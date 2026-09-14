@@ -297,7 +297,7 @@ export interface SearchOptions {
   limit?: number
   cursor?: string
   sort?: SearchSortOrder // Defaults to 'relevance'
-  highlight?: SearchHighlightOptions
+  highlight?: boolean | SearchHighlightOptions
   // Attributes to read from the stored documents and return on each result.
   fields?: string[]
 }
@@ -322,13 +322,22 @@ export interface SearchResultDoc {
   description?: string
   emojiIcon?: string
   score?: number
-  highlights?: Record<string, string[]>
+  /**
+   * Matching excerpts, by what they were cut from rather than by the index field they came out
+   * of - the same text is highlighted in several fields at once, and which of them matched is
+   * not something a caller should have to know.
+   */
+  highlights?: {
+    content?: string[]
+    title?: string[]
+  }
   // Values of the attributes named by `SearchOptions.fields`, read from the stored document.
   fields?: Record<string, any>
   doc: Pick<Doc, '_id' | '_class' | 'createdOn'> &
     Partial<Pick<Doc, 'createdBy' | 'modifiedOn' | 'modifiedBy' | 'space'>> &
     Partial<Pick<AttachedDoc, 'attachedTo' | 'attachedToClass'>> &
-    Partial<Pick<VersionableDoc, 'baseId'>>
+    Partial<Pick<VersionableDoc, 'baseId'>> &
+    { objectId?: Ref<Doc>, objectClass?: Ref<Class<Doc>> }
 }
 
 /**

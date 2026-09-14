@@ -110,11 +110,48 @@ describe('mapSearchResultDoc', () => {
     expect(doc.doc.modifiedBy).toBe(ALICE)
   })
 
-  it('passes highlight fragments through', () => {
-    const highlights = { highlightableContent: ['the <em>release</em> notes'] }
-    const doc = mapSearchResultDoc(hierarchy, indexed({ _highlights: highlights }))
+  it('reports content fragments without naming the index field they came from', () => {
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({ _highlights: { highlightableContent: ['the <em>release</em> notes'] } })
+    )
 
-    expect(doc.highlights).toEqual(highlights)
+    expect(doc.highlights).toEqual({ content: ['the <em>release</em> notes'] })
+  })
+
+  it('falls back to the russian analyser fragments', () => {
+    // Same text, a different analyser matched it - the caller should not have to care which.
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({ _highlights: { 'highlightableContent.ru': ['<em>релиз</em> готов'] } })
+    )
+
+    expect(doc.highlights).toEqual({ content: ['<em>релиз</em> готов'] })
+  })
+
+  it('falls back to the shared summary when no dedicated field matched', () => {
+    const doc = mapSearchResultDoc(hierarchy, indexed({ _highlights: { fulltextSummary: ['a <em>match</em>'] } }))
+
+    expect(doc.highlights).toEqual({ content: ['a <em>match</em>'] })
+  })
+
+  it('keeps title fragments apart from content ones', () => {
+    // A title is different text, not another copy of the body, so it must not be collapsed in.
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({ _highlights: { searchTitle: ['<em>Alice</em> — General'], fulltextSummary: ['body'] } })
+    )
+
+    expect(doc.highlights).toEqual({ content: ['body'], title: ['<em>Alice</em> — General'] })
+  })
+
+  it('prefers the dedicated field over the shared summary', () => {
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({ _highlights: { highlightableContent: ['exact'], fulltextSummary: ['duplicate'] } })
+    )
+
+    expect(doc.highlights).toEqual({ content: ['exact'] })
   })
 
   it('carries thread parent references so a result can be opened without a db round trip', () => {

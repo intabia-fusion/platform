@@ -141,6 +141,20 @@ function toTimestamp (value: any): Timestamp | undefined {
   return isNaN(num) ? undefined : num
 }
 
+function toHighlights (raw: Record<string, string[]> | undefined): SearchResultDoc['highlights'] {
+  if (raw === undefined) return undefined
+
+  const content = raw.highlightableContent ?? raw['highlightableContent.ru'] ?? raw.fulltextSummary
+  const title = raw.searchTitle
+
+  if (content === undefined && title === undefined) return undefined
+
+  return {
+    ...(content !== undefined ? { content } : {}),
+    ...(title !== undefined ? { title } : {})
+  }
+}
+
 /**
  * @public
  */
@@ -149,7 +163,7 @@ export function mapSearchResultDoc (hierarchy: Hierarchy, raw: IndexedDoc): Sear
     id: raw.id,
     title: raw.searchTitle,
     shortTitle: raw.searchShortTitle,
-    highlights: raw._highlights,
+    highlights: toHighlights(raw._highlights),
     doc: {
       _id: raw.id,
       _class: raw._class[0],

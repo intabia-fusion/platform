@@ -255,6 +255,28 @@ describe('Elastic search string', () => {
     expect(ids(result)).not.toContain('m3')
   })
 
+  it('matches nothing when a filter resolves to an empty set', async () => {
+    // A caller that asked to filter by author and found no social ids for them must get no rows.
+    // Ignoring the empty set would hand back everyone's messages instead.
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'release', classes: [MESSAGE_CLASS], filters: { createdBy: [] } },
+      {}
+    )
+    expect(ids(result)).toEqual([])
+  })
+
+  it('matches nothing for an empty object filter', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'release', classes: [MESSAGE_CLASS], filters: { attachedTo: [] } },
+      {}
+    )
+    expect(ids(result)).toEqual([])
+  })
+
   it('narrows by date range', async () => {
     const result = await adapter.searchString(
       ctx,
@@ -415,6 +437,30 @@ describe('Elastic search string', () => {
     // title, which every message in `space:general` shares.
     const result = await adapter.searchString(ctx, ws, { query: 'General' }, { searchIn: 'content' })
     expect(ids(result)).toEqual([])
+  })
+
+  it('turns highlighting on with a bare `true`', async () => {
+    // The defaults, without spelling out an options object.
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'quarterly', classes: [MESSAGE_CLASS] },
+      { highlight: true }
+    )
+    const hit = result.docs.find((d) => d.id === 'm1')
+    expect(hit?._highlights?.highlightableContent?.length ?? 0).toBeGreaterThan(0)
+  })
+
+  it('leaves highlighting off for `false`', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'quarterly', classes: [MESSAGE_CLASS] },
+      { highlight: false }
+    )
+    const hit = result.docs.find((d) => d.id === 'm1')
+    expect(hit).toBeDefined()
+    expect(hit?._highlights).toBeUndefined()
   })
 
   it('returns highlighted fragments for russian text', async () => {

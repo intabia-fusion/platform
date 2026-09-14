@@ -625,7 +625,13 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
         sort: req.query.sort as SearchOptions['sort'],
         searchIn: req.query.searchIn as SearchOptions['searchIn'],
         fuzzy: req.query.fuzzy !== undefined ? req.query.fuzzy === 'true' : undefined,
-        highlight: req.query.highlight !== undefined ? JSON.parse(req.query.highlight as string) : undefined
+        // Either `true` or a JSON object, so the bare flag survives the query string.
+        highlight:
+          req.query.highlight === undefined
+            ? undefined
+            : req.query.highlight === 'true'
+              ? true
+              : JSON.parse(req.query.highlight as string)
       }
       const result = await session.searchFulltextRaw(ctx, query, options)
       await sendJson(req, res, result, rateLimitToHeaders(rateLimit), true)

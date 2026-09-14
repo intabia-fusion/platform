@@ -467,10 +467,10 @@ class ElasticAdapter implements FullTextAdapter {
           }
         })
       }
-      if (filters?.createdBy !== undefined && filters.createdBy.length > 0) {
+      if (filters?.createdBy !== undefined) {
         filter.push({ terms: this.getTerms(filters.createdBy, CREATED_BY_FIELD) })
       }
-      if (filters?.attachedTo !== undefined && filters.attachedTo.length > 0) {
+      if (filters?.attachedTo !== undefined) {
         // Matches both a message hanging off the object and a thread reply whose root it is.
         filter.push({
           bool: {
@@ -482,7 +482,7 @@ class ElasticAdapter implements FullTextAdapter {
           }
         })
       }
-      if (filters?.attachedToClass !== undefined && filters.attachedToClass.length > 0) {
+      if (filters?.attachedToClass !== undefined) {
         filter.push({ terms: this.getTerms(filters.attachedToClass, 'attachedToClass') })
       }
       if (filters?.hasAttachment === true) {
@@ -536,8 +536,8 @@ class ElasticAdapter implements FullTextAdapter {
         }
       }
 
-      if (options.highlight !== undefined) {
-        const h = options.highlight
+      if (options.highlight !== undefined && options.highlight !== false) {
+        const h = options.highlight === true ? {} : options.highlight
         elasticQuery.highlight = {
           pre_tags: [h.preTag ?? HIGHLIGHT_PRE_TAG],
           post_tags: [h.postTag ?? HIGHLIGHT_POST_TAG],
@@ -569,7 +569,7 @@ class ElasticAdapter implements FullTextAdapter {
         'elastic-search-string',
         {
           sort: options.sort ?? 'relevance',
-          highlight: options.highlight !== undefined,
+          highlight: options.highlight !== undefined && options.highlight !== false,
           paged: options.cursor !== undefined
         },
         () =>
