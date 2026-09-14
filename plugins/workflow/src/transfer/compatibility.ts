@@ -618,12 +618,5 @@ function extractTransitionsReport (config: WorkflowConfig): TransitionCompatibil
  * Checks whether the workflow config contains screens directly or references screen requests.
  */
 function hasScreensInConfig (config: WorkflowConfig): boolean {
-  if (config.screens !== undefined && config.screens.length > 0) {
-    return true
-  }
-
-  return config.workflows.some(
-    (w) =>
-      w.transitions?.some((t) => t.requests?.some((r) => r.rule === workflow.request.ScreenRequest) === true) === true
-  )
+  return config.screens !== undefined && config.screens.length > 0
 }

@@ -17,7 +17,12 @@ import { type Ref, type Status, type Tx, type TxRemoveDoc, type TxUpdateDoc } fr
 import { type TriggerControl } from '@hcengineering/server-core'
 import { type TaskType, type Project } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import { type ProjectWorkflow, type Workflow } from '@hcengineering/workflow'
+import workflowPlugin, {
+  type ProjectWorkflow,
+  type Screen,
+  type ScreenProps,
+  type Workflow
+} from '@hcengineering/workflow'
 
 export async function OnWorkflowDelete (txes: TxRemoveDoc<Workflow>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -113,6 +118,37 @@ export async function OnStatusDelete (txes: TxRemoveDoc<Status>[], control: Trig
         })
       )
     }
+  }
+
+  return result
+}
+
+export async function OnScreenDelete (txes: TxRemoveDoc<Screen>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+  const removedScreenIds = new Set<Ref<Screen>>(txes.map((it) => it.objectId))
+
+  if (removedScreenIds.size === 0) return result
+
+  const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {})
+
+  for (const t of transitions) {
+    const requests = t.requests ?? []
+    if (requests.length === 0) continue
+
+    const remaining = requests.filter(
+      (r) =>
+        !(
+          r.rule === workflowPlugin.request.ScreenRequest &&
+          removedScreenIds.has((r.props as ScreenProps | undefined)?.screen as Ref<Screen>)
+        )
+    )
+    if (remaining.length === requests.length) continue
+
+    result.push(
+      control.txFactory.createTxUpdateDoc(workflow.class.WorkflowTransition, t.space, t._id, {
+        requests: remaining
+      })
+    )
   }
 
   return result
