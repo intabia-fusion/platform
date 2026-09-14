@@ -144,10 +144,6 @@ async function UnarchiveChannel (channel: Channel): Promise<void> {
 
 export const userSearch = writable('')
 
-export async function chunterBrowserVisible (): Promise<boolean> {
-  return false
-}
-
 export function chatMessagesFilter (message: ActivityMessage): boolean {
   return message._class === chunter.class.ChatMessage
 }
@@ -213,7 +209,6 @@ export default async (): Promise<Resources> => ({
   function: {
     CommentsApplier,
     GetDmName: getDmName,
-    ChunterBrowserVisible: chunterBrowserVisible,
     GetFragment: getTitle,
     GetLink: getMessageLink,
     DirectTitleProvider,
