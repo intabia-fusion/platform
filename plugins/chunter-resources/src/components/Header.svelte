@@ -26,7 +26,7 @@
     IconSettings,
     IconToDetails
   } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
@@ -35,9 +35,8 @@
   import workbench from '@hcengineering/workbench'
   import { PresenceAvatars } from '@hcengineering/presence-resources'
 
-  import { userSearch } from '../index'
   import chunter from '../plugin'
-  import { navigateToSpecial, openChannelInSidebar } from '../navigation'
+  import { openChannelInSidebar } from '../navigation'
   import ChannelMessagesFilter from './ChannelMessagesFilter.svelte'
 
   export let object: Doc | undefined = undefined
@@ -62,18 +61,13 @@
   export let canOpenInSidebar: boolean = false
   export let closeOnEscape: boolean = true
   export let realWidth: number | undefined = undefined
+  export let hideTitle: boolean = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
 
   export let searchValue: string = ''
-
-  $: searchValue = $userSearch
-
-  onDestroy(() => {
-    userSearch.set('')
-  })
 
   let iconComponent: AnySvelteComponent | undefined = undefined
   $: clazz = object && hierarchy.getClass(object._class)
@@ -102,7 +96,9 @@
     <slot />
   </svelte:fragment>
 
-  {#if titleKind === 'breadcrumbs'}
+  {#if hideTitle}
+    <!-- Nothing: the title group gives way to whatever the search slot renders. -->
+  {:else if titleKind === 'breadcrumbs'}
     {#if iconComponent != null && object}
       <Breadcrumbs
         items={[
@@ -164,18 +160,14 @@
         autoFocus={focusSearch}
         bind:value={searchValue}
         on:change={(ev) => {
-          userSearch.set(ev.detail)
-
-          if (ev.detail !== '') {
-            navigateToSpecial('browser')
-          }
+          dispatch('search', ev.detail)
         }}
       />
       {#if withFilters}
         <ChannelMessagesFilter bind:selectedFilters={filters} />
       {/if}
-      <slot name="search" {doubleRow} />
     {/if}
+    <slot name="search" {doubleRow} />
   </svelte:fragment>
   <svelte:fragment slot="actions" let:doubleRow>
     <slot name="actions" {doubleRow} />

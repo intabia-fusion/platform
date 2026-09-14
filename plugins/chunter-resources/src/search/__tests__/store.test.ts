@@ -37,14 +37,14 @@ jest.mock('../resolve', () => ({
   toSearchSpaces: (_filters: unknown, scope?: Ref<Space>) => (scope !== undefined ? [scope] : undefined)
 }))
 
+/* eslint-disable import/first */
 import { createChatSearchStore, seedGlobalSearch, takePendingSearch } from '../store'
 
 const page = (ids: string[], cursor?: string): SearchResult =>
   ({ docs: ids.map((id) => ({ id })), cursor, total: ids.length }) as unknown as SearchResult
 
-/** Lets the 250ms debounce fire and the promise chain inside `run` settle. */
 async function settle (): Promise<void> {
-  await new Promise((r) => setTimeout(r, 300))
+  await new Promise((resolve) => setTimeout(resolve, 550))
   for (let i = 0; i < 6; i++) await Promise.resolve()
 }
 
@@ -82,7 +82,7 @@ describe('createChatSearchStore', () => {
     // cannot stop the first request from landing after the second.
     let resolveFirst: (r: SearchResult) => void = () => {}
     searchFulltext
-      .mockImplementationOnce(async () => await new Promise<SearchResult>((r) => (resolveFirst = r)))
+      .mockImplementationOnce(async () => await new Promise<SearchResult>((resolve) => (resolveFirst = resolve)))
       .mockResolvedValueOnce(page(['second']))
 
     const store = createChatSearchStore()
@@ -102,7 +102,7 @@ describe('createChatSearchStore', () => {
     // A superseded request still owns the flag it turned on; leaving it would block loadMore.
     let resolveFirst: (r: SearchResult) => void = () => {}
     searchFulltext
-      .mockImplementationOnce(async () => await new Promise<SearchResult>((r) => (resolveFirst = r)))
+      .mockImplementationOnce(async () => await new Promise<SearchResult>((resolve) => (resolveFirst = resolve)))
       .mockResolvedValueOnce(page(['second']))
 
     const store = createChatSearchStore()
@@ -262,15 +262,15 @@ describe('createChatSearchStore', () => {
   })
 
   it('writes nothing after being destroyed', async () => {
-    let resolve: (r: SearchResult) => void = () => {}
-    searchFulltext.mockImplementation(async () => await new Promise<SearchResult>((r) => (resolve = r)))
+    let release: (r: SearchResult) => void = () => {}
+    searchFulltext.mockImplementation(async () => await new Promise<SearchResult>((resolve) => (release = resolve)))
 
     const store = createChatSearchStore()
     store.setSearch('release')
     await settle()
 
     store.destroy()
-    resolve(page(['m1']))
+    release(page(['m1']))
     await settle()
 
     expect(get(store).results).toEqual([])

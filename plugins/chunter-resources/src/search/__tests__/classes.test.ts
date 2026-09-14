@@ -26,6 +26,7 @@ jest.mock('@hcengineering/presentation', () => ({
   getClient: () => ({ getHierarchy: () => hierarchy })
 }))
 
+/* eslint-disable import/first */
 import { expandClasses, getActivityDocClasses, splitPrimaryClasses } from '../classes'
 
 const CHANNEL = 'chunter:class:Channel' as Ref<Class<Doc>>

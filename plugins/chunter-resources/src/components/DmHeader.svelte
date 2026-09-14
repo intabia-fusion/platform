@@ -21,16 +21,15 @@
   import { SearchEdit } from '@hcengineering/ui'
   import { openDoc } from '@hcengineering/view-resources'
 
-  import { userSearch } from '../index'
   import chunter from '../plugin'
   import { getDmName } from '../utils'
   import { navigateToSpecial } from '../navigation'
+  import { seedGlobalSearch } from '../search/store'
 
   export let spaceId: Ref<DirectMessage> | undefined
   export let withSearch: boolean = true
 
-  let userSearch_: string = ''
-  userSearch.subscribe((v) => (userSearch_ = v))
+  let searchValue: string = ''
 
   const client = getClient()
   const query = createQuery()
@@ -64,11 +63,12 @@
   {/if}
   {#if withSearch}
     <SearchEdit
-      value={userSearch_}
+      value={searchValue}
       on:change={(ev) => {
-        userSearch.set(ev.detail)
+        searchValue = ev.detail
 
         if (ev.detail !== '') {
+          seedGlobalSearch({ search: ev.detail, filters: {}, sort: 'relevance' })
           navigateToSpecial('browser')
         }
       }}

@@ -27,6 +27,7 @@ jest.mock('@hcengineering/contact-resources', () => ({
   getSocialIdsByPersonRefs: async (refs: Array<Ref<Person>>) => await getSocialIdsByPersonRefs(refs)
 }))
 
+/* eslint-disable import/first */
 import { endOfDay, pickAuthors, startOfDay, toSearchFilters, toSearchSpaces } from '../resolve'
 import type { ChatSearchFilters, PickedAuthor } from '../types'
 

@@ -23,7 +23,7 @@ import { toSearchFilters, toSearchSpaces } from './resolve'
 import type { ChatSearchFilters, ChatSearchScope, ChatSearchState, SearchResultRow } from './types'
 
 export const PAGE_SIZE = 50
-const DEBOUNCE_MS = 250
+const DEBOUNCE_MS = 500
 
 const emptyState: ChatSearchState = {
   search: '',
@@ -43,6 +43,10 @@ export interface ChatSearchStore extends Readable<ChatSearchState> {
   loadMore: () => void
   clear: () => void
   destroy: () => void
+}
+
+function sameFilters (a: ChatSearchFilters, b: ChatSearchFilters): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
 }
 
 export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchStore {
@@ -189,6 +193,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
     },
 
     setFilters (filters: ChatSearchFilters): void {
+      if (sameFilters(get(store).filters, filters)) return
       cursor = undefined
       store.update((s) => ({ ...s, filters }))
       clearTimeout(timer)
