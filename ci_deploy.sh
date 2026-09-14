@@ -162,6 +162,9 @@ registry="${deploy_registry:+$deploy_registry/}${DOCKER_NAMESPACE:-intabiafusion
   fi
   # After the checkout: it would otherwise restore the repo's own plan-config.yaml.
   if [ -n "$STAND_PLAN_CONFIG_B64" ]; then
+    # A bind mount whose source is missing makes docker create a directory there, and the
+    # redirect below cannot overwrite one.
+    printf 'rm -rf plan-config.yaml\n'
     printf 'echo %s | base64 -d > plan-config.yaml\n' "$(shq "$STAND_PLAN_CONFIG_B64")"
     printf 'echo "plan-config.yaml: $(wc -l < plan-config.yaml) lines from the stand config"\n'
   fi
