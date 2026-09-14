@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import TextAreaEditor from '../components/TextAreaEditor.svelte'
 
 let target: HTMLElement
@@ -25,10 +26,10 @@ interface Mounted {
   textarea: HTMLTextAreaElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<TextAreaEditor>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TextAreaEditor({ target: host, props })
+  const component = new TextAreaEditor({ target: host, props: props as ComponentProps<TextAreaEditor> })
   return { component, host, textarea: host.querySelector('textarea') as HTMLTextAreaElement }
 }
 

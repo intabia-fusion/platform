@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { themeStore } from '@hcengineering/theme'
+import type { ComponentProps } from 'svelte'
 import ProgressCircle from '../components/ProgressCircle.svelte'
 import { getPlatformColor } from '../colors'
 
@@ -25,10 +26,14 @@ let target: HTMLElement
 // Mirrors the component's own constant, to compute expected offsets from a hand-run scenario.
 const lenghtC = Math.PI * 14 - 1
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ProgressCircle, circles: SVGCircleElement[] } {
+function mount (props: Partial<ComponentProps<ProgressCircle>>): {
+  host: HTMLElement
+  component: ProgressCircle
+  circles: SVGCircleElement[]
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ProgressCircle({ target: host, props })
+  const component = new ProgressCircle({ target: host, props: props as ComponentProps<ProgressCircle> })
   return { host, component, circles: Array.from(host.querySelectorAll('circle')) }
 }
 

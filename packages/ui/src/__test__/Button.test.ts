@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Button from '../components/Button.svelte'
 import { deviceOptionsStore } from '../index'
 
@@ -24,10 +25,10 @@ const ICON = 'ui:icon:Check' as Asset
 let target: HTMLElement
 
 /** Own wrapper per mount, so a test can mount twice and still address each button. */
-function mount (props: Record<string, unknown> = {}): { button: HTMLButtonElement, component: Button } {
+function mount (props: Partial<ComponentProps<Button>> = {}): { button: HTMLButtonElement, component: Button } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Button({ target: host, props })
+  const component = new Button({ target: host, props: props as ComponentProps<Button> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

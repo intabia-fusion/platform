@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import SearchInput from '../components/SearchInput.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,10 @@ interface Mounted {
   wrapper: HTMLElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<SearchInput>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new SearchInput({ target: host, props })
+  const component = new SearchInput({ target: host, props: props as ComponentProps<SearchInput> })
   return {
     component,
     host,

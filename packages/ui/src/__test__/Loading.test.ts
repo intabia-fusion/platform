@@ -14,14 +14,15 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Loading from '../components/Loading.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: Loading } {
+function mount (props: Partial<ComponentProps<Loading>> = {}): { host: HTMLElement, component: Loading } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Loading({ target: host, props })
+  const component = new Loading({ target: host, props: props as ComponentProps<Loading> })
   return { host, component }
 }
 
@@ -39,9 +40,7 @@ describe('Loading', () => {
 
   it('is full-size by default, and shrinks when shrink is set', () => {
     expect(mount().host.querySelector('.spinner-container')?.classList.contains('fullSize')).toBe(true)
-    expect(mount({ shrink: true }).host.querySelector('.spinner-container')?.classList.contains('fullSize')).toBe(
-      false
-    )
+    expect(mount({ shrink: true }).host.querySelector('.spinner-container')?.classList.contains('fullSize')).toBe(false)
   })
 
   it('marks the inner element labeled only when a label is given', () => {

@@ -15,14 +15,15 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Fold from '../components/Fold.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { root: HTMLElement, component: Fold } {
+function mount (props: Partial<ComponentProps<Fold>>): { root: HTMLElement, component: Fold } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Fold({ target: host, props })
+  const component = new Fold({ target: host, props: props as ComponentProps<Fold> })
   return { root: host.querySelector('.hulyFold-container') as HTMLElement, component }
 }
 

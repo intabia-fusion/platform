@@ -70,7 +70,7 @@ Three groups, told apart by file name - see [`docs/testing.md`](docs/testing.md)
 pnpm test           # unit (*.test.ts, *.spec.ts) - no Docker, part of the build phase
 pnpm integration    # *.itest.ts - needs tests/prepare-tests.sh
 pnpm bench          # *.bench.ts - by hand only
-pnpm coverage       # per-package table + merged istanbul report in coverage/
+pnpm coverage       # per-package table + lcov/cobertura/html reports in coverage/
 ```
 
 A test that needs a service belongs in `*.itest.ts`; renaming the file is the whole

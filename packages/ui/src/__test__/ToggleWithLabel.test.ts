@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ToggleWithLabel from '../components/ToggleWithLabel.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,11 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ToggleWithLabel>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ToggleWithLabel({ target: host, props: { label: 'ui:string:Ok' as IntlString, ...props } })
+  const merged = { label: 'ui:string:Ok' as IntlString, ...props }
+  const component = new ToggleWithLabel({ target: host, props: merged as ComponentProps<ToggleWithLabel> })
   return { component, host, input: host.querySelector('input') as HTMLInputElement }
 }
 

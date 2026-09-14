@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import NestedSelectPopup from '../components/NestedSelectPopup.svelte'
 import type { NestedSelectItem } from '../types'
 
@@ -26,7 +27,7 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<NestedSelectPopup>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new NestedSelectPopup({ target: host, props: props as any })

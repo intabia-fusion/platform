@@ -21,11 +21,22 @@ import type { IModeSelector } from '../utils'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ModeSelector } {
+// Written out rather than taken from ComponentProps: svelte-check sees this component as generic
+// and plain tsc does not, so naming its type would satisfy exactly one of the two.
+interface Props {
+  props: IModeSelector<string>
+  kind?: 'nuance' | 'subtle'
+  onlyIcons?: boolean
+  expansion?: 'stretch' | 'default'
+  padding?: string
+}
+
+function mount (props: Props): { host: HTMLElement } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModeSelector({ target: host, props })
-  return { host, component }
+  // eslint-disable-next-line no-new
+  new ModeSelector({ target: host, props })
+  return { host }
 }
 
 describe('ModeSelector', () => {

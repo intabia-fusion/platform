@@ -16,14 +16,15 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ButtonItem } from '../types'
+import type { ComponentProps } from 'svelte'
 import Panel from '../components/Panel.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: Panel } {
+function mount (props: Partial<ComponentProps<Panel>> = {}): { host: HTMLElement, component: Panel } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Panel({ target: host, props })
+  const component = new Panel({ target: host, props: props as ComponentProps<Panel> })
   return { host, component }
 }
 
@@ -105,10 +106,7 @@ describe('Panel', () => {
   })
 
   it('setAside with a customAside id dispatches select and updates getAside', () => {
-    const customAside: ButtonItem[] = [
-      { id: 'first' },
-      { id: 'second' }
-    ]
+    const customAside: ButtonItem[] = [{ id: 'first' }, { id: 'second' }]
     const { component } = mount({ customAside, floatAside: true })
     const onSelect = vi.fn()
     component.$on('select', onSelect)

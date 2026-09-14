@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import TimeInputBox from '../components/calendar/TimeInputBox.svelte'
 import { fromCurrentToTz } from '../components/calendar/internal/DateUtils'
 
@@ -27,10 +28,10 @@ interface Mounted {
   min: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<TimeInputBox>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TimeInputBox({ target: host, props })
+  const component = new TimeInputBox({ target: host, props: props as ComponentProps<TimeInputBox> })
   const digits = host.querySelectorAll('.digit')
   return { component, host, hour: digits[0] as HTMLElement, min: digits[1] as HTMLElement }
 }
@@ -38,7 +39,9 @@ function mount (props: Record<string, unknown>): Mounted {
 const key = (span: HTMLElement, code: string, keyChar: string = code): void => {
   span.dispatchEvent(new KeyboardEvent('keydown', { key: keyChar, code, bubbles: true }))
 }
-const digitKey = (span: HTMLElement, digit: number): void => { key(span, `Digit${digit}`, String(digit)) }
+const digitKey = (span: HTMLElement, digit: number): void => {
+  key(span, `Digit${digit}`, String(digit))
+}
 
 describe('TimeInputBox', () => {
   beforeEach(() => {

@@ -17,16 +17,17 @@ import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import type { TabBase } from '../types'
+import type { ComponentProps } from 'svelte'
 import TabsControl from '../components/TabsControl.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: TabsControl } {
+function mount (props: Partial<ComponentProps<TabsControl>>): { host: HTMLElement, component: TabsControl } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TabsControl({ target: host, props })
+  const component = new TabsControl({ target: host, props: props as ComponentProps<TabsControl> })
   return { host, component }
 }
 

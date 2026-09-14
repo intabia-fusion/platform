@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import TabList from '../components/TabList.svelte'
 import { deviceOptionsStore } from '../index'
 import type { TabItem } from '../types'
@@ -35,10 +36,11 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<TabList>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TabList({ target: host, props: { items, ...props } })
+  const merged = { items, ...props }
+  const component = new TabList({ target: host, props: merged as ComponentProps<TabList> })
   return { component, host }
 }
 

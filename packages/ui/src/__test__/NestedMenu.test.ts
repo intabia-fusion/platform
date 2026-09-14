@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import NestedMenu from '../components/NestedMenu.svelte'
 import type { DropdownIntlItem } from '../types'
 import { modalStore } from '../modals'
@@ -33,10 +34,10 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<NestedMenu>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new NestedMenu({ target: host, props })
+  const component = new NestedMenu({ target: host, props: props as ComponentProps<NestedMenu> })
   return { component, host }
 }
 
@@ -61,7 +62,13 @@ describe('NestedMenu', () => {
     const onSelect = vi.fn()
     const a = item('a')
     const b = item('b')
-    const { host, component } = mount({ items: [[a, []], [b, []]], onSelect })
+    const { host, component } = mount({
+      items: [
+        [a, []],
+        [b, []]
+      ],
+      onSelect
+    })
     const onClose = vi.fn()
     component.$on('close', onClose)
 
@@ -76,7 +83,13 @@ describe('NestedMenu', () => {
   it('shows the icon only when withIcon is set and the item has one', () => {
     const withIcon = item('a', ICON)
     const noIcon = item('b')
-    const { host } = mount({ items: [[withIcon, []], [noIcon, []]], withIcon: true })
+    const { host } = mount({
+      items: [
+        [withIcon, []],
+        [noIcon, []]
+      ],
+      withIcon: true
+    })
     const buttons = Array.from(host.querySelectorAll('button.menu-item'))
     expect(buttons[0].querySelector('.icon')).not.toBeNull()
     expect(buttons[1].querySelector('.icon')).toBeNull()
@@ -131,7 +144,12 @@ describe('NestedMenu', () => {
   // keyDown reads from `actionElements`, an array declared but never populated via bind:this -
   // pinned behaviour: ArrowDown/ArrowUp are dead code, no focus ever moves and nothing throws.
   it('does nothing on ArrowDown/ArrowUp - actionElements is never populated (suspected source bug)', () => {
-    const { host } = mount({ items: [[item('a'), []], [item('b'), []]] })
+    const { host } = mount({
+      items: [
+        [item('a'), []],
+        [item('b'), []]
+      ]
+    })
     const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button.menu-item'))
     buttons[0].focus()
     expect(document.activeElement).toBe(buttons[0])

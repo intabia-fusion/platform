@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import CodeForm from '../components/CodeForm.svelte'
 
 const fields = [0, 1, 2, 3].map((i) => ({ id: `code-${i}`, name: `code-${i}`, optional: false }))
@@ -30,7 +31,8 @@ interface Mounted {
 function mount (): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new CodeForm({ target: host, props: { fields } })
+  const merged = { fields }
+  const component = new CodeForm({ target: host, props: merged as ComponentProps<CodeForm> })
   const submitted = vi.fn()
   component.$on('submit', submitted)
   return { component, inputs: [...host.querySelectorAll('input')] as HTMLInputElement[], submitted }

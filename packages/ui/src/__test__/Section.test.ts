@@ -15,6 +15,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Section from '../components/Section.svelte'
 
 const LABEL = 'ui:string:Ok' as IntlString
@@ -22,10 +23,11 @@ const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { root: HTMLElement, component: Section } {
+function mount (props: Partial<ComponentProps<Section>> = {}): { root: HTMLElement, component: Section } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Section({ target: host, props: { label: LABEL, ...props } })
+  const merged = { label: LABEL, ...props }
+  const component = new Section({ target: host, props: merged as ComponentProps<Section> })
   return { root: host.querySelector('.antiSection') as HTMLElement, component }
 }
 

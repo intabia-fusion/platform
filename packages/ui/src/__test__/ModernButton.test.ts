@@ -15,16 +15,20 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernButton from '../components/ModernButton.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { button: HTMLButtonElement, component: ModernButton } {
+function mount (props: Partial<ComponentProps<ModernButton>> = {}): {
+  button: HTMLButtonElement
+  component: ModernButton
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernButton({ target: host, props })
+  const component = new ModernButton({ target: host, props: props as ComponentProps<ModernButton> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

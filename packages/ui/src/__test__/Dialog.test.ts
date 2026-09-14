@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Dialog from '../components/Dialog.svelte'
 import { deviceOptionsStore } from '../index'
 
@@ -33,10 +34,10 @@ async function settle (): Promise<void> {
   await tick()
 }
 
-async function mount (props: Record<string, unknown> = {}): Promise<Mounted> {
+async function mount (props: Partial<ComponentProps<Dialog>> = {}): Promise<Mounted> {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Dialog({ target: host, props })
+  const component = new Dialog({ target: host, props: props as ComponentProps<Dialog> })
   await settle()
   return { component, host }
 }

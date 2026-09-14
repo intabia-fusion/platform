@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import DropdownLabels from '../components/DropdownLabels.svelte'
 import DropdownLabelsPopup from '../components/DropdownLabelsPopup.svelte'
 import type { DropdownTextItem } from '../types'
@@ -38,7 +39,7 @@ interface Mounted {
   button: HTMLButtonElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<DropdownLabels>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new DropdownLabels({ target: host, props: props as any })

@@ -15,6 +15,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import RadioButton from '../components/RadioButton.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,11 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<RadioButton>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new RadioButton({ target: host, props: { value: 'a', ...props } })
+  const merged = { value: 'a', ...props }
+  const component = new RadioButton({ target: host, props: merged as ComponentProps<RadioButton> })
   return {
     component,
     host,

@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import NavItem from '../components/NavItem.svelte'
 import { getTreeCollapsed, setTreeCollapsed } from '../location'
 
@@ -23,10 +24,14 @@ const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, button: HTMLButtonElement, component: NavItem } {
+function mount (props: Partial<ComponentProps<NavItem>> = {}): {
+  host: HTMLElement
+  button: HTMLButtonElement
+  component: NavItem
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new NavItem({ target: host, props })
+  const component = new NavItem({ target: host, props: props as ComponentProps<NavItem> })
   return { host, button: host.querySelector('button.hulyNavItem-container') as HTMLButtonElement, component }
 }
 

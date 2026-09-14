@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import FilterCategoryPopup from '../components/FilterCategoryPopup.svelte'
 import type { ActiveFilter, FilterCategory } from '../types'
 
@@ -26,11 +27,15 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<FilterCategoryPopup>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const base = { onFilterChange: vi.fn(), onFilterRemove: vi.fn() }
-  const component = new FilterCategoryPopup({ target: host, props: { ...base, ...props } as any })
+  const merged = { ...base, ...props }
+  const component = new FilterCategoryPopup({
+    target: host,
+    props: merged as ComponentProps<FilterCategoryPopup> as any
+  })
   return { component, host }
 }
 
@@ -65,7 +70,12 @@ describe('FilterCategoryPopup', () => {
 
   it('marks an active category and shows its active option label', () => {
     const active: ActiveFilter[] = [
-      { categoryId: 'cat1', optionId: 'opt1', categoryLabel: 'ui:string:Cat1' as IntlString, optionLabel: 'ui:string:Opt1' as IntlString }
+      {
+        categoryId: 'cat1',
+        optionId: 'opt1',
+        categoryLabel: 'ui:string:Cat1' as IntlString,
+        optionLabel: 'ui:string:Opt1' as IntlString
+      }
     ]
     const { host } = mount({ categories: categories(), activeFilters: active })
     const buttons = host.querySelectorAll('.category-item')
@@ -105,7 +115,12 @@ describe('FilterCategoryPopup', () => {
 
   it('marks the currently active option as selected', async () => {
     const active: ActiveFilter[] = [
-      { categoryId: 'cat1', optionId: 'opt2', categoryLabel: 'ui:string:Cat1' as IntlString, optionLabel: 'ui:string:Opt2' as IntlString }
+      {
+        categoryId: 'cat1',
+        optionId: 'opt2',
+        categoryLabel: 'ui:string:Cat1' as IntlString,
+        optionLabel: 'ui:string:Opt2' as IntlString
+      }
     ]
     const { host } = mount({ categories: categories(), activeFilters: active })
     host.querySelectorAll<HTMLButtonElement>('.category-item')[0].click()
@@ -119,7 +134,12 @@ describe('FilterCategoryPopup', () => {
   it('shows a clear-filter button only when the category has an active filter, and clears it on click', async () => {
     const onFilterRemove = vi.fn()
     const active: ActiveFilter[] = [
-      { categoryId: 'cat1', optionId: 'opt1', categoryLabel: 'ui:string:Cat1' as IntlString, optionLabel: 'ui:string:Opt1' as IntlString }
+      {
+        categoryId: 'cat1',
+        optionId: 'opt1',
+        categoryLabel: 'ui:string:Cat1' as IntlString,
+        optionLabel: 'ui:string:Opt1' as IntlString
+      }
     ]
     const { host, component } = mount({ categories: categories(), activeFilters: active, onFilterRemove })
     const onClose = vi.fn()

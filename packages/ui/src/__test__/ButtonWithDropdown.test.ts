@@ -16,6 +16,7 @@
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ButtonWithDropdown from '../components/ButtonWithDropdown.svelte'
 import { modalStore } from '../modals'
 import { popupstore } from '../popups'
@@ -28,10 +29,13 @@ const ITEMS: SelectPopupValueType[] = [
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ButtonWithDropdown } {
+function mount (props: Partial<ComponentProps<ButtonWithDropdown>>): {
+  host: HTMLElement
+  component: ButtonWithDropdown
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ButtonWithDropdown({ target: host, props })
+  const component = new ButtonWithDropdown({ target: host, props: props as ComponentProps<ButtonWithDropdown> })
   return { host, component }
 }
 
@@ -101,13 +105,13 @@ describe('ButtonWithDropdown', () => {
 
   it('gives the main button a rectangle-right shape only when hasDropdown is true', () => {
     expect(
-      mount({ dropdownItems: ITEMS, hasDropdown: true }).host
-        .querySelector('button.antiButton')
+      mount({ dropdownItems: ITEMS, hasDropdown: true })
+        .host.querySelector('button.antiButton')
         ?.classList.contains('sh-rectangle-right')
     ).toBe(true)
     expect(
-      mount({ dropdownItems: ITEMS, hasDropdown: false }).host
-        .querySelector('button.antiButton')
+      mount({ dropdownItems: ITEMS, hasDropdown: false })
+        .host.querySelector('button.antiButton')
         ?.classList.contains('sh-no-shape')
     ).toBe(true)
   })

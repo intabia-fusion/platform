@@ -16,15 +16,16 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DateRangeMode } from '@hcengineering/core'
+import type { ComponentProps } from 'svelte'
 import Shifts from '../components/calendar/Shifts.svelte'
 import { HOUR, MINUTE } from '../types'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: Shifts } {
+function mount (props: Partial<ComponentProps<Shifts>>): { host: HTMLElement, component: Shifts } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Shifts({ target: host, props })
+  const component = new Shifts({ target: host, props: props as ComponentProps<Shifts> })
   return { host, component }
 }
 
@@ -119,7 +120,6 @@ describe('Shifts', () => {
     })
     const onChange = vi.fn()
     component.$on('change', onChange)
-
     ;(host.querySelector('.btn') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
     const zeroed = new Date('2026-01-15T12:00:45.678Z').setSeconds(0, 0)

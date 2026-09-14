@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernRadioButton from '../components/ModernRadioButton.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,11 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ModernRadioButton>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernRadioButton({ target: host, props: { value: 'a', ...props } })
+  const merged = { value: 'a', ...props }
+  const component = new ModernRadioButton({ target: host, props: merged as ComponentProps<ModernRadioButton> })
   return { component, host, input: host.querySelector('input') as HTMLInputElement }
 }
 

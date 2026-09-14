@@ -14,14 +14,15 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import SelectBox from '../components/SelectBox.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, box: HTMLElement } {
+function mount (props: Partial<ComponentProps<SelectBox>> = {}): { host: HTMLElement, box: HTMLElement } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new SelectBox({ target: host, props })
+  const component = new SelectBox({ target: host, props: props as ComponentProps<SelectBox> })
   expect(component).toBeDefined()
   return { host, box: host.querySelector('.scrollBox') as HTMLElement }
 }

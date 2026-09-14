@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import DropdownLabelsIntl from '../components/DropdownLabelsIntl.svelte'
 import DropdownLabelsPopupIntl from '../components/DropdownLabelsPopupIntl.svelte'
 import type { DropdownIntlItem } from '../types'
@@ -38,7 +39,7 @@ interface Mounted {
   button: HTMLButtonElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<DropdownLabelsIntl>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new DropdownLabelsIntl({ target: host, props: props as any })
@@ -57,7 +58,11 @@ describe('DropdownLabelsIntl', () => {
   })
 
   it('shows the label id text as no i18n loader is registered', () => {
-    const { button } = mount({ items: ITEMS, shouldUpdateUndefined: false, label: 'ui:string:Placeholder' as IntlString })
+    const { button } = mount({
+      items: ITEMS,
+      shouldUpdateUndefined: false,
+      label: 'ui:string:Placeholder' as IntlString
+    })
     expect(button.textContent).toContain('ui:string:Placeholder')
   })
 
@@ -66,7 +71,11 @@ describe('DropdownLabelsIntl', () => {
   it('auto-selects the first item on mount and dispatches selected', async () => {
     const host = document.createElement('div')
     target.appendChild(host)
-    const component = new DropdownLabelsIntl({ target: host, props: { items: ITEMS } as any })
+    const merged = { items: ITEMS }
+    const component = new DropdownLabelsIntl({
+      target: host,
+      props: merged as ComponentProps<DropdownLabelsIntl> as any
+    })
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
     await tick()

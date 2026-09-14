@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import TimeZonesPopup from '../components/TimeZonesPopup.svelte'
 import type { TimeZone } from '../types'
 
@@ -31,10 +32,11 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<TimeZonesPopup>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TimeZonesPopup({ target: host, props: { timeZones: TZS, count: 1, reset: null, ...props } })
+  const merged = { timeZones: TZS, count: 1, reset: null, ...props }
+  const component = new TimeZonesPopup({ target: host, props: merged as ComponentProps<TimeZonesPopup> })
   return { component, host }
 }
 
@@ -59,7 +61,9 @@ describe('TimeZonesPopup', () => {
     const { host } = mount({ selected: 'none' })
     const headers = host.querySelectorAll('.menu-group__header')
     expect(headers).toHaveLength(2) // Europe, America
-    headers.forEach((h) => { expect(h.classList.contains('show')).toBe(false) })
+    headers.forEach((h) => {
+      expect(h.classList.contains('show')).toBe(false)
+    })
   })
 
   it('toggles a group open on header click', async () => {

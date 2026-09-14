@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import DateInputBox from '../components/calendar/DateInputBox.svelte'
 
 let target: HTMLElement
@@ -25,10 +26,11 @@ interface Mounted {
   digits: HTMLElement[] // day, month, year, [hour, min]
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<DateInputBox>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new DateInputBox({ target: host, props: { currentDate: null, ...props } })
+  const merged = { currentDate: null, ...props }
+  const component = new DateInputBox({ target: host, props: merged as ComponentProps<DateInputBox> })
   return { component, host, digits: Array.from(host.querySelectorAll('.digit')) }
 }
 
@@ -63,7 +65,9 @@ describe('DateInputBox', () => {
     const { host, digits } = mount({ currentDate: null })
     expect(digits).toHaveLength(3)
     // A placeholder is a label id, never a two/four digit number.
-    digits.forEach((d) => { expect(/^\d+$/.test(d.textContent?.trim() ?? '')).toBe(false) })
+    digits.forEach((d) => {
+      expect(/^\d+$/.test(d.textContent?.trim() ?? '')).toBe(false)
+    })
     expect(host.querySelector('.close-btn')).toBeNull()
   })
 

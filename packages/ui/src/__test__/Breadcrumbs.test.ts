@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Breadcrumbs from '../components/Breadcrumbs.svelte'
 import type { BreadcrumbItem } from '../types'
 
@@ -23,10 +24,10 @@ let target: HTMLElement
 
 const ITEMS: BreadcrumbItem[] = [{ title: 'One' }, { title: 'Two' }, { title: 'Three' }]
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: Breadcrumbs } {
+function mount (props: Partial<ComponentProps<Breadcrumbs>>): { host: HTMLElement, component: Breadcrumbs } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Breadcrumbs({ target: host, props })
+  const component = new Breadcrumbs({ target: host, props: props as ComponentProps<Breadcrumbs> })
   return { host, component }
 }
 
@@ -70,7 +71,6 @@ describe('Breadcrumbs', () => {
 
     ;(buttons[0] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onSelect).not.toHaveBeenCalled()
-
     ;(buttons[2] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ detail: 2 }))
   })

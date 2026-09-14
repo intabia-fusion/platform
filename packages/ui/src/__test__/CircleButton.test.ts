@@ -15,16 +15,17 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import CircleButton from '../components/CircleButton.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { el: HTMLElement, component: CircleButton } {
+function mount (props: Partial<ComponentProps<CircleButton>> = {}): { el: HTMLElement, component: CircleButton } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new CircleButton({ target: host, props })
+  const component = new CircleButton({ target: host, props: props as ComponentProps<CircleButton> })
   return { el: host.querySelector('.icon-button') as HTMLElement, component }
 }
 

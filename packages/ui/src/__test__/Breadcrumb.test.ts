@@ -16,16 +16,17 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Breadcrumb from '../components/Breadcrumb.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { button: HTMLButtonElement, component: Breadcrumb } {
+function mount (props: Partial<ComponentProps<Breadcrumb>>): { button: HTMLButtonElement, component: Breadcrumb } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Breadcrumb({ target: host, props })
+  const component = new Breadcrumb({ target: host, props: props as ComponentProps<Breadcrumb> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

@@ -17,21 +17,26 @@ import { get } from 'svelte/store'
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Action } from '../types'
+import type { ComponentProps } from 'svelte'
 import NavGroup from '../components/NavGroup.svelte'
 import { modalStore } from '../modals'
 import { popupstore } from '../popups'
 import { getCollapsedKey } from '../location'
 
-const ACTIONS: Action[] = [
-  { label: 'ui:string:Ok' as any, action: async () => {} }
-]
+const ACTIONS: Action[] = [{ label: 'ui:string:Ok' as any, action: async () => {} }]
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, header: HTMLButtonElement, label: HTMLElement, component: NavGroup } {
+function mount (props: Partial<ComponentProps<NavGroup>>): {
+  host: HTMLElement
+  header: HTMLButtonElement
+  label: HTMLElement
+  component: NavGroup
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new NavGroup({ target: host, props: { categoryName: 'cat', ...props } })
+  const merged = { categoryName: 'cat', ...props }
+  const component = new NavGroup({ target: host, props: merged as ComponentProps<NavGroup> })
   return {
     host,
     header: host.querySelector('.hulyNavGroup-header') as HTMLButtonElement,
@@ -58,11 +63,15 @@ describe('NavGroup', () => {
     expect(nested.classList.contains('nested')).toBe(true)
     expect(nested.classList.contains('selectable')).toBe(false)
 
-    const nestedSelectable = mount({ type: 'nested-selectable' }).host.querySelector('.hulyNavGroup-container') as HTMLElement
+    const nestedSelectable = mount({ type: 'nested-selectable' }).host.querySelector(
+      '.hulyNavGroup-container'
+    ) as HTMLElement
     expect(nestedSelectable.classList.contains('nested')).toBe(true)
     expect(nestedSelectable.classList.contains('selectable')).toBe(true)
 
-    const selectableHeader = mount({ type: 'selectable-header' }).host.querySelector('.hulyNavGroup-container') as HTMLElement
+    const selectableHeader = mount({ type: 'selectable-header' }).host.querySelector(
+      '.hulyNavGroup-container'
+    ) as HTMLElement
     expect(selectableHeader.classList.contains('selectable')).toBe(true)
     expect(selectableHeader.classList.contains('selectableHeader')).toBe(true)
   })

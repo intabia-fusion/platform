@@ -15,16 +15,17 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ButtonIcon from '../components/ButtonIcon.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { button: HTMLButtonElement, component: ButtonIcon } {
+function mount (props: Partial<ComponentProps<ButtonIcon>>): { button: HTMLButtonElement, component: ButtonIcon } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ButtonIcon({ target: host, props })
+  const component = new ButtonIcon({ target: host, props: props as ComponentProps<ButtonIcon> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

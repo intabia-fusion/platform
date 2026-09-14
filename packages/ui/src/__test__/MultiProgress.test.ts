@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { themeStore } from '@hcengineering/theme'
+import type { ComponentProps } from 'svelte'
 import MultiProgress from '../components/MultiProgress.svelte'
 import { getPlatformColor } from '../colors'
 
@@ -27,10 +28,10 @@ interface Progress {
   color: number
 }
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: MultiProgress } {
+function mount (props: Partial<ComponentProps<MultiProgress>>): { host: HTMLElement, component: MultiProgress } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new MultiProgress({ target: host, props })
+  const component = new MultiProgress({ target: host, props: props as ComponentProps<MultiProgress> })
   return { host, component }
 }
 
@@ -121,7 +122,12 @@ describe('MultiProgress', () => {
     const { host, component } = mount({ values: [{ value: 10, color: 0 }] })
     expect(bars(host)).toHaveLength(1)
 
-    component.$set({ values: [{ value: 10, color: 0 }, { value: 20, color: 1 }] })
+    component.$set({
+      values: [
+        { value: 10, color: 0 },
+        { value: 20, color: 1 }
+      ]
+    })
     await tick()
     expect(bars(host)).toHaveLength(2)
   })

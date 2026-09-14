@@ -15,14 +15,15 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Like from '../components/Like.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: Like } {
+function mount (props: Partial<ComponentProps<Like>>): { host: HTMLElement, component: Like } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Like({ target: host, props })
+  const component = new Like({ target: host, props: props as ComponentProps<Like> })
   return { host, component }
 }
 

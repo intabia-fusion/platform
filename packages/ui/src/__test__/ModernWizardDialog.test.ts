@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernWizardDialog from '../components/wizard/ModernWizardDialog.svelte'
 import ui from '../plugin'
 import type { IWizardStep } from '../types'
@@ -39,12 +40,13 @@ async function settle (): Promise<void> {
   await tick()
 }
 
-async function mount (props: Record<string, unknown>): Promise<Mounted> {
+async function mount (props: Partial<ComponentProps<ModernWizardDialog>>): Promise<Mounted> {
   const host = document.createElement('div')
   target.appendChild(host)
+  const merged = { label: 'wiz:string:Title' as IntlString, submitLabel: SUBMIT_LABEL, steps: STEPS, ...props }
   const component = new ModernWizardDialog({
     target: host,
-    props: { label: 'wiz:string:Title' as IntlString, submitLabel: SUBMIT_LABEL, steps: STEPS, ...props }
+    props: merged as ComponentProps<ModernWizardDialog>
   })
   await settle()
   return { component, host }

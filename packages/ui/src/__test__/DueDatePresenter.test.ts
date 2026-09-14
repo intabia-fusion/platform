@@ -14,6 +14,7 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import DueDatePresenter from '../components/calendar/DueDatePresenter.svelte'
 import ui from '../plugin'
 
@@ -23,10 +24,11 @@ const DAY = 1000 * 60 * 60 * 24
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: DueDatePresenter } {
+function mount (props: Partial<ComponentProps<DueDatePresenter>>): { host: HTMLElement, component: DueDatePresenter } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new DueDatePresenter({ target: host, props: { onChange: vi.fn(), ...props } })
+  const merged = { onChange: vi.fn(), ...props }
+  const component = new DueDatePresenter({ target: host, props: merged as ComponentProps<DueDatePresenter> })
   return { host, component }
 }
 

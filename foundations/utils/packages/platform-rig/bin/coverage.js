@@ -18,7 +18,11 @@
 //
 //   pnpm coverage                    unit tests only
 //   pnpm coverage --integration      unit + integration (needs tests/prepare-tests.sh)
-//   pnpm coverage --html             also write an HTML report
+//   pnpm coverage --allow-failures   report even when a test failed (exit 0)
+//
+// Writes into coverage/: coverage-final.json (merged istanbul), lcov.info, cobertura-coverage.xml
+// and html/. CI reads the cobertura file; the last line of the output is the summary GitLab's
+// `coverage:` regex matches.
 //
 // Two runners produce it: jest for everything with a jest.config.js, vitest for packages/ui.
 // Their istanbul JSON reports are merged here; a package with no tests at all is not in either
@@ -27,12 +31,16 @@
 const { spawnSync } = require('child_process')
 const { join, relative } = require('path')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } = require('fs')
-const { jestConfigPath, planTestRun, collectTestEntries, buildSharedConfig, findJestBin } = require('./libs/test-groups')
+const libCoverage = require('istanbul-lib-coverage')
+const libReport = require('istanbul-lib-report')
+const istanbulReports = require('istanbul-reports')
+const { GROUPS, jestConfigPath, planTestRun, collectTestEntries, buildSharedConfig, findJestBin } = require('./libs/test-groups')
 const { listWorkspaceProjects, findWorkspaceRoot } = require('./libs/workspace')
 
 const args = process.argv.slice(2)
 const groups = ['unit', ...(args.includes('--integration') ? ['integration'] : [])]
-const wantHtml = args.includes('--html')
+const allowFailures = args.includes('--allow-failures')
+let failed = false
 
 const root = findWorkspaceRoot()
 const outDir = join(root, 'coverage')
@@ -43,45 +51,72 @@ mkdirSync(outDir, { recursive: true })
 // rootDir. A repo-relative pattern (`plugins/x/src/**`) matches nothing and reports zero files.
 const COLLECT_FROM = ['src/**/*.ts', '!**/__tests__/**', '!**/__test__/**', '!**/*.{test,spec,itest,bench}.ts']
 
-/** One jest run over a group, its istanbul JSON left in `<outDir>/<group>`. */
+/** One jest run over a group, its istanbul JSON left under `<outDir>/<group>-<n>`. */
 function runJest (group) {
   const entries = collectTestEntries(root, group)
   if (entries.length === 0) return null
-  const { shared, isolated } = planTestRun(entries)
-  const exclusive = new Set(isolated.filter((i) => i.exclusive).map((i) => i.name))
-  // Playwright suites and the ws-tests runners keep a jest.config.js they never use from `pnpm
-  // test`; pulled in as projects they would start an e2e run against a stand that is not there.
-  const runsJest = (e) => {
-    if (jestConfigPath(e.cwd) === null) return false
-    const scripts = JSON.parse(readFileSync(join(e.cwd, 'package.json'), 'utf-8')).scripts ?? {}
-    const script = scripts.test ?? scripts['_phase:test']
-    return script === undefined || script.trim().startsWith('jest')
-  }
-  // Coverage does not need the stand to itself the way a kafka topic budget does, but an
-  // exclusive package still cannot share the run, so it gets its own pass and its own report.
-  const batches = [entries.filter((e) => !exclusive.has(e.name) && runsJest(e))]
-  for (const e of entries.filter((x) => exclusive.has(x.name))) batches.push([e])
+  const sharedJestBin = findJestBin(entries)
+  if (sharedJestBin == null) throw new Error('jest not found in any workspace package; run pnpm install')
 
-  const jestBin = findJestBin(entries)
-  if (jestBin == null) throw new Error('jest not found in any workspace package; run pnpm install')
+  // Everything classify() clears goes into one run, exactly as `pnpm test` does it. The rest each
+  // get their own jest: a package whose config is itself a multi-project (desktop, presentation)
+  // loses its preset when flattened into a project, and falls back to babel — which cannot parse TS.
+  const { shared, isolated } = planTestRun(entries)
+  const isolatedNames = new Set(isolated.map((i) => i.name))
+  const own = entries.filter((e) => isolatedNames.has(e.name) && runsJest(e))
+
   const reports = []
-  batches.forEach((packages, i) => {
-    if (packages.length === 0) return
-    const { projects, testTimeout } = buildSharedConfig({ packages }, group)
-    const dir = join(outDir, `${group}-${i}`)
-    const configPath = join(outDir, `${group}-${i}.config.js`)
-    writeFileSync(configPath, `module.exports = ${JSON.stringify({ projects }, null, 2)}\n`)
-    const args = [
-      '-c', configPath, ...(shared?.flags ?? ['--passWithNoTests', '--forceExit']), '--silent', '--coverage',
-      ...COLLECT_FROM.flatMap((p) => ['--collectCoverageFrom', p]),
-      '--coverageReporters=json', `--coverageDirectory=${dir}`
-    ]
-    if (testTimeout !== undefined) args.push(`--testTimeout=${testTimeout}`)
-    const status = spawnSync(jestBin, args, { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] }).status
-    if (status !== 0) console.error(`  jest exited ${status} for ${group} batch ${i}; coverage below is partial`)
+  let n = 0
+  const collectFlags = COLLECT_FROM.flatMap((p) => ['--collectCoverageFrom', p])
+
+  /** @param {(dir: string) => string[]} argsFor */
+  const run = (label, cwd, argsFor, jestBin = sharedJestBin) => {
+    const dir = join(outDir, `${group}-${n++}`)
+    const status = spawnSync(jestBin, [...argsFor(dir), '--silent', '--coverage', ...collectFlags,
+      '--coverageReporters=json', `--coverageDirectory=${dir}`], { cwd, stdio: ['ignore', 'ignore', 'inherit'] }).status
+    if (status !== 0) {
+      failed = true
+      console.error(`  jest exited ${status} for ${label}; coverage below is partial`)
+    }
     reports.push(join(dir, 'coverage-final.json'))
-  })
+  }
+
+  if (shared !== null) {
+    const { projects, testTimeout } = buildSharedConfig(shared, group)
+    const configPath = join(outDir, `${group}-shared.config.js`)
+    writeFileSync(configPath, `module.exports = ${JSON.stringify({ projects }, null, 2)}\n`)
+    console.log(`  ${shared.packages.length} packages as one jest`)
+    run(`${group} shared run`, root, () => [
+      '-c', configPath, ...shared.flags,
+      ...(testTimeout !== undefined ? [`--testTimeout=${testTimeout}`] : [])
+    ])
+  }
+  for (const pkg of own) {
+    console.log(`  ${pkg.name} on its own`)
+    const match = GROUPS[group].testMatch
+    // Its own jest, not the shared one: pnpm keeps every package's dependencies to itself, so a
+    // jest resolved from a sibling brings a ts-jest that cannot see this package's @types/jest, and
+    // every test file then fails to compile with `Cannot find name 'describe'`.
+    run(pkg.name, pkg.cwd, () => [
+      '-c', jestConfigPath(pkg.cwd), '--passWithNoTests', '--forceExit',
+      // Instrumentation is slower than the run these tests were timed against; network-backrpc's
+      // zmq suite times out at the 5s default under coverage on a CI runner.
+      `--testTimeout=${GROUPS[group].testTimeout ?? 30000}`,
+      ...(match !== undefined ? ['--testMatch', ...match] : [])
+    ], findJestBin([pkg]) ?? sharedJestBin)
+  }
   return reports
+}
+
+/**
+ * Playwright suites and the ws-tests runners keep a jest.config.js they never use from `pnpm test`;
+ * started here they would run an e2e suite against a stand that is not there.
+ */
+function runsJest (e) {
+  if (jestConfigPath(e.cwd) === null) return false
+  const scripts = JSON.parse(readFileSync(join(e.cwd, 'package.json'), 'utf-8')).scripts ?? {}
+  const script = scripts.test ?? scripts['_phase:test']
+  return script === undefined || script.trim().startsWith('jest')
 }
 
 /** Packages on vitest (no jest.config.js, but a test script of their own). */
@@ -91,29 +126,18 @@ function runVitest () {
     if (existsSync(join(p.fullPath, 'jest.config.js'))) continue
     if (!existsSync(join(p.fullPath, 'vitest.config.mts'))) continue
     console.log(`  vitest: ${p.name}`)
-    spawnSync('pnpm', ['exec', 'vitest', 'run', '--silent', '--coverage'], {
+    const status = spawnSync('pnpm', ['exec', 'vitest', 'run', '--silent', '--coverage'], {
       cwd: p.fullPath,
       stdio: ['ignore', 'ignore', 'inherit']
-    })
+    }).status
+    if (status !== 0) {
+      failed = true
+      console.error(`  vitest exited ${status} for ${p.name}; coverage below is partial`)
+    }
     const report = join(p.fullPath, 'coverage', 'coverage-final.json')
     if (existsSync(report)) reports.push(report)
   }
   return reports
-}
-
-/** Sums two istanbul file entries; the same file can be hit by more than one run. */
-function mergeInto (acc, file, entry) {
-  const prev = acc[file]
-  if (prev === undefined) {
-    acc[file] = entry
-    return
-  }
-  for (const key of ['s', 'f']) {
-    for (const id of Object.keys(entry[key] ?? {})) prev[key][id] = (prev[key][id] ?? 0) + entry[key][id]
-  }
-  for (const id of Object.keys(entry.b ?? {})) {
-    prev.b[id] = (prev.b[id] ?? entry.b[id].map(() => 0)).map((v, i) => v + entry.b[id][i])
-  }
 }
 
 const reports = []
@@ -124,25 +148,32 @@ for (const group of groups) {
 console.log('Running vitest packages with coverage...')
 reports.push(...runVitest())
 
-const merged = {}
+// A file can appear in more than one report (two projects importing it), so the maps are merged
+// rather than spread: istanbul sums the counters per statement, branch and function.
+const coverageMap = libCoverage.createCoverageMap({})
 for (const path of reports) {
   if (!existsSync(path)) continue
-  const data = JSON.parse(readFileSync(path, 'utf-8'))
-  for (const [file, entry] of Object.entries(data)) mergeInto(merged, file, entry)
+  coverageMap.merge(libCoverage.createCoverageMap(JSON.parse(readFileSync(path, 'utf-8'))))
 }
+const merged = coverageMap.toJSON()
 writeFileSync(join(outDir, 'coverage-final.json'), JSON.stringify(merged))
+
+const context = libReport.createContext({ dir: outDir, coverageMap, defaultSummarizer: 'nested' })
+istanbulReports.create('lcovonly', { file: 'lcov.info' }).execute(context)
+istanbulReports.create('cobertura', { file: 'cobertura-coverage.xml', projectRoot: root }).execute(context)
+istanbulReports.create('html', { subdir: 'html' }).execute(context)
 
 // Roll the per-file counters up to the package that owns the file: longest path first, so a
 // package nested inside another one wins.
 const projects = listWorkspaceProjects(root).sort((a, b) => b.fullPath.length - a.fullPath.length)
 const perPackage = new Map(projects.map((p) => [p.name, { files: 0, covered: 0, total: 0 }]))
 let covered = 0
-let total = 0
+let totalStatements = 0
 for (const [file, entry] of Object.entries(merged)) {
   const counts = Object.values(entry.s ?? {})
   const hit = counts.filter((v) => v > 0).length
   covered += hit
-  total += counts.length
+  totalStatements += counts.length
   const owner = projects.find((p) => file.startsWith(p.fullPath + '/'))
   if (owner === undefined) continue
   const acc = perPackage.get(owner.name)
@@ -162,16 +193,18 @@ console.log('\n=== Coverage by package (statements, worst first) ===')
 for (const [name, v] of rows) {
   console.log(`  ${pct(v.covered, v.total)}  ${String(v.covered).padStart(6)}/${String(v.total).padEnd(6)} ${name}`)
 }
-console.log(`\n  TOTAL ${pct(covered, total)}  ${covered}/${total} statements over ${Object.keys(merged).length} files in ${rows.length} packages`)
+console.log(`\n  TOTAL ${pct(covered, totalStatements)}  ${covered}/${totalStatements} statements over ${Object.keys(merged).length} files in ${rows.length} packages`)
 console.log(`  ${noTests.length} more packages have a src/ but no ${groups.join('/')} test at all, and are not in the number above`)
-console.log(`\n  merged report: ${relative(root, join(outDir, 'coverage-final.json'))}`)
+for (const name of ['coverage-final.json', 'lcov.info', 'cobertura-coverage.xml', 'html/index.html']) {
+  console.log(`  ${relative(root, join(outDir, name))}`)
+}
 
-if (wantHtml) {
-  const nyc = join(root, 'node_modules', '.bin', 'nyc')
-  if (!existsSync(nyc)) {
-    console.log('  --html needs nyc: pnpm add -w -D nyc')
-  } else {
-    spawnSync(nyc, ['report', '-t', outDir, '--report-dir', join(outDir, 'html'), '--reporter=html'], { cwd: root, stdio: 'inherit' })
-    console.log(`  html report: ${relative(root, join(outDir, 'html', 'index.html'))}`)
-  }
+// Last line, and the one GitLab's `coverage:` regex reads. Keep the wording in step with
+// .gitlab-ci.yml if it ever changes.
+const total = (covered / totalStatements * 100).toFixed(2)
+console.log(`\nCoverage: ${total}% of statements`)
+
+if (failed && !allowFailures) {
+  console.error('\nTests failed; the report above covers only what ran.')
+  process.exit(1)
 }

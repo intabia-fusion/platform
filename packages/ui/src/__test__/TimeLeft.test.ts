@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import TimeLeft from '../components/TimeLeft.svelte'
 import ui from '../plugin'
 
@@ -23,10 +24,10 @@ const DAY_MS = 1000 * 60 * 60 * 24
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: TimeLeft } {
+function mount (props: Partial<ComponentProps<TimeLeft>>): { host: HTMLElement, component: TimeLeft } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TimeLeft({ target: host, props })
+  const component = new TimeLeft({ target: host, props: props as ComponentProps<TimeLeft> })
   return { host, component }
 }
 

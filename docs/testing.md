@@ -48,14 +48,27 @@ Never part of a CI phase. jest packages run through their own `jest.config.js` w
 ## Coverage (`pnpm coverage`)
 
 ```bash
-pnpm coverage                 # unit only
-pnpm coverage --integration   # unit + integration, needs the stand
-pnpm coverage --html          # also an HTML report (needs nyc)
+pnpm coverage                    # unit only
+pnpm coverage --integration      # unit + integration, needs the stand
+pnpm coverage --allow-failures   # report even when a test failed (exit 0)
 ```
 
-Prints a per-package table worst-first and one total, and leaves a merged istanbul report in
-`coverage/coverage-final.json`. Two runners feed it: jest for everything with a
-`jest.config.js`, vitest (istanbul provider) for `packages/ui`.
+Prints a per-package table worst-first and one total, and writes into `coverage/`:
+
+| file | for |
+|---|---|
+| `coverage-final.json` | merged istanbul, input to any other reporter |
+| `lcov.info` | Codecov, SonarQube, editors |
+| `cobertura-coverage.xml` | GitLab's `artifacts:reports:coverage_report` |
+| `html/index.html` | reading it by hand |
+
+The last line is `Coverage: NN.NN% of statements`, which is what GitLab's `coverage:` regex
+reads. A failing test fails the command unless `--allow-failures` is passed.
+
+Two runners feed it: jest for everything with a `jest.config.js`, vitest (istanbul provider) for
+`packages/ui`. Packages that jest cannot run together - `desktop` and `presentation` declare
+their own `projects`, which jest will not nest - get their own invocation; flattened into the
+shared run they lose their preset and babel then fails to parse TypeScript.
 
 Two things the number does not include, both reported as separate lines:
 
@@ -86,6 +99,32 @@ Flags (`-g "<title>"`, `--workers=1` for love/meetings), tracing, flake diagnosi
 
 - `ws-tests/` - workspace, API and backup integration tests. `ws-tests/prepare.sh` sets up the stand, `prepare_data.sh` seeds it. Run with `cd ws-tests/api-tests && pnpm run api-test` and `cd ws-tests/backup-tests && pnpm run backup-test`.
 - `qms-tests/` - controlled-documents (QMS) suite, its own stand (`./prepare-qms.sh`, same ports as `tests/` - run one at a time). UI tests: `cd qms-tests/sanity && pnpm run uitest`.
+
+## CI
+
+Both pipelines run the unit group and then the coverage run, which repeats it together with the
+integration group and is also that group's gate:
+
+```bash
+pnpm test --verbose        # unit, fails fast with a per-package report
+pnpm coverage --integration
+```
+
+- GitHub - the `test` job in `.github/workflows/main.yml`. The tail of the run goes into the job
+  summary and `coverage/` goes up as the `coverage` artifact.
+- GitLab - the `test` job in `.gitlab-ci.yml`, which runs `ci_test.sh` on a shell runner that
+  already has Docker. The job reads the percentage off the last line with its `coverage:` regex and
+  publishes `cobertura-coverage.xml` as the merge-request coverage report; `html/` and `lcov.info`
+  go up as artifacts.
+
+The GitLab `test` job holds the per-host stand lock (`.lock_stand`), so it cannot overlap a
+`uitest:*` job on the same runner.
+
+The Playwright suites (`tests/sanity`, `qms-tests`, `ws-tests`) are their own `uitest:*` jobs in
+GitLab and `uitest-*` jobs in GitHub; neither the unit nor the integration group touches them.
+
+`wait-elastic.sh` takes its host from `ELASTIC_HOST` (default `localhost`) and now exits non-zero
+when elasticsearch never answers, instead of reporting a healthy stand.
 
 ## Связанные документы
 

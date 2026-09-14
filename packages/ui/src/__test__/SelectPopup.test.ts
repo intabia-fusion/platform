@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import SelectPopup from '../components/SelectPopup.svelte'
 import type { SelectPopupValueType } from '../types'
 
@@ -25,7 +26,7 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<SelectPopup>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new SelectPopup({ target: host, props: props as any })
@@ -40,7 +41,11 @@ function values (): SelectPopupValueType[] {
   ]
 }
 
-interface FakeKeyboardEvent { code: string, preventDefault: () => void, stopPropagation: () => void }
+interface FakeKeyboardEvent {
+  code: string
+  preventDefault: () => void
+  stopPropagation: () => void
+}
 
 function keydown (code: string): FakeKeyboardEvent {
   return { code, preventDefault: vi.fn(), stopPropagation: vi.fn() }
@@ -140,7 +145,9 @@ describe('SelectPopup', () => {
 
   it('disables every item button while loading', () => {
     const { host } = mount({ value: values(), loading: true })
-    host.querySelectorAll<HTMLButtonElement>('.menu-item').forEach((b) => { expect(b.disabled).toBe(true) })
+    host.querySelectorAll<HTMLButtonElement>('.menu-item').forEach((b) => {
+      expect(b.disabled).toBe(true)
+    })
   })
 
   it('applies width and embedded classes to the root', () => {

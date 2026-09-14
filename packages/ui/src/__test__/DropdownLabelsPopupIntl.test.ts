@@ -16,16 +16,23 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import DropdownLabelsPopupIntl from '../components/DropdownLabelsPopupIntl.svelte'
 import IconCheck from '../components/icons/Check.svelte'
 import type { DropdownIntlItem } from '../types'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: DropdownLabelsPopupIntl } {
+function mount (props: Partial<ComponentProps<DropdownLabelsPopupIntl>>): {
+  host: HTMLElement
+  component: DropdownLabelsPopupIntl
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new DropdownLabelsPopupIntl({ target: host, props })
+  const component = new DropdownLabelsPopupIntl({
+    target: host,
+    props: props as ComponentProps<DropdownLabelsPopupIntl>
+  })
   return { host, component }
 }
 
@@ -71,7 +78,6 @@ describe('DropdownLabelsPopupIntl', () => {
     const { host, component } = mount({ items: ITEMS })
     const onClose = vi.fn()
     component.$on('close', onClose)
-
     ;(host.querySelectorAll('.menu-item')[2] as HTMLButtonElement).click()
     expect(onClose).toHaveBeenLastCalledWith(expect.objectContaining({ detail: 'c' }))
   })
@@ -84,7 +90,6 @@ describe('DropdownLabelsPopupIntl', () => {
     const buttons = host.querySelectorAll('.menu-item')
     ;(buttons[1] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['a', 'b'] }))
-
     ;(buttons[0] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['b'] }))
   })
@@ -95,7 +100,6 @@ describe('DropdownLabelsPopupIntl', () => {
     const { host, component } = mount({ items: ITEMS, multiselect: true })
     const onClose = vi.fn()
     component.$on('close', onClose)
-
     ;(host.querySelectorAll('.menu-item')[0] as HTMLButtonElement).click()
     expect(onClose).toHaveBeenLastCalledWith(expect.objectContaining({ detail: 'a' }))
   })
