@@ -186,13 +186,24 @@ test:
   variables:
     DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
     ELASTIC_URL: "http://localhost:9201"
-    MONGO_URL: "mongodb://localhost:27018"
   before_script:
     - !reference [.linux, before_script]
     - !reference [.lock_stand, script]
     - !reference [.docker_login, script]
   script:
     - ./ci_test.sh
+  # Matches the last line ci_test.sh prints. Keep in step with bin/coverage.js if it changes.
+  coverage: '/^Coverage: (\d+\.\d+)% of statements/'
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - coverage/html/
+      - coverage/lcov.info
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
 
 # Builds and publishes every image by commit sha; the stands below pull them from there.
 docker-build:

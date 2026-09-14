@@ -185,12 +185,46 @@ jobs:
               exit 1
             fi
           fi
+      # Unit group only (*.test.ts / *.spec.ts): no service needed, and it fails fast with a
+      # per-package report. The coverage step below re-runs it together with the integration group.
       - name: Testing...
         run: pnpm test --verbose
         env:
           DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
           ELASTIC_URL: "http://localhost:9201"
-          MONGO_URL: "mongodb://localhost:27018"
+
+      # Runs unit + integration (*.itest.ts) again under istanbul and writes coverage/. This is also
+      # the gate for the integration group, so a failure here fails the job.
+      - name: Coverage...
+        run: |
+          set -o pipefail
+          pnpm coverage --integration | tee /tmp/coverage.log
+        env:
+          DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
+          ELASTIC_URL: "http://localhost:9201"
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo '### Coverage'
+            echo ''
+            echo '```'
+            tail -n 12 /tmp/coverage.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage
+          path: |
+            coverage/lcov.info
+            coverage/cobertura-coverage.xml
+            coverage/html
+          if-no-files-found: warn
+          retention-days: 14
 
   uitest-cockroach:
     if: inputs.run-cockroach == true

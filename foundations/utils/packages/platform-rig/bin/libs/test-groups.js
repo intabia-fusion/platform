@@ -20,10 +20,30 @@ const { existsSync, readFileSync, readdirSync } = require('fs')
 const { join } = require('path')
 const { listWorkspaceProjects, findWorkspaceRoot } = require('./workspace')
 
-const TEST_FILE = /\.(test|spec)\.(ts|js|tsx|jsx)$/
+// Three groups, told apart by file name so no config or package.json field has to list them:
+//   unit         *.test.ts / *.spec.ts   - no docker, runs in the build phase
+//   integration  *.itest.ts              - needs the stand from tests/prepare-tests.sh
+//   bench        *.bench.ts              - run by hand
+// `*.itest.ts` and `*.bench.ts` deliberately do not match a package's default testMatch
+// (`+(spec|test)` cannot decompose `itest`), so a rename alone takes a file out of the unit run.
+const GROUPS = {
+  unit: { file: /\.(test|spec)\.(ts|js|tsx|jsx)$/ },
+  integration: { file: /\.itest\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)itest.[jt]s?(x)'] },
+  bench: { file: /\.bench\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)bench.[jt]s?(x)'], testTimeout: 600000 }
+}
+
+/** Either spelling of the config; love-agent is CommonJS in an ESM-typed package. */
+function jestConfigPath (dir) {
+  for (const name of ['jest.config.js', 'jest.config.cjs']) {
+    const path = join(dir, name)
+    if (existsSync(path)) return path
+  }
+  return null
+}
 
 /** A package with no test file at all is not worth a jest project, nor a jest process. */
-function hasTestFiles (dir) {
+function hasTestFiles (dir, group = 'unit') {
+  const TEST_FILE = GROUPS[group].file
   let entries
   try {
     entries = readdirSync(dir, { withFileTypes: true })
@@ -33,7 +53,7 @@ function hasTestFiles (dir) {
   for (const e of entries) {
     if (e.name === 'node_modules' || e.name === '.svelte-check') continue
     if (e.isDirectory()) {
-      if (hasTestFiles(join(dir, e.name))) return true
+      if (hasTestFiles(join(dir, e.name), group)) return true
     } else if (TEST_FILE.test(e.name)) {
       return true
     }
@@ -42,9 +62,9 @@ function hasTestFiles (dir) {
 }
 
 /** Every workspace package that has tests, as planTestRun wants them. */
-function collectTestEntries (rootDir = findWorkspaceRoot()) {
+function collectTestEntries (rootDir = findWorkspaceRoot(), group = 'unit') {
   return listWorkspaceProjects(rootDir)
-    .filter((p) => hasTestFiles(p.fullPath))
+    .filter((p) => hasTestFiles(p.fullPath, group))
     .map((p) => ({ name: p.name, cwd: p.fullPath }))
 }
 
@@ -73,8 +93,8 @@ function classify (entry) {
     else return { isolated: `unsupported flag ${p}` }
   }
 
-  const configPath = join(entry.cwd, 'jest.config.js')
-  if (!existsSync(configPath)) return { isolated: 'no jest.config.js' }
+  const configPath = jestConfigPath(entry.cwd)
+  if (configPath === null) return { isolated: 'no jest.config.js' }
   // jest does not nest: a config that is itself a multi-project cannot become one of our projects.
   if (/\bprojects\s*:/.test(readFileSync(configPath, 'utf-8'))) return { isolated: 'config uses projects' }
 
@@ -109,11 +129,11 @@ const GLOBAL_ONLY_KEYS = [
  * which package a test came from.
  * @returns {{projects: object[], testTimeout: number | undefined}}
  */
-function buildSharedConfig (shared) {
+function buildSharedConfig (shared, group = 'unit') {
   const projects = []
   let testTimeout
   for (const pkg of shared.packages) {
-    const raw = require(join(pkg.cwd, 'jest.config.js'))
+    const raw = require(jestConfigPath(pkg.cwd))
     const config = { ...(typeof raw === 'function' ? raw() : raw) }
     // A per-project timeout cannot survive, but the longest one can stand for the whole run.
     if (typeof config.testTimeout === 'number') {
@@ -125,6 +145,13 @@ function buildSharedConfig (shared) {
     const tsconfig = join(pkg.cwd, 'tsconfig.json')
     if (config.preset === 'ts-jest' && config.transform === undefined && existsSync(tsconfig)) {
       config.transform = { '^.+\\.[cm]?[jt]sx?$': ['ts-jest', { tsconfig }] }
+    }
+    // A group other than unit picks its files by name, so the package's own matcher is replaced.
+    const match = GROUPS[group].testMatch
+    if (match !== undefined) {
+      delete config.testRegex
+      config.testMatch = match
+      testTimeout = Math.max(testTimeout ?? 0, GROUPS[group].testTimeout ?? 0)
     }
     projects.push({ ...config, rootDir: pkg.cwd, displayName: pkg.name })
   }
@@ -164,4 +191,4 @@ function findJestBin (packages) {
   return null
 }
 
-module.exports = { planTestRun, findJestBin, hasTestFiles, collectTestEntries, buildSharedConfig }
+module.exports = { GROUPS, jestConfigPath, planTestRun, findJestBin, hasTestFiles, collectTestEntries, buildSharedConfig }

@@ -12,7 +12,10 @@ Non-obvious pieces, all of them required to make a `.svelte` component mount in 
 - `workspaceSources()` plugin in the config — workspace packages point `main` at raw `.ts`, which vite
   refuses as a package entry ("Failed to resolve entry for package @hcengineering/theme").
 - `src/__test__/setup.ts` — jsdom ships neither `window.matchMedia` (pulled in by plyr via the ui index)
-  nor `PointerEvent`.
+  nor `PointerEvent` nor `ResizeObserver` (`use:resizeObserver` is on most self-sizing components; a
+  no-op class is enough, jsdom lays nothing out so it would never fire). It also calls
+  `initThemeStore()`: nothing mounts `Theme.svelte` here, so `themeStore` stays an empty writable and
+  every component that renders a `Label` throws on `$themeStore.language`.
 - jsdom does no layout: every `getBoundingClientRect` is zero. `Separator.test.ts` installs a fake
   layout that derives widths from the inline styles the component writes and hands the remainder to
   the auto panels.
@@ -87,3 +90,44 @@ rather than on the store.
 - `distribute` behaviour pinned by two tests: the auto panel next to the separator takes the whole
   growth; with a sized panel in between the growth skips it and is split between the auto panels
   further out.
+
+
+## Component suites added 2026-09-14
+
+`Button.test.ts` (13), `EditBox.test.ts` (16), `CodeForm.test.ts` (11), `popups.test.ts` (15).
+Package coverage went 7.9% -> 12.0% statements; the three components sit at ~90% each.
+
+Mount idiom is the raw svelte client API, as in `Separator.test.ts` - no testing-library. Each
+`mount()` appends its **own** wrapper div: with a shared target `querySelector('button')` returns the
+first mount's element, and a test that mounts twice silently asserts against the wrong one.
+
+`Icon.svelte` needs a string `Asset` (it renders `<use href>`); an `{} as any` placeholder falls
+through to `<svelte:component this={icon}>` and throws.
+
+Two source bugs the suites turned up:
+
+- `utils.ts` imports the package index, and the index re-exports `resize.ts`/`lazy.ts`, which imported
+  `DelayedCaller` from `utils.ts`. In that cycle `DelayedCaller` is still undefined when those modules
+  evaluate, so importing `EditBox.svelte` first died with `DelayedCaller is not a constructor`. Webpack
+  happened to order it the other way, which is why the app never saw it. The class now lives in
+  `src/callers.ts`, a leaf with no imports; `utils.ts` re-exports it so the public API is unchanged.
+- `closePopup(category)` filtered with `p.type === 'popup' && p.options.category !== category`, which
+  dropped every **non**-popup entry of `modalStore` as well - tooltips share that store. Now
+  `p.type !== 'popup' || p.options.category !== category`.
+
+`pin()` takes a popup **id** and stores that popup's `options.refId` under `dock-popup`, not the refId
+it is handed - easy to get backwards when writing a test.
+
+## Small components: Section, Status, Loading, Fold, ModeSelector, Like (2026-09-14)
+
+`Section.test.ts` (5), `Status.test.ts` (5), `Loading.test.ts` (5), `Fold.test.ts` (5),
+`ModeSelector.test.ts` (5), `Like.test.ts` (5) - all pass, no source bugs found.
+
+- `Loading.svelte` dispatches `progress` from a 50ms `setTimeout` in `onMount` - use
+  `vi.useFakeTimers()` / `vi.advanceTimersByTime(50)` rather than a real wait.
+- `Status.svelte` takes a real `@hcengineering/platform` `Status` object (`severity`, `code`,
+  `params`, `notLocalizedParams`), not a plain object - construct with `new Status(...)`.
+- `ModeSelector.svelte` wraps `Switcher`/`SwitcherBase`: selection is a radio (`input.switcher`),
+  so drive it with a `change` event on the input, not a click.
+- `Like.svelte`'s `vote()` flips `voted` unconditionally and always increments `value` - a second
+  click un-votes but still increments. Pinned as current behaviour, not obviously desired.

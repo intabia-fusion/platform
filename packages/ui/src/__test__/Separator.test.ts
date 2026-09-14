@@ -14,6 +14,7 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Separator from '../components/Separator.svelte'
 import { defineSeparators } from '../resize'
 import { deviceOptionsStore } from '../index'
@@ -63,10 +64,11 @@ async function mount (
 ): Promise<{ separator: HTMLElement, component: Separator }> {
   defineSeparators(name, defs)
   const anchor = target.children[anchorIndex]
+  const merged = { name, index, color: 'transparent', ...extra }
   const component = new Separator({
     target,
     anchor,
-    props: { name, index, color: 'transparent', ...extra }
+    props: merged as ComponentProps<Separator>
   })
   await settle()
   const separator = target.querySelector('.antiSeparator') as HTMLElement
@@ -203,15 +205,17 @@ describe('Separator', () => {
     const middle = addPanel('middle')
     const right = addPanel('right')
     defineSeparators('shared', [aside, auto, aside])
+    const merged = { name: 'shared', index: 0, color: 'transparent' }
     const first = new Separator({
       target: parent,
       anchor: middle,
-      props: { name: 'shared', index: 0, color: 'transparent' }
+      props: merged as ComponentProps<Separator>
     })
+    const secondProps = { name: 'shared', index: 1, color: 'transparent' }
     const second = new Separator({
       target: parent,
       anchor: right,
-      props: { name: 'shared', index: 1, color: 'transparent' }
+      props: secondProps as ComponentProps<Separator>
     })
     await settle()
     expect(first).toBeDefined()

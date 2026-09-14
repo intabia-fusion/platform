@@ -12,7 +12,7 @@
 
 import { writable } from 'svelte/store'
 import type { DefSeparators, SeparatedItem } from './types'
-import { DelayedCaller } from './utils'
+import { DelayedCaller } from './callers'
 
 // limitations under the License.
 let observer: ResizeObserver

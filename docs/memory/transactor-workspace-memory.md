@@ -248,7 +248,7 @@ Harness бенчмарков переехал из `server-middleware/src/tests/
   только при реальном пересечении (`shadowsFrozenKey`), проверка идёт по `getAncestors(mixin)` -
   proxy падает и в ancestor-миксин, там коллизия такая же. Внутри `for...in`, а не `Object.keys`:
   путь горячий и не должен аллоцировать (с `Object.keys` heapΔ на 200k `as` был 68 Mb, стало 4 Mb).
-- **Бенчи по всем методам чтения**, standalone против оверлея (`models/all/model.bench.test.ts`,
+- **Бенчи по всем методам чтения**, standalone против оверлея (`models/all/model.bench.ts`,
   `describeBench('model read performance')`): `isDerived`, `getAncestors`, `getDescendants` (Doc и
   все классы), `getClass`/`findClass`, `isMixin`, `getBaseClass`, `findDomain`, `getAllAttributes`,
   `getOwnAttributes`, `findAttribute`, `as`, `classHierarchyMixin`, `getMixinClasses`, `domains`,
