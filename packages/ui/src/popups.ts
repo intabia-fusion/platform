@@ -155,7 +155,7 @@ export function showPopup (
 export function closePopup (category?: string): void {
   modalStore.update((popups) => {
     if (category !== undefined) {
-      popups = popups.filter((p) => p.type === 'popup' && p.options.category !== category)
+      popups = popups.filter((p) => p.type !== 'popup' || p.options.category !== category)
     } else {
       for (let i = popups.length - 1; i >= 0; i--) {
         if (popups[i].type !== 'popup') continue

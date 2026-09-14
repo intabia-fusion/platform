@@ -1,4 +1,4 @@
-import { DelayedCaller } from './utils'
+import { DelayedCaller } from './callers'
 
 const observers = new Map<string, IntersectionObserver>()
 const entryMap = new WeakMap<Element, { callback: (isIntersecting: boolean) => void }>()

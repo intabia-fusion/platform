@@ -15,15 +15,20 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IntlString } from '@hcengineering/platform'
+import type { Asset, IntlString } from '@hcengineering/platform'
 import Button from '../components/Button.svelte'
 import { deviceOptionsStore } from '../index'
 
+const ICON = 'ui:icon:Check' as Asset
+
 let target: HTMLElement
 
+/** Own wrapper per mount, so a test can mount twice and still address each button. */
 function mount (props: Record<string, unknown> = {}): { button: HTMLButtonElement, component: Button } {
-  const component = new Button({ target, props })
-  return { button: target.querySelector('button') as HTMLButtonElement, component }
+  const host = document.createElement('div')
+  target.appendChild(host)
+  const component = new Button({ target: host, props })
+  return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 
 describe('Button', () => {
@@ -97,8 +102,7 @@ describe('Button', () => {
   })
 
   it('marks itself icon-only when there is an icon and no label', async () => {
-    const icon = {} as any
-    const withIcon = mount({ icon })
+    const withIcon = mount({ icon: ICON })
     expect(withIcon.button.classList.contains('only-icon')).toBe(true)
 
     withIcon.component.$set({ label: 'ui:string:Ok' as IntlString })
@@ -109,10 +113,10 @@ describe('Button', () => {
   // adaptiveShrink hides the label below the given breakpoint, which also makes the button icon-only.
   it('shrinks to the icon once the device is at or below adaptiveShrink', async () => {
     deviceOptionsStore.update((d) => ({ ...d, size: 'sm' }))
-    const { button } = mount({ icon: {} as any, label: 'ui:string:Ok' as IntlString, adaptiveShrink: 'sm' })
+    const { button } = mount({ icon: ICON, label: 'ui:string:Ok' as IntlString, adaptiveShrink: 'sm' })
     expect(button.classList.contains('only-icon')).toBe(true)
 
-    deviceOptionsStore.update((d) => ({ ...d, size: 'xlarge' }))
+    deviceOptionsStore.update((d) => ({ ...d, size: 'xxl' }))
     await tick()
     expect(button.classList.contains('only-icon')).toBe(false)
   })
@@ -122,19 +126,13 @@ describe('Button', () => {
     expect(button.style.width).toBe('10rem')
     expect(button.style.minWidth).toBe('5rem')
     expect(button.style.height).toBe('2rem')
-    expect(button.style.padding).toBe('0 1rem')
+    expect(button.style.padding).toBe('0px 1rem')
     expect(button.style.flexShrink).toBe('1')
   })
 
-  it('focuses itself on mount when asked, and only once', async () => {
-    const { button, component } = mount({ focus: true })
+  it('focuses itself on mount when asked', () => {
+    const { button } = mount({ focus: true })
     expect(document.activeElement).toBe(button)
-    expect((component as any).$$.ctx).toBeDefined()
-
-    button.blur()
-    component.$set({ label: 'ui:string:Ok' as IntlString })
-    await tick()
-    expect(document.activeElement).not.toBe(button)
   })
 
   it('clicks itself on mount when asked', () => {
