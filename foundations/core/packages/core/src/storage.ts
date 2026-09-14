@@ -15,7 +15,7 @@
 
 import type { Asset, Resource } from '@hcengineering/platform'
 
-import type { Association, AttachedDoc, Class, Doc, Domain, Ref, Space } from './classes'
+import type { Association, AttachedDoc, Class, Doc, Domain, PersonId, Ref, Space, Timestamp } from './classes'
 import type { Tx } from './tx'
 import type { KeysByType } from './utils'
 import { VersionableDoc } from './versioning'
@@ -235,6 +235,27 @@ export interface DomainResult<T = any> {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TxResult {}
 
+export type SearchSortOrder = 'relevance' | 'date-desc' | 'date-asc'
+
+/**
+ * Structured filters applied on top of the full text query.
+ * Every field maps to an already indexed attribute, no reindex required by itself.
+ * @public
+ */
+export interface SearchFilters {
+  // createdOn >= createdAfter
+  createdAfter?: Timestamp
+  // createdOn <= createdBefore
+  createdBefore?: Timestamp
+  createdBy?: PersonId[]
+
+  attachedTo?: Ref<Doc>[]
+  attachedToClass?: Ref<Class<Doc>>[]
+
+  excludeCollections?: string[]
+  hasAttachment?: boolean
+}
+
 /**
  * @public
  */
@@ -242,15 +263,41 @@ export interface SearchQuery {
   query: string
   classes?: Ref<Class<Doc>>[]
   spaces?: Ref<Space>[]
+  filters?: SearchFilters
+}
+
+/**
+ * @public
+ *
+ * Asks the search engine for the matching excerpts, not just the documents.
+ *
+ * Which fields are highlighted is not a caller's choice: each one needs the highlighter that
+ * suits how it is mapped (`searchContent` carries term vectors and uses a fast one, a title is
+ * returned whole), so the set lives with the mapping in the adapter.
+ */
+export interface SearchHighlightOptions {
+  // Characters of context around a match. Absent means the adapter's own default.
+  fragmentSize?: number
+  // How many excerpts per document, best scoring first.
+  numberOfFragments?: number
+  // What a match is wrapped in. Defaults to control characters rather than tags, so that text
+  // containing a literal `<em>` cannot be mistaken for a marker by whoever parses a fragment.
+  preTag?: string
+  postTag?: string
 }
 
 /**
  * @public
  */
 export interface SearchOptions {
-  strict?: boolean // Search only by searchTitle
+  searchIn?: 'title' | 'content' | 'all'
   viewerId?: string
   limit?: number
+  cursor?: string
+  sort?: SearchSortOrder // Defaults to 'relevance'
+  highlight?: SearchHighlightOptions
+  // Attributes to read from the stored documents and return on each result.
+  fields?: string[]
 }
 
 export interface SearchComponentWithProps {
@@ -273,7 +320,11 @@ export interface SearchResultDoc {
   description?: string
   emojiIcon?: string
   score?: number
+  highlights?: Record<string, string[]>
+  // Values of the attributes named by `SearchOptions.fields`, read from the stored document.
+  fields?: Record<string, any>
   doc: Pick<Doc, '_id' | '_class' | 'createdOn'> &
+    Partial<Pick<Doc, 'createdBy' | 'modifiedOn' | 'modifiedBy' | 'space'>> &
     Partial<Pick<AttachedDoc, 'attachedTo' | 'attachedToClass'>> &
     Partial<Pick<VersionableDoc, 'baseId'>>
 }
@@ -284,6 +335,9 @@ export interface SearchResultDoc {
 export interface SearchResult {
   docs: SearchResultDoc[]
   total?: number
+  totalExact?: boolean
+  cursor?: string
+  failed?: boolean
 }
 
 /**
