@@ -1,11 +1,13 @@
-import {
+import core, {
   getObjectValue,
   type Class,
   type Doc,
+  docKey,
   type Hierarchy,
   type Ref,
   type SearchResultDoc,
   type Space,
+  type Timestamp,
   type MeasureContext
 } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
@@ -133,6 +135,12 @@ export function getScoringConfig (hierarchy: Hierarchy, classes: Ref<Class<Doc>>
   return results
 }
 
+function toTimestamp (value: any): Timestamp | undefined {
+  if (value === undefined || value === null) return undefined
+  const num = typeof value === 'number' ? value : Number(value)
+  return isNaN(num) ? undefined : num
+}
+
 /**
  * @public
  */
@@ -141,15 +149,25 @@ export function mapSearchResultDoc (hierarchy: Hierarchy, raw: IndexedDoc): Sear
     id: raw.id,
     title: raw.searchTitle,
     shortTitle: raw.searchShortTitle,
+    highlights: raw._highlights,
     doc: {
       _id: raw.id,
       _class: raw._class[0],
-      createdOn: raw.createdOn,
+      createdOn: toTimestamp(raw[docKey('createdOn', core.class.Doc)] ?? raw.createdOn),
+      createdBy: raw[docKey('createdBy', core.class.Doc)] ?? raw.createdBy,
+      modifiedOn: toTimestamp(raw.modifiedOn),
+      modifiedBy: raw.modifiedBy,
+      space: raw.space,
       attachedTo: raw.attachedTo,
       attachedToClass: raw.attachedToClass,
       baseId: raw.baseId
     },
     score: raw._score
+  }
+
+  if (raw.objectId != null && raw.objectClass != null) {
+    ;(doc.doc as any).objectId = raw.objectId
+    ;(doc.doc as any).objectClass = raw.objectClass
   }
 
   function fUpper (name: string): string {
