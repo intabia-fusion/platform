@@ -300,7 +300,8 @@
     </ModernButton>
   </div>
 {:else}
-<div class="filter-bar">
+<div class="filter-bar-host">
+  <div class="filter-bar">
   <ModernDropdownLabels
     items={classItems}
     selected={selectedClasses}
@@ -403,9 +404,10 @@
     </ModernButton>
   </div>
 
-  {#if $$slots.trailing}
-    <div class="trailing"><slot name="trailing" /></div>
-  {/if}
+    {#if $$slots.trailing}
+      <div class="trailing"><slot name="trailing" /></div>
+    {/if}
+  </div>
 </div>
 {/if}
 
@@ -426,13 +428,20 @@
   .compact-bar .authors {
     max-width: 7rem;
   }
-
   .trailing {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     flex: 0 0 auto;
-    margin-left: auto;
+  }
+
+  @container filterBar (min-width: 660px) {
+    .trailing {
+      margin-left: auto;
+    }
+  }
+
+  .filter-bar-host {
+    container: filterBar / inline-size;
   }
 
   .filter-bar {
@@ -441,6 +450,13 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 1rem;
+  }
+
+  @container filterBar (max-width: 480px) {
+    .filter-bar {
+      padding: 0.5rem 0.75rem;
+      gap: 0.25rem;
+    }
   }
 
   .filter-bar > :global(*) {

@@ -235,4 +235,23 @@
     border-top: 1px solid var(--theme-divider-color);
     padding: 0.25rem 0.5rem;
   }
+
+  @media (max-width: 480px) {
+    .summary {
+      padding: 0 0.75rem 0.5rem;
+    }
+
+    .panel.in-channel {
+      top: 0;
+      left: 0;
+      right: 0;
+      border-left: none;
+      border-right: none;
+      border-radius: 0 0 var(--medium-BorderRadius) var(--medium-BorderRadius);
+    }
+
+    .panel.in-channel .summary {
+      padding: 0.5rem 0.75rem 0.5rem;
+    }
+  }
 </style>

@@ -121,6 +121,8 @@
     font-size: 0.75rem;
     color: var(--theme-darker-color);
     white-space: nowrap;
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .reference {
@@ -145,13 +147,23 @@
     align-items: center;
   }
 
-  .time {
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-
   .content {
     font-size: 0.875rem;
     line-height: 1.25rem;
+  }
+  @media (max-width: 480px) {
+    .result {
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .header {
+      flex-wrap: wrap;
+      gap: 0.25rem 0.375rem;
+    }
+
+    .time {
+      margin-left: 0;
+    }
   }
 </style>

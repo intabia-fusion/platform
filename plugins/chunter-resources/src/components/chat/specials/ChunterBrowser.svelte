@@ -32,6 +32,9 @@
   const pending = takePendingSearch()
 
   let query: string = pending?.search ?? ''
+  const COMPACT_TABS_WIDTH = 640
+  let headerWidth: number = 0
+  $: compactTabs = headerWidth > 0 && headerWidth < COMPACT_TABS_WIDTH
 
   const tabs = [
     {
@@ -60,7 +63,7 @@
   }
 </script>
 
-<Header adaptive={'freezeActions'} withSearch={false} hideTitle>
+<Header adaptive={'disabled'} withSearch={false} hideTitle bind:realWidth={headerWidth}>
   <svelte:fragment slot="search">
     <div class="header-search page-search">
       <SearchInputBox
@@ -75,6 +78,7 @@
     <Switcher
       name={'browser_group'}
       kind={'subtle'}
+      onlyIcons={compactTabs}
       selected={searchType}
       items={tabs}
       on:select={(result) => {
@@ -109,9 +113,13 @@
   }
 
   :global(.hulyHeader-container:has(.page-search) .hulyHeader-buttonsGroup.search) {
-    flex-grow: 1;
+    flex: 1 1 auto;
     min-width: 0;
     margin-left: 0;
+  }
+
+  :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.actions) {
+    flex-shrink: 0;
   }
 
   :global(.hulyHeader-container:has(.page-search) > .hulyHeader-titleGroup) {
@@ -122,4 +130,5 @@
   :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.presence:empty) {
     display: none;
   }
+
 </style>

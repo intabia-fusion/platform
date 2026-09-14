@@ -125,6 +125,9 @@
   let searchDismissed = false
   let lastQuery: string = ''
 
+  $: searchAvailable = !$deviceInfo.isMobile
+  $: if (!searchAvailable && searchOpened) closeSearch()
+
   $: if (searchQuery !== lastQuery) {
     lastQuery = searchQuery
     searchDismissed = false
@@ -169,7 +172,7 @@
   }
 
   function handleKeydown (e: KeyboardEvent): void {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+    if (searchAvailable && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
       const target = e.target as HTMLElement | null
       // Leave the browser's own find alone while the user is writing a message.
       if (target?.isContentEditable === true || target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') {
@@ -244,15 +247,17 @@
         {/if}
       </svelte:fragment>
       <svelte:fragment slot="actions">
-        <Button
-          icon={IconSearch}
-          iconProps={{ size: 'small' }}
-          kind={'icon'}
-          dataId="channel-search"
-          selected={searchOpened}
-          showTooltip={{ label: searchOpened ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
-          on:click={toggleSearch}
-        />
+        {#if searchAvailable}
+          <Button
+            icon={IconSearch}
+            iconProps={{ size: 'small' }}
+            kind={'icon'}
+            dataId="channel-search"
+            selected={searchOpened}
+            showTooltip={{ label: searchOpened ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
+            on:click={toggleSearch}
+          />
+        {/if}
       </svelte:fragment>
     </ChannelHeader>
 
