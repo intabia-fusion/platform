@@ -49,29 +49,29 @@ async function directNames (docs: SearchResultDoc[]): Promise<Map<Ref<Space>, st
 }
 
 export async function hydrateResults (docs: SearchResultDoc[]): Promise<SearchResultRow[]> {
-  const personIds = Array.from(
-    new Set(docs.map((d) => d.doc.createdBy).filter(notEmpty)
-    ))
+  const personIds = Array.from(new Set(docs.map((d) => d.doc.createdBy).filter(notEmpty)))
 
   const persons = personIds.length > 0 ? await getPersonsByPersonIds(personIds) : new Map()
   const directs = await directNames(docs)
 
-  return docs.map((d) => {
-    const directName = d.doc.space !== undefined ? directs.get(d.doc.space) : undefined
+  return docs
+    .map((d) => {
+      const directName = d.doc.space !== undefined ? directs.get(d.doc.space) : undefined
 
-    if (d.doc.attachedTo == null || d.doc.attachedToClass == null) return undefined
+      if (d.doc.attachedTo == null || d.doc.attachedToClass == null) return undefined
 
-    return {
-      _id: d.id as Ref<ChatMessage>,
-      _class: d.doc._class as Ref<Class<ChatMessage>>,
-      channel: directName ?? d.shortTitle ?? '',
-      createdOn: d.doc.createdOn ?? 0,
-      attachedTo: d.doc.attachedTo,
-      attachedToClass: d.doc.attachedToClass,
-      highlights: (d.highlights?.content ?? []).map((f) => f.trim()).filter((f) => f !== ''),
-      markup: d.fields?.message ?? EmptyMarkup,
-      person: persons.get(d.doc.createdBy),
-      raw: d
-    }
-  }).filter(notEmpty)
+      return {
+        _id: d.id as Ref<ChatMessage>,
+        _class: d.doc._class as Ref<Class<ChatMessage>>,
+        channel: directName ?? d.shortTitle ?? '',
+        createdOn: d.doc.createdOn ?? 0,
+        attachedTo: d.doc.attachedTo,
+        attachedToClass: d.doc.attachedToClass,
+        highlights: (d.highlights?.content ?? []).map((f) => f.trim()).filter((f) => f !== ''),
+        markup: d.fields?.message ?? EmptyMarkup,
+        person: persons.get(d.doc.createdBy),
+        raw: d
+      }
+    })
+    .filter(notEmpty)
 }

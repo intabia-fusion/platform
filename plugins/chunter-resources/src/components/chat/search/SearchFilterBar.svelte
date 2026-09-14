@@ -147,10 +147,7 @@
   let memberRefs: Array<Ref<Person>> | undefined
   $: void loadMembers(space, $employeeRefByAccountUuidStore)
 
-  async function loadMembers (
-    space: Ref<Space> | undefined,
-    byAccount: Map<AccountUuid, Ref<Employee>>
-  ): Promise<void> {
+  async function loadMembers (space: Ref<Space> | undefined, byAccount: Map<AccountUuid, Ref<Employee>>): Promise<void> {
     if (space === undefined) {
       memberRefs = undefined
       return
@@ -300,115 +297,117 @@
     </ModernButton>
   </div>
 {:else}
-<div class="filter-bar-host">
-  <div class="filter-bar">
-  <ModernDropdownLabels
-    items={classItems}
-    selected={selectedClasses}
-    iconSize="small"
-    multiselect
-    autoSelect={false}
-    label={chunter.string.SearchFilterObjectClass}
-    kind={'secondary'}
-    size={'small'}
-    categoryKind={'heading'}
-    on:selected={(e) => {
-      handleClassesSelected(e.detail)
-    }}
-  >
-    <svelte:fragment slot="content">
-      {#if selectedClassItems[0] !== undefined}
-        <FilterButtonContent
-          title={selectedClassItems[0].label}
-          icon={selectedClassItems[0].icon}
-          count={selectedClassItems.length}
-        />
-      {/if}
-    </svelte:fragment>
-  </ModernDropdownLabels>
+  <div class="filter-bar-host">
+    <div class="filter-bar">
+      <ModernDropdownLabels
+        items={classItems}
+        selected={selectedClasses}
+        iconSize="small"
+        multiselect
+        autoSelect={false}
+        label={chunter.string.SearchFilterObjectClass}
+        kind={'secondary'}
+        size={'small'}
+        categoryKind={'heading'}
+        on:selected={(e) => {
+          handleClassesSelected(e.detail)
+        }}
+      >
+        <svelte:fragment slot="content">
+          {#if selectedClassItems[0] !== undefined}
+            <FilterButtonContent
+              title={selectedClassItems[0].label}
+              icon={selectedClassItems[0].icon}
+              count={selectedClassItems.length}
+            />
+          {/if}
+        </svelte:fragment>
+      </ModernDropdownLabels>
 
-  <ModernButton
-    icon={persons.length === 0 ? contact.icon.Person : undefined}
-    label={persons.length === 0 ? chunter.string.SearchFilterAuthor : undefined}
-    kind={'secondary'}
-    size={'small'}
-    iconSize="small"
-    on:click={pickAuthors}
-  >
-    {#if persons.length > 0}
-      <span class="authors">
-        {#if persons.length === 1}
-          <Avatar person={persons[0]} name={persons[0].name} size={'tiny'} />
-          <span class="overflow-label">{formatName(persons[0].name)}</span>
-        {:else}
-          <CombineAvatars _class={contact.mixin.Employee} items={pickedPersons} size={'tiny'} hideLimit />
-          <span class="overflow-label">
-            <Label label={contact.string.NumberMembers} params={{ count: persons.length }} />
-          </span>
-        {/if}
-      </span>
-    {/if}
-  </ModernButton>
-
-  <div bind:this={objectsButton}>
-    <ModernButton
-      icon={objectsIcon}
-      label={objects.length === 0 ? chunter.string.SearchFilterObject : undefined}
-      kind={'secondary'}
-      size={'small'}
-      iconSize="small"
-      on:click={openObjects}
-    >
-      {#if objects.length > 0}
-        <FilterButtonContent title={objects[0].title} count={objects.length} />
-      {/if}
-    </ModernButton>
-  </div>
-
-  <div class="filter">
-    <ModernButton
-      icon={IconCalendar}
-      label={filters.after === undefined && filters.before === undefined ? chunter.string.SearchFilterDate : undefined}
-      title={filters.after !== undefined || filters.before !== undefined ? dateText : undefined}
-      kind={'secondary'}
-      size={'small'}
-      iconSize="small"
-      on:click={pickDate}
-    />
-    {#if filters.after !== undefined || filters.before !== undefined}
       <ModernButton
-        icon={IconClose}
-        kind={'tertiary'}
+        icon={persons.length === 0 ? contact.icon.Person : undefined}
+        label={persons.length === 0 ? chunter.string.SearchFilterAuthor : undefined}
+        kind={'secondary'}
         size={'small'}
         iconSize="small"
-        tooltip={{ label: chunter.string.SearchFilterClear }}
-        on:click={() => {
-          update({ after: undefined, before: undefined })
-        }}
-      />
-    {/if}
-  </div>
+        on:click={pickAuthors}
+      >
+        {#if persons.length > 0}
+          <span class="authors">
+            {#if persons.length === 1}
+              <Avatar person={persons[0]} name={persons[0].name} size={'tiny'} />
+              <span class="overflow-label">{formatName(persons[0].name)}</span>
+            {:else}
+              <CombineAvatars _class={contact.mixin.Employee} items={pickedPersons} size={'tiny'} hideLimit />
+              <span class="overflow-label">
+                <Label label={contact.string.NumberMembers} params={{ count: persons.length }} />
+              </span>
+            {/if}
+          </span>
+        {/if}
+      </ModernButton>
 
-  <div bind:this={optionsButton}>
-    <ModernButton
-      icon={IconAttachment}
-      label={chunter.string.SearchFilterOptions}
-      kind={'secondary'}
-      size={'small'}
-      iconSize="small"
-      on:click={openOptions}
-    >
-      {#if activeOptions > 0}
-        <span class="counter">{activeOptions}</span>
+      <div bind:this={objectsButton}>
+        <ModernButton
+          icon={objectsIcon}
+          label={objects.length === 0 ? chunter.string.SearchFilterObject : undefined}
+          kind={'secondary'}
+          size={'small'}
+          iconSize="small"
+          on:click={openObjects}
+        >
+          {#if objects.length > 0}
+            <FilterButtonContent title={objects[0].title} count={objects.length} />
+          {/if}
+        </ModernButton>
+      </div>
+
+      <div class="filter">
+        <ModernButton
+          icon={IconCalendar}
+          label={filters.after === undefined && filters.before === undefined
+            ? chunter.string.SearchFilterDate
+            : undefined}
+          title={filters.after !== undefined || filters.before !== undefined ? dateText : undefined}
+          kind={'secondary'}
+          size={'small'}
+          iconSize="small"
+          on:click={pickDate}
+        />
+        {#if filters.after !== undefined || filters.before !== undefined}
+          <ModernButton
+            icon={IconClose}
+            kind={'tertiary'}
+            size={'small'}
+            iconSize="small"
+            tooltip={{ label: chunter.string.SearchFilterClear }}
+            on:click={() => {
+              update({ after: undefined, before: undefined })
+            }}
+          />
+        {/if}
+      </div>
+
+      <div bind:this={optionsButton}>
+        <ModernButton
+          icon={IconAttachment}
+          label={chunter.string.SearchFilterOptions}
+          kind={'secondary'}
+          size={'small'}
+          iconSize="small"
+          on:click={openOptions}
+        >
+          {#if activeOptions > 0}
+            <span class="counter">{activeOptions}</span>
+          {/if}
+        </ModernButton>
+      </div>
+
+      {#if $$slots.trailing}
+        <div class="trailing"><slot name="trailing" /></div>
       {/if}
-    </ModernButton>
+    </div>
   </div>
-
-    {#if $$slots.trailing}
-      <div class="trailing"><slot name="trailing" /></div>
-    {/if}
-  </div>
-</div>
 {/if}
 
 <style lang="scss">

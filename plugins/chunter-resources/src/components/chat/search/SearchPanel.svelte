@@ -19,12 +19,7 @@
   import { get } from 'svelte/store'
 
   import chunter from '../../../plugin'
-  import {
-    createChatSearchStore,
-    keepSearchSnapshot,
-    searchKey,
-    takeSearchSnapshot
-  } from '../../../search/store'
+  import { createChatSearchStore, keepSearchSnapshot, searchKey, takeSearchSnapshot } from '../../../search/store'
   import type { ChatSearchFilters, SearchResultRow } from '../../../search/types'
   import SearchFilterBar from './SearchFilterBar.svelte'
   import SearchResultsList from './SearchResultsList.svelte'
@@ -156,66 +151,65 @@
 <svelte:window on:keydown={onWindowKeydown} />
 
 {#if visible}
-<div class="panel" class:in-channel={inChannel}>
-  {#if !inChannel}
-  <SearchFilterBar
-    filters={$store.filters}
-    on:change={(e) => {
-      handleFiltersChanged(e.detail)
-    }}
-  >
-    <svelte:fragment slot="trailing">
-      <ModernDropdown
-        items={sortItems}
-        selected={$store.sort}
-        icon={IconOptions}
-        iconSize="small"
-        kind={'secondary'}
-        size={'small'}
-        showDropdownIcon
-        on:selected={(e) => {
-          handleSortSelected(e.detail)
+  <div class="panel" class:in-channel={inChannel}>
+    {#if !inChannel}
+      <SearchFilterBar
+        filters={$store.filters}
+        on:change={(e) => {
+          handleFiltersChanged(e.detail)
         }}
       >
-        <svelte:fragment slot="content">
-          <Label label={sortLabel} />
+        <svelte:fragment slot="trailing">
+          <ModernDropdown
+            items={sortItems}
+            selected={$store.sort}
+            icon={IconOptions}
+            iconSize="small"
+            kind={'secondary'}
+            size={'small'}
+            showDropdownIcon
+            on:selected={(e) => {
+              handleSortSelected(e.detail)
+            }}
+          >
+            <svelte:fragment slot="content">
+              <Label label={sortLabel} />
+            </svelte:fragment>
+          </ModernDropdown>
         </svelte:fragment>
-      </ModernDropdown>
-    </svelte:fragment>
-  </SearchFilterBar>
-  {/if}
+      </SearchFilterBar>
+    {/if}
 
-  {#if $store.total !== undefined && $store.results.length > 0}
-    <div class="summary">
-      {#if $store.totalExact === false}
-        <Label label={chunter.string.SearchResultsCountApprox} params={{ count: $store.total }} />
-      {:else}
-        <Label label={chunter.string.SearchResultsCount} params={{ count: $store.total }} />
-      {/if}
+    {#if $store.total !== undefined && $store.results.length > 0}
+      <div class="summary">
+        {#if $store.totalExact === false}
+          <Label label={chunter.string.SearchResultsCountApprox} params={{ count: $store.total }} />
+        {:else}
+          <Label label={chunter.string.SearchResultsCount} params={{ count: $store.total }} />
+        {/if}
+      </div>
+    {/if}
+
+    <div class="results">
+      <SearchResultsList
+        bind:divScroll
+        state={$store}
+        {selection}
+        showChannel={!inChannel}
+        maxHeight={inChannel ? 24 : undefined}
+        on:select={(e) => {
+          open(e.detail)
+        }}
+        on:hover={(e) => (selection = e.detail)}
+        on:loadMore={() => {
+          store.loadMore()
+        }}
+        on:retry={() => {
+          store.submit()
+        }}
+      />
     </div>
-  {/if}
-
-  <div class="results">
-    <SearchResultsList
-      bind:divScroll
-      state={$store}
-      {selection}
-      showChannel={!inChannel}
-      maxHeight={inChannel ? 24 : undefined}
-      on:select={(e) => {
-        open(e.detail)
-      }}
-      on:hover={(e) => (selection = e.detail)}
-      on:loadMore={() => {
-        store.loadMore()
-      }}
-      on:retry={() => {
-        store.submit()
-      }}
-    />
   </div>
-
-</div>
 {/if}
 
 <style lang="scss">

@@ -33,7 +33,6 @@ export class MessageSearchPage extends CommonPage {
   readonly buttonChannelSearch = (): Locator => this.page.locator('[data-id="channel-search"]')
   readonly inputSearch = (): Locator => this.page.locator('.header-search input')
   readonly panel = (): Locator => this.page.locator('div.panel')
-  readonly summary = (): Locator => this.page.locator('div.summary')
   readonly results = (): Locator => this.page.locator('div.panel div.row')
   readonly result = (text: string): Locator => this.results().filter({ hasText: text })
 
@@ -77,20 +76,7 @@ export class MessageSearchPage extends CommonPage {
     })
   }
 
-  async checkResultCount (count: number): Promise<void> {
-    await retry(async () => {
-      await expect(this.results()).toHaveCount(count, { timeout: 1000 })
-    })
-  }
-
   async clickResult (text: string): Promise<void> {
     await this.result(text).first().click()
-  }
-
-  async filterByAuthor (name: string): Promise<void> {
-    await this.buttonAuthorFilter().click()
-    await this.page.locator('.popup input').fill(name)
-    await this.page.locator('.popup button', { hasText: name }).first().click()
-    await this.page.keyboard.press('Escape')
   }
 }

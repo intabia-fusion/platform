@@ -336,8 +336,7 @@ export interface SearchResultDoc {
   doc: Pick<Doc, '_id' | '_class' | 'createdOn'> &
     Partial<Pick<Doc, 'createdBy' | 'modifiedOn' | 'modifiedBy' | 'space'>> &
     Partial<Pick<AttachedDoc, 'attachedTo' | 'attachedToClass'>> &
-    Partial<Pick<VersionableDoc, 'baseId'>> &
-    { objectId?: Ref<Doc>, objectClass?: Ref<Class<Doc>> }
+    Partial<Pick<VersionableDoc, 'baseId'>> & { objectId?: Ref<Doc>, objectClass?: Ref<Class<Doc>> }
 }
 
 /**

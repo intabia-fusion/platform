@@ -283,16 +283,16 @@
         {/key}
         {#if searchOpened}
           <div class="searchOverlay" class:hidden={searchDismissed}>
-          <SearchPanel
-            space={searchSpace}
-            attachedTo={searchAttachedTo}
-            filters={searchFilters}
-            bind:value={searchQuery}
-            on:select={(e) => {
-              handleSearchResult(e.detail)
-            }}
-            on:close={closeSearch}
-          />
+            <SearchPanel
+              space={searchSpace}
+              attachedTo={searchAttachedTo}
+              filters={searchFilters}
+              bind:value={searchQuery}
+              on:select={(e) => {
+                handleSearchResult(e.detail)
+              }}
+              on:close={closeSearch}
+            />
           </div>
         {/if}
       </div>

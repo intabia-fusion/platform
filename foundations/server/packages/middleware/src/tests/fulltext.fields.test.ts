@@ -135,7 +135,9 @@ describe('FullTextMiddleware fields', () => {
 
   it('drops only the deleted document, keeping the rest of the page', async () => {
     indexResult = { docs: [resultDoc('a'), resultDoc('b')] }
-    findAll.mockImplementation(async () => toFindResult([{ _id: 'b', _class: MESSAGE_CLASS, message: 'markup-b' }] as any))
+    findAll.mockImplementation(async () =>
+      toFindResult([{ _id: 'b', _class: MESSAGE_CLASS, message: 'markup-b' }] as any)
+    )
 
     const out = await createMiddleware().searchFulltext(ctx, { query: 'q' }, { limit: 10, fields: ['message'] })
     expect(out.docs.map((d) => d.id)).toEqual(['b'])

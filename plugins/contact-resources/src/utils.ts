@@ -883,9 +883,7 @@ export async function getSocialIdByPersonId (personId: PersonId): Promise<Social
   return await getSocialIdByPersonIdBase(getClient(), personId)
 }
 
-export async function getSocialIdsByPersonRefs (
-  personRefs: Array<Ref<Person>>
-): Promise<Map<Ref<Person>, PersonId[]>> {
+export async function getSocialIdsByPersonRefs (personRefs: Array<Ref<Person>>): Promise<Map<Ref<Person>, PersonId[]>> {
   return await getSocialIdsByPersonRefsBase(getClient(), personRefs)
 }
 

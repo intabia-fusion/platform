@@ -33,7 +33,6 @@
 
   const dispatch = createEventDispatcher()
 
-
   function handleScroll (): void {
     if (divScroll == null || state.done || state.loadingMore) return
     if (divScroll.scrollTop + divScroll.clientHeight >= divScroll.scrollHeight - 400) {

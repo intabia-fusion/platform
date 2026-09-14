@@ -17,13 +17,7 @@ import { expect, test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { MessageSearchPage } from '../model/message-search-page'
-import {
-  createAccount,
-  generateUser,
-  getInviteLink,
-  getSecondPageByInvite,
-  loginByToken
-} from '../utils'
+import { createAccount, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
 import { SignUpData } from '../model/common-types'
 
 test.describe.configure({ mode: 'parallel' })
@@ -154,19 +148,23 @@ test.describe('Message search', () => {
 
   // A direct needs a second account and an invite, so this one spends a seat of the shared
   // workspace - hence the tag the fixture keys its recycling off.
-  test('Searches inside a direct the same way it does a channel', { tag: '@invite' }, async ({ browser, page, request }) => {
-    const message = `Direct search ${uniq}`
-    const linkText = await getInviteLink(page)
-    await createAccount(request, newUser)
-    using invited = await getSecondPageByInvite(browser, linkText, newUser)
-    await expect(invited.page).toHaveURL(/workbench/)
+  test(
+    'Searches inside a direct the same way it does a channel',
+    { tag: '@invite' },
+    async ({ browser, page, request }) => {
+      const message = `Direct search ${uniq}`
+      const linkText = await getInviteLink(page)
+      await createAccount(request, newUser)
+      using invited = await getSecondPageByInvite(browser, linkText, newUser)
+      await expect(invited.page).toHaveURL(/workbench/)
 
-    await chunterPage.createDirectChat(newUser)
-    await channelPage.clickChooseChannel(`${newUser.lastName} ${newUser.firstName}`)
-    await channelPage.sendMessage(message)
+      await chunterPage.createDirectChat(newUser)
+      await channelPage.clickChooseChannel(`${newUser.lastName} ${newUser.firstName}`)
+      await channelPage.sendMessage(message)
 
-    await searchPage.openChannelSearch()
-    await searchPage.search(message)
-    await searchPage.checkResultExists(message)
-  })
+      await searchPage.openChannelSearch()
+      await searchPage.search(message)
+      await searchPage.checkResultExists(message)
+    }
+  )
 })

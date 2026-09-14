@@ -146,9 +146,7 @@ describe('createChatSearchStore', () => {
 
   it('walks on by itself when a page comes back empty but the cursor lives', async () => {
     // Nothing was added, so the scroll handler that normally asks for more will never fire.
-    searchFulltext
-      .mockResolvedValueOnce(page([], 'cur1'))
-      .mockResolvedValueOnce(page(['m1']))
+    searchFulltext.mockResolvedValueOnce(page([], 'cur1')).mockResolvedValueOnce(page(['m1']))
 
     const store = createChatSearchStore()
     store.setSearch('release')

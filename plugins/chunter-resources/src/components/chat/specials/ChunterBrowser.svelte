@@ -36,7 +36,7 @@
   const startLoc = getCurrentLocation()
   const last = startLoc.query?.q == null ? peekSearchSnapshot() : undefined
 
-  let query: string = pending?.search ?? last?.search ?? (startLoc.query?.q ?? '')
+  let query: string = pending?.search ?? last?.search ?? startLoc.query?.q ?? ''
   let filters: ChatSearchFilters = pending?.filters ?? last?.filters ?? {}
   let sort: SearchSortOrder = pending?.sort ?? last?.sort ?? sortFromQuery(startLoc.query) ?? 'relevance'
 
@@ -100,12 +100,7 @@
 <Header adaptive={'disabled'} withSearch={false} hideTitle bind:realWidth={headerWidth}>
   <svelte:fragment slot="search">
     <div class="header-search page-search">
-      <SearchInputBox
-        bind:value={query}
-        label={chunter.string.SearchPlaceholder}
-        autoFocus
-        kind="default"
-      />
+      <SearchInputBox bind:value={query} label={chunter.string.SearchPlaceholder} autoFocus kind="default" />
     </div>
   </svelte:fragment>
   <svelte:fragment slot="actions">
@@ -164,5 +159,4 @@
   :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.presence:empty) {
     display: none;
   }
-
 </style>

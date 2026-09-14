@@ -107,20 +107,24 @@ async function resolveAuthorName (
   if (cached !== undefined) return cached
 
   let name = ''
-  const identity = (await storage.findAll<SocialIdentity>(
-    ctx,
-    contactPlugin.class.SocialIdentity,
-    { _id: personId as SocialIdentity['_id'] },
-    { limit: 1, skipSpace: true, skipClass: true }
-  ))[0]
+  const identity = (
+    await storage.findAll<SocialIdentity>(
+      ctx,
+      contactPlugin.class.SocialIdentity,
+      { _id: personId as SocialIdentity['_id'] },
+      { limit: 1, skipSpace: true, skipClass: true }
+    )
+  )[0]
   const personRef = identity?.attachedTo
   if (personRef !== undefined) {
-    const person = (await storage.findAll<Person>(
-      ctx,
-      contactPlugin.class.Person,
-      { _id: personRef },
-      { limit: 1, skipSpace: true, skipClass: true }
-    ))[0]
+    const person = (
+      await storage.findAll<Person>(
+        ctx,
+        contactPlugin.class.Person,
+        { _id: personRef },
+        { limit: 1, skipSpace: true, skipClass: true }
+      )
+    )[0]
     if (person !== null) {
       name = formatName(person.name).trim()
     }
