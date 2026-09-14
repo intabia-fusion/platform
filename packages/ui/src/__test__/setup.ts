@@ -39,3 +39,21 @@ if ((globalThis as any).ResizeObserver === undefined) {
     disconnect (): void {}
   }
 }
+
+// jsdom stops at the layout boundary: these exist in every browser and in none of its tests.
+if ((globalThis as any).IntersectionObserver === undefined) {
+  ;(globalThis as any).IntersectionObserver = class {
+    observe (): void {}
+    unobserve (): void {}
+    disconnect (): void {}
+    takeRecords (): [] {
+      return []
+    }
+  }
+}
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = function (): void {}
+}
+if (typeof window.scrollTo !== 'function') {
+  window.scrollTo = (() => {}) as typeof window.scrollTo
+}
