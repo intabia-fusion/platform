@@ -186,6 +186,7 @@ registry="${deploy_registry:+$deploy_registry/}${DOCKER_NAMESPACE:-intabiafusion
 project=$(grep '^DOCKER_NAME=' config/platform.conf | cut -d= -f2)
 project=${project:-platform}
 deadline=$(( $(date +%s) + 420 ))
+was_clean=""
 while :; do
   # Ready: running, or a one-shot job that exited cleanly.
   bad=$(docker ps -a --filter "label=com.docker.compose.project=$project" \
@@ -194,7 +195,17 @@ while :; do
           $2 ~ /^Up / { next }
           $2 ~ /^Exited \(0\)/ { next }
           { print }')
-  [ -z "$bad" ] && break
+  # Two clean passes: a crash-looping container shows up as "Up" between restarts, which is
+  # how a broken image slipped past a single check.
+  if [ -z "$bad" ]; then
+    if [ -n "$was_clean" ]; then
+      break
+    fi
+    was_clean=1
+    sleep 20
+    continue
+  fi
+  was_clean=""
   if [ "$(date +%s)" -ge "$deadline" ]; then
     echo "Stand '$project' is not up after 7 minutes:" >&2
     printf '%s\n' "$bad" | tr '|' ' ' >&2

@@ -459,8 +459,8 @@ services:
       - CACHE_PATH=/data/cache
     restart: unless-stopped
   link-preview:
-    image: 'intabiafusion/link-preview:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/link-preview:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     environment:
       - SECRET=secret
       - PORT=4041
