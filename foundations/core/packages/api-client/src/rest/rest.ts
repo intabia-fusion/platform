@@ -362,6 +362,9 @@ export class RestClientImpl implements RestClient {
       if (options.searchIn != null) {
         params.append('searchIn', options.searchIn)
       }
+      if (options.fuzzy != null) {
+        params.append('fuzzy', `${options.fuzzy}`)
+      }
       if (options.highlight != null) {
         params.append('highlight', JSON.stringify(options.highlight))
       }
