@@ -234,6 +234,8 @@ DROP
     fi
     printf './set-version.sh %s --registry %s --silent\n' \
       "$(shq "$CICD_ENV_VERSION")" "$(shq "$registry")"
+    # Update never re-runs setup.sh, so a stand installed before webhooks existed gets the flag here.
+    printf "grep -q '^WEBHOOK_ENABLED=' config/platform.conf || echo 'WEBHOOK_ENABLED=true' >> config/platform.conf\n"
     # set-version.sh leaves containers whose image did not change, so one stuck from an earlier
     # deploy survives every update. Recreate everything: images are already pulled by now.
     printf './up.sh --recreate\n'
