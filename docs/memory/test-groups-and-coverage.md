@@ -110,12 +110,23 @@ not elasticsearch answered. It now exits 1, and takes the host from `ELASTIC_HOS
 
 ## What only CI caught
 
-- **A package must run on its own jest binary.** `findJestBin()` returned the first workspace
-  package that had one, and running `desktop` under a sibling's jest made its ts-jest resolve
-  `@types` from that sibling: every test file then failed to compile with `Cannot find name
-  'describe'`. It reproduces locally with
-  `cd desktop && ../plugins/training-resources/node_modules/.bin/jest -c jest.config.js`. Both
-  `coverage.js` and `test-group.js` now prefer `findJestBin([pkg])` for a single-package run.
+- **An isolated package has to run through its own npm script, not a jest binary.** Spawning jest
+  directly made `desktop`'s jsdom project fail to compile its own test files (`Cannot find name
+  'describe'`, `Cannot find namespace 'jest'`) while `pnpm run test` on the same config passed. The
+  first suspect was the binary: `findJestBin()` returned the first workspace package that had one,
+  and a sibling's jest does bring a ts-jest that cannot see the package's `@types` - that
+  reproduces locally with
+  `cd desktop && ../plugins/training-resources/node_modules/.bin/jest -c jest.config.js`. Using the
+  package's own binary fixed the `node` project but not the `jsdom` one, and nothing about
+  `--coverage` reproduces it on a developer machine. `coverage.js` now runs `pnpm run <script>` with
+  the coverage flags appended, which is exactly the invocation the green `pnpm test` phase uses.
+  `test-group.js` still picks `findJestBin([pkg])` for a single-package run.
+- **Never append a flag the script already carries.** `network-backrpc`'s `test` is
+  `jest --coverage --coverageDirectory=./coverage ...`; appending our own turned the value into an
+  array and jest died in config normalization with
+  `TypeError: The "paths[1]" argument must be of type string`. The flags in the script text are
+  parsed out first, and a script that names its own coverage directory keeps it - the merged report
+  is read from there instead.
 - **Instrumentation is slower than the timeouts these tests were written against.**
   `network-backrpc`'s zmq suite binds a real socket and blew the 5s default under coverage on a CI
   runner. Own-package coverage runs get `--testTimeout=30000`.
