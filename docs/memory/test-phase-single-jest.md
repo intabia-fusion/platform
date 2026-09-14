@@ -31,7 +31,9 @@ roughly 40s — untried.
 
 `--coverage` is dropped in the shared run: coverage is per-run, not per-project. No package sets a
 `coverageThreshold` and CI does not read the reports, so nothing checks it; `pnpm test
---no-test-group` still collects it per package.
+--no-test-group` still collects it per package. Whole-workspace coverage has its own entry point,
+`pnpm coverage` - see `test-groups-and-coverage.md`, which also covers why
+`collectCoverageFrom` only works when it is declared globally with package-relative patterns.
 
 ## Leftover kafka topics wedge the next run
 

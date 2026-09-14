@@ -86,7 +86,7 @@ TS-клиент по-прежнему шлёт hello в msgpack — так ег�
 приезжает `capacity` **разных** файлов одновременно, и что при `capacity=1` его батчер физически
 не может собрать группу больше одного чанка.
 
-`kafka-clisr-e2e.spec.ts` гоняет весь путь stt-worker на живой redpanda:
+`kafka-clisr-e2e.itest.ts` гоняет весь путь stt-worker на живой redpanda:
 Kafka -> batch consumer -> `ServerProvider` -> clisr -> воркер (1-2 мс на задачу) -> обратно.
 Запускается только по `AI_BOT_QUEUE_E2E=1` (`QUEUE_CONFIG`, дефолт `localhost:19093`), каждый
 прогон берёт свой топик и свою группу, топики стенда не трогает.

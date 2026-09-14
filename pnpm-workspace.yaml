@@ -616,6 +616,7 @@ catalog:
   '@typescript-eslint/eslint-plugin': ^8.70.0
   '@typescript-eslint/parser': ^8.70.0
   '@vercel/webpack-asset-relocator-loader': ^1.7.3
+  '@vitest/coverage-istanbul': ^2.1.9
   allure-js-commons: ^3.10.2
   allure-playwright: ^3.10.2
   autoprefixer: ^10.4.14

@@ -26,8 +26,8 @@ Pipeline e2e ограничен скоростью write-side (`TxOperations.cre
 
 ## Корректность
 
-- kafka SDK `__test__/queue.spec.ts`: 8/8 PASS (включая 3 batch-теста)
-- fulltext `__tests__/indexing.spec.ts`: 3/3 PASS
+- kafka SDK `__test__/queue.itest.ts`: 8/8 PASS (включая 3 batch-теста)
+- fulltext `__tests__/indexing.itest.ts`: 3/3 PASS
 - fulltext `__tests__/indexing.bench.ts`: 4/4 PASS
 
 ## Прочие consumer

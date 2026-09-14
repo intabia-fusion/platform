@@ -30,6 +30,12 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['src/__test__/setup.ts'],
-    include: ['src/**/*.{test,spec}.ts']
+    include: ['src/**/*.{test,spec}.ts'],
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text-summary', 'json'],
+      include: ['src/**/*.{ts,svelte}'],
+      exclude: ['src/__test__/**']
+    }
   }
 })
