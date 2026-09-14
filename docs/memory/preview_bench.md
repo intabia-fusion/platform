@@ -2,7 +2,7 @@
 
 Область: [Файлы и медиа](../features/drive-media.md)
 
-`pods/preview/src/__tests__/bench/` - `BENCH=1 npx jest src/__tests__/bench/sharp.bench.test.ts`. Regular `pnpm run test` skips it.
+`pods/preview/src/__tests__/bench/` - `BENCH=1 npx jest src/__tests__/bench/sharp.bench.ts`. Regular `pnpm run test` skips it.
 
 ## Why each config forks a process
 

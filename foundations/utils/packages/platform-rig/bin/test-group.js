@@ -26,7 +26,7 @@ const { spawnSync } = require('child_process')
 const { join } = require('path')
 const { existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync } = require('fs')
 const { tmpdir } = require('os')
-const { GROUPS, planTestRun, collectTestEntries, buildSharedConfig, findJestBin } = require('./libs/test-groups')
+const { GROUPS, jestConfigPath, planTestRun, collectTestEntries, buildSharedConfig, findJestBin } = require('./libs/test-groups')
 const { findWorkspaceRoot } = require('./libs/workspace')
 
 const [group, ...jestArgs] = process.argv.slice(2)
@@ -48,7 +48,7 @@ const { shared, isolated } = planTestRun(entries)
 const exclusive = entries.filter((e) => isolated.some((i) => i.exclusive && i.name === e.name))
 // A package on another runner (packages/ui is vitest) has no jest.config.js to turn into a project;
 // it runs its own script of the same name instead.
-const ownScript = entries.filter((e) => !existsSync(join(e.cwd, 'jest.config.js')))
+const ownScript = entries.filter((e) => jestConfigPath(e.cwd) === null)
 const together = entries.filter((e) => !exclusive.includes(e) && !ownScript.includes(e))
 
 const jestBin = findJestBin(entries)

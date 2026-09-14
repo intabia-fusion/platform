@@ -32,6 +32,15 @@ const GROUPS = {
   bench: { file: /\.bench\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)bench.[jt]s?(x)'], testTimeout: 600000 }
 }
 
+/** Either spelling of the config; love-agent is CommonJS in an ESM-typed package. */
+function jestConfigPath (dir) {
+  for (const name of ['jest.config.js', 'jest.config.cjs']) {
+    const path = join(dir, name)
+    if (existsSync(path)) return path
+  }
+  return null
+}
+
 /** A package with no test file at all is not worth a jest project, nor a jest process. */
 function hasTestFiles (dir, group = 'unit') {
   const TEST_FILE = GROUPS[group].file
@@ -84,8 +93,8 @@ function classify (entry) {
     else return { isolated: `unsupported flag ${p}` }
   }
 
-  const configPath = join(entry.cwd, 'jest.config.js')
-  if (!existsSync(configPath)) return { isolated: 'no jest.config.js' }
+  const configPath = jestConfigPath(entry.cwd)
+  if (configPath === null) return { isolated: 'no jest.config.js' }
   // jest does not nest: a config that is itself a multi-project cannot become one of our projects.
   if (/\bprojects\s*:/.test(readFileSync(configPath, 'utf-8'))) return { isolated: 'config uses projects' }
 
@@ -124,7 +133,7 @@ function buildSharedConfig (shared, group = 'unit') {
   const projects = []
   let testTimeout
   for (const pkg of shared.packages) {
-    const raw = require(join(pkg.cwd, 'jest.config.js'))
+    const raw = require(jestConfigPath(pkg.cwd))
     const config = { ...(typeof raw === 'function' ? raw() : raw) }
     // A per-project timeout cannot survive, but the longest one can stand for the whole run.
     if (typeof config.testTimeout === 'number') {
@@ -182,4 +191,4 @@ function findJestBin (packages) {
   return null
 }
 
-module.exports = { GROUPS, planTestRun, findJestBin, hasTestFiles, collectTestEntries, buildSharedConfig }
+module.exports = { GROUPS, jestConfigPath, planTestRun, findJestBin, hasTestFiles, collectTestEntries, buildSharedConfig }
