@@ -69,16 +69,29 @@ function runJest (group) {
   let n = 0
   const collectFlags = COLLECT_FROM.flatMap((p) => ['--collectCoverageFrom', p])
 
-  /** @param {(dir: string) => string[]} argsFor */
-  const run = (label, cwd, argsFor, jestBin = sharedJestBin) => {
+  /**
+   * @param {(dir: string) => string[]} argsFor
+   * @param {string[]} taken flags the invocation already carries; jest turns a repeated flag into
+   *   an array and dies with `paths[1] must be of type string`, so they are never appended twice.
+   */
+  const run = (label, cwd, argsFor, bin = sharedJestBin, taken = [], reportDir) => {
     const dir = join(outDir, `${group}-${n++}`)
-    const status = spawnSync(jestBin, [...argsFor(dir), '--silent', '--coverage', ...collectFlags,
-      '--coverageReporters=json', `--coverageDirectory=${dir}`], { cwd, stdio: ['ignore', 'ignore', 'inherit'] }).status
+    const add = (flag, ...args) => (taken.includes(flag) ? [] : args)
+    const coverageArgs = [
+      ...add('--coverage', '--coverage'),
+      ...collectFlags,
+      ...add('--coverageReporters', '--coverageReporters=json'),
+      ...add('--coverageDirectory', `--coverageDirectory=${dir}`),
+      ...add('--silent', '--silent')
+    ]
+    const [cmd, ...prefix] = Array.isArray(bin) ? bin : [bin]
+    const status = spawnSync(cmd, [...prefix, ...argsFor(dir), ...coverageArgs],
+      { cwd, stdio: ['ignore', 'ignore', 'inherit'] }).status
     if (status !== 0) {
       failed = true
       console.error(`  jest exited ${status} for ${label}; coverage below is partial`)
     }
-    reports.push(join(dir, 'coverage-final.json'))
+    reports.push(join(reportDir ?? dir, 'coverage-final.json'))
   }
 
   if (shared !== null) {
@@ -94,16 +107,25 @@ function runJest (group) {
   for (const pkg of own) {
     console.log(`  ${pkg.name} on its own`)
     const match = GROUPS[group].testMatch
-    // Its own jest, not the shared one: pnpm keeps every package's dependencies to itself, so a
-    // jest resolved from a sibling brings a ts-jest that cannot see this package's @types/jest, and
-    // every test file then fails to compile with `Cannot find name 'describe'`.
-    run(pkg.name, pkg.cwd, () => [
-      '-c', jestConfigPath(pkg.cwd), '--passWithNoTests', '--forceExit',
-      // Instrumentation is slower than the run these tests were timed against; network-backrpc's
-      // zmq suite times out at the 5s default under coverage on a CI runner.
-      `--testTimeout=${GROUPS[group].testTimeout ?? 30000}`,
-      ...(match !== undefined ? ['--testMatch', ...match] : [])
-    ], findJestBin([pkg]) ?? sharedJestBin)
+    // Instrumentation is slower than the run these tests were timed against; network-backrpc's
+    // zmq suite times out at the 5s default under coverage on a CI runner.
+    const extra = [`--testTimeout=${GROUPS[group].testTimeout ?? 30000}`,
+      ...(match !== undefined ? ['--testMatch', ...match] : [])]
+    // Through the package's own script where it has one. Spawning jest directly instead is what
+    // `pnpm test` never does, and desktop's jsdom project then fails to compile its own test files
+    // (`Cannot find name 'describe'`) while the same config passes under `pnpm run test`.
+    const script = testScript(pkg)
+    if (script !== undefined) {
+      const text = JSON.parse(readFileSync(join(pkg.cwd, 'package.json'), 'utf-8')).scripts[script]
+      const taken = [...text.matchAll(/(--[\w-]+)/g)].map((m) => m[1])
+      // A script that already names its own coverage directory keeps it; the report is read there.
+      const own = /--coverageDirectory[= ]([^\s]+)/.exec(text)
+      run(pkg.name, pkg.cwd, () => extra.filter((f) => !taken.includes(f.split('=')[0])),
+        ['pnpm', 'run', script], taken, own === null ? undefined : join(pkg.cwd, own[1]))
+    } else {
+      run(pkg.name, pkg.cwd, () => ['-c', jestConfigPath(pkg.cwd), '--passWithNoTests', '--forceExit', ...extra],
+        findJestBin([pkg]) ?? sharedJestBin)
+    }
   }
   return reports
 }
@@ -117,6 +139,15 @@ function runsJest (e) {
   const scripts = JSON.parse(readFileSync(join(e.cwd, 'package.json'), 'utf-8')).scripts ?? {}
   const script = scripts.test ?? scripts['_phase:test']
   return script === undefined || script.trim().startsWith('jest')
+}
+
+/** The npm script that runs this package's jest, if it has one. */
+function testScript (e) {
+  const scripts = JSON.parse(readFileSync(join(e.cwd, 'package.json'), 'utf-8')).scripts ?? {}
+  for (const name of ['test', '_phase:test']) {
+    if (scripts[name]?.trim().startsWith('jest') === true) return name
+  }
+  return undefined
 }
 
 /** Packages on vitest (no jest.config.js, but a test script of their own). */
