@@ -33,8 +33,8 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   webhook:
-    image: 'intabiafusion/webhook:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/webhook:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       redpanda:
         condition: service_started
