@@ -290,6 +290,7 @@ async function decodeCollectBody (req: Request): Promise<AnalyticEvent[]> {
 
 export function createServer (ctx: MeasureContext): Express {
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.json({ limit: config.MaxPayloadSize, type: 'application/json' }))
   app.use(express.raw({ limit: config.MaxPayloadSize, type: 'application/octet-stream' }))

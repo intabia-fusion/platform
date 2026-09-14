@@ -90,6 +90,7 @@ export function createServer (storageConfig: StorageConfiguration, brandings: Br
   })
 
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.json())
 

@@ -138,6 +138,7 @@ export async function createServer (
   const workspaceCleaner = createWorkspaceCleaner(ctx, queue, datalake)
 
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.json({ limit: '50mb' }))
   app.use(fileUpload({ useTempFiles: true, tempFileDir: tempDir.path }))

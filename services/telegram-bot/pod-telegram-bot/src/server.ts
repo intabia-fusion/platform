@@ -62,6 +62,7 @@ const wrapRequest = (fn: AsyncRequestHandler) => (req: Request, res: Response, n
 
 export function createServer (bot: Telegraf<TgContext>, worker: PlatformWorker, ctx: MeasureContext): Express {
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(cors())
   app.use(express.json())

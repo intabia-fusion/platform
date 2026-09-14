@@ -54,6 +54,7 @@ const handleRequest = async (
 
 export async function createServer (ctx: MeasureContext, config: Config): Promise<{ app: Express, close: () => void }> {
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(
     cors({

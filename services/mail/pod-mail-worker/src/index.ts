@@ -51,6 +51,7 @@ async function main (): Promise<void> {
   initQueue(ctx, config.serviceId, baseConfig)
 
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(cors())
   app.use(

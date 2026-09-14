@@ -17,6 +17,7 @@ const catchError = (fn: Handler) => (req: Request, res: Response, next: NextFunc
 
 export function createServer (endpoints: Array<[string, Handler]>): Express {
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(cors())
   app.use(express.json())

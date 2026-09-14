@@ -159,8 +159,10 @@ export const main = async (): Promise<void> => {
   const storageConfig = storageConfigs.storages.find((it) => ['datalake', 's3'].includes(it.kind))
   const s3storageConfig = s3StorageConfigs?.storages.findLast((p) => p.kind === 's3')
 
-  const app = express()
   const port = config.Port
+
+  const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.raw({ type: 'application/webhook+json' }))
   app.use(express.json())

@@ -130,6 +130,7 @@ export function createServer (
   const whitelistedHostnames = allowedHostnames.length > 0 ? new Set(allowedHostnames) : null
 
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.json())
   app.use(withMeasureContext({ ctx: measureCtx }))

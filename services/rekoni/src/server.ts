@@ -46,6 +46,7 @@ const extractToken = (header: IncomingHttpHeaders): any => {
 
 export const startServer = async (): Promise<void> => {
   const app = express()
+  app.disable('x-powered-by')
 
   setMetadata(serverToken.metadata.Secret, process.env.SECRET)
   setMetadata(serverToken.metadata.Service, 'rekoni')

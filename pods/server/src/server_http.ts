@@ -153,6 +153,7 @@ export function startHttpServer (
   }
 
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
 
   const childLogger = ctx.logger.childLogger?.('requests', {

@@ -51,6 +51,7 @@ export async function start (ctx: MeasureContext, config: Config, storageAdapter
   ctx.info('Starting collaborator server', { config })
 
   const app = express()
+  app.disable('x-powered-by')
   app.use(cors())
   app.use(express.json({ limit: '10mb' }))
   app.use(bp.json({ limit: '10mb' }))

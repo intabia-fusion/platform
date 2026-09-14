@@ -55,6 +55,7 @@ export async function start (ctx: MeasureContext, brandingMap: BrandingMap): Pro
   const middleware = createNodeMiddleware(octokitApp.webhooks, { path })
 
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(middleware as any)
   app.use(cors())

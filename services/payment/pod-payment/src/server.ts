@@ -168,6 +168,7 @@ export async function createServer (
   close: () => void
 }> {
   const app = express()
+  app.disable('x-powered-by')
   // Trust one proxy hop (traefik). `true` trusts whole XFF chain -> client spoofs IP, evades per-IP limiter.
   app.set('trust proxy', 1)
   app.use(cors())

@@ -32,6 +32,7 @@ const catchError = (fn: RequestHandler) => (req: Request, res: Response, next: N
 
 export function createServer (endpoints: Endpoint[]): Express {
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(cors())
   app.use(express.json())

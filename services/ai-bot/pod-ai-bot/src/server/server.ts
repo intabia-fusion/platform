@@ -74,6 +74,7 @@ const isWorkspaceOwner = async (req: Request): Promise<boolean> => {
 export function createServer (controller: AIControl, ctx: MeasureContext, app?: Express): Express {
   if (app === undefined) {
     app = express()
+    app.disable('x-powered-by')
     app.use(cors())
   }
   app.use((req, res, next) => {

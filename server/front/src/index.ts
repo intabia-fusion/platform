@@ -279,6 +279,7 @@ export function start (
   extraConfig?: Record<string, string | undefined>
 ): () => void {
   const app = express()
+  app.disable('x-powered-by')
 
   const tempFileDir = mkdtempSync(join(tmpdir(), 'front-'))
 
@@ -332,6 +333,14 @@ export function start (
       skip: (_req, res) => !accessLogAll && res.statusCode < 400
     })
   )
+
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+    res.setHeader('Permissions-Policy', 'accelerometer=(), geolocation=(), gyroscope=(), payment=(), usb=()')
+    next()
+  })
 
   const data = {
     ACCOUNTS_URL: config.accountsUrl,
