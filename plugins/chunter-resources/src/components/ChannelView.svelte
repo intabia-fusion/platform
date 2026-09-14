@@ -286,7 +286,6 @@
           <SearchPanel
             space={searchSpace}
             attachedTo={searchAttachedTo}
-            showEscalate={false}
             filters={searchFilters}
             bind:value={searchQuery}
             on:select={(e) => {

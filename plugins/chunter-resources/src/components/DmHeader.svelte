@@ -18,18 +18,12 @@
   import { CombineAvatars, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import { type Ref, notEmpty } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { SearchEdit } from '@hcengineering/ui'
   import { openDoc } from '@hcengineering/view-resources'
 
   import chunter from '../plugin'
   import { getDmName } from '../utils'
-  import { navigateToSpecial } from '../navigation'
-  import { seedGlobalSearch } from '../search/store'
 
   export let spaceId: Ref<DirectMessage> | undefined
-  export let withSearch: boolean = true
-
-  let searchValue: string = ''
 
   const client = getClient()
   const query = createQuery()
@@ -60,19 +54,6 @@
         <span class="ac-header__title">{name}</span>
       </div>
     {/await}
-  {/if}
-  {#if withSearch}
-    <SearchEdit
-      value={searchValue}
-      on:change={(ev) => {
-        searchValue = ev.detail
-
-        if (ev.detail !== '') {
-          seedGlobalSearch({ search: ev.detail, filters: {}, sort: 'relevance' })
-          navigateToSpecial('browser')
-        }
-      }}
-    />
   {/if}
 </div>
 

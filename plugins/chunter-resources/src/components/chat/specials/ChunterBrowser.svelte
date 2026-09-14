@@ -14,10 +14,13 @@
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
   import { FileBrowser } from '@hcengineering/attachment-resources'
-  import { Scroller, Switcher } from '@hcengineering/ui'
+  import { getCurrentLocation, navigate, Scroller, Switcher } from '@hcengineering/ui'
+  import { type SearchSortOrder } from '@hcengineering/core'
 
   import { SearchType } from '../../../utils'
-  import { takePendingSearch } from '../../../search/store'
+  import { peekSearchSnapshot, takePendingSearch } from '../../../search/store'
+  import { filtersFromQuery, filtersToQuery, sortFromQuery } from '../../../search/url'
+  import type { ChatSearchFilters } from '../../../search/types'
   import { openSearchResult } from '../../../navigation'
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
@@ -30,8 +33,39 @@
   $: localStorage.setItem(localStorageKey, searchType.toString())
 
   const pending = takePendingSearch()
+  const startLoc = getCurrentLocation()
+  const last = startLoc.query?.q == null ? peekSearchSnapshot() : undefined
 
-  let query: string = pending?.search ?? ''
+  let query: string = pending?.search ?? last?.search ?? (startLoc.query?.q ?? '')
+  let filters: ChatSearchFilters = pending?.filters ?? last?.filters ?? {}
+  let sort: SearchSortOrder = pending?.sort ?? last?.sort ?? sortFromQuery(startLoc.query) ?? 'relevance'
+
+  let ready = pending !== undefined || last !== undefined
+  if (!ready) {
+    void filtersFromQuery(startLoc.query).then((restored) => {
+      filters = restored
+      ready = true
+    })
+  }
+
+  let lastWritten: string = ''
+
+  $: if (ready) rememberSearch(query, filters, sort)
+
+  function rememberSearch (query: string, filters: ChatSearchFilters, sort: SearchSortOrder): void {
+    const params: Record<string, string> = { ...filtersToQuery(filters, sort) }
+    if (query !== '') params.q = query
+
+    const serialized = JSON.stringify(params)
+    if (serialized === lastWritten) return
+    lastWritten = serialized
+
+    const loc = getCurrentLocation()
+    const { q, type, from, in: inParam, after, before, files, transcripts, sort: s, ...rest } = loc.query ?? {}
+    loc.query = { ...rest, ...params }
+    navigate(loc, true)
+  }
+
   const COMPACT_TABS_WIDTH = 640
   let headerWidth: number = 0
   $: compactTabs = headerWidth > 0 && headerWidth < COMPACT_TABS_WIDTH
@@ -88,11 +122,11 @@
   </svelte:fragment>
 </Header>
 
-{#if searchType === SearchType.Messages}
+{#if searchType === SearchType.Messages && ready}
   <SearchPanel
     bind:value={query}
-    initialFilters={pending?.filters}
-    initialSort={pending?.sort}
+    bind:filters
+    bind:sort
     on:select={(e) => {
       void openSearchResult(e.detail.raw.doc)
     }}

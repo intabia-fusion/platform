@@ -14,25 +14,32 @@
 -->
 <script lang="ts">
   import { type Doc, type Ref, type SearchSortOrder, type Space } from '@hcengineering/core'
-  import { IconOptions, Label, ModernButton, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { IconOptions, Label, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
+  import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
+  import { get } from 'svelte/store'
 
   import chunter from '../../../plugin'
-  import { createChatSearchStore, type PendingSearch } from '../../../search/store'
+  import {
+    createChatSearchStore,
+    keepSearchSnapshot,
+    searchKey,
+    takeSearchSnapshot
+  } from '../../../search/store'
   import type { ChatSearchFilters, SearchResultRow } from '../../../search/types'
   import SearchFilterBar from './SearchFilterBar.svelte'
   import SearchResultsList from './SearchResultsList.svelte'
 
   export let space: Ref<Space> | undefined = undefined
   export let attachedTo: Ref<Doc> | undefined = undefined
-  export let showEscalate: boolean = space !== undefined
   export let value: string = ''
-  export let initialFilters: ChatSearchFilters | undefined = undefined
-  export let initialSort: SearchSortOrder | undefined = undefined
   export let filters: ChatSearchFilters = {}
+  export let sort: SearchSortOrder = 'relevance'
 
   const dispatch = createEventDispatcher()
   const store = createChatSearchStore({ space, attachedTo })
+
+  let divScroll: HTMLElement | undefined | null = undefined
+  let scrolledFor: string | undefined
 
   $: inChannel = space !== undefined || attachedTo !== undefined
   $: visible = !inChannel || $store.results.length > 0 || $store.failure !== undefined
@@ -48,37 +55,68 @@
   $: sortLabel = (sortItems.find((i) => i.id === $store.sort) ?? sortItems[0]).label
 
   onMount(() => {
-    if (initialSort !== undefined) store.setSort(initialSort)
-    if (initialFilters !== undefined) store.setFilters(initialFilters)
-    if (value !== '') {
-      store.setSearch(value)
+    if (value === '') return
+
+    const key = searchKey(value, filters, sort)
+    const restored = inChannel ? undefined : takeSearchSnapshot(key)
+    if (restored !== undefined) {
+      scrolledFor = key
+      store.setSearchSilently(value)
+      store.restore(restored)
+      void tick().then(() => {
+        if (divScroll != null) divScroll.scrollTop = restored.scrollTop
+      })
+      return
     }
+
+    store.setSearch(value)
   })
 
   onDestroy(() => {
+    if (!inChannel) {
+      const state = get(store)
+      if (state.results.length > 0) {
+        keepSearchSnapshot({
+          key: searchKey(state.search, state.filters, state.sort),
+          search: state.search,
+          filters: state.filters,
+          sort: state.sort,
+          results: state.results,
+          cursor: store.getCursor(),
+          total: state.total,
+          totalExact: state.totalExact,
+          done: state.done,
+          scrollTop: divScroll?.scrollTop ?? 0
+        })
+      }
+    }
     store.destroy()
   })
 
   $: store.setSearch(value)
   $: store.setFilters(filters)
+  $: store.setSort(sort)
+
+  $: if ($store.results.length > 0) {
+    const key = searchKey($store.search, $store.filters, $store.sort)
+    if (scrolledFor !== undefined && scrolledFor !== key && divScroll != null) {
+      divScroll.scrollTop = 0
+    }
+    scrolledFor = key
+  }
   $: if (selection >= $store.results.length) selection = 0
 
   function handleSortSelected (id: unknown): void {
-    store.setSort(id as SearchSortOrder)
+    sort = id as SearchSortOrder
   }
 
-  function handleFiltersChanged (filters: ChatSearchFilters): void {
-    store.setFilters(filters)
+  function handleFiltersChanged (next: ChatSearchFilters): void {
+    filters = next
   }
 
   function open (row: SearchResultRow | undefined): void {
     if (row === undefined) return
     dispatch('select', row)
-  }
-
-  function escalate (): void {
-    const pending: PendingSearch = { search: value, filters: $store.filters, sort: $store.sort }
-    dispatch('escalate', pending)
   }
 
   function onWindowKeydown (e: KeyboardEvent): void {
@@ -159,6 +197,7 @@
 
   <div class="results">
     <SearchResultsList
+      bind:divScroll
       state={$store}
       {selection}
       showChannel={!inChannel}
@@ -176,16 +215,6 @@
     />
   </div>
 
-  {#if showEscalate && value !== ''}
-    <div class="footer">
-      <ModernButton
-        label={chunter.string.SearchAllChannels}
-        kind={'tertiary'}
-        size={'small'}
-        on:click={escalate}
-      />
-    </div>
-  {/if}
 </div>
 {/if}
 
@@ -229,11 +258,6 @@
 
   .panel.in-channel .results {
     flex: 0 1 auto;
-  }
-
-  .footer {
-    border-top: 1px solid var(--theme-divider-color);
-    padding: 0.25rem 0.5rem;
   }
 
   @media (max-width: 480px) {

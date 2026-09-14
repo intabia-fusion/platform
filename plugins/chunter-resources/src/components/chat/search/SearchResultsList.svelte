@@ -25,6 +25,7 @@
   export let selection: number = 0
   export let showChannel: boolean = true
   export let maxHeight: number | undefined = undefined
+  export let divScroll: HTMLElement | undefined | null = undefined
 
   // A one line message; `VirtualRow` measures the real height before collapsing a row, so this
   // is only the guess for a row that has never been on screen.
@@ -32,7 +33,6 @@
 
   const dispatch = createEventDispatcher()
 
-  let divScroll: HTMLElement | undefined | null = undefined
 
   function handleScroll (): void {
     if (divScroll == null || state.done || state.loadingMore) return

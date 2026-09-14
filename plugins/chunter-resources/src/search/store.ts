@@ -36,6 +36,9 @@ const emptyState: ChatSearchState = {
 }
 
 export interface ChatSearchStore extends Readable<ChatSearchState> {
+  getCursor: () => string | undefined
+  setSearchSilently: (search: string) => void
+  restore: (snapshot: SearchSnapshot) => void
   setSearch: (search: string) => void
   setFilters: (filters: ChatSearchFilters) => void
   setSort: (sort: SearchSortOrder) => void
@@ -185,6 +188,30 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
   return {
     subscribe: store.subscribe,
 
+    getCursor (): string | undefined {
+      return cursor
+    },
+
+    setSearchSilently (search: string): void {
+      store.update((s) => ({ ...s, search }))
+    },
+
+    restore (snapshot: SearchSnapshot): void {
+      clearTimeout(timer)
+      generation++
+      cursor = snapshot.cursor
+      store.update((s) => ({
+        ...s,
+        results: snapshot.results,
+        total: snapshot.total,
+        totalExact: snapshot.totalExact,
+        loading: false,
+        loadingMore: false,
+        done: snapshot.done,
+        failure: undefined
+      }))
+    },
+
     setSearch (search: string): void {
       if (get(store).search === search) return
       cursor = undefined
@@ -240,6 +267,40 @@ export interface PendingSearch {
 }
 
 const pendingSearchQuery = writable<PendingSearch | undefined>(undefined)
+
+export interface SearchSnapshot {
+  key: string
+  search: string
+  filters: ChatSearchFilters
+  sort: SearchSortOrder
+  results: SearchResultRow[]
+  cursor?: string
+  total?: number
+  totalExact?: boolean
+  done: boolean
+  scrollTop: number
+}
+
+let snapshot: SearchSnapshot | undefined
+
+export function searchKey (search: string, filters: ChatSearchFilters, sort: SearchSortOrder): string {
+  return JSON.stringify({ search: search.trim(), filters, sort })
+}
+
+export function keepSearchSnapshot (value: SearchSnapshot): void {
+  snapshot = value
+}
+
+export function takeSearchSnapshot (key: string): SearchSnapshot | undefined {
+  if (snapshot?.key !== key) return undefined
+  const value = snapshot
+  snapshot = undefined
+  return value
+}
+
+export function peekSearchSnapshot (): SearchSnapshot | undefined {
+  return snapshot
+}
 
 export function seedGlobalSearch (search: PendingSearch): void {
   pendingSearchQuery.set(search)
