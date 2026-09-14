@@ -807,6 +807,23 @@ export async function loadCachesForPersonRefs (client: Client, personRefs: Array
   }
 }
 
+export async function getSocialIdsByPersonRefsBase (
+  client: Client,
+  personRefs: Array<Ref<Person>>
+): Promise<Map<Ref<Person>, PersonId[]>> {
+  const missing = personRefs.filter((ref) => !contactCache.personIdsByPersonRef.has(ref))
+  if (missing.length > 0) {
+    await loadCachesForPersonRefs(client, missing)
+  }
+
+  const result = new Map<Ref<Person>, PersonId[]>()
+  for (const ref of personRefs) {
+    result.set(ref, Array.from(contactCache.personIdsByPersonRef.get(ref) ?? []))
+  }
+
+  return result
+}
+
 export async function getPersonRefByPersonId (client: Client, personId: PersonId): Promise<Ref<Person> | null> {
   if (!contactCache.personRefByPersonId.has(personId)) {
     await loadCachesForPersonId(client, personId)
