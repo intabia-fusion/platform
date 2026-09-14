@@ -11,6 +11,8 @@
     "build:lint": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --lint",
     "test": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --test",
     "jest": "node ./foundations/utils/packages/platform-rig/bin/jest.js",
+    "integration": "node ./foundations/utils/packages/platform-rig/bin/test-group.js integration",
+    "bench": "node ./foundations/utils/packages/platform-rig/bin/test-group.js bench",
     "bundle": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle",
     "package": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle --package",
     "docker:build": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --docker-build",
