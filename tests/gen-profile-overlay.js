@@ -9,8 +9,9 @@
 // One-shot containers that exit before any test runs, plus non-Node images where the V8 flags
 // would do nothing.
 const SKIP = new Set(['db-migrator', 'elastic-plugins'])
+const namespace = process.env.DOCKER_NAMESPACE ?? 'intabiafusion'
 const isOurNodeImage = (image) =>
-  typeof image === 'string' && image.includes('intabiafusion/') && !image.includes('-go')
+  typeof image === 'string' && image.includes(`${namespace}/`) && !image.includes('-go')
 
 let raw = ''
 process.stdin.setEncoding('utf8')
@@ -30,7 +31,7 @@ process.stdin.on('end', () => {
     .sort()
 
   if (services.length === 0) {
-    console.error('gen-profile-overlay: no intabiafusion services found')
+    console.error(`gen-profile-overlay: no ${namespace} services found`)
     process.exit(1)
   }
 

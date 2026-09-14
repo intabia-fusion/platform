@@ -35,10 +35,12 @@ function getDockerImageName(cwd) {
     if (!dockerBuildScript) return null
     
     // Extract image name from script like:
-    // "../../common/scripts/docker_build.sh intabiafusion/rating"
+    // "../../common/scripts/docker_build.sh rating"
     const match = dockerBuildScript.match(/docker_build\.sh\s+([^\s]+)/)
     if (match) {
-      return match[1]
+      // docker_build.sh prepends the namespace to a bare component name.
+      const namespace = process.env.DOCKER_NAMESPACE ?? 'intabiafusion'
+      return match[1].includes('/') ? match[1] : `${namespace}/${match[1]}`
     }
     
     return null

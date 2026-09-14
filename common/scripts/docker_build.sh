@@ -3,6 +3,9 @@ set -eo pipefail
 
 version=$(git rev-parse HEAD)
 
+# $1 is the component name; the namespace comes from the environment.
+case "$1" in */*) image="$1" ;; *) image="${DOCKER_NAMESPACE:-intabiafusion}/$1" ;; esac
+
 # Check for cleanup flag from environment
 cleanup=false
 if [ "$DOCKER_BUILD_CLEANUP" = "true" ]; then
@@ -11,17 +14,23 @@ fi
 
 echo "Building version: $version"
 
+# Dockerfiles that install their own deps read this; unset means the public registry.
+registry_arg=()
+if [ -n "$NPM_REGISTRY" ]; then
+  registry_arg=(--build-arg "NPM_REGISTRY=$NPM_REGISTRY")
+fi
+
 # Optional extra tag: DOCKER_TAG=mytag pnpm docker -> image:mytag
-tags=(-t "$1" -t "$1:$version")
+tags=(-t "$image" -t "$image:$version")
 if [ -n "$DOCKER_TAG" ]; then
-  tags+=(-t "$1:$DOCKER_TAG")
+  tags+=(-t "$image:$DOCKER_TAG")
 fi
 
 # Add PACKAGE_HASH label if provided (for caching)
 if [ -n "$PACKAGE_HASH" ]; then
-  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" --label "PACKAGE_HASH=$PACKAGE_HASH" "${tags[@]}" ${DOCKER_EXTRA} .
+  docker build --build-arg BUILD_ID="$version" "${registry_arg[@]}" --label "BUILD_ID=$version" --label "PACKAGE_HASH=$PACKAGE_HASH" "${tags[@]}" ${DOCKER_EXTRA} .
 else
-  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" "${tags[@]}" ${DOCKER_EXTRA} .
+  docker build --build-arg BUILD_ID="$version" "${registry_arg[@]}" --label "BUILD_ID=$version" "${tags[@]}" ${DOCKER_EXTRA} .
 fi
 
 if [ "$cleanup" = true ]; then

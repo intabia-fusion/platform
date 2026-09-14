@@ -1,6 +1,9 @@
 FROM intabiafusion/love-agent-base:v20260309
 WORKDIR /usr/src/app
 
+ARG NPM_REGISTRY
+RUN [ -z "$NPM_REGISTRY" ] || pnpm config set registry "$NPM_REGISTRY"
+
 COPY package.json package.json
 COPY pnpm-lock.yaml pnpm-lock.yaml
 COPY docker-pnpm-workspace.yaml pnpm-workspace.yaml

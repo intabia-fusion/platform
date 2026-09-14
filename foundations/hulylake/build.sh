@@ -1,3 +1,3 @@
 #!/bin/bash
 
-../../common/scripts/docker_build.sh intabiafusion/hulylake
+../../common/scripts/docker_build.sh hulylake

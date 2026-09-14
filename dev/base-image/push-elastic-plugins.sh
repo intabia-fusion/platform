@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-IMAGE="intabiafusion/elastic-plugins"
+IMAGE="${DOCKER_NAMESPACE:-intabiafusion}/elastic-plugins"
 TAG="${1:-8.19.1-slim}"
 
 # FROM_IMAGE=true — build from existing full image (no CDN needed)

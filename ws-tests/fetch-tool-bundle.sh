@@ -2,11 +2,13 @@
 
 set -e
 
+NS="${DOCKER_NAMESPACE:-intabiafusion}"
+
 # Define the path to the docker-compose.override.yml
 DOCKER_COMPOSE_PATH="./docker-compose.override.yml"
 
 # Extract the version of intabiafusion/transactor from the docker-compose file
-VERSION=$(grep "image: intabiafusion/transactor:" "$DOCKER_COMPOSE_PATH" | head -1 | sed -E 's/.*image: intabiafusion\/transactor:([^[:space:]]+).*/\1/')
+VERSION=$(grep -E "image: .*/transactor:" "$DOCKER_COMPOSE_PATH" | head -1 | sed -E 's#.*/transactor:([^[:space:]"]+).*#\1#')
 
 if [ -z "$VERSION" ]; then
   echo "Error: Could not find transactor version in docker-compose file"
@@ -14,13 +16,13 @@ if [ -z "$VERSION" ]; then
 fi
 
 echo "Found transactor version: $VERSION"
-echo "Fetching intabiafusion/tool:$VERSION..."
+echo "Fetching $NS/tool:$VERSION..."
 
 # Pull the tool image with the same version
-docker pull "intabiafusion/tool:$VERSION"
+docker pull "$NS/tool:$VERSION"
 
 # Create a temporary container from the image
-CONTAINER_ID=$(docker container create "intabiafusion/tool:$VERSION")
+CONTAINER_ID=$(docker container create "$NS/tool:$VERSION")
 
 # Extract bundle.js from the container
 echo "Extracting bundle.js..."

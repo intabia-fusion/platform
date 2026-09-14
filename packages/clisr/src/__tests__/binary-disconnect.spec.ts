@@ -375,7 +375,9 @@ describe('binary request disconnect/recovery', () => {
       sess.lastPing = Date.now() - (server.pingTimeout + 100)
       await (server as any).handleTick()
       expect((server as any).sessions.size).toBe(0)
-      expect((server as any).reconnectQueue.size).toBe(1)
+      // By id, not size: the client reconnects and its fresh session may itself
+      // time out under load, adding an unrelated entry to the queue.
+      expect((server as any).reconnectQueue.has(sess.sessionId)).toBe(true)
 
       // Watch the inner per-session request reject. We tap into requests map BEFORE second
       // handleTick clears it.
@@ -389,13 +391,13 @@ describe('binary request disconnect/recovery', () => {
       })
 
       // Force reconnect window to elapse and tick again.
-      const queued = Array.from((server as any).reconnectQueue.values())[0] as any
+      const queued = (server as any).reconnectQueue.get(sess.sessionId)
       queued.lastPing = Date.now() - (server.reconnectTimeout + 100)
       await (server as any).handleTick()
       // Allow the rejection callback to flush.
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      expect((server as any).reconnectQueue.size).toBe(0)
+      expect((server as any).reconnectQueue.has(sess.sessionId)).toBe(false)
       expect(rejected).toBe(true)
       expect(rejectError ?? '').toContain('Session reconnect timeout')
 

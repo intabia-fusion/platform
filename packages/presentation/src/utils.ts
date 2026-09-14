@@ -380,6 +380,16 @@ export function isDisabled (feature?: string): boolean {
   return alwaysDisabled.includes(feature) || (getMetadata(plugin.metadata.DisabledFeatures)?.has(feature) ?? false)
 }
 
+/**
+ * Server bundles are `<semver>-<sha>`, desktop is bare semver - compatibility checks
+ * must compare the semver part only.
+ *
+ * @public
+ */
+export function releaseVersion (version: string): string {
+  return version.split('-')[0]
+}
+
 export type OnClientListener = (client: Client, account: Account) => void | Promise<void>
 const onClientListeners: OnClientListener[] = []
 

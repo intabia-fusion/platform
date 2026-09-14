@@ -3,6 +3,8 @@
 # Define the target version
 VERSION="$1"
 
+NS="${DOCKER_NAMESPACE:-intabiafusion}"
+
 # Path to docker-compose.yaml file
 COMPOSE_FILE="./docker-compose.yaml"
 OVERRIDE_FILE="./docker-compose.override.versions.yml"
@@ -19,16 +21,16 @@ echo "services:" >> $OVERRIDE_FILE
 
 # Extract hardcoreeng services and add them to the override file with fixed versions
 # Image lines may be quoted and carry a ${DOCKER_TAG:-latest} suffix.
-grep -B 1 -E "image: '?intabiafusion/" $COMPOSE_FILE | grep -v "\-\-" | grep -v "image:" | sed 's/:$//g' | while read -r service; do
+grep -B 1 -E "image: .*DOCKER_NAMESPACE" $COMPOSE_FILE | grep -v "\-\-" | grep -v "image:" | sed 's/:$//g' | while read -r service; do
     service=$(echo $service | tr -d ' ')
     if [ -n "$service" ]; then
         echo "  $service:" >> $OVERRIDE_FILE
 
         # Get the pod name: strip quotes, registry prefix and tag
-        image=$(grep -A 1 "$service:" $COMPOSE_FILE | grep -E "image: '?intabiafusion/" | awk '{print $2}' | tr -d "'")
-        pod_name=$(echo $image | sed -E 's#^intabiafusion/##; s#:.*$##')
+        image=$(grep -A 1 "$service:" $COMPOSE_FILE | grep -E "image: .*DOCKER_NAMESPACE" | awk '{print $2}' | tr -d "'\"")
+        pod_name=$(echo $image | sed -E 's#^.*/##; s#:.*$##')
 
-        echo "    image: intabiafusion/$pod_name:$VERSION" >> $OVERRIDE_FILE
+        echo "    image: $NS/$pod_name:$VERSION" >> $OVERRIDE_FILE
         echo "    pull_policy: always" >> $OVERRIDE_FILE
         if [ "$pod_name" == "account" ]; then
           echo "    environment:" >> $OVERRIDE_FILE
@@ -42,7 +44,7 @@ grep -B 1 -E "image: '?intabiafusion/" $COMPOSE_FILE | grep -v "\-\-" | grep -v 
 done
 
 echo "hulylake:" >> $OVERRIDE_FILE
-echo "    image: intabiafusion/hulylake:$VERSION" >> $OVERRIDE_FILE
+echo "    image: $NS/hulylake:$VERSION" >> $OVERRIDE_FILE
 echo "    pull_policy: always" >> $OVERRIDE_FILE
 
 ./fetch-tool-bundle.sh
