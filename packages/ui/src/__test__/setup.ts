@@ -29,3 +29,13 @@ if ((globalThis as any).PointerEvent === undefined) {
 // Nothing calls Theme.svelte here, so themeStore is an empty writable and every component that
 // renders a Label ($themeStore.language) throws on mount.
 initThemeStore()
+
+// jsdom has no ResizeObserver, and `use:resizeObserver` sits on most components that size themselves.
+// A no-op is enough: jsdom never lays anything out, so it would never fire.
+if ((globalThis as any).ResizeObserver === undefined) {
+  ;(globalThis as any).ResizeObserver = class {
+    observe (): void {}
+    unobserve (): void {}
+    disconnect (): void {}
+  }
+}
