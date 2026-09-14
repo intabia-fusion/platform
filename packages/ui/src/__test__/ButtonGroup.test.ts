@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ButtonGroup from '../components/ButtonGroup.svelte'
 import type { ButtonItem } from '../types'
 
@@ -27,10 +28,10 @@ const ITEMS: ButtonItem[] = [
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ButtonGroup } {
+function mount (props: Partial<ComponentProps<ButtonGroup>>): { host: HTMLElement, component: ButtonGroup } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ButtonGroup({ target: host, props })
+  const component = new ButtonGroup({ target: host, props: props as ComponentProps<ButtonGroup> })
   return { host, component }
 }
 
@@ -91,7 +92,9 @@ describe('ButtonGroup', () => {
   it('applies shared props to every button', () => {
     const { host } = mount({ items: ITEMS, props: { size: 'large' } })
     const buttons = host.querySelectorAll('button.antiButton')
-    buttons.forEach((b) => { expect(b.classList.contains('large')).toBe(true) })
+    buttons.forEach((b) => {
+      expect(b.classList.contains('large')).toBe(true)
+    })
   })
 
   it('ids each button as btnGID-<item id>', () => {

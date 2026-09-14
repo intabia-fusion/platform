@@ -14,6 +14,7 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import MonthSquare from '../components/calendar/MonthSquare.svelte'
 import { areDatesEqual, day, firstDay, getWeekDayName, weekday } from '../components/calendar/internal/DateUtils'
 import { capitalizeFirstLetter } from '../utils'
@@ -26,10 +27,10 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<MonthSquare>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new MonthSquare({ target: host, props })
+  const component = new MonthSquare({ target: host, props: props as ComponentProps<MonthSquare> })
   return { component, host }
 }
 

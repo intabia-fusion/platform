@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernCheckbox from '../components/ModernCheckbox.svelte'
 
 let target: HTMLElement
@@ -27,10 +28,10 @@ interface Mounted {
   element: HTMLDivElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ModernCheckbox>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernCheckbox({ target: host, props })
+  const component = new ModernCheckbox({ target: host, props: props as ComponentProps<ModernCheckbox> })
   return {
     component,
     host,

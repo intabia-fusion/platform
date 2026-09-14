@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernPopupLabels from '../components/ModernPopupLabels.svelte'
 import type { DropdownTextItem } from '../types'
 
@@ -23,10 +24,13 @@ const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: ModernPopupLabels } {
+function mount (props: Partial<ComponentProps<ModernPopupLabels>> = {}): {
+  host: HTMLElement
+  component: ModernPopupLabels
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernPopupLabels({ target: host, props })
+  const component = new ModernPopupLabels({ target: host, props: props as ComponentProps<ModernPopupLabels> })
   return { host, component }
 }
 
@@ -66,9 +70,9 @@ describe('ModernPopupLabels', () => {
     const onClose = vi.fn()
     component.$on('close', onClose)
 
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onClose).toHaveBeenLastCalledWith(expect.objectContaining({ detail: 'id2' }))
   })
 
@@ -77,16 +81,16 @@ describe('ModernPopupLabels', () => {
     const onUpdate = vi.fn()
     component.$on('update', onUpdate)
 
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['id0'] }))
 
     component.$set({ selected: ['id0'] })
     await tick()
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: [] }))
   })
 
@@ -97,9 +101,9 @@ describe('ModernPopupLabels', () => {
     const onUpdate = vi.fn()
     component.$on('update', onUpdate)
 
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['id2'] }))
   })
 

@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import EditBox from '../components/EditBox.svelte'
 
 let target: HTMLElement
@@ -25,10 +26,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<EditBox>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new EditBox({ target: host, props })
+  const component = new EditBox({ target: host, props: props as ComponentProps<EditBox> })
   return { component, host, input: host.querySelector('input, textarea') as HTMLInputElement }
 }
 

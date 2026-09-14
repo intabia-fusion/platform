@@ -15,6 +15,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernTab from '../components/ModernTab.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
@@ -27,10 +28,10 @@ interface Mounted {
   container: HTMLElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ModernTab>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernTab({ target: host, props })
+  const component = new ModernTab({ target: host, props: props as ComponentProps<ModernTab> })
   return { component, host, container: host.querySelector('.container') as HTMLElement }
 }
 
@@ -51,7 +52,10 @@ describe('ModernTab', () => {
   })
 
   it('renders labelIntl and boldLabelIntl through Label (unregistered - shows the id)', () => {
-    const { container } = mount({ labelIntl: 'ui:string:Ok' as IntlString, boldLabelIntl: 'ui:string:Cancel' as IntlString })
+    const { container } = mount({
+      labelIntl: 'ui:string:Ok' as IntlString,
+      boldLabelIntl: 'ui:string:Cancel' as IntlString
+    })
     expect(container.textContent).toContain('ui:string:Ok')
     expect(container.querySelector('.label')?.textContent).toContain('ui:string:Cancel')
   })

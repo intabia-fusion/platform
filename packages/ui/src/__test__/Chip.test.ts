@@ -14,14 +14,15 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Chip from '../components/Chip.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: Chip } {
+function mount (props: Partial<ComponentProps<Chip>>): { host: HTMLElement, component: Chip } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Chip({ target: host, props })
+  const component = new Chip({ target: host, props: props as ComponentProps<Chip> })
   return { host, component }
 }
 

@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Month from '../components/calendar/Month.svelte'
 import { getMonthName } from '../components/calendar/internal/DateUtils'
 import { capitalizeFirstLetter } from '../utils'
@@ -23,10 +24,14 @@ let target: HTMLElement
 
 const monthYearOf = (date: Date): string => `${capitalizeFirstLetter(getMonthName(date))} ${date.getFullYear()}`
 
-function mount (currentDate: Date | null, props: Record<string, unknown> = {}): { host: HTMLElement, component: Month } {
+function mount (
+  currentDate: Date | null,
+  props: Partial<ComponentProps<Month>> = {}
+): { host: HTMLElement, component: Month } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Month({ target: host, props: { currentDate, ...props } })
+  const merged = { currentDate, ...props }
+  const component = new Month({ target: host, props: merged as ComponentProps<Month> })
   return { host, component }
 }
 

@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Timeline from '../components/Timeline.svelte'
 import type { TimelineItem, TimelineRow } from '../types'
 
@@ -34,10 +35,10 @@ function item (startOffsetDays: number, targetOffsetDays: number | undefined): T
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: Timeline } {
+function mount (props: Partial<ComponentProps<Timeline>> = {}): { host: HTMLElement, component: Timeline } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Timeline({ target: host, props })
+  const component = new Timeline({ target: host, props: props as ComponentProps<Timeline> })
   return { host, component }
 }
 
@@ -66,7 +67,13 @@ describe('Timeline', () => {
     expect(months[1].querySelector('span')?.textContent).toBe(monthLabel(new Date(2026, 1, 1)))
 
     const days = host.querySelectorAll('.day')
-    expect(Array.from(days).map((d) => (d as HTMLElement).style.left)).toEqual(['-70px', '-35px', '0px', '35px', '70px'])
+    expect(Array.from(days).map((d) => (d as HTMLElement).style.left)).toEqual([
+      '-70px',
+      '-35px',
+      '0px',
+      '35px',
+      '70px'
+    ])
     expect(Array.from(days).map((d) => d.textContent)).toEqual(['1', '8', '15', '22', '29'])
 
     const cursor = host.querySelector('.cursor') as HTMLElement
@@ -98,8 +105,18 @@ describe('Timeline', () => {
     const rowNoTarget: TimelineRow = { items: [item(2, undefined)] }
     const lines = [rowNull, rowRight, rowLeft, rowNoTarget]
 
-    function mountRows (extra: Record<string, unknown> = {}): { host: HTMLElement, component: Timeline, rows: NodeListOf<Element> } {
-      const { host, component } = mount({ currentTime: CURRENT_TIME, lines, selectedRows: [0, 3], selectedRow: 2, ...extra })
+    function mountRows (extra: Record<string, unknown> = {}): {
+      host: HTMLElement
+      component: Timeline
+      rows: NodeListOf<Element>
+    } {
+      const { host, component } = mount({
+        currentTime: CURRENT_TIME,
+        lines,
+        selectedRows: [0, 3],
+        selectedRow: 2,
+        ...extra
+      })
       return { host, component, rows: host.querySelectorAll('.listGrid') }
     }
 
@@ -231,11 +248,31 @@ describe('Timeline', () => {
     const nativeRect = Element.prototype.getBoundingClientRect.bind(null) as (this: Element) => DOMRect
     Element.prototype.getBoundingClientRect = function (this: Element): DOMRect {
       if (this.classList.contains('timeline-container')) {
-        const rect: DOMRect = { x: 0, y: 0, width: 1000, height: 1000, left: 0, top: 0, right: 1000, bottom: 1000, toJSON: () => ({}) }
+        const rect: DOMRect = {
+          x: 0,
+          y: 0,
+          width: 1000,
+          height: 1000,
+          left: 0,
+          top: 0,
+          right: 1000,
+          bottom: 1000,
+          toJSON: () => ({})
+        }
         return rect
       }
       if (this.classList.contains('timeline-header__time')) {
-        const rect: DOMRect = { x: 320, y: 0, width: 0, height: 1000, left: 320, top: 0, right: 320, bottom: 1000, toJSON: () => ({}) }
+        const rect: DOMRect = {
+          x: 320,
+          y: 0,
+          width: 0,
+          height: 1000,
+          left: 320,
+          top: 0,
+          right: 320,
+          bottom: 1000,
+          toJSON: () => ({})
+        }
         return rect
       }
       return nativeRect.call(this)

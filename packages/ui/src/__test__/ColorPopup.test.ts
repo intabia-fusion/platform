@@ -15,13 +15,18 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import ColorPopup from '../components/ColorPopup.svelte'
 
 let target: HTMLElement
 
-interface ColorValue { id: number | string, color: number, label: string }
+interface ColorValue {
+  id: number | string
+  color: number
+  label: string
+}
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ColorPopup } {
+function mount (props: Partial<ComponentProps<ColorPopup>>): { host: HTMLElement, component: ColorPopup } {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new ColorPopup({ target: host, props: props as any })
@@ -64,9 +69,7 @@ describe('ColorPopup', () => {
     const onClose = vi.fn()
     component.$on('close', onClose)
 
-    host.querySelectorAll<HTMLButtonElement>('.menu-item')[1].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host.querySelectorAll<HTMLButtonElement>('.menu-item')[1].dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onClose).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { id: 1, color: 1, label: 'color1' } }))
   })
 

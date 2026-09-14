@@ -15,14 +15,16 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import ListView from '../components/ListView.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: ListView } {
+function mount (props: Partial<ComponentProps<ListView>> = {}): { host: HTMLElement, component: ListView } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ListView({ target: host, props: { count: 0, ...props } })
+  const merged = { count: 0, ...props }
+  const component = new ListView({ target: host, props: merged as ComponentProps<ListView> })
   return { host, component }
 }
 

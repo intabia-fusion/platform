@@ -15,14 +15,15 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import ShowMore from '../components/ShowMore.svelte'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: ShowMore } {
+function mount (props: Partial<ComponentProps<ShowMore>> = {}): { host: HTMLElement, component: ShowMore } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ShowMore({ target: host, props })
+  const component = new ShowMore({ target: host, props: props as ComponentProps<ShowMore> })
   return { host, component }
 }
 

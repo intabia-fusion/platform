@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Dropdown from '../components/Dropdown.svelte'
 import DropdownPopup from '../components/DropdownPopup.svelte'
 import type { ListItem } from '../types'
@@ -38,7 +39,7 @@ interface Mounted {
   button: HTMLButtonElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<Dropdown>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new Dropdown({ target: host, props: props as any })
@@ -67,7 +68,11 @@ describe('Dropdown', () => {
   })
 
   it('opens exactly one popup with the dropdown popup component and props on click', async () => {
-    const { button } = mount({ items: ITEMS, placeholder: 'ui:string:Placeholder' as IntlString, label: 'ui:string:Title' as IntlString })
+    const { button } = mount({
+      items: ITEMS,
+      placeholder: 'ui:string:Placeholder' as IntlString,
+      label: 'ui:string:Title' as IntlString
+    })
     button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
     await tick()
 
@@ -111,12 +116,23 @@ describe('Dropdown', () => {
   })
 
   it("falls back to the component's own icon when the selected item has none", () => {
-    const { button } = mount({ items: ITEMS, selected: ITEMS[0], icon: ICON, placeholder: 'ui:string:Placeholder' as IntlString })
+    const { button } = mount({
+      items: ITEMS,
+      selected: ITEMS[0],
+      icon: ICON,
+      placeholder: 'ui:string:Placeholder' as IntlString
+    })
     expect(button.querySelector('.btn-icon')).not.toBeNull()
   })
 
   it('carries kind, size and justify to the trigger button', () => {
-    const { button } = mount({ items: ITEMS, placeholder: 'ui:string:Placeholder' as IntlString, kind: 'primary', size: 'large', justify: 'left' })
+    const { button } = mount({
+      items: ITEMS,
+      placeholder: 'ui:string:Placeholder' as IntlString,
+      kind: 'primary',
+      size: 'large',
+      justify: 'left'
+    })
     expect(button.classList.contains('primary')).toBe(true)
     expect(button.classList.contains('large')).toBe(true)
     expect(button.classList.contains('jf-left')).toBe(true)

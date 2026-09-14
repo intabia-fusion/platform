@@ -17,6 +17,7 @@ import { DateRangeMode } from '@hcengineering/core'
 import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import DateRangePresenter from '../components/calendar/DateRangePresenter.svelte'
 import { getMonthName } from '../components/calendar/internal/DateUtils'
 import { modalStore } from '../modals'
@@ -29,10 +30,10 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<DateRangePresenter>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new DateRangePresenter({ target: host, props })
+  const component = new DateRangePresenter({ target: host, props: props as ComponentProps<DateRangePresenter> })
   return { component, host }
 }
 

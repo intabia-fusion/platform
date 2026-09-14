@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import ScrollerBar from '../components/ScrollerBar.svelte'
 
 let target: HTMLElement
@@ -31,10 +32,11 @@ interface Mounted {
   track: HTMLElement
 }
 
-async function mount (props: Record<string, unknown> = {}): Promise<Mounted> {
+async function mount (props: Partial<ComponentProps<ScrollerBar>> = {}): Promise<Mounted> {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ScrollerBar({ target: host, props: { scroller: undefined as any, ...props } })
+  const merged = { scroller: undefined as any, ...props }
+  const component = new ScrollerBar({ target: host, props: merged as ComponentProps<ScrollerBar> })
   await settle()
   return {
     component,

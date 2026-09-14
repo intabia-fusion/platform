@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { get } from 'svelte/store'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import type { Ref, Doc } from '@hcengineering/core'
+import type { ComponentProps } from 'svelte'
 import Menu from '../components/Menu.svelte'
 import type { Action } from '../types'
 import { modalStore } from '../modals'
@@ -46,10 +47,10 @@ interface Mounted {
   buttons: HTMLButtonElement[]
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<Menu>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Menu({ target: host, props })
+  const component = new Menu({ target: host, props: props as ComponentProps<Menu> })
   return { component, host, buttons: Array.from(host.querySelectorAll('button')) }
 }
 
@@ -144,8 +145,9 @@ describe('Menu', () => {
   // focusTarget only opens a submenu when MouseSpeedTracker's focusSpeed is true, which it never
   // is in jsdom (no real mousemove ever fires) - pinned behaviour, not a desired one.
   it('does not open a submenu on click alone, since focus speed is never tracked in jsdom', () => {
-    mount({ actions: [action({ component: FakeSubmenu as any })] }).buttons[0]
-      .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    mount({ actions: [action({ component: FakeSubmenu as any })] }).buttons[0].dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true })
+    )
     expect(get(popupstore).length).toBe(0)
   })
 

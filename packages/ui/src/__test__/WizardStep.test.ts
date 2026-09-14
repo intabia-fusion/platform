@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import WizardStep from '../components/wizard/WizardStep.svelte'
 import type { WizardItemPosition, WizardItemPositionState } from '../..'
 
@@ -41,7 +42,8 @@ async function mount (
 ): Promise<Mounted> {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new WizardStep({ target: host, props: { label: LABEL, position, positionState, ...extra } })
+  const merged = { label: LABEL, position, positionState, ...extra }
+  const component = new WizardStep({ target: host, props: merged as ComponentProps<WizardStep> })
   await settle()
   return { component, host }
 }
@@ -59,8 +61,9 @@ describe('WizardStep', () => {
   it('renders nothing until the translation resolves', () => {
     const host = document.createElement('div')
     target.appendChild(host)
+    const merged = { label: LABEL, position: 'start', positionState: 'current' }
     // eslint-disable-next-line no-new
-    new WizardStep({ target: host, props: { label: LABEL, position: 'start', positionState: 'current' } })
+    new WizardStep({ target: host, props: merged as ComponentProps<WizardStep> })
     expect(host.querySelector('.bar')).toBeNull()
   })
 

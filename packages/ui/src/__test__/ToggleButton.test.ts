@@ -16,16 +16,17 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ToggleButton from '../components/ToggleButton.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { button: HTMLButtonElement, component: ToggleButton } {
+function mount (props: Partial<ComponentProps<ToggleButton>>): { button: HTMLButtonElement, component: ToggleButton } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ToggleButton({ target: host, props })
+  const component = new ToggleButton({ target: host, props: props as ComponentProps<ToggleButton> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import DropdownPopup from '../components/DropdownPopup.svelte'
 import type { ListItem } from '../types'
 
@@ -28,7 +29,7 @@ interface Mounted {
   host: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<DropdownPopup>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new DropdownPopup({ target: host, props: props as any })

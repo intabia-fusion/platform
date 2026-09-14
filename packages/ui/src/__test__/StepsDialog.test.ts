@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import type { DialogStep } from '../types'
+import type { ComponentProps } from 'svelte'
 import StepsDialog from '../components/StepsDialog.svelte'
 import { modalStore } from '../modals'
 
@@ -32,10 +33,11 @@ let target: HTMLElement
 
 // floatAside:true keeps Panel's aside shown: Panel re-derives its width from the mounted element on
 // every update and, in jsdom, that width is always 0 - which otherwise auto-collapses the aside.
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: StepsDialog } {
+function mount (props: Partial<ComponentProps<StepsDialog>>): { host: HTMLElement, component: StepsDialog } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new StepsDialog({ target: host, props: { floatAside: true, ...props } })
+  const merged = { floatAside: true, ...props }
+  const component = new StepsDialog({ target: host, props: merged as ComponentProps<StepsDialog> })
   return { host, component }
 }
 
@@ -71,7 +73,9 @@ describe('StepsDialog', () => {
 
   it('hides the Back button on the first step', () => {
     const { host } = mount({ steps: steps(3), title: 'ui:string:Title' as IntlString })
-    const buttonLabels = Array.from(host.querySelectorAll('.popupPanel-body__header ~ * .antiButton, button.antiButton'))
+    const buttonLabels = Array.from(
+      host.querySelectorAll('.popupPanel-body__header ~ * .antiButton, button.antiButton')
+    )
     // Back is only rendered once currentStepIndex > 0; on the first step there is just the primary button.
     const primaryButtons = host.querySelectorAll('button.antiButton.primary')
     const regularButtons = host.querySelectorAll('button.antiButton.regular')
@@ -87,7 +91,11 @@ describe('StepsDialog', () => {
   })
 
   it('a single-step dialog is its own last step: the primary button is the done button immediately', async () => {
-    const { host } = mount({ steps: steps(1), title: 'ui:string:Title' as IntlString, doneLabel: 'ui:string:Publish' as IntlString })
+    const { host } = mount({
+      steps: steps(1),
+      title: 'ui:string:Title' as IntlString,
+      doneLabel: 'ui:string:Publish' as IntlString
+    })
     const primary = host.querySelector('button.antiButton.primary') as HTMLButtonElement
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(primary.textContent?.trim()).toBe('ui:string:Publish')
@@ -111,7 +119,11 @@ describe('StepsDialog', () => {
   })
 
   it('renders stepsName in the aside only when provided', () => {
-    const withName = mount({ steps: steps(2), title: 'ui:string:Title' as IntlString, stepsName: 'ui:string:Steps' as IntlString })
+    const withName = mount({
+      steps: steps(2),
+      title: 'ui:string:Title' as IntlString,
+      stepsName: 'ui:string:Steps' as IntlString
+    })
     expect(withName.host.querySelector('.default-padding > h4.no-margin')).not.toBeNull()
 
     const withoutName = mount({ steps: steps(2), title: 'ui:string:Title' as IntlString })

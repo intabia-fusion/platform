@@ -16,16 +16,18 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import Modal from '../components/Modal.svelte'
 
 const LABEL = 'ui:string:Label' as IntlString
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { root: HTMLElement, component: Modal } {
+function mount (props: Partial<ComponentProps<Modal>> = {}): { root: HTMLElement, component: Modal } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Modal({ target: host, props: { type: 'type-popup', ...props } })
+  const merged = { type: 'type-popup', ...props }
+  const component = new Modal({ target: host, props: merged as ComponentProps<Modal> })
   return { root: host.querySelector('.hulyModal-container') as HTMLElement, component }
 }
 

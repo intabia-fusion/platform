@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernWizardBar from '../components/wizard/ModernWizardBar.svelte'
 import type { IWizardStep } from '../types'
 
@@ -27,10 +28,10 @@ const steps: readonly IWizardStep[] = [
   { id: 'c', title: 'ui:string:StepC' as IntlString }
 ]
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: ModernWizardBar } {
+function mount (props: Partial<ComponentProps<ModernWizardBar>>): { host: HTMLElement, component: ModernWizardBar } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernWizardBar({ target: host, props })
+  const component = new ModernWizardBar({ target: host, props: props as ComponentProps<ModernWizardBar> })
   return { host, component }
 }
 
@@ -75,8 +76,12 @@ describe('ModernWizardBar', () => {
       expect(c.classList.contains('filledHighlighted')).toBe(false)
     })
     expect(host.querySelectorAll('.checkmark')).toHaveLength(0)
-    host.querySelectorAll('.label').forEach((l) => { expect(l.classList.contains('highlighted')).toBe(false) })
-    host.querySelectorAll('.path').forEach((p) => { expect(p.classList.contains('highlighted')).toBe(false) })
+    host.querySelectorAll('.label').forEach((l) => {
+      expect(l.classList.contains('highlighted')).toBe(false)
+    })
+    host.querySelectorAll('.path').forEach((p) => {
+      expect(p.classList.contains('highlighted')).toBe(false)
+    })
   })
 
   it('marks steps before the selected one as past (checkmarked, highlighted), and the selected as current', () => {

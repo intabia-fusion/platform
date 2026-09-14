@@ -15,16 +15,21 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Header from '../components/Header.svelte'
 import { deviceOptionsStore } from '../index'
 import { modalStore } from '../modals'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: Header, container: HTMLElement } {
+function mount (props: Partial<ComponentProps<Header>> = {}): {
+  host: HTMLElement
+  component: Header
+  container: HTMLElement
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Header({ target: host, props })
+  const component = new Header({ target: host, props: props as ComponentProps<Header> })
   return { host, component, container: host.querySelector('.hulyHeader-container') as HTMLElement }
 }
 
@@ -103,7 +108,14 @@ describe('Header', () => {
     component.$on('close', onClose)
 
     modalStore.set([
-      { type: 'popup', id: 'p1', is: {} as any, props: {}, close: () => {}, options: { category: 'popup', overlay: true } }
+      {
+        type: 'popup',
+        id: 'p1',
+        is: {} as any,
+        props: {},
+        close: () => {},
+        options: { category: 'popup', overlay: true }
+      }
     ])
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     expect(onClose).not.toHaveBeenCalled()
@@ -121,7 +133,9 @@ describe('Header', () => {
 
     fullsizeButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     let visible = false
-    deviceOptionsStore.subscribe((d) => { visible = d.navigator.visible })()
+    deviceOptionsStore.subscribe((d) => {
+      visible = d.navigator.visible
+    })()
     expect(visible).toBe(true)
   })
 

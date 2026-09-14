@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import CheckBox from '../components/CheckBox.svelte'
 
 let target: HTMLElement
@@ -25,10 +26,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<CheckBox>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new CheckBox({ target: host, props })
+  const component = new CheckBox({ target: host, props: props as ComponentProps<CheckBox> })
   return {
     component,
     label: host.querySelector('.checkbox-container') as HTMLLabelElement,

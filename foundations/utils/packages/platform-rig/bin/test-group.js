@@ -67,7 +67,10 @@ function run (packages, label) {
   writeFileSync(configPath, `module.exports = ${JSON.stringify({ projects }, null, 2)}\n`)
   const args = ['-c', configPath, ...flags, ...jestArgs]
   if (testTimeout !== undefined) args.push(`--testTimeout=${testTimeout}`)
-  return spawnSync(jestBin, args, { cwd: root, stdio: 'inherit' }).status ?? 1
+  // A single package runs on its own jest: pnpm keeps dependencies per package, so a jest resolved
+  // from a sibling brings a ts-jest that cannot see this one's @types.
+  const bin = (packages.length === 1 ? findJestBin(packages) : null) ?? jestBin
+  return spawnSync(bin, args, { cwd: root, stdio: 'inherit' }).status ?? 1
 }
 
 let code = 0

@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernPopup from '../components/ModernPopup.svelte'
 import type { DropdownIntlItem } from '../types'
 
@@ -23,10 +24,10 @@ const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: ModernPopup } {
+function mount (props: Partial<ComponentProps<ModernPopup>> = {}): { host: HTMLElement, component: ModernPopup } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernPopup({ target: host, props })
+  const component = new ModernPopup({ target: host, props: props as ComponentProps<ModernPopup> })
   return { host, component }
 }
 
@@ -80,9 +81,9 @@ describe('ModernPopup', () => {
 
     component.$set({ selected: ['id0'] })
     await tick()
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: [] }))
   })
 
@@ -93,9 +94,9 @@ describe('ModernPopup', () => {
     const onUpdate = vi.fn()
     component.$on('update', onUpdate)
 
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[2]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['id2'] }))
   })
 
@@ -106,9 +107,9 @@ describe('ModernPopup', () => {
     const onUpdate = vi.fn()
     component.$on('update', onUpdate)
 
-    host.querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0].dispatchEvent(
-      new MouseEvent('click', { bubbles: true })
-    )
+    host
+      .querySelectorAll<HTMLButtonElement>('.hulyPopup-row')[0]
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['id0'] }))
   })
 

@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import EditWithIcon from '../components/EditWithIcon.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
@@ -29,10 +30,11 @@ interface Mounted {
   wrapper: HTMLElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<EditWithIcon>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new EditWithIcon({ target: host, props: { icon: ICON, ...props } })
+  const merged = { icon: ICON, ...props }
+  const component = new EditWithIcon({ target: host, props: merged as ComponentProps<EditWithIcon> })
   return {
     component,
     host,

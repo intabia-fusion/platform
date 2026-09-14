@@ -15,16 +15,17 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import SplitButton from '../components/SplitButton.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: SplitButton } {
+function mount (props: Partial<ComponentProps<SplitButton>> = {}): { host: HTMLElement, component: SplitButton } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new SplitButton({ target: host, props })
+  const component = new SplitButton({ target: host, props: props as ComponentProps<SplitButton> })
   return { host, component }
 }
 
@@ -56,9 +57,9 @@ describe('SplitButton', () => {
     expect((mount({ kind: 'primary' }).host.querySelector('.hulySplitButton-main') as HTMLButtonElement).type).toBe(
       'submit'
     )
-    expect(
-      (mount({ kind: 'secondary' }).host.querySelector('.hulySplitButton-main') as HTMLButtonElement).type
-    ).toBe('button')
+    expect((mount({ kind: 'secondary' }).host.querySelector('.hulySplitButton-main') as HTMLButtonElement).type).toBe(
+      'button'
+    )
   })
 
   it('invokes action on the main button click and stops propagation', () => {

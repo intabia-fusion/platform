@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import StylishEdit from '../components/StylishEdit.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<StylishEdit>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new StylishEdit({ target: host, props })
+  const component = new StylishEdit({ target: host, props: props as ComponentProps<StylishEdit> })
   return { component, host, input: host.querySelector('input') as HTMLInputElement }
 }
 

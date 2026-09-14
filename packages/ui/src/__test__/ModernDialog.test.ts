@@ -16,16 +16,18 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernDialog from '../components/ModernDialog.svelte'
 
 const LABEL = 'ui:string:Label' as IntlString
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { root: HTMLElement, component: ModernDialog } {
+function mount (props: Partial<ComponentProps<ModernDialog>> = {}): { root: HTMLElement, component: ModernDialog } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernDialog({ target: host, props: { label: LABEL, ...props } })
+  const merged = { label: LABEL, ...props }
+  const component = new ModernDialog({ target: host, props: merged as ComponentProps<ModernDialog> })
   return { root: host.firstElementChild as HTMLElement, component }
 }
 

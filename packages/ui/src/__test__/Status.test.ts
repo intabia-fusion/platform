@@ -17,18 +17,20 @@ import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
 import { Severity, Status as PlatformStatus } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import StatusComponent from '../components/Status.svelte'
 
 const CODE = 'ui:string:Ok' as IntlString
 
 let target: HTMLElement
 
-function mount (severity: Severity, props: Record<string, unknown> = {}): HTMLElement {
+function mount (severity: Severity, props: Partial<ComponentProps<StatusComponent>> = {}): HTMLElement {
   const host = document.createElement('div')
   target.appendChild(host)
   const status = new PlatformStatus(severity, CODE, {})
+  const merged = { status, ...props }
   // eslint-disable-next-line no-new
-  new StatusComponent({ target: host, props: { status, ...props } })
+  new StatusComponent({ target: host, props: merged as ComponentProps<StatusComponent> })
   return host.querySelector('.container') as HTMLElement
 }
 
@@ -70,7 +72,8 @@ describe('Status', () => {
     const host = document.createElement('div')
     target.appendChild(host)
     const status = new PlatformStatus(Severity.ERROR, CODE, {}, { extra: 'ui:string:Ok' as IntlString })
-    expect(() => new StatusComponent({ target: host, props: { status } })).not.toThrow()
+    const merged = { status }
+    expect(() => new StatusComponent({ target: host, props: merged as ComponentProps<StatusComponent> })).not.toThrow()
     await tick()
   })
 })

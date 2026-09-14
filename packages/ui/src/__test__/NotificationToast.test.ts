@@ -15,15 +15,16 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import NotificationToast from '../components/NotificationToast.svelte'
 import { NotificationSeverity } from '../components/notifications/NotificationSeverity'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: NotificationToast } {
+function mount (props: Partial<ComponentProps<NotificationToast>>): { host: HTMLElement, component: NotificationToast } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new NotificationToast({ target: host, props })
+  const component = new NotificationToast({ target: host, props: props as ComponentProps<NotificationToast> })
   return { host, component }
 }
 

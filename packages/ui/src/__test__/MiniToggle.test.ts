@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import MiniToggle from '../components/MiniToggle.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<MiniToggle>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new MiniToggle({ target: host, props })
+  const component = new MiniToggle({ target: host, props: props as ComponentProps<MiniToggle> })
   return { component, host, input: host.querySelector('input') as HTMLInputElement }
 }
 

@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Switcher from '../components/Switcher.svelte'
 import type { TabItem } from '../types'
 
@@ -35,11 +36,12 @@ interface Mounted {
   items: TabItem[]
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<Switcher>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const items = (props.items as TabItem[] | undefined) ?? makeItems()
-  const component = new Switcher({ target: host, props: { name: 'sw', ...props, items } })
+  const merged = { name: 'sw', ...props, items }
+  const component = new Switcher({ target: host, props: merged as ComponentProps<Switcher> })
   return { component, host, radios: Array.from(host.querySelectorAll('input[type=radio]')), items }
 }
 

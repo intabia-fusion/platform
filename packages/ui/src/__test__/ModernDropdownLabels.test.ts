@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernDropdownLabels from '../components/ModernDropdownLabels.svelte'
 import ModernPopupLabels from '../components/ModernPopupLabels.svelte'
 import { modalStore } from '../modals'
@@ -25,10 +26,13 @@ import type { DropdownTextItem } from '../types'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: ModernDropdownLabels } {
+function mount (props: Partial<ComponentProps<ModernDropdownLabels>> = {}): {
+  host: HTMLElement
+  component: ModernDropdownLabels
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernDropdownLabels({ target: host, props })
+  const component = new ModernDropdownLabels({ target: host, props: props as ComponentProps<ModernDropdownLabels> })
   return { host, component }
 }
 
@@ -113,7 +117,6 @@ describe('ModernDropdownLabels', () => {
     const { host, component } = mount({ items: ITEMS, autoSelect: false })
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
-
     ;(host.querySelector('button') as HTMLButtonElement).click()
     const popup = openedPopup()
     popup.onClose?.('c')
@@ -131,7 +134,6 @@ describe('ModernDropdownLabels', () => {
     const { host, component } = mount({ items: ITEMS, selected: 'a', autoSelect: false })
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
-
     ;(host.querySelector('button') as HTMLButtonElement).click()
     openedPopup().onClose?.(null)
     await tick()
@@ -144,7 +146,6 @@ describe('ModernDropdownLabels', () => {
     const { host, component } = mount({ items: ITEMS, selected: 'b', allowDeselect: true, autoSelect: false })
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
-
     ;(host.querySelector('button') as HTMLButtonElement).click()
     openedPopup().onClose?.('b')
     await tick()
@@ -159,7 +160,6 @@ describe('ModernDropdownLabels', () => {
     const { host, component } = mount({ items: ITEMS, multiselect: true, selected: ['a'] })
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
-
     ;(host.querySelector('button') as HTMLButtonElement).click()
     openedPopup().onUpdate?.(['a', 'b'])
     await tick()
@@ -194,9 +194,17 @@ describe('ModernDropdownLabels', () => {
   })
 
   it('sizes the container from the width prop, or min-content/100% from wrap otherwise', () => {
-    expect(mount({ items: ITEMS, width: '12rem' }).host.querySelector('.modern-dropdown-labels-container')?.getAttribute('style')).toContain('width: 12rem')
-    expect(mount({ items: ITEMS, wrap: true }).host.querySelector('.modern-dropdown-labels-container')?.getAttribute('style')).toContain('width: 100%')
-    expect(mount({ items: ITEMS }).host.querySelector('.modern-dropdown-labels-container')?.getAttribute('style')).toContain('width: min-content')
+    expect(
+      mount({ items: ITEMS, width: '12rem' })
+        .host.querySelector('.modern-dropdown-labels-container')
+        ?.getAttribute('style')
+    ).toContain('width: 12rem')
+    expect(
+      mount({ items: ITEMS, wrap: true }).host.querySelector('.modern-dropdown-labels-container')?.getAttribute('style')
+    ).toContain('width: 100%')
+    expect(
+      mount({ items: ITEMS }).host.querySelector('.modern-dropdown-labels-container')?.getAttribute('style')
+    ).toContain('width: min-content')
   })
 
   it('carries a custom label as tooltip content instead of the placeholder text', () => {

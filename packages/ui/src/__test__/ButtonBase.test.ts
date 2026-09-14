@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ButtonBase from '../components/ButtonBase.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
@@ -23,10 +24,13 @@ const BASE = { kind: 'primary' as const, size: 'medium' as const, type: 'type-bu
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = BASE): { button: HTMLButtonElement, component: ButtonBase } {
+function mount (props: Partial<ComponentProps<ButtonBase>> = BASE): {
+  button: HTMLButtonElement
+  component: ButtonBase
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ButtonBase({ target: host, props })
+  const component = new ButtonBase({ target: host, props: props as ComponentProps<ButtonBase> })
   return { button: host.querySelector('button') as HTMLButtonElement, component }
 }
 

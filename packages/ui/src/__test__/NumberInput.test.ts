@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import NumberInput from '../components/NumberInput.svelte'
 
 let target: HTMLElement
@@ -25,10 +26,11 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<NumberInput>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new NumberInput({ target: host, props: { value: undefined, ...props } })
+  const merged = { value: undefined, ...props }
+  const component = new NumberInput({ target: host, props: merged as ComponentProps<NumberInput> })
   return { component, host, input: host.querySelector('input') as HTMLInputElement }
 }
 
@@ -137,7 +139,9 @@ describe('NumberInput', () => {
   it('passes disabled down to the input and both buttons', () => {
     const { input, host } = mount({ value: 1, disabled: true })
     expect(input.disabled).toBe(true)
-    host.querySelectorAll('button').forEach((b) => { expect(b.disabled).toBe(true) })
+    host.querySelectorAll('button').forEach((b) => {
+      expect(b.disabled).toBe(true)
+    })
   })
 
   it('focuses the input on mount with autoFocus, and exposes focusInput/selectInput', () => {

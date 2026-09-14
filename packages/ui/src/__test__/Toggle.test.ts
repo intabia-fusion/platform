@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Toggle from '../components/Toggle.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<Toggle>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new Toggle({ target: host, props })
+  const component = new Toggle({ target: host, props: props as ComponentProps<Toggle> })
   return {
     component,
     host,

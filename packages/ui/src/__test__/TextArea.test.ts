@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import TextArea from '../components/TextArea.svelte'
 
 let target: HTMLElement
@@ -26,10 +27,10 @@ interface Mounted {
   textarea: HTMLTextAreaElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<TextArea>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TextArea({ target: host, props })
+  const component = new TextArea({ target: host, props: props as ComponentProps<TextArea> })
   return { component, host, textarea: host.querySelector('textarea') as HTMLTextAreaElement }
 }
 

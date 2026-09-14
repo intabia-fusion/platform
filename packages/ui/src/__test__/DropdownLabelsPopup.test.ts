@@ -16,16 +16,20 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import DropdownLabelsPopup from '../components/DropdownLabelsPopup.svelte'
 import IconCheck from '../components/icons/Check.svelte'
 import type { DropdownTextItem } from '../types'
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown> = {}): { host: HTMLElement, component: DropdownLabelsPopup } {
+function mount (props: Partial<ComponentProps<DropdownLabelsPopup>> = {}): {
+  host: HTMLElement
+  component: DropdownLabelsPopup
+} {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new DropdownLabelsPopup({ target: host, props })
+  const component = new DropdownLabelsPopup({ target: host, props: props as ComponentProps<DropdownLabelsPopup> })
   return { host, component }
 }
 
@@ -101,7 +105,6 @@ describe('DropdownLabelsPopup', () => {
     const buttons = host.querySelectorAll('.menu-item')
     ;(buttons[1] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['a', 'b'] }))
-
     ;(buttons[0] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['b'] }))
   })
@@ -115,7 +118,6 @@ describe('DropdownLabelsPopup', () => {
     const buttons = host.querySelectorAll('.menu-item')
     ;(buttons[3] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: ['x'] }))
-
     ;(buttons[3] as HTMLButtonElement).click()
     expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: [] }))
   })

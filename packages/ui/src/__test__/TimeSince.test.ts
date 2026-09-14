@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import TimeSince from '../components/TimeSince.svelte'
 
 const NOW = new Date('2026-01-15T12:00:00Z').getTime()
@@ -25,10 +26,10 @@ const YEAR = DAY * 365
 
 let target: HTMLElement
 
-function mount (props: Record<string, unknown>): { host: HTMLElement, component: TimeSince } {
+function mount (props: Partial<ComponentProps<TimeSince>>): { host: HTMLElement, component: TimeSince } {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new TimeSince({ target: host, props })
+  const component = new TimeSince({ target: host, props: props as ComponentProps<TimeSince> })
   return { host, component }
 }
 

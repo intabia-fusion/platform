@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import RadioGroup from '../components/RadioGroup.svelte'
 import type { RadioItem } from '../types'
 
@@ -34,11 +35,12 @@ interface Mounted {
   inputs: HTMLInputElement[]
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<RadioGroup>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const items = (props.items as RadioItem[] | undefined) ?? makeItems()
-  const component = new RadioGroup({ target: host, props: { ...props, items } })
+  const merged = { ...props, items }
+  const component = new RadioGroup({ target: host, props: merged as ComponentProps<RadioGroup> })
   return { component, host, inputs: Array.from(host.querySelectorAll('input[type=radio]')) }
 }
 

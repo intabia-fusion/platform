@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import RangeDatePopup from '../components/calendar/RangeDatePopup.svelte'
 import { getMonthName } from '../components/calendar/internal/DateUtils'
 import { capitalizeFirstLetter } from '../utils'
@@ -35,7 +36,8 @@ interface Mounted {
 function mount (startDate: Date | null, endDate: Date | null): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new RangeDatePopup({ target: host, props: { label: LABEL, startDate, endDate } })
+  const merged = { label: LABEL, startDate, endDate }
+  const component = new RangeDatePopup({ target: host, props: merged as ComponentProps<RangeDatePopup> })
   const root = host.querySelector('.date-popup-container') as HTMLElement
   return { component, root, squares: Array.from(root.querySelectorAll('.month-container')) as HTMLElement[] }
 }
@@ -190,11 +192,7 @@ describe('RangeDatePopup', () => {
     saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
     await tick()
 
-    expect(onUpdate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ detail: { startDate: null, endDate: null } })
-    )
-    expect(onClose).toHaveBeenLastCalledWith(
-      expect.objectContaining({ detail: { startDate: null, endDate: null } })
-    )
+    expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { startDate: null, endDate: null } }))
+    expect(onClose).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { startDate: null, endDate: null } }))
   })
 })

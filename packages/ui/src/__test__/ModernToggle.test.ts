@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernToggle from '../components/ModernToggle.svelte'
 
 let target: HTMLElement
@@ -27,10 +28,10 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ModernToggle>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernToggle({ target: host, props })
+  const component = new ModernToggle({ target: host, props: props as ComponentProps<ModernToggle> })
   return {
     component,
     host,
@@ -93,8 +94,8 @@ describe('ModernToggle', () => {
 
   it('renders the title text and the Label id when given', () => {
     expect(mount({ title: 'My title' }).host.querySelector('.toggle-label')?.textContent).toContain('My title')
-    expect(
-      mount({ label: 'ui:string:Ok' as IntlString }).host.querySelector('.toggle-label')?.textContent
-    ).toContain('ui:string:Ok')
+    expect(mount({ label: 'ui:string:Ok' as IntlString }).host.querySelector('.toggle-label')?.textContent).toContain(
+      'ui:string:Ok'
+    )
   })
 })

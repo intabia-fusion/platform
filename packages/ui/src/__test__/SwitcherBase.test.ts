@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset, IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import SwitcherBase from '../components/SwitcherBase.svelte'
 
 const ICON = 'ui:icon:Check' as Asset
@@ -29,10 +30,11 @@ interface Mounted {
   input: HTMLInputElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<SwitcherBase>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new SwitcherBase({ target: host, props: { id: 'a', name: 'grp', ...props } })
+  const merged = { id: 'a', name: 'grp', ...props }
+  const component = new SwitcherBase({ target: host, props: merged as ComponentProps<SwitcherBase> })
   const label = host.querySelector('label.switcher-element__wrapper') as HTMLLabelElement
   return { component, host, label, input: host.querySelector('input') as HTMLInputElement }
 }

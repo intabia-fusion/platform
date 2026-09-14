@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import ModernDropdown from '../components/ModernDropdown.svelte'
 import ModernPopup from '../components/ModernPopup.svelte'
 import { modalStore } from '../modals'
@@ -39,10 +40,10 @@ interface Mounted {
   button: HTMLButtonElement
 }
 
-function mount (props: Record<string, unknown> = {}): Mounted {
+function mount (props: Partial<ComponentProps<ModernDropdown>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new ModernDropdown({ target: host, props })
+  const component = new ModernDropdown({ target: host, props: props as ComponentProps<ModernDropdown> })
   return { component, host, button: host.querySelector('button.hulyButton') as HTMLButtonElement }
 }
 

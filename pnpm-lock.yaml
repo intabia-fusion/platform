@@ -524,6 +524,15 @@ catalogs:
     install:
       specifier: ^0.13.0
       version: 0.13.0
+    istanbul-lib-coverage:
+      specifier: ^3.2.2
+      version: 3.2.2
+    istanbul-lib-report:
+      specifier: ^3.0.1
+      version: 3.0.1
+    istanbul-reports:
+      specifier: ^3.2.0
+      version: 3.2.0
     jest:
       specifier: ^29.7.0
       version: 29.7.0
@@ -5639,13 +5648,13 @@ importers:
         specifier: 'catalog:'
         version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       istanbul-lib-coverage:
-        specifier: ^3.2.2
+        specifier: 'catalog:'
         version: 3.2.2
       istanbul-lib-report:
-        specifier: ^3.0.1
+        specifier: 'catalog:'
         version: 3.0.1
       istanbul-reports:
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0
       lcov-parse:
         specifier: ^1.0.0
@@ -6774,6 +6783,15 @@ importers:
       eslint-plugin-svelte:
         specifier: 'catalog:'
         version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
+      istanbul-lib-coverage:
+        specifier: 'catalog:'
+        version: 3.2.2
+      istanbul-lib-report:
+        specifier: 'catalog:'
+        version: 3.0.1
+      istanbul-reports:
+        specifier: 'catalog:'
+        version: 3.2.0
       prettier:
         specifier: 'catalog:'
         version: 3.6.2

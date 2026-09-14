@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { themeStore } from '@hcengineering/theme'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import Progress from '../components/Progress.svelte'
 import { deviceOptionsStore } from '../index'
 
@@ -29,7 +30,7 @@ interface Mounted {
   bar: HTMLElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<Progress>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new Progress({ target: host, props: props as any })

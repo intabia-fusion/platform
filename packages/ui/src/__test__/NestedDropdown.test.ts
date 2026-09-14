@@ -16,6 +16,7 @@
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
+import type { ComponentProps } from 'svelte'
 import NestedDropdown from '../components/NestedDropdown.svelte'
 import NestedMenu from '../components/NestedMenu.svelte'
 import type { DropdownIntlItem } from '../types'
@@ -37,7 +38,7 @@ interface Mounted {
   button: HTMLButtonElement
 }
 
-function mount (props: Record<string, unknown>): Mounted {
+function mount (props: Partial<ComponentProps<NestedDropdown>>): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new NestedDropdown({ target: host, props: props as any })

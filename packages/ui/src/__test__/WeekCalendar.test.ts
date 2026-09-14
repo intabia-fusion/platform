@@ -15,6 +15,7 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'svelte'
 import WeekCalendar from '../components/calendar/WeekCalendar.svelte'
 import { day as getDay, getWeekDayName, getWeekStart } from '../components/calendar/internal/DateUtils'
 import ui, { deviceOptionsStore } from '../index'
@@ -35,10 +36,10 @@ async function settle (): Promise<void> {
   await tick()
 }
 
-async function mount (props: Record<string, unknown> = {}): Promise<Mounted> {
+async function mount (props: Partial<ComponentProps<WeekCalendar>> = {}): Promise<Mounted> {
   const host = document.createElement('div')
   target.appendChild(host)
-  const component = new WeekCalendar({ target: host, props })
+  const component = new WeekCalendar({ target: host, props: props as ComponentProps<WeekCalendar> })
   await settle()
   return { component, host }
 }
