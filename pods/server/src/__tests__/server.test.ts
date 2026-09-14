@@ -17,6 +17,7 @@
 import { UNAUTHORIZED } from '@hcengineering/platform'
 import { RPCHandler, type Response } from '@hcengineering/rpc'
 import { generateToken } from '@hcengineering/server-token'
+import { createServer, type AddressInfo } from 'net'
 import WebSocket from 'ws'
 
 import {
@@ -45,8 +46,17 @@ import { createDummyQueue, createDummyStorageAdapter } from '@hcengineering/serv
 import { startHttpServer } from '../server_http'
 import { genMinModel } from './minmodel'
 
+/** A fixed port collides with whatever else already listens on the machine. */
+async function freePort (): Promise<number> {
+  const probe = createServer()
+  await new Promise<void>((resolve) => probe.listen(0, resolve))
+  const { port } = probe.address() as AddressInfo
+  await new Promise<void>((resolve) => probe.close(() => { resolve() }))
+  return port
+}
+
 describe('server', () => {
-  const port = 10000
+  let port = 0
   const handler = new RPCHandler()
   async function getModelDb (): Promise<{ modelDb: ModelDb, hierarchy: Hierarchy }> {
     const txes = genMinModel()
@@ -105,7 +115,12 @@ describe('server', () => {
   }
   const sessionMgr = startSessionManager(toolCtx, opt)
 
-  const serverShutdown = startHttpServer(toolCtx, sessionMgr, port, opt.accountsUrl, createDummyStorageAdapter())
+  let serverShutdown: () => Promise<void>
+
+  beforeAll(async () => {
+    port = await freePort()
+    serverShutdown = startHttpServer(toolCtx, sessionMgr, port, opt.accountsUrl, createDummyStorageAdapter())
+  })
 
   function connect (): WebSocket {
     const token: string = generateToken(
