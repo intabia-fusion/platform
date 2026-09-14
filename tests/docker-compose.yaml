@@ -239,6 +239,8 @@ services:
       - billing
       - sign
       - payment
+      - preview
+      - link-preview
     ports:
       - 8083:8083
     volumes:
@@ -278,6 +280,8 @@ services:
       - BILLING_URL=http://localhost:8083/_billing
       - PAYMENT_URL=http://localhost:8083/_payment
       - AI_URL=http://localhost:8083/_ai
+      - PREVIEW_URL=http://localhost:8083/_preview
+      - LINK_PREVIEW_URL=http://localhost:8083/_link-preview
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
@@ -453,6 +457,13 @@ services:
       # Preview reads blobs through datalake for on-the-fly image resizing (proxied via nginx /_preview).
       - STORAGE_CONFIG=datalake|http://datalake:4031
       - CACHE_PATH=/data/cache
+    restart: unless-stopped
+  link-preview:
+    image: 'intabiafusion/link-preview:${DOCKER_TAG:-latest}'
+    pull_policy: never
+    environment:
+      - SECRET=secret
+      - PORT=4041
     restart: unless-stopped
   billing:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/billing:${DOCKER_TAG:-latest}"
