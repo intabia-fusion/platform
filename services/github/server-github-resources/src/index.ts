@@ -190,7 +190,7 @@ async function updateDocSyncInfo (
     }
   }
   // Do not modify state if is modified by github service.
-  if (tx.modifiedBy === systemAccount.primarySocialId) {
+  if (tx.modifiedBy === core.account.System) {
     return
   }
   const projects =

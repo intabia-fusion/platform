@@ -270,8 +270,16 @@ function main () {
     .filter((t) => t.statuses.includes('passed') && t.statuses.some((st) => st !== 'passed' && st !== 'skipped'))
     .map((t) => ({ file: t.file, title: t.title, attempts: t.statuses.length, seconds: round(t.duration / 1000) }))
     .sort((a, b) => b.seconds - a.seconds)
+  // A run stopped by hand leaves every in-flight test `interrupted`. Those are not failures, and
+  // counting them as such put five phantom entries into the series summary of 20260916-173658.
+  // At least one attempt interrupted and none of them a real result: a test that failed and was
+  // then caught by the stop on its retry is a failure the series has to see, and a suite that skips
+  // dozens of tests every run must not read as a stopped one.
+  const isInterrupted = (t) =>
+    t.statuses.includes('interrupted') && t.statuses.every((s) => s === 'interrupted' || s === 'skipped')
+  const interrupted = [...byTest.values()].filter(isInterrupted)
   const failed = [...byTest.values()]
-    .filter((t) => !t.statuses.includes('passed') && !t.statuses.includes('skipped'))
+    .filter((t) => !t.statuses.includes('passed') && !t.statuses.includes('skipped') && !isInterrupted(t))
     .map((t) => ({ file: t.file, title: t.title, attempts: t.statuses.length }))
 
   const stepWork = steps.filter((s) => s.depth === 0).reduce((a, s) => a + s.ms, 0)
@@ -279,6 +287,8 @@ function main () {
 
   const run = {
     generatedAt: new Date().toISOString(),
+    // Partial: comparing its wall time or tallying its tests against a full run means nothing.
+    partial: interrupted.length > 0,
     fingerprint: fingerprint(configuredWorkers ?? workers.size),
     // Playwright never reuses a crashed worker's index, so extra indices mean crashed workers.
     workerRestarts: Math.max(0, workers.size - (configuredWorkers ?? workers.size)),
@@ -289,6 +299,7 @@ function main () {
       retrySec: round(retryTime / 1000),
       expected: [...byTest.values()].filter((t) => t.statuses.includes('passed')).length,
       unexpected: failed.length,
+      interrupted: interrupted.length,
       flaky: flaky.length,
       skipped: [...byTest.values()].filter((t) => t.statuses.every((s) => s === 'skipped')).length,
       attempts: runs.length
@@ -324,7 +335,8 @@ function main () {
   console.log(
     `[telemetry] ${outPath}\n` +
       `  wall ${run.totals.wallSec}s  work ${run.totals.workSec}s  ` +
-      `tests ${run.totals.expected ?? '?'} passed / ${run.totals.flaky} flaky / ${run.totals.unexpected ?? 0} failed\n` +
+      `tests ${run.totals.expected ?? '?'} passed / ${run.totals.flaky} flaky / ${run.totals.unexpected ?? 0} failed` +
+      (run.partial === true ? `  (STOPPED: ${run.totals.interrupted} interrupted)\n` : '\n') +
       (d !== undefined
         ? `  docker ${d.containers.length} containers  cpu ${d.totals.cpuSeconds}s  ` +
           `peak mem ${(d.totals.memPeak / 1024 ** 3).toFixed(1)}GB  net ${(

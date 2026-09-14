@@ -16,6 +16,7 @@
   "scripts": {
     "build": "compile",
     "test": "jest --passWithNoTests --silent --coverage",
+    "bench": "jest --testMatch='**/*.bench.ts'",
     "build:watch": "compile",
     "format": "format src",
     "_phase:build": "compile build",

@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures'
-import { openBotDirect } from '../API/AiBot'
+import { BOT_REPLY_TIMEOUT, openBotDirect } from '../API/AiBot'
 import { ApiEndpoint } from '../API/Api'
 import { setWorkspacePlanByUuid } from '../API/Billing'
 import { ChannelPage } from '../model/channel-page'
@@ -46,7 +46,7 @@ test.describe('ai-bot direct chat', () => {
     await channelPage.sendMessage(question)
 
     const reply = page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })
-    await expect(reply).toBeVisible({ timeout: 60000 })
+    await expect(reply).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     await expect(reply).toContainText('prompt')
     await expect(reply).toContainText(question)
   })
@@ -60,7 +60,7 @@ test.describe('ai-bot direct chat', () => {
     const echo = page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })
     // The bot's own message lands in the same direct, so a missing self-filter turns one question
     // into an endless exchange - it would echo its own reply.
-    await expect(echo).toHaveCount(1, { timeout: 60000 })
+    await expect(echo).toHaveCount(1, { timeout: BOT_REPLY_TIMEOUT })
     // The welcome the bot posts on member join arrives asynchronously, so the total is not a fixed
     // number. Wait for the count to stop moving instead of sleeping out the slowest case.
     const settled = await waitStable(async () => await messages.count(), { stableFor: 5000 })
@@ -73,7 +73,7 @@ test.describe('ai-bot direct chat', () => {
 
     await channelPage.sendMessage('первое сообщение')
     await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' }).first()).toBeVisible({
-      timeout: 60000
+      timeout: BOT_REPLY_TIMEOUT
     })
 
     await channelPage.sendMessage('второе сообщение')
@@ -81,7 +81,7 @@ test.describe('ai-bot direct chat', () => {
     await expect(async () => {
       const last = page.locator('.hulyComponent .activityMessage', { hasText: 'history' }).last()
       await expect(last).toContainText('первое сообщение', { timeout: 5000 })
-    }).toPass({ intervals: retryIntervals, timeout: 60000 })
+    }).toPass({ intervals: retryIntervals, timeout: BOT_REPLY_TIMEOUT })
   })
 
   test('tool definitions reach the model', async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe('ai-bot direct chat', () => {
 
     await channelPage.sendMessage('привет')
     const reply = page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })
-    await expect(reply).toBeVisible({ timeout: 60000 })
+    await expect(reply).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     // Without tool definitions tool calling silently degrades, so assert they are passed.
     await expect(reply).toContainText('tools')
   })
@@ -102,7 +102,7 @@ test.describe('ai-bot direct chat', () => {
     await test.step('First request goes through', async () => {
       await channelPage.sendMessage('hello')
       await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' }).first()).toBeVisible({
-        timeout: 60000
+        timeout: BOT_REPLY_TIMEOUT
       })
     })
 
@@ -115,7 +115,7 @@ test.describe('ai-bot direct chat', () => {
         await expect(page.locator('.hulyComponent .activityMessage', { hasText: blockText })).toBeVisible({
           timeout: 10000
         })
-      }).toPass({ intervals: retryIntervals, timeout: 120000 })
+      }).toPass({ intervals: retryIntervals, timeout: 30000 })
     })
   })
 })

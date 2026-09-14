@@ -463,3 +463,134 @@ describe('$inc on a doc shared by several queries', () => {
     expect(q.last()[0]?.rate).toBe(2)
   })
 })
+
+describe('duplicate delivery of one $inc tx', () => {
+  it('ignores a re-delivered $inc tx on a doc that entered the result via TxCreateDoc', async () => {
+    const { liveQuery, storage, txFactory } = await getCountingClient()
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'dup-space' })
+    const ts = Date.now()
+
+    const createTx = txFactory.createTxCreateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      { name: 'dup-space', description: '', private: false, members: [], archived: false, rate: 0 } as any,
+      undefined,
+      ts
+    )
+    await storage.tx(createTx)
+    await settle()
+
+    const incTx = txFactory.createTxUpdateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      createTx.objectId,
+      { $inc: { rate: 1 } } as any,
+      false,
+      ts
+    )
+    await storage.tx(incTx)
+    await settle()
+    expect(q.last()[0]?.rate).toBe(1)
+
+    // The very same tx arrives again (reconnect replay / double notify).
+    await liveQuery.tx(incTx)
+    await settle()
+
+    const server = await storage.findOne<CounterSpace>(core.class.Space, { _id: createTx.objectId })
+    expect(server?.rate).toBe(1)
+    expect(q.last()[0]?.rate).toBe(1)
+  })
+
+  it('ignores a re-delivered $inc tx that was first applied by timestamp', async () => {
+    // The real shape of a comment counter: the issue is created well before the comment, so the
+    // first delivery takes the `modifiedOn <` branch - after which the doc sits at tx.modifiedOn
+    // and the repeat looks like an equal-timestamp $inc.
+    const { liveQuery, storage, txFactory } = await getCountingClient()
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'dup-later' })
+
+    const createTx = txFactory.createTxCreateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      { name: 'dup-later', description: '', private: false, members: [], archived: false, rate: 0 } as any,
+      undefined,
+      Date.now() - 1000
+    )
+    await storage.tx(createTx)
+    await settle()
+
+    const incTx = txFactory.createTxUpdateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      createTx.objectId,
+      { $inc: { rate: 1 } } as any,
+      false,
+      Date.now()
+    )
+    await storage.tx(incTx)
+    await settle()
+    expect(q.last()[0]?.rate).toBe(1)
+
+    await liveQuery.tx(incTx)
+    await settle()
+
+    const server = await storage.findOne<CounterSpace>(core.class.Space, { _id: createTx.objectId })
+    expect(server?.rate).toBe(1)
+    expect(q.last()[0]?.rate).toBe(1)
+  })
+})
+
+// `loadedModifiedOn` is recorded only by the ResultArray constructor, so a doc that getCurrentDoc
+// re-reads from the server mid-flight keeps no record of having been loaded at that timestamp.
+// That looks like a hole - an equal-timestamp $inc on top of a value that already contains it -
+// but the doc's own modifiedOn closes it. Pinned here so a change to either guard is noticed.
+describe('$inc after the doc was refreshed from the server mid-flight', () => {
+  it('keeps the client counter equal to the server one', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 0, name: 'refreshed' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'refreshed' })
+    const ts = q.last()[0].modifiedOn
+
+    // Both land on the server at the doc's current timestamp, the way a parent tx and its derived
+    // counter tx do. The server ends up at rate 1.
+    await storage.tx(
+      txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { $inc: { rate: 1 } },
+        false,
+        ts
+      )
+    )
+    await settle()
+    // Equal-timestamp non-$inc update: sends the query through getCurrentDoc, which re-reads the
+    // doc from the server - rate is already 1 there.
+    await storage.tx(
+      txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { description: 'forces getCurrentDoc' },
+        false,
+        ts
+      )
+    )
+    await settle()
+
+    // Re-deliver the counter tx, as a reconnect replay would.
+    await liveQuery.tx(
+      txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { $inc: { rate: 1 } },
+        false,
+        ts
+      )
+    )
+    await settle()
+
+    const server = await factory.findOne<CounterSpace>(core.class.Space, { _id: id })
+    expect(q.last()[0].rate).toBe(server?.rate)
+  })
+})

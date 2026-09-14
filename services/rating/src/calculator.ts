@@ -17,7 +17,6 @@ import core, {
   type PersonId,
   type Ref,
   SortingOrder,
-  systemAccount,
   systemAccountUuid,
   type Timestamp,
   toIdMap,
@@ -233,7 +232,7 @@ export class RatingCalculator {
         plugin: ratingId,
         state: 'v1',
         modifiedOn: Date.now(),
-        modifiedBy: systemAccount.primarySocialId,
+        modifiedBy: core.account.System,
         space: core.space.Configuration
       }
       await result.lowLevelStorage.upload(ctx, DOMAIN_MIGRATION, [newState])
@@ -455,7 +454,7 @@ export class RatingCalculator {
       _id: generateId(),
       _class: rating.class.PersonRating,
       space: core.space.Workspace,
-      modifiedBy: systemAccount.primarySocialId,
+      modifiedBy: core.account.System,
       rating: 0,
       accountId: person,
       months: [],
@@ -713,7 +712,7 @@ export class RatingCalculator {
             _class: core.class.TxUpdateDoc,
             objectClass: rating.class.PersonRating,
             modifiedOn: info.person.modifiedOn,
-            modifiedBy: systemAccount.primarySocialId,
+            modifiedBy: core.account.System,
             collection: '_rating',
             objectId: info.person._id,
             objectSpace: info.person.space,

@@ -1,4 +1,5 @@
-import { Page, Locator } from '@playwright/test'
+import { Page, Locator, expect } from '@playwright/test'
+import { retry } from '../../retry'
 
 export enum MenuItems {
   COMPANIES = 'Companies',
@@ -94,7 +95,15 @@ export class NotificationsPage {
     }
   }
 
+  // Positional locator, so a click can land on a neighbouring toggle or on nothing at all, and the
+  // test then asserts an absence it never configured. Read the state back instead of trusting it.
   async toggleChatMessage (): Promise<void> {
-    await this.chatMessageToggle().click()
+    const box = this.chatMessageToggle().locator('input[type="checkbox"]')
+    const before = await box.isChecked()
+    await retry(async () => {
+      if ((await box.isChecked()) !== before) return
+      await this.chatMessageToggle().click({ timeout: 5000 })
+      expect(await box.isChecked()).toBe(!before)
+    })
   }
 }

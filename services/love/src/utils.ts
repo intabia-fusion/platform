@@ -90,20 +90,39 @@ export async function createToken (
   return await at.toJwt()
 }
 
+const UPDATE_METADATA_ATTEMPTS = 3
+const UPDATE_METADATA_RETRY_MS = 200
+
 // `updateRoomMetadata` replaces the whole blob: read it back every time, a local cache
 // would let one replica merge over a snapshot another has moved past and drop a flag.
+//
+// Never throws. A room LiveKit lost the node for answers "no response from servers" forever, and
+// the queue consumer retries a failing message without limit - one such room used to block every
+// later webhook of the whole topic (stand run 20260915-152705: 636 webhooks delivered, 0 processed).
 export async function updateMetadata (
   ctx: MeasureContext,
   roomClient: RoomServiceClient,
   roomName: string,
   metadata: Partial<RoomMetadata>
 ): Promise<void> {
-  const room = (await roomClient.listRooms([roomName]))[0]
-  if (room === undefined) {
-    ctx.warn(`Cannot update metadata: room "${roomName}" does not exist`)
-    return
-  }
-  const currentMetadata = parseMetadata(room.metadata)
+  // Bounded, not endless: a blip must not cost the `recording` flag, a dead room must not cost the queue.
+  for (let attempt = 1; attempt <= UPDATE_METADATA_ATTEMPTS; attempt++) {
+    try {
+      const room = (await roomClient.listRooms([roomName]))[0]
+      if (room === undefined) {
+        ctx.warn(`Cannot update metadata: room "${roomName}" does not exist`)
+        return
+      }
+      const currentMetadata = parseMetadata(room.metadata)
 
-  await roomClient.updateRoomMetadata(roomName, JSON.stringify({ ...currentMetadata, ...metadata }))
+      await roomClient.updateRoomMetadata(roomName, JSON.stringify({ ...currentMetadata, ...metadata }))
+      return
+    } catch (err: any) {
+      if (attempt === UPDATE_METADATA_ATTEMPTS) {
+        ctx.warn('Failed to update room metadata', { roomName, attempts: attempt, error: err?.message ?? String(err) })
+        return
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * UPDATE_METADATA_RETRY_MS))
+    }
+  }
 }

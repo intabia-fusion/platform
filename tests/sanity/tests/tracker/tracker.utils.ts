@@ -310,11 +310,20 @@ export async function performPanelTest (page: Page, statuses: string[], panel: s
     await expect(locator).not.toContainText(excluded)
   }
   for (const status of statuses) {
-    await expect(
-      page.locator('.panel-container', {
-        has: page.locator(`.header:has-text("${status}")`)
-      })
-    ).toContainText(getIssueName(status), { timeout: 15000 })
+    const column = page.locator('.panel-container', { has: page.locator(`.header:has-text("${status}")`) })
+    // A column renders only its first ten cards, and other specs leave hundreds of issues in the
+    // same project - the issue this test just created is then not in the DOM at all, which reads
+    // exactly like a missing one. Expand until it shows up.
+    await retry(async () => {
+      if ((await column.getByText(getIssueName(status)).count()) === 0) {
+        await column
+          .locator('button[data-id="btn-kanban-show-more"]')
+          .first()
+          .click({ timeout: 2000 })
+          .catch(() => {})
+      }
+      await expect(column).toContainText(getIssueName(status), { timeout: 2000 })
+    })
   }
 }
 
