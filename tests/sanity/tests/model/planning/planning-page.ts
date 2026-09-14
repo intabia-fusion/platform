@@ -420,6 +420,14 @@ export class PlanningPage extends CalendarPage {
         await endDigits.last().pressSequentially(slot.timeEnd.substring(2), { delay: 100 })
       }
       await expect(endShown.first()).toHaveText(wanted, { timeout: 3000 })
+      // `EditToDo` assigns the stored value back into the open editor, so a write that never
+      // round-tripped is shown first and reverted a beat later - re-read once it stops moving.
+      const settled = await waitStable(async () => ((await endShown.first().textContent()) ?? '').trim(), {
+        stableFor: 500,
+        interval: 100,
+        timeout: 5000
+      })
+      expect(settled).toBe(wanted)
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 

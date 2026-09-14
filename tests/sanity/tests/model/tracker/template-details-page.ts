@@ -2,7 +2,7 @@ import { expect, type Locator } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
 import { Issue, NewIssue } from './types'
 import { convertEstimation } from '../../tracker/tracker.utils'
-import { retry } from '../../retry'
+import { retry, waitStable } from '../../retry'
 
 export class TemplateDetailsPage extends CommonTrackerPage {
   inputTitle = (): Locator => this.page.locator('div.popupPanel-body input[type="text"]')
@@ -77,6 +77,14 @@ export class TemplateDetailsPage extends CommonTrackerPage {
         await this.buttonEstimation().click()
         await this.fillEstimationPopup(this.page, estimation)
         await expect(this.buttonEstimation()).toHaveText(convertEstimation(estimation), { timeout: 5000 })
+        // The panel shows the typed value first and falls back a beat later when the write is lost -
+        // the check above passes on that first render, so read it again once it stops moving.
+        const settled = await waitStable(async () => (await this.buttonEstimation().innerText()).trim(), {
+          stableFor: 500,
+          interval: 100,
+          timeout: 5000
+        })
+        expect(settled).toBe(convertEstimation(estimation))
       })
     }
     if (data.duedate != null) {

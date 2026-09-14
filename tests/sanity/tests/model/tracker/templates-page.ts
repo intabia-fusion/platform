@@ -154,9 +154,15 @@ export class TemplatePage extends CommonTrackerPage {
     })
   }
 
+  // Edit and fill are one interaction: a click that landed before the panel was ready leaves view
+  // mode standing, and the fill then waits out its whole 30s on an editor that never mounted.
   async editTemplate (newContent: string): Promise<void> {
-    await this.editTemplateButton().click()
-    await this.proseMirrorEditor().fill(newContent)
+    await retry(async () => {
+      if ((await this.proseMirrorEditor().count()) === 0) {
+        await this.editTemplateButton().click({ timeout: 5000 })
+      }
+      await this.proseMirrorEditor().fill(newContent, { timeout: 5000 })
+    })
     await this.clickSaveTemplate()
   }
 }

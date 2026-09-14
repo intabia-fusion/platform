@@ -38,10 +38,6 @@ export class RecordingProcessor {
   // writes; past this age it must not keep blocking new recordings.
   private static readonly RESERVATION_GRACE_MS = 60_000
 
-  // Serialises attempts inside this replica so a double click cannot get past the reservation
-  // check. Across replicas the PendingRecording row is the guard, with a one-round-trip window.
-  private readonly startInFlight = new Map<Ref<MeetingMinutes>, Promise<StartRecordingVerdict>>()
-
   constructor (
     readonly ctx: MeasureContext,
     readonly roomClient: RoomServiceClient,
@@ -53,29 +49,6 @@ export class RecordingProcessor {
   ) {}
 
   async startRecording (
-    roomName: string,
-    workspaceId: WorkspaceUuid,
-    meetingId: Ref<MeetingMinutes>,
-    wsLoginInfo: WorkspaceLoginInfo,
-    meetingTitle: string
-  ): Promise<StartRecordingVerdict> {
-    // Wait out an attempt already in flight, then re-run: its reservation is visible by now.
-    const inFlight = this.startInFlight.get(meetingId)
-    if (inFlight !== undefined) {
-      await inFlight.catch(() => undefined)
-    }
-    const attempt = this.doStartRecording(roomName, workspaceId, meetingId, wsLoginInfo, meetingTitle)
-    this.startInFlight.set(meetingId, attempt)
-    try {
-      return await attempt
-    } finally {
-      if (this.startInFlight.get(meetingId) === attempt) {
-        this.startInFlight.delete(meetingId)
-      }
-    }
-  }
-
-  private async doStartRecording (
     roomName: string,
     workspaceId: WorkspaceUuid,
     meetingId: Ref<MeetingMinutes>,
@@ -131,8 +104,18 @@ export class RecordingProcessor {
     }
 
     // Reserve before the slow egress call: this row is the only guard shared across replicas.
-    const pendingId = await wsClient.createPendingRecording({ meeting: meetingId, format: 'video', roomName, name })
+    const pendingId = await wsClient.createPendingRecording({
+      meeting: meetingId,
+      format: 'video',
+      roomName,
+      name,
+      reservedAfter: Date.now() - RecordingProcessor.RESERVATION_GRACE_MS
+    })
     if (pendingId === undefined) {
+      // A start that passed the check above at the same moment took the slot first.
+      if ((await this.findRunningRecording(wsClient, meetingId, 'video')) !== undefined) {
+        return { started: false, reason: 'already-running' }
+      }
       this.ctx.error('Cannot start recording: failed to reserve PendingRecording', { meetingId, roomName })
       return { started: false, reason: 'no-reservation' }
     }
@@ -239,9 +222,18 @@ export class RecordingProcessor {
       const dateStr = new Date().toISOString().replace('T', '_').slice(0, 19)
       const name = `${meetingDoc.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${dateStr}.ogg`
       // Reserve before the slow egress call - same shared guard the video path uses.
-      const pendingId = await wsClient.createPendingRecording({ meeting: meetingId, format: 'audio', roomName, name })
+      const pendingId = await wsClient.createPendingRecording({
+        meeting: meetingId,
+        format: 'audio',
+        roomName,
+        name,
+        reservedAfter: Date.now() - RecordingProcessor.RESERVATION_GRACE_MS
+      })
       if (pendingId === undefined) {
-        this.ctx.error('Cannot start audio recording: failed to reserve PendingRecording', { meetingId, roomName })
+        this.ctx.warn('Audio recording not started: slot held by another start or reservation failed', {
+          meetingId,
+          roomName
+        })
         return
       }
 

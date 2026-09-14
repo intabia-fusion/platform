@@ -103,25 +103,38 @@ export class WorkflowPage {
   }
 
   async createWorkflow (name: string, taskType?: string): Promise<void> {
-    await this.openAside(this.addWorkflowButton())
-    await this.fillAsideName(name)
-    if (taskType !== undefined) {
+    await this.createInAside(this.addWorkflowButton(), name, this.workflowRow(name), async () => {
+      if (taskType === undefined) return
       await this.taskTypeDropdown().click()
       await this.dropdownRow(taskType).click()
-    }
-    await this.clickAsideCreate()
-    await expect(this.workflowRow(name)).toBeVisible()
+    })
   }
 
   async createScreen (name: string, targetClass?: string): Promise<void> {
-    await this.openAside(this.addScreenButton())
-    await this.fillAsideName(name)
-    if (targetClass !== undefined) {
+    await this.createInAside(this.addScreenButton(), name, this.screenRow(name), async () => {
+      if (targetClass === undefined) return
       await this.screenClassDropdown().click()
       await this.dropdownRow(targetClass).click()
+    })
+  }
+
+  // The aside can still close after openAside's 200ms re-check, with the name already typed (run
+  // 20260915-143459): Create then waited 30s for a button that was gone. Start the form over instead.
+  private async createInAside (open: Locator, name: string, row: Locator, pick: () => Promise<void>): Promise<void> {
+    for (let attempt = 1; ; attempt++) {
+      await this.openAside(open)
+      await this.fillAsideName(name)
+      await pick()
+      if (await this.clickAsideCreate()) break
+      // Gone can also mean the click did land and the aside closed on success.
+      const created = await row.waitFor({ state: 'visible', timeout: 3000 }).then(
+        () => true,
+        () => false
+      )
+      if (created) break
+      if (attempt === 3) throw new Error(`aside for "${name}" closed before Create, ${attempt} times in a row`)
     }
-    await this.clickAsideCreate()
-    await expect(this.screenRow(name)).toBeVisible()
+    await expect(row).toBeVisible()
   }
 
   // A reopened aside drops what was typed, and Create stays disabled on an empty name - the click
@@ -134,13 +147,19 @@ export class WorkflowPage {
   }
 
   // The aside re-renders while the name settles and detaches the button mid-click; short timeouts
-  // send us back to a freshly resolved one.
-  private async clickAsideCreate (): Promise<void> {
+  // send us back to a freshly resolved one. False when the aside itself is gone.
+  private async clickAsideCreate (): Promise<boolean> {
     const create = this.asideButton('Create')
+    let gone = false
     await retry(async () => {
+      if ((await this.asideModal().count()) === 0) {
+        gone = true
+        return
+      }
       await expect(create).toBeEnabled({ timeout: 5000 })
       await create.click({ timeout: 5000 })
     })
+    return !gone
   }
 
   // Both asides carry a Create button, so a leftover one from the previous step cannot be told

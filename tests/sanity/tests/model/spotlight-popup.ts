@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { CommonPage } from './common-page'
 import { StatusBar } from './statusbar'
+import { retry } from '../retry'
 
 export class SpotlightPopup extends CommonPage {
   readonly page: Page
@@ -35,9 +36,14 @@ export class SpotlightPopup extends CommonPage {
     await expect(this.popup()).not.toBeVisible()
   }
 
+  // A workbench that is still settling - a workspace created moments ago - closes the popup again
+  // right after `open()` asserted it, and the fill then waits out its timeout on nothing. Reopen.
   async fillSearchInput (search: string): Promise<void> {
-    await this.input().fill(search)
-    await expect(this.input()).toHaveValue(search)
+    await retry(async () => {
+      if (!(await this.popup().isVisible())) await this.open()
+      await this.input().fill(search, { timeout: 5000 })
+      await expect(this.input()).toHaveValue(search, { timeout: 3000 })
+    })
     await this.page.waitForTimeout(500)
   }
 

@@ -54,14 +54,16 @@ function main () {
         String(t.expected ?? '?').padStart(8),
         String(t.flaky ?? 0).padStart(6),
         String(t.unexpected ?? 0).padStart(7)
-      ].join(' ')
+      ].join(' ') + (run.partial === true ? '   stopped, not counted below' : '')
     )
   }
+  // A stopped run saw only part of the suite: its tests would drag every rate towards "unstable".
+  const counted = runs.filter(({ run }) => run.partial !== true)
 
   // The point of the loop: a test that flakes in several runs is a defect, one that flakes once is
   // still a candidate but ranks below it.
   const tally = new Map()
-  for (const { stamp, run } of runs) {
+  for (const { stamp, run } of counted) {
     for (const kind of ['flaky', 'failed']) {
       for (const t of run[kind] ?? []) {
         const key = `${t.file} > ${t.title}`
@@ -73,12 +75,16 @@ function main () {
     }
   }
 
+  if (counted.length === 0) {
+    console.log('\nevery run in this window was stopped, nothing to tally')
+    return
+  }
   if (tally.size === 0) {
-    console.log(`\nno flaky or failed tests in ${runs.length} runs`)
+    console.log(`\nno flaky or failed tests in ${counted.length} runs`)
     return
   }
 
-  console.log(`\nunstable tests in ${runs.length} runs (flaky/failed, runs):`)
+  console.log(`\nunstable tests in ${counted.length} runs (flaky/failed, runs):`)
   for (const [key, e] of [...tally.entries()].sort((a, b) => b[1].flaky + b[1].failed - (a[1].flaky + a[1].failed))) {
     console.log(`  ${String(e.flaky)}/${String(e.failed)}  ${key}   [${e.runs.join(' ')}]`)
   }

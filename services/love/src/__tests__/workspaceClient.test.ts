@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Class, type Doc, type DocumentQuery, type MeasureContext, type Ref } from '@hcengineering/core'
+import core, { type Class, type Doc, type DocumentQuery, type MeasureContext, type Ref } from '@hcengineering/core'
 import love, { type MeetingMinutes, type ParticipantInfo, type Room } from '@hcengineering/love'
 import { createMockContext, createMockMeeting, createMockRoom, TEST_IDS } from './test-helpers'
 import { WorkspaceClient } from '../workspaceClient'
@@ -73,6 +73,81 @@ describe('WorkspaceClient.upsertParticipantFromLiveKit → new ParticipantInfo s
 
     expect(createDocCalls).toHaveLength(1)
     expect(createDocCalls[0].data.kind).toBe('user')
+  })
+})
+
+// The guard itself runs in the transactor; what this side owns is sending check and insert as one tx.
+describe('WorkspaceClient.createPendingRecording → reservation is one conditional write', () => {
+  const meeting = createMockMeeting()
+  const params = {
+    meeting: meeting._id,
+    format: 'video' as const,
+    roomName: 'ws_meeting',
+    name: 'rec.mp4',
+    reservedAfter: 1000
+  }
+
+  function clientAnswering (success: boolean): any {
+    return {
+      findOne: jest.fn(async () => meeting),
+      getAccount: jest.fn(async () => ({ primarySocialId: 'core:account:System' })),
+      tx: jest.fn(async () => ({ success, serverTime: 0 }))
+    }
+  }
+
+  it('sends the running-recording check and the insert under one per-slot scope', async () => {
+    const client = clientAnswering(true)
+    const id = await makeWorkspaceClient(createMockContext(), client).createPendingRecording(params)
+
+    const applyIf = client.tx.mock.calls[0][0]
+    expect(applyIf._class).toBe(core.class.TxApplyIf)
+    expect(applyIf.scope).toBe(`love:recording:${meeting._id}:video`)
+    const queries = applyIf.notMatch.map((it: any) => it.query)
+    expect(queries).toContainEqual(
+      expect.objectContaining({ attachedTo: meeting._id, format: 'video', egressId: { $exists: true } })
+    )
+    expect(queries).toContainEqual(
+      expect.objectContaining({ attachedTo: meeting._id, format: 'video', startedAt: { $gt: 1000 } })
+    )
+    expect(applyIf.txes).toHaveLength(1)
+    expect(id).toBe(applyIf.txes[0].objectId)
+  })
+
+  it('reports no reservation when the transactor refuses the write', async () => {
+    const client = clientAnswering(false)
+    expect(await makeWorkspaceClient(createMockContext(), client).createPendingRecording(params)).toBeUndefined()
+  })
+
+  // `undefined` means "somebody else holds the slot" and the caller drops the recording on it. A
+  // transactor that never answered must not be reported as that.
+  it('throws when the write fails instead of reporting the slot as taken', async () => {
+    const client = clientAnswering(true)
+    client.tx = jest.fn(async () => {
+      throw new Error('transactor unreachable')
+    })
+
+    await expect(makeWorkspaceClient(createMockContext(), client).createPendingRecording(params)).rejects.toThrow(
+      'transactor unreachable'
+    )
+  })
+
+  it('resolves the social id once for concurrent reservations', async () => {
+    const client = clientAnswering(true)
+    const wc = makeWorkspaceClient(createMockContext(), client)
+
+    await Promise.all([wc.createPendingRecording(params), wc.createPendingRecording(params)])
+
+    expect(client.getAccount).toHaveBeenCalledTimes(1)
+  })
+
+  // `findRunningRecording` still counts a row with no `status` as holding the slot; the atomic
+  // guard is the one place that has to agree with it.
+  it('treats a row with no status as holding the slot', async () => {
+    const client = clientAnswering(true)
+    await makeWorkspaceClient(createMockContext(), client).createPendingRecording(params)
+
+    const queries = client.tx.mock.calls[0][0].notMatch.map((it: any) => it.query)
+    expect(queries).toContainEqual(expect.objectContaining({ status: { $exists: false } }))
   })
 })
 
