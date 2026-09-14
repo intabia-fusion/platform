@@ -109,7 +109,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
           query: text,
           classes: allClasses,
           spaces: toSearchSpaces(state.filters, scope.space),
-          filters: toSearchFilters(state.filters)
+          filters: toSearchFilters(state.filters, scope.attachedTo)
         },
         {
           limit: PAGE_SIZE,

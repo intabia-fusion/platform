@@ -85,4 +85,5 @@ export type SearchFailure = { kind: 'unavailable' } | { kind: 'error', message: 
 
 export interface ChatSearchScope {
   space?: Ref<Space>
+  attachedTo?: Ref<Doc>
 }

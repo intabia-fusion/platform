@@ -125,12 +125,13 @@
   let searchDismissed = false
   let lastQuery: string = ''
 
-  $: isSearchOpen = searchOpened && !isDocChat
   $: if (searchQuery !== lastQuery) {
     lastQuery = searchQuery
     searchDismissed = false
   }
-  $: searchSpace = object._id as Ref<Space>
+  $: searchSpace = isDocChat ? undefined : (object._id as Ref<Space>)
+  $: searchAttachedTo = isDocChat ? object._id : undefined
+  $: searchMembersOf = isDocChat ? object.space : (object._id as Ref<Space>)
 
   function openSearch (initial: string = ''): void {
     searchQuery = initial
@@ -186,6 +187,7 @@
     prevObjectId = object._id
     objectChatPanel = hierarchy.classHierarchyMixin(object._class, chunter.mixin.ObjectChatPanel)
     isAsideShown = isAsideShown ?? objectChatPanel?.openByDefault === true
+    closeSearch()
   }
 </script>
 
@@ -214,7 +216,7 @@
       }}
     >
       <svelte:fragment slot="search">
-        {#if isSearchOpen}
+        {#if searchOpened}
           <div class="header-search">
             <SearchInputBox
               bind:this={searchInput}
@@ -230,7 +232,7 @@
               <svelte:fragment slot="filter">
                 <SearchFilterBar
                   compact
-                  space={searchSpace}
+                  space={searchMembersOf}
                   filters={searchFilters}
                   on:change={(e) => {
                     searchFilters = e.detail
@@ -242,17 +244,15 @@
         {/if}
       </svelte:fragment>
       <svelte:fragment slot="actions">
-        {#if !isDocChat}
-          <Button
-            icon={IconSearch}
-            iconProps={{ size: 'small' }}
-            kind={'icon'}
-            dataId="channel-search"
-            selected={isSearchOpen}
-            showTooltip={{ label: isSearchOpen ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
-            on:click={toggleSearch}
-          />
-        {/if}
+        <Button
+          icon={IconSearch}
+          iconProps={{ size: 'small' }}
+          kind={'icon'}
+          dataId="channel-search"
+          selected={searchOpened}
+          showTooltip={{ label: searchOpened ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
+          on:click={toggleSearch}
+        />
       </svelte:fragment>
     </ChannelHeader>
 
@@ -273,13 +273,14 @@
               </div>
             </div>
           {:else}
-            <ChannelComponent readonly={_readonly} {context} {object} autofocus={autofocus && !isSearchOpen} />
+            <ChannelComponent readonly={_readonly} {context} {object} autofocus={autofocus && !searchOpened} />
           {/if}
         {/key}
-        {#if isSearchOpen}
+        {#if searchOpened}
           <div class="searchOverlay" class:hidden={searchDismissed}>
           <SearchPanel
             space={searchSpace}
+            attachedTo={searchAttachedTo}
             showEscalate={false}
             filters={searchFilters}
             bind:value={searchQuery}

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref, type SearchSortOrder, type Space } from '@hcengineering/core'
+  import { type Doc, type Ref, type SearchSortOrder, type Space } from '@hcengineering/core'
   import { IconOptions, Label, ModernButton, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
@@ -24,6 +24,7 @@
   import SearchResultsList from './SearchResultsList.svelte'
 
   export let space: Ref<Space> | undefined = undefined
+  export let attachedTo: Ref<Doc> | undefined = undefined
   export let showEscalate: boolean = space !== undefined
   export let value: string = ''
   export let initialFilters: ChatSearchFilters | undefined = undefined
@@ -31,9 +32,9 @@
   export let filters: ChatSearchFilters = {}
 
   const dispatch = createEventDispatcher()
-  const store = createChatSearchStore({ space })
+  const store = createChatSearchStore({ space, attachedTo })
 
-  $: inChannel = space !== undefined
+  $: inChannel = space !== undefined || attachedTo !== undefined
   $: visible = !inChannel || $store.results.length > 0 || $store.failure !== undefined
 
   let selection = 0

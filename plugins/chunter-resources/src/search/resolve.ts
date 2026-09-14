@@ -15,7 +15,7 @@
 
 import { type Person } from '@hcengineering/contact'
 import { getSocialIdsByPersonRefs } from '@hcengineering/contact-resources'
-import { type Ref, type SearchFilters, type Space } from '@hcengineering/core'
+import { type Doc, type Ref, type SearchFilters, type Space } from '@hcengineering/core'
 
 import { expandClasses } from './classes'
 import type { ChatSearchFilters, PickedAuthor } from './types'
@@ -30,8 +30,12 @@ export async function pickAuthors (persons: Array<Ref<Person>>): Promise<PickedA
   return persons.map((person) => ({ person, socialIds: socialIds.get(person) ?? [] }))
 }
 
-export function toSearchFilters (filters: ChatSearchFilters): SearchFilters | undefined {
+export function toSearchFilters (filters: ChatSearchFilters, scopeAttachedTo?: Ref<Doc>): SearchFilters | undefined {
   const result: SearchFilters = {}
+
+  if (scopeAttachedTo !== undefined) {
+    result.attachedTo = [scopeAttachedTo]
+  }
 
   if (filters.attachedToClasses !== undefined && filters.attachedToClasses.length > 0) {
     result.attachedToClass = expandClasses(filters.attachedToClasses)
@@ -45,7 +49,7 @@ export function toSearchFilters (filters: ChatSearchFilters): SearchFilters | un
   if (filters.before !== undefined) {
     result.createdBefore = filters.before
   }
-  if (filters.attachedTo !== undefined && filters.attachedTo.length > 0) {
+  if (scopeAttachedTo === undefined && filters.attachedTo !== undefined && filters.attachedTo.length > 0) {
     result.attachedTo = filters.attachedTo.map((o) => o._id)
   }
   if (filters.hasAttachment === true) {
