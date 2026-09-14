@@ -272,8 +272,8 @@ export interface SearchQuery {
  * Asks the search engine for the matching excerpts, not just the documents.
  *
  * Which fields are highlighted is not a caller's choice: each one needs the highlighter that
- * suits how it is mapped (`searchContent` carries term vectors and uses a fast one, a title is
- * returned whole), so the set lives with the mapping in the adapter.
+ * suits how it is mapped (`highlightableContent` carries term vectors and uses a fast one, a
+ * title is returned whole), so the set lives with the mapping in the adapter.
  */
 export interface SearchHighlightOptions {
   // Characters of context around a match. Absent means the adapter's own default.
