@@ -616,10 +616,16 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       const query: SearchQuery = {
         query: req.query.query as string,
         classes: req.query.classes !== undefined ? JSON.parse(req.query.classes as string) : undefined,
-        spaces: req.query.spaces !== undefined ? JSON.parse(req.query.spaces as string) : undefined
+        spaces: req.query.spaces !== undefined ? JSON.parse(req.query.spaces as string) : undefined,
+        filters: req.query.filters !== undefined ? JSON.parse(req.query.filters as string) : undefined
       }
       const options: SearchOptions = {
-        limit: req.query.limit !== undefined ? parseInt(req.query.limit as string) : undefined
+        limit: req.query.limit !== undefined ? parseInt(req.query.limit as string) : undefined,
+        cursor: req.query.cursor as string | undefined,
+        sort: req.query.sort as SearchOptions['sort'],
+        searchIn: req.query.searchIn as SearchOptions['searchIn'],
+        fuzzy: req.query.fuzzy !== undefined ? req.query.fuzzy === 'true' : undefined,
+        highlight: req.query.highlight !== undefined ? JSON.parse(req.query.highlight as string) : undefined
       }
       const result = await session.searchFulltextRaw(ctx, query, options)
       await sendJson(req, res, result, rateLimitToHeaders(rateLimit), true)
