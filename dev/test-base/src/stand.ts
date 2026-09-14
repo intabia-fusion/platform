@@ -16,8 +16,9 @@
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { existsSync, rmSync } from 'fs'
 import { resolve } from 'path'
-import { composeDown, composeUp, exec, waitElastic, waitFor, waitTcp } from './docker'
+import { composeDown, composeUp, exec, removeStaleStands, waitElastic, waitFor, waitTcp } from './docker'
 import { initLogs, log, parallel, phase } from './log'
+import { stands } from './stands'
 import { applyEnv, getModelVersionString, repoRoot, runTool, warmupTool, type ToolEnv } from './tool'
 
 /**
@@ -204,6 +205,13 @@ async function verifyStand (cfg: StandConfig): Promise<void> {
   }
 }
 
+/** Compose projects of every other stand, which share this host's fixed ports. */
+function otherStandProjects (project: string): string[] {
+  const all = new Set(Object.values(stands).map((s) => s.project))
+  all.delete(project)
+  return [...all]
+}
+
 /**
  * @public
  */
@@ -218,6 +226,10 @@ export async function prepareStand (cfg: StandConfig): Promise<void> {
   }
 
   await phase('docker down', async () => {
+    // Only when asked: locally the other stands are someone's running work.
+    if (process.env.STAND_CLEAN_OTHERS === 'true') {
+      await removeStaleStands(otherStandProjects(compose.project), compose.cwd)
+    }
     await composeDown(compose)
   })
 

@@ -82,6 +82,20 @@ export async function composeDown (opts: ComposeOptions): Promise<void> {
 }
 
 /**
+ * Clears stands left by a suite that died mid-run. Compose finds them by project label, so their
+ * compose files need not exist.
+ * @public
+ */
+export async function removeStaleStands (projects: string[], cwd: string): Promise<void> {
+  for (const project of projects) {
+    await exec('docker', ['compose', '-p', project, 'down', '--volumes', '--remove-orphans'], {
+      cwd,
+      prefix: `compose down ${project}`
+    }).catch(() => {})
+  }
+}
+
+/**
  * `docker compose up` pulls missing images and retries nothing, so a layer download reset by the
  * registry CDN takes the whole stand down with it. Layers that did land are cached, so a retry
  * resumes rather than starts over.
