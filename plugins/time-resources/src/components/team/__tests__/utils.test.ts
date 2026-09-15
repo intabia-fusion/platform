@@ -9,12 +9,13 @@
 import { type BusySlot } from '@hcengineering/calendar'
 import { type Person } from '@hcengineering/contact'
 import { type Ref, type Timestamp } from '@hcengineering/core'
+import { describe, expect, it, vi } from 'vitest'
 import { groupTeamData } from '../utils'
 
 // The module pulls in svelte packages at import time, none of which the grouping logic uses.
-jest.mock('@hcengineering/presentation', () => ({ getClient: () => ({}) }))
-jest.mock('@hcengineering/workbench-resources', () => ({ openWidget: () => {} }))
-jest.mock('@hcengineering/calendar-resources', () => ({ isVisible: () => true }))
+vi.mock('@hcengineering/presentation', () => ({ getClient: () => ({}) }))
+vi.mock('@hcengineering/workbench-resources', () => ({ openWidget: () => {} }))
+vi.mock('@hcengineering/calendar-resources', () => ({ isVisible: () => true }))
 
 const me = 'me' as Ref<Person>
 const other = 'other' as Ref<Person>

@@ -144,13 +144,23 @@ export interface Response<R> {
   queue?: number
 }
 
+// msgpackr grows its packing buffer to the largest message ever packed and only drops it past
+// 1Gb; above this size we hand it back, and `pack` allocates 8Kb again (FUSIO-1344).
+const packrBufferKeep = 4 * 1024 * 1024
+
 export class RPCHandler {
   packr = new Packr({ structuredClone: true, bundleStrings: true, copyBuffers: false })
   protoSerialize (object: object, binary: boolean): any {
     if (!binary) {
       return JSON.stringify(object, rpcJSONReplacer)
     }
-    return new Uint8Array(this.packr.pack(object))
+    const packed = this.packr.pack(object)
+    // A copy, not a view: `pack` returns a subarray of the buffer being released below.
+    const res = new Uint8Array(packed)
+    if (packed.length > packrBufferKeep) {
+      this.packr.useBuffer(new Uint8Array(8192))
+    }
+    return res
   }
 
   protoDeserialize (data: any, binary: boolean): any {

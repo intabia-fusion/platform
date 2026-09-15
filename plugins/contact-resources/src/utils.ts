@@ -72,7 +72,7 @@ import core, {
   type Space,
   type Timestamp,
   toIdMap,
-  type TxOperations,
+  TxOperations,
   type TypedSpace,
   type UserStatus,
   type WithLookup,
@@ -372,23 +372,28 @@ function detectBrowserTimezone (): string | undefined {
   }
 }
 
-let timezoneSyncInFlight = false
+const timezoneSyncKey = 'contact_timezone_synced'
+let timezoneSynced = false
 
-async function syncMyEmployeeTimezone (employee: WithLookup<Employee> | undefined): Promise<void> {
-  if (timezoneSyncInFlight || employee === undefined) return
+// FUSIO-1344: the store also fires on my other sessions' changes, so two devices in different
+// zones overwrote each other forever. Write only when THIS device's own zone changed.
+export async function syncMyEmployeeTimezone (employee: WithLookup<Employee> | undefined): Promise<void> {
+  if (timezoneSynced || employee === undefined) return
   const browserTz = detectBrowserTimezone()
-  if (browserTz === undefined || employee.timezone === browserTz) return
+  if (browserTz === undefined) return
 
-  timezoneSyncInFlight = true
+  timezoneSynced = true
+  if (employee.timezone === browserTz || localStorage.getItem(timezoneSyncKey) === browserTz) return
   try {
+    // Derived: the browser restates a device fact, there is nothing to keep in the tx log.
     const client = getClient()
-    await client.updateMixin(employee._id, contact.class.Person, employee.space, contact.mixin.Employee, {
+    const derived = new TxOperations(client.client, getCurrentAccount().primarySocialId, true)
+    await derived.updateMixin(employee._id, contact.class.Person, employee.space, contact.mixin.Employee, {
       timezone: browserTz
     })
+    localStorage.setItem(timezoneSyncKey, browserTz)
   } catch (err) {
     console.error('Failed to sync employee timezone', err)
-  } finally {
-    timezoneSyncInFlight = false
   }
 }
 

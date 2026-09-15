@@ -19724,12 +19724,12 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 3.1.2(supports-color@8.1.1)(svelte@4.2.20)(vite@5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.44.1))
       '@types/crypto-js':
         specifier: ^4.2.2
         version: 4.2.2
-      '@types/jest':
-        specifier: 'catalog:'
-        version: 29.5.14
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 8.70.0(@typescript-eslint/parser@8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -19753,10 +19753,10 @@ importers:
         version: 6.6.0(eslint@8.57.1(supports-color@8.1.1))
       eslint-plugin-svelte:
         specifier: 'catalog:'
-        version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
-      jest:
+        version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(typescript@6.0.3))
+      jsdom:
         specifier: 'catalog:'
-        version: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
+        version: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
@@ -19778,12 +19778,15 @@ importers:
       svelte-preprocess:
         specifier: 'catalog:'
         version: 6.0.5(@babel/core@7.28.5(supports-color@8.1.1))(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@6.0.3)
-      ts-jest:
-        specifier: 'catalog:'
-        version: 29.4.12(@babel/core@7.28.5(supports-color@8.1.1))(@jest/transform@29.7.0(supports-color@8.1.1))(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.44.1)
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@24.13.3)(jsdom@25.0.1(supports-color@8.1.1))(sass@1.93.3)(supports-color@8.1.1)(terser@5.44.1)
 
   plugins/controlled-documents:
     dependencies:
@@ -30314,9 +30317,9 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
-      '@types/jest':
+      '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
-        version: 29.5.14
+        version: 3.1.2(supports-color@8.1.1)(svelte@4.2.20)(vite@5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.44.1))
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 8.70.0(@typescript-eslint/parser@8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -30340,10 +30343,10 @@ importers:
         version: 6.6.0(eslint@8.57.1(supports-color@8.1.1))
       eslint-plugin-svelte:
         specifier: 'catalog:'
-        version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
-      jest:
+        version: 2.46.1(eslint@8.57.1(supports-color@8.1.1))(svelte@4.2.20)(ts-node@10.9.2(typescript@6.0.3))
+      jsdom:
         specifier: 'catalog:'
-        version: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
+        version: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
@@ -30365,12 +30368,15 @@ importers:
       svelte-preprocess:
         specifier: 'catalog:'
         version: 6.0.5(@babel/core@7.28.5(supports-color@8.1.1))(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@6.0.3)
-      ts-jest:
-        specifier: 'catalog:'
-        version: 29.4.12(@babel/core@7.28.5(supports-color@8.1.1))(@jest/transform@29.7.0(supports-color@8.1.1))(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.44.1)
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@24.13.3)(jsdom@25.0.1(supports-color@8.1.1))(sass@1.93.3)(supports-color@8.1.1)(terser@5.44.1)
 
   plugins/tracker:
     dependencies:
@@ -58014,41 +58020,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  '@jest/core@29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))':
-    dependencies:
-      '@jest/console': 29.7.0
-      '@jest/reporters': 29.7.0(supports-color@8.1.1)
-      '@jest/test-result': 29.7.0
-      '@jest/transform': 29.7.0(supports-color@8.1.1)
-      '@jest/types': 29.6.3
-      '@types/node': 24.13.3
-      ansi-escapes: 4.3.2
-      chalk: 4.1.2
-      ci-info: 3.9.0
-      exit: 0.1.2
-      graceful-fs: 4.2.11
-      jest-changed-files: 29.7.0
-      jest-config: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
-      jest-haste-map: 29.7.0
-      jest-message-util: 29.7.0
-      jest-regex-util: 29.6.3
-      jest-resolve: 29.7.0
-      jest-resolve-dependencies: 29.7.0(supports-color@8.1.1)
-      jest-runner: 29.7.0(supports-color@8.1.1)
-      jest-runtime: 29.7.0(supports-color@8.1.1)
-      jest-snapshot: 29.7.0(supports-color@8.1.1)
-      jest-util: 29.7.0
-      jest-validate: 29.7.0
-      jest-watcher: 29.7.0
-      micromatch: 4.0.8
-      pretty-format: 29.7.0
-      slash: 3.0.0
-      strip-ansi: 6.0.1
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-      - ts-node
-
   '@jest/core@29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))':
     dependencies:
       '@jest/console': 29.7.0
@@ -62892,21 +62863,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  create-jest@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3)):
-    dependencies:
-      '@jest/types': 29.6.3
-      chalk: 4.1.2
-      exit: 0.1.2
-      graceful-fs: 4.2.11
-      jest-config: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
-      jest-util: 29.7.0
-      prompts: 2.4.2
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - supports-color
-      - ts-node
-
   create-jest@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)):
     dependencies:
       '@jest/types': 29.6.3
@@ -65647,14 +65603,14 @@ snapshots:
 
   jest-cli@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3)):
     dependencies:
-      '@jest/core': 29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
+      '@jest/core': 29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
       chalk: 4.1.2
-      create-jest: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
+      create-jest: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       exit: 0.1.2
       import-local: 3.2.0
-      jest-config: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
+      jest-config: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util: 29.7.0
       jest-validate: 29.7.0
       yargs: 17.7.2
@@ -65710,37 +65666,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.13.3
       ts-node: 10.9.2(@swc/core@1.16.2(@swc/helpers@0.5.19))(@types/node@24.13.3)(typescript@6.0.3)
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-
-  jest-config@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3)):
-    dependencies:
-      '@babel/core': 7.28.5(supports-color@8.1.1)
-      '@jest/test-sequencer': 29.7.0
-      '@jest/types': 29.6.3
-      babel-jest: 29.7.0(@babel/core@7.28.5(supports-color@8.1.1))(supports-color@8.1.1)
-      chalk: 4.1.2
-      ci-info: 3.9.0
-      deepmerge: 4.3.1
-      glob: 7.2.3
-      graceful-fs: 4.2.11
-      jest-circus: 29.7.0(supports-color@8.1.1)
-      jest-environment-node: 29.7.0
-      jest-get-type: 29.6.3
-      jest-regex-util: 29.6.3
-      jest-resolve: 29.7.0
-      jest-runner: 29.7.0(supports-color@8.1.1)
-      jest-util: 29.7.0
-      jest-validate: 29.7.0
-      micromatch: 4.0.8
-      parse-json: 5.2.0
-      pretty-format: 29.7.0
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    optionalDependencies:
-      '@types/node': 24.13.3
-      ts-node: 10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -66071,7 +65996,7 @@ snapshots:
 
   jest@29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3)):
     dependencies:
-      '@jest/core': 29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
+      '@jest/core': 29.7.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       '@jest/types': 29.6.3
       import-local: 3.2.0
       jest-cli: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2)(@types/node@24.13.3)(typescript@6.0.3))
@@ -66141,6 +66066,34 @@ snapshots:
   js-yaml@5.4.1:
     dependencies:
       argparse: 2.0.1
+
+  jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6):
+    dependencies:
+      cssstyle: 4.6.0
+      data-urls: 5.0.0
+      decimal.js: 10.6.0
+      form-data: 4.0.6
+      html-encoding-sniffer: 4.0.0
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      is-potential-custom-element-name: 1.0.1
+      nwsapi: 2.2.22
+      parse5: 7.3.0
+      rrweb-cssom: 0.7.1
+      saxes: 6.0.0
+      symbol-tree: 3.2.4
+      tough-cookie: 5.1.2
+      w3c-xmlserializer: 5.0.0
+      webidl-conversions: 7.0.0
+      whatwg-encoding: 3.1.1
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 14.2.0
+      ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      xml-name-validator: 5.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   jsdom@25.0.1(supports-color@8.1.1):
     dependencies:
@@ -69957,7 +69910,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.13.3
-      jsdom: 25.0.1(supports-color@8.1.1)
+      jsdom: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - less
       - lightningcss

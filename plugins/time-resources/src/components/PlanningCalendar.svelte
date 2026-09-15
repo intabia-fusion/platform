@@ -13,7 +13,7 @@
   import { UserBoxList, employeeByIdStore } from '@hcengineering/contact-resources'
   import { IdMap, PersonId, Ref, SortingOrder, Timestamp, getCurrentAccount } from '@hcengineering/core'
   import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import {
     AnyComponent,
     ButtonBase,
@@ -180,18 +180,39 @@
 
   $: overlay = busyOverlay(busyPlain.concat(busyRecurring), from, to, $employeeByIdStore)
 
-  function update (calendars: Calendar[]): void {
+  const qR = createQuery()
+  let rawPlain: Event[] = []
+  let rawRecurring: Event[] = []
+
+  // Without a window this pulled every event the user ever had - a recurring master still has to
+  // come in full, its date/dueDate only describe the first occurrence.
+  const update = reduceCalls(async (calendars: Calendar[], from: Timestamp, to: Timestamp): Promise<void> => {
+    const calendarIds = [personalCalendar, ...calendars.map((p) => p._id)]
     q.query<Event>(
       calendar.class.Event,
-      { calendar: { $in: [personalCalendar, ...calendars.map((p) => p._id)] } },
+      {
+        _class: { $ne: calendar.class.ReccuringEvent },
+        calendar: { $in: calendarIds },
+        date: { $lte: to },
+        dueDate: { $gte: from }
+      },
       (result) => {
-        raw = result
+        rawPlain = result
       },
       { sort: { date: SortingOrder.Ascending } }
     )
-  }
+    qR.query<Event>(
+      calendar.class.ReccuringEvent,
+      { calendar: { $in: calendarIds }, date: { $lte: to } },
+      (result) => {
+        rawRecurring = result
+      },
+      { sort: { date: SortingOrder.Ascending } }
+    )
+  })
 
-  $: update(calendars)
+  $: void update(calendars, from, to)
+  $: raw = rawPlain.concat(rawRecurring)
   $: all = getAllEvents(raw, from, to)
   // Hiding my own schedule keeps the drag preview, there is nothing to drop onto otherwise.
   $: objects = showMine ? hidePrivateEvents(all, $calendarByIdStore) : all.filter((it) => it._id === dragItemId)
