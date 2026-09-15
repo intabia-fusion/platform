@@ -28,6 +28,8 @@ const metricsContext = initStatisticsContext('front', {
 })
 
 startFront(metricsContext, {
+  // Commit the images were built from, baked in by docker_build.sh --build-arg BUILD_ID
+  BUILD_ID: process.env.BUILD_ID !== '' ? process.env.BUILD_ID : undefined,
   GITHUB_APP: process.env.GITHUB_APP ?? '',
   GITHUB_CLIENTID: process.env.GITHUB_CLIENTID ?? '',
   INTERCOM_APP_ID: process.env.INTERCOM_APP_ID ?? '',

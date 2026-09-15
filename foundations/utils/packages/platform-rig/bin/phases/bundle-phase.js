@@ -480,6 +480,21 @@ async function runBundlePhase(graph, packageNames, concurrency, options = {}) {
       result = await runBundleScript(cwd, bundleScript)
     }
 
+    // esbuild has exited 0 after writing a truncated bundle.js, and the break only surfaced
+    // as a SyntaxError inside the running container. Parse the output before caching it.
+    if (result.success && isStandardEsbuild(bundleScript)) {
+      const bundleFile = join(cwd, 'bundle', 'bundle.js')
+      const { spawnSync } = require('child_process')
+      const check = spawnSync(process.execPath, ['--check', bundleFile], { stdio: 'pipe' })
+      if (check.status !== 0) {
+        const size = fs.existsSync(bundleFile) ? fs.statSync(bundleFile).size : 0
+        return {
+          success: false,
+          error: new Error(`bundle.js is not parseable (${size} bytes): ${String(check.stderr).trim()}`)
+        }
+      }
+    }
+
     if (result.success && packageHash) {
       markPhaseCompleted(cwd, packageHash, 'bundle', null, ['bundle'])
     }

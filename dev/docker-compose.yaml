@@ -1,6 +1,6 @@
 services:
   stream:
-    image: "intabiafusion/stream:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stream:${DOCKER_TAG:-latest}"
     pull_policy: never
     environment:
       - STREAM_ENDPOINT_URL=datalake://datalake:4030
@@ -26,7 +26,7 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
   media:
-    image: "intabiafusion/media:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/media:${DOCKER_TAG:-latest}"
     environment:
       - ACCOUNTS_URL=http://account:3000
       - SECRET=secret
@@ -34,7 +34,7 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
   preview:
-    image: "intabiafusion/preview:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/preview:${DOCKER_TAG:-latest}"
     environment:
       - SECRET=secret
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -107,7 +107,7 @@ services:
       redpanda:
         condition: service_healthy
   minio:
-    image: "minio/minio"
+    image: "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
     command: server /data --address ":9000" --console-address ":9001"
     expose:
       - 9000
@@ -123,7 +123,7 @@ services:
       retries: 10
     restart: unless-stopped
   elastic-plugins:
-    image: intabiafusion/elastic-plugins:8.19.1-slim
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/elastic-plugins:8.19.1-slim"
     command:
       - sh
       - -c
@@ -169,7 +169,7 @@ services:
     restart: unless-stopped
 
   account:
-    image: "intabiafusion/account:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/account:${DOCKER_TAG:-latest}"
     links:
       - stats
     volumes:
@@ -208,7 +208,7 @@ services:
     # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9230
     restart: unless-stopped
   stats:
-    image: "intabiafusion/stats:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stats:${DOCKER_TAG:-latest}"
     environment:
       - PORT=4900
       - SERVER_SECRET=secret
@@ -219,7 +219,7 @@ services:
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9235
     restart: unless-stopped
   payment:
-    image: "intabiafusion/payment:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/payment:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -257,7 +257,7 @@ services:
       - TRIAL_EXPIRY_INTERVAL_MINUTES=${TRIAL_EXPIRY_INTERVAL_MINUTES:-}
     restart: unless-stopped
   workspace:
-    image: "intabiafusion/workspace:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/workspace:${DOCKER_TAG:-latest}"
     links:
       - postgres
       - minio
@@ -289,7 +289,7 @@ services:
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9231
     restart: unless-stopped
   collaborator0:
-    image: "intabiafusion/collaborator:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/collaborator:${DOCKER_TAG:-latest}"
     links:
       - minio
       - transactor
@@ -307,7 +307,7 @@ services:
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9233
     restart: unless-stopped
   front:
-    image: "intabiafusion/front:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/front:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     links:
@@ -366,7 +366,7 @@ services:
     # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9234
     restart: unless-stopped
   transactor:
-    image: "intabiafusion/transactor:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/transactor:${DOCKER_TAG:-latest}"
     links:
       - postgres
       - minio
@@ -409,7 +409,7 @@ services:
       - WEB_PUSH_URL=http://notification:3335
     restart: unless-stopped
   rekoni:
-    image: "intabiafusion/rekoni-service:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/rekoni-service:${DOCKER_TAG:-latest}"
     restart: unless-stopped
     environment:
       - STATS_URL=http://stats:4901
@@ -419,7 +419,7 @@ services:
       #   - 9239:9239
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9239
   fulltext:
-    image: "intabiafusion/fulltext:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/fulltext:${DOCKER_TAG:-latest}"
     depends_on:
       elastic:
         condition: service_healthy
@@ -447,7 +447,7 @@ services:
       #   - 9232:9232
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9232
   print:
-    image: "intabiafusion/print:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/print:${DOCKER_TAG:-latest}"
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     restart: unless-stopped
@@ -460,7 +460,7 @@ services:
       - ACCOUNTS_URL=http://account:3000
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   sign:
-    image: "intabiafusion/sign:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/sign:${DOCKER_TAG:-latest}"
     restart: unless-stopped
     volumes:
       - ../services/sign/pod-sign/debug/certificate.p12:/var/cfg/certificate.p12
@@ -478,7 +478,7 @@ services:
       - STATS_URL=http://stats:4900
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   love:
-    image: "intabiafusion/love:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/love:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -511,7 +511,7 @@ services:
     restart: unless-stopped
 
   aibot:
-    image: "intabiafusion/ai-bot:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -595,7 +595,7 @@ services:
     #   - 9236:9236
     # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9236
   aibot_client_llm:
-    image: "intabiafusion/ai-bot:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -635,7 +635,7 @@ services:
       # LLM-only worker: opt out of ASR even though the shared registry yaml has an `asr:` block.
       - STT_PROVIDER=none
   aibot_client_stt:
-    image: "intabiafusion/ai-bot:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -666,7 +666,7 @@ services:
 
       - STATS_URL=http://stats:4900
   analytics:
-    image: "intabiafusion/analytics-collector:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/analytics-collector:${DOCKER_TAG:-latest}"
     restart: unless-stopped
     environment:
       - SECRET=secret
@@ -679,7 +679,7 @@ services:
       # - POSTHOG_API_KEY=${POSTHOG_API_KEY}
       # - MAX_PAYLOAD_SIZE=10mb
   export:
-    image: "intabiafusion/export:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/export:${DOCKER_TAG:-latest}"
     links:
       - minio
       - stats
@@ -694,7 +694,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   datalake:
-    image: "intabiafusion/datalake:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/datalake:${DOCKER_TAG:-latest}"
     depends_on:
       minio:
         condition: service_healthy
@@ -770,7 +770,7 @@ services:
   #   restart: unless-stopped
 
   process-service:
-    image: "intabiafusion/process:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/process:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started
@@ -783,7 +783,7 @@ services:
       - QUEUE_REGION=
     restart: unless-stopped
   time-machine:
-    image: "intabiafusion/worker:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/worker:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started
@@ -848,7 +848,7 @@ services:
   #    restart: unless-stopped
 
   rating:
-    image: "intabiafusion/rating:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/rating:${DOCKER_TAG:-latest}"
     links:
       - postgres
       - minio
@@ -870,7 +870,7 @@ services:
     restart: unless-stopped
 
   db-migrator:
-    image: "intabiafusion/db-migrator:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/db-migrator:${DOCKER_TAG:-latest}"
     pull_policy: never
     depends_on:
       postgres:
@@ -880,7 +880,7 @@ services:
     restart: "no"
 
   love-agent:
-    image: "intabiafusion/love-agent:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/love-agent:${DOCKER_TAG:-latest}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -926,7 +926,7 @@ services:
       - minio
     restart: unless-stopped
   billing:
-    image: "intabiafusion/billing:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/billing:${DOCKER_TAG:-latest}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -954,7 +954,7 @@ services:
     restart: unless-stopped
 
   mail_server:
-    image: "intabiafusion/mail:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
     depends_on:
       - mailpit
     environment:
@@ -975,7 +975,7 @@ services:
       - SECRET=secret
       - APP_NAME=Platform
   mail_client:
-    image: "intabiafusion/mail:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
     depends_on:
       - mail_server
       - mailpit
@@ -1013,14 +1013,14 @@ services:
   #     - PORT=4409
   #   restart: unless-stopped
   link-preview:
-    image: "intabiafusion/link-preview:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/link-preview:${DOCKER_TAG:-latest}"
     container_name: link-preview
     environment:
       - SECRET=secret
       - PORT=4042
     restart: unless-stopped
   activity:
-    image: "intabiafusion/activity:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/activity:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started
@@ -1067,7 +1067,7 @@ services:
   #     - AMO_CRM_RESPONSIBLE_USER_ID=
   #   restart: unless-stopped
   tbank-subscriptions:
-    image: "intabiafusion/tbank-subscriptions:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/tbank-subscriptions:${DOCKER_TAG:-latest}"
     depends_on:
       account:
         condition: service_started
@@ -1109,7 +1109,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   notifications:
-    image: "intabiafusion/notifications:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/notifications:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started
@@ -1130,7 +1130,7 @@ services:
       - STATS_URL=http://stats:4900
       - BRANDING_PATH=/var/cfg/branding.json
   notification:
-    image: "intabiafusion/notification:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/notification:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started

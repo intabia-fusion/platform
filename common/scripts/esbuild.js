@@ -27,6 +27,22 @@ function getGitRevision() {
   }
 }
 
+// Bundles carry the build commit so a stand can be traced back to it.
+// Desktop is unaffected: it goes through webpack, not this script.
+function getVersionWithRevision() {
+  const version = getVersionFromScript('./show_tag.js')
+  if (version === '') {
+    return version
+  }
+  try {
+    const revision = execSync('git rev-parse --short HEAD').toString().trim()
+    return JSON.stringify(`${JSON.parse(version)}-${revision}`)
+  } catch (error) {
+    console.warn('Failed to get git revision:', error.message)
+    return version
+  }
+}
+
 function getVersionFromScript(scriptPath) {
   try {
     const absoluteScriptPath = path.resolve(SCRIPT_DIR, scriptPath)
@@ -110,7 +126,7 @@ async function main() {
 
   const env = {
     MODEL_VERSION: define['MODEL_VERSION'] ? getVersionFromScript('./show_version.js') : undefined,
-    VERSION: getVersionFromScript('./show_tag.js'),
+    VERSION: getVersionWithRevision(),
     GIT_REVISION: define['GIT_REVISION'] ? getGitRevision() : undefined,
     // License public key (base64 PEM), baked at CI build time. Empty/unset on dev/local builds ->
     // license.ts treats the build as edition 'dev' (unlimited, no gating). JSON.stringify so esbuild

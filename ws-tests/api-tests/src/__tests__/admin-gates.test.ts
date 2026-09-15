@@ -59,7 +59,9 @@ describe('admin-gates', () => {
     wsUuid = owner.workspaceId
     memberAccount = member.info.account
 
-    const adminInfo = await login('admin')
+    // Own admin account: case 4 burns the OTP rate limit, which is per-actor and would
+    // otherwise refuse the sessions the plan-* suites open in parallel.
+    const adminInfo = await login('admin2')
     adminLogin = adminInfo.token
     adminAccount = adminInfo.account
     billingLogin = (await login('billing')).token

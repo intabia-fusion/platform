@@ -1,6 +1,6 @@
 services:
   minio:
-    image: 'minio/minio'
+    image: 'quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z'
     command: server /data --address ":9000" --console-address ":9001"
     ports:
       - 9000:9000
@@ -33,7 +33,7 @@ services:
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
     restart: unless-stopped
   account:
-    image: intabiafusion/account
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/account"
     links:
       - minio
     ports:
@@ -56,7 +56,7 @@ services:
       - INIT_WORKSPACE=onboarding
     restart: unless-stopped
   collaborator:
-    image: intabiafusion/collaborator
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/collaborator"
     links:
       - minio
       - transactor
@@ -72,7 +72,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
     restart: unless-stopped
   front:
-    image: intabiafusion/front
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/front"
     links:
       - minio
       - elastic
@@ -103,7 +103,7 @@ services:
       - BRANDING_URL=http://localhost:8087/branding.json
     restart: unless-stopped
   transactor:
-    image: intabiafusion/transactor
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/transactor"
     links:
       - elastic
       - minio
@@ -137,7 +137,7 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   rekoni:
-    image: intabiafusion/rekoni-service
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/rekoni-service"
     restart: unless-stopped
     ports:
       - 4004:4004
@@ -146,7 +146,7 @@ services:
         limits:
           memory: 1024M
   print:
-    image: intabiafusion/print
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/print"
     restart: unless-stopped
     ports:
       - 4005:4005
@@ -160,7 +160,7 @@ services:
         limits:
           memory: 300M
   sign:
-    image: intabiafusion/sign
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/sign"
     restart: unless-stopped
     ports:
       - 4006:4006
@@ -199,7 +199,7 @@ services:
   #        limits:
   #          memory: 300M
   aiBot:
-    image: intabiafusion/ai-bot
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/ai-bot"
     restart: unless-stopped
     environment:
       - SERVER_SECRET=secret

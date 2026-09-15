@@ -75,6 +75,15 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverWorkflow.trigger.OnScreenDelete,
+    isAsync: false,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: workflow.class.Screen
+    }
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverWorkflow.trigger.OnTaskTypeUpdate,
     isAsync: false,
     txMatch: {
