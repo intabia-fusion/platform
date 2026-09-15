@@ -42,7 +42,14 @@ import { usageFromApi } from './types'
 import { runToolCalls, buildToolExecutor, MAX_TOOL_ITERATIONS, type AskModel } from './toolLoop'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 import { PROMPTS, buildSystemPrompt, CONTINUE_PROMPT } from './prompts'
-import { buildPersonNameMap, buildMessageText, replacePersonRefs } from './summarizeUtils'
+import {
+  buildPersonNameMap,
+  buildMessageText,
+  buildParticipantList,
+  mergePersonSections,
+  replacePersonRefs,
+  stripTagsInProse
+} from './summarizeUtils'
 
 // GigaChat tokens live 30 minutes and the client refreshes only lazily (on a 401), so the first
 // request after each expiry pays the OAuth round trip. Refresh ahead of it instead.
@@ -194,20 +201,32 @@ export default class GigaChatProvider implements LLMProvider {
   ): Promise<string | undefined> {
     try {
       const personToName = buildPersonNameMap(messages)
-      const text = buildMessageText(messages)
+      const text = buildMessageText(messages, personToName)
+      const systemPrompt = PROMPTS.SUMMARIZE_MESSAGES(lang, description, buildParticipantList(personToName))
+
+      if (config.LLMDebug) {
+        ctx.info('LLM debug -> gigachat summarizeMessages', {
+          model: this.modelFor(level),
+          temperature: config.SummaryTemperature,
+          participants: buildParticipantList(personToName),
+          systemPrompt,
+          transcript: text
+        })
+      }
 
       const response = await this.client.chat({
         messages: [
           {
             role: 'system',
-            content: PROMPTS.SUMMARIZE_MESSAGES(lang, description)
+            content: systemPrompt
           },
           {
             role: 'user',
             content: text
           }
         ],
-        model: this.modelFor(level)
+        model: this.modelFor(level),
+        temperature: config.SummaryTemperature
       })
 
       const usage = usageFromApi(response.usage)
@@ -216,7 +235,15 @@ export default class GigaChatProvider implements LLMProvider {
       let responseText = response.choices?.[0]?.message?.content ?? undefined
       if (responseText === undefined) return undefined
 
-      responseText = replacePersonRefs(responseText, personToName, encodeURIComponent(contact.class.Contact))
+      if (config.LLMDebug) {
+        ctx.info('LLM debug <- gigachat summarizeMessages', { model: this.modelFor(level), raw: responseText })
+      }
+
+      responseText = replacePersonRefs(
+        stripTagsInProse(mergePersonSections(responseText), personToName),
+        personToName,
+        encodeURIComponent(contact.class.Contact)
+      )
 
       return responseText
     } catch (error) {

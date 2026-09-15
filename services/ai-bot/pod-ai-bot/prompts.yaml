@@ -4,6 +4,7 @@
 #   {{botName}}         display name of the bot (FIRST_NAME / bot.firstName in the pod config)
 #   {{lang}}            target language (translate / summarize)
 #   {{description}}     optional meeting description block (summarizeMessages)
+#   {{participants}}    comma-separated roster of real participants (summarizeMessages)
 #   {{sharedPrompt}}    workspace instructions block (direct/thread chat)
 #   {{personalContext}} personal user preferences block (direct chat only)
 #   {{outputLimit}}     output-cap rule of the serving model (empty when uncapped)
@@ -20,18 +21,30 @@ translateHtml: |-
   Your task is to translate the text into {{lang}} while preserving the html structure and metadata. Do not translate <span data-type="reference">
 
 summarizeMessages: |-
-  Generate a summary from the provided sequence of messages by creating separate bullet lists for each participant, ensuring that each bullet point includes only the key points, problems and further work plans without any chit-chat, and clearly label each participant so that their individual contributions are distinctly summarized.
-    Use following structure for output:
+  Generate a summary from the provided sequence of messages by creating a separate bullet list for each participant, ensuring that each bullet point includes only the key points, problems and further work plans without any chit-chat, and clearly label each participant so that their individual contributions are distinctly summarized.
+    Open with 2 to 5 bullets about the meeting as a whole - what was discussed, the key problems raised, and what was decided. Write them as plain bullets with NO heading of any kind above them: the document already carries its own title. Write this block once, before any participant section, and never repeat it.
+    Then, for each participant, use following structure, repeated once per participant:
       **@Participant Name**
         - Key point 1
         - Key point 2
         - ...
-      **@Participant Name**
-        - Key point 1
-        - ...
     Don't introduce any other elements of the structure.
+    The summary is organised by person: one section per participant who said something of substance, gathering what they contributed across the whole meeting, however far apart those moments were. Prefer a single section per person; if the same participant ends up with more than one, their sections are joined afterwards, so never repeat a point you have already written for them.
+    The transcript below is chronological, one block per turn, in the order the meeting happened. Read it as a conversation: a turn usually answers the turn just before it, and "this", "it" or "agreed" refers to what was said in the preceding turns, not to the speaker's own previous turn. Never merge two separate moments into one statement - if a speaker mentioned mockups in one turn and a person in another, those are two facts, not one.
+    The participants of this meeting are, in full: {{participants}}
+    That list is exhaustive. Write a section ONLY for a name on it, spelled exactly as listed, and never invent a participant or a placeholder heading such as "Participants" or "Unnamed participant". If the list holds a single name, the summary has exactly one section.
+    Every heading is written as **@Name**: the `@` and the surrounding `**` are required markup, never part of the name and never to be dropped. A heading without its `@` is unusable.
+    Inside that markup, copy the name character for character, in the script it is written in. Do NOT translate it, transliterate it into the language of the summary, reorder the parts, or "correct" the spelling: a Latin-script name stays in Latin script even when the summary is in another language. A name is an identifier, not prose.
+    A heading contains ONE name and nothing else - no second name, no conjunction in any language, no punctuation joining two people, no words describing a group. A point that involves two people is written in the bullets of each of them, never under a shared heading.
+    The same applies to people named inside the messages: write such a name exactly as the speaker said it, and never replace it with a different name. When a speaker names someone, keep that name in the bullet - "Sergey promised to send the mockups" must not become "the mockups are missing", because who owes what is the point of the line. Only when the transcript itself leaves the person unclear should you phrase the point without a name, and even then never substitute a different one.
+    Carry technical terms over word for word, in the language they were spoken in, however many words they take. Do not shorten a multi-word term to one of its words, glue its words together with a hyphen, or swap in a near-synonym - a term is a name for one thing, and a shortened or spliced form means something else. Copy the whole term from the transcript exactly as it appears there, in the overview bullets as much as in the participant sections.
+    Two participants may share a name, told apart by a trailing tag: "Ivan Petrov (1)" and "Ivan Petrov (2)" are two different people. Write that tag in the section HEADING only, exactly as listed, so the section can be attributed to the right person; never merge two namesakes into one section and never add such a tag to a name listed without one.
+    Everywhere else - in the overview bullets and inside any bullet - write the plain name with no tag: the tag is bookkeeping, and "Ivan Petrov (2) finished the payment form" tells a reader nothing.
+    Wherever you name a participant, write their name in full as the roster spells it. Never shorten it to one word or to a different name: "Pyotr" instead of "Petrov Ivan" points at somebody who was not at the meeting. This holds above all in the opening overview, where the name is not next to its section and a wrong one cannot be noticed.
+    A name mentioned inside a message is a subject of the discussion, not a participant - never give it a section of its own.
+    Summarize only what was actually said: base every bullet on the messages, never on what such a meeting usually contains. A participant who said little gets few bullets, and one who said nothing of substance is omitted entirely. A short meeting yields a short summary.
     If a bullet point implies a reference to another participant include a reference according to this format: **@Participant Name**
-    The response should be translated into {{lang}} regardless of the original language. Don't translate the names of the participants and leave them exactly as they appear in the text.{{#description}}
+    Write the summary in {{lang}} regardless of the original language - this applies to the prose you write, never to the names, which stay exactly as they appear in the text.{{#description}}
 
     Meeting description / agenda (use as context for topic, goals, and expected outcomes; copy to summary only parts with relevant todo items):
   {{description}}{{/description}}

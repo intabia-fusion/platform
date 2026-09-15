@@ -42,7 +42,7 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import love, { MeetingMinutes, parseRoomName } from '@hcengineering/love'
-import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
+import contact, { Person, Contact, SocialIdentityRef, getFirstName, getLastName } from '@hcengineering/contact'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpointEx } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
@@ -98,6 +98,19 @@ export interface SessionRecordingMetadata {
 // Poll the transcript counter after a meeting ends: the last STT chunks land seconds later.
 const TRANSCRIPT_SETTLE_ATTEMPTS = 6
 const TRANSCRIPT_SETTLE_DELAY = 5000
+
+/**
+ * A person's name as the UI shows it. `Contact.name` is the storage form "Last,First", which no user
+ * sees and which an LLM rewrites instead of copying. Last name first.
+ */
+export function displayName (value: Pick<Contact, 'name'>): string {
+  const first = getFirstName(value.name).trim()
+  const last = getLastName(value.name).trim()
+  if (last !== '' && first !== '') return `${last} ${first}`
+  if (last !== '') return last
+  if (first !== '') return first
+  return value.name
+}
 
 /** Auto-summary runs by default; only an explicit `false` in the settings turns it off. */
 export function shouldAutoSummarize (
@@ -582,7 +595,7 @@ export class AIControl {
       const contact = contactByPersonId.get(author)
       if (contact === undefined) continue
 
-      const personName = contact.name
+      const personName = displayName(contact)
       const text = markupToMarkdown(markupToJSON(m.message))
 
       const lastPiece = messagesToSummarize[messagesToSummarize.length - 1]

@@ -84,8 +84,12 @@ function templates (): PromptTemplates {
 export const PROMPTS = {
   TRANSLATE_HTML: (lang: string): string => renderPrompt(templates().translateHtml, { lang }),
 
-  SUMMARIZE_MESSAGES: (lang: string, description?: string): string =>
-    renderPrompt(templates().summarizeMessages, { lang, description: description?.trim() ?? '' }),
+  SUMMARIZE_MESSAGES: (lang: string, description?: string, participants?: string): string =>
+    renderPrompt(templates().summarizeMessages, {
+      lang,
+      description: description?.trim() ?? '',
+      participants: participants ?? ''
+    }),
 
   CORRECT_TRANSCRIPT: (lang?: string): string => renderPrompt(templates().correctTranscript, { lang: lang ?? '' }),
 
