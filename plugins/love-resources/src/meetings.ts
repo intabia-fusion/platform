@@ -7,7 +7,8 @@ import love, {
   RoomType,
   isOffice,
   isScheduledJoinable,
-  type MeetingMinutes
+  type MeetingMinutes,
+  newCallTraceId
 } from '@hcengineering/love'
 import presentation, { getClient, onClient } from '@hcengineering/presentation'
 import {
@@ -363,7 +364,8 @@ async function createMeetingDocument (room: Room): Promise<{ meeting: MeetingMin
         recordingState: RecordingState.NotStarted,
         language: room.language,
         startWithRecording: room.startWithRecording ?? false,
-        startWithTranscription: room.startWithTranscription ?? false
+        startWithTranscription: room.startWithTranscription ?? false,
+        traceId: newCallTraceId()
       },
       newMeetingId
     )
