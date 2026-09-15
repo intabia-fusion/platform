@@ -2,6 +2,12 @@
 
 Changelog.
 
+## [0.8.45] - 2026-09-16
+
+* 🚀 FEATURES: · FUSIO-200: GitLab Build ([#437](https://github.com/hcengineering/platform/issues/437))
+* 🐛 BUG FIXES: · FUSIO-1344: Fix hang on planer/calendar ([#446](https://github.com/hcengineering/platform/issues/446)) · Fix race on image render ([#447](https://github.com/hcengineering/platform/issues/447)) · Clear transition rules on screen remove · Fix link preview service failed on gitlab ([#440](https://github.com/hcengineering/platform/issues/440)) · Fix gitlab CI ([#439](https://github.com/hcengineering/platform/issues/439)) · Fix webpack error · Fix more flacky tests ([#436](https://github.com/hcengineering/platform/issues/436))
+* 🧩 OTHER: · FUSIO-200: Clean stand on failed tests ([#442](https://github.com/hcengineering/platform/issues/442)) · Add link preview service to test env ([#438](https://github.com/hcengineering/platform/issues/438)) · Switch to different minio container · Enable QMS tests back
+
 ## [0.8.44] - 2026-09-10
 
 * 🐛 BUG FIXES: · Build fixes ([#433](https://github.com/hcengineering/platform/issues/433))
