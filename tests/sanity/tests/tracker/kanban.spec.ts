@@ -52,39 +52,58 @@ async function openTrackerBoard (page: import('@playwright/test').Page, projectI
 // retryIntervals falls back to a 3s tail - three drops cost 44s, 35s of it pure sleep.
 const dragIntervals = [100, 200, 300, 500]
 
+async function dragUntilField (
+  read: () => Promise<string | undefined>,
+  target: string,
+  drag: () => Promise<void>
+): Promise<void> {
+  const status = read
+  let lastError = 'none'
+  const poll = expect.poll(
+    async () => {
+      if ((await status()) === target) return target
+      let threw = false
+      try {
+        await drag()
+      } catch (err) {
+        // The drop can already have landed while findOne still reports the old status - the card
+        // is then gone from the DOM and the drag throws. Let the next read settle it.
+        threw = true
+        lastError = err instanceof Error ? err.message : String(err)
+        console.error('drag failed:', err)
+      }
+      // The drop shows up optimistically; wait for the tx before paying for another drag, which
+      // would otherwise start from the card's new position and cost seconds of scrolling. A drag
+      // that threw usually sent nothing, so it waits out only the short end of the ladder.
+      for (const wait of threw ? retryIntervals.slice(0, 3) : retryIntervals) {
+        if ((await status()) === target) return target
+        await new Promise((resolve) => setTimeout(resolve, wait))
+      }
+      return await status()
+    },
+    // Short of the 60s test timeout on purpose: at 60s the runner killed the test before the poll
+    // could report anything, so every one of these flakes arrived as a bare "Test timeout".
+    { timeout: 40000, intervals: dragIntervals }
+  )
+  try {
+    await poll.toBe(target)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(`${msg}\nlast drag error: ${lastError}`)
+  }
+}
+
 async function dragUntilStatus (
   client: TxOperations,
   cardId: Ref<Issue>,
   target: string,
   drag: () => Promise<void>
 ): Promise<void> {
-  const status = async (): Promise<string | undefined> =>
-    (await client.findOne(tracker.class.Issue, { _id: cardId }))?.status as string | undefined
-  await expect
-    .poll(
-      async () => {
-        if ((await status()) === target) return target
-        let threw = false
-        try {
-          await drag()
-        } catch (err) {
-          // The drop can already have landed while findOne still reports the old status - the card
-          // is then gone from the DOM and the drag throws. Let the next read settle it.
-          threw = true
-          console.error('drag failed:', err)
-        }
-        // The drop shows up optimistically; wait for the tx before paying for another drag, which
-        // would otherwise start from the card's new position and cost seconds of scrolling. A drag
-        // that threw usually sent nothing, so it waits out only the short end of the ladder.
-        for (const wait of threw ? retryIntervals.slice(0, 3) : retryIntervals) {
-          if ((await status()) === target) return target
-          await new Promise((resolve) => setTimeout(resolve, wait))
-        }
-        return await status()
-      },
-      { timeout: 60000, intervals: dragIntervals }
-    )
-    .toBe(target)
+  await dragUntilField(
+    async () => (await client.findOne(tracker.class.Issue, { _id: cardId }))?.status as string | undefined,
+    target,
+    drag
+  )
 }
 
 // Wide on purpose: with the statuses other specs add the board needs ~2000px, and at 1440 a drag
@@ -364,18 +383,15 @@ test.describe('Kanban board', () => {
       await board.expectCardInSwimLaneCell(childA, parentA, todo)
       await board.expectCardInSwimLaneCell(childB, parentB, todo)
 
-      await expect
-        .poll(
-          async () => {
-            const issue = await client.findOne(tracker.class.Issue, { _id: childA })
-            const at = issue?.attachedTo as string | undefined
-            if (at === parentB) return at
-            await board.dragCardToSwimLaneCell(childA, parentB, todo)
-            return at
-          },
-          { timeout: 30000, intervals: retryIntervals }
-        )
-        .toBe(parentB)
+      // Same shape as the status drags: read after the drop, not before, and report the drag's own
+      // error - this poll used to return the pre-drag value and fail with a bare "Expected/Received".
+      await dragUntilField(
+        async () => (await client.findOne(tracker.class.Issue, { _id: childA }))?.attachedTo as string | undefined,
+        parentB,
+        async () => {
+          await board.dragCardToSwimLaneCell(childA, parentB, todo)
+        }
+      )
     })
 
     test('multiple children render in the same parent lane', async ({ page }) => {

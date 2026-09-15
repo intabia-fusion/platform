@@ -530,17 +530,20 @@ export class IssuesPage extends CommonTrackerPage {
       await this.inputSearchIcon().click({ timeout: 5000 })
       await this.inputSearch().fill(issueName, { timeout: 5000 })
       const v = await this.inputSearch().inputValue()
-      if (v === issueName) {
-        await this.inputSearch().press('Enter')
-      }
+      // Returning here left the list unfiltered and the caller then hunted its row among every
+      // issue other specs had created - a click that can never resolve.
+      if (v !== issueName) throw new Error(`search box holds "${v}", not "${issueName}"`)
+      await this.inputSearch().press('Enter')
     }).toPass(retryOptions)
   }
 
   // The list re-renders as other specs touch issues and detaches the row mid-click; a short timeout
   // sends us back to a freshly resolved one.
   async openIssueByName (issueName: string): Promise<void> {
-    await this.expandCollapsedCategories()
+    // Inside the retry: a live update from another spec re-renders the list and collapses the
+    // categories again, hiding the row that a single expand up front had just revealed.
     await retry(async () => {
+      await this.expandCollapsedCategories()
       await this.issueByName(issueName).click({ timeout: 5000 })
     })
   }

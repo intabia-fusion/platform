@@ -44,3 +44,24 @@
 `recordings.test.ts` «reports a refusal when a recording is already running» проверял,
 что сервер **возвращает** `already-running` - то есть фиксировал симптом как корректное
 поведение. Клиентский рассинхрон не покрывал никто.
+
+## Второй аудио-egress из гонки /transcription (2026-09-15)
+
+`startAudioRecording` не имел сериализации, которая есть у видео (`startInFlight`): два
+`/transcription(true)` в пределах одного round-trip (тест + авто-коннект ai-bot по
+`startWithTranscription`) создавали две резервации и два egress на один митинг.
+Разбор флака - в [sanity-flaky-tests.md](sanity-flaky-tests.md).
+
+## Резервация через TxApplyIf (2026-09-15)
+
+`startInFlight` - Map в памяти процесса, между репликами love не работает. Заменён на
+`WorkspaceClient.createPendingRecording`: проверка "слот занят" и вставка уходят одним `TxApplyIf`
+со scope `love:recording:<meeting>:<format>` и двумя `notMatch` (у `notMatch` нет `$or`: строка
+с `egressId` или свежая резервация моложе grace). `ApplyTxMiddleware` держит scope-lock на время
+проверки и записи - атомарно в пределах транзактора воркспейса. Проигравший перечитывает слот и
+получает `already-running`.
+
+Отвергнуто: детерминированный `_id` `${meetingId}-${format}` с упором в PK. Освобождать слот пришлось
+бы удалением строки, а строка `cancelled` ещё ждёт `egress_ended` - удалить её значит не прикрепить
+файл записи. Плюс удаление+вставка устаревшей строки снова гонка. Вставка в PG - обычный `INSERT` без
+`ON CONFLICT` (`postgres/src/storage.ts`, `insert` -> `upload(..., false)`).

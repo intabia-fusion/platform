@@ -49,7 +49,15 @@ function createMockWsClient (): Record<string, any> {
   return {
     findMeetingById: jest.fn().mockResolvedValue(meeting),
     findPendingRecordingsByMeeting: jest.fn(async () => [...pending]),
+    // Check and insert in one synchronous step, as the transactor runs a scoped TxApplyIf.
     createPendingRecording: jest.fn(async (params: any) => {
+      const held = pending.some(
+        (it) =>
+          it.format === params.format &&
+          (it.status === 'active' || it.status === 'completed') &&
+          (it.egressId !== undefined || it.startedAt > params.reservedAfter)
+      )
+      if (held) return undefined
       const id = `rec-${pending.length + 1}`
       pending.push({ ...params, _id: id, status: 'active', startedAt: Date.now() })
       return id
@@ -155,6 +163,18 @@ describe('RecordingProcessor.startRecording', () => {
       const second = processor.startAudioRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo)
       release({ egressId: 'EG_1' })
       await Promise.all([first, second])
+
+      expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
+      expect(wsClient.__pending.filter((it: any) => it.format === 'audio')).toHaveLength(1)
+    })
+
+    // Real race from the stand: the test's `/transcription` and ai-bot's auto-connect both
+    // checked for a running recording before either wrote its reservation.
+    it('two starts racing before any reservation produce a single egress', async () => {
+      await Promise.all([
+        processor.startAudioRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo),
+        processor.startAudioRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo)
+      ])
 
       expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
       expect(wsClient.__pending.filter((it: any) => it.format === 'audio')).toHaveLength(1)
@@ -276,7 +296,7 @@ describe('RecordingProcessor.startRecording', () => {
     const results = await both
 
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
-    expect(wsClient.createPendingRecording).toHaveBeenCalledTimes(1)
+    expect(wsClient.__pending.filter((it: any) => it.format === 'video')).toHaveLength(1)
     expect(results.filter((r) => r.started)).toHaveLength(1)
     expect(results.filter((r) => !r.started)).toEqual([{ started: false, reason: 'already-running' }])
   })
