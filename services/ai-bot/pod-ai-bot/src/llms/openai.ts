@@ -42,7 +42,14 @@ import { totalTokens, usageFromApi } from './types'
 import { runToolCalls, buildToolExecutor, MAX_TOOL_ITERATIONS, type AskModel } from './toolLoop'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 import { PROMPTS, buildSystemPrompt, CONTINUE_PROMPT } from './prompts'
-import { buildPersonNameMap, buildMessageText, replacePersonRefs } from './summarizeUtils'
+import {
+  buildPersonNameMap,
+  buildMessageText,
+  buildParticipantList,
+  mergePersonSections,
+  replacePersonRefs,
+  stripTagsInProse
+} from './summarizeUtils'
 import { parseInlineToolCalls } from './inlineToolCalls'
 
 export default class OpenAIProvider implements LLMProvider {
@@ -144,14 +151,26 @@ export default class OpenAIProvider implements LLMProvider {
     level?: AILevel
   ): Promise<string | undefined> {
     const personToName = buildPersonNameMap(messages)
-    const text = buildMessageText(messages)
+    const text = buildMessageText(messages, personToName)
+    const systemPrompt = PROMPTS.SUMMARIZE_MESSAGES(lang, description, buildParticipantList(personToName))
+
+    if (config.LLMDebug) {
+      ctx.info('LLM debug -> openai summarizeMessages', {
+        model: this.modelFor(level),
+        temperature: config.SummaryTemperature,
+        participants: buildParticipantList(personToName),
+        systemPrompt,
+        transcript: text
+      })
+    }
 
     const response = await this.client.chat.completions.create({
       model: this.modelFor(level),
+      temperature: config.SummaryTemperature,
       messages: [
         {
           role: 'system',
-          content: PROMPTS.SUMMARIZE_MESSAGES(lang, description)
+          content: systemPrompt
         },
         {
           role: 'user',
@@ -186,7 +205,15 @@ export default class OpenAIProvider implements LLMProvider {
     let responseText = response.choices?.[0]?.message?.content ?? undefined
     if (responseText === undefined) return undefined
 
-    responseText = replacePersonRefs(responseText, personToName, encodeURIComponent(contact.class.Contact))
+    if (config.LLMDebug) {
+      ctx.info('LLM debug <- openai summarizeMessages', { model: this.modelFor(level), raw: responseText })
+    }
+
+    responseText = replacePersonRefs(
+      stripTagsInProse(mergePersonSections(responseText), personToName),
+      personToName,
+      encodeURIComponent(contact.class.Contact)
+    )
 
     return responseText
   }
