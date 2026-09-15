@@ -7,6 +7,7 @@ import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { Analytics } from '@hcengineering/analytics'
 import { selectedRoomPlace } from './stores'
 import { get } from 'svelte/store'
+import { computeCallTraceParent } from './tracing'
 
 export function getLoveClient (): LoveClient {
   return new LoveClient()
@@ -37,10 +38,7 @@ export class LoveClient {
 
       await fetch(concatLink(endpoint, '/language'), {
         method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token,
-          'Content-Type': 'application/json'
-        },
+        headers: await this.buildHeaders(mm._id, token),
         body: JSON.stringify({
           meetingId: mm._id,
           language: room.language
@@ -61,10 +59,7 @@ export class LoveClient {
       const path = isRecording ? '/stopRecord' : '/startRecord'
       const res = await fetch(concatLink(endpoint, path), {
         method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token,
-          'Content-Type': 'application/json'
-        },
+        headers:await this.buildHeaders(mm._id, token),
         body: JSON.stringify({
           meetingId: mm._id,
           title: mm.name
@@ -100,10 +95,7 @@ export class LoveClient {
     try {
       await fetch(concatLink(this.getLoveEndpoint(), '/claimSession'), {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${getPlatformToken()}`,
-          'Content-Type': 'application/json'
-        },
+        headers: await this.buildHeaders(meetingMinutes._id, getPlatformToken()),
         body: JSON.stringify({ meetingId: meetingMinutes._id }),
         signal: AbortSignal.timeout(LOVE_HOUSEKEEPING_TIMEOUT_MS)
       })
@@ -119,12 +111,13 @@ export class LoveClient {
    */
   async liveSessions (candidates: Array<Ref<MeetingMinutes>>): Promise<Array<Ref<MeetingMinutes>>> {
     try {
+      const token = getPlatformToken()
+      const headers =
+        candidates.length === 1 ? await this.buildHeaders(candidates[0], token) : this.authHeaders(token)
+
       const res = await fetch(concatLink(this.getLoveEndpoint(), '/liveSessions'), {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${getPlatformToken()}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({ meetings: candidates }),
         signal: AbortSignal.timeout(LOVE_HOUSEKEEPING_TIMEOUT_MS)
       })
@@ -141,10 +134,7 @@ export class LoveClient {
     try {
       await fetch(concatLink(this.getLoveEndpoint(), '/finishMeeting'), {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${getPlatformToken()}`,
-          'Content-Type': 'application/json'
-        },
+        headers: await this.buildHeaders(meetingId, getPlatformToken()),
         body: JSON.stringify({ meetingId }),
         signal: AbortSignal.timeout(LOVE_HOUSEKEEPING_TIMEOUT_MS)
       })
@@ -176,10 +166,7 @@ export class LoveClient {
 
     const res = await fetch(concatLink(endpoint, '/getToken'), {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${platformToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: await this.buildHeaders(meetingMinutes._id, platformToken),
       body: JSON.stringify({
         meetingId: meetingMinutes._id,
         _id: myPerson._id,
@@ -202,10 +189,7 @@ export class LoveClient {
   async getGuestToken (mm: MeetingMinutes): Promise<string> {
     const res = await fetch(concatLink(this.getLoveEndpoint(), '/guestToken'), {
       method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + getPlatformToken(),
-        'Content-Type': 'application/json'
-      },
+      headers: await this.buildHeaders(mm._id, getPlatformToken()),
       body: JSON.stringify({ meetingId: mm._id })
     })
 
@@ -216,5 +200,27 @@ export class LoveClient {
 
     const data = await res.json()
     return data?.token ?? data
+  }
+
+  private async callTraceParent (meetingId: Ref<MeetingMinutes>): Promise<string | undefined> {
+    const person = await getPersonByPersonRef(getCurrentEmployee())
+    if (person == null) return undefined
+    return await computeCallTraceParent(meetingId, person._id)
+  }
+
+  private authHeaders (token: string): Record<string, string> {
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }
+
+  private async buildHeaders (meetingId: Ref<MeetingMinutes>, token: string): Promise<Record<string, string>> {
+    const headers = this.authHeaders(token)
+    const traceParent = await this.callTraceParent(meetingId)
+    if (traceParent !== undefined) {
+      headers.traceparent = traceParent
+    }
+    return headers
   }
 }

@@ -42613,6 +42613,9 @@ importers:
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../plugins/love
+      '@hcengineering/measurements-otlp':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/measurements-otlp
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -42631,6 +42634,9 @@ importers:
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/token
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
       cors:
         specifier: 'catalog:'
         version: 2.8.5
