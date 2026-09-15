@@ -40,15 +40,23 @@
   $: height = imageHeight != null ? `min(${imageHeight}px, ${fit ? '100%' : '80vh'})` : '100%'
 
   let loading = true
-  function _setLoading (newState: boolean): void {
-    loading = newState
-    setLoading?.(loading)
+
+  function trackLoading (img: HTMLImageElement): void {
+    const sync = (): void => {
+      const newState = !(img.complete && img.currentSrc !== '')
+      if (loading === newState) return
+      loading = newState
+      setLoading?.(loading)
+    }
+    sync()
+    img.addEventListener('load', sync)
+    img.addEventListener('error', sync)
   }
 
-  $: if (value !== undefined) _setLoading(true)
+  $: blobRefPromise = getBlobRef(value, name)
 </script>
 
-{#await getBlobRef(value, name) then blobRef}
+{#await blobRefPromise then blobRef}
   {#if loading}
     <div class="flex-center w-full h-full clear-mins">
       <Loading />
@@ -65,9 +73,7 @@
     style={`max-width:${width};max-height:${height}`}
   >
     <img
-      on:load={() => {
-        _setLoading(false)
-      }}
+      use:trackLoading
       class="object-contain mx-auto"
       style:max-width={width}
       style:max-height={height}
