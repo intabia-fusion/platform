@@ -506,6 +506,7 @@ services:
       - STATS_URL=http://stats:4900
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
     # Debug: uncomment to enable remote debugging
     # ports:
     #   - 9237:9237
