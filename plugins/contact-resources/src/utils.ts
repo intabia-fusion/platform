@@ -72,7 +72,7 @@ import core, {
   type Space,
   type Timestamp,
   toIdMap,
-  type TxOperations,
+  TxOperations,
   type TypedSpace,
   type UserStatus,
   type WithLookup,
@@ -97,6 +97,7 @@ import { type LocationData } from '@hcengineering/workbench'
 import { derived, get, type Readable, writable } from 'svelte/store'
 
 import contact from './plugin'
+import { syncMyEmployeeTimezone } from './timezone'
 import { getPreviewPopup } from './components/person/utils'
 import ContactCacheStoreManager from './cache'
 
@@ -362,35 +363,6 @@ export const myEmployeeStore = derived(
     return currentEmployeeRef !== undefined ? employeeById.get(currentEmployeeRef) : undefined
   }
 )
-
-function detectBrowserTimezone (): string | undefined {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-    return tz !== '' ? tz : undefined
-  } catch {
-    return undefined
-  }
-}
-
-let timezoneSyncInFlight = false
-
-async function syncMyEmployeeTimezone (employee: WithLookup<Employee> | undefined): Promise<void> {
-  if (timezoneSyncInFlight || employee === undefined) return
-  const browserTz = detectBrowserTimezone()
-  if (browserTz === undefined || employee.timezone === browserTz) return
-
-  timezoneSyncInFlight = true
-  try {
-    const client = getClient()
-    await client.updateMixin(employee._id, contact.class.Person, employee.space, contact.mixin.Employee, {
-      timezone: browserTz
-    })
-  } catch (err) {
-    console.error('Failed to sync employee timezone', err)
-  } finally {
-    timezoneSyncInFlight = false
-  }
-}
 
 onClient(() => {
   myEmployeeStore.subscribe((employee) => {

@@ -13,7 +13,7 @@
   import { UserBoxList, employeeByIdStore } from '@hcengineering/contact-resources'
   import { IdMap, PersonId, Ref, SortingOrder, Timestamp, getCurrentAccount } from '@hcengineering/core'
   import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import {
     AnyComponent,
     ButtonBase,
@@ -33,7 +33,7 @@
   import { PlannerCalendarMode } from '..'
   import time from '../plugin'
   import PlannerViewSwitch from './PlannerViewSwitch.svelte'
-  import { getWorkSlotSpace } from '../utils'
+  import { eventWindowQueries, getWorkSlotSpace } from '../utils'
   import IconSun from './icons/Sun.svelte'
 
   export let dragItem: ToDo | null = null
@@ -180,18 +180,44 @@
 
   $: overlay = busyOverlay(busyPlain.concat(busyRecurring), from, to, $employeeByIdStore)
 
-  function update (calendars: Calendar[]): void {
+  const qR = createQuery()
+  const qI = createQuery()
+  let rawPlain: Event[] = []
+  let rawRecurring: Event[] = []
+  let rawInstances: Event[] = []
+
+  // Masters and overrides come unwindowed: neither is described by the date range (see
+  // eventWindowQueries).
+  const update = reduceCalls(async (calendars: Calendar[], from: Timestamp, to: Timestamp): Promise<void> => {
+    const queries = eventWindowQueries([personalCalendar, ...calendars.map((p) => p._id)], from, to)
     q.query<Event>(
       calendar.class.Event,
-      { calendar: { $in: [personalCalendar, ...calendars.map((p) => p._id)] } },
+      queries.plain,
       (result) => {
-        raw = result
+        rawPlain = result
       },
       { sort: { date: SortingOrder.Ascending } }
     )
-  }
+    qR.query<Event>(
+      calendar.class.ReccuringEvent,
+      queries.recurring,
+      (result) => {
+        rawRecurring = result
+      },
+      { sort: { date: SortingOrder.Ascending } }
+    )
+    qI.query<Event>(
+      calendar.class.ReccuringInstance,
+      queries.instances,
+      (result) => {
+        rawInstances = result
+      },
+      { sort: { date: SortingOrder.Ascending } }
+    )
+  })
 
-  $: update(calendars)
+  $: void update(calendars, from, to)
+  $: raw = rawPlain.concat(rawRecurring, rawInstances)
   $: all = getAllEvents(raw, from, to)
   // Hiding my own schedule keeps the drag preview, there is nothing to drop onto otherwise.
   $: objects = showMine ? hidePrivateEvents(all, $calendarByIdStore) : all.filter((it) => it._id === dragItemId)
