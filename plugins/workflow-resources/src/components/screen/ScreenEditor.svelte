@@ -125,7 +125,7 @@
   $: usedWorkflows = workflows.filter((wf) => {
     const transitions = (wf.$lookup?.transitions ?? []) as WorkflowTransition[]
     return transitions.some((t) =>
-      t.requests?.some((r) => r.id === plugin.request.ScreenRequest && (r.props as ScreenProps)?.screen === objectId)
+      t.requests?.some((r) => r.rule === plugin.request.ScreenRequest && (r.props as ScreenProps)?.screen === objectId)
     )
   })
 

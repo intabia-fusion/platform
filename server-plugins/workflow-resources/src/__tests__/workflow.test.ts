@@ -29,7 +29,7 @@ import core, {
 import { type TriggerControl, type PipelineContext } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
+import workflowPlugin, { type Screen, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
 
 import { PostFunctionsTrigger } from '../PostFunctions'
@@ -1166,6 +1166,73 @@ describe('PostFunctionsTrigger', () => {
         _class: core.class.TxUpdateDoc,
         objectId: 'wf-1',
         operations: { initialStatuses: [otherStatusId] }
+      })
+    })
+  })
+
+  describe('OnScreenDelete', () => {
+    it('should drop only the ScreenRequests pointing at the removed screen', async () => {
+      const { OnScreenDelete } = jest.requireActual('../WorkflowTrigger')
+      const deletedScreenId = 'screen-1' as Ref<Screen>
+      const otherScreenId = 'screen-2' as Ref<Screen>
+      const space = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: deletedScreenId,
+        objectClass: workflow.class.Screen,
+        objectSpace: space,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const keptRequest = {
+        id: 'r-other-screen',
+        rule: workflowPlugin.request.ScreenRequest,
+        props: { screen: otherScreenId }
+      }
+      const transitionWithDeleted = {
+        _id: 't-1' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        requests: [
+          { id: 'r-dead', rule: workflowPlugin.request.ScreenRequest, props: { screen: deletedScreenId } },
+          keptRequest
+        ]
+      }
+      const transitionUntouched = {
+        _id: 't-2' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        requests: [keptRequest]
+      }
+      const transitionWithoutRequests = {
+        _id: 't-3' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class) => {
+          if (_class === workflow.class.WorkflowTransition) {
+            return [transitionWithDeleted, transitionUntouched, transitionWithoutRequests]
+          }
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnScreenDelete([removeTx as any], mockControl as any)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxUpdateDoc,
+        objectId: 't-1',
+        operations: { requests: [keptRequest] }
       })
     })
   })

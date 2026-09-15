@@ -15,6 +15,8 @@
 
 import core from '@hcengineering/core'
 
+import workflow from '../../plugin'
+
 import {
   checkWorkflowCompatibility,
   exportWorkflow,
@@ -116,6 +118,36 @@ describe('Workflow Compatibility Check', () => {
     ]
     const reportWithScreens = await checkWorkflowCompatibility(client, config, targetTaskTypeId)
     expect(reportWithScreens.hasScreens).toBe(true)
+  })
+
+  it('does not set hasScreens for a ScreenRequest with no screens section', async () => {
+    const client = createMockTx()
+    const config = await exportWorkflow(client, workflowId, {
+      workspace: ws1,
+      projectTypeId
+    })
+
+    // A request left over from a deleted screen: the export cannot resolve it, so there is nothing
+    // for the Screens step to render and it must stay hidden.
+    config.screens = undefined
+    config.workflows[0].transitions = [
+      {
+        id: 'trans-dangling' as any,
+        name: 'dangling',
+        to: 'status-open' as any,
+        requests: [
+          {
+            id: 'req-dangling',
+            rule: workflow.request.ScreenRequest,
+            ruleClass: workflow.class.WorkflowRequest,
+            props: { screen: 'deleted-screen' }
+          }
+        ]
+      }
+    ] as any
+
+    const report = await checkWorkflowCompatibility(client, config, targetTaskTypeId)
+    expect(report.hasScreens).toBe(false)
   })
 
   it('checks strict attribute type compatibility', () => {

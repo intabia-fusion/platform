@@ -50,6 +50,7 @@ export default plugin(serverWorkflowId, {
     OnWorkflowDelete: '' as Resource<TriggerFunc>,
     OnTaskTypeDelete: '' as Resource<TriggerFunc>,
     OnStatusDelete: '' as Resource<TriggerFunc>,
+    OnScreenDelete: '' as Resource<TriggerFunc>,
     OnTaskTypeUpdate: '' as Resource<TriggerFunc>
   },
   mixin: {
