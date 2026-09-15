@@ -18,6 +18,16 @@ TypeScript/Svelte 4 monorepo. pnpm workspaces, Node 24 (`.nvmrc`; engines accept
 
 Projects sit 2-3 levels deep, each with its own `package.json`.
 
+## Session memory (`docs/memory/`)
+
+One file per topic, for what the code and git history do NOT already say: a root cause that took
+digging, a third-party quirk with its file:line, a constant whose value came from a measurement.
+
+Keep it minimal. No narrative, no restating the fix, no "what we tried" — a fact per line, with the
+number or the reference that makes it checkable. If a line would be obvious to anyone reading the
+code it touches, drop it. Prefer editing an existing file over adding a near-duplicate; delete a
+note once it stops being true.
+
 ## UI Components
 
 Before writing a new `.svelte` component, check [`docs/ui-components/`](docs/ui-components/README.md): catalogs of

@@ -144,13 +144,42 @@ export interface Response<R> {
   queue?: number
 }
 
+// msgpackr keeps one module-scoped arena and only drops it past 1Gb (pack.js:209), so a single
+// oversized response parked 45.7Mb for the life of a 512Mb pod (FUSIO-1344). Growth is coarse
+// (8Mb -> 32Mb), hence the 16Mb line. Packed model, the largest routine message, is 1.31Mb.
+const packrArenaSize = 8 * 1024 * 1024
+const packrArenaMax = 16 * 1024 * 1024
+
+/** The one method of node's Buffer this needs - the package is isomorphic, so no @types/node. */
+interface ArenaAllocator {
+  allocUnsafeSlow?: (size: number) => Uint8Array
+}
+
+function allocPackrArena (): Uint8Array {
+  // msgpackr's own allocator (pack.js:8); it writes strings via Buffer.utf8Write, which a plain
+  // Uint8Array lacks.
+  const allocator = (globalThis as { Buffer?: ArenaAllocator }).Buffer
+  return allocator?.allocUnsafeSlow?.(packrArenaSize) ?? new Uint8Array(packrArenaSize)
+}
+
 export class RPCHandler {
   packr = new Packr({ structuredClone: true, bundleStrings: true, copyBuffers: false })
+  constructor () {
+    this.packr.useBuffer(allocPackrArena())
+  }
+
   protoSerialize (object: object, binary: boolean): any {
     if (!binary) {
       return JSON.stringify(object, rpcJSONReplacer)
     }
-    return new Uint8Array(this.packr.pack(object))
+    const packed = this.packr.pack(object)
+    // A copy, not a view: `pack` returns a subarray of the arena replaced below.
+    const res = new Uint8Array(packed)
+    // `.buffer` is the whole arena, not the slice: its grown size, not the message size.
+    if (packed.buffer.byteLength > packrArenaMax) {
+      this.packr.useBuffer(allocPackrArena())
+    }
+    return res
   }
 
   protoDeserialize (data: any, binary: boolean): any {
