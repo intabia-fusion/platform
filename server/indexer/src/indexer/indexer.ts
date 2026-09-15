@@ -21,6 +21,7 @@ import core, {
   type AttachedDoc,
   type Blob,
   type Class,
+  type Collection,
   type Doc,
   docKey,
   type Domain,
@@ -62,7 +63,7 @@ import { RateLimiter, SessionDataImpl } from '@hcengineering/server-core'
 import { jsonToText, markupToJSON, markupToText } from '@hcengineering/text'
 import { findSearchPresenter, updateDocWithPresenter } from '../mapper'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
-import chunter, { type Chat, type DirectMessage } from '@hcengineering/chunter'
+import chunter, { type Chat, type DirectMessage, ThreadMessage } from '@hcengineering/chunter'
 import { type Person } from '@hcengineering/contact'
 
 import { type FullTextPipeline } from './types'
@@ -238,6 +239,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     control?: ConsumerControl
   ): Promise<void> {
     let processed = 0
+    ctx.contextData ??= this.createContextData()
     await ctx.with(
       'reindex domain',
       { domain },
@@ -333,6 +335,21 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     }
   }
 
+  private readonly hasAttachments = new Map<Ref<Class<Doc>>, boolean>()
+
+  private hasAttachmentsCollection (_class: Ref<Class<Doc>>): boolean {
+    const cached = this.hasAttachments.get(_class)
+    if (cached !== undefined) return cached
+
+    const attr = this.hierarchy.findAttribute(_class, 'attachments')
+    const has =
+      attr?.type._class === core.class.Collection &&
+      this.hierarchy.isDerived((attr.type as Collection<AttachedDoc>).of, attachmentPlugin.class.Attachment)
+
+    this.hasAttachments.set(_class, has)
+    return has
+  }
+
   private async findParents (ctx: MeasureContext, docs: AttachedDoc[]): Promise<IdMap<Doc>> {
     const result: Doc[] = []
     const groups = groupByArray(docs, (doc) => doc.attachedToClass)
@@ -421,6 +438,33 @@ export class FullTextIndexPipeline implements FullTextPipeline {
               indexedDoc.fulltextSummary = ''
               indexedDoc.searchTitle = ''
 
+              const highlightableField = searchPresenter?.highlightableField
+              if (highlightableField !== undefined) {
+                indexedDoc.highlightableContent = ''
+              }
+
+              if (this.hasAttachmentsCollection(doc._class)) {
+                indexedDoc.hasAttachment = ((doc as any).attachments ?? 0) > 0
+              }
+
+              if (this.hierarchy.isDerived(doc._class, chunter.class.ThreadMessage)) {
+                const thread = doc as ThreadMessage
+                indexedDoc.rootObject = thread.objectId
+                indexedDoc.rootObjectClass = thread.objectClass
+              } else if (this.hierarchy.isDerived(doc._class, core.class.AttachedDoc)) {
+                const attachedDoc = doc as AttachedDoc
+                indexedDoc.rootObject = attachedDoc.attachedTo
+                indexedDoc.rootObjectClass = attachedDoc.attachedToClass
+              }
+
+              if (
+                searchPresenter?.indexCollection === true &&
+                this.hierarchy.isDerived(doc._class, core.class.AttachedDoc)
+              ) {
+                const attachedDoc = doc as AttachedDoc
+                indexedDoc.collection = attachedDoc.collection
+              }
+
               for (const [, v] of Object.entries(content)) {
                 if (v.attr.type._class === core.class.TypeBlob) {
                   await ctx.with('process-blob', {}, (ctx) => this.processBlob(ctx, v, doc, indexedDoc), {
@@ -435,12 +479,16 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                   continue
                 }
                 if ((isFullTextAttribute(v.attr) || v.attr.isCustom === true) && v.value !== undefined) {
+                  let text: string
                   if (v.attr.type._class === core.class.TypeMarkup) {
-                    ctx.withSync('markup-to-json-text', {}, () => {
-                      indexedDoc.fulltextSummary += '\n' + jsonToText(markupToJSON(v.value))
-                    })
+                    text = ctx.withSync('markup-to-json-text', {}, () => jsonToText(markupToJSON(v.value)))
                   } else {
-                    indexedDoc.fulltextSummary += '\n' + v.value
+                    text = `${v.value}`
+                  }
+                  indexedDoc.fulltextSummary += '\n' + text
+
+                  if (v.attr.name === highlightableField) {
+                    indexedDoc.highlightableContent = text
                   }
 
                   if (v.attr.indexOptions?.searchTitle === true && v.value != null && searchPresenter == null) {
@@ -475,6 +523,9 @@ export class FullTextIndexPipeline implements FullTextPipeline {
               // trim to large content
               if (indexedDoc.fulltextSummary.length > textLimit) {
                 indexedDoc.fulltextSummary = indexedDoc.fulltextSummary.slice(0, textLimit)
+              }
+              if (indexedDoc.highlightableContent !== undefined && indexedDoc.highlightableContent.length > textLimit) {
+                indexedDoc.highlightableContent = indexedDoc.highlightableContent.slice(0, textLimit)
               }
 
               if (searchPresenter !== undefined) {

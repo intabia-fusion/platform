@@ -117,6 +117,54 @@ describe('ContactCache', () => {
       expect(cache.personByPersonId.get(personId)).toBe(personWLookup)
       expect(cache.personByPersonId.get(personId2)).toBe(personWLookup)
     })
+
+    it('records every social id of the person, so a lookup by ref is complete', () => {
+      const personWLookup = {
+        ...person,
+        $lookup: {
+          socialIds: [
+            {
+              _id: personId as SocialIdentityRef,
+              _class: contact.class.SocialIdentity,
+              space: contact.space.Contacts,
+              modifiedOn: 0,
+              attachedTo: personRef,
+              createdBy: personId,
+              modifiedBy: personId,
+              attachedToClass: contact.class.Person,
+              type: SocialIdType.EMAIL,
+              value: 'tester@huly.me',
+              key: 'email:tester@huly.me',
+              collection: 'socialIds'
+            },
+            {
+              _id: personId2 as SocialIdentityRef,
+              _class: contact.class.SocialIdentity,
+              space: contact.space.Contacts,
+              modifiedOn: 0,
+              attachedTo: personRef,
+              createdBy: personId,
+              modifiedBy: personId,
+              attachedToClass: contact.class.Person,
+              type: SocialIdType.EMAIL,
+              value: 'tester2@huly.me',
+              key: 'email:tester2@huly.me',
+              collection: 'socialIds'
+            }
+          ]
+        }
+      }
+
+      cache.fillCachesForPersonRef(personRef, personWLookup)
+
+      expect(Array.from(cache.personIdsByPersonRef.get(personRef) ?? [])).toEqual([personId, personId2])
+    })
+
+    it('leaves no social ids for a person that has none', () => {
+      cache.fillCachesForPersonRef(personRef, null)
+
+      expect(cache.personIdsByPersonRef.get(personRef)).toBeUndefined()
+    })
   })
 
   describe('handleTx', () => {

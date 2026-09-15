@@ -319,6 +319,74 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async searchFulltext (ctx: MeasureContext, query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
+    const result = await this.searchIndex(ctx, query, options)
+    if ((options.fields?.length ?? 0) === 0 || result.docs.length === 0) {
+      return result
+    }
+    return await this.attachFields(ctx, result, options.fields ?? [])
+  }
+
+  /**
+   * Reads the requested attributes off the stored documents and puts them on the results.
+   *
+   * Runs over the documents the search already returned, so it cannot widen what the caller may
+   * see, and fetches them by `_id` - not by the secondary indexes some domains disable.
+   */
+  private async attachFields (ctx: MeasureContext, result: SearchResult, fields: string[]): Promise<SearchResult> {
+    try {
+      return await ctx.with('full-text-search-fields', { fields: fields.length }, async (ctx) => {
+        const byClass = new Map<Ref<Class<Doc>>, Array<Ref<Doc>>>()
+        for (const doc of result.docs) {
+          const _class = this.context.hierarchy.getBaseClass(doc.doc._class)
+          const ids = byClass.get(_class) ?? []
+          ids.push(doc.doc._id)
+          byClass.set(_class, ids)
+        }
+
+        const projection: Record<string, number> = { _id: 1 }
+        for (const field of fields) {
+          projection[field] = 1
+        }
+
+        const loaded = new Map<Ref<Doc>, Doc>()
+        await Promise.all(
+          Array.from(byClass.entries()).map(async ([_class, ids]) => {
+            const docs = await this.provideFindAll(
+              ctx,
+              _class,
+              { _id: { $in: ids } },
+              { projection: projection as any }
+            )
+            for (const doc of docs) {
+              loaded.set(doc._id, doc)
+            }
+          })
+        )
+
+        // The index lags deletions, so a result can outlive the document it points at - drop
+        // those. One that merely lacks the attributes is kept: it still exists.
+        result.docs = result.docs.filter((doc) => {
+          const stored = loaded.get(doc.doc._id)
+          if (stored == null) return false
+
+          const values: Record<string, any> = {}
+          for (const field of fields) {
+            if ((stored as any)[field] !== undefined) values[field] = (stored as any)[field]
+          }
+          if (Object.keys(values).length > 0) doc.fields = values
+          return true
+        })
+        return result
+      })
+    } catch (err: any) {
+      // The search itself succeeded; losing the extra attributes is not worth failing it.
+      Analytics.handleError(err)
+      return result
+    }
+  }
+
+  private async searchIndex (ctx: MeasureContext, query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
+    const { fields, ...indexOptions } = options
     try {
       return await ctx.with('full-text-search', {}, async (ctx) => {
         return await (
@@ -332,7 +400,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
               workspace: this.context.workspace.uuid,
               token: this.token,
               query,
-              options,
+              options: indexOptions,
               viewerId: ctx.contextData?.account?.uuid
             })
           })
@@ -341,10 +409,10 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     } catch (err: any) {
       if (err?.cause?.code === 'ECONNRESET' || err?.cause?.code === 'ECONNREFUSED') {
         // TODO:  We need to send event about indexing is complete after a while
-        return { docs: [] }
+        return { docs: [], failed: true }
       }
       Analytics.handleError(err)
-      return { docs: [] }
+      return { docs: [], failed: true }
     }
   }
 

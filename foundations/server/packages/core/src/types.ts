@@ -350,6 +350,20 @@ export interface IndexedDoc {
   searchShortTitle_fields?: any[]
   searchIcon_fields?: any[]
   fulltextSummary?: string
+
+  /** Text of the attribute named by `SearchPresenter.highlightableField`, tuned for snippets. */
+  highlightableContent?: string
+  /** The collection this document hangs off its parent under, so a search can exclude whole ones. */
+  collection?: string
+  /** Whether the document carries attachments, so the filter needs no lookup of its own. */
+  hasAttachment?: boolean
+  /**
+   * The object the document ultimately belongs to. A thread reply hangs off its parent message,
+   * so this follows the chain up to the channel or issue the thread itself lives under.
+   */
+  rootObject?: Ref<Doc>
+  rootObjectClass?: Ref<Class<Doc>>
+
   baseId?: Ref<Doc>
   [key: string]: any
 }
@@ -360,6 +374,9 @@ export interface IndexedDoc {
 export interface SearchStringResult {
   docs: IndexedDoc[]
   total?: number
+  totalExact?: boolean
+  cursor?: string
+  failed?: boolean
 }
 
 export interface FulltextListener {
@@ -511,6 +528,8 @@ export interface SearchPresenter extends Class<Doc> {
   title: FieldTemplateComponent | FieldTemplate
   shortTitle?: FieldTemplateComponent | FieldTemplate
   scoring?: SearchScoring[]
+  highlightableField?: string
+  indexCollection?: boolean
 }
 
 export interface ServiceAdapter {

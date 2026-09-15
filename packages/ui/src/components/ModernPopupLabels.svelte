@@ -22,6 +22,7 @@
   import Icon from './Icon.svelte'
   import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
+  import PopupCategory from './PopupCategory.svelte'
   import ModernEditbox from './ModernEditbox.svelte'
   import Scroller from './Scroller.svelte'
 
@@ -31,6 +32,7 @@
   export let multiselect: boolean = false
   export let enableSearch: boolean = true
   export let params: Record<string, any> = {}
+  export let categoryKind: 'divider' | 'heading' = 'divider'
 
   const dispatch = createEventDispatcher<{
     update: DropdownTextItem['id'] | Array<DropdownTextItem['id']>
@@ -117,13 +119,7 @@
     {#each filteredItems as item, i (item.id)}
       {#if item.separatorBefore === true || item.separatorLabel !== undefined}
         {#if item.separatorLabel !== undefined}
-          <div class="hulyPopup-category">
-            <div class="hulyPopup-line" />
-            <span class="hulyPopup-category-label">
-              <Label label={item.separatorLabel} />
-            </span>
-            <div class="hulyPopup-line" />
-          </div>
+          <PopupCategory label={item.separatorLabel} kind={categoryKind} />
         {:else}
           <div class="hulyPopup-divider" />
         {/if}
@@ -178,30 +174,5 @@
     text-align: center;
     font-size: 0.8125rem;
     color: var(--global-secondary-TextColor, var(--theme-trans-color, #6b7280));
-  }
-
-  .hulyPopup-category {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-1);
-    padding: var(--spacing-1_5) var(--spacing-1) var(--spacing-0_5) var(--spacing-1);
-    min-width: 0;
-    overflow: hidden;
-
-    &-label {
-      font-size: 0.625rem;
-      font-weight: 500;
-      color: var(--global-tertiary-TextColor);
-      text-transform: uppercase;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .hulyPopup-line {
-      flex: 1;
-      height: 1px;
-      background-color: var(--theme-popup-divider);
-      min-width: 0.5rem;
-    }
   }
 </style>
