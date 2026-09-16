@@ -50,6 +50,10 @@ import { LRUCache } from 'lru-cache'
 
 import { Client, EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
 
+// Short and bounded: this runs inside message processing, so a sender that never resolves must not
+// hold the queue for long. ~1.4s total covers the replication lag of a just-created account.
+const SENDER_RETRY_DELAYS = [100, 200, 400, 700]
+
 /**
  * WorkspaceCache manages caching and transaction-driven updates of
  * notification-related workspace documents, collaborator access lists, and user statuses.
@@ -523,6 +527,12 @@ class WorkspaceCache {
 
   /**
    * Resolves details of the message sender by their Social ID reference.
+   *
+   * The first message of a freshly created account can arrive before its SocialIdentity has
+   * replicated here, and an unresolved sender is not harmless: `account` drives the "do not notify
+   * the author" check in the message module, so the sender would notify themselves, and `person`
+   * is what renders the name, which degrades to "Unknown user". Both are permanent for that
+   * message, so give the lookup a few short retries before giving up.
    */
   public async getSender (socialId: PersonId): Promise<Sender> {
     if (socialId === core.account.System) {
@@ -532,6 +542,26 @@ class WorkspaceCache {
       }
     }
 
+    let sender = await this.resolveSender(socialId)
+
+    for (const delay of SENDER_RETRY_DELAYS) {
+      if (sender.person !== undefined && sender.account !== undefined) break
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      sender = await this.resolveSender(socialId)
+    }
+
+    if (sender.person === undefined || sender.account === undefined) {
+      this.ctx.error('Cannot resolve message sender', {
+        _id: socialId,
+        hasPerson: sender.person !== undefined,
+        hasAccount: sender.account !== undefined
+      })
+    }
+
+    return sender
+  }
+
+  private async resolveSender (socialId: PersonId): Promise<Sender> {
     const person = this.personsBySocialIdCache.get(socialId)
     if (person != null) {
       return { socialId, person, account: person.personUuid as AccountUuid }
@@ -558,7 +588,6 @@ class WorkspaceCache {
     })
 
     if (socialIdentity === undefined) {
-      this.ctx.error('Cannot find SocialIdentity', { _id: socialId })
       return { socialId, account }
     }
 
@@ -1010,13 +1039,13 @@ class WorkspaceCache {
     const toLoad = collaborators.filter((it) => !this.employeesByAccountCache.has(it))
     if (toLoad.length === 0) return existing.filter((it) => it.active)
 
-    const employees: Pick<Employee, '_id' | 'personUuid' | 'role' | 'active'>[] = (await this.client.findAll(
-      contact.mixin.Employee,
-      { personUuid: { $in: toLoad }, active: true },
-      { projection: { _id: 1, personUuid: 1, role: 1, active: 1 } }
-    )).map((it) =>
-      this.client.hierarchy.as(it, contact.mixin.Employee)
-    )
+    const employees: Pick<Employee, '_id' | 'personUuid' | 'role' | 'active'>[] = (
+      await this.client.findAll(
+        contact.mixin.Employee,
+        { personUuid: { $in: toLoad }, active: true },
+        { projection: { _id: 1, personUuid: 1, role: 1, active: 1 } }
+      )
+    ).map((it) => this.client.hierarchy.as(it, contact.mixin.Employee))
 
     for (const employee of employees) {
       if (employee.personUuid == null) continue

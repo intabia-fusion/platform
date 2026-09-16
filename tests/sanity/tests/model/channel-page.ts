@@ -62,6 +62,11 @@ export class ChannelPage extends CommonPage {
   readonly messageActionButton = (message: string, dataIdSelector: string): Locator =>
     this.textMessage(message).last().locator(`.activityMessage-actionPopup > button[${dataIdSelector}]`)
 
+  // Items of the menu behind the message's "..." button - the non-inline actions live only here.
+  // Exact text: hasText is a substring match, so 'Pin' would also catch 'Unpin'.
+  readonly messageMenuItem = (label: string): Locator =>
+    this.page.locator('.antiPopup button.ap-menuItem').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`) })
+
   readonly messageSaveMarker = (): Locator => this.page.locator('.saveMarker')
   readonly saveMessageTab = (): Locator => this.page.getByRole('button', { name: 'Saved' })
   readonly pinnedMessageButton = (): Locator => this.page.getByRole('button', { name: 'pinned' })
@@ -84,7 +89,7 @@ export class ChannelPage extends CommonPage {
     this.page.locator('div.popup div.menu-item', { hasText: change })
 
   readonly userAdded = (user: string): Locator => this.page.locator('.members').getByText(user)
-  private readonly addMemberPreview = (): Locator => this.page.getByRole('button', { name: 'Add members' })
+  readonly addMemberPreview = (): Locator => this.page.getByRole('button', { name: 'Add members' })
   private readonly addButtonPreview = (): Locator => this.page.getByRole('button', { name: 'Add', exact: true })
 
   readonly inputSearchChannel = (): Locator => this.page.locator('.hulyHeader-container').getByPlaceholder('Search')
@@ -281,10 +286,34 @@ export class ChannelPage extends CommonPage {
     await expect(this.messageSaveMarker()).toBeVisible()
   }
 
+  async removeMessageFromSaved (message: string): Promise<void> {
+    await this.clickMessageAction(message, 'data-id$="RemoveFromLaterAction"')
+  }
+
   async pinMessage (message: string): Promise<void> {
-    await this.clickMessageAction(message, 'data-id$="PinMessageAction"')
+    await this.clickOpenMoreButton(message)
+    await this.messageMenuItem('Pin').click()
+    await expect(this.page.locator('.antiPopup')).toHaveCount(0)
     await this.pinnedMessageButton().click()
     await expect(this.pinnedMessage(message)).toBeVisible()
+    await this.pressEscape()
+  }
+
+  async unpinMessage (message: string): Promise<void> {
+    await this.clickOpenMoreButton(message)
+    await this.messageMenuItem('Unpin').click()
+    await expect(this.page.locator('.antiPopup')).toHaveCount(0)
+  }
+
+  async checkPinnedMessage (message: string, pinned: boolean): Promise<void> {
+    if (pinned) {
+      await expect(this.pinnedMessageButton()).toBeVisible()
+      await this.pinnedMessageButton().click()
+      await expect(this.pinnedMessage(message)).toBeVisible()
+      await this.pressEscape()
+    } else {
+      await expect(this.pinnedMessageButton()).toHaveCount(0)
+    }
   }
 
   async replyMessage (message: string): Promise<void> {

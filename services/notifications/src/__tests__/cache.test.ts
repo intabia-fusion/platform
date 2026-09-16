@@ -125,7 +125,8 @@ describe('WorkspaceCache', () => {
       hierarchy: {
         isDerived: mockIsDerived,
         hasClass: mockHasClass,
-        getBaseClass: jest.fn().mockImplementation((cls) => cls)
+        getBaseClass: jest.fn().mockImplementation((cls) => cls),
+        as: jest.fn().mockImplementation((doc, mixin) => ({ ...doc, ...(doc?.[mixin] ?? {}) }))
       } as unknown as Client['hierarchy'],
       txFactory: {} as unknown as Client['txFactory'],
       branding: { lastNameFirst: true, defaultLanguage: 'ru' } as unknown as Client['branding'],

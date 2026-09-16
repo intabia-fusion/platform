@@ -55,7 +55,6 @@
     const providerFn = await getResource(special.notificationsCountProvider)
     const store = await providerFn()
 
-
     if (subscribedTo !== special) return
 
     countUnsub = store.subscribe((value) => {

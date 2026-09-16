@@ -47,6 +47,21 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
   const me = getCurrentAccount()
   const ops = getClient().apply(undefined, 'readNotifyContext', true)
   try {
+    const reactionIds = doc.unreadReactions?.map((it) => it.id) ?? []
+    const commonIds = doc.unreadCommons?.map((it) => it.id) ?? []
+    const mentionIds = doc.unreadMentions?.map((it) => it.id) ?? []
+
+    if (reactionIds.length > 0 || commonIds.length > 0 || mentionIds.length > 0) {
+      await ops.createDoc(notification.class.ReadNotificationAction, doc.space, {
+        attachedTo: doc.objectId,
+        attachedToClass: doc.objectClass,
+        account: me.uuid,
+        reactionIds,
+        commonIds,
+        mentionIds
+      })
+    }
+
     const state = await inboxClient.getReadState(doc.objectId)
     if (state != null) {
       await ops.update(state, {
@@ -56,13 +71,6 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
         }
       })
     }
-    await ops.update(doc, {
-      unreadCount: 0,
-      unreadMessages: [],
-      unreadCommons: [],
-      unreadMentions: [],
-      unreadReactions: []
-    })
   } finally {
     await ops.commit()
   }
