@@ -387,14 +387,16 @@
     restoreScrollHeight = 0
   }
 
-  $: updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
+  $: if (isThread !== undefined) {
+    updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
+  }
 
   function updateDownButtonVisibility (
     messages: ActivityMessage[],
     scrollDiv?: HTMLDivElement | null,
     isTailLoaded: boolean = $isTailLoadedStore
   ): void {
-    if (messages.length === 0 || !isScrollInitialized) {
+    if (isThread || messages.length === 0 || !isScrollInitialized) {
       isLatestMessageButtonVisible = false
       return
     }

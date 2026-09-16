@@ -479,7 +479,7 @@ export class NotificationClientImpl implements NotificationClient {
         {
           user: getCurrentAccount().uuid
         },
-        { projection: { _id: 1, _class: 1, space: 1 } }
+        { projection: { _id: 1, _class: 1, space: 1, objectId: 1 } }
       )
       for (const context of contexts) {
         await ops.removeDoc(context._class, context.space, context._id)
@@ -504,7 +504,18 @@ export class NotificationClientImpl implements NotificationClient {
           user: getCurrentAccount().uuid,
           unreadCount: { $gt: 0 }
         },
-        { projection: { _id: 1, _class: 1, space: 1, unreadReactions: 1, unreadCommons: 1, unreadMentions: 1 } }
+        {
+          projection: {
+            _id: 1,
+            _class: 1,
+            space: 1,
+            objectId: 1,
+            objectClass: 1,
+            unreadReactions: 1,
+            unreadCommons: 1,
+            unreadMentions: 1
+          }
+        }
       )
       for (const context of contexts) {
         const reactionIds = context.unreadReactions?.map((n) => n.id) ?? []

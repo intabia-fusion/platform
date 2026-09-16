@@ -13,14 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import { SpecialNavModel } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
   import { SavedAttachments } from '@hcengineering/attachment'
   import { SavedMessage } from '@hcengineering/activity'
   import { savedMessagesStore } from '@hcengineering/activity-resources'
   import { savedAttachmentsStore } from '@hcengineering/attachment-resources'
-  import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import NavItem from './NavItem.svelte'
 
@@ -30,23 +29,38 @@
 
   const dispatch = createEventDispatcher()
 
-  const notificationsClient = NotificationClientImpl.getClient()
-  const totalUnreadCountStore = notificationsClient.totalUnreadCount
-
   let count: number = 0
   let elementsCount = 0
 
-  $: void getNotificationsCount(special, $totalUnreadCountStore).then((res) => {
-    count = res
-  })
+  let countUnsub: (() => void) | undefined
+  let subscribedTo: SpecialNavModel | undefined
+
+  $: if (special !== subscribedTo) {
+    subscribedTo = special
+    void subscribeToCount(special)
+  }
   $: elementsCount = getElementsCount(special, $savedMessagesStore, $savedAttachmentsStore)
 
-  async function getNotificationsCount (special: SpecialNavModel, totalUnreadCount: number): Promise<number> {
-    if (special.notificationsCountProvider == null) return 0
+  onDestroy(() => {
+    countUnsub?.()
+  })
+
+  async function subscribeToCount (special: SpecialNavModel): Promise<void> {
+    countUnsub?.()
+    countUnsub = undefined
+    count = 0
+
+    if (special.notificationsCountProvider == null) return
 
     const providerFn = await getResource(special.notificationsCountProvider)
+    const store = await providerFn()
 
-    return await providerFn(totalUnreadCount)
+
+    if (subscribedTo !== special) return
+
+    countUnsub = store.subscribe((value) => {
+      count = value
+    })
   }
 
   function getElementsCount (

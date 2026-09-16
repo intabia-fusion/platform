@@ -169,6 +169,10 @@ export interface NavigatorModel {
   hideStarred?: boolean
 }
 
+export interface NavCountStore {
+  subscribe: (run: (value: number) => void) => () => void
+}
+
 /** @public */
 export interface SpecialNavModel {
   id: string // Uniq id
@@ -183,7 +187,9 @@ export interface SpecialNavModel {
   // If defined, will be used to find spaces for visibleIf
   spaceClass?: Ref<Class<Space>>
   checkIsDisabled?: Resource<() => Promise<boolean>>
-  notificationsCountProvider?: Resource<(totalCount: number) => Promise<number>>
+  // Returns a store so the count can follow its own data instead of being recomputed from the
+  // unread total, which is a sum and misses changes that cancel out.
+  notificationsCountProvider?: Resource<() => Promise<NavCountStore>>
   navigationModel?: ParentsNavigationModel
   queryBuilder?: Resource<() => Promise<DocumentQuery<Doc>>>
 }

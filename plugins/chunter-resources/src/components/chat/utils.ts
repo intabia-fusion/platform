@@ -63,7 +63,7 @@ export const chatSpecials: SpecialNavModel[] = [
     icon: chunter.icon.Thread,
     component: chunter.component.Threads,
     position: 'top',
-    notificationsCountProvider: chunter.function.GetUnreadThreadsCount
+    notificationsCountProvider: chunter.function.GetUnreadThreadsCountStore
   },
   {
     id: 'saved',

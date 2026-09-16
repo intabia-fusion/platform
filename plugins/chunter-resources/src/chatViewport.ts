@@ -693,6 +693,12 @@ export class ChatViewport implements IChatViewport {
           return isBackward ? [...messages, ...currentHistory] : [...currentHistory, ...messages]
         })
       }
+
+      if (!isBackward && !get(this.hasMoreForward)) {
+        const newestLoaded = get(this.loadedHistory).at(-1)
+        const tailStart = newestLoaded?.createdOn ?? loadAfterTs
+        this.subscribeToLiveTail(tailStart, this.getBoundaryOverlapIds(tailStart, true))
+      }
     } catch (err) {
       if (err instanceof StaleVersionError) {
         return

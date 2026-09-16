@@ -19357,9 +19357,6 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
-      '@hcengineering/audio-dsp':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/audio-dsp
       '@hcengineering/billing':
         specifier: workspace:^0.7.0
         version: link:../billing
@@ -19390,9 +19387,6 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/preference':
-        specifier: workspace:^0.7.0
-        version: link:../preference
       '@hcengineering/presence-resources':
         specifier: workspace:^0.7.0
         version: link:../presence-resources
@@ -19411,9 +19405,6 @@ importers:
       '@hcengineering/text-editor-resources':
         specifier: workspace:^0.7.0
         version: link:../text-editor-resources
-      '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.20
-        version: link:../../foundations/core/packages/text-markdown
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui

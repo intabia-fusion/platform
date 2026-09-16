@@ -14,7 +14,16 @@
  */
 
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
-import { getEventPositionElement, showPopup } from '@hcengineering/ui'
+import {
+  closePanel,
+  getCurrentLocation,
+  getEventPositionElement,
+  type Location,
+  locationStorageKeyId,
+  navigate,
+  showPopup
+} from '@hcengineering/ui'
+import { decodeObjectURI } from '@hcengineering/view'
 import core, {
   type Class,
   type Doc,
@@ -22,6 +31,7 @@ import core, {
   getClassCollaborators,
   getCurrentAccount,
   type Ref,
+  type Space,
   type TxOperations
 } from '@hcengineering/core'
 import { getClient, MessageBox } from '@hcengineering/presentation'
@@ -109,7 +119,63 @@ export async function subscribeDoc (
 
 export async function unsubscribe (context: DocNotifyContext): Promise<void> {
   const client = getClient()
-  await subscribeDoc(client, context.objectClass, context.objectId, 'remove')
+  const hierarchy = client.getHierarchy()
+  const isSpace = hierarchy.isDerived(context.objectClass, core.class.Space)
+  const params = { name: context.objectTitle }
+
+  showPopup(
+    MessageBox,
+    {
+      label: isSpace
+        ? notification.string.UnsubscribeSpaceConfirmationTitle
+        : notification.string.UnsubscribeConfirmationTitle,
+      labelProps: params,
+      message: isSpace
+        ? notification.string.UnsubscribeSpaceConfirmationMessage
+        : notification.string.UnsubscribeConfirmationMessage,
+      params,
+      dangerous: true,
+      action: async () => {
+        if (isSpace) {
+          const space = await client.findOne(core.class.Space, { _id: context.objectId as Ref<Space> })
+          if (space === undefined) return
+          await client.update(space, { $pull: { members: getCurrentAccount().uuid } })
+          closeObjectLocation(context.objectId)
+        } else {
+          await subscribeDoc(client, context.objectClass, context.objectId, 'remove')
+        }
+      }
+    },
+    'top'
+  )
+}
+
+function closeObjectLocation (objectId: Ref<Doc>): void {
+  closePanel()
+  forgetSavedLocations(objectId)
+
+  const loc = getCurrentLocation()
+  const [locId] = decodeObjectURI(loc.path[3] ?? '')
+  if (locId !== objectId) return
+
+  loc.path.length = 3
+  loc.query = {}
+  loc.fragment = undefined
+  navigate(loc)
+}
+
+function forgetSavedLocations (objectId: Ref<Doc>): void {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith(locationStorageKeyId)) continue
+      const raw = localStorage.getItem(key)
+      if (raw?.includes(objectId) !== true) continue
+      const [locId] = decodeObjectURI((JSON.parse(raw) as Location).path[3] ?? '')
+      if (locId === objectId) localStorage.removeItem(key)
+    }
+  } catch (err) {
+    console.error('Failed to clear saved locations', err)
+  }
 }
 
 export async function subscribe (docClass: Ref<Class<Doc>>, docId: Ref<Doc>): Promise<void> {

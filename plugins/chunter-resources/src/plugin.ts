@@ -18,6 +18,7 @@ import type { Client, Doc, Ref, Space } from '@hcengineering/core'
 import type { IntlString, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
+import type { NavCountStore } from '@hcengineering/workbench'
 
 export default mergeIds(chunterId, chunter, {
   component: {
@@ -43,7 +44,7 @@ export default mergeIds(chunterId, chunter, {
     DirectLabelProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<IntlString>>,
     ChannelTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
     ChunterBrowserVisible: '' as Resource<(spaces: Space[]) => Promise<boolean>>,
-    GetUnreadThreadsCount: '' as Resource<() => Promise<number>>
+    GetUnreadThreadsCountStore: '' as Resource<() => Promise<NavCountStore>>
   },
   actionImpl: {},
   string: {

@@ -59,11 +59,11 @@ import {
   showPopup
 } from '@hcengineering/ui'
 import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
-import { get, type Unsubscriber } from 'svelte/store'
+import { get, type Readable, type Unsubscriber } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import attachment, { type Attachment } from '@hcengineering/attachment'
 import { isEmptyMarkup } from '@hcengineering/text'
-import notification, { notificationId } from '@hcengineering/notification'
+import { notificationId } from '@hcengineering/notification'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
@@ -73,7 +73,8 @@ import {
   replyingToMessageStore,
   shownTranslatedMessagesStore,
   translatedMessagesStore,
-  translatingMessagesStore
+  translatingMessagesStore,
+  unreadThreadsCountStore
 } from './stores'
 import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
 import view, { decodeObjectURI } from '@hcengineering/view'
@@ -262,19 +263,8 @@ export async function getChannelName (
   return (await getDocTitle(client, _id, _class, object)) ?? (await getDocLabel(client, _id, _class, object, lang))
 }
 
-export async function getUnreadThreadsCount (): Promise<number> {
-  const client = getClient()
-  const contexts = await client.findAll(
-    notification.class.DocNotifyContext,
-    {
-      objectClass: chunter.class.ChatMessage,
-      unreadCount: { $gt: 0 },
-      unreadMessages: { $size: { $gt: 0 } }
-    },
-    { limit: 1, total: true }
-  )
-
-  return contexts.total ?? 0
+export async function getUnreadThreadsCountStore (): Promise<Readable<number>> {
+  return unreadThreadsCountStore
 }
 
 export function getClosestDate (selectedDate: Timestamp, dates: Timestamp[]): Timestamp | undefined {

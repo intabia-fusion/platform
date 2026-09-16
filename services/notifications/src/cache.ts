@@ -1010,10 +1010,12 @@ class WorkspaceCache {
     const toLoad = collaborators.filter((it) => !this.employeesByAccountCache.has(it))
     if (toLoad.length === 0) return existing.filter((it) => it.active)
 
-    const employees: Pick<Employee, '_id' | 'personUuid' | 'role' | 'active'>[] = await this.client.findAll(
+    const employees: Pick<Employee, '_id' | 'personUuid' | 'role' | 'active'>[] = (await this.client.findAll(
       contact.mixin.Employee,
       { personUuid: { $in: toLoad }, active: true },
       { projection: { _id: 1, personUuid: 1, role: 1, active: 1 } }
+    )).map((it) =>
+      this.client.hierarchy.as(it, contact.mixin.Employee)
     )
 
     for (const employee of employees) {
