@@ -36,7 +36,12 @@ function serviceToken (): string {
 }
 
 /** Uploads a file through the same form-data endpoint the platform uses, under the given blob name. */
-export async function uploadBlob (workspace: WorkspaceUuid, name: string, data: Buffer, contentType: string): Promise<void> {
+export async function uploadBlob (
+  workspace: WorkspaceUuid,
+  name: string,
+  data: Buffer,
+  contentType: string
+): Promise<void> {
   const form = new FormData()
   form.append('file', new Blob([new Uint8Array(data)], { type: contentType }), name)
   const response = await fetch(`${datalakeUrl}/upload/form-data/${workspace}`, {

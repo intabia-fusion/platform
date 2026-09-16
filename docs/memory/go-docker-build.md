@@ -116,7 +116,11 @@ stand with the stand's own bundle copied onto the new base, so only the base dif
 - love-agent: on `v20260309` the pod's `pnpm install --frozen-lockfile` re-resolved `+305 -216` packages
   in 10.6s (base was baked with pnpm 11 against an older lock); on `v20260917` it is a 94ms no-op.
 
-Left on purpose: 37 pods on `base`/`base-slim:v20260309` and `front-base` (pods/front, backup-api-pod) -
-the newer tags only move node 24.20.0 -> 24.21.0. `foundations/stream` stays on `v20260916`: `go-base`
-and `stream-base` did not change between the two tags.
+Then every remaining pin followed (27 `base-slim`, 10 `base`, 2 `front-base`, and `foundations/stream`
+`BASE_VERSION`), so the whole repo is on `v20260917`. For those images the only change is node
+24.20.0 -> 24.21.0: not a security release, but module ABI is unchanged (`modules 137`), it carries
+OpenSSL 3.5.8, root certs NSS 3.126, Undici 7.29.1 (our `fetch`) and memory-safety fixes (http2
+use-after-free on `rst_stream`, buffer string-write offset overflow, `mkdtemp` out-of-bounds write).
+Native modules baked into the bases (`bufferutil`, `utf-8-validate`, `snappy`, `msgpackr`,
+`msgpackr-extract`, `sharp` where installed) load on the new tags.
 

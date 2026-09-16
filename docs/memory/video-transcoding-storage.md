@@ -171,3 +171,8 @@ Verified by mutation: restoring the `!isServiceToken` guard fails 2 of them.
 - Run playwright from `tests/sanity`, not `tests/sanity/tests` - `.env` supplies
   `PLATFORM_URI` and `loginByToken` fails without it.
 - `listWorkspaces` refuses an arbitrary service token; `billing` works.
+- `tests/make-media-fixtures.sh` must run its containers as the caller (`--user $(id -u):$(id -g)`).
+  The `stream` image runs as uid 1000 and cannot write into a CI runner's checkout (uitest-pg failed
+  with `Permission denied` on PR #450); macOS Docker Desktop ignores bind-mount ownership, so it
+  never shows locally. libreoffice under a uid without a passwd entry also needs an explicit
+  `-env:UserInstallation=file://...` - it does not derive the profile from `HOME`.
