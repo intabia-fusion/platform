@@ -79,50 +79,51 @@ function nameKey (name: string): string {
   return tag === undefined ? words : `${words} (${tag})`
 }
 
-/**
- * Cyrillic -> Latin for the fallback match: the model transliterates names despite the prompt.
- * Multi-letter sequences come first so "щ"/"ш" do not collide.
- */
-const CYRILLIC_TO_LATIN: Array<[RegExp, string]> = [
-  [/щ/g, 'sh'],
-  [/ш/g, 'sh'],
-  [/ч/g, 'ch'],
-  [/ц/g, 'c'],
-  [/ю/g, 'u'],
-  [/я/g, 'a'],
-  [/ж/g, 'j'],
-  [/х/g, 'h'],
-  [/ё/g, 'e'],
-  [/э/g, 'e'],
-  [/[ъь]/g, ''],
-  [/а/g, 'a'],
-  [/б/g, 'b'],
-  [/в/g, 'v'],
-  [/г/g, 'g'],
-  [/д/g, 'd'],
-  [/е/g, 'e'],
-  [/з/g, 'z'],
-  [/и/g, 'i'],
-  [/й/g, 'i'],
-  [/к/g, 'k'],
-  [/л/g, 'l'],
-  [/м/g, 'm'],
-  [/н/g, 'n'],
-  [/о/g, 'o'],
-  [/п/g, 'p'],
-  [/р/g, 'r'],
-  [/с/g, 's'],
-  [/т/g, 't'],
-  [/у/g, 'u'],
-  [/ф/g, 'f'],
-  [/ы/g, 'i']
-]
+/** Cyrillic -> Latin for the fallback match: the model transliterates names despite the prompt. */
+const CYRILLIC_TO_LATIN: Record<string, string> = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ё: 'e',
+  ж: 'j',
+  з: 'z',
+  и: 'i',
+  й: 'i',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'h',
+  ц: 'c',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'sh',
+  ъ: '',
+  ы: 'i',
+  ь: '',
+  э: 'e',
+  ю: 'u',
+  я: 'a'
+}
 
-/** Script-insensitive key, used only after an exact `nameKey` miss. */
+const CYRILLIC_RE = new RegExp(`[${Object.keys(CYRILLIC_TO_LATIN).join('')}]`, 'g')
+
+/** Script-insensitive key, used only after an exact `nameKey` miss. One pass over the string. */
 function translitKey (name: string): string {
-  let out = nameKey(name)
-  for (const [from, to] of CYRILLIC_TO_LATIN) out = out.replace(from, to)
-  return out.replace(/[yj]/g, 'i').replace(/(.)\1+/g, '$1')
+  return nameKey(name)
+    .replace(CYRILLIC_RE, (ch) => CYRILLIC_TO_LATIN[ch])
+    .replace(/[yj]/g, 'i')
+    .replace(/(.)\1+/g, '$1')
 }
 
 /**
