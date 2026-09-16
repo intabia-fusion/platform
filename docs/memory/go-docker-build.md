@@ -63,3 +63,42 @@ fasthttp v1.59 vs v1.74, tusd v2.6 vs v2.10, otel v1.38 vs v1.46).
 
 Node stays on 24: `.nvmrc` is `v24` and the whole monorepo targets that LTS,
 even though `node:26` exists.
+
+## node:24 is bookworm (2026-09-16)
+
+`node:24` and `node:24-slim` still resolve to Debian 12 bookworm, which is oldstable
+and frozen. Rebuilding a node-based base image therefore bumps only node itself -
+v20260309 -> v20260916 moved node 24.20.0 -> 24.21.0 and nothing else in
+`preview-base`. `golang:1.27.1` is already trixie.
+
+`preview-base` switched to `node:24-trixie`: ffmpeg 5.1.9 -> 7.1.5, libreoffice
+7.4.7 -> 25.2.3, poppler 22.12 -> 25.03. The flags the preview pod passes
+(`pods/preview/src/utils/ffmpeg.ts`, `libreoffice.ts`) all still exist.
+Verified A/B beside a live stand without touching it: same `bundle.js` copied from
+`intabiafusion/preview:latest` onto the trixie base, run on the `sanity_default`
+network, and `tests/sanity/tests/drive/preview.spec.ts` pointed at it with
+`PREVIEW_URL`. Removing the libreoffice binary turns the docx case into a 500, so
+the test is not vacuous.
+
+**`pods/preview/Dockerfile` still pins `preview-base:v20260309`.** Bump it only after
+a base tag containing the trixie change is published - pinning an unpublished tag
+is exactly what broke uitest on PR #450.
+
+LibreOffice is not a substitute for Chromium as an HTML -> PDF renderer: on the same
+page it dropped flexbox, grid, table borders/width and border-radius, all of which
+Chromium kept. Details and the print-service direction in
+`../foundation-tasks/docs/collab/2026-09-16-101-print-service-pdf.md`.
+
+`rekoni-base` also moved to `node:24-trixie` (poppler 22.12 -> 25.03 for the
+`pdftotext -layout` call in `services/rekoni/src/extractors/pdf.ts`). Checked on a
+real 10-page Cyrillic PDF with a table and diagrams: identical 786 words, one line
+shifted by a single space; `sharp` and `pdfjs-dist` load. `antiword` and `unrtf` are
+the same upstream versions in trixie. `html2text` is installed there but nothing in
+`services/rekoni/src` calls it. Same caveat as preview: bump
+`services/rekoni/Dockerfile`'s base pin only after the tag is published.
+
+Print on prod (2026-09-16): `print()` in `services/print/pod-print/src/print.ts`
+opens the page and calls `goto` before its `try/finally`, so a navigation timeout
+leaks the tab; a few leaks wedge the shared Chromium (`Target.createTarget timed out`)
+and `getBrowser` never relaunches a browser that is still `connected`. Tracked as
+TSK-2026-09-16-108/109 in `../foundation-tasks/docs/collab/2026-09-16-101-print-service-pdf.md`.

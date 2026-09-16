@@ -1,4 +1,6 @@
-FROM node:24
+# trixie, not the bookworm that plain node:24 still points at: bookworm is oldstable and frozen at
+# ffmpeg 5.1, libreoffice 7.4 and poppler 22.12, all of which this image exists to run.
+FROM node:24-trixie
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

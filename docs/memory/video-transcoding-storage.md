@@ -151,7 +151,7 @@ not two. After deleting the file the workspace stats went back to
 Supporting pieces:
 - `tests/sanity/tests/API/Datalake.ts` - stats over the nginx `/_datalake`
   prefix with a `sanity` service token, plus the polling helpers.
-- `tests/make-video-fixture.sh` - generates the mp4 with the ffmpeg inside the
+- `tests/make-media-fixtures.sh` - generates the mp4 (and a docx for the preview test) with tools inside the
   `stream` image (no host ffmpeg, nothing downloaded), called from
   `tests/prepare-pg.sh` after the stand is up. Output is gitignored.
 - `pods/media` added to `tests/docker-compose.yaml` - it was missing, and

@@ -35,6 +35,21 @@ function serviceToken (): string {
   return generateToken(systemAccountUuid, undefined, { service: 'sanity' }, 'secret')
 }
 
+/** Uploads a file through the same form-data endpoint the platform uses, under the given blob name. */
+export async function uploadBlob (workspace: WorkspaceUuid, name: string, data: Buffer, contentType: string): Promise<void> {
+  const form = new FormData()
+  form.append('file', new Blob([new Uint8Array(data)], { type: contentType }), name)
+  const response = await fetch(`${datalakeUrl}/upload/form-data/${workspace}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${serviceToken()}` },
+    body: form
+  })
+  const text = await response.text()
+  if (!response.ok || text.includes('"error"')) {
+    throw new Error(`datalake upload of ${name} failed: ${response.status} ${text}`)
+  }
+}
+
 async function get<T> (path: string): Promise<T> {
   const response = await fetch(`${datalakeUrl}/${path}`, {
     headers: { Authorization: `Bearer ${serviceToken()}` }
