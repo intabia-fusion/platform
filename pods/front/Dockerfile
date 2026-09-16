@@ -1,4 +1,4 @@
-FROM intabiafusion/front-base:v20260309
+FROM intabiafusion/front-base:v20260917
 WORKDIR /app
 
 # Reported in /config.json so a running stand can be traced back to its build

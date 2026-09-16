@@ -12,7 +12,7 @@
 # limitations under the License.
 
 # Pinned to a published tag, like the other pods do with intabiafusion/base.
-ARG BASE_VERSION=v20260916
+ARG BASE_VERSION=v20260917
 
 # --platform=$BUILDPLATFORM keeps the toolchain native: a linux/arm64 target is
 # cross-compiled instead of running the whole Go build under QEMU. go-base

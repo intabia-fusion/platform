@@ -102,3 +102,21 @@ opens the page and calls `goto` before its `try/finally`, so a navigation timeou
 leaks the tab; a few leaks wedge the shared Chromium (`Target.createTarget timed out`)
 and `getBrowser` never relaunches a browser that is still `connected`. Tracked as
 TSK-2026-09-16-108/109 in `../foundation-tasks/docs/collab/2026-09-16-101-print-service-pdf.md`.
+
+## v20260917 pin bump (2026-09-17)
+
+Switched to `v20260917`: `pods/preview` (trixie: ffmpeg 7.1.5, libreoffice 25.2.3, poppler 25.03),
+`services/rekoni` (trixie, poppler 25.03), `services/print/pod-print` (Chromium 151 -> 152) and
+`services/ai-bot/love-agent` (deps baked against the current lock). Each verified A/B next to a live
+stand with the stand's own bundle copied onto the new base, so only the base differs:
+- preview: `preview.spec.ts` via `PREVIEW_URL`, 4/4.
+- rekoni: `POST /toText` on a real 10-page PDF, identical 786-word sequence to the stand pod.
+- print: same guest document, 10 pages, identical text, `Skia/PDF m151` -> `m152`, 6s. The A/B print
+  pod shares nginx's network namespace like the stand one, so it needs `PORT` to avoid 4005.
+- love-agent: on `v20260309` the pod's `pnpm install --frozen-lockfile` re-resolved `+305 -216` packages
+  in 10.6s (base was baked with pnpm 11 against an older lock); on `v20260917` it is a 94ms no-op.
+
+Left on purpose: 37 pods on `base`/`base-slim:v20260309` and `front-base` (pods/front, backup-api-pod) -
+the newer tags only move node 24.20.0 -> 24.21.0. `foundations/stream` stays on `v20260916`: `go-base`
+and `stream-base` did not change between the two tags.
+
