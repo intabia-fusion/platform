@@ -347,8 +347,26 @@ export class RestClientImpl implements RestClient {
       if (query.spaces != null && Object.keys(query.spaces).length > 0) {
         params.append('spaces', JSON.stringify(query.spaces))
       }
+      if (query.filters != null) {
+        params.append('filters', JSON.stringify(query.filters))
+      }
       if (options.limit != null) {
         params.append('limit', `${options.limit}`)
+      }
+      if (options.cursor != null) {
+        params.append('cursor', options.cursor)
+      }
+      if (options.sort != null) {
+        params.append('sort', options.sort)
+      }
+      if (options.searchIn != null) {
+        params.append('searchIn', options.searchIn)
+      }
+      if (options.fuzzy != null) {
+        params.append('fuzzy', `${options.fuzzy}`)
+      }
+      if (options.highlight != null) {
+        params.append('highlight', JSON.stringify(options.highlight))
       }
       const requestUrl = concatLink(this.endpoint, `/api/v1/search-fulltext/${this.workspace}?${params.toString()}`)
       const response = await fetch(requestUrl, {

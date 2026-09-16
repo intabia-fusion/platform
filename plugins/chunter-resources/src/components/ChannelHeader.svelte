@@ -39,6 +39,7 @@
   export let filters: Ref<ActivityMessagesFilter>[] = []
   export let canOpenInSidebar: boolean = false
   export let closeOnEscape: boolean = true
+  export let hideTitle: boolean = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -84,12 +85,20 @@
   {isAsideShown}
   {withSearch}
   {withPresence}
+  {hideTitle}
   {canOpenInSidebar}
   {closeOnEscape}
   bind:realWidth
   on:aside-toggled
   on:close
+  on:search
 >
+  <svelte:fragment slot="search">
+    <slot name="search" />
+  </svelte:fragment>
+  <svelte:fragment slot="actions">
+    <slot name="actions" />
+  </svelte:fragment>
   {#if object}
     <PinnedMessages
       {_id}

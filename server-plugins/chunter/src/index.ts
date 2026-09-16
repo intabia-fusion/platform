@@ -35,6 +35,7 @@ export default plugin(serverChunterId, {
     ChannelUrlPresenter: '' as Resource<Presenter>,
     ChannelTitlePresenter: '' as Resource<Presenter>,
     ChatSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
+    ChatMessageSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
     JoinChannelTypeMatch: '' as TypeMatchFuncResource
   }
 })

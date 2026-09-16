@@ -14,25 +14,61 @@
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
   import { FileBrowser } from '@hcengineering/attachment-resources'
-  import { Scroller, Switcher } from '@hcengineering/ui'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { FilterBar, FilterButton } from '@hcengineering/view-resources'
-  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { getCurrentLocation, navigate, Scroller, Switcher } from '@hcengineering/ui'
+  import { type SearchSortOrder } from '@hcengineering/core'
 
-  import { userSearch } from '../../../index'
   import { SearchType } from '../../../utils'
+  import { peekSearchSnapshot, takePendingSearch } from '../../../search/store'
+  import { filtersFromQuery, filtersToQuery, sortFromQuery } from '../../../search/url'
+  import type { ChatSearchFilters } from '../../../search/types'
+  import { openSearchResult } from '../../../navigation'
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
-  import MessagesBrowser from './MessagesBrowser.svelte'
-
-  let userSearch_: string = ''
-  userSearch.subscribe((v) => (userSearch_ = v))
+  import SearchPanel from '../search/SearchPanel.svelte'
+  import SearchInputBox from '../search/SearchInputBox.svelte'
 
   const localStorageKey = 'chunter-browser-st__v2'
 
   let searchType: SearchType = initSearchType()
   $: localStorage.setItem(localStorageKey, searchType.toString())
+
+  const pending = takePendingSearch()
+  const startLoc = getCurrentLocation()
+  const last = startLoc.query?.q == null ? peekSearchSnapshot() : undefined
+
+  let query: string = pending?.search ?? last?.search ?? startLoc.query?.q ?? ''
+  let filters: ChatSearchFilters = pending?.filters ?? last?.filters ?? {}
+  let sort: SearchSortOrder = pending?.sort ?? last?.sort ?? sortFromQuery(startLoc.query) ?? 'relevance'
+
+  let ready = pending !== undefined || last !== undefined
+  if (!ready) {
+    void filtersFromQuery(startLoc.query).then((restored) => {
+      filters = restored
+      ready = true
+    })
+  }
+
+  let lastWritten: string = ''
+
+  $: if (ready) rememberSearch(query, filters, sort)
+
+  function rememberSearch (query: string, filters: ChatSearchFilters, sort: SearchSortOrder): void {
+    const params: Record<string, string> = { ...filtersToQuery(filters, sort) }
+    if (query !== '') params.q = query
+
+    const serialized = JSON.stringify(params)
+    if (serialized === lastWritten) return
+    lastWritten = serialized
+
+    const loc = getCurrentLocation()
+    const { q, type, from, in: inParam, after, before, files, transcripts, sort: s, ...rest } = loc.query ?? {}
+    loc.query = { ...rest, ...params }
+    navigate(loc, true)
+  }
+
+  const COMPACT_TABS_WIDTH = 640
+  let headerWidth: number = 0
+  $: compactTabs = headerWidth > 0 && headerWidth < COMPACT_TABS_WIDTH
 
   const tabs = [
     {
@@ -49,31 +85,6 @@
     }
   ]
 
-  const components: {
-    component: AnySvelteComponent
-    searchType: SearchType
-    label: IntlString
-    filterClass?: Ref<Class<Doc>>
-    props?: Record<string, any>
-  }[] = [
-    {
-      searchType: SearchType.Messages,
-      component: MessagesBrowser,
-      label: chunter.string.Messages
-    },
-    {
-      searchType: SearchType.Files,
-      component: FileBrowser,
-      label: attachment.string.Files,
-      props: {
-        requestedSpaceClasses: [chunter.class.Channel, chunter.class.DirectMessage]
-      }
-    }
-  ]
-
-  let searchValue: string = ''
-  let filterQuery: DocumentQuery<Doc> = {}
-
   function initSearchType (): SearchType {
     const saved = localStorage.getItem(localStorageKey)
     const parsed = Number(saved)
@@ -86,21 +97,17 @@
   }
 </script>
 
-<Header
-  icon={chunter.icon.ChannelBrowser}
-  intlLabel={chunter.string.ChunterBrowser}
-  titleKind={'breadcrumbs'}
-  bind:searchValue
-  adaptive={'freezeActions'}
-  focusSearch
->
+<Header adaptive={'disabled'} withSearch={false} hideTitle bind:realWidth={headerWidth}>
   <svelte:fragment slot="search">
-    <FilterButton _class={components[searchType].filterClass} />
+    <div class="header-search page-search">
+      <SearchInputBox bind:value={query} label={chunter.string.SearchPlaceholder} autoFocus kind="default" />
+    </div>
   </svelte:fragment>
   <svelte:fragment slot="actions">
     <Switcher
       name={'browser_group'}
       kind={'subtle'}
+      onlyIcons={compactTabs}
       selected={searchType}
       items={tabs}
       on:select={(result) => {
@@ -109,27 +116,47 @@
     />
   </svelte:fragment>
 </Header>
-{#if components[searchType].filterClass !== undefined}
-  <FilterBar
-    _class={components[searchType].filterClass}
-    space={undefined}
-    query={{ $search: searchValue }}
-    hideSaveButtons
-    on:change={(e) => {
-      filterQuery = e.detail
-      filterQuery.$search = undefined
+
+{#if searchType === SearchType.Messages && ready}
+  <SearchPanel
+    bind:value={query}
+    bind:filters
+    bind:sort
+    on:select={(e) => {
+      void openSearchResult(e.detail.raw.doc)
     }}
   />
-{/if}
-
-{#if components[searchType].component}
+{:else}
   <Scroller>
-    <svelte:component
-      this={components[searchType].component}
-      withHeader={false}
-      search={userSearch_}
-      {filterQuery}
-      {...components[searchType].props}
-    />
+    <FileBrowser requestedSpaceClasses={[chunter.class.Channel, chunter.class.DirectMessage]} withHeader={false} />
   </Scroller>
 {/if}
+
+<style lang="scss">
+  .header-search {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  :global(.hulyHeader-container:has(.page-search) .hulyHeader-buttonsGroup.search) {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.actions) {
+    flex-shrink: 0;
+  }
+
+  :global(.hulyHeader-container:has(.page-search) > .hulyHeader-titleGroup) {
+    display: none;
+  }
+
+  :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.before:empty),
+  :global(.hulyHeader-container:has(.page-search) > .hulyHeader-buttonsGroup.presence:empty) {
+    display: none;
+  }
+</style>

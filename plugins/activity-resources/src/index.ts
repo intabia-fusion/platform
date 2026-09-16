@@ -62,7 +62,7 @@ export { default as ActivityMessageHeader } from './components/activity-message/
 export { default as ActivityMessagesFilterPopup } from './components/ActivityFilterPopup.svelte'
 export { default as ActivityReferencePresenter } from './components/activity-reference/ActivityReferencePresenter.svelte'
 export { default as ActivityMessagePreview } from './components/activity-message/ActivityMessagePreview.svelte'
-// export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
+export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
 export { default as BaseMessagePreview } from './components/activity-message/BaseMessagePreview.svelte'
 export { default as BasePreview } from './components/BasePreview.svelte'
 

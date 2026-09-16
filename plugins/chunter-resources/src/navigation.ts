@@ -11,7 +11,7 @@ import {
   languageStore,
   deviceOptionsStore
 } from '@hcengineering/ui'
-import { type Ref, type Doc, type Class, concatLink } from '@hcengineering/core'
+import { type Ref, type Doc, type Class, concatLink, type SearchResultDoc } from '@hcengineering/core'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import {
   type Channel,
@@ -93,6 +93,35 @@ export async function openMessageFromSpecial (message?: ActivityMessage): Promis
   }
 
   loc.query = { ...loc.query, message: message._id }
+
+  navigate(loc)
+}
+
+export async function openSearchResult (doc: SearchResultDoc['doc']): Promise<void> {
+  const loc = getCurrentResolvedLocation()
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
+
+  const objectId = doc.objectId
+  const objectClass = doc.objectClass
+  const isThread = hierarchy.isDerived(doc._class, chunter.class.ThreadMessage)
+
+  if (isThread && objectId !== undefined && objectClass !== undefined) {
+    const id = await getObjectLinkId(providers, objectId, objectClass)
+    loc.path[3] = encodeObjectURI(id, objectClass)
+    loc.path[4] = doc.attachedTo as string
+    loc.path.length = 5
+  } else if (doc.attachedTo !== undefined && doc.attachedToClass !== undefined) {
+    const id = await getObjectLinkId(providers, doc.attachedTo, doc.attachedToClass)
+    loc.path[3] = encodeObjectURI(id, doc.attachedToClass)
+    loc.path[4] = ''
+    loc.path.length = 4
+  } else {
+    return
+  }
+
+  loc.query = { ...loc.query, message: doc._id }
 
   navigate(loc)
 }

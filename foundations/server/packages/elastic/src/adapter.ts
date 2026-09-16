@@ -36,12 +36,24 @@ import { KEYBOARD_MAPPINGS_CYRILLIC_TO_LATIN, KEYBOARD_MAPPINGS_LATIN_TO_CYRILLI
 
 const DEFAULT_LIMIT = 200
 
+// Indexed attributes of core.class.Doc are stored under their prefixed keys.
+const CREATED_ON_FIELD = 'core:class:Doc%createdOn'
+const CREATED_BY_FIELD = 'core:class:Doc%createdBy'
+
+// Above this many hits the reported total becomes a lower bound, which keeps counting cheap.
+const TOTAL_TRACKING_LIMIT = 10000
+
+// Control characters are used as highlight markers so that message text containing literal
+// `<em>` cannot be confused for a marker by the client side splitter.
+const HIGHLIGHT_PRE_TAG = '\u0001'
+const HIGHLIGHT_POST_TAG = '\u0002'
+
 function getIndexName (): string {
   return getMetadata(serverCore.metadata.ElasticIndexName) ?? 'storage_index'
 }
 
 function getIndexVersion (): string {
-  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v4'
+  return getMetadata(serverCore.metadata.ElasticIndexVersion) ?? 'v5'
 }
 
 const mappings: estypes.MappingTypeMapping = {
@@ -49,6 +61,25 @@ const mappings: estypes.MappingTypeMapping = {
     fulltextSummary: {
       type: 'text',
       analyzer: 'rebuilt_english'
+    },
+    // Filled only for classes naming an attribute in SearchPresenter.highlightableField.
+    // `term_vector` roughly doubles the stored size of this field, which is why it lives here
+    // and not on the shared `fulltextSummary` that also carries documents and blob content.
+    highlightableContent: {
+      type: 'text',
+      analyzer: 'rebuilt_english',
+      term_vector: 'with_positions_offsets',
+      fields: {
+        ru: {
+          type: 'text',
+          analyzer: 'rebuilt_russian',
+          term_vector: 'with_positions_offsets'
+        }
+      }
+    },
+    hasAttachment: {
+      type: 'boolean',
+      index: true
     },
     searchTitle: {
       type: 'text',
@@ -91,6 +122,18 @@ const mappings: estypes.MappingTypeMapping = {
       index: true
     },
     attachedToClass: {
+      type: 'keyword',
+      index: true
+    },
+    collection: {
+      type: 'keyword',
+      index: true
+    },
+    rootObject: {
+      type: 'keyword',
+      index: true
+    },
+    rootObjectClass: {
       type: 'keyword',
       index: true
     },
@@ -212,6 +255,10 @@ class ElasticAdapter implements FullTextAdapter {
                     type: 'pattern_replace',
                     pattern: "[ʹ\\'ʼ]",
                     replacement: ''
+                  },
+                  russian_stemmer: {
+                    type: 'stemmer',
+                    language: 'russian'
                   }
                 },
                 analyzer: {
@@ -236,6 +283,11 @@ class ElasticAdapter implements FullTextAdapter {
                     type: 'custom',
                     tokenizer: 'standard',
                     filter: ['english_possessive_stemmer', 'lowercase', 'english_stemmer']
+                  },
+                  rebuilt_russian: {
+                    type: 'custom',
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'russian_stemmer']
                   }
                 }
               }
@@ -273,15 +325,91 @@ class ElasticAdapter implements FullTextAdapter {
     options: SearchOptions & { scoring?: SearchScoring[] }
   ): Promise<SearchStringResult> {
     try {
-      const { strict, viewerId } = options
-      const fields = [
+      const { viewerId } = options
+      const searchIn = options.searchIn ?? 'all'
+      const titleFields = [
         'searchTitle^50',
         'searchShortTitle^50',
         'searchTitle.translit^10',
         'searchTitle.keyboard_latin_to_cyrillic^10',
-        'searchTitle.keyboard_cyrillic_to_latin^10',
-        ...(strict === true ? [] : ['*'])
+        'searchTitle.keyboard_cyrillic_to_latin^10'
       ]
+      // An explicit field list instead of '*': the wildcard expands over every mapped field,
+      // including keyword fields holding uuids, which is both noise and measurably slower.
+      const contentFields = ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3']
+      const fields =
+        searchIn === 'title' ? titleFields : searchIn === 'content' ? contentFields : [...titleFields, ...contentFields]
+
+      const mainQuery = query.query.startsWith('*')
+        ? {
+            bool: {
+              should: [
+                {
+                  // Clause 1: Prefix priority
+                  simple_query_string: {
+                    query: query.query.substring(1),
+                    analyze_wildcard: true,
+                    flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                    default_operator: 'and',
+                    fields,
+                    boost: 10
+                  }
+                },
+                {
+                  // Clause 2: Match anywhere
+                  query_string: {
+                    query: query.query,
+                    analyze_wildcard: true,
+                    allow_leading_wildcard: true,
+                    lenient: true,
+                    default_operator: 'and',
+                    fields,
+                    boost: 1
+                  }
+                }
+              ],
+              minimum_should_match: 1
+            }
+          }
+        : options.fuzzy === true
+          ? {
+              bool: {
+                should: [
+                  // Exact phrase is the strongest signal: "release notes" must beat a document
+                  // merely containing "release" and "notes" far apart.
+                  { multi_match: { query: query.query, type: 'phrase', fields, slop: 1, boost: 6 } },
+                  {
+                    // `minimum_should_match: '2<-25%'` keeps the precision of a plain `and` for
+                    // queries of up to three words, while letting longer ones miss a quarter of
+                    // their terms - those simply returned nothing before.
+                    // `prefix_length: 1` keeps fuzzy expansion off the hot path.
+                    multi_match: {
+                      query: query.query,
+                      type: 'best_fields',
+                      fields,
+                      operator: 'or',
+                      minimum_should_match: '2<-25%',
+                      fuzziness: 'AUTO',
+                      prefix_length: 1,
+                      max_expansions: 30,
+                      boost: 2
+                    }
+                  },
+                  // Last token prefix, gives an as-you-type feel without a separate index.
+                  { multi_match: { query: query.query, type: 'bool_prefix', fields, boost: 1 } }
+                ],
+                minimum_should_match: 1
+              }
+            }
+          : {
+              simple_query_string: {
+                query: query.query,
+                analyze_wildcard: true,
+                flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                default_operator: 'and',
+                fields
+              }
+            }
 
       const elasticQuery: any = {
         query: {
@@ -289,48 +417,7 @@ class ElasticAdapter implements FullTextAdapter {
             query: {
               bool: {
                 must: [
-                  {
-                    ...(query.query.startsWith('*')
-                      ? {
-                          bool: {
-                            should: [
-                              {
-                                // Clause 1: Prefix priority
-                                simple_query_string: {
-                                  query: query.query.substring(1),
-                                  analyze_wildcard: true,
-                                  flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                                  default_operator: 'and',
-                                  fields,
-                                  boost: 10
-                                }
-                              },
-                              {
-                                // Clause 2: Match anywhere
-                                query_string: {
-                                  query: query.query,
-                                  analyze_wildcard: true,
-                                  allow_leading_wildcard: true,
-                                  lenient: true,
-                                  default_operator: 'and',
-                                  fields,
-                                  boost: 1
-                                }
-                              }
-                            ],
-                            minimum_should_match: 1
-                          }
-                        }
-                      : {
-                          simple_query_string: {
-                            query: query.query,
-                            analyze_wildcard: true,
-                            flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                            default_operator: 'and',
-                            fields
-                          }
-                        })
-                  },
+                  mainQuery,
                   {
                     term: {
                       workspaceId
@@ -345,11 +432,9 @@ class ElasticAdapter implements FullTextAdapter {
         size: options.limit ?? DEFAULT_LIMIT
       }
 
-      const filter: any = [
-        {
-          exists: { field: 'searchTitle' }
-        }
-      ]
+      // No title means the indexer never got to the document properly: there is nothing to render
+      // a result row from, so it is treated as broken rather than returned empty.
+      const filter: any = [{ exists: { field: 'searchTitle' } }]
 
       if (query.spaces !== undefined) {
         filter.push({
@@ -367,6 +452,48 @@ class ElasticAdapter implements FullTextAdapter {
           bool: {
             should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
           }
+        })
+      }
+
+      const filters = query.filters
+      if (filters?.createdAfter !== undefined || filters?.createdBefore !== undefined) {
+        filter.push({
+          range: {
+            [CREATED_ON_FIELD]: {
+              ...(filters.createdAfter !== undefined ? { gte: filters.createdAfter } : {}),
+              ...(filters.createdBefore !== undefined ? { lte: filters.createdBefore } : {}),
+              format: 'epoch_millis'
+            }
+          }
+        })
+      }
+      if (filters?.createdBy !== undefined) {
+        filter.push({ terms: this.getTerms(filters.createdBy, CREATED_BY_FIELD) })
+      }
+      if (filters?.attachedTo !== undefined) {
+        // Matches both a message hanging off the object and a thread reply whose root it is.
+        filter.push({
+          bool: {
+            should: [
+              { terms: this.getTerms(filters.attachedTo, 'attachedTo') },
+              { terms: this.getTerms(filters.attachedTo, 'rootObject') }
+            ],
+            minimum_should_match: 1
+          }
+        })
+      }
+      if (filters?.attachedToClass !== undefined) {
+        filter.push({ terms: this.getTerms(filters.attachedToClass, 'attachedToClass') })
+      }
+      if (filters?.hasAttachment === true) {
+        filter.push({ term: { hasAttachment: true } })
+      }
+      if (filters?.excludeCollections !== undefined && filters.excludeCollections.length > 0) {
+        // Only classes opting into content indexing carry `collection` at all, and a document
+        // sitting in no collection has no such field either. Both must keep matching, hence
+        // must_not rather than a positive term list.
+        filter.push({
+          bool: { must_not: { terms: this.getTerms(filters.excludeCollections, 'collection') } }
         })
       }
 
@@ -391,31 +518,96 @@ class ElasticAdapter implements FullTextAdapter {
         elasticQuery.query.function_score.query.bool.should = scoringTerms
       }
 
-      const result = await this.client.search({
-        index: this.indexName,
-        ...elasticQuery
-      })
+      // Every sort spec ends in a unique tiebreaker so that `search_after` can resume from it.
+      // `unmapped_type` guards against shards holding documents older than the date mapping.
+      elasticQuery.sort =
+        options.sort === 'date-desc'
+          ? [{ [CREATED_ON_FIELD]: { order: 'desc', unmapped_type: 'date' } }, { id: 'desc' }]
+          : options.sort === 'date-asc'
+            ? [{ [CREATED_ON_FIELD]: { order: 'asc', unmapped_type: 'date' } }, { id: 'asc' }]
+            : [{ _score: { order: 'desc' } }, { id: 'desc' }]
+      elasticQuery.track_total_hits = TOTAL_TRACKING_LIMIT
+
+      if (options.cursor !== undefined) {
+        try {
+          elasticQuery.search_after = JSON.parse(Buffer.from(options.cursor, 'base64').toString())
+        } catch (err: any) {
+          ctx.warn('malformed search cursor, ignoring', { error: err })
+        }
+      }
+
+      if (options.highlight !== undefined && options.highlight !== false) {
+        const h = options.highlight === true ? {} : options.highlight
+        elasticQuery.highlight = {
+          pre_tags: [h.preTag ?? HIGHLIGHT_PRE_TAG],
+          post_tags: [h.postTag ?? HIGHLIGHT_POST_TAG],
+          // `default`, not `html`: the client splits the fragment on the markers and renders the
+          // pieces as text nodes, so Svelte escapes them. Asking Elastic to escape as well turns
+          // a `/` in the message into a literal `&#x2F;` on screen.
+          encoder: 'default',
+          fragment_size: h.fragmentSize ?? 120,
+          number_of_fragments: h.numberOfFragments ?? 2,
+          order: 'score',
+          // The query is a bool of several should clauses; without this each of them would
+          // try to produce its own highlight for its own field.
+          require_field_match: false,
+          fields: {
+            // `fvh` uses the term vectors stored on highlightableContent, making it O(fragment).
+            // Cut on word boundaries, not sentence ones: a chat message often has no full stop at
+            // all, and the scanner then stretches the fragment to the whole text - measured at
+            // twice `fragment_size`, still clipped mid word at the end.
+            highlightableContent: { type: 'fvh', boundary_scanner: 'word' },
+            'highlightableContent.ru': { type: 'fvh', boundary_scanner: 'word' },
+            // 0 fragments means the whole field, which is what a short title wants.
+            searchTitle: { type: 'unified', number_of_fragments: 0 },
+            fulltextSummary: { type: 'unified' }
+          }
+        }
+      }
+
+      const result = await ctx.with(
+        'elastic-search-string',
+        {
+          sort: options.sort ?? 'relevance',
+          highlight: options.highlight !== undefined && options.highlight !== false,
+          paged: options.cursor !== undefined
+        },
+        () =>
+          this.client.search({
+            index: this.indexName,
+            ...elasticQuery
+          })
+      )
 
       const resp: SearchStringResult = { docs: [] }
       if (result.hits !== undefined) {
         const total = result.hits.total as any
         if (total?.value !== undefined) {
           resp.total = total.value
+          resp.totalExact = total.relation === 'eq'
         } else if (typeof total === 'number') {
           resp.total = total
+          resp.totalExact = true
         }
-        resp.docs = result.hits.hits.map((hit: any) => ({ ...hit._source, _score: hit._score }))
+        const hits = result.hits.hits as any[]
+        resp.docs = hits.map((hit: any) => ({ ...hit._source, _score: hit._score, _highlights: hit.highlight }))
+
+        // Only hand back a cursor when the page was full, otherwise this was the last one.
+        const lastHit = hits[hits.length - 1]
+        if (lastHit?.sort !== undefined && hits.length === elasticQuery.size) {
+          resp.cursor = Buffer.from(JSON.stringify(lastHit.sort)).toString('base64')
+        }
       }
 
       return resp
     } catch (err: any) {
       if (err.name === 'ConnectionError') {
         ctx.warn('Elastic DB is not available')
-        return { docs: [] }
+        return { docs: [], failed: true }
       }
       Analytics.handleError(err)
       ctx.error('Elastic error', { error: err })
-      return { docs: [] }
+      return { docs: [], failed: true }
     }
   }
 
