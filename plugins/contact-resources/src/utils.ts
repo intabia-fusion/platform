@@ -43,6 +43,7 @@ import {
   getPersonByPersonRefCb as getPersonByPersonRefCbBase,
   getPersonsByPersonRefsCb as getPersonsByPersonRefsCbBase,
   getSocialIdByPersonId as getSocialIdByPersonIdBase,
+  getSocialIdsByPersonRefsBase,
   getSocialIdByPersonIdCb as getSocialIdByPersonIdCbBase,
   type PermissionsBySpace,
   type PermissionsStore,
@@ -829,6 +830,10 @@ export function getPersonsByPersonRefsCb (
 
 export async function getSocialIdByPersonId (personId: PersonId): Promise<SocialIdentity | null> {
   return await getSocialIdByPersonIdBase(getClient(), personId)
+}
+
+export async function getSocialIdsByPersonRefs (personRefs: Array<Ref<Person>>): Promise<Map<Ref<Person>, PersonId[]>> {
+  return await getSocialIdsByPersonRefsBase(getClient(), personRefs)
 }
 
 export function getSocialIdByPersonIdCb (personId: PersonId, cb: (socialId: SocialIdentity | null) => void): void {

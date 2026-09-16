@@ -112,6 +112,10 @@ export default class ContactCache {
     return this._socialIdByPersonId
   }
 
+  public get personIdsByPersonRef (): ReadonlyMap<Ref<Person>, ReadonlySet<PersonId>> {
+    return this._personIdsByPersonRef
+  }
+
   private addPersonIdToPersonRef (personRef: Ref<Person>, personId: PersonId): void {
     this._personIdsByPersonRef.set(personRef, (this._personIdsByPersonRef.get(personRef) ?? new Set()).add(personId))
   }

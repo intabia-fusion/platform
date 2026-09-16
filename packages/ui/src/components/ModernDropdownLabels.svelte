@@ -59,6 +59,7 @@
   export let disabled: boolean = false
   export let loading: boolean = false
   export let enableSearch: boolean = true
+  export let categoryKind: 'divider' | 'heading' = 'divider'
 
   const dispatch = createEventDispatcher<{
     selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined
@@ -84,7 +85,7 @@
       opened = true
       showPopup(
         ModernPopupLabels,
-        { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch },
+        { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch, categoryKind },
         container,
         (result) => {
           if (result != null) {

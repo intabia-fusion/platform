@@ -13,10 +13,11 @@
 // limitations under the License.
 //
 
-import {
+import core, {
   type AnyAttribute,
   type Class,
   type Doc,
+  docKey,
   type FullTextSearchContext,
   getFullTextContext,
   type Hierarchy,
@@ -102,6 +103,13 @@ export function createIndexedDoc (doc: Doc, mixins: Ref<Class<Doc>>[] | undefine
     modifiedBy: doc.modifiedBy,
     modifiedOn: doc.modifiedOn,
     space
+  }
+
+  if (doc.createdOn !== undefined) {
+    indexedDoc[docKey('createdOn', core.class.Doc)] = doc.createdOn
+  }
+  if (doc.createdBy !== undefined) {
+    indexedDoc[docKey('createdBy', core.class.Doc)] = doc.createdBy
   }
   if ((doc as VersionableDoc).baseId !== undefined) {
     indexedDoc.baseId = (doc as VersionableDoc).baseId

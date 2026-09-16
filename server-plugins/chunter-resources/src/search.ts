@@ -13,7 +13,16 @@
  limitations under the License.
  */
 
-import { type Doc, getObjectValue, type Hierarchy, MeasureContext, type Space } from '@hcengineering/core'
+import {
+  type Doc,
+  getObjectValue,
+  type Hierarchy,
+  MeasureContext,
+  type PersonId,
+  type Ref,
+  type SessionData,
+  type Space
+} from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
 import serverCore, {
   type FieldTemplate,
@@ -21,8 +30,8 @@ import serverCore, {
   SearchPresenterProvider,
   WithFind
 } from '@hcengineering/server-core'
-import chunter, { type Chat, type DirectMessage } from '@hcengineering/chunter'
-import contactPlugin, { formatName, type Person } from '@hcengineering/contact'
+import chunter, { type Chat, type ChatMessage, type DirectMessage } from '@hcengineering/chunter'
+import contactPlugin, { formatName, type Person, type SocialIdentity } from '@hcengineering/contact'
 
 export const ChatSearchTitleProvider: SearchPresenterProvider = async (
   _doc: Doc,
@@ -70,6 +79,109 @@ export const ChatSearchTitleProvider: SearchPresenterProvider = async (
   }
 
   return ''
+}
+
+function batchCache<K, V> (ctx: MeasureContext, key: string): Map<K, V> {
+  // Absent only outside the indexer, where a per call Map degrades to no memo at all rather
+  // than to a wrong answer.
+  const cache = (ctx.contextData as SessionData | undefined)?.contextCache
+  if (cache === undefined) return new Map<K, V>()
+
+  let scoped = cache.get(key)
+  if (scoped === undefined) {
+    scoped = new Map<K, V>()
+    cache.set(key, scoped)
+  }
+  return scoped
+}
+
+async function resolveAuthorName (
+  personId: PersonId | undefined,
+  ctx: MeasureContext,
+  storage: WithFind
+): Promise<string> {
+  if (personId == null) return ''
+
+  const authorNameCache = batchCache<PersonId, string>(ctx, 'chunter.searchTitle.authorNames')
+  const cached = authorNameCache.get(personId)
+  if (cached !== undefined) return cached
+
+  let name = ''
+  const identity = (
+    await storage.findAll<SocialIdentity>(
+      ctx,
+      contactPlugin.class.SocialIdentity,
+      { _id: personId as SocialIdentity['_id'] },
+      { limit: 1, skipSpace: true, skipClass: true }
+    )
+  )[0]
+  const personRef = identity?.attachedTo
+  if (personRef !== undefined) {
+    const person = (
+      await storage.findAll<Person>(
+        ctx,
+        contactPlugin.class.Person,
+        { _id: personRef },
+        { limit: 1, skipSpace: true, skipClass: true }
+      )
+    )[0]
+    if (person !== null) {
+      name = formatName(person.name).trim()
+    }
+  }
+
+  authorNameCache.set(personId, name)
+  return name
+}
+
+async function resolveChannelName (
+  space: Space | undefined,
+  hierarchy: Hierarchy,
+  ctx: MeasureContext,
+  storage: WithFind
+): Promise<string> {
+  if (space === undefined) return ''
+
+  if (!hierarchy.isDerived(space._class, chunter.class.DirectMessage)) {
+    return space.name ?? ''
+  }
+
+  const directNameCache = batchCache<Ref<Space>, string>(ctx, 'chunter.searchTitle.directNames')
+  const cached = directNameCache.get(space._id)
+  if (cached !== undefined) return cached
+
+  const members = (space as DirectMessage).members ?? []
+  const persons = await storage.findAll<Person>(
+    ctx,
+    contactPlugin.class.Person,
+    { personUuid: { $in: members } },
+    { skipSpace: true, skipClass: true }
+  )
+  const name = persons
+    .map((p) => formatName(p.name).trim())
+    .filter((n) => n !== '')
+    .join(', ')
+
+  directNameCache.set(space._id, name)
+  return name
+}
+
+export const ChatMessageSearchTitleProvider: SearchPresenterProvider = async (
+  doc: Doc,
+  _parent: Doc | undefined,
+  space: Space | undefined,
+  hierarchy: Hierarchy,
+  mode: string,
+  ctx: MeasureContext,
+  storage: WithFind
+): Promise<string> => {
+  const channelName = await resolveChannelName(space, hierarchy, ctx, storage)
+  if (mode === 'short') return channelName
+
+  const message = doc as ChatMessage
+  const authorName = await resolveAuthorName(message.createdBy ?? message.modifiedBy, ctx, storage)
+
+  return [authorName, channelName].filter((s) => s !== '').join(' — ')
 }
 
 async function evaluateTemplate (
