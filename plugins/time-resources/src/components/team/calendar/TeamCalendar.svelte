@@ -23,7 +23,6 @@
     PersonId,
     Ref,
     Timestamp,
-    Tx,
     TxCreateDoc,
     TxCUD,
     TxUpdateDoc,
@@ -38,7 +37,8 @@
   import time from '../../../plugin'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import WithTeamData from '../WithTeamData.svelte'
-  import { groupTeamData, toSlots, openPersonDay } from '../utils'
+  import { createDayGroups, groupsForDay, openPersonDay, type DayGroups } from '../utils'
+  import { activityTxQuery } from '../../../utils'
   import PersonCalendar from './PersonCalendar.svelte'
   import DayCell from './DayCell.svelte'
   import TxPanel from './TxPanel.svelte'
@@ -87,27 +87,37 @@
   const txCreateQuery = createQuery()
 
   let personsSocialIds: PersonId[] = []
-  let txes: Tx[] = []
-  let txesMap = new Map<Ref<Person>, Tx[]>()
+  let txes: Array<TxCUD<Doc>> = []
+  let txesMap = new Map<Ref<Person>, Array<TxCUD<Doc>>>()
 
   const socialIdsQuery = createQuery()
-  $: if (personsRefs.length > 0) {
+  // Both queries feed the activity counters only - the tx one scans the whole tx domain for every
+  // shown person, so it must not run while the counters are off.
+  $: if (showActivity && personsRefs.length > 0) {
     socialIdsQuery.query(contact.class.SocialIdentity, { attachedTo: { $in: personsRefs } }, (res) => {
       personsSocialIds = res.map((si) => si._id).flat()
     })
   } else {
     socialIdsQuery.unsubscribe()
+    personsSocialIds = []
   }
 
-  $: txCreateQuery.query(
-    core.class.Tx,
-    { modifiedBy: { $in: personsSocialIds }, modifiedOn: { $gt: fromDate, $lt: toDate } },
-    (res) => {
-      txes = res
-    }
-  )
+  $: if (showActivity && personsSocialIds.length > 0) {
+    const tx = activityTxQuery(personsSocialIds, fromDate, toDate)
+    txCreateQuery.query<TxCUD<Doc>>(
+      core.class.TxCUD,
+      tx.query,
+      (res) => {
+        txes = res
+      },
+      tx.options
+    )
+  } else {
+    txCreateQuery.unsubscribe()
+    txes = []
+  }
   $: getPersonRefsByPersonIdsCb(unique(txes.map((it) => it.createdBy ?? it.modifiedBy)), (res) => {
-    const map = new Map<Ref<Person>, Tx[]>()
+    const map = new Map<Ref<Person>, Array<TxCUD<Doc>>>()
     for (const t of txes) {
       const personId = t.createdBy ?? t.modifiedBy
       const personRef = res.get(personId)
@@ -120,7 +130,7 @@
   const client = getClient()
 
   function group (
-    txes: Tx[],
+    txes: Array<TxCUD<Doc>>,
     from: Timestamp,
     to: Timestamp
   ): { add: Map<Asset, { count: number, tx: TxCUD<Doc>[] }>, change: Map<Asset, { count: number, tx: TxCUD<Doc>[] }> } {
@@ -177,6 +187,10 @@
 
   $: allSlots = getAllEvents(slots, fromDate, toDate)
   $: allEvents = getAllEvents(events, fromDate, toDate)
+
+  // Rebuilt whenever an input changes; cells read days out of it lazily.
+  let dayGroups: DayGroups
+  $: dayGroups = createDayGroups(allSlots, allEvents, busySlots, todos, me, $calendarByIdStore)
 </script>
 
 <WithTeamData
@@ -195,17 +209,7 @@
   <svelte:fragment slot="day" let:day let:today let:weekend let:person let:height>
     {@const dayFrom = new Date(day).setHours(0, 0, 0, 0)}
     {@const dayTo = new Date(day).setHours(23, 59, 59, 999)}
-    {@const grouped = groupTeamData(
-      toSlots(getAllEvents(allSlots, dayFrom, dayTo)),
-      todos,
-      getAllEvents(allEvents, dayFrom, dayTo),
-      busySlots,
-      me,
-      $calendarByIdStore,
-      dayFrom,
-      dayTo
-    )}
-    {@const gitem = grouped.find((it) => it.user === person)}
+    {@const gitem = groupsForDay(dayGroups, dayFrom, dayTo).get(person)}
     {@const planned = gitem?.mappings.reduce((it, val) => it + val.total, 0) ?? 0}
     {@const pevents = gitem?.events.reduce((it, val) => it + (val.dueDate - val.date), 0) ?? 0}
     {@const busy =

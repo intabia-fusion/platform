@@ -1,10 +1,22 @@
-import { getCurrentAccount, type Client, type Ref, type Space } from '@hcengineering/core'
+import {
+  getCurrentAccount,
+  SortingOrder,
+  type Client,
+  type Doc,
+  type DocumentQuery,
+  type FindOptions,
+  type PersonId,
+  type Ref,
+  type Space,
+  type Timestamp,
+  type TxCUD
+} from '@hcengineering/core'
 import { getClient } from '@hcengineering/presentation'
 import type { ToDo, WorkSlot } from '@hcengineering/time'
 import time from '@hcengineering/time'
 import type { DefSeparators } from '@hcengineering/ui'
 
-import calendarPlugin, { AccessLevel, getPrimaryCalendar, type Calendar } from '@hcengineering/calendar'
+import calendarPlugin, { AccessLevel, getPrimaryCalendar, type Calendar, type Event } from '@hcengineering/calendar'
 import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 
 export * from './types'
@@ -88,4 +100,51 @@ export async function findPrimaryCalendar (): Promise<Ref<Calendar>> {
   })
   const preference = await client.findOne(calendarPlugin.class.PrimaryCalendar, {})
   return getPrimaryCalendar(calendars, preference, acc.uuid)
+}
+
+/**
+ * @public
+ *
+ * Activity counters read no tx payload, and an unbounded scan of the tx domain is what made one
+ * staging transactor run out of memory (FUSIO-1344).
+ *
+ * ponytail: the limit truncates silently - on a busy workspace the oldest days of the window
+ * lose their counters (newest survive, the sort is descending). Per-day queries if that shows.
+ */
+export function activityTxQuery (
+  socialIds: PersonId[],
+  from: Timestamp,
+  to: Timestamp
+): { query: DocumentQuery<TxCUD<Doc>>, options: FindOptions<TxCUD<Doc>> } {
+  return {
+    query: { modifiedBy: { $in: socialIds }, modifiedOn: { $gt: from, $lt: to } },
+    options: {
+      limit: 2000,
+      sort: { modifiedOn: SortingOrder.Descending },
+      projection: { _class: 1, objectId: 1, objectClass: 1, modifiedBy: 1, createdBy: 1, modifiedOn: 1 }
+    }
+  }
+}
+
+/**
+ * @public
+ *
+ * A master's date/dueDate describe the first occurrence only, and an override is matched to it by
+ * `originalStartTime` - windowing either by date resurrects occurrences moved out of view.
+ */
+export function eventWindowQueries (
+  calendarIds: Array<Ref<Calendar>>,
+  from: Timestamp,
+  to: Timestamp
+): { plain: DocumentQuery<Event>, recurring: DocumentQuery<Event>, instances: DocumentQuery<Event> } {
+  return {
+    plain: {
+      _class: { $nin: [calendarPlugin.class.ReccuringEvent, calendarPlugin.class.ReccuringInstance] },
+      calendar: { $in: calendarIds },
+      date: { $lte: to },
+      dueDate: { $gte: from }
+    },
+    recurring: { calendar: { $in: calendarIds }, date: { $lte: to } },
+    instances: { calendar: { $in: calendarIds } }
+  }
 }

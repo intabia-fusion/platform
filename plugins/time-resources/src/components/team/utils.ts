@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type BusySlot, type Calendar, type Event, getBusyIntervals } from '@hcengineering/calendar'
+import { type BusySlot, type Calendar, type Event, getAllEvents, getBusyIntervals } from '@hcengineering/calendar'
 import { isVisible } from '@hcengineering/calendar-resources'
 import { type Contact, type Employee, type Person } from '@hcengineering/contact'
 import { type IdMap, type Ref, type Timestamp } from '@hcengineering/core'
@@ -161,6 +161,66 @@ export function groupTeamData (
  * @public
  */
 export const toSlots = (events: Event[]): WorkSlot[] => events as WorkSlot[]
+
+/**
+ * @public
+ */
+export interface DayGroups {
+  // Keyed by the whole window: the same day start with a different end is a different question.
+  groups: Map<string, Map<Ref<Person>, EventPersonMapping>>
+  slots: Event[]
+  events: Event[]
+  busySlots: BusySlot[]
+  todos: IdMap<ToDo>
+  me: Ref<Person>
+  calendars: IdMap<Calendar>
+}
+
+/**
+ * @public
+ *
+ * A grouping pass scans every person, so the team grid must not run one per (person x day) cell -
+ * that is quadratic in the row count. Callers rebuild this whenever any input changes and read
+ * days out of it lazily.
+ */
+export function createDayGroups (
+  slots: Event[],
+  events: Event[],
+  busySlots: BusySlot[],
+  todos: IdMap<ToDo>,
+  me: Ref<Person>,
+  calendars: IdMap<Calendar>
+): DayGroups {
+  return { groups: new Map(), slots, events, busySlots, todos, me, calendars }
+}
+
+/**
+ * @public
+ */
+export function groupsForDay (
+  cache: DayGroups,
+  dayFrom: Timestamp,
+  dayTo: Timestamp
+): Map<Ref<Person>, EventPersonMapping> {
+  const key = `${dayFrom}-${dayTo}`
+  let res = cache.groups.get(key)
+  if (res === undefined) {
+    res = new Map(
+      groupTeamData(
+        toSlots(getAllEvents(cache.slots, dayFrom, dayTo)),
+        cache.todos,
+        getAllEvents(cache.events, dayFrom, dayTo),
+        cache.busySlots,
+        cache.me,
+        cache.calendars,
+        dayFrom,
+        dayTo
+      ).map((it) => [it.user, it])
+    )
+    cache.groups.set(key, res)
+  }
+  return res
+}
 
 type EventVars = Pick<Event, 'date' | 'dueDate'>
 
