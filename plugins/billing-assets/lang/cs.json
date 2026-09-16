@@ -20,6 +20,7 @@
     "Documents": "Dokumenty",
     "Archives": "Archivy",
     "OtherFiles": "Ostatní soubory",
+    "GeneratedVersions": "vcetne {size} vygenerovanych",
     "StorageByType": "Úložiště podle typu",
     "LargestFiles": "Největší soubory",
     "LargestSpaces": "Největší prostory",

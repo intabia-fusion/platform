@@ -301,6 +301,28 @@ func (u *uploaderImpl) deleteRemoteFile(f string) {
 	logger.Error("can not delete remote file")
 }
 
+func (u *uploaderImpl) setRemoteParent(f string) {
+	var logger = u.logger.With(zap.String("set parent", f), zap.String("source", u.options.Source))
+
+	for range u.options.RetryCount {
+		var ctx, cancel = context.WithTimeout(u.uploadCtx, u.options.Timeout)
+		var err = u.storage.SetParent(ctx, f, u.options.Source)
+		cancel()
+
+		if err != nil {
+			logger.Error("attempt failed", zap.Error(err))
+		} else {
+			logger.Debug("blob parent set")
+			return
+		}
+
+		time.Sleep(u.options.RetryDelay)
+	}
+
+	// Orphan: it will not be cascade-deleted with its source and keeps counting towards usage.
+	logger.Error("can not set blob parent, blob is orphaned")
+}
+
 func (u *uploaderImpl) uploadAndDelete(f string) {
 	var logger = u.logger.With(zap.String("upload and delete", f))
 	logger.Debug("uploading file")
@@ -343,12 +365,7 @@ func (u *uploaderImpl) uploadAndDelete(f string) {
 
 			// Update the file's parent if SourceFile is set
 			if u.options.Source != "" {
-				var setParentCtx, setParentCancel = context.WithTimeout(u.uploadCtx, u.options.Timeout)
-				err = u.storage.SetParent(setParentCtx, f, u.options.Source)
-				setParentCancel()
-				if err != nil {
-					logger.Error("can not set blob parent", zap.Error(err), zap.String("filename", f), zap.String("source", u.options.Source))
-				}
+				u.setRemoteParent(f)
 			}
 
 			// Delete the file locally if it should be deleted

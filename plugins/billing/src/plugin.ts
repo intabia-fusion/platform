@@ -48,6 +48,7 @@ export const billingPlugin = plugin(billingId, {
     Documents: '' as IntlString,
     Archives: '' as IntlString,
     OtherFiles: '' as IntlString,
+    GeneratedVersions: '' as IntlString,
     StorageByType: '' as IntlString,
     LargestFiles: '' as IntlString,
     UpgradePlan: '' as IntlString,

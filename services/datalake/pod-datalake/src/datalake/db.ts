@@ -80,12 +80,17 @@ export interface StatsResult {
 export interface WorkspaceStatsResult {
   count: number
   size: number
+  // Subset of the above produced by transcoding (blob.parent IS NOT NULL), not uploaded by a user.
+  derivedCount: number
+  derivedSize: number
 }
 
 export interface WorkspaceStatsByTypeResult {
   type: string
   count: number
   size: number
+  derivedCount: number
+  derivedSize: number
 }
 
 export async function createDb (ctx: MeasureContext, connectionString: string): Promise<BlobDB> {
@@ -432,7 +437,11 @@ export class PostgresDB implements BlobDB {
   async getWorkspaceStats (ctx: MeasureContext, workspace: string): Promise<WorkspaceStatsResult> {
     const rows = await this.execute(
       `
-      SELECT count(1) as count, sum(d.size) as size
+      SELECT
+        count(1) as count,
+        sum(d.size) as size,
+        count(1) FILTER (WHERE b.parent IS NOT NULL) as derived_count,
+        sum(d.size) FILTER (WHERE b.parent IS NOT NULL) as derived_size
       FROM blob.blob b
       JOIN blob.data AS d ON b.hash = d.hash AND b.location = d.location
       WHERE workspace = $1 and deleted_at IS NULL
@@ -444,7 +453,9 @@ export class PostgresDB implements BlobDB {
 
     return {
       count: parseInt(stats.count ?? 0),
-      size: parseInt(stats.size ?? 0)
+      size: parseInt(stats.size ?? 0),
+      derivedCount: parseInt(stats.derived_count ?? 0),
+      derivedSize: parseInt(stats.derived_size ?? 0)
     }
   }
 
@@ -473,7 +484,9 @@ export class PostgresDB implements BlobDB {
           ELSE 'other'
         END AS type,
         count(1) AS count,
-        sum(d.size) AS size
+        sum(d.size) AS size,
+        count(1) FILTER (WHERE b.parent IS NOT NULL) AS derived_count,
+        sum(d.size) FILTER (WHERE b.parent IS NOT NULL) AS derived_size
       FROM blob.blob b
       JOIN blob.data AS d ON b.hash = d.hash AND b.location = d.location
       WHERE workspace = $1 AND deleted_at IS NULL
@@ -485,7 +498,9 @@ export class PostgresDB implements BlobDB {
     return rows.map((row: Row) => ({
       type: row.type as string,
       count: parseInt(row.count ?? 0),
-      size: parseInt(row.size ?? 0)
+      size: parseInt(row.size ?? 0),
+      derivedCount: parseInt(row.derived_count ?? 0),
+      derivedSize: parseInt(row.derived_size ?? 0)
     }))
   }
 }

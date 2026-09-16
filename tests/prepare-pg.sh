@@ -45,6 +45,10 @@ fi
 
 ../dev/test-base/run.sh "$STAND"
 
+# The video sanity tests need an mp4; generate it with the stream image's ffmpeg once the
+# stand is up, so nothing is downloaded and no host ffmpeg is needed.
+./make-video-fixture.sh
+
 if [ "x$DO_CLEAN" == 'xtrue' ]; then
     echo 'Do docker Clean'
     docker system prune -a -f

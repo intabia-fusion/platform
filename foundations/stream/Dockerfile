@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Pin to a dated tag once dev/base-image publishes one.
-ARG BASE_VERSION=latest
+# Pinned to a published tag, like the other pods do with intabiafusion/base.
+ARG BASE_VERSION=v20260916
 
 # --platform=$BUILDPLATFORM keeps the toolchain native: a linux/arm64 target is
 # cross-compiled instead of running the whole Go build under QEMU. go-base
