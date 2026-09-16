@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { EncodingOptions, EncodingOptionsPreset } from 'livekit-server-sdk'
+import { EncodingOptions, EncodingOptionsPreset, VideoCodec } from 'livekit-server-sdk'
 
 export interface RecordingPreset {
   name: string
@@ -35,12 +35,27 @@ export const RecordingPreset1080p: RecordingPreset = {
   preset: EncodingOptionsPreset.H264_1080P_30
 }
 
+export const RecordingPreset1080p15fps: RecordingPreset = {
+  name: '1080p15fps',
+  width: 1920,
+  height: 1080,
+  preset: new EncodingOptions({
+    width: 1920,
+    height: 1080,
+    framerate: 15,
+    videoCodec: VideoCodec.H264_MAIN,
+    videoBitrate: 3000
+  })
+}
+
 export function getRecordingPreset (name: string | undefined): RecordingPreset {
   switch (name) {
     case RecordingPreset1080p.name:
       return RecordingPreset1080p
     case RecordingPreset720p.name:
       return RecordingPreset720p
+    case RecordingPreset1080p15fps.name:
+      return RecordingPreset1080p15fps
     default:
       return RecordingPreset720p
   }
