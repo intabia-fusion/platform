@@ -12,3 +12,5 @@ docker push $NS/print-base:${VERSION}
 docker push $NS/front-base:${VERSION}
 docker push $NS/preview-base:${VERSION}
 docker push $NS/love-agent-base:${VERSION}
+docker push $NS/go-base:${VERSION}
+docker push $NS/stream-base:${VERSION}

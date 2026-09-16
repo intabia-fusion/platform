@@ -22,6 +22,13 @@ import (
 	"github.com/hcengineering/stream/internal/pkg/resconv"
 )
 
+const (
+	codecH264 = "libx264"
+	codecAAC  = "aac"
+	// codecCopy remuxes the stream as-is, without re-encoding.
+	codecCopy = "copy"
+)
+
 // VideoProfile represents a video profile
 type VideoProfile struct {
 	Name      string
@@ -42,8 +49,8 @@ type VideoProfile struct {
 var profileOriginal = VideoProfile{
 	Name:       "orig",
 	Scale:      false,
-	VideoCodec: "copy",
-	AudioCodec: "copy",
+	VideoCodec: codecCopy,
+	AudioCodec: codecCopy,
 	CRF:        23,
 }
 
@@ -51,8 +58,8 @@ var profileOriginal = VideoProfile{
 var profileOriginalT = VideoProfile{
 	Name:       "orig",
 	Scale:      false,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        23,
 }
 
@@ -63,8 +70,8 @@ var Profile360p = VideoProfile{
 	Width:      640,
 	Height:     360,
 	Bandwidth:  500000,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        28,
 }
 
@@ -75,8 +82,8 @@ var Profile480p = VideoProfile{
 	Width:      854,
 	Height:     480,
 	Bandwidth:  2000000,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        27,
 }
 
@@ -87,8 +94,8 @@ var Profile720p = VideoProfile{
 	Width:      1280,
 	Height:     720,
 	Bandwidth:  5000000,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        25,
 }
 
@@ -99,8 +106,8 @@ var Profile1080p = VideoProfile{
 	Width:      1920,
 	Height:     1080,
 	Bandwidth:  8000000,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        23,
 }
 
@@ -111,8 +118,8 @@ var Profile1440p = VideoProfile{
 	Width:      2560,
 	Height:     1440,
 	Bandwidth:  12000000,
-	VideoCodec: "libx264",
-	AudioCodec: "aac",
+	VideoCodec: codecH264,
+	AudioCodec: codecAAC,
 	CRF:        23,
 }
 
@@ -123,8 +130,8 @@ var Profile2160p = VideoProfile{
 	Width:      3840,
 	Height:     2160,
 	Bandwidth:  25000000,
-	VideoCodec: "libx264", // Consider libx265
-	AudioCodec: "aac",
+	VideoCodec: codecH264, // Consider libx265
+	AudioCodec: codecAAC,
 	CRF:        22,
 }
 
@@ -135,8 +142,8 @@ var Profile4320p = VideoProfile{
 	Width:      7680,
 	Height:     4320,
 	Bandwidth:  50000000,
-	VideoCodec: "libx264", // Consider libx265
-	AudioCodec: "aac",
+	VideoCodec: codecH264, // Consider libx265
+	AudioCodec: codecAAC,
 	CRF:        22,
 }
 
