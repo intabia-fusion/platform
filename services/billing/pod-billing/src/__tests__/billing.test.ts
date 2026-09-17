@@ -40,6 +40,10 @@ jest.mock('@hcengineering/account-client', () => ({
 jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn(() => 'tok')
 }))
+const datalakeClientMock = jest.fn()
+jest.mock('@hcengineering/datalake', () => ({
+  createDatalakeClient: (...args: any[]) => datalakeClientMock(...args)
+}))
 jest.mock('../config', () => ({
   __esModule: true,
   default: { AccountsUrl: 'http://account', WindowMonthLimit: 1000, ProviderPrices: {} }
@@ -56,7 +60,8 @@ const {
   handlePushAiTranscriptData,
   handlePushParticipantSessions,
   resolveWorkspacePlan,
-  clearWorkspacePlanCache
+  clearWorkspacePlanCache,
+  collectDatalakeStats
 } = require('../billing')
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -309,5 +314,47 @@ describe('push handlers', () => {
       expect(db[dbMethod]).toHaveBeenCalledWith(ctx, sample)
       expect(res.status).toHaveBeenCalledWith(204)
     })
+  })
+})
+
+describe('collectDatalakeStats', () => {
+  function makeClient (stats: any, byType: any[]): any {
+    return {
+      getWorkspaceStats: jest.fn(async () => stats),
+      getWorkspaceStatsByType: jest.fn(async () => byType)
+    }
+  }
+
+  it('sums totals and the derived subset across storage configs', async () => {
+    datalakeClientMock
+      .mockReturnValueOnce(
+        makeClient({ count: 10, size: 1000, derivedCount: 6, derivedSize: 600 }, [
+          { type: 'video', count: 8, size: 900, derivedCount: 6, derivedSize: 600 },
+          { type: 'image', count: 2, size: 100, derivedCount: 0, derivedSize: 0 }
+        ])
+      )
+      .mockReturnValueOnce(
+        makeClient({ count: 3, size: 300, derivedCount: 1, derivedSize: 50 }, [
+          { type: 'video', count: 3, size: 300, derivedCount: 1, derivedSize: 50 }
+        ])
+      )
+
+    const result = await collectDatalakeStats(ctx, WS, [
+      { kind: 'datalake', name: 'a' },
+      { kind: 's3', name: 'ignored' },
+      { kind: 'datalake', name: 'b' }
+    ])
+
+    expect(datalakeClientMock).toHaveBeenCalledTimes(2)
+    expect(result.count).toBe(13)
+    expect(result.size).toBe(1300)
+    expect(result.derivedCount).toBe(7)
+    expect(result.derivedSize).toBe(650)
+
+    const video = result.byType.find((t: any) => t.type === 'video')
+    expect(video).toEqual({ type: 'video', count: 11, size: 1200, derivedCount: 7, derivedSize: 650 })
+
+    const image = result.byType.find((t: any) => t.type === 'image')
+    expect(image).toEqual({ type: 'image', count: 2, size: 100, derivedCount: 0, derivedSize: 0 })
   })
 })

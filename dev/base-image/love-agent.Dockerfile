@@ -14,5 +14,7 @@ RUN [ -z "$NPM_REGISTRY" ] || pnpm config set registry "$NPM_REGISTRY"
 # Dependency tree is baked here so the per-commit love-agent build stays off the npm registry.
 COPY package.json package.json
 COPY pnpm-lock.yaml pnpm-lock.yaml
+# The image is its own workspace root, so it needs the catalog the "catalog:" pins resolve against.
+COPY docker-pnpm-workspace.yaml pnpm-workspace.yaml
 
 RUN pnpm install --frozen-lockfile --ignore-scripts=false

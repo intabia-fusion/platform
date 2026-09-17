@@ -20,6 +20,7 @@
     "Documents": "文档",
     "Archives": "档案",
     "OtherFiles": "其他文件",
+    "GeneratedVersions": "其中 {size} 为生成",
     "StorageByType": "按类型存储",
     "LargestFiles": "最大文件",
     "LargestSpaces": "最大空间",

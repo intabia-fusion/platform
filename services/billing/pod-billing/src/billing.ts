@@ -297,12 +297,14 @@ export async function collectDatalakeStats (
   const result: WorkspaceStats & { byType: WorkspaceStatsByType[] } = {
     count: 0,
     size: 0,
+    derivedCount: 0,
+    derivedSize: 0,
     byType: []
   }
 
   const token = generateToken(systemAccountUuid, undefined, { service: 'billing' })
 
-  const byTypeMap = new Map<string, { count: number, size: number }>()
+  const byTypeMap = new Map<string, { count: number, size: number, derivedCount: number, derivedSize: number }>()
 
   for (const storageConfig of storageConfigs) {
     if (storageConfig.kind !== 'datalake') {
@@ -317,14 +319,23 @@ export async function collectDatalakeStats (
 
     result.count += storageStats.count
     result.size += storageStats.size
+    result.derivedCount += storageStats.derivedCount
+    result.derivedSize += storageStats.derivedSize
 
     for (const entry of statsByType) {
       const existing = byTypeMap.get(entry.type)
       if (existing !== undefined) {
         existing.count += entry.count
         existing.size += entry.size
+        existing.derivedCount += entry.derivedCount
+        existing.derivedSize += entry.derivedSize
       } else {
-        byTypeMap.set(entry.type, { count: entry.count, size: entry.size })
+        byTypeMap.set(entry.type, {
+          count: entry.count,
+          size: entry.size,
+          derivedCount: entry.derivedCount,
+          derivedSize: entry.derivedSize
+        })
       }
     }
   }
@@ -332,7 +343,9 @@ export async function collectDatalakeStats (
   result.byType = Array.from(byTypeMap.entries()).map(([type, stats]) => ({
     type,
     count: stats.count,
-    size: stats.size
+    size: stats.size,
+    derivedCount: stats.derivedCount,
+    derivedSize: stats.derivedSize
   }))
 
   return result

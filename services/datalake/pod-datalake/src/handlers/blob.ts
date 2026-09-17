@@ -316,10 +316,8 @@ export async function handleUploadFormData (
 
           ctx.info('uploaded', { workspace, name, etag: metadata.etag, type: contentType })
 
-          // Storage delta to billing (fire-and-forget, user uploads only). ref=sha256 for idempotency.
-          if (!isServiceToken) {
-            limitsState?.sendStorageDelta(ctx, workspace, size, sha256)
-          }
+          // Storage delta to billing (fire-and-forget). ref=sha256 for idempotency.
+          limitsState?.sendStorageDelta(ctx, workspace, size, sha256)
 
           return { key, id: name, metadata }
         } catch (err: any) {

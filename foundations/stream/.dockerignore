@@ -1,0 +1,7 @@
+.git
+.github
+.rush
+rush-logs
+node_modules
+.fast-build-cache.json
+.DS_Store

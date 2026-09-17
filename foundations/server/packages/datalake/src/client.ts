@@ -81,6 +81,9 @@ export interface R2UploadParams {
 export interface WorkspaceStats {
   count: number
   size: number
+  // Subset of the above produced by transcoding, not uploaded by a user.
+  derivedCount: number
+  derivedSize: number
 }
 
 /** @public */
@@ -88,6 +91,8 @@ export interface WorkspaceStatsByType {
   type: string
   count: number
   size: number
+  derivedCount: number
+  derivedSize: number
 }
 
 /** @public */

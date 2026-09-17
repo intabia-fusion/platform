@@ -21,6 +21,8 @@
     type: string
     count: number
     size: number
+    derivedCount?: number
+    derivedSize?: number
   }
 
   export let byType: TypeStats[] = []
@@ -32,6 +34,7 @@
     color: string
     size: number
     count: number
+    derivedSize: number
     percentage: number
   }
 
@@ -59,6 +62,7 @@
           color: config.color,
           size: t.size,
           count: t.count,
+          derivedSize: t.derivedSize ?? 0,
           percentage: base > 0 ? (t.size / base) * 100 : 0
         }
       })
@@ -90,6 +94,14 @@
         <div class="legend-dot" style="background-color: {segment.color}" />
         <span class="legend-label"><Label label={segment.label} /></span>
         <span class="legend-value">{filesize(segment.size, { spacer: ' ' })} ({segment.count})</span>
+        {#if segment.derivedSize > 0}
+          <span class="legend-derived">
+            <Label
+              label={billingPlugin.string.GeneratedVersions}
+              params={{ size: filesize(segment.derivedSize, { spacer: ' ' }) }}
+            />
+          </span>
+        {/if}
       </div>
     {/each}
   </div>
@@ -170,5 +182,10 @@
   .legend-value {
     font-size: 0.8125rem;
     color: var(--theme-halfcontent-color);
+  }
+
+  .legend-derived {
+    font-size: 0.75rem;
+    color: var(--theme-darker-color);
   }
 </style>

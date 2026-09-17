@@ -1,4 +1,6 @@
-FROM node:24
+# trixie, not the bookworm that plain node:24 still points at: rekoni extracts PDF text for
+# fulltext search with pdftotext, and bookworm is frozen at poppler 22.12.
+FROM node:24-trixie
 
 RUN apt-get update
 RUN apt-get install libjemalloc2 dumb-init

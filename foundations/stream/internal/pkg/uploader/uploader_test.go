@@ -44,6 +44,10 @@ type fakeStorage struct {
 	failPutAll   bool
 	putDelay     time.Duration
 	putCount     int32
+
+	setParentCalls     int32
+	failSetParentUntil int32 // fail the first N SetParent calls with a transient error
+	failSetParentAll   bool
 }
 
 func newFakeStorage() *fakeStorage {
@@ -90,10 +94,24 @@ func (f *fakeStorage) StatFile(_ context.Context, _ string) (*storage.BlobInfo, 
 }
 
 func (f *fakeStorage) SetParent(_ context.Context, name, parent string) error {
+	atomic.AddInt32(&f.setParentCalls, 1)
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.failSetParentAll {
+		return errors.New("transient")
+	}
+	if atomic.LoadInt32(&f.failSetParentUntil) > 0 {
+		atomic.AddInt32(&f.failSetParentUntil, -1)
+		return errors.New("transient")
+	}
 	f.parents[name] = parent
 	return nil
+}
+
+func (f *fakeStorage) parentOf(name string) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.parents[name]
 }
 
 func (f *fakeStorage) putAttempts(name string) int {
@@ -266,4 +284,91 @@ func TestUploader_NewPanicsOnNilStorage(t *testing.T) {
 	assert.Panics(t, func() {
 		_ = uploader.New(context.Background(), nil, uploader.Options{})
 	})
+}
+
+// TestUploader_RetriesSetParent verifies that a transient SetParent failure does not orphan the
+// blob: without the retry the very first error is only logged and the parent is never set, which
+// leaves the artifact invisible to the datalake cascade delete while still counting towards usage.
+func TestUploader_RetriesSetParent(t *testing.T) {
+	if runtime.GOOS != osLinux {
+		t.Skip("uploader relies on inotify")
+	}
+
+	dir := t.TempDir()
+	writeFile(t, dir, "segment_000.ts", "a")
+
+	fs := newFakeStorage()
+	atomic.StoreInt32(&fs.failSetParentUntil, 2)
+
+	up := newUploader(t, fs, dir, uploader.Options{
+		RetryCount: 5,
+		RetryDelay: 10 * time.Millisecond,
+		Source:     "source-blob",
+	})
+
+	up.Start()
+	target := filepath.Join(dir, "segment_000.ts")
+	require.Eventually(t, func() bool {
+		return fs.parentOf(target) != ""
+	}, 2*time.Second, 10*time.Millisecond, "parent must be set after the transient failures")
+	up.Stop()
+
+	assert.Equal(t, "source-blob", fs.parentOf(target))
+	assert.Equal(t, int32(3), atomic.LoadInt32(&fs.setParentCalls),
+		"SetParent must be retried until it succeeds")
+}
+
+// TestUploader_GivesUpSettingParent verifies the retry is bounded by RetryCount rather than
+// looping forever when the parent never becomes settable.
+func TestUploader_GivesUpSettingParent(t *testing.T) {
+	if runtime.GOOS != osLinux {
+		t.Skip("uploader relies on inotify")
+	}
+
+	dir := t.TempDir()
+	writeFile(t, dir, "segment_000.ts", "a")
+
+	fs := newFakeStorage()
+	fs.failSetParentAll = true
+
+	const retryCount = 3
+	up := newUploader(t, fs, dir, uploader.Options{
+		RetryCount: retryCount,
+		RetryDelay: 5 * time.Millisecond,
+		Source:     "source-blob",
+	})
+
+	up.Start()
+	target := filepath.Join(dir, "segment_000.ts")
+	require.Eventually(t, func() bool {
+		return atomic.LoadInt32(&fs.setParentCalls) >= retryCount
+	}, 2*time.Second, 5*time.Millisecond, "uploader must attempt RetryCount times")
+	up.Stop()
+
+	assert.Empty(t, fs.parentOf(target), "parent must stay unset when every attempt fails")
+	assert.LessOrEqual(t, atomic.LoadInt32(&fs.setParentCalls), int32(2*retryCount),
+		"uploader must not retry SetParent indefinitely")
+}
+
+// TestUploader_NoSourceSkipsSetParent verifies the recording path that has no source blob does not
+// issue a parent PATCH at all.
+func TestUploader_NoSourceSkipsSetParent(t *testing.T) {
+	if runtime.GOOS != osLinux {
+		t.Skip("uploader relies on inotify")
+	}
+
+	dir := t.TempDir()
+	writeFile(t, dir, "segment_000.ts", "a")
+
+	fs := newFakeStorage()
+	up := newUploader(t, fs, dir, uploader.Options{RetryDelay: 5 * time.Millisecond})
+
+	up.Start()
+	target := filepath.Join(dir, "segment_000.ts")
+	require.Eventually(t, func() bool {
+		return fs.putAttempts(target) > 0
+	}, 2*time.Second, 5*time.Millisecond)
+	up.Stop()
+
+	assert.Zero(t, atomic.LoadInt32(&fs.setParentCalls))
 }

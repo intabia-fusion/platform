@@ -78,7 +78,7 @@ export class LimitsState {
     return this.diskExhausted.has(workspace) || this.paymentExhausted.has(workspace)
   }
 
-  /** Fire-and-forget storage delta to billing-usage. Call only for user uploads. ref=sha256 for idempotency. */
+  /** Fire-and-forget storage delta to billing-usage, for user and service uploads alike. ref=sha256 for idempotency. */
   sendStorageDelta (ctx: MeasureContext, workspace: WorkspaceUuid, size: number, sha256: string): void {
     void this.usageProducer
       .send(ctx, workspace, [{ kind: 'usage', workspace, metric: 'storage', amount: size, ref: sha256 }])

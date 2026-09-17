@@ -20,6 +20,7 @@
     "Documents": "ドキュメント",
     "Archives": "アーカイブ",
     "OtherFiles": "その他のファイル",
+    "GeneratedVersions": "うち {size} は生成",
     "StorageByType": "タイプ別ストレージ",
     "LargestFiles": "最大のファイル",
     "LargestSpaces": "最大のスペース",

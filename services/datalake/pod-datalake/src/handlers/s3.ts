@@ -58,7 +58,7 @@ export async function handleS3CreateBlob (
 
   try {
     const head = await datalake.create(ctx, workspace, name, filename)
-    if (head != null && !isServiceToken) {
+    if (head != null) {
       // etag is content-derived — stable ref for retry dedup in billing
       limitsState?.sendStorageDelta(ctx, workspace, head.size, head.etag)
     }

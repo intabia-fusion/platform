@@ -20,6 +20,7 @@
     "Documents": "Документы",
     "Archives": "Архивы",
     "OtherFiles": "Прочие файлы",
+    "GeneratedVersions": "из них {size} сгенерировано",
     "StorageByType": "Хранилище по типам",
     "LargestFiles": "Крупные файлы",
     "LargestSpaces": "Крупные пространства",
