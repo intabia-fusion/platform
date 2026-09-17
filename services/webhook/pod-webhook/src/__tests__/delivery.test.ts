@@ -387,7 +387,11 @@ describe('recordDeliveryOutcome', () => {
       removeDoc: jest.fn().mockResolvedValue(undefined)
     }
 
-    await recordDeliveryOutcome(rest, 'ep_1' as any, { deliveryId: 'msg_1', attempt: 0, status: 200 })
+    await recordDeliveryOutcome(rest, { _id: 'ep_1', space: 'ps_1' } as any, {
+      deliveryId: 'msg_1',
+      attempt: 0,
+      status: 200
+    })
 
     expect(rest.removeDoc).not.toHaveBeenCalled()
   })
@@ -400,8 +404,12 @@ describe('recordDeliveryOutcome', () => {
       removeDoc: jest.fn().mockResolvedValue(undefined)
     }
 
-    await recordDeliveryOutcome(rest, 'ep_1' as any, { deliveryId: 'msg_1', attempt: 0, status: 200 })
+    await recordDeliveryOutcome(rest, { _id: 'ep_1', space: 'ps_1' } as any, {
+      deliveryId: 'msg_1',
+      attempt: 0,
+      status: 200
+    })
 
-    expect(rest.removeDoc).toHaveBeenCalledWith(setting.class.WebhookDelivery, expect.anything(), 'oldest')
+    expect(rest.removeDoc).toHaveBeenCalledWith(setting.class.WebhookDelivery, 'ps_1', 'oldest')
   })
 })

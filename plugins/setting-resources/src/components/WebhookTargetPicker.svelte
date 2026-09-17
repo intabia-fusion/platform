@@ -14,12 +14,14 @@
 -->
 <script lang="ts">
   import { type Class, type Doc, type DocumentQuery, type Ref } from '@hcengineering/core'
-  import { ObjectPopup } from '@hcengineering/presentation'
+  import { ObjectPopup, type ObjectSearchCategory } from '@hcengineering/presentation'
   import settingsRes from '../plugin'
 
   export let _class: Ref<Class<Doc>>
   export let docQuery: DocumentQuery<Doc> | undefined = undefined
   export let searchField: string = 'name'
+  export let searchMode: 'field' | 'spotlight' = 'field'
+  export let category: Ref<ObjectSearchCategory> | undefined = undefined
   export let selected: Ref<Doc> | undefined = undefined
 
   interface TargetLike extends Doc {
@@ -37,6 +39,8 @@
   {_class}
   {docQuery}
   {searchField}
+  {searchMode}
+  {category}
   {selected}
   placeholder={settingsRes.string.WebhookConstructPickTarget}
   on:close

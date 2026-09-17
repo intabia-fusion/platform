@@ -37,6 +37,7 @@ import { isKnownOperation } from './operations'
 import { buildDeliveryHeaders } from './signature'
 import { safeFetch } from './ssrf'
 import { WebhookStore } from './store'
+import { lookupTarget, targetField, type TargetLookup } from './targets'
 import type { WebhookEvent, WebhookJobMessage } from './types'
 import { getSystemTransactorTarget } from './workspaceClient'
 
@@ -62,14 +63,25 @@ export function createServer (
   app.post(
     '/api/v1/webhook/action',
     wrap(async (req, res) => {
-      await handleIngest(ctx, accountClient, producer, store, perKeyHeaderLimiter, perIpLimiter, 'header', req, res)
+      await handleIngest(
+        ctx,
+        config,
+        accountClient,
+        producer,
+        store,
+        perKeyHeaderLimiter,
+        perIpLimiter,
+        'header',
+        req,
+        res
+      )
     })
   )
 
   app.post(
     '/api/v1/webhook/k/:key',
     wrap(async (req, res) => {
-      await handleIngest(ctx, accountClient, producer, store, perKeyPathLimiter, perIpLimiter, 'path', req, res)
+      await handleIngest(ctx, config, accountClient, producer, store, perKeyPathLimiter, perIpLimiter, 'path', req, res)
     })
   )
 
@@ -165,6 +177,7 @@ function applyRateLimitHeaders (res: Response, info: RateLimitInfo): void {
 
 async function handleIngest (
   ctx: MeasureContext,
+  config: Config,
   accountClient: AccountClient,
   producer: PlatformQueueProducer<WebhookJobMessage>,
   store: WebhookStore,
@@ -231,17 +244,21 @@ async function handleIngest (
 
   const body = (req.body ?? {}) as Record<string, unknown>
   const action = body.action
-  const space = body.space
   // `action` validity is checked against the operations registry (src/operations.ts) - the same
   // registry the consumer executes against, so the facade and the execution can't drift apart.
-  if (!isKnownOperation(action) || typeof space !== 'string' || space.length === 0) {
+  if (!isKnownOperation(action)) {
     logCall(ctx, check.keyId, action, keySource, 'invalid_payload')
-    sendError(res, 400, 'invalid_payload')
+    sendError(res, 400, 'invalid_payload', `Unknown action: ${String(action)}`)
+    return
+  }
+  const field = targetField(action)
+  const target = body[field]
+  if (typeof target !== 'string' || target.length === 0) {
+    logCall(ctx, check.keyId, action, keySource, 'invalid_payload')
+    sendError(res, 400, 'invalid_payload', `field "${field}": required`)
     return
   }
 
-  // Right check only: `space` is the caller's project/channel id, not a Ref<Space>. Resolving it and
-  // checking it against check.spaces is the consumer's job, once it has the workspace model loaded.
   if (!check.ops.includes(action)) {
     logCall(ctx, check.keyId, action, keySource, 'forbidden')
     sendError(res, 403, 'forbidden')
@@ -256,6 +273,26 @@ async function handleIngest (
       res.status(202).json({ jobId: existing.jobId })
       return
     }
+  }
+
+  // Best effort: a caller retries on its own only on 5xx, so an unknown target must be a 404 now rather
+  // than a failed job later. If the lookup itself fails, the job is queued and the transactor decides.
+  let lookup: TargetLookup | undefined
+  try {
+    const system = await getSystemTransactorTarget(config, workspace)
+    lookup = await lookupTarget(system.rest, workspace, action, target)
+  } catch (err) {
+    ctx.warn('webhook: target lookup failed, queueing unchecked', { keyId: check.keyId, action, err })
+  }
+  if (lookup?.found === false) {
+    logCall(ctx, check.keyId, action, keySource, 'not_found')
+    sendError(res, 404, 'not_found', lookup.message)
+    return
+  }
+  if (lookup?.found === true && check.spaces.length > 0 && !check.spaces.includes(lookup.space)) {
+    logCall(ctx, check.keyId, action, keySource, 'forbidden')
+    sendError(res, 403, 'forbidden', `The API key is not granted the space of ${field} '${target}'`)
+    return
   }
 
   const jobId = `wh_${generateId()}`
@@ -408,11 +445,11 @@ async function handleTestSend (config: Config, req: Request, res: Response): Pro
       devAllowedHosts: config.DevAllowedWebhookHosts,
       blockedHosts: config.BlockedWebhookHosts
     })
-    await recordDeliveryOutcome(target.rest, endpoint._id, { deliveryId, attempt: 0, status: result.status })
+    await recordDeliveryOutcome(target.rest, endpoint, { deliveryId, attempt: 0, status: result.status })
     res.status(200).json({ delivered: result.status >= 200 && result.status < 300, status: result.status })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    await recordDeliveryOutcome(target.rest, endpoint._id, { deliveryId, attempt: 0, error: message })
+    await recordDeliveryOutcome(target.rest, endpoint, { deliveryId, attempt: 0, error: message })
     res.status(200).json({ delivered: false, error: message })
   }
 }

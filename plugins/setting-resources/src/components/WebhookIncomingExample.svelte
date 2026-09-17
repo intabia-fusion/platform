@@ -16,7 +16,7 @@
   import { apiKeyOperations, type ApiKeyOperation } from '@hcengineering/account-client'
   import { concatLink, type Class, type Doc, type DocumentQuery, type Ref } from '@hcengineering/core'
   import { getMetadata, type IntlString } from '@hcengineering/platform'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
+  import { copyTextToClipboard, type ObjectSearchCategory } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import {
     Button,
@@ -40,6 +40,8 @@
   const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
   const teamspaceClass = 'document:class:Teamspace' as Ref<Class<Doc>>
   const documentClass = 'document:class:Document' as Ref<Class<Doc>>
+  // Spotlight finds an issue by its identifier too - a title-only search can't reach "TSK-12".
+  const issueCategory = 'tracker:completion:IssueCategory' as Ref<ObjectSearchCategory>
 
   const PLACEHOLDER_KEY = '<API_KEY>'
   const PLACEHOLDER_REPORT = '<REPORT_ID>'
@@ -53,13 +55,16 @@
   let op: ApiKeyOperation = apiKeyOperations[0]
   const opItems: DropdownTextItem[] = apiKeyOperations.map((o) => ({ id: o, label: o }))
 
-  /** What each operation's `space` field names, so only targets of that kind can be picked. */
+  /** What each operation acts on, so only targets of that kind can be picked. */
   interface TargetKind {
     _class: Ref<Class<Doc>>
     docQuery?: DocumentQuery<Doc>
     searchField: string
-    // Field substituted into the example - the same value the transactor's resolver looks up.
-    field: 'identifier' | 'name' | 'title'
+    category?: Ref<ObjectSearchCategory>
+    // Body field carrying the target - keep in step with pod-webhook's src/targets.ts.
+    bodyField: 'space' | 'issue' | 'document'
+    // Doc field substituted into the example - the same value the transactor's resolver looks up.
+    field: 'identifier' | '_id'
     placeholder: string
     hint: IntlString
   }
@@ -70,6 +75,7 @@
         return {
           _class: projectClass,
           searchField: 'name',
+          bodyField: 'space',
           field: 'identifier',
           placeholder: '<PROJECT_IDENTIFIER>',
           hint: settingsRes.string.WebhookIncomingPlaceholderProject
@@ -80,6 +86,8 @@
         return {
           _class: issueClass,
           searchField: 'title',
+          category: issueCategory,
+          bodyField: 'issue',
           field: 'identifier',
           placeholder: '<ISSUE_IDENTIFIER>',
           hint: settingsRes.string.WebhookIncomingPlaceholderIssue
@@ -88,24 +96,27 @@
         return {
           _class: channelClass,
           searchField: 'name',
-          field: 'name',
-          placeholder: '<CHANNEL_NAME>',
+          bodyField: 'space',
+          field: '_id',
+          placeholder: '<CHANNEL_ID>',
           hint: settingsRes.string.WebhookIncomingPlaceholderChannel
         }
       case 'doc:create':
         return {
           _class: teamspaceClass,
           searchField: 'name',
-          field: 'name',
-          placeholder: '<TEAMSPACE_NAME>',
+          bodyField: 'space',
+          field: '_id',
+          placeholder: '<TEAMSPACE_ID>',
           hint: settingsRes.string.WebhookIncomingPlaceholderTeamspace
         }
       case 'doc:update':
         return {
           _class: documentClass,
           searchField: 'title',
-          field: 'title',
-          placeholder: '<DOCUMENT_TITLE>',
+          bodyField: 'document',
+          field: '_id',
+          placeholder: '<DOCUMENT_ID>',
           hint: settingsRes.string.WebhookIncomingPlaceholderDocument
         }
     }
@@ -123,11 +134,20 @@
   // No live key/token ever appears here - examples get pasted into tickets and chats, and one carrying
   // a real credential would leak it. Only the placeholder and the header/path shape are shown.
   $: pathEndpoint = `POST ${concatLink(serviceUrl, `/api/v1/webhook/k/${PLACEHOLDER_KEY}`)}`
+  // Without the `Bearer` scheme the key is not recognized and the call gets 401.
+  const authHeader = `Authorization: Bearer ${PLACEHOLDER_KEY}`
 
   function pickTarget (event: MouseEvent): void {
     showPopup(
       WebhookTargetPicker,
-      { _class: kind._class, docQuery: kind.docQuery, searchField: kind.searchField, selected: target?._id },
+      {
+        _class: kind._class,
+        docQuery: kind.docQuery,
+        searchField: kind.searchField,
+        searchMode: kind.category !== undefined ? 'spotlight' : 'field',
+        category: kind.category,
+        selected: target?._id
+      },
       eventToHTMLElement(event),
       (result?: Doc) => {
         if (result !== undefined) target = result as TargetLike
@@ -146,9 +166,10 @@
     hint?: IntlString
   }
 
-  function buildExamples (op: ApiKeyOperation, space: string | undefined): Example[] {
-    const hint = space === undefined ? targetKind(op).hint : undefined
-    const value = space ?? targetKind(op).placeholder
+  function buildExamples (op: ApiKeyOperation, targetValue: string | undefined): Example[] {
+    const kind = targetKind(op)
+    const hint = targetValue === undefined ? kind.hint : undefined
+    const targetEntry = { [kind.bodyField]: targetValue ?? kind.placeholder }
     switch (op) {
       case 'issue:create':
         return [
@@ -156,7 +177,7 @@
             title: op,
             json: {
               action: op,
-              space: value,
+              ...targetEntry,
               title: 'Payment webhook retries indefinitely',
               body: '## Steps to reproduce\n\n1. Trigger a webhook delivery\n2. Watch it retry forever'
             },
@@ -169,7 +190,7 @@
             title: op,
             json: {
               action: op,
-              space: value,
+              ...targetEntry,
               title: 'Payment webhook stops retrying after fix',
               body: 'Confirmed fixed after deploying the retry-cap change.'
             },
@@ -180,7 +201,7 @@
         return [
           {
             title: op,
-            json: { action: op, space: value, message: 'Reproduced on staging, looking into the retry loop now.' },
+            json: { action: op, ...targetEntry, message: 'Reproduced on staging, looking into the retry loop now.' },
             hint
           }
         ]
@@ -192,7 +213,7 @@
             title: `${op} - create`,
             json: {
               action: op,
-              space: value,
+              ...targetEntry,
               employee: 'user@example.com',
               date: '2026-09-03',
               hours: 2.5,
@@ -204,7 +225,7 @@
             title: `${op} - update`,
             json: {
               action: op,
-              space: value,
+              ...targetEntry,
               id: PLACEHOLDER_REPORT,
               hours: 3.5,
               description: 'Investigated the retry loop and the backoff cap'
@@ -213,14 +234,14 @@
           }
         ]
       case 'chat:post':
-        return [{ title: op, json: { action: op, space: value, message: 'Deploy finished, all green.' }, hint }]
+        return [{ title: op, json: { action: op, ...targetEntry, message: 'Deploy finished, all green.' }, hint }]
       case 'doc:create':
         return [
           {
             title: op,
             json: {
               action: op,
-              space: value,
+              ...targetEntry,
               title: 'Q3 Roadmap',
               body: '# Roadmap\n\nMarkdown content for the new document.'
             },
@@ -231,7 +252,7 @@
         return [
           {
             title: op,
-            json: { action: op, space: value, title: 'Q3 Roadmap (revised)', body: 'Updated markdown content.' },
+            json: { action: op, ...targetEntry, title: 'Q3 Roadmap (revised)', body: 'Updated markdown content.' },
             hint
           }
         ]
@@ -290,6 +311,18 @@
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(headerEndpoint)
+                  }}
+                />
+              </div>
+              <div class="flex-row-center flex-gap-2">
+                <code class="endpointUrl">{authHeader}</code>
+                <Button
+                  kind="ghost"
+                  size="small"
+                  icon={IconCopy}
+                  showTooltip={{ label: view.string.CopyToClipboard }}
+                  on:click={() => {
+                    void copyText(authHeader)
                   }}
                 />
               </div>

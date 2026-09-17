@@ -14,7 +14,7 @@
 //
 
 import type { ApiKeyOperation } from '@hcengineering/account-client'
-import { type Channel, postMessage, resolveChannel } from '@hcengineering/chunter'
+import chunter, { type Channel, postMessage } from '@hcengineering/chunter'
 import { saveCollabJson } from '@hcengineering/collaboration'
 import contact, { type Employee, type Person } from '@hcengineering/contact'
 import {
@@ -183,7 +183,7 @@ async function resolveProject (client: TxOperations, identifier: string): Promis
   return project
 }
 
-async function resolveIssue (client: TxOperations, identifier: string, field: string = 'space'): Promise<Issue> {
+async function resolveIssue (client: TxOperations, identifier: string, field: string = 'issue'): Promise<Issue> {
   const issue = await client.findOne(tracker.class.Issue, { identifier })
   if (issue === undefined) {
     throw badRequest(`field "${field}": issue not found: "${identifier}"`)
@@ -223,33 +223,29 @@ async function resolveStatus (client: TxOperations, issue: Issue, name: string):
   return match._id
 }
 
-async function resolveTeamspace (client: TxOperations, nameOrRef: string): Promise<Teamspace> {
-  const byRef = await client.findOne(document.class.Teamspace, { _id: nameOrRef as Ref<Teamspace> })
-  if (byRef !== undefined) return byRef
-
-  const byName = await client.findAll(document.class.Teamspace, { name: nameOrRef })
-  if (byName.length === 0) {
-    throw badRequest(`field "space": teamspace not found: "${nameOrRef}"`)
+// Channels, teamspaces and documents are addressed by `_id`: a name or title can be renamed, the id cannot.
+async function resolveChannel (client: TxOperations, id: string): Promise<Channel> {
+  const channel = await client.findOne(chunter.class.Channel, { _id: id as Ref<Channel> })
+  if (channel === undefined) {
+    throw badRequest(`field "space": channel not found: "${id}"`)
   }
-  if (byName.length > 1) {
-    throw badRequest(`field "space": multiple teamspaces named "${nameOrRef}"`)
-  }
-  return byName[0]
+  return channel
 }
 
-// Id or title, like resolveTeamspace - an external system has no way to learn a document's internal id.
-async function resolveDocument (client: TxOperations, idOrTitle: string, field: string = 'space'): Promise<Document> {
-  const byId = await client.findOne(document.class.Document, { _id: idOrTitle as Ref<Document> })
-  if (byId !== undefined) return byId
+async function resolveTeamspace (client: TxOperations, id: string): Promise<Teamspace> {
+  const teamspace = await client.findOne(document.class.Teamspace, { _id: id as Ref<Teamspace> })
+  if (teamspace === undefined) {
+    throw badRequest(`field "space": teamspace not found: "${id}"`)
+  }
+  return teamspace
+}
 
-  const byTitle = await client.findAll(document.class.Document, { title: idOrTitle })
-  if (byTitle.length === 0) {
-    throw badRequest(`field "${field}": document not found: "${idOrTitle}"`)
+async function resolveDocument (client: TxOperations, id: string): Promise<Document> {
+  const doc = await client.findOne(document.class.Document, { _id: id as Ref<Document> })
+  if (doc === undefined) {
+    throw badRequest(`field "document": document not found: "${id}"`)
   }
-  if (byTitle.length > 1) {
-    throw badRequest(`field "${field}": multiple documents titled "${idOrTitle}", use the document id`)
-  }
-  return byTitle[0]
+  return doc
 }
 
 // ---- operations --------------------------------------------------------------
@@ -276,7 +272,7 @@ const issueCreate: OpsExecutor = async (client, payload, uploadMarkup) => {
 }
 
 const issueUpdate: OpsExecutor = async (client, payload, uploadMarkup) => {
-  const issue = await resolveIssue(client, requireString(payload, 'space'))
+  const issue = await resolveIssue(client, requireString(payload, 'issue'))
 
   const update: IssueUpdate = {}
   const title = optionalString(payload, 'title')
@@ -306,7 +302,7 @@ const issueUpdate: OpsExecutor = async (client, payload, uploadMarkup) => {
 }
 
 const issueComment: OpsExecutor = async (client, payload) => {
-  const issue = await resolveIssue(client, requireString(payload, 'space'))
+  const issue = await resolveIssue(client, requireString(payload, 'issue'))
   const message = requireString(payload, 'message')
 
   const messageId = await commentIssue(client, issue, message)
@@ -314,7 +310,7 @@ const issueComment: OpsExecutor = async (client, payload) => {
 }
 
 const issueTimeReport: OpsExecutor = async (client, payload) => {
-  const issue = await resolveIssue(client, requireString(payload, 'space'))
+  const issue = await resolveIssue(client, requireString(payload, 'issue'))
   const reportId = optionalString(payload, 'id')
   const employeeEmail = optionalString(payload, 'employee')
   const employee =
@@ -374,7 +370,7 @@ const docCreate: OpsExecutor = async (client, payload, uploadMarkup) => {
 }
 
 const docUpdate: OpsExecutor = async (client, payload, uploadMarkup) => {
-  const doc = await resolveDocument(client, requireString(payload, 'space'))
+  const doc = await resolveDocument(client, requireString(payload, 'document'))
 
   const update: DocumentUpdateData = {}
   const title = optionalString(payload, 'title')

@@ -153,6 +153,19 @@ describe('ApiKeyPermissionsMiddleware', () => {
     expect(lastQuery()).toBe(query)
   })
 
+  it('a granted space doc itself can be updated, but not created or removed', async () => {
+    const { next } = makeNext()
+    const mw = await ApiKeyPermissionsMiddleware.create(ctx, anyContext, next)
+    const spaceTx = (_class: string, objectId: string): Tx =>
+      ({ _class, objectSpace: core.space.Space, objectClass: core.class.Space, objectId }) as unknown as Tx
+
+    // createIssue bumps the project's sequence this way.
+    expect((await runTx(mw, opsKey([SPACE_A]), spaceTx(core.class.TxUpdateDoc, SPACE_A))).rejected).toBe(false)
+    expect((await runTx(mw, opsKey([SPACE_A]), spaceTx(core.class.TxUpdateDoc, SPACE_B))).rejected).toBe(true)
+    expect((await runTx(mw, opsKey([SPACE_A]), spaceTx(core.class.TxRemoveDoc, SPACE_A))).rejected).toBe(true)
+    expect((await runTx(mw, opsKey([SPACE_A]), spaceTx(core.class.TxCreateDoc, SPACE_A))).rejected).toBe(true)
+  })
+
   // Real derived txes never reach this middleware - they enter at MarkDerivedEntryMiddleware, which is
   // registered after it. So `space: DerivedTx` on an incoming tx is the caller's claim, not a fact.
   it('a tx claiming core.space.DerivedTx still gets its objectSpace checked', async () => {

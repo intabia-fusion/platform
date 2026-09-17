@@ -58,8 +58,11 @@ Open the UI: <http://localhost:8087/_webhook-mock/>
 (Settings -> API keys, or whatever the current UI location is - see `docs/memory/webhook_api_keys.md`
 for the key format `fus_<ws>_<hex>`). Paste the key into the left column - the workspace isn't asked
 for, the key alone identifies it - pick one of the six action presets (`issue:create`, `issue:update`,
-`issue:comment`, `chat:post`, `doc:create`, `doc:update`), edit the JSON body if needed, and press Send
-- the mock's backend calls `POST /api/v1/webhook/action` (or `/k/:key` with the "key in path" option)
+`issue:comment`, `chat:post`, `doc:create`, `doc:update`), edit the JSON body if needed (the target
+goes in `space` - project identifier, channel or teamspace `_id`; in `issue` - issue identifier like
+`TSK-12`; in `document` - document `_id`), and press Send
+- the mock's backend calls `POST /api/v1/webhook/action` with `Authorization: Bearer <key>` (a bare
+key without `Bearer` gets 401), or `/k/:key` with the "key in path" option
 on the real `webhook` pod and shows the raw response, including `jobId`. Use "Poll job" to call
 `GET /api/v1/webhook/job/:id` and see how the job resolved.
 

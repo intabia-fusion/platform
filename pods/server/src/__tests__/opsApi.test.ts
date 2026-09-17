@@ -56,8 +56,8 @@ describe('opsApi operations registry', () => {
 
   test('resolving a nonexistent issue fails with a field-named error', async () => {
     const client = fakeClient()
-    await expect(operations['issue:comment'](client, { space: 'FUSIO-999', message: 'hi' })).rejects.toThrow(
-      'field "space": issue not found: "FUSIO-999"'
+    await expect(operations['issue:comment'](client, { issue: 'FUSIO-999', message: 'hi' })).rejects.toThrow(
+      'field "issue": issue not found: "FUSIO-999"'
     )
   })
 
@@ -177,7 +177,7 @@ describe('opsApi operations registry', () => {
       client.addCollection = jest.fn().mockResolvedValue('report-1')
 
       const result = await operations['issue:time_report'](client, {
-        space: 'FUSIO-1',
+        issue: 'FUSIO-1',
         employee: 'a@b.com',
         date: '2026-01-15',
         hours: 3
@@ -211,7 +211,7 @@ describe('opsApi operations registry', () => {
       client.update = jest.fn().mockResolvedValue(undefined)
 
       const result = await operations['issue:time_report'](client, {
-        space: 'FUSIO-1',
+        issue: 'FUSIO-1',
         id: 'report-1',
         hours: 4,
         description: 'corrected'
@@ -237,7 +237,7 @@ describe('opsApi operations registry', () => {
       client.update = jest.fn().mockResolvedValue(undefined)
 
       await operations['issue:time_report'](client, {
-        space: 'FUSIO-1',
+        issue: 'FUSIO-1',
         id: 'report-1',
         employee: 'c@d.com',
         date: '2026-02-01'
@@ -261,7 +261,7 @@ describe('opsApi operations registry', () => {
         .mockResolvedValueOnce({ _id: 'report-1', _class: tracker.class.TimeSpendReport, attachedTo: 'issue-1' })
       client.update = jest.fn()
 
-      const result = await operations['issue:time_report'](client, { space: 'FUSIO-1', id: 'report-1' })
+      const result = await operations['issue:time_report'](client, { issue: 'FUSIO-1', id: 'report-1' })
 
       expect(result.reportId).toBe('report-1')
       expect(client.update).not.toHaveBeenCalled()
@@ -279,7 +279,7 @@ describe('opsApi operations registry', () => {
         .mockResolvedValueOnce(undefined)
 
       await expect(
-        operations['issue:time_report'](client, { space: 'FUSIO-1', id: 'report-9', hours: 1 })
+        operations['issue:time_report'](client, { issue: 'FUSIO-1', id: 'report-9', hours: 1 })
       ).rejects.toThrow('field "id": time report not found on issue "FUSIO-1": "report-9"')
     })
 
@@ -293,15 +293,15 @@ describe('opsApi operations registry', () => {
       })
 
       await expect(
-        operations['issue:time_report'](client, { space: 'FUSIO-1', date: '2026-01-15', hours: 1 })
+        operations['issue:time_report'](client, { issue: 'FUSIO-1', date: '2026-01-15', hours: 1 })
       ).rejects.toThrow('field "employee": required when creating a time report')
     })
 
     test('rejects an unknown issue', async () => {
       const client = fakeClient()
       await expect(
-        operations['issue:time_report'](client, { space: 'NOPE', employee: 'a@b.com', date: '2026-01-15', hours: 1 })
-      ).rejects.toThrow('field "space": issue not found: "NOPE"')
+        operations['issue:time_report'](client, { issue: 'NOPE', employee: 'a@b.com', date: '2026-01-15', hours: 1 })
+      ).rejects.toThrow('field "issue": issue not found: "NOPE"')
     })
 
     test('rejects an unknown employee email', async () => {
@@ -309,7 +309,7 @@ describe('opsApi operations registry', () => {
       client.findOne.mockResolvedValueOnce({ _id: 'issue-1', identifier: 'FUSIO-1' })
       await expect(
         operations['issue:time_report'](client, {
-          space: 'FUSIO-1',
+          issue: 'FUSIO-1',
           employee: 'nope@x.com',
           date: '2026-01-15',
           hours: 1
@@ -324,7 +324,7 @@ describe('opsApi operations registry', () => {
         .mockResolvedValueOnce({ attachedTo: 'person-1' })
       await expect(
         operations['issue:time_report'](client, {
-          space: 'FUSIO-1',
+          issue: 'FUSIO-1',
           employee: 'a@b.com',
           date: '2026-02-30',
           hours: 1
@@ -339,7 +339,7 @@ describe('opsApi operations registry', () => {
         .mockResolvedValueOnce({ attachedTo: 'person-1' })
       await expect(
         operations['issue:time_report'](client, {
-          space: 'FUSIO-1',
+          issue: 'FUSIO-1',
           employee: 'a@b.com',
           date: '2026-01-15',
           hours: 0
@@ -349,31 +349,35 @@ describe('opsApi operations registry', () => {
   })
 
   describe('doc:update document resolution', () => {
-    test('resolves by title when the value is not an id', async () => {
+    test('resolves the document by id', async () => {
       const client = fakeClient()
-      client.findAll.mockResolvedValueOnce([{ _id: 'doc-1', title: 'Runbook' }])
+      client.findOne.mockResolvedValueOnce({ _id: 'doc-1', title: 'Runbook' })
       client.update = jest.fn().mockResolvedValue(undefined)
 
-      const res = await operations['doc:update'](client, { space: 'Runbook', title: 'Runbook v2' })
+      const res = await operations['doc:update'](client, { document: 'doc-1', title: 'Runbook v2' })
 
       expect(res).toEqual({ docId: 'doc-1' })
     })
 
-    test('an ambiguous title is refused, naming the way out', async () => {
+    test('a title is not an id', async () => {
       const client = fakeClient()
-      client.findAll.mockResolvedValueOnce([{ _id: 'doc-1' }, { _id: 'doc-2' }])
+      client.findAll.mockResolvedValueOnce([{ _id: 'doc-1', title: 'Runbook' }])
 
-      await expect(operations['doc:update'](client, { space: 'Runbook', title: 'x' })).rejects.toThrow(
-        'field "space": multiple documents titled "Runbook", use the document id'
+      await expect(operations['doc:update'](client, { document: 'Runbook', title: 'x' })).rejects.toThrow(
+        'field "document": document not found: "Runbook"'
       )
     })
+  })
 
-    test('an unknown document fails with a field-named error', async () => {
-      const client = fakeClient()
-      await expect(operations['doc:update'](client, { space: 'Nope', title: 'x' })).rejects.toThrow(
-        'field "space": document not found: "Nope"'
-      )
-    })
+  test('chat:post resolves the channel by id only', async () => {
+    const client = fakeClient()
+    client.addCollection = jest.fn().mockResolvedValue('msg-1')
+    await expect(operations['chat:post'](client, { space: 'general', message: 'hi' })).rejects.toThrow(
+      'field "space": channel not found: "general"'
+    )
+
+    client.findOne.mockResolvedValueOnce({ _id: 'ch-1', _class: 'chunter:class:Channel' })
+    expect(await operations['chat:post'](client, { space: 'ch-1', message: 'hi' })).toEqual({ messageId: 'msg-1' })
   })
 
   describe('isOperationGranted', () => {

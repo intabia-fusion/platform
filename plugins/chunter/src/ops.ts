@@ -23,18 +23,3 @@ export async function postMessage (client: TxOperations, channel: Channel, messa
     message
   })
 }
-
-/** Resolve a channel by ref or by its (unique) name; throws if not found or the name is ambiguous. */
-export async function resolveChannel (client: TxOperations, nameOrRef: string): Promise<Channel> {
-  const byRef = await client.findOne(chunter.class.Channel, { _id: nameOrRef as Ref<Channel> })
-  if (byRef !== undefined) return byRef
-
-  const byName = await client.findAll(chunter.class.Channel, { name: nameOrRef })
-  if (byName.length === 0) {
-    throw new Error(`Channel not found: ${nameOrRef}`)
-  }
-  if (byName.length > 1) {
-    throw new Error(`Multiple channels named "${nameOrRef}": ${byName.map((c) => c._id).join(', ')}`)
-  }
-  return byName[0]
-}

@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { getCurrentEmployeeSpace } from '@hcengineering/contact'
   import core from '@hcengineering/core'
   import setting, { generateWebhookSecret, type WebhookSecretEntry } from '@hcengineering/setting'
   import presentation, { getClient } from '@hcengineering/presentation'
@@ -71,7 +72,9 @@
         secret: generateWebhookSecret(),
         createdOn: Date.now()
       }
-      const _id = await client.createDoc(setting.class.WebhookEndpoint, core.space.Workspace, {
+      // Private to its creator, readable by workspace owners and the webhook pod - the signing secrets
+      // must not reach every member.
+      const _id = await client.createDoc(setting.class.WebhookEndpoint, getCurrentEmployeeSpace(), {
         url: url.trim(),
         ...(name.trim() !== '' ? { name: name.trim() } : {}),
         events,

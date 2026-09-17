@@ -7,11 +7,18 @@ TSK-2026-09-01-023..028,058,060,061 + follow-ups. Тот же под, что и 
 
 ## Модель - `plugins/setting`/`models/setting`, не account-client
 
-`setting.class.WebhookEndpoint` (`TWebhookEndpoint`, `DOMAIN_SETTING`, space `core.space.Workspace`,
+`setting.class.WebhookEndpoint` (`TWebhookEndpoint`, `DOMAIN_SETTING`, space - PersonSpace создателя, см. ниже,
 конвенция та же, что у `Integration`):
 `url/events/spaces?/secrets/enabled/failureCount/lastDeliveryOn?/lastError?`. Это workspace-данные,
 в отличие от API-ключей (`IntegrationSecret` в account DB - control-plane identity). `models/all`
 уже подключает `createModel` из `models/setting` в каждый воркспейс, миграция не нужна.
+
+## Адрес в PersonSpace создателя (TSK-2026-09-01-082)
+
+Секреты `whsec_` открытым текстом, поэтому адрес и `WebhookDelivery` лежат в приватном PersonSpace
+создателя. Другие Owner НЕ видят: Owner-обход в postgres `addSecurity` (`storage.ts:659`) только для
+DOMAIN_SPACE, запись в приватный space - только участникам (`canWriteSpace`). Под пишет в
+`endpoint.space`, никогда в фиксированный space.
 
 ## Контракт очереди
 

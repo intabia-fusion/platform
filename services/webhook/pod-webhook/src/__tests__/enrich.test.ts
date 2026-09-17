@@ -119,7 +119,8 @@ describe('enrichEvents', () => {
     }
     await enrichEvents(ctx, config, workspace, [{ space: SPACE, event }], createEnrichCache())
 
-    expect(event.data.channel).toBe('general')
+    expect(event.data.channel).toBe(SPACE)
+    expect(event.data.channelName).toBe('general')
     expect(event.url).toBe(`https://front.example.com/workbench/acme/chunter/${SPACE}|chunter:class:Channel`)
   })
 

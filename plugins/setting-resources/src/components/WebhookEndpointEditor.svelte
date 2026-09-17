@@ -109,7 +109,7 @@
 
   async function update (upd: Partial<WebhookEndpoint>): Promise<void> {
     if (endpoint === undefined || readonly) return
-    await client.updateDoc(setting.class.WebhookEndpoint, core.space.Workspace, endpoint._id, upd)
+    await client.updateDoc(setting.class.WebhookEndpoint, endpoint.space, endpoint._id, upd)
   }
 
   async function commitName (): Promise<void> {
@@ -217,7 +217,7 @@
       dangerous: true,
       okLabel: settingsRes.string.WebhookDelete,
       action: async () => {
-        await client.removeDoc(setting.class.WebhookEndpoint, core.space.Workspace, current._id)
+        await client.removeDoc(setting.class.WebhookEndpoint, current.space, current._id)
         dispatch('close')
       }
     })

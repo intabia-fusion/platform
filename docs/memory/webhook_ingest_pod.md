@@ -25,8 +25,11 @@ TSK-2026-09-01-009..014,021,022,054,056 (приём) + TSK-015..020,050,053 (con
   `server-core`: агенту было запрещено трогать `foundations/server/packages/core` кроме
   `queue/types.ts`. Если consumer понадобится в другом поде - тип дублировать или выносить. Несёт
   `spaces: Ref<Space>[]` из `ApiKeyCheck`, чтобы consumer не делал повторный `verifyApiKey`.
-- `check.spaces` НЕ сверяется с `body.space` в HTTP-хендлере: `space` в теле - id проекта/канала на
-  стороне отправителя, а не `Ref<Space>`.
+- Цель резолвится до 202 (`src/targets.ts`): неизвестная - `404 not_found`, вне `check.spaces` -
+  `403`. Поле цели по операции: `space` (проект identifier / канал `_id` / teamspace `_id`),
+  `issue` (identifier задачи), `document` (`_id`). Кэш пространств - на воркспейс, перезагрузка при
+  промахе не чаще 10 с; задача/документ - `findOne` на запрос. Ошибка поиска не блокирует
+  (задание ставится непроверенным): отправитель ретраит только 5xx, а 4xx ему нужен честный.
 
 ## ponytail-ограничения (искать при добавлении второй реплики)
 
@@ -48,7 +51,7 @@ HTTP-ручка окажутся в разных подах, `GET /job/:id` не
   нет/брокер недоступен) - job сразу `failed` с причиной, а не висит в `queued` навечно (`//
   ponytail:` в `src/consumer.ts`).
 - Резолв покрыл все 6 операций через существующие
-  `createIssue`/`updateIssue`/`commentIssue`/`postMessage`/`resolveChannel`/`createDocument`/`updateDocument`
+  `createIssue`/`updateIssue`/`commentIssue`/`postMessage`/`createDocument`/`updateDocument`
   без обходных путей.
 
 ## Прочее
@@ -75,14 +78,15 @@ HTTP-ручка окажутся в разных подах, `GET /job/:id` не
   стояла в pipeline). Двойной проверки нет: ручка `/api/v1/ops` прав ключа не проверяет вообще.
   `uploadMarkup` в ops.ts всегда получает `undefined` - транзактор НЕ умеет заливать markup (нет
   `@hcengineering/collaborator-client`).
-- Правила резолва (унаследованы от пода): проект - `findOne(tracker.class.Project, {identifier})`;
-  задача - `findOne(..., {identifier})` (в `issue:update`/`issue:comment` `body.space` это
-  идентификатор ЗАДАЧИ, не проекта, а `Ref<Space>` берётся из `issue.space`); канал -
-  `resolveChannel` из `@hcengineering/chunter`; исполнитель - `contact.class.SocialIdentity` по
+- Правила резолва: проект - `findOne(tracker.class.Project, {identifier})`;
+  задача - `findOne(..., {identifier})` из поля `issue`; канал/teamspace/документ - только по `_id`
+  (имена переименовываются); исполнитель - `contact.class.SocialIdentity` по
   `{type: SocialIdType.EMAIL, value}` -> `.attachedTo`; статус - по имени case-insensitive среди
   статусов task-типа проекта (дубль приватного `resolveTaskType` из `plugins/tracker/src/ops.ts`, он
-  не экспортирован); teamspace - по имени; `parent`-документ и обновляемый документ - СЫРОЙ
-  `Ref<Document>` (ponytail: у документов нет человеческого идентификатора вроде `FUSIO-42`).
+  не экспортирован).
+- **Ключ со `spaces` и `issue:create`**: `createIssue` делает `$inc sequence` у самого Project -
+  `TxUpdateDoc` с `objectSpace = core.space.Space`. `ApiKeyPermissionsMiddleware` сверяет такой tx по
+  `objectId`, иначе 403 `not granted the space core:space:Space`.
 - **Новая доменная зависимость `@hcengineering/task` в `pods/server`** (вопреки исходному
   предположению, что tracker/chunter/document/contact достаточно): `resolveStatus` резолвит имя
   через `task.class.ProjectType`/`TaskType`, без прямого импорта class-id взять неоткуда (pnpm
