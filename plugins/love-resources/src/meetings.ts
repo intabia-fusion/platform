@@ -120,12 +120,19 @@ export async function leaveMeeting (): Promise<void> {
   // re-enter `connectToMeeting` on the still-live ParticipantInfo.
   leavingMeeting = true
   forgetActiveMeeting()
+
+  const meetingId = currentMeeting
+
   try {
     // The `participant_left` webhook removes our ParticipantInfo server-side;
     // clients must NOT delete those documents directly.
     await liveKitClient.disconnect()
     currentMeeting = undefined
     currentMeetingRoom = undefined
+
+    if (meetingId !== undefined) {
+      void loveClient.requestFinishMeeting(meetingId)
+    }
   } finally {
     leavingMeeting = false
   }
@@ -163,7 +170,7 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
       return
     }
 
-    await connectToMeeting(meeting)
+    await connectToMeeting(meeting, room)
   })
 }
 
