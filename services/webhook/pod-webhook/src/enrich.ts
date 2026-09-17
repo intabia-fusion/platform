@@ -248,10 +248,11 @@ export async function enrichEvents (
     } else if (event.type === 'document.created' && typeof event.data.title === 'string') {
       event.url = documentUrl(links, event.data.id as Ref<Doc>, event.data.title)
     } else if (event.type === 'message.posted') {
+      // The channel id is what `chat:post` takes as its `space`, so a receiver can answer into it.
+      event.data.channel = space
       const channel = cache.spaces.get(`${ws}:${space}`)
       if (channel !== undefined) {
-        // The channel name is what `chat:post` takes as its `space`, so a receiver can answer into it.
-        event.data.channel = channel.name
+        event.data.channelName = channel.name
         event.url = channelUrl(links, space, channel._class)
       }
     }

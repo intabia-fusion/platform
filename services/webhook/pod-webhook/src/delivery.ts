@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { SortingOrder, type MeasureContext, type Ref } from '@hcengineering/core'
+import { SortingOrder, type MeasureContext } from '@hcengineering/core'
 import {
   QueueTopic,
   type ConsumerHandle,
@@ -135,12 +135,12 @@ async function onSuccess (
   job: WebhookDeliveryMessage,
   status: number
 ): Promise<void> {
-  await rest.updateDoc(setting.class.WebhookEndpoint, core.space.Workspace, endpoint._id, {
+  await rest.updateDoc(setting.class.WebhookEndpoint, endpoint.space, endpoint._id, {
     failureCount: 0,
     lastError: '',
     lastDeliveryOn: Date.now()
   })
-  await recordDeliveryOutcome(rest, endpoint._id, { deliveryId: job.deliveryId, attempt: job.attempt, status })
+  await recordDeliveryOutcome(rest, endpoint, { deliveryId: job.deliveryId, attempt: job.attempt, status })
   await bumpWebhookStat(ctx, rest, 'out', endpoint._id, job.event.type)
 }
 
@@ -153,17 +153,18 @@ const MAX_DELIVERY_HISTORY = 20
  * happens today (one updateDoc per terminal outcome) roughly doubled, not multiplied by MAX_ATTEMPTS. */
 export async function recordDeliveryOutcome (
   rest: RestClient,
-  endpointId: Ref<WebhookEndpoint>,
+  endpoint: Pick<WebhookEndpoint, '_id' | 'space'>,
   entry: { deliveryId: string, attempt: number, status?: number, error?: string }
 ): Promise<void> {
-  await rest.createDoc(setting.class.WebhookDelivery, core.space.Workspace, { endpoint: endpointId, ...entry })
+  // Same space as the endpoint: the history carries the receiver's URL errors and responses.
+  await rest.createDoc(setting.class.WebhookDelivery, endpoint.space, { endpoint: endpoint._id, ...entry })
   const recent = await rest.findAll(
     setting.class.WebhookDelivery,
-    { endpoint: endpointId },
+    { endpoint: endpoint._id },
     { sort: { createdOn: SortingOrder.Descending }, limit: MAX_DELIVERY_HISTORY + 1 }
   )
   if (recent.length > MAX_DELIVERY_HISTORY) {
-    await rest.removeDoc(setting.class.WebhookDelivery, core.space.Workspace, recent[recent.length - 1]._id)
+    await rest.removeDoc(setting.class.WebhookDelivery, endpoint.space, recent[recent.length - 1]._id)
   }
 }
 
@@ -232,7 +233,7 @@ async function finalizeFailure (
 ): Promise<void> {
   // $inc, not a write of the count read together with the endpoint: deliveries run in parallel and
   // would all store the same value, so the auto-disable threshold would never be reached.
-  await rest.updateDoc(setting.class.WebhookEndpoint, core.space.Workspace, endpoint._id, {
+  await rest.updateDoc(setting.class.WebhookEndpoint, endpoint.space, endpoint._id, {
     $inc: { failureCount: 1 },
     lastError: reason
   })
@@ -240,9 +241,9 @@ async function finalizeFailure (
   const failureCount = current?.failureCount ?? (endpoint.failureCount ?? 0) + 1
   const disable = failureCount >= config.WebhookDisableAfterFailures
   if (disable) {
-    await rest.updateDoc(setting.class.WebhookEndpoint, core.space.Workspace, endpoint._id, { enabled: false })
+    await rest.updateDoc(setting.class.WebhookEndpoint, endpoint.space, endpoint._id, { enabled: false })
   }
-  await recordDeliveryOutcome(rest, endpoint._id, { deliveryId: job.deliveryId, attempt: job.attempt, error: reason })
+  await recordDeliveryOutcome(rest, endpoint, { deliveryId: job.deliveryId, attempt: job.attempt, error: reason })
 
   ctx.warn('webhook delivery gave up', {
     deliveryId: job.deliveryId,

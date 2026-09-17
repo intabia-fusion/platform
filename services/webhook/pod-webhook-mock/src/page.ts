@@ -112,11 +112,11 @@ export const PAGE_HTML = `<!doctype html>
 <script>
 const ACTIONS = {
   'issue:create': { space: 'PROJ', title: 'Sample issue from webhook mock', description: 'Created via mock webhook UI', priority: 'medium' },
-  'issue:update': { space: 'PROJ-1', status: 'In Progress', priority: 'high' },
-  'issue:comment': { space: 'PROJ-1', message: 'Comment posted via mock webhook UI' },
-  'chat:post': { space: 'general', message: 'Hello from mock webhook UI' },
-  'doc:create': { space: 'My Teamspace', title: 'Sample document', content: '# Hello\\n\\nCreated via mock webhook UI' },
-  'doc:update': { space: '<document-ref>', title: 'Updated title' }
+  'issue:update': { issue: 'PROJ-1', status: 'In Progress', priority: 'high' },
+  'issue:comment': { issue: 'PROJ-1', message: 'Comment posted via mock webhook UI' },
+  'chat:post': { space: '<channel-id>', message: 'Hello from mock webhook UI' },
+  'doc:create': { space: '<teamspace-id>', title: 'Sample document', content: '# Hello\\n\\nCreated via mock webhook UI' },
+  'doc:update': { document: '<document-id>', title: 'Updated title' }
 }
 
 // Served both at the root and behind nginx under /_webhook-mock/ - resolve API calls against the

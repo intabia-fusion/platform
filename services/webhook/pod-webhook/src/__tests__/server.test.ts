@@ -18,9 +18,16 @@ jest.mock('@hcengineering/account-client', () => ({
   getClient: jest.fn()
 }))
 
+// Target lookup talks to the transactor; the ingest route is tested against its answer only.
+jest.mock('../targets', () => ({
+  ...jest.requireActual('../targets'),
+  lookupTarget: jest.fn()
+}))
+
 /* eslint-disable import/first */
 import { getClient as getAccountClient, type ApiKeyCheck } from '@hcengineering/account-client'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { lookupTarget } from '../targets'
 import { ENDPOINT_CACHE_TTL_MS, getSystemTransactorTarget } from '../workspaceClient'
 import { startWebhookSender, type WebhookSender } from './webhookSender'
 /* eslint-enable import/first */
@@ -30,7 +37,7 @@ const KEY = 'fus_ws1_test'
 const baseCheck: ApiKeyCheck = {
   keyId: 'key_1',
   name: 'key one',
-  workspace: 'ws-1' as any,
+  workspace: '11111111-1111-4111-8111-111111111111' as any,
   socialId: 'social_1' as any,
   personUuid: 'person_1' as any,
   ops: ['issue:create'],
@@ -41,8 +48,49 @@ const baseCheck: ApiKeyCheck = {
 describe('POST /api/v1/webhook/action', () => {
   let sender: WebhookSender
 
+  beforeEach(() => {
+    ;(getAccountClient as jest.Mock).mockReturnValue({
+      selectWorkspace: jest.fn().mockResolvedValue({ endpoint: 'ws://transactor.local', workspaceUrl: 'ws-slug' })
+    })
+    ;(lookupTarget as jest.Mock).mockReset().mockResolvedValue({ found: true, space: 'proj-1' })
+  })
+
   afterEach(() => {
     sender.close()
+  })
+
+  test('unknown target -> 404 not_found naming it, nothing queued', async () => {
+    sender = await startWebhookSender({ ...baseCheck, ops: ['chat:post'] })
+    ;(lookupTarget as jest.Mock).mockResolvedValue({ found: false, message: "Channel 'qqq' not found" })
+    const res = await sender.action(KEY, { action: 'chat:post', space: 'qqq', message: 'hi' })
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ error: 'not_found', message: "Channel 'qqq' not found" })
+    expect(sender.producer.send).not.toHaveBeenCalled()
+  })
+
+  test('target outside the key spaces -> 403 forbidden before queueing', async () => {
+    sender = await startWebhookSender({ ...baseCheck, spaces: ['proj-2' as any] })
+    const res = await sender.action(KEY, { action: 'issue:create', space: 'FUSIO' })
+    expect(res.status).toBe(403)
+    expect(sender.producer.send).not.toHaveBeenCalled()
+  })
+
+  test('a failed lookup does not block the job - it is queued unchecked', async () => {
+    sender = await startWebhookSender(baseCheck)
+    ;(lookupTarget as jest.Mock).mockRejectedValue(new Error('transactor down'))
+    const res = await sender.action(KEY, { action: 'issue:create', space: 'FUSIO' })
+    expect(res.status).toBe(202)
+  })
+
+  test('issue operations take the issue identifier in `issue`, not `space`', async () => {
+    sender = await startWebhookSender({ ...baseCheck, ops: ['issue:comment'] })
+    const bad = await sender.action(KEY, { action: 'issue:comment', space: 'FUSIO-1', message: 'hi' })
+    expect(bad.status).toBe(400)
+    expect(await bad.json()).toEqual({ error: 'invalid_payload', message: 'field "issue": required' })
+
+    const ok = await sender.action(KEY, { action: 'issue:comment', issue: 'FUSIO-1', message: 'hi' })
+    expect(ok.status).toBe(202)
+    expect(lookupTarget).toHaveBeenCalledWith(expect.anything(), baseCheck.workspace, 'issue:comment', 'FUSIO-1')
   })
 
   test('invalid key -> 401 unauthorized', async () => {

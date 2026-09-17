@@ -296,7 +296,7 @@ export const webhookEventSamples: Record<WebhookEventType, Record<string, unknow
     url: 'https://fusion.example.com/workbench/acme/tracker/FUSIO-123',
     data: {
       id: '64f10a1b2c3d4e5f6a7b8c98',
-      // The issue identifier `issue:time_report` takes as its `space`, and the report id it takes as
+      // The issue identifier `issue:time_report` takes as its `issue`, and the report id it takes as
       // `id` to update this very report later.
       issue: 'FUSIO-123',
       employee: 'assignee@example.com',
@@ -330,8 +330,9 @@ export const webhookEventSamples: Record<WebhookEventType, Record<string, unknow
     url: 'https://fusion.example.com/workbench/acme/chunter/64f10a1b2c3d4e5f6a7b8c90|chunter:class:Channel',
     data: {
       id: '64f10a1b2c3d4e5f6a7b8c96',
-      // The name `chat:post` takes as its `space`, so an answer can go straight back to this channel.
-      channel: 'general',
+      // The id `chat:post` takes as its `space`, so an answer can go straight back to this channel.
+      channel: '64f10a1b2c3d4e5f6a7b8c90',
+      channelName: 'general',
       message: 'Deploy finished, all green.'
     },
     organizationId: '9c858f36-6b1a-4d3a-8f2e-1a2b3c4d5e6f'

@@ -83,8 +83,14 @@ export class ApiKeyPermissionsMiddleware extends BaseMiddleware implements Middl
       throw forbidden('A key granted named operations may write only through /api/v1/ops')
     }
     const cudTx = tx as TxCUD<Doc>
-    if (apiKey.spaces.length > 0 && !apiKey.spaces.includes(cudTx.objectSpace)) {
-      throw forbidden(`The API key is not granted the space ${cudTx.objectSpace}`)
+    // A space doc lives in core.space.Space, so updating a granted space itself (e.g. the project's
+    // issue sequence bumped by createIssue) is checked by its own id. Create/remove stay denied.
+    const space =
+      cudTx.objectSpace === core.space.Space && cudTx._class === core.class.TxUpdateDoc
+        ? (cudTx.objectId as Ref<Space>)
+        : cudTx.objectSpace
+    if (apiKey.spaces.length > 0 && !apiKey.spaces.includes(space)) {
+      throw forbidden(`The API key is not granted the space ${space}`)
     }
   }
 }

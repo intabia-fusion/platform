@@ -26,7 +26,7 @@ describe('webhookEventSamples matches eventTable.ts', () => {
   })
 
   // Fields enrich.ts adds after the rule ran, so a receiver gets a token it can send back.
-  const enriched: Partial<Record<string, string[]>> = { 'message.posted': ['channel'] }
+  const enriched: Partial<Record<string, string[]>> = { 'message.posted': ['channel', 'channelName'] }
 
   test('a create rule sample data has exactly the id key plus the rule dataFields', () => {
     for (const rule of domainRules) {
