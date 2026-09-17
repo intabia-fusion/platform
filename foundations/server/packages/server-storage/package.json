@@ -64,8 +64,7 @@
     "@hcengineering/datalake": "workspace:^0.7.17",
     "@hcengineering/hulylake": "workspace:^0.7.17",
     "@hcengineering/storage": "workspace:^0.7.17",
-    "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/server-token": "workspace:^0.7.17"
+    "@hcengineering/analytics": "workspace:^0.7.17"
   },
   "repository": "https://github.com/hcengineering/huly.server",
   "publishConfig": {

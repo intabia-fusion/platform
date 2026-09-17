@@ -60,7 +60,6 @@
   },
   "dependencies": {
     "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/document": "workspace:^0.7.0",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-storage": "workspace:^0.7.17",
@@ -76,7 +75,6 @@
     "@hcengineering/model-core": "workspace:^0.7.0",
     "@hcengineering/server-pipeline": "workspace:^0.7.0",
     "@hcengineering/middleware": "workspace:^0.7.22",
-    "@hcengineering/text": "workspace:^0.7.18",
     "@hcengineering/analytics-service": "workspace:^0.7.17",
     "@hcengineering/postgres": "workspace:^0.7.22",
     "@hcengineering/attachment": "workspace:^0.7.0",

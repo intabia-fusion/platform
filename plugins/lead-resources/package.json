@@ -45,9 +45,7 @@
     "@hcengineering/contact-resources": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/lead": "workspace:^0.7.0",
-    "@hcengineering/login": "workspace:^0.7.0",
     "@hcengineering/notification": "workspace:^0.7.0",
-    "@hcengineering/notification-resources": "workspace:^0.7.0",
     "@hcengineering/panel": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/presentation": "workspace:^0.7.0",
@@ -59,7 +57,6 @@
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
-    "@hcengineering/workbench": "workspace:^0.7.0",
     "svelte": "catalog:",
     "fast-equals": "catalog:"
   }

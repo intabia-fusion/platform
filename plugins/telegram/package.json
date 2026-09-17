@@ -38,7 +38,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/notification": "workspace:^0.7.0",

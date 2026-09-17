@@ -55,7 +55,6 @@
     "@hcengineering/postgres": "workspace:^0.7.22",
     "@hcengineering/retry": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-token": "workspace:^0.7.17",
     "dotenv": "catalog:",
     "postgres": "catalog:"
   }

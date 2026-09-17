@@ -37,15 +37,12 @@
   "dependencies": {
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/model": "workspace:^0.7.17",
-    "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/server-notification": "workspace:^0.7.0",
     "@hcengineering/server-activity": "workspace:^0.7.0",
     "@hcengineering/model-tracker": "workspace:^0.7.0",
     "@hcengineering/server-tracker": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/model-core": "workspace:^0.7.0",
     "@hcengineering/server-view": "workspace:^0.7.0"
   }
 }

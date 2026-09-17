@@ -38,7 +38,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/platform": "workspace:^0.7.19",
     "svelte": "catalog:",
     "@hcengineering/rating": "workspace:^0.7.0",

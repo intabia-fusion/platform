@@ -38,8 +38,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/ui": "workspace:^0.7.0"
+    "@hcengineering/platform": "workspace:^0.7.19"
   }
 }

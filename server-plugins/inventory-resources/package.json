@@ -42,10 +42,8 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-activity": "workspace:^0.7.0",
-    "@hcengineering/server-notification": "workspace:^0.7.0",
     "@hcengineering/inventory": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/login": "workspace:^0.7.0",
     "@hcengineering/workbench": "workspace:^0.7.0"
   }
 }
