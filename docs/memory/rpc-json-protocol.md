@@ -77,7 +77,7 @@ replacer в `serialize`), переименовывает `__proto__` в `__proto
 
 ## Бенч: model.json был нерепрезентативен
 
-`foundations/core/packages/client-resources/src/__tests__/protocol-bench.spec.ts` - синтетика,
+`foundations/core/packages/client-resources/src/__tests__/protocol.bench.ts` - синтетика,
 байты + ops/sec + p50/p90/p99, snappy в замере, ~8s, идёт в `rushx test`. Синтетика однородная и
 потому льстит msgpackr (record extension сворачивает повторяющуюся форму документа).
 
