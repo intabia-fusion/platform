@@ -58,7 +58,6 @@
   "dependencies": {
     "@hcengineering/attachment": "workspace:^0.7.0",
     "@hcengineering/client": "workspace:^0.7.18",
-    "@hcengineering/client-resources": "workspace:^0.7.18",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",

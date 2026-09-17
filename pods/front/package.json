@@ -56,7 +56,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/prod": "workspace:^1.0.1",
     "@hcengineering/front": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
@@ -65,8 +64,6 @@
     "uuid": "catalog:",
     "cors": "catalog:",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/attachment": "workspace:^0.7.0",
     "body-parser": "catalog:",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/analytics-service": "workspace:^0.7.17"

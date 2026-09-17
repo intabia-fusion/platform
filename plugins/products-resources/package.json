@@ -49,9 +49,6 @@
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/panel": "workspace:^0.7.0",
     "@hcengineering/text-editor-resources": "workspace:^0.7.0",
-    "@hcengineering/workbench": "workspace:^0.7.0",
-    "@hcengineering/workbench-resources": "workspace:^0.7.0",
-    "@hcengineering/tags": "workspace:^0.7.0",
     "@hcengineering/contact-resources": "workspace:^0.7.0",
     "@hcengineering/notification": "workspace:^0.7.0",
     "fast-equals": "catalog:"

@@ -55,8 +55,6 @@
     "@hcengineering/kafka": "workspace:^0.7.19",
     "@hcengineering/kvs-client": "workspace:^0.7.0",
     "@hcengineering/mail": "workspace:^0.7.0",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-storage": "workspace:^0.7.17",
     "image-size": "catalog:",
     "kafkajs": "catalog:",
     "markdown-it": "catalog:",

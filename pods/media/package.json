@@ -52,7 +52,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/analytics-service": "workspace:^0.7.17",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/core": "workspace:^0.7.24",
@@ -61,7 +60,6 @@
     "@hcengineering/api-client": "workspace:^0.7.18",
     "@hcengineering/server-client": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-storage": "workspace:^0.7.17",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/attachment": "workspace:^0.7.0",
     "@hcengineering/drive": "workspace:^0.7.0",

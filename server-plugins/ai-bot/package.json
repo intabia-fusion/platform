@@ -38,9 +38,7 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/ai-bot": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/server-core": "workspace:^0.7.18"
   }
 }

@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "@hcengineering/controlled-documents": "workspace:^0.7.0",
-    "@hcengineering/account": "workspace:^0.7.0",
     "@hcengineering/attachment": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
@@ -50,7 +49,6 @@
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-storage": "workspace:^0.7.17",
     "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/server-tool": "workspace:^0.7.0",
     "@hcengineering/server-client": "workspace:^0.7.17",
     "@hcengineering/collaborator-client": "workspace:^0.7.17",
     "commander": "catalog:",

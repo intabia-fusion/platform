@@ -41,16 +41,8 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/presentation": "workspace:^0.7.0",
-    "@hcengineering/activity": "workspace:^0.7.0",
     "svelte": "catalog:",
-    "@hcengineering/chunter": "workspace:^0.7.0",
-    "@hcengineering/text-editor-resources": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/view-resources": "workspace:^0.7.0",
-    "@hcengineering/client": "workspace:^0.7.18",
     "@hcengineering/devmodel": "workspace:^0.7.0",
-    "@hcengineering/model": "workspace:^0.7.17",
     "@hcengineering/workbench": "workspace:^0.7.0"
   }
 }

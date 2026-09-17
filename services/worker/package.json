@@ -56,7 +56,6 @@
   },
   "dependencies": {
     "@hcengineering/kafka": "workspace:^0.7.19",
-    "@hcengineering/process": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "postgres": "catalog:",
