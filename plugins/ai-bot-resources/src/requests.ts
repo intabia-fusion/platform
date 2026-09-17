@@ -57,13 +57,20 @@ export async function translate (text: Markup, lang: string): Promise<TranslateR
   }
 }
 
-/** Queues the summary; the text is written into the document by the pod, not returned here. */
-export async function summarizeMessages (lang: string, target: Ref<Doc>, targetClass: Ref<Class<Doc>>): Promise<void> {
+/**
+ * Queues the summary; the text is written into the document by the pod, not returned here.
+ * Returns whether the job was accepted, so the caller can stop waiting when it was not.
+ */
+export async function summarizeMessages (
+  lang: string,
+  target: Ref<Doc>,
+  targetClass: Ref<Class<Doc>>
+): Promise<boolean> {
   const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
   const token = getMetadata(presentation.metadata.Token) ?? ''
 
   if (url === '' || token === '') {
-    return
+    return false
   }
 
   try {
@@ -82,9 +89,12 @@ export async function summarizeMessages (lang: string, target: Ref<Doc>, targetC
     })
     if (!resp.ok) {
       console.error('Failed to queue summary', resp.status)
+      return false
     }
+    return true
   } catch (error) {
     console.error(error)
+    return false
   }
 }
 

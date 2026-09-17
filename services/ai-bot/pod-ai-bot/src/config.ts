@@ -190,6 +190,10 @@ interface Config {
   // raw completions) for debugging. Verbose; off by default. Env: LLM_DEBUG=true.
   LLMDebug: boolean
 
+  // Sampling temperature for summarization: a summary extracts facts, so the provider default only
+  // adds spread. Env: SUMMARY_TEMPERATURE.
+  SummaryTemperature: number
+
   // LLM parameters
   // LLM selection (e.g. 'openai' | 'gigachat' | 'server' or leave empty for auto)
   LLMProvider: string // Could be 'server' to pass LLM requests to connected clients.
@@ -644,7 +648,9 @@ const config: Config = (() => {
 
     // Debug configuration
     DebugDir: yamlConfig?.debug?.dir ?? process.env.DEBUG_DIR ?? '',
-    LLMDebug: (process.env.LLM_DEBUG ?? 'false').toLowerCase() === 'true'
+    LLMDebug: (process.env.LLM_DEBUG ?? 'false').toLowerCase() === 'true',
+
+    SummaryTemperature: parseFloat(process.env.SUMMARY_TEMPERATURE ?? '0.1')
   }
 
   // 'client' is a thin clisr worker (only needs the server endpoint); every other

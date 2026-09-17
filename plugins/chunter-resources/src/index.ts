@@ -102,6 +102,8 @@ import {
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
 
+export { summarizingStore, startSummarizing, stopSummarizing } from './stores'
+
 export { default as ChannelEmbeddedContent } from './components/ChannelEmbeddedContent.svelte'
 export { default as ChatMessageInput } from './components/chat-message/ChatMessageInput.svelte'
 export { default as ChatMessageInputLite } from './components/chat-message/ChatMessageInputLite.svelte'

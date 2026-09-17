@@ -38,6 +38,7 @@ export default mergeIds(loveId, love, {
     MeetingMinutesStatusPresenter: '' as AnyComponent,
     MeetingMinutesTranscriptionStatePresenter: '' as AnyComponent,
     MeetingMinutesRecordingStatePresenter: '' as AnyComponent,
+    MeetingSummaryEditor: '' as AnyComponent,
     RoomLanguageEditor: '' as AnyComponent,
     MediaPopupItemExt: '' as AnyComponent,
     SharingStateIndicator: '' as AnyComponent,

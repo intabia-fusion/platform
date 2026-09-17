@@ -533,6 +533,8 @@ services:
       - MODE=all
       # Full LLM payload logging (messages, tool defs, function calls, completions).
       - LLM_DEBUG=true
+      # Sampling temperature for meeting summaries (facts, not prose - keep the spread low).
+      - SUMMARY_TEMPERATURE=${SUMMARY_TEMPERATURE:-0.1}
 
       # Bot Identity Configuration
       - FIRST_NAME=Julia
@@ -619,6 +621,8 @@ services:
       - CLISR_MODEL=${CLISR_MODEL:-}
       # Full LLM payload logging (messages, tool defs, tool calls, completions).
       - LLM_DEBUG=true
+      # Sampling temperature for meeting summaries (facts, not prose - keep the spread low).
+      - SUMMARY_TEMPERATURE=${SUMMARY_TEMPERATURE:-0.1}
 
       # GigaChat Configuration (only if using GigaChat)
       # - LLM_PROVIDER=gigachat

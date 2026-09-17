@@ -84,7 +84,9 @@ import {
   replyingToMessageStore,
   shownTranslatedMessagesStore,
   translatedMessagesStore,
-  translatingMessagesStore
+  translatingMessagesStore,
+  startSummarizing,
+  stopSummarizing
 } from './stores'
 import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
 import view, { decodeObjectURI } from '@hcengineering/view'
@@ -509,7 +511,11 @@ export async function canTranslateMessage (): Promise<boolean> {
 }
 
 export async function summarizeMessages (doc: Doc): Promise<void> {
-  await aiSummarizeMessages(get(languageStore), doc._id, doc._class)
+  startSummarizing(doc._id)
+  const queued = await aiSummarizeMessages(get(languageStore), doc._id, doc._class)
+  if (!queued) {
+    stopSummarizing(doc._id)
+  }
 }
 
 export async function canSummarizeMessages (doc: Doc): Promise<boolean> {
