@@ -1601,7 +1601,7 @@ describe('account operations', () => {
       // Self-leave consumes a user OTP; the code path itself is covered in utils tests.
       let verifyOtpSpy: jest.SpyInstance
       beforeEach(() => {
-        verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockImplementation(async (_c, _d, _t, code) => {
+        verifyOtpSpy = jest.spyOn(utils, 'verifyOperationOtp').mockImplementation(async (_c, _d, _t, code) => {
           if (code == null || code === '') {
             throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
           }
@@ -1643,6 +1643,22 @@ describe('account operations', () => {
         expect(mockDb.unassignWorkspace).not.toHaveBeenCalled()
       })
 
+      test('should refuse the last owner before asking for a code', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+          account: ownerAccount,
+          workspace: mockWorkspace.uuid,
+          extra: {}
+        })
+        ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+        ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+          { accountUuid: ownerAccount, role: AccountRole.Owner }
+        ])
+
+        await expect(
+          leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+      })
+
       test('should refuse a self-leave without a confirmation code', async () => {
         ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
           account: ownerAccount,
@@ -1650,6 +1666,11 @@ describe('account operations', () => {
           extra: {}
         })
         ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+        // A second owner, so the code is what stands in the way and not the last-owner rule.
+        ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+          { accountUuid: ownerAccount, role: AccountRole.Owner },
+          { accountUuid: 'other-owner', role: AccountRole.Owner }
+        ])
 
         await expect(
           leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount })

@@ -176,7 +176,7 @@ describe('billing read-only admin - read access', () => {
 })
 
 describe('admin account actions', () => {
-  const verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp')
+  const verifyOtpSpy = jest.spyOn(utils, 'verifyOperationOtp')
   const logSpy = jest.spyOn(utils, 'logAdminAction')
   const releaseSpy = jest.spyOn(utils, 'doReleaseSocialId')
 
@@ -292,8 +292,8 @@ describe('admin session freshness', () => {
       adminAction: { find: jest.fn().mockResolvedValue(failures) },
       otp: { deleteMany }
     } as unknown as AccountDB
-    const sidSpy = jest.spyOn(utils, 'getAdminEmailSocialId').mockResolvedValue({ _id: 'sid' } as any)
-    const verifySpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    const sidSpy = jest.spyOn(utils, 'getCallerEmailSocialId').mockResolvedValue({ _id: 'sid' } as any)
+    const verifySpy = jest.spyOn(utils, 'verifyOperationOtp').mockResolvedValue(undefined)
 
     setToken(ADMIN)
     await expect(

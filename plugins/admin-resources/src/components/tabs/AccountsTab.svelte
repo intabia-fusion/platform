@@ -162,12 +162,13 @@
     return new Date(ms).toISOString().slice(0, 10)
   }
 
-  // Account deletion is an irreversible identity purge -> OTP-gated on the server
-  function deleteAccount (uuid: AccountUuid): void {
+  // Account deletion is an irreversible identity purge -> OTP-gated on the server.
+  // force skips the deferral and purges the identity right away.
+  function deleteAccount (uuid: AccountUuid, force = false): void {
     void requestAdminOtpCode().then((code) => {
       if (code === undefined) return
       void accountClient
-        .deleteAccount(uuid, code)
+        .deleteAccount(uuid, code, force)
         .then(() => loadAccounts(accountSearch, accountSkip, accountLimit))
         .catch((err) => {
           console.error('Failed to delete account:', err)
@@ -207,7 +208,7 @@
     </div>
   {/if}
 </div>
-<div class="fs-title p-3 flex-no-shrink">
+<div class="fs-title p-3 flex-no-shrink" data-testid="account-search-container">
   <SearchEdit bind:value={accountSearch} width={'100%'} on:change={accountSearchChanged} />
 </div>
 
@@ -365,7 +366,7 @@
           </tr>
         {/if}
         {#each group.items as account}
-          <tr class="focused-button">
+          <tr class="focused-button" id={account.uuid}>
             <td>
               <div class="fs-title">{account.firstName} {account.lastName}</div>
               <div class="content-dark-color flex-row-center">
@@ -409,6 +410,17 @@
                       }
                     }}
                   />
+                  {#if account.hasAccount !== false}
+                    <Button
+                      icon={IconStop}
+                      size={'small'}
+                      kind={'dangerous'}
+                      label={adminRes.string.DeleteNow}
+                      on:click={() => {
+                        deleteAccount(account.uuid, true)
+                      }}
+                    />
+                  {/if}
                 {/if}
               </div>
             </td>

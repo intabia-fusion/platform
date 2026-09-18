@@ -32,10 +32,10 @@ import {
 import { type WorkspaceInfoWithStatus, type WorkspaceUserOperation } from '@hcengineering/core'
 import login, { loginId } from '@hcengineering/login'
 import { getMetadata, PlatformError, setMetadata } from '@hcengineering/platform'
-import presentation, { decodeTokenPayload } from '@hcengineering/presentation'
+import presentation, { decodeTokenPayload, OtpConfirmDialog, type OtpConfirmProps } from '@hcengineering/presentation'
 import { navigate, showPopup } from '@hcengineering/ui'
 
-import AdminOtpDialog from './components/AdminOtpDialog.svelte'
+import adminRes from './plugin'
 
 export { getBillingClient } from '@hcengineering/billing-resources'
 
@@ -234,10 +234,23 @@ export async function openAdminSession (otpCode: string): Promise<void> {
   await getAccountClient(token).setCookie()
 }
 
+/** Labels and the request behind the admin code dialog; the dialog itself is generic. */
+export function adminOtpProps (): OtpConfirmProps {
+  return {
+    label: adminRes.string.OtpConfirmTitle,
+    okLabel: adminRes.string.Confirm,
+    codeLabel: adminRes.string.OtpCode,
+    sendLabel: adminRes.string.SendCode,
+    sentLabel: adminRes.string.OtpSent,
+    failedLabel: adminRes.string.OtpSendFailed,
+    requestCode: async () => await getAccountClient().requestAdminOperationOtp()
+  }
+}
+
 /** Show the admin OTP dialog and resolve with the entered code, or undefined if cancelled */
 export async function requestAdminOtpCode (): Promise<string | undefined> {
   return await new Promise<string | undefined>((resolve) => {
-    showPopup(AdminOtpDialog, {}, undefined, (code) => {
+    showPopup(OtpConfirmDialog, adminOtpProps(), undefined, (code) => {
       resolve(typeof code === 'string' && code.length > 0 ? code : undefined)
     })
   })

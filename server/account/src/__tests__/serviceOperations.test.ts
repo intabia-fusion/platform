@@ -1940,7 +1940,7 @@ describe('adminCreateSubscription', () => {
       otp: { deleteMany: jest.fn() }
     }
     getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
-    verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    verifyOtpSpy = jest.spyOn(utils, 'verifyOperationOtp').mockResolvedValue(undefined)
     logSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: 'admin-acc',
@@ -2081,7 +2081,7 @@ describe('adminUpdateSubscription', () => {
       adminAction: { find: jest.fn().mockResolvedValue([]) },
       otp: { deleteMany: jest.fn() }
     }
-    verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    verifyOtpSpy = jest.spyOn(utils, 'verifyOperationOtp').mockResolvedValue(undefined)
     logAdminActionSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: 'admin-acc',

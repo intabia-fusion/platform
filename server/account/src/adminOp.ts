@@ -24,7 +24,7 @@ import {
 } from '@hcengineering/server-token'
 
 import { type AccountDB } from './types'
-import { getAdminEmailSocialId, logAdminAction, verifyAdminOtp } from './utils'
+import { getCallerEmailSocialId, logAdminAction, verifyOperationOtp } from './utils'
 
 const OTP_FAIL_WINDOW_SEC = 300
 const OTP_FAIL_LIMIT = 5
@@ -78,7 +78,7 @@ export async function verifyAdminOtpLimited (
 
   if (failures.length >= OTP_FAIL_LIMIT) {
     // Drop the outstanding code as well: guessing must not be resumable within the same window.
-    const sid = await getAdminEmailSocialId(ctx, db, token).catch(() => undefined)
+    const sid = await getCallerEmailSocialId(ctx, db, token).catch(() => undefined)
     if (sid !== undefined) {
       await db.otp.deleteMany({ socialId: sid._id })
     }
@@ -86,7 +86,7 @@ export async function verifyAdminOtpLimited (
   }
 
   try {
-    await verifyAdminOtp(ctx, db, token, otpCode)
+    await verifyOperationOtp(ctx, db, token, otpCode)
   } catch (err: any) {
     await logAdminAction(ctx, db, token, 'otp_failed', undefined, undefined, {
       attempts: failures.length + 1
