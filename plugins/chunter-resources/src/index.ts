@@ -19,7 +19,7 @@ import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
-import notification, { type NotificationAppearancePreference } from '@hcengineering/notification'
+import { type NotificationAppearancePreference } from '@hcengineering/notification'
 import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
 import chunter from './plugin'
@@ -231,17 +231,8 @@ export default async (): Promise<Resources> => ({
       if (preference?.showChatBadge === false) return false
       if (unreadCount === 0) return false
 
-      const notificationClient = NotificationClientImpl.getClient()
-      const loadedContexts = Array.from(get(notificationClient.contextById).values())
-
-      if (loadedContexts.some((ctx) => (ctx?.unreadMessages?.length ?? 0) > 0)) return true
-
-      const client = getClient()
-      const context = await client.findOne(notification.class.DocNotifyContext, {
-        unreadMessages: { $size: { $gt: 0 } }
-      })
-
-      return context != null
+      const unread = get(NotificationClientImpl.getClient().unreadByDoc).values()
+      return Array.from(unread).some((it) => it.unreadMessagesCount > 0)
     }
   },
   actionImpl: {

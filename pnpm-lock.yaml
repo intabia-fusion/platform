@@ -24787,6 +24787,9 @@ importers:
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../setting
+      '@hcengineering/text-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text-core
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui

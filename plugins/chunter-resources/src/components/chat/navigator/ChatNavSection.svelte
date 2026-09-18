@@ -16,9 +16,9 @@
   import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
   import { statusByUserStore } from '@hcengineering/contact-resources'
-  import core, { Class, Doc, getCurrentAccount, notEmpty, reduceCalls, Ref, WithLookup } from '@hcengineering/core'
+  import core, { Class, Doc, notEmpty, reduceCalls, Ref, WithLookup } from '@hcengineering/core'
   import { getResource, IntlString, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, isSpace } from '@hcengineering/presentation'
+  import { getClient, isSpace } from '@hcengineering/presentation'
   import ui, {
     Action,
     AnySvelteComponent,
@@ -36,7 +36,7 @@
   import { getDocIdentifier } from '@hcengineering/view-resources'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import { Chat } from '@hcengineering/chunter'
-  import notification, { getUnreadMessageCount } from '@hcengineering/notification'
+  import { getUnreadMessageCount } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
@@ -60,10 +60,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const dispatcher = createEventDispatcher()
-  const inboxClient = NotificationClientImpl.getClient()
-  const account = getCurrentAccount()
-  const contextByDocStore = inboxClient.contextByDoc
-  const query = createQuery()
+  const unreadByDoc = NotificationClientImpl.getClient().unreadByDoc
 
   let sortedItems: ChatNavItemModel[] = []
   let items: ChatNavItemModel[] = []
@@ -71,27 +68,15 @@
   let count: number = 0
   let isOpen = true
 
-  $: if (_class !== core.class.Doc && !isOpen) {
-    query.query(
-      notification.class.DocNotifyContext,
-      {
-        user: account.uuid,
-        objectClass: _class,
-        unreadMessages: { $size: { $gt: 0 } }
-      },
-      (res) => {
-        count = getUnreadMessageCount(res)
-      },
-      { projection: { unreadMessages: 1, unreadCount: 1 } }
-    )
-  } else if (!isOpen) {
-    count = getUnreadMessageCount(objects.map(({ doc }) => $contextByDocStore.get(doc._id)).filter(notEmpty))
-  } else {
-    count = 0
-    query.unsubscribe()
+  // A collapsed section shows the unread total of its contexts: by class for a class section, by
+  // the listed documents for a mixed one. Both come from the shared unread store.
+  $: sectionIds = new Set(objects.map(({ doc }) => doc._id))
+  $: count = isOpen ? 0 : getUnreadMessageCount(Array.from($unreadByDoc.values()).filter(inSection))
+
+  function inSection (it: { objectId: Ref<Doc>, objectClass: Ref<Class<Doc>> }): boolean {
+    return _class !== core.class.Doc ? hierarchy.isDerived(it.objectClass, _class) : sectionIds.has(it.objectId)
   }
 
-  $: void inboxClient.loadContextsByDoc(objects.map(({ doc }) => doc._id))
   $: void getChatNavItems(
     objects,
     (res) => {
@@ -115,7 +100,7 @@
           return (a.title ?? a.identifier).localeCompare(b.title ?? b.identifier)
         })
       : sortFn(items, {
-          contextByDoc: $contextByDocStore,
+          unreadByDoc: $unreadByDoc,
           userStatusByAccount: $statusByUserStore
         })
 
@@ -211,8 +196,13 @@
     bind:isOpen
   >
     {#each sortedItems as item (getChatNavItemKey(item))}
-      {@const context = $contextByDocStore.get(item.id) ?? undefined}
-      <ChatNavItem {context} isSelected={objectId === item.id} {item} type={'type-object'} on:select />
+      <ChatNavItem
+        unread={$unreadByDoc.get(item.id)}
+        isSelected={objectId === item.id}
+        {item}
+        type={'type-object'}
+        on:select
+      />
     {/each}
     {#if canShowMore}
       <div class="showMore">
@@ -223,8 +213,13 @@
     {/if}
     <svelte:fragment slot="visible" let:isOpen={isOpenItem}>
       {#if visibleItem !== undefined && !isOpenItem}
-        {@const context = $contextByDocStore.get(visibleItem.id) ?? undefined}
-        <ChatNavItem {context} isSelected item={visibleItem} type={'type-object'} on:select />
+        <ChatNavItem
+          unread={$unreadByDoc.get(visibleItem.id)}
+          isSelected
+          item={visibleItem}
+          type={'type-object'}
+          on:select
+        />
       {/if}
     </svelte:fragment>
 

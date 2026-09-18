@@ -126,7 +126,11 @@ jest.mock('../../utils/utils', () => {
     hasMentionNotificationByMessage: (...args: any[]) => mockHasMentionNotificationByMessage(...args),
     hasUnreadMentionByMessage: (...args: any[]) => mockHasUnreadMentionByMessage(...args),
     getAttachments: (...args: any[]) => mockGetAttachments(...args),
-    getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args)
+    getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
+    isSender: (receiver: Receiver, sender: Sender) => {
+      if (sender.account != null && receiver.account === sender.account) return true
+      return receiver.socialIds.includes(sender.socialId)
+    }
   }
 })
 
@@ -163,7 +167,8 @@ describe('message module', () => {
         isDerived: jest.fn().mockReturnValue(false),
         getClass: jest.fn().mockReturnValue({ label: 'DocLabel' })
       },
-      findOne: jest.fn()
+      findOne: jest.fn(),
+      findAll: jest.fn()
     }
 
     mockCache = {
@@ -401,6 +406,17 @@ describe('message module', () => {
         expect(mockGetCreateContextTx).not.toHaveBeenCalled()
       })
 
+      it('skips processing if receiver socialIds includes sender socialId, even without a sender account', async () => {
+        sender.account = undefined
+        receiver.socialIds = [sender.socialId]
+        mockCache.getSender.mockResolvedValue(sender)
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).not.toHaveBeenCalled()
+        expect(mockGetCreateContextTx).not.toHaveBeenCalled()
+      })
+
       it('calls pushNotification if inbox notification type exists for provider', async () => {
         mockGetMessageNotifyProviders.mockResolvedValue({
           [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
@@ -631,6 +647,7 @@ describe('message module', () => {
         createdOn: 300,
         message: 'Hello 6'
       }
+      mockClient.findAll.mockResolvedValue([msg5Doc, msg6Doc])
 
       mockClient.findOne.mockImplementation(async (clazz: any, query: any) => {
         if (query._id === 'msg-5') return msg5Doc
@@ -903,6 +920,88 @@ describe('message module', () => {
       expect(mockGetObjectDisplayData).toHaveBeenCalledWith(mockClient, mockCache, txCache, doc, 'user-1')
       expect(mockGetCreateContextTx).toHaveBeenCalled()
       expect(result.createContextTx[0].attributes.unreadMessages).toEqual([unreadMessage])
+    })
+
+    it('returns early without pushing an update when the id is already in context.unreadMessages', async () => {
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        unreadMessages: [{ id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1 }]
+      } as unknown as DocNotifyContext
+
+      const doc = { _id: 'doc-1' }
+      const receiver = { account: 'user-1' }
+      const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 5, notified: false }
+
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
+
+      expect(result.updateContextTx).toHaveLength(0)
+      expect(result.createContextTx).toHaveLength(0)
+      expect(mockClient.txFactory.createTxUpdateDoc).not.toHaveBeenCalled()
+    })
+
+    it('treats a chunk covering the message time as already counted', async () => {
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        unreadMessages: [{ from: 1, to: 10, count: 3 }]
+      } as unknown as DocNotifyContext
+      const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 5, notified: false }
+
+      const receiver = { account: 'user-1' }
+      const doc = { _id: 'doc-1' }
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
+
+      expect(result.updateContextTx).toHaveLength(0)
+    })
+
+    it('does not treat a chunk outside the message time as a match and still pushes the update', async () => {
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        unreadMessages: [{ from: 1, to: 10, count: 3 }]
+      } as unknown as DocNotifyContext
+
+      const doc = { _id: 'doc-1' }
+      const receiver = { account: 'user-1' }
+      const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 50, notified: false }
+
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
+
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations.$push).toEqual({
+        unreadMessages: unreadMessage
+      })
     })
 
     it('collapses unreadMessages when adding causes the count to exceed 100', async () => {

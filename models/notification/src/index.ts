@@ -288,6 +288,9 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeNumber(), core.string.Number)
   unreadCount!: number
 
+  @Prop(TypeNumber(), core.string.Number)
+  unreadMessagesCount!: number
+
   @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadMessages'))
   unreadMessages!: UnreadMessage[]
 }

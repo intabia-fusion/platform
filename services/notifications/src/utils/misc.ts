@@ -16,8 +16,8 @@
 import { AccountUuid, BlobType, Doc, type Hierarchy, Space } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
 import { ActivityMessage } from '@hcengineering/activity'
-import { NotificationMessage } from '@hcengineering/notification'
-import { TypeMatchClient } from '@hcengineering/server-notification'
+import { compactNotificationMessage, NotificationMessage } from '@hcengineering/notification'
+import { Receiver, Sender, TypeMatchClient } from '@hcengineering/server-notification'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import attachment, { Attachment } from '@hcengineering/attachment'
 
@@ -76,10 +76,9 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
  * Strips volatile activity-only fields from an ActivityMessage,
  * producing a stable NotificationMessage snapshot.
  */
-export function toNotificationMessage (message: ActivityMessage): NotificationMessage {
-  const { editedOn, replies, repliedPersons, reactions, isPinned, lastReply, ...notificationMessage } = message
 
-  return notificationMessage
+export function toNotificationMessage (message: ActivityMessage, hierarchy: Hierarchy): NotificationMessage {
+  return compactNotificationMessage(message, hierarchy)
 }
 
 export function isChatMessage (message: ActivityMessage, hierarchy: Hierarchy): message is ChatMessage {
@@ -102,4 +101,13 @@ export async function getAttachments (message: ActivityMessage, client: Client):
     size: it.size,
     metadata: it.metadata
   }))
+}
+
+/**
+ * The author of a message never gets notified about it. The sender resolves to an account only
+ * when its SocialIdentity is already in this database, so the social id is checked as well.
+ */
+export function isSender (receiver: Receiver, sender: Sender): boolean {
+  if (sender.account != null && receiver.account === sender.account) return true
+  return receiver.socialIds.includes(sender.socialId)
 }

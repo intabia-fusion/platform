@@ -126,9 +126,30 @@
     objectsByClass = objectsByClass
   }
 
-  $: loadObjects(model, pinned, search)
+  const searchDebounceMs = 300
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
+  let debouncedSearch = search
+
+  $: if (search === '' || search === debouncedSearch) {
+    // Empty search (e.g. cleared, or the initial value) and no-op changes apply immediately.
+    if (searchDebounceTimer != null) {
+      clearTimeout(searchDebounceTimer)
+      searchDebounceTimer = undefined
+    }
+    debouncedSearch = search
+  } else {
+    if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = setTimeout(() => {
+      searchDebounceTimer = undefined
+      debouncedSearch = search
+    }, searchDebounceMs)
+  }
+
+  $: loadObjects(model, pinned, debouncedSearch)
 
   onDestroy(() => {
+    if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
+
     for (const { query } of objectsQueryByClass.values()) {
       query.unsubscribe()
     }

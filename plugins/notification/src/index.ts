@@ -49,6 +49,7 @@ import {
 
 export type * from './types'
 export * from './utils'
+export * from './collapse'
 
 export const DOMAIN_DOC_NOTIFY = 'notification-dnc' as Domain
 export const DOMAIN_USER_NOTIFY = 'notification-user' as Domain

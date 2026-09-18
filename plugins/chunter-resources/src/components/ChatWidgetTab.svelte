@@ -18,7 +18,6 @@
   import { getResource } from '@hcengineering/platform'
   import { ChatWidgetTab } from '@hcengineering/chunter'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
-  import { getUnreadMessageCount } from '@hcengineering/notification'
 
   export let tab: ChatWidgetTab
   export let widget: Widget
@@ -26,7 +25,7 @@
   export let actions: Action[] = []
 
   const notificationClient = NotificationClientImpl.getClient()
-  const contextByDocStore = notificationClient.contextByDoc
+  const unreadByDoc = notificationClient.unreadByDoc
 
   $: icon = tab.icon ?? widget.icon
 
@@ -39,9 +38,7 @@
   let count: number = 0
 
   $: objectId = tab.data.thread ?? tab.data._id
-  $: void notificationClient.loadContextByDoc(objectId)
-  $: context = objectId != null ? ($contextByDocStore.get(objectId) ?? undefined) : undefined
-  $: count = getUnreadMessageCount(context)
+  $: count = objectId != null ? ($unreadByDoc.get(objectId)?.unreadMessagesCount ?? 0) : 0
 
   function handleMenu (event: CustomEvent<MouseEvent>): void {
     if (actions.length === 0) {

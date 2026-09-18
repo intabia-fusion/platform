@@ -13,7 +13,11 @@
 // limitations under the License.
 //
 
-import { isUnreadMessageChunk, isUnreadMessageId, UnreadMessage } from '@hcengineering/notification'
+import { UnreadMessage } from './types'
+import { getUnreadMessagesTotal, isUnreadMessageChunk, isUnreadMessageId } from './utils'
+
+export const UNREAD_MESSAGES_FLAT_LIMIT = 100
+export const UNREAD_MESSAGES_TAIL = 20
 
 export function getChunkSize (candidateCount: number): number {
   const S_OPTIONS = [10, 20, 30, 50, 100]
@@ -90,13 +94,13 @@ function splitAndMergeRun (run: UnreadMessage[], maxChunkSize: number): UnreadMe
 }
 
 export function collapseUnreadMessages (unreadMessages: UnreadMessage[]): UnreadMessage[] {
-  const totalCount = unreadMessages.reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
+  const totalCount = getUnreadMessagesTotal(unreadMessages)
 
-  if (totalCount <= 100) {
+  if (totalCount <= UNREAD_MESSAGES_FLAT_LIMIT) {
     return unreadMessages
   }
 
-  const keepCount = 20
+  const keepCount = UNREAD_MESSAGES_TAIL
   let tailStartIndex = unreadMessages.length
   let tailCount = 0
 
@@ -114,7 +118,7 @@ export function collapseUnreadMessages (unreadMessages: UnreadMessage[]): Unread
   const candidates = unreadMessages.slice(0, tailStartIndex)
   const tail = unreadMessages.slice(tailStartIndex)
 
-  const candidateCount = candidates.reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
+  const candidateCount = getUnreadMessagesTotal(candidates)
   const maxChunkSize = getChunkSize(candidateCount)
 
   const collapsedCandidates: UnreadMessage[] = []

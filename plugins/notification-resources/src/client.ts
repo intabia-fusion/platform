@@ -34,7 +34,8 @@ import notification, {
   type DocNotificationSetting,
   type DocNotifyContext,
   type NotificationClient,
-  type ReadState
+  type ReadState,
+  type UnreadContext
 } from '@hcengineering/notification'
 import { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { get, writable } from 'svelte/store'
@@ -46,6 +47,7 @@ export class NotificationClientImpl implements NotificationClient {
 
   readonly contextByDoc = writable<Map<Ref<Doc>, DocNotifyContext | null>>(new Map())
   readonly contextById = writable<Map<Ref<DocNotifyContext>, DocNotifyContext | null>>(new Map())
+  readonly unreadByDoc = writable<Map<Ref<Doc>, UnreadContext>>(new Map())
 
   readonly readStateByDoc = writable<Map<Ref<Doc>, ReadState | null>>(new Map())
 
@@ -56,10 +58,27 @@ export class NotificationClientImpl implements NotificationClient {
   private readonly contextByIdPromises = new Map<Ref<DocNotifyContext>, Promise<DocNotifyContext | undefined>>()
   private readonly contextByDocPromises = new Map<Ref<Doc>, Promise<DocNotifyContext | undefined>>()
 
+  // A list renders one component per row, each asking for its own context, so without this every
+  // row would issue its own findAll. Requests made in the same tick are collected here and sent as
+  // a single $in query.
+  private pendingByDoc: Array<Ref<Doc>> = []
+  private pendingByDocFlush: Promise<DocNotifyContext[]> | undefined = undefined
+  private pendingById: Array<Ref<DocNotifyContext>> = []
+  private pendingByIdFlush: Promise<DocNotifyContext[]> | undefined = undefined
+
+  // Same coalescing as pendingByDoc/pendingById, for the per-doc ReadState/DocNotificationSetting lookups.
+  private pendingReadState: Array<Ref<Doc>> = []
+  private pendingReadStateFlush: Promise<Map<Ref<Doc>, ReadState>> | undefined = undefined
+  private pendingDocSetting: Array<Ref<Doc>> = []
+  private pendingDocSettingFlush: Promise<Map<Ref<Doc>, DocNotificationSetting>> | undefined = undefined
+
   public readonly clearingAllInbox = writable(false)
   public readonly readingAllInbox = writable(false)
 
-  private readonly unreadQuery = createQuery(true)
+  private readonly inboxUnreadQuery = createQuery(true)
+  private readonly chatUnreadQuery = createQuery(true)
+  private inboxUnread: UnreadContext[] = []
+  private chatUnread: UnreadContext[] = []
 
   static createClient (): NotificationClientImpl {
     NotificationClientImpl._instance = new NotificationClientImpl()
@@ -86,25 +105,48 @@ export class NotificationClientImpl implements NotificationClient {
     this.contextByIdPromises.clear()
     this.contextByDocPromises.clear()
 
+    this.pendingByDoc = []
+    this.pendingById = []
+    this.pendingReadState = []
+    this.pendingDocSetting = []
+
     this.totalUnreadCount.set(0)
+    this.inboxUnread = []
+    this.chatUnread = []
+    this.unreadByDoc.set(new Map())
   }
 
   private async init (_client: Client, account: Account): Promise<void> {
     this.clear()
 
-    this.unreadQuery.query(
+    const projection = { objectId: 1, objectClass: 1, unreadCount: 1, unreadMessagesCount: 1, modifiedOn: 1 } as const
+    this.inboxUnreadQuery.query(
       notification.class.DocNotifyContext,
-      {
-        user: account.uuid,
-        unreadCount: { $gt: 0 }
-      },
+      { user: account.uuid, unreadCount: { $gt: 0 } },
       (res) => {
-        this.totalUnreadCount.set(res.reduce((acc, curr) => acc + curr.unreadCount, 0))
+        this.inboxUnread = res
+        this.publishUnread()
       },
-      {
-        projection: { unreadCount: 1 }
-      }
+      { projection }
     )
+    this.chatUnreadQuery.query(
+      notification.class.DocNotifyContext,
+      { user: account.uuid, unreadMessagesCount: { $gt: 0 } },
+      (res) => {
+        this.chatUnread = res
+        this.publishUnread()
+      },
+      { projection }
+    )
+  }
+
+  private publishUnread (): void {
+    this.totalUnreadCount.set(this.inboxUnread.reduce((acc, it) => acc + it.unreadCount, 0))
+    const byDoc = new Map<Ref<Doc>, UnreadContext>()
+    for (const it of [...this.inboxUnread, ...this.chatUnread]) {
+      byDoc.set(it.objectId, it)
+    }
+    this.unreadByDoc.set(byDoc)
   }
 
   async loadReadState (attachedTo: Ref<Doc>): Promise<void> {
@@ -125,28 +167,41 @@ export class NotificationClientImpl implements NotificationClient {
       return await promise
     }
 
-    const loadPromise = (async () => {
-      try {
-        const client = getClient()
-        const state = await client.findOne(notification.class.ReadState, { attachedTo })
+    this.pendingReadState.push(attachedTo)
 
-        this.readStateByDoc.update((map) => {
-          map.set(attachedTo, state ?? null)
-          return map
-        })
-        return state
-      } finally {
-        this.readStatePromises.delete(attachedTo)
-      }
-    })()
+    this.pendingReadStateFlush ??= Promise.resolve().then(async () => {
+      const ids = this.pendingReadState
+      this.pendingReadState = []
+      this.pendingReadStateFlush = undefined
+      return await this.loadReadStates(ids)
+    })
 
+    const loadPromise = this.pendingReadStateFlush.then((map) => map.get(attachedTo))
     this.readStatePromises.set(attachedTo, loadPromise)
+    try {
+      return await loadPromise
+    } finally {
+      this.readStatePromises.delete(attachedTo)
+    }
+  }
+
+  private async loadReadStates (ids: Array<Ref<Doc>>): Promise<Map<Ref<Doc>, ReadState>> {
+    const client = getClient()
+    const states = await client.findAll(notification.class.ReadState, { attachedTo: { $in: ids } })
+
+    const statesByDoc = new Map<Ref<Doc>, ReadState>()
+    for (const state of states) {
+      statesByDoc.set(state.attachedTo, state)
+    }
+
     this.readStateByDoc.update((map) => {
-      map.set(attachedTo, null)
+      for (const id of ids) {
+        map.set(id, statesByDoc.get(id) ?? null)
+      }
       return map
     })
 
-    return await loadPromise
+    return statesByDoc
   }
 
   async loadDocSetting (attachedTo: Ref<Doc>): Promise<void> {
@@ -167,39 +222,70 @@ export class NotificationClientImpl implements NotificationClient {
       return await promise
     }
 
-    const loadPromise = (async () => {
-      try {
-        const client = getClient()
-        const state = await client.findOne(notification.class.DocNotificationSetting, {
-          attachedTo,
-          account: getCurrentAccount().uuid
-        })
+    this.pendingDocSetting.push(attachedTo)
 
-        this.docSettingByDoc.update((map) => {
-          map.set(attachedTo, state ?? null)
-          return map
-        })
-        return state
-      } finally {
-        this.docSettingPromises.delete(attachedTo)
-      }
-    })()
+    this.pendingDocSettingFlush ??= Promise.resolve().then(async () => {
+      const ids = this.pendingDocSetting
+      this.pendingDocSetting = []
+      this.pendingDocSettingFlush = undefined
+      return await this.loadDocSettings(ids)
+    })
 
+    const loadPromise = this.pendingDocSettingFlush.then((map) => map.get(attachedTo))
     this.docSettingPromises.set(attachedTo, loadPromise)
+    try {
+      return await loadPromise
+    } finally {
+      this.docSettingPromises.delete(attachedTo)
+    }
+  }
+
+  private async loadDocSettings (ids: Array<Ref<Doc>>): Promise<Map<Ref<Doc>, DocNotificationSetting>> {
+    const client = getClient()
+    const settings = await client.findAll(notification.class.DocNotificationSetting, {
+      attachedTo: { $in: ids },
+      account: getCurrentAccount().uuid
+    })
+
+    const settingsByDoc = new Map<Ref<Doc>, DocNotificationSetting>()
+    for (const setting of settings) {
+      settingsByDoc.set(setting.attachedTo, setting)
+    }
+
     this.docSettingByDoc.update((map) => {
-      map.set(attachedTo, null)
+      for (const id of ids) {
+        map.set(id, settingsByDoc.get(id) ?? null)
+      }
       return map
     })
 
-    return await loadPromise
+    return settingsByDoc
   }
 
   public async loadContextById (_id: Ref<DocNotifyContext>): Promise<void> {
-    await this.ensureContextsById([_id])
+    await this.batchContextById(_id)
   }
 
   public async getContextById (_id: Ref<DocNotifyContext>): Promise<DocNotifyContext | undefined> {
-    return (await this.ensureContextsById([_id]))[0]
+    return await this.batchContextById(_id)
+  }
+
+  // Coalesces same-tick single-id requests into one ensureContextsById call.
+  private async batchContextById (_id: Ref<DocNotifyContext>): Promise<DocNotifyContext | undefined> {
+    const cached = get(this.contextById).get(_id)
+    if (cached !== undefined) return cached ?? undefined
+
+    this.pendingById.push(_id)
+
+    this.pendingByIdFlush ??= Promise.resolve().then(async () => {
+      const ids = this.pendingById
+      this.pendingById = []
+      this.pendingByIdFlush = undefined
+      return await this.ensureContextsById(ids)
+    })
+
+    await this.pendingByIdFlush
+    return get(this.contextById).get(_id) ?? undefined
   }
 
   public async loadContextsById (ids: Array<Ref<DocNotifyContext>>): Promise<void> {
@@ -295,20 +381,42 @@ export class NotificationClientImpl implements NotificationClient {
 
   public async loadContextByDoc (doc?: Ref<Doc>): Promise<void> {
     if (doc == null) return
-    await this.ensureContextsByDoc([doc])
+    await this.batchContextsByDoc([doc])
   }
 
   public async getContextByDoc (doc?: Ref<Doc>): Promise<DocNotifyContext | undefined> {
     if (doc == null) return undefined
-    return (await this.ensureContextsByDoc([doc]))[0]
+    await this.batchContextsByDoc([doc])
+    return get(this.contextByDoc).get(doc) ?? undefined
   }
 
-  public async loadContextsByDoc (doc: Array<Ref<Doc>>): Promise<void> {
-    await this.ensureContextsByDoc(doc)
+  public async loadContextsByDoc (docs: Array<Ref<Doc>>): Promise<void> {
+    await this.batchContextsByDoc(docs)
   }
 
-  public async getContextsByDoc (doc: Array<Ref<Doc>>): Promise<DocNotifyContext[]> {
-    return await this.ensureContextsByDoc(doc)
+  public async getContextsByDoc (docs: Array<Ref<Doc>>): Promise<DocNotifyContext[]> {
+    await this.batchContextsByDoc(docs)
+    const contextByDoc = get(this.contextByDoc)
+    return docs.map((doc) => contextByDoc.get(doc)).filter((it): it is DocNotifyContext => it != null)
+  }
+
+  // Coalesces every request of the same tick, single or plural (one navigator section asks for all
+  // of its docs at once, and several sections mount together), into one ensureContextsByDoc call.
+  private async batchContextsByDoc (docs: Array<Ref<Doc>>): Promise<void> {
+    const cached = get(this.contextByDoc)
+    const missing = docs.filter((doc) => cached.get(doc) === undefined)
+    if (missing.length === 0) return
+
+    this.pendingByDoc.push(...missing)
+
+    this.pendingByDocFlush ??= Promise.resolve().then(async () => {
+      const pending = Array.from(new Set(this.pendingByDoc))
+      this.pendingByDoc = []
+      this.pendingByDocFlush = undefined
+      return await this.ensureContextsByDoc(pending)
+    })
+
+    await this.pendingByDocFlush
   }
 
   private async ensureContextsByDoc (docs: Array<Ref<Doc>>): Promise<DocNotifyContext[]> {

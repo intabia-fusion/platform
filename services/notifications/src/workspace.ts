@@ -43,6 +43,7 @@ import notification, {
 } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
+import { DelayStrategyFactory, retryNetworkErrors, withRetry } from '@hcengineering/retry'
 import {
   createPipeline,
   MiddlewareCreator,
@@ -65,10 +66,29 @@ import config from './config'
 import WorkspaceCache from './cache'
 import { Client, Result, TxCache } from './types'
 import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils/utils'
+import { setUnreadMessagesCounts } from './utils/context'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
 import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
+
+const transientHttpStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
+// Attempts of one tx batch on a transient transactor error before the source tx goes back to the queue.
+const applyAttempts = 4
+const applyBackoff = DelayStrategyFactory.exponentialBackoff({
+  initialDelayMs: 500,
+  maxDelayMs: 5000,
+  backoffFactor: 2,
+  jitter: 0.2
+})
+
+// Network failures and transactor-side outages are worth a retry; a rejected batch (bad request,
+// policy reject, forbidden) is not.
+export function isTransientError (e: unknown): boolean {
+  if (retryNetworkErrors(e)) return true
+  const httpStatus = (e as any)?.httpStatus
+  return typeof httpStatus === 'number' && transientHttpStatuses.has(httpStatus)
+}
 
 class Workspace {
   public readonly cache: WorkspaceCache
@@ -97,9 +117,16 @@ class Workspace {
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     this.inProgress = true
+    try {
+      await this.processTx(tx)
+    } finally {
+      this.inProgress = false
+    }
+  }
+
+  private async processTx (tx: TxCUD<Doc>): Promise<void> {
     const domain = this.hierarchy.findDomain(tx.objectClass)
     if (domain == null) {
-      this.inProgress = false
       return
     }
 
@@ -141,11 +168,11 @@ class Workspace {
 
     if (!isEmptyResult(result)) {
       if (tx.meta?.inboxOnly === true) this.keepInboxProviderOnly(result)
+      // Derived counters are filled once here, after every handler had its say on the context txes.
+      await setUnreadMessagesCounts(result, this.cache, this.client)
       this.lastUpdate = tx.createdOn ?? tx.modifiedOn
       await this.applyResult(result)
     }
-
-    this.inProgress = false
   }
 
   // Push/sound/email/telegram senders filter by allowedProviders, so trimming them leaves the inbox entry alone.
@@ -168,17 +195,42 @@ class Workspace {
         true
       )
       try {
-        await this.rest.tx(txApply)
+        await withRetry(() => this.rest.tx(txApply), {
+          maxRetries: applyAttempts,
+          isRetryable: isTransientError,
+          delayStrategy: applyBackoff
+        })
         for (const tx of batch) {
           this.cache.tx(tx, true)
         }
-      } catch (e) {
-        this.ctx.error('Failed to send tx batch', { e, tx: txApply, batchSize: batch.length })
+      } catch (e: any) {
+        this.cache.resetContexts()
+        const transient = isTransientError(e)
+        this.ctx.error(transient ? 'Failed to apply tx batch, tx will be redelivered' : 'Tx batch rejected, dropped', {
+          error: e?.message ?? String(e),
+          status: e instanceof PlatformError ? e.status : undefined,
+          batchSize: batch.length,
+          txIds: batch.map((it) => it._id)
+        })
+        if (transient) {
+          throw e
+        }
       }
     }
 
     if (result.queueMessages.length > 0) {
-      await this.producer.send(this.ctx, this.ws.uuid, result.queueMessages)
+      try {
+        await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, result.queueMessages), {
+          maxRetries: applyAttempts,
+          isRetryable: () => true,
+          delayStrategy: applyBackoff
+        })
+      } catch (e: any) {
+        this.ctx.error('Failed to publish user notifications', {
+          error: e?.message ?? String(e),
+          count: result.queueMessages.length
+        })
+      }
     }
   }
 

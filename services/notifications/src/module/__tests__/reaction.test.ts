@@ -57,6 +57,7 @@ describe('handleReaction', () => {
     getReceivers: jest.Mock
     getSettings: jest.Mock
     getContexts: jest.Mock
+    getContext: jest.Mock
     getSender: jest.Mock
     getPushSubscriptions: jest.Mock
   }
@@ -99,6 +100,7 @@ describe('handleReaction', () => {
       getReceivers: jest.fn(),
       getSettings: jest.fn(),
       getContexts: jest.fn(),
+      getContext: jest.fn(),
       getSender: jest.fn(),
       getPushSubscriptions: jest.fn()
     }
@@ -145,7 +147,7 @@ describe('handleReaction', () => {
         objectId: 'react-1'
       } as unknown as TxCreateDoc<Reaction>
 
-      mockClient.findOne.mockResolvedValue(undefined)
+      mockCache.getDoc.mockResolvedValue(undefined)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
@@ -165,11 +167,13 @@ describe('handleReaction', () => {
         createdBy: 'user-1'
       } as unknown as ActivityMessage
 
-      mockClient.findOne.mockResolvedValue(message)
+      mockCache.getDoc.mockResolvedValue(message)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
-      expect(mockCache.getDoc).not.toHaveBeenCalled()
+      expect(mockCache.getDoc).toHaveBeenCalledWith('msg-1', activity.class.ActivityMessage)
+      expect(pushNotification).not.toHaveBeenCalled()
+      expect(result.updateContextTx).toHaveLength(0)
     })
 
     it('logs warn and returns if doc of the message is not found', async () => {
@@ -187,8 +191,7 @@ describe('handleReaction', () => {
         attachedToClass: 'DocClass'
       } as unknown as ActivityMessage
 
-      mockClient.findOne.mockResolvedValue(message)
-      mockCache.getDoc.mockResolvedValue(undefined)
+      mockCache.getDoc.mockResolvedValueOnce(message).mockResolvedValueOnce(undefined)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
@@ -210,8 +213,7 @@ describe('handleReaction', () => {
         attachedToClass: 'DocClass'
       } as unknown as ActivityMessage
 
-      mockClient.findOne.mockResolvedValue(message)
-      mockCache.getDoc.mockResolvedValue({ _id: 'doc-1' } as unknown as Doc)
+      mockCache.getDoc.mockResolvedValueOnce(message).mockResolvedValueOnce({ _id: 'doc-1' } as unknown as Doc)
       mockCache.getAccountBySocialId.mockResolvedValue(null)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
@@ -248,8 +250,7 @@ describe('handleReaction', () => {
         socialIds: ['social-1']
       }
 
-      mockClient.findOne.mockResolvedValue(message)
-      mockCache.getDoc.mockResolvedValue(doc)
+      mockCache.getDoc.mockResolvedValueOnce(message).mockResolvedValueOnce(doc)
       mockCache.getAccountBySocialId.mockResolvedValue('user-1')
       mockCache.getReceivers.mockResolvedValue([receiver])
       mockCache.getSettings.mockResolvedValue({
@@ -320,7 +321,7 @@ describe('handleReaction', () => {
         attachedTo: 'msg-1'
       } as unknown as TxRemoveDoc<Reaction>
 
-      mockClient.findOne.mockResolvedValue(undefined)
+      mockCache.getDoc.mockResolvedValue(undefined)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
@@ -338,7 +339,7 @@ describe('handleReaction', () => {
         createdBy: 'user-1'
       } as unknown as ActivityMessage
 
-      mockClient.findOne.mockResolvedValue(message)
+      mockCache.getDoc.mockResolvedValue(message)
       mockCache.getAccountBySocialId.mockResolvedValue(null)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
@@ -368,9 +369,9 @@ describe('handleReaction', () => {
         lastNotify: 100
       } as unknown as DocNotifyContext
 
-      mockClient.findOne.mockResolvedValue(message)
+      mockCache.getDoc.mockResolvedValue(message)
       mockCache.getAccountBySocialId.mockResolvedValue('user-1')
-      mockClient.findAll.mockResolvedValue([context])
+      mockCache.getContext.mockResolvedValue(context)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 

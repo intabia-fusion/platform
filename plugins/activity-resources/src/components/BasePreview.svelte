@@ -23,6 +23,7 @@
   import activity, { ActivityMessagePreviewType } from '@hcengineering/activity'
   import { classIcon, DocNavLink } from '@hcengineering/view-resources'
   import { markupToText } from '@hcengineering/text'
+  import { getObjectById } from '../objectCache'
 
   export let text: string | undefined = undefined
   export let intlLabel: IntlString | undefined = undefined
@@ -61,7 +62,7 @@
 
   $: headerObjectId &&
     headerObjectClass &&
-    client.findOne(headerObjectClass, { _id: headerObjectId }).then((doc) => {
+    getObjectById(headerObjectClass, headerObjectId).then((doc) => {
       headerObject = doc
     })
 

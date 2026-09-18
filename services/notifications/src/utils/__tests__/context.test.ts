@@ -27,14 +27,33 @@ import {
   getLastNotify,
   getMode,
   isMuted,
-  getCreateContextTx
+  getCreateContextTx,
+  isNotificationRecorded,
+  setUnreadMessagesCounts
 } from '../context'
 import { emptyResult } from '../result'
-import { DocNotifyContext, DocNotificationSetting } from '@hcengineering/notification'
+import notification, {
+  DocNotifyContext,
+  DocNotificationSetting,
+  ContextNotification,
+  UnreadMessage
+} from '@hcengineering/notification'
 import { ActivityMessage, Reaction } from '@hcengineering/activity'
-import { Ref, AccountUuid, TxFactory, Doc, Class, Space } from '@hcengineering/core'
-import { ObjectDisplayData } from '../../types'
+import core, {
+  Ref,
+  AccountUuid,
+  TxFactory,
+  Doc,
+  Class,
+  Space,
+  Timestamp,
+  TxCreateDoc,
+  TxUpdateDoc,
+  DocumentUpdate
+} from '@hcengineering/core'
+import { ObjectDisplayData, Client } from '../../types'
 import { Receiver } from '@hcengineering/server-notification'
+import type Cache from '../../cache'
 
 describe('context utils', () => {
   describe('notification presence checks', () => {
@@ -108,6 +127,163 @@ describe('context utils', () => {
     it('hasUnreadMessage returns true if unread message id matches and is an unread message id', () => {
       expect(hasUnreadMessage(mockContext, 'msg-4' as Ref<ActivityMessage>)).toBe(true)
       expect(hasUnreadMessage(mockContext, 'msg-999' as Ref<ActivityMessage>)).toBe(false)
+    })
+
+    it('hasUnreadReactionByMessage returns false when context.unreadReactions is undefined', () => {
+      const context = {} as unknown as DocNotifyContext
+      expect(hasUnreadReactionByMessage(context, 'msg-1' as Ref<ActivityMessage>)).toBe(false)
+    })
+
+    it('hasUnreadReaction returns false when context.unreadReactions is undefined', () => {
+      const context = {} as unknown as DocNotifyContext
+      expect(hasUnreadReaction(context, 'react-1' as Ref<Reaction>)).toBe(false)
+    })
+
+    it('hasUnreadReactionByMessage returns false when context.unreadMessages is undefined', () => {
+      const context = {} as unknown as DocNotifyContext
+      expect(hasUnreadMentionByMessage(context, 'msg-1' as Ref<ActivityMessage>)).toBe(false)
+    })
+
+    it('hasUnreadMessage returns false when context.unreadMessages is undefined', () => {
+      const context = {} as unknown as DocNotifyContext
+      expect(hasUnreadMessage(context, 'msg-1' as Ref<ActivityMessage>)).toBe(false)
+    })
+  })
+
+  describe('isNotificationRecorded', () => {
+    it('returns true when found by latestNotifications[].id', () => {
+      const context = {
+        latestNotifications: [{ id: 'notify-1', type: 'common' }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-1', type: 'common' } as unknown as ContextNotification
+        })
+      ).toBe(true)
+    })
+
+    it('returns true when a mention is found by messageId via latestNotifications', () => {
+      const context = {
+        latestNotifications: [{ id: 'other-id', type: 'mention', messageId: 'msg-1' as Ref<ActivityMessage> }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: {
+            id: 'notify-2',
+            type: 'mention',
+            messageId: 'msg-1' as Ref<ActivityMessage>
+          } as unknown as ContextNotification
+        })
+      ).toBe(true)
+    })
+
+    it('returns true when found in unreadMessages by id (ignoring chunk entries)', () => {
+      const context = {
+        latestNotifications: [],
+        unreadMessages: [
+          { from: 10 as Timestamp, to: 20 as Timestamp, count: 3 },
+          { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 100 }
+        ]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-3', type: 'message' } as unknown as ContextNotification,
+          unreadMessage: { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1 }
+        })
+      ).toBe(true)
+    })
+
+    it('does not match unreadMessages chunk entries ({from,to,count})', () => {
+      const context = {
+        latestNotifications: [],
+        unreadMessages: [{ from: 10 as Timestamp, to: 20 as Timestamp, count: 3 }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-3', type: 'message' } as unknown as ContextNotification,
+          unreadMessage: { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1 }
+        })
+      ).toBe(false)
+    })
+
+    it('returns true when found in unreadReactions by id', () => {
+      const context = {
+        latestNotifications: [],
+        unreadReactions: [{ id: 'react-1' as Ref<Reaction>, attachedTo: 'msg-1' as Ref<ActivityMessage> }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-4', type: 'reaction' } as unknown as ContextNotification,
+          unreadReaction: { id: 'react-1' as Ref<Reaction>, attachedTo: 'msg-1' as Ref<ActivityMessage> }
+        })
+      ).toBe(true)
+    })
+
+    it('returns true when found in unreadMentions by id', () => {
+      const context = {
+        latestNotifications: [],
+        unreadMentions: [{ id: 'mention-1' }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-5', type: 'mention' } as unknown as ContextNotification,
+          unreadMention: { id: 'mention-1' }
+        })
+      ).toBe(true)
+    })
+
+    it('returns true when found in unreadCommons by id', () => {
+      const context = {
+        latestNotifications: [],
+        unreadCommons: [{ id: 'common-1' }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-6', type: 'common' } as unknown as ContextNotification,
+          unreadCommon: { id: 'common-1', type: 'common', createdBy: 'acc' as any, createdOn: 1 }
+        })
+      ).toBe(true)
+    })
+
+    it('returns false for an unknown id', () => {
+      const context = {
+        latestNotifications: [{ id: 'notify-1', type: 'common' }],
+        unreadMessages: [{ id: 'msg-1' as Ref<ActivityMessage>, createdOn: 100 }],
+        unreadReactions: [{ id: 'react-1' as Ref<Reaction>, attachedTo: 'msg-1' as Ref<ActivityMessage> }],
+        unreadMentions: [{ id: 'mention-1' }],
+        unreadCommons: [{ id: 'common-1' }]
+      } as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-unknown', type: 'message' } as unknown as ContextNotification,
+          unreadMessage: { id: 'msg-unknown' as Ref<ActivityMessage>, createdOn: 1 },
+          unreadReaction: { id: 'react-unknown' as Ref<Reaction>, attachedTo: 'msg-unknown' as Ref<ActivityMessage> },
+          unreadMention: { id: 'mention-unknown' },
+          unreadCommon: { id: 'common-unknown', type: 'common', createdBy: 'acc' as any, createdOn: 1 }
+        })
+      ).toBe(false)
+    })
+
+    it('tolerates a context whose unread arrays are undefined', () => {
+      const context = {} as unknown as DocNotifyContext
+
+      expect(
+        isNotificationRecorded(context, {
+          notification: { id: 'notify-1', type: 'message' } as unknown as ContextNotification,
+          unreadMessage: { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1 },
+          unreadReaction: { id: 'react-1' as Ref<Reaction>, attachedTo: 'msg-1' as Ref<ActivityMessage> },
+          unreadMention: { id: 'mention-1' },
+          unreadCommon: { id: 'common-1', type: 'common', createdBy: 'acc' as any, createdOn: 1 }
+        })
+      ).toBe(false)
     })
   })
 
@@ -241,6 +417,7 @@ describe('context utils', () => {
             unreadCommons: [],
             unreadMessages: [],
             unreadCount: 0,
+            unreadMessagesCount: 0,
             lastNotify: 0
           },
           'new-ctx-id'
@@ -248,6 +425,228 @@ describe('context utils', () => {
 
         expect(result.createContextTx).toEqual([tx])
       })
+    })
+  })
+
+  describe('setUnreadMessagesCounts', () => {
+    const factory = new TxFactory(core.account.System)
+    const contextClass = notification.class.DocNotifyContext
+    const contextSpace = 'ctx-space' as Ref<Space>
+    const contextId = 'ctx-1' as Ref<DocNotifyContext>
+
+    function createContextTx (
+      attributes: Partial<DocNotifyContext>,
+      id: Ref<DocNotifyContext>
+    ): TxCreateDoc<DocNotifyContext> {
+      return factory.createTxCreateDoc<DocNotifyContext>(contextClass, contextSpace, attributes as DocNotifyContext, id)
+    }
+
+    function updateContextTx (
+      operations: DocumentUpdate<DocNotifyContext>,
+      id: Ref<DocNotifyContext> = contextId
+    ): TxUpdateDoc<DocNotifyContext> {
+      return factory.createTxUpdateDoc<DocNotifyContext>(contextClass, contextSpace, id, operations)
+    }
+
+    function makeUnreadContext (id: Ref<DocNotifyContext>, unreadMessages: UnreadMessage[]): DocNotifyContext {
+      const value = { _id: id, unreadMessages }
+      return value as unknown as DocNotifyContext
+    }
+
+    function makeCache (cached: Record<string, DocNotifyContext | undefined>): Pick<Cache, 'getCachedContext'> {
+      return {
+        getCachedContext: (id: Ref<DocNotifyContext>) => cached[id as unknown as string]
+      }
+    }
+
+    function makeClient (findOneResult: DocNotifyContext | undefined): { findOne: jest.Mock, ctx: { warn: jest.Mock } } {
+      return {
+        ctx: { warn: jest.fn() },
+        findOne: jest.fn(async () => findOneResult)
+      }
+    }
+
+    it('sets unreadMessagesCount on a create tx from attributes.unreadMessages', async () => {
+      const result = emptyResult()
+      const tx = createContextTx(
+        {
+          unreadMessages: [
+            { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 },
+            { from: 1, to: 2, count: 5 }
+          ]
+        },
+        contextId
+      )
+      result.createContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({}) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.attributes.unreadMessagesCount).toBe(6)
+    })
+
+    it('sets unreadMessagesCount to 0 on a create tx with an empty/undefined unreadMessages array', async () => {
+      const result = emptyResult()
+      const txEmpty = createContextTx({ unreadMessages: [] }, 'ctx-empty' as Ref<DocNotifyContext>)
+      const txUndefined = createContextTx({}, 'ctx-undefined' as Ref<DocNotifyContext>)
+      result.createContextTx.push(txEmpty, txUndefined)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({}) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(txEmpty.attributes.unreadMessagesCount).toBe(0)
+      expect(txUndefined.attributes.unreadMessagesCount).toBe(0)
+    })
+
+    it('sets operations.unreadMessagesCount on a $push update tx using the cached context, without mutating the cached object', async () => {
+      const cachedContext = makeUnreadContext(contextId, [
+        { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 },
+        { id: 'msg-2' as Ref<ActivityMessage>, createdOn: 20 }
+      ])
+      const cachedSnapshot = JSON.parse(JSON.stringify(cachedContext))
+
+      const result = emptyResult()
+      const tx = updateContextTx({
+        $push: { unreadMessages: { id: 'msg-3' as Ref<ActivityMessage>, createdOn: 30 } }
+      })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.operations.unreadMessagesCount).toBe(3)
+      expect(cachedContext).toEqual(cachedSnapshot)
+    })
+
+    it('decreases unreadMessagesCount on a $pull update tx with $in', async () => {
+      const cachedContext = makeUnreadContext(contextId, [
+        { id: 'a' as Ref<ActivityMessage>, createdOn: 10 },
+        { id: 'b' as Ref<ActivityMessage>, createdOn: 20 },
+        { id: 'c' as Ref<ActivityMessage>, createdOn: 30 }
+      ])
+
+      const result = emptyResult()
+      const tx = updateContextTx({
+        $pull: { unreadMessages: { id: { $in: ['a' as Ref<ActivityMessage>] } } }
+      })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      // NOTE: this asserts against TxProcessor.updateDoc2Doc's actual $pull handling for the
+      // `{ field: { $in: [...] } }` shape (core's $pull operator matches per-field $in when the
+      // top-level key isn't itself `$in`). If core changes that semantic, this count will drift.
+      expect(tx.operations.unreadMessagesCount).toBe(2)
+    })
+
+    it('sets unreadMessagesCount to the total of the new array on a wholesale (collapse) update', async () => {
+      const cachedContext = makeUnreadContext(
+        contextId,
+        Array.from({ length: 150 }, (_, i) => ({ id: `msg-${i}` as Ref<ActivityMessage>, createdOn: i }))
+      )
+
+      const collapsed: UnreadMessage[] = [
+        { from: 0, to: 129, count: 130 },
+        { id: 'msg-149' as Ref<ActivityMessage>, createdOn: 149 }
+      ]
+
+      const result = emptyResult()
+      const tx = updateContextTx({ unreadMessages: collapsed })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.operations.unreadMessagesCount).toBe(131)
+    })
+
+    it("applies two update txes for the same context sequentially, second sees the first one's effect", async () => {
+      const cachedContext = makeUnreadContext(contextId, [{ id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 }])
+
+      const result = emptyResult()
+      const tx1 = updateContextTx({
+        $push: { unreadMessages: { id: 'msg-2' as Ref<ActivityMessage>, createdOn: 20 } }
+      })
+      const tx2 = updateContextTx({
+        $push: { unreadMessages: { id: 'msg-3' as Ref<ActivityMessage>, createdOn: 30 } }
+      })
+      result.updateContextTx.push(tx1, tx2)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx1.operations.unreadMessagesCount).toBe(2)
+      expect(tx2.operations.unreadMessagesCount).toBe(3)
+    })
+
+    it('falls back to client.findOne when the context is missing from the cache', async () => {
+      const foundContext = makeUnreadContext(contextId, [
+        { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 },
+        { id: 'msg-2' as Ref<ActivityMessage>, createdOn: 20 }
+      ])
+
+      const result = emptyResult()
+      const tx = updateContextTx({
+        $push: { unreadMessages: { id: 'msg-3' as Ref<ActivityMessage>, createdOn: 30 } }
+      })
+      result.updateContextTx.push(tx)
+
+      const client = makeClient(foundContext)
+      await setUnreadMessagesCounts(result, makeCache({}) as unknown as Cache, client as unknown as Client)
+
+      expect(client.findOne).toHaveBeenCalledWith(notification.class.DocNotifyContext, { _id: contextId })
+      expect(tx.operations.unreadMessagesCount).toBe(3)
+    })
+
+    it('leaves the tx untouched when the context is missing from both cache and client.findOne', async () => {
+      const result = emptyResult()
+      const tx = updateContextTx({
+        $push: { unreadMessages: { id: 'msg-3' as Ref<ActivityMessage>, createdOn: 30 } }
+      })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({}) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.operations.unreadMessagesCount).toBeUndefined()
+    })
+
+    it('leaves an update tx that does not touch unreadMessages untouched', async () => {
+      const cachedContext = makeUnreadContext(contextId, [{ id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 }])
+
+      const result = emptyResult()
+      const tx = updateContextTx({ $inc: { unreadCount: 1 } })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.operations.unreadMessagesCount).toBeUndefined()
     })
   })
 })

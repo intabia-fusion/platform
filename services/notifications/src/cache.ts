@@ -50,10 +50,6 @@ import { LRUCache } from 'lru-cache'
 
 import { Client, EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
 
-// Short and bounded: this runs inside message processing, so a sender that never resolves must not
-// hold the queue for long. ~1.4s total covers the replication lag of a just-created account.
-const SENDER_RETRY_DELAYS = [100, 200, 400, 700]
-
 /**
  * WorkspaceCache manages caching and transaction-driven updates of
  * notification-related workspace documents, collaborator access lists, and user statuses.
@@ -502,7 +498,7 @@ class WorkspaceCache {
     const employeeByAccount = new Map(employees.map((it) => [it.personUuid, it]))
     const spaceByPerson = new Map(personSpaces.map((it) => [it.person, it]))
     const socialIdsByEmployee = groupByArray(socialIds, (it) => it.attachedTo)
-    const statuses = await this.getUserStatuses()
+    const onlineByUser = new Map((await this.getUserStatuses()).map((it) => [it.user, it.online]))
 
     return collaborators
       .map((it) => {
@@ -517,7 +513,7 @@ class WorkspaceCache {
           space: space._id,
           account: it,
           socialIds: socialIdsByEmployee.get(employee._id)?.map((it) => it._id) ?? [],
-          online: statuses.find((s) => s.user === it)?.online ?? false,
+          online: onlineByUser.get(it) ?? false,
           language: this.client.branding?.defaultLanguage ?? 'en'
         }
         return info
@@ -528,11 +524,10 @@ class WorkspaceCache {
   /**
    * Resolves details of the message sender by their Social ID reference.
    *
-   * The first message of a freshly created account can arrive before its SocialIdentity has
-   * replicated here, and an unresolved sender is not harmless: `account` drives the "do not notify
-   * the author" check in the message module, so the sender would notify themselves, and `person`
-   * is what renders the name, which degrades to "Unknown user". Both are permanent for that
-   * message, so give the lookup a few short retries before giving up.
+   * An unresolved sender is tolerated: the modules exclude the author by social id as well as by
+   * account (see `isSender`), and the client renders the name from `createdBy` itself, so nothing
+   * permanent depends on the lookup. The lookup is not retried with delays here: the consumer
+   * handles every workspace of the topic in one sequential loop, and a sleep stalls all of them.
    */
   public async getSender (socialId: PersonId): Promise<Sender> {
     if (socialId === core.account.System) {
@@ -542,16 +537,10 @@ class WorkspaceCache {
       }
     }
 
-    let sender = await this.resolveSender(socialId)
-
-    for (const delay of SENDER_RETRY_DELAYS) {
-      if (sender.person !== undefined && sender.account !== undefined) break
-      await new Promise((resolve) => setTimeout(resolve, delay))
-      sender = await this.resolveSender(socialId)
-    }
+    const sender = await this.resolveSender(socialId)
 
     if (sender.person === undefined || sender.account === undefined) {
-      this.ctx.error('Cannot resolve message sender', {
+      this.ctx.warn('Cannot resolve message sender', {
         _id: socialId,
         hasPerson: sender.person !== undefined,
         hasAccount: sender.account !== undefined
@@ -989,6 +978,20 @@ class WorkspaceCache {
       )
       this.socialIdToEmployeeMap.delete(tx.objectId as Ref<SocialIdentity>)
     }
+  }
+
+  /**
+   * Drops every cached context. Used when a write to the transactor failed and the database
+   * state of the contexts is unknown: the next lookup reads them back.
+   */
+  public getCachedContext (_id: Ref<DocNotifyContext>): DocNotifyContext | undefined {
+    const docId = this.contextToDocMap.get(_id)
+    return docId === undefined ? undefined : this.contextsByDocCache.get(docId)?.find((it) => it._id === _id)
+  }
+
+  public resetContexts (): void {
+    this.contextsByDocCache.clear()
+    this.contextToDocMap.clear()
   }
 
   // ==========================================

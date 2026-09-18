@@ -210,10 +210,19 @@ export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> 
   unreadMessages: UnreadMessage[] // unified timeline of unread messages and chunks
   unreadCommons: CommonNotification[] // store unread common notifications
 
+  // Items that reached the inbox: messages marked `notified`, reactions, mentions, commons. Drives the inbox badge.
   unreadCount: number
+  // Every unread chat message of the context. Drives the chat badges;
+  // service keeps it equal to the total of `unreadMessages`.
+  unreadMessagesCount: number
 }
 
 export type ContextNotification = MessageNotification | ReactionNotification | MentionNotification | CommonNotification
+
+export type UnreadContext = Pick<
+  DocNotifyContext,
+  '_id' | 'objectId' | 'objectClass' | 'unreadCount' | 'unreadMessagesCount' | 'modifiedOn'
+>
 export type NotificationMessage<T extends ActivityMessage = ActivityMessage> = ActivityMessageLite<T>
 
 export interface MessageNotification<T extends ActivityMessage = ActivityMessage> {
@@ -222,6 +231,8 @@ export interface MessageNotification<T extends ActivityMessage = ActivityMessage
 
   messageId: Ref<ActivityMessage>
   message: NotificationMessage<T>
+  // The embedded message carries an excerpt; the full text lives in the chat.
+  truncated?: boolean
   intlMessage?: IntlString
 
   attachments?: BlobType[]
@@ -236,6 +247,7 @@ export interface ReactionNotification {
 
   messageId: Ref<ActivityMessage>
   message: NotificationMessage
+  truncated?: boolean
   attachments?: BlobType[]
   reaction: Reaction
 
@@ -250,6 +262,8 @@ export interface MentionNotification {
   messageId?: Ref<ActivityMessage>
 
   markup: Markup
+  // `markup` is an excerpt of the mentioning message.
+  truncated?: boolean
   attachments?: BlobType[]
 
   createdBy: PersonId
@@ -378,6 +392,8 @@ export interface NotificationClient {
 
   contextByDoc: Readable<Map<Ref<Doc>, DocNotifyContext | null>>
   contextById: Readable<Map<Ref<DocNotifyContext>, DocNotifyContext | null>>
+  // Every context of the user with unread items, by document.
+  unreadByDoc: Readable<Map<Ref<Doc>, UnreadContext>>
 
   docSettingByDoc: Readable<Map<Ref<Doc>, DocNotificationSetting | null>>
 

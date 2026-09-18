@@ -67,7 +67,7 @@ export function updateInboxContexts (query: DocumentQuery<DocNotifyContext>, lim
     notification.class.DocNotifyContext,
     {
       ...query,
-      latestNotifications: { $size: { $gt: 0 } },
+      lastNotify: { $gt: 0 },
       user: account.uuid
     },
     (res) => {

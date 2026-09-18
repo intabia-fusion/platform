@@ -59,5 +59,6 @@ export {
   getTypeMatchClient,
   toNotificationMessage,
   isChatMessage,
-  getAttachments
+  getAttachments,
+  isSender
 } from './misc'

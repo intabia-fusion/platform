@@ -31,7 +31,7 @@
   import { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext } from '@hcengineering/notification'
+  import { type UnreadContext } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'
@@ -81,16 +81,10 @@
   }
 
   const inboxClient = NotificationClientImpl.getClient()
-  const notifyContextByDocStore = inboxClient.contextByDoc
+  const unreadByDoc = inboxClient.unreadByDoc
 
-  function isChanged (space: Space, notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext | null>): boolean {
-    const context = notifyContextByDoc.get(space._id) ?? undefined
-
-    if (context == null) {
-      return false
-    }
-
-    return context.unreadCount > 0
+  function isChanged (space: Space, unread: Map<Ref<Doc>, UnreadContext>): boolean {
+    return (unread.get(space._id)?.unreadCount ?? 0) > 0
   }
 
   function getParentActions (): Action[] {
@@ -137,8 +131,6 @@
     (currentSpecial !== undefined || currentFragment !== undefined || currentFragment !== '') &&
     !deselect &&
     !empty
-
-  $: void inboxClient.loadContextsByDoc(filteredSpaces.map((it) => it._id))
 </script>
 
 <TreeNode
@@ -159,7 +151,7 @@
       {currentSpecial}
       {currentFragment}
       {deselect}
-      isChanged={isChanged(space, $notifyContextByDocStore)}
+      isChanged={isChanged(space, $unreadByDoc)}
       spaceActions={[starSpace]}
     />
   {/each}
@@ -173,7 +165,7 @@
         {currentSpecial}
         {currentFragment}
         {deselect}
-        isChanged={isChanged(visibleSpace, $notifyContextByDocStore)}
+        isChanged={isChanged(visibleSpace, $unreadByDoc)}
         spaceActions={[starSpace]}
         forciblyСollapsed
       />

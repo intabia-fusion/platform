@@ -114,6 +114,7 @@ describe('WorkspaceCache', () => {
   beforeEach(() => {
     mockCtx = {
       error: jest.fn(),
+      warn: jest.fn(),
       info: jest.fn()
     } as unknown as MeasureContext
 

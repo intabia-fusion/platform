@@ -15,10 +15,12 @@
 
 import core, { Doc, DocumentUpdate, Ref, TxCreateDoc, TxCUD, TxProcessor, TxRemoveDoc } from '@hcengineering/core'
 import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
+import { type ChatMessage } from '@hcengineering/chunter'
 import { truncateMessage, Sender } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import notification, {
   DocNotifyContext,
+  isOversizedChatMessage,
   NotificationIntl,
   NotificationProvider,
   TxNotificationType
@@ -66,7 +68,7 @@ async function handleCreateReaction (
 
   const reaction = TxProcessor.createDoc2Doc(tx)
 
-  const message = await client.findOne(activity.class.ActivityMessage, { _id: reaction.attachedTo })
+  const message = await cache.getDoc(reaction.attachedTo, activity.class.ActivityMessage)
   if (message === undefined) {
     client.ctx.warn('Message not found for reaction creation', { reaction: tx.objectId, message: tx.attachedTo })
     return
@@ -126,7 +128,8 @@ async function handleCreateReaction (
       id: reaction._id,
       type: 'reaction',
       messageId: message._id,
-      message: toNotificationMessage(message),
+      message: toNotificationMessage(message, client.hierarchy),
+      truncated: isOversizedChatMessage(message) || undefined,
       attachments,
       reaction,
       createdOn: reaction.createdOn ?? reaction.modifiedOn,
@@ -143,7 +146,8 @@ async function handleCreateReaction (
       receiver.language
     ),
     notifyProviders,
-    pushSubscriptions
+    pushSubscriptions,
+    markup: (message as Partial<ChatMessage>).message
   })
 }
 
@@ -158,7 +162,7 @@ async function handleRemoveReaction (
     return
   }
 
-  const message = await client.findOne(activity.class.ActivityMessage, { _id: tx.attachedTo as Ref<ActivityMessage> })
+  const message = await cache.getDoc(tx.attachedTo as Ref<ActivityMessage>, activity.class.ActivityMessage)
   if (message === undefined) {
     client.ctx.warn('Message not found for reaction removal', { reaction: tx.objectId, message: tx.attachedTo })
     return
@@ -170,10 +174,8 @@ async function handleRemoveReaction (
     return
   }
 
-  const contexts = await client.findAll(notification.class.DocNotifyContext, {
-    user: account,
-    objectId: message.attachedTo
-  })
+  const context = await cache.getContext(message.attachedTo, account)
+  const contexts = context != null ? [context] : []
 
   for (const context of contexts) {
     const ops: DocumentUpdate<DocNotifyContext> = {}
@@ -191,8 +193,7 @@ async function handleRemoveReaction (
 
     if (Object.keys(ops).length > 0) {
       const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops)
-      const updatedContext = TxProcessor.updateDoc2Doc(context, updateTx)
-      const lastNotify = getLastNotify(updatedContext)
+      const lastNotify = getLastNotify(TxProcessor.updateDoc2Doc(structuredClone(context), updateTx))
 
       if (lastNotify !== context.lastNotify) {
         updateTx.operations.lastNotify = lastNotify

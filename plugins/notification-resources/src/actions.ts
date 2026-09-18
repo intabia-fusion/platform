@@ -81,19 +81,20 @@ export async function removeDocNotifyContext (context?: DocNotifyContext): Promi
 
   const inboxClient = NotificationClientImpl.getClient()
   const me = getCurrentAccount()
-  const client = getClient()
+  const ops = getClient().apply(undefined, 'removeDocNotifyContext', true)
 
-  await client.remove(context)
+  await ops.remove(context)
 
   const state = await inboxClient.getReadState(context.objectId)
   if (state != null) {
-    await client.update(state, {
+    await ops.update(state, {
       [me.uuid]: {
         messageId: generateId<ActivityMessage>(),
         timestamp: Date.now()
       }
     })
   }
+  await ops.commit()
 }
 
 export async function subscribeDoc (

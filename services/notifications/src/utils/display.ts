@@ -165,7 +165,7 @@ export async function getObjectDisplayData (
       displayData.parentObjectIdentifier = await getDocIdentifier(client, txCache, parentDoc)
       displayData.parentObjectIcon = await getDocIcon(client, txCache, parentDoc, account)
     }
-    displayData.object = toNotificationMessage(message)
+    displayData.object = toNotificationMessage(message, client.hierarchy)
   }
 
   return displayData

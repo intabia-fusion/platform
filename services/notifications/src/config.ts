@@ -29,6 +29,7 @@ export interface Config {
   AllowedNotificationProviders: (Ref<NotificationProvider> | 'all')[]
   DbUrl: string
   ApplyTxBatchSize: number
+  ApplyTxRetries: number
   FrontUrl: string
   BrandingPath: string
   LatestNotificationsSliceSize: number

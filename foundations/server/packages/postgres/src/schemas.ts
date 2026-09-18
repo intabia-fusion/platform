@@ -262,10 +262,11 @@ const dncSchema: Schema = {
     notNull: true,
     index: false
   },
+  // customIndexes below; a single-column index on top of them would only cost writes.
   parentObjectId: {
     type: 'text',
     notNull: false,
-    index: true
+    index: false
   },
   parentObjectClass: {
     type: 'text',
@@ -275,13 +276,19 @@ const dncSchema: Schema = {
   lastNotify: {
     type: 'bigint',
     notNull: true,
-    index: true
+    index: false
   },
   unreadCount: {
     type: 'integer',
     notNull: true,
-    index: true,
+    index: false,
     check: '"unreadCount" >= 0'
+  },
+  unreadMessagesCount: {
+    type: 'integer',
+    notNull: true,
+    index: false,
+    check: '"unreadMessagesCount" >= 0'
   },
   user: {
     type: 'text',
@@ -411,15 +418,16 @@ const docReadStateSchema: Schema = {
     notNull: true,
     index: true
   },
+  // Indexed together with workspaceId in customIndexes below.
   latestMessageId: {
     type: 'text',
     notNull: false,
-    index: true
+    index: false
   },
   latestMessageTimestamp: {
     type: 'bigint',
     notNull: false,
-    index: true
+    index: false
   }
 }
 
@@ -454,13 +462,23 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
   [translateDomain('notification_read_state')]: [
     {
       unique: ['attachedTo', 'attachedToClass'],
-      custom: []
+      custom: [
+        'CREATE INDEX IF NOT EXISTS notification_read_state_workspaceId_latestMessageId__index ON notification_read_state ("workspaceId", "latestMessageId");',
+        'CREATE INDEX IF NOT EXISTS notification_read_state_workspaceId_latestMessageTimestamp__index ON notification_read_state ("workspaceId", "latestMessageTimestamp");'
+      ]
     }
   ],
   [translateDomain('notification-dnc')]: [
     {
       unique: ['user', 'objectId', 'objectClass'],
-      custom: []
+      custom: [
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_objectId__index ON notification_dnc ("workspaceId", "objectId");',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_parentObjectId__index ON notification_dnc ("workspaceId", "parentObjectId");',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_lastNotify_desc__index ON notification_dnc ("workspaceId", "user", "lastNotify" DESC);',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unread__index ON notification_dnc ("workspaceId", "user", "unreadCount") WHERE "unreadCount" > 0;',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_objectClass__index ON notification_dnc ("workspaceId", "user", "objectClass");',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unreadMessages__index ON notification_dnc ("workspaceId", "user", "unreadMessagesCount") WHERE "unreadMessagesCount" > 0;'
+      ]
     }
   ],
   [DOMAIN_SPACE]: [
@@ -510,6 +528,11 @@ export const domainSchemas: Record<string, Schema> = {
   [translateDomain('notification_read_state')]: docReadStateSchema,
   [translateDomain('activity')]: activitySchema
 }
+
+// Snapshot of the schemas declared above. `domainSchemas` is replaced per domain by what the
+// database actually has (see `getTableSchema` in utils.ts); this copy keeps the declared shape so
+// the loader can report columns a table is missing.
+export const declaredSchemas: Readonly<Record<string, Schema>> = { ...domainSchemas }
 
 export function getSchema (domain: string): Schema {
   return domainSchemas[translateDomain(domain)] ?? defaultSchema

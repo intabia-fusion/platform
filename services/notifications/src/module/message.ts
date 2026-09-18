@@ -34,12 +34,15 @@ import notification, {
   UnreadMessageChunk,
   isUnreadMessageId,
   isUnreadMessageChunk,
-  ContextNotification
+  ContextNotification,
+  appendAndCollapseUnreadMessages,
+  isOversizedChatMessage
 } from '@hcengineering/notification'
 import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 
+import { hasUnreadMessage } from '../utils/context'
 import {
   getBaseDisplayParams,
   getCollaboratorAccounts,
@@ -55,12 +58,12 @@ import {
   getLastNotify,
   hasMentionNotificationByMessage,
   getAttachments,
-  getCreateContextTx
+  getCreateContextTx,
+  isSender
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
-import { appendAndCollapseUnreadMessages } from '../utils/collapse'
 import config from '../config'
 import { translate } from '@hcengineering/platform'
 
@@ -147,7 +150,7 @@ async function handleCreateMessage (
   const attachments = await getAttachments(message, client)
 
   for (const receiver of receivers) {
-    if (receiver.account === sender.account) continue
+    if (isSender(receiver, sender)) continue
 
     const readPosition = readState?.[receiver.account]
     const alreadyRead = readPosition != null && readPosition.timestamp >= messageTimestamp
@@ -273,8 +276,7 @@ async function handleRemoveMessage (
     if (Object.keys(operations).length === 0) continue
 
     const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
-    const updatedContext = TxProcessor.updateDoc2Doc(context, updateTx)
-    const lastNotify = getLastNotify(updatedContext)
+    const lastNotify = getLastNotify(TxProcessor.updateDoc2Doc(structuredClone(context), updateTx))
 
     if (lastNotify !== context.lastNotify) {
       updateTx.operations.lastNotify = lastNotify
@@ -327,7 +329,7 @@ async function handleUpdateMessage (
         latestNotifications: {
           $query: { messageId: tx.objectId },
           $update: {
-            message: toNotificationMessage(message),
+            message: toNotificationMessage(message, client.hierarchy),
             attachments
           }
         }
@@ -355,7 +357,7 @@ async function handleUpdateMessage (
   for (const context of threadContexts) {
     result.updateContextTx.push(
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-        object: toNotificationMessage(message)
+        object: toNotificationMessage(message, client.hierarchy)
       })
     )
   }
@@ -415,7 +417,7 @@ async function handleUpdateDUM (
   const messageTimestamp = message.createdOn ?? message.modifiedOn
 
   for (const receiver of receivers) {
-    if (receiver.account === sender.account) continue
+    if (isSender(receiver, sender)) continue
 
     const readPosition = readState?.[receiver.account]
     const alreadyRead = readPosition != null && readPosition.timestamp >= messageTimestamp
@@ -534,6 +536,10 @@ export async function addUnreadMessage (
   cache: Cache
 ): Promise<void> {
   if (context != null) {
+    if (isUnreadMessageId(unreadMessage) && hasUnreadMessage(context, unreadMessage)) {
+      // Redelivered tx: the message is already counted in this context.
+      return
+    }
     const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
     const operations: DocumentUpdate<DocNotifyContext> = {}
     if (didCollapse) {
@@ -602,14 +608,16 @@ async function pushNotification (
       type: 'message',
       messageId: message._id,
       intlMessage: type.notificationMessage,
-      message: toNotificationMessage(message),
+      message: toNotificationMessage(message, client.hierarchy),
+      truncated: isOversizedChatMessage(message) || undefined,
       attachments,
       createdOn: message.createdOn ?? message.modifiedOn,
       createdBy: message.createdBy ?? message.modifiedBy
     },
     intl: content,
     notifyProviders: notifyResult,
-    pushSubscriptions
+    pushSubscriptions,
+    markup: (message as Partial<ChatMessage>).message
   })
 }
 
@@ -693,20 +701,20 @@ async function restoreLatestNotifications (
   const restoreCandidates = candidates.slice(0, needed)
   const restoredNotifications: ContextNotification[] = []
 
-  for (const candidate of restoreCandidates) {
-    const message = await client.findOne(activity.class.ActivityMessage, { _id: candidate.id })
-    if (message != null) {
-      const attachments = await getAttachments(message, client)
-      restoredNotifications.push({
-        id: message._id,
-        type: 'message',
-        messageId: message._id,
-        message: toNotificationMessage(message),
-        attachments,
-        createdOn: message.createdOn ?? message.modifiedOn,
-        createdBy: message.createdBy ?? message.modifiedBy
-      })
-    }
+  const messages = await client.findAll(activity.class.ActivityMessage, {
+    _id: { $in: restoreCandidates.map((it) => it.id) }
+  })
+  for (const message of messages) {
+    restoredNotifications.push({
+      id: message._id,
+      type: 'message',
+      messageId: message._id,
+      message: toNotificationMessage(message, client.hierarchy),
+      truncated: isOversizedChatMessage(message) || undefined,
+      attachments: await getAttachments(message, client),
+      createdOn: message.createdOn ?? message.modifiedOn,
+      createdBy: message.createdBy ?? message.modifiedBy
+    })
   }
 
   if (restoredNotifications.length > 0) {

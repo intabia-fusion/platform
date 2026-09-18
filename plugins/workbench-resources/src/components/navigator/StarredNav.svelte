@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Class, Ref, Space } from '@hcengineering/core'
-  import { DocNotifyContext } from '@hcengineering/notification'
+  import { type UnreadContext } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
@@ -43,13 +43,12 @@
   }
 
   const inboxClient = NotificationClientImpl.getClient()
-  const notifyContextByDocStore = inboxClient.contextByDoc
+  const unreadByDoc = inboxClient.unreadByDoc
 
-  function isChanged (context: DocNotifyContext | undefined): boolean {
-    return (context?.unreadCount ?? 0) > 0
+  function isChanged (unread: UnreadContext | undefined): boolean {
+    return (unread?.unreadCount ?? 0) > 0
   }
   $: visibleSpace = spaces.find((space) => currentSpace === space._id)
-  $: void inboxClient.loadContextsByDoc(spaces.map((s) => s._id))
 </script>
 
 <TreeNode
@@ -69,7 +68,7 @@
       {currentSpecial}
       {currentFragment}
       {deselect}
-      isChanged={isChanged($notifyContextByDocStore.get(space._id) ?? undefined)}
+      isChanged={isChanged($unreadByDoc.get(space._id))}
     />
   {/each}
 
@@ -83,7 +82,7 @@
         {currentSpecial}
         {currentFragment}
         {deselect}
-        isChanged={isChanged($notifyContextByDocStore.get(visibleSpace._id) ?? undefined)}
+        isChanged={isChanged($unreadByDoc.get(visibleSpace._id))}
         forciblyСollapsed
       />
     {/if}

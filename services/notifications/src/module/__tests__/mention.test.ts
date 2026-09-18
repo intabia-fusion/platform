@@ -15,7 +15,7 @@
 
 import core, { AccountUuid, AnyAttribute, Doc, Ref, TxCUD } from '@hcengineering/core'
 import activity, { UserMentionInfo } from '@hcengineering/activity'
-import notification, { DocNotifyContext } from '@hcengineering/notification'
+import notification, { DocNotifyContext, EMBEDDED_MARKUP_LIMIT } from '@hcengineering/notification'
 import { Receiver } from '@hcengineering/server-notification'
 import contact, { Person } from '@hcengineering/contact'
 
@@ -57,6 +57,7 @@ const mockMarkupToJSON = jest.fn()
 const mockMarkupToText = jest.fn()
 
 jest.mock('@hcengineering/text-core', () => ({
+  MarkupNodeType: jest.requireActual('@hcengineering/text-core').MarkupNodeType,
   areEqualJson: (...args: any[]) => mockAreEqualJson(...args),
   extractReferences: (...args: any[]) => mockExtractReferences(...args),
   jsonToMarkup: (...args: any[]) => mockJsonToMarkup(...args),
@@ -171,7 +172,9 @@ describe('mention module', () => {
       getReceivers: jest.fn(),
       getCollaborators: jest.fn(),
       getUserStatuses: jest.fn(),
-      getPushSubscriptions: jest.fn()
+      getPushSubscriptions: jest.fn(),
+      getDoc: jest.fn(),
+      getContext: jest.fn()
     }
 
     txCache = createEmptyTxCache()
@@ -321,6 +324,165 @@ describe('mention module', () => {
         })
       )
     })
+
+    it('excerpts the pushed mention markup when the mentioning message is longer than EMBEDDED_MARKUP_LIMIT', async () => {
+      // The excerpt walks the real markup tree: parse and serialize for real inside this test.
+      const longMarkup = JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x'.repeat(EMBEDDED_MARKUP_LIMIT + 1) }] }]
+      })
+
+      const tx = {
+        _class: core.class.TxCreateDoc,
+        objectId: 'msg-1',
+        objectClass: 'MsgClass',
+        createdOn: 100,
+        modifiedBy: 'user-2',
+        attributes: {
+          message: longMarkup
+        }
+      } as unknown as TxCUD<Doc>
+
+      const doc: Doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+      // The mentioning message itself carries the long markup; it is derived from ActivityMessage.
+      const txObject: Doc = { _id: 'msg-1', _class: 'MsgClass', message: longMarkup } as any as Doc
+
+      const mockAttr = {
+        name: 'message',
+        type: {
+          _class: core.class.TypeMarkup
+        }
+      } as unknown as AnyAttribute
+      const attrs = new Map()
+      attrs.set('message', mockAttr)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        if (target === activity.class.ActivityMessage && cls === 'MsgClass') return true
+        return false
+      })
+
+      // The excerpt walks the real markup tree; the mention content path keeps the stub document.
+      const real = jest.requireActual('@hcengineering/text-core')
+      mockMarkupToJSON.mockImplementation((m: string) => (m === longMarkup ? real.markupToJSON(m) : { type: 'doc' }))
+      mockExtractReferences.mockReturnValue([
+        {
+          objectId: 'employee-1',
+          objectClass: contact.class.Person,
+          parentNode: { type: 'paragraph' }
+        }
+      ])
+      mockJsonToMarkup.mockImplementation((j: any) => (j?.content != null ? real.jsonToMarkup(j) : '<mention-markup>'))
+
+      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getDocSettings.mockResolvedValue([])
+
+      mockClient.findOne.mockImplementation(async (cls: string, query: any) => {
+        if (cls === contact.mixin.Employee && query._id === 'employee-1') {
+          return { personUuid: 'user-1' as AccountUuid, employeeRef: 'emp-ref-1' }
+        }
+        return undefined
+      })
+
+      const receiver = {
+        account: 'user-1' as AccountUuid,
+        employeeRef: 'emp-ref-1',
+        space: 'user-space-1'
+      } as unknown as Receiver
+      mockCache.getReceivers.mockResolvedValue([receiver])
+
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+      mockCache.getPushSubscriptions.mockResolvedValue([])
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+
+      expect(mockPushNotification).toHaveBeenCalledTimes(1)
+      const pushArgs = mockPushNotification.mock.calls[0]
+      const pushedNotification = pushArgs[4].notification
+      expect(pushedNotification.markup).not.toBe(longMarkup)
+      const parsed = JSON.parse(pushedNotification.markup)
+      expect(parsed.content[0].content[0].text.endsWith('…')).toBe(true)
+    })
+
+    it('passes the pushed mention markup through unchanged when the mentioning message is short', async () => {
+      const shortMarkup = '<p>hello there</p>'
+
+      const tx = {
+        _class: core.class.TxCreateDoc,
+        objectId: 'msg-1',
+        objectClass: 'MsgClass',
+        createdOn: 100,
+        modifiedBy: 'user-2',
+        attributes: {
+          message: shortMarkup
+        }
+      } as unknown as TxCUD<Doc>
+
+      const doc: Doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+      const txObject: Doc = { _id: 'msg-1', _class: 'MsgClass', message: shortMarkup } as any as Doc
+
+      const mockAttr = {
+        name: 'message',
+        type: {
+          _class: core.class.TypeMarkup
+        }
+      } as unknown as AnyAttribute
+      const attrs = new Map()
+      attrs.set('message', mockAttr)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        if (target === activity.class.ActivityMessage && cls === 'MsgClass') return true
+        return false
+      })
+
+      mockMarkupToJSON.mockReturnValue({ type: 'doc' })
+      mockExtractReferences.mockReturnValue([
+        {
+          objectId: 'employee-1',
+          objectClass: contact.class.Person,
+          parentNode: { type: 'paragraph' }
+        }
+      ])
+      mockJsonToMarkup.mockReturnValue('<mention-markup>')
+
+      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getDocSettings.mockResolvedValue([])
+
+      mockClient.findOne.mockImplementation(async (cls: string, query: any) => {
+        if (cls === contact.mixin.Employee && query._id === 'employee-1') {
+          return { personUuid: 'user-1' as AccountUuid, employeeRef: 'emp-ref-1' }
+        }
+        return undefined
+      })
+
+      const receiver = {
+        account: 'user-1' as AccountUuid,
+        employeeRef: 'emp-ref-1',
+        space: 'user-space-1'
+      } as unknown as Receiver
+      mockCache.getReceivers.mockResolvedValue([receiver])
+
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+      mockCache.getPushSubscriptions.mockResolvedValue([])
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+
+      expect(mockPushNotification).toHaveBeenCalledTimes(1)
+      const pushArgs = mockPushNotification.mock.calls[0]
+      const pushedNotification = pushArgs[4].notification
+      expect(pushedNotification.markup).toBe(shortMarkup)
+    })
   })
 
   describe('createMentionsData scenarios', () => {
@@ -442,25 +604,22 @@ describe('mention module', () => {
         if (cls === activity.class.UserMentionInfo) {
           return [oldMention]
         }
-        if (cls === notification.class.DocNotifyContext) {
-          return [
-            {
-              _id: 'ctx-1',
-              _class: 'DocNotifyContext',
-              space: 'space-1',
-              latestNotifications: [{ type: 'mention', messageId: 'msg-1' }],
-              unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true, mentioned: true }]
-            }
-          ]
-        }
         return []
       })
 
-      mockClient.findOne.mockImplementation(async (cls: string) => {
+      mockCache.getDoc.mockImplementation(async (_id: string, cls: string) => {
         if (cls === contact.class.Person) {
           return { personUuid: 'user-1' as AccountUuid }
         }
         return undefined
+      })
+
+      mockCache.getContext.mockResolvedValue({
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        latestNotifications: [{ type: 'mention', messageId: 'msg-1' }],
+        unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true, mentioned: true }]
       })
 
       mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
@@ -571,6 +730,90 @@ describe('mention module', () => {
 
       await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
 
+      expect(result.updateUserMentionInfoTx).toHaveLength(1)
+      expect(result.updateUserMentionInfoTx[0].operations).toEqual({
+        content: '{"text":"new"}'
+      })
+    })
+
+    it('treats a mention with non-JSON stored content as changed without throwing', async () => {
+      const tx = {
+        _class: core.class.TxUpdateDoc,
+        objectId: 'msg-1',
+        objectClass: 'MsgClass',
+        createdOn: 100,
+        modifiedBy: 'user-2',
+        operations: {
+          message: '<content>'
+        }
+      } as unknown as TxCUD<Doc>
+
+      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+      const txObject = { _id: 'msg-1', _class: 'MsgClass' } as any as Doc
+
+      const mockAttr = {
+        name: 'message',
+        type: { _class: core.class.TypeMarkup }
+      } as unknown as AnyAttribute
+      const attrs = new Map()
+      attrs.set('message', mockAttr)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        if (target === activity.class.ActivityMessage && cls === 'MsgClass') return true
+        return false
+      })
+
+      mockExtractReferences.mockReturnValue([
+        {
+          objectId: 'employee-1',
+          objectClass: contact.class.Person,
+          parentNode: { type: 'paragraph' }
+        }
+      ])
+      mockJsonToMarkup.mockReturnValue('{"text":"new"}')
+
+      // Legacy/truncated stored content that is not valid JSON
+      const existingMention = {
+        _id: 'mention-info-1',
+        _class: activity.class.UserMentionInfo,
+        space: 'space-1',
+        user: 'employee-1' as Ref<Person>,
+        attachedTo: 'msg-1',
+        content: 'not-json'
+      } as unknown as UserMentionInfo
+      mockClient.findAll.mockImplementation(async (cls: string) => {
+        if (cls === activity.class.UserMentionInfo) {
+          return [existingMention]
+        }
+        return []
+      })
+
+      mockClient.findOne.mockImplementation(async (cls: string, query: any) => {
+        if (cls === contact.mixin.Employee && query._id === 'employee-1') {
+          return { personUuid: 'user-1' as AccountUuid, employeeRef: 'employee-1' }
+        }
+        return undefined
+      })
+
+      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getDocSettings.mockResolvedValue([])
+
+      const receiver = { account: 'user-1' as AccountUuid, employeeRef: 'employee-1' } as any as Receiver
+      mockCache.getReceivers.mockResolvedValue([receiver])
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+
+      await expect(
+        handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+      ).resolves.not.toThrow()
+
+      // Non-JSON content never matches, so areEqualJson (mocked text-core helper) is not consulted
+      expect(mockAreEqualJson).not.toHaveBeenCalled()
       expect(result.updateUserMentionInfoTx).toHaveLength(1)
       expect(result.updateUserMentionInfoTx[0].operations).toEqual({
         content: '{"text":"new"}'

@@ -207,7 +207,7 @@ describe('misc utils', () => {
         otherStableField: 'stable-value'
       } as unknown as ActivityMessage
 
-      const notificationMsg = toNotificationMessage(activityMsg)
+      const notificationMsg = toNotificationMessage(activityMsg, { isDerived: () => false } as any)
 
       expect(notificationMsg).toEqual({
         _id: 'msg-1',

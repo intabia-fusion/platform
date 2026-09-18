@@ -14,11 +14,7 @@
 -->
 <script lang="ts">
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import notification, {
-    DocNotifyContext,
-    NotificationClient,
-    getUnreadMessageCount
-  } from '@hcengineering/notification'
+  import notification, { NotificationClient, UnreadContext } from '@hcengineering/notification'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Readable } from 'svelte/store'
@@ -37,23 +33,16 @@
   $: lastReply = object.lastReply ?? new Date().getTime()
 
   let inboxClient: NotificationClient
-  let contextByDocStore: Readable<Map<Ref<Doc>, DocNotifyContext | null>> | undefined
+  let unreadByDoc: Readable<Map<Ref<Doc>, UnreadContext>> | undefined
 
   onMount(async () => {
     const getClientFn = await getResource(notification.function.GetNotificationsClient)
 
     inboxClient = getClientFn()
-    contextByDocStore = inboxClient.contextByDoc
-
-    void inboxClient.loadContextByDoc(object._id)
+    unreadByDoc = inboxClient.unreadByDoc
   })
 
-  $: hasNew = hasNewReplies($contextByDocStore?.get(object._id) ?? undefined)
-
-  function hasNewReplies (context?: DocNotifyContext): boolean {
-    if (context == null) return false
-    return getUnreadMessageCount(context) > 0
-  }
+  $: hasNew = ($unreadByDoc?.get(object._id)?.unreadMessagesCount ?? 0) > 0
 
   const replyProvider = client.getModel().findAllSync(activity.class.ReplyProvider, {})[0]
 

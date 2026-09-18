@@ -22,6 +22,7 @@ import {
   type FindOptions,
   FindResult,
   Hierarchy,
+  Markup,
   MeasureContext,
   ModelDb,
   Ref,
@@ -84,6 +85,8 @@ export interface Client {
 
 export interface MentionResult {
   notification: Omit<MentionNotification, 'id' | 'type' | 'createdOn' | 'createdBy'>
+  // Whole message for the email template; `notification.markup` is the excerpt kept in the context.
+  markup: Markup
   intl: Partial<NotificationIntl>
   context: DocNotifyContext | undefined
   receiver: Receiver

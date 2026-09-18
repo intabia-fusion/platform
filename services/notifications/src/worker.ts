@@ -137,29 +137,36 @@ export class Worker {
     this.pendingStatusUpdates.clear()
     const timestamp = Date.now()
 
+    const pending: { user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean }[] = []
     for (const [user, statuses] of updates) {
       for (const [wsUuid, hasUnread] of Object.entries(statuses)) {
-        try {
-          await this.userEventProducer.send(
+        pending.push({ user, wsUuid: wsUuid as WorkspaceUuid, hasUnread })
+      }
+    }
+
+    const batchSize = 25
+    while (pending.length > 0) {
+      const batch = pending.splice(0, batchSize)
+      const results = await Promise.allSettled(
+        batch.map(({ user, wsUuid, hasUnread }) =>
+          this.userEventProducer.send(
             this.ctx,
-            wsUuid as WorkspaceUuid,
+            wsUuid,
             [userEvents.notifyStatusChanged({ user, hasUnread, timestamp })],
             user
           )
-        } catch (e) {
-          this.ctx.error('Failed to send notifyStatusChanged to queue', { e, user, wsUuid, hasUnread })
+        )
+      )
+      results.forEach((res, index) => {
+        if (res.status !== 'rejected') return
+        const { user, wsUuid, hasUnread } = batch[index]
+        this.ctx.error('Failed to send notifyStatusChanged to queue', { e: res.reason, user, wsUuid, hasUnread })
 
-          let currentMap = this.pendingStatusUpdates.get(user)
-          if (currentMap === undefined) {
-            currentMap = {}
-            this.pendingStatusUpdates.set(user, currentMap)
-          }
-
-          if (currentMap[wsUuid as WorkspaceUuid] === undefined) {
-            currentMap[wsUuid as WorkspaceUuid] = hasUnread
-          }
-        }
-      }
+        // Keep the failed flag for the next tick unless a newer one arrived meanwhile.
+        const currentMap = this.pendingStatusUpdates.get(user) ?? {}
+        this.pendingStatusUpdates.set(user, currentMap)
+        currentMap[wsUuid] ??= hasUnread
+      })
     }
   }
 

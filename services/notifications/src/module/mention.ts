@@ -29,6 +29,8 @@ import core, {
 } from '@hcengineering/core'
 import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
 import notification, {
+  excerptMarkup,
+  isOversizedMarkup,
   DocNotifyContext,
   MentionNotification,
   NotificationIntl,
@@ -110,8 +112,17 @@ export async function handleMention (
       intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver.language),
       notifyProviders: mention.notifyProviders,
       objectDisplayData,
-      pushSubscriptions
+      pushSubscriptions,
+      markup: mention.markup
     })
+  }
+}
+
+function areEqualMarkup (a: Markup, b: Markup): boolean {
+  try {
+    return areEqualJson(JSON.parse(a), JSON.parse(b))
+  } catch {
+    return a === b
   }
 }
 
@@ -150,13 +161,13 @@ async function createMentionsData (
     const ref = references[refIndex]
 
     if (refIndex !== -1) {
-      const alreadyProcessed = areEqualJson(JSON.parse(mention.content), JSON.parse(ref.markup))
+      const alreadyProcessed = areEqualMarkup(mention.content, ref.markup)
 
       if (alreadyProcessed) {
         references.splice(refIndex, 1)
       }
     } else {
-      await removeMentions(client, mention, tx, result, doc._id)
+      await removeMentions(client, cache, mention, tx, result, doc._id)
     }
   }
 
@@ -228,12 +239,15 @@ async function getMentionResult (
   reference: MentionRef
 ): Promise<MentionResult> {
   const attachments = message != null ? await getAttachments(message, client) : []
+  const markup = message?.message ?? reference.markup
   return {
     notification: {
-      markup: message?.message ?? reference.markup,
+      markup: capMarkup(markup),
+      truncated: isOversizedMarkup(markup) || undefined,
       messageId: message?._id,
       attachments
     },
+    markup,
     intl: {
       titleIntl: activity.string.MentionedYouIn
     },
@@ -352,6 +366,7 @@ function getMentionRefsData (
 
 async function removeMentions (
   client: Client,
+  cache: Cache,
   mention: UserMentionInfo,
   tx: TxCUD<Doc>,
   result: Result,
@@ -365,11 +380,12 @@ async function removeMentions (
     ? (tx.objectId as Ref<ActivityMessage>)
     : undefined
 
-  const person = await client.findOne(contact.class.Person, { _id: mention.user })
+  const person = await cache.getDoc(mention.user, contact.class.Person)
   if (person?.personUuid == null) return
 
   const account = person.personUuid as AccountUuid
-  const contexts = await client.findAll(notification.class.DocNotifyContext, { user: account, objectId })
+  const context = await cache.getContext(objectId, account)
+  const contexts = context != null ? [context] : []
 
   for (const context of contexts) {
     const op: DocumentUpdate<DocNotifyContext> = {}
@@ -468,4 +484,8 @@ async function getMentionIntl (
       ...mention.intl.intlParamsNotLocalized
     }
   }
+}
+
+function capMarkup (markup: Markup): Markup {
+  return isOversizedMarkup(markup) ? excerptMarkup(markup) : markup
 }

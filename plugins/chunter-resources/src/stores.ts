@@ -15,7 +15,7 @@
 
 import { readable, writable } from 'svelte/store'
 import chunter, { type ChatMessage } from '@hcengineering/chunter'
-import { type Markup, type Ref } from '@hcengineering/core'
+import { getCurrentAccount, type Markup, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
 import { type ActivityMessage } from '@hcengineering/activity'
 import { createQuery, onClient } from '@hcengineering/presentation'
@@ -39,9 +39,10 @@ function startUnreadThreadsQuery (): void {
   unreadThreadsQuery.query(
     notification.class.DocNotifyContext,
     {
+      user: getCurrentAccount().uuid,
       objectClass: chunter.class.ChatMessage,
       unreadCount: { $gt: 0 },
-      unreadMessages: { $size: { $gt: 0 } }
+      unreadMessagesCount: { $gt: 0 }
     },
     (res) => {
       setUnreadThreads?.(res.total ?? 0)

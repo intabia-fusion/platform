@@ -22,11 +22,9 @@
   export let kind: 'table' | 'block' = 'block'
 
   const inboxClient = NotificationClientImpl.getClient()
-  const contextByDocStore = inboxClient.contextByDoc
+  const unreadByDoc = inboxClient.unreadByDoc
 
-  $: void inboxClient.loadContextByDoc(value._id)
-  $: notifyContext = $contextByDocStore.get(value._id)
-  $: hasNotification = (notifyContext?.unreadCount ?? 0) > 0
+  $: hasNotification = ($unreadByDoc.get(value._id)?.unreadCount ?? 0) > 0
 </script>
 
 {#if hasNotification}

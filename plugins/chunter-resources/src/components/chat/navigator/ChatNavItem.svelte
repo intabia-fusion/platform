@@ -13,11 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, {
-    DocNotificationSetting,
-    DocNotifyContext,
-    getUnreadMessageCount
-  } from '@hcengineering/notification'
+  import notification, { DocNotificationSetting, UnreadContext } from '@hcengineering/notification'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
@@ -36,7 +32,7 @@
   import { leaveChannel, toggleChannelIcon } from '../../../utils'
   import ChannelIcon from '../../ChannelIcon.svelte'
 
-  export let context: DocNotifyContext | undefined
+  export let unread: UnreadContext | undefined
   export let item: ChatNavItemModel
   export let isSelected = false
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
@@ -53,7 +49,7 @@
 
   $: void notificationClient.loadDocSetting(item.object._id)
   $: setting = $settingByDocStore.get(item.object._id) ?? undefined
-  $: count = context != null ? getUnreadMessageCount(context) : 0
+  $: count = unread?.unreadMessagesCount ?? 0
 
   $: void getActions(item.object, item.chat).then((res) => {
     actions = res
@@ -205,7 +201,7 @@
   {isSelected}
   iconProps={{ ...item.iconProps, value: item.object }}
   {count}
-  countColor={(context?.unreadCount ?? 0) === 0 ? 'gray' : 'red'}
+  countColor={(unread?.unreadCount ?? 0) === 0 ? 'gray' : 'red'}
   title={item.title}
   subTitle={item.subTitle}
   identifier={item.identifier}

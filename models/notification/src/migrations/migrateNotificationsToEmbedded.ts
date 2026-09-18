@@ -30,7 +30,12 @@ import notification, {
   type CommonNotification,
   type ContextNotification,
   type DocNotifyContext,
-  type NotificationMessage,
+  collapseUnreadMessages,
+  compactNotificationMessage,
+  excerptMarkup,
+  getUnreadMessagesTotal,
+  isOversizedChatMessage,
+  isOversizedMarkup,
   type UnreadMention,
   type UnreadMessage,
   type UnreadReaction
@@ -391,11 +396,6 @@ async function getDocIdentifierFallback (
   return undefined
 }
 
-function toNotificationMessage (message: ActivityMessage): NotificationMessage {
-  const { editedOn, replies, repliedPersons, reactions, isPinned, lastReply, ...notificationMessage } = message
-  return notificationMessage
-}
-
 function getTimestamp (doc: InboxNotification): number {
   return doc.createdOn ?? doc.modifiedOn ?? 0
 }
@@ -428,7 +428,8 @@ async function mapToContextNotification (
       type: 'message',
       id: activityNotif.attachedTo,
       messageId: activityNotif.attachedTo,
-      message: toNotificationMessage(message),
+      message: compactNotificationMessage(message, client.hierarchy),
+      truncated: isOversizedChatMessage(message) || undefined,
       attachments,
       createdBy,
       createdOn
@@ -446,7 +447,8 @@ async function mapToContextNotification (
       type: 'reaction',
       id: reactNotif.ref,
       messageId: reactNotif.attachedTo,
-      message: toNotificationMessage(message),
+      message: compactNotificationMessage(message, client.hierarchy),
+      truncated: isOversizedChatMessage(message) || undefined,
       attachments,
       reaction,
       createdBy,
@@ -468,7 +470,8 @@ async function mapToContextNotification (
       type: 'mention',
       id: inboxNotification._id,
       messageId: message?._id,
-      markup,
+      markup: isOversizedMarkup(markup) ? excerptMarkup(markup) : markup,
+      truncated: isOversizedMarkup(markup) || undefined,
       attachments,
       createdBy,
       createdOn
@@ -717,7 +720,7 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
 
           if (client.hierarchy.isDerived(targetDoc._class, activity.class.ActivityMessage)) {
             const message = targetDoc as ActivityMessage
-            object = toNotificationMessage(message)
+            object = compactNotificationMessage(message, client.hierarchy)
 
             const parentId = message.attachedTo
             const parentClass = message.attachedToClass
@@ -790,8 +793,10 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
             latestNotifications.push(t)
           }
 
+          // Every migrated message entry is `notified`, so the message part of unreadCount is the total.
+          const unreadMessagesCount = getUnreadMessagesTotal(unreadMessages)
           const unreadCount =
-            unreadMessages.length + unreadMentions.length + unreadCommons.length + unreadReactions.length
+            unreadMessagesCount + unreadMentions.length + unreadCommons.length + unreadReactions.length
           const lastNotify =
             inboxNotifications.length > 0 ? getTimestamp(inboxNotifications[inboxNotifications.length - 1]) : 0
 
@@ -801,9 +806,11 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
               latestNotifications,
               unreadReactions,
               unreadMentions,
-              unreadMessages,
+              // Kept flat up to the limit, older entries folded into chunks like the service does on append.
+              unreadMessages: collapseUnreadMessages(unreadMessages),
               unreadCommons,
               unreadCount,
+              unreadMessagesCount,
               lastNotify,
               objectTitle,
               objectIdentifier,

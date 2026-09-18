@@ -56,7 +56,7 @@
     notification.class.DocNotifyContext,
     {
       user: account.uuid,
-      latestNotifications: { $size: { $gt: 0 } },
+      lastNotify: { $gt: 0 },
       ...(filter === 'unread' ? { unreadCount: { $gt: 0 } } : {})
     },
     (res) => {

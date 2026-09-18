@@ -595,6 +595,75 @@ describe('pushNotification', () => {
     })
   })
 
+  describe('redelivered tx (already recorded notification)', () => {
+    it('skips pushing when the notification id is already in context.latestNotifications', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+      }
+
+      const context: DocNotifyContext = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        user: 'user-1',
+        lastNotify: 50,
+        latestNotifications: [{ id: 'notify-1', type: 'common' }]
+      } as any
+
+      mockClient.ctx.info = jest.fn()
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(mockClient.ctx.info).toHaveBeenCalledWith(
+        'notification already recorded, skipping',
+        expect.objectContaining({ contextId: 'ctx-1', notificationId: 'notify-1' })
+      )
+      expect(result.updateContextTx).toHaveLength(0)
+      expect(result.queueMessages).toHaveLength(0)
+      expect(result.createAppPushNotificationTx).toHaveLength(0)
+      expect(mockClient.txFactory.createTxUpdateDoc).not.toHaveBeenCalled()
+    })
+
+    it('skips pushing when the unreadMessage id is already in context.unreadMessages', async () => {
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 10, notified: true }
+
+      const context: DocNotifyContext = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        user: 'user-1',
+        lastNotify: 50,
+        latestNotifications: [],
+        unreadMessages: [{ id: 'msg-1', createdOn: 10 }]
+      } as any
+
+      mockClient.ctx.info = jest.fn()
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(mockClient.ctx.info).toHaveBeenCalledWith(
+        'notification already recorded, skipping',
+        expect.objectContaining({ contextId: 'ctx-1', notificationId: 'notify-1' })
+      )
+      expect(result.updateContextTx).toHaveLength(0)
+      expect(result.queueMessages).toHaveLength(0)
+      expect(result.createAppPushNotificationTx).toHaveLength(0)
+    })
+
+    it('never skips when the context is new (context undefined)', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+      }
+      mockClient.ctx.info = jest.fn()
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.ctx.info).not.toHaveBeenCalled()
+      expect(result.queueMessages).toHaveLength(1)
+      expect(mockGetCreateContextTx).toHaveBeenCalled()
+    })
+  })
+
   describe('alreadyRead checks (no unread payload)', () => {
     it('does not increment unreadCount but creates queue messages and updates latestNotifications', async () => {
       mockData.notifyProviders = {

@@ -13,19 +13,36 @@
 // limitations under the License.
 //
 
-import { AccountUuid, type Class, Doc, Ref, Space, Timestamp, TxCreateDoc, TxFactory } from '@hcengineering/core'
+import {
+  AccountUuid,
+  type Class,
+  Doc,
+  Ref,
+  Space,
+  Timestamp,
+  TxCreateDoc,
+  TxFactory,
+  TxProcessor
+} from '@hcengineering/core'
 import { ActivityMessage, Reaction } from '@hcengineering/activity'
 import notification, {
+  CommonNotification,
   ContextNotification,
   DocNotificationMode,
   DocNotificationSetting,
   DocNotifyContext,
   MentionNotification,
+  UnreadMention,
+  UnreadMessage,
+  UnreadReaction,
+  getUnreadMessagesTotal,
+  isUnreadMessageChunk,
   isUnreadMessageId
 } from '@hcengineering/notification'
 import { Receiver } from '@hcengineering/server-notification'
 
-import { ObjectDisplayData, Result } from '../types'
+import { Client, ObjectDisplayData, Result } from '../types'
+import type Cache from '../cache'
 
 // ---- Notification presence checks ----
 
@@ -48,19 +65,53 @@ export function hasReactionNotification (context: DocNotifyContext, reactionId: 
 // ---- Unread state checks ----
 
 export function hasUnreadReactionByMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadReactions.some((it) => it.attachedTo === messageId)
+  return (context.unreadReactions ?? []).some((it) => it.attachedTo === messageId)
 }
 
 export function hasUnreadReaction (context: DocNotifyContext, reactionId: Ref<Reaction>): boolean {
-  return context.unreadReactions.some((it) => it.id === reactionId)
+  return (context.unreadReactions ?? []).some((it) => it.id === reactionId)
 }
 
 export function hasUnreadMentionByMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadMessages.some((it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true)
+  return (context.unreadMessages ?? []).some(
+    (it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true
+  )
 }
 
-export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadMessages.some((it) => isUnreadMessageId(it) && String(it.id) === messageId)
+// A message is counted either by its own entry or, once collapsed, by a chunk covering its time.
+export function hasUnreadMessage (
+  context: DocNotifyContext,
+  message: Ref<ActivityMessage> | { id: Ref<ActivityMessage>, createdOn: Timestamp }
+): boolean {
+  const messageId = typeof message === 'string' ? message : message.id
+  const createdOn = typeof message === 'string' ? undefined : message.createdOn
+  return (context.unreadMessages ?? []).some((it) =>
+    isUnreadMessageId(it)
+      ? String(it.id) === messageId
+      : createdOn !== undefined && isUnreadMessageChunk(it) && it.from <= createdOn && createdOn <= it.to
+  )
+}
+
+export function isNotificationRecorded (
+  context: DocNotifyContext,
+  data: {
+    notification: ContextNotification
+    unreadMessage?: UnreadMessage
+    unreadReaction?: UnreadReaction
+    unreadMention?: UnreadMention
+    unreadCommon?: CommonNotification
+  }
+): boolean {
+  const { notification, unreadMessage, unreadReaction, unreadMention, unreadCommon } = data
+  if ((context.latestNotifications ?? []).some((it) => it.id === notification.id)) return true
+  if (notification.type === 'mention' && notification.messageId != null) {
+    if (hasMentionNotificationByMessage(context, notification.messageId)) return true
+  }
+  if (unreadMessage != null && isUnreadMessageId(unreadMessage) && hasUnreadMessage(context, unreadMessage)) return true
+  if (unreadReaction != null && hasUnreadReaction(context, unreadReaction.id)) return true
+  if (unreadMention != null && (context.unreadMentions ?? []).some((it) => it.id === unreadMention.id)) return true
+  if (unreadCommon != null && (context.unreadCommons ?? []).some((it) => it.id === unreadCommon.id)) return true
+  return false
 }
 
 // ---- Notification queries ----
@@ -126,6 +177,7 @@ export function getCreateContextTx (
       unreadCommons: [],
       unreadMessages: [],
       unreadCount: 0,
+      unreadMessagesCount: 0,
       lastNotify: 0
     },
     _id
@@ -133,4 +185,42 @@ export function getCreateContextTx (
 
   result.createContextTx.push(tx)
   return tx
+}
+
+// ---- Derived counters ----
+
+/**
+ * Keeps `unreadMessagesCount` equal to the total of `unreadMessages` on every context write.
+ * Called once per result, so every path that touches the array (push, collapse, read, remove) is
+ * covered, and the value is absolute, so a redelivered tx cannot skew it.
+ */
+export async function setUnreadMessagesCounts (result: Result, cache: Cache, client: Client): Promise<void> {
+  for (const tx of result.createContextTx) {
+    tx.attributes.unreadMessagesCount = getUnreadMessagesTotal(tx.attributes.unreadMessages ?? [])
+  }
+
+  const working = new Map<Ref<DocNotifyContext>, DocNotifyContext>()
+  for (const tx of result.updateContextTx) {
+    const ops = tx.operations
+    const touched =
+      ops.unreadMessages !== undefined ||
+      ops.$push?.unreadMessages !== undefined ||
+      ops.$pull?.unreadMessages !== undefined
+    if (!touched) continue
+
+    let context = working.get(tx.objectId)
+    if (context === undefined) {
+      const current =
+        cache.getCachedContext(tx.objectId) ??
+        (await client.findOne(notification.class.DocNotifyContext, { _id: tx.objectId }))
+      if (current === undefined) {
+        client.ctx.warn('context not found, unreadMessagesCount left as is', { context: tx.objectId })
+        continue
+      }
+      context = { ...current, unreadMessages: [...(current.unreadMessages ?? [])] }
+      working.set(tx.objectId, context)
+    }
+    TxProcessor.updateDoc2Doc(context, tx)
+    ops.unreadMessagesCount = getUnreadMessagesTotal(context.unreadMessages ?? [])
+  }
 }

@@ -27,7 +27,8 @@ import notificationPlugin, {
   getNotificationMessageId,
   translateNotification,
   NotificationTemplate,
-  QueueNotificationMessage
+  QueueNotificationMessage,
+  appendAndCollapseUnreadMessages
 } from '@hcengineering/notification'
 import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
@@ -39,7 +40,7 @@ import { markupToHtml } from '@hcengineering/text-html'
 import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
 import config from '../config'
 import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
-import { appendAndCollapseUnreadMessages } from '../utils/collapse'
+import { isNotificationRecorded } from '../utils/context'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -59,6 +60,10 @@ interface CreateNotificationData {
 
   receiver: Receiver
   pushSubscriptions: PushSubscription[]
+
+  // Source markup for the email template. The embedded `notification` carries an excerpt of a
+  // long message; the queue and the letter get the whole text.
+  markup?: Markup
 }
 
 export async function pushNotification (
@@ -83,6 +88,16 @@ export async function pushNotification (
     objectDisplayData,
     pushSubscriptions
   } = data
+
+  if (context != null && isNotificationRecorded(context, data)) {
+    // Redelivered tx: the first pass already wrote this notification into the context.
+    client.ctx.info('notification already recorded, skipping', {
+      contextId: context._id,
+      notificationId: notification.id,
+      type: notification.type
+    })
+    return
+  }
 
   const isUnread = unreadMessage != null || unreadReaction != null || unreadMention != null || unreadCommon != null
 
@@ -111,7 +126,7 @@ export async function pushNotification (
     objectClass,
     objectSpace,
     createdOn: data.notification.createdOn,
-    template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url)
+    template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
   })
   if (context != null) {
     const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
@@ -235,7 +250,8 @@ async function getTemplate (
   providers: NotifyProviders,
   intl: NotificationIntl,
   receiver: Receiver,
-  inboxUrl: string
+  inboxUrl: string,
+  markup?: Markup
 ): Promise<QueueNotificationMessage['template']> {
   const types = (providers[notificationPlugin.providers.InboxNotificationProvider] ?? []).filter(
     (it) => it.templates != null
@@ -252,7 +268,14 @@ async function getTemplate (
   }
 
   try {
-    const content = await translateTemplate(client, type, intl, receiver, inboxUrl, notification)
+    const content = await translateTemplate(
+      client,
+      type,
+      intl,
+      receiver,
+      inboxUrl,
+      markup ?? getNotificationMarkup(notification)
+    )
     if (content != null) {
       const subject = content.subject
       const text = content.text
@@ -280,7 +303,7 @@ async function translateTemplate (
   intl: NotificationIntl,
   receiver: Receiver,
   inboxUrl: string,
-  notification: ContextNotification
+  markup: Markup | undefined
 ): Promise<QueueNotificationMessage['template']> {
   const templates: NotificationTemplate = type?.templates ?? {
     text: notificationPlugin.emailTemplate.GeneratedNotificationText,
@@ -317,7 +340,6 @@ async function translateTemplate (
   let bodyText: string
   let bodyHtml: string
 
-  const markup = getNotificationMarkup(notification)
   if (markup != null && markup !== '' && !isEmptyMarkup(markup)) {
     const textMessage = markupToText(markup)
     let htmlMessage = textMessage

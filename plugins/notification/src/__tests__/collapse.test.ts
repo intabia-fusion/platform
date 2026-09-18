@@ -15,14 +15,8 @@
 
 import { Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
-import {
-  isUnreadMessageChunk,
-  isUnreadMessageId,
-  UnreadMessage,
-  UnreadMessageChunk,
-  UnreadMessageId
-} from '@hcengineering/notification'
-
+import { UnreadMessage, UnreadMessageChunk, UnreadMessageId } from '../types'
+import { isUnreadMessageChunk, isUnreadMessageId } from '../utils'
 import { collapseUnreadMessages, appendAndCollapseUnreadMessages, getChunkSize } from '../collapse'
 
 describe('Unread Message Chunking Logic', () => {
@@ -105,10 +99,10 @@ describe('Unread Message Chunking Logic', () => {
 
     // Check that mentions are preserved in their original order
     const msg10 = result.find(
-      (it) => isUnreadMessageId(it) && it.id === ('msg-10' as Ref<ActivityMessage>)
+      (it): it is UnreadMessageId => isUnreadMessageId(it) && it.id === ('msg-10' as Ref<ActivityMessage>)
     ) as UnreadMessageId
     const msg50 = result.find(
-      (it) => isUnreadMessageId(it) && it.id === ('msg-50' as Ref<ActivityMessage>)
+      (it): it is UnreadMessageId => isUnreadMessageId(it) && it.id === ('msg-50' as Ref<ActivityMessage>)
     ) as UnreadMessageId
 
     expect(msg10).toBeDefined()
