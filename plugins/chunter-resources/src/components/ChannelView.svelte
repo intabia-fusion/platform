@@ -27,7 +27,6 @@
     panelSeparators,
     Separator
   } from '@hcengineering/ui'
-  import { DocNotifyContext } from '@hcengineering/notification'
   import { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import { Channel, ObjectChatPanel } from '@hcengineering/chunter'
@@ -50,7 +49,6 @@
   import type { ChatSearchFilters, SearchResultRow } from '../search/types'
 
   export let object: Doc
-  export let context: DocNotifyContext | undefined
   export let autofocus = true
   export let embedded: boolean = false
   export let readonly: boolean = false
@@ -278,7 +276,7 @@
               </div>
             </div>
           {:else}
-            <ChannelComponent readonly={_readonly} {context} {object} autofocus={autofocus && !searchOpened} />
+            <ChannelComponent readonly={_readonly} {object} autofocus={autofocus && !searchOpened} />
           {/if}
         {/key}
         {#if searchOpened}

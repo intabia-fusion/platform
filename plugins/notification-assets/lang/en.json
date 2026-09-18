@@ -8,7 +8,6 @@
     "PlatformNotification": "in platform",
     "Track": "Track",
     "DontTrack": "Don't track",
-    "BrowserNotification": "in browser",
     "Remove": "Delete notification",
     "RemoveAll": "Delete all notifications",
     "MarkAllAsRead": "Mark all notifications as read",
@@ -42,6 +41,10 @@
     "MarkReadAll": "Mark all as read",
     "RemoveAllConfirmationTitle": "Remove all notifications?",
     "RemoveAllConfirmationMessage": "Are you sure you want to remove all notifications? This operation cannot be undone.",
+    "UnsubscribeConfirmationTitle": "Unsubscribe from {name}?",
+    "UnsubscribeConfirmationMessage": "You will be removed from the collaborators of {name} and will no longer receive notifications about it.",
+    "UnsubscribeSpaceConfirmationTitle": "Leave {name}?",
+    "UnsubscribeSpaceConfirmationMessage": "You will be removed from the members of {name}, lose access to it and will no longer receive notifications about it.",
     "StarDocument": "Star document",
     "UnstarDocument": "Unstar document",
     "Unsubscribe": "Unsubscribe",
@@ -86,20 +89,23 @@
     "JustMentions": "Just mentions",
     "Mute": "Mute",
     "Appearance": "Appearance",
-    "ShowChatBadge": "Show chat app badge"
+    "ShowChatBadge": "Show chat app badge",
+    "ReactedToYourMessage": "Reacted to your message",
+    "Clearing": "Clearing...",
+    "Reading": "Reading..."
   },
-    "emailTemplate": {
-      "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
-      "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>",
-      "MeAddedInCollaboratorsNotificationSubject": "You were added as a collaborator to {doc}",
-      "MeRemovedFromCollaboratorsNotificationText": "{sender} removed you as a collaborator from {doc}.",
-      "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>",
-      "MeRemovedFromCollaboratorsNotificationSubject": "You were removed as a collaborator from {doc}",
-      "MentionNotificationText": "{sender} mentioned you in {doc}: {message}",
-      "MentionNotificationHtml": "<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>",
-      "MentionNotificationSubject": "You were mentioned in {doc}",
-      "GeneratedNotificationText": "{body}",
-      "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
-      "GeneratedNotificationSubject": "{doc} updated"
-    }
+  "emailTemplate": {
+    "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
+    "MeAddedInCollaboratorsNotificationHtml": "<p><b>{sender}</b> added you as a collaborator to {doc}.</p><p>{link}</p>",
+    "MeAddedInCollaboratorsNotificationSubject": "You were added as a collaborator to {doc}",
+    "MeRemovedFromCollaboratorsNotificationText": "{sender} removed you as a collaborator from {doc}.",
+    "MeRemovedFromCollaboratorsNotificationHtml": "<p><b>{sender}</b> removed you as a collaborator from {doc}.</p><p>{link}</p>",
+    "MeRemovedFromCollaboratorsNotificationSubject": "You were removed as a collaborator from {doc}",
+    "MentionNotificationText": "{sender} mentioned you in {doc}: {message}",
+    "MentionNotificationHtml": "<p><b>{sender}</b> mentioned you in {doc}:</p> <p>{message}</p> <p>{link}</p>",
+    "MentionNotificationSubject": "You were mentioned in {doc}",
+    "GeneratedNotificationText": "{body}",
+    "GeneratedNotificationHtml": "<p>{body}</p><p>{link}</p>",
+    "GeneratedNotificationSubject": "{doc} updated"
+  }
 }

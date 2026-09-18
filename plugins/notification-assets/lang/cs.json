@@ -8,7 +8,6 @@
     "PlatformNotification": "na platformě",
     "Track": "Sledovat",
     "DontTrack": "Nesledovat",
-    "BrowserNotification": "v prohlížeči",
     "Remove": "Smazat oznámení",
     "RemoveAll": "Smazat všechna oznámení",
     "MarkAllAsRead": "Označit všechna oznámení jako přečtená",
@@ -42,6 +41,10 @@
     "MarkReadAll": "Označit vše jako přečtené",
     "RemoveAllConfirmationTitle": "Archivovat všechna oznámení?",
     "RemoveAllConfirmationMessage": "Opravdu chcete archivovat všechna oznámení? Tato operace je nevratná.",
+    "UnsubscribeConfirmationTitle": "Odhlásit se z {name}?",
+    "UnsubscribeConfirmationMessage": "Budete odebráni ze spolupracovníků {name} a nebudete již dostávat oznámení.",
+    "UnsubscribeSpaceConfirmationTitle": "Opustit {name}?",
+    "UnsubscribeSpaceConfirmationMessage": "Budete odebráni z členů {name}, ztratíte přístup a nebudete již dostávat oznámení.",
     "StarDocument": "Přidat dokument do oblíbených",
     "UnstarDocument": "Odebrat dokument z oblíbených",
     "Unsubscribe": "Odhlásit odběr",
@@ -86,7 +89,10 @@
     "Appearance": "Vzhled",
     "ShowChatBadge": "Zobrazovat značku chatu",
     "HasNewNotifications": "You have new notifications",
-    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "ReactedToYourMessage": "reagoval na vaši zprávu",
+    "Clearing": "Vymazávam...",
+    "Reading": "Čítam..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

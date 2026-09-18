@@ -8,7 +8,6 @@
     "PlatformNotification": "en la plataforma",
     "Track": "Seguir",
     "DontTrack": "No seguir",
-    "BrowserNotification": "en el navegador",
     "Remove": "Eliminar notificación",
     "RemoveAll": "Eliminar todas las notificaciones",
     "MarkAllAsRead": "Marcar todas las notificaciones como leídas",
@@ -42,6 +41,10 @@
     "MarkReadAll": "Marcar todo como leído",
     "RemoveAllConfirmationTitle": "¿Archivar todas las notificaciones?",
     "RemoveAllConfirmationMessage": "¿Estás seguro de que quieres archivar todas las notificaciones? Esta operación no se puede deshacer.",
+    "UnsubscribeConfirmationTitle": "¿Cancelar la suscripción a {name}?",
+    "UnsubscribeConfirmationMessage": "Se te eliminará de los colaboradores de {name} y dejarás de recibir notificaciones.",
+    "UnsubscribeSpaceConfirmationTitle": "¿Salir de {name}?",
+    "UnsubscribeSpaceConfirmationMessage": "Se te eliminará de los miembros de {name}, perderás el acceso y dejarás de recibir notificaciones.",
     "StarDocument": "Marcar documento",
     "UnstarDocument": "Desmarcar documento",
     "Unsubscribe": "Cancelar suscripción",
@@ -86,7 +89,10 @@
     "Appearance": "Apariencia",
     "ShowChatBadge": "Mostrar insignia de chat",
     "HasNewNotifications": "You have new notifications",
-    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "ReactedToYourMessage": "reaccionó a tu mensaje",
+    "Clearing": "Borrando...",
+    "Reading": "Leyendo..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

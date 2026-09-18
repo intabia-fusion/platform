@@ -13,11 +13,13 @@
 // limitations under the License.
 //
 
-import { writable } from 'svelte/store'
-import { type ChatMessage } from '@hcengineering/chunter'
-import { type Doc, type Markup, type Ref } from '@hcengineering/core'
+import { readable, writable } from 'svelte/store'
+import chunter, { type ChatMessage } from '@hcengineering/chunter'
+import { getCurrentAccount, type Doc, type Markup, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
 import { type ActivityMessage } from '@hcengineering/activity'
+import { createQuery, onClient } from '@hcengineering/presentation'
+import notification from '@hcengineering/notification'
 
 export const translatingMessagesStore = writable<Set<Ref<ChatMessage>>>(new Set())
 export const translatedMessagesStore = writable<Map<Ref<ChatMessage>, Markup>>(new Map())
@@ -51,6 +53,40 @@ export function stopSummarizing (doc: Ref<Doc>): void {
 export const threadMessagesStore = writable<ActivityMessage | undefined>(undefined)
 
 export const replyingToMessageStore = writable<ChatMessage | undefined>(undefined)
+
+const unreadThreadsQuery = createQuery(true)
+
+let setUnreadThreads: ((value: number) => void) | undefined
+
+function startUnreadThreadsQuery (): void {
+  if (setUnreadThreads === undefined) return
+
+  unreadThreadsQuery.query(
+    notification.class.DocNotifyContext,
+    {
+      user: getCurrentAccount().uuid,
+      objectClass: chunter.class.ChatMessage,
+      unreadCount: { $gt: 0 },
+      unreadMessagesCount: { $gt: 0 }
+    },
+    (res) => {
+      setUnreadThreads?.(res.total ?? 0)
+    },
+    { limit: 1, total: true }
+  )
+}
+
+onClient(startUnreadThreadsQuery)
+
+export const unreadThreadsCountStore = readable<number>(0, (set) => {
+  setUnreadThreads = set
+  startUnreadThreadsQuery()
+
+  return () => {
+    setUnreadThreads = undefined
+    unreadThreadsQuery.unsubscribe()
+  }
+})
 
 languageStore.subscribe(() => {
   translatedMessagesStore.set(new Map())

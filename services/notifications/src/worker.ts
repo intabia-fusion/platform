@@ -35,8 +35,6 @@ import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
-import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
-import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import {
   loadBrandingMap,
   type PlatformQueue,
@@ -46,12 +44,18 @@ import {
   userEvents
 } from '@hcengineering/server-core'
 import { getAccountClient } from '@hcengineering/server-client'
-import { PersonSpace } from '@hcengineering/contact'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import platform from '@hcengineering/platform'
+import notification, {
+  TxNotificationType,
+  QueueNotificationMessage,
+  DocNotifyContext
+} from '@hcengineering/notification'
+import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import { PersonSpace } from '@hcengineering/contact'
 
 import Workspace from './workspace'
-import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
+import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils/utils'
 import config from './config'
 
 export class Worker {
@@ -72,6 +76,7 @@ export class Worker {
 
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
+  private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
 
   private aiBotAccountUuid?: AccountUuid
 
@@ -90,6 +95,8 @@ export class Worker {
       QueueTopic.Users
     )
 
+    this.producer = queue.getProducer<QueueNotificationMessage>(ctx, QueueTopic.UserNotifications)
+
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel
       .findAllSync(notification.class.TxNotificationType, {})
@@ -97,6 +104,9 @@ export class Worker {
     this.triggerClasses = [
       notification.class.ReadState,
       activity.class.ActivityMessage,
+      activity.class.Reaction,
+      notification.class.ReadNotificationAction,
+      notification.class.CreateNotificationAction,
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
 
@@ -127,29 +137,36 @@ export class Worker {
     this.pendingStatusUpdates.clear()
     const timestamp = Date.now()
 
+    const pending: { user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean }[] = []
     for (const [user, statuses] of updates) {
       for (const [wsUuid, hasUnread] of Object.entries(statuses)) {
-        try {
-          await this.userEventProducer.send(
+        pending.push({ user, wsUuid: wsUuid as WorkspaceUuid, hasUnread })
+      }
+    }
+
+    const batchSize = 25
+    while (pending.length > 0) {
+      const batch = pending.splice(0, batchSize)
+      const results = await Promise.allSettled(
+        batch.map(({ user, wsUuid, hasUnread }) =>
+          this.userEventProducer.send(
             this.ctx,
-            wsUuid as WorkspaceUuid,
+            wsUuid,
             [userEvents.notifyStatusChanged({ user, hasUnread, timestamp })],
             user
           )
-        } catch (e) {
-          this.ctx.error('Failed to send notifyStatusChanged to queue', { e, user, wsUuid, hasUnread })
+        )
+      )
+      results.forEach((res, index) => {
+        if (res.status !== 'rejected') return
+        const { user, wsUuid, hasUnread } = batch[index]
+        this.ctx.error('Failed to send notifyStatusChanged to queue', { e: res.reason, user, wsUuid, hasUnread })
 
-          let currentMap = this.pendingStatusUpdates.get(user)
-          if (currentMap === undefined) {
-            currentMap = {}
-            this.pendingStatusUpdates.set(user, currentMap)
-          }
-
-          if (currentMap[wsUuid as WorkspaceUuid] === undefined) {
-            currentMap[wsUuid as WorkspaceUuid] = hasUnread
-          }
-        }
-      }
+        // Keep the failed flag for the next tick unless a newer one arrived meanwhile.
+        const currentMap = this.pendingStatusUpdates.get(user) ?? {}
+        this.pendingStatusUpdates.set(user, currentMap)
+        currentMap[wsUuid] ??= hasUnread
+      })
     }
   }
 
@@ -172,8 +189,8 @@ export class Worker {
 
     const tx = _tx as TxCUD<Doc>
 
-    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) {
-      await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<InboxNotification>)
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
+      await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<DocNotifyContext>)
     }
 
     const exists = this.workspaces.get(ws)
@@ -197,18 +214,18 @@ export class Worker {
   private async getTxUser (
     ctx: MeasureContext,
     wsUuid: WorkspaceUuid,
-    _tx: TxCUD<InboxNotification>
+    _tx: TxCUD<DocNotifyContext>
   ): Promise<AccountUuid | undefined> {
     if (_tx._class === core.class.TxCreateDoc) {
-      return TxProcessor.createDoc2Doc(_tx as TxCreateDoc<InboxNotification>).user
+      return TxProcessor.createDoc2Doc(_tx as TxCreateDoc<DocNotifyContext>).user
     } else if (_tx._class === core.class.TxRemoveDoc) {
-      const tx = _tx as TxRemoveDoc<InboxNotification>
+      const tx = _tx as TxRemoveDoc<DocNotifyContext>
       const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
       const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
       return space?.account
     } else if (_tx._class === core.class.TxUpdateDoc) {
-      const tx = _tx as TxUpdateDoc<InboxNotification>
-      if (tx.operations.isViewed == null) return undefined
+      const tx = _tx as TxUpdateDoc<DocNotifyContext>
+      if (tx.operations.unreadCount == null && tx.operations.$inc?.unreadCount == null) return undefined
       const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
       const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
       return space?.account
@@ -219,35 +236,38 @@ export class Worker {
   private async updateUserNotifyStatus (
     ctx: MeasureContext,
     wsUuid: WorkspaceUuid,
-    _tx: TxCUD<InboxNotification>
+    _tx: TxCUD<DocNotifyContext>
   ): Promise<void> {
     const user = await this.getTxUser(ctx, wsUuid, _tx)
     if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
 
     if (_tx._class === core.class.TxCreateDoc) {
-      const tx = _tx as TxCreateDoc<InboxNotification>
-      const doc = TxProcessor.createDoc2Doc(tx)
-
-      if (doc.isViewed || doc.archived) return
-
       this.scheduleStatusUpdate(user, wsUuid, true)
     } else {
+      let unread = false
       if (_tx._class === core.class.TxUpdateDoc) {
-        const tx = _tx as TxUpdateDoc<InboxNotification>
-        if (tx.operations.isViewed == null) return
+        const tx = _tx as TxUpdateDoc<DocNotifyContext>
+        if (tx.operations.unreadCount == null && tx.operations.$inc?.unreadCount == null) return
+        if (tx.operations.unreadCount != null && tx.operations.unreadCount > 0) {
+          unread = true
+        }
+        if (tx.operations.$inc?.unreadCount != null && tx.operations.$inc.unreadCount > 0) {
+          unread = true
+        }
       }
 
       const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
       if (wsClient == null) return
 
-      const unread = await wsClient.client.findOne(
-        notification.class.InboxNotification,
-        { user, isViewed: false, archived: false },
-        { limit: 1 }
-      )
-      const notify = unread != null
+      unread =
+        unread ||
+        (await wsClient.client.findOne(
+          notification.class.DocNotifyContext,
+          { user, unreadCount: { $gt: 0 } },
+          { limit: 1, projection: { _id: 1, unreadCount: 1, user: 1 } }
+        )) != null
 
-      this.scheduleStatusUpdate(user, wsUuid, notify)
+      this.scheduleStatusUpdate(user, wsUuid, unread)
     }
   }
 
@@ -271,10 +291,19 @@ export class Worker {
       try {
         const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
         const wsInfo = await getWorkspaceInfo(token)
-        if (wsInfo === undefined) return undefined
+        if (wsInfo === undefined) {
+          ctx.warn('Workspace info not found, dropping workspace client initialization', { wsUuid: ws })
+          return undefined
+        }
 
         const endpoint = getTransactorApiEndpoint(wsInfo)
-        if (endpoint === undefined) return undefined
+        if (endpoint === undefined) {
+          ctx.warn('Transactor API endpoint not found in workspace info, dropping workspace client initialization', {
+            wsUuid: ws,
+            wsInfo
+          })
+          return undefined
+        }
 
         const client = createRestClient(endpoint, ws, token)
 
@@ -292,7 +321,8 @@ export class Worker {
           this.storage,
           client,
           branding,
-          this.txTypes
+          this.txTypes,
+          this.producer
         )
 
         this.workspaces.set(ws, workspace)
@@ -302,6 +332,7 @@ export class Worker {
           ctx.error('Workspace is forbidden, dropping workspace initialization', { e, wsUuid: ws })
           return undefined
         }
+        ctx.error('Failed to initialize workspace client', { e, wsUuid: ws })
         throw e
       } finally {
         this.pendingWorkspaces.delete(ws)
@@ -316,6 +347,6 @@ export class Worker {
     clearInterval(this.clearInterval)
     clearInterval(this.flushInterval)
     this.pendingStatusUpdates.clear()
-    await Promise.allSettled([this.userEventProducer.close()])
+    await Promise.allSettled([this.userEventProducer.close(), this.producer.close()])
   }
 }

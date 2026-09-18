@@ -21,14 +21,14 @@ import {
   type AccountUuid,
   type DocumentQuery
 } from '@hcengineering/core'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type UnreadContext } from '@hcengineering/notification'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
 import { type Chat } from '@hcengineering/chunter'
 
 export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 
 export interface SortFnOptions {
-  contextByDoc: Map<Ref<Doc>, DocNotifyContext>
+  unreadByDoc: Map<Ref<Doc>, UnreadContext>
   userStatusByAccount: Map<AccountUuid, UserStatus>
 }
 

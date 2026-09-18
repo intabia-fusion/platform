@@ -43,6 +43,7 @@ import {
   getSchema,
   getSchemaAndFields,
   customIndexes,
+  declaredSchemas,
   type Schema,
   type SchemaAndFields,
   translateDomain
@@ -98,7 +99,7 @@ export async function createTables (
 
   const domainsToLoad = mapped.filter((it) => tables.has(it))
   if (domainsToLoad.length > 0) {
-    await ctx.with('load-schemas', {}, () => getTableSchema(client, domainsToLoad))
+    await ctx.with('load-schemas', {}, () => getTableSchema(ctx, client, domainsToLoad))
   }
   const domainsToCreate: string[] = []
   for (const domain of mapped) {
@@ -120,10 +121,16 @@ export async function createTables (
   }
 }
 
-async function getTableSchema (client: postgres.Sql | postgres.TransactionSql, domains: string[]): Promise<void> {
+// An existing table is described by its real columns: a declared column the table lacks lives in
+// jsonb `data` without an index. It is reported, as that usually means a migration did not land.
+async function getTableSchema (
+  ctx: MeasureContext,
+  client: postgres.Sql | postgres.TransactionSql,
+  domains: string[]
+): Promise<void> {
   const res = await client.unsafe(`SELECT column_name::name, data_type::text, is_nullable::text, table_name::name
             FROM information_schema.columns
-            WHERE table_name IN (${domains.map((it) => `'${it}'`).join(', ')}) and table_schema = 'public'::name  
+            WHERE table_name IN (${domains.map((it) => `'${it}'`).join(', ')}) and table_schema = 'public'::name
             ORDER BY table_name::name, ordinal_position::int ASC;`)
 
   const schemas: Record<string, Schema> = {}
@@ -142,6 +149,16 @@ async function getTableSchema (client: postgres.Sql | postgres.TransactionSql, d
     }
   }
   for (const [domain, schema] of Object.entries(schemas)) {
+    const declared = declaredSchemas[domain]
+    if (declared !== undefined) {
+      const missing = Object.keys(declared).filter((key) => schema[key] === undefined)
+      if (missing.length > 0) {
+        ctx.error('table is missing declared columns, their values are stored in data jsonb without indexes', {
+          domain,
+          missing
+        })
+      }
+    }
     addSchema(domain, schema)
   }
 }
@@ -152,6 +169,8 @@ function parseDataType (type: string): DataType {
       return 'text'
     case 'bigint':
       return 'bigint'
+    case 'integer':
+      return 'integer'
     case 'boolean':
       return 'bool'
     case 'ARRAY':
@@ -167,7 +186,9 @@ async function createTable (client: postgres.Sql | postgres.TransactionSql, doma
   const fields: string[] = []
   for (const key in schema) {
     const val = schema[key]
-    fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
+    fields.push(
+      `"${key}" ${val.type}${val.check != null ? ` CHECK (${val.check})` : ''} ${val.notNull ? 'NOT NULL' : ''}`
+    )
   }
   const colums = fields.join(', ')
   await client.unsafe(`CREATE TABLE IF NOT EXISTS ${domain} (
@@ -184,7 +205,9 @@ async function createTable (client: postgres.Sql | postgres.TransactionSql, doma
           CREATE INDEX IF NOT EXISTS ${domain}_${key}__index ON ${domain} ${getIndex(val)} ("${key}")
         `)
     }
-    fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
+    fields.push(
+      `"${key}" ${val.type}${val.check != null ? ` CHECK (${val.check})` : ''} ${val.notNull ? 'NOT NULL' : ''}`
+    )
   }
 
   if (indexes !== undefined) {
@@ -245,6 +268,7 @@ export function convertDoc<T extends Doc> (
         // We missing required field, and we need to add a dummy value for it.
         // Null value is not allowed
         switch (_type.type) {
+          case 'integer':
           case 'bigint':
             extractedFields[key] = 0
             break
@@ -282,6 +306,9 @@ export function inferType (val: any): string {
   }
   if (Array.isArray(val)) {
     const type = inferType(val[0] ?? val[1])
+    if (type === '::jsonb') {
+      return '::jsonb'
+    }
     if (type !== '') {
       return type + '[]'
     }
@@ -480,7 +507,7 @@ function assignColumns (doc: DBDoc, target: Record<string, any>, schema: Schema)
     } else {
       const field = schema[key]
       if (field !== undefined) {
-        if (field.type === 'bigint') {
+        if (field.type === 'bigint' || field.type === 'integer') {
           value = Number.parseInt(value)
         } else if (field.type === 'text[]' && typeof value === 'string') {
           value = decodeArray(value)

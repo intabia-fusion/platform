@@ -14,36 +14,23 @@
 -->
 <script lang="ts">
   import { WorkbenchTab } from '@hcengineering/workbench'
-  import {
-    getNotificationsCount,
-    InboxNotificationsClientImpl,
-    isActivityNotification,
-    isMentionNotification,
-    NotifyMarker
-  } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { InboxNotification } from '@hcengineering/notification'
-  import { onDestroy } from 'svelte'
   import { concatLink, Doc, Ref } from '@hcengineering/core'
   import view, { decodeObjectURI } from '@hcengineering/view'
   import { chunterId } from '@hcengineering/chunter'
   import { parseLinkId } from '@hcengineering/view-resources'
   import { parseLocation } from '@hcengineering/ui'
 
-  import chunter from '../plugin'
-
   export let tab: WorkbenchTab
 
-  const client = getClient()
-  const hierarchy = client.getHierarchy()
-  const notificationClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = notificationClient.contextByDoc
+  const inboxClient = NotificationClientImpl.getClient()
+  const unreadByDoc = inboxClient.unreadByDoc
 
   let objectId: Ref<Doc> | undefined = undefined
-  let notifications: InboxNotification[] = []
   let count = 0
 
-  $: context = objectId !== undefined ? $contextByDocStore.get(objectId) : undefined
+  $: count = objectId !== undefined ? ($unreadByDoc.get(objectId)?.unreadMessagesCount ?? 0) : 0
 
   $: void updateObjectId(tab)
 
@@ -52,7 +39,7 @@
     const url = new URL(concatLink(base, tab.location))
     const loc = parseLocation(url)
 
-    if (loc.path[2] !== chunterId) {
+    if (loc.path[2] !== chunterId || loc.path[3] == null || loc.path[3] === '') {
       objectId = undefined
       return
     }
@@ -62,25 +49,6 @@
     const [id, _class] = decodeObjectURI(loc.path[3])
     objectId = await parseLinkId(providers, id, _class)
   }
-
-  const unsubscribe = notificationClient.inboxNotificationsByContext.subscribe((res) => {
-    if (context === undefined) {
-      count = 0
-      return
-    }
-
-    notifications = (res.get(context._id) ?? []).filter((n) => {
-      if (isActivityNotification(n)) return true
-
-      return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
-    })
-  })
-
-  $: count = getNotificationsCount(context, notifications)
-
-  onDestroy(() => {
-    unsubscribe()
-  })
 </script>
 
 {#if count > 0}

@@ -30,8 +30,8 @@
   import { TreeNode } from '@hcengineering/view-resources'
   import { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
+  import { type UnreadContext } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'
@@ -80,24 +80,11 @@
     }
   }
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const notifyContextByDocStore = inboxClient.contextByDoc
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  const inboxClient = NotificationClientImpl.getClient()
+  const unreadByDoc = inboxClient.unreadByDoc
 
-  function isChanged (
-    space: Space,
-    notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): boolean {
-    const context = notifyContextByDoc.get(space._id)
-
-    if (context === undefined) {
-      return false
-    }
-
-    const inboxNotifications = inboxNotificationsByContext.get(context._id) ?? []
-
-    return inboxNotifications.filter(({ isViewed }) => !isViewed).length > 0
+  function isChanged (space: Space, unread: Map<Ref<Doc>, UnreadContext>): boolean {
+    return (unread.get(space._id)?.unreadCount ?? 0) > 0
   }
 
   function getParentActions (): Action[] {
@@ -164,7 +151,7 @@
       {currentSpecial}
       {currentFragment}
       {deselect}
-      isChanged={isChanged(space, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
+      isChanged={isChanged(space, $unreadByDoc)}
       spaceActions={[starSpace]}
     />
   {/each}
@@ -178,7 +165,7 @@
         {currentSpecial}
         {currentFragment}
         {deselect}
-        isChanged={isChanged(visibleSpace, $notifyContextByDocStore, $inboxNotificationsByContextStore)}
+        isChanged={isChanged(visibleSpace, $unreadByDoc)}
         spaceActions={[starSpace]}
         forciblyСollapsed
       />

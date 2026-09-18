@@ -126,9 +126,30 @@
     objectsByClass = objectsByClass
   }
 
-  $: loadObjects(model, pinned, search)
+  const searchDebounceMs = 300
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
+  let debouncedSearch = search
+
+  $: if (search === '' || search === debouncedSearch) {
+    // Empty search (e.g. cleared, or the initial value) and no-op changes apply immediately.
+    if (searchDebounceTimer != null) {
+      clearTimeout(searchDebounceTimer)
+      searchDebounceTimer = undefined
+    }
+    debouncedSearch = search
+  } else {
+    if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = setTimeout(() => {
+      searchDebounceTimer = undefined
+      debouncedSearch = search
+    }, searchDebounceMs)
+  }
+
+  $: loadObjects(model, pinned, debouncedSearch)
 
   onDestroy(() => {
+    if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
+
     for (const { query } of objectsQueryByClass.values()) {
       query.unsubscribe()
     }
@@ -232,28 +253,28 @@
 </script>
 
 {#each sections as section (section.id)}
-  <ChatNavSection
-    id={section.id}
-    _class={section._class ?? core.class.Doc}
-    objects={section.objects}
-    objectId={object?._id}
-    header={section.label}
-    actions={model.actionsFn()}
-    createAction={model.createAction}
-    sortFn={model.sortFn}
-    showEmpty={model.showEmpty}
-    itemsCount={section.count}
-    {pinned}
-    sortByScore={search !== ''}
-    on:show-more={() => {
-      if (section._class !== undefined) {
-        const query = objectsQueryByClass.get(section._class)
-        if (query?.limit != null) {
-          query.limit += 50
-          loadObjects(model, pinned, search)
+  {#if section.objects.length > 0 || model.showEmpty}
+    <ChatNavSection
+      id={section.id}
+      _class={section._class ?? core.class.Doc}
+      objects={section.objects}
+      objectId={object?._id}
+      header={section.label}
+      actions={model.actionsFn()}
+      createAction={model.createAction}
+      sortFn={model.sortFn}
+      showEmpty={model.showEmpty}
+      itemsCount={section.count}
+      on:show-more={() => {
+        if (section._class !== undefined) {
+          const query = objectsQueryByClass.get(section._class)
+          if (query?.limit != null) {
+            query.limit += 50
+            loadObjects(model, pinned, search)
+          }
         }
-      }
-    }}
-    on:select
-  />
+      }}
+      on:select
+    />
+  {/if}
 {/each}

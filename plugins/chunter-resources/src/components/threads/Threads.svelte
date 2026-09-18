@@ -16,7 +16,7 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
-  import core, { Collaborator, getCurrentAccount, notEmpty, SortingOrder, WithLookup } from '@hcengineering/core'
+  import core, { Collaborator, getCurrentAccount, notEmpty, Ref, SortingOrder, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Lazy, Loading, Scroller } from '@hcengineering/ui'
 
@@ -39,40 +39,63 @@
 
   let collabs: WithLookup<Collaborator>[] = []
 
+  const messageClasses = h.getDescendants(activity.class.ActivityMessage)
+  const me = getCurrentAccount().uuid
+
   const query = createQuery()
-  query.query(
-    core.class.Collaborator,
-    {
-      collaborator: getCurrentAccount().uuid,
-      attachedToClass: { $in: h.getDescendants(activity.class.ActivityMessage) },
-      '$lookup.attachedTo.replies': { $gte: 1 }
-    },
+
+  const repliesQuery = createQuery()
+  let threadIds: Ref<ActivityMessage>[] | undefined
+
+  repliesQuery.query(
+    activity.class.ActivityMessage,
+    { replies: { $gte: 1 } },
     (res) => {
-      if (res.length <= limit) {
-        hasNextPage = false
-      } else {
-        res.pop()
-      }
-      collabs = res
-      threads = collabs.map((it) => it?.$lookup?.attachedTo as ActivityMessage).filter(notEmpty)
-      isLoading = false
+      threadIds = res.map((it) => it._id)
     },
-    {
-      lookup: {
-        attachedTo: [
-          activity.class.ActivityMessage,
-          {
-            _id: {
-              attachments: attachment.class.Attachment,
-              reactions: activity.class.Reaction
-            }
-          }
-        ]
-      },
-      sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
-      limit: limit + 1
-    }
+    { projection: { _id: 1 }, sort: { modifiedOn: SortingOrder.Descending }, limit: limit + 1 }
   )
+
+  $: loadThreads(limit, threadIds)
+
+  function loadThreads (limit: number, threadIds: Ref<ActivityMessage>[] | undefined): void {
+    if (threadIds === undefined) return
+
+    query.query(
+      core.class.Collaborator,
+      {
+        collaborator: me,
+        attachedToClass: { $in: messageClasses },
+        attachedTo: { $in: threadIds }
+      },
+      (res) => {
+        if (res.length <= limit) {
+          hasNextPage = false
+        } else {
+          hasNextPage = true
+          res.pop()
+        }
+        collabs = res
+        threads = collabs.map((it) => it?.$lookup?.attachedTo as ActivityMessage).filter(notEmpty)
+        isLoading = false
+      },
+      {
+        lookup: {
+          attachedTo: [
+            activity.class.ActivityMessage,
+            {
+              _id: {
+                attachments: attachment.class.Attachment,
+                reactions: activity.class.Reaction
+              }
+            }
+          ]
+        },
+        sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
+        limit: limit + 1
+      }
+    )
+  }
 
   function handleScroll (): void {
     if (divScroll != null && hasNextPage && threads.length === limit) {

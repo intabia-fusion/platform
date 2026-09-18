@@ -86,7 +86,8 @@ function isPolicyReject (err: any): boolean {
 
 // Parse the server error body and throw the real Status when present, so callers see the
 // concrete reason (e.g. PlanLimitExceeded) instead of a generic "Forbidden". Marks 403s as
-// non-retryable.
+// non-retryable. The HTTP status travels as `httpStatus` (`status` is the platform Status), so a
+// caller can tell a gateway 502/503 from a rejected request.
 async function throwResponseError (response: Response): Promise<never> {
   let status: Status | undefined
   try {
@@ -96,6 +97,7 @@ async function throwResponseError (response: Response): Promise<never> {
     // body not JSON; fall back to status text
   }
   const err = new PlatformError(status ?? unknownError(response.statusText))
+  ;(err as any).httpStatus = response.status
   if (response.status === 403) {
     ;(err as any).policyReject = true
   }

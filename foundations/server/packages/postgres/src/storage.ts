@@ -38,7 +38,7 @@ import core, {
   getClassCollaborators,
   groupByArray,
   type Hierarchy,
-  isOperator,
+  hasOperator,
   type Iterator,
   type Lookup,
   type MeasureContext,
@@ -91,6 +91,7 @@ import type postgres from 'postgres'
 import {
   getDocFieldsByDomains,
   getSchema,
+  type DataType,
   getSchemaAndFields,
   type Schema,
   type SchemaAndFields,
@@ -116,6 +117,7 @@ import {
   simpleEscape,
   toWithLookup
 } from './utils'
+
 async function * createCursorGenerator (
   client: postgres.Sql,
   sql: string,
@@ -222,6 +224,21 @@ const DB_QUERY_DURATION = 'db.query.duration'
 // with ICU support and folds case for all scripts, unlike the database LC_CTYPE
 // which only handles ASCII when the database was created with LC_CTYPE=C.
 const SEARCH_COLLATION = '"und-x-icu"'
+
+// Declared type of a real column of the domain, undefined for jsonb fields and dotted paths.
+function columnTypeOf (domain: string, key: string): DataType | undefined {
+  return key.includes('.') ? undefined : getSchema(domain)[key]?.type
+}
+
+// A number binds as numeric, which makes Postgres cast an integer or bigint column to numeric and
+// lose its btree index (`"unreadCount" > ?::numeric` skipped the partial unread index). Bind the
+// parameter in the column's own type instead.
+function castForColumn (valType: string, columnType: DataType | undefined): string {
+  if (columnType !== 'bigint' && columnType !== 'integer') return valType
+  if (valType === '::numeric') return '::' + columnType
+  if (valType === '::numeric[]') return '::' + columnType + '[]'
+  return valType
+}
 
 abstract class PostgresAdapterBase implements DbAdapter {
   protected readonly _helper: DBCollectionHelper
@@ -368,7 +385,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     for (const key in query) {
       const value = query[key]
       const tkey = this.transformKey(domain, core.class.Doc, key, false)
-      const translated = this.translateQueryValue(vars, tkey, value, 'common')
+      const translated = this.translateQueryValue(vars, tkey, value, 'common', columnTypeOf(domain, key))
       if (translated !== undefined) {
         res.push(translated)
       }
@@ -386,7 +403,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if ((operations as any).$set !== undefined) {
       ;(operations as any) = { ...(operations as any).$set }
     }
-    const isOps = isOperator(operations)
+    const isOps = hasOperator(operations)
     if ((operations as any)['%hash%'] == null) {
       ;(operations as any)['%hash%'] = this.curHash()
     }
@@ -1092,7 +1109,16 @@ abstract class PostgresAdapterBase implements DbAdapter {
       if (typeof val === 'number') {
         const key = escape(_key)
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
-          res.push(`(${this.getKey(_class, baseDomain, key, joins)})::numeric ${val === 1 ? 'ASC' : 'DESC'}`)
+          // A jsonb value is text and needs the cast; a real bigint/integer column does not, and
+          // the cast would keep Postgres from ordering by the column's btree index.
+          const columnType = columnTypeOf(baseDomain, key)
+          const numericColumn = columnType === 'bigint' || columnType === 'integer'
+          const dir = val === 1 ? 'ASC' : 'DESC'
+          res.push(
+            numericColumn
+              ? `${this.getKey(_class, baseDomain, key, joins)} ${dir}`
+              : `(${this.getKey(_class, baseDomain, key, joins)})::numeric ${dir}`
+          )
         } else if (attr?.type._class === core.class.TypeIdentifier) {
           res.push(
             `regexp_replace(COALESCE(${this.getKey(_class, baseDomain, key, joins)}, ''), '-?\\d+$', '') ${val === 1 ? 'ASC' : 'DESC'}`
@@ -1149,7 +1175,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       const key = escape(_key)
       const valueType = this.getValueType(_class, key)
       const tkey = this.getKey(_class, baseDomain, key, joins, valueType === 'dataArray')
-      const translated = this.translateQueryValue(vars, tkey, value, valueType)
+      const translated = this.translateQueryValue(vars, tkey, value, valueType, columnTypeOf(baseDomain, key))
       if (translated !== undefined) {
         res.push(translated)
       }
@@ -1314,7 +1340,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
     return key
   }
 
-  private translateQueryValue (vars: ValuesVariables, tkey: string, value: any, type: ValueType): string | undefined {
+  private translateQueryValue (
+    vars: ValuesVariables,
+    tkey: string,
+    value: any,
+    type: ValueType,
+    columnType?: DataType
+  ): string | undefined {
     const tkeyData = tkey.includes('data') && (tkey.includes('->') || tkey.includes('#>>'))
     if (tkeyData && (Array.isArray(value) || (typeof value !== 'object' && typeof value !== 'string'))) {
       value = Array.isArray(value)
@@ -1336,7 +1368,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           val = Array.isArray(val) ? val.map((it) => (it == null ? null : `${it}`)) : val == null ? null : `${val}`
         }
 
-        let valType = inferType(val)
+        let valType = castForColumn(inferType(val), columnType)
         const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
         if (arrowCount > 0 && valType === '::text') {
           valType = ''
@@ -1460,7 +1492,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       return res.length === 0 ? undefined : res.join(' AND ')
     }
 
-    let valType = inferType(value)
+    let valType = castForColumn(inferType(value), columnType)
     const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
     if (arrowCount > 0 && valType === '::text') {
       valType = ''
@@ -1883,7 +1915,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
           break
         case core.class.TxUpdateDoc: {
           const updateTx = tx as TxUpdateDoc<Doc>
-          if (isOperator(updateTx.operations)) {
+          if (hasOperator(updateTx.operations)) {
             ops.updates.push(updateTx)
           } else {
             const current = updateGroup.get(updateTx.objectId)
@@ -2010,7 +2042,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
     txes: TxUpdateDoc<Doc>[],
     schemaFields: SchemaAndFields
   ): Promise<TxResult[]> {
-    const byOperator = groupByArray(txes, (it) => isOperator(it.operations))
+    const byOperator = groupByArray(txes, (it) => hasOperator(it.operations))
 
     const withOperator = byOperator.get(true)
     const withoutOperator = byOperator.get(false)
