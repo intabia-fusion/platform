@@ -983,11 +983,12 @@ export async function performWorkspaceOperation (
         update.lastProcessingTime = Date.now() - processingTimeoutMs // To not wait for next step
         break
       case 'delete':
-        if (workspace.status.mode !== 'active') {
-          throw new PlatformError(unknownError('Delete allowed only for active workspaces'))
+        if (workspace.status.mode !== 'active' && workspace.status.mode !== 'archived') {
+          throw new PlatformError(unknownError('Delete allowed only for active or archived workspaces'))
         }
 
         // Deferred: read-only first, then archived, and only then purged. See sweepScheduledDeletions.
+        // An already archived one just waits out the deadline.
         update.deleteOn = deletionDeadline()
         break
       case 'delete-now':
@@ -1008,14 +1009,9 @@ export async function performWorkspaceOperation (
           throw new PlatformError(unknownError('Workspace is not scheduled for deletion'))
         }
 
+        // Only the deadline goes away, the mode is left alone: cancelling means "do not delete it",
+        // not "undo the archiving". An archived workspace is brought back by unarchive.
         update.deleteOn = undefined
-        // Still read-only and alive - nothing to restore, the mark alone was holding it.
-        if (workspace.status.mode === 'archived') {
-          update.mode = 'pending-restore'
-          update.processingAttempts = 0
-          update.processingProgress = 0
-          update.lastProcessingTime = Date.now() - processingTimeoutMs // To not wait for next step
-        }
         break
       case 'archive':
         if (!isActiveMode(workspace.status.mode)) {

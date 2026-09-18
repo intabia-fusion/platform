@@ -351,7 +351,7 @@ describe('performWorkspaceOperation deletion events', () => {
     expect(statusById.w1.mode).toBe('active')
   })
 
-  test('cancel-delete on an archived workspace starts a restore', async () => {
+  test('cancel-delete on an archived workspace leaves it archived', async () => {
     const db = setup('archived', Date.now() + DAY)
 
     await performWorkspaceOperation(ctx, db, null, 'token', {
@@ -361,7 +361,20 @@ describe('performWorkspaceOperation deletion events', () => {
     })
 
     expect(statusById.w1.deleteOn).toBeUndefined()
-    expect(statusById.w1.mode).toBe('pending-restore')
+    expect(statusById.w1.mode).toBe('archived')
+  })
+
+  test('delete schedules an archived workspace as well', async () => {
+    const db = setup('archived')
+
+    await performWorkspaceOperation(ctx, db, null, 'token', {
+      workspaceId: 'w1' as WorkspaceUuid,
+      event: 'delete',
+      params: []
+    })
+
+    expect(statusById.w1.deleteOn).toBeGreaterThan(Date.now())
+    expect(statusById.w1.mode).toBe('archived')
   })
 
   test('an owner on their own workspace does not go through the admin OTP', async () => {

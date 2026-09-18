@@ -191,7 +191,7 @@
 
   async function cancelDeletion (uuid: WorkspaceUuid, token: string): Promise<void> {
     if (await cancelWorkspaceDeletion(uuid, token)) {
-      await awaitRestore(uuid)
+      workspaces = await getWorkspaces()
     }
   }
 

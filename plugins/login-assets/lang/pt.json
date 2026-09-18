@@ -118,7 +118,7 @@
     "NoFreeSeatsDescription": "Este espaço de trabalho atingiu o limite de lugares do plano. Contacte o administrador do espaço de trabalho.",
     "NoFreeSeatsForInvite": "O plano não tem lugares livres, não é possível criar uma nova ligação de convite.",
     "ScheduledForDeletion": "exclusão em {date}",
-    "WorkspaceDeletionScheduledDesc": "Este espaço de trabalho está programado para exclusão em {date}. Até lá pode ser restaurado; depois disso, ele e o backup somem.",
+    "WorkspaceDeletionScheduledDesc": "Este espaço de trabalho está programado para exclusão em {date}. Cancelar apenas anula a exclusão - se já tiver sido arquivado, restaure-o separadamente. Depois dessa data, ele e o backup somem.",
     "CancelWorkspaceDeletion": "Cancelar exclusão",
     "AccountDeletionScheduled": "Conta programada para exclusão",
     "AccountDeletionScheduledDesc": "Sua conta será excluída em {date}. Cancele a exclusão para mantê-la. Os espaços de trabalho programados continuam programados: restaure cada um separadamente.",
