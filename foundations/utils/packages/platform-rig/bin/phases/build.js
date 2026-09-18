@@ -31,6 +31,11 @@ const success = (t) => `${COLORS.green}${t}${COLORS.reset}`
 const error = (t) => `${COLORS.red}${t}${COLORS.reset}`
 const dim = (t) => `${COLORS.dim}${t}${COLORS.reset}`
 
+// tsgo occasionally dies mid-compile on a flaky host: random fault address, random package.
+// Only a Go-level crash is retried, a type error must still fail on the first pass.
+const TSC_CRASH_RETRIES = Number(process.env.TSC_CRASH_RETRIES ?? 2)
+const GO_CRASH = /fatal error:|^panic:|SIGSEGV|unexpected fault address|signal SIG/m
+
 // Esbuild is still needed for the one svelte package that compiles .svelte to JS.
 async function runEsbuildPackage (packagePath) {
   const { collectFiles, performESBuildWithSvelte, generateSvelteTypes } = require('../compile.js')
@@ -51,7 +56,7 @@ async function runEsbuildEmit (packagePath) {
   return { success: true }
 }
 
-function runTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
+function spawnTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
   return new Promise((resolve) => {
     const args = ['-p', 'tsconfig.json', '--tsBuildInfoFile', join('.build', 'build.tsbuildinfo')]
     if (emitDeclarationOnly) args.push('--emitDeclarationOnly')
@@ -66,12 +71,24 @@ function runTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
     const child = spawn(resolveTsc7(), args, { cwd: packagePath })
     child.stdout.on('data', append)
     child.stderr.on('data', append)
-    child.on('error', (err) => resolve({ success: false, error: err }))
+    child.on('error', (err) => resolve({ success: false, out: '', error: err }))
     child.on('close', (code) => {
-      if (code === 0) resolve({ success: true })
-      else resolve({ success: false, error: new Error(out.trim() || `tsc exited with ${code}`) })
+      if (code === 0) resolve({ success: true, out })
+      else resolve({ success: false, out, error: new Error(out.trim() || `tsc exited with ${code}`) })
     })
   })
+}
+
+async function runTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
+  for (let attempt = 0; ; attempt++) {
+    const result = await spawnTsc(packagePath, emitDeclarationOnly, noTypeCheck)
+    if (result.success || attempt === TSC_CRASH_RETRIES || !GO_CRASH.test(result.out)) return result
+    // The crash lands inside the incremental snapshot write, so the leftover state may be torn.
+    try {
+      require('fs').rmSync(join(packagePath, '.build', 'build.tsbuildinfo'), { force: true })
+    } catch {}
+    console.error(`    ${error('B')} ${packagePath} tsc crashed, retry ${attempt + 1}/${TSC_CRASH_RETRIES}`)
+  }
 }
 
 /**
@@ -228,4 +245,4 @@ async function runBuildPhase (graph, packageNames, concurrency, options = {}) {
   return results
 }
 
-module.exports = { runBuildPhase }
+module.exports = { runBuildPhase, GO_CRASH }
