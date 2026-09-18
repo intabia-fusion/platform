@@ -291,7 +291,7 @@ func (p *Scheduler) processTask(ctx context.Context, task *Task) error {
 			ctx,
 			task.Source,
 			&storage.Metadata{
-				"hls": map[string]any{
+				metaKeyHLS: map[string]any{
 					"source":    result.Playlist,
 					"thumbnail": result.Thumbnail,
 				},

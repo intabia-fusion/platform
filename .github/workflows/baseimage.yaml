@@ -44,12 +44,12 @@ jobs:
           fetch-depth: 1
           filter: tree:0
 
+      # No explicit version: the action reads it from "packageManager" in package.json,
+      # and pinning it here as well makes it refuse to run on the mismatch.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
       - name: Docker build
         run: |
           cd ./dev/base-image

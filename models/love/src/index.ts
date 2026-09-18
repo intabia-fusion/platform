@@ -242,7 +242,7 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
   @Index(IndexKind.FullText)
   descriptionRef!: MarkupBlobRef | null
 
-  @Prop(TypeCollaborativeDoc(), love.string.Summary)
+  @Prop(TypeCollaborativeDoc(), love.string.Summary, { editor: love.component.MeetingSummaryEditor })
   @Index(IndexKind.FullText)
   summary!: MarkupBlobRef | null
 

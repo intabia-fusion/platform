@@ -22,7 +22,17 @@ import (
 	"strings"
 )
 
-const defaultLevel = "360p"
+const (
+	level360p  = "360p"
+	level480p  = "480p"
+	level720p  = "720p"
+	level1080p = "1080p"
+	level1440p = "1440p"
+	level2160p = "2160p"
+	level4320p = "4320p"
+)
+
+const defaultLevel = level360p
 
 var prefixes = []struct {
 	pixels int
@@ -30,32 +40,32 @@ var prefixes = []struct {
 	height int
 	label  string
 }{
-	{pixels: 640 * 360, width: 640, height: 360, label: "360p"},
-	{pixels: 1280 * 720, width: 720, height: 720, label: "480p"},
-	{pixels: 1920 * 1080, width: 1920, height: 1080, label: "720p"},
-	{pixels: 2560 * 1440, width: 2560, height: 1440, label: "1080p"},
-	{pixels: 3840 * 2160, width: 3840, height: 2160, label: "1440p"},
-	{pixels: 7680 * 4320, width: 7680, height: 4320, label: "2160p"},
+	{pixels: 640 * 360, width: 640, height: 360, label: level360p},
+	{pixels: 1280 * 720, width: 720, height: 720, label: level480p},
+	{pixels: 1920 * 1080, width: 1920, height: 1080, label: level720p},
+	{pixels: 2560 * 1440, width: 2560, height: 1440, label: level1080p},
+	{pixels: 3840 * 2160, width: 3840, height: 2160, label: level1440p},
+	{pixels: 7680 * 4320, width: 7680, height: 4320, label: level2160p},
 }
 
 var bandwidthMap = map[string]int{
-	"360p":  500000,
-	"480p":  2000000,
-	"720p":  5000000,
-	"1080p": 8000000,
-	"1440p": 12000000,
-	"2160p": 25000000,
-	"4320p": 50000000,
+	level360p:  500000,
+	level480p:  2000000,
+	level720p:  5000000,
+	level1080p: 8000000,
+	level1440p: 12000000,
+	level2160p: 25000000,
+	level4320p: 50000000,
 }
 
 var resolutions = map[string]string{
-	"360p":  "640:360",
-	"480p":  "640:480",
-	"720p":  "1280:720",
-	"1080p": "1920:1080",
-	"1440p": "2560:1440",
-	"2160p": "3840:2160",
-	"4320p": "7680:4320",
+	level360p:  "640:360",
+	level480p:  "640:480",
+	level720p:  "1280:720",
+	level1080p: "1920:1080",
+	level1440p: "2560:1440",
+	level2160p: "3840:2160",
+	level4320p: "7680:4320",
 }
 
 // SubLevels returns sublevels for the resolution
@@ -97,7 +107,7 @@ func Level(resolution string) string {
 		return height < prefixes[i].height
 	})
 	if idx == len(prefixes) {
-		return "4320p"
+		return level4320p
 	}
 
 	return prefixes[idx].label

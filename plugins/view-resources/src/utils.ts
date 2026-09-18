@@ -1936,6 +1936,11 @@ export async function getDocAttrsInfo (
 }
 
 function getAttrEditor (key: KeyedAttribute, hierarchy: Hierarchy): AnyComponent | undefined {
+  // An editor named on the attribute itself wins over the one its type carries: the type-level
+  // mixin is shared by every attribute of that type, so it is the only way to give one field its
+  // own editor (e.g. a collaborative field that needs more than the standard editor).
+  if (key.attr.editor != null) return key.attr.editor
+
   const attrClass = getAttributePresenterClass(hierarchy, key.attr.type)
   const clazz = hierarchy.getClass(attrClass.attrClass)
   const mix = {

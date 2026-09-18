@@ -43,8 +43,6 @@
     "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/activity-resources": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/attachment": "workspace:^0.7.0",
-    "@hcengineering/attachment-resources": "workspace:^0.7.0",
     "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/contact-resources": "workspace:^0.7.0",
@@ -52,13 +50,13 @@
     "@hcengineering/emoji-resources": "workspace:^0.7.0",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/preference": "workspace:^0.7.0",
     "@hcengineering/presentation": "workspace:^0.7.0",
-    "@hcengineering/text": "workspace:^0.7.18",
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
     "@hcengineering/workbench": "workspace:^0.7.0",
-    "svelte": "catalog:"
+    "svelte": "catalog:",
+    "@hcengineering/attachment": "workspace:^0.7.0",
+    "@hcengineering/attachment-resources": "workspace:^0.7.0"
   }
 }

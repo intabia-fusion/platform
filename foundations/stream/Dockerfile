@@ -11,92 +11,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.26.2 AS base
+# Pinned to a published tag, like the other pods do with intabiafusion/base.
+ARG BASE_VERSION=v20260917
 
-WORKDIR /app
+# --platform=$BUILDPLATFORM keeps the toolchain native: a linux/arm64 target is
+# cross-compiled instead of running the whole Go build under QEMU. go-base
+# carries the module cache and a prewarmed stdlib for both target arches.
+FROM --platform=$BUILDPLATFORM intabiafusion/go-base:${BASE_VERSION} AS base
 
-ENV GO111MODULE=on
-ENV CGO_ENABLED=0
-ENV GOBIN=/bin
-ENV PATH=$PATH:$GOBIN
-# Pin cache paths so every RUN sees the same locations that we mount as
-# BuildKit caches below. Defaults already match, but setting them explicitly
-# avoids surprises if the base image ever changes.
-ENV GOMODCACHE=/go/pkg/mod
-ENV GOCACHE=/root/.cache/go-build
-ARG BUILDARCH=amd64
-
-# Download modules once into a dedicated layer so they can be cached
-FROM base AS deps
-
-# Copy only go.mod and go.sum to leverage Docker layer caching
-COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go mod download
-
-# Linter stage: reuse downloaded modules from deps
-FROM base AS linter
-
-# Cache the golangci-lint binary across builds via a build cache mount.
-RUN --mount=type=cache,target=/root/.cache/golangci-lint \
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
-    | sh -s -- -b $(go env GOPATH)/bin v2.5.0
-
-# Copy go.mod and go.sum for module resolution
-COPY go.mod go.sum ./
-
-# Copy full source for linting
-COPY . ./
-
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/root/.cache/golangci-lint \
-    golangci-lint run --verbose
-
-# Tester stage: run the unit tests with the race detector.
-# Runs in parallel with linter/builder — BuildKit schedules them concurrently.
-FROM base AS tester
-
-# CGO is required for -race.
-ENV CGO_ENABLED=1
-RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY go.mod go.sum ./
-COPY . ./
-
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go test -race -count=1 ./...
-
-# Builder stage: reuse modules and build caches, then compile
 FROM base AS builder
 
-# Copy go.mod and go.sum for module resolution
-COPY go.mod go.sum ./
+WORKDIR /app
+ENV CGO_ENABLED=0
 
-# Copy the rest of the source
 COPY . ./
 
-# Allow overriding target OS/ARCH at build time (optional)
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
+# The cache mounts are seeded from go-base, so a cold build still starts warm.
+RUN --mount=type=cache,target=/go/pkg/mod,from=base,source=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build,from=base,source=/root/.cache/go-build \
     set -xe && GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /go/bin/stream ./cmd/stream
 
-# Final runtime image
-FROM alpine
+# Final runtime image. stream-base already carries ffmpeg and the stream user,
+# so nothing has to run under emulation for a foreign target arch.
+FROM intabiafusion/stream-base:${BASE_VERSION}
 
-RUN set -xe && apk add --no-cache ffmpeg
-RUN apk add --no-cache ca-certificates jq bash \
-    && addgroup -g 1000 stream \
-    && adduser -u 1000 -G stream -s /bin/sh -D stream
-
-COPY --from=builder /go/bin/stream /stream
-RUN chown stream:stream /stream
+COPY --from=builder --chown=stream:stream /go/bin/stream /stream
 
 EXPOSE 1080
 USER stream

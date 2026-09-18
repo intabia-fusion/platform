@@ -1,7 +1,7 @@
 ---
 version: "2"
 run:
-  go: "1.26"
+  go: "1.27"
   timeout: 2m
   issues-exit-code: 1
   tests: true
@@ -100,6 +100,8 @@ linters:
     goconst:
       min-len: 2
       min-occurrences: 3
+      # Repeated literals are what makes a table-driven test readable.
+      ignore-tests: true
     depguard:
       rules:
         main:

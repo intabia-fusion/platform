@@ -60,10 +60,8 @@
     "@hcengineering/storage": "workspace:^0.7.17",
     "@hcengineering/server-storage": "workspace:^0.7.17",
     "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/attachment": "workspace:^0.7.0",
     "body-parser": "catalog:",
     "sharp": "catalog:",
-    "@hcengineering/minio": "workspace:^0.7.17",
     "morgan": "catalog:",
     "@hcengineering/analytics": "workspace:^0.7.17"
   }

@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/ui": "workspace:^0.7.0",
     "events": "catalog:"
   },

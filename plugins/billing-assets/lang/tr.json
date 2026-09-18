@@ -20,6 +20,7 @@
     "Documents": "Belgeler",
     "Archives": "Arşivler",
     "OtherFiles": "Diğer dosyalar",
+    "GeneratedVersions": "{size} olusturulmus dahil",
     "StorageByType": "Türüne göre depolama",
     "LargestFiles": "En büyük dosyalar",
     "LargestSpaces": "En büyük alanlar",

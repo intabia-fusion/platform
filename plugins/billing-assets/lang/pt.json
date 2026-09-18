@@ -20,6 +20,7 @@
     "Documents": "Documentos",
     "Archives": "Arquivos",
     "OtherFiles": "Outros arquivos",
+    "GeneratedVersions": "incl. {size} gerados",
     "StorageByType": "Armazenamento por tipo",
     "LargestFiles": "Maiores arquivos",
     "LargestSpaces": "Maiores espaços",

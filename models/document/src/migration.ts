@@ -139,7 +139,8 @@ async function migrateRank (client: MigrationClient): Promise<void> {
 async function renameFields (client: MigrationClient): Promise<void> {
   const documents = await client.find<Document>(DOMAIN_DOCUMENT, {
     _class: document.class.Document,
-    content: { $exists: true }
+    // Only the old schema has `name`; on Postgres `$rename` writes 'parent' into the attachedTo column.
+    name: { $exists: true }
   })
 
   for (const document of documents) {
@@ -162,7 +163,7 @@ async function renameFields (client: MigrationClient): Promise<void> {
 
   const spnapshots = await client.find<DocumentSnapshot>(DOMAIN_DOCUMENT, {
     _class: document.class.DocumentSnapshot,
-    content: { $exists: true }
+    name: { $exists: true }
   })
 
   for (const snapshot of spnapshots) {

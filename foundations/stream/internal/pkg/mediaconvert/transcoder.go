@@ -46,6 +46,9 @@ type Transcoder struct {
 	logger    *zap.Logger
 }
 
+// metaKeyHLS is the storage metadata key the players read the playlist from.
+const metaKeyHLS = "hls"
+
 // NewTranscoder creates a new instance of task transcoder
 func NewTranscoder(ctx context.Context, cfg *config.Config) *Transcoder {
 	outputDir := filepath.Join(cfg.OutputDir, transcodingDir)
@@ -231,7 +234,7 @@ func (p *Transcoder) Transcode(ctx context.Context, task *Task) (*TaskResult, er
 			ctx,
 			task.Source,
 			&storage.Metadata{
-				"hls": map[string]any{
+				metaKeyHLS: map[string]any{
 					"source":    result.Playlist,
 					"thumbnail": result.Thumbnail,
 				},

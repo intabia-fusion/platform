@@ -65,8 +65,6 @@
     "uuid": "catalog:",
     "cors": "catalog:",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-token": "workspace:^0.7.17",
-    "@hcengineering/attachment": "workspace:^0.7.0",
     "body-parser": "catalog:",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/analytics-service": "workspace:^0.7.17"

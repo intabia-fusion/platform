@@ -45,9 +45,7 @@
     "otp-generator": "catalog:",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/server-storage": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
-    "@hcengineering/server-pipeline": "workspace:^0.7.0",
     "js-yaml": "catalog:"
   }
 }

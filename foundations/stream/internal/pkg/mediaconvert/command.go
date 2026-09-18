@@ -46,6 +46,9 @@ func resolveFfmpegLogLevel(cfg *config.Config) LogLevel {
 // LogLevel is ffmpeg log level
 type LogLevel string
 
+// formatHLS is the ffmpeg muxer name passed to -f.
+const formatHLS = "hls"
+
 const (
 	// LogLevelQuiet is quiet log level
 	LogLevelQuiet LogLevel = "quiet"
@@ -115,7 +118,7 @@ func buildCommonCommand(opts *Options) []string {
 
 func buildHLSCommand(profile profile.VideoProfile, opts *Options) []string {
 	return []string{
-		"-f", "hls",
+		"-f", formatHLS,
 		"-hls_time", "5",
 		// Use HLS flags
 		// - split_by_time

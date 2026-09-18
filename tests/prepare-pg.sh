@@ -45,6 +45,10 @@ fi
 
 ../dev/test-base/run.sh "$STAND"
 
+# The media sanity tests need an mp4 and a docx; generate them with the stand images once the
+# stand is up, so nothing is downloaded and no host ffmpeg or libreoffice is needed.
+./make-media-fixtures.sh
+
 if [ "x$DO_CLEAN" == 'xtrue' ]; then
     echo 'Do docker Clean'
     docker system prune -a -f

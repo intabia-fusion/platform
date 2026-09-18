@@ -140,7 +140,7 @@ export async function handleMultipartUploadComplete (
   await bucket.completeMultipartUpload(ctx, uuid, { uploadId }, parts)
   const metadata = await datalake.create(ctx, workspace, name, uuid)
 
-  if (!isServiceToken && metadata != null) {
+  if (metadata != null) {
     // etag is content-derived — stable ref for retry dedup in billing
     limitsState?.sendStorageDelta(ctx, workspace, metadata.size, metadata.etag)
   }
