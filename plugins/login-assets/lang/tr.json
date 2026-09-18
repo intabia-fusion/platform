@@ -118,7 +118,7 @@
     "NoFreeSeatsDescription": "Bu çalışma alanı plan koltuk limitine ulaştı. Lütfen çalışma alanı yöneticisine başvurun.",
     "NoFreeSeatsForInvite": "Planda boş koltuk kalmadı, yeni bir davet bağlantısı oluşturulamıyor.",
     "ScheduledForDeletion": "{date} tarihinde silinecek",
-    "WorkspaceDeletionScheduledDesc": "Bu çalışma alanı {date} tarihinde silinmek üzere planlandı. O ana kadar geri yüklenebilir, sonrasında yedeğiyle birlikte kaybolur.",
+    "WorkspaceDeletionScheduledDesc": "Bu çalışma alanı {date} tarihinde silinmek üzere planlandı. İptal yalnızca silmeyi geri alır; o ana kadar arşivlenmişse ayrıca geri yükleyin. Bu tarihten sonra yedeğiyle birlikte kaybolur.",
     "CancelWorkspaceDeletion": "Silmeyi iptal et",
     "AccountDeletionScheduled": "Hesap silinmek üzere planlandı",
     "AccountDeletionScheduledDesc": "Hesabınız {date} tarihinde silinecek. Tutmak için silmeyi iptal edin. Planlanan çalışma alanları planlı kalır - her birini ayrı ayrı geri yükleyin.",

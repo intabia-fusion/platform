@@ -1007,7 +1007,7 @@
                             }}
                           />
                         {/if}
-                        {#if !readOnly && superAdminMode && workspace.deleteOn == null && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
+                        {#if !readOnly && superAdminMode && workspace.deleteOn == null && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))}
                           <Button
                             icon={IconStop}
                             size={'small'}
@@ -1020,7 +1020,7 @@
                             }}
                           />
                         {/if}
-                        {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
+                        {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))}
                           <Button
                             icon={IconStop}
                             size={'small'}

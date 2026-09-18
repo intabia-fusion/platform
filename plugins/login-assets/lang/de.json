@@ -118,7 +118,7 @@
     "NoFreeSeatsDescription": "Dieser Arbeitsbereich hat das Platzlimit des Tarifs erreicht. Bitte wenden Sie sich an den Administrator des Arbeitsbereichs.",
     "NoFreeSeatsForInvite": "Der Tarif hat keine freien Plätze mehr, ein neuer Einladungslink kann nicht erstellt werden.",
     "ScheduledForDeletion": "Löschung am {date}",
-    "WorkspaceDeletionScheduledDesc": "Dieser Arbeitsbereich ist zur Löschung am {date} vorgemerkt. Bis dahin kann er wiederhergestellt werden, danach sind er und sein Backup verschwunden.",
+    "WorkspaceDeletionScheduledDesc": "Dieser Arbeitsbereich ist zur Löschung am {date} vorgemerkt. Ein Abbruch hebt nur die Löschung auf - wurde er bis dahin schon archiviert, stellen Sie ihn separat wieder her. Nach diesem Datum sind er und sein Backup verschwunden.",
     "CancelWorkspaceDeletion": "Löschung abbrechen",
     "AccountDeletionScheduled": "Konto zur Löschung vorgemerkt",
     "AccountDeletionScheduledDesc": "Ihr Konto wird am {date} gelöscht. Brechen Sie die Löschung ab, um es zu behalten. Vorgemerkte Arbeitsbereiche bleiben vorgemerkt - stellen Sie jeden einzeln wieder her.",

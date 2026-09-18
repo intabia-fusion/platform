@@ -118,7 +118,7 @@
     "NoFreeSeatsDescription": "Este espacio de trabajo alcanzó el límite de plazas del plan. Póngase en contacto con el administrador del espacio de trabajo.",
     "NoFreeSeatsForInvite": "El plan no tiene plazas libres, no se puede crear un nuevo enlace de invitación.",
     "ScheduledForDeletion": "eliminación el {date}",
-    "WorkspaceDeletionScheduledDesc": "Este espacio de trabajo está programado para eliminarse el {date}. Hasta entonces se puede restaurar; después, él y su copia de seguridad desaparecen.",
+    "WorkspaceDeletionScheduledDesc": "Este espacio de trabajo está programado para eliminarse el {date}. Cancelar solo anula la eliminación; si ya se archivó, restáuralo por separado. Después de esa fecha, él y su copia de seguridad desaparecen.",
     "CancelWorkspaceDeletion": "Cancelar eliminación",
     "AccountDeletionScheduled": "Cuenta programada para eliminación",
     "AccountDeletionScheduledDesc": "Su cuenta se eliminará el {date}. Cancele la eliminación para conservarla. Los espacios de trabajo programados siguen programados: restaure cada uno por separado.",

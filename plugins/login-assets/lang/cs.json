@@ -118,7 +118,7 @@
     "NoFreeSeatsDescription": "Tento pracovní prostor dosáhl limitu míst tarifu. Obraťte se prosím na správce pracovního prostoru.",
     "NoFreeSeatsForInvite": "Tarif nemá volná místa, nový odkaz s pozvánkou nelze vytvořit.",
     "ScheduledForDeletion": "smazání {date}",
-    "WorkspaceDeletionScheduledDesc": "Tento pracovní prostor je naplánován ke smazání {date}. Do té doby jej lze obnovit, poté zmizí i se zálohou.",
+    "WorkspaceDeletionScheduledDesc": "Tento pracovní prostor je naplánován ke smazání {date}. Zrušení jen odvolá smazání - pokud už byl archivován, obnovte jej zvlášť. Po tomto datu zmizí i se zálohou.",
     "CancelWorkspaceDeletion": "Zrušit smazání",
     "AccountDeletionScheduled": "Účet je naplánován ke smazání",
     "AccountDeletionScheduledDesc": "Váš účet bude smazán {date}. Zrušte smazání, pokud si jej chcete ponechat. Naplánované pracovní prostory zůstávají naplánované - obnovte každý zvlášť.",
