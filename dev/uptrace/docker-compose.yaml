@@ -1,7 +1,7 @@
 services:
   # ClickHouse для uptrace
   clickhouse-uptrace:
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:26.3
     restart: on-failure
     deploy:
       resources:
@@ -24,7 +24,7 @@ services:
       - clickhouse_uptrace_data:/var/lib/clickhouse
 # PostgreSQL для uptrace
   uptrace-postgres:
-    image: postgres:18-alpine
+    image: postgres:17-alpine
     restart: on-failure
     shm_size: 64mb
     deploy:
@@ -45,7 +45,7 @@ services:
       - uptrace_postgres_data:/var/lib/postgresql/data
 # Redis для uptrace
   uptrace-redis:
-    image: redis:latest
+    image: redis:6.2.2-alpine
     restart: on-failure
     command: redis-server --maxmemory 28mb --maxmemory-policy allkeys-lru
     deploy:
@@ -60,7 +60,7 @@ services:
 
   # Uptrace - APM и observability платформа
   uptrace:
-    image: 'uptrace/uptrace:2.1.0-beta'
+    image: 'uptrace/uptrace:2.1.0-beta.5'
     restart: on-failure
     deploy:
       resources:
@@ -84,10 +84,11 @@ services:
       test: ['CMD', 'wget', '--spider', '-q', 'localhost:80/api/v1/health']
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 30
+      start_period: 120s
 # OpenTelemetry Collector для сбора телеметрии
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.123.0
     restart: on-failure
     deploy:
       resources:

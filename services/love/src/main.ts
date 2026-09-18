@@ -43,11 +43,12 @@ import {
   QueueMeetingUpdateMetadataMessage,
   QueueWebhookMeetingMessage,
   RoomMetadata,
-  TranscriptionState
+  TranscriptionState,
+  callTraceParent
 } from '@hcengineering/love'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-
+import { trace } from '@opentelemetry/api'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import {
   initStatisticsContext,
@@ -157,6 +158,36 @@ export const main = async (): Promise<void> => {
   app.use(express.raw({ type: 'application/webhook+json' }))
   app.use(express.json())
 
+  app.use((req, res, next) => {
+    const span = trace.getActiveSpan()
+    if (span !== undefined) {
+      const meetingId = extractMeetingId(req)
+      if (meetingId !== undefined) span.setAttribute('meeting.id', meetingId)
+
+      const participantId = req.headers['x-participant-id']
+      if (typeof participantId === 'string' && participantId !== '') {
+        span.setAttribute('participant.id', participantId)
+      }
+    }
+    next()
+  })
+
+  function extractMeetingId (req: Request): string | undefined {
+    if (Buffer.isBuffer(req.body)) {
+      try {
+        const event = JSON.parse(req.body.toString()) as WebhookEvent
+        const room = getWebhookRoomName(event)
+        return room !== undefined ? parseRoomName(room)?.meetingId : undefined
+      } catch {
+        return undefined
+      }
+    }
+
+    const body = req.body as { meetingId?: unknown } | undefined
+    if (typeof body?.meetingId === 'string' && body.meetingId !== '') return body.meetingId
+    return undefined
+  }
+
   const roomClient = new RoomServiceClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
   const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret, {
     requestTimeout: config.EgressRequestTimeoutSec
@@ -212,11 +243,25 @@ export const main = async (): Promise<void> => {
     switch (queueMsg.type) {
       case QueueMeetingEvent.webhook: {
         const event = (queueMsg as QueueWebhookMeetingMessage).webhook
-        await ctx.with('handle-webhook', {}, () =>
-          webhookProcessor.processEvent(event, {
+        const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
+        const meetingDoc = await wsClient.findMeetingById(queueMsg.meetingId)
+        const traceParent = meetingDoc?.traceId !== undefined ? callTraceParent(meetingDoc.traceId) : undefined
+
+        await ctx.with(
+          `handle-webhook ${event.event}`,
+          {
+            event: event.event,
             meetingId: queueMsg.meetingId,
-            workspace: msg.workspace
-          })
+            'participant.id': event.participant?.identity ?? '',
+            'participant.name': event.participant?.name ?? ''
+          },
+          () =>
+            webhookProcessor.processEvent(event, {
+              meetingId: queueMsg.meetingId,
+              workspace: msg.workspace
+            }),
+          undefined,
+          traceParent !== undefined ? { meta: { traceparent: traceParent } } : undefined
         )
         break
       }

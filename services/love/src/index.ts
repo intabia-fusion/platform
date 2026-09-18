@@ -13,10 +13,12 @@
 // limitations under the License.
 //
 
+import { configureAnalytics } from '@hcengineering/analytics-service'
 // eslint-disable-next-line
 import { config } from 'dotenv'
+configureAnalytics('love', process.env.VERSION ?? '0.7.0')
+require('http')
+require('https')
 config()
 // eslint-disable-next-line
-import { main } from './main'
-
-void main()
+import('./main').then(({ main }) => void main())

@@ -26,6 +26,10 @@ jest.mock('@hcengineering/contact-resources', () => ({ getPersonByPersonRef: jes
 jest.mock('svelte/store', () => ({ get: jest.fn(() => undefined) }))
 jest.mock('../stores', () => ({ selectedRoomPlace: {} }))
 jest.mock('../utils', () => ({ getPlatformToken: jest.fn(() => 'token') }))
+jest.mock('@hcengineering/presentation', () => ({
+  getClient: () => ({ update: jest.fn(), findOne: jest.fn() }),
+  onClient: jest.fn()
+}))
 
 function requestedPath (): string {
   return new URL((fetch as unknown as jest.Mock).mock.calls[0][0]).pathname
