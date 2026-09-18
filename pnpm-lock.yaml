@@ -31450,6 +31450,9 @@ importers:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@hcengineering/prod':
+        specifier: workspace:^1.0.1
+        version: link:../../dev/prod
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
