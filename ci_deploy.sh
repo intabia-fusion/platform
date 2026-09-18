@@ -170,13 +170,16 @@ registry="${deploy_registry:+$deploy_registry/}${DOCKER_NAMESPACE:-intabiafusion
   fi
   if [ "$mode" == clean ]; then
     printf './cleanup.sh --configs --volumes -y\n'
-    printf './setup.sh --silent --host %s --version %s --registry %s' \
+    # Dev stands run webhook + webhook-mock; setup.env.WEBHOOK_ENABLED in the stand config still wins (later --env).
+    printf './setup.sh --silent --host %s --version %s --registry %s --env WEBHOOK_ENABLED=true' \
       "$(shq "$STAND_HOST")" "$(shq "$CICD_ENV_VERSION")" "$(shq "$registry")"
     for arg in "${STAND_SETUP_ARGS[@]}"; do printf ' %s' "$(shq "$arg")"; done
     printf '\n./up.sh --recreate\n'
   else
     printf './set-version.sh %s --registry %s --silent\n' \
       "$(shq "$CICD_ENV_VERSION")" "$(shq "$registry")"
+    # Update never re-runs setup.sh, so a stand installed before webhooks existed gets the flag here.
+    printf "grep -q '^WEBHOOK_ENABLED=' config/platform.conf || echo 'WEBHOOK_ENABLED=true' >> config/platform.conf\n"
     # set-version.sh leaves containers whose image did not change, so one stuck from an earlier
     # deploy survives every update. Recreate everything: images are already pulled by now.
     printf './up.sh --recreate\n'
