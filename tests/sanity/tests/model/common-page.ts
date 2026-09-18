@@ -1,6 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { DateDivided } from './types'
-import { retryIntervals, waitStable } from '../retry'
+import { retry, retryIntervals, waitStable } from '../retry'
 
 export class CommonPage {
   readonly page: Page
@@ -353,14 +353,12 @@ export class CommonPage {
     if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
       switch (filter) {
         case 'Title':
-          await this.inputFilterTitle().fill(filterSecondLevel)
-          await this.buttonFilterApply().click()
+          await this.applyTextFilter(this.inputFilterTitle(), filterSecondLevel)
           // Wait for the list to update after applying filter
           await this.page.waitForTimeout(500)
           break
         case 'Name':
-          await this.inputFilterName().fill(filterSecondLevel)
-          await this.buttonFilterApply().click()
+          await this.applyTextFilter(this.inputFilterName(), filterSecondLevel)
           break
         case 'Labels':
           await this.selectFromDropdown(this.page, filterSecondLevel)
@@ -371,9 +369,28 @@ export class CommonPage {
           await this.page.keyboard.press('Escape')
           break
         default:
-          await this.selectPopupMenu(filterSecondLevel).click()
+          // The option list re-renders as it loads, so the row detaches mid-click; an untimed click
+          // then spends the whole 30s on an element that is gone.
+          await retry(async () => {
+            await this.selectPopupMenu(filterSecondLevel).click({ timeout: 5000 })
+          })
       }
     }
+  }
+
+  /**
+   * Typing and Apply are one interaction: the popup re-renders as its rows arrive and detaches
+   * whichever of the two the action is on - retrying only the fill left Apply to burn its own 30s.
+   * A popup that is already gone means Apply landed.
+   */
+  private async applyTextFilter (input: Locator, value: string): Promise<void> {
+    const popup = this.page.locator('div.selectPopup')
+    await retry(async () => {
+      if ((await popup.count()) === 0) return
+      await input.fill(value, { timeout: 5000 })
+      await expect(input).toHaveValue(value, { timeout: 3000 })
+      await this.buttonFilterApply().click({ timeout: 5000 })
+    })
   }
 
   async filterOppositeCondition (filter: string, conditionBefore: string, conditionAfter: string): Promise<void> {

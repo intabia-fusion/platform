@@ -28,11 +28,12 @@ import { WorkspaceClient } from '../workspaceClient'
 // Lightweight in-memory fake of the platform client surface that `WorkspaceClient.finishMeeting` touches.
 function createFakeClient (seed: {
   meeting: MeetingMinutes
+  otherMeetings?: MeetingMinutes[]
   participants?: ParticipantInfo[]
   invites?: UserMeetingInvite[]
 }): { client: any, removed: Ref<Doc>[], updated: Array<{ doc: Doc, update: DocumentUpdate<Doc> }> } {
   const meetings = new Map<Ref<MeetingMinutes>, MeetingMinutes>()
-  meetings.set(seed.meeting._id, { ...seed.meeting })
+  for (const m of [seed.meeting, ...(seed.otherMeetings ?? [])]) meetings.set(m._id, { ...m })
   const participants = (seed.participants ?? []).map((p) => ({ ...p }))
   const invites = (seed.invites ?? []).map((i) => ({ ...i }))
 
@@ -42,7 +43,15 @@ function createFakeClient (seed: {
   const client = {
     findOne: jest.fn(async <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>) => {
       if (_class === love.class.MeetingMinutes) {
-        return meetings.get((query as any)._id as Ref<MeetingMinutes>)
+        const q = query as any
+        if (typeof q._id === 'string') return meetings.get(q._id)
+        // Live-meeting-in-room lookup: roomId + _id.$ne + status.$in.
+        return [...meetings.values()].find(
+          (m) =>
+            m.roomId === q.roomId &&
+            m._id !== q._id?.$ne &&
+            ((q.status?.$in ?? []) as MeetingStatus[]).includes(m.status)
+        )
       }
       return undefined
     }),
@@ -160,6 +169,34 @@ describe('WorkspaceClient.finishMeeting → re-arm vs finish', () => {
     const meetingUpdate = updated.find((u) => u.doc._id === meeting._id)
     expect(meetingUpdate?.update).toEqual({ status: MeetingStatus.Finished, meetingEnd: 123456 })
   })
+
+  it('does not log a finish it did not write (defect: the second finish still logged a fresh meetingEnd)', async () => {
+    const meeting = createMockMeeting({
+      status: MeetingStatus.Finished,
+      meetingEnd: 1000,
+      meetingScheduledDate: undefined
+    })
+    const { client } = createFakeClient({ meeting })
+    const ctx = createMockContext()
+
+    await makeWorkspaceClient(ctx, client).finishMeeting(meeting._id, 5000)
+
+    const logged = (ctx.info as jest.Mock).mock.calls.map((c) => c[0])
+    expect(logged).not.toContain('Marked meeting as finished')
+  })
+
+  it('keeps the first meetingEnd when the meeting is finished a second time (defect: polling overwrote the webhook end)', async () => {
+    const meeting = createMockMeeting({
+      status: MeetingStatus.Finished,
+      meetingEnd: 1000,
+      meetingScheduledDate: undefined
+    })
+    const { client, updated } = createFakeClient({ meeting })
+
+    await makeWorkspaceClient(createMockContext(), client).finishMeeting(meeting._id, 5000)
+
+    expect(updated.find((u) => u.doc._id === meeting._id)).toBeUndefined()
+  })
 })
 
 describe('WorkspaceClient.finishMeeting → invite cleanup', () => {
@@ -199,6 +236,54 @@ describe('WorkspaceClient.finishMeeting → invite cleanup', () => {
     await wc.finishMeeting(meeting._id)
 
     expect(removed).toContain(knockRequest._id)
+  })
+
+  // Sanity knock-office flake: room_finished finished the owner's first office meeting, the owner
+  // reconnected into a new one, and polling's late second finish of the first dropped the new knocks.
+  it('keeps knocks into the room once the next meeting there is live (defect: a late second finish wiped them)', async () => {
+    const meeting = createMockMeeting({ roomId: roomRef, status: MeetingStatus.Finished, meetingEnd: 1000 })
+    const next = createMockMeeting({
+      _id: 'meeting:next' as Ref<MeetingMinutes>,
+      roomId: roomRef,
+      status: MeetingStatus.Active
+    })
+    const knock = invite({
+      _id: 'inv:knock-next' as Ref<UserMeetingInvite>,
+      kind: 'invite-request',
+      room: roomRef,
+      meeting: undefined,
+      createdOn: 1100
+    })
+    const { client, removed } = createFakeClient({ meeting, otherMeetings: [next], invites: [knock] })
+
+    // Polling finishes it a second time long after the webhook already did.
+    await makeWorkspaceClient(createMockContext(), client).finishMeeting(meeting._id, 9000)
+
+    expect(removed).not.toContain(knock._id)
+  })
+
+  // The `liveInRoom` guard was a read followed by a delete: a meeting starting in the room between
+  // the two still lost its knocks. A knock made after this meeting ended cannot be about it.
+  it('keeps a knock made after the meeting ended even when nothing is live in the room yet', async () => {
+    const meeting = createMockMeeting({ roomId: roomRef, status: MeetingStatus.Finished, meetingEnd: 1000 })
+    const before = invite({
+      _id: 'inv:before' as Ref<UserMeetingInvite>,
+      room: roomRef,
+      meeting: undefined,
+      createdOn: 900
+    })
+    const after = invite({
+      _id: 'inv:after' as Ref<UserMeetingInvite>,
+      room: roomRef,
+      meeting: undefined,
+      createdOn: 1100
+    })
+    const { client, removed } = createFakeClient({ meeting, invites: [before, after] })
+
+    await makeWorkspaceClient(createMockContext(), client).finishMeeting(meeting._id, 5000)
+
+    expect(removed).toContain(before._id)
+    expect(removed).not.toContain(after._id)
   })
 
   it('does not touch invites for other meetings/rooms', async () => {

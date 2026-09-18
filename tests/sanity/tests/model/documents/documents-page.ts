@@ -3,7 +3,7 @@ import { NewDocument, NewTeamspace } from './types'
 import { CommonPage } from '../common-page'
 import { DocumentCreatePopup } from './document-create-popup'
 import { DocumentMovePopup } from './document-move-popup'
-import { retryIntervals } from '../../retry'
+import { retry, retryIntervals } from '../../retry'
 
 export class DocumentsPage extends CommonPage {
   readonly page: Page
@@ -148,12 +148,18 @@ export class DocumentsPage extends CommonPage {
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
+  // The row is still moving between teamspaces right after a Move, so a click can land on one the
+  // navigator is about to drop and open nothing. Retry until the panel really carries the document.
   async openDocumentForTeamspace (spaceName: string, documentName: string): Promise<void> {
-    await this.page
+    const row = this.page
       .locator('button.hulyNavGroup-header span[class*="label"]', { hasText: spaceName })
       .locator('xpath=../../following-sibling::div[1]')
       .locator('button.hulyNavItem-container span[class*="label"]', { hasText: documentName })
-      .click()
+    const title = this.page.locator('div[class*="main-content"] div.title input')
+    await retry(async () => {
+      await row.click({ timeout: 5000 })
+      await expect(title).toHaveValue(documentName, { timeout: 5000 })
+    })
   }
 
   async editTeamspace (data: NewTeamspace): Promise<void> {

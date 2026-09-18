@@ -19,6 +19,7 @@ import love, {
   MeetingStatus,
   type MeetingMinutes,
   type ParticipantInfo,
+  type Room,
   type UserMeetingInvite
 } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
@@ -235,6 +236,20 @@ export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext
 }
 
 export const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
+
+/**
+ * ai-bot auto-joins every meeting of a room with `startWithTranscription` and creates its own
+ * ParticipantInfo - a third avatar on the floor grid and a second audio egress nobody asked for.
+ * The suite never asserts on transcription that came from the room setting, so switch it off once.
+ */
+export async function disableRoomAutoTranscription (): Promise<void> {
+  const sys = await getSystemRestClient()
+  const rooms = await sys.findAll<Room>(love.class.Room, { name: { $in: ROOM_CANDIDATES } })
+  for (const room of rooms) {
+    if (!room.startWithTranscription) continue
+    await sys.updateDoc(room._class, room.space, room._id, { startWithTranscription: false })
+  }
+}
 
 /** Either surface proves the LiveKit session is live: the sidebar widget is not
  *  rendered when the meeting opens in the main area. */

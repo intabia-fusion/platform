@@ -38,6 +38,13 @@ fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT="runs/${STAMP}"
 mkdir -p "$OUT"
+# series.sh reads this to tell "the run produced nothing" from "the run failed a test".
+[ -n "${RUN_DIR_FILE:-}" ] && printf '%s' "$OUT" > "$RUN_DIR_FILE"
+
+# Both are written at the end of a run. Left from the previous one, they are copied into this run's
+# directory when it is killed before Playwright writes its own - the run then reports someone
+# else's numbers instead of nothing.
+rm -f playwright-report.json step-report.ndjson
 
 # Test policy in seconds: check every 1s, force a push at 10s, push early on 0.1% movement.
 # Prod default 10/300/1% is restored after the run.
