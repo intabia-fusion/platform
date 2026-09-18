@@ -145,9 +145,17 @@ export class ChatViewport implements IChatViewport {
     } else {
       entry.lastAccessed = ++ChatViewport.accessCounter
       entry.lastAccessedTime = Date.now()
-      void entry.viewport.syncUnreadMarker(readState)
       if (selectedMessageId !== undefined) {
+        void entry.viewport.syncUnreadMarker(readState)
         void entry.viewport.jumpToMessageId(selectedMessageId)
+      } else if (get(entry.viewport.hasMoreForward)) {
+        // The cached window still sits around a message the user was sent to (inbox link, search hit,
+        // jump to date). Reopened without a target, the chat has to start from its end again.
+        if (readState !== undefined) entry.viewport.readState = readState
+        entry.viewport.jumpToEnd()
+        void entry.viewport.syncUnreadMarker(readState)
+      } else {
+        void entry.viewport.syncUnreadMarker(readState)
       }
     }
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte'
+  import { onDestroy } from 'svelte'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
   import core, { Doc, Ref, Space } from '@hcengineering/core'
@@ -49,9 +49,13 @@
 
   $: void updateViewport(message._id)
 
-  async function updateViewport (messageId: Ref<ActivityMessage>): Promise<void> {
-    if (chatViewport !== undefined) return
+  // The read state arrives asynchronously, so the viewport is acquired once per component,
+  // otherwise a second call would take a reference that onDestroy never releases.
+  let viewportRequested = false
 
+  async function updateViewport (messageId: Ref<ActivityMessage>): Promise<void> {
+    if (viewportRequested) return
+    viewportRequested = true
     const readState = (await inboxClient.getReadState(messageId)) ?? undefined
     chatViewport = ChatViewport.getOrCreate(readState, messageId, selectedMessageId, 100, true)
   }
@@ -59,10 +63,6 @@
   onDestroy(() => {
     chatViewport?.release()
     chatViewport = undefined
-  })
-
-  onMount(() => {
-    void updateViewport(message._id)
   })
 
   $: messagesStore = chatViewport?.messages

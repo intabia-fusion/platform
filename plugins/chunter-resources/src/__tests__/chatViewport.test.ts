@@ -1662,5 +1662,36 @@ describe('ChatViewport', () => {
         expect.objectContaining({ limit: 1, sort: { createdOn: 1 } })
       )
     })
+
+    it('9.6 should return to the end when a mid-history viewport is reopened without a target', async () => {
+      const chatId = 'chat-1' as Ref<Doc>
+      const readState = { 'me-uuid': { timestamp: 1000 }, latestMessageTimestamp: 1000 }
+
+      // Inbox link: anchor far behind the tail, so the viewport loads a split window around it.
+      mockClient.findOne.mockResolvedValueOnce({ _id: 'selected-1', createdOn: 700 })
+      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 51 }, (_, i) => ({ _id: `tail-${i}`, createdOn: 1000 - i })))
+      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 26 }, (_, i) => ({ _id: `older-${i}`, createdOn: 699 - i })))
+      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 51 }, (_, i) => ({ _id: `newer-${i}`, createdOn: 701 + i })))
+
+      const vp1 = ChatViewport.getOrCreate(readState as any, chatId, 'selected-1' as any, 50, false)
+      await flushTasks()
+      expect(get(vp1.hasMoreForward)).toBe(true)
+      expect(get(vp1.messages).some(({ _id }) => _id === 'tail-0')).toBe(false)
+      vp1.release()
+
+      // Back to the chat from the navigator: no target, the latest tail is expected.
+      const tailRes = Array.from({ length: 10 }, (_, i) => ({ _id: `tail-${i}`, createdOn: 1000 - i }))
+      mockClient.findAll.mockImplementation(async (_cls, _query, options) => (options?.limit === 51 ? tailRes : []))
+
+      const vp2 = ChatViewport.getOrCreate(readState as any, chatId, undefined, 50, false)
+      expect(vp2).toBe(vp1)
+      expect(get(vp2.isLoading)).toBe(true)
+      await flushTasks()
+
+      expect(get(vp2.hasMoreForward)).toBe(false)
+      expect(get(vp2.messages).map(({ _id }) => _id)).toEqual(tailRes.map(({ _id }) => _id).reverse())
+      expect(mockClient.findOne).toHaveBeenCalledTimes(1)
+      expect(get(vp2.newTimestamp)).toBeUndefined()
+    })
   })
 })
