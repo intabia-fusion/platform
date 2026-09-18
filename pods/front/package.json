@@ -56,6 +56,7 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
+    "@hcengineering/prod": "workspace:^1.0.1",
     "@hcengineering/front": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
