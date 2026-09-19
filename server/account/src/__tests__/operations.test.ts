@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -3035,6 +3036,24 @@ describe('account operations', () => {
         token: 'workspace-token'
       })
       expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
+      expect(mockDb.updateWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should not let the anonymous account join or change its role', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: readOnlyGuestAccountUuid,
+        workspace: mockWorkspace.uuid,
+        extra: {}
+      })
+      jest.spyOn(utils, 'getWorkspaceInvite').mockResolvedValue({ ...mockInvite, role: AccountRole.Guest })
+      jest.spyOn(utils, 'checkInvite').mockResolvedValue(mockInvite.workspaceUuid)
+      jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue(mockWorkspace as any)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.ReadOnlyGuest)
+      jest.spyOn(utils, 'selectWorkspace').mockResolvedValue({ role: AccountRole.ReadOnlyGuest } as any)
+
+      await expect(checkJoin(mockCtx, mockDb, mockBranding, mockToken, { inviteId: 'invite-uuid' })).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
       expect(mockDb.updateWorkspaceRole).not.toHaveBeenCalled()
     })
 

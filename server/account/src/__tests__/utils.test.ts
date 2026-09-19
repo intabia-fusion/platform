@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,9 +24,11 @@ import {
   type PersonUuid,
   SocialIdType,
   systemAccountUuid,
-  type WorkspaceUuid
+  type WorkspaceUuid,
+  readOnlyGuestAccountUuid
 } from '@hcengineering/core'
 import {
+  doJoinByInvite,
   generateWorkspaceUrl,
   cleanEmail,
   confirmEmail,
@@ -2603,5 +2606,30 @@ describe('account utils', () => {
       await expect(assertSeatAvailable(ctx, db, workspace, AccountRole.Guest)).resolves.toBeUndefined()
       expect(db.subscription.find).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('doJoinByInvite with the anonymous account', () => {
+  const ctx = { warn: jest.fn(), info: jest.fn(), error: jest.fn() } as unknown as MeasureContext
+  const workspace = { uuid: 'ws-uuid' as WorkspaceUuid, url: 'ws', allowReadOnlyGuest: true, allowGuestSignUp: true }
+  const db = {
+    getWorkspaceRole: jest.fn(async () => AccountRole.ReadOnlyGuest),
+    assignWorkspace: jest.fn(),
+    updateWorkspaceRole: jest.fn(),
+    invite: { updateOne: jest.fn() }
+  } as unknown as AccountDB
+
+  test.each([
+    [
+      'an invite',
+      { id: 'invite', workspaceUuid: workspace.uuid, role: AccountRole.User, expiresOn: 0, remainingUses: -1 }
+    ],
+    ['guest sign up', null]
+  ])('never changes the anonymous role (%s)', async (_name, invite) => {
+    await expect(
+      doJoinByInvite(ctx, db, null, 'token', readOnlyGuestAccountUuid, workspace as any, invite as any)
+    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+    expect(db.assignWorkspace).not.toHaveBeenCalled()
+    expect(db.updateWorkspaceRole).not.toHaveBeenCalled()
   })
 })

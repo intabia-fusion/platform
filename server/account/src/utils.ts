@@ -1764,6 +1764,11 @@ export async function doJoinByInvite (
   workspace: Workspace,
   invite: WorkspaceInvite | null | undefined
 ): Promise<WorkspaceLoginInfo> {
+  if (account === readOnlyGuestAccountUuid) {
+    // The shared anonymous account is used by every anonymous visitor: its role must stay ReadOnlyGuest
+    ctx.warn('Join by invite with the anonymous account is not allowed', { workspace: workspace.uuid })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
   const role = await db.getWorkspaceRole(account, workspace.uuid)
 
   if (invite !== undefined && invite != null) {

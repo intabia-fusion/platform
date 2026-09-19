@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+import { readOnlyGuestAccountUuid } from '@hcengineering/core'
 import { type DBFlavor } from '../../types'
 
 // Type definitions for different database flavors.
@@ -117,7 +118,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV48Migration(ns, flavor),
     getV49Migration(ns),
     getV50Migration(ns),
-    getV51Migration(ns, flavor)
+    getV51Migration(ns, flavor),
+    getV52Migration(ns)
   ]
 }
 
@@ -1310,6 +1312,19 @@ function getV51Migration (ns: string, flavor: DBFlavor): [string, string] {
     /* Fulltext skipped a reindex on a version mismatch; it runs after the upgrade. No default: no backfill. */
     `
     ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS needs_reindex ${types.bool};
+    `
+  ]
+}
+
+function getV52Migration (ns: string): [string, string] {
+  return [
+    'account_db_v52_anonymous_account_read_only',
+    `
+    -- The shared anonymous account must always be ReadOnlyGuest. Joining by an invite link with the
+    -- anonymous session could raise its role (e.g. to GUEST) for every anonymous visitor.
+    UPDATE ${ns}.workspace_members
+    SET role = 'READONLYGUEST'
+    WHERE account_uuid = '${readOnlyGuestAccountUuid}' AND role <> 'READONLYGUEST';
     `
   ]
 }

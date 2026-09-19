@@ -1172,6 +1172,10 @@ export async function checkJoin (
   }
 
   const { account: accountUuid } = decodeTokenVerbose(ctx, token)
+  if (accountUuid === readOnlyGuestAccountUuid) {
+    // The shared anonymous account can't join by invite: the visitor has to sign in with an own account
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
   const emailSocialId = await db.socialId.findOne({
     type: SocialIdType.EMAIL,
     personUuid: accountUuid,
