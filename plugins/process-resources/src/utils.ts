@@ -34,6 +34,7 @@ import core, {
   type Type
 } from '@hcengineering/core'
 import { getResource, type IntlString, PlatformError, Severity, Status } from '@hcengineering/platform'
+import { toRank } from '@hcengineering/rank'
 import { getClient } from '@hcengineering/presentation'
 import {
   type Context,
@@ -536,6 +537,10 @@ export async function requestUserInput (
   return { context: userContext, state: target.to, changed }
 }
 
+function getAttributeRank (attribute: AnyAttribute | undefined): string {
+  return attribute === undefined ? '' : attribute.rank ?? toRank(attribute._id) ?? ''
+}
+
 export async function getTransitionUserInput (
   processId: Ref<Process>,
   space: Ref<Space>,
@@ -613,6 +618,14 @@ export async function getTransitionUserInput (
           }
         }
       }
+    }
+
+    if (virtualContext?.type === 'userRequest' && virtualKey === 'requiredFields') {
+      inputs.sort((a, b) => {
+        const rankA = getAttributeRank(hierarchy.findAttribute(a._class, a.key))
+        const rankB = getAttributeRank(hierarchy.findAttribute(b._class, b.key))
+        return rankA.localeCompare(rankB)
+      })
     }
 
     if (inputs.length > 0) {
