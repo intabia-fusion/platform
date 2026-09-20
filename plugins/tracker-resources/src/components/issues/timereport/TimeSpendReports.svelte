@@ -15,7 +15,7 @@
 <script lang="ts">
   import { DocumentQuery, SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { Issue, TimeSpendReport, splitReportedTime } from '@hcengineering/tracker'
   import { Expandable, Label, MiniToggle, Spinner, floorFractionDigits } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TimePresenter from './TimePresenter.svelte'
@@ -45,7 +45,9 @@
     }
   )
 
-  $: total = (reports ?? []).reduce((a, b) => a + floorFractionDigits(b.value, 3), 0)
+  $: split = splitReportedTime(reports ?? [])
+  $: spent = floorFractionDigits(split.spent, 3)
+  $: planned = floorFractionDigits(split.planned, 3)
 </script>
 
 {#if reports}
@@ -54,8 +56,16 @@
       <span class="overflow-label flex-nowrap">
         <Label label={tracker.string.ReportedTime} />:
         <span class="caption-color">
-          <TimePresenter value={total} />
+          <TimePresenter value={spent} />
         </span>
+        {#if planned > 0}
+          <span class="ml-2">
+            <Label label={tracker.string.PlannedTime} />:
+            <span class="caption-color">
+              <TimePresenter value={planned} />
+            </span>
+          </span>
+        {/if}
       </span>
     </svelte:fragment>
     <svelte:fragment slot="tools">

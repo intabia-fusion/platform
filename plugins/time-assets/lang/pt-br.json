@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Você deseja alterar o responsável pela tarefa? A tarefa será removida do planejamento atual do responsável.",
     "Occupancy": "Ocupação",
     "ShowEvents": "Eventos",
-    "ShowActivity": "Atividade"
+    "ShowActivity": "Atividade",
+    "PlannedTime": "Tempo planejado",
+    "CloseToDoQuestion": "Fechar tarefa?",
+    "CloseToDoQuestionMessage": "A tarefa foi fechada. Fechar também {count, plural, =1 {sua tarefa} other {suas tarefas}}?",
+    "ReassignedTo": "Reatribuído a",
+    "ToDoReassigned": "Tarefa reatribuída",
+    "IssueClosedCloseToDo": "Tarefa fechada, tarefa ainda aberta"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

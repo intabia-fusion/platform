@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "¿Desea cambiar el asignado de la tarea? La tarea será removida del planificador actual del asignado.",
     "Occupancy": "Ocupación",
     "ShowEvents": "Eventos",
-    "ShowActivity": "Actividad"
+    "ShowActivity": "Actividad",
+    "PlannedTime": "Tiempo planificado",
+    "CloseToDoQuestion": "¿Cerrar tarea?",
+    "CloseToDoQuestionMessage": "La tarea está cerrada. ¿Cerrar también {count, plural, =1 {su tarea} other {sus tareas}}?",
+    "ReassignedTo": "Reasignado a",
+    "ToDoReassigned": "Tarea reasignada",
+    "IssueClosedCloseToDo": "Tarea cerrada, tarea aún abierta"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

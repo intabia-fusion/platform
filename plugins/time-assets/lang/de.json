@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Möchten Sie die Aufgabenzuweisung ändern? Die Aufgabe wird aus dem Planer des aktuellen Zugewiesenen entfernt.",
     "Occupancy": "Auslastung",
     "ShowEvents": "Ereignisse",
-    "ShowActivity": "Aktivität"
+    "ShowActivity": "Aktivität",
+    "PlannedTime": "Geplante Zeit",
+    "CloseToDoQuestion": "Aufgabe schließen?",
+    "CloseToDoQuestionMessage": "Die Aufgabe wurde geschlossen. Auch {count, plural, =1 {Ihre Aufgabe} other {Ihre Aufgaben}} schließen?",
+    "ReassignedTo": "Neu zugewiesen an",
+    "ToDoReassigned": "Aufgabe neu zugewiesen",
+    "IssueClosedCloseToDo": "Aufgabe geschlossen, Aufgabe weiterhin offen"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

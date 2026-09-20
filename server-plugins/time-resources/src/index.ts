@@ -23,26 +23,25 @@ import core, {
   DocumentUpdate,
   Ref,
   SortingOrder,
-  Status,
+  Timestamp,
   Tx,
   TxCUD,
   TxCreateDoc,
-  TxFactory,
   TxProcessor,
-  TxUpdateDoc,
-  toIdMap
+  TxUpdateDoc
 } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
 import type { TriggerControl } from '@hcengineering/server-core'
-import serverTime, { OnToDo, ToDoFactory } from '@hcengineering/server-time'
+import serverTime, { ToDoFactory } from '@hcengineering/server-time'
 import task, { makeRank } from '@hcengineering/task'
-import time, { ProjectToDo, ToDo, ToDoPriority, TodoAutomationHelper, WorkSlot } from '@hcengineering/time'
+import time, { ProjectToDo, ToDo, ToDoPriority, WorkSlot } from '@hcengineering/time'
 import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengineering/tracker'
 import {
   CreateNotificationFunc,
   CreateNotificationResult,
   Receiver,
-  TypeMatchClient
+  TypeMatchClient,
+  TypeMatchFunc
 } from '@hcengineering/server-notification'
 import { jsonToMarkup, nodeDoc, nodeParagraph, nodeText } from '@hcengineering/text-core'
 
@@ -81,22 +80,57 @@ export async function OnWorkSlotUpdate (txes: Tx[], control: TriggerControl): Pr
       continue
     }
     const updTx = actualTx as TxUpdateDoc<WorkSlot>
-    const visibility = updTx.operations.visibility
+    const { visibility, date, dueDate } = updTx.operations
+    if (visibility === undefined && date === undefined && dueDate === undefined) {
+      continue
+    }
+    const workslot = (await control.findAll(control.ctx, time.class.WorkSlot, { _id: updTx.objectId }, { limit: 1 }))[0]
+    if (workslot === undefined) {
+      continue
+    }
     if (visibility !== undefined) {
-      const workslot = (
-        await control.findAll(control.ctx, time.class.WorkSlot, { _id: updTx.objectId }, { limit: 1 })
+      const todo = (await control.findAll(control.ctx, time.class.ToDo, { _id: workslot.attachedTo }))[0]
+      if (todo !== undefined) {
+        result.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { visibility }))
+      }
+    }
+    if (date !== undefined || dueDate !== undefined) {
+      const report = (
+        await control.findAll(control.ctx, tracker.class.TimeSpendReport, { workslot: workslot._id }, { limit: 1 })
       )[0]
-      if (workslot === undefined) {
+      if (report === undefined) {
+        // Slots planned before reports were tied to them, and slots that started out empty,
+        // get their report on the first move instead of staying invisible forever.
+        const createTx = await workSlotReportTx(control, workslot)
+        if (createTx !== undefined) {
+          result.push(createTx)
+        }
         continue
       }
-      const todo = (await control.findAll(control.ctx, time.class.ToDo, { _id: workslot.attachedTo }))[0]
-      result.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { visibility }))
+      const innerTx = control.txFactory.createTxUpdateDoc(report._class, report.space, report._id, {
+        date: workslot.date,
+        value: workSlotHours(workslot)
+      })
+      result.push(
+        control.txFactory.createTxCollectionCUD(
+          report.attachedToClass,
+          report.attachedTo,
+          report.space,
+          report.collection,
+          innerTx
+        )
+      )
     }
   }
   return result
 }
 
+function workSlotHours (workslot: WorkSlot): number {
+  return (workslot.dueDate - workslot.date) / 1000 / 60 / 60
+}
+
 export async function OnWorkSlotCreate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
   for (const tx of txes) {
     const actualTx = tx as TxCUD<WorkSlot>
     if (!control.hierarchy.isDerived(actualTx.objectClass, time.class.WorkSlot)) {
@@ -106,120 +140,72 @@ export async function OnWorkSlotCreate (txes: Tx[], control: TriggerControl): Pr
       continue
     }
     const workslot = TxProcessor.createDoc2Doc(actualTx as TxCreateDoc<WorkSlot>)
-    const workslots = await control.findAll(control.ctx, time.class.WorkSlot, { attachedTo: workslot.attachedTo })
-    if (workslots.length > 1) {
-      continue
-    }
-    const todo = (await control.findAll(control.ctx, time.class.ToDo, { _id: workslot.attachedTo }))[0]
-    if (todo === undefined) {
-      continue
-    }
-    if (!control.hierarchy.isDerived(todo.attachedToClass, tracker.class.Issue)) {
-      continue
-    }
-    const issue = (await control.findAll(control.ctx, tracker.class.Issue, { _id: todo.attachedTo as Ref<Issue> }))[0]
-    if (issue === undefined) {
-      continue
-    }
-    const project = (await control.findAll(control.ctx, task.class.Project, { _id: issue.space }))[0]
-    if (project !== undefined) {
-      const type = (await control.modelDb.findAll(task.class.ProjectType, { _id: project.type }))[0]
-      if (type?.classic) {
-        const taskType = (await control.modelDb.findAll(task.class.TaskType, { _id: issue.kind }))[0]
-        if (taskType !== undefined) {
-          const statuses = await control.modelDb.findAll(core.class.Status, { _id: { $in: taskType.statuses } })
-          const statusMap = toIdMap(statuses)
-          const typeStatuses = taskType.statuses.map((p) => statusMap.get(p)).filter((p) => p !== undefined) as Status[]
-          const current = statusMap.get(issue.status)
-          if (current === undefined) {
-            continue
-          }
-          if (current.category !== task.statusCategory.UnStarted && current.category !== task.statusCategory.ToDo) {
-            continue
-          }
-          const nextStatus = typeStatuses.find((p) => p.category === task.statusCategory.Active)
-          if (nextStatus !== undefined) {
-            const factory = new TxFactory(control.txFactory.account)
-            const innerTx = factory.createTxUpdateDoc(issue._class, issue.space, issue._id, {
-              status: nextStatus._id
-            })
-            const outerTx = factory.createTxCollectionCUD(
-              issue.attachedToClass,
-              issue.attachedTo,
-              issue.space,
-              issue.collection,
-              innerTx
-            )
-            await control.apply(control.ctx, [outerTx])
-          }
-        }
-      }
+    const reportTx = await workSlotReportTx(control, workslot)
+    if (reportTx !== undefined) {
+      result.push(reportTx)
     }
   }
-  return []
+  return result
 }
 
-export async function OnToDoRemove (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+async function workSlotReportTx (control: TriggerControl, workslot: WorkSlot): Promise<Tx | undefined> {
+  const value = workSlotHours(workslot)
+  if (value <= 0) return
+  const target = await getWorkSlotIssue(control, workslot)
+  if (target === undefined) return
+  const { issue, todo } = target
+  const data: AttachedData<TimeSpendReport> = {
+    employee: todo.user,
+    date: workslot.date,
+    value,
+    description: '',
+    workslot: workslot._id
+  }
+  const innerTx = control.txFactory.createTxCreateDoc(
+    tracker.class.TimeSpendReport,
+    issue.space,
+    data as Data<TimeSpendReport>
+  )
+  return control.txFactory.createTxCollectionCUD(issue._class, issue._id, issue.space, 'reports', innerTx)
+}
+
+export async function OnWorkSlotRemove (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
   for (const tx of txes) {
-    const actualTx = tx as TxCUD<ToDo>
-    if (!control.hierarchy.isDerived(actualTx.objectClass, time.class.ToDo)) {
+    const actualTx = tx as TxCUD<WorkSlot>
+    if (!control.hierarchy.isDerived(actualTx.objectClass, time.class.WorkSlot)) {
       continue
     }
     if (!control.hierarchy.isDerived(actualTx._class, core.class.TxRemoveDoc)) {
       continue
     }
-    const todo = control.removedMap.get(actualTx.objectId) as ToDo
-    if (todo === undefined) {
-      continue
-    }
-    // it was closed, do nothing
-    if (todo.doneOn != null) {
-      continue
-    }
-    const todos = await control.findAll(control.ctx, time.class.ToDo, { attachedTo: todo.attachedTo })
-    if (todos.length > 0) {
-      continue
-    }
-    const issue = (await control.findAll(control.ctx, tracker.class.Issue, { _id: todo.attachedTo as Ref<Issue> }))[0]
-    if (issue === undefined) {
-      continue
-    }
-    const project = (await control.findAll(control.ctx, task.class.Project, { _id: issue.space }))[0]
-    if (project !== undefined) {
-      const type = (await control.modelDb.findAll(task.class.ProjectType, { _id: project.type }))[0]
-      if (type?.classic) {
-        const factory = new TxFactory(control.txFactory.account)
-        const taskType = (await control.modelDb.findAll(task.class.TaskType, { _id: issue.kind }))[0]
-        if (taskType !== undefined) {
-          const statuses = await control.modelDb.findAll(core.class.Status, { _id: { $in: taskType.statuses } })
-          const statusMap = toIdMap(statuses)
-          const typeStatuses = taskType.statuses.map((p) => statusMap.get(p)).filter((p) => p !== undefined) as Status[]
-          const current = statusMap.get(issue.status)
-          if (current === undefined) {
-            continue
-          }
-          if (current.category !== task.statusCategory.Active && current.category !== task.statusCategory.ToDo) {
-            continue
-          }
-          const nextStatus = typeStatuses.find((p) => p.category === task.statusCategory.UnStarted)
-          if (nextStatus !== undefined) {
-            const innerTx = factory.createTxUpdateDoc(issue._class, issue.space, issue._id, {
-              status: nextStatus._id
-            })
-            const outerTx = factory.createTxCollectionCUD(
-              issue.attachedToClass,
-              issue.attachedTo,
-              issue.space,
-              issue.collection,
-              innerTx
-            )
-            await control.apply(control.ctx, [outerTx])
-          }
-        }
-      }
+    const reports = await control.findAll(control.ctx, tracker.class.TimeSpendReport, { workslot: actualTx.objectId })
+    for (const report of reports) {
+      const innerTx = control.txFactory.createTxRemoveDoc(report._class, report.space, report._id)
+      result.push(
+        control.txFactory.createTxCollectionCUD(
+          report.attachedToClass,
+          report.attachedTo,
+          report.space,
+          report.collection,
+          innerTx
+        )
+      )
     }
   }
-  return []
+  return result
+}
+
+async function getWorkSlotIssue (
+  control: TriggerControl,
+  workslot: WorkSlot
+): Promise<{ issue: Issue, todo: ToDo } | undefined> {
+  const todo = (await control.findAll(control.ctx, time.class.ToDo, { _id: workslot.attachedTo }))[0]
+  if (todo === undefined) return
+  if (!control.hierarchy.isDerived(todo.attachedToClass, tracker.class.Issue)) return
+  const issue = (await control.findAll(control.ctx, tracker.class.Issue, { _id: todo.attachedTo as Ref<Issue> }))[0]
+  if (issue === undefined) return
+  return { issue, todo }
 }
 
 /**
@@ -253,56 +239,14 @@ export async function OnToDoUpdate (txes: Tx[], control: TriggerControl): Promis
       if (wasProcessed.filter((p) => p._id !== tx._id).length > 0) {
         continue
       }
-      const events = await control.findAll(control.ctx, time.class.WorkSlot, { attachedTo: updTx.objectId })
-      const resEvents: WorkSlot[] = []
-      for (const event of events) {
-        if (event.date > doneOn) {
-          const innerTx = control.txFactory.createTxRemoveDoc(event._class, event.space, event._id)
-          const outerTx = control.txFactory.createTxCollectionCUD(
-            event.attachedToClass,
-            event.attachedTo,
-            event.space,
-            event.collection,
-            innerTx
-          )
-          result.push(outerTx)
-        } else if (event.dueDate > doneOn) {
-          const upd: DocumentUpdate<WorkSlot> = {
-            dueDate: doneOn
-          }
-          if (title !== undefined) {
-            upd.title = title
-          }
-          if (description !== undefined) {
-            upd.description = description
-          }
-          const innerTx = control.txFactory.createTxUpdateDoc(event._class, event.space, event._id, upd)
-          const outerTx = control.txFactory.createTxCollectionCUD(
-            event.attachedToClass,
-            event.attachedTo,
-            event.space,
-            event.collection,
-            innerTx
-          )
-          result.push(outerTx)
-          resEvents.push({
-            ...event,
-            dueDate: doneOn
-          })
-        } else {
-          resEvents.push(event)
-        }
+      const extra: DocumentUpdate<WorkSlot> = {}
+      if (title !== undefined) {
+        extra.title = title
       }
-
-      const funcs = control.hierarchy.classHierarchyMixin<Class<Doc>, OnToDo>(
-        todo.attachedToClass,
-        serverTime.mixin.OnToDo
-      )
-      if (funcs !== undefined) {
-        const func = await getResource(funcs.onDone)
-        const todoRes = await func(control, resEvents, todo, tx.space === core.space.DerivedTx)
-        await control.apply(control.ctx, todoRes)
+      if (description !== undefined) {
+        extra.description = description
       }
+      result.push(...(await trimWorkSlots(control, updTx.objectId, doneOn, extra)))
       continue
     }
     if (title !== undefined || description !== undefined || visibility !== undefined) {
@@ -337,6 +281,38 @@ export async function OnToDoUpdate (txes: Tx[], control: TriggerControl): Promis
 }
 
 /**
+ * Drops the slots planned after `until` and cuts the one in progress, so the reported time follows.
+ */
+async function trimWorkSlots (
+  control: TriggerControl,
+  todoId: Ref<ToDo>,
+  until: Timestamp,
+  extra: DocumentUpdate<WorkSlot> = {}
+): Promise<Tx[]> {
+  const result: Tx[] = []
+  const events = await control.findAll(control.ctx, time.class.WorkSlot, { attachedTo: todoId })
+  for (const event of events) {
+    let innerTx: TxCUD<WorkSlot> | undefined
+    if (event.date > until) {
+      innerTx = control.txFactory.createTxRemoveDoc(event._class, event.space, event._id)
+    } else if (event.dueDate > until) {
+      innerTx = control.txFactory.createTxUpdateDoc(event._class, event.space, event._id, { ...extra, dueDate: until })
+    }
+    if (innerTx === undefined) continue
+    result.push(
+      control.txFactory.createTxCollectionCUD(
+        event.attachedToClass,
+        event.attachedTo,
+        event.space,
+        event.collection,
+        innerTx
+      )
+    )
+  }
+  return result
+}
+
+/**
  * @public
  */
 export async function IssueToDoFactory (actualTx: TxCUD<Issue>, control: TriggerControl): Promise<Tx[]> {
@@ -349,123 +325,6 @@ export async function IssueToDoFactory (actualTx: TxCUD<Issue>, control: Trigger
     return await updateIssueHandler(updateTx, control)
   }
   return []
-}
-
-async function generateChangeStatusTx (
-  control: TriggerControl,
-  factory: TxFactory,
-  issue: Issue,
-  todo: ToDo
-): Promise<Tx | undefined> {
-  if (await isClassic(control, issue.space)) {
-    const taskType = (await control.modelDb.findAll(task.class.TaskType, { _id: issue.kind }))[0]
-    if (taskType !== undefined) {
-      const index = taskType.statuses.findIndex((p) => p === issue.status)
-      const nextStatus = taskType.statuses[index + 1]
-      const currentStatus = taskType.statuses[index]
-
-      const current = await getStatus(control, currentStatus)
-      const next = await getStatus(control, nextStatus)
-      if (isValidStatusChange(current, next)) {
-        const unfinished = await getUnfinishedTodos(control, issue._id)
-        if (unfinished.length > 0) return
-
-        const testers = await getTesters(control)
-        for (const tester of testers) {
-          if (!(await tester(control, todo))) {
-            return
-          }
-        }
-
-        return createStatusChangeTx(factory, issue, nextStatus)
-      }
-    }
-  }
-}
-
-async function isClassic (control: TriggerControl, space: Ref<Project>): Promise<boolean> {
-  const project = (await control.findAll(control.ctx, tracker.class.Project, { _id: space }))[0]
-  const projectType = (await control.modelDb.findAll(task.class.ProjectType, { _id: project.type }))[0]
-  return projectType?.classic ?? false
-}
-
-async function getUnfinishedTodos (control: TriggerControl, issueId: Ref<Issue>): Promise<ToDo[]> {
-  return await control.findAll(control.ctx, time.class.ToDo, { attachedTo: issueId, doneOn: null }, { limit: 1 })
-}
-
-async function getTesters (
-  control: TriggerControl
-): Promise<((control: TriggerControl, todo: ToDo) => Promise<boolean>)[]> {
-  const helpers = await control.modelDb.findAll<TodoAutomationHelper>(time.class.TodoAutomationHelper, {})
-  return await Promise.all(helpers.map((it) => getResource(it.onDoneTester)))
-}
-
-async function getStatus (control: TriggerControl, statusId: Ref<Status> | undefined): Promise<Status | undefined> {
-  if (statusId === undefined) return
-  return (await control.modelDb.findAll(core.class.Status, { _id: statusId }))[0]
-}
-
-function isValidStatusChange (current: Status | undefined, next: Status | undefined): boolean {
-  if (current === undefined || next === undefined) return false
-  return (
-    current.category !== task.statusCategory.Lost &&
-    next.category !== task.statusCategory.Lost &&
-    current.category !== task.statusCategory.Won
-  )
-}
-
-function createStatusChangeTx (factory: TxFactory, issue: Issue, nextStatus: Ref<Status>): Tx {
-  const innerTx = factory.createTxUpdateDoc(issue._class, issue.space, issue._id, {
-    status: nextStatus
-  })
-  return factory.createTxCollectionCUD(issue.attachedToClass, issue.attachedTo, issue.space, issue.collection, innerTx)
-}
-
-/**
- * @public
- */
-export async function IssueToDoDone (
-  control: TriggerControl,
-  workslots: WorkSlot[],
-  todo: ToDo,
-  isDerived: boolean
-): Promise<Tx[]> {
-  const res: Tx[] = []
-  let total = 0
-  for (const workslot of workslots) {
-    total += (workslot.dueDate - workslot.date) / 1000 / 60
-  }
-  const factory = new TxFactory(control.txFactory.account)
-  const issue = (
-    await control.findAll<Issue>(control.ctx, todo.attachedToClass, { _id: todo.attachedTo as Ref<Issue> })
-  )[0]
-  if (issue !== undefined) {
-    if (!isDerived) {
-      const changeTx = await generateChangeStatusTx(control, factory, issue, todo)
-      if (changeTx !== undefined) {
-        res.push(changeTx)
-      }
-    }
-    if (total > 0) {
-      // round to nearest 15 minutes
-      total = Math.round(total / 15) * 15
-
-      const data: AttachedData<TimeSpendReport> = {
-        employee: todo.user,
-        date: new Date().getTime(),
-        value: total / 60,
-        description: ''
-      }
-      const innerTx = factory.createTxCreateDoc(
-        tracker.class.TimeSpendReport,
-        issue.space,
-        data as Data<TimeSpendReport>
-      )
-      const outerTx = factory.createTxCollectionCUD(issue._class, issue._id, issue.space, 'reports', innerTx)
-      res.push(outerTx)
-    }
-  }
-  return res
 }
 
 async function createIssueHandler (issue: Issue, control: TriggerControl): Promise<Tx[]> {
@@ -544,27 +403,42 @@ async function changeIssueAssigneeHandler (
   issueId: Ref<Issue>
 ): Promise<Tx[]> {
   const issue = (await control.findAll(control.ctx, tracker.class.Issue, { _id: issueId }))[0]
-  if (issue !== undefined) {
-    const status = (await control.modelDb.findAll(core.class.Status, { _id: issue.status }))[0]
-    if (status === undefined) return []
-    if (status.category === task.statusCategory.Active || status.category === task.statusCategory.ToDo) {
-      const res: Tx[] = []
-      const todos = await control.findAll(control.ctx, time.class.ToDo, {
-        attachedTo: issue._id
-      })
-      const now = Date.now()
-      for (const todo of todos) {
-        if (todo.doneOn != null) continue
-        res.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { doneOn: now }))
+  if (issue === undefined) return []
+
+  const res: Tx[] = []
+  const todos = await control.findAll(control.ctx, time.class.ToDo, {
+    attachedTo: issue._id
+  })
+  const now = Date.now()
+  let assigneeHasToDo = false
+  for (const todo of todos) {
+    if (todo.doneOn != null) continue
+    if ((todo.user as Ref<Person>) === newAssignee) {
+      assigneeHasToDo = true
+      if (todo.reassignedTo != null) {
+        res.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { reassignedTo: null }))
       }
+      continue
+    }
+    // The todo stays open, its owner decides what to do with it, but the time planned ahead is freed.
+    // A todo outlives the status it was created in, so this part does not check the status at all.
+    res.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { reassignedTo: newAssignee }))
+    res.push(...(await trimWorkSlots(control, todo._id, now)))
+  }
+
+  if (!assigneeHasToDo) {
+    const status = (await control.modelDb.findAll(core.class.Status, { _id: issue.status }))[0]
+    const inWork =
+      status !== undefined &&
+      (status.category === task.statusCategory.Active || status.category === task.statusCategory.ToDo)
+    if (inWork) {
       const tx = await getCreateToDoTx(issue, newAssignee, control)
       if (tx !== undefined) {
         res.push(tx)
       }
-      return res
     }
   }
-  return []
+  return res
 }
 
 async function changeIssueStatusHandler (
@@ -587,22 +461,6 @@ async function changeIssueStatusHandler (
           await control.apply(control.ctx, [tx])
         }
       }
-    }
-  } else if (status.category === task.statusCategory.Won || status.category === task.statusCategory.Lost) {
-    const issue = (await control.findAll(control.ctx, tracker.class.Issue, { _id: issueId }))[0]
-    if (issue !== undefined) {
-      const todos = await control.findAll(control.ctx, time.class.ToDo, {
-        attachedTo: issue._id,
-        doneOn: null
-      })
-      const res: Tx[] = []
-      const now = Date.now()
-      for (const todo of todos) {
-        if (todo.doneOn == null) {
-          res.push(control.txFactory.createTxUpdateDoc(todo._class, todo.space, todo._id, { doneOn: now }))
-        }
-      }
-      return res
     }
   }
   return []
@@ -700,18 +558,90 @@ const TodoCreateNotification: CreateNotificationFunc = async (
   }
 }
 
+const TodoReassignedMatch: TypeMatchFunc = (_client, _type, _typeObject, doc, receiver): boolean => {
+  const todo = doc as ToDo
+  // The same field is cleared when the task comes back, and that is not worth a notification.
+  return todo.reassignedTo != null && todo.doneOn == null && todo.user === receiver.employeeRef
+}
+
+const TodoReassignedNotification: CreateNotificationFunc = async (
+  _client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  _attachedToDoc: Doc | undefined,
+  object: Doc,
+  receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  const todo = object as ToDo
+
+  if (todo.user !== receiver.employeeRef) return undefined
+
+  return {
+    header: time.string.ToDoReassigned,
+    headerIcon: time.icon.Planned,
+    headerObjectId: todo._id,
+    headerObjectClass: todo._class,
+    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+  }
+}
+
+async function hasOpenToDo (client: TypeMatchClient, issue: Issue, receiver: Receiver): Promise<boolean> {
+  const todos = await client.findAll(
+    client.ctx,
+    time.class.ToDo,
+    { attachedTo: issue._id, user: receiver.employeeRef, doneOn: null },
+    { limit: 1 }
+  )
+  return todos.length > 0
+}
+
+const IssueClosedToDoMatch: TypeMatchFunc = async (
+  client: TypeMatchClient,
+  _type,
+  _typeObject,
+  doc: Doc,
+  receiver: Receiver
+): Promise<boolean> => {
+  const issue = doc as Issue
+  const status = (await client.modelDb.findAll(core.class.Status, { _id: issue.status }))[0]
+  if (status === undefined) return false
+  if (status.category !== task.statusCategory.Won && status.category !== task.statusCategory.Lost) return false
+  return await hasOpenToDo(client, issue, receiver)
+}
+
+const IssueClosedToDoNotification: CreateNotificationFunc = async (
+  _client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  _attachedToDoc: Doc | undefined,
+  object: Doc,
+  _receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  // The receiver got here only through IssueClosedToDoMatch, which already checked the todo.
+  const issue = object as Issue
+
+  return {
+    header: time.string.IssueClosedCloseToDo,
+    headerIcon: time.icon.Planned,
+    headerObjectId: issue._id,
+    headerObjectClass: issue._class,
+    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(issue.title))))
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
     IssueToDoFactory,
-    IssueToDoDone,
-    TodoCreateNotification
+    TodoCreateNotification,
+    TodoReassignedNotification,
+    TodoReassignedMatch,
+    IssueClosedToDoNotification,
+    IssueClosedToDoMatch
   },
   trigger: {
     OnTask,
     OnToDoUpdate,
-    OnToDoRemove,
     OnWorkSlotCreate,
-    OnWorkSlotUpdate
+    OnWorkSlotUpdate,
+    OnWorkSlotRemove
   }
 })

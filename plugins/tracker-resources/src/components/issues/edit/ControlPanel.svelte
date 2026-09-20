@@ -15,11 +15,11 @@
 <script lang="ts">
   import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
   import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import { AttributeBarEditor, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
   import { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
   import task from '@hcengineering/task'
-  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import { Issue, TimeSpendReport, reduceChildInfoTree } from '@hcengineering/tracker'
   import { Component, Label, floorFractionDigits } from '@hcengineering/ui'
   import { getDocMixins, getFiltredKeys, isCollectionAttr, ObjectBox } from '@hcengineering/view-resources'
 
@@ -38,6 +38,19 @@
   export let issue: Issue
   export let showAllMixins: boolean = false
   export let readonly = false
+
+  // Both reported-time editors below read the same reports, so they share one query.
+  const reportsQuery = createQuery()
+  let reports: TimeSpendReport[] | undefined = undefined
+
+  $: reportsQuery.query(
+    tracker.class.TimeSpendReport,
+    { attachedTo: issue._id },
+    (res) => {
+      reports = res
+    },
+    { projection: { date: 1, value: 1, workslot: 1 } }
+  )
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -226,6 +239,7 @@
         placeholder={tracker.string.ReportedTime}
         object={issue}
         value={issue.reportedTime}
+        {reports}
         showChildIssues={false}
         kind={'link'}
         {readonly}
@@ -261,6 +275,7 @@
         placeholder={tracker.string.ReportedTime}
         object={issue}
         value={issue.reportedTime}
+        {reports}
         kind={'link'}
         {readonly}
       />
@@ -326,8 +341,11 @@
   .time-value {
     padding: 0 0.75rem;
 
+    // The hover background belongs to the button, so the padding has to live there; the negative
+    // margin keeps the value itself aligned with the plain ones above and below.
     :global(.link-container) {
-      padding: 0;
+      padding: 0 0.75rem;
+      margin: 0 -0.75rem;
     }
   }
 </style>

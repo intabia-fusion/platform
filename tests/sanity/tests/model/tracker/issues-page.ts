@@ -223,9 +223,18 @@ export class IssuesPage extends CommonTrackerPage {
     }).toPass({ intervals: retryIntervals, timeout: 45000 })
   }
 
+  async verifyPlannedTime (label: string): Promise<void> {
+    await expect(this.page.locator('#ReportedTimeEditor')).toContainText(`+${label}`, { timeout: 20000 })
+  }
+
   async verifyReportedTime (time: number): Promise<void> {
     // Assuming toTime is defined elsewhere
     await expect(this.page.locator('#ReportedTimeEditor')).toContainText(await toTime(time))
+  }
+
+  // A report entered by hand is time already spent, so it must not show up on the planned side.
+  async verifyNoPlannedTime (): Promise<void> {
+    await expect(this.page.locator('#ReportedTimeEditor span.content-dark-color')).toHaveCount(0)
   }
 
   // ACTIONS

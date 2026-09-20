@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Вы хотите изменить исполнителя Действия? Действие будет удалено из планирования текущего исполнителя.",
     "Occupancy": "Занятость",
     "ShowEvents": "События",
-    "ShowActivity": "Активность"
+    "ShowActivity": "Активность",
+    "PlannedTime": "Запланировано",
+    "CloseToDoQuestion": "Закрыть Действие?",
+    "CloseToDoQuestionMessage": "Задача закрыта. Закрыть {count, plural, =1 {ваше Действие} other {ваши Действия}} тоже?",
+    "ReassignedTo": "Переназначено на",
+    "ToDoReassigned": "Действие переназначено",
+    "IssueClosedCloseToDo": "Задача закрыта, Действие осталось"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",
