@@ -24,6 +24,8 @@
     "WorkspaceAlreadyExists": "El espacio de trabajo ya existe",
         "InvalidOtp": "Código inválido",
     "PasswordLoginLocked": "El inicio de sesión con contraseña está bloqueado debido a demasiados intentos fallidos. Use el método de inicio de sesión OTP para desbloquear su cuenta.",
+    "AccountBlocked": "Tu cuenta ha sido bloqueada por el administrador.",
+    "WorkspaceReadOnly": "Este espacio de trabajo es de solo lectura en este momento.",
     "InviteNotFound": "Invitación con correo electrónico:{email} no encontrada.",
     "WorkspaceLimitReached": "Ha alcanzado el límite de espacios de trabajo. Póngase en contacto con nosotros...",
     "ReadOnlyAccount": "Demo de invitado anónimo",

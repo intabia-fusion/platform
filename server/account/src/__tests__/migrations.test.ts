@@ -96,3 +96,13 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v42/v43 delet
     }
   })
 })
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v44 blocked_on [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ddl = migrations.find(([id]) => id === 'account_db_v44_account_blocked_on')?.[1] ?? ''
+
+  it('adds blocked_on with the int8 type of this flavor, alone in its batch', () => {
+    expect(ddl).toContain(`blocked_on ${flavor === 'cockroach' ? 'INT8' : 'BIGINT'}`)
+    expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
+  })
+})

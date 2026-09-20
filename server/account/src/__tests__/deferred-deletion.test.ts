@@ -28,13 +28,13 @@ import {
   findOrphanedWorkspaces,
   getDeletionGraceMs,
   getDeletionReadonlyMs,
-  isReadOnlyPending,
   purgeAccount,
   sweepScheduledDeletions
 } from '../deletion'
 import { requireAdminOp } from '../adminOp'
 import { performWorkspaceOperation } from '../serviceOperations'
 import * as utils from '../utils'
+import { isReadOnlyWorkspace } from '../utils'
 import type { AccountDB, WorkspaceStatus } from '../types'
 
 jest.mock('@hcengineering/server-token', () => ({
@@ -89,12 +89,22 @@ function fakeDb (
   const db = {
     workspaceStatus: {
       find: async (query: any) => statuses.filter((s) => matches(s, query)),
+      findOne: async (query: any) => statuses.find((s) => matches(s, query)) ?? null,
       update: async (query: any, ops: any) => {
         for (const s of statuses.filter((s) => matches(s, query))) {
           Object.assign(s, ops)
         }
       }
     },
+    // The sweep reads the workspace back to write to its owners.
+    workspace: {
+      findOne: async (query: any) =>
+        workspacesOfAccount.find((w) => matches(w, query)) ??
+        (statuses.some((s) => s.workspaceUuid === query.uuid)
+          ? { uuid: query.uuid, name: String(query.uuid), url: String(query.uuid) }
+          : null)
+    },
+    socialId: { find: async () => [] },
     account: {
       find: async (query: any) => accounts.filter((a) => matches(a, query)),
       update: async (query: any, ops: any) => {
@@ -139,10 +149,15 @@ describe('deletion schedule', () => {
     expect(getDeletionGraceMs()).toBe(2 * DAY)
   })
 
-  test('read-only only while the workspace is still active', () => {
-    expect(isReadOnlyPending({ mode: 'active', deleteOn: Date.now() })).toBe(true)
-    expect(isReadOnlyPending({ mode: 'active' })).toBe(false)
-    expect(isReadOnlyPending({ mode: 'archived', deleteOn: Date.now() })).toBe(false)
+  test('read-only for a scheduled workspace and for every archive', () => {
+    expect(isReadOnlyWorkspace({ mode: 'active', deleteOn: Date.now() })).toBe(true)
+    expect(isReadOnlyWorkspace({ mode: 'active' })).toBe(false)
+
+    // An archive is restored through the platform, never edited in place - and the flag is what
+    // stops datalake from taking writes for it.
+    expect(isReadOnlyWorkspace({ mode: 'archived' })).toBe(true)
+    expect(isReadOnlyWorkspace({ mode: 'archiving-backup' })).toBe(true)
+    expect(isReadOnlyWorkspace({ mode: 'archived', deleteOn: Date.now() })).toBe(true)
   })
 })
 
@@ -244,6 +259,25 @@ describe('sweepScheduledDeletions', () => {
   })
 })
 
+describe('sweepScheduledDeletions resilience', () => {
+  test('a failed notice does not cost the remaining rows their sweep', async () => {
+    const expired: Partial<WorkspaceStatus> = {
+      workspaceUuid: 'w1' as WorkspaceUuid,
+      mode: 'archived',
+      deleteOn: Date.now() - 1000
+    }
+    const { db, accounts, deleted } = fakeDb([expired], [{ uuid: 'a1' as AccountUuid, deleteOn: Date.now() - 1000 }])
+    jest.spyOn(utils, 'getWorkspaceInfoWithStatusById').mockRejectedValue(new Error('mail is down'))
+    jest.spyOn(utils, 'notifyAccountDeletion').mockResolvedValue(undefined)
+
+    await sweepScheduledDeletions(ctx, db)
+
+    expect(expired.mode).toBe('pending-deletion')
+    expect(accounts).toHaveLength(1)
+    expect(deleted).toEqual(['a1'])
+  })
+})
+
 describe('purgeAccount', () => {
   test('refuses to purge the sole owner of a live workspace', async () => {
     const person = 'p1' as AccountUuid
@@ -268,6 +302,7 @@ describe('performWorkspaceOperation deletion events', () => {
       .mockResolvedValue([{ uuid: 'w1' as WorkspaceUuid, name: 'W1', url: 'w1', status }] as any)
     jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
     jest.spyOn(utils, 'notifyWorkspaceDeleted').mockResolvedValue(undefined)
+    jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled').mockResolvedValue(undefined)
     return db
   }
 
@@ -306,6 +341,41 @@ describe('performWorkspaceOperation deletion events', () => {
     expect(statusById.w1.isDisabled).toBe(true)
     expect(statusById.w1.deleteOn).toBeUndefined()
     expect(statusById.w1.processingAttempts).toBe(0)
+  })
+
+  test('the owners are told once: a repeat delete only moves the deadline', async () => {
+    const db = setup('active')
+    const notify = jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled')
+
+    await performWorkspaceOperation(ctx, db, null, 'token', {
+      workspaceId: 'w1' as WorkspaceUuid,
+      event: 'delete',
+      params: []
+    })
+    expect(notify).toHaveBeenCalledTimes(1)
+    // The email quotes the deadline that was written, not one computed a moment later.
+    expect(notify.mock.calls[0][4]).toBe(statusById.w1.deleteOn)
+
+    await performWorkspaceOperation(ctx, db, null, 'token', {
+      workspaceId: 'w1' as WorkspaceUuid,
+      event: 'delete',
+      params: []
+    })
+    expect(notify).toHaveBeenCalledTimes(1)
+  })
+
+  test('delete-now writes without a deadline: nothing left to call off', async () => {
+    const db = setup('active', Date.now() + DAY)
+    const notify = jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled')
+
+    await performWorkspaceOperation(ctx, db, null, 'token', {
+      workspaceId: 'w1' as WorkspaceUuid,
+      event: 'delete-now',
+      params: []
+    })
+
+    expect(notify).toHaveBeenCalledTimes(1)
+    expect(notify.mock.calls[0][4]).toBeUndefined()
   })
 
   test('delete-now is refused for a workspace already on its way out', async () => {

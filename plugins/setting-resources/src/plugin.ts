@@ -118,7 +118,7 @@ export default mergeIds(settingId, setting, {
     DeleteRole: '' as IntlString,
     DeleteRoleConfirmation: '' as IntlString,
     DeleteWorkspace: '' as IntlString,
-    DeleteWorkspaceConfirm: '' as IntlString,
+    DeleteWorkspaceConfirm: '' as IntlString<{ days: number, readonlyDays: number }>,
     DeleteSpaceType: '' as IntlString,
     DeleteSpaceTypeConfirm: '' as IntlString,
     WorkspaceName: '' as IntlString,
@@ -166,7 +166,7 @@ export default mergeIds(settingId, setting, {
     LastOwnerLeaveTitle: '' as IntlString,
     LastOwnerLeaveMessage: '' as IntlString,
     DeleteAccount: '' as IntlString,
-    DeleteAccountConfirm: '' as IntlString,
+    DeleteAccountConfirm: '' as IntlString<{ days: number }>,
     DeleteAccountBlocked: '' as IntlString<{ workspaces: string }>,
     OverrideAttribute: '' as IntlString,
     Required: '' as IntlString

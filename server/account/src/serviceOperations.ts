@@ -117,6 +117,7 @@ import {
   sendOperationOtp,
   logAdminAction,
   notifyWorkspaceDeleted,
+  notifyWorkspaceDeletionScheduled,
   doReleaseSocialId,
   publishMembersChanged
 } from './utils'
@@ -353,6 +354,36 @@ export async function adminDeletePerson (
     socialIds: socialIds.map((s) => `${s.type}:${s.value}`)
   })
   ctx.info('admin: unfinished signup purged', { personUuid })
+}
+
+/** Admin block/unblock. A blocked account cannot log in and cannot open a workspace. */
+export async function adminSetAccountBlocked (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { accountUuid: AccountUuid, blocked: boolean, otpCode: string }
+): Promise<void> {
+  const { accountUuid, blocked, otpCode } = params
+  const action = blocked ? 'block_account' : 'unblock_account'
+  const { account: actor } = await requireAdminOp(ctx, db, token, action, otpCode, accountUuid)
+
+  if (accountUuid === actor) {
+    // Blocking yourself would lock the admin panel along with the account.
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const existing = await db.account.findOne({ uuid: accountUuid })
+  if (existing == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const person = await db.person.findOne({ uuid: accountUuid })
+  const label = `${person?.firstName ?? ''} ${person?.lastName ?? ''}`.trim()
+
+  await db.account.update({ uuid: accountUuid }, { blockedOn: blocked ? Date.now() : undefined })
+  await logAdminAction(ctx, db, token, action, accountUuid, label)
+  ctx.info(blocked ? 'admin: account blocked' : 'admin: account unblocked', { accountUuid })
 }
 
 async function ensureNotLastOwner (db: AccountDB, workspace: WorkspaceUuid, target: AccountUuid): Promise<void> {
@@ -974,6 +1005,11 @@ export async function performWorkspaceOperation (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, {}))
   }
 
+  // One deadline for the whole batch, so the row and the email quote the same moment.
+  const deadline = deletionDeadline()
+  // A repeat 'delete' only moves the deadline - the owners were told the first time.
+  const alreadyScheduled = new Set(workspaces.filter((ws) => ws.status.deleteOn != null).map((ws) => ws.uuid))
+
   let ops = 0
   for (const workspace of workspaces) {
     const update: Partial<WorkspaceStatus> = {}
@@ -989,7 +1025,7 @@ export async function performWorkspaceOperation (
 
         // Deferred: read-only first, then archived, and only then purged. See sweepScheduledDeletions.
         // An already archived one just waits out the deadline.
-        update.deleteOn = deletionDeadline()
+        update.deleteOn = deadline
         break
       case 'delete-now':
         if (isDeletingMode(workspace.status.mode)) {
@@ -1078,6 +1114,11 @@ export async function performWorkspaceOperation (
     for (const workspace of workspaces) {
       await cancelWorkspaceSubscriptions(ctx, db, workspace.uuid)
       await notifyWorkspaceDeleted(ctx, db, token, workspace)
+      if (event === 'delete-now') {
+        await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, undefined)
+      } else if (!alreadyScheduled.has(workspace.uuid)) {
+        await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, deadline)
+      }
     }
   }
   return ops > 0
@@ -2644,6 +2685,7 @@ export type AccountServiceMethods =
   | 'adminUpdateWorkspaceUrl'
   | 'adminReleaseSocialId'
   | 'adminDeletePerson'
+  | 'adminSetAccountBlocked'
   | 'listAdminActions'
   | 'performWorkspaceOperation'
   | 'updateWorkspaceRoleBySocialKey'
@@ -2726,6 +2768,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     adminUpdateWorkspaceUrl: wrap(adminUpdateWorkspaceUrl),
     adminReleaseSocialId: wrap(adminReleaseSocialId),
     adminDeletePerson: wrap(adminDeletePerson),
+    adminSetAccountBlocked: wrap(adminSetAccountBlocked),
     listAdminActions: wrap(listAdminActions),
     performWorkspaceOperation: wrap(performWorkspaceOperation),
     updateWorkspaceRoleBySocialKey: wrap(updateWorkspaceRoleBySocialKey),

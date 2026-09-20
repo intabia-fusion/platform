@@ -16,7 +16,12 @@ import {
 } from '@hcengineering/integration-client'
 import login from '@hcengineering/login'
 import { getMetadata } from '@hcengineering/platform'
-import presentation, { getClient, OtpConfirmDialog, type OtpConfirmProps } from '@hcengineering/presentation'
+import presentation, {
+  getClient,
+  OtpConfirmDialog,
+  type OtpConfirmProps,
+  type OtpConfirmResult
+} from '@hcengineering/presentation'
 import type { PersonRating } from '@hcengineering/rating'
 import setting from '@hcengineering/setting'
 import { type TemplateDataProvider } from '@hcengineering/templates'
@@ -135,8 +140,8 @@ export async function requestOperationOtpCode (): Promise<string | undefined> {
       failedLabel: setting.string.OtpSendFailed,
       requestCode: async () => await getAccountClient().requestOperationOtp()
     }
-    showPopup(OtpConfirmDialog, props, undefined, (code) => {
-      resolve(typeof code === 'string' && code.length > 0 ? code : undefined)
+    showPopup(OtpConfirmDialog, props, undefined, (res?: OtpConfirmResult) => {
+      resolve(res != null && res.code.length > 0 ? res.code : undefined)
     })
   })
 }

@@ -23,6 +23,12 @@ export type * from './components/breadcrumbs/types'
  * @public
  */
 /** Props of `OtpConfirmDialog`; the dialog is opened through `showPopup`, which is untyped. */
+/** What `OtpConfirmDialog` closes with. Cancelling closes with undefined instead. */
+export interface OtpConfirmResult {
+  code: string
+  option: boolean
+}
+
 export interface OtpConfirmProps {
   label: IntlString
   okLabel: IntlString
@@ -31,6 +37,9 @@ export interface OtpConfirmProps {
   sentLabel: IntlString
   failedLabel: IntlString
   message?: IntlString
+  messageParams?: Record<string, any>
+  /** When set, the dialog also shows a checkbox; its state comes back as `option` */
+  optionLabel?: IntlString
   codeLength?: number
   requestCode: () => Promise<{ retryOn: number }>
 }

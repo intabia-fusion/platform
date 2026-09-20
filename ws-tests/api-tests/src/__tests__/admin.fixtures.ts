@@ -20,6 +20,8 @@ export const STAND_URL = 'http://localhost:8083'
 export const TRANSACTOR_URL = `${STAND_URL}/_tr`
 export const STATS_URL = `${STAND_URL}/_stats`
 export const DEV_OTP = '000000'
+/** Mailpit of the ws stand: every email the services send lands here and nowhere else. */
+export const MAILPIT_URL = 'http://localhost:8026'
 export const WRONG_OTP = '999999'
 
 /** Raw RPC result: account returns HTTP 200 with `{ error: Status }` for handled failures. */
@@ -82,4 +84,37 @@ export async function adminSessionClient (config: ServerConfig): Promise<Account
   const session = await rpc(config, login.result.token, 'verifyAdminSession', { otpCode: DEV_OTP })
   if (session.error != null) throw new Error(`admin session failed: ${JSON.stringify(session.error)}`)
   return getAccountClient(config.ACCOUNTS_URL, session.result.token)
+}
+
+export interface MailMessage {
+  ID: string
+  Subject: string
+  To: Array<{ Address: string }>
+}
+
+/** Waits for a message to the given address, newest first. Returns undefined if none arrives. */
+export async function waitForMail (to: string, timeoutMs = 30000): Promise<MailMessage | undefined> {
+  const until = Date.now() + timeoutMs
+  while (Date.now() < until) {
+    const res = await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent('to:' + to)}&limit=20`)
+    if (res.ok) {
+      const body = await res.json()
+      const found = (body.messages ?? []).find((m: MailMessage) => m.To?.some((t) => t.Address === to))
+      if (found !== undefined) return found
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+}
+
+/** Body of a message, for asserting on the link or the date it quotes. */
+export async function mailBody (id: string): Promise<string> {
+  const res = await fetch(`${MAILPIT_URL}/api/v1/message/${id}`)
+  if (!res.ok) return ''
+  const body = await res.json()
+  return `${body.Text ?? ''}\n${body.HTML ?? ''}`
+}
+
+/** Drops every stored message so a test sees only its own. */
+export async function clearMail (): Promise<void> {
+  await fetch(`${MAILPIT_URL}/api/v1/messages`, { method: 'DELETE' })
 }

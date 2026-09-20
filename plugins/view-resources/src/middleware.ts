@@ -378,6 +378,18 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
         )
         return {}
       }
+      if (err instanceof PlatformError && err.status.code === platform.status.WorkspaceReadOnly) {
+        addNotification(
+          await translate(view.string.ReadOnlyWorkspaceWarningTitle, {}, getCurrentLanguage()),
+          await translate(view.string.ReadOnlyWorkspaceWarningMessage, {}, getCurrentLanguage()),
+          ForbiddenNotification,
+          {
+            onClose: () => {}
+          },
+          NotificationSeverity.Info
+        )
+        return {}
+      }
       if (err instanceof PlatformError && err.status.code === platform.status.Forbidden) {
         addNotification(
           await translate(view.string.PermissionWarningTitle, {}, getCurrentLanguage()),

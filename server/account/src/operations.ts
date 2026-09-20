@@ -113,6 +113,7 @@ import {
   getWorkspaceRole,
   getWorkspaceRoles,
   getWorkspacesInfoWithStatusByIds,
+  ensureNotBlocked,
   GUEST_ACCOUNT,
   isAccountPasswordLocked,
   isAllowReadOnlyGuests,
@@ -136,7 +137,9 @@ import {
   updatePasswordAgingRule,
   updateWorkspaceRole,
   logAdminAction,
+  notifyAccountDeletion,
   notifyWorkspaceDeleted,
+  notifyWorkspaceDeletionScheduled,
   sendOperationOtp,
   verifyOperationOtp,
   verifyAllowedRole,
@@ -144,7 +147,13 @@ import {
   verifyPassword,
   wrap
 } from './utils'
-import { deletionDeadline, findOrphanedWorkspaces, purgeAccount } from './deletion'
+import {
+  deletionDeadline,
+  findOrphanedWorkspaces,
+  getDeletionGraceDays,
+  getDeletionReadonlyDays,
+  purgeAccount
+} from './deletion'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
 // to the database layer when searching/inserting as they may contain SQL injection
@@ -223,6 +232,8 @@ export async function login (
         new Status(Severity.ERROR, platform.status.PasswordLoginLocked, { account: normalizedEmail })
       )
     }
+
+    ensureNotBlocked(existingAccount)
 
     const person = await db.person.findOne({ uuid: emailSocialId.personUuid })
     if (person == null) {
@@ -471,6 +482,7 @@ export async function validateOtp (
     await db.otp.deleteMany({ socialId: emailSocialId._id })
 
     const targetAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
+    ensureNotBlocked(targetAccount)
 
     if (action !== 'verify') {
       // login/sign up
@@ -1278,6 +1290,8 @@ export async function checkAutoJoin (
   if (emailSocialId != null) {
     const targetAccount = await getAccount(db, emailSocialId.personUuid as AccountUuid)
     if (targetAccount != null) {
+      ensureNotBlocked(targetAccount)
+
       if (targetAccount.automatic == null || !targetAccount.automatic) {
         if (token == null) {
           // Login required
@@ -1415,6 +1429,8 @@ export async function confirm (
   }
 
   await confirmHulyIds(ctx, db, account)
+
+  ensureNotBlocked(await db.account.findOne({ uuid: account }))
 
   const person = await db.person.findOne({ uuid: account })
   if (person == null) {
@@ -1747,12 +1763,16 @@ export async function deleteWorkspace (
 
   // Deferred: the workspace stays open read-only, gets archived, and is purged only when the
   // deadline arrives. sweepScheduledDeletions moves it between those states.
-  await db.workspaceStatus.update({ workspaceUuid: workspace }, { deleteOn: deletionDeadline() })
+  const deleteOn = deletionDeadline()
+  await db.workspaceStatus.update({ workspaceUuid: workspace }, { deleteOn })
 
   await cancelWorkspaceSubscriptions(ctx, db, workspace)
   await logAdminAction(ctx, db, token, 'workspace_delete', workspace, ws?.name ?? ws?.url)
   if (ws != null) {
     await notifyWorkspaceDeleted(ctx, db, token, ws)
+    // The other owners did not push the button: they learn the deadline the same way as from the
+    // admin panel.
+    await notifyWorkspaceDeletionScheduled(ctx, db, branding, ws, deleteOn)
   }
 }
 
@@ -2708,20 +2728,44 @@ export async function releaseSocialId (
  * Workspaces the account would orphan by leaving: it is their only owner and they are still alive.
  * Workspaces already on their way out keep a member row forever, so they never block a purge.
  */
-/** Whether the caller may purge their own account, and what stands in the way if not. */
+/**
+ * Whether the account may be purged, and what stands in the way if not. Without `uuid` it answers
+ * for the caller; an admin may ask about anybody, so the panel can say why before asking for a code.
+ */
 export async function canDeleteAccount (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  params: { uuid?: AccountUuid } = {}
 ): Promise<{ canDelete: boolean, ownedWorkspaces: Array<{ uuid: WorkspaceUuid, name: string, url: string }> }> {
-  const { account } = decodeTokenVerbose(ctx, token)
-  const blocking = await findOrphanedWorkspaces(db, account)
+  const decoded = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decoded
+  const uuid = params.uuid ?? account
+  const isAdmin = extra?.admin === 'true'
+
+  if (uuid !== account && !isAdmin) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const blocking = await findOrphanedWorkspaces(db, uuid)
+  // Matches deleteAccount: an admin purging themselves would also break the OTP-email lookup.
+  const selfAdmin = uuid === account && isAdmin
 
   return {
-    canDelete: blocking.length === 0,
+    canDelete: blocking.length === 0 && !selfAdmin,
     ownedWorkspaces: blocking.map((ws) => ({ uuid: ws.uuid, name: ws.name, url: ws.url }))
   }
+}
+
+/** Deferral windows the UI puts into its warnings. Public: the texts are shown before signing in. */
+export async function getDeletionPolicy (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<{ graceDays: number, readonlyDays: number }> {
+  return { graceDays: getDeletionGraceDays(), readonlyDays: getDeletionReadonlyDays() }
 }
 
 export async function deleteAccount (
@@ -2774,7 +2818,9 @@ export async function deleteAccount (
     return
   }
 
-  await db.account.update({ uuid }, { deleteOn: deletionDeadline() })
+  const deleteOn = deletionDeadline()
+  await db.account.update({ uuid }, { deleteOn })
+  await notifyAccountDeletion(ctx, db, branding, uuid, deleteOn)
   await logAdminAction(ctx, db, token, 'account_delete_scheduled', uuid, label)
 }
 
@@ -3354,6 +3400,7 @@ export type AccountMethods =
   | 'releaseSocialId'
   | 'deleteAccount'
   | 'canDeleteAccount'
+  | 'getDeletionPolicy'
   | 'cancelAccountDeletion'
   | 'canMergeSpecifiedPersons'
   | 'mergeSpecifiedPersons'
@@ -3421,6 +3468,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     releaseSocialId: wrap(releaseSocialId),
     deleteAccount: wrap(deleteAccount),
     canDeleteAccount: wrap(canDeleteAccount),
+    getDeletionPolicy: wrap(getDeletionPolicy),
     cancelAccountDeletion: wrap(cancelAccountDeletion),
     canMergeSpecifiedPersons: wrap(canMergeSpecifiedPersons),
     mergeSpecifiedPersons: wrap(mergeSpecifiedPersons),

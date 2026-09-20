@@ -21,6 +21,7 @@ import {
   generateId,
   hashWorkspace,
   isActiveMode,
+  isArchivingMode,
   type MeasureContext,
   type Person,
   type PersonId,
@@ -91,7 +92,6 @@ import {
   type WorkspaceStatus
 } from './types'
 import { getBillingAdminEmails, isAdminEmail, isBillingAdminEmail } from './admin'
-import { isReadOnlyPending } from './deletion'
 
 export const GUEST_ACCOUNT = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
 
@@ -391,6 +391,18 @@ export function isAccountPasswordLocked (account: Account): boolean {
   const failedAttempts = account.failedLoginAttempts ?? 0
 
   return failedAttempts >= maxFailedLoginAttempts
+}
+
+/** Scheduled for deletion or archived: the data can still be taken out, but not changed. */
+export function isReadOnlyWorkspace (status: { mode: WorkspaceMode, deleteOn?: number }): boolean {
+  return (status.deleteOn != null && isActiveMode(status.mode)) || isArchivingMode(status.mode)
+}
+
+/** Blocked by an admin: every path that hands out a token must refuse. */
+export function ensureNotBlocked (account: Pick<Account, 'blockedOn'> | null): void {
+  if (account?.blockedOn != null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountBlocked, {}))
+  }
 }
 
 /**
@@ -999,12 +1011,14 @@ export async function selectWorkspace (
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUrl }))
     }
 
-    // Scheduled for deletion: open for taking the data out, closed for writing.
-    if (isReadOnlyPending(wsStatus)) {
+    // Scheduled for deletion or archived: open for taking the data out, closed for writing.
+    if (isReadOnlyWorkspace(wsStatus)) {
       extra ??= {}
       extra.readonly = 'true'
     }
   }
+
+  ensureNotBlocked(await db.account.findOne({ uuid: accountUuid }))
 
   const person = await db.person.findOne({ uuid: accountUuid })
   if (person == null) {
@@ -1860,6 +1874,8 @@ export async function loginOrSignUpWithProvider (
       await db.socialId.update({ key: emailSocialId.key }, { verifiedOn: Date.now() })
     }
 
+    ensureNotBlocked(await db.account.findOne({ uuid: personUuid as AccountUuid }))
+
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true' }
@@ -2086,11 +2102,7 @@ export async function notifyWorkspaceDeleted (
 
   try {
     const { account } = decodeTokenVerbose(ctx, token)
-    // A retired social id carries a mangled value, an unverified one was never proven to be theirs.
-    const emails = (await db.socialId.find({ personUuid: account, type: SocialIdType.EMAIL })).filter(
-      (sid) => sid.isDeleted !== true && sid.verifiedOn != null
-    )
-    const actor = emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value ?? account
+    const actor = (await getPersonEmail(db, account)) ?? account
     const subject = `Workspace deleted: ${workspace.name}`
     const text = `${actor} deleted workspace "${workspace.name}" (${workspace.url}, ${workspace.uuid}) at ${new Date().toISOString()}.`
 
@@ -2099,6 +2111,115 @@ export async function notifyWorkspaceDeleted (
     }
   } catch (err) {
     ctx.warn('Failed to notify billing admins about a workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
+/** Primary verified email of a person. A retired or unproven address is not one. */
+export async function getPersonEmail (db: AccountDB, person: PersonUuid): Promise<string | undefined> {
+  const emails = (await db.socialId.find({ personUuid: person, type: SocialIdType.EMAIL })).filter(
+    (sid) => sid.isDeleted !== true && sid.verifiedOn != null
+  )
+  return emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value
+}
+
+/** Where a person goes to see - and call off - a scheduled deletion. */
+function getSelectWorkspaceLink (branding: Branding | null): string {
+  return concatLink(getFrontUrl(branding), '/login/selectWorkspace')
+}
+
+/**
+ * Tells the owners their workspace is on its way out. `deleteOn` null means it goes now, with no
+ * deferral and nothing to call off.
+ */
+export async function notifyWorkspaceDeletionScheduled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string },
+  deleteOn: number | undefined
+): Promise<void> {
+  try {
+    const lang = branding?.defaultLanguage
+    const owners = (await db.getWorkspaceMembers(workspace.uuid)).filter((m) => m.role === AccountRole.Owner)
+    const params = {
+      ws: workspace.name !== '' ? workspace.name : workspace.url,
+      url: workspace.url,
+      date: deleteOn != null ? new Date(deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      link: getSelectWorkspaceLink(branding)
+    }
+    const scheduled = deleteOn != null
+    const info = {
+      subject: await translate(
+        scheduled
+          ? accountPlugin.string.WorkspaceDeletionScheduledSubject
+          : accountPlugin.string.WorkspaceDeletedSubject,
+        params,
+        lang
+      ),
+      text: await translate(
+        scheduled ? accountPlugin.string.WorkspaceDeletionScheduledText : accountPlugin.string.WorkspaceDeletedText,
+        params,
+        lang
+      ),
+      html: await translate(
+        scheduled ? accountPlugin.string.WorkspaceDeletionScheduledHTML : accountPlugin.string.WorkspaceDeletedHTML,
+        params,
+        lang
+      )
+    }
+
+    for (const owner of owners) {
+      const to = await getPersonEmail(db, owner.person)
+      if (to === undefined) continue
+      await sendEmail({ ...info, to }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify the owners about a workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
+/** Tells the person their account is on its way out. `deleteOn` null means it is already gone. */
+export async function notifyAccountDeletion (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  account: AccountUuid,
+  deleteOn: number | undefined
+): Promise<void> {
+  try {
+    const to = await getPersonEmail(db, account)
+    if (to === undefined) return
+
+    const lang = branding?.defaultLanguage
+    const scheduled = deleteOn != null
+    const params = {
+      date: scheduled ? new Date(deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      link: getSelectWorkspaceLink(branding)
+    }
+
+    await sendEmail(
+      {
+        to,
+        subject: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledSubject : accountPlugin.string.AccountDeletedSubject,
+          params,
+          lang
+        ),
+        text: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledText : accountPlugin.string.AccountDeletedText,
+          params,
+          lang
+        ),
+        html: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledHTML : accountPlugin.string.AccountDeletedHTML,
+          params,
+          lang
+        )
+      },
+      ctx
+    )
+  } catch (err) {
+    ctx.warn('Failed to notify about an account deletion', { account, err })
   }
 }
 

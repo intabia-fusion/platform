@@ -1221,3 +1221,14 @@ function getV44Migration (ns: string, flavor: DBFlavor): [string, string] {
     `
   ]
 }
+
+function getV44Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v44_account_blocked_on',
+    /* Admin block: when the account was blocked. Null means not blocked. */
+    `
+    ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS blocked_on ${types.int8};
+    `
+  ]
+}

@@ -124,7 +124,8 @@
     "AccountDeletionScheduledDesc": "Il tuo account sarà eliminato il {date}. Annulla l'eliminazione per conservarlo. Gli spazi di lavoro programmati restano programmati: ripristina ciascuno separatamente.",
     "CancelAccountDeletion": "Annulla eliminazione",
     "DeleteAccount": "Elimina account",
-    "DeleteAccountConfirm": "L'account sarà contrassegnato per l'eliminazione e rimosso definitivamente tra 21 giorni. Accedendo prima potrai annullare. Continuare?",
+    "DeleteAccountConfirm": "L'account sarà contrassegnato per l'eliminazione e rimosso definitivamente tra {days} giorni. Accedendo prima potrai annullare. Continuare?",
+    "DeleteAccountBlockedAdmin": "Un account amministratore non può essere eliminato da qui.",
     "DeleteAccountBlocked": "Sei l'unico proprietario di: {workspaces}. Elimina prima questi spazi di lavoro o trasferiscili.",
     "CodeSent": "Un codice di conferma è stato inviato alla tua email."
   }

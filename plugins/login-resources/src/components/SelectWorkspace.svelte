@@ -28,6 +28,7 @@
   import presentation, {
     MessageBox,
     OtpConfirmDialog,
+    type OtpConfirmResult,
     type OtpConfirmProps,
     reduceCalls
   } from '@hcengineering/presentation'
@@ -79,6 +80,7 @@
 
   let canDeleteAccount = false
   let blockingWorkspaces: string[] = []
+  let deletionGraceDays = 21
   $: showDeleteAccount = account?.token != null && !isReadOnlyGuest
 
   async function loadAccount (): Promise<void> {
@@ -117,9 +119,12 @@
       return
     }
     try {
-      const res = await getAccountClient(account.token).canDeleteAccount()
+      const client = getAccountClient(account.token)
+      const res = await client.canDeleteAccount()
       canDeleteAccount = res.canDelete
       blockingWorkspaces = res.ownedWorkspaces.map((ws) => ws.name)
+      // The deferral is configurable per installation, so the warning cannot hardcode it.
+      deletionGraceDays = (await client.getDeletionPolicy()).graceDays
     } catch (err) {
       console.error('Failed to check whether the account can be deleted', err)
       canDeleteAccount = false
@@ -143,7 +148,8 @@
     if (!canDeleteAccount) {
       showPopup(MessageBox, {
         label: login.string.DeleteAccount,
-        message: login.string.DeleteAccountBlocked,
+        message:
+          blockingWorkspaces.length > 0 ? login.string.DeleteAccountBlocked : login.string.DeleteAccountBlockedAdmin,
         params: { workspaces: blockingWorkspaces.join(', ') },
         canSubmit: false
       })
@@ -155,16 +161,17 @@
       label: login.string.DeleteAccount,
       okLabel: login.string.DeleteAccount,
       message: login.string.DeleteAccountConfirm,
+      messageParams: { days: deletionGraceDays },
       codeLabel: login.string.EnterCode,
       sendLabel: login.string.ResendCode,
       sentLabel: login.string.CodeSent,
       failedLabel: login.string.ConfirmationFailed,
       requestCode: async () => await getAccountClient(token).requestOperationOtp()
     }
-    showPopup(OtpConfirmDialog, props, undefined, (code) => {
-      if (typeof code !== 'string' || code.length === 0) return
+    showPopup(OtpConfirmDialog, props, undefined, (res?: OtpConfirmResult) => {
+      if (res == null || res.code.length === 0) return
       // showPopup hands the result to a sync callback, hence the detached promise.
-      void deleteAccount(uuid, token, code)
+      void deleteAccount(uuid, token, res.code)
     })
   }
 

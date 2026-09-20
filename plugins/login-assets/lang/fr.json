@@ -124,7 +124,8 @@
     "AccountDeletionScheduledDesc": "Votre compte sera supprimé le {date}. Annulez la suppression pour le conserver. Les espaces de travail programmés le restent : restaurez chacun séparément.",
     "CancelAccountDeletion": "Annuler la suppression",
     "DeleteAccount": "Supprimer le compte",
-    "DeleteAccountConfirm": "Le compte sera marqué pour suppression et définitivement effacé dans 21 jours. Si vous vous connectez avant, vous pourrez annuler. Continuer ?",
+    "DeleteAccountConfirm": "Le compte sera marqué pour suppression et définitivement effacé dans {days} jours. Si vous vous connectez avant, vous pourrez annuler. Continuer ?",
+    "DeleteAccountBlockedAdmin": "Un compte administrateur ne peut pas être supprimé ici.",
     "DeleteAccountBlocked": "Vous êtes le seul propriétaire de : {workspaces}. Supprimez d'abord ces espaces de travail ou transférez-les.",
     "CodeSent": "Un code de confirmation a été envoyé à votre adresse e-mail."
   }

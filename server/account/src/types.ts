@@ -69,6 +69,7 @@ export interface Account {
   maxWorkspaces?: number
   failedLoginAttempts?: number // Number of consecutive failed login attempts
   deleteOn?: Timestamp // Deferred deletion: when the identity gets purged for good
+  blockedOn?: Timestamp // Admin block: no login, no workspace access
 }
 
 // TODO: type data with generic type
@@ -828,6 +829,7 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   registeredOn?: number
   // False for an unfinished signup: person + social ids exist, but no account row yet
   hasAccount?: boolean
+  blockedOn?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
@@ -837,6 +839,7 @@ export interface AccountsFilter {
   noWorkspaces?: boolean
   inactiveDays?: number
   pendingOnly?: boolean
+  blockedOnly?: boolean
 }
 
 /** Transactor endpoint entry for admin manage calls (mirrors account-client type) */

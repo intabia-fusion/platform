@@ -200,6 +200,8 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      - DELETION_GRACE_DAYS=21
+      - DELETION_READONLY_DAYS=7
       - MAILBOX_DOMAINS=huly.dev.local
       - MAILBOX_MAX_COUNT_PER_ACCOUNT=2
     # Debug: uncomment to enable remote debugging

@@ -124,7 +124,8 @@
     "AccountDeletionScheduledDesc": "您的账户将于 {date} 删除。若要保留，请取消删除。已计划删除的工作区仍保持计划状态，请分别恢复。",
     "CancelAccountDeletion": "取消删除",
     "DeleteAccount": "删除账户",
-    "DeleteAccountConfirm": "账户将被标记为删除，并在 21 天后彻底移除。在此之前登录即可取消。是否继续?",
+    "DeleteAccountConfirm": "账户将被标记为删除，并在 {days} 天后彻底移除。在此之前登录即可取消。是否继续?",
+    "DeleteAccountBlockedAdmin": "管理员账户无法在此删除。",
     "DeleteAccountBlocked": "您是以下工作区的唯一所有者：{workspaces}。请先删除这些工作区或将其移交他人。",
     "CodeSent": "确认码已发送到您的邮箱。"
   }

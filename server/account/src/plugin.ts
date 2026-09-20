@@ -83,6 +83,18 @@ export const accountPlugin = plugin(accountId, {
     SignUpOtpHTML: '' as IntlString,
     AdminOtpText: '' as IntlString,
     AdminOtpHTML: '' as IntlString,
-    AdminOtpSubject: '' as IntlString
+    AdminOtpSubject: '' as IntlString,
+    WorkspaceDeletionScheduledSubject: '' as IntlString,
+    WorkspaceDeletionScheduledText: '' as IntlString,
+    WorkspaceDeletionScheduledHTML: '' as IntlString,
+    WorkspaceDeletedSubject: '' as IntlString,
+    WorkspaceDeletedText: '' as IntlString,
+    WorkspaceDeletedHTML: '' as IntlString,
+    AccountDeletionScheduledSubject: '' as IntlString,
+    AccountDeletionScheduledText: '' as IntlString,
+    AccountDeletionScheduledHTML: '' as IntlString,
+    AccountDeletedSubject: '' as IntlString,
+    AccountDeletedText: '' as IntlString,
+    AccountDeletedHTML: '' as IntlString
   }
 })

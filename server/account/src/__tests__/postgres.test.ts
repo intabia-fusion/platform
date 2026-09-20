@@ -338,6 +338,7 @@ describe('AccountPostgresDbCollection', () => {
         a.max_workspaces,
         a.failed_login_attempts,
         a.delete_on,
+        a.blocked_on,
         p.hash,
         p.salt
       FROM global_account.account as a
@@ -346,7 +347,22 @@ describe('AccountPostgresDbCollection', () => {
         ['acc1']
       )
       // Every timestamp column is normalised, so an absent delete_on comes back as null.
-      expect(result).toEqual(mockResult.map((r) => ({ ...r, deleteOn: null })))
+      expect(result).toEqual(mockResult.map((r) => ({ ...r, deleteOn: null, blockedOn: null })))
+    })
+
+    it('selects every column it promises to convert', async () => {
+      // The clause lists columns by name: one left out is read as undefined everywhere, which is
+      // how blocked_on once slipped past the login guard.
+      mockClient.unsafe.mockResolvedValue([])
+      await collection.find({ uuid: 'acc1' as AccountUuid })
+
+      const sql: string = mockClient.unsafe.mock.calls[0][0]
+      for (const field of collection.timestampFields) {
+        const column = String(field)
+          .replace(/([A-Z])/g, '_$1')
+          .toLowerCase()
+        expect(sql).toContain(`a.${column}`)
+      }
     })
 
     it('should convert buffer fields from database', async () => {

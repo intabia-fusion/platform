@@ -198,6 +198,15 @@
     "Ops5m": "Ops (5 min)",
     "CancelDeletion": "Cancel deletion",
     "DeletionScheduled": "deletion on {date}",
+    "CannotDeleteOwnAccount": "An admin cannot delete their own account.",
+    "OwnedWorkspacesBlockDeletion": "Sole owner of: {workspaces}. Delete those workspaces or hand them over first.",
+    "WorkspaceNotFound": "Workspace not found - it may be gone already.",
+    "ActionFailed": "Action failed",
+    "NothingChanged": "Nothing changed",
+    "Block": "Block",
+    "Unblock": "Unblock",
+    "Blocked": "Blocked",
+    "BlockedOnly": "Blocked only",
     "DeleteNow": "Delete now"
   }
 }

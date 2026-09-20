@@ -19,6 +19,18 @@
     "ResendInviteSubject": "Erneute Einladung zu {ws}",
     "AdminOtpSubject": "Confirmation code for an administrator action",
     "AdminOtpText": "You are about to perform a sensitive administrator action in {app} (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).\n\nYour confirmation code is:\n\n{code}\n\nEnter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.",
-    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>"
+    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>",
+    "WorkspaceDeletionScheduledSubject": "Arbeitsbereich {ws} ist zum Löschen vorgemerkt",
+    "WorkspaceDeletionScheduledText": "Der Arbeitsbereich {ws} ({url}) wird am {date} gelöscht. Er bleibt eine Zeit lang schreibgeschützt geöffnet, damit die Daten entnommen werden können, dann wird er archiviert, und an diesem Datum verschwinden er und sein Backup endgültig. Bis dahin kann jeder Besitzer die Löschung abbrechen: {link}",
+    "WorkspaceDeletionScheduledHTML": "<p>Der Arbeitsbereich <b>{ws}</b> ({url}) wird am <b>{date}</b> gelöscht.</p><p>Er bleibt eine Zeit lang schreibgeschützt geöffnet, damit die Daten entnommen werden können, dann wird er archiviert, und an diesem Datum verschwinden er und sein Backup endgültig.</p><p>Bis dahin kann jeder Besitzer die Löschung abbrechen: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletedSubject": "Arbeitsbereich {ws} wird gelöscht",
+    "WorkspaceDeletedText": "Der Arbeitsbereich {ws} ({url}) wird gerade gelöscht, ohne die übliche Frist. Die Daten und das Backup können nicht wiederhergestellt werden.",
+    "WorkspaceDeletedHTML": "<p>Der Arbeitsbereich <b>{ws}</b> ({url}) wird gerade gelöscht, ohne die übliche Frist.</p><p>Die Daten und das Backup können nicht wiederhergestellt werden.</p>",
+    "AccountDeletionScheduledSubject": "Ihr Konto ist zum Löschen vorgemerkt",
+    "AccountDeletionScheduledText": "Ihr Konto wird am {date} gelöscht. Wenn Sie sich vorher anmelden, können Sie die Löschung abbrechen: {link}",
+    "AccountDeletionScheduledHTML": "<p>Ihr Konto wird am <b>{date}</b> gelöscht.</p><p>Wenn Sie sich vorher anmelden, können Sie die Löschung abbrechen: <a href={link}>{link}</a></p>",
+    "AccountDeletedSubject": "Ihr Konto wurde gelöscht",
+    "AccountDeletedText": "Ihr Konto wurde gelöscht. Alles, was Sie identifiziert hat, ist entfernt, und die Adresse ist für eine neue Registrierung frei.",
+    "AccountDeletedHTML": "<p>Ihr Konto wurde gelöscht.</p><p>Alles, was Sie identifiziert hat, ist entfernt, und die Adresse ist für eine neue Registrierung frei.</p>"
   }
 }

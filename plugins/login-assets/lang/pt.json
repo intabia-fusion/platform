@@ -124,7 +124,8 @@
     "AccountDeletionScheduledDesc": "Sua conta será excluída em {date}. Cancele a exclusão para mantê-la. Os espaços de trabalho programados continuam programados: restaure cada um separadamente.",
     "CancelAccountDeletion": "Cancelar exclusão",
     "DeleteAccount": "Excluir conta",
-    "DeleteAccountConfirm": "A conta será marcada para exclusão e removida definitivamente em 21 dias. Entrando antes disso, você poderá cancelar. Continuar?",
+    "DeleteAccountConfirm": "A conta será marcada para exclusão e removida definitivamente em {days} dias. Entrando antes disso, você poderá cancelar. Continuar?",
+    "DeleteAccountBlockedAdmin": "Uma conta de administrador não pode ser eliminada aqui.",
     "DeleteAccountBlocked": "É o único proprietário de: {workspaces}. Elimine primeiro esses espaços de trabalho ou transfira-os.",
     "CodeSent": "Um código de confirmação foi enviado para seu e-mail."
   }

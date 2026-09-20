@@ -145,6 +145,8 @@
     "ReadOnlyWarningMessage": "Sadece görüntüleme modundasınız. Yolunuzu seçin: İşbirliği yapmak için bu çalışma alanına katılın (misafir olarak) veya projeleri tam olarak yönetmek için kendi alanınızı oluşturun — görevler, son tarihler, takım!",
     "ReadOnlyJoinWorkspace": "Çalışma alanına katıl",
     "ReadOnlySignUp": "Çalışma alanı oluştur",
+    "ReadOnlyWorkspaceWarningTitle": "Çalışma alanı salt okunur",
+    "ReadOnlyWorkspaceWarningMessage": "Bu çalışma alanı şu anda değişiklik kabul etmiyor: arşivlenmiş, silinmek üzere planlanmış ya da salt okunur bir oturumda görüntülüyorsunuz.",
     "PermissionWarningTitle": "✨ Erişiminizi yükseltin!",
     "PermissionWarningMessage": "Mevcut rolünüzün sınırlı izinleri var. Bu ve diğer gelişmiş özelliklerin kilidini açmak için çalışma alanı yöneticinizden erişim seviyenizi yükseltmesini isteyin!",
     "PlanLimitWarningTitle": "Plan sınırına ulaşıldı",

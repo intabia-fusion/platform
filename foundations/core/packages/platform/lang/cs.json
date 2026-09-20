@@ -24,6 +24,8 @@
     "WorkspaceAlreadyExists": "Pracovní prostor již existuje",
         "InvalidOtp": "Neplatný kód",
     "PasswordLoginLocked": "Přihlášení heslem je zablokováno z důvodu příliš mnoha neúspěšných pokusů. Pomocí metody přihlášení OTP odemkněte svůj účet.",
+    "AccountBlocked": "Váš účet byl zablokován administrátorem.",
+    "WorkspaceReadOnly": "Tento pracovní prostor je nyní jen pro čtení.",
     "InviteNotFound": "Pozvánka s e-mailem:{email} nenalezena.",
     "WorkspaceLimitReached": "Dosáhli jste limitu pracovních prostorů. Kontaktujte nás...",
     "ReadOnlyAccount": "Anonymní hostovská ukázka",

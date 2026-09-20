@@ -198,6 +198,15 @@
     "Ops5m": "Operações (5 min)",
     "CancelDeletion": "Cancelar exclusão",
     "DeletionScheduled": "exclusão em {date}",
+    "CannotDeleteOwnAccount": "Um administrador não pode eliminar a própria conta.",
+    "OwnedWorkspacesBlockDeletion": "Único proprietário de: {workspaces}. Elimine esses espaços de trabalho ou transfira-os primeiro.",
+    "WorkspaceNotFound": "Espaço de trabalho não encontrado - pode já ter sido eliminado.",
+    "ActionFailed": "A ação falhou",
+    "NothingChanged": "Nada mudou",
+    "Block": "Bloquear",
+    "Unblock": "Desbloquear",
+    "Blocked": "Bloqueado",
+    "BlockedOnly": "Apenas bloqueados",
     "DeleteNow": "Eliminar agora"
   }
 }

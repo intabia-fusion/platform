@@ -143,9 +143,13 @@
       return
     }
 
+    const policy = await getAccountClient()
+      .getDeletionPolicy()
+      .catch(() => ({ graceDays: 21, readonlyDays: 7 }))
     showPopup(MessageBox, {
       label: setting.string.DeleteAccount,
       message: setting.string.DeleteAccountConfirm,
+      params: { days: policy.graceDays },
       dangerous: true,
       action: async () => {
         const code = await requestOperationOtpCode()

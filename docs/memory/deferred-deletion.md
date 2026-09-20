@@ -88,3 +88,53 @@ attempts обнуляются. Кнопки "Delete now" на вкладках W
 - **CI uitest-workspaces (PR #434).** `AdminPage.gotoAdmin` уходил на `/login/admin` до того, как
   редирект логина завершится: сессия терялась, панель отдавала форму логина, тест падал на
   `[data-id="tab-workspaces"]`. Ожидание `selectWorkspace|workbench` перенесено внутрь `gotoAdmin`.
+
+## Блокировка аккаунта (админ)
+
+`account.blocked_on` (миграция v44). Проверка - `ensureNotBlocked` (`utils.ts`) в четырёх точках выдачи
+токена: `login`, `validateOtp`, `loginOrSignUpWithProvider`, `selectWorkspace`. Уже выданный
+workspace-токен транзактор проверяет сам, без похода в account, поэтому открытая вкладка живёт до
+следующего `selectWorkspace` (не дольше времени жизни токена). RPC `adminSetAccountBlocked` -
+OTP + audit, себя заблокировать нельзя. Фильтр `blockedOnly` в `listAccounts`.
+
+## Обратная связь в админке
+
+`runAdminAction` (`admin-resources/src/utils.ts`) показывает MessageBox с переводом статуса вместо
+`console.error`; `false` от `performWorkspaceOperation` (ops == 0) тоже виден. Перед удалением
+аккаунта панель спрашивает `canDeleteAccount(uuid)` - он теперь принимает чужой uuid для админа и
+возвращает `canDelete: false` ещё и тогда, когда админ удаляет сам себя (совпадает с `deleteAccount`).
+
+## "Удалить сейчас" как галка
+
+`OtpConfirmDialog` с `optionLabel` закрывается объектом `{ code, option }` вместо строки; без пропа
+контракт прежний. Отдельная кнопка DeleteNow убрана и в Accounts, и в Workspaces.
+
+## Окна отсрочки в текстах
+
+`getDeletionPolicy` (публичный RPC) отдаёт `graceDays`/`readonlyDays` из ENV; строки подтверждения
+берут их параметрами (`{days}`, `{readonlyDays}`, ICU plural в ru/en/cs). Раньше 7 и 21 были
+зашиты в переводы - замечание из ревью PR #434. Сами переменные проброшены в `dev/docker-compose.yaml`
+и `ws-tests/docker-compose.yaml`.
+
+## Письма
+
+`notifyWorkspaceDeletionScheduled` - владельцам: дата и ссылка на отмену, а при `delete-now` (и при
+финальном переводе в `pending-deletion` из sweep) текст без отмены. `notifyAccountDeletion` - на
+email аккаунта; при purge отправляется ДО `db.deleteAccount`, иначе адрес уже обезличен.
+Строки - `server/account/lang` (en + ru, остальные языки падают на en).
+
+
+## Почта на ws-стенде
+
+У `ws-tests` не было ни mailpit, ни сервиса `mail`, поэтому OTP регистрации и входа некуда было
+доставить (`ADMIN_OTP_DEV_CODE` перекрывает только `verifyOperationOtp` - админские операции и
+self-service подтверждения, но не `sendOtp`). Добавлены `mail` + `mailpit` в
+`ws-tests/docker-compose.yaml`, UI на 8026 и SMTP на 1026 (у dev-стенда 8025/1025, чтобы жили рядом).
+
+`MODE=server` только раздаёт письма подключённому mail-клиенту и без него висит в
+`request waiting for available client`. Нужен `MODE=queue`: читает очередь уведомлений и шлёт в SMTP
+сам (`services/mail/pod-mail/src/main.ts:145`). API_KEY при этом не нужен.
+
+Письма об удалении проверяются через mailpit API в
+`ws-tests/api-tests/src/__tests__/deletion-emails.test.ts` (хелперы `waitForMail`/`mailBody`/
+`clearMail` в `admin.fixtures.ts`).

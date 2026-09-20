@@ -19,6 +19,18 @@
     "ResendInviteSubject": "{ws} çalışma alanına yeniden davet",
     "AdminOtpSubject": "Confirmation code for an administrator action",
     "AdminOtpText": "You are about to perform a sensitive administrator action in {app} (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).\n\nYour confirmation code is:\n\n{code}\n\nEnter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.",
-    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>"
+    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>",
+    "WorkspaceDeletionScheduledSubject": "{ws} çalışma alanı silinmek üzere planlandı",
+    "WorkspaceDeletionScheduledText": "{ws} ({url}) çalışma alanı {date} tarihinde silinecek. Veriler dışarı alınabilsin diye bir süre salt okunur olarak açık kalır, sonra arşivlenir ve o tarihte kendisi de yedeği de kalıcı olarak yok olur. O zamana kadar herhangi bir sahip silmeyi iptal edebilir: {link}",
+    "WorkspaceDeletionScheduledHTML": "<p><b>{ws}</b> ({url}) çalışma alanı <b>{date}</b> tarihinde silinecek.</p><p>Veriler dışarı alınabilsin diye bir süre salt okunur olarak açık kalır, sonra arşivlenir ve o tarihte kendisi de yedeği de kalıcı olarak yok olur.</p><p>O zamana kadar herhangi bir sahip silmeyi iptal edebilir: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletedSubject": "{ws} çalışma alanı siliniyor",
+    "WorkspaceDeletedText": "{ws} ({url}) çalışma alanı olağan bekleme süresi olmadan şu anda siliniyor. Veriler ve yedeği geri alınamaz.",
+    "WorkspaceDeletedHTML": "<p><b>{ws}</b> ({url}) çalışma alanı olağan bekleme süresi olmadan şu anda siliniyor.</p><p>Veriler ve yedeği geri alınamaz.</p>",
+    "AccountDeletionScheduledSubject": "Hesabınız silinmek üzere planlandı",
+    "AccountDeletionScheduledText": "Hesabınız {date} tarihinde silinecek. O tarihten önce giriş yaparsanız silmeyi iptal edebilirsiniz: {link}",
+    "AccountDeletionScheduledHTML": "<p>Hesabınız <b>{date}</b> tarihinde silinecek.</p><p>O tarihten önce giriş yaparsanız silmeyi iptal edebilirsiniz: <a href={link}>{link}</a></p>",
+    "AccountDeletedSubject": "Hesabınız silindi",
+    "AccountDeletedText": "Hesabınız silindi. Sizi tanımlayan her şey kaldırıldı ve adres yeni bir kayıt için serbest.",
+    "AccountDeletedHTML": "<p>Hesabınız silindi.</p><p>Sizi tanımlayan her şey kaldırıldı ve adres yeni bir kayıt için serbest.</p>"
   }
 }

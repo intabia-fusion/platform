@@ -13,37 +13,36 @@
 // limitations under the License.
 //
 
-import {
-  AccountRole,
-  isActiveMode,
-  isDeletingMode,
-  type AccountUuid,
-  type MeasureContext,
-  type WorkspaceMode
-} from '@hcengineering/core'
+import { AccountRole, isDeletingMode, type AccountUuid, type MeasureContext } from '@hcengineering/core'
 
 import { AccountEventType, type AccountDB, type WorkspaceInfoWithStatus } from './types'
+import { getWorkspaceInfoWithStatusById, notifyAccountDeletion, notifyWorkspaceDeletionScheduled } from './utils'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
+/** Full deferral, in days: from the deletion request to the irreversible purge. */
+export function getDeletionGraceDays (): number {
+  return parseInt(process.env.DELETION_GRACE_DAYS ?? '21')
+}
+
+/** Head of the deferral, in days, while the workspace still opens read-only. */
+export function getDeletionReadonlyDays (): number {
+  return parseInt(process.env.DELETION_READONLY_DAYS ?? '7')
+}
+
 /** Full deferral: from the deletion request to the irreversible purge. */
 export function getDeletionGraceMs (): number {
-  return parseInt(process.env.DELETION_GRACE_DAYS ?? '21') * DAY_MS
+  return getDeletionGraceDays() * DAY_MS
 }
 
 /** Head of the deferral, while the workspace still opens read-only so its data can be taken out. */
 export function getDeletionReadonlyMs (): number {
-  return parseInt(process.env.DELETION_READONLY_DAYS ?? '7') * DAY_MS
+  return getDeletionReadonlyDays() * DAY_MS
 }
 
 /** When a deletion requested now must complete. */
 export function deletionDeadline (): number {
   return Date.now() + getDeletionGraceMs()
-}
-
-/** A workspace scheduled for deletion opens read-only until it gets archived. */
-export function isReadOnlyPending (status: { mode: WorkspaceMode, deleteOn?: number }): boolean {
-  return status.deleteOn != null && isActiveMode(status.mode)
 }
 
 /**
@@ -93,6 +92,16 @@ export async function sweepScheduledDeletions (ctx: MeasureContext, db: AccountD
         lastProcessingTime: 0
       }
     )
+
+    try {
+      const workspace = await getWorkspaceInfoWithStatusById(db, status.workspaceUuid)
+      if (workspace != null) {
+        await notifyWorkspaceDeletionScheduled(ctx, db, null, workspace, undefined)
+      }
+    } catch (err) {
+      // A failed notice must not cost the remaining rows their sweep.
+      ctx.warn('Failed to notify about an expired workspace deferral', { workspace: status.workspaceUuid, err })
+    }
   }
 
   for (const account of await db.account.find({ deleteOn: { $lte: now } })) {
@@ -111,6 +120,9 @@ export async function purgeAccount (ctx: MeasureContext, db: AccountDB, uuid: Ac
     })
     return
   }
+
+  // Before the purge: afterwards the address is retired and there is nobody left to write to.
+  await notifyAccountDeletion(ctx, db, null, uuid, undefined)
 
   await db.deleteAccount(uuid)
   await db.accountEvent.insertOne({

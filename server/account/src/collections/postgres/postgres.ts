@@ -461,7 +461,7 @@ export class AccountPostgresDbCollection
     ns?: string,
     withRetryClient?: PostgresDbCollectionOptions<Account, 'uuid'>['withRetryClient']
   ) {
-    super('account', client, { idKey: 'uuid', ns, timestampFields: ['deleteOn'], withRetryClient })
+    super('account', client, { idKey: 'uuid', ns, timestampFields: ['deleteOn', 'blockedOn'], withRetryClient })
   }
 
   getPasswordsTableName (): string {
@@ -483,6 +483,7 @@ export class AccountPostgresDbCollection
         a.max_workspaces,
         a.failed_login_attempts,
         a.delete_on,
+        a.blocked_on,
         p.hash,
         p.salt
       FROM ${this.getTableName()} as a
@@ -1250,6 +1251,7 @@ export class PostgresAccountDB implements AccountDB {
           a.locale,
           a.automatic,
           a.max_workspaces,
+          a.blocked_on,
           (a.uuid IS NOT NULL) as has_account,
           p.first_name,
           p.last_name,
@@ -1349,6 +1351,9 @@ export class PostgresAccountDB implements AccountDB {
     // Filters use the CTE's aggregated columns, so they belong to the outer WHERE.
     // The CTE is person-based, so accounts must be selected explicitly (default behaviour).
     const outerWhere: string[] = [filter?.pendingOnly === true ? 'has_account = FALSE' : 'has_account = TRUE']
+    if (filter?.blockedOnly === true) {
+      outerWhere.push('blocked_on IS NOT NULL')
+    }
     if (filter?.noWorkspaces === true) {
       outerWhere.push('(workspaces IS NULL OR jsonb_array_length(workspaces) = 0)')
     }
@@ -1411,6 +1416,7 @@ export class PostgresAccountDB implements AccountDB {
 
         converted.lastVisit = convertTimestamp(converted.lastVisit)
         converted.registeredOn = convertTimestamp(converted.registeredOn)
+        converted.blockedOn = convertTimestamp(converted.blockedOn)
 
         return converted as AccountAggregatedInfo
       })

@@ -116,9 +116,12 @@
   const isWorkspaceOwner = getCurrentAccount().role === AccountRole.Owner
 
   async function handleDelete (): Promise<void> {
+    // Deferral windows come from the account pod - they are configurable per installation.
+    const policy = await accountClient.getDeletionPolicy().catch(() => ({ graceDays: 21, readonlyDays: 7 }))
     showPopup(MessageBox, {
       label: settingsRes.string.DeleteWorkspace,
       message: settingsRes.string.DeleteWorkspaceConfirm,
+      params: { days: policy.graceDays, readonlyDays: policy.readonlyDays },
       dangerous: true,
       action: async () => {
         // Irreversible for every member: a code sent to the owner's email confirms it.

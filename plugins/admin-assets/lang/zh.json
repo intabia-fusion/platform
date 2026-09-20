@@ -198,6 +198,15 @@
     "Ops5m": "操作数（5 分钟）",
     "CancelDeletion": "取消删除",
     "DeletionScheduled": "{date} 删除",
+    "CannotDeleteOwnAccount": "管理员无法删除自己的账户。",
+    "OwnedWorkspacesBlockDeletion": "是以下工作区的唯一所有者：{workspaces}。请先删除这些工作区或移交给他人。",
+    "WorkspaceNotFound": "未找到工作区，可能已被删除。",
+    "ActionFailed": "操作失败",
+    "NothingChanged": "没有变化",
+    "Block": "封禁",
+    "Unblock": "解除封禁",
+    "Blocked": "已封禁",
+    "BlockedOnly": "仅已封禁",
     "DeleteNow": "立即删除"
   }
 }

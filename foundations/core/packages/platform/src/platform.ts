@@ -167,6 +167,8 @@ export default plugin(platformId, {
     PersonNotFound: '' as StatusCode<{ person: string }>,
     InvalidPassword: '' as StatusCode<{ account: string }>,
     PasswordLoginLocked: '' as StatusCode,
+    AccountBlocked: '' as StatusCode,
+    WorkspaceReadOnly: '' as StatusCode,
     AccountAlreadyExists: '' as StatusCode,
     PhoneAlreadyExists: '' as StatusCode,
     WorkspaceAlreadyExists: '' as StatusCode<{ workspace: string }>,

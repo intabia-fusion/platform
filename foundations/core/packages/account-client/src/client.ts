@@ -81,7 +81,8 @@ import type {
   RegistrationStats,
   WorkspaceActivityPoint,
   WorkspaceMemberDetails,
-  AccountActivityStats
+  AccountActivityStats,
+  DeletionPolicy
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -203,7 +204,8 @@ export interface AccountClient {
   getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
   deleteAccount: (uuid: AccountUuid, otpCode?: string, force?: boolean) => Promise<void>
   cancelAccountDeletion: () => Promise<void>
-  canDeleteAccount: () => Promise<CanDeleteAccountResult>
+  canDeleteAccount: (uuid?: AccountUuid) => Promise<CanDeleteAccountResult>
+  getDeletionPolicy: () => Promise<DeletionPolicy>
 
   workerHandshake: (region: string, version: Data<Version>, operation: WorkspaceOperation) => Promise<void>
   getPendingWorkspace: (
@@ -275,6 +277,7 @@ export interface AccountClient {
   adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
   adminReleaseSocialId: (personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string) => Promise<void>
   adminDeletePerson: (personUuid: PersonUuid, otpCode: string) => Promise<void>
+  adminSetAccountBlocked: (accountUuid: AccountUuid, blocked: boolean, otpCode: string) => Promise<void>
   listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   performWorkspaceOperation: (
     workspaceId: string | string[],
@@ -1223,6 +1226,10 @@ class AccountClientImpl implements AccountClient {
     await this.rpc({ method: 'adminDeletePerson' as const, params: { personUuid, otpCode } })
   }
 
+  async adminSetAccountBlocked (accountUuid: AccountUuid, blocked: boolean, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminSetAccountBlocked' as const, params: { accountUuid, blocked, otpCode } })
+  }
+
   async listAdminActions (query: AdminActionsQuery): Promise<AdminActionsResult> {
     return await this.rpc({ method: 'listAdminActions' as const, params: query })
   }
@@ -1401,10 +1408,14 @@ class AccountClientImpl implements AccountClient {
     await this.rpc(request)
   }
 
-  async canDeleteAccount (): Promise<CanDeleteAccountResult> {
+  async getDeletionPolicy (): Promise<DeletionPolicy> {
+    return await this.rpc({ method: 'getDeletionPolicy' as const, params: {} })
+  }
+
+  async canDeleteAccount (uuid?: AccountUuid): Promise<CanDeleteAccountResult> {
     const request = {
       method: 'canDeleteAccount' as const,
-      params: {}
+      params: { uuid }
     }
 
     return await this.rpc(request)
