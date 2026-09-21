@@ -14,6 +14,10 @@
     "NoMic": "マイクなし",
     "NoSpeaker": "スピーカーなし",
     "On": "オン",
-    "Off": "オフ"
+    "Off": "オフ",
+    "CameraInUseMessage": "カメラは別のアプリケーションで使用されています。そのアプリケーションを閉じて、もう一度お試しください。",
+    "CameraInUseRetry": "再試行",
+    "CameraNotAllowed": "このサイトのカメラへのアクセスは拒否されています。ブラウザの設定を確認してください。",
+    "DefaultCameraError": "カメラへの接続エラー。"
   }
 }

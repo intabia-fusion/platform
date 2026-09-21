@@ -14,6 +14,10 @@
     "NoMic": "Kein Mikrofon",
     "NoSpeaker": "Kein Lautsprecher",
     "On": "Ein",
-    "Off": "Aus"
+    "Off": "Aus",
+    "CameraInUseMessage": "Die Kamera wird von einer anderen Anwendung verwendet. Schließen Sie diese und versuchen Sie es erneut.",
+    "CameraInUseRetry": "Erneut versuchen",
+    "CameraNotAllowed": "Der Kamerazugriff ist für diese Website verweigert. Überprüfen Sie Ihre Browser-Einstellungen.",
+    "DefaultCameraError": "Fehler beim Verbinden mit der Kamera."
   }
 }

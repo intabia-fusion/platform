@@ -14,7 +14,11 @@
     "NoMic": "Nessun microfono",
     "NoSpeaker": "Nessun altoparlante",
     "On": "Acceso",
-    "Off": "Spento"
+    "Off": "Spento",
+    "CameraInUseMessage": "La fotocamera è in uso da un'altra applicazione. Chiudila e riprova.",
+    "CameraInUseRetry": "Riprova",
+    "CameraNotAllowed": "L'accesso alla fotocamera è negato per questo sito, si prega di controllare le impostazioni del browser.",
+    "DefaultCameraError": "Errore di connessione della fotocamera"
   }
 }
 
