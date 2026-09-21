@@ -42,7 +42,9 @@ export function readViewportMessages (
   scrollDiv?: HTMLElement | null,
   contentDiv?: HTMLElement | null,
   context?: DocNotifyContext,
-  readState?: ReadState
+  readState?: ReadState,
+  // The view is going away: read what is on screen now, the debounce has nothing more to collect.
+  immediate = false
 ): void {
   if (scrollDiv == null || contentDiv == null || messages.length === 0) return
 
@@ -72,7 +74,7 @@ export function readViewportMessages (
     clearTimeout(timer)
   }
 
-  const newTimer = setTimeout(() => {
+  const flush = (): void => {
     timersByChannel.delete(chatId)
     const accumulator = accumulatorsByChannel.get(chatId)
     if (accumulator == null) return
@@ -81,9 +83,14 @@ export function readViewportMessages (
     const messagesToRead = Array.from(accumulator.values())
     if (messagesToRead.length === 0) return
     void readMessages(sortActivityMessages(messagesToRead), context, readState)
-  }, 500)
+  }
 
-  timersByChannel.set(chatId, newTimer)
+  if (immediate) {
+    flush()
+    return
+  }
+
+  timersByChannel.set(chatId, setTimeout(flush, 500))
 }
 
 export function recheckNotifications (context: DocNotifyContext): void {

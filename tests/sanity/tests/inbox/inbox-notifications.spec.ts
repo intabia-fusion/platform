@@ -1,19 +1,36 @@
 import { type Browser, type Page } from '@playwright/test'
-import { expect, test } from '../fixtures'
-import { ApiEndpoint } from '../API/Api'
+import { type Doc, type Ref } from '@hcengineering/core'
+import { expect, test, type SharedWorkspace } from '../fixtures'
+import { type ChatMember, connectOwner, joinWorkspace, openMemberPage } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { InboxPage } from '../model/inbox.ts/inbox-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { generateTestData, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
+import { generateTestData, generateUser, loginByToken } from '../utils'
 
-interface SecondUser {
+type Channel = Awaited<ReturnType<ChatMember['findChannel']>>
+
+interface SecondUserUi {
   page2: Page
   channelPage2: ChannelPage
   chunterPage2: ChunterPage
   inboxPage2: InboxPage
   leftSideMenu2: LeftSideMenuPage
+}
+
+/**
+ * The other side of the conversation. It talks over REST: what these tests look at is the inbox of
+ * the first user. The few that need the second user's own screen open a browser for it with `ui()`.
+ */
+interface SecondUser {
+  // The first user over REST.
+  owner: ChatMember
+  member: ChatMember
+  channel: Channel
+  /** A message to the shared channel, or to another channel of the workspace by its name. */
+  send: (text: string, channelName?: string) => Promise<Ref<Doc>>
+  ui: () => Promise<SecondUserUi>
   dispose: () => Promise<void>
 }
 
@@ -28,14 +45,14 @@ test.describe('Inbox notification tests', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let inboxPage: InboxPage
-  let api: ApiEndpoint
+  let shared: SharedWorkspace
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let uniq: string
 
-  test.beforeEach(async ({ page, request, sharedWorkspace }, testInfo) => {
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     // One seat per test: past the cap a guest silently drops to read-only.
-    const shared = await sharedWorkspace(1)
+    shared = await sharedWorkspace(1)
     uniq = `${testInfo.testId}${testInfo.retry}`
     data = { ...shared.data, channelName: `${generateTestData().channelName}${uniq}` }
     newUser2 = generateUser()
@@ -44,49 +61,46 @@ test.describe('Inbox notification tests', () => {
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
     inboxPage = new InboxPage(page)
-    api = new ApiEndpoint(request)
     await loginByToken(page, shared.token, shared.ws, 'chunter')
   })
 
-  /** Invites a second user and adds them to the channel, so both sides can talk to each other. */
+  /**
+   * Brings a second user into the workspace and the channel over the API: the invite link, the join
+   * page and the "Add members" popup are not what these tests are about, and a member whose first
+   * login has to create its own employee can be refused the write.
+   */
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
-    // createChannel only clicks Create, so the modal can still be up when the profile menu opens
-    // behind it and getInviteLink then waits its retries out on a popup that never renders.
     await channelPage.checkIfChannelDefaultExist(true, channelName)
-    const linkText = await getInviteLink(page)
-    // The invite link only logs in, so the account has to exist before the second page opens it.
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    const second = await getSecondPageByInvite(browser, linkText, newUser2)
-    const page2 = second.page
-
-    // From the details panel: the shared Channels table is slower and racier.
-    await channelPage.clickChooseChannel(channelName)
-    // The aside is a toggle that takes a moment to mount, so keep clicking until it is there.
-    await expect(async () => {
-      if (!(await channelPage.addMemberPreview().isVisible())) {
-        await channelPage.clickOnOpenChannelDetails()
-      }
-      await expect(channelPage.addMemberPreview()).toBeVisible({ timeout: 1000 })
-    }).toPass({ timeout: 3000 })
-    await channelPage.addMemberToChannelPreview(newUser2.lastName + ' ' + newUser2.firstName)
-    await channelPage.clickOnOpenChannelDetails()
+    const owner = await connectOwner(shared.ws, `${data.lastName} ${data.firstName}`)
+    const member = await joinWorkspace(shared.ws, newUser2)
+    const channel = await owner.findChannel(channelName)
+    await owner.addMember(channel, member.account)
 
     // An open channel reads its messages on arrival, which would zero every badge below.
     await leftSideMenuPage.clickNotification()
 
-    const leftSideMenu2 = new LeftSideMenuPage(page2)
-    const channelPage2 = new ChannelPage(page2)
-    await leftSideMenu2.clickChunter()
-    await channelPage2.checkIfChannelDefaultExist(true, channelName)
-
+    let opened: Awaited<ReturnType<typeof openMemberPage>> | undefined
     return {
-      page2,
-      channelPage2,
-      chunterPage2: new ChunterPage(page2),
-      inboxPage2: new InboxPage(page2),
-      leftSideMenu2,
+      owner,
+      member,
+      channel,
+      send: async (text, name) =>
+        await member.sendMessage(name !== undefined ? await member.findChannel(name) : channel, text),
+      ui: async () => {
+        opened ??= await openMemberPage(browser, member, 'chunter')
+        const page2 = opened.page
+        const channelPage2 = new ChannelPage(page2)
+        await channelPage2.checkIfChannelDefaultExist(true, channelName)
+        return {
+          page2,
+          channelPage2,
+          chunterPage2: new ChunterPage(page2),
+          inboxPage2: new InboxPage(page2),
+          leftSideMenu2: new LeftSideMenuPage(page2)
+        }
+      },
       dispose: async () => {
-        await second.context.close()
+        await opened?.context.close()
       }
     }
   }
@@ -97,8 +111,7 @@ test.describe('Inbox notification tests', () => {
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
       const message = `Inbox message ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(message)
+      await invited.send(message)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -115,8 +128,7 @@ test.describe('Inbox notification tests', () => {
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
       const message = `Read me ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(message)
+      await invited.send(message)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -133,12 +145,8 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
       for (let i = 1; i <= 3; i++) {
-        const message = `Batch ${i} ${uniq}`
-        await invited.channelPage2.sendMessage(message)
-        // The badge below counts these, so each one has to actually land before the next is sent.
-        await invited.channelPage2.checkMessageExist(message, true, message)
+        await invited.send(`Batch ${i} ${uniq}`)
       }
 
       await leftSideMenuPage.clickNotification()
@@ -165,8 +173,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Mark read ${uniq}`)
+      await invited.send(`Mark read ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -183,8 +190,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Clear one ${uniq}`)
+      await invited.send(`Clear one ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -201,8 +207,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Checkbox ${uniq}`)
+      await invited.send(`Checkbox ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -218,8 +223,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Filter me ${uniq}`)
+      await invited.send(`Filter me ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -240,17 +244,26 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Tab filter ${uniq}`)
+      // A tab exists only for a class that has cards, so the direct message is sent here and not
+      // left to the bot greeting, which may not have arrived yet.
+      const ui = await invited.ui()
+      await ui.chunterPage2.createDirectChat(data as unknown as SignUpData)
+      await ui.channelPage2.sendMessage(`Tab filter direct ${uniq}`)
+      const dmTitle = `${newUser2.lastName} ${newUser2.firstName}`
+      await invited.send(`Tab filter ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
+      await inboxPage.checkCardExists(dmTitle, true)
       await inboxPage.selectTab('Channels')
       await inboxPage.checkCardExists(data.channelName, true)
+      await inboxPage.checkCardExists(dmTitle, false)
       await inboxPage.selectTab('Direct messages')
+      await inboxPage.checkCardExists(dmTitle, true)
       await inboxPage.checkCardExists(data.channelName, false)
       await inboxPage.selectTab('All')
       await inboxPage.checkCardExists(data.channelName, true)
+      await inboxPage.checkCardExists(dmTitle, true)
     } finally {
       await invited.dispose()
     }
@@ -265,8 +278,7 @@ test.describe('Inbox notification tests', () => {
       await inboxPage.checkCardExists(data.channelName, false)
 
       const message = `Live ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(message)
+      await invited.send(message)
 
       await inboxPage.checkCardExists(data.channelName, true)
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -284,9 +296,8 @@ test.describe('Inbox notification tests', () => {
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
       const reply = `Thread reply ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.replyMessage(parent)
-      await invited.channelPage2.sendReply(reply)
+      const parentId = await invited.member.findMessage(invited.channel, parent)
+      await invited.member.reply(invited.channel, parentId, reply)
 
       await leftSideMenuPage.clickNotification()
       // A thread is its own context: a second card of the same channel, told apart by its parent.
@@ -301,15 +312,14 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Before clear ${uniq}`)
+      await invited.send(`Before clear ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
       await inboxPage.clearAll()
       await inboxPage.checkCardExists(data.channelName, false)
 
-      await invited.channelPage2.sendMessage(`After clear ${uniq}`)
+      await invited.send(`After clear ${uniq}`)
       await inboxPage.checkCardExists(data.channelName, true)
     } finally {
       await invited.dispose()
@@ -321,8 +331,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Menu read ${uniq}`)
+      await invited.send(`Menu read ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -340,8 +349,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Menu gating ${uniq}`)
+      await invited.send(`Menu gating ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -361,11 +369,9 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Menu clear ${uniq}`)
+      await invited.send(`Menu clear ${uniq}`)
       // The AI bot greets every new account, so there is always a second card to outlive this one.
-      await invited.channelPage2.clickChannel('general')
-      await invited.channelPage2.sendMessage(`General noise ${uniq}`)
+      await invited.send(`General noise ${uniq}`, 'general')
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -384,8 +390,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Unsub ${uniq}`)
+      await invited.send(`Unsub ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -404,8 +409,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Unsub cancel ${uniq}`)
+      await invited.send(`Unsub cancel ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.selectCardMenuAction(data.channelName, 'Unsubscribe')
@@ -423,8 +427,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Unsub confirm ${uniq}`)
+      await invited.send(`Unsub confirm ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.selectCardMenuAction(data.channelName, 'Unsubscribe')
@@ -443,14 +446,12 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Ordering first ${uniq}`)
+      await invited.send(`Ordering first ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
 
-      await invited.channelPage2.clickChannel('general')
-      await invited.channelPage2.sendMessage(`Ordering second ${uniq}`)
+      await invited.send(`Ordering second ${uniq}`, 'general')
       await inboxPage.checkCardPosition('general', 0)
     } finally {
       await invited.dispose()
@@ -464,8 +465,10 @@ test.describe('Inbox notification tests', () => {
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
       const dmText = `Direct hello ${uniq}`
-      await invited.chunterPage2.createDirectChat(data as unknown as SignUpData)
-      await invited.channelPage2.sendMessage(dmText)
+      // A direct chat is opened from the second user's own screen.
+      const ui = await invited.ui()
+      await ui.chunterPage2.createDirectChat(data as unknown as SignUpData)
+      await ui.channelPage2.sendMessage(dmText)
 
       // The card is titled by whoever wrote, so the owner sees the guest's name on it.
       const dmTitle = `${newUser2.lastName} ${newUser2.firstName}`
@@ -486,8 +489,7 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Filter persists ${uniq}`)
+      await invited.send(`Filter persists ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkCardExists(data.channelName, true)
@@ -511,12 +513,8 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
       for (let i = 1; i <= 3; i++) {
-        const message = `Counted-${i} ${uniq}`
-        await invited.channelPage2.sendMessage(message)
-        // sendMessage only clicks Send, so wait for each to land before sending the next.
-        await invited.channelPage2.checkMessageExist(message, true, message)
+        await invited.send(`Counted-${i} ${uniq}`)
       }
 
       await inboxPage.checkUnreadMarker(data.channelName, 3)
@@ -533,8 +531,8 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(`Read elsewhere ${uniq}`)
+      const message = `Read elsewhere ${uniq}`
+      await invited.send(message)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
@@ -542,6 +540,12 @@ test.describe('Inbox notification tests', () => {
       // Read it through chat instead of the inbox: the context is shared, so the badge must follow.
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChooseChannel(data.channelName)
+      // A message is read once the channel has settled on it: the text is in the DOM before that,
+      // and leaving then reads nothing. The counter in the navigator goes when the channel does.
+      await channelPage.checkMessageExist(message, true, message)
+      await expect(
+        channelPage.channelContainers().filter({ hasText: data.channelName }).locator('.notifyMarker')
+      ).toHaveCount(0)
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, undefined)
     } finally {
@@ -561,8 +565,7 @@ test.describe('Inbox notification tests', () => {
       await channelPage.pressEscape()
 
       const message = `Muted inbox ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(message)
+      await invited.send(message)
 
       // Muting suppresses the notification, so no card is filed - the message still arrives.
       await leftSideMenuPage.clickNotification()
@@ -581,16 +584,12 @@ test.describe('Inbox notification tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     const invited = await inviteSecondUser(browser, page, data.channelName)
     try {
-      const message = `Deleted source ${uniq}`
-      await invited.channelPage2.clickChooseChannel(data.channelName)
-      await invited.channelPage2.sendMessage(message)
+      const messageId = await invited.send(`Deleted source ${uniq}`)
 
       await leftSideMenuPage.clickNotification()
       await inboxPage.checkUnreadMarker(data.channelName, 1)
 
-      await invited.channelPage2.clickOpenMoreButton(message)
-      await invited.channelPage2.clickDeleteMessageButton()
-      await invited.channelPage2.clickDeleteMessageConfirmationButton()
+      await invited.member.removeMessage(invited.channel, messageId)
 
       await inboxPage.checkUnreadMarker(data.channelName, undefined)
     } finally {
@@ -607,12 +606,14 @@ test.describe('Inbox notification tests', () => {
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChooseChannel(data.channelName)
       const mentionOf = newUser2.lastName + ' ' + newUser2.firstName
+      await invited.owner.waitUntilSearchable(mentionOf)
       await channelPage.sendMention(mentionOf, 'EMPLOYEES')
 
-      await invited.leftSideMenu2.clickNotification()
-      await invited.inboxPage2.checkCardExists(data.channelName, true)
+      const ui = await invited.ui()
+      await ui.leftSideMenu2.clickNotification()
+      await ui.inboxPage2.checkCardExists(data.channelName, true)
       // Joining can leave a system entry too, so the exact count is not ours to pin down.
-      await invited.inboxPage2.checkCardPreview(data.channelName, mentionOf)
+      await ui.inboxPage2.checkCardPreview(data.channelName, mentionOf)
     } finally {
       await invited.dispose()
     }
@@ -631,8 +632,9 @@ test.describe('Inbox notification tests', () => {
       await channelPage.clickChooseChannel(privateName)
       await channelPage.sendMessage(`Not for you ${uniq}`)
 
-      await invited.leftSideMenu2.clickNotification()
-      await invited.inboxPage2.checkCardExists(privateName, false)
+      const ui = await invited.ui()
+      await ui.leftSideMenu2.clickNotification()
+      await ui.inboxPage2.checkCardExists(privateName, false)
     } finally {
       await invited.dispose()
     }

@@ -1,18 +1,11 @@
-import { expect, test } from '../fixtures'
-import { ApiEndpoint } from '../API/Api'
+import { expect, test, type SharedWorkspace } from '../fixtures'
+import { getSecondPageByApi } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { SidebarPage } from '../model/sidebar-page'
-import {
-  generateTestData,
-  getInviteLink,
-  generateUser,
-  createAccount,
-  getSecondPageByInvite,
-  loginByToken
-} from '../utils'
+import { generateTestData, generateUser, loginByToken } from '../utils'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -21,16 +14,16 @@ test.describe('Channel tests', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let sidebarPage: SidebarPage
-  let api: ApiEndpoint
+  let shared: SharedWorkspace
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let message: string
   let secondMessage: string
 
-  test.beforeEach(async ({ page, request, sharedWorkspace }, testInfo) => {
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     // The workspace is shared with the other tests of this worker, so general and random keep their
     // messages: everything this test asserts on has to carry an id of its own, retry included.
-    const shared = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
+    shared = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
     const uniq = `${testInfo.testId}${testInfo.retry}`
     // faker's word list is short enough to repeat a channel name inside one workspace, and the
     // navigator then matches both channels by prefix.
@@ -43,7 +36,6 @@ test.describe('Channel tests', () => {
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
     sidebarPage = new SidebarPage(page)
-    api = new ApiEndpoint(request)
     // Straight into the workspace from the account token: the login form plus the workspace picker
     // are three page loads and cost about a second per test.
     await loginByToken(page, shared.token, shared.ws, 'chunter')
@@ -87,9 +79,7 @@ test.describe('Channel tests', () => {
       await channelPage.sendMessage(message)
       await channelPage.checkMessageExist(message, true, message)
 
-      const linkText = await getInviteLink(page)
-      await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-      using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+      using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
       const page2 = _page2.page
 
       const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -112,9 +102,7 @@ test.describe('Channel tests', () => {
       await channelPage.sendMessage(message)
       await channelPage.checkMessageExist(message, true, message)
 
-      const linkText = await getInviteLink(page)
-      await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-      using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+      using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
       const page2 = _page2.page
 
       const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -136,9 +124,7 @@ test.describe('Channel tests', () => {
       await channelPage.sendMessage(message)
       await channelPage.checkMessageExist(message, true, message)
 
-      const linkText = await getInviteLink(page)
-      await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-      using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+      using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
       const page2 = _page2.page
 
       const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -166,9 +152,7 @@ test.describe('Channel tests', () => {
     await channelPage.sendMessage(message)
     await channelPage.checkMessageExist(message, true, message)
 
-    const linkText = await getInviteLink(page)
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+    using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
     const page2 = _page2.page
 
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -196,9 +180,7 @@ test.describe('Channel tests', () => {
     await channelPage.sendMessage(message)
     await channelPage.checkMessageExist(message, true, message)
 
-    const linkText = await getInviteLink(page)
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+    using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
     const page2 = _page2.page
 
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -220,9 +202,7 @@ test.describe('Channel tests', () => {
     await channelPage.sendMessage(message)
     await channelPage.checkMessageExist(message, true, message)
 
-    const linkText = await getInviteLink(page)
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+    using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
     const page2 = _page2.page
 
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -335,9 +315,7 @@ test.describe('Channel tests', () => {
   })
 
   test('Check if the user can be added through preview tab', { tag: '@invite' }, async ({ browser, page }) => {
-    const linkText = await getInviteLink(page)
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+    using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
     const page2 = _page2.page
 
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
@@ -357,9 +335,7 @@ test.describe('Channel tests', () => {
       await chunterPage.createChannel(data.channelName, false)
       await channelPage.checkIfChannelDefaultExist(true, data.channelName)
 
-      const linkText = await getInviteLink(page)
-      await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-      using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+      using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
       const page2 = _page2.page
       const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
       await leftSideMenuPageSecond.clickChunter()
@@ -371,10 +347,8 @@ test.describe('Channel tests', () => {
     }
   )
 
-  test('Checking backlinks in the Chat', { tag: '@invite' }, async ({ browser, page, request }) => {
-    await createAccount(request, newUser2)
-    const linkText = await getInviteLink(page)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+  test('Checking backlinks in the Chat', { tag: '@invite' }, async ({ browser, page }) => {
+    using _page2 = await getSecondPageByApi(browser, shared.ws, newUser2, 'chunter')
     const page2 = _page2.page
 
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)

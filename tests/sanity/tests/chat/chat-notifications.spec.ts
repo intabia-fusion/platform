@@ -1,13 +1,15 @@
 import { type Browser, type Page, expect } from '@playwright/test'
-import { test } from '../fixtures'
-import { ApiEndpoint } from '../API/Api'
+import { test, type SharedWorkspace } from '../fixtures'
+import { type ChatMember, connectOwner, joinWorkspace, openMemberPage } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { generateTestData, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
+import { generateTestData, generateUser, loginByToken } from '../utils'
 
 interface SecondUser {
+  // The first user over REST.
+  owner: ChatMember
   page2: Page
   channelPage2: ChannelPage
   chunterPage2: ChunterPage
@@ -29,13 +31,13 @@ test.describe('Chat notification tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
-  let api: ApiEndpoint
+  let shared: SharedWorkspace
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let uniq: string
 
-  test.beforeEach(async ({ page, request, sharedWorkspace }, testInfo) => {
-    const shared = await sharedWorkspace(1)
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
+    shared = await sharedWorkspace(1)
     uniq = `${testInfo.testId}${testInfo.retry}`
     data = { ...shared.data, channelName: `${generateTestData().channelName}${uniq}` }
     newUser2 = generateUser()
@@ -43,38 +45,29 @@ test.describe('Chat notification tests', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
-    api = new ApiEndpoint(request)
     await loginByToken(page, shared.token, shared.ws, 'chunter')
   })
 
+  /**
+   * The second user joins the workspace and the channel over the API, and only then gets a browser:
+   * the invite link, the join page and the "Add members" popup are not what these tests are about,
+   * and a member whose first login has to create its own employee can be refused the write.
+   */
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
-    // createChannel only clicks Create, so the modal can still be up when the profile menu opens
-    // behind it and getInviteLink then waits its retries out on a popup that never renders.
     await channelPage.checkIfChannelDefaultExist(true, channelName)
-    const linkText = await getInviteLink(page)
-    // The invite link only logs in, so the account has to exist before the second page opens it.
-    await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    const second = await getSecondPageByInvite(browser, linkText, newUser2)
-    const page2 = second.page
+    const owner = await connectOwner(shared.ws, `${data.lastName} ${data.firstName}`)
+    const member = await joinWorkspace(shared.ws, newUser2)
+    await owner.addMember(await owner.findChannel(channelName), member.account)
 
-    // From the details panel: the shared Channels table is slower and racier.
-    await channelPage.clickChooseChannel(channelName)
-    // The aside is a toggle that takes a moment to mount, so keep clicking until it is there.
-    await expect(async () => {
-      if (!(await channelPage.addMemberPreview().isVisible())) {
-        await channelPage.clickOnOpenChannelDetails()
-      }
-      await expect(channelPage.addMemberPreview()).toBeVisible({ timeout: 1000 })
-    }).toPass({ timeout: 3000 })
-    await channelPage.addMemberToChannelPreview(newUser2.lastName + ' ' + newUser2.firstName)
-    await channelPage.clickOnOpenChannelDetails()
+    const second = await openMemberPage(browser, member, 'chunter')
+    const page2 = second.page
 
     const leftSideMenu2 = new LeftSideMenuPage(page2)
     const channelPage2 = new ChannelPage(page2)
-    await leftSideMenu2.clickChunter()
     await channelPage2.checkIfChannelDefaultExist(true, channelName)
 
     return {
+      owner,
       page2,
       channelPage2,
       chunterPage2: new ChunterPage(page2),
@@ -225,6 +218,7 @@ test.describe('Chat notification tests', () => {
     try {
       // From the owner's side: a just-joined guest can have an empty employee list.
       const mentionOf = newUser2.lastName + ' ' + newUser2.firstName
+      await invited.owner.waitUntilSearchable(mentionOf)
       await channelPage.sendMention(mentionOf, 'EMPLOYEES')
 
       await expectIncomingMessage(invited.page2, `@${mentionOf}`)

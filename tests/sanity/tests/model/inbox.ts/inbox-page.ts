@@ -42,7 +42,8 @@ export class InboxPage extends CommonPage {
 
   async checkCardExists (title: string, exists: boolean): Promise<void> {
     if (exists) {
-      await expect(this.cardByTitle(title)).toHaveCount(1)
+      // As long as the badge check: a notification is a round trip through the service.
+      await expect(this.cardByTitle(title)).toHaveCount(1, { timeout: 3000 })
     } else {
       await expect(this.cardByTitle(title)).toHaveCount(0)
     }
@@ -169,7 +170,7 @@ export class InboxPage extends CommonPage {
     if (exists) {
       await expect(this.inboxChat(text)).toBeVisible()
     } else {
-      await expect(this.inboxChat(text)).not.toBeVisible()
+      await expect(this.inboxChat(text)).toHaveCount(0)
     }
   }
 

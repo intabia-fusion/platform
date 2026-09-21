@@ -13,11 +13,12 @@
 // limitations under the License.
 //
 
-import { expect, test } from '../fixtures'
+import { expect, test, type SharedWorkspace } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { MessageSearchPage } from '../model/message-search-page'
-import { createAccount, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
+import { getSecondPageByApi } from '../API/ChatApi'
+import { generateUser, loginByToken } from '../utils'
 import { SignUpData } from '../model/common-types'
 
 test.describe.configure({ mode: 'parallel' })
@@ -30,9 +31,10 @@ test.describe('Message search', () => {
   // match each other's messages.
   let uniq: string
   let newUser: SignUpData
+  let workspace: SharedWorkspace
 
   test.beforeEach(async ({ page, request, sharedWorkspace }, testInfo) => {
-    const shared = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
+    workspace = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
     uniq = `${testInfo.testId}${testInfo.retry}`
     newUser = generateUser()
 
@@ -40,7 +42,7 @@ test.describe('Message search', () => {
     channelPage = new ChannelPage(page)
     searchPage = new MessageSearchPage(page)
 
-    await loginByToken(page, shared.token, shared.ws, 'chunter')
+    await loginByToken(page, workspace.token, workspace.ws, 'chunter')
   })
 
   test('Finds a message from the Browser page', async () => {
@@ -153,9 +155,7 @@ test.describe('Message search', () => {
     { tag: '@invite' },
     async ({ browser, page, request }) => {
       const message = `Direct search ${uniq}`
-      const linkText = await getInviteLink(page)
-      await createAccount(request, newUser)
-      using invited = await getSecondPageByInvite(browser, linkText, newUser)
+      using invited = await getSecondPageByApi(browser, workspace.ws, newUser, 'chunter')
       await expect(invited.page).toHaveURL(/workbench/)
 
       await chunterPage.createDirectChat(newUser)

@@ -29,8 +29,9 @@ import {
   type Ref,
   type Space
 } from '@hcengineering/core'
+import { type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { type SignUpData } from '../model/common-types'
-import { LocalUrl } from '../utils'
+import { LocalUrl, loginByToken } from '../utils'
 
 // Ids as strings: the suite does not depend on the chunter/activity/contact packages.
 const chatMessageClass = 'chunter:class:ChatMessage' as Ref<Class<Doc>>
@@ -65,7 +66,9 @@ export class ChatMember {
     readonly client: RestClient,
     readonly account: AccountUuid,
     readonly socialId: PersonId,
-    readonly name: string
+    readonly name: string,
+    // What a browser needs to open the workspace as this member; absent for the owner.
+    readonly login?: { ws: WorkspaceLoginInfo, user: SignUpData }
   ) {}
 
   async findChannel (name: string): Promise<ChannelDoc> {
@@ -197,10 +200,17 @@ export class ChatMember {
    * What "Mark all as read" does, for every document with anything unread, and tells how many
    * there were: a fresh workspace greets its owner with system messages and a bot, every new
    * member adds more, and the workspace is shared with the tests that ran before.
+   * `except`: the channels under test (with their threads), which only the UI may read.
    */
-  async readEverything (): Promise<number> {
+  async readEverything (except: Array<Ref<Doc>> = []): Promise<number> {
     const contexts = await this.client.findAll(docNotifyContextClass, { user: this.account } as any)
-    const unread = contexts.filter((it: any) => it.unreadCount > 0 || it.unreadMessagesCount > 0)
+    const unread = contexts.filter(
+      (it: any) =>
+        (it.unreadCount > 0 || it.unreadMessagesCount > 0) &&
+        // A thread lives in the space of its channel.
+        !except.includes(it.objectId) &&
+        !except.includes(it.objectSpace)
+    )
     for (const context of unread as any[]) {
       const reactionIds = (context.unreadReactions ?? []).map((it: any) => it.id)
       const commonIds = (context.unreadCommons ?? []).map((it: any) => it.id)
@@ -224,13 +234,31 @@ export class ChatMember {
     return unread.length
   }
 
-  /** Unread messages of this member in the channel, as the notification service counts them. */
-  async unreadMessagesCount (channel: ChannelDoc): Promise<number> {
-    const context = await this.client.findOne(docNotifyContextClass, {
-      user: this.account,
-      objectId: channel._id
-    } as any)
-    return (context as any)?.unreadMessagesCount ?? 0
+  /**
+   * The member has read the channel up to its last message. By the read position and not by the
+   * unread counter: the counter is 0 both after the read and before the service has counted.
+   */
+  async hasReadChannel (channel: ChannelDoc): Promise<boolean> {
+    const last = await this.client.findOne(
+      'activity:class:ActivityMessage' as Ref<Class<Doc>>,
+      { attachedTo: channel._id } as any,
+      { sort: { createdOn: -1 } } as any
+    )
+    if (last === undefined) return true
+    const state = await this.client.findOne(readStateClass, { attachedTo: channel._id } as any)
+    const position = (state as any)?.[this.account]
+    return (position?.timestamp ?? 0) >= (last.createdOn ?? last.modifiedOn)
+  }
+
+  /**
+   * The person can be found by name, which is how the mention popup looks people up: the
+   * full-text index learns about a new employee a while after the workspace does.
+   */
+  async waitUntilSearchable (name: string): Promise<void> {
+    await poll(async () => {
+      const found = await this.client.searchFulltext({ query: name, classes: [personClass] }, { limit: 1 })
+      return found.docs.length > 0
+    })
   }
 
   /** The per-document notification mode of this member: what "Edit notifications" sets in the UI. */
@@ -252,11 +280,17 @@ export class ChatMember {
   }
 }
 
-async function connect (ws: WorkspaceLoginInfo, name: string): Promise<ChatMember> {
+async function connect (ws: WorkspaceLoginInfo, name: string, user?: SignUpData): Promise<ChatMember> {
   if (ws.token === undefined) throw new Error('No workspace token')
   const client = createRestClient(ws.endpoint, ws.workspace, ws.token)
   const account = await client.getAccount()
-  return new ChatMember(client, account.uuid, account.primarySocialId, name)
+  return new ChatMember(
+    client,
+    account.uuid,
+    account.primarySocialId,
+    name,
+    user !== undefined ? { ws, user } : undefined
+  )
 }
 
 /** The owner of a workspace created through the account API (`sharedWorkspace`). */
@@ -272,17 +306,45 @@ export async function joinWorkspace (owner: WorkspaceLoginInfo, user: SignUpData
     1,
     AccountRole.User
   )
-  const joined = await getAccountClient(LocalUrl).signUpJoin(
-    user.email,
-    user.password,
-    user.firstName,
-    user.lastName,
-    inviteId,
-    owner.workspaceUrl
-  )
-  const member = await connect(joined, `${user.lastName} ${user.firstName}`)
+  const accounts = getAccountClient(LocalUrl)
+  // Some specs create the account up front, for the join page to log in with.
+  const joined = await accounts
+    .signUpJoin(user.email, user.password, user.firstName, user.lastName, inviteId, owner.workspaceUrl)
+    .catch(async () => await accounts.join(user.email, user.password, inviteId, owner.workspaceUrl))
+  const member = await connect(joined, `${user.lastName} ${user.firstName}`, user)
   await createEmployee(member, joined)
+  // The employee joins the contacts space a moment after it is created, and a client that loads
+  // before that keeps an empty list of people: no direct chat, nobody to mention.
+  await poll(async () => (await member.client.findOne(personClass, { personUuid: owner.account } as any)) !== undefined)
   return member
+}
+
+async function poll (condition: () => Promise<boolean>, timeoutMs = 30000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (!(await condition())) {
+    if (Date.now() > deadline) throw new Error('Timed out waiting for the workspace to catch up')
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+}
+
+/**
+ * A browser of a member that joined over REST. The employee is already there, so the first login
+ * writes nothing: a browser whose first write is refused (a member just joined has no seat for a
+ * moment) stops on a fatal error page.
+ */
+export async function openMemberPage (
+  browser: Browser,
+  member: ChatMember,
+  app?: string
+): Promise<{ page: Page, context: BrowserContext }> {
+  if (member.login === undefined) throw new Error('Not a member created by joinWorkspace')
+  const { ws, user } = member.login
+  const accountToken = (await getAccountClient(LocalUrl).login(user.email, user.password)).token
+  if (accountToken === undefined) throw new Error(`Cannot log in as ${user.email}`)
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  await loginByToken(page, accountToken, ws, app)
+  return { page, context }
 }
 
 // ensureEmployee only times its steps with the context.
@@ -307,6 +369,34 @@ async function createEmployee (member: ChatMember, ws: WorkspaceLoginInfo): Prom
     } catch (err) {
       if (attempt === 5) throw err
       await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+  }
+}
+
+/**
+ * A drop-in for `getInviteLink` + `getSecondPageByInvite`: the second user joins over the API and
+ * its browser opens by token, so neither the invite link nor the join page is walked, and the
+ * employee exists before the first login.
+ */
+export async function getSecondPageByApi (
+  browser: Browser,
+  owner: WorkspaceLoginInfo,
+  user: SignUpData,
+  app?: string
+): Promise<{ page: Page, context: BrowserContext, member: ChatMember } & Disposable> {
+  const member = await joinWorkspace(owner, user)
+  const { page, context } = await openMemberPage(browser, member, app)
+  return {
+    page,
+    context,
+    member,
+    [Symbol.dispose]: () => {
+      void page
+        .close()
+        .finally(() => {
+          void context.close().catch(() => {})
+        })
+        .catch(() => {})
     }
   }
 }

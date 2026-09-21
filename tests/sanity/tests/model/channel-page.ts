@@ -199,21 +199,23 @@ export class ChannelPage extends CommonPage {
   }
 
   async addMemberToChannelPreview (user: string): Promise<void> {
-    await this.addMemberPreview().click()
     const popup = this.page.locator('.hulyModal-container')
     const item = popup.getByText(user)
     // A member who joined the workspace moments ago can be missing from the list the popup
-    // loaded: reopen it so the query is re-issued instead of waiting an empty list out.
+    // loaded, or be listed before the account behind the person is known, and then "Add" adds
+    // nobody. The whole pick-add-verify round is retried from a reopened popup: it re-issues the query.
     await expect(async () => {
-      if ((await item.count()) === 0) {
+      if ((await this.userAdded(user).count()) > 0) return
+      if (await popup.isVisible()) {
         await this.page.keyboard.press('Escape')
-        await this.addMemberPreview().click()
+        await expect(popup).toBeHidden({ timeout: 5000 })
       }
+      await this.addMemberPreview().click()
       await expect(item).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: retryIntervals, timeout: 30000 })
-    await item.click()
-    await this.addButtonPreview().click()
-    await expect(this.userAdded(user)).toBeVisible()
+      await item.click()
+      await this.addButtonPreview().click()
+      await expect(this.userAdded(user)).toBeVisible({ timeout: 5000 })
+    }).toPass({ intervals: retryIntervals, timeout: 45000 })
   }
 
   async checkIfUserIsAdded (user: string, added: boolean): Promise<void> {

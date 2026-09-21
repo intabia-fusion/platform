@@ -688,6 +688,9 @@
 
   onDestroy(() => {
     inboxClient.setDocReading(object._id, false, reader)
+    if (!isFreeze() && isScrollInitialized) {
+      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
+    }
     flushReadQueue()
     chatReadMessagesStore.update(() => new Set())
     if (observer !== undefined) {

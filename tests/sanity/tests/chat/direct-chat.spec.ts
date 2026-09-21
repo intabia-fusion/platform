@@ -3,14 +3,9 @@ import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
-import {
-  createAccount,
-  createAccountAndWorkspace,
-  generateTestData,
-  generateUser,
-  getInviteLink,
-  getSecondPageByInvite
-} from '../utils'
+import type { WorkspaceLoginInfo } from '@hcengineering/account'
+import { getSecondPageByApi } from '../API/ChatApi'
+import { createAccountAndWorkspace, generateTestData, generateUser } from '../utils'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -18,6 +13,7 @@ test.describe('Check direct messages channels', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let newUser2: SignUpData
+  let owner: { ws: WorkspaceLoginInfo, token: string }
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, request }) => {
@@ -28,13 +24,11 @@ test.describe('Check direct messages channels', () => {
     channelPage = new ChannelPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data, 'chunter')
+    owner = await createAccountAndWorkspace(page, request, data, 'chunter')
   })
 
-  test('User can create/close/reacreate direct chat with employee', async ({ request, page, browser }) => {
-    const linkText = await getInviteLink(page)
-    await createAccount(request, newUser2)
-    using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)
+  test('User can create/close/reacreate direct chat with employee', async ({ page, browser }) => {
+    using _page2 = await getSecondPageByApi(browser, owner.ws, newUser2, 'chunter')
     const page2 = _page2.page
     const channelPageSecond = new ChannelPage(page2)
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)

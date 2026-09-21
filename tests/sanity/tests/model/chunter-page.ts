@@ -39,16 +39,20 @@ export class ChunterPage extends CommonPage {
 
   // ACTIONS
 
+  // The "+" of a section only shows under the pointer, and the navigator re-renders as chats come
+  // in: the hover is lost between the two steps unless they are retried as one.
   async clickAddChannel (): Promise<void> {
-    await this.buttonChannelsHeader().hover()
-    expect(await this.buttonAddChannel().isVisible()).toBe(true)
-    await this.buttonAddChannel().click()
+    await expect(async () => {
+      await this.buttonChannelsHeader().hover()
+      await this.buttonAddChannel().click({ timeout: 1000 })
+    }).toPass({ timeout: 3000 })
   }
 
   async clickAddDirect (): Promise<void> {
-    await this.buttonDirectHeader().hover()
-    expect(await this.buttonAddDirectMessage().isVisible()).toBe(true)
-    await this.buttonAddDirectMessage().click()
+    await expect(async () => {
+      await this.buttonDirectHeader().hover()
+      await this.buttonAddDirectMessage().click({ timeout: 1000 })
+    }).toPass({ timeout: 3000 })
   }
 
   async createChannel (channelName: string, privateChannel: boolean): Promise<void> {

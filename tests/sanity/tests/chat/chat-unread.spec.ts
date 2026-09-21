@@ -24,6 +24,8 @@ interface Chat {
 
 test.describe.configure({ mode: 'parallel' })
 
+const others = new Map<string, ChatMember>()
+
 /**
  * Unread state of the chat as the user sees it: application markers, navigator counters, the "New"
  * separator and where a channel opens. The other user talks over REST, so a test can afford dozens
@@ -40,8 +42,11 @@ test.describe('Chat unread state tests', () => {
   let uniq: string
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
-    // The REST member takes a seat like an invited one.
-    shared = await sharedWorkspace(1)
+    // The REST member takes a seat like an invited one, once per workspace.
+    shared = await sharedWorkspace(0)
+    if (!others.has(shared.ws.workspace)) {
+      shared = await sharedWorkspace(1)
+    }
     uniq = `${testInfo.testId}${testInfo.retry}`
     channelName = `${generateTestData().channelName}${uniq}`
 
@@ -60,7 +65,8 @@ test.describe('Chat unread state tests', () => {
     await channelPage.checkIfChannelDefaultExist(true, channelName)
 
     const me = await connectOwner(shared.ws, `${shared.data.lastName} ${shared.data.firstName}`)
-    const other = await joinWorkspace(shared.ws, generateUser())
+    const other = others.get(shared.ws.workspace) ?? (await joinWorkspace(shared.ws, generateUser()))
+    others.set(shared.ws.workspace, other)
     const channel = await me.findChannel(channelName)
     await me.addMember(channel, other.account)
 
@@ -77,21 +83,51 @@ test.describe('Chat unread state tests', () => {
   }
 
   /**
-   * Nothing unread before the scenario starts. A fresh workspace greets its owner in `general`,
-   * `random` and a bot chat, and every member joining adds a system message to the first two a
-   * moment later: those are muted (no notification, no marker), the rest is read until it stays so.
+   * What is unread before the scenario starts is read over REST: a fresh workspace greets its
+   * owner in `general`, `random` and a bot chat, every member joining adds a system message, and the
+   * tests that ran in this workspace before left their own. Best effort: more can arrive at any
+   * moment, so the assertions that depend on the rest of the workspace read it again themselves.
+   * Nothing here is muted or otherwise kept: the workspace goes on to the next spec of the worker.
    */
   async function settle (me: ChatMember): Promise<void> {
-    for (const name of ['general', 'random']) {
-      await me.setNotificationMode(await me.findChannel(name), 'mute')
-    }
-    let quiet = 0
+    await me.readEverything()
+  }
+
+  /**
+   * The application markers are off. They are global, and the bot greeting of a fresh workspace
+   * arrives whenever the bot gets to it: everything outside the channels under test is read over
+   * REST first, so only the UI can have cleared what the test is about.
+   */
+  async function checkMarkersOff (
+    chat: Chat,
+    markers: Array<'chat' | 'inbox'>,
+    channels = [chat.channel]
+  ): Promise<void> {
+    const except = channels.map((it) => it._id)
     await expect(async () => {
-      quiet = (await me.readEverything()) === 0 ? quiet + 1 : 0
-      expect(quiet).toBeGreaterThanOrEqual(2)
-    }).toPass({ timeout: 30000, intervals: [500] })
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+      await chat.me.readEverything(except)
+      for (const marker of markers) {
+        const locator = marker === 'chat' ? unread.chatAppMarker() : unread.inboxAppMarker()
+        await expect(locator).toHaveCount(0, { timeout: 1000 })
+      }
+    }).toPass({ timeout: 3000 })
+  }
+
+  /**
+   * The counter of a collapsed section. It sums every channel of the section, `general` and
+   * `random` included, so whatever is unread outside the channels under test is read first.
+   */
+  async function checkSectionCounter (
+    chat: Chat,
+    id: string,
+    count: number | undefined,
+    channels = [chat.channel]
+  ): Promise<void> {
+    const except = channels.map((it) => it._id)
+    await expect(async () => {
+      await chat.me.readEverything(except)
+      await unread.checkSectionCounter(id, count, 1000)
+    }).toPass({ timeout: 3000 })
   }
 
   async function leaveChannel (): Promise<void> {
@@ -108,7 +144,7 @@ test.describe('Chat unread state tests', () => {
    * the read has to land before the channel is left, or the messages stay unread.
    */
   async function waitUntilRead (chat: Chat): Promise<void> {
-    await expect.poll(async () => await chat.me.unreadMessagesCount(chat.channel), { timeout: 15000 }).toBe(0)
+    await expect.poll(async () => await chat.me.hasReadChannel(chat.channel), { timeout: 15000 }).toBe(true)
   }
 
   async function sendMany (chat: Chat, count: number, prefix: string): Promise<string[]> {
@@ -132,7 +168,7 @@ test.describe('Chat unread state tests', () => {
   test('Message in a closed channel raises the counter and both application markers', async () => {
     const chat = await createChat()
     await unread.checkNavCounter(channelName, undefined)
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
 
     await chat.other.sendMessage(chat.channel, `Hello ${uniq}`)
 
@@ -151,8 +187,7 @@ test.describe('Chat unread state tests', () => {
     await channelPage.checkMessageExist(text, true, text)
 
     await unread.checkNavCounter(channelName, undefined)
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
   })
 
   test('Counter counts a burst of messages and survives a reload', async ({ page }) => {
@@ -175,8 +210,7 @@ test.describe('Chat unread state tests', () => {
     await channelPage.checkMessageExist(text, true, text)
 
     await unread.checkNavCounterStaysAway(channelName)
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
 
     // Read for real, not only hidden while the channel is open.
     await waitUntilRead(chat)
@@ -204,8 +238,7 @@ test.describe('Chat unread state tests', () => {
 
     await chat.other.removeMessage(chat.channel, first)
     await unread.checkNavCounter(channelName, undefined)
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
   })
 
   test('Editing an unread message does not count it twice', async () => {
@@ -236,7 +269,7 @@ test.describe('Chat unread state tests', () => {
 
     await leftSideMenuPage.clickChunter()
     await unread.checkNavCounter(channelName, undefined)
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
   })
 
   // ---- Several channels ----
@@ -261,8 +294,7 @@ test.describe('Chat unread state tests', () => {
     await channelPage.clickChooseChannel(secondName)
     await channelPage.checkMessageExist(`Second ${uniq}`, true, `Second ${uniq}`)
     await unread.checkNavCounter(secondName, undefined)
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'], [chat.channel, second])
   })
 
   test('Collapsed Channels section shows the unread total of its channels', async () => {
@@ -277,7 +309,7 @@ test.describe('Chat unread state tests', () => {
     await unread.checkNavCounter(secondName, 3, 'red')
 
     await unread.collapseSection(channelsSection)
-    await unread.checkSectionCounter(channelsSection, 5)
+    await checkSectionCounter(chat, channelsSection, 5, [chat.channel, second])
   })
 
   test('Starred channel is counted in its own section, not in Channels', async () => {
@@ -289,9 +321,9 @@ test.describe('Chat unread state tests', () => {
     await unread.checkNavCounter(channelName, 2, 'red')
 
     await unread.collapseSection(channelsSection)
-    await unread.checkSectionCounter(channelsSection, undefined)
+    await checkSectionCounter(chat, channelsSection, undefined)
     await unread.collapseSection('starred')
-    await unread.checkSectionCounter('starred', 2)
+    await checkSectionCounter(chat, 'starred', 2)
   })
 
   // ---- Notification modes ----
@@ -303,11 +335,14 @@ test.describe('Chat unread state tests', () => {
     await chat.other.sendMessage(chat.channel, `Quiet ${uniq}`)
 
     await unread.checkNavCounter(channelName, 1, 'gray')
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
 
+    // The card is there since the greeting; the quiet message neither marks it nor shows in it.
     await leftSideMenuPage.clickNotification()
-    await inboxPage.checkCardExists(channelName, false)
+    await inboxPage.checkCardExists(channelName, true)
+    await inboxPage.checkCardPreview(channelName, 'Hi')
+    await inboxPage.checkUnreadMarker(channelName, undefined)
+    await expect(inboxPage.cardByTitle(channelName)).not.toContainText('Quiet')
   })
 
   test('Mentions-only channel: a reaction reaches the inbox but not the chat marker', async () => {
@@ -320,7 +355,7 @@ test.describe('Chat unread state tests', () => {
 
     await unread.checkInboxAppMarker(true)
     await unread.checkNavCounter(channelName, 1, 'gray')
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
   })
 
   test('Mentions-only channel: a mention turns the counter red and lights the chat marker', async () => {
@@ -354,8 +389,7 @@ test.describe('Chat unread state tests', () => {
     await chat.other.removeMessage(chat.channel, mention)
 
     await unread.checkNavCounter(channelName, 1, 'gray')
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
   })
 
   test('Muted channel: messages count gray and light no marker', async () => {
@@ -365,8 +399,7 @@ test.describe('Chat unread state tests', () => {
     await sendMany(chat, 3, 'Muted')
 
     await unread.checkNavCounter(channelName, 3, 'gray')
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
   })
 
   test('Muted channel still delivers a reaction to the inbox', async () => {
@@ -377,7 +410,7 @@ test.describe('Chat unread state tests', () => {
     await chat.other.react(chat.channel, mine, '👍')
 
     await unread.checkInboxAppMarker(true)
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
     await leftSideMenuPage.clickNotification()
     await inboxPage.checkCardExists(channelName, true)
   })
@@ -418,11 +451,11 @@ test.describe('Chat unread state tests', () => {
 
     const reaction = await chat.other.react(chat.channel, mine, '👍')
     await unread.checkInboxAppMarker(true)
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
     await unread.checkNavCounter(channelName, undefined)
 
     await chat.other.removeReaction(chat.channel, mine, reaction)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['inbox'])
   })
 
   // ---- "New" separator and where the channel opens ----
@@ -482,7 +515,7 @@ test.describe('Chat unread state tests', () => {
     await waitUntilRead(chat)
     await leaveChannel()
     await unread.checkNavCounter(channelName, undefined)
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
   })
 
   test('Channel visited through a link to an old message opens from its end next time', async ({ page }) => {
@@ -559,8 +592,7 @@ test.describe('Chat unread state tests', () => {
     await channelPage.checkIfMessageExistInSidebar(true, reply)
     await expect(unread.newSeparatorInSidebar()).toBeVisible()
     await unread.checkNavCounter('Threads', undefined)
-    await unread.checkChatAppMarker(false)
-    await unread.checkInboxAppMarker(false)
+    await checkMarkersOff(chat, ['chat', 'inbox'])
   })
 
   test('Reply arriving in the open thread is read at once', async ({ page }) => {
@@ -578,7 +610,7 @@ test.describe('Chat unread state tests', () => {
     await channelPage.checkIfMessageExistInSidebar(true, live)
 
     await unread.checkNavCounterStaysAway('Threads')
-    await unread.checkChatAppMarker(false)
+    await checkMarkersOff(chat, ['chat'])
   })
 
   async function openThread (page: Page, parent: string): Promise<void> {

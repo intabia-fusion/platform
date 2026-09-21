@@ -64,11 +64,11 @@ export class ChatUnreadPage extends CommonPage {
   }
 
   /** `count === undefined`: no counter on the collapsed section. */
-  async checkSectionCounter (id: string, count: number | undefined): Promise<void> {
+  async checkSectionCounter (id: string, count: number | undefined, timeout = badgeTimeout): Promise<void> {
     if (count === undefined) {
-      await expect(this.sectionCounter(id)).toHaveCount(0, { timeout: badgeTimeout })
+      await expect(this.sectionCounter(id)).toHaveCount(0, { timeout })
     } else {
-      await expect(this.sectionCounter(id)).toHaveText(String(count), { timeout: badgeTimeout })
+      await expect(this.sectionCounter(id)).toHaveText(String(count), { timeout })
     }
   }
 

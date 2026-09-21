@@ -364,7 +364,7 @@ export async function createAccountAndWorkspace (
   request: APIRequestContext,
   data: TestData,
   app?: string
-): Promise<void> {
+): Promise<{ ws: WorkspaceLoginInfo, token: string }> {
   // Two steps, not one: the per-test setup is a quarter of the Platform lane, and without the split
   // the step report cannot say whether that is the account service or the client booting a new
   // workspace.
@@ -373,6 +373,7 @@ export async function createAccountAndWorkspace (
   await test.step('setup: open the workspace', async () => {
     await loginByToken(page, token, ws, app)
   })
+  return { ws, token }
 }
 
 export const convertDate = (date: Date): { day: string, month: string, year: string } => {
