@@ -67,7 +67,7 @@ function getVersion() {
   if (cachedVersion !== null) return cachedVersion
   try {
     const { execSync } = require('child_process')
-    const stdout = execSync('git describe --tags --abbrev=0').toString().trim()
+    const stdout = execSync('git describe --tags --abbrev=0 --match="v*"').toString().trim()
     const rawVersion = stdout.replace('v', '').replace('s', '').split('.')
     if (rawVersion.length === 3) {
       const version = {

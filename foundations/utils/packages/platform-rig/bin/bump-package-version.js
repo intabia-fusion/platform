@@ -4,7 +4,7 @@
 
 const child_process = require('child_process')
 
-child_process.exec('git describe --tags --abbrev=0', (err, stdout, stderr) => {
+child_process.exec('git describe --tags --abbrev=0 --match="v*"', (err, stdout, stderr) => {
   if (err !== null) {
     if (err.message.includes('No names found')) {
       console.log('No git version available')
