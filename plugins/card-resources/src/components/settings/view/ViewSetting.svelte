@@ -38,6 +38,7 @@
     getKeyLabel,
     ViewletClassSettings
   } from '@hcengineering/view-resources'
+  import { updateViewletConfig } from './utils'
 
   export let viewlet: Viewlet
 
@@ -397,7 +398,7 @@
               // TODO UBERF-9639: restore defaults
             }}
             on:save={(event) => {
-              viewlet.config = event.detail
+              updateViewletConfig(viewlet, event.detail)
               viewlet = viewlet
               dispatch('update', event.detail)
             }}
