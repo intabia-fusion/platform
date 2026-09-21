@@ -35,7 +35,7 @@ import {
   sweepScheduledDeletions
 } from '../deletion'
 import { requireAdminOp } from '../adminOp'
-import { deleteWorkspace } from '../operations'
+import { cancelAccountDeletion, deleteWorkspace } from '../operations'
 import { performWorkspaceOperation } from '../serviceOperations'
 import * as serviceOperations from '../serviceOperations'
 import * as utils from '../utils'
@@ -114,6 +114,7 @@ function fakeDb (
     socialId: { find: async () => [] },
     account: {
       find: async (query: any) => accounts.filter((a) => matches(a, query)),
+      findOne: async (query: any) => accounts.find((a) => matches(a, query)) ?? null,
       update: async (query: any, ops: any) => {
         for (const a of accounts.filter((a) => matches(a, query))) {
           Object.assign(a, ops)
@@ -317,6 +318,7 @@ describe('purgeAccount', () => {
 
 describe('performWorkspaceOperation deletion events', () => {
   let statusById: Record<string, Partial<WorkspaceStatus>>
+  let cancelled: jest.SpyInstance
 
   const setup = (mode: WorkspaceMode, deleteOn?: number): AccountDB => {
     const status: Partial<WorkspaceStatus> = { workspaceUuid: 'w1' as WorkspaceUuid, mode, deleteOn }
@@ -328,6 +330,7 @@ describe('performWorkspaceOperation deletion events', () => {
     jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
     jest.spyOn(utils, 'notifyWorkspaceDeleted').mockResolvedValue(undefined)
     jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled').mockResolvedValue(undefined)
+    cancelled = jest.spyOn(utils, 'notifyWorkspaceDeletionCancelled').mockResolvedValue(undefined)
     return db
   }
 
@@ -447,6 +450,8 @@ describe('performWorkspaceOperation deletion events', () => {
 
     expect(statusById.w1.deleteOn).toBeUndefined()
     expect(statusById.w1.mode).toBe('active')
+    expect(cancelled).toHaveBeenCalledTimes(1)
+    expect(cancelled.mock.calls[0][4]).toBe('active')
   })
 
   test('cancel-delete on an archived workspace leaves it archived', async () => {
@@ -460,6 +465,8 @@ describe('performWorkspaceOperation deletion events', () => {
 
     expect(statusById.w1.deleteOn).toBeUndefined()
     expect(statusById.w1.mode).toBe('archived')
+    expect(cancelled).toHaveBeenCalledTimes(1)
+    expect(cancelled.mock.calls[0][4]).toBe('archived')
   })
 
   test('delete schedules an archived workspace as well', async () => {
@@ -516,6 +523,19 @@ describe('performWorkspaceOperation deletion events', () => {
 
     expect(statusById.w1.deleteOn).toBeUndefined()
     expect(statusById.w1.mode).toBe('pending-restore')
+    expect(cancelled.mock.calls[0][4]).toBe('restoring')
+  })
+
+  test('unarchive of a workspace that was never scheduled sends no cancellation letter', async () => {
+    const db = setup('archived')
+
+    await performWorkspaceOperation(ctx, db, null, 'token', {
+      workspaceId: 'w1' as WorkspaceUuid,
+      event: 'unarchive',
+      params: []
+    })
+
+    expect(cancelled).not.toHaveBeenCalled()
   })
 })
 
@@ -558,5 +578,32 @@ describe('deleteWorkspace self-service guard', () => {
       AccountRole.Owner
 
     await expect(deleteWorkspace(ctx, db, null, 'token', { otpCode: '' })).rejects.toThrow(PlatformError)
+  })
+})
+
+describe('cancelAccountDeletion', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'p1' as AccountUuid, extra: {} })
+  })
+
+  test('clears the mark and tells the person the account is active again', async () => {
+    const fake = fakeDb([], [{ uuid: 'p1' as AccountUuid, deleteOn: Date.now() + DAY }])
+    const notify = jest.spyOn(utils, 'notifyAccountDeletionCancelled').mockResolvedValue(undefined)
+
+    await cancelAccountDeletion(ctx, fake.db, null, 'token')
+
+    expect(fake.accounts[0].deleteOn).toBeUndefined()
+    expect(notify).toHaveBeenCalledTimes(1)
+    expect(notify.mock.calls[0][3]).toBe('p1')
+  })
+
+  test('sends nothing when no deletion was scheduled', async () => {
+    const fake = fakeDb([], [{ uuid: 'p1' as AccountUuid }])
+    const notify = jest.spyOn(utils, 'notifyAccountDeletionCancelled').mockResolvedValue(undefined)
+
+    await cancelAccountDeletion(ctx, fake.db, null, 'token')
+
+    expect(notify).not.toHaveBeenCalled()
   })
 })

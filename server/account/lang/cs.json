@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>Váš účet bude smazán <b>{date}</b>.</p><p>Pokud se do té doby přihlásíte, můžete smazání zrušit: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "Váš účet byl smazán",
     "AccountDeletedText": "Váš účet byl smazán. Vše, co vás identifikovalo, je pryč a adresa je volná pro novou registraci.",
-    "AccountDeletedHTML": "<p>Váš účet byl smazán.</p><p>Vše, co vás identifikovalo, je pryč a adresa je volná pro novou registraci.</p>"
+    "AccountDeletedHTML": "<p>Váš účet byl smazán.</p><p>Vše, co vás identifikovalo, je pryč a adresa je volná pro novou registraci.</p>",
+    "AccountDeletionCancelledSubject": "Váš účet {app} je znovu aktivní",
+    "AccountDeletionCancelledText": "Smazání vašeho účtu {app} bylo zrušeno - účet je znovu aktivní.\n\nDěkujeme, že s námi zůstáváte!\n\nPracovní prostory, které jste poslali ke smazání, zůstávají naplánované - každý je potřeba obnovit samostatně: {link}",
+    "AccountDeletionCancelledHTML": "<p>Smazání vašeho účtu <b>{app}</b> bylo zrušeno - účet je znovu aktivní.</p><p>Děkujeme, že s námi zůstáváte!</p><p>Pracovní prostory, které jste poslali ke smazání, zůstávají naplánované - každý je potřeba obnovit samostatně: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "Pracovní prostor {ws} nebude smazán",
+    "WorkspaceDeletionCancelledText": "Smazání pracovního prostoru {ws} ({url}) bylo zrušeno. {state, select, archived {Už byl archivován - kterýkoli vlastník ho může obnovit: {link}} restoring {Obnovuje se z archivu a brzy bude opět dostupný: {link}} other {Je opět plně dostupný: {link}}}\n\nDěkujeme, že s námi zůstáváte!",
+    "WorkspaceDeletionCancelledHTML": "<p>Smazání pracovního prostoru <b>{ws}</b> ({url}) bylo zrušeno.</p><p>{state, select, archived {Už byl archivován - kterýkoli vlastník ho může obnovit: <a href={link}>{link}</a>} restoring {Obnovuje se z archivu a brzy bude opět dostupný: <a href={link}>{link}</a>} other {Je opět plně dostupný: <a href={link}>{link}</a>}}</p><p>Děkujeme, že s námi zůstáváte!</p>"
   }
 }

@@ -2185,6 +2185,39 @@ export async function notifyWorkspaceDeletionScheduled (
   }
 }
 
+/** Tells the owners the scheduled deletion was called off. `state` picks the sentence about what it is now. */
+export async function notifyWorkspaceDeletionCancelled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string },
+  state: 'active' | 'archived' | 'restoring'
+): Promise<void> {
+  try {
+    const lang = branding?.defaultLanguage
+    const owners = (await db.getWorkspaceMembers(workspace.uuid)).filter((m) => m.role === AccountRole.Owner)
+    const params = {
+      ws: workspace.name !== '' ? workspace.name : workspace.url,
+      url: workspace.url,
+      state,
+      link: getSelectWorkspaceLink(branding)
+    }
+    const info = {
+      subject: await translate(accountPlugin.string.WorkspaceDeletionCancelledSubject, params, lang),
+      text: await translate(accountPlugin.string.WorkspaceDeletionCancelledText, params, lang),
+      html: await translate(accountPlugin.string.WorkspaceDeletionCancelledHTML, params, lang)
+    }
+
+    for (const owner of owners) {
+      const to = await getPersonEmail(db, owner.person)
+      if (to === undefined) continue
+      await sendEmail({ ...info, to }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify the owners about a cancelled workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
 /** Tells the person their account is on its way out. `deleteOn` null means it is already gone. */
 export async function notifyAccountDeletion (
   ctx: MeasureContext,
@@ -2227,6 +2260,37 @@ export async function notifyAccountDeletion (
     )
   } catch (err) {
     ctx.warn('Failed to notify about an account deletion', { account, err })
+  }
+}
+
+/** Tells the person the scheduled deletion of their account was called off. */
+export async function notifyAccountDeletionCancelled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  account: AccountUuid
+): Promise<void> {
+  try {
+    const to = await getPersonEmail(db, account)
+    if (to === undefined) return
+
+    const lang = branding?.defaultLanguage
+    const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
+      link: getSelectWorkspaceLink(branding)
+    }
+
+    await sendEmail(
+      {
+        to,
+        subject: await translate(accountPlugin.string.AccountDeletionCancelledSubject, params, lang),
+        text: await translate(accountPlugin.string.AccountDeletionCancelledText, params, lang),
+        html: await translate(accountPlugin.string.AccountDeletionCancelledHTML, params, lang)
+      },
+      ctx
+    )
+  } catch (err) {
+    ctx.warn('Failed to notify about a cancelled account deletion', { account, err })
   }
 }
 

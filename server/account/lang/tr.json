@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>Hesabınız <b>{date}</b> tarihinde silinecek.</p><p>O tarihten önce giriş yaparsanız silmeyi iptal edebilirsiniz: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "Hesabınız silindi",
     "AccountDeletedText": "Hesabınız silindi. Sizi tanımlayan her şey kaldırıldı ve adres yeni bir kayıt için serbest.",
-    "AccountDeletedHTML": "<p>Hesabınız silindi.</p><p>Sizi tanımlayan her şey kaldırıldı ve adres yeni bir kayıt için serbest.</p>"
+    "AccountDeletedHTML": "<p>Hesabınız silindi.</p><p>Sizi tanımlayan her şey kaldırıldı ve adres yeni bir kayıt için serbest.</p>",
+    "AccountDeletionCancelledSubject": "{app} hesabınız yeniden aktif",
+    "AccountDeletionCancelledText": "{app} hesabınızın silinmesi iptal edildi - hesap yeniden aktif.\n\nBizimle kaldığınız için teşekkürler!\n\nSilinmek üzere gönderdiğiniz çalışma alanları planlanmış durumda kalır, her biri ayrı ayrı geri yüklenmelidir: {link}",
+    "AccountDeletionCancelledHTML": "<p><b>{app}</b> hesabınızın silinmesi iptal edildi - hesap yeniden aktif.</p><p>Bizimle kaldığınız için teşekkürler!</p><p>Silinmek üzere gönderdiğiniz çalışma alanları planlanmış durumda kalır, her biri ayrı ayrı geri yüklenmelidir: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "{ws} çalışma alanı silinmeyecek",
+    "WorkspaceDeletionCancelledText": "{ws} ({url}) çalışma alanının silinmesi iptal edildi. {state, select, archived {Zaten arşivlendi - herhangi bir sahip onu geri yükleyebilir: {link}} restoring {Arşivden geri yükleniyor ve kısa süre içinde tekrar kullanılabilir olacak: {link}} other {Tekrar tamamen kullanılabilir durumda: {link}}}\n\nBizimle kaldığınız için teşekkürler!",
+    "WorkspaceDeletionCancelledHTML": "<p><b>{ws}</b> ({url}) çalışma alanının silinmesi iptal edildi.</p><p>{state, select, archived {Zaten arşivlendi - herhangi bir sahip onu geri yükleyebilir: <a href={link}>{link}</a>} restoring {Arşivden geri yükleniyor ve kısa süre içinde tekrar kullanılabilir olacak: <a href={link}>{link}</a>} other {Tekrar tamamen kullanılabilir durumda: <a href={link}>{link}</a>}}</p><p>Bizimle kaldığınız için teşekkürler!</p>"
   }
 }

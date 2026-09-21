@@ -117,6 +117,7 @@ import {
   sendOperationOtp,
   logAdminAction,
   notifyWorkspaceDeleted,
+  notifyWorkspaceDeletionCancelled,
   notifyWorkspaceDeletionScheduled,
   doReleaseSocialId,
   publishMembersChanged
@@ -1121,6 +1122,14 @@ export async function performWorkspaceOperation (
         const readonlyDays = isActiveMode(workspace.status.mode) ? getDeletionReadonlyDays() : 0
         await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, { deleteOn: deadline, readonlyDays })
       }
+    }
+  }
+
+  // unarchive drops the deadline as well, which calls a scheduled deletion off just the same.
+  if ((event === 'cancel-delete' || event === 'unarchive') && ops > 0) {
+    for (const workspace of workspaces.filter((ws) => alreadyScheduled.has(ws.uuid))) {
+      const kept = isActiveMode(workspace.status.mode) ? 'active' : 'archived'
+      await notifyWorkspaceDeletionCancelled(ctx, db, branding, workspace, event === 'unarchive' ? 'restoring' : kept)
     }
   }
   return ops > 0

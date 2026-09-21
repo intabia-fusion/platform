@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>A sua conta será eliminada em <b>{date}</b>.</p><p>Se iniciar sessão antes dessa data, pode cancelar: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "A sua conta foi eliminada",
     "AccountDeletedText": "A sua conta foi eliminada. Tudo o que o identificava desapareceu e o endereço fica livre para um novo registo.",
-    "AccountDeletedHTML": "<p>A sua conta foi eliminada.</p><p>Tudo o que o identificava desapareceu e o endereço fica livre para um novo registo.</p>"
+    "AccountDeletedHTML": "<p>A sua conta foi eliminada.</p><p>Tudo o que o identificava desapareceu e o endereço fica livre para um novo registo.</p>",
+    "AccountDeletionCancelledSubject": "A sua conta {app} está novamente ativa",
+    "AccountDeletionCancelledText": "A eliminação da sua conta {app} foi cancelada - a conta está novamente ativa.\n\nObrigado por continuar connosco!\n\nOs espaços de trabalho que enviou para eliminação continuam agendados - cada um tem de ser restaurado separadamente: {link}",
+    "AccountDeletionCancelledHTML": "<p>A eliminação da sua conta <b>{app}</b> foi cancelada - a conta está novamente ativa.</p><p>Obrigado por continuar connosco!</p><p>Os espaços de trabalho que enviou para eliminação continuam agendados - cada um tem de ser restaurado separadamente: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "O espaço de trabalho {ws} não será eliminado",
+    "WorkspaceDeletionCancelledText": "A eliminação do espaço de trabalho {ws} ({url}) foi cancelada. {state, select, archived {Já foi arquivado - qualquer proprietário pode restaurá-lo: {link}} restoring {Está a ser restaurado a partir do arquivo e estará disponível novamente em breve: {link}} other {Está totalmente disponível novamente: {link}}}\n\nObrigado por continuar connosco!",
+    "WorkspaceDeletionCancelledHTML": "<p>A eliminação do espaço de trabalho <b>{ws}</b> ({url}) foi cancelada.</p><p>{state, select, archived {Já foi arquivado - qualquer proprietário pode restaurá-lo: <a href={link}>{link}</a>} restoring {Está a ser restaurado a partir do arquivo e estará disponível novamente em breve: <a href={link}>{link}</a>} other {Está totalmente disponível novamente: <a href={link}>{link}</a>}}</p><p>Obrigado por continuar connosco!</p>"
   }
 }

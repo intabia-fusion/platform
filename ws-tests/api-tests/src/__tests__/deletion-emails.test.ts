@@ -92,13 +92,23 @@ describe('deletion-emails', () => {
     expect(body).toContain('/login/selectWorkspace')
   }, 120000)
 
-  it('tells the owners when one of them deletes the workspace themselves', async () => {
+  it('tells the owners when the deletion is called off', async () => {
+    await clearMail()
+
     const cancelled = await adminOp('performWorkspaceOperation', {
       workspaceId: wsUuid,
       event: 'cancel-delete',
       params: []
     })
     expect(cancelled.error).toBeUndefined()
+
+    const mail = await waitForMail(email)
+    expect(mail).toBeDefined()
+    expect(mail?.Subject).toContain('will not be deleted')
+    expect(await mailBody(mail?.ID ?? '')).toContain('fully available again')
+  }, 120000)
+
+  it('tells the owners when one of them deletes the workspace themselves', async () => {
     await clearMail()
 
     const selected = await rpc(config, userToken, 'selectWorkspace', { workspaceUrl, kind: 'external' })
@@ -146,5 +156,17 @@ describe('deletion-emails', () => {
 
     const body = await mailBody(mail?.ID ?? '')
     expect(body).toContain('/login/selectWorkspace')
+  }, 120000)
+
+  it('tells the person when they call the account deletion off', async () => {
+    await clearMail()
+
+    const res = await rpc(config, userToken, 'cancelAccountDeletion', {})
+    expect(res.error).toBeUndefined()
+
+    const mail = await waitForMail(email)
+    expect(mail).toBeDefined()
+    expect(mail?.Subject).toContain('account is active again')
+    expect(await mailBody(mail?.ID ?? '')).toContain('Thank you for staying')
   }, 120000)
 })

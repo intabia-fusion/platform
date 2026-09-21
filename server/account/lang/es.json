@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>Tu cuenta se eliminará el <b>{date}</b>.</p><p>Si inicias sesión antes de esa fecha, puedes cancelarlo: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "Tu cuenta ha sido eliminada",
     "AccountDeletedText": "Tu cuenta ha sido eliminada. Todo lo que te identificaba ha desaparecido y la dirección queda libre para un nuevo registro.",
-    "AccountDeletedHTML": "<p>Tu cuenta ha sido eliminada.</p><p>Todo lo que te identificaba ha desaparecido y la dirección queda libre para un nuevo registro.</p>"
+    "AccountDeletedHTML": "<p>Tu cuenta ha sido eliminada.</p><p>Todo lo que te identificaba ha desaparecido y la dirección queda libre para un nuevo registro.</p>",
+    "AccountDeletionCancelledSubject": "Tu cuenta de {app} está activa de nuevo",
+    "AccountDeletionCancelledText": "Se ha cancelado la eliminación de tu cuenta de {app} - la cuenta está activa de nuevo.\n\n¡Gracias por quedarte con nosotros!\n\nLos espacios de trabajo que enviaste a eliminación siguen programados - cada uno debe restaurarse por separado: {link}",
+    "AccountDeletionCancelledHTML": "<p>Se ha cancelado la eliminación de tu cuenta de <b>{app}</b> - la cuenta está activa de nuevo.</p><p>¡Gracias por quedarte con nosotros!</p><p>Los espacios de trabajo que enviaste a eliminación siguen programados - cada uno debe restaurarse por separado: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "El espacio de trabajo {ws} no será eliminado",
+    "WorkspaceDeletionCancelledText": "Se ha cancelado la eliminación del espacio de trabajo {ws} ({url}). {state, select, archived {Ya se ha archivado - cualquier propietario puede restaurarlo: {link}} restoring {Se está restaurando desde el archivo y estará disponible de nuevo en breve: {link}} other {Vuelve a estar totalmente disponible: {link}}}\n\n¡Gracias por quedarte con nosotros!",
+    "WorkspaceDeletionCancelledHTML": "<p>Se ha cancelado la eliminación del espacio de trabajo <b>{ws}</b> ({url}).</p><p>{state, select, archived {Ya se ha archivado - cualquier propietario puede restaurarlo: <a href={link}>{link}</a>} restoring {Se está restaurando desde el archivo y estará disponible de nuevo en breve: <a href={link}>{link}</a>} other {Vuelve a estar totalmente disponible: <a href={link}>{link}</a>}}</p><p>¡Gracias por quedarte con nosotros!</p>"
   }
 }

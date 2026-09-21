@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>Sua conta será excluída em <b>{date}</b>.</p><p>Entrar antes dessa data permite cancelar: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "Sua conta foi excluída",
     "AccountDeletedText": "Sua conta foi excluída. Tudo o que identificava você sumiu e o endereço está livre para um novo cadastro.",
-    "AccountDeletedHTML": "<p>Sua conta foi excluída.</p><p>Tudo o que identificava você sumiu e o endereço está livre para um novo cadastro.</p>"
+    "AccountDeletedHTML": "<p>Sua conta foi excluída.</p><p>Tudo o que identificava você sumiu e o endereço está livre para um novo cadastro.</p>",
+    "AccountDeletionCancelledSubject": "Sua conta {app} está ativa novamente",
+    "AccountDeletionCancelledText": "A exclusão da sua conta {app} foi cancelada - a conta está ativa novamente.\n\nObrigado por continuar com a gente!\n\nOs workspaces que você enviou para exclusão continuam agendados - cada um precisa ser restaurado separadamente: {link}",
+    "AccountDeletionCancelledHTML": "<p>A exclusão da sua conta <b>{app}</b> foi cancelada - a conta está ativa novamente.</p><p>Obrigado por continuar com a gente!</p><p>Os workspaces que você enviou para exclusão continuam agendados - cada um precisa ser restaurado separadamente: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "O workspace {ws} não será excluído",
+    "WorkspaceDeletionCancelledText": "A exclusão do workspace {ws} ({url}) foi cancelada. {state, select, archived {Ele já foi arquivado - qualquer proprietário pode restaurá-lo: {link}} restoring {Ele está sendo restaurado do arquivo e estará disponível novamente em breve: {link}} other {Ele está totalmente disponível novamente: {link}}}\n\nObrigado por continuar com a gente!",
+    "WorkspaceDeletionCancelledHTML": "<p>A exclusão do workspace <b>{ws}</b> ({url}) foi cancelada.</p><p>{state, select, archived {Ele já foi arquivado - qualquer proprietário pode restaurá-lo: <a href={link}>{link}</a>} restoring {Ele está sendo restaurado do arquivo e estará disponível novamente em breve: <a href={link}>{link}</a>} other {Ele está totalmente disponível novamente: <a href={link}>{link}</a>}}</p><p>Obrigado por continuar com a gente!</p>"
   }
 }

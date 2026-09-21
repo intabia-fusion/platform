@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>您的账户将于 <b>{date}</b> 被删除。</p><p>在该日期之前登录即可取消删除：<a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "您的账户已被删除",
     "AccountDeletedText": "您的账户已被删除。所有可识别您身份的信息均已清除，该邮箱可用于重新注册。",
-    "AccountDeletedHTML": "<p>您的账户已被删除。</p><p>所有可识别您身份的信息均已清除，该邮箱可用于重新注册。</p>"
+    "AccountDeletedHTML": "<p>您的账户已被删除。</p><p>所有可识别您身份的信息均已清除，该邮箱可用于重新注册。</p>",
+    "AccountDeletionCancelledSubject": "您的 {app} 账户已重新激活",
+    "AccountDeletionCancelledText": "您 {app} 账户的删除已取消 - 账户已重新激活。\n\n感谢您继续留在我们这里！\n\n您提交删除的工作区仍按计划保留，每个都需要单独恢复：{link}",
+    "AccountDeletionCancelledHTML": "<p>您 <b>{app}</b> 账户的删除已取消 - 账户已重新激活。</p><p>感谢您继续留在我们这里！</p><p>您提交删除的工作区仍按计划保留，每个都需要单独恢复：<a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "工作区 {ws} 将不会被删除",
+    "WorkspaceDeletionCancelledText": "工作区 {ws}（{url}）的删除已被取消。{state, select, archived {它已被归档 - 任何所有者都可以恢复它：{link}} restoring {它正在从归档中恢复，很快将重新可用：{link}} other {它已完全恢复可用：{link}}}\n\n感谢您继续留在我们这里！",
+    "WorkspaceDeletionCancelledHTML": "<p>工作区 <b>{ws}</b>（{url}）的删除已被取消。</p><p>{state, select, archived {它已被归档 - 任何所有者都可以恢复它：<a href={link}>{link}</a>} restoring {它正在从归档中恢复，很快将重新可用：<a href={link}>{link}</a>} other {它已完全恢复可用：<a href={link}>{link}</a>}}</p><p>感谢您继续留在我们这里！</p>"
   }
 }

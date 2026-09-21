@@ -135,6 +135,21 @@ db, brandings)` резолвит branding письма через `getBranding(b
 `@hcengineering/core`; у `purgeAccount` источника языка нет - `Account.locale` есть в типе, но нигде не
 пишется в server/account, поэтому остаётся `null`.
 
+`cancelAccountDeletion` шлёт `notifyAccountDeletionCancelled` ("аккаунт снова активен" + напоминание, что
+отправленные на удаление пространства остаются запланированными). Только если `deleteOn` реально стоял:
+RPC вызывается и без метки, письмо на каждый такой вызов было бы спамом.
+
+Локали писем: файл в `server/account/lang` сам по себе ничего не даёт - строки отдаёт загрузчик в
+`server/account-service/src/index.ts` (`accountStrings`), и до FUSIO-1339 он знал только `en`/`ru`, остальные
+9 файлов не читались вовсе. Новая локаль = файл + строка в `accountStrings`. Паритет ключей и плейсхолдеров
+с `plugin.ts`/`en.json` держит `server/account/src/__tests__/lang.test.ts` (так нашлась опечатка
+`InviteSubjectRU` в `ru.json`: тема приглашения на русском молча уходила по-английски).
+
+`notifyWorkspaceDeletionCancelled` - владельцам, из `performWorkspaceOperation`: на `cancel-delete` и на
+`unarchive` пространства с `deleteOn` (он тоже снимает срок). Фраза о текущем состоянии - ICU select по
+`state`: `active` / `archived` (отмена архивацию не откатывает) / `restoring`. В e2e после `cancel-delete`
+письмо надо дождаться, а не сразу `clearMail`: оно идёт через очередь и иначе прилетит в следующий тест.
+
 
 ## Почта на ws-стенде
 

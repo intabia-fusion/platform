@@ -34,6 +34,12 @@
     "AccountDeletionScheduledHTML": "<p>Ihr Konto wird am <b>{date}</b> gelöscht.</p><p>Wenn Sie sich vorher anmelden, können Sie die Löschung abbrechen: <a href={link}>{link}</a></p>",
     "AccountDeletedSubject": "Ihr Konto wurde gelöscht",
     "AccountDeletedText": "Ihr Konto wurde gelöscht. Alles, was Sie identifiziert hat, ist entfernt, und die Adresse ist für eine neue Registrierung frei.",
-    "AccountDeletedHTML": "<p>Ihr Konto wurde gelöscht.</p><p>Alles, was Sie identifiziert hat, ist entfernt, und die Adresse ist für eine neue Registrierung frei.</p>"
+    "AccountDeletedHTML": "<p>Ihr Konto wurde gelöscht.</p><p>Alles, was Sie identifiziert hat, ist entfernt, und die Adresse ist für eine neue Registrierung frei.</p>",
+    "AccountDeletionCancelledSubject": "Ihr {app}-Konto ist wieder aktiv",
+    "AccountDeletionCancelledText": "Die Löschung Ihres {app}-Kontos wurde abgebrochen - das Konto ist wieder aktiv.\n\nDanke, dass Sie bei uns bleiben!\n\nArbeitsbereiche, die Sie zum Löschen vorgemerkt haben, bleiben weiterhin vorgemerkt - jeder muss einzeln wiederhergestellt werden: {link}",
+    "AccountDeletionCancelledHTML": "<p>Die Löschung Ihres <b>{app}</b>-Kontos wurde abgebrochen - das Konto ist wieder aktiv.</p><p>Danke, dass Sie bei uns bleiben!</p><p>Arbeitsbereiche, die Sie zum Löschen vorgemerkt haben, bleiben weiterhin vorgemerkt - jeder muss einzeln wiederhergestellt werden: <a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "Arbeitsbereich {ws} wird nicht gelöscht",
+    "WorkspaceDeletionCancelledText": "Die Löschung des Arbeitsbereichs {ws} ({url}) wurde abgebrochen. {state, select, archived {Er wurde bereits archiviert - jeder Besitzer kann ihn wiederherstellen: {link}} restoring {Er wird gerade aus dem Archiv wiederhergestellt und ist in Kürze wieder verfügbar: {link}} other {Er ist wieder voll verfügbar: {link}}}\n\nDanke, dass Sie bei uns bleiben!",
+    "WorkspaceDeletionCancelledHTML": "<p>Die Löschung des Arbeitsbereichs <b>{ws}</b> ({url}) wurde abgebrochen.</p><p>{state, select, archived {Er wurde bereits archiviert - jeder Besitzer kann ihn wiederherstellen: <a href={link}>{link}</a>} restoring {Er wird gerade aus dem Archiv wiederhergestellt und ist in Kürze wieder verfügbar: <a href={link}>{link}</a>} other {Er ist wieder voll verfügbar: <a href={link}>{link}</a>}}</p><p>Danke, dass Sie bei uns bleiben!</p>"
   }
 }

@@ -145,6 +145,7 @@ import {
   updateWorkspaceRole,
   logAdminAction,
   notifyAccountDeletion,
+  notifyAccountDeletionCancelled,
   notifyWorkspaceDeleted,
   notifyWorkspaceDeletionScheduled,
   sendOperationOtp,
@@ -2854,8 +2855,12 @@ export async function cancelAccountDeletion (
 ): Promise<void> {
   const { account } = decodeTokenVerbose(ctx, token)
 
+  // Nothing was scheduled: no state to change and no letter to send.
+  if ((await db.account.findOne({ uuid: account }))?.deleteOn == null) return
+
   await db.account.update({ uuid: account }, { deleteOn: undefined })
   ctx.info('Account deletion cancelled', { account })
+  await notifyAccountDeletionCancelled(ctx, db, branding, account)
 }
 
 // Social ids that resolve to an account on their own, and therefore hand over the ability to
