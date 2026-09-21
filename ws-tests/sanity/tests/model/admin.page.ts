@@ -49,15 +49,21 @@ export class AdminPage {
     await input.press('Enter')
   }
 
-  async deleteAccount (uuid: string): Promise<void> {
+  async deleteAccount (uuid: string, force: boolean = false): Promise<void> {
     await this.page.locator(`[id="${uuid}"]`).getByRole('button', { name: 'Delete', exact: true }).click()
+    if (force) {
+      await this.toggleDeleteNow()
+    }
     await this.confirmOtp()
   }
 
   // Skips the deferral: the identity is purged as soon as the code is accepted.
-  async deleteAccountNow (uuid: string): Promise<void> {
+  async deleteAccountNow (uuid?: string): Promise<void> {
     await this.page.locator(`[id="${uuid}"]`).getByRole('button', { name: 'Delete now', exact: true }).click()
-    await this.confirmOtp()
+  }
+
+  async toggleDeleteNow (): Promise<void> {
+    await this.page.locator('[data-id="otpConfirmOptional"] .checkbox-container').click()
   }
 
   async searchWorkspace (uuid: string): Promise<void> {

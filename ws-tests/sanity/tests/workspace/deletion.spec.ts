@@ -45,11 +45,9 @@ test.describe('Workspace and account deletion', () => {
 
     await test.step('delete now skips the deferral', async () => {
       await adminPage.toggleFilter('Show deleted workspaces')
-      await row.getByRole('button', { name: 'Delete now', exact: true }).click()
+      await row.getByRole('button', { name: 'Delete', exact: true }).click()
+      await adminPage.toggleDeleteNow()
       await adminPage.confirmOtp()
-      // The purge itself is the worker's job (WS_OPERATION=all+backup); the admin action is done
-      // once the workspace is handed over to it.
-      await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'pending-deletion')
     })
 
     // Only now: an account that is still the sole owner of a live workspace cannot be marked at all.
@@ -65,7 +63,7 @@ test.describe('Workspace and account deletion', () => {
     })
 
     await test.step('delete now takes the identity right away', async () => {
-      await adminPage.deleteAccountNow(accountUuid)
+      await adminPage.deleteAccount(accountUuid, true)
       await expect(page.locator(`[id="${accountUuid}"]`)).toHaveCount(0, { timeout: 30000 })
       await expect(api.loginAndGetToken(email, '1234')).rejects.toThrow()
     })

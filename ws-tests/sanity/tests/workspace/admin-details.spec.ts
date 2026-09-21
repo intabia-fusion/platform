@@ -40,7 +40,7 @@ test.describe('Workspace admin details tests', () => {
       await page2.getByRole('button', { name: 'Save' }).click()
       await adminPage.confirmOtp()
       // The dialog updates its local url state immediately after a successful call.
-      await expect(page2.getByText(newUrl)).toBeVisible({ timeout: 15000 })
+      await expect(page2.getByText(newUrl)).toHaveCount(2, { timeout: 15000 })
     })
 
     await test.step('add user2 as a member (OTP-gated)', async () => {

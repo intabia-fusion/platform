@@ -94,7 +94,7 @@
       {/if}
     </div>
     {#if optionLabel !== undefined}
-      <div class="flex-row-center mt-2">
+      <div class="flex-row-center mt-2" data-id="otpConfirmOptional">
         <CheckBox bind:checked={option} />
         <span class="ml-1"><Label label={optionLabel} /></span>
       </div>
