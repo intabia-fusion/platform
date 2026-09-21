@@ -31,6 +31,9 @@ function smtp (config: SmtpConfig): Transporter {
     host: config.Host,
     port: config.Port,
     auth,
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
     logger: true,
     debug: config.DebugLog,
     ...tlsSettings
@@ -69,6 +72,9 @@ export function getSmtpTransport (config: SmtpConfig, user: string, pass: string
     host: config.Host,
     port: config.Port,
     auth,
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
     logger: true,
     debug: config.DebugLog,
     ...tlsSettings

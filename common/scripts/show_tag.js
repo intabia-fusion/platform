@@ -15,7 +15,7 @@
 
 const exec = require('child_process').exec
 
-exec('git describe --tags --abbrev=0', (err, stdout, stderr) => {
+exec('git describe --tags --abbrev=0 --match="v*"', (err, stdout, stderr) => {
   if (err !== null) {
     console.log('"0.6.0"')
   }
