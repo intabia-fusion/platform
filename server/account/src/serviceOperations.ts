@@ -47,7 +47,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { isHumanAdminLogin, requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
-import { deletionDeadline } from './deletion'
+import { deletionDeadline, getDeletionReadonlyDays } from './deletion'
 
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
@@ -257,7 +257,7 @@ export async function requestAdminOperationOtp (
   _params: Record<string, unknown>
 ): Promise<OtpInfo> {
   checkHumanAdminLogin(ctx, token)
-  return await sendOperationOtp(ctx, db, branding, token)
+  return await sendOperationOtp(ctx, db, branding, token, 'admin')
 }
 
 /**
@@ -1117,7 +1117,9 @@ export async function performWorkspaceOperation (
       if (event === 'delete-now') {
         await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, undefined)
       } else if (!alreadyScheduled.has(workspace.uuid)) {
-        await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, deadline)
+        // Already archived when scheduled: no read-only window applies to it.
+        const readonlyDays = isActiveMode(workspace.status.mode) ? getDeletionReadonlyDays() : 0
+        await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, { deleteOn: deadline, readonlyDays })
       }
     }
   }

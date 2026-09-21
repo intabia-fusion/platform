@@ -277,7 +277,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       3 * 60 * 1000
     )
     const sweep = (): void => {
-      void sweepScheduledDeletions(measureCtx, db).catch((err) => {
+      void sweepScheduledDeletions(measureCtx, db, brandings).catch((err) => {
         measureCtx.error('Scheduled deletion sweep failed', { err })
       })
     }

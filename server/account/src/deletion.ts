@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import { AccountRole, isDeletingMode, type AccountUuid, type MeasureContext } from '@hcengineering/core'
+import {
+  AccountRole,
+  getBranding,
+  isDeletingMode,
+  type AccountUuid,
+  type BrandingMap,
+  type MeasureContext
+} from '@hcengineering/core'
 
 import { AccountEventType, type AccountDB, type WorkspaceInfoWithStatus } from './types'
 import { getWorkspaceInfoWithStatusById, notifyAccountDeletion, notifyWorkspaceDeletionScheduled } from './utils'
@@ -65,7 +72,11 @@ export async function findOrphanedWorkspaces (db: AccountDB, uuid: AccountUuid):
  * Moves scheduled rows to their next state. Every step is a conditional update, so several account
  * pods running this in parallel is harmless.
  */
-export async function sweepScheduledDeletions (ctx: MeasureContext, db: AccountDB): Promise<void> {
+export async function sweepScheduledDeletions (
+  ctx: MeasureContext,
+  db: AccountDB,
+  brandings: BrandingMap
+): Promise<void> {
   const now = Date.now()
   const archiveDue = now + getDeletionGraceMs() - getDeletionReadonlyMs()
 
@@ -96,7 +107,8 @@ export async function sweepScheduledDeletions (ctx: MeasureContext, db: AccountD
     try {
       const workspace = await getWorkspaceInfoWithStatusById(db, status.workspaceUuid)
       if (workspace != null) {
-        await notifyWorkspaceDeletionScheduled(ctx, db, null, workspace, undefined)
+        const branding = getBranding(brandings, workspace.branding)
+        await notifyWorkspaceDeletionScheduled(ctx, db, branding, workspace, undefined)
       }
     } catch (err) {
       // A failed notice must not cost the remaining rows their sweep.

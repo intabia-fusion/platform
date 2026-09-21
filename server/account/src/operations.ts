@@ -35,7 +35,14 @@ import {
   type WorkspaceMemberInfo,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
+import platform, {
+  getMetadata,
+  PlatformError,
+  Severity,
+  Status,
+  translate,
+  unknownError
+} from '@hcengineering/platform'
 import {
   decodeToken,
   decodeTokenVerbose,
@@ -1756,10 +1763,21 @@ export async function deleteWorkspace (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  const ws = await getWorkspaceInfoWithStatusById(db, workspace)
+
+  // Same guard as the admin 'delete' case in performWorkspaceOperation.
+  if (ws != null && ws.status.mode !== 'active' && ws.status.mode !== 'archived') {
+    throw new PlatformError(unknownError('Delete allowed only for active or archived workspaces'))
+  }
+
+  // Repeat click: the deadline is already set and the owners were told - a no-op, same as the
+  // admin path's alreadyScheduled dedup.
+  if (ws?.status.deleteOn != null) {
+    return
+  }
+
   // Irreversible for everyone in the workspace: confirm with a code sent to the owner's email.
   await verifyOperationOtp(ctx, db, token, params?.otpCode ?? '')
-
-  const ws = await db.workspace.findOne({ uuid: workspace })
 
   // Deferred: the workspace stays open read-only, gets archived, and is purged only when the
   // deadline arrives. sweepScheduledDeletions moves it between those states.
@@ -1772,7 +1790,10 @@ export async function deleteWorkspace (
     await notifyWorkspaceDeleted(ctx, db, token, ws)
     // The other owners did not push the button: they learn the deadline the same way as from the
     // admin panel.
-    await notifyWorkspaceDeletionScheduled(ctx, db, branding, ws, deleteOn)
+    await notifyWorkspaceDeletionScheduled(ctx, db, branding, ws, {
+      deleteOn,
+      readonlyDays: isActiveMode(ws.status.mode) ? getDeletionReadonlyDays() : 0
+    })
   }
 }
 

@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,7 +25,7 @@
     isUpgradingMode
   } from '@hcengineering/core'
   import { LoginInfo } from '@hcengineering/login'
-  import { OK, Severity, Status } from '@hcengineering/platform'
+  import { OK, Severity, Status, unknownError } from '@hcengineering/platform'
   import presentation, {
     MessageBox,
     OtpConfirmDialog,
@@ -81,7 +82,7 @@
   let canDeleteAccount = false
   let blockingWorkspaces: string[] = []
   let deletionGraceDays = 21
-  $: showDeleteAccount = account?.token != null && !isReadOnlyGuest
+  $: showDeleteAccount = account?.token != null && !isReadOnlyGuest && account?.deleteOn == null
 
   async function loadAccount (): Promise<void> {
     accountPromise = getAccount()
@@ -139,7 +140,7 @@
       goTo('login')
     } catch (err: any) {
       console.error('Failed to delete the account', err)
-      status = new Status(Severity.ERROR, login.status.JoinWorkspaceError, {})
+      status = unknownError(err)
     }
   }
 

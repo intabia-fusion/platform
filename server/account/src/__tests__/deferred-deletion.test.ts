@@ -16,6 +16,8 @@
 import {
   AccountRole,
   type AccountUuid,
+  type Branding,
+  type BrandingMap,
   type MeasureContext,
   type WorkspaceMode,
   type WorkspaceUuid
@@ -27,15 +29,20 @@ import {
   deletionDeadline,
   findOrphanedWorkspaces,
   getDeletionGraceMs,
+  getDeletionReadonlyDays,
   getDeletionReadonlyMs,
   purgeAccount,
   sweepScheduledDeletions
 } from '../deletion'
 import { requireAdminOp } from '../adminOp'
+import { deleteWorkspace } from '../operations'
 import { performWorkspaceOperation } from '../serviceOperations'
+import * as serviceOperations from '../serviceOperations'
 import * as utils from '../utils'
 import { isReadOnlyWorkspace } from '../utils'
 import type { AccountDB, WorkspaceStatus } from '../types'
+
+const noBrandings: BrandingMap = {}
 
 jest.mock('@hcengineering/server-token', () => ({
   isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
@@ -207,7 +214,7 @@ describe('sweepScheduledDeletions', () => {
     }
     const { db } = fakeDb([due, fresh])
 
-    await sweepScheduledDeletions(ctx, db)
+    await sweepScheduledDeletions(ctx, db, noBrandings)
 
     expect(due.mode).toBe('archiving-pending-backup')
     expect(fresh.mode).toBe('active')
@@ -226,7 +233,7 @@ describe('sweepScheduledDeletions', () => {
     }
     const { db } = fakeDb([due, waiting])
 
-    await sweepScheduledDeletions(ctx, db)
+    await sweepScheduledDeletions(ctx, db, noBrandings)
 
     expect(due.mode).toBe('pending-deletion')
     expect(due.isDisabled).toBe(true)
@@ -237,7 +244,7 @@ describe('sweepScheduledDeletions', () => {
     const archived: Partial<WorkspaceStatus> = { workspaceUuid: 'w1' as WorkspaceUuid, mode: 'archived' }
     const { db } = fakeDb([archived])
 
-    await sweepScheduledDeletions(ctx, db)
+    await sweepScheduledDeletions(ctx, db, noBrandings)
 
     expect(archived.mode).toBe('archived')
   })
@@ -252,10 +259,28 @@ describe('sweepScheduledDeletions', () => {
       ]
     )
 
-    await sweepScheduledDeletions(ctx, db)
+    await sweepScheduledDeletions(ctx, db, noBrandings)
 
     expect(deleted).toEqual(['a1'])
     expect(events).toHaveLength(1)
+  })
+
+  test('a workspace with a branding gets that branding passed to the notify function', async () => {
+    const expired: Partial<WorkspaceStatus> = {
+      workspaceUuid: 'w1' as WorkspaceUuid,
+      mode: 'archived',
+      deleteOn: now - 1000
+    }
+    const ws = { uuid: 'w1' as WorkspaceUuid, name: 'W1', url: 'w1', branding: 'acme' }
+    const { db } = fakeDb([expired], [], [ws])
+    const acmeBranding: Branding = { key: 'acme', defaultLanguage: 'ru' }
+    const brandings: BrandingMap = { 'acme.example.com': acmeBranding }
+    const notify = jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled').mockResolvedValue(undefined)
+
+    await sweepScheduledDeletions(ctx, db, brandings)
+
+    expect(notify).toHaveBeenCalledTimes(1)
+    expect(notify.mock.calls[0][2]).toBe(acmeBranding)
   })
 })
 
@@ -270,7 +295,7 @@ describe('sweepScheduledDeletions resilience', () => {
     jest.spyOn(utils, 'getWorkspaceInfoWithStatusById').mockRejectedValue(new Error('mail is down'))
     jest.spyOn(utils, 'notifyAccountDeletion').mockResolvedValue(undefined)
 
-    await sweepScheduledDeletions(ctx, db)
+    await sweepScheduledDeletions(ctx, db, noBrandings)
 
     expect(expired.mode).toBe('pending-deletion')
     expect(accounts).toHaveLength(1)
@@ -354,7 +379,10 @@ describe('performWorkspaceOperation deletion events', () => {
     })
     expect(notify).toHaveBeenCalledTimes(1)
     // The email quotes the deadline that was written, not one computed a moment later.
-    expect(notify.mock.calls[0][4]).toBe(statusById.w1.deleteOn)
+    expect(notify.mock.calls[0][4]).toEqual({
+      deleteOn: statusById.w1.deleteOn,
+      readonlyDays: getDeletionReadonlyDays()
+    })
 
     await performWorkspaceOperation(ctx, db, null, 'token', {
       workspaceId: 'w1' as WorkspaceUuid,
@@ -436,6 +464,7 @@ describe('performWorkspaceOperation deletion events', () => {
 
   test('delete schedules an archived workspace as well', async () => {
     const db = setup('archived')
+    const notify = jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled')
 
     await performWorkspaceOperation(ctx, db, null, 'token', {
       workspaceId: 'w1' as WorkspaceUuid,
@@ -445,6 +474,8 @@ describe('performWorkspaceOperation deletion events', () => {
 
     expect(statusById.w1.deleteOn).toBeGreaterThan(Date.now())
     expect(statusById.w1.mode).toBe('archived')
+    // Already archived: no read-only window applies, unlike scheduling an active workspace.
+    expect(notify.mock.calls[0][4]).toEqual({ deleteOn: statusById.w1.deleteOn, readonlyDays: 0 })
   })
 
   test('an owner on their own workspace does not go through the admin OTP', async () => {
@@ -485,5 +516,47 @@ describe('performWorkspaceOperation deletion events', () => {
 
     expect(statusById.w1.deleteOn).toBeUndefined()
     expect(statusById.w1.mode).toBe('pending-restore')
+  })
+})
+
+describe('deleteWorkspace self-service guard', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks()
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'p1' as AccountUuid,
+      workspace: 'w1' as WorkspaceUuid,
+      extra: {}
+    })
+  })
+
+  test('a repeat delete on an already scheduled workspace is a no-op, like the admin dedup', async () => {
+    const status: Partial<WorkspaceStatus> = {
+      workspaceUuid: 'w1' as WorkspaceUuid,
+      mode: 'active',
+      deleteOn: Date.now() + DAY
+    }
+    const { db } = fakeDb([status])
+    ;(db as unknown as { getWorkspaceRole: () => Promise<AccountRole> }).getWorkspaceRole = async () =>
+      AccountRole.Owner
+    const cancelSubs = jest.spyOn(serviceOperations, 'cancelWorkspaceSubscriptions').mockResolvedValue(undefined)
+    const notifyScheduled = jest.spyOn(utils, 'notifyWorkspaceDeletionScheduled').mockResolvedValue(undefined)
+    const notifyDeleted = jest.spyOn(utils, 'notifyWorkspaceDeleted').mockResolvedValue(undefined)
+    const before = status.deleteOn
+
+    await deleteWorkspace(ctx, db, null, 'token', { otpCode: '' })
+
+    expect(status.deleteOn).toBe(before)
+    expect(cancelSubs).not.toHaveBeenCalled()
+    expect(notifyScheduled).not.toHaveBeenCalled()
+    expect(notifyDeleted).not.toHaveBeenCalled()
+  })
+
+  test('delete is refused for a workspace already on its way out, same as the admin delete guard', async () => {
+    const status: Partial<WorkspaceStatus> = { workspaceUuid: 'w1' as WorkspaceUuid, mode: 'pending-deletion' }
+    const { db } = fakeDb([status])
+    ;(db as unknown as { getWorkspaceRole: () => Promise<AccountRole> }).getWorkspaceRole = async () =>
+      AccountRole.Owner
+
+    await expect(deleteWorkspace(ctx, db, null, 'token', { otpCode: '' })).rejects.toThrow(PlatformError)
   })
 })

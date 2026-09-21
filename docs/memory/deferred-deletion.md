@@ -123,6 +123,18 @@ OTP + audit, себя заблокировать нельзя. Фильтр `blo
 email аккаунта; при purge отправляется ДО `db.deleteAccount`, иначе адрес уже обезличен.
 Строки - `server/account/lang` (en + ru, остальные языки падают на en).
 
+Код подтверждения: `sendOperationOtp` общий для админки и self-service, шаблон выбирает точка входа
+(`OtpKind`): `requestAdminOperationOtp` -> `AdminOtp*`, `requestOperationOtp` -> `OperationOtp*`. До
+этого владелец при удалении своего пространства получал письмо "действие администратора... введите в
+админ-панели". На стенде не видно: при `ADMIN_OTP_DEV_CODE` письмо с кодом не отправляется вовсе.
+
+`notifyWorkspaceDeletionScheduled` берёт `schedule?: {deleteOn, readonlyDays}` вместо голого `deleteOn`;
+`readonlyDays: 0`, если пространство уже было `archived` на момент планирования (ICU-plural с веткой
+`=0` во всех 11 локалях `server/account/lang` убирает фразу про read-only). `sweepScheduledDeletions(ctx,
+db, brandings)` резолвит branding письма через `getBranding(brandings, workspace.branding)` из
+`@hcengineering/core`; у `purgeAccount` источника языка нет - `Account.locale` есть в типе, но нигде не
+пишется в server/account, поэтому остаётся `null`.
+
 
 ## Почта на ws-стенде
 

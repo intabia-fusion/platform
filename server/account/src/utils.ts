@@ -551,13 +551,16 @@ export function getSignUpLinkTtlMs (): number {
   return (getMetadata(accountPlugin.metadata.SignUpLinkTimeToLiveSec) ?? 7 * 24 * 60 * 60) * 1000
 }
 
+/** Which letter carries the code: sign in, admin panel action, or a person's own destructive action. */
+export type OtpKind = 'login' | 'admin' | 'operation'
+
 export async function sendOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   socialId: SocialId,
   ttlSec?: number,
-  adminAction: boolean = false
+  kind: OtpKind = 'login'
 ): Promise<OtpInfo> {
   const ts = Date.now()
   const otpData = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
@@ -577,9 +580,9 @@ export async function sendOtp (
   // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
   // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
   const link =
-    !adminAction && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
+    kind === 'login' && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
 
-  await sendOtpEmail(ctx, branding, code, socialId.value, adminAction, link)
+  await sendOtpEmail(ctx, branding, code, socialId.value, kind, link)
   await db.otp.insertOne({ socialId: socialId._id, code, expiresOn: ts + ttlMs, createdOn: ts })
 
   return { sent: true, retryOn: ts + retryDelayMs }
@@ -590,7 +593,7 @@ export async function sendOtpEmail (
   branding: Branding | null,
   otp: string,
   email: string,
-  adminAction: boolean = false,
+  kind: OtpKind = 'login',
   link?: string
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
@@ -599,19 +602,20 @@ export async function sendOtpEmail (
 
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
-  // Admin-operation OTP uses a distinct message so the admin knows what they are confirming.
+  // Admin and self-service codes name what is being confirmed; the admin one points at the admin panel.
   // The sign up variant carries an activation link; a template cannot include one conditionally.
-  const textKey = adminAction
-    ? accountPlugin.string.AdminOtpText
-    : link !== undefined
-      ? accountPlugin.string.SignUpOtpText
-      : accountPlugin.string.OtpText
-  const htmlKey = adminAction
-    ? accountPlugin.string.AdminOtpHTML
-    : link !== undefined
-      ? accountPlugin.string.SignUpOtpHTML
-      : accountPlugin.string.OtpHTML
-  const subjectKey = adminAction ? accountPlugin.string.AdminOtpSubject : accountPlugin.string.OtpSubject
+  let textKey = link !== undefined ? accountPlugin.string.SignUpOtpText : accountPlugin.string.OtpText
+  let htmlKey = link !== undefined ? accountPlugin.string.SignUpOtpHTML : accountPlugin.string.OtpHTML
+  let subjectKey = accountPlugin.string.OtpSubject
+  if (kind === 'admin') {
+    textKey = accountPlugin.string.AdminOtpText
+    htmlKey = accountPlugin.string.AdminOtpHTML
+    subjectKey = accountPlugin.string.AdminOtpSubject
+  } else if (kind === 'operation') {
+    textKey = accountPlugin.string.OperationOtpText
+    htmlKey = accountPlugin.string.OperationOtpHTML
+    subjectKey = accountPlugin.string.OperationOtpSubject
+  }
 
   const params = { code: otp, app, link }
   const text = await translate(textKey, params, lang)
@@ -709,7 +713,8 @@ export async function sendOperationOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  kind: OtpKind = 'operation'
 ): Promise<OtpInfo> {
   const audit = isHumanAdmin(decodeTokenVerbose(ctx, token))
   if (getAdminOtpDevCode() !== undefined) {
@@ -720,7 +725,7 @@ export async function sendOperationOtp (
   }
   const sid = await getCallerEmailSocialId(ctx, db, token)
   const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
-  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, kind)
   const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
   // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
   if (audit && after !== before) {
@@ -2128,15 +2133,16 @@ function getSelectWorkspaceLink (branding: Branding | null): string {
 }
 
 /**
- * Tells the owners their workspace is on its way out. `deleteOn` null means it goes now, with no
- * deferral and nothing to call off.
+ * Tells the owners their workspace is on its way out. `schedule` undefined means it goes now,
+ * with no deferral and nothing to call off. `readonlyDays` is 0 when the workspace was already
+ * archived when scheduled - no read-only window applies to it.
  */
 export async function notifyWorkspaceDeletionScheduled (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   workspace: { uuid: WorkspaceUuid, name: string, url: string },
-  deleteOn: number | undefined
+  schedule: { deleteOn: number, readonlyDays: number } | undefined
 ): Promise<void> {
   try {
     const lang = branding?.defaultLanguage
@@ -2144,10 +2150,11 @@ export async function notifyWorkspaceDeletionScheduled (
     const params = {
       ws: workspace.name !== '' ? workspace.name : workspace.url,
       url: workspace.url,
-      date: deleteOn != null ? new Date(deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      date: schedule != null ? new Date(schedule.deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      readonlyDays: schedule?.readonlyDays ?? 0,
       link: getSelectWorkspaceLink(branding)
     }
-    const scheduled = deleteOn != null
+    const scheduled = schedule != null
     const info = {
       subject: await translate(
         scheduled

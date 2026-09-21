@@ -1059,6 +1059,16 @@ describe('account utils', () => {
             // Degrades to a code-only email instead of breaking sign in entirely.
             expect(sentHtml()).toContain('account:string:OtpHTML')
           })
+
+          test('a self-service action gets its own letter, not the admin panel one', async () => {
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId, 300, 'operation')
+            expect(sentHtml()).toContain('account:string:OperationOtpHTML')
+            expect(sentHtml()).not.toContain('/login/confirm')
+
+            mailSend.mockClear()
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId, 300, 'admin')
+            expect(sentHtml()).toContain('account:string:AdminOtpHTML')
+          })
         })
 
         test('should throw error for unsupported social id type', async () => {
