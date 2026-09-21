@@ -201,7 +201,7 @@
   {isSelected}
   iconProps={{ ...item.iconProps, value: item.object }}
   {count}
-  countColor={(unread?.unreadCount ?? 0) === 0 ? 'gray' : 'red'}
+  countColor={(unread?.notifiedMessagesCount ?? 0) === 0 ? 'gray' : 'red'}
   title={item.title}
   subTitle={item.subTitle}
   identifier={item.identifier}
