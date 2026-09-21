@@ -106,3 +106,32 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v44 blocked_o
     expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
   })
 })
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v45/v46 backup_lease [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddlOf = (id: string): string => migrations.find(([mid]) => mid === id)?.[1] ?? ''
+
+  it('registers both backup_lease migrations, without duplicates', () => {
+    expect(ids).toContain('account_db_v45_workspace_backup_lease_until')
+    expect(ids).toContain('account_db_v46_workspace_backup_lease_owner')
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('backup_lease_until uses the int8 type of this flavor', () => {
+    const expected = flavor === 'cockroach' ? 'INT8' : 'BIGINT'
+    expect(ddlOf('account_db_v45_workspace_backup_lease_until')).toContain(`backup_lease_until ${expected}`)
+  })
+
+  it('backup_lease_owner uses the string type of this flavor', () => {
+    const expected = flavor === 'cockroach' ? 'STRING' : 'TEXT'
+    expect(ddlOf('account_db_v46_workspace_backup_lease_owner')).toContain(`backup_lease_owner ${expected}`)
+  })
+
+  it('touches one table each: CockroachDB parses a batch as a whole', () => {
+    for (const id of ['account_db_v45_workspace_backup_lease_until', 'account_db_v46_workspace_backup_lease_owner']) {
+      expect(ddlOf(id).match(/ALTER TABLE/g)).toHaveLength(1)
+      expect(ddlOf(id)).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+    }
+  })
+})

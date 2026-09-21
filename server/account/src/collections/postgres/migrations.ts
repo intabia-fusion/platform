@@ -110,7 +110,9 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV41Migration(ns),
     getV42Migration(ns, flavor),
     getV43Migration(ns, flavor),
-    getV44Migration(ns, flavor)
+    getV44Migration(ns, flavor),
+    getV45Migration(ns, flavor),
+    getV46Migration(ns, flavor)
   ]
 }
 
@@ -1229,6 +1231,28 @@ function getV44Migration (ns: string, flavor: DBFlavor): [string, string] {
     /* Admin block: when the account was blocked. Null means not blocked. */
     `
     ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS blocked_on ${types.int8};
+    `
+  ]
+}
+
+function getV45Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v45_workspace_backup_lease_until',
+    /* Separate migration on purpose: a multi-statement batch is parsed as a whole. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS backup_lease_until ${types.int8};
+    `
+  ]
+}
+
+function getV46Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v46_workspace_backup_lease_owner',
+    /* Backup pod identity holding the lease. Null means no live lease. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS backup_lease_owner ${types.string};
     `
   ]
 }

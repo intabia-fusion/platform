@@ -37,8 +37,9 @@ import { BlobClient } from '@hcengineering/server-client'
 import { BackupClientOps, createDummyStorageAdapter, type Pipeline } from '@hcengineering/server-core'
 import { deepEqual } from 'fast-equals'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { promisify } from 'node:util'
 import { extract } from 'tar-stream'
-import { createGunzip, gunzipSync } from 'zlib'
+import { createGunzip, gunzip } from 'zlib'
 import { BackupStorage } from './storage'
 import type { BackupInfo, BackupSnapshot } from './types'
 import { chunkArray, doTrimHash, isAccountDomain, loadDigest, migradeBlobData, toAccountDomain } from './utils'
@@ -47,6 +48,9 @@ export * from './storage'
 const dataUploadSize = 2 * 1024 * 1024
 
 const defaultLevel = 9
+
+// Same rationale as backup.ts: keep the index read off the event loop.
+const gunzipAsync = promisify(gunzip)
 
 type BlobVerifyResult = 'ok' | 'missing' | 'mismatch'
 
@@ -195,7 +199,9 @@ export async function restore (
     ctx.error('file not pressent', { file: infoFile })
     throw new Error(`${infoFile} should present to restore`)
   }
-  const backupInfo: BackupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+  const backupInfo: BackupInfo = JSON.parse(
+    (await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString()
+  )
   let snapshots = backupInfo.snapshots
   if (opt.date !== -1) {
     const bk = backupInfo.snapshots.findIndex((it) => it.date === opt.date)

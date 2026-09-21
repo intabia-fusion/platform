@@ -292,6 +292,8 @@ export interface AccountClient {
   ) => Promise<boolean>
   assignWorkspace: (email: string, workspaceUuid: string, role: AccountRole) => Promise<void>
   updateBackupInfo: (info: BackupStatus) => Promise<void>
+  // Workspace comes from the token. false: not taken (acquire) or lost (renew) - stop the backup.
+  updateBackupLease: (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number) => Promise<boolean>
   updateUsageInfo: (info: UsageStatus) => Promise<void>
   updateWorkspaceRoleBySocialKey: (socialKey: string, targetRole: AccountRole) => Promise<void>
   ensurePerson: (
@@ -1245,6 +1247,10 @@ class AccountClientImpl implements AccountClient {
     }
 
     await this.rpc(request)
+  }
+
+  async updateBackupLease (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number): Promise<boolean> {
+    return await this.rpc<boolean>({ method: 'updateBackupLease' as const, params: { owner, action, ttlMs } })
   }
 
   async updateUsageInfo (usageInfo: UsageStatus): Promise<void> {

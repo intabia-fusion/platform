@@ -15,6 +15,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import {
+  generateId,
   groupByArray,
   isActiveMode,
   RateLimiter,
@@ -29,6 +30,7 @@ import {
   type WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import { getAccountDB } from '@hcengineering/account'
+import platform, { PlatformError } from '@hcengineering/platform'
 import { getAccountClient } from '@hcengineering/server-client'
 import {
   type DbConfiguration,
@@ -38,11 +40,19 @@ import {
 } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { clearInterval } from 'node:timers'
-import { gunzipSync } from 'node:zlib'
+import { promisify } from 'node:util'
+import { gunzip } from 'node:zlib'
 import { createStorageBackupStorage, type BackupStorage } from './storage'
 import { backup } from './backup'
 import { restore } from './restore'
 import { type BackupInfo } from './types'
+
+// Same rationale as backup.ts: keep the index read off the event loop.
+const gunzipAsync = promisify(gunzip)
+
+// Renew well inside the TTL so a slow tick or two never drops the lease.
+const backupLeaseTtlMs = 150000
+const backupLeaseRenewMs = 30000
 
 export interface BackupConfig {
   AccountsURL: string
@@ -86,7 +96,7 @@ export async function removeBackupFiles (ctx: MeasureContext, storage: BackupSto
     return 0
   }
 
-  const info: BackupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+  const info: BackupInfo = JSON.parse((await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString())
 
   const files = new Set<string>()
   for (const snapshot of info.snapshots ?? []) {
@@ -170,10 +180,15 @@ export async function cleanupDeletedBackups (
   return cleaned
 }
 
-class BackupWorker {
+/** @internal exported for tests */
+export class BackupWorker {
   downloadLimit: number = 2
   workspacesToBackup = new Map<WorkspaceUuid, WorkspaceInfoWithStatus>()
   rateLimiter: RateLimiter
+  // Identifies this pod's lease claims; shared by every backup this instance runs.
+  readonly backupOwnerId = generateId()
+  // Warn only once per worker when the account service doesn't support the lease RPC yet.
+  leaseUnsupportedWarned = false
 
   constructor (
     readonly storageAdapter: StorageAdapter,
@@ -384,7 +399,7 @@ class BackupWorker {
               return // If canceled, we should stop
             }
             const st = Date.now()
-            const result = await this.doBackup(ctx, ws)
+            const result = await this.doBackup(ctx, ws, undefined, true)
             if (result) {
               const totalTime = Date.now() - st
               this.allBackupTime += totalTime
@@ -419,7 +434,10 @@ class BackupWorker {
   async doBackup (
     rootCtx: MeasureContext,
     ws: WorkspaceInfoWithStatus,
-    notify?: (progress: number) => Promise<void>
+    notify?: (progress: number) => Promise<void>,
+    // Only the periodic pod leases: workspace-service backs up workspaces it already moved out of
+    // `active` (archiving, migration), where the lease can never be taken.
+    withLease: boolean = false
   ): Promise<boolean> {
     const st = Date.now()
     rootCtx.warn('\n\nBACKUP WORKSPACE ', {
@@ -429,13 +447,68 @@ class BackupWorker {
     })
     const ctx = rootCtx.newChild('doBackup', {}, { span: false })
     const dataId = ws.dataId ?? (ws.uuid as unknown as WorkspaceDataId)
+    const token = generateToken(systemAccountUuid, ws.uuid, { service: 'backup' })
+    const accountClient = getAccountClient(token)
+
     let pipeline: Pipeline | undefined
+    let renewLease: ReturnType<typeof setInterval> | undefined
+    let leaseAcquired = false
+    let leaseLost = false
     const backupIds = {
       uuid: this.config.BucketName as WorkspaceUuid,
       dataId: this.config.BucketName as WorkspaceDataId,
       url: ''
     }
     try {
+      let leaseSupported = withLease
+      try {
+        if (withLease) {
+          leaseAcquired = await accountClient.updateBackupLease(this.backupOwnerId, 'acquire', backupLeaseTtlMs)
+        }
+      } catch (err: any) {
+        if (err instanceof PlatformError && err.status.code === platform.status.UnknownMethod) {
+          // Account service not upgraded yet (rolling deploy) - fall back to the old, lease-less behavior.
+          leaseSupported = false
+          if (!this.leaseUnsupportedWarned) {
+            this.leaseUnsupportedWarned = true
+            rootCtx.warn('account service does not support backup lease yet, backing up without one', {
+              workspace: ws.uuid
+            })
+          }
+        } else {
+          throw err
+        }
+      }
+      if (leaseSupported && !leaseAcquired) {
+        // Another pod holds it, or the workspace left active mode - try again on the next pass.
+        rootCtx.info('backup lease not acquired, will retry later', { workspace: ws.uuid, url: ws.url })
+        return false
+      }
+
+      let renewErrors = 0
+      let renewing = false
+      if (leaseAcquired) {
+        renewLease = setInterval(() => {
+          if (renewing) {
+            return
+          }
+          renewing = true
+          void (async () => {
+            try {
+              // false is final: the workspace left active mode (archiving waits on us) or the lease moved on.
+              leaseLost ||= !(await accountClient.updateBackupLease(this.backupOwnerId, 'renew', backupLeaseTtlMs))
+              renewErrors = 0
+            } catch (err: any) {
+              ctx.error('failed to renew backup lease', { workspace: ws.uuid, err })
+              // Two misses still leave half the TTL; stop before the lease can expire under us.
+              if (++renewErrors >= 2) leaseLost = true
+            } finally {
+              renewing = false
+            }
+          })()
+        }, backupLeaseRenewMs)
+      }
+
       const storage = await createStorageBackupStorage(ctx, this.storageAdapter, backupIds, dataId)
       const wsIds: WorkspaceIds = {
         uuid: ws.uuid,
@@ -469,6 +542,7 @@ class BackupWorker {
               blobDownloadLimit: this.downloadLimit,
               skipBlobContentTypes: ['video/', 'audio/'],
               fullVerify: this.fullCheck,
+              isCanceled: () => leaseLost,
               progress: (progress) => {
                 return notify?.(progress) ?? Promise.resolve()
               },
@@ -500,8 +574,7 @@ class BackupWorker {
           time: Math.round((Date.now() - st) / 1000)
         })
         // We need to report update for stats to account service
-        const token = generateToken(systemAccountUuid, ws.uuid, { service: 'backup' })
-        await getAccountClient(token).updateBackupInfo(backupInfo)
+        await accountClient.updateBackupInfo(backupInfo)
       } else {
         rootCtx.error('BACKUP FAILED', {
           workspace: ws.uuid,
@@ -515,6 +588,15 @@ class BackupWorker {
       rootCtx.error('\n\nFAILED to BACKUP', { workspace: ws.uuid, url: ws.url, err })
       return false
     } finally {
+      if (renewLease !== undefined) {
+        clearInterval(renewLease)
+      }
+      // Release before closing the pipeline: a slow/throwing close must not hold the lease up to its TTL.
+      if (leaseAcquired) {
+        await accountClient.updateBackupLease(this.backupOwnerId, 'release').catch((err) => {
+          ctx.error('failed to release backup lease', { workspace: ws.uuid, err })
+        })
+      }
       if (pipeline !== undefined) {
         await pipeline.close()
       }

@@ -610,6 +610,15 @@ export interface AccountDB {
     processingTimeoutMs: number,
     wsLivenessMs?: number
   ) => Promise<WorkspaceInfoWithStatus | undefined>
+  // Per-workspace backup lease: acquire only while active, renew only while still active,
+  // release by owner. True when the conditional update matched a row.
+  updateBackupLease: (
+    workspace: WorkspaceUuid,
+    owner: string,
+    action: 'acquire' | 'renew' | 'release',
+    now: number,
+    until: number
+  ) => Promise<boolean>
   setPassword: (accountId: AccountUuid, passwordHash: Buffer, salt: Buffer) => Promise<void>
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>

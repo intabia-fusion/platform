@@ -1125,6 +1125,13 @@ export class PostgresAccountDB implements AccountDB {
     whereChunks.push(`(s.last_processing_time IS NULL OR s.last_processing_time < $${values.length + 1})`)
     values.push(Date.now() - processingTimeoutMs)
 
+    // A live backup lease blocks operations that read/write backup or data; create/upgrade never
+    // touch those modes, so this is a no-op for them.
+    whereChunks.push(
+      `(NOT (${archivingSql} OR ${migrationSql} OR ${restoringSql} OR ${deletingSql}) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $${values.length + 1})`
+    )
+    values.push(Date.now())
+
     if (region !== '') {
       whereChunks.push(`region = $${values.length + 1}`)
       values.push(region)
@@ -1150,6 +1157,54 @@ export class PostgresAccountDB implements AccountDB {
       }
 
       return convertKeysToCamelCase(res[0]) as WorkspaceInfoWithStatus
+    })
+  }
+
+  async updateBackupLease (
+    workspace: WorkspaceUuid,
+    owner: string,
+    action: 'acquire' | 'renew' | 'release',
+    now: number,
+    until: number
+  ): Promise<boolean> {
+    const table = this.workspaceStatus.getTableName()
+    return await this.withRetry(async (rTx) => {
+      let res: any
+      switch (action) {
+        case 'acquire':
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = $1, backup_lease_owner = $2
+             WHERE workspace_uuid = $3
+               AND (mode = 'active' OR mode IS NULL)
+               AND (is_disabled IS NOT TRUE)
+               AND (backup_lease_until IS NULL OR backup_lease_until < $4 OR backup_lease_owner = $2)
+             RETURNING workspace_uuid`,
+            [until, owner, workspace, now]
+          )
+          break
+        case 'renew':
+          // mode <> 'active' fails renew at once, instead of making archiving wait a whole backup.
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = $1, backup_lease_owner = $2
+             WHERE workspace_uuid = $3 AND backup_lease_owner = $2 AND (mode = 'active' OR mode IS NULL)
+               AND (is_disabled IS NOT TRUE)
+             RETURNING workspace_uuid`,
+            [until, owner, workspace]
+          )
+          break
+        case 'release':
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = NULL, backup_lease_owner = NULL
+             WHERE workspace_uuid = $1 AND backup_lease_owner = $2
+             RETURNING workspace_uuid`,
+            [workspace, owner]
+          )
+          break
+      }
+      return (res?.length ?? 0) > 0
     })
   }
 

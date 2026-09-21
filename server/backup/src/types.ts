@@ -98,6 +98,10 @@ export interface BackupInfo {
   snapshotsIndex?: number
   lastTxId?: string
 
+  // Set on every write by the writer that wrote it; lets a writer detect that another
+  // writer (pod backup vs workspace-service archiving) replaced the index since it was read.
+  revision?: string
+
   // A hash of current domain transactions, so we could skip all other checks if same.
   domainHashes: Record<Domain, string>
 

@@ -1416,6 +1416,37 @@ export async function updateBackupInfo (
   )
 }
 
+const MIN_BACKUP_LEASE_TTL_MS = 30000
+const MAX_BACKUP_LEASE_TTL_MS = 600000
+const DEFAULT_BACKUP_LEASE_TTL_MS = 150000
+
+export async function updateBackupLease (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number }
+): Promise<boolean> {
+  const { owner, action, ttlMs } = params
+  const { extra, workspace } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'backup') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  if (action !== 'acquire' && action !== 'renew' && action !== 'release') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  if (typeof owner !== 'string' || owner.length === 0 || (ttlMs !== undefined && !Number.isFinite(ttlMs))) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const clampedTtl = Math.min(
+    Math.max(ttlMs ?? DEFAULT_BACKUP_LEASE_TTL_MS, MIN_BACKUP_LEASE_TTL_MS),
+    MAX_BACKUP_LEASE_TTL_MS
+  )
+  const now = Date.now()
+  return await db.updateBackupLease(workspace, owner, action, now, now + clampedTtl)
+}
+
 export async function updateUsageInfo (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2669,6 +2700,7 @@ export type AccountServiceMethods =
   | 'updateWorkspaceInfo'
   | 'workerHandshake'
   | 'updateBackupInfo'
+  | 'updateBackupLease'
   | 'updateUsageInfo'
   | 'assignWorkspace'
   | 'listWorkspaces'
@@ -2751,6 +2783,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     updateWorkspaceInfo: wrap(updateWorkspaceInfo),
     workerHandshake: wrap(workerHandshake),
     updateBackupInfo: wrap(updateBackupInfo),
+    updateBackupLease: wrap(updateBackupLease),
     updateUsageInfo: wrap(updateUsageInfo),
     assignWorkspace: wrap(assignWorkspace),
     listWorkspaces: wrap(listWorkspaces),

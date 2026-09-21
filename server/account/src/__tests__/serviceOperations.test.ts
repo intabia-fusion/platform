@@ -53,7 +53,8 @@ import {
   adminCreateSubscription,
   adminUpdateSubscription,
   getPersonInfo,
-  updateWorkspaceInfo
+  updateWorkspaceInfo,
+  updateBackupLease
 } from '../serviceOperations'
 
 // Mock platform
@@ -2377,5 +2378,82 @@ describe('updateWorkspaceInfo - delete events', () => {
       { workspaceUuid },
       expect.objectContaining({ mode: 'deleted', processingProgress: 100 })
     )
+  })
+})
+
+describe('updateBackupLease', () => {
+  const mockCtx = { error: jest.fn() } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+  const NOW = 1700000000000
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.spyOn(Date, 'now').mockReturnValue(NOW)
+    mockDb = { updateBackupLease: jest.fn().mockResolvedValue(true) }
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'backup' }, workspace: workspaceUuid })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('rejects a non-backup token', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'workspace' }, workspace: workspaceUuid })
+
+    await expect(
+      updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, { owner: 'pod-1', action: 'acquire' })
+    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+    expect(mockDb.updateBackupLease).not.toHaveBeenCalled()
+  })
+
+  test('rejects an invalid action', async () => {
+    await expect(
+      updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, { owner: 'pod-1', action: 'bogus' as any })
+    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+    expect(mockDb.updateBackupLease).not.toHaveBeenCalled()
+  })
+
+  test('rejects an empty owner', async () => {
+    await expect(
+      updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, { owner: '', action: 'acquire' })
+    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+    expect(mockDb.updateBackupLease).not.toHaveBeenCalled()
+  })
+
+  test('defaults ttl to 150000ms', async () => {
+    await updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, { owner: 'pod-1', action: 'acquire' })
+
+    expect(mockDb.updateBackupLease).toHaveBeenCalledWith(workspaceUuid, 'pod-1', 'acquire', NOW, NOW + 150000)
+  })
+
+  test('clamps ttl below the 30000ms floor', async () => {
+    await updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, { owner: 'pod-1', action: 'renew', ttlMs: 1000 })
+
+    expect(mockDb.updateBackupLease).toHaveBeenCalledWith(workspaceUuid, 'pod-1', 'renew', NOW, NOW + 30000)
+  })
+
+  test('clamps ttl above the 600000ms ceiling', async () => {
+    await updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, {
+      owner: 'pod-1',
+      action: 'renew',
+      ttlMs: 999999999
+    })
+
+    expect(mockDb.updateBackupLease).toHaveBeenCalledWith(workspaceUuid, 'pod-1', 'renew', NOW, NOW + 600000)
+  })
+
+  test('passes through the db result', async () => {
+    mockDb.updateBackupLease.mockResolvedValue(false)
+
+    const result = await updateBackupLease(mockCtx, mockDb, mockBranding, mockToken, {
+      owner: 'pod-1',
+      action: 'release'
+    })
+
+    expect(result).toBe(false)
   })
 })

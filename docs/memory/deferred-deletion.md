@@ -165,3 +165,7 @@ self-service подтверждения, но не `sendOtp`). Добавлен�
 Письма об удалении проверяются через mailpit API в
 `ws-tests/api-tests/src/__tests__/deletion-emails.test.ts` (хелперы `waitForMail`/`mailBody`/
 `clearMail` в `admin.fixtures.ts`).
+
+## Аренда бэкапа
+
+`workspace_status.backup_lease_until`/`backup_lease_owner` (v45/v46). `updateBackupLease` (postgres.ts): acquire - `mode='active' AND is_disabled IS NOT TRUE` и lease свободен/истёк/свой; renew - `owner=X AND mode='active'` (смена mode - мгновенный отказ, а не ожидание конца бэкапа); release - `owner=X`, поля в NULL. `getPendingWorkspace` не отдаёт migration-*/archiving-*/restoring/deleting с живым lease, create/upgrade не задеты.
