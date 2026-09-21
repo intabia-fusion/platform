@@ -14,7 +14,7 @@
 //
 import type { PersonId, PersonUuid, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
 import type { ApiKeyOperation } from '@hcengineering/account-client'
-import type { WebhookEndpoint } from '@hcengineering/setting'
+import type { WebhookEndpoint, WebhookIncomingRule } from '@hcengineering/setting'
 
 // Domain event body, Linear-shaped: a receiver never parses a raw Tx to learn what changed.
 // `webhookId`/`webhookTimestamp` are added by delivery.ts right before signing, not here.
@@ -57,6 +57,8 @@ export interface WebhookJobMessage {
   receivedAt: number
   // Retry counter, bumped by the consumer on each re-schedule through time-machine.
   attempt: number
+  // Set only for a job produced by an incoming rule (POST /in), not the raw action/k routes.
+  rule?: Ref<WebhookIncomingRule>
 }
 
 export type WebhookJobStatus = 'queued' | 'done' | 'failed'

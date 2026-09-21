@@ -26988,6 +26988,12 @@ importers:
       '@hcengineering/templates':
         specifier: workspace:^0.7.0
         version: link:../templates
+      '@hcengineering/text':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text
+      '@hcengineering/text-markdown':
+        specifier: workspace:^0.7.20
+        version: link:../../foundations/core/packages/text-markdown
       '@hcengineering/theme':
         specifier: workspace:^0.7.0
         version: link:../../packages/theme

@@ -60,7 +60,7 @@
     width: 18%;
   }
   th:nth-child(3) {
-    width: 20%;
+    width: 16%;
   }
   th:nth-child(4) {
     width: 6rem;
@@ -74,8 +74,9 @@
   th:nth-child(7) {
     width: 16%;
   }
+  // Holds "Rules (N)" next to Revoke; at 7rem the first button was clipped to its last characters.
   th:nth-child(8) {
-    width: 7rem;
+    width: 14rem;
   }
   th {
     text-align: left;

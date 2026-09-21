@@ -25,7 +25,12 @@ import { SlidingWindowRateLimitter, type RateLimitInfo } from '@hcengineering/rp
 import type { PlatformQueueProducer } from '@hcengineering/server-core'
 import { PlatformError } from '@hcengineering/platform'
 import { decodeToken } from '@hcengineering/server-token'
-import setting, { type WebhookEndpoint } from '@hcengineering/setting'
+import setting, {
+  evaluateWebhookRule,
+  WEBHOOK_RULE_MAX_JOBS,
+  type WebhookEndpoint,
+  type WebhookIncomingRule
+} from '@hcengineering/setting'
 import cors from 'cors'
 import { createHash } from 'crypto'
 import express, { type Express, type NextFunction, type Request, type Response } from 'express'
@@ -34,12 +39,13 @@ import type { Config } from './config'
 import { recordDeliveryOutcome } from './delivery'
 import { sendError } from './errors'
 import { isKnownOperation } from './operations'
+import { loadRules, safeRegexTest } from './rules'
 import { buildDeliveryHeaders } from './signature'
 import { safeFetch } from './ssrf'
 import { WebhookStore } from './store'
 import { lookupTarget, targetField, type TargetLookup } from './targets'
 import type { WebhookEvent, WebhookJobMessage } from './types'
-import { getSystemTransactorTarget } from './workspaceClient'
+import { getSystemTransactorTarget, type TransactorTarget } from './workspaceClient'
 
 const BODY_LIMIT = '1mb'
 
@@ -60,28 +66,54 @@ export function createServer (
   app.use(cors())
   app.use(express.json({ limit: BODY_LIMIT }))
 
+  const headerDeps: IngestDeps = {
+    ctx,
+    config,
+    accountClient,
+    producer,
+    store,
+    perKeyLimiter: perKeyHeaderLimiter,
+    perIpLimiter,
+    keySource: 'header'
+  }
+  const pathDeps: IngestDeps = {
+    ctx,
+    config,
+    accountClient,
+    producer,
+    store,
+    perKeyLimiter: perKeyPathLimiter,
+    perIpLimiter,
+    keySource: 'path'
+  }
+
   app.post(
     '/api/v1/webhook/action',
     wrap(async (req, res) => {
-      await handleIngest(
-        ctx,
-        config,
-        accountClient,
-        producer,
-        store,
-        perKeyHeaderLimiter,
-        perIpLimiter,
-        'header',
-        req,
-        res
-      )
+      await handleIngest(headerDeps, req, res)
     })
   )
 
   app.post(
     '/api/v1/webhook/k/:key',
     wrap(async (req, res) => {
-      await handleIngest(ctx, config, accountClient, producer, store, perKeyPathLimiter, perIpLimiter, 'path', req, res)
+      await handleIngest(pathDeps, req, res)
+    })
+  )
+
+  // Third-party systems (Alertmanager, GitLab...) POST their own body; WebhookIncomingRule maps it
+  // to one or more of our operations. Registered before /k/:key so express doesn't need it to differ.
+  app.post(
+    '/api/v1/webhook/in',
+    wrap(async (req, res) => {
+      await handleRulesIngest(headerDeps, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/webhook/k/:key/in',
+    wrap(async (req, res) => {
+      await handleRulesIngest(pathDeps, req, res)
     })
   )
 
@@ -175,24 +207,31 @@ function applyRateLimitHeaders (res: Response, info: RateLimitInfo): void {
   res.setHeader('X-RateLimit-Reset', `${reset}`)
 }
 
-async function handleIngest (
-  ctx: MeasureContext,
-  config: Config,
-  accountClient: AccountClient,
-  producer: PlatformQueueProducer<WebhookJobMessage>,
-  store: WebhookStore,
-  perKeyLimiter: SlidingWindowRateLimitter,
-  perIpLimiter: SlidingWindowRateLimitter,
-  keySource: 'header' | 'path',
-  req: Request,
-  res: Response
-): Promise<void> {
+// Shared by both ingest flows (raw action/k routes and the rule-driven /in routes) - grouped into one
+// object because the two handlers now share it rather than each taking its own long parameter list.
+interface IngestDeps {
+  ctx: MeasureContext
+  config: Config
+  accountClient: AccountClient
+  producer: PlatformQueueProducer<WebhookJobMessage>
+  store: WebhookStore
+  perKeyLimiter: SlidingWindowRateLimitter
+  perIpLimiter: SlidingWindowRateLimitter
+  keySource: 'header' | 'path'
+}
+
+type IngestAuth = { ok: true, check: ApiKeyCheck } | { ok: false }
+
+// Shared by both ingest flows. On `{ ok: false }` a response was already sent to `res` - the caller
+// must return without writing anything else.
+async function authenticateIngest (deps: IngestDeps, req: Request, res: Response): Promise<IngestAuth> {
+  const { ctx, accountClient, perKeyLimiter, perIpLimiter, keySource } = deps
   const key = keySource === 'path' ? req.params.key : bearerToken(req)
 
   if (key === undefined || key.length === 0) {
     logCall(ctx, undefined, undefined, keySource, 'unauthorized')
     sendError(res, 401, 'unauthorized')
-    return
+    return { ok: false }
   }
 
   // Before verifyApiKey, so an unknown key cannot drive unbounded calls into the account service.
@@ -204,19 +243,19 @@ async function handleIngest (
     logCall(ctx, undefined, undefined, keySource, 'rate_limited')
     applyRateLimitHeaders(res, keyLimit)
     sendError(res, 429, 'rate_limited')
-    return
+    return { ok: false }
   }
 
   const verification = await verifyKey(ctx, accountClient, key)
   if (verification.status === 'unavailable') {
     logCall(ctx, undefined, undefined, keySource, 'service_unavailable')
     sendError(res, 503, 'service_unavailable')
-    return
+    return { ok: false }
   }
   if (verification.status === 'error') {
     logCall(ctx, undefined, undefined, keySource, 'internal_error')
     sendError(res, 500, 'internal_error')
-    return
+    return { ok: false }
   }
   if (verification.status === 'invalid') {
     // Only a credential that did not verify burns the shared per-IP budget - that is the guessing case.
@@ -225,11 +264,11 @@ async function handleIngest (
       logCall(ctx, undefined, undefined, keySource, 'rate_limited')
       applyRateLimitHeaders(res, ipLimit)
       sendError(res, 429, 'rate_limited')
-      return
+      return { ok: false }
     }
     logCall(ctx, undefined, undefined, keySource, 'unauthorized')
     sendError(res, 401, 'unauthorized')
-    return
+    return { ok: false }
   }
   const check = verification.check
   if (!check.incoming) {
@@ -237,8 +276,16 @@ async function handleIngest (
     // "valid key, but not permitted on ingest routes". Only our own log tells the two apart.
     logCall(ctx, check.keyId, undefined, keySource, 'incoming_disabled')
     sendError(res, 401, 'unauthorized')
-    return
+    return { ok: false }
   }
+  return { ok: true, check }
+}
+
+async function handleIngest (deps: IngestDeps, req: Request, res: Response): Promise<void> {
+  const { ctx, config, producer, store, keySource } = deps
+  const auth = await authenticateIngest(deps, req, res)
+  if (!auth.ok) return
+  const check = auth.check
   // No workspace in the path to check against - the key itself identifies it.
   const workspace = check.workspace
 
@@ -330,6 +377,170 @@ async function handleIngest (
 
   logCall(ctx, check.keyId, action, keySource, 'queued')
   res.status(202).json({ jobId })
+}
+
+interface RuleMatch {
+  rule: WebhookIncomingRule
+  items: Array<Record<string, string>>
+}
+
+// Evaluated against the whole body; only rules that matched AND produced at least one item carry work.
+function matchRules (rules: WebhookIncomingRule[], body: Record<string, unknown>): RuleMatch[] {
+  return rules
+    .map((rule) => ({ rule, evaluation: evaluateWebhookRule(rule, body, safeRegexTest) }))
+    .filter((m) => m.evaluation.matched && m.evaluation.items.length > 0)
+    .map((m) => ({ rule: m.rule, items: m.evaluation.items }))
+}
+
+// One lookup per distinct (action, target) pair even when several matched rules share it. A failed
+// lookup is recorded as `undefined` - queued unchecked, the same fallback handleIngest uses.
+async function resolveRuleTargets (
+  system: TransactorTarget,
+  workspace: WorkspaceUuid,
+  matches: RuleMatch[]
+): Promise<Map<string, TargetLookup | undefined>> {
+  const lookups = new Map<string, TargetLookup | undefined>()
+  for (const { rule } of matches) {
+    const key = `${rule.action}:${rule.target.id}`
+    if (lookups.has(key)) continue
+    try {
+      lookups.set(key, await lookupTarget(system.rest, workspace, rule.action, rule.target.id))
+    } catch (err) {
+      lookups.set(key, undefined)
+    }
+  }
+  return lookups
+}
+
+interface RuleJob {
+  payload: Record<string, unknown>
+  rule: WebhookIncomingRule
+}
+
+interface RuleSkip {
+  rule: Ref<WebhookIncomingRule>
+  reason: 'forbidden' | 'not_found'
+}
+
+// The grant is never widened for rule jobs: still `check.ops`/`check.spaces`, same as handleIngest.
+function classifyRuleMatch (
+  check: ApiKeyCheck,
+  lookups: Map<string, TargetLookup | undefined>,
+  match: RuleMatch
+): { jobs: RuleJob[], skipped?: RuleSkip } {
+  if (!check.ops.includes(match.rule.action)) {
+    return { jobs: [], skipped: { rule: match.rule._id, reason: 'forbidden' } }
+  }
+  const lookup = lookups.get(`${match.rule.action}:${match.rule.target.id}`)
+  if (lookup?.found === false) {
+    return { jobs: [], skipped: { rule: match.rule._id, reason: 'not_found' } }
+  }
+  if (lookup?.found === true && check.spaces.length > 0 && !check.spaces.includes(lookup.space)) {
+    return { jobs: [], skipped: { rule: match.rule._id, reason: 'forbidden' } }
+  }
+  const field = targetField(match.rule.action)
+  // Item fields are spread first so a field named `action`/the target field cannot override them.
+  const jobs = match.items.map((item) => ({
+    payload: { ...item, action: match.rule.action, [field]: match.rule.target.id },
+    rule: match.rule
+  }))
+  return { jobs }
+}
+
+// Queues every job in one producer.send call; on failure, none of them are left tracked in the store.
+async function queueRuleJobs (
+  deps: IngestDeps,
+  workspace: WorkspaceUuid,
+  check: ApiKeyCheck,
+  jobs: RuleJob[]
+): Promise<Array<{ jobId: string, rule: Ref<WebhookIncomingRule> }> | undefined> {
+  const { ctx, producer, store } = deps
+  const created: Array<{ jobId: string, rule: Ref<WebhookIncomingRule> }> = []
+  const messages: WebhookJobMessage[] = []
+  for (const job of jobs) {
+    const jobId = `wh_${generateId()}`
+    store.createJob(jobId, workspace, check.keyId)
+    created.push({ jobId, rule: job.rule._id })
+    messages.push({
+      jobId,
+      workspace,
+      keyId: check.keyId,
+      name: check.name,
+      socialId: check.socialId,
+      personUuid: check.personUuid,
+      action: job.rule.action,
+      ops: check.ops,
+      spaces: check.spaces,
+      payload: job.payload,
+      receivedAt: Date.now(),
+      attempt: 0,
+      rule: job.rule._id
+    })
+  }
+  if (messages.length === 0) return created
+  try {
+    await producer.send(ctx, workspace, messages, workspace)
+    return created
+  } catch (err) {
+    for (const job of created) store.dropJob(job.jobId)
+    ctx.error('webhook: failed to enqueue rule jobs', { err, keyId: check.keyId })
+    return undefined
+  }
+}
+
+// Third-party body -> WebhookIncomingRule matching -> one job per rendered item. No Idempotency-Key
+// support here yet (one request can fan out into N jobs) - add a per-item key if a sender needs it.
+async function handleRulesIngest (deps: IngestDeps, req: Request, res: Response): Promise<void> {
+  const { ctx, config, keySource } = deps
+  const auth = await authenticateIngest(deps, req, res)
+  if (!auth.ok) return
+  const check = auth.check
+  const workspace = check.workspace
+  const body = (req.body ?? {}) as Record<string, unknown>
+
+  let system: TransactorTarget
+  let rules: WebhookIncomingRule[]
+  try {
+    system = await getSystemTransactorTarget(config, workspace)
+    rules = await loadRules(system.rest, workspace, check)
+  } catch (err) {
+    ctx.error('webhook: failed to load rules', { err, keyId: check.keyId })
+    logCall(ctx, check.keyId, undefined, keySource, 'service_unavailable')
+    sendError(res, 503, 'service_unavailable')
+    return
+  }
+
+  const matches = matchRules(rules, body)
+  const totalItems = matches.reduce((sum, m) => sum + m.items.length, 0)
+  if (totalItems > WEBHOOK_RULE_MAX_JOBS) {
+    logCall(ctx, check.keyId, undefined, keySource, 'payload_too_large')
+    sendError(res, 413, 'payload_too_large', `Rules matched ${totalItems} items, limit is ${WEBHOOK_RULE_MAX_JOBS}`)
+    return
+  }
+  if (totalItems === 0) {
+    logCall(ctx, check.keyId, undefined, keySource, 'no_match')
+    res.status(202).json({ jobs: [] })
+    return
+  }
+
+  const lookups = await resolveRuleTargets(system, workspace, matches)
+  const jobs: RuleJob[] = []
+  const skipped: RuleSkip[] = []
+  for (const match of matches) {
+    const classified = classifyRuleMatch(check, lookups, match)
+    jobs.push(...classified.jobs)
+    if (classified.skipped !== undefined) skipped.push(classified.skipped)
+  }
+
+  const created = await queueRuleJobs(deps, workspace, check, jobs)
+  if (created === undefined) {
+    logCall(ctx, check.keyId, undefined, keySource, 'internal_error')
+    sendError(res, 500, 'internal_error')
+    return
+  }
+
+  logCall(ctx, check.keyId, undefined, keySource, created.length > 0 ? 'queued' : 'no_match')
+  res.status(202).json({ jobs: created, skipped })
 }
 
 async function handleJobStatus (

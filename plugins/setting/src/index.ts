@@ -36,11 +36,13 @@ import { Action, AnyComponent } from '@hcengineering/ui'
 import { type Integration as AccountIntegration } from '@hcengineering/account-client'
 
 import { SpaceTypeCreator, SpaceTypeEditor } from './spaceTypeEditor'
+import type { WebhookIncomingRule } from './webhookRules'
 
 export type * from './spaceTypeEditor'
 export * from './utils'
 export * from './analytics'
 export * from './webhookSecret'
+export * from './webhookRules'
 
 export const DOMAIN_SETTING = 'setting' as Domain
 
@@ -431,7 +433,8 @@ export default plugin(settingId, {
     WorkspaceSetting: '' as Ref<Class<WorkspaceSetting>>,
     WebhookEndpoint: '' as Ref<Class<WebhookEndpoint>>,
     WebhookDelivery: '' as Ref<Class<WebhookDelivery>>,
-    WebhookStat: '' as Ref<Class<WebhookStat>>
+    WebhookStat: '' as Ref<Class<WebhookStat>>,
+    WebhookIncomingRule: '' as Ref<Class<WebhookIncomingRule>>
   },
   component: {
     Settings: '' as AnyComponent,

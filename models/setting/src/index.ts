@@ -49,6 +49,9 @@ import {
   type UserMixin,
   type WebhookDelivery,
   type WebhookEndpoint,
+  type WebhookIncomingRule,
+  type WebhookRuleCondition,
+  type WebhookRuleTarget,
   type WebhookSecretEntry,
   type WebhookStat,
   type WorkspaceSetting
@@ -173,6 +176,25 @@ export class TWebhookStat extends TDoc implements WebhookStat {
   lastOn!: Timestamp
 }
 
+@Model(setting.class.WebhookIncomingRule, core.class.Doc, DOMAIN_SETTING)
+export class TWebhookIncomingRule extends TDoc implements WebhookIncomingRule {
+  keyId!: string
+  name!: string
+  enabled!: boolean
+
+  // Declared as an attribute: SortableDocList reorders only classes that have `rank` in the hierarchy.
+  @Prop(TypeRank(), core.string.Rank)
+  rank!: Rank
+
+  match!: WebhookRuleCondition[]
+  forEach?: string
+  where?: WebhookRuleCondition[]
+  action!: WebhookIncomingRule['action']
+  target!: WebhookRuleTarget
+  fields!: Record<string, string>
+  template?: string
+}
+
 @Mixin(setting.mixin.SpaceTypeEditor, core.class.Class)
 export class TSpaceTypeEditor extends TClass implements SpaceTypeEditor {
   sections!: SpaceTypeEditorSection[]
@@ -199,6 +221,7 @@ export function createModel (builder: Builder): void {
     TWebhookEndpoint,
     TWebhookDelivery,
     TWebhookStat,
+    TWebhookIncomingRule,
     TSpaceTypeEditor,
     TSpaceTypeCreator
   )

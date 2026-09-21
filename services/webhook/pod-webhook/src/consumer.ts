@@ -127,7 +127,8 @@ export async function processJob (
 
     // 4xx is a permanent failure (bad payload, forbidden action) - retrying won't fix it, so fail now
     // instead of burning the full backoff schedule. 5xx and network/timeout errors still retry below.
-    if (err instanceof TransactorHttpError && err.status >= 400 && err.status < 500) {
+    // 429 retries too: one /in request fans out into up to 50 jobs against the key's transactor limit.
+    if (err instanceof TransactorHttpError && err.status >= 400 && err.status < 500 && err.status !== 429) {
       store.markFailed(job.jobId, message)
       return
     }

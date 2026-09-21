@@ -1982,7 +1982,8 @@ export async function verifyApiKey (
     ops: secret.unrestricted === true ? apiKeyOperations : secret.ops,
     spaces: secret.spaces,
     // Independent of ops/unrestricted - a key with full rights still needs `incoming` set explicitly.
-    incoming: secret.incoming === true
+    incoming: secret.incoming === true,
+    createdBy: secret.createdBy
   }
 }
 

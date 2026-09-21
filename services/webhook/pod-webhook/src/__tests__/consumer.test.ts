@@ -169,6 +169,21 @@ describe('processJob', () => {
     expect(job?.status).toBe('queued') // stays queued until time-machine re-delivers it
   })
 
+  test('a 429 transactor response schedules a retry instead of failing the job', async () => {
+    ;(getTransactorTarget as jest.Mock).mockResolvedValue(mockTarget())
+    ;(global as any).fetch = jest.fn().mockResolvedValue({ ok: false, status: 429, text: async () => 'slow down' })
+
+    const store = new WebhookStore()
+    store.createJob('wh_429', 'ws-1' as any, 'key_1')
+    const send = jest.fn().mockResolvedValue(undefined)
+    const queue: any = { getProducer: jest.fn().mockReturnValue({ send }) }
+
+    await processJob(newCtx(), testConfig, queue, store, baseJob({ jobId: 'wh_429', attempt: 0 }))
+
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(store.getJob('wh_429')?.status).toBe('queued')
+  })
+
   test('a 5xx transactor response dead-letters the job once retries are exhausted', async () => {
     ;(getTransactorTarget as jest.Mock).mockResolvedValue(mockTarget())
     const fetchMock = jest.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'boom' })

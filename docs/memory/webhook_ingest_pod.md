@@ -139,3 +139,39 @@ HTTP-ручка окажутся в разных подах, `GET /job/:id` не
 `bumpWebhookStat` (`src/stats.ts`) СРАЗУ ПОСЛЕ `store.markDone` - считается только успешно
 исполненная операция; путь `store.markFailed` счётчик не трогает. Схема `_id` и мотивация
 сателлит-документа - см. [webhook_outgoing_delivery](webhook_outgoing_delivery.md).
+
+## Rule mapping - `POST /in`, `POST /k/:key/in` (FUSIO-1151)
+
+Движок правил (`getWebhookPath`/`renderWebhookTemplate`/`evaluateWebhookRule`) - чистый TS в
+`plugins/setting/src/webhookRules.ts` (браузер + под). Под добавляет только `src/rules.ts`
+(`loadRules`, `safeRegexTest`) и два маршрута в `server.ts`, авторизацию с action/k общую
+(`authenticateIngest`, один код на оба потока).
+
+- **PersonSpace-гейт обязателен**: правила читаются системным токеном (видит все пространства), а
+  завести `WebhookIncomingRule` с чужим `keyId` может любой участник воркспейса. `loadRules` отдаёт
+  правило только если `rule.space` = PersonSpace создателя ключа (`contact.class.Person` по
+  `personUuid: check.createdBy` -> `contact.class.PersonSpace` по `person: person._id`, как
+  `connect.ts`). Нет person/space - правил нет. `ApiKeyCheck.createdBy` добавлено в
+  account-client и в дублирующий тип `server/account/src/apiKeys.ts` (оба меняются вместе,
+  `verifyApiKey` отдаёт `secret.createdBy`).
+- Кэш правил - `workspace:keyId`, TTL `RULES_RELOAD_MS=10_000` (правки в UI применяются в течение
+  ~10с), по образцу space-индекса в `targets.ts` (promise-кэш, сброс при rejection).
+- **Regex под таймаутом**: пользовательские паттерны гоняются на shared-поде против чужого тела ->
+  ReDoS - реальный DoS. `safeRegexTest` (`src/rules.ts`) - `vm.Script.runInContext({timeout: 50})`
+  мс; паттерн >200 симв. или значение >2000 симв. - `false` без запуска; таймаут/невалидный паттерн
+  - `false` (catch). Тест `^(a+)+$` на `'a'.repeat(40)+'!'` возвращает `false` быстро.
+- **Лимит 50** (`WEBHOOK_RULE_MAX_JOBS`, `plugins/setting/src/webhookRules.ts`) считается по сумме
+  `items` со всех совпавших правил ДО проверки grant/target - превышение сразу 413, в очередь ничего
+  не попадает.
+- **Grant не расширяется**: `check.ops`/`check.spaces` те же, что у сырых action/k маршрутов;
+  правило с action вне `ops` или target вне `spaces` - в `skipped` (`forbidden`/`not_found`), не в
+  `jobs`, ответ всё равно 202. Упавший `lookupTarget` (не 404, а сетевая ошибка) - в очередь
+  непроверенным, как в `handleIngest`.
+- Payload собирается `{ ...item, action: rule.action, [targetField(rule.action)]: rule.target.id }`
+  - порядок ключей после спреда не даёт полю `action`/`space` из `rule.fields` переопределить
+  реальные.
+- **Idempotency-Key на `/in` не поддержан** в этой итерации: один запрос -> N джобов, ключ на
+  запрос не мапится 1:1 на джобу. Потолок известный, апгрейд - per-item ключ, если понадобится
+  отправителю.
+- **429 от транзактора ретраится** (`consumer.ts::processJob`), остальные 4xx - сразу `failed`. Один
+  `/in` даёт до 50 заданий при `apiKeyLimitter` 300/30с на ключ - без этого всплеск алертов терялся.

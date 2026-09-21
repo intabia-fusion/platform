@@ -647,4 +647,6 @@ export interface ApiKeyCheck {
   spaces: Ref<Space>[]
   /** Whether this key may be used on pod-webhook's ingest routes. */
   incoming: boolean
+  /** Used by pod-webhook to accept incoming rules only from the key creator's PersonSpace. */
+  createdBy: AccountUuid
 }

@@ -42,7 +42,8 @@ const baseCheck: ApiKeyCheck = {
   personUuid: 'person_1' as any,
   ops: ['issue:create'],
   spaces: [],
-  incoming: true
+  incoming: true,
+  createdBy: 'account_1' as any
 }
 
 describe('POST /api/v1/webhook/action', () => {

@@ -36,6 +36,10 @@ export interface WebhookSender {
   action: (key: string, body: Record<string, unknown>, headers?: Record<string, string>) => Promise<Response>
   /** POST .../k/:key - same call, key in the path instead. */
   pathKey: (key: string, body: Record<string, unknown>) => Promise<Response>
+  /** POST .../in - rule-driven ingest, key in the Authorization header. */
+  in: (key: string, body: Record<string, unknown>) => Promise<Response>
+  /** POST .../k/:key/in - rule-driven ingest, key in the path. */
+  pathIn: (key: string, body: Record<string, unknown>) => Promise<Response>
   /** GET .../job/:id, authenticated with `key`. */
   job: (key: string, id: string) => Promise<Response>
   close: () => void
@@ -78,6 +82,18 @@ export async function startWebhookSender (
       }),
     pathKey: async (key, body) =>
       await fetch(`${base}/k/${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }),
+    in: async (key, body) =>
+      await fetch(`${base}/in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        body: JSON.stringify(body)
+      }),
+    pathIn: async (key, body) =>
+      await fetch(`${base}/k/${key}/in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)

@@ -14,10 +14,14 @@
 -->
 <script lang="ts">
   import { type ApiKeyInfo } from '@hcengineering/account-client'
-  import { type Ref, type Space } from '@hcengineering/core'
-  import { Button, Label } from '@hcengineering/ui'
+  import { getCurrentEmployeeSpace } from '@hcengineering/contact'
+  import { getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
+  import { Button, Label, showPopup } from '@hcengineering/ui'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import settingsRes from '../plugin'
+  import WebhookRulesSection from './WebhookRulesSection.svelte'
 
   export let apiKey: ApiKeyInfo
   export let spaceNames: Map<Ref<Space>, string>
@@ -41,6 +45,29 @@
 
   $: revoked = apiKey.revokedOn !== undefined
   $: spacesLabel = apiKey.spaces.map((id) => spaceNames.get(id) ?? id).join(', ')
+
+  // Rules are pod-webhook readable only from the key creator's own space - showing them for anyone
+  // else's key would let a viewer add a rule the pod refuses to trust as coming from that key.
+  $: showRules = !revoked && apiKey.incoming === true && apiKey.createdBy === getCurrentAccount().uuid
+
+  let ruleCount = 0
+  const rulesCountQuery = createQuery()
+  $: if (showRules) {
+    rulesCountQuery.query(
+      setting.class.WebhookIncomingRule,
+      { keyId: apiKey.keyId, space: getCurrentEmployeeSpace() },
+      (res) => {
+        ruleCount = res.length
+      }
+    )
+  } else {
+    rulesCountQuery.unsubscribe()
+    ruleCount = 0
+  }
+
+  function openRules (): void {
+    showPopup(WebhookRulesSection, { apiKey })
+  }
 </script>
 
 <tr class="row" class:revoked>
@@ -98,16 +125,27 @@
     {/if}
   </td>
   <td class="actions">
-    {#if !revoked}
-      <Button
-        label={settingsRes.string.RevokeApiKey}
-        kind="dangerous"
-        size="small"
-        on:click={() => {
-          onRevoke(apiKey)
-        }}
-      />
-    {/if}
+    <div class="actionButtons">
+      {#if showRules}
+        <Button
+          label={settingsRes.string.WebhookRulesCount}
+          labelParams={{ count: ruleCount }}
+          kind="regular"
+          size="small"
+          on:click={openRules}
+        />
+      {/if}
+      {#if !revoked}
+        <Button
+          label={settingsRes.string.RevokeApiKey}
+          kind="dangerous"
+          size="small"
+          on:click={() => {
+            onRevoke(apiKey)
+          }}
+        />
+      {/if}
+    </div>
   </td>
 </tr>
 {#if expanded}
@@ -210,6 +248,11 @@
   .actions {
     text-align: right;
     white-space: nowrap;
+  }
+  .actionButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.375rem;
   }
   .badge {
     // Shrinks with the cell instead of overflowing it and being clipped mid-word.
