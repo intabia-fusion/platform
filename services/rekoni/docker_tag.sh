@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=$(git describe --tags --abbrev=0)
+version=$(git describe --tags --abbrev=0 --match="v*")
 
 if [ "x$2" = "xstaging" ]
 then

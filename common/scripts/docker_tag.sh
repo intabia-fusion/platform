@@ -32,7 +32,7 @@ upload() {
 
 if [ "$2" = "staging" ]; then
   # staging derives from the last release, not from a tag on this very commit
-  tag_version=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+  tag_version=$(git describe --tags --abbrev=0 --match="v*" 2>/dev/null || echo "")
   if [ -z "$tag_version" ]; then
     echo "Error: no git tag found, cannot derive a staging version." >&2
     exit 1
