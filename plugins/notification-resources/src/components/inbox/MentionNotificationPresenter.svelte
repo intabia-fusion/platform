@@ -26,7 +26,7 @@
 <BasePreview text={value.markup} timestamp={value.createdOn} account={value.createdBy} on:click>
   {#if attachments.length > 0}
     <div class="attachments" use:tooltip={{ component: AttachmentsTooltip, props: { attachments } }}>
-      {value.attachments}
+      {attachments.length}
       <Icon icon={attachment.icon.Attachment} size="small" />
     </div>
   {/if}

@@ -33,7 +33,7 @@ import core, {
   TxFactory
 } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
-import notification, { ReadState } from '@hcengineering/notification'
+import notification, { PushSubscription, ReadState } from '@hcengineering/notification'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
 import contact from '@hcengineering/contact'
@@ -69,8 +69,10 @@ export class NotificationMiddleware extends BaseMiddleware {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
 
+      this.handleMixin(ctx, tx)
       this.handleDocNotifyContext(ctx, tx)
       this.handleAppPushNotification(ctx, tx)
+      await this.handlePushSubscription(ctx, tx)
 
       const apply = await this.handleReadState(ctx, tx)
       if (!apply) skip.push(_tx._id)
@@ -97,6 +99,36 @@ export class NotificationMiddleware extends BaseMiddleware {
   private isSystemAccess (ctx: MeasureContext<SessionData>): boolean {
     const account = ctx.contextData.account
     return account.uuid === systemAccountUuid || ctx.contextData.isTriggerCtx === true
+  }
+
+  private handleMixin (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): void {
+    if (tx._class !== core.class.TxMixin || this.isSystemAccess(ctx)) return
+    if (
+      tx.objectClass === notification.class.DocNotifyContext ||
+      tx.objectClass === notification.class.ReadState ||
+      tx.objectClass === notification.class.AppPushNotification ||
+      tx.objectClass === notification.class.PushSubscription
+    ) {
+      this.throwForbidden()
+    }
+  }
+
+  private async handlePushSubscription (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): Promise<void> {
+    if (tx.objectClass !== notification.class.PushSubscription || this.isSystemAccess(ctx)) return
+    const account = ctx.contextData.account.uuid
+
+    if (tx._class === core.class.TxCreateDoc) {
+      if ((tx as TxCreateDoc<PushSubscription>).attributes.user !== account) this.throwForbidden()
+      return
+    }
+
+    if (tx._class === core.class.TxUpdateDoc) {
+      const user = (tx as TxUpdateDoc<PushSubscription>).operations.user
+      if (user !== undefined && user !== account) this.throwForbidden()
+    }
+
+    const current = (await this.findAll(ctx, notification.class.PushSubscription, { _id: tx.objectId as any }))[0]
+    if (current !== undefined && current.user !== account) this.throwForbidden()
   }
 
   private handleDocNotifyContext (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): void {
@@ -146,7 +178,11 @@ export class NotificationMiddleware extends BaseMiddleware {
         const systemCtx = Object.create(ctx)
         systemCtx.contextData = Object.create(ctx.contextData)
         systemCtx.contextData.isTriggerCtx = true
-        await this.context.derived?.tx(systemCtx, [ttx])
+        try {
+          await this.context.derived?.tx(systemCtx, [ttx])
+        } catch (err: any) {
+          ctx.warn('Thread read state was not created, it most likely exists already', { attachedTo, err })
+        }
       }
     } else if (tx._class === core.class.TxUpdateDoc && tx.objectClass === notification.class.ReadState) {
       if (this.isSystemAccess(ctx)) return true

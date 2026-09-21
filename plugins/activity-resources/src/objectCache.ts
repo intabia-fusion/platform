@@ -17,11 +17,33 @@ import core, { type Class, type Doc, type Ref, type Tx, type TxCUD } from '@hcen
 import { addTxListener, getClient } from '@hcengineering/presentation'
 
 // Activity cards look up their header object (a channel, a document) one per card, and many cards
-// share the same object. Concurrent lookups share one findOne, found objects are kept until a tx
-// touches them. A miss is not kept: the object may simply not have arrived yet.
+// share the same object. Lookups of one class issued in the same tick go out as a single `$in`
+// query, found objects are kept until a tx touches them. A miss is not kept: the object may simply
+// not have arrived yet.
 const found = new Map<Ref<Doc>, Doc>()
 const inflight = new Map<Ref<Doc>, Promise<Doc | undefined>>()
 const maxSize = 50
+
+interface Batch {
+  ids: Set<Ref<Doc>>
+  promise: Promise<Map<Ref<Doc>, Doc>>
+}
+const batches = new Map<Ref<Class<Doc>>, Batch>()
+
+function batchOf (_class: Ref<Class<Doc>>): Batch {
+  let batch = batches.get(_class)
+  if (batch === undefined) {
+    const ids = new Set<Ref<Doc>>()
+    const promise = Promise.resolve().then(async () => {
+      batches.delete(_class)
+      const docs = await getClient().findAll(_class, { _id: { $in: Array.from(ids) } })
+      return new Map(docs.map((doc) => [doc._id, doc]))
+    })
+    batch = { ids, promise }
+    batches.set(_class, batch)
+  }
+  return batch
+}
 
 export async function getObjectById (_class: Ref<Class<Doc>>, _id: Ref<Doc>): Promise<Doc | undefined> {
   const cached = found.get(_id)
@@ -29,9 +51,11 @@ export async function getObjectById (_class: Ref<Class<Doc>>, _id: Ref<Doc>): Pr
 
   let pending = inflight.get(_id)
   if (pending === undefined) {
-    pending = getClient()
-      .findOne(_class, { _id })
-      .then((doc) => {
+    const batch = batchOf(_class)
+    batch.ids.add(_id)
+    pending = batch.promise
+      .then((docs) => {
+        const doc = docs.get(_id)
         if (doc !== undefined) {
           if (found.size >= maxSize) found.clear()
           found.set(_id, doc)

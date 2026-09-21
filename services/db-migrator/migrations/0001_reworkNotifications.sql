@@ -37,12 +37,13 @@ END $$;
 
 -- One context per (user, object). Archived duplicates from the old model would make the unique
 -- index fail: keep the live (non-archived) and newest row of each group, delete the rest.
+-- COALESCE: a row without the `archived` key is live, and a bare NULL would sort after `true`.
 DELETE FROM notification_dnc
 WHERE _id IN (
     SELECT _id FROM (
         SELECT _id, ROW_NUMBER() OVER (
             PARTITION BY "workspaceId", "user", "objectId", "objectClass"
-            ORDER BY (data->>'archived' = 'true') ASC, "modifiedOn" DESC, _id
+            ORDER BY (COALESCE(data->>'archived', 'false') = 'true') ASC, "modifiedOn" DESC, _id
         ) AS rn
         FROM notification_dnc
     ) ranked

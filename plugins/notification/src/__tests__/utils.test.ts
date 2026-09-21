@@ -15,7 +15,7 @@
 
 import { Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
-import { getUnreadMessageCount } from '../utils'
+import { getNotifiedMessagesTotal, getUnreadMessageCount } from '../utils'
 import { DocNotifyContext, UnreadMessage } from '../types'
 
 type UnreadCounted = Partial<Pick<DocNotifyContext, 'unreadMessages' | 'unreadMessagesCount'>>
@@ -59,5 +59,20 @@ describe('getUnreadMessageCount', () => {
 
   it('returns 0 for undefined', () => {
     expect(getUnreadMessageCount(undefined)).toBe(0)
+  })
+})
+
+describe('getNotifiedMessagesTotal', () => {
+  it('counts notified entries and the notified part of chunks', () => {
+    const unreadMessages: UnreadMessage[] = [
+      { from: 1, to: 5, count: 10, notifiedCount: 3 },
+      { from: 6, to: 7, count: 4 },
+      { id: 'm1' as Ref<ActivityMessage>, createdOn: 8 },
+      { id: 'm2' as Ref<ActivityMessage>, createdOn: 9, notified: true },
+      { id: 'm3' as Ref<ActivityMessage>, createdOn: 10, notified: false }
+    ]
+
+    expect(getNotifiedMessagesTotal(unreadMessages)).toBe(4)
+    expect(getNotifiedMessagesTotal([])).toBe(0)
   })
 })

@@ -180,6 +180,7 @@ class WorkspaceCache {
 
   private readonly notificationTypeSettingsMap = new Map<Ref<NotificationTypeSetting>, NotificationTypeSetting>()
   private readonly userStatusesMap = new Map<Ref<UserStatus>, UserStatus>()
+  private userStatusesLoaded = false
 
   // ==========================================
   // Secondary Indexes for O(1) Transaction Updates
@@ -222,7 +223,7 @@ class WorkspaceCache {
     }
 
     if ([core.class.TxUpdateDoc, core.class.TxMixin].includes(tx._class)) {
-      this.txUpdateDoc(tx as TxUpdateDoc<Doc> | TxMixin<Doc, Doc>)
+      this.txUpdateDoc(tx as TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, service)
     }
 
     if (tx._class === core.class.TxRemoveDoc) {
@@ -623,7 +624,7 @@ class WorkspaceCache {
    * Returns list of user status records.
    */
   public async getUserStatuses (): Promise<UserStatus[]> {
-    if (this.userStatusesMap.size > 0) {
+    if (this.userStatusesLoaded) {
       return Array.from(this.userStatusesMap.values())
     }
 
@@ -632,8 +633,9 @@ class WorkspaceCache {
     for (const status of statuses) {
       this.userStatusesMap.set(status._id, status)
     }
+    this.userStatusesLoaded = true
 
-    return statuses
+    return Array.from(this.userStatusesMap.values())
   }
 
   // ==========================================
@@ -673,13 +675,17 @@ class WorkspaceCache {
     }
   }
 
-  private txUpdateDoc (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): void {
+  private txUpdateDoc (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, service: boolean): void {
     const doc = this.documentsCache.get(tx.objectId)
     const { hierarchy } = this.client
 
     if (doc != null) {
-      const updated = this.updateOrMixin(tx, doc)
-      this.documentsCache.set(updated._id, updated)
+      if (tx.modifiedOn <= doc.modifiedOn) {
+        this.documentsCache.delete(tx.objectId)
+      } else {
+        const updated = this.updateOrMixin(tx, doc)
+        this.documentsCache.set(updated._id, updated)
+      }
     }
 
     if (hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
@@ -689,7 +695,7 @@ class WorkspaceCache {
       this.updateReadState(tx)
     }
     if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
-      this.updateNotifyContext(tx)
+      this.updateNotifyContext(tx, service)
     }
     if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotificationSetting)) {
       this.updateNotificationSetting(tx)
@@ -830,9 +836,16 @@ class WorkspaceCache {
     }
   }
 
-  private updateNotifyContext (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): void {
+  private updateNotifyContext (tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, service: boolean): void {
     const docId = this.contextToDocMap.get(tx.objectId as Ref<DocNotifyContext>)
     if (docId !== undefined) {
+      // Only this service writes contexts, and the echo of its own txes never gets here. Anything
+      // else is an echo that outlived a restart (the DB copy already holds it) or a foreign write:
+      // either way the cached copy is not to be patched, the next lookup reads the DB.
+      if (!service) {
+        this.invalidateContexts(docId)
+        return
+      }
       const current = this.contextsByDocCache.get(docId) ?? []
       const context = current.find((it) => it._id === tx.objectId)
       if (context !== undefined && tx.modifiedOn < context.modifiedOn) {
@@ -992,6 +1005,17 @@ class WorkspaceCache {
   public resetContexts (): void {
     this.contextsByDocCache.clear()
     this.contextToDocMap.clear()
+  }
+
+  public reset (): void {
+    this.resetContexts()
+    this.documentsCache.clear()
+    this.readStatesByDocCache.clear()
+    this.readStateToDocMap.clear()
+    this.collaboratorsByDocCache.clear()
+    this.collaboratorToDocMap.clear()
+    this.notificationSettingsByDocCache.clear()
+    this.settingToDocMap.clear()
   }
 
   // ==========================================

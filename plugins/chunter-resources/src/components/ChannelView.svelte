@@ -33,7 +33,7 @@
   import view from '@hcengineering/view'
   import { messageInFocus } from '@hcengineering/activity-resources'
   import { Presence } from '@hcengineering/presence-resources'
-  import { tick } from 'svelte'
+  import { onDestroy, tick } from 'svelte'
 
   import ChannelComponent from './Channel.svelte'
   import ChannelHeader from './ChannelHeader.svelte'
@@ -61,10 +61,11 @@
   let isAsideShown = false
   let threadId: Ref<ActivityMessage> | undefined = undefined
 
-  locationStore.subscribe((newLocation) => {
+  const unsubscribeLocation = locationStore.subscribe((newLocation) => {
     threadId = newLocation.path[4] as Ref<ActivityMessage> | undefined
     isThreadOpened = threadId != null
   })
+  onDestroy(unsubscribeLocation)
 
   // A phone has no sidebar to put the thread in, so it takes over this panel instead.
   $: mobileThread = $deviceInfo.isMobile ? threadId : undefined

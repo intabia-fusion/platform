@@ -144,6 +144,7 @@ async function getDoc<T extends Doc = Doc> (
   const domain = client.hierarchy.findDomain(_class)
   if (domain == null) return
   const doc = (await client.find<Doc>(domain, { _id }))[0]
+  if (doc != null && !client.hierarchy.hasClass(doc._class)) return
   if (doc != null) {
     cache.set(_id, doc)
   }
@@ -591,6 +592,7 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
           if (cleanIds.length === 0) continue
           const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
           for (const doc of docs) {
+            if (!client.hierarchy.hasClass(doc._class)) continue
             objectsMap.set(doc._id, doc)
           }
         }
@@ -621,6 +623,7 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
           if (cleanIds.length === 0) continue
           const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
           for (const doc of docs) {
+            if (!client.hierarchy.hasClass(doc._class)) continue
             parentObjectMap.set(doc._id, doc)
           }
         }
@@ -811,6 +814,7 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
               unreadCommons,
               unreadCount,
               unreadMessagesCount,
+              notifiedMessagesCount: unreadMessagesCount,
               lastNotify,
               objectTitle,
               objectIdentifier,

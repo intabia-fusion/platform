@@ -34,8 +34,7 @@ const lastViewTimestampStore = writable<Map<Ref<Doc>, number>>(new Map())
 // NOTE: Sometimes user can read message before notification is created and we should mark it as viewed when notification is received
 export const chatReadMessagesStore = writable<Set<Ref<ActivityMessage>>>(new Set())
 
-const toRead = new Set<Ref<ActivityMessage>>()
-let toReadTimer: any
+const toReadByContext = new Map<Ref<DocNotifyContext>, { ids: Set<Ref<ActivityMessage>>, timer: any }>()
 
 export function readViewportMessages (
   chatId: Ref<Doc>,
@@ -92,20 +91,22 @@ export function recheckNotifications (context: DocNotifyContext): void {
 
   if (messages.size === 0) return
 
+  const pending = toReadByContext.get(context._id) ?? { ids: new Set<Ref<ActivityMessage>>(), timer: undefined }
   for (const unread of context.unreadMessages ?? []) {
     if (isUnreadMessageId(unread)) {
       if (messages.has(unread.id)) {
-        toRead.add(unread.id)
+        pending.ids.add(unread.id)
       }
     }
   }
 
-  if (toRead.size === 0) return
+  if (pending.ids.size === 0) return
+  toReadByContext.set(context._id, pending)
 
-  clearTimeout(toReadTimer)
-  toReadTimer = setTimeout(() => {
-    const toReadData = Array.from(toRead)
-    toRead.clear()
+  clearTimeout(pending.timer)
+  pending.timer = setTimeout(() => {
+    const toReadData = Array.from(pending.ids)
+    toReadByContext.delete(context._id)
     void (async () => {
       const client = getClient()
       const me = getCurrentAccount()

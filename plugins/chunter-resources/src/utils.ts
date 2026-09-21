@@ -115,8 +115,17 @@ export async function buildDmName (client: Client, name: string, accounts: Accou
 
   let myName = ''
 
+  // Non-employees (bots, guests, deactivated) are not in the store: one query for all of them.
+  const missing = accounts.filter((acc) => employeeByAccount.get(acc) === undefined)
+  const personByAccount = new Map<AccountUuid, Person>()
+  if (missing.length > 0) {
+    for (const person of await client.findAll(contact.class.Person, { personUuid: { $in: missing } })) {
+      if (person.personUuid != null) personByAccount.set(person.personUuid as AccountUuid, person)
+    }
+  }
+
   for (const acc of accounts) {
-    const employee = employeeByAccount.get(acc) ?? (await client.findOne(contact.class.Person, { personUuid: acc }))
+    const employee = employeeByAccount.get(acc) ?? personByAccount.get(acc)
 
     if (employee === undefined) {
       continue

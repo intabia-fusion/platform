@@ -629,8 +629,16 @@ describe('WorkspaceCache', () => {
 
       cache.tx(tx)
 
+      // A status seen before the first load must not pass for the whole table: the DB is still read.
+      const other = { _id: 'us-2', _class: 'UserStatusClass', user: 'acc-2', online: false } as unknown as UserStatus
+      mockClient.findAll.mockResolvedValue([status, other] as unknown as FindResult<UserStatus>)
+
       const statuses = await cache.getUserStatuses()
-      expect(statuses).toEqual([status])
+      expect(statuses).toEqual([status, other])
+      expect(mockClient.findAll).toHaveBeenCalledTimes(1)
+
+      await cache.getUserStatuses()
+      expect(mockClient.findAll).toHaveBeenCalledTimes(1)
     })
 
     it('handles TxUpdateDoc document cache updates', async () => {
@@ -708,10 +716,38 @@ describe('WorkspaceCache', () => {
         modifiedOn: 20
       } as unknown as TxUpdateDoc<Doc>
 
-      cache.tx(tx)
+      // Applied by this service: the cached copy is patched in place.
+      cache.tx(tx, true)
 
       const updated = await cache.getContexts('doc-1' as Ref<Doc>)
       expect(updated[0].objectTitle).toBe('new')
+      expect(mockClient.findAll).toHaveBeenCalledTimes(1)
+    })
+
+    it('reloads a DocNotifyContext touched by a tx this service did not apply', async () => {
+      jest
+        .mocked(mockIsDerived)
+        .mockImplementation(
+          (cls: unknown, target: unknown) => cls === 'NotifyCtxClass' && target === notification.class.DocNotifyContext
+        )
+
+      const context = { _id: 'ctx-1', _class: 'NotifyCtxClass', objectId: 'doc-1', modifiedOn: 20 }
+      mockClient.findAll.mockResolvedValue([context] as unknown as FindResult<DocNotifyContext>)
+      await cache.getContexts('doc-1' as Ref<Doc>)
+
+      // The echo of a tx applied before a restart: the DB copy read above already holds it.
+      cache.tx({
+        _id: 'tx-echo',
+        _class: core.class.TxUpdateDoc,
+        objectId: 'ctx-1',
+        objectClass: 'NotifyCtxClass',
+        operations: { $push: { latestNotifications: { id: 'n-1' } } },
+        modifiedOn: 20
+      } as unknown as TxUpdateDoc<Doc>)
+
+      const reloaded = await cache.getContexts('doc-1' as Ref<Doc>)
+      expect(mockClient.findAll).toHaveBeenCalledTimes(2)
+      expect((reloaded[0] as any).latestNotifications).toBeUndefined()
     })
 
     it('invalidates DocNotifyContext on outdated update transaction', async () => {

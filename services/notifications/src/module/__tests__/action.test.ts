@@ -41,6 +41,7 @@ jest.mock('../../utils/utils', () => {
 
 describe('handleReadNotificationAction', () => {
   let mockClient: {
+    ctx: { warn: jest.Mock }
     findAll: jest.Mock
     txFactory: {
       createTxUpdateDoc: jest.Mock
@@ -48,11 +49,13 @@ describe('handleReadNotificationAction', () => {
   }
   let mockCache: {
     getContext: jest.Mock
+    getAccountBySocialId: jest.Mock
   }
   let result: Result
 
   beforeEach(() => {
     mockClient = {
+      ctx: { warn: jest.fn() },
       findAll: jest.fn(),
       txFactory: {
         createTxUpdateDoc: jest.fn().mockImplementation((cls: string, space: string, id: string, payload: unknown) => ({
@@ -64,11 +67,29 @@ describe('handleReadNotificationAction', () => {
     }
 
     mockCache = {
-      getContext: jest.fn()
+      getContext: jest.fn(),
+      getAccountBySocialId: jest.fn()
     }
 
     result = emptyResult()
     jest.clearAllMocks()
+    // The author of every action in these tests is the account the action names.
+    mockCache.getAccountBySocialId.mockResolvedValue('user-1')
+  })
+
+  it('ignores an action that names an account other than its author', async () => {
+    const tx = {
+      _class: core.class.TxCreateDoc,
+      objectId: 'action-foreign',
+      modifiedBy: 'social-2',
+      attributes: { attachedTo: 'doc-1', account: 'user-1' as AccountUuid, commonIds: ['common-1'] }
+    } as unknown as TxCUD<ReadNotificationAction>
+    mockCache.getAccountBySocialId.mockResolvedValue('user-2')
+
+    await handleReadNotificationAction(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+    expect(mockCache.getContext).not.toHaveBeenCalled()
+    expect(result.updateContextTx).toHaveLength(0)
   })
 
   it('does nothing if class is not TxCreateDoc', async () => {

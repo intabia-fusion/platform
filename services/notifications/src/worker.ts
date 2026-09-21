@@ -328,8 +328,9 @@ export class Worker {
         this.workspaces.set(ws, workspace)
         return workspace
       } catch (e: any) {
-        if (e?.status?.code === platform.status.Forbidden) {
-          ctx.error('Workspace is forbidden, dropping workspace initialization', { e, wsUuid: ws })
+        if (e?.status?.code === platform.status.Forbidden || e?.status?.code === platform.status.WorkspaceNotFound) {
+          // A deleted workspace still has txes in the queue; retrying them can never succeed.
+          ctx.error('Workspace is forbidden or gone, dropping workspace initialization', { e, wsUuid: ws })
           return undefined
         }
         ctx.error('Failed to initialize workspace client', { e, wsUuid: ws })

@@ -234,7 +234,7 @@ export default async (): Promise<Resources> => ({
       if (unreadCount === 0) return false
 
       const unread = get(NotificationClientImpl.getClient().unreadByDoc).values()
-      return Array.from(unread).some((it) => it.unreadMessagesCount > 0)
+      return Array.from(unread).some((it) => (it.notifiedMessagesCount ?? 0) > 0)
     }
   },
   actionImpl: {

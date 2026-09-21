@@ -168,6 +168,14 @@
     read()
   }
 
+  // While the viewer sits at the bottom of a focused channel, arriving messages are read at once:
+  // the badges skip them instead of blinking for the read round trip.
+  // Only with the tail loaded: the bottom of a window from the middle of the history (a link to an
+  // old message) is not the end of the chat.
+  const reader = {}
+  $: isReadingTail = !freeze && !isPageHidden && isScrollInitialized && isScrollAtBottom && $isTailLoadedStore
+  $: inboxClient.setDocReading(object._id, isReadingTail, reader)
+
   $: void inboxClient.getReadState(object._id).then((it) => {
     readState = it
     isReadStateLoaded = true
@@ -429,16 +437,23 @@
   }
 
   let forceRead = false
-  $: void forceReadState(isScrollAtBottom, readState)
+  // The raw context counter, not unreadByDoc: the latter hides this very document while it is read.
+  $: void forceReadState(isReadingTail, readState, notifyContext?.unreadMessagesCount ?? 0)
 
-  async function forceReadState (isScrollAtBottom: boolean, readState?: ReadState): Promise<void> {
-    if (readState === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
-    const lastView = readState[getCurrentAccount().uuid]?.timestamp ?? 0
-    const lastUpdate = readState.latestMessageTimestamp ?? 0
+  // The counter goes down a round trip after the read (the service is asynchronous), and every
+  // store update re-runs this: without the pause the same read would be sent again and again.
+  let forceReadAt = 0
+  const forceReadPauseMs = 3000
 
-    if (lastView < lastUpdate) {
-      forceRead = true
+  async function forceReadState (isReadingTail: boolean, readState?: ReadState, unread = 0): Promise<void> {
+    if (readState === undefined || !isReadingTail || forceRead || unread === 0) return
+    if (Date.now() - forceReadAt < forceReadPauseMs) return
+
+    forceRead = true
+    forceReadAt = Date.now()
+    try {
       await inboxClient.forceReadDocState(object._id)
+    } finally {
       forceRead = false
     }
   }
@@ -672,6 +687,7 @@
   })
 
   onDestroy(() => {
+    inboxClient.setDocReading(object._id, false, reader)
     flushReadQueue()
     chatReadMessagesStore.update(() => new Set())
     if (observer !== undefined) {

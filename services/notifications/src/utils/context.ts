@@ -35,6 +35,7 @@ import notification, {
   UnreadMention,
   UnreadMessage,
   UnreadReaction,
+  getNotifiedMessagesTotal,
   getUnreadMessagesTotal,
   isUnreadMessageChunk,
   isUnreadMessageId
@@ -104,8 +105,17 @@ export function isNotificationRecorded (
 ): boolean {
   const { notification, unreadMessage, unreadReaction, unreadMention, unreadCommon } = data
   if ((context.latestNotifications ?? []).some((it) => it.id === notification.id)) return true
-  if (notification.type === 'mention' && notification.messageId != null) {
-    if (hasMentionNotificationByMessage(context, notification.messageId)) return true
+  if (notification.type === 'mention') {
+    if (notification.messageId != null) {
+      if (hasMentionNotificationByMessage(context, notification.messageId)) return true
+    } else if (
+      // A document-level mention gets a fresh id on every pass; the tx time tells a redelivery apart.
+      (context.latestNotifications ?? []).some(
+        (it) => it.type === 'mention' && it.messageId == null && it.createdOn === notification.createdOn
+      )
+    ) {
+      return true
+    }
   }
   if (unreadMessage != null && isUnreadMessageId(unreadMessage) && hasUnreadMessage(context, unreadMessage)) return true
   if (unreadReaction != null && hasUnreadReaction(context, unreadReaction.id)) return true
@@ -178,6 +188,7 @@ export function getCreateContextTx (
       unreadMessages: [],
       unreadCount: 0,
       unreadMessagesCount: 0,
+      notifiedMessagesCount: 0,
       lastNotify: 0
     },
     _id
@@ -190,13 +201,18 @@ export function getCreateContextTx (
 // ---- Derived counters ----
 
 /**
- * Keeps `unreadMessagesCount` equal to the total of `unreadMessages` on every context write.
+ * Keeps `unreadMessagesCount` and `notifiedMessagesCount` equal to the totals of `unreadMessages`
+ * on every context write.
  * Called once per result, so every path that touches the array (push, collapse, read, remove) is
  * covered, and the value is absolute, so a redelivered tx cannot skew it.
+ *
+ * Also keeps `unreadCount` from going below zero: the column has a CHECK, and one drifted counter
+ * would make the transactor reject the whole batch with everybody's notifications in it.
  */
 export async function setUnreadMessagesCounts (result: Result, cache: Cache, client: Client): Promise<void> {
   for (const tx of result.createContextTx) {
     tx.attributes.unreadMessagesCount = getUnreadMessagesTotal(tx.attributes.unreadMessages ?? [])
+    tx.attributes.notifiedMessagesCount = getNotifiedMessagesTotal(tx.attributes.unreadMessages ?? [])
   }
 
   const working = new Map<Ref<DocNotifyContext>, DocNotifyContext>()
@@ -206,7 +222,8 @@ export async function setUnreadMessagesCounts (result: Result, cache: Cache, cli
       ops.unreadMessages !== undefined ||
       ops.$push?.unreadMessages !== undefined ||
       ops.$pull?.unreadMessages !== undefined
-    if (!touched) continue
+    const decrements = (ops.$inc?.unreadCount ?? 0) < 0
+    if (!touched && !decrements) continue
 
     let context = working.get(tx.objectId)
     if (context === undefined) {
@@ -217,10 +234,26 @@ export async function setUnreadMessagesCounts (result: Result, cache: Cache, cli
         client.ctx.warn('context not found, unreadMessagesCount left as is', { context: tx.objectId })
         continue
       }
-      context = { ...current, unreadMessages: [...(current.unreadMessages ?? [])] }
+      // A deep copy: the operations are replayed on it below, and the cached context must not see
+      // them here (applyResult applies them once more, so shared arrays ended up with duplicates).
+      context = structuredClone(current)
       working.set(tx.objectId, context)
     }
     TxProcessor.updateDoc2Doc(context, tx)
-    ops.unreadMessagesCount = getUnreadMessagesTotal(context.unreadMessages ?? [])
+    if (touched) {
+      ops.unreadMessagesCount = getUnreadMessagesTotal(context.unreadMessages ?? [])
+      ops.notifiedMessagesCount = getNotifiedMessagesTotal(context.unreadMessages ?? [])
+    }
+    if (decrements && context.unreadCount < 0) {
+      client.ctx.warn('unreadCount would go below zero, set to 0', { context: tx.objectId, value: context.unreadCount })
+      const { unreadCount, ...inc } = ops.$inc ?? {}
+      if (Object.keys(inc).length > 0) {
+        ops.$inc = inc
+      } else {
+        delete ops.$inc
+      }
+      ops.unreadCount = 0
+      context.unreadCount = 0
+    }
   }
 }

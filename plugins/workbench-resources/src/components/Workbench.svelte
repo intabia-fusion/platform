@@ -602,6 +602,9 @@
     clear(2)
     currentSpace = spaceId
     if (spaceId === undefined) return
+    // An encoded object URI (`id|class`, chat channels, inbox contexts) is not a space id: the
+    // lookup below always came back empty, one wasted round trip per channel open.
+    if (spaceId.includes('|')) return
     const space = await client.findOne<Space>(core.class.Space, { _id: spaceId })
     if (space === undefined) return
     const spaceClass = client.getHierarchy().getClass(space._class)

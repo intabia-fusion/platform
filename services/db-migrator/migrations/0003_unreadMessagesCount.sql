@@ -8,7 +8,10 @@ ALTER TABLE notification_dnc
 UPDATE notification_dnc
 SET "unreadMessagesCount" = COALESCE((
     SELECT sum(COALESCE((e->>'count')::integer, 1))
-    FROM jsonb_array_elements(COALESCE(data->'unreadMessages', '[]'::jsonb)) e
+    FROM jsonb_array_elements(
+        -- A JSON null or a scalar here would abort the whole migration.
+        CASE WHEN jsonb_typeof(data->'unreadMessages') = 'array' THEN data->'unreadMessages' ELSE '[]'::jsonb END
+    ) e
 ), 0);
 
 -- The default stays: a pod that loaded the table schema before this migration keeps inserting

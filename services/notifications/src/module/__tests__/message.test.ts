@@ -44,6 +44,7 @@ function createEmptyResult (): Result {
     updateContextTx: [],
     createContextTx: [],
     createAppPushNotificationTx: [],
+    updateReadStateTx: [],
     queueMessages: [],
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
@@ -207,6 +208,7 @@ describe('message module', () => {
 
     // Default mock setups
     mockCache.getDocReadState.mockResolvedValue(undefined)
+    mockCache.getSender.mockResolvedValue({ socialId: 'author-social', account: 'author-account' })
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
     mockGetBaseDisplayParams.mockResolvedValue({ intlParams: { doc: 'doc' }, intlParamsNotLocalized: {} })
     mockGetCollaboratorAccounts.mockResolvedValue([])
@@ -330,6 +332,40 @@ describe('message module', () => {
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
       expect(mockGetCollaboratorAccounts).not.toHaveBeenCalled()
+    })
+
+    it('moves ReadState.latestMessage* forward for a newer message', async () => {
+      mockCache.getDoc.mockResolvedValue(mockDoc)
+      mockCache.getDocSpace.mockResolvedValue(mockSpace)
+      mockCache.getDocReadState.mockResolvedValue({
+        _id: 'rs-1',
+        _class: 'ReadState',
+        space: 'space-1',
+        latestMessageId: 'msg-0',
+        latestMessageTimestamp: 50
+      })
+      mockGetCollaboratorAccounts.mockResolvedValue([])
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      expect(result.updateReadStateTx.map((it) => it.operations)).toEqual([
+        { latestMessageId: 'msg-1', latestMessageTimestamp: 100 }
+      ])
+    })
+
+    it('leaves ReadState.latestMessage* alone for an older message', async () => {
+      mockCache.getDoc.mockResolvedValue(mockDoc)
+      mockCache.getDocSpace.mockResolvedValue(mockSpace)
+      mockCache.getDocReadState.mockResolvedValue({
+        _id: 'rs-1',
+        latestMessageId: 'msg-2',
+        latestMessageTimestamp: 200
+      })
+      mockGetCollaboratorAccounts.mockResolvedValue([])
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      expect(result.updateReadStateTx).toHaveLength(0)
     })
 
     it('exits early if collaborators list is empty', async () => {
@@ -490,6 +526,61 @@ describe('message module', () => {
   })
 
   describe('handleRemoveMessage', () => {
+    it('re-points ReadState.latestMessage* when the latest message is removed', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-1',
+        attachedTo: 'doc-1',
+        removedDoc: {}
+      } as unknown as TxRemoveDoc<ActivityMessage>
+      mockCache.getDocReadState.mockResolvedValue({
+        _id: 'rs-1',
+        latestMessageId: 'msg-1',
+        latestMessageTimestamp: 100
+      })
+      mockCache.getContexts.mockResolvedValue([])
+      mockClient.findOne.mockResolvedValueOnce({ _id: 'msg-0', createdOn: 50 })
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        expect.anything(),
+        { attachedTo: 'doc-1' },
+        expect.objectContaining({ sort: { createdOn: -1 } })
+      )
+      expect(result.updateReadStateTx.map((it) => it.operations)).toEqual([
+        { latestMessageId: 'msg-0', latestMessageTimestamp: 50 }
+      ])
+
+      // Nothing left in the chat: only the timestamp is reset.
+      mockClient.findOne.mockResolvedValueOnce(undefined)
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+      expect(result.updateReadStateTx[1].operations).toEqual({ latestMessageTimestamp: 0 })
+    })
+
+    it('does not shrink a chunk when the removed message was written by the context user', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-own',
+        attachedTo: 'doc-1',
+        removedDoc: { createdOn: 150, createdBy: 'own-social' }
+      } as unknown as TxRemoveDoc<ActivityMessage>
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        user: 'user-1',
+        unreadMessages: [{ from: 100, to: 200, count: 5, notifiedCount: 2 }]
+      } as unknown as DocNotifyContext
+
+      mockCache.getContexts.mockResolvedValue([context])
+      mockCache.getSender.mockResolvedValue({ socialId: 'own-social', account: 'user-1' })
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(result.updateContextTx).toHaveLength(0)
+    })
+
     it('logs error and returns if attachedTo is null', async () => {
       const tx = {
         _class: core.class.TxRemoveDoc,
@@ -668,6 +759,43 @@ describe('message module', () => {
         'msg-2'
       ])
     })
+
+    it('does not restore a message already shown through its mention entry', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-1',
+        attachedTo: 'doc-1',
+        removedDoc: {}
+      } as unknown as TxRemoveDoc<ActivityMessage>
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        latestNotifications: [
+          { id: 'msg-1', messageId: 'msg-1', createdOn: 100, type: 'message' },
+          { id: 'mention-2', messageId: 'msg-2', createdOn: 150, type: 'mention' }
+        ],
+        unreadMessages: [
+          { id: 'msg-1', createdOn: 100, notified: true },
+          { id: 'msg-2', createdOn: 150, notified: true, mentioned: true }
+        ],
+        unreadReactions: [],
+        unreadMentions: []
+      } as unknown as DocNotifyContext
+
+      mockCache.getContexts.mockResolvedValue([context])
+      mockGetNotificationsByMessage.mockReturnValue([{ id: 'msg-1', type: 'message' }])
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(mockClient.findAll).not.toHaveBeenCalled()
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations.$pull).toEqual({
+        latestNotifications: { id: { $in: ['msg-1'] } },
+        unreadMessages: { id: 'msg-1' }
+      })
+    })
   })
 
   describe('handleUpdateMessage', () => {
@@ -693,6 +821,15 @@ describe('message module', () => {
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
       expect(mockCache.getDoc).not.toHaveBeenCalled()
+    })
+
+    it('returns early for counter updates that leave the text and attachments alone', async () => {
+      mockTx.operations = { $inc: { replies: 1 }, lastReply: 123 } as any
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      expect(mockCache.getDoc).not.toHaveBeenCalled()
+      expect(result.updateContextTx).toHaveLength(0)
     })
 
     it('updates existing notification content inside active contexts', async () => {
@@ -760,7 +897,8 @@ describe('message module', () => {
           latestNotifications: {
             $query: { type: 'mention', messageId: 'msg-1' },
             $update: {
-              markup: 'New Text',
+              // The cached message already carries the edit, the tx is not applied a second time.
+              markup: 'New Mention Text',
               attachments: []
             }
           }
@@ -769,6 +907,49 @@ describe('message module', () => {
       expect(result.updateContextTx[1].operations).toEqual({
         object: { text: 'NotifMsg' }
       })
+    })
+
+    it('refreshes both the message entry and the mention entry of one message', async () => {
+      const messageDoc = {
+        _id: 'msg-1',
+        _class: 'MsgClass',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        message: 'New Text'
+      } as unknown as ActivityMessage
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1'
+      } as unknown as DocNotifyContext
+
+      mockCache.getDoc.mockResolvedValueOnce(messageDoc).mockResolvedValueOnce({ _id: 'doc-1' })
+      mockCache.getContexts.mockResolvedValue([context])
+      mockHasMessageNotification.mockReturnValue(true)
+      mockHasMentionNotificationByMessage.mockReturnValue(true)
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      expect(result.updateContextTx.map((it) => it.operations)).toEqual([
+        {
+          $update: {
+            latestNotifications: {
+              $query: { messageId: 'msg-1' },
+              $update: { message: { text: 'NotifMsg' }, attachments: [] }
+            }
+          }
+        },
+        {
+          $update: {
+            latestNotifications: {
+              $query: { type: 'mention', messageId: 'msg-1' },
+              $update: { markup: 'New Text', attachments: [] }
+            }
+          }
+        },
+        { object: { text: 'NotifMsg' } }
+      ])
     })
   })
 
@@ -870,6 +1051,54 @@ describe('message module', () => {
 
       // Should push new notification
       expect(mockPushNotification).toHaveBeenCalled()
+    })
+
+    it('pushes against a context without the pulled entry and leaves the cached context alone', async () => {
+      const messageDoc = {
+        _id: 'msg-1',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        createdOn: 100
+      } as unknown as DocUpdateMessage
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        user: 'user-1',
+        unreadCount: 2,
+        latestNotifications: [
+          { id: 'msg-1', type: 'message', messageId: 'msg-1', createdOn: 100 },
+          { id: 'msg-0', type: 'message', messageId: 'msg-0', createdOn: 50 }
+        ],
+        unreadMessages: [
+          { id: 'msg-0', createdOn: 50, notified: true },
+          { id: 'msg-1', createdOn: 100, notified: true }
+        ]
+      } as unknown as DocNotifyContext
+      const snapshot = JSON.parse(JSON.stringify(context))
+
+      mockCache.getDoc.mockResolvedValueOnce(messageDoc).mockResolvedValueOnce(mockDoc)
+      mockCache.getDocSpace.mockResolvedValue(mockSpace)
+      mockGetCollaboratorAccounts.mockResolvedValue(['user-1'])
+      mockCache.getReceivers.mockResolvedValue([receiver])
+      mockCache.getSender.mockResolvedValue(sender)
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSettings.mockResolvedValue([])
+      mockCache.getContexts.mockResolvedValue([context])
+      mockHasMessageNotification.mockReturnValue(true)
+      mockGetMessageNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+      })
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      // Otherwise pushNotification takes the merged update for a redelivery and drops it.
+      const pushedContext = mockPushNotification.mock.calls[0][3]
+      expect(pushedContext.latestNotifications.map((it: any) => it.id)).toEqual(['msg-0'])
+      expect(pushedContext.unreadMessages.map((it: any) => it.id)).toEqual(['msg-0'])
+      expect(pushedContext.unreadCount).toBe(1)
+      expect(context).toEqual(snapshot)
     })
   })
 

@@ -120,12 +120,17 @@ export class ChatViewport implements IChatViewport {
     }
   }
 
+  /**
+   * @param hasUnread - the chat has unread messages by the notification counter, which is exact;
+   * `ReadState.latestMessageTimestamp` is maintained asynchronously and may lag behind.
+   */
   public static getOrCreate (
     readState: ReadState | undefined,
     chatId: Ref<Doc>,
     selectedMessageId: Ref<ActivityMessage> | undefined,
     limit = 50,
-    isThread = false
+    isThread = false,
+    hasUnread = false
   ): ChatViewport {
     ChatViewport.startCleanupInterval()
 
@@ -138,7 +143,7 @@ export class ChatViewport implements IChatViewport {
     let entry = cache.get(key)
 
     if (entry === undefined) {
-      const viewport = new ChatViewport(readState, chatId, selectedMessageId, limit)
+      const viewport = new ChatViewport(readState, chatId, selectedMessageId, limit, hasUnread)
       entry = { viewport, lastAccessed: ++ChatViewport.accessCounter, lastAccessedTime: Date.now() }
       cache.set(key, entry)
       ChatViewport.cleanCache(cache)
@@ -146,8 +151,10 @@ export class ChatViewport implements IChatViewport {
       entry.lastAccessed = ++ChatViewport.accessCounter
       entry.lastAccessedTime = Date.now()
       if (selectedMessageId !== undefined) {
-        void entry.viewport.syncUnreadMarker(readState)
-        void entry.viewport.jumpToMessageId(selectedMessageId)
+        const viewport = entry.viewport
+        void viewport.jumpToMessageId(selectedMessageId).then(async () => {
+          await viewport.syncUnreadMarker(readState)
+        })
       } else if (get(entry.viewport.hasMoreForward)) {
         // The cached window still sits around a message the user was sent to (inbox link, search hit,
         // jump to date). Reopened without a target, the chat has to start from its end again.
@@ -155,7 +162,7 @@ export class ChatViewport implements IChatViewport {
         entry.viewport.jumpToEnd()
         void entry.viewport.syncUnreadMarker(readState)
       } else {
-        void entry.viewport.syncUnreadMarker(readState)
+        void entry.viewport.refreshUnreadMarker(readState)
       }
     }
 
@@ -284,7 +291,8 @@ export class ChatViewport implements IChatViewport {
     private readState: ReadState | undefined,
     public chatId: Ref<Doc>,
     public selectedMessageId: Ref<ActivityMessage> | undefined,
-    public readonly limit = 50
+    public readonly limit = 50,
+    private readonly hasUnread = false
   ) {
     this.historyUnsubscribe = this.loadedHistory.subscribe((history) => {
       this.loadedMessageIds.clear()
@@ -408,10 +416,31 @@ export class ChatViewport implements IChatViewport {
       return false
     }
 
+    const target = await getClient().findOne(
+      activity.class.ActivityMessage,
+      { _id: messageId, attachedTo: this.chatId },
+      { projection: { _id: 1 } }
+    )
+    if (target === undefined) {
+      return false
+    }
+
     this.resetViewport()
     await this.initializeViewport(messageId)
 
     return true
+  }
+
+  public async refreshUnreadMarker (readState?: ReadState): Promise<void> {
+    const version = this.viewportVersion
+    this.isLoading.set(true)
+    try {
+      await this.syncUnreadMarker(readState)
+    } finally {
+      if (version === this.viewportVersion) {
+        this.isLoading.set(false)
+      }
+    }
   }
 
   /**
@@ -555,7 +584,7 @@ export class ChatViewport implements IChatViewport {
     if (selectedMessageId !== undefined) {
       selectedMessage = await client.findOne(
         activity.class.ActivityMessage,
-        { _id: selectedMessageId },
+        { _id: selectedMessageId, attachedTo: this.chatId },
         { projection: { _id: 1, createdOn: 1 } }
       )
       if (selectedMessage !== undefined) return selectedMessage
@@ -568,7 +597,7 @@ export class ChatViewport implements IChatViewport {
     const latestMessageTs = this.readState?.latestMessageTimestamp ?? 0
 
     // Only query if user has unread messages
-    const hasUnread = latestMessageTs === 0 || latestMessageTs > lastViewTs
+    const hasUnread = this.hasUnread || latestMessageTs === 0 || latestMessageTs > lastViewTs
 
     let firstUnreadMessage: ActivityMessage | undefined
     if (!ignoreUnread && hasUnread) {
@@ -791,6 +820,7 @@ export class ChatViewport implements IChatViewport {
 
   private resetViewport (): void {
     this.viewportVersion++
+    this.isLoadingMore.set(false)
     this.liveTail.set([])
     this.loadedHistory.set([])
     this.tailQuery.unsubscribe()

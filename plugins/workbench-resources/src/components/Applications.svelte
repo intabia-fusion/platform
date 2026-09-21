@@ -91,21 +91,24 @@
 
   const inboxClient = NotificationClientImpl.getClient()
   const totalUnreadCountStore = inboxClient.totalUnreadCount
+  const unreadByDocStore = inboxClient.unreadByDoc
 
   let notifyStates: Record<string, boolean> = {}
   let updateSeq = 0
 
-  $: void updateNotifyStatuses(apps, $totalUnreadCountStore, $appearancePreferences)
+  $: void updateNotifyStatuses(apps, $totalUnreadCountStore, $appearancePreferences, $unreadByDocStore.size)
 
   async function updateNotifyStatuses (
     apps: Application[],
     unreadCount: number,
-    preference?: NotificationAppearancePreference
+    preference: NotificationAppearancePreference | undefined,
+    unreadDocs: number
   ): Promise<void> {
     const seq = ++updateSeq
+    const hasUnread = unreadCount > 0 || unreadDocs > 0
     for (const app of apps) {
       let res = false
-      if (app.showNotifyMarkerFn != null) {
+      if (hasUnread && app.showNotifyMarkerFn != null) {
         const fn = await getResource(app.showNotifyMarkerFn)
         res = await fn(unreadCount, preference)
       }

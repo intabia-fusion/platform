@@ -290,6 +290,12 @@ const dncSchema: Schema = {
     index: false,
     check: '"unreadMessagesCount" >= 0'
   },
+  notifiedMessagesCount: {
+    type: 'integer',
+    notNull: true,
+    index: false,
+    check: '"notifiedMessagesCount" >= 0'
+  },
   user: {
     type: 'text',
     notNull: true,
@@ -477,7 +483,8 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_lastNotify_desc__index ON notification_dnc ("workspaceId", "user", "lastNotify" DESC);',
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unread__index ON notification_dnc ("workspaceId", "user", "unreadCount") WHERE "unreadCount" > 0;',
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_objectClass__index ON notification_dnc ("workspaceId", "user", "objectClass");',
-        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unreadMessages__index ON notification_dnc ("workspaceId", "user", "unreadMessagesCount") WHERE "unreadMessagesCount" > 0;'
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unreadMessages__index ON notification_dnc ("workspaceId", "user", "unreadMessagesCount") WHERE "unreadMessagesCount" > 0;',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_notifiedMessages__index ON notification_dnc ("workspaceId", "user", "notifiedMessagesCount") WHERE "notifiedMessagesCount" > 0;'
       ]
     }
   ],

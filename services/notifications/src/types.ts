@@ -42,7 +42,8 @@ import {
   type NotificationProviderSetting,
   NotificationType,
   type NotificationTypeSetting,
-  QueueNotificationMessage
+  QueueNotificationMessage,
+  ReadState
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
@@ -97,6 +98,8 @@ export interface Result {
   updateContextTx: TxUpdateDoc<DocNotifyContext>[]
   createContextTx: TxCreateDoc<DocNotifyContext>[]
   createAppPushNotificationTx: TxCreateDoc<AppPushNotification>[]
+  // `latestMessageId/latestMessageTimestamp` of the document's ReadState.
+  updateReadStateTx: TxUpdateDoc<ReadState>[]
 
   createUserMentionInfoTx: TxCreateDoc<UserMentionInfo>[]
   updateUserMentionInfoTx: TxUpdateDoc<UserMentionInfo>[]

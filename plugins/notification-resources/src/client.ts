@@ -53,8 +53,13 @@ export class NotificationClientImpl implements NotificationClient {
 
   readonly docSettingByDoc = writable<Map<Ref<Doc>, DocNotificationSetting | null>>(new Map())
 
+  // An account has a handful of doc settings, so they all come in one live query: a lookup is a
+  // map read and a mute made elsewhere arrives through the query, not a tx listener.
+  private readonly docSettingsQuery = createQuery(true)
+  private docSettingsByDoc: Map<Ref<Doc>, DocNotificationSetting> | undefined = undefined
+  private docSettingsLoaded: Promise<void> | undefined = undefined
+
   private readonly readStatePromises = new Map<Ref<Doc>, Promise<ReadState | undefined>>()
-  private readonly docSettingPromises = new Map<Ref<Doc>, Promise<DocNotificationSetting | undefined>>()
   private readonly contextByIdPromises = new Map<Ref<DocNotifyContext>, Promise<DocNotifyContext | undefined>>()
   private readonly contextByDocPromises = new Map<Ref<Doc>, Promise<DocNotifyContext | undefined>>()
 
@@ -66,11 +71,9 @@ export class NotificationClientImpl implements NotificationClient {
   private pendingById: Array<Ref<DocNotifyContext>> = []
   private pendingByIdFlush: Promise<DocNotifyContext[]> | undefined = undefined
 
-  // Same coalescing as pendingByDoc/pendingById, for the per-doc ReadState/DocNotificationSetting lookups.
+  // Same coalescing as pendingByDoc/pendingById, for the per-doc ReadState lookups.
   private pendingReadState: Array<Ref<Doc>> = []
   private pendingReadStateFlush: Promise<Map<Ref<Doc>, ReadState>> | undefined = undefined
-  private pendingDocSetting: Array<Ref<Doc>> = []
-  private pendingDocSettingFlush: Promise<Map<Ref<Doc>, DocNotificationSetting>> | undefined = undefined
 
   public readonly clearingAllInbox = writable(false)
   public readonly readingAllInbox = writable(false)
@@ -99,27 +102,36 @@ export class NotificationClientImpl implements NotificationClient {
     this.contextById.set(new Map())
     this.readStateByDoc.set(new Map())
     this.docSettingByDoc.set(new Map())
+    this.docSettingsQuery.unsubscribe()
+    this.docSettingsByDoc = undefined
+    this.docSettingsLoaded = undefined
 
     this.readStatePromises.clear()
-    this.docSettingPromises.clear()
     this.contextByIdPromises.clear()
     this.contextByDocPromises.clear()
 
     this.pendingByDoc = []
     this.pendingById = []
     this.pendingReadState = []
-    this.pendingDocSetting = []
 
     this.totalUnreadCount.set(0)
     this.inboxUnread = []
     this.chatUnread = []
+    this.readingDocs.clear()
     this.unreadByDoc.set(new Map())
   }
 
   private async init (_client: Client, account: Account): Promise<void> {
     this.clear()
 
-    const projection = { objectId: 1, objectClass: 1, unreadCount: 1, unreadMessagesCount: 1, modifiedOn: 1 } as const
+    const projection = {
+      objectId: 1,
+      objectClass: 1,
+      unreadCount: 1,
+      unreadMessagesCount: 1,
+      notifiedMessagesCount: 1,
+      modifiedOn: 1
+    } as const
     this.inboxUnreadQuery.query(
       notification.class.DocNotifyContext,
       { user: account.uuid, unreadCount: { $gt: 0 } },
@@ -140,12 +152,48 @@ export class NotificationClientImpl implements NotificationClient {
     )
   }
 
+  // Documents whose new messages the viewer reads as they arrive (channel open, scrolled to the
+  // bottom, app focused). Their unread messages are not counted: the service marks a message
+  // unread and the client reads it a round trip later, so the badge would blink on every message.
+  private readonly readingDocs = new Map<Ref<Doc>, Set<unknown>>()
+
+  // `reader` identifies the view: the same channel can be open in the main panel and in the
+  // sidebar, and one of them going away must not switch the other off.
+  setDocReading (doc: Ref<Doc>, reading: boolean, reader: unknown = doc): void {
+    const readers = this.readingDocs.get(doc)
+    if (reading === (readers?.has(reader) ?? false)) return
+    if (reading) {
+      this.readingDocs.set(doc, (readers ?? new Set()).add(reader))
+    } else if (readers !== undefined) {
+      readers.delete(reader)
+      if (readers.size === 0) this.readingDocs.delete(doc)
+    }
+    this.publishUnread()
+  }
+
   private publishUnread (): void {
-    this.totalUnreadCount.set(this.inboxUnread.reduce((acc, it) => acc + it.unreadCount, 0))
+    let total = 0
     const byDoc = new Map<Ref<Doc>, UnreadContext>()
     for (const it of [...this.inboxUnread, ...this.chatUnread]) {
       byDoc.set(it.objectId, it)
     }
+    for (const it of this.inboxUnread) {
+      total += it.unreadCount
+    }
+    for (const doc of this.readingDocs.keys()) {
+      const it = byDoc.get(doc)
+      if (it === undefined) continue
+      // unreadCount also counts reactions, mentions and commons: only the notified messages go.
+      const hidden = Math.min(it.notifiedMessagesCount ?? 0, it.unreadCount)
+      total -= hidden
+      const unreadCount = it.unreadCount - hidden
+      if (unreadCount === 0) {
+        byDoc.delete(doc)
+      } else {
+        byDoc.set(doc, { ...it, unreadCount, unreadMessagesCount: 0, notifiedMessagesCount: 0 })
+      }
+    }
+    this.totalUnreadCount.set(total)
     this.unreadByDoc.set(byDoc)
   }
 
@@ -159,9 +207,11 @@ export class NotificationClientImpl implements NotificationClient {
 
   private async ensureReadState (attachedTo: Ref<Doc>): Promise<ReadState | undefined> {
     const current = get(this.readStateByDoc).get(attachedTo)
-    if (current !== undefined && current !== null) {
+    if (current != null) {
       return current
     }
+    // `null`: looked up and absent. A state created later arrives through the tx listener.
+    if (current === null) return undefined
     const promise = this.readStatePromises.get(attachedTo)
     if (promise !== undefined) {
       return await promise
@@ -213,53 +263,36 @@ export class NotificationClientImpl implements NotificationClient {
   }
 
   private async ensureDocSetting (attachedTo: Ref<Doc>): Promise<DocNotificationSetting | undefined> {
-    const current = get(this.docSettingByDoc).get(attachedTo)
-    if (current !== undefined && current !== null) {
-      return current
+    await this.loadDocSettings()
+    const setting = this.docSettingsByDoc?.get(attachedTo)
+    // `null` tells the store readers the doc was looked up and has no setting.
+    if (get(this.docSettingByDoc).get(attachedTo) !== (setting ?? null)) {
+      this.docSettingByDoc.update((map) => map.set(attachedTo, setting ?? null))
     }
-    const promise = this.docSettingPromises.get(attachedTo)
-    if (promise !== undefined) {
-      return await promise
-    }
-
-    this.pendingDocSetting.push(attachedTo)
-
-    this.pendingDocSettingFlush ??= Promise.resolve().then(async () => {
-      const ids = this.pendingDocSetting
-      this.pendingDocSetting = []
-      this.pendingDocSettingFlush = undefined
-      return await this.loadDocSettings(ids)
-    })
-
-    const loadPromise = this.pendingDocSettingFlush.then((map) => map.get(attachedTo))
-    this.docSettingPromises.set(attachedTo, loadPromise)
-    try {
-      return await loadPromise
-    } finally {
-      this.docSettingPromises.delete(attachedTo)
-    }
+    return setting
   }
 
-  private async loadDocSettings (ids: Array<Ref<Doc>>): Promise<Map<Ref<Doc>, DocNotificationSetting>> {
-    const client = getClient()
-    const settings = await client.findAll(notification.class.DocNotificationSetting, {
-      attachedTo: { $in: ids },
-      account: getCurrentAccount().uuid
+  private async loadDocSettings (): Promise<void> {
+    this.docSettingsLoaded ??= new Promise((resolve) => {
+      this.docSettingsQuery.query(
+        notification.class.DocNotificationSetting,
+        { account: getCurrentAccount().uuid },
+        (settings) => {
+          this.docSettingsByDoc = new Map(settings.map((it) => [it.attachedTo, it]))
+          this.docSettingByDoc.update((map) => {
+            for (const id of map.keys()) {
+              map.set(id, this.docSettingsByDoc?.get(id) ?? null)
+            }
+            for (const setting of settings) {
+              map.set(setting.attachedTo, setting)
+            }
+            return map
+          })
+          resolve()
+        }
+      )
     })
-
-    const settingsByDoc = new Map<Ref<Doc>, DocNotificationSetting>()
-    for (const setting of settings) {
-      settingsByDoc.set(setting.attachedTo, setting)
-    }
-
-    this.docSettingByDoc.update((map) => {
-      for (const id of ids) {
-        map.set(id, settingsByDoc.get(id) ?? null)
-      }
-      return map
-    })
-
-    return settingsByDoc
+    await this.docSettingsLoaded
   }
 
   public async loadContextById (_id: Ref<DocNotifyContext>): Promise<void> {
@@ -273,7 +306,12 @@ export class NotificationClientImpl implements NotificationClient {
   // Coalesces same-tick single-id requests into one ensureContextsById call.
   private async batchContextById (_id: Ref<DocNotifyContext>): Promise<DocNotifyContext | undefined> {
     const cached = get(this.contextById).get(_id)
-    if (cached !== undefined) return cached ?? undefined
+    if (cached != null) return cached
+    if (cached === null) {
+      // `null` is also the placeholder of a lookup in flight: wait for it instead of answering "absent".
+      const inflight = this.contextByIdPromises.get(_id)
+      return inflight !== undefined ? await inflight : undefined
+    }
 
     this.pendingById.push(_id)
 
@@ -404,7 +442,10 @@ export class NotificationClientImpl implements NotificationClient {
   // of its docs at once, and several sections mount together), into one ensureContextsByDoc call.
   private async batchContextsByDoc (docs: Array<Ref<Doc>>): Promise<void> {
     const cached = get(this.contextByDoc)
-    const missing = docs.filter((doc) => cached.get(doc) === undefined)
+    // `null` with a lookup in flight is not an answer yet; ensureContextsByDoc waits for that lookup.
+    const missing = docs.filter(
+      (doc) => cached.get(doc) === undefined || (cached.get(doc) === null && this.contextByDocPromises.has(doc))
+    )
     if (missing.length === 0) return
 
     this.pendingByDoc.push(...missing)
@@ -462,8 +503,10 @@ export class NotificationClientImpl implements NotificationClient {
 
           this.contextByDoc.update((state) => {
             for (const doc of toLoad) {
-              const ctx = contextsMap.get(doc)
+              // A context created while the query was in flight has already arrived through the tx listener.
+              const ctx = contextsMap.get(doc) ?? state.get(doc) ?? undefined
               state.set(doc, ctx ?? null)
+              if (ctx !== undefined) contextsMap.set(doc, ctx)
             }
             return state
           })
@@ -664,14 +707,6 @@ addTxListener((txes: Tx[]) => {
               return readStateByDoc.set(state.attachedTo, state)
             })
           }
-        } else if (createTx.objectClass === notification.class.DocNotificationSetting) {
-          const setting = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotificationSetting>)
-          const current = get(notificationClient.docSettingByDoc).get(setting.attachedTo)
-          if (current == null) {
-            notificationClient.docSettingByDoc.update((docSettingsByDoc) => {
-              return docSettingsByDoc.set(setting.attachedTo, setting)
-            })
-          }
         } else if (createTx.objectClass === notification.class.DocNotifyContext) {
           const context = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotifyContext>)
           const current = get(notificationClient.contextByDoc).get(context.objectId)
@@ -711,28 +746,6 @@ addTxListener((txes: Tx[]) => {
               )
             })
           }
-        } else if (updateTx.objectClass === notification.class.DocNotificationSetting) {
-          let attachedTo = updateTx.attachedTo
-          if (attachedTo == null) {
-            const setting = Array.from(get(notificationClient.docSettingByDoc).values())
-              .filter(notEmpty)
-              .find((it) => it._id === (updateTx.objectId as Ref<DocNotificationSetting>))
-            if (setting != null) {
-              attachedTo = setting.attachedTo
-            }
-          }
-          if (attachedTo != null) {
-            const finalAttachedTo = attachedTo
-            notificationClient.docSettingByDoc.update((stateByDoc) => {
-              const current = stateByDoc.get(finalAttachedTo)
-              if (current == null) return stateByDoc
-
-              return stateByDoc.set(
-                finalAttachedTo,
-                TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<DocNotificationSetting>)
-              )
-            })
-          }
         } else if (updateTx.objectClass === notification.class.DocNotifyContext) {
           const contextId = updateTx.objectId as Ref<DocNotifyContext>
           const context = get(notificationClient.contextById).get(contextId)
@@ -763,19 +776,6 @@ addTxListener((txes: Tx[]) => {
             notificationClient.readStateByDoc.update((stateByDoc) => {
               stateByDoc.delete(state.attachedTo)
               return stateByDoc
-            })
-          }
-        } else if (removeTx.objectClass === notification.class.DocNotificationSetting) {
-          const settingById = new Map(
-            Array.from(get(notificationClient.docSettingByDoc).values())
-              .filter(notEmpty)
-              .map((it) => [it._id, it])
-          )
-          const state = settingById.get(removeTx.objectId as Ref<DocNotificationSetting>)
-          if (state != null) {
-            notificationClient.docSettingByDoc.update((settingByDoc) => {
-              settingByDoc.delete(state.attachedTo)
-              return settingByDoc
             })
           }
         } else if (removeTx.objectClass === notification.class.DocNotifyContext) {

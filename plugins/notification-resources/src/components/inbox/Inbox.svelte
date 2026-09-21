@@ -122,6 +122,7 @@
     }
 
     if (loc?.loc.path[3] == null) {
+      selectedContextId = undefined
       selectedContext = undefined
       urlObjectId = undefined
       urlObjectClass = undefined
@@ -148,17 +149,17 @@
       context =
         contexts.find((c) => c._id === queryContext) ??
         (await client.findOne(notification.class.DocNotifyContext, { _id: queryContext }))
-    } else if (thread != null) {
-      context = await client.findOne(notification.class.DocNotifyContext, { objectId: thread })
     } else {
-      context = await client.findOne(notification.class.DocNotifyContext, { objectId: _id })
+      // The channel view asks for the same context right after: one cached, user-scoped lookup.
+      context = await inboxClient.getContextByDoc(thread ?? _id)
     }
 
     if (token !== syncLocationToken) return
     selectedContextId = context?._id
 
     if (selectedContextId !== selectedContext?._id) {
-      selectedContext = undefined
+      // The context may sit outside the loaded page or the current filter: keep the one just found.
+      selectedContext = context
     }
 
     const selectedMessageId = loc?.loc.query?.message as Ref<ActivityMessage> | undefined
@@ -176,8 +177,9 @@
     }
   }
 
+  // The list copy is live (counters, latest notifications), so it wins over the one found on navigation.
   $: selectedContext =
-    selectedContextId != null ? (selectedContext ?? contexts.find((c) => c._id === selectedContextId)) : undefined
+    selectedContextId != null ? (contexts.find((c) => c._id === selectedContextId) ?? selectedContext) : undefined
 
   $: void updateSelectedPanel(selectedContext, urlObjectClass)
 

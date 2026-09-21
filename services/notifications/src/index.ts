@@ -69,12 +69,27 @@ async function main (): Promise<void> {
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
   const worker = new Worker(ctx, model, queue)
 
+  // The queue retries a failing message forever, and a partition is consumed in order: one tx that
+  // can never succeed (a batch the transactor keeps rejecting with 500, a broken workspace) would
+  // stop the notifications of every workspace. It is retried for a while, outages pass, then dropped.
+  const giveUpAfterMs = 5 * 60 * 1000
+  const failingSince = new Map<string, number>()
+
   const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     const ws = queueMessage.workspace
     const tx = queueMessage.value
     try {
       await worker.tx(ctx, ws, tx)
+      failingSince.delete(tx._id)
     } catch (e) {
+      const since = failingSince.get(tx._id) ?? Date.now()
+      if (Date.now() - since >= giveUpAfterMs) {
+        failingSince.delete(tx._id)
+        ctx.error('Tx message dropped after repeated failures', { e, wsUuid: ws, tx, failingForMs: Date.now() - since })
+        return
+      }
+      if (failingSince.size > 100) failingSince.clear()
+      failingSince.set(tx._id, since)
       ctx.error('Failed to process tx message', { e, wsUuid: ws, tx })
       throw e
     }

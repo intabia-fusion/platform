@@ -25,6 +25,7 @@ import core, {
   Ref,
   Space,
   TxCUD,
+  TxProcessor,
   Blob
 } from '@hcengineering/core'
 import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
@@ -52,6 +53,7 @@ import {
   getTxNotifyProviders,
   isMuted,
   getMentionNotification,
+  getLastNotify,
   hasMessageNotification,
   getAttachments
 } from '../utils/utils'
@@ -118,6 +120,10 @@ export async function handleMention (
   }
 }
 
+function isGroupMention (mentionId: Ref<Person>): boolean {
+  return mentionId === contact.mention.Everyone || mentionId === contact.mention.Here
+}
+
 function areEqualMarkup (a: Markup, b: Markup): boolean {
   try {
     return areEqualJson(JSON.parse(a), JSON.parse(b))
@@ -155,15 +161,17 @@ async function createMentionsData (
       : await client.findAll(activity.class.UserMentionInfo, { attachedTo: tx.objectId })
 
   for (const mention of mentions) {
+    // A UserMentionInfo is stored per person, also for @everyone/@here, so a group reference
+    // stands for every existing mention of that message.
     const refIndex = references.findIndex(
-      (r) => mention.user === r.mentionId && mention.attachedTo === (r.messageId ?? r.docId)
+      (r) =>
+        (mention.user === r.mentionId || isGroupMention(r.mentionId)) && mention.attachedTo === (r.messageId ?? r.docId)
     )
     const ref = references[refIndex]
 
     if (refIndex !== -1) {
-      const alreadyProcessed = areEqualMarkup(mention.content, ref.markup)
-
-      if (alreadyProcessed) {
+      // A group reference stays in the list: it is checked per receiver below.
+      if (!isGroupMention(ref.mentionId) && areEqualMarkup(mention.content, ref.markup)) {
         references.splice(refIndex, 1)
       }
     } else {
@@ -199,6 +207,9 @@ async function createMentionsData (
 
       const context = contexts.find((it) => it.user === receiver.account)
       const mention = mentions.find((it) => it.user === receiver.employeeRef)
+
+      // Already processed for this person with the same text (a group mention edited elsewhere).
+      if (mention != null && areEqualMarkup(mention.content, reference.markup)) continue
 
       createOrUpdateMention(client, result, receiver.employeeRef, reference, space._id, mention)
 
@@ -389,12 +400,18 @@ async function removeMentions (
 
   for (const context of contexts) {
     const op: DocumentUpdate<DocNotifyContext> = {}
-    const hasNotification = context.latestNotifications.some(
-      (it) => it.type === 'mention' && it.messageId === messageId
-    )
+    const ids = (context.latestNotifications ?? [])
+      .filter((it) => it.type === 'mention' && it.messageId === messageId)
+      .map((it) => it.id)
 
-    if (hasNotification) {
-      op.$pull = { latestNotifications: { type: 'mention', messageId } }
+    if (ids.length > 0) {
+      op.$pull = { latestNotifications: { id: { $in: ids } } }
+    }
+
+    const unreadIds = (context.unreadMentions ?? []).filter((it) => ids.includes(it.id)).map((it) => it.id)
+    if (unreadIds.length > 0) {
+      op.$pull = { ...op.$pull, unreadMentions: { id: { $in: unreadIds } } }
+      op.$inc = { unreadCount: -unreadIds.length }
     }
 
     if (messageId != null) {
@@ -414,7 +431,12 @@ async function removeMentions (
     }
 
     if (Object.keys(op).length > 0) {
-      result.updateContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, op))
+      const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, op)
+      const lastNotify = getLastNotify(TxProcessor.updateDoc2Doc(structuredClone(context), updateTx))
+      if (lastNotify !== context.lastNotify) {
+        updateTx.operations.lastNotify = lastNotify
+      }
+      result.updateContextTx.push(updateTx)
     }
   }
 }

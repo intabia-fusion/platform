@@ -93,8 +93,12 @@ const mockClient = {
 // Two live queries feed the unread store: inbox unread (unreadCount) and chat unread (unreadMessagesCount).
 let unreadQueryCallback: ((res: any[]) => void) | undefined
 let unreadMessagesQueryCallback: ((res: any[]) => void) | undefined
+// The account's doc settings come through a third live query, keyed by `account`.
+let docSettingsQueryCallback: ((res: any[]) => void) | undefined
 const unreadQueryQueryMock = jest.fn((_class: any, query: any, callback: (res: any[]) => void) => {
-  if (query?.unreadMessagesCount !== undefined) {
+  if (query?.account !== undefined) {
+    docSettingsQueryCallback = callback
+  } else if (query?.unreadMessagesCount !== undefined) {
     unreadMessagesQueryCallback = callback
   } else {
     unreadQueryCallback = callback
@@ -267,6 +271,45 @@ describe('NotificationClientImpl', () => {
     })
   })
 
+  describe('lookups in flight', () => {
+    it('makes a later getContextByDoc wait for the running query instead of answering "absent"', async () => {
+      const ctxA = makeContext({ _id: 'ctxA' as any, objectId: 'docA' as any })
+      let release: (value: any[]) => void = () => {}
+      findAllMock.mockImplementationOnce(
+        async () =>
+          await new Promise((resolve) => {
+            release = resolve
+          })
+      )
+
+      const client = NotificationClientImpl.getClient()
+      await initClient(client)
+
+      const first = client.getContextByDoc('docA' as any)
+      // Let the batch start: the store now holds the `null` placeholder of the running query.
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(get(client.contextByDoc).get('docA' as any)).toBeNull()
+
+      const second = client.getContextByDoc('docA' as any)
+      release([ctxA])
+
+      expect(await first).toEqual(ctxA)
+      expect(await second).toEqual(ctxA)
+      expect(findAllMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not query again for a document known to have no ReadState', async () => {
+      findAllMock.mockResolvedValueOnce([])
+      const client = NotificationClientImpl.getClient()
+      await initClient(client)
+
+      expect(await client.getReadState('docA' as any)).toBeUndefined()
+      expect(await client.getReadState('docA' as any)).toBeUndefined()
+      expect(findAllMock).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('getContextById batching', () => {
     it('coalesces same-tick single-id requests into one findAll by _id', async () => {
       const ctxA = makeContext({ _id: 'ctxA' as Ref<DocNotifyContext>, objectId: 'docA' as any })
@@ -316,27 +359,35 @@ describe('NotificationClientImpl', () => {
   })
 
   describe('ensureDocSetting (getDocSetting/loadDocSetting)', () => {
-    it('coalesces same-tick calls into one findAll with attachedTo $in and account filter, caching null for missing', async () => {
+    it('loads all settings of the account through one live query, caching null for missing', async () => {
       const setting1 = { _id: 'ds1', attachedTo: 'docA', account: 'acc-me' } as any
-      findAllMock.mockResolvedValueOnce([setting1])
 
       const client = NotificationClientImpl.getClient()
       await initClient(client)
 
-      const [r1, r2] = await Promise.all([client.getDocSetting('docA' as any), client.getDocSetting('docB' as any)])
+      const pending = Promise.all([client.getDocSetting('docA' as any), client.getDocSetting('docB' as any)])
+      expect(unreadQueryQueryMock).toHaveBeenCalledWith(
+        notification.class.DocNotificationSetting,
+        { account: 'acc-me' },
+        expect.any(Function)
+      )
+      docSettingsQueryCallback?.([setting1])
 
-      expect(findAllMock).toHaveBeenCalledTimes(1)
-      expect(findAllMock).toHaveBeenCalledWith(notification.class.DocNotificationSetting, {
-        attachedTo: { $in: ['docA', 'docB'] },
-        account: 'acc-me'
-      })
+      const [r1, r2] = await pending
       expect(r1).toEqual(setting1)
       expect(r2).toBeUndefined()
       expect(get(client.docSettingByDoc).get('docB' as any)).toBeNull()
+      expect(findAllMock).not.toHaveBeenCalledWith(notification.class.DocNotificationSetting, expect.anything())
 
-      findAllMock.mockClear()
-      await client.getDocSetting('docA' as any)
-      expect(findAllMock).not.toHaveBeenCalled()
+      // A mute made in another tab arrives through the same query, no tx listener involved.
+      const setting2 = { _id: 'ds2', attachedTo: 'docB', account: 'acc-me' } as any
+      docSettingsQueryCallback?.([setting1, setting2])
+      expect(get(client.docSettingByDoc).get('docB' as any)).toEqual(setting2)
+      expect(await client.getDocSetting('docB' as any)).toEqual(setting2)
+      const settingsQueries = unreadQueryQueryMock.mock.calls.filter(
+        ([_class]) => _class === notification.class.DocNotificationSetting
+      )
+      expect(settingsQueries).toHaveLength(1)
     })
   })
 
@@ -469,6 +520,58 @@ describe('NotificationClientImpl', () => {
 
       unreadMessagesQueryCallback?.([])
       expect(get(client.unreadByDoc).size).toBe(1)
+    })
+
+    it('leaves out the messages of a document being read, keeping its other unread items', async () => {
+      const client = NotificationClientImpl.getClient()
+      await initClient(client)
+
+      unreadQueryCallback?.([
+        { objectId: 'docA', unreadCount: 3, unreadMessagesCount: 2 },
+        { objectId: 'docB', unreadCount: 1, unreadMessagesCount: 1 }
+      ])
+      unreadMessagesQueryCallback?.([
+        { objectId: 'docA', unreadCount: 3, unreadMessagesCount: 2, notifiedMessagesCount: 2 },
+        { objectId: 'docB', unreadCount: 1, unreadMessagesCount: 1, notifiedMessagesCount: 1 }
+      ])
+      expect(get(client.totalUnreadCount)).toBe(4)
+
+      client.setDocReading('docA' as any, true)
+      client.setDocReading('docB' as any, true)
+      expect(get(client.totalUnreadCount)).toBe(1)
+      expect(get(client.unreadByDoc).get('docA' as any)).toMatchObject({ unreadCount: 1, unreadMessagesCount: 0 })
+      expect(get(client.unreadByDoc).has('docB' as any)).toBe(false)
+
+      // A message arriving while the viewer is at the bottom stays hidden until they leave.
+      unreadMessagesQueryCallback?.([
+        { objectId: 'docA', unreadCount: 4, unreadMessagesCount: 3, notifiedMessagesCount: 3 },
+        { objectId: 'docB', unreadCount: 1, unreadMessagesCount: 1, notifiedMessagesCount: 1 }
+      ])
+      expect(get(client.unreadByDoc).get('docA' as any)).toMatchObject({
+        unreadMessagesCount: 0,
+        notifiedMessagesCount: 0
+      })
+
+      client.setDocReading('docA' as any, false)
+      expect(get(client.unreadByDoc).get('docA' as any)?.unreadMessagesCount).toBe(3)
+      expect(get(client.totalUnreadCount)).toBe(3)
+    })
+  })
+
+  describe('setDocReading with other unread items', () => {
+    it('hides only the notified messages and keeps an unread reaction of the document', async () => {
+      // 3 unread messages without inbox notifications and one unread reaction: unreadCount = 1.
+      const client = NotificationClientImpl.getClient()
+      await initClient(client)
+
+      const unread = { objectId: 'docA', unreadCount: 1, unreadMessagesCount: 3, notifiedMessagesCount: 0 }
+      unreadQueryCallback?.([unread])
+      unreadMessagesQueryCallback?.([unread])
+
+      client.setDocReading('docA' as any, true)
+
+      expect(get(client.totalUnreadCount)).toBe(1)
+      expect(get(client.unreadByDoc).get('docA' as any)).toMatchObject({ unreadCount: 1, unreadMessagesCount: 0 })
     })
   })
 

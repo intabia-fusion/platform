@@ -68,14 +68,12 @@
   let count: number = 0
   let isOpen = true
 
-  // A collapsed section shows the unread total of its contexts: by class for a class section, by
-  // the listed documents for a mixed one. Both come from the shared unread store.
+  // A collapsed section shows the unread total of the documents it lists, from the shared unread
+  // store. Not by class: a starred channel lives in another section, hidden and archived ones in none.
   $: sectionIds = new Set(objects.map(({ doc }) => doc._id))
-  $: count = isOpen ? 0 : getUnreadMessageCount(Array.from($unreadByDoc.values()).filter(inSection))
-
-  function inSection (it: { objectId: Ref<Doc>, objectClass: Ref<Class<Doc>> }): boolean {
-    return _class !== core.class.Doc ? hierarchy.isDerived(it.objectClass, _class) : sectionIds.has(it.objectId)
-  }
+  $: count = isOpen
+    ? 0
+    : getUnreadMessageCount(Array.from($unreadByDoc.values()).filter((it) => sectionIds.has(it.objectId)))
 
   $: void getChatNavItems(
     objects,

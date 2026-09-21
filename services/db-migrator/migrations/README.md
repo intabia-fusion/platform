@@ -37,6 +37,13 @@ All migration scripts must follow this format:
 
 ---
 
+## Adding a migration
+
+Bump `EXPECTED_SCHEMA_VERSION` in `foundations/server/packages/postgres/src/version.ts` together with
+the new file. The migrator compares the stored version with it first and does not even list the
+files when the database is already at that version, so a file added without the bump is never
+applied to an existing database.
+
 ## Failure handling
 
 Each file runs in one transaction together with its `system._migrations` row. A failing statement

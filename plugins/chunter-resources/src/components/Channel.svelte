@@ -20,6 +20,7 @@
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import { location as locationStore } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
+  import { get } from 'svelte/store'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import chunter from '../plugin'
@@ -55,7 +56,10 @@
     messageInFocus.set(id)
   })
 
+  let destroyed = false
+
   onDestroy(() => {
+    destroyed = true
     unsubscribe()
     unsubscribeLocation()
     chatViewport?.release()
@@ -73,8 +77,11 @@
   async function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
     if (viewportRequested) return
     viewportRequested = true
-    const read = await NotificationClientImpl.getClient().getReadState(attachedTo)
-    chatViewport = ChatViewport.getOrCreate(read, attachedTo, selectedMessageId, 50, false)
+    const inboxClient = NotificationClientImpl.getClient()
+    const read = await inboxClient.getReadState(attachedTo)
+    if (destroyed) return
+    const hasUnread = (get(inboxClient.unreadByDoc).get(attachedTo)?.unreadMessagesCount ?? 0) > 0
+    chatViewport = ChatViewport.getOrCreate(read, attachedTo, selectedMessageId, 50, false, hasUnread)
   }
 </script>
 

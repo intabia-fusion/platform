@@ -58,6 +58,7 @@ import {
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
+import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { type IntlString } from '@hcengineering/platform'
 
 import { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
@@ -775,6 +776,61 @@ async function initReadStates (client: MigrationClient): Promise<void> {
   }
 }
 
+async function initThreadReadStates (client: MigrationClient): Promise<void> {
+  const messageClasses = client.hierarchy.getDescendants(activity.class.ActivityMessage)
+  const iterator = await client.traverse<DocNotifyContext>(
+    DOMAIN_DOC_NOTIFY,
+    { _class: notification.class.DocNotifyContext, objectClass: { $in: messageClasses } },
+    { projection: { _id: 1, objectId: 1, objectClass: 1 } }
+  )
+
+  let created = 0
+  try {
+    while (true) {
+      const contexts = (await iterator.next(500)) ?? []
+      if (contexts.length === 0) break
+
+      const classById = new Map<Ref<Doc>, Ref<Class<Doc>>>(contexts.map((it) => [it.objectId, it.objectClass]))
+      const ids = Array.from(classById.keys())
+      const existing = await client.find<ReadState>(
+        DOMAIN_READ_STATE,
+        { attachedTo: { $in: ids } },
+        { projection: { attachedTo: 1 } }
+      )
+      const existingIds = new Set(existing.map((it) => it.attachedTo))
+      const missing = ids.filter((id) => !existingIds.has(id))
+      if (missing.length === 0) continue
+
+      const messages = await client.find<Doc>(
+        DOMAIN_ACTIVITY,
+        { _id: { $in: missing } },
+        { projection: { _id: 1, space: 1 } }
+      )
+      if (messages.length === 0) continue
+
+      await client.create<ReadState>(
+        DOMAIN_READ_STATE,
+        messages.map((message) => ({
+          _id: generateId(),
+          _class: notification.class.ReadState,
+          space: message.space,
+          attachedTo: message._id,
+          attachedToClass: classById.get(message._id) ?? activity.class.ActivityMessage,
+          collection: 'readStates',
+          modifiedOn: Date.now(),
+          createdOn: Date.now(),
+          createdBy: core.account.System,
+          modifiedBy: core.account.System
+        }))
+      )
+      created += messages.length
+    }
+  } finally {
+    await iterator.close()
+  }
+  client.logger.log('thread read states created', { count: created })
+}
+
 async function clearNotificationTx (client: MigrationClient): Promise<void> {
   const _classes = [
     'notification:class:InboxNotification' as any,
@@ -1254,6 +1310,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'init-read-states-v2',
         mode: 'upgrade',
         func: initReadStates
+      },
+      {
+        state: 'init-thread-read-states-v1',
+        mode: 'upgrade',
+        func: initThreadReadStates
       },
       {
         state: 'clear-notification-tx-v1',

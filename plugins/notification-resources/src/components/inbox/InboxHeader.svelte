@@ -60,7 +60,11 @@
       ...(filter === 'unread' ? { unreadCount: { $gt: 0 } } : {})
     },
     (res) => {
-      classes = new Set(res.map((it) => it.objectClass))
+      // Every context update fires this callback; the tabs only change when the set of classes does.
+      const next = new Set(res.map((it) => it.objectClass))
+      if (next.size !== classes.size || Array.from(next).some((it) => !classes.has(it))) {
+        classes = next
+      }
     },
     {
       projection: { objectClass: 1 }

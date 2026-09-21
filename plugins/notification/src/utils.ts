@@ -49,6 +49,13 @@ export function getUnreadMessagesTotal (unreadMessages: UnreadMessage[]): number
   return unreadMessages.reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
 }
 
+export function getNotifiedMessagesTotal (unreadMessages: UnreadMessage[]): number {
+  return unreadMessages.reduce(
+    (acc, it) => acc + (isUnreadMessageChunk(it) ? (it.notifiedCount ?? 0) : it.notified === true ? 1 : 0),
+    0
+  )
+}
+
 export function isUnreadMessageChunk (unread: UnreadMessage | undefined): unread is UnreadMessageChunk {
   if (unread == null) return false
   return 'from' in unread && 'to' in unread && 'count' in unread

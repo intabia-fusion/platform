@@ -100,6 +100,7 @@ import {
 import { type ValueType } from './types'
 import { waitForSchemaVersion } from './version'
 import {
+  castForColumn,
   convertArrayParams,
   convertDoc,
   createTables,
@@ -228,16 +229,6 @@ const SEARCH_COLLATION = '"und-x-icu"'
 // Declared type of a real column of the domain, undefined for jsonb fields and dotted paths.
 function columnTypeOf (domain: string, key: string): DataType | undefined {
   return key.includes('.') ? undefined : getSchema(domain)[key]?.type
-}
-
-// A number binds as numeric, which makes Postgres cast an integer or bigint column to numeric and
-// lose its btree index (`"unreadCount" > ?::numeric` skipped the partial unread index). Bind the
-// parameter in the column's own type instead.
-function castForColumn (valType: string, columnType: DataType | undefined): string {
-  if (columnType !== 'bigint' && columnType !== 'integer') return valType
-  if (valType === '::numeric') return '::' + columnType
-  if (valType === '::numeric[]') return '::' + columnType + '[]'
-  return valType
 }
 
 abstract class PostgresAdapterBase implements DbAdapter {
@@ -1368,7 +1359,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           val = Array.isArray(val) ? val.map((it) => (it == null ? null : `${it}`)) : val == null ? null : `${val}`
         }
 
-        let valType = castForColumn(inferType(val), columnType)
+        let valType = castForColumn(inferType(val), columnType, val)
         const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
         if (arrowCount > 0 && valType === '::text') {
           valType = ''
@@ -1492,7 +1483,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       return res.length === 0 ? undefined : res.join(' AND ')
     }
 
-    let valType = castForColumn(inferType(value), columnType)
+    let valType = castForColumn(inferType(value), columnType, value)
     const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
     if (arrowCount > 0 && valType === '::text') {
       valType = ''

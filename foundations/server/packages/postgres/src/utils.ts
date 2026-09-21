@@ -294,6 +294,20 @@ export function convertDoc<T extends Doc> (
   return res
 }
 
+// A number binds as numeric, which makes Postgres cast an integer or bigint column to numeric and
+// lose its btree index (`"unreadCount" > ?::numeric` skipped the partial unread index). Bind the
+// parameter in the column's own type instead.
+// Only whole numbers: parameters travel as text, and '1.5'::bigint is an error where
+// '1.5'::numeric compares fine. An integer column also rejects what does not fit int32.
+export function castForColumn (valType: string, columnType: DataType | undefined, value: unknown): string {
+  if (columnType !== 'bigint' && columnType !== 'integer') return valType
+  const fits = (it: unknown): boolean =>
+    typeof it === 'number' && Number.isSafeInteger(it) && (columnType === 'bigint' || Math.abs(it) <= 2147483647)
+  if (valType === '::numeric' && fits(value)) return '::' + columnType
+  if (valType === '::numeric[]' && Array.isArray(value) && value.every(fits)) return '::' + columnType + '[]'
+  return valType
+}
+
 export function inferType (val: any): string {
   if (typeof val === 'string') {
     return '::text'

@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
+  import { get } from 'svelte/store'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
   import core, { Doc, Ref, Space } from '@hcengineering/core'
@@ -57,10 +58,16 @@
     if (viewportRequested) return
     viewportRequested = true
     const readState = (await inboxClient.getReadState(messageId)) ?? undefined
-    chatViewport = ChatViewport.getOrCreate(readState, messageId, selectedMessageId, 100, true)
+    // Destroyed while the read state was loading: acquiring now would never be released.
+    if (destroyed) return
+    const hasUnread = (get(inboxClient.unreadByDoc).get(messageId)?.unreadMessagesCount ?? 0) > 0
+    chatViewport = ChatViewport.getOrCreate(readState, messageId, selectedMessageId, 100, true, hasUnread)
   }
 
+  let destroyed = false
+
   onDestroy(() => {
+    destroyed = true
     chatViewport?.release()
     chatViewport = undefined
   })

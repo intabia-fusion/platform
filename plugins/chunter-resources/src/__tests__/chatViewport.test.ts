@@ -314,7 +314,7 @@ describe('ChatViewport', () => {
       expect(viewport).toBeDefined()
       expect(mockClient.findOne).toHaveBeenCalledWith(
         activity.class.ActivityMessage,
-        { _id: 'selected-1' },
+        { _id: 'selected-1', attachedTo: chatId },
         { projection: { _id: 1, createdOn: 1 } }
       )
       expect(mockClient.findAll).toHaveBeenLastCalledWith(
@@ -404,9 +404,27 @@ describe('ChatViewport', () => {
       expect(mockClient.findOne).toHaveBeenCalledTimes(1)
       expect(mockClient.findOne).toHaveBeenCalledWith(
         activity.class.ActivityMessage,
-        { _id: 'selected-1' },
+        { _id: 'selected-1', attachedTo: chatId },
         { projection: { _id: 1, createdOn: 1 } }
       )
+    })
+
+    it('1.6b should query the first unread on the unread hint even if latestMessageTimestamp is stale', async () => {
+      const readState = { 'me-uuid': { timestamp: 900 }, latestMessageTimestamp: 500 }
+      mockClient.findOne.mockResolvedValueOnce({ _id: 'unread-1', createdOn: 950 })
+      mockClient.findAll.mockResolvedValueOnce(
+        Array.from({ length: 10 }, (_, i) => ({ _id: `msg-${i}`, createdOn: 1000 - i * 10 }))
+      )
+
+      const viewport = new ChatViewport(readState as any, chatId, undefined, 50, true)
+      await flushTasks()
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { attachedTo: chatId, createdOn: { $gt: 900 }, createdBy: { $nin: ['me-social-id'] } },
+        expect.objectContaining({ sort: { createdOn: 1 } })
+      )
+      expect(get(viewport.newTimestamp)).toBe(950)
     })
 
     it('1.7 should skip unread query if latestMessageTimestamp is less than or equal to lastView', async () => {
@@ -587,6 +605,8 @@ describe('ChatViewport', () => {
 
       expect(get(viewport.isLoadingMore)).toBe(true)
       ;(viewport as any).resetViewport()
+      // The reset owns the flag now: left set, it would block every later loadMore of this viewport.
+      expect(get(viewport.isLoadingMore)).toBe(false)
       viewport.isLoadingMore.set(true)
 
       queryResolve([])
@@ -712,7 +732,10 @@ describe('ChatViewport', () => {
 
     it('6.2.2 should jumpToMessageId return true, reset, and re-initialize if message not loaded', async () => {
       mockClient.findAll.mockResolvedValueOnce([])
-      mockClient.findOne.mockResolvedValueOnce({ _id: 'msg-new', createdOn: 1200 })
+      // The membership check of jumpToMessageId, then the anchor lookup of initializeViewport.
+      mockClient.findOne
+        .mockResolvedValueOnce({ _id: 'msg-new' })
+        .mockResolvedValueOnce({ _id: 'msg-new', createdOn: 1200 })
       mockClient.findAll
         .mockResolvedValueOnce([{ _id: 'msg-new', createdOn: 1200 }])
         .mockResolvedValueOnce([{ _id: 'msg-new', createdOn: 1200 }])
@@ -728,9 +751,22 @@ describe('ChatViewport', () => {
       expect(resetSpy).toHaveBeenCalled()
       expect(mockClient.findOne).toHaveBeenCalledWith(
         activity.class.ActivityMessage,
-        { _id: 'msg-new' },
+        { _id: 'msg-new', attachedTo: chatId },
         { projection: { _id: 1, createdOn: 1 } }
       )
+    })
+
+    it('6.2.3 should leave the viewport alone when the message belongs to another chat', async () => {
+      mockClient.findAll.mockResolvedValueOnce([])
+      const viewport = new ChatViewport(undefined, chatId, undefined)
+      await flushTasks()
+
+      // A thread reply opened next to the channel: not found among the messages of this chat.
+      mockClient.findOne.mockResolvedValueOnce(undefined)
+      const resetSpy = jest.spyOn(viewport as any, 'resetViewport')
+
+      expect(await viewport.jumpToMessageId('thread-reply' as any)).toBe(false)
+      expect(resetSpy).not.toHaveBeenCalled()
     })
 
     it('6.3 should jumpToEnd reset viewport and initialize with undefined target', async () => {
@@ -1669,9 +1705,15 @@ describe('ChatViewport', () => {
 
       // Inbox link: anchor far behind the tail, so the viewport loads a split window around it.
       mockClient.findOne.mockResolvedValueOnce({ _id: 'selected-1', createdOn: 700 })
-      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 51 }, (_, i) => ({ _id: `tail-${i}`, createdOn: 1000 - i })))
-      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 26 }, (_, i) => ({ _id: `older-${i}`, createdOn: 699 - i })))
-      mockClient.findAll.mockResolvedValueOnce(Array.from({ length: 51 }, (_, i) => ({ _id: `newer-${i}`, createdOn: 701 + i })))
+      mockClient.findAll.mockResolvedValueOnce(
+        Array.from({ length: 51 }, (_, i) => ({ _id: `tail-${i}`, createdOn: 1000 - i }))
+      )
+      mockClient.findAll.mockResolvedValueOnce(
+        Array.from({ length: 26 }, (_, i) => ({ _id: `older-${i}`, createdOn: 699 - i }))
+      )
+      mockClient.findAll.mockResolvedValueOnce(
+        Array.from({ length: 51 }, (_, i) => ({ _id: `newer-${i}`, createdOn: 701 + i }))
+      )
 
       const vp1 = ChatViewport.getOrCreate(readState as any, chatId, 'selected-1' as any, 50, false)
       await flushTasks()

@@ -27,6 +27,7 @@ describe('result utils', () => {
         updateContextTx: [],
         createContextTx: [],
         createAppPushNotificationTx: [],
+        updateReadStateTx: [],
         queueMessages: [],
         createUserMentionInfoTx: [],
         updateUserMentionInfoTx: [],

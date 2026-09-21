@@ -48,6 +48,14 @@ export async function handleReadNotificationAction (
   const tx = _tx as TxCreateDoc<ReadNotificationAction>
   const action = TxProcessor.createDoc2Doc(tx)
 
+  if (tx.modifiedBy !== core.account.System && (await cache.getAccountBySocialId(tx.modifiedBy)) !== action.account) {
+    client.ctx.warn('Read notification action for a foreign account, ignored', {
+      account: action.account,
+      modifiedBy: tx.modifiedBy
+    })
+    return
+  }
+
   const context = await cache.getContext(action.attachedTo, action.account)
   if (context == null) {
     client.ctx.warn('Context not found for read notification action', {

@@ -418,6 +418,7 @@ describe('context utils', () => {
             unreadMessages: [],
             unreadCount: 0,
             unreadMessagesCount: 0,
+            notifiedMessagesCount: 0,
             lastNotify: 0
           },
           'new-ctx-id'
@@ -488,6 +489,42 @@ describe('context utils', () => {
       expect(tx.attributes.unreadMessagesCount).toBe(6)
     })
 
+    it('sets notifiedMessagesCount from the notified entries and chunks, on create and on update', async () => {
+      const result = emptyResult()
+      const createTx = createContextTx(
+        {
+          unreadMessages: [
+            { from: 1, to: 2, count: 5, notifiedCount: 2 },
+            { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 },
+            { id: 'msg-2' as Ref<ActivityMessage>, createdOn: 11, notified: true }
+          ]
+        },
+        'ctx-created' as Ref<DocNotifyContext>
+      )
+      result.createContextTx.push(createTx)
+
+      // A mentions-only channel: two unread messages without a notification, one more arrives with it.
+      const cachedContext = makeUnreadContext(contextId, [
+        { id: 'a' as Ref<ActivityMessage>, createdOn: 10 },
+        { id: 'b' as Ref<ActivityMessage>, createdOn: 20 }
+      ])
+      const pushTx = updateContextTx({
+        $push: { unreadMessages: { id: 'c' as Ref<ActivityMessage>, createdOn: 30, notified: true } }
+      })
+      const pullTx = updateContextTx({ $pull: { unreadMessages: { id: { $in: ['c' as Ref<ActivityMessage>] } } } })
+      result.updateContextTx.push(pushTx, pullTx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(createTx.attributes.notifiedMessagesCount).toBe(3)
+      expect(pushTx.operations).toMatchObject({ unreadMessagesCount: 3, notifiedMessagesCount: 1 })
+      expect(pullTx.operations).toMatchObject({ unreadMessagesCount: 2, notifiedMessagesCount: 0 })
+    })
+
     it('sets unreadMessagesCount to 0 on a create tx with an empty/undefined unreadMessages array', async () => {
       const result = emptyResult()
       const txEmpty = createContextTx({ unreadMessages: [] }, 'ctx-empty' as Ref<DocNotifyContext>)
@@ -525,6 +562,59 @@ describe('context utils', () => {
 
       expect(tx.operations.unreadMessagesCount).toBe(3)
       expect(cachedContext).toEqual(cachedSnapshot)
+    })
+
+    it('leaves every array of the cached context untouched, latestNotifications included', async () => {
+      const cachedContext = {
+        _id: contextId,
+        unreadMessages: [{ id: 'msg-1' as Ref<ActivityMessage>, createdOn: 10 }],
+        latestNotifications: [{ id: 'n-1', type: 'message', messageId: 'msg-1', createdOn: 10 }],
+        unreadReactions: [] as unknown[]
+      } as unknown as DocNotifyContext
+      const cachedSnapshot = JSON.parse(JSON.stringify(cachedContext))
+
+      const result = emptyResult()
+      const tx = updateContextTx({
+        $push: {
+          unreadMessages: { id: 'msg-2' as Ref<ActivityMessage>, createdOn: 20 },
+          latestNotifications: {
+            $each: [{ id: 'n-2', type: 'message', messageId: 'msg-2', createdOn: 20 } as any],
+            $position: 0,
+            $slice: 5
+          }
+        } as any
+      })
+      result.updateContextTx.push(tx)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        makeClient(undefined) as unknown as Client
+      )
+
+      expect(tx.operations.unreadMessagesCount).toBe(2)
+      // applyResult replays the same operations on the cache: a shared array would get them twice.
+      expect(cachedContext).toEqual(cachedSnapshot)
+    })
+
+    it('replaces a decrement that would take unreadCount below zero with an absolute 0', async () => {
+      const cachedContext = { _id: contextId, unreadCount: 1, unreadMessages: [] } as unknown as DocNotifyContext
+      const result = emptyResult()
+      const tx = updateContextTx({ $inc: { unreadCount: -2 }, $pull: { unreadReactions: { id: 'r1' } } } as any)
+      result.updateContextTx.push(tx)
+      const client = makeClient(undefined)
+
+      await setUnreadMessagesCounts(
+        result,
+        makeCache({ [contextId]: cachedContext }) as unknown as Cache,
+        client as unknown as Client
+      )
+
+      // The column has a CHECK (>= 0): the raw decrement would fail the whole batch.
+      expect(tx.operations.$inc).toBeUndefined()
+      expect(tx.operations.unreadCount).toBe(0)
+      expect(client.ctx.warn).toHaveBeenCalled()
+      expect(cachedContext.unreadCount).toBe(1)
     })
 
     it('decreases unreadMessagesCount on a $pull update tx with $in', async () => {

@@ -117,6 +117,7 @@ class Workspace {
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     this.inProgress = true
+    this.lastUpdate = Date.now()
     try {
       await this.processTx(tx)
     } finally {
@@ -135,7 +136,13 @@ class Workspace {
       this.model.addTxes(this.ctx, [tx], true)
     }
 
-    this.cache.tx(tx)
+    try {
+      this.cache.tx(tx)
+    } catch (e: any) {
+      // A cache that failed half way through an update cannot be trusted; the DB can.
+      this.ctx.error('Failed to apply tx to the cache, cache is reset', { error: e?.message ?? String(e), tx: tx._id })
+      this.cache.reset()
+    }
 
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.AppPushNotification)) return
@@ -158,19 +165,18 @@ class Workspace {
       await handleReadState(this.client, this.cache, result, tx as TxCUD<ReadState>)
     }
 
-    if (tx.meta?.silent === true) return
+    if (tx.meta?.silent !== true) {
+      await handleTxNotification(this.client, this.cache, txCache, result, tx, this.txTypes)
 
-    await handleTxNotification(this.client, this.cache, txCache, result, tx, this.txTypes)
-
-    if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
-      await handleMessage(this.client, this.cache, txCache, result, tx as TxCUD<ActivityMessage>)
+      if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
+        await handleMessage(this.client, this.cache, txCache, result, tx as TxCUD<ActivityMessage>)
+      }
     }
 
     if (!isEmptyResult(result)) {
       if (tx.meta?.inboxOnly === true) this.keepInboxProviderOnly(result)
       // Derived counters are filled once here, after every handler had its say on the context txes.
       await setUnreadMessagesCounts(result, this.cache, this.client)
-      this.lastUpdate = tx.createdOn ?? tx.modifiedOn
       await this.applyResult(result)
     }
   }
@@ -200,9 +206,7 @@ class Workspace {
           isRetryable: isTransientError,
           delayStrategy: applyBackoff
         })
-        for (const tx of batch) {
-          this.cache.tx(tx, true)
-        }
+        this.mirrorToCache(batch)
       } catch (e: any) {
         this.cache.resetContexts()
         const transient = isTransientError(e)
@@ -231,6 +235,18 @@ class Workspace {
           count: result.queueMessages.length
         })
       }
+    }
+  }
+
+  // The batch is applied by now: a failure here is a cache problem, not a rejected batch.
+  private mirrorToCache (batch: TxCUD<Doc>[]): void {
+    try {
+      for (const tx of batch) {
+        this.cache.tx(tx, true)
+      }
+    } catch (e: any) {
+      this.ctx.error('Failed to mirror applied txes to the cache, cache is reset', { error: e?.message ?? String(e) })
+      this.cache.reset()
     }
   }
 

@@ -23,6 +23,8 @@ import core, {
   DocumentUpdate,
   Doc,
   Ref,
+  SortingOrder,
+  Timestamp,
   generateId
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
@@ -30,6 +32,7 @@ import notification, {
   DocNotifyContext,
   NotificationIntl,
   NotificationType,
+  ReadState,
   UnreadMessage,
   UnreadMessageChunk,
   isUnreadMessageId,
@@ -112,6 +115,9 @@ async function handleCreateMessage (
     return
   }
 
+  const readState = await cache.getDocReadState(doc._id)
+  trackLatestMessage(client, result, readState, message._id, message.createdOn ?? message.modifiedOn)
+
   const notified = getNotifiedUsers(result)
   const collaborators = await getCollaboratorAccounts(client, cache, doc, space, notified)
 
@@ -139,7 +145,6 @@ async function handleCreateMessage (
   const contexts = await cache.getContexts(doc._id)
   const docSettings = await cache.getDocSettings(doc._id)
   const sender = await cache.getSender(message.modifiedBy)
-  const readState = await cache.getDocReadState(doc._id)
 
   const unreadMessage: UnreadMessage = {
     id: message._id,
@@ -200,7 +205,18 @@ async function handleRemoveMessage (
     return
   }
 
+  const readState = await cache.getDocReadState(tx.attachedTo)
+  if (readState?.latestMessageId === tx.objectId) {
+    const newest = await client.findOne(
+      activity.class.ActivityMessage,
+      { attachedTo: tx.attachedTo },
+      { sort: { createdOn: SortingOrder.Descending }, projection: { _id: 1, createdOn: 1, modifiedOn: 1 } }
+    )
+    trackLatestMessage(client, result, readState, newest?._id, newest?.createdOn ?? newest?.modifiedOn ?? 0, true)
+  }
+
   const contexts = await cache.getContexts(tx.attachedTo)
+  const author = await cache.getSender(tx.removedDoc.createdBy ?? tx.removedDoc.modifiedBy ?? tx.modifiedBy)
 
   for (const context of contexts) {
     let operations: DocumentUpdate<DocNotifyContext> = {}
@@ -223,10 +239,11 @@ async function handleRemoveMessage (
           unreadCount: (operations.$inc?.unreadCount ?? 0) - 1
         }
       }
-    } else {
+    } else if (author.account !== context.user) {
       const createdOn = tx.removedDoc?.createdOn
       if (createdOn !== undefined) {
-        const unreadMessages = context.unreadMessages ?? []
+        // A copy: the cached context is updated only once the tx is applied.
+        const unreadMessages = [...(context.unreadMessages ?? [])]
         const chunkIndex = unreadMessages.findIndex(
           (it) => isUnreadMessageChunk(it) && it.from <= createdOn && createdOn <= it.to
         )
@@ -285,6 +302,27 @@ async function handleRemoveMessage (
   }
 }
 
+// `ReadState.latestMessage*` feed the unread anchor on the clients and the "recent direct" check
+// in the chunter server plugin; a migration filled them once, this keeps them moving.
+function trackLatestMessage (
+  client: Client,
+  result: Result,
+  readState: ReadState | undefined,
+  messageId: Ref<ActivityMessage> | undefined,
+  timestamp: Timestamp,
+  force = false
+): void {
+  if (readState === undefined) return
+  if (!force && timestamp <= (readState.latestMessageTimestamp ?? 0)) return
+  result.updateReadStateTx.push(
+    client.txFactory.createTxUpdateDoc(readState._class, readState.space, readState._id, {
+      // The id column is not nullable: an empty chat keeps the old id and a zero timestamp.
+      ...(messageId !== undefined ? { latestMessageId: messageId } : {}),
+      latestMessageTimestamp: timestamp
+    })
+  )
+}
+
 async function handleUpdateMessage (
   client: Client,
   cache: Cache,
@@ -297,15 +335,16 @@ async function handleUpdateMessage (
     await handleUpdateDUM(client, cache, txCache, result, tx as TxUpdateDoc<DocUpdateMessage>)
   }
 
-  if (tx.operations.message == null && (tx.operations as any).attachments === null && !isDUM) return
+  const ops = tx.operations as any
+  const contentChanged = ops.message != null || ops.attachments != null || ops.$inc?.attachments != null
+  if (!contentChanged && !isDUM) return
 
-  const _message = await cache.getDoc(tx.objectId, tx.objectClass)
-  if (_message === undefined) {
+  // The cache (or the DB behind it) already holds this tx: applying it again doubles $push/$inc.
+  const message = await cache.getDoc(tx.objectId, tx.objectClass)
+  if (message === undefined) {
     client.ctx.warn('Message not found for update', { messageId: tx.objectId, messageClass: tx.objectClass })
     return
   }
-
-  const message = TxProcessor.updateDoc2Doc(_message, tx)
 
   const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
   if (doc === undefined) {
@@ -334,21 +373,28 @@ async function handleUpdateMessage (
           }
         }
       }
-    } else if (hasMentionNotificationByMessage(context, tx.objectId)) {
-      ops.$update = {
-        ...ops.$update,
-        latestNotifications: {
-          $query: { type: 'mention', messageId: tx.objectId },
-          $update: {
-            markup: message.message,
-            attachments
-          }
-        }
-      }
     }
 
     if (Object.keys(ops).length > 0) {
       result.updateContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
+    }
+
+    // A mention entry keeps its own markup and can sit next to a message entry for the same
+    // message, so it is refreshed on its own, not instead of the one above.
+    if (hasMentionNotificationByMessage(context, tx.objectId)) {
+      result.updateContextTx.push(
+        client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
+          $update: {
+            latestNotifications: {
+              $query: { type: 'mention', messageId: tx.objectId },
+              $update: {
+                markup: message.message,
+                attachments
+              }
+            }
+          }
+        })
+      )
     }
   }
 
@@ -380,10 +426,8 @@ async function handleUpdateDUM (
     return
   }
 
-  const _message = await cache.getDoc(tx.objectId, tx.objectClass)
-  if (_message === undefined) return
-
-  const message = TxProcessor.updateDoc2Doc(_message, tx)
+  const message = await cache.getDoc(tx.objectId, tx.objectClass)
+  if (message === undefined) return
 
   const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
   if (doc === undefined) return
@@ -424,11 +468,12 @@ async function handleUpdateDUM (
 
     const mode = getMode(docSettings, receiver.account)
 
-    const context = contexts.find((it) => it.user === receiver.account)
+    const cached = contexts.find((it) => it.user === receiver.account)
 
-    if (context != null) {
-      pullDUMFromContext(client, context, tx.objectId, result)
+    if (cached != null) {
+      pullDUMFromContext(client, cached, tx.objectId, result)
     }
+    const context = cached != null ? withoutMessage(cached, tx.objectId) : undefined
 
     const notifyResult = !isMuted(mode)
       ? await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
@@ -621,6 +666,19 @@ async function pushNotification (
   })
 }
 
+// A copy of the context as it will be once pullDUMFromContext is applied; the cached one is untouched.
+function withoutMessage (context: DocNotifyContext, objectId: Ref<ActivityMessage>): DocNotifyContext {
+  const unreadMessages = context.unreadMessages ?? []
+  const unread = unreadMessages.find((it) => isUnreadMessageId(it) && String(it.id) === String(objectId))
+  const wasNotified = unread !== undefined && isUnreadMessageId(unread) && unread.notified === true
+  return {
+    ...context,
+    latestNotifications: (context.latestNotifications ?? []).filter((it) => it.id !== objectId),
+    unreadMessages: unreadMessages.filter((it) => it !== unread),
+    unreadCount: wasNotified ? Math.max(context.unreadCount - 1, 0) : context.unreadCount
+  }
+}
+
 function pullDUMFromContext (
   client: Client,
   context: DocNotifyContext,
@@ -683,7 +741,7 @@ async function restoreLatestNotifications (
     return (
       it.notified === true &&
       !idsToRemove.includes(it.id) &&
-      !remaining.some((n) => n.type === 'message' && n.id === it.id)
+      !remaining.some((n) => n.type !== 'common' && n.messageId === it.id)
     )
   })
 

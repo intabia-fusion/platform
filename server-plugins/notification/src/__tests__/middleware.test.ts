@@ -135,6 +135,62 @@ describe('NotificationMiddleware', () => {
     await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
   })
 
+  it('forbids a mixin tx on a read state: it would write another user position past the checks', async () => {
+    middleware = (await NotificationMiddleware.create(
+      mockMeasureContext,
+      mockPipelineContext,
+      mockNext
+    )) as NotificationMiddleware
+
+    const tx = {
+      _class: core.class.TxMixin,
+      objectClass: notification.class.ReadState,
+      objectId: 'readstate-1',
+      objectSpace: 'space-1',
+      mixin: 'victim-uuid',
+      attributes: { timestamp: 9e15 }
+    } as any
+
+    await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
+  })
+
+  it('lets a user create a push subscription only for themselves', async () => {
+    middleware = (await NotificationMiddleware.create(
+      mockMeasureContext,
+      mockPipelineContext,
+      mockNext
+    )) as NotificationMiddleware
+
+    const create = (user: string): any => ({
+      _class: core.class.TxCreateDoc,
+      objectClass: notification.class.PushSubscription,
+      objectId: 'sub-1',
+      objectSpace: 'space-1',
+      attributes: { user, endpoint: 'https://push.example', keys: { p256dh: 'k', auth: 'a' } }
+    })
+
+    await expect(middleware.tx(mockMeasureContext, [create('someone-else')])).rejects.toThrow(PlatformError)
+    await expect(middleware.tx(mockMeasureContext, [create(userAccountUuid)])).resolves.toBeDefined()
+  })
+
+  it('forbids removing a push subscription of another user', async () => {
+    middleware = (await NotificationMiddleware.create(
+      mockMeasureContext,
+      mockPipelineContext,
+      mockNext
+    )) as NotificationMiddleware
+    jest.spyOn(middleware as any, 'findAll').mockResolvedValue([{ _id: 'sub-1', user: 'someone-else' }])
+
+    const tx = {
+      _class: core.class.TxRemoveDoc,
+      objectClass: notification.class.PushSubscription,
+      objectId: 'sub-1',
+      objectSpace: 'space-1'
+    } as any
+
+    await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
+  })
+
   it('allows system account to remove ReadState', async () => {
     middleware = (await NotificationMiddleware.create(
       mockMeasureContext,

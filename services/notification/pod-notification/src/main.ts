@@ -34,7 +34,16 @@ import { createRestClient } from '@hcengineering/api-client'
 import webpush, { WebPushError } from 'web-push'
 
 import config from './config'
-import { apnsConfigured, Delivery, fcmConfigured, PushKind, pushTarget, sendApns, sendFcm } from './mobile'
+import {
+  apnsConfigured,
+  Delivery,
+  fcmConfigured,
+  PushKind,
+  pushTarget,
+  sendApns,
+  sendFcm,
+  sendTimeoutMs
+} from './mobile'
 import { getCtx } from './utils'
 
 const errorMessages = ['expired', 'Unregistered', 'No such subscription', 'VapidPkHashMismatch']
@@ -65,6 +74,7 @@ export async function sendPushToSubscription (
     try {
       await webpush.sendNotification(subscription, JSON.stringify(data), {
         TTL: config.TTL,
+        timeout: sendTimeoutMs,
         headers: {
           Urgency: 'high'
         }
@@ -73,8 +83,9 @@ export async function sendPushToSubscription (
     } catch (err: any) {
       console.error(`Failed to send push notification to subscription ${subscription._id}:`, err)
       if (err instanceof WebPushError) {
+        // 404/410 is how a push service says the subscription is gone; some send no body with it.
         const bodyStr = err.body != null ? JSON.stringify(err.body) : ''
-        if (errorMessages.some((p) => bodyStr.includes(p))) {
+        if (err.statusCode === 404 || err.statusCode === 410 || errorMessages.some((p) => bodyStr.includes(p))) {
           return subscription._id
         }
       }

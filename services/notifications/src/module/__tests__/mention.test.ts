@@ -27,6 +27,7 @@ function createEmptyResult (): Result {
     updateContextTx: [],
     createContextTx: [],
     createAppPushNotificationTx: [],
+    updateReadStateTx: [],
     queueMessages: [],
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
@@ -107,6 +108,8 @@ jest.mock('../../utils/utils', () => ({
   isMuted: (...args: any[]) => mockIsMuted(...args),
   getMentionNotification: (...args: any[]) => mockGetMentionNotification(...args),
   hasMessageNotification: (...args: any[]) => mockHasMessageNotification(...args),
+  getLastNotify: (context: any) =>
+    Math.max(...(context.latestNotifications ?? []).map((it: any) => it.createdOn ?? 0), 0),
   getAttachments: (...args: any[]) => mockGetAttachments(...args)
 }))
 
@@ -618,7 +621,8 @@ describe('mention module', () => {
         _id: 'ctx-1',
         _class: 'DocNotifyContext',
         space: 'space-1',
-        latestNotifications: [{ type: 'mention', messageId: 'msg-1' }],
+        lastNotify: 100,
+        latestNotifications: [{ id: 'n-mention', type: 'mention', messageId: 'msg-1', createdOn: 100 }],
         unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true, mentioned: true }]
       })
 
@@ -639,9 +643,10 @@ describe('mention module', () => {
       // Verify removal operations
       expect(result.removeUserMentionInfoTx).toHaveLength(1)
       expect(result.updateContextTx).toHaveLength(1)
+      // By id: a `{ type, messageId: undefined }` pull loses messageId in JSON and takes every mention.
       expect(result.updateContextTx[0].operations).toEqual({
         $pull: {
-          latestNotifications: { type: 'mention', messageId: 'msg-1' }
+          latestNotifications: { id: { $in: ['n-mention'] } }
         },
         $update: {
           unreadMessages: {
@@ -652,6 +657,139 @@ describe('mention module', () => {
           }
         }
       })
+    })
+
+    it('removes a document-level mention by id together with its unread entry', async () => {
+      const tx = {
+        _class: core.class.TxUpdateDoc,
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        createdOn: 100,
+        modifiedBy: 'user-2',
+        operations: { description: '<content>' }
+      } as unknown as TxCUD<Doc>
+      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+
+      const attrs = new Map()
+      attrs.set('description', {
+        name: 'description',
+        type: { _class: core.class.TypeMarkup }
+      } as unknown as AnyAttribute)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation(
+        (cls: string, target: string) => target === contact.class.Person
+      )
+      mockExtractReferences.mockReturnValue([
+        { objectId: 'employee-3', objectClass: contact.class.Person, parentNode: { type: 'paragraph' } }
+      ])
+      mockJsonToMarkup.mockReturnValue('{"text":"new"}')
+
+      mockClient.findAll.mockImplementation(async (cls: string) =>
+        cls === activity.class.UserMentionInfo
+          ? [
+              {
+                _id: 'mention-info-1',
+                _class: activity.class.UserMentionInfo,
+                space: 'space-1',
+                user: 'employee-1',
+                attachedTo: 'doc-1',
+                content: '{"text":"old"}'
+              }
+            ]
+          : []
+      )
+      mockCache.getDoc.mockImplementation(async (_id: string, cls: string) =>
+        cls === contact.class.Person ? { personUuid: 'user-1' as AccountUuid } : undefined
+      )
+      mockCache.getContext.mockResolvedValue({
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        lastNotify: 100,
+        unreadCount: 1,
+        latestNotifications: [
+          { id: 'n-doc', type: 'mention', createdOn: 100 },
+          { id: 'n-comment', type: 'mention', messageId: 'msg-9', createdOn: 90 }
+        ],
+        unreadMentions: [{ id: 'n-doc' }]
+      })
+      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getDocSettings.mockResolvedValue([])
+      mockCache.getReceivers.mockResolvedValue([])
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, doc, 'test-type' as any)
+
+      // The comment mention of the same document stays, the counter goes down with the entry.
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
+        $pull: {
+          latestNotifications: { id: { $in: ['n-doc'] } },
+          unreadMentions: { id: { $in: ['n-doc'] } }
+        },
+        $inc: { unreadCount: -1 }
+      })
+    })
+
+    it('keeps the mentions of an @everyone message when it is edited without touching the mention', async () => {
+      const tx = {
+        _class: core.class.TxUpdateDoc,
+        objectId: 'msg-1',
+        objectClass: 'MsgClass',
+        createdOn: 100,
+        modifiedBy: 'user-9',
+        operations: { message: '<content>' }
+      } as unknown as TxCUD<Doc>
+      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+      const txObject = { _id: 'msg-1', _class: 'MsgClass' } as any as Doc
+
+      const attrs = new Map()
+      attrs.set('message', { name: 'message', type: { _class: core.class.TypeMarkup } } as unknown as AnyAttribute)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        return target === activity.class.ActivityMessage && cls === 'MsgClass'
+      })
+      mockExtractReferences.mockReturnValue([
+        { objectId: contact.mention.Everyone, objectClass: contact.class.Person, parentNode: { type: 'paragraph' } }
+      ])
+      mockJsonToMarkup.mockReturnValue('{"text":"same"}')
+      mockAreEqualJson.mockReturnValue(true)
+
+      const infos = ['employee-1', 'employee-2'].map((user, i) => ({
+        _id: `mention-info-${i}`,
+        _class: activity.class.UserMentionInfo,
+        space: 'space-1',
+        user,
+        attachedTo: 'msg-1',
+        content: '{"text":"same"}'
+      }))
+      mockClient.findAll.mockImplementation(async (cls: string) =>
+        cls === activity.class.UserMentionInfo ? infos : []
+      )
+
+      mockCache.getSender.mockResolvedValue({ account: 'user-9' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false, members: [] })
+      mockCache.getDocSettings.mockResolvedValue([])
+      mockCache.getCollaborators.mockResolvedValue([{ collaborator: 'user-1' }, { collaborator: 'user-2' }])
+      mockCache.getReceivers.mockResolvedValue([
+        { account: 'user-1', employeeRef: 'employee-1' },
+        { account: 'user-2', employeeRef: 'employee-2' }
+      ])
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+
+      expect(result.removeUserMentionInfoTx).toHaveLength(0)
+      expect(result.updateUserMentionInfoTx).toHaveLength(0)
+      expect(result.updateContextTx).toHaveLength(0)
+      expect(mockPushNotification).not.toHaveBeenCalled()
     })
 
     it('updates existing mentions if references changed but UserMentionInfo exists', async () => {

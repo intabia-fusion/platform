@@ -215,13 +215,14 @@ export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> 
   // Every unread chat message of the context. Drives the chat badges;
   // service keeps it equal to the total of `unreadMessages`.
   unreadMessagesCount: number
+  notifiedMessagesCount: number
 }
 
 export type ContextNotification = MessageNotification | ReactionNotification | MentionNotification | CommonNotification
 
 export type UnreadContext = Pick<
   DocNotifyContext,
-  '_id' | 'objectId' | 'objectClass' | 'unreadCount' | 'unreadMessagesCount' | 'modifiedOn'
+  '_id' | 'objectId' | 'objectClass' | 'unreadCount' | 'unreadMessagesCount' | 'notifiedMessagesCount' | 'modifiedOn'
 >
 export type NotificationMessage<T extends ActivityMessage = ActivityMessage> = ActivityMessageLite<T>
 
@@ -394,6 +395,7 @@ export interface NotificationClient {
   contextById: Readable<Map<Ref<DocNotifyContext>, DocNotifyContext | null>>
   // Every context of the user with unread items, by document.
   unreadByDoc: Readable<Map<Ref<Doc>, UnreadContext>>
+  setDocReading: (doc: Ref<Doc>, reading: boolean, reader?: unknown) => void
 
   docSettingByDoc: Readable<Map<Ref<Doc>, DocNotificationSetting | null>>
 

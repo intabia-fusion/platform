@@ -25,7 +25,7 @@
 
 <div class="content">
   <div class="notifications">
-    {#each value.latestNotifications.slice(0, 3) as n (n.id)}
+    {#each (value.latestNotifications ?? []).slice(0, 3) as n (n.id)}
       <div class="notification">
         <div class="embeddedMarker" />
         <NotificationPresenter
