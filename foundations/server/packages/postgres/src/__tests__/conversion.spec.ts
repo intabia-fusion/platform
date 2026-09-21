@@ -167,6 +167,51 @@ function createTestContext (): { adapter: PostgresAdapter, ctx: MeasureMetricsCo
   return { adapter, ctx, queries }
 }
 
+describe('number comparison on jsonb fields', () => {
+  function translate (tkey: string, value: any): { sql: string | undefined, values: any[] } {
+    const { adapter } = createTestContext()
+    const values: any[] = []
+    let idx = 1
+    const vars = {
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return `$${idx++}${type}`
+      },
+      addArray (value: any[], type: string = ''): string {
+        values.push(value)
+        return `$${idx++}${type}`
+      }
+    }
+    return { sql: (adapter as any).translateQueryValue(vars, tkey, value, 'common'), values }
+  }
+
+  it('compares a jsonb field with a number as a number, not as text', () => {
+    // Text orders '10' before '9': `number > 9 AND number < 100` used to match nothing.
+    const { sql, values } = translate("task.data#>>'{number}'", { $gt: 9, $lt: 100 })
+
+    const key = "(CASE WHEN jsonb_typeof(task.data#>'{number}') = 'number' THEN (task.data#>>'{number}')::numeric END)"
+    expect(sql).toEqual(`${key} > $1::numeric AND ${key} < $2::numeric`)
+    expect(values).toEqual([9, 100])
+  })
+
+  it('does the same for a field of a joined document and for an arrow path', () => {
+    expect(translate('lookup_activity_attachedTo."data"#>>\'{replies}\'', { $gte: 1 }).sql).toEqual(
+      "(CASE WHEN jsonb_typeof(lookup_activity_attachedTo.\"data\"#>'{replies}') = 'number' " +
+        'THEN (lookup_activity_attachedTo."data"#>>\'{replies}\')::numeric END) >= $1::numeric'
+    )
+    expect(translate("data->'a'->'b'", { $lte: 5 }).sql).toEqual(
+      "(CASE WHEN jsonb_typeof(data->'a'->'b') = 'number' THEN (data->'a'->>'b')::numeric END) <= $1::numeric"
+    )
+  })
+
+  it('leaves text ranges, equality and real columns as they were', () => {
+    expect(translate("task.data#>>'{title}'", { $gt: 'a' }).sql).toEqual("task.data#>>'{title}' > $1::text")
+    expect(translate("task.data#>>'{number}'", 9).values).toEqual(['9'])
+    expect(translate("task.data#>>'{number}'", { $in: [1, 2] }).values).toEqual([['1', '2']])
+    expect(translate('task."modifiedOn"', { $gt: 9 }).sql).toEqual('task."modifiedOn" > $1::numeric')
+  })
+})
+
 describe('projection', () => {
   it('mixin query projection', () => {
     const data = {

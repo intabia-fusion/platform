@@ -1365,6 +1365,14 @@ abstract class PostgresAdapterBase implements DbAdapter {
           valType = ''
         }
 
+        // A jsonb value is read as text, and text orders '10' before '9': a number is compared as
+        // a number.
+        const rangeOperator = rangeOperators[operator]
+        if (rangeOperator !== undefined && tkeyData && typeof value[operator] === 'number') {
+          res.push(`${numericJsonKey(tkey)} ${rangeOperator} ${vars.add(value[operator], '::numeric')}`)
+          continue
+        }
+
         switch (operator) {
           case '$ne':
             if (val == null) {
@@ -1374,16 +1382,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
             }
             break
           case '$gt':
-            res.push(`${tlkey} > ${vars.add(val, valType)}`)
-            break
           case '$gte':
-            res.push(`${tlkey} >= ${vars.add(val, valType)}`)
-            break
           case '$lt':
-            res.push(`${tlkey} < ${vars.add(val, valType)}`)
-            break
           case '$lte':
-            res.push(`${tlkey} <= ${vars.add(val, valType)}`)
+            res.push(`${tlkey} ${rangeOperators[operator]} ${vars.add(val, valType)}`)
             break
           case '$in':
             switch (type) {
@@ -2280,6 +2282,19 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
     return this.stripHash(model) as Tx[]
   }
 }
+const rangeOperators: Record<string, string | undefined> = { $gt: '>', $gte: '>=', $lt: '<', $lte: '<=' }
+
+/**
+ * A jsonb field as a number. Guarded by its json type: the same field holds a string in an old or
+ * foreign document, and a bare cast would fail the whole query on it; such a row just does not match.
+ */
+function numericJsonKey (tkey: string): string {
+  // `data#>>'{a,b}'` reads text, `data#>'{a,b}'` the json value; `data->'a'->'b'` is json already.
+  const json = tkey.replace('#>>', '#>')
+  const text = tkey.includes('#>>') ? tkey : tkey.replace(/->(?!.*->)/, '->>')
+  return `(CASE WHEN jsonb_typeof(${json}) = 'number' THEN (${text})::numeric END)`
+}
+
 function prepareJsonValue (tkey: string, valType: string): { tlkey: string, arrowCount: number } {
   if (valType === '::string') {
     valType = '' // No need to add a string conversion

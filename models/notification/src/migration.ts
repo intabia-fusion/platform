@@ -686,6 +686,24 @@ async function createChats (client: MigrationClient): Promise<void> {
   })) as DocNotifyContext[]
   const spaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace })
   const processed = new Map<Ref<Doc>, AccountUuid[]>()
+
+  const existingIterator = await client.traverse<Chat>(
+    DOMAIN_CHUNTER_DOC,
+    { _class: chunter.class.Chat },
+    { projection: { attachedTo: 1, account: 1 } }
+  )
+  try {
+    while (true) {
+      const existing = (await existingIterator.next(1000)) ?? []
+      if (existing.length === 0) break
+      for (const chat of existing) {
+        processed.set(chat.attachedTo, (processed.get(chat.attachedTo) ?? []).concat([chat.account]))
+      }
+    }
+  } finally {
+    await existingIterator.close()
+  }
+
   while (true) {
     const collaborators = (await iterator.next(500)) ?? []
     if (collaborators.length === 0) break

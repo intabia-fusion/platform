@@ -453,6 +453,11 @@ const activitySchema: Schema = {
     type: 'text',
     notNull: false,
     index: true
+  },
+  replies: {
+    type: 'integer',
+    notNull: false,
+    index: false
   }
 }
 
@@ -500,7 +505,8 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
     {
       unique: [],
       custom: [
-        'CREATE INDEX IF NOT EXISTS activity_attachedTo_createdOn__index ON activity ("workspaceId", "attachedTo", "createdOn" DESC);'
+        'CREATE INDEX IF NOT EXISTS activity_attachedTo_createdOn__index ON activity ("workspaceId", "attachedTo", "createdOn" DESC);',
+        'CREATE INDEX IF NOT EXISTS activity_workspaceId_modifiedOn_threads__index ON activity ("workspaceId", "modifiedOn" DESC) WHERE replies > 0;'
       ]
     }
   ]

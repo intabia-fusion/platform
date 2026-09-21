@@ -73,7 +73,7 @@ export class ChannelPage extends CommonPage {
   readonly pinnedMessage = (message: string): Locator => this.page.locator('.antiPopup').getByText(message)
   readonly closeReplyButton = (): Locator => this.page.locator('.hulyHeader-container > button.iconOnly')
   readonly openReplyMessage = (): Locator => this.page.getByText('1 reply Last reply less than')
-  readonly editMessageButton = (): Locator => this.page.getByRole('button', { name: 'Edit' })
+  readonly editMessageButton = (): Locator => this.page.getByRole('button', { name: 'Edit', exact: true })
   readonly copyLinkButton = (): Locator => this.page.getByRole('button', { name: 'Copy link' })
   readonly deleteMessageButton = (): Locator => this.page.getByRole('button', { name: 'Delete' })
   readonly updateButton = (): Locator => this.page.getByRole('button', { name: 'Update' })

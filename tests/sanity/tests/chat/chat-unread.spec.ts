@@ -613,6 +613,107 @@ test.describe('Chat unread state tests', () => {
     await checkMarkersOff(chat, ['chat'])
   })
 
+  // ---- The Threads list ----
+
+  test('Threads lists the threads I take part in, the latest on top', async ({ page }) => {
+    const chat = await createChat()
+    const first = `First parent ${uniq}`
+    const second = `Second parent ${uniq}`
+    const firstId = await chat.me.sendMessage(chat.channel, first)
+    const secondId = await chat.me.sendMessage(chat.channel, second)
+    await chat.other.reply(chat.channel, firstId, `Reply one ${uniq}`)
+    await chat.other.reply(chat.channel, secondId, `Reply two ${uniq}`)
+
+    await unread.navItem('Threads').click()
+
+    const threads = page.locator('.activityMessage')
+    await expect(threads.filter({ hasText: first })).toBeVisible()
+    await expect(threads.filter({ hasText: second })).toBeVisible()
+    const firstBox = await threads.filter({ hasText: first }).boundingBox()
+    const secondBox = await threads.filter({ hasText: second }).boundingBox()
+    expect((secondBox?.y ?? 0) < (firstBox?.y ?? 0)).toBeTruthy()
+
+    // A new reply moves its thread up, without a reload.
+    await chat.other.reply(chat.channel, firstId, `Reply three ${uniq}`)
+    await expect(async () => {
+      const a = await threads.filter({ hasText: first }).boundingBox()
+      const b = await threads.filter({ hasText: second }).boundingBox()
+      expect((a?.y ?? 0) < (b?.y ?? 0)).toBeTruthy()
+    }).toPass()
+  })
+
+  test("Threads leaves out other people's threads and messages without replies", async ({ page }) => {
+    const chat = await createChat()
+    const mine = `My parent ${uniq}`
+    const theirs = `Their parent ${uniq}`
+    const lonely = `No replies ${uniq}`
+    const mineId = await chat.me.sendMessage(chat.channel, mine)
+    await chat.me.sendMessage(chat.channel, lonely)
+    const theirsId = await chat.other.sendMessage(chat.channel, theirs)
+    await chat.other.reply(chat.channel, theirsId, `Talking to myself ${uniq}`)
+    await chat.other.reply(chat.channel, mineId, `Reply ${uniq}`)
+
+    await unread.navItem('Threads').click()
+
+    const threads = page.locator('.activityMessage')
+    // The list has loaded once my thread is on it; only then does an absence mean anything.
+    await expect(threads.filter({ hasText: mine })).toBeVisible()
+    await expect(threads.filter({ hasText: theirs })).toHaveCount(0)
+    await expect(threads.filter({ hasText: lonely })).toHaveCount(0)
+  })
+
+  test('A thread started while the Threads list is open shows up in it', async ({ page }) => {
+    const chat = await createChat()
+    const existing = `Existing parent ${uniq}`
+    const existingId = await chat.me.sendMessage(chat.channel, existing)
+    await chat.other.reply(chat.channel, existingId, `Reply ${uniq}`)
+    const fresh = `Fresh parent ${uniq}`
+    const freshId = await chat.me.sendMessage(chat.channel, fresh)
+    const theirs = `Their parent ${uniq}`
+    const theirsId = await chat.other.sendMessage(chat.channel, theirs)
+
+    await unread.navItem('Threads').click()
+    const threads = page.locator('.activityMessage')
+    await expect(threads.filter({ hasText: existing })).toBeVisible()
+    await expect(threads.filter({ hasText: fresh })).toHaveCount(0)
+
+    // Somebody answers my message: a thread I am in from its first reply.
+    await chat.other.reply(chat.channel, freshId, `First reply ${uniq}`)
+    await expect(threads.filter({ hasText: fresh })).toBeVisible()
+
+    // I answer somebody's message: a thread I join by replying.
+    await chat.me.reply(chat.channel, theirsId, `My reply ${uniq}`)
+    await expect(threads.filter({ hasText: theirs })).toBeVisible()
+  })
+
+  test('A reply lifts a thread from beyond the loaded page to the top', async ({ page }) => {
+    const chat = await createChat()
+    // One more than a page holds. Replies go in order, so the first thread is the oldest one.
+    const parents: Array<{ id: Ref<Doc>, text: string }> = []
+    for (let i = 1; i <= 101; i++) {
+      const text = `Thread-${String(i).padStart(3, '0')}-${uniq}`
+      parents.push({ id: await chat.me.sendMessage(chat.channel, text), text })
+    }
+    for (const parent of parents) {
+      await chat.other.reply(chat.channel, parent.id, `Reply ${uniq}`)
+    }
+    const oldest = parents[0]
+    const newest = parents[100]
+
+    await unread.navItem('Threads').click()
+
+    const threads = page.locator('.activityMessage')
+    await expect(threads.filter({ hasText: newest.text })).toBeVisible()
+    await expect(threads.filter({ hasText: oldest.text })).toHaveCount(0)
+
+    await chat.other.reply(chat.channel, oldest.id, `Late reply ${uniq}`)
+
+    await expect(threads.filter({ hasText: oldest.text })).toBeVisible()
+    const oldestBox = await threads.filter({ hasText: oldest.text }).boundingBox()
+    const newestBox = await threads.filter({ hasText: newest.text }).boundingBox()
+    expect((oldestBox?.y ?? 0) < (newestBox?.y ?? 0)).toBeTruthy()
+  })
+
   async function openThread (page: Page, parent: string): Promise<void> {
     await unread
       .message(parent)
