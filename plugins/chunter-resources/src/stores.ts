@@ -54,7 +54,6 @@ export const threadMessagesStore = writable<ActivityMessage | undefined>(undefin
 
 export const replyingToMessageStore = writable<ChatMessage | undefined>(undefined)
 
-
 export const unreadThreadsCountStore = readable<number>(0, (set) => {
   return NotificationClientImpl.getClient().unreadByDoc.subscribe((byDoc) => {
     let count = 0

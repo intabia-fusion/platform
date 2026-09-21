@@ -582,7 +582,10 @@ test.describe('Chat unread state tests', () => {
   })
 
   async function openThread (page: Page, parent: string): Promise<void> {
-    await unread.message(parent).getByText(/\d+ repl(y|ies)/).click()
+    await unread
+      .message(parent)
+      .getByText(/\d+ repl(y|ies)/)
+      .click()
     await expect(page.locator('#sidebar div.text-editor-view')).toBeVisible()
   }
 })
