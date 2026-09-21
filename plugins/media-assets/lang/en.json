@@ -14,6 +14,10 @@
     "NoMic": "No microphone",
     "NoSpeaker": "No speaker",
     "On": "On",
-    "Off": "Off"
+    "Off": "Off",
+    "CameraInUseMessage": "Camera is in use by another application. Please close it and try again.",
+    "CameraInUseRetry": "Try again",
+    "CameraNotAllowed": "Camera access is denied for this site. Please check your browser settings.",
+    "DefaultCameraError": "Error connecting to the camera."
   }
 }
