@@ -10,17 +10,7 @@ export class ChunterPage extends CommonPage {
     this.page = page
   }
 
-  readonly buttonChannelsHeader = (): Locator =>
-    this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: 'Channels' })
-
-  readonly buttonDirectHeader = (): Locator =>
-    this.page
-      .locator('[data-testid="section-chunter:class:DirectMessage"]')
-      .getByRole('button', { name: 'Direct messages' })
-
-  readonly buttonAddChannel = (): Locator => this.page.locator('[data-testid="action-create-chunter:class:Channel"]')
-  readonly buttonAddDirectMessage = (): Locator =>
-    this.page.locator('[data-testid="action-create-chunter:class:DirectMessage"]')
+  readonly buttonNewChat = (): Locator => this.page.locator('.hulyNavPanel-header .header-actions button').last()
 
   readonly inputNewChannelName = (): Locator => this.page.getByPlaceholder('New channel')
   readonly inputDescription = (): Locator => this.page.getByPlaceholder('Description (optional)')
@@ -39,20 +29,16 @@ export class ChunterPage extends CommonPage {
 
   // ACTIONS
 
-  // The "+" of a section only shows under the pointer, and the navigator re-renders as chats come
-  // in: the hover is lost between the two steps unless they are retried as one.
+  // Through the "new" menu of the chat header, not the "+" of a section: the "+" exists only while
+  // the pointer is over the section header, and the navigator re-renders under it as chats come in.
   async clickAddChannel (): Promise<void> {
-    await expect(async () => {
-      await this.buttonChannelsHeader().hover()
-      await this.buttonAddChannel().click({ timeout: 1000 })
-    }).toPass({ timeout: 3000 })
+    await this.buttonNewChat().click()
+    await this.selectFromDropdown(this.page, 'New channel')
   }
 
   async clickAddDirect (): Promise<void> {
-    await expect(async () => {
-      await this.buttonDirectHeader().hover()
-      await this.buttonAddDirectMessage().click({ timeout: 1000 })
-    }).toPass({ timeout: 3000 })
+    await this.buttonNewChat().click()
+    await this.selectFromDropdown(this.page, 'New direct chat')
   }
 
   async createChannel (channelName: string, privateChannel: boolean): Promise<void> {

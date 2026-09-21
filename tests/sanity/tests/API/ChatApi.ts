@@ -300,12 +300,8 @@ export async function connectOwner (ws: WorkspaceLoginInfo, name: string): Promi
 
 /** Signs a new user up straight into the workspace, without the invite link and the join page. */
 export async function joinWorkspace (owner: WorkspaceLoginInfo, user: SignUpData): Promise<ChatMember> {
-  const inviteId = await getAccountClient(LocalUrl, owner.token).createInvite(
-    Date.now() + 60 * 60 * 1000,
-    '',
-    1,
-    AccountRole.User
-  )
+  // `exp` is how long the invite lives, not when it ends.
+  const inviteId = await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, '', 1, AccountRole.User)
   const accounts = getAccountClient(LocalUrl)
   // Some specs create the account up front, for the join page to log in with.
   const joined = await accounts
