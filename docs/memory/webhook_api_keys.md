@@ -8,9 +8,9 @@
 
 - `SocialIdType.WEBHOOK = 'webhook'` (`foundations/core/packages/core/src/classes.ts`), значение
   соц.id = keyId -> `webhook:<keyId>`.
-- Миграции `account_db_v42` (значение enum `social_id_type`), `v43` (индекс
-  `integration_secrets(kind, key)` - до него verify был full scan), `v44`
-  (`workspace.max_api_keys`). v42 и v43 РАЗДЕЛЬНО: PG запрещает использовать значение enum в той же
+- Миграции `account_db_v43` (значение enum `social_id_type`), `v44` (индекс
+  `integration_secrets(kind, key)` - до него verify был full scan), `v45`
+  (`workspace.max_api_keys`). v43 и v44 РАЗДЕЛЬНО: PG запрещает использовать значение enum в той же
   транзакции.
 - `server/account/src/apiKeys.ts` (формат, хеш, маска, проверки прав/срока); ops
   `createApiKey`/`listApiKeys`/`revokeApiKey` в `operations.ts` (только Owner воркспейса или admin);
@@ -222,7 +222,7 @@ seat-limits, не sessionManager.
   `API_KEY_LIMIT_PER_WORKSPACE`, дефолт 5). Переопределение ставит admin:
   `adminUpdateApiKeyLimit(workspace, maxApiKeys|null, otpCode)` (`serviceOperations.ts:835`,
   OTP-gated + аудит, `null` = сброс на env), UI -
-  `plugins/admin-resources/src/.../WorkspaceDetails.svelte`. Миграция `account_db_v44` добавляет
+  `plugins/admin-resources/src/.../WorkspaceDetails.svelte`. Миграция `account_db_v45` добавляет
   `workspace.max_api_keys`.
 - `listApiKeys` отдаёт `{keys, limit, personalLimit}`; Owner/admin видят все ключи, обычный участник -
   только свои личные.
