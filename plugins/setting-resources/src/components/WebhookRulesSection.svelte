@@ -171,6 +171,7 @@
     min-width: 0;
     padding: 0.5rem 0.75rem;
     text-align: left;
+    color: var(--theme-caption-color);
     border-radius: 0.375rem;
 
     &:hover {
