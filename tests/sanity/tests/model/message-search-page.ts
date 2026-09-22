@@ -35,6 +35,7 @@ export class MessageSearchPage extends CommonPage {
   readonly panel = (): Locator => this.page.locator('div.panel')
   readonly results = (): Locator => this.page.locator('div.panel div.row')
   readonly result = (text: string): Locator => this.results().filter({ hasText: text })
+  readonly summary = (): Locator => this.page.locator('div.panel div.summary')
 
   readonly emptyState = (): Locator => this.page.getByText('No results')
 

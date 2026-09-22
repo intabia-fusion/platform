@@ -365,6 +365,7 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
 
         // The index lags deletions, so a result can outlive the document it points at - drop
         // those. One that merely lacks the attributes is kept: it still exists.
+        const before = result.docs.length
         result.docs = result.docs.filter((doc) => {
           const stored = loaded.get(doc.doc._id)
           if (stored == null) return false
@@ -376,6 +377,14 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
           if (Object.keys(values).length > 0) doc.fields = values
           return true
         })
+
+        // The index counted what it dropped. Later pages may hold more of the same, so the
+        // count is only a bound from here on.
+        const dropped = before - result.docs.length
+        if (dropped > 0 && result.total !== undefined) {
+          result.total = Math.max(0, result.total - dropped)
+          result.totalExact = false
+        }
         return result
       })
     } catch (err: any) {

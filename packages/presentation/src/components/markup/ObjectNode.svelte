@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { Class, Doc, Ref } from '@hcengineering/core'
+  import { highlightRuns } from '@hcengineering/text'
   import { Component, Icon, Label, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import contact from '@hcengineering/contact'
@@ -27,6 +28,7 @@
   export let _class: Ref<Class<Doc>> | undefined = undefined
   export let title: string = ''
   export let transparent: boolean = false
+  export let highlight: string | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -37,6 +39,7 @@
   const withoutDoc: Ref<Doc>[] = [contact.mention.Here, contact.mention.Everyone]
 
   $: clazz = _class ? hierarchy.findClass(_class) : undefined
+  $: hit = highlight !== undefined && highlightRuns(title, highlight).some((r) => r.marked)
 
   $: icon =
     _class !== undefined &&
@@ -66,7 +69,7 @@
 {#if !doc && title}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <span class="antiMention" class:transparent class:broken on:click={onBrokenLinkClick}>
+  <span class="antiMention" class:transparent class:broken class:highlighted={hit} on:click={onBrokenLinkClick}>
     {#if icon}{#if icon === view.ids.IconWithEmoji}<IconWithEmoji
           icon={clazz?.color ?? 0}
           size={'smaller'}
@@ -83,7 +86,15 @@
     props={{
       object: doc,
       title,
-      transparent
+      transparent,
+      highlight
     }}
   />
 {/if}
+
+<style lang="scss">
+  .antiMention.highlighted {
+    background-color: var(--tag-nuance-SunshineBackground);
+    color: var(--tag-accent-SunshineText);
+  }
+</style>

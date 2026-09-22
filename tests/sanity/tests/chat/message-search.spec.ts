@@ -17,6 +17,7 @@ import { expect, test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { MessageSearchPage } from '../model/message-search-page'
+import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { createAccount, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
 import { SignUpData } from '../model/common-types'
 
@@ -145,6 +146,45 @@ test.describe('Message search', () => {
     await expect(searchPage.inputSearch()).toBeHidden()
     await expect(searchPage.panel()).toBeHidden()
   })
+
+  // The owner of the workspace sees every private channel in the list, but not what is said in
+  // one they are not a member of. The search has to agree with that: a hit from such a channel
+  // must neither show up nor be counted, or the count promises rows the list never gets.
+  test(
+    'Keeps the owner out of a private channel they are not in, count included',
+    { tag: '@invite' },
+    async ({ browser, page, request }) => {
+      const word = `Confidential${uniq}`
+      const privateMessage = `${word} behind the door`
+      const publicMessage = `${word} out in the open`
+
+      const linkText = await getInviteLink(page)
+      await createAccount(request, newUser)
+      using invited = await getSecondPageByInvite(browser, linkText, newUser)
+      await expect(invited.page).toHaveURL(/workbench/)
+      const invitedChunter = new ChunterPage(invited.page)
+      const invitedChannel = new ChannelPage(invited.page)
+      await new LeftSideMenuPage(invited.page).clickChunter()
+
+      // The private one goes first: once the public one is indexed, so is this.
+      const channel = `priv-${uniq}`
+      await invitedChunter.clickAddChannel()
+      await invitedChunter.createChannel(channel, true)
+      await invitedChannel.checkIfChannelDefaultExist(true, channel)
+      await invitedChannel.sendMessage(privateMessage)
+      await invitedChannel.checkMessageExist(privateMessage, true, privateMessage)
+
+      await invitedChannel.clickChannel('general')
+      await invitedChannel.sendMessage(publicMessage)
+      await invitedChannel.checkMessageExist(publicMessage, true, publicMessage)
+
+      await searchPage.openBrowser()
+      await searchPage.search(word)
+      await searchPage.checkResultExists(publicMessage)
+      await expect(searchPage.result(privateMessage)).toBeHidden()
+      await expect(searchPage.summary()).toHaveText('1 result')
+    }
+  )
 
   // A direct needs a second account and an invite, so this one spends a seat of the shared
   // workspace - hence the tag the fixture keys its recycling off.

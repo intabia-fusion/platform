@@ -16,6 +16,7 @@
   import { Class, Doc, Ref } from '@hcengineering/core'
   import { getResource, translateCB } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { highlightRuns } from '@hcengineering/text'
   import { AnyComponent, Icon, LabelAndProps, themeStore, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import activity, { ActivityMessage } from '@hcengineering/activity'
@@ -33,6 +34,7 @@
   export let disabled: boolean = false
   export let onClick: ((event: MouseEvent) => void) | undefined = undefined
   export let transparent: boolean = false
+  export let highlight: string | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -51,6 +53,7 @@
   let displayTitle = ''
 
   $: displayTitle = docTitle || title || docLabel
+  $: hit = highlight !== undefined && highlightRuns(displayTitle, highlight).some((r) => r.marked)
   $: docComponent = getPanelComponent(parentDoc ?? doc, _class)
 
   $: if (object == null && _class != null && _id != null) {
@@ -153,6 +156,7 @@
 
 {#if displayTitle}
   <span
+    class:highlighted={hit}
     data-type={'reference'}
     data-id={doc?._id}
     data-objectclass={doc?._class}
@@ -178,3 +182,10 @@
     </DocNavLink>
   </span>
 {/if}
+
+<style lang="scss">
+  .highlighted :global(.antiMention) {
+    background-color: var(--tag-nuance-SunshineBackground);
+    color: var(--tag-accent-SunshineText);
+  }
+</style>

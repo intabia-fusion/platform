@@ -24,6 +24,8 @@ import type { ChatSearchFilters, ChatSearchScope, ChatSearchState, SearchResultR
 
 export const PAGE_SIZE = 50
 const DEBOUNCE_MS = 500
+// How many thin pages are fetched on their own before the scroll takes over again.
+export const MAX_AUTO_PAGES = 5
 
 const emptyState: ChatSearchState = {
   search: '',
@@ -58,6 +60,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
   // Bumped on every new search. A late response from a superseded request checks this before
   // writing, which is what fixes out of order results - a debounce alone does not.
   let generation = 0
+  let autoPages = 0
   let cursor: string | undefined
   let timer: any
   let destroyed = false
@@ -80,6 +83,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
 
   async function run (append: boolean): Promise<void> {
     const gen = ++generation
+    if (!append) autoPages = 0
     const state = get(store)
     const text = state.search.trim()
 
@@ -118,7 +122,6 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
           limit: PAGE_SIZE,
           sort: state.sort,
           searchIn: 'content',
-          fuzzy: true,
           cursor: append ? cursor : undefined,
           highlight: true,
           fields: ['message']
@@ -159,8 +162,14 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
         done: result.cursor === undefined
       }))
 
-      if (rows.length === 0 && result.cursor !== undefined) {
-        void run(true)
+      // A page too thin to scroll never triggers the scroll handler, so fetch the next one here.
+      // Thin pages are followed only a few times, so an endless cursor cannot loop forever.
+      if (result.cursor !== undefined) {
+        const thin = rows.length < PAGE_SIZE / 2 && autoPages < MAX_AUTO_PAGES
+        if (rows.length === 0 || thin) {
+          autoPages++
+          void run(true)
+        }
       }
     } catch (err: any) {
       if (gen !== generation || destroyed) {
@@ -243,6 +252,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
     loadMore (): void {
       const s = get(store)
       if (s.loading || s.loadingMore || s.done || cursor === undefined) return
+      autoPages = 0
       void run(true)
     },
 

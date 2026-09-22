@@ -45,7 +45,20 @@ export function pmNodeToJSON (node: ProseMirrorNode): MarkupNode {
 /** @public */
 export function jsonToText (node: MarkupNode, schema?: Schema, extensions?: Extensions): string {
   const pmNode = jsonToPmNode(node, schema, extensions)
-  return pmNode.textBetween(0, pmNode.content.size, '\n', '')
+  return pmNode.textBetween(0, pmNode.content.size, '\n', leafText)
+}
+
+// A mention or an emoji is a leaf node, not text: without this they vanish from the result, and a
+// message that was nothing but `@Someone` reads as empty. Same shape as text-core's `markupToText`.
+function leafText (leaf: ProseMirrorNode): string {
+  if (leaf.type.name === 'reference') {
+    const label = `${leaf.attrs.label ?? ''}`
+    return label.length > 0 ? `@${label}` : ''
+  }
+  if (leaf.type.name === 'emoji') {
+    return `${leaf.attrs.emoji ?? ''}`
+  }
+  return ''
 }
 
 // export function markupToText (markup: Markup, schema?: Schema, extensions?: Extensions): string {

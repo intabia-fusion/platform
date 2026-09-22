@@ -62,11 +62,11 @@
         <span class="author"><Label label={core.string.System} /></span>
       {/if}
       {#if showChannel && row.channel !== ''}
-        <span class="reference flex-row-center flex-no-shrink flex-gap-1">
+        <span class="reference flex-row-center flex-gap-1">
           {#if icon !== undefined}
             <div class="icon"><Icon {icon} size={'x-small'} /></div>
           {/if}
-          <span class="label overflow-label font-medium-12 text-left max-w-20 secondary-textColor">
+          <span class="label overflow-label font-medium-12 text-left secondary-textColor">
             {row.channel}
           </span>
         </span>
@@ -110,6 +110,7 @@
   }
 
   .author {
+    flex-shrink: 0;
     font-weight: 500;
     color: var(--theme-caption-color);
     white-space: nowrap;
@@ -126,6 +127,9 @@
   }
 
   .reference {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 20rem;
     height: 1.25rem;
     padding: 0 var(--spacing-0_75) 0 var(--spacing-0_5);
     box-shadow: inset 0 0 0 1px var(--global-subtle-ui-BorderColor);

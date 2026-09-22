@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { collectTerms, highlightMarkup } from '../highlight'
+import { collectTerms, highlightMarkup, highlightRuns } from '../highlight'
 import { MarkupMarkType, MarkupNodeType, type MarkupNode } from '../model'
 
 const doc = (...content: MarkupNode[]): MarkupNode => ({ type: MarkupNodeType.doc, content })
@@ -114,6 +114,47 @@ describe('highlightMarkup', () => {
       ['План', true],
       [' на завтра', false]
     ])
+  })
+
+  it('marks a mention whose name was hit', () => {
+    const mention: MarkupNode = {
+      type: MarkupNodeType.reference,
+      attrs: { id: 'p1', objectclass: 'contact:class:Person', label: 'Sobolev Andrey' }
+    }
+    const out = highlightMarkup(doc(p(mention, t(' ping'))), ['Sobolev'])
+    const node = out.content?.[0].content?.[0]
+    expect(node?.type).toBe(MarkupNodeType.reference)
+    expect(node?.attrs?.highlight).toBe('sobolev')
+    expect(node?.attrs?.label).toBe('Sobolev Andrey')
+    expect(runs(out)).toEqual([[' ping', false]])
+  })
+
+  it('splits a name into runs around the hit', () => {
+    expect(highlightRuns('Sobolev Andrey', 'sobolev')).toEqual([
+      { text: 'Sobolev', marked: true },
+      { text: ' Andrey', marked: false }
+    ])
+    expect(highlightRuns('Sobolev Andrey', 'ping')).toEqual([{ text: 'Sobolev Andrey', marked: false }])
+  })
+
+  it('widens a hit to the whole word when asked', () => {
+    // `and` is only the start of `Andrey`; the name must not come out as `And|rey`.
+    expect(highlightRuns('Sobolev Andrey', 'sobolev and', { wholeWords: true })).toEqual([
+      { text: 'Sobolev', marked: true },
+      { text: ' ', marked: false },
+      { text: 'Andrey', marked: true }
+    ])
+    expect(highlightRuns('Andrey', 'and', { wholeWords: true })).toEqual([{ text: 'Andrey', marked: true }])
+  })
+
+  it('leaves a mention alone when its name was not hit', () => {
+    const mention: MarkupNode = {
+      type: MarkupNodeType.reference,
+      attrs: { id: 'p1', objectclass: 'contact:class:Person', label: 'Sobolev Andrey' }
+    }
+    const out = highlightMarkup(doc(p(mention, t(' ping'))), ['ping'])
+    const node = out.content?.[0].content?.[0]
+    expect(node?.attrs?.highlight).toBeUndefined()
   })
 
   it('marks nothing when the engine reported nothing', () => {

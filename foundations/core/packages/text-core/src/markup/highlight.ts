@@ -107,8 +107,55 @@ function highlightNode (node: MarkupNode, terms: string[]): MarkupNode[] {
   if (node.type === MarkupNodeType.text) {
     return highlightTextNode(node, terms)
   }
+  if (node.type === MarkupNodeType.reference) {
+    const label = `${node.attrs?.label ?? ''}`
+    if (label !== '' && findSpans(label, terms).length > 0) {
+      return [{ ...node, attrs: { ...node.attrs, highlight: terms.join(' ') } }]
+    }
+    return [node]
+  }
   if (node.content === undefined) return [node]
   return [{ ...node, content: node.content.flatMap((child) => highlightNode(child, terms)) }]
+}
+
+export interface HighlightRun {
+  text: string
+  marked: boolean
+}
+
+/**
+ * Splits `text` into plain and marked runs, for a component that renders its own text.
+ *
+ * `wholeWords` extends every hit to the end of its word: a name is one thing, and `And|rey`
+ * cut in the middle reads as a glitch rather than a match.
+ */
+export function highlightRuns (text: string, matched: string, options?: { wholeWords?: boolean }): HighlightRun[] {
+  const terms = collectTerms(matched)
+  let spans = terms.length > 0 ? findSpans(text, terms) : []
+  if (options?.wholeWords === true && spans.length > 0) {
+    spans = spans.map((span) => {
+      let end = span.end
+      while (end < text.length && WORD_CHAR.test(text[end])) end++
+      return { start: span.start, end }
+    })
+    // Widening can make neighbours touch or overlap; one run per stretch, as findSpans keeps it.
+    const merged: Span[] = [spans[0]]
+    for (const span of spans.slice(1)) {
+      const last = merged[merged.length - 1]
+      if (span.start <= last.end) last.end = Math.max(last.end, span.end)
+      else merged.push(span)
+    }
+    spans = merged
+  }
+  const runs: HighlightRun[] = []
+  let at = 0
+  for (const span of spans) {
+    if (span.start > at) runs.push({ text: text.slice(at, span.start), marked: false })
+    runs.push({ text: text.slice(span.start, span.end), marked: true })
+    at = span.end
+  }
+  if (at < text.length) runs.push({ text: text.slice(at), marked: false })
+  return runs
 }
 
 /**
