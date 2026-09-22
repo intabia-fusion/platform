@@ -6,7 +6,7 @@
 частичный индекс пода и потеряло задачу. Баг был на develop, стенд `ws-tests` просто впервые получил
 бэкап-под.
 
-- Аренда: колонки `backup_lease_until`/`backup_lease_owner` (v45/v46), RPC `updateBackupLease`.
+- Аренда: колонки `backup_lease_until`/`backup_lease_owner` (v46/v47), RPC `updateBackupLease`.
   `getPendingWorkspace` не отдаёт archiving/migration/restore/deletion при живой аренде.
 - Продление, вернувшее `false`, сразу отменяет бэкап (`isCanceled`): пространство ушло из `active`,
   архивация ждёт. Ошибки сети терпятся дважды (60 с из TTL 150 с).

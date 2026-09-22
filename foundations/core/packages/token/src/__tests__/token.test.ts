@@ -15,8 +15,21 @@
 
 import { setMetadata } from '@hcengineering/platform'
 import type { PersonUuid, WorkspaceUuid } from '@hcengineering/core'
+import { decode } from 'jwt-simple'
 import { decodeToken, extractCookieToken, generateToken } from '../token'
 import plugin from '../plugin'
+
+jest.mock('jwt-simple', () => {
+  const actual = jest.requireActual('jwt-simple')
+  return { ...actual, decode: jest.fn(actual.decode) }
+})
+
+// A cache hit skips the HMAC; count real decodes to tell a hit from a miss.
+function isCacheHit (token: string): boolean {
+  const before = (decode as jest.Mock).mock.calls.length
+  decodeToken(token)
+  return (decode as jest.Mock).mock.calls.length === before
+}
 
 export function decodeTokenPayload (token: string): any {
   try {
@@ -186,6 +199,17 @@ describe('decodeToken cache', () => {
     expect(decodeToken(token).account).toBe(account)
   })
 
+  it('should not let a caller mutate the cached payload', () => {
+    const token = generateToken(account, undefined, { authMethod: 'otp' })
+
+    for (let i = 0; i < 2; i++) {
+      const decoded = decodeToken(token)
+      decoded.extra = Object.assign(decoded.extra ?? {}, { readonly: 'true' })
+    }
+
+    expect(decodeToken(token).extra).toEqual({ authMethod: 'otp' })
+  })
+
   it('should not serve an expired token from the cache', () => {
     const token = generateToken(account, workspace, undefined, undefined, {
       exp: Math.floor(Date.now() / 1000) + 1
@@ -209,16 +233,15 @@ describe('decodeToken cache', () => {
 
   it('should keep a hot token alive across an eviction sweep', () => {
     const hot = generateToken(account, workspace)
-    // A cache hit returns the very object that was stored, a miss decodes a fresh one.
-    const cached = decodeToken(hot)
-    expect(decodeToken(hot)).toBe(cached)
+    decodeToken(hot)
+    expect(isCacheHit(hot)).toBe(true)
 
     // Overflow the cache several times over; the hot token is re-set on every hit.
     for (let i = 0; i < 6000; i++) {
       decodeToken(generateToken(account, workspace, { n: `${i}` }))
-      if (i % 100 === 0) expect(decodeToken(hot)).toBe(cached)
+      if (i % 100 === 0) expect(isCacheHit(hot)).toBe(true)
     }
-    expect(decodeToken(hot)).toBe(cached)
+    expect(isCacheHit(hot)).toBe(true)
   })
 
   it('should evict a cold token once the cache overflows', () => {
@@ -228,10 +251,8 @@ describe('decodeToken cache', () => {
     for (let i = 0; i < 6000; i++) {
       decodeToken(generateToken(account, workspace, { m: `${i}` }))
     }
-    // Same payload, but a re-decoded object - the cold entry was swept.
-    const after = decodeToken(cold)
-    expect(after).not.toBe(cached)
-    expect(after).toEqual(cached)
+    expect(isCacheHit(cold)).toBe(false)
+    expect(decodeToken(cold)).toEqual(cached)
   })
 
   it('should not let a tampered token through after a valid one', () => {

@@ -4,7 +4,7 @@
 
 ## Модель
 
-Две колонки `delete_on` (миграции v42 workspace_status, v43 account) вместо новых режимов.
+Две колонки `delete_on` (миграции v43 workspace_status, v44 account) вместо новых режимов.
 
 Пространство: `deleteOn` выставлен, mode остаётся `active` -> 7 дней readonly -> планировщик
 переводит в `archiving-pending-backup` -> `archived` -> в `deleteOn` переводит в `pending-deletion`.
@@ -91,7 +91,7 @@ attempts обнуляются. Кнопки "Delete now" на вкладках W
 
 ## Блокировка аккаунта (админ)
 
-`account.blocked_on` (миграция v44). Проверка - `ensureNotBlocked` (`utils.ts`) в четырёх точках выдачи
+`account.blocked_on` (миграция v45). Проверка - `ensureNotBlocked` (`utils.ts`) в четырёх точках выдачи
 токена: `login`, `validateOtp`, `loginOrSignUpWithProvider`, `selectWorkspace`. Уже выданный
 workspace-токен транзактор проверяет сам, без похода в account, поэтому открытая вкладка живёт до
 следующего `selectWorkspace` (не дольше времени жизни токена). RPC `adminSetAccountBlocked` -
@@ -168,4 +168,28 @@ self-service подтверждения, но не `sendOtp`). Добавлен�
 
 ## Аренда бэкапа
 
-`workspace_status.backup_lease_until`/`backup_lease_owner` (v45/v46). `updateBackupLease` (postgres.ts): acquire - `mode='active' AND is_disabled IS NOT TRUE` и lease свободен/истёк/свой; renew - `owner=X AND mode='active'` (смена mode - мгновенный отказ, а не ожидание конца бэкапа); release - `owner=X`, поля в NULL. `getPendingWorkspace` не отдаёт migration-*/archiving-*/restoring/deleting с живым lease, create/upgrade не задеты.
+`workspace_status.backup_lease_until`/`backup_lease_owner` (v46/v47). `updateBackupLease` (postgres.ts): acquire - `mode='active' AND is_disabled IS NOT TRUE` и lease свободен/истёк/свой; renew - `owner=X AND mode='active'` (смена mode - мгновенный отказ, а не ожидание конца бэкапа); release - `owner=X`, поля в NULL. `getPendingWorkspace` не отдаёт migration-*/archiving-*/restoring/deleting с живым lease, create/upgrade не задеты.
+
+**Rebase на develop 2026-09-22:** develop занял v42 (workspace.language), наши миграции сдвинуты на v43-v47. Git автосмёрживает новые `getVNMigration` без конфликта - после rebase проверять дубли номеров.
+
+## Selfhost: workspace-сервис и WS_OPERATION
+
+`getPendingWorkspace` отдаёт `pending-deletion`/`archiving-*`/`restoring`/`migration-*` только для
+`WS_OPERATION=all+backup`; дефолт `all` берёт лишь создание и апгрейд. На selfhost переменная не была
+задана - `delete-now` навечно висел в `pending-deletion`. Исправлено в foundation-selfhost 2c78e83
+(`all+backup` + minio bucket `backups`). backup-service на selfhost нет, поэтому
+`cleanupDeletedBackups` не работает: архив удалённого через архивацию пространства остаётся в `backups`.
+
+## Readonly "залипал" после cancel-delete
+
+`selectWorkspace` копирует `extra` из входящего токена, а клиент передаёт текущий workspace-токен
+(`presentation.metadata.Token`). Readonly по статусу (`isReadOnlyWorkspace`) переезжал в каждый новый
+токен и переживал отмену удаления. Теперь такой readonly помечается `workspaceReadonly: 'true'` и
+сбрасывается при следующем select; readonly без метки (impersonation) переносится как раньше.
+Токены, выданные до фикса, метки не имеют - нужен перелогин.
+
+Перелогин НЕ помогал из-за второй причины: кеш `decodeToken` (foundations/core/packages/token)
+отдавал один и тот же объект, а `selectWorkspace` мутировал `decodedToken.extra`. Логин-токен без
+`iat` детерминирован, поэтому каждый новый логин попадал в испорченную запись кеша, и `PUT /cookie`
+клал в куку токен с `readonly`. Кеш теперь хранит и отдаёт `structuredClone`. Разлипить без деплоя -
+рестарт account.

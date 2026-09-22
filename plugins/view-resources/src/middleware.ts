@@ -331,10 +331,15 @@ export class AnalyticsMiddleware extends BasePresentationMiddleware implements P
   }
 }
 
+const READONLY_WORKSPACE_NOTIFY_INTERVAL = 5 * 60 * 1000
+
 /**
  * @public
  */
 export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware implements PresentationMiddleware {
+  // Background writes fail on every module switch; one warning per interval is enough.
+  private readOnlyWorkspaceNotifiedAt = 0
+
   private constructor (client: Client, next?: PresentationMiddleware) {
     super(client, next)
   }
@@ -379,6 +384,8 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
         return {}
       }
       if (err instanceof PlatformError && err.status.code === platform.status.WorkspaceReadOnly) {
+        if (Date.now() - this.readOnlyWorkspaceNotifiedAt < READONLY_WORKSPACE_NOTIFY_INTERVAL) return {}
+        this.readOnlyWorkspaceNotifiedAt = Date.now()
         addNotification(
           await translate(view.string.ReadOnlyWorkspaceWarningTitle, {}, getCurrentLanguage()),
           await translate(view.string.ReadOnlyWorkspaceWarningMessage, {}, getCurrentLanguage()),
@@ -386,7 +393,8 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
           {
             onClose: () => {}
           },
-          NotificationSeverity.Info
+          NotificationSeverity.Info,
+          'readOnlyWorkspaceNotification'
         )
         return {}
       }

@@ -909,6 +909,12 @@ export async function selectWorkspace (
     accountUuid = decodedToken.account
     workspace ??= await getWorkspaceById(db, decodedToken.workspace)
     extra = decodedToken.extra
+    // The status-derived readonly is recomputed below; carried over, it outlives a cancelled deletion.
+    if (extra?.workspaceReadonly === 'true') {
+      extra = { ...extra }
+      delete extra.readonly
+      delete extra.workspaceReadonly
+    }
     grant = decodedToken.grant
     sub = decodedToken.sub
     exp = decodedToken.exp
@@ -1017,9 +1023,8 @@ export async function selectWorkspace (
     }
 
     // Scheduled for deletion or archived: open for taking the data out, closed for writing.
-    if (isReadOnlyWorkspace(wsStatus)) {
-      extra ??= {}
-      extra.readonly = 'true'
+    if (isReadOnlyWorkspace(wsStatus) && extra?.readonly !== 'true') {
+      extra = { ...extra, readonly: 'true', workspaceReadonly: 'true' }
     }
   }
 

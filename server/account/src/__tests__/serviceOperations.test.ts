@@ -2378,6 +2378,7 @@ describe('updateWorkspaceInfo - delete events', () => {
       { workspaceUuid },
       expect.objectContaining({ mode: 'deleted', processingProgress: 100 })
     )
+    expect(mockDb.workspace.update).toHaveBeenCalledWith({ uuid: workspaceUuid }, { url: workspaceUuid })
   })
 })
 

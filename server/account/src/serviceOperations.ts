@@ -1348,6 +1348,8 @@ export async function updateWorkspaceInfo (
     case 'delete-done':
       update.mode = 'deleted'
       update.processingProgress = 100
+      // The row stays for history, the url is released for reuse.
+      wsUpdate.url = workspaceUuid
       break
     case 'ping':
     default:
