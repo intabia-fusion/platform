@@ -164,6 +164,9 @@
     "SwitchWorkspaceLeaveMeeting": "Çalışma alanını değiştirmek sizi mevcut toplantıdan koparacak.",
     "AlreadyInAnotherMeeting": "Zaten bir toplantıdasınız",
     "LeaveOtherMeeting": "Başka bir sekmede veya cihazda \"{meeting}\" toplantısına bağlısınız. Devam edip oradan çıkılsın mı?",
-    "SwitchWorkspaceEndsMeeting": "Burası sizin ofisiniz: çalışma alanını değiştirmek sizi koparır ve toplantıyı herkes için sonlandırır."
+    "SwitchWorkspaceEndsMeeting": "Burası sizin ofisiniz: çalışma alanını değiştirmek sizi koparır ve toplantıyı herkes için sonlandırır.",
+    "AllHands": "Genel toplantı",
+    "MeetingRoomNum": "Toplantı Odası {number}",
+    "VoiceRoomNum": "Sesli Oda {number}"
   }
 }

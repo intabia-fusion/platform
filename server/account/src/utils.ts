@@ -1262,7 +1262,8 @@ export async function createWorkspaceRecord (
   account: PersonUuid,
   region: string = '',
   initMode: WorkspaceMode = 'pending-creation',
-  dataId?: WorkspaceDataId
+  dataId?: WorkspaceDataId,
+  language?: string
 ): Promise<CreateWorkspaceRecordResult> {
   const brandingKey = branding?.key ?? 'huly'
   const regionInfo = getRegions().find((it) => it.region === region)
@@ -1304,7 +1305,8 @@ export async function createWorkspaceRecord (
           billingAccount: account,
           allowReadOnlyGuest: false,
           allowGuestSignUp: false,
-          region
+          region,
+          language
         },
         {
           mode: initMode,

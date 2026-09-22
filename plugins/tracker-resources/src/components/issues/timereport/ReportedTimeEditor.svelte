@@ -16,10 +16,19 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
-  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
-  import { ActionIcon, IconAdd, Label, eventToHTMLElement, floorFractionDigits, showPopup } from '@hcengineering/ui'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { Issue, Project, TimeSpendReport, reduceChildInfoTree, splitReportedTime } from '@hcengineering/tracker'
+  import {
+    ActionIcon,
+    IconAdd,
+    Label,
+    eventToHTMLElement,
+    floorFractionDigits,
+    showPopup,
+    tooltip
+  } from '@hcengineering/ui'
 
+  import trackerPlugin from '../../../plugin'
   import { activeProjects } from '../../../utils'
   import ReportsPopup from './ReportsPopup.svelte'
   import TimePresenter from './TimePresenter.svelte'
@@ -42,6 +51,8 @@
   export let draft: boolean = false
   export let onChange: ((val: any) => void) | undefined = undefined
   export let showChildIssues: boolean = true
+  // Pass it in when several editors share an issue; left out, the editor queries on its own.
+  export let reports: TimeSpendReport[] | undefined = undefined
 
   $: if (currentProject === undefined) {
     currentProject = $activeProjects.get(object.space)
@@ -98,6 +109,26 @@
       : ((typeof value === 'object' && value !== null ? (value as DraftTimeReportPayload)?.reportedTime : undefined) ??
         object?.reportedTime ??
         0)
+
+  // Reports mirror planner work slots, so part of the reported time may still be ahead of now.
+  const reportsQuery = createQuery()
+  let ownReports: TimeSpendReport[] | undefined = undefined
+
+  $: if (reports === undefined && !draft && object?._id !== undefined) {
+    reportsQuery.query(
+      trackerPlugin.class.TimeSpendReport,
+      { attachedTo: object._id },
+      (res) => {
+        ownReports = res
+      },
+      { projection: { date: 1, value: 1, workslot: 1 } }
+    )
+  }
+
+  $: effectiveReports = reports ?? ownReports
+  $: split = effectiveReports !== undefined ? splitReportedTime(effectiveReports) : undefined
+  $: spentValue = split !== undefined ? floorFractionDigits(split.spent, 3) : numericValue
+  $: plannedValue = split !== undefined ? floorFractionDigits(split.planned, 3) : 0
 </script>
 
 {#if kind === 'link'}
@@ -112,17 +143,20 @@
     {#if numericValue !== undefined}
       <span class="flex-row-center">
         {#if showChildIssues}
-          <TimePresenter value={numericValue + childTime} />
-          {#if numericValue !== numericValue + childTime}
+          <TimePresenter value={spentValue + childTime} />
+          {#if childTime !== 0}
             <span class="ml-1">
-              (<TimePresenter value={numericValue} />
-              {#if childTime !== 0}
-                / <TimePresenter value={childTime} />)
-              {/if}
+              (<TimePresenter value={spentValue} />
+              / <TimePresenter value={childTime} />)
             </span>
           {/if}
         {:else}
-          <TimePresenter value={numericValue} />
+          <TimePresenter value={spentValue} />
+        {/if}
+        {#if plannedValue > 0}
+          <span class="ml-2 content-dark-color" use:tooltip={{ label: trackerPlugin.string.PlannedTime }}>
+            +<TimePresenter value={plannedValue} />
+          </span>
         {/if}
       </span>
     {:else}
@@ -136,9 +170,14 @@
   </div>
 {:else if numericValue !== undefined}
   <span class="flex-row-center">
-    <TimePresenter value={numericValue} />
+    <TimePresenter value={spentValue} />
     {#if childTime !== 0}
       / <TimePresenter value={childTime} />
+    {/if}
+    {#if plannedValue > 0}
+      <span class="ml-2 content-dark-color" use:tooltip={{ label: trackerPlugin.string.PlannedTime }}>
+        +<TimePresenter value={plannedValue} />
+      </span>
     {/if}
   </span>
 {:else}

@@ -58,6 +58,7 @@
     "@hcengineering/workflow": "workspace:^0.7.0",
     "@mermaid-js/layout-elk": "~0.2.3",
     "mermaid": "catalog:",
-    "svelte": "catalog:"
+    "svelte": "catalog:",
+    "@hcengineering/time": "workspace:^0.7.0"
   }
 }

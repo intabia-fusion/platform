@@ -22,13 +22,14 @@
     HotkeyGroup,
     Scroller,
     formatDuration,
-    Label
+    Label,
+    tooltip
   } from '@hcengineering/ui'
   import { EventTimeEditor } from '@hcengineering/calendar-resources'
   import { WorkSlot } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
-  import { calculateEventsDuration } from '../utils'
+  import { splitEventsDuration } from '../utils'
 
   export let slots: WorkSlot[] = []
   export let shortcuts: boolean = true
@@ -37,8 +38,13 @@
   const dispatch = createEventDispatcher()
 
   let duration: string
-  $: formatDuration(calculateEventsDuration(slots), $themeStore.language).then((res) => {
+  let plannedDuration: string
+  $: split = splitEventsDuration(slots)
+  $: formatDuration(split.spent, $themeStore.language).then((res) => {
     duration = res
+  })
+  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+    plannedDuration = res
   })
 
   function handleKeyDown (event: KeyboardEvent): void {
@@ -98,11 +104,16 @@
       <HotkeyGroup keys={['shift', 'Enter']} />
     {/if}
   </ButtonBase>
-  {#if duration}
+  {#if split.spent > 0 || split.planned > 0}
     <div class="font-regular-14">
       <Label label={time.string.SummaryDuration} />:
       <br />
-      <span class="duration">{duration}</span>
+      {#if split.spent > 0}
+        <span class="duration">{duration}</span>
+      {/if}
+      {#if split.planned > 0}
+        <span class="ml-2 content-dark-color" use:tooltip={{ label: time.string.PlannedTime }}>+{plannedDuration}</span>
+      {/if}
     </div>
   {/if}
 </div>

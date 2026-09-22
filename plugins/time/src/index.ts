@@ -30,7 +30,7 @@ import {
 import { IntlString, plugin } from '@hcengineering/platform'
 import { Event, Visibility } from '@hcengineering/calendar'
 import { AnyComponent } from '@hcengineering/ui'
-import { Employee } from '@hcengineering/contact'
+import { Employee, Person } from '@hcengineering/contact'
 import type { Rank } from '@hcengineering/rank'
 import { TxNotificationType } from '@hcengineering/notification'
 
@@ -63,6 +63,8 @@ export interface ToDo extends AttachedDoc {
   visibility: Visibility
   doneOn: Timestamp | null
   user: Ref<Employee>
+  // Set when the task went to somebody else; the todo itself is left for its owner to deal with.
+  reassignedTo?: Ref<Person> | null
   attachedSpace?: Ref<Space>
   labels?: number
   rank: Rank
@@ -136,10 +138,15 @@ export default plugin(timeId, {
   mixin: {
     ItemPresenter: '' as Ref<Mixin<ItemPresenter>>
   },
+  function: {
+    SuggestCloseToDos: '' as Resource<(objectIds: Array<Ref<Doc>>) => Promise<void>>
+  },
   ids: {
     NotAttached: '' as Ref<Doc>,
     TimeNotificationGroup: '' as Ref<Doc>,
     ToDoCreated: '' as Ref<TxNotificationType>,
+    ToDoReassigned: '' as Ref<TxNotificationType>,
+    IssueClosedToDo: '' as Ref<TxNotificationType>,
     PersonDayWidget: '' as Ref<Doc>
   },
   space: {
@@ -171,7 +178,13 @@ export default plugin(timeId, {
     UnassignToDo: '' as IntlString,
     UnassignToDoConfirm: '' as IntlString,
     ReassignToDo: '' as IntlString,
-    ReassignToDoConfirm: '' as IntlString
+    ReassignToDoConfirm: '' as IntlString,
+    PlannedTime: '' as IntlString,
+    CloseToDoQuestion: '' as IntlString,
+    CloseToDoQuestionMessage: '' as IntlString,
+    ReassignedTo: '' as IntlString,
+    ToDoReassigned: '' as IntlString,
+    IssueClosedCloseToDo: '' as IntlString
   },
   emailTemplate: {
     ToDoCreatedText: '' as IntlString,

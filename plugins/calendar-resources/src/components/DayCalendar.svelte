@@ -33,7 +33,8 @@
     getWeekStart,
     isWeekend,
     resizeObserver,
-    ticker
+    ticker,
+    languageStore
   } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
@@ -960,6 +961,8 @@
     dispatch('dragOut')
     e.preventDefault()
   }
+
+  $: lang = $languageStore
 </script>
 
 <Scroller
@@ -994,10 +997,14 @@
           {#if tday}
             <div class="flex-col">
               <span class="today"><Label label={calendar.string.Today} /></span>
-              <span class="weekday">{getWeekDayName(day, weekFormat)}</span>
+              {#key lang}
+                <span class="weekday">{getWeekDayName(day, weekFormat)}</span>
+              {/key}
             </div>
           {:else}
-            <span class="weekday">{getWeekDayName(day, weekFormat)}</span>
+            {#key lang}
+              <span class="weekday">{getWeekDayName(day, weekFormat)}</span>
+            {/key}
           {/if}
           {#if tEvents !== 0}
             <div class="header-time">

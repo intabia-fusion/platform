@@ -16,7 +16,8 @@
 <script lang="ts">
   import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { getTaskTypeStates } from '@hcengineering/task'
+  import task, { getTaskTypeStates } from '@hcengineering/task'
+  import time from '@hcengineering/time'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
   import {
@@ -33,7 +34,7 @@
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
   import workflow, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
-  import { isInfoError, isOkError } from '@hcengineering/platform'
+  import { getResource, isInfoError, isOkError } from '@hcengineering/platform'
 
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
@@ -80,12 +81,20 @@
           issue: value.identifier,
           status: newStatus
         })
+        await suggestCloseToDos(value._id, newStatus)
       } catch (e) {
         if (!isInfoError(e) && !isOkError(e)) {
           throw e
         }
       }
     }
+  }
+
+  async function suggestCloseToDos (issueId: Ref<Issue>, newStatus: Ref<IssueStatus>): Promise<void> {
+    const category = $statusStore.byId.get(newStatus)?.category
+    if (category !== task.statusCategory.Won && category !== task.statusCategory.Lost) return
+    const suggest = await getResource(time.function.SuggestCloseToDos)
+    await suggest([issueId])
   }
 
   const handleStatusEditorOpened = (event: MouseEvent) => {

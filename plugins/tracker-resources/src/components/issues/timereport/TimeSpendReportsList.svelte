@@ -57,6 +57,8 @@
     )
   }
   $: twoRows = $deviceInfo.twoRows
+  // A report mirrors a work slot, so one that has not started yet is a plan, not spent time.
+  $: now = Date.now()
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -67,6 +69,7 @@
     {@const currentProject = $activeProjects.get(toProjectId(report.space))}
     <div
       class="{twoRows ? 'flex-col' : 'flex-between'} p-text-2 clear-mins"
+      class:content-dark-color={(report.date ?? 0) > now}
       on:contextmenu={(ev) => {
         showMenu(ev, { object: report })
       }}

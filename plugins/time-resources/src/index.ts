@@ -28,12 +28,46 @@ import NotificationToDoPresenter from './components/NotificationToDoPresenter.sv
 import PriorityEditor from './components/PriorityEditor.svelte'
 import ToDoPresenter from './components/ToDoPresenter.svelte'
 import { ToDoTitleProvider } from './utils'
+import type { Doc, Ref } from '@hcengineering/core'
+import { getCurrentEmployee } from '@hcengineering/contact'
+import { getClient, MessageBox } from '@hcengineering/presentation'
+import time from '@hcengineering/time'
+import { showPopup } from '@hcengineering/ui'
 import PersonCalendar from './components/team/calendar/PersonCalendar.svelte'
 
 export type ToDosMode = 'unplanned' | 'planned' | 'all' | 'tag' | 'date'
 
 // Right-hand panel of the Planner: my own schedule, the team grid or the team occupancy view.
 export type PlannerCalendarMode = 'personal' | 'team-calendar' | 'team'
+
+/**
+ * Closing a task is not the same as finishing the work, so the todo is only offered for closing,
+ * and only to the one who closed the task.
+ */
+async function suggestCloseToDos (objectIds: Array<Ref<Doc>>): Promise<void> {
+  if (objectIds.length === 0) return
+  const client = getClient()
+  const todos = await client.findAll(time.class.ToDo, {
+    attachedTo: { $in: objectIds },
+    user: getCurrentEmployee(),
+    doneOn: null
+  })
+  if (todos.length === 0) return
+
+  showPopup(MessageBox, {
+    label: time.string.CloseToDoQuestion,
+    message: time.string.CloseToDoQuestionMessage,
+    params: { count: todos.length },
+    action: async () => {
+      const ops = client.apply(undefined, 'close-todos')
+      const doneOn = Date.now()
+      for (const todo of todos) {
+        await ops.update(todo, { doneOn })
+      }
+      await ops.commit()
+    }
+  })
+}
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -53,6 +87,7 @@ export default async (): Promise<Resources> => ({
     PersonCalendar
   },
   function: {
-    ToDoTitleProvider
+    ToDoTitleProvider,
+    SuggestCloseToDos: suggestCloseToDos
   }
 })

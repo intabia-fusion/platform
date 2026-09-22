@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "您要更改待办事项被指派人吗？待办事项将从当前被指派人的计划中移除。",
     "Occupancy": "占用情况",
     "ShowEvents": "事件",
-    "ShowActivity": "活动"
+    "ShowActivity": "活动",
+    "PlannedTime": "计划时间",
+    "CloseToDoQuestion": "关闭待办事项？",
+    "CloseToDoQuestionMessage": "问题已关闭。是否同时关闭{count, plural, =1 {您的待办事项} other {您的待办事项}}？",
+    "ReassignedTo": "重新指派给",
+    "ToDoReassigned": "待办事项已重新指派",
+    "IssueClosedCloseToDo": "问题已关闭，待办事项仍未关闭"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

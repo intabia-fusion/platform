@@ -80,6 +80,7 @@ test.describe('Tracker tests', () => {
       await issuesPage.createAndOpenIssue(name, assignee, status)
       await issuesPage.reportTime(time)
       await issuesPage.verifyReportedTime(time)
+      await issuesPage.verifyNoPlannedTime()
     }
   })
 

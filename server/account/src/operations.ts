@@ -152,6 +152,7 @@ import {
 
 const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
+const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
 
 /* =================================== */
 /* ============OPERATIONS============= */
@@ -582,10 +583,11 @@ export async function createWorkspace (
   params: {
     workspaceName: string
     region?: string
+    language?: string
   },
   meta?: Meta
 ): Promise<WorkspaceLoginInfo> {
-  const { workspaceName, region } = params
+  const { workspaceName, region, language } = params
 
   if (workspaceName == null || workspaceName.length === 0) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -623,7 +625,24 @@ export async function createWorkspace (
     )
   }
 
-  const { workspaceUuid, workspaceUrl } = await createWorkspaceRecord(ctx, db, branding, workspaceName, account, region)
+  let validLanguage: string | undefined
+  if (language != null && SUPPORTED_LANGUAGES.includes(language)) {
+    validLanguage = language
+  } else if (language != null) {
+    ctx.warn('Unsupported language received', { language })
+  }
+
+  const { workspaceUuid, workspaceUrl } = await createWorkspaceRecord(
+    ctx,
+    db,
+    branding,
+    workspaceName,
+    account,
+    region,
+    'pending-creation',
+    undefined,
+    validLanguage
+  )
 
   await db.assignWorkspace(account, workspaceUuid, AccountRole.Owner)
 

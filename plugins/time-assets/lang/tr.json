@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Eylem Öğesi atananını değiştirmek istiyor musunuz? Eylem Öğesi, mevcut atananın planlayıcısından kaldırılacak.",
     "Occupancy": "Doluluk",
     "ShowEvents": "Etkinlikler",
-    "ShowActivity": "Etkinlik akışı"
+    "ShowActivity": "Etkinlik akışı",
+    "PlannedTime": "Planlanan zaman",
+    "CloseToDoQuestion": "Eylem Öğesi kapatılsın mı?",
+    "CloseToDoQuestionMessage": "Sorun kapatıldı. {count, plural, =1 {Eylem Öğeniz} other {Eylem Öğeleriniz}} de kapatılsın mı?",
+    "ReassignedTo": "Yeniden atanan",
+    "ToDoReassigned": "Eylem Öğesi yeniden atandı",
+    "IssueClosedCloseToDo": "Sorun kapatıldı, Eylem Öğesi hâlâ açık"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

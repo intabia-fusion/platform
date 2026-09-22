@@ -47,6 +47,6 @@
     "doupdate": "pnpm install --frozen-lockfile"
   },
   "dependencies": {
-    "pnpm": "^12.3.4"
+    "pnpm": "12.4.1"
   }
 }

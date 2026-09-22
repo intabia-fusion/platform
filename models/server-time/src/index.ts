@@ -20,8 +20,8 @@ import { TClass } from '@hcengineering/model-core'
 import { type Resource } from '@hcengineering/platform'
 import serverCore, { type TriggerControl } from '@hcengineering/server-core'
 import tracker from '@hcengineering/tracker'
-import serverTime, { type ToDoFactory, type OnToDo } from '@hcengineering/server-time'
-import time, { type ToDo, type WorkSlot } from '@hcengineering/time'
+import serverTime, { type ToDoFactory } from '@hcengineering/server-time'
+import time from '@hcengineering/time'
 import notification, { type NotificationType } from '@hcengineering/notification'
 import serverNotification, { type TypeMatch } from '@hcengineering/server-notification'
 
@@ -30,13 +30,8 @@ export class TToDoFactory extends TClass implements ToDoFactory {
   factory!: Resource<(tx: Tx, control: TriggerControl) => Promise<Tx[]>>
 }
 
-@Mixin(serverTime.mixin.OnToDo, core.class.Class)
-export class TOnToDo extends TClass implements OnToDo {
-  onDone!: Resource<(control: TriggerControl, workslots: WorkSlot[], todo: ToDo) => Promise<Tx[]>>
-}
-
 export function createModel (builder: Builder): void {
-  builder.createModel(TToDoFactory, TOnToDo)
+  builder.createModel(TToDoFactory)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverTime.trigger.OnTask,
@@ -47,14 +42,6 @@ export function createModel (builder: Builder): void {
     trigger: serverTime.trigger.OnToDoUpdate,
     txMatch: {
       _class: core.class.TxUpdateDoc,
-      objectClass: time.class.ToDo
-    }
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverTime.trigger.OnToDoRemove,
-    txMatch: {
-      _class: core.class.TxRemoveDoc,
       objectClass: time.class.ToDo
     }
   })
@@ -75,12 +62,16 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.mixin(tracker.class.Issue, core.class.Class, serverTime.mixin.ToDoFactory, {
-    factory: serverTime.function.IssueToDoFactory
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverTime.trigger.OnWorkSlotRemove,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: time.class.WorkSlot
+    }
   })
 
-  builder.mixin(tracker.class.Issue, core.class.Class, serverTime.mixin.OnToDo, {
-    onDone: serverTime.function.IssueToDoDone
+  builder.mixin(tracker.class.Issue, core.class.Class, serverTime.mixin.ToDoFactory, {
+    factory: serverTime.function.IssueToDoFactory
   })
 
   builder.mixin(time.class.ToDo, core.class.Class, serverCore.mixin.SearchPresenter, {
@@ -93,6 +84,26 @@ export function createModel (builder: Builder): void {
     serverNotification.mixin.TypeMatch,
     {
       create: serverTime.function.TodoCreateNotification
+    }
+  )
+
+  builder.mixin<NotificationType, TypeMatch>(
+    time.ids.ToDoReassigned,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverTime.function.TodoReassignedMatch,
+      create: serverTime.function.TodoReassignedNotification
+    }
+  )
+
+  builder.mixin<NotificationType, TypeMatch>(
+    time.ids.IssueClosedToDo,
+    notification.class.NotificationType,
+    serverNotification.mixin.TypeMatch,
+    {
+      match: serverTime.function.IssueClosedToDoMatch,
+      create: serverTime.function.IssueClosedToDoNotification
     }
   )
 }

@@ -209,6 +209,10 @@ export class PlanningPage extends CalendarPage {
     }).toPass(retryOptions)
   }
 
+  async checkToDoIsDone (title: string): Promise<void> {
+    await expect(this.toDoInToDos(title)).toHaveClass(/isDone/, { timeout: 20000 })
+  }
+
   async checkInSchedule (title: string): Promise<void> {
     await expect(this.eventInSchedule(title)).toBeVisible()
   }

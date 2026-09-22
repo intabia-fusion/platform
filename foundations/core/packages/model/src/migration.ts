@@ -149,7 +149,8 @@ export interface MigrateOperation {
   upgrade: (
     state: Map<string, Set<string>>,
     client: () => Promise<MigrationUpgradeClient>,
-    mode: MigrateMode
+    mode: MigrateMode,
+    context?: { language?: string }
   ) => Promise<void>
 }
 

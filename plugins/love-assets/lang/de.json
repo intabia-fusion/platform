@@ -164,6 +164,9 @@
     "SwitchWorkspaceLeaveMeeting": "Beim Wechsel des Arbeitsbereichs werden Sie vom laufenden Meeting getrennt.",
     "AlreadyInAnotherMeeting": "Sie sind bereits in einem Meeting",
     "LeaveOtherMeeting": "Sie sind in einem anderen Tab oder auf einem anderen Gerät mit \"{meeting}\" verbunden. Fortfahren und dieses verlassen?",
-    "SwitchWorkspaceEndsMeeting": "Dies ist Ihr Büro: Beim Wechsel des Arbeitsbereichs werden Sie getrennt und das Meeting für alle beendet."
+    "SwitchWorkspaceEndsMeeting": "Dies ist Ihr Büro: Beim Wechsel des Arbeitsbereichs werden Sie getrennt und das Meeting für alle beendet.",
+    "AllHands": "All-Hands-Meeting",
+    "MeetingRoomNum": "Besprechungsraum {number}",
+    "VoiceRoomNum": "Audioraum {number}"
   }
 }

@@ -84,6 +84,22 @@ export function calculateEventsDuration (events: WorkSlot[]): number {
   return duration
 }
 
+/**
+ * Slots before now are time already spent, slots after it are still a plan; a slot in progress
+ * counts on both sides.
+ */
+export function splitEventsDuration (events: WorkSlot[], now: number = Date.now()): { spent: number, planned: number } {
+  const clip = (from: number, to: number): WorkSlot[] =>
+    events
+      .map((event) => ({ ...event, date: Math.max(event.date, from), dueDate: Math.min(event.dueDate, to) }))
+      .filter((event) => event.dueDate > event.date)
+
+  return {
+    spent: calculateEventsDuration(clip(0, now)),
+    planned: calculateEventsDuration(clip(now, Number.MAX_SAFE_INTEGER))
+  }
+}
+
 // A ProjectToDo's workslot goes to the project space, a plain ToDo's workslot to the owner's personal space.
 export function getWorkSlotSpace (todo: Pick<ToDo, 'attachedSpace'>): Ref<Space> {
   return todo.attachedSpace ?? getCurrentEmployeeSpace()
