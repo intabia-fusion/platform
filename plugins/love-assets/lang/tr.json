@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "Burası sizin ofisiniz: çalışma alanını değiştirmek sizi koparır ve toplantıyı herkes için sonlandırır.",
     "AllHands": "Genel toplantı",
     "MeetingRoomNum": "Toplantı Odası {number}",
-    "VoiceRoomNum": "Sesli Oda {number}"
+    "VoiceRoomNum": "Sesli Oda {number}",
+    "JoinRequestTitle": "Katılma isteği",
+    "JoinRequestBody": "{name} toplantıya katılmak istiyor"
   }
 }

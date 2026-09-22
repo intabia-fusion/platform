@@ -475,15 +475,16 @@ async function createInviteNotificationTxs (
   // the IsKnocking copy ("{name} is knocking..."). Scenario A keeps the
   // InvitingYou wording ("{name} is asking you to join").
   const isKnock = source.room !== undefined
-  const messageLabel = isKnock ? love.string.IsKnocking : love.string.InvitingYou
+  const messageLabel = isKnock ? love.string.JoinRequestBody : love.string.InvitingYou
+  const titleLabel = isKnock ? love.string.JoinRequestTitle : love.string.MeetingRequest
   const data: Data<CommonInboxNotification> = {
     docNotifyContext: contextId,
     user: account,
     message: messageLabel,
     intlParams: { name: senderName, senderName },
-    title: love.string.MeetingRequest,
+    title: titleLabel,
     body: messageLabel,
-    header: love.string.MeetingRequest,
+    header: titleLabel,
     headerIcon: love.icon.Invite,
     objectId: notificationObjectId,
     objectClass: notificationObjectClass,
