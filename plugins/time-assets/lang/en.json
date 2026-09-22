@@ -65,7 +65,13 @@
     "ReassignToDoConfirm": "Do you want to change the Action Item assignee? The Action Item will be removed from the current assignee's planner.",
     "Occupancy": "Occupancy",
     "ShowEvents": "Events",
-    "ShowActivity": "Activity"
+    "ShowActivity": "Activity",
+    "PlannedTime": "Planned time",
+    "CloseToDoQuestion": "Close Action Item?",
+    "CloseToDoQuestionMessage": "The task is closed. Close {count, plural, =1 {your Action Item} other {your Action Items}} as well?",
+    "ReassignedTo": "Reassigned to",
+    "ToDoReassigned": "Action Item reassigned",
+    "IssueClosedCloseToDo": "Task closed, Action Item still open"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Vuoi cambiare l'assegnatario dell'Elemento d'Azione? L'Elemento d'Azione verrà rimosso dal pianificatore dell'assegnatario attuale.",
     "Occupancy": "Occupazione",
     "ShowEvents": "Eventi",
-    "ShowActivity": "Attività"
+    "ShowActivity": "Attività",
+    "PlannedTime": "Tempo pianificato",
+    "CloseToDoQuestion": "Chiudere l'Elemento d'Azione?",
+    "CloseToDoQuestionMessage": "L'issue è stata chiusa. Chiudere anche {count, plural, =1 {il tuo Elemento d'Azione} other {i tuoi Elementi d'Azione}}?",
+    "ReassignedTo": "Riassegnato a",
+    "ToDoReassigned": "Elemento d'Azione riassegnato",
+    "IssueClosedCloseToDo": "Issue chiusa, Elemento d'Azione ancora aperto"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

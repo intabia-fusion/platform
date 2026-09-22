@@ -15,7 +15,7 @@
 
 import activity from '@hcengineering/activity'
 import calendarPlugin, { type Visibility } from '@hcengineering/calendar'
-import contactPlugin, { type Employee } from '@hcengineering/contact'
+import contactPlugin, { type Employee, type Person } from '@hcengineering/contact'
 import {
   DOMAIN_MODEL,
   DateRangeMode,
@@ -125,6 +125,10 @@ export class TToDo extends TAttachedDoc implements ToDo {
   @Prop(TypeRef(contactPlugin.mixin.Employee), contactPlugin.string.Employee)
   @Index(IndexKind.Indexed)
   user!: Ref<Employee>
+
+  @Prop(TypeRef(contactPlugin.class.Person), time.string.ReassignedTo)
+  @Hidden()
+  reassignedTo?: Ref<Person> | null
 
   @Prop(Collection(time.class.WorkSlot, time.string.WorkSlot), time.string.WorkSlot)
   workslots!: number
@@ -390,10 +394,46 @@ export function createModel (builder: Builder): void {
     time.ids.ToDoCreated
   )
 
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
+    core.space.Model,
+    {
+      hidden: false,
+      generated: false,
+      notifyAuthor: false,
+      label: time.string.ToDoReassigned,
+      group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
+      txClasses: [core.class.TxUpdateDoc],
+      objectClass: time.class.ProjectToDo,
+      field: 'reassignedTo',
+      isMention: true,
+      defaultEnabled: false,
+      attachToParent: true
+    },
+    time.ids.ToDoReassigned
+  )
+
+  builder.createDoc<TxNotificationType>(
+    notification.class.TxNotificationType,
+    core.space.Model,
+    {
+      hidden: false,
+      generated: false,
+      notifyAuthor: false,
+      label: time.string.IssueClosedCloseToDo,
+      group: time.ids.TimeNotificationGroup as Ref<NotificationGroup>,
+      txClasses: [core.class.TxUpdateDoc],
+      objectClass: tracker.class.Issue,
+      field: 'status',
+      defaultEnabled: false
+    },
+    time.ids.IssueClosedToDo
+  )
+
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.InboxNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [time.ids.ToDoCreated]
+    enabledTypes: [time.ids.ToDoCreated, time.ids.ToDoReassigned, time.ids.IssueClosedToDo]
   })
 
   defineCollaborators(builder, time.class.ToDo, { fields: ['user'] })

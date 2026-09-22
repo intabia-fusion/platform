@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Chcete změnit přiřazení akční položky? Akční položka bude odebrána z plánovače aktuálního přiřazeného uživatele.",
     "Occupancy": "Vytíženost",
     "ShowEvents": "Události",
-    "ShowActivity": "Aktivita"
+    "ShowActivity": "Aktivita",
+    "PlannedTime": "Plánovaný čas",
+    "CloseToDoQuestion": "Zavřít akční položku?",
+    "CloseToDoQuestionMessage": "Úkol byl uzavřen. Chcete zavřít i {count, plural, =1 {vaši akční položku} other {vaše akční položky}}?",
+    "ReassignedTo": "Přeřazeno na",
+    "ToDoReassigned": "Akční položka přeřazena",
+    "IssueClosedCloseToDo": "Úkol uzavřen, akční položka zůstává otevřená"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

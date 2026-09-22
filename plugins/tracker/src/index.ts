@@ -36,7 +36,7 @@ import {
 import { Asset, IntlString, Plugin, Resource, plugin } from '@hcengineering/platform'
 import { Preference } from '@hcengineering/preference'
 import { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
-import { ToDo } from '@hcengineering/time'
+import { ToDo, WorkSlot } from '@hcengineering/time'
 import {
   ProjectType,
   ProjectTypeDescriptor,
@@ -316,6 +316,9 @@ export interface TimeSpendReport extends AttachedDoc {
   value: number
 
   description: string
+
+  // Set when the report mirrors a planner work slot, kept in sync with it
+  workslot?: Ref<WorkSlot>
 }
 
 /**
@@ -345,6 +348,33 @@ export interface IssueChildInfo {
 export interface ChildInfoTreeResult {
   totalEstimation: number
   totalReportedTime: number
+}
+
+/**
+ * A report that mirrors a planner work slot may still lie ahead of now: the slot end is restored
+ * from date + value, and a slot in progress is split proportionally. A report entered by hand is
+ * time already spent, whatever its duration, unless it is dated ahead.
+ *
+ * @public
+ */
+export function splitReportedTime (
+  reports: Array<Pick<TimeSpendReport, 'date' | 'value' | 'workslot'>>,
+  now: number = Date.now()
+): { spent: number, planned: number } {
+  let spent = 0
+  let total = 0
+  for (const report of reports) {
+    total += report.value
+    if (report.workslot === undefined) {
+      if ((report.date ?? 0) <= now) {
+        spent += report.value
+      }
+      continue
+    }
+    const elapsed = (now - (report.date ?? 0)) / (1000 * 60 * 60)
+    spent += Math.min(Math.max(elapsed, 0), report.value)
+  }
+  return { spent, planned: total - spent }
 }
 
 /**

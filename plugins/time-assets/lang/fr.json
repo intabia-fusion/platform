@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "Voulez-vous changer l'assigné de la tâche ? La tâche sera retirée de la planification de l'assigné actuel.",
     "Occupancy": "Occupation",
     "ShowEvents": "Événements",
-    "ShowActivity": "Activité"
+    "ShowActivity": "Activité",
+    "PlannedTime": "Temps planifié",
+    "CloseToDoQuestion": "Fermer la tâche ?",
+    "CloseToDoQuestionMessage": "L'issue est fermée. Fermer également {count, plural, =1 {votre tâche} other {vos tâches}} ?",
+    "ReassignedTo": "Réassigné à",
+    "ToDoReassigned": "Tâche réassignée",
+    "IssueClosedCloseToDo": "Issue fermée, tâche toujours ouverte"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",

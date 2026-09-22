@@ -13,13 +13,12 @@
 // limitations under the License.
 //
 
-import { Class, Doc, Mixin, Ref, Tx } from '@hcengineering/core'
+import { Class, Mixin, Ref, Tx } from '@hcengineering/core'
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import { Task } from '@hcengineering/task'
-import { ToDo, WorkSlot } from '@hcengineering/time'
-import { CreateNotificationResource } from '@hcengineering/server-notification'
+import { CreateNotificationResource, TypeMatchFuncResource } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -36,30 +35,23 @@ export interface ToDoFactory extends Class<Task> {
 /**
  * @public
  */
-export interface OnToDo extends Class<Doc> {
-  onDone: Resource<(control: TriggerControl, workslots: WorkSlot[], todo: ToDo, isDerived: boolean) => Promise<Tx[]>>
-}
-
-/**
- * @public
- */
 export default plugin(serverTimeId, {
   mixin: {
-    ToDoFactory: '' as Ref<Mixin<ToDoFactory>>,
-    OnToDo: '' as Ref<Mixin<OnToDo>>
+    ToDoFactory: '' as Ref<Mixin<ToDoFactory>>
   },
   function: {
     IssueToDoFactory: '' as Resource<(tx: Tx, control: TriggerControl) => Promise<Tx[]>>,
-    IssueToDoDone: '' as Resource<
-      (control: TriggerControl, workslots: WorkSlot[], todo: ToDo, isDerived: boolean) => Promise<Tx[]>
-    >,
-    TodoCreateNotification: '' as CreateNotificationResource
+    TodoCreateNotification: '' as CreateNotificationResource,
+    TodoReassignedNotification: '' as CreateNotificationResource,
+    TodoReassignedMatch: '' as TypeMatchFuncResource,
+    IssueClosedToDoNotification: '' as CreateNotificationResource,
+    IssueClosedToDoMatch: '' as TypeMatchFuncResource
   },
   trigger: {
     OnTask: '' as Resource<TriggerFunc>,
     OnToDoUpdate: '' as Resource<TriggerFunc>,
-    OnToDoRemove: '' as Resource<TriggerFunc>,
     OnWorkSlotCreate: '' as Resource<TriggerFunc>,
-    OnWorkSlotUpdate: '' as Resource<TriggerFunc>
+    OnWorkSlotUpdate: '' as Resource<TriggerFunc>,
+    OnWorkSlotRemove: '' as Resource<TriggerFunc>
   }
 })

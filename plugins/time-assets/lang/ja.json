@@ -64,7 +64,13 @@
     "ReassignToDoConfirm": "アクションアイテムの担当者を変更しますか？アクションアイテムは現在の担当者のプランナーから削除されます。",
     "Occupancy": "稼働状況",
     "ShowEvents": "イベント",
-    "ShowActivity": "アクティビティ"
+    "ShowActivity": "アクティビティ",
+    "PlannedTime": "計画時間",
+    "CloseToDoQuestion": "アクションアイテムを閉じますか？",
+    "CloseToDoQuestionMessage": "イシューは完了しました。{count, plural, =1 {アクションアイテム} other {アクションアイテム}}も閉じますか？",
+    "ReassignedTo": "新しい担当者",
+    "ToDoReassigned": "アクションアイテムの担当者が変更されました",
+    "IssueClosedCloseToDo": "イシューは完了、アクションアイテムは未完了"
   },
   "emailTemplate": {
     "ToDoCreatedNotificationText": "{body}",
