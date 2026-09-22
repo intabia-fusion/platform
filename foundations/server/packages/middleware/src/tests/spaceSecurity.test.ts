@@ -257,14 +257,20 @@ describe('SpaceSecurityMiddleware', () => {
       expect(passedSpaces).not.toContain('public1' as Ref<Space>)
     })
 
-    it('should let workspace Owner see private spaces they are not a member of', async () => {
-      const mw = await createMiddleware([createSpace('private1', ['user1'], { private: true, owners: ['user1'] })])
+    it('should keep workspace Owner out of private spaces they are not a member of', async () => {
+      // The owner sees the space itself, but the database hands the documents inside a private
+      // space only to its members. A search scoped wider than that reports hits nobody can open.
+      const mw = await createMiddleware([
+        createSpace('private1', ['user1'], { private: true, owners: ['user1'] }),
+        createSpace('private2', ['owner1'], { private: true, owners: ['owner1'] })
+      ])
 
       const owner = createAccount('owner1', AccountRole.Owner)
       ctx.contextData = createSessionData(owner)
       await mw.searchFulltext(ctx, { query: 'test' }, { limit: 10 })
       const passedSpaces = (nextMiddleware.searchFulltext as jest.Mock).mock.calls[0][1].spaces
-      expect(passedSpaces).toContain('private1' as Ref<Space>)
+      expect(passedSpaces).not.toContain('private1' as Ref<Space>)
+      expect(passedSpaces).toContain('private2' as Ref<Space>)
     })
   })
 

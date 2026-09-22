@@ -774,7 +774,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
 
     // Workspace owner sees every space regardless of membership/privacy,
     // mirroring filterLookup's availableForOwner branch.
-    const isWorkspaceOwner = account.role === AccountRole.Owner
+    // Not for a search: the DB lets only members read a private space, so such hits could
+    // neither be loaded nor opened, yet they would still be counted.
+    const isWorkspaceOwner = !forSearch && account.role === AccountRole.Owner
 
     for (const space of this.spacesMap.values()) {
       if (!showArchived && space.archived) continue

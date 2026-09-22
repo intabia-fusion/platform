@@ -417,6 +417,32 @@ describe('jsonToText', () => {
     }
     expect(jsonToText(node)).toEqual('')
   })
+  it('keeps a mention as its label, so a search can find who was addressed', () => {
+    const node: MarkupNode = {
+      type: MarkupNodeType.paragraph,
+      content: [
+        {
+          type: MarkupNodeType.reference,
+          attrs: { id: 'person-1', objectclass: 'contact:class:Person', label: 'Pavel Vasilenko' }
+        },
+        {
+          type: MarkupNodeType.text,
+          text: ' please have a look'
+        }
+      ]
+    }
+    expect(jsonToText(node)).toEqual('@Pavel Vasilenko please have a look')
+  })
+  it('keeps an emoji', () => {
+    const node: MarkupNode = {
+      type: MarkupNodeType.paragraph,
+      content: [
+        { type: MarkupNodeType.text, text: 'done ' },
+        { type: MarkupNodeType.emoji, attrs: { emoji: '✅', kind: 'unicode' } }
+      ]
+    }
+    expect(jsonToText(node)).toEqual('done ✅')
+  })
   it('returns error for text node with no text', () => {
     const node: MarkupNode = {
       type: MarkupNodeType.text,

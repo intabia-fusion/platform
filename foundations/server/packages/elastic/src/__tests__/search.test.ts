@@ -123,6 +123,26 @@ describe('Elastic search string', () => {
     expect(ids(result)).toContain('m1')
   })
 
+  it('finds the words in any order and distance', async () => {
+    // Both have the two words, only m1 as a phrase.
+    const result = await adapter.searchString(ctx, ws, { query: 'notes release', classes: [MESSAGE_CLASS] }, {})
+    expect(ids(result).sort()).toEqual(['m1', 'm2'])
+  })
+
+  it('finds a word by the prefix being typed', async () => {
+    const result = await adapter.searchString(ctx, ws, { query: 'quarter', classes: [MESSAGE_CLASS] }, {})
+    expect(ids(result)).toContain('m1')
+
+    const russian = await adapter.searchString(ctx, ws, { query: 'переписали поис', classes: [MESSAGE_CLASS] }, {})
+    expect(ids(russian)).toEqual(['m3'])
+  })
+
+  it('does not let the stemmer widen the prefix', async () => {
+    // `полностью` is indexed; `поло` is not how it starts, whatever the stemmer makes of it.
+    const result = await adapter.searchString(ctx, ws, { query: 'поло', classes: [MESSAGE_CLASS] }, {})
+    expect(ids(result)).toEqual([])
+  })
+
   it('demands every word unless asked to be fuzzy', async () => {
     // The default stays strict, so a picker does not start offering rows that merely resemble
     // what was typed.

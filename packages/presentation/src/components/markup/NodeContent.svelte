@@ -153,9 +153,10 @@
     {@const objectId = toString(attrs.id)}
     {@const objectClass = toString(attrs.objectclass)}
     {@const objectLabel = toString(attrs.label)}
+    {@const highlight = toString(attrs.highlight)}
 
     {#if objectClass !== undefined && objectId !== undefined}
-      <ObjectNode _id={toRef(objectId)} _class={toClassRef(objectClass)} title={objectLabel} />
+      <ObjectNode _id={toRef(objectId)} _class={toClassRef(objectClass)} title={objectLabel} {highlight} />
     {:else if nodes.length > 0}
       {#each nodes as node}
         <Node {parseEmojisFunction} {node} {preview} />
