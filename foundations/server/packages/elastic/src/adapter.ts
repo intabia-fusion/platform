@@ -339,6 +339,7 @@ class ElasticAdapter implements FullTextAdapter {
       const contentFields = ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3']
       const fields =
         searchIn === 'title' ? titleFields : searchIn === 'content' ? contentFields : [...titleFields, ...contentFields]
+      const prefixFields = fields.filter((f) => !f.split('^')[0].includes('.'))
 
       const mainQuery = query.query.startsWith('*')
         ? {
@@ -402,12 +403,23 @@ class ElasticAdapter implements FullTextAdapter {
               }
             }
           : {
-              simple_query_string: {
-                query: query.query,
-                analyze_wildcard: true,
-                flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
-                default_operator: 'and',
-                fields
+              bool: {
+                should: [
+                  {
+                    simple_query_string: {
+                      query: query.query,
+                      analyze_wildcard: true,
+                      flags: 'OR|PREFIX|PHRASE|FUZZY|NOT|ESCAPE',
+                      default_operator: 'and',
+                      fields
+                    }
+                  },
+                  // The last word as a prefix, so a message is found while it is still being typed.
+                  // Base fields only: a subfield rewrites the term first, and the stemmer would turn
+                  // `ало` into `ал` and then offer everything from `Алексей` to `альтернатива`.
+                  { multi_match: { query: query.query, type: 'bool_prefix', fields: prefixFields, operator: 'and' } }
+                ],
+                minimum_should_match: 1
               }
             }
 

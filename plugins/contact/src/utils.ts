@@ -431,8 +431,11 @@ export async function ensureEmployee (
   getGlobalPerson: () => Promise<GlobalPerson | undefined>,
   options?: EnsureEmployeeOptions
 ): Promise<Ref<Employee> | null> {
-  const globalPerson = await getGlobalPerson()
-  return await ensureEmployeeForPerson(ctx, me, me, client, socialIds, globalPerson, options)
+  return await ensureEmployeeForPerson(ctx, me, me, client, socialIds, getGlobalPerson, options)
+}
+
+function employeeMixin (person: Person): Pick<Employee, 'active' | 'role'> | undefined {
+  return Hierarchy.hasMixin(person, contact.mixin.Employee) ? (person as any)[contact.mixin.Employee] : undefined
 }
 
 export async function ensureEmployeeForPerson (
@@ -441,32 +444,32 @@ export async function ensureEmployeeForPerson (
   person: Account,
   client: Pick<Client, 'findOne' | 'findAll' | 'tx'>,
   socialIds: SocialId[],
-  globalPerson?: GlobalPerson,
+  globalPersonOrGetter?: GlobalPerson | (() => Promise<GlobalPerson | undefined>),
   options?: EnsureEmployeeOptions
 ): Promise<Ref<Employee> | null> {
   const createEmployee = options?.createEmployee ?? true
   const maxRetries = 3
-  let retryCount = 0
-  let personRef: Ref<Person> | undefined
+  const socialIdRefs = person.socialIds as SocialIdentityRef[]
 
-  while (retryCount <= maxRetries) {
+  // Everything the common path needs, in one round trip.
+  const [globalPerson, personByUuid, existingIdentities] = await Promise.all([
+    typeof globalPersonOrGetter === 'function' ? globalPersonOrGetter() : globalPersonOrGetter,
+    client.findOne(contact.class.Person, { personUuid: person.uuid }),
+    client.findAll(contact.class.SocialIdentity, { _id: { $in: socialIdRefs } })
+  ])
+
+  // These social ids are confirmed globally, as socialIds holds only confirmed identities:
+  // a local person one of them is attached to is ours even without personUuid.
+  let personRef: Ref<Person> | undefined = personByUuid?._id ?? existingIdentities[0]?.attachedTo
+  const foundBySocialId = personByUuid === undefined && personRef !== undefined
+  let personDoc: Person | undefined = personByUuid
+
+  for (let attempt = 0; personRef === undefined && attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      // Small delay to allow the other concurrent operation to complete
+      await new Promise((resolve) => setTimeout(resolve, 10 * attempt))
+    }
     const txFactory = new TxFactory(me.primarySocialId)
-    const personByUuid = await client.findOne(contact.class.Person, { personUuid: person.uuid })
-    personRef = personByUuid?._id
-
-    if (personRef === undefined) {
-      const socialIdentity = await client.findOne(contact.class.SocialIdentity, {
-        _id: { $in: person.socialIds as SocialIdentityRef[] }
-      })
-
-      // This social id is confirmed globally as we only have ids of confirmed social identities in socialIds array
-      personRef = socialIdentity?.attachedTo
-    }
-
-    if (personRef !== undefined) {
-      // Person found, break out of retry loop
-      break
-    }
 
     // Local person not found: neither by personUuid nor by a local social identity
     // Creating a new local person using TxApplyIf to prevent race conditions
@@ -504,6 +507,7 @@ export async function ensureEmployeeForPerson (
       const existingPerson = await client.findOne(contact.class.Person, { personUuid: person.uuid })
       if (existingPerson !== undefined) {
         personRef = existingPerson._id
+        personDoc = existingPerson
       } else if (!(txResult as TxApplyResult).success) {
         // TxApplyIf was rejected and we couldn't find the existing person yet
         // Mark for retry - another concurrent call may have created it
@@ -516,13 +520,6 @@ export async function ensureEmployeeForPerson (
       // TxApplyIf succeeded or person was found, break out of retry loop
       break
     }
-
-    // TxApplyIf was rejected and we haven't found the person, retry
-    retryCount++
-    if (retryCount <= maxRetries) {
-      // Small delay to allow the other concurrent operation to complete
-      await new Promise((resolve) => setTimeout(resolve, 10 * retryCount))
-    }
   }
 
   if (personRef === undefined) {
@@ -532,9 +529,7 @@ export async function ensureEmployeeForPerson (
 
   try {
     const txFactory = new TxFactory(me.primarySocialId)
-    // Check if person was found by social identity but missing personUuid
-    const personByUuidNow = await client.findOne(contact.class.Person, { personUuid: person.uuid })
-    if (personByUuidNow === undefined) {
+    if (foundBySocialId) {
       // Local person found only by social identity, need to set personUuid
       const updatePersonTx = txFactory.createTxUpdateDoc(contact.class.Person, contact.space.Contacts, personRef, {
         personUuid: person.uuid
@@ -542,9 +537,7 @@ export async function ensureEmployeeForPerson (
       await client.tx(updatePersonTx)
     }
 
-    const existingIdentifiers = toIdMap(
-      await client.findAll(contact.class.SocialIdentity, { _id: { $in: person.socialIds as SocialIdentityRef[] } })
-    )
+    const existingIdentifiers = toIdMap(existingIdentities)
 
     for (const socialId of socialIds) {
       const existing = existingIdentifiers.get(socialId._id as SocialIdentityRef)
@@ -672,14 +665,12 @@ export async function ensureEmployeeForPerson (
       const employeeRole =
         options?.roleOverride ??
         (person.role === AccountRole.Guest || person.role === AccountRole.ReadOnlyGuest ? 'GUEST' : 'USER')
-      const employee = await client.findOne(contact.mixin.Employee, { _id: personRef as Ref<Employee> })
+      // The person document already carries the mixin; only a person found through a social identity
+      // has not been read yet.
+      personDoc ??= await client.findOne(contact.class.Person, { _id: personRef })
+      const employee = personDoc !== undefined ? employeeMixin(personDoc) : undefined
 
-      if (
-        employee === undefined ||
-        !Hierarchy.hasMixin(employee, contact.mixin.Employee) ||
-        !employee.active ||
-        employee.role !== employeeRole
-      ) {
+      if (employee === undefined || !employee.active || employee.role !== employeeRole) {
         await ctx.with('create-employee', {}, async () => {
           if (personRef === undefined) {
             // something went wrong

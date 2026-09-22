@@ -38,7 +38,7 @@ jest.mock('../resolve', () => ({
 }))
 
 /* eslint-disable import/first */
-import { createChatSearchStore, seedGlobalSearch, takePendingSearch } from '../store'
+import { MAX_AUTO_PAGES, PAGE_SIZE, createChatSearchStore, seedGlobalSearch, takePendingSearch } from '../store'
 
 const page = (ids: string[], cursor?: string): SearchResult =>
   ({ docs: ids.map((id) => ({ id })), cursor, total: ids.length }) as unknown as SearchResult
@@ -157,6 +157,59 @@ describe('createChatSearchStore', () => {
     expect(get(store).results.map((r) => r._id)).toEqual(['m1'])
   })
 
+  it('walks on by itself when a page comes back too thin to scroll', async () => {
+    // The server drops hits whose document is gone; a handful of rows never fills the list.
+    searchFulltext.mockResolvedValueOnce(page(['m1'], 'cur1')).mockResolvedValueOnce(page(['m2']))
+
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    await settle()
+
+    expect(searchFulltext).toHaveBeenCalledTimes(2)
+    expect(searchFulltext.mock.calls[1][1].cursor).toBe('cur1')
+    expect(get(store).results.map((r) => r._id)).toEqual(['m1', 'm2'])
+  })
+
+  it('stops following thin pages after a few and leaves the rest to the scroll', async () => {
+    // A cursor that never runs out must not turn one keystroke into an endless fetch.
+    let n = 0
+    searchFulltext.mockImplementation(async () => page([`m${n++}`], `cur${n}`))
+    // Stores of the earlier tests are never destroyed and may still be mid-chain on the same
+    // mock, so only the calls carrying this query are counted.
+    const own = (): number => searchFulltext.mock.calls.filter((c) => c[0].query === 'follow-cap').length
+
+    const store = createChatSearchStore()
+    store.setSearch('follow-cap')
+    // Wait until the chain stops on its own rather than a fixed while: under load it runs slower.
+    let calls = -1
+    for (let i = 0; i < 12 && calls !== own(); i++) {
+      calls = own()
+      await settle()
+    }
+
+    // The first page plus the pages followed on their own.
+    expect(own()).toBe(1 + MAX_AUTO_PAGES)
+    expect(get(store).done).toBe(false)
+
+    store.loadMore()
+    await settle()
+    expect(own()).toBeGreaterThan(1 + MAX_AUTO_PAGES)
+  })
+
+  it('waits for the scroll when a page is full enough', async () => {
+    const ids = Array.from({ length: 30 }, (_, i) => `m${i}`)
+    searchFulltext.mockResolvedValueOnce(page(ids, 'cur1')).mockResolvedValueOnce(page(['x']))
+
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    await settle()
+
+    expect(searchFulltext).toHaveBeenCalledTimes(1)
+    expect(get(store).done).toBe(false)
+  })
+
   it('is done only when the index hands back no cursor', async () => {
     searchFulltext.mockResolvedValue(page(['m1']))
     const store = createChatSearchStore()
@@ -181,7 +234,8 @@ describe('createChatSearchStore', () => {
 
   it('starts from the top when the sort changes', async () => {
     // The cursor encodes the sort it was made with, so it cannot survive the switch.
-    searchFulltext.mockResolvedValue(page(['m1'], 'cur1'))
+    const full = Array.from({ length: PAGE_SIZE }, (_, i) => `m${i}`)
+    searchFulltext.mockResolvedValue(page(full, 'cur1'))
     const store = createChatSearchStore()
     store.setSearch('release')
     await settle()
@@ -294,7 +348,6 @@ describe('createChatSearchStore', () => {
 
     expect(searchFulltext.mock.calls[0][1]).toMatchObject({
       searchIn: 'content',
-      fuzzy: true,
       highlight: true,
       fields: ['message']
     })

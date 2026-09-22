@@ -436,10 +436,11 @@ async function createInviteNotificationTxs (
   const senderName = sender !== undefined ? formatName(sender.name, control.branding?.lastNameFirst) : 'System'
   // Б flow (knock-to-private-room) — `source.room !== undefined`. The
   // recipient is the meeting owner being asked to admit a stranger, so use
-  // the IsKnocking copy ("{name} is knocking..."). Scenario A keeps the
-  // InvitingYou wording ("{name} is asking you to join").
+  // the JoinRequest copy ("{name} wants to join the meeting"). Scenario A
+  // keeps the InvitingYou wording ("{name} is asking you to join").
   const isKnock = source.room !== undefined
-  const messageLabel = isKnock ? love.string.IsKnocking : love.string.InvitingYou
+  const messageLabel = isKnock ? love.string.JoinRequestBody : love.string.InvitingYou
+  const titleLabel = isKnock ? love.string.JoinRequestTitle : love.string.MeetingRequest
   result.push(
     control.txFactory.createTxCreateDoc(
       notification.class.CreateNotificationAction,
@@ -454,7 +455,7 @@ async function createInviteNotificationTxs (
           icon: love.icon.Invite
         },
         intl: {
-          titleIntl: love.string.MeetingRequest,
+          titleIntl: titleLabel,
           bodyIntl: messageLabel,
           intlParams: { name: senderName }
         }

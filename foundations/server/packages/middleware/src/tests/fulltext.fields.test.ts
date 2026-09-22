@@ -143,6 +143,27 @@ describe('FullTextMiddleware fields', () => {
     expect(out.docs.map((d) => d.id)).toEqual(['b'])
   })
 
+  it('takes the dropped documents off the total and marks it approximate', async () => {
+    // The index counted the stale hit; the caller would otherwise show a count the list never reaches.
+    indexResult = { docs: [resultDoc('a'), resultDoc('b')], total: 7, totalExact: true }
+    findAll.mockImplementation(async () =>
+      toFindResult([{ _id: 'b', _class: MESSAGE_CLASS, message: 'markup-b' }] as any)
+    )
+
+    const out = await createMiddleware().searchFulltext(ctx, { query: 'q' }, { limit: 10, fields: ['message'] })
+    expect(out.total).toBe(6)
+    expect(out.totalExact).toBe(false)
+  })
+
+  it('leaves the total alone when nothing was dropped', async () => {
+    indexResult = { docs: [resultDoc('a')], total: 7, totalExact: true }
+    findAll.mockImplementation(async () => toFindResult([{ _id: 'a', _class: MESSAGE_CLASS }] as any))
+
+    const out = await createMiddleware().searchFulltext(ctx, { query: 'q' }, { limit: 10, fields: ['message'] })
+    expect(out.total).toBe(7)
+    expect(out.totalExact).toBe(true)
+  })
+
   it('keeps a document that merely lacks the attribute', async () => {
     // A system message exists but has no body of its own; it must still be shown, rendered from
     // the index fragments rather than from a body it never had.

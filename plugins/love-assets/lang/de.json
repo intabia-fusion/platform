@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "Dies ist Ihr Büro: Beim Wechsel des Arbeitsbereichs werden Sie getrennt und das Meeting für alle beendet.",
     "AllHands": "All-Hands-Meeting",
     "MeetingRoomNum": "Besprechungsraum {number}",
-    "VoiceRoomNum": "Audioraum {number}"
+    "VoiceRoomNum": "Audioraum {number}",
+    "JoinRequestTitle": "Beitrittsanfrage",
+    "JoinRequestBody": "{name} möchte dem Meeting beitreten"
   }
 }

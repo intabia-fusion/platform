@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "ここはあなたのオフィスです。ワークスペースを切り替えると、切断され、全員の会議が終了します。",
     "AllHands": "全員会議",
     "MeetingRoomNum": "会議室 {number}",
-    "VoiceRoomNum": "ボイスルーム {number}"
+    "VoiceRoomNum": "ボイスルーム {number}",
+    "JoinRequestTitle": "参加リクエスト",
+    "JoinRequestBody": "{name} がミーティングへの参加を希望しています"
   }
 }
