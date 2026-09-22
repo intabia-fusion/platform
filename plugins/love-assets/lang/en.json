@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "This is your office: switching the workspace will disconnect you and end the meeting for everyone.",
     "AllHands": "All hands",
     "MeetingRoomNum": "Meeting Room {number}",
-    "VoiceRoomNum": "Voice Room {number}"
+    "VoiceRoomNum": "Voice Room {number}",
+    "JoinRequestTitle": "Request to join",
+    "JoinRequestBody": "{name}  wants to join the meeting"
   }
 }

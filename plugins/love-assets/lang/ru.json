@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "Это ваш офис: переключение пространства отключит вас и завершит встречу для всех участников.",
     "AllHands": "Общая встреча",
     "MeetingRoomNum": "Переговорная {number}",
-    "VoiceRoomNum": "Голосовая комната {number}"
+    "VoiceRoomNum": "Голосовая комната {number}",
+    "JoinRequestTitle": "Запрос на вступление",
+    "JoinRequestBody": "{name} хочет присоединиться к встрече"
   }
 }

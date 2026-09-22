@@ -46,6 +46,8 @@ const love = plugin(loveId, {
     MyOffice: '' as IntlString,
     Room: '' as IntlString,
     IsKnocking: '' as IntlString,
+    JoinRequestTitle: '' as IntlString,
+    JoinRequestBody: '' as IntlString,
     KnockingLabel: '' as IntlString,
     InvitingYou: '' as IntlString,
     MeetingRequest: '' as IntlString,

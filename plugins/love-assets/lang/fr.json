@@ -167,6 +167,8 @@
     "SwitchWorkspaceEndsMeeting": "Ceci est votre bureau : changer d'espace de travail vous déconnectera et mettra fin à la réunion pour tout le monde.",
     "AllHands": "Réunion générale",
     "MeetingRoomNum": "Salle de réunion {number}",
-    "VoiceRoomNum": "Salle vocale {number}"
+    "VoiceRoomNum": "Salle vocale {number}",
+    "JoinRequestTitle": "Demande d'adhésion",
+    "JoinRequestBody": "{name}  souhaite rejoindre la réunion"
   }
 }
