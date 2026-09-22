@@ -1371,7 +1371,11 @@ describe('account utils', () => {
         ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
         const select = async (extra: Record<string, string>, status: Record<string, any>): Promise<any> => {
-          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: mockAccount.uuid, workspace: 'workspace-uuid', extra })
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+            account: mockAccount.uuid,
+            workspace: 'workspace-uuid',
+            extra
+          })
           ;(mockDb.workspaceStatus.findOne as jest.Mock).mockResolvedValue({ isDisabled: false, ...status })
           await selectWorkspace(mockCtx, mockDb, mockBranding, userToken, { workspaceUrl, kind: 'external' })
           return (generateToken as jest.Mock).mock.calls.at(-1)?.[2]

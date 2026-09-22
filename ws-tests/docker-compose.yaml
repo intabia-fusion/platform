@@ -218,8 +218,7 @@ services:
       - OTP_RETRY_DELAY=1
     restart: unless-stopped
   backup:
-    image: 'intabiafusion/backup:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/backup:${DOCKER_TAG:-latest}"
     depends_on:
       postgres:
         condition: service_healthy

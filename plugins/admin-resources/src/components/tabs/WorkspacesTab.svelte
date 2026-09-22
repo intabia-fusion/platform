@@ -930,7 +930,9 @@
                       {/if}
                     </td>
                     <td>
-                      {#if workspace.backupInfo != null}
+                      {#if workspace.backupInfo?.backups === 0}
+                        -
+                      {:else if workspace.backupInfo != null}
                         {@const sz = Math.max(
                           workspace.backupInfo.backupSize,
                           workspace.backupInfo.dataSize + workspace.backupInfo.blobsSize
@@ -947,7 +949,9 @@
                       {/if}
                     </td>
                     <td>
-                      {#if workspace.backupInfo != null}
+                      {#if workspace.backupInfo?.backups === 0}
+                        -
+                      {:else if workspace.backupInfo != null}
                         {@const hours = Math.round((now - workspace.backupInfo.lastBackup) / (1000 * 3600))}
                         {#if hours > 24}
                           {Math.round(hours / 24)} days
