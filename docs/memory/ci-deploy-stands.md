@@ -27,9 +27,17 @@
 - Админ - это `PLATFORM_ADMIN_EMAILS` сервиса account (`server/account/src/admin.ts` читает env один
   раз при старте), команды в tool для этого нет. `admin` домешивается к списку стенда.
 - `create-workspace` не идемпотентен: на занятый url делает второй workspace со случайным суффиксом.
-  Поэтому не в update.
+  Поэтому seed в обоих режимах сначала проверяет `login user1@user1` + `selectWorkspace sanity-ws` и
+  пропускается, если стенд уже засеян. `PLATFORM_ADMIN_EMAILS` пишется в `platform.conf` и в update.
 - tool глотает ошибки (`withAccountDatabase` ловит и печатает, exit 0), поэтому после сидирования
   идёт проверка через RPC account: `login` user1 + `selectWorkspace sanity-ws`.
 - `deploy.sh` на стенде запускается из временного файла со stdin `/dev/null`, а не `bash -s`: при `bash -s`
   `up.sh` (docker compose) съедал кусок stdin, bash продолжал с середины base64 дампа sanity-ws
   (`bash: line 14: T+ZYMj0tQKY2: command not found`), seed и проверка готовности не выполнялись.
+
+## Почта и OTP на стендах
+
+Почта (account -> redpanda -> mail_server -> mailpit) работает, но nodemailer отбрасывает адрес без `@`
+(`No recipients defined`): OTP для логинов `admin`/`user1` не доходил. Seed теперь создаёт
+`admin@admin`, `user1@user1`, `user2@user2`. `isEmail` в account требует точку в домене, но он проверяет
+только mailbox-операции, не логин.

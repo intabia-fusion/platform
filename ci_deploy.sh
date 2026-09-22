@@ -30,9 +30,10 @@ set -eo pipefail
 #     seed:
 #       password: '1234'
 #
-# seed is for QA stands only: after a clean deploy it creates user1, user2 and admin (a platform
-# admin) with that password and restores tests/sanity-ws as workspace sanity-ws with user1 and
-# user2 as owners. Off unless the key is present; password defaults to 1234, what the sanity
+# seed is for QA stands only: after a clean deploy it creates user1@user1, user2@user2 and
+# admin@admin (a platform admin) with that password and restores tests/sanity-ws as workspace
+# sanity-ws with the two users as owners. The logins carry a domain so OTP letters reach mailpit.
+# Off unless the key is present; password defaults to 1234, what the sanity
 # suite logs in with.
 #
 # QA_TOOLS_ENABLED turns on the selfhost qa profile (/_logs, /_stand/, user qa) in both modes. The
@@ -101,8 +102,8 @@ const seed = stand.seed != null && stand.seed !== false
 const setupEnv = Object.assign({}, setup.env)
 if (seed) {
   // The account service takes platform admins from this list only, there is no tool command for it.
-  const admins = String(setupEnv.PLATFORM_ADMIN_EMAILS || '').split(',').filter((it) => it !== '' && it !== 'admin')
-  setupEnv.PLATFORM_ADMIN_EMAILS = admins.concat('admin').join(',')
+  const admins = String(setupEnv.PLATFORM_ADMIN_EMAILS || '').split(',').filter((it) => it !== '' && it !== 'admin@admin')
+  setupEnv.PLATFORM_ADMIN_EMAILS = admins.concat('admin@admin').join(',')
 }
 if (String(setupEnv.QA_TOOLS_ENABLED) === 'true' && !setupEnv.QA_TOOLS_PASSWORD) {
   setupEnv.QA_TOOLS_PASSWORD = name + 'qa123'
@@ -135,8 +136,8 @@ for (const [k, v] of Object.entries(setupEnv)) {
     process.exit(1)
   }
   args.push('--env', k + "='" + value + "'")
-  // An update never re-runs setup.sh, so a stand deployed before the QA tools existed gets them here.
-  if (k.startsWith('QA_TOOLS_')) updateEnv.push(k + "='" + value + "'")
+  // An update never re-runs setup.sh, so a stand deployed before these existed gets them here.
+  if (k.startsWith('QA_TOOLS_') || k === 'PLATFORM_ADMIN_EMAILS') updateEnv.push(k + "='" + value + "'")
 }
 out.push('STAND_SETUP_ARGS=(' + args.map(q).join(' ') + ')')
 out.push('STAND_UPDATE_ENV=(' + updateEnv.map(q).join(' ') + ')')
@@ -277,32 +278,16 @@ while :; do
 done
 echo "Stand '$project' is up: $(docker ps -q --filter "label=com.docker.compose.project=$project" | wc -l) containers running"
 READY
-  # Clean only: the data survives an update, and create-workspace run twice makes a second workspace.
-  if [ "$mode" == clean ] && [ -n "$STAND_SEED" ]; then
-    # The dump lives in this repo, the stand has only the selfhost checkout.
-    printf 'rm -rf backups/sanity-ws && mkdir -p backups\n'
-    printf "base64 -d <<'SANITY_WS' | tar xzf - -C backups\n"
-    tar czf - -C "$repo/tests" sanity-ws | base64
-    printf 'SANITY_WS\n'
+  # Both modes: a stand seeded before is detected and left alone, since create-workspace run twice
+  # makes a second workspace.
+  if [ -n "$STAND_SEED" ]; then
     printf 'seed_password=%s\n' "$(shq "$STAND_SEED_PASSWORD")"
-    # Same steps as the sanity stand in dev/test-base/src/stands.ts.
-    cat <<'SEED'
-tool() { ./run-tool.sh "$@"; }
-tool create-account admin -p "$seed_password" -f Super -l Admin
-tool create-account user1 -p "$seed_password" -f John -l Appleseed
-tool create-account user2 -p "$seed_password" -f Kainin -l Dirak
-tool create-workspace sanity-ws email:user1
-./backup-restore.sh backups/sanity-ws sanity-ws --no-accounts < /dev/null
-for user in user1 user2; do
-  tool assign-workspace "$user" sanity-ws
-  tool set-user-role "$user" sanity-ws OWNER
-done
-tool configure sanity-ws '--enable=*'
-tool set-workspace-plan sanity-ws business
-# The tool logs its errors and still exits 0, so prove the result: user1 signs in and opens sanity-ws.
-account=$(docker ps -q --filter "label=com.docker.compose.project=$project" \
-  --filter "label=com.docker.compose.service=account" | head -1)
-docker exec -i -e SEED_PASSWORD="$seed_password" "$account" node - <<'CHECK'
+    cat <<'SEEDED'
+# The tool logs its errors and still exits 0, so the result is proven: user1 signs in and opens sanity-ws.
+seeded() {
+  account=$(docker ps -q --filter "label=com.docker.compose.project=$project" \
+    --filter "label=com.docker.compose.service=account" | head -1)
+  docker exec -i -e SEED_PASSWORD="$seed_password" "$account" node - <<'CHECK'
 const call = async (method, params, token) => {
   const res = await fetch('http://localhost:3000', {
     method: 'POST',
@@ -313,11 +298,38 @@ const call = async (method, params, token) => {
   if (body.error != null || body.result == null) throw new Error(method + ': ' + JSON.stringify(body.error ?? body))
   return body.result
 }
-call('login', { email: 'user1', password: process.env.SEED_PASSWORD })
+call('login', { email: 'user1@user1', password: process.env.SEED_PASSWORD })
   .then(async (info) => await call('selectWorkspace', { workspaceUrl: 'sanity-ws', kind: 'external' }, info.token))
-  .then(() => { console.log('Seeded: admin, user1, user2, workspace sanity-ws') })
-  .catch((err) => { console.error('Seed check failed - ' + err.message); process.exit(1) })
+  .catch((err) => { console.error(err.message); process.exit(1) })
 CHECK
+}
+SEEDED
+    printf 'if seeded 2>/dev/null; then\n  echo "Already seeded: admin@admin, user1@user1, user2@user2, workspace sanity-ws"\nelse\n'
+    # The dump lives in this repo, the stand has only the selfhost checkout.
+    printf 'rm -rf backups/sanity-ws && mkdir -p backups\n'
+    printf "base64 -d <<'SANITY_WS' | tar xzf - -C backups\n"
+    tar czf - -C "$repo/tests" sanity-ws | base64
+    printf 'SANITY_WS\n'
+    # Same steps as the sanity stand in dev/test-base/src/stands.ts.
+    cat <<'SEED'
+tool() { ./run-tool.sh "$@"; }
+tool create-account admin@admin -p "$seed_password" -f Super -l Admin
+tool create-account user1@user1 -p "$seed_password" -f John -l Appleseed
+tool create-account user2@user2 -p "$seed_password" -f Kainin -l Dirak
+tool create-workspace sanity-ws email:user1@user1
+./backup-restore.sh backups/sanity-ws sanity-ws --no-accounts
+for user in user1@user1 user2@user2; do
+  tool assign-workspace "$user" sanity-ws
+  tool set-user-role "$user" sanity-ws OWNER
+done
+tool configure sanity-ws '--enable=*'
+tool set-workspace-plan sanity-ws business
+if ! seeded; then
+  echo "Seed check failed" >&2
+  exit 1
+fi
+echo "Seeded: admin@admin, user1@user1, user2@user2, workspace sanity-ws"
+fi
 SEED
   fi
 } > deploy.sh
