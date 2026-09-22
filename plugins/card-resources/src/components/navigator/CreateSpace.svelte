@@ -54,7 +54,16 @@
   $: isNew = space === undefined
 
   let rolesAssignment = getRolesAssignment(roles)
-  $: rolesAssignment = getRolesAssignment(roles)
+  $: updateRolesAssignment(roles)
+
+  function updateRolesAssignment (roles: Role[]): void {
+    const storedRolesAssignment = getRolesAssignment(roles)
+    // Keep draft assignments separate from reactive role discovery and stored space data.
+    rolesAssignment = roles.reduce<RolesAssignment>((res, { _id }) => {
+      res[_id] = rolesAssignment[_id] ?? storedRolesAssignment[_id] ?? []
+      return res
+    }, {})
+  }
 
   function getRolesAssignment (roles: Role[]): RolesAssignment {
     if (space === undefined || roles === undefined) {
