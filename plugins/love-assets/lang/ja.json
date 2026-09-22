@@ -164,6 +164,9 @@
     "SwitchWorkspaceLeaveMeeting": "ワークスペースを切り替えると、現在の会議から切断されます。",
     "AlreadyInAnotherMeeting": "すでに会議に参加しています",
     "LeaveOtherMeeting": "別のタブまたはデバイスで「{meeting}」に接続しています。続行して退出しますか？",
-    "SwitchWorkspaceEndsMeeting": "ここはあなたのオフィスです。ワークスペースを切り替えると、切断され、全員の会議が終了します。"
+    "SwitchWorkspaceEndsMeeting": "ここはあなたのオフィスです。ワークスペースを切り替えると、切断され、全員の会議が終了します。",
+    "AllHands": "全員会議",
+    "MeetingRoomNum": "会議室 {number}",
+    "VoiceRoomNum": "ボイスルーム {number}"
   }
 }

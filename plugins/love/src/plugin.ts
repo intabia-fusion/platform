@@ -133,7 +133,10 @@ const love = plugin(loveId, {
     GroupByRoom: '' as IntlString,
     GroupByOwner: '' as IntlString,
     GroupByStatus: '' as IntlString,
-    GroupByDate: '' as IntlString
+    GroupByDate: '' as IntlString,
+    AllHands: '' as IntlString,
+    MeetingRoomNum: '' as IntlString,
+    VoiceRoomNum: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,

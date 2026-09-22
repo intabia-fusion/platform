@@ -3,6 +3,7 @@ import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
 import love from './plugin'
 import { MeetingMinutes, MeetingStatus, Office, ParticipantInfo, Room, RoomType } from './types'
+import { translate } from '@hcengineering/platform'
 
 /**
  * Parsed LiveKit room name components
@@ -40,13 +41,22 @@ export function isOffice (room: Data<Room>): room is Office {
   return (room as Office).person !== undefined
 }
 
-export function createDefaultRooms (
+export async function createDefaultRooms (
   employees: Ref<Employee>[],
   defaultTranscription: boolean = false,
   defaultRecording: boolean = false,
-  defaultPrivate: boolean = false
-): (Data<Room | Office> & { _id: Ref<Room> })[] {
+  defaultPrivate: boolean = false,
+  language?: string
+): Promise<(Data<Room | Office> & { _id: Ref<Room> })[]> {
   const res: (Data<Room | Office> & { _id: Ref<Room> })[] = []
+  const [allHandsName, meetingRoom1Name, meetingRoom2Name, voiceRoom1Name, voiceRoom2Name] = await Promise.all([
+    translate(love.string.AllHands, {}, language),
+    translate(love.string.MeetingRoomNum, { number: 1 }, language),
+    translate(love.string.MeetingRoomNum, { number: 2 }, language),
+    translate(love.string.VoiceRoomNum, { number: 1 }, language),
+    translate(love.string.VoiceRoomNum, { number: 2 }, language)
+  ])
+
   // create 12 offices
   for (let index = 0; index < 12; index++) {
     const _id = generateId<Office>()
@@ -72,7 +82,7 @@ export function createDefaultRooms (
 
   res.push({
     _id: allHands,
-    name: 'All hands',
+    name: allHandsName,
     type: RoomType.Video,
     floor: love.ids.MainFloor,
     width: 9,
@@ -89,7 +99,7 @@ export function createDefaultRooms (
   const meetingRoom1 = generateId<Room>()
   res.push({
     _id: meetingRoom1,
-    name: 'Meeting Room 1',
+    name: meetingRoom1Name,
     type: RoomType.Video,
     floor: love.ids.MainFloor,
     width: 4,
@@ -105,7 +115,7 @@ export function createDefaultRooms (
   const meetingRoom2 = generateId<Room>()
   res.push({
     _id: meetingRoom2,
-    name: 'Meeting Room 2',
+    name: meetingRoom2Name,
     type: RoomType.Video,
     floor: love.ids.MainFloor,
     width: 4,
@@ -121,7 +131,7 @@ export function createDefaultRooms (
   const voiceRoom1 = generateId<Room>()
   res.push({
     _id: voiceRoom1,
-    name: 'Voice Room 1',
+    name: voiceRoom1Name,
     type: RoomType.Audio,
     floor: love.ids.MainFloor,
     width: 4,
@@ -137,7 +147,7 @@ export function createDefaultRooms (
   const voiceRoom2 = generateId<Room>()
   res.push({
     _id: voiceRoom2,
-    name: 'Voice Room 2',
+    name: voiceRoom2Name,
     type: RoomType.Audio,
     floor: love.ids.MainFloor,
     width: 4,

@@ -48,7 +48,8 @@ export async function createWorkspace (
     progress: number,
     message?: string
   ) => Promise<void>,
-  external: boolean = false
+  external: boolean = false,
+  language?: string
 ): Promise<void> {
   const childLogger = ctx.newChild('createWorkspace', ctx.getParams())
   const ctxModellogger: ModelLogger = {
@@ -128,7 +129,8 @@ export async function createWorkspace (
             async (value) => {
               await handleWsEvent?.('progress', version, 10 + Math.round((Math.min(value, 100) / 100) * 10))
             },
-            'create'
+            'create',
+            language
           ),
         fp
       )

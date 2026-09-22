@@ -164,6 +164,9 @@
     "SwitchWorkspaceLeaveMeeting": "Cambiare spazio di lavoro ti disconnetterà dalla riunione in corso.",
     "AlreadyInAnotherMeeting": "Sei già in una riunione",
     "LeaveOtherMeeting": "Sei connesso a \"{meeting}\" in un'altra scheda o dispositivo. Continuare e uscire?",
-    "SwitchWorkspaceEndsMeeting": "Questo è il tuo ufficio: cambiare spazio di lavoro ti disconnetterà e terminerà la riunione per tutti."
+    "SwitchWorkspaceEndsMeeting": "Questo è il tuo ufficio: cambiare spazio di lavoro ti disconnetterà e terminerà la riunione per tutti.",
+    "AllHands": "Riunione generale",
+    "MeetingRoomNum": "Sala riunioni {number}",
+    "VoiceRoomNum": "Stanza vocale {number}"
   }
 }

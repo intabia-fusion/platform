@@ -164,6 +164,9 @@
     "SwitchWorkspaceLeaveMeeting": "Switching the workspace will disconnect you from the current meeting.",
     "AlreadyInAnotherMeeting": "You are already in a meeting",
     "LeaveOtherMeeting": "You are connected to \"{meeting}\" in another tab or device. Continue and leave it?",
-    "SwitchWorkspaceEndsMeeting": "This is your office: switching the workspace will disconnect you and end the meeting for everyone."
+    "SwitchWorkspaceEndsMeeting": "This is your office: switching the workspace will disconnect you and end the meeting for everyone.",
+    "AllHands": "All hands",
+    "MeetingRoomNum": "Meeting Room {number}",
+    "VoiceRoomNum": "Voice Room {number}"
   }
 }

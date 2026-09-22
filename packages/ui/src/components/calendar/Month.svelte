@@ -18,7 +18,7 @@
   import ButtonIcon from '../ButtonIcon.svelte'
   import IconChevronLeft from '../icons/ChevronLeft.svelte'
   import IconChevronRight from '../icons/ChevronRight.svelte'
-  import { deviceOptionsStore as deviceInfo } from '../..'
+  import { deviceOptionsStore as deviceInfo, languageStore } from '../..'
   import {
     ICell,
     TCellStyle,
@@ -76,6 +76,10 @@
     viewDate.setMonth(viewDate.getMonth() + offset)
     days = renderCellStyles(viewDate, $deviceInfo.firstDayOfWeek)
   }
+
+  $: if ($languageStore !== undefined) {
+    days = renderCellStyles(viewDate, $deviceInfo.firstDayOfWeek)
+  }
 </script>
 
 <div class="month-container">
@@ -111,13 +115,15 @@
   </div>
 
   {#if viewDate}
-    <div class="caption">
-      {#each [...Array(7).keys()] as dayOfWeek}
-        <span class="weekdays ui-regular-12">
-          {capitalizeFirstLetter(getWeekDayName(day(firstDayOfCurrentMonth, dayOfWeek), 'short'))}
-        </span>
-      {/each}
-    </div>
+    {#key $languageStore}
+      <div class="caption">
+        {#each [...Array(7).keys()] as dayOfWeek}
+          <span class="weekdays ui-regular-12">
+            {capitalizeFirstLetter(getWeekDayName(day(firstDayOfCurrentMonth, dayOfWeek), 'short'))}
+          </span>
+        {/each}
+      </div>
+    {/key}
     <div class="calendar">
       {#each days as day, i}
         <button
