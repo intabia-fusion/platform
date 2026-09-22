@@ -48,26 +48,22 @@
     { limit: 1 }
   )
 
-  $: void updateViewport(message._id)
+  $: updateViewport(message._id)
 
-  // The read state arrives asynchronously, so the viewport is acquired once per component,
-  // otherwise a second call would take a reference that onDestroy never releases.
+  // The viewport is acquired once per component, otherwise a second call would take a reference
+  // that onDestroy never releases.
   let viewportRequested = false
 
-  async function updateViewport (messageId: Ref<ActivityMessage>): Promise<void> {
+  function updateViewport (messageId: Ref<ActivityMessage>): void {
     if (viewportRequested) return
     viewportRequested = true
-    const readState = (await inboxClient.getReadState(messageId)) ?? undefined
-    // Destroyed while the read state was loading: acquiring now would never be released.
-    if (destroyed) return
     const hasUnread = (get(inboxClient.unreadByDoc).get(messageId)?.unreadMessagesCount ?? 0) > 0
+    // The read state is not awaited here: the viewport fetches the first page alongside it.
+    const readState = inboxClient.getReadState(messageId)
     chatViewport = ChatViewport.getOrCreate(readState, messageId, selectedMessageId, 100, true, hasUnread)
   }
 
-  let destroyed = false
-
   onDestroy(() => {
-    destroyed = true
     chatViewport?.release()
     chatViewport = undefined
   })

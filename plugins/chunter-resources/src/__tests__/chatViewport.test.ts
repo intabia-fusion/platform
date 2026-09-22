@@ -409,9 +409,8 @@ describe('ChatViewport', () => {
       )
     })
 
-    it('1.6b should query the first unread on the unread hint even if latestMessageTimestamp is stale', async () => {
+    it('1.6b should find the first unread on the unread hint even if latestMessageTimestamp is stale', async () => {
       const readState = { 'me-uuid': { timestamp: 900 }, latestMessageTimestamp: 500 }
-      mockClient.findOne.mockResolvedValueOnce({ _id: 'unread-1', createdOn: 950 })
       mockClient.findAll.mockResolvedValueOnce(
         Array.from({ length: 10 }, (_, i) => ({ _id: `msg-${i}`, createdOn: 1000 - i * 10 }))
       )
@@ -419,12 +418,93 @@ describe('ChatViewport', () => {
       const viewport = new ChatViewport(readState as any, chatId, undefined, 50, true)
       await flushTasks()
 
+      expect(get(viewport.newTimestamp)).toBe(910)
+    })
+
+    it('1.8 should take the first unread from the loaded page when the read position is on it', async () => {
+      // 51 messages: older ones exist, but the position (955) is newer than the oldest on the page (951).
+      const tailRes = Array.from({ length: 51 }, (_, i) => ({
+        _id: `tail-${i}`,
+        createdOn: 1000 - i,
+        createdBy: i === 44 ? 'me-social-id' : 'other'
+      }))
+      mockClient.findAll.mockResolvedValueOnce(tailRes)
+      const readState = { 'me-uuid': { timestamp: 955 } }
+
+      const viewport = new ChatViewport(readState as any, chatId, undefined)
+      await flushTasks()
+
+      // 956 is mine, so 957 is the first unread; no query went out to find it.
+      expect(get(viewport.newTimestamp)).toBe(957)
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+      expect(get(viewport.messages)).toHaveLength(50)
+      expect(get(viewport.hasMoreBackward)).toBe(true)
+    })
+
+    it('1.9 should ask the server for the first unread when the read position is older than the page', async () => {
+      const tailRes = Array.from({ length: 51 }, (_, i) => ({ _id: `tail-${i}`, createdOn: 1000 - i }))
+      mockClient.findOne.mockResolvedValueOnce({ _id: 'unread-1', createdOn: 500 })
+      mockClient.findAll
+        .mockResolvedValueOnce(tailRes)
+        .mockResolvedValueOnce([{ _id: 'older-1', createdOn: 400 }])
+        .mockResolvedValueOnce([{ _id: 'fw-1', createdOn: 600 }])
+      const readState = { 'me-uuid': { timestamp: 300 } }
+
+      const viewport = new ChatViewport(readState as any, chatId, undefined)
+      await flushTasks()
+
       expect(mockClient.findOne).toHaveBeenCalledWith(
         activity.class.ActivityMessage,
-        { attachedTo: chatId, createdOn: { $gt: 900 }, createdBy: { $nin: ['me-social-id'] } },
+        { attachedTo: chatId, createdOn: { $gt: 300 }, createdBy: { $nin: ['me-social-id'] } },
         expect.objectContaining({ sort: { createdOn: 1 } })
       )
-      expect(get(viewport.newTimestamp)).toBe(950)
+      expect(get(viewport.newTimestamp)).toBe(500)
+    })
+
+    it('1.10 should fetch the page while the read state is still on its way', async () => {
+      const tailRes = Array.from({ length: 10 }, (_, i) => ({ _id: `msg-${i}`, createdOn: 1000 - i * 10 }))
+      mockClient.findAll.mockResolvedValueOnce(tailRes)
+      let resolveReadState: (state: any) => void = () => {}
+      const readState = new Promise<any>((resolve) => {
+        resolveReadState = resolve
+      })
+
+      const viewport = new ChatViewport(readState, chatId, undefined)
+      await flushTasks()
+
+      // The page was requested without waiting for the read state.
+      expect(mockClient.findAll).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { attachedTo: chatId },
+        expect.objectContaining({ limit: 51 })
+      )
+      expect(get(viewport.messages)).toEqual([])
+
+      resolveReadState({ 'me-uuid': { timestamp: 950 } })
+      await flushTasks()
+
+      expect(get(viewport.messages)).toHaveLength(10)
+      expect(get(viewport.newTimestamp)).toBe(960)
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('1.11 should keep a pending read state for a load started by a jump before the first page arrived', async () => {
+      const tailRes = Array.from({ length: 10 }, (_, i) => ({ _id: `msg-${i}`, createdOn: 1000 - i * 10 }))
+      mockClient.findAll.mockResolvedValue(tailRes)
+      let resolveReadState: (state: any) => void = () => {}
+      const readState = new Promise<any>((resolve) => {
+        resolveReadState = resolve
+      })
+
+      const viewport = new ChatViewport(readState, chatId, undefined)
+      // The user jumps before anything has arrived: the first load is stale, the second must still
+      // see the read state.
+      viewport.jumpToEnd()
+      resolveReadState({ 'me-uuid': { timestamp: 950 } })
+      await flushTasks()
+
+      expect(get(viewport.messages)).toHaveLength(10)
+      expect(get(viewport.newTimestamp)).toBe(960)
     })
 
     it('1.7 should skip unread query if latestMessageTimestamp is less than or equal to lastView', async () => {

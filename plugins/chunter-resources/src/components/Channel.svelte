@@ -56,10 +56,7 @@
     messageInFocus.set(id)
   })
 
-  let destroyed = false
-
   onDestroy(() => {
-    destroyed = true
     unsubscribe()
     unsubscribeLocation()
     chatViewport?.release()
@@ -68,19 +65,19 @@
 
   $: isDocChannel = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
 
-  $: void updateViewport(object._id, selectedMessageId)
+  $: updateViewport(object._id, selectedMessageId)
 
-  // The read state arrives asynchronously, so the viewport is acquired once per component,
-  // otherwise a second call would take a reference that onDestroy never releases.
+  // The viewport is acquired once per component, otherwise a second call would take a reference
+  // that onDestroy never releases.
   let viewportRequested = false
 
-  async function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
+  function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): void {
     if (viewportRequested) return
     viewportRequested = true
     const inboxClient = NotificationClientImpl.getClient()
-    const read = await inboxClient.getReadState(attachedTo)
-    if (destroyed) return
     const hasUnread = (get(inboxClient.unreadByDoc).get(attachedTo)?.unreadMessagesCount ?? 0) > 0
+    // The read state is not awaited here: the viewport fetches the first page alongside it.
+    const read = inboxClient.getReadState(attachedTo)
     chatViewport = ChatViewport.getOrCreate(read, attachedTo, selectedMessageId, 50, false, hasUnread)
   }
 </script>

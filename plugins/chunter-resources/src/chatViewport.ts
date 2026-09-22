@@ -19,6 +19,7 @@ import core, {
   type Doc,
   getCurrentAccount,
   type Lookup,
+  type PersonId,
   type Ref,
   SortingOrder,
   type Timestamp,
@@ -38,6 +39,10 @@ import chunter, { type ChatMessage } from '@hcengineering/chunter'
 
 export type LoadMode = 'forward' | 'backward'
 
+// The read state may still be on its way when a chat opens: the first page of messages does not
+// depend on it, so a pending one is awaited alongside that page rather than before it.
+export type ReadStateSource = ReadState | undefined | Promise<ReadState | undefined>
+
 /**
  * Interface defining the minimal API required for chat viewports.
  */
@@ -51,6 +56,20 @@ interface IChatViewport {
 
   canLoadMore: (mode: LoadMode, loadAfter: Timestamp) => boolean
   jumpToDate: (date: Timestamp) => Promise<Ref<ActivityMessage> | undefined>
+}
+
+// A read state already at hand is handled in the same tick, so a reopened viewport reacts before
+// the old messages are painted; a pending one is handled as soon as it arrives.
+function whenReady (source: ReadStateSource, handle: (readState: ReadState | undefined) => void): void {
+  if (source instanceof Promise) {
+    void source.then(handle)
+  } else {
+    handle(source)
+  }
+}
+
+function isOwnMessage (message: Pick<ActivityMessage, 'createdBy'>, socialIds: PersonId[]): boolean {
+  return message.createdBy !== undefined && socialIds.includes(message.createdBy)
 }
 
 class StaleVersionError extends Error {
@@ -125,7 +144,7 @@ export class ChatViewport implements IChatViewport {
    * `ReadState.latestMessageTimestamp` is maintained asynchronously and may lag behind.
    */
   public static getOrCreate (
-    readState: ReadState | undefined,
+    readStateSource: ReadStateSource,
     chatId: Ref<Doc>,
     selectedMessageId: Ref<ActivityMessage> | undefined,
     limit = 50,
@@ -143,26 +162,35 @@ export class ChatViewport implements IChatViewport {
     let entry = cache.get(key)
 
     if (entry === undefined) {
-      const viewport = new ChatViewport(readState, chatId, selectedMessageId, limit, hasUnread)
+      const viewport = new ChatViewport(readStateSource, chatId, selectedMessageId, limit, hasUnread)
       entry = { viewport, lastAccessed: ++ChatViewport.accessCounter, lastAccessedTime: Date.now() }
       cache.set(key, entry)
       ChatViewport.cleanCache(cache)
     } else {
       entry.lastAccessed = ++ChatViewport.accessCounter
       entry.lastAccessedTime = Date.now()
+      const viewport = entry.viewport
       if (selectedMessageId !== undefined) {
-        const viewport = entry.viewport
         void viewport.jumpToMessageId(selectedMessageId).then(async () => {
-          await viewport.syncUnreadMarker(readState)
+          await viewport.syncUnreadMarker(await readStateSource)
         })
-      } else if (get(entry.viewport.hasMoreForward)) {
+      } else if (get(viewport.hasMoreForward)) {
         // The cached window still sits around a message the user was sent to (inbox link, search hit,
-        // jump to date). Reopened without a target, the chat has to start from its end again.
-        if (readState !== undefined) entry.viewport.readState = readState
-        entry.viewport.jumpToEnd()
-        void entry.viewport.syncUnreadMarker(readState)
+        // jump to date). Reopened without a target, the chat has to start from its end again, at once:
+        // a read state still on its way joins that reload.
+        if (readStateSource instanceof Promise) {
+          viewport.pendingReadState = readStateSource
+        } else if (readStateSource !== undefined) {
+          viewport.readState = readStateSource
+        }
+        viewport.jumpToEnd()
+        whenReady(readStateSource, (readState) => {
+          void viewport.syncUnreadMarker(readState)
+        })
       } else {
-        void entry.viewport.refreshUnreadMarker(readState)
+        whenReady(readStateSource, (readState) => {
+          void viewport.refreshUnreadMarker(readState)
+        })
       }
     }
 
@@ -287,13 +315,23 @@ export class ChatViewport implements IChatViewport {
     forwardedMessage: chunter.class.ChatMessage
   }
 
+  private readState: ReadState | undefined
+  // Set while the read state of the first load is still on its way; consumed by that load.
+  private pendingReadState: Promise<ReadState | undefined> | undefined
+
   constructor (
-    private readState: ReadState | undefined,
+    readStateSource: ReadStateSource,
     public chatId: Ref<Doc>,
     public selectedMessageId: Ref<ActivityMessage> | undefined,
     public readonly limit = 50,
     private readonly hasUnread = false
   ) {
+    if (readStateSource instanceof Promise) {
+      this.pendingReadState = readStateSource
+    } else {
+      this.readState = readStateSource
+    }
+
     this.historyUnsubscribe = this.loadedHistory.subscribe((history) => {
       this.loadedMessageIds.clear()
       this.loadedAttachmentIds.clear()
@@ -528,20 +566,39 @@ export class ChatViewport implements IChatViewport {
     const client = this.getVersionedClient(version)
 
     try {
-      const targetAnchor = await this.resolveAnchor(client, selectedMessageId, ignoreUnread)
+      // Everything the first paint needs goes out in one round trip: the tail depends on nothing,
+      // the selected message only on its id, and the read state is on its way already.
+      const targetId = selectedMessageId ?? this.selectedMessageId
+      // Kept until it resolves: a jump that resets the viewport before the first page arrives
+      // starts another load, and that one needs the read state as well.
+      const pendingReadState = this.pendingReadState
+      const [readState, latestRes, selectedMessage] = await Promise.all([
+        pendingReadState,
+        client.findAll(
+          activity.class.ActivityMessage,
+          {
+            attachedTo: this.chatId
+          },
+          {
+            limit: this.limit + 1,
+            sort: { createdOn: SortingOrder.Descending },
+            lookup: this.LOOKUP
+          }
+        ),
+        targetId !== undefined
+          ? client.findOne(
+              activity.class.ActivityMessage,
+              { _id: targetId, attachedTo: this.chatId },
+              { projection: { _id: 1, createdOn: 1 } }
+            )
+          : undefined
+      ])
+      if (pendingReadState !== undefined) {
+        this.readState = readState
+        if (this.pendingReadState === pendingReadState) this.pendingReadState = undefined
+      }
 
-      // Always query the latest tail of history first to optimize loading
-      const latestRes = await client.findAll(
-        activity.class.ActivityMessage,
-        {
-          attachedTo: this.chatId
-        },
-        {
-          limit: this.limit + 1,
-          sort: { createdOn: SortingOrder.Descending },
-          lookup: this.LOOKUP
-        }
-      )
+      const targetAnchor = selectedMessage ?? (await this.resolveUnreadAnchor(client, latestRes, ignoreUnread))
 
       if (targetAnchor === undefined) {
         this.applyLatestTail(latestRes)
@@ -573,34 +630,46 @@ export class ChatViewport implements IChatViewport {
     }
   }
 
-  private async resolveAnchor (
+  /**
+   * Resolves the first unread message as a prospective anchor. `latestRes` is the newest page,
+   * newest first, `limit + 1` long when older messages exist.
+   */
+  private async resolveUnreadAnchor (
     client: ReturnType<typeof this.getVersionedClient>,
-    _selectedMessageId?: Ref<ActivityMessage>,
+    latestRes: ActivityMessage[],
     ignoreUnread = false
   ): Promise<ActivityMessage | undefined> {
-    // 1. Resolve selected message as a prioritized anchor
-    const selectedMessageId = _selectedMessageId ?? this.selectedMessageId
-    let selectedMessage: ActivityMessage | undefined
-    if (selectedMessageId !== undefined) {
-      selectedMessage = await client.findOne(
-        activity.class.ActivityMessage,
-        { _id: selectedMessageId, attachedTo: this.chatId },
-        { projection: { _id: 1, createdOn: 1 } }
-      )
-      if (selectedMessage !== undefined) return selectedMessage
+    if (ignoreUnread) {
+      this.newTimestamp.set(undefined)
+      return undefined
     }
 
-    // 2. Resolve first unread message as a prospective anchor
     const me = getCurrentAccount()
     const readPosition: ReadPosition | undefined = this.readState?.[me.uuid]
     const lastViewTs = readPosition?.timestamp ?? 0
     const latestMessageTs = this.readState?.latestMessageTimestamp ?? 0
 
-    // Only query if user has unread messages
+    // Only look if user has unread messages
     const hasUnread = this.hasUnread || latestMessageTs === 0 || latestMessageTs > lastViewTs
+    if (!hasUnread) return undefined
+
+    // The page holds every message newer than its oldest one: with the read position inside it (or
+    // the whole history on it) the first unread is here, and no round trip is needed to find it.
+    const hasMoreOlder = latestRes.length > this.limit
+    const page = hasMoreOlder ? latestRes.slice(0, this.limit) : latestRes
+    const oldest = page[page.length - 1]
+    const positionOnPage = !hasMoreOlder || (oldest?.createdOn !== undefined && lastViewTs >= oldest.createdOn)
 
     let firstUnreadMessage: ActivityMessage | undefined
-    if (!ignoreUnread && hasUnread) {
+    if (positionOnPage) {
+      for (let i = page.length - 1; i >= 0; i--) {
+        const message = page[i]
+        if ((message.createdOn ?? 0) > lastViewTs && !isOwnMessage(message, me.socialIds)) {
+          firstUnreadMessage = message
+          break
+        }
+      }
+    } else {
       firstUnreadMessage = await client.findOne(
         activity.class.ActivityMessage,
         {
@@ -617,8 +686,6 @@ export class ChatViewport implements IChatViewport {
 
     if (firstUnreadMessage !== undefined) {
       this.newTimestamp.set(firstUnreadMessage.createdOn)
-    } else if (ignoreUnread) {
-      this.newTimestamp.set(undefined)
     }
 
     return firstUnreadMessage
