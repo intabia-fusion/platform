@@ -184,6 +184,7 @@ export class SessionDataImpl implements SessionData {
   _removedMap: Map<Ref<Doc>, Doc> | undefined
   _contextCache: Map<string, any> | undefined
   _broadcast: SessionData['broadcast'] | undefined
+  asyncRequests: SessionData['asyncRequests']
 
   constructor (
     readonly account: Account,
@@ -350,6 +351,15 @@ export function wrapPipeline (
       if (doBroadcast) {
         await pipeline.handleBroadcast(ctx)
       }
+      // A caller's session data is not an async context: triggers queue async work here instead of
+      // running it, and only the ws path drains that queue.
+      const asyncs = contextData.asyncRequests ?? []
+      contextData.asyncRequests = []
+      for (const r of asyncs) {
+        await r(ctx)
+      }
+      // processAsyncTriggers swaps in its own session data.
+      ctx.contextData = contextData
       // One SessionData for the whole run: without draining, broadcast.txes grows
       // unbounded and per-tx scanners (permissions) turn O(n^2).
       contextData.broadcast.txes.length = 0

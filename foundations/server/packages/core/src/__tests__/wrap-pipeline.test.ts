@@ -81,6 +81,41 @@ describe('wrapPipeline session identity', () => {
   })
 })
 
+// A caller's session data is not an async context: TriggersMiddleware queues async triggers into
+// asyncRequests, and only the ws path drained them - REST writes lost every async trigger.
+describe('wrapPipeline async requests', () => {
+  const wsIds = { uuid: 'ws', url: '', dataId: 'ws' } as any
+
+  it('runs queued async requests once and restores the session data', async () => {
+    const ctx = new MeasureMetricsContext('test', {})
+    const sessionData: any = {
+      account: { uuid: 'user-1' },
+      broadcast: { targets: {}, txes: [], queue: [], sessions: {} }
+    }
+    let runs = 0
+    const pipeline: any = {
+      context: { modelDb: {}, hierarchy: { updateLookupMixin: (_c: any, v: any) => v }, lowLevelStorage: {} },
+      tx: async (ctx: any) => {
+        ctx.contextData.asyncRequests = [
+          async () => {
+            runs++
+            // processAsyncTriggers swaps the context data
+            ctx.contextData = { broadcast: { targets: {}, txes: [], queue: [], sessions: {} } }
+          }
+        ]
+        return {}
+      },
+      handleBroadcast: async () => {}
+    }
+    const client = wrapPipeline(ctx, pipeline, wsIds, true, sessionData)
+
+    await client.tx({} as any)
+    expect(runs).toBe(1)
+    expect(ctx.contextData).toBe(sessionData)
+    expect(sessionData.asyncRequests).toEqual([])
+  })
+})
+
 // LookupMiddleware strips scalar query fields from results; the ws/rest clients revert that, and so
 // must the in-process one - otherwise findOne(X, { _id }) hands back a doc with no _id.
 describe('wrapPipeline reverts stripped query fields', () => {
