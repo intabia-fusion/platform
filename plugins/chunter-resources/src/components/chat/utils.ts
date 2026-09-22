@@ -135,7 +135,8 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     query: {
       pinned: false
     },
-    skipClasses: [chunter.class.DirectMessage, chunter.class.Channel, contact.class.Channel]
+    skipClasses: [chunter.class.DirectMessage, chunter.class.Channel, contact.class.Channel],
+    deferred: true
   }
 ]
 

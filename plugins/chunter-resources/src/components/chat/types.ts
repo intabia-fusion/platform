@@ -44,6 +44,8 @@ export interface ChatNavGroupModel {
   _class?: Ref<Class<Doc>>
   skipClasses?: Array<Ref<Class<Doc>>>
   showEmpty?: boolean
+  // Loaded after the other groups have answered
+  deferred?: boolean
 }
 
 export interface ChatNavItemModel {

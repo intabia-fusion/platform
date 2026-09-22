@@ -18,7 +18,7 @@
   import { createQuery, getClient, LiveQuery } from '@hcengineering/presentation'
   import { Chat, DirectMessage } from '@hcengineering/chunter'
   import { Employee } from '@hcengineering/contact'
-  import { onDestroy } from 'svelte'
+  import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import chunter from '../../../plugin'
   import { ChatNavGroupModel } from '../types'
@@ -36,6 +36,9 @@
   export let model: ChatNavGroupModel
   export let search: string = ''
   export let employees: Employee[] = []
+  export let active: boolean = true
+
+  const dispatch = createEventDispatcher<{ loaded: undefined }>()
 
   interface Section {
     id: string
@@ -65,8 +68,20 @@
   $: shouldPushObject = shouldPushObjectInNavigator(model, object, chat, Array.from(objectsByClass.keys()))
   $: pushObj = shouldPushObject && object != null ? { object, chat } : undefined
 
+  let loadedReported = false
+  const answeredClasses = new Set<Ref<Class<Doc>>>()
+
+  function reportLoaded (classes: Array<Ref<Class<Doc>>>): void {
+    if (loadedReported || !classes.every((it) => answeredClasses.has(it))) return
+    loadedReported = true
+    // A group without classes reports during its own initialisation, before the parent has
+    // attached its listener: the event goes out a tick later.
+    void tick().then(() => dispatch('loaded'))
+  }
+
   function loadObjects (model: ChatNavGroupModel, pinned: Chat[], search: string): void {
     const classes = getNavGroupClasses(model, pinned)
+    reportLoaded(classes)
 
     for (const _class of classes) {
       const { query, limit } = objectsQueryByClass.get(_class) ?? {
@@ -102,6 +117,8 @@
         (res) => {
           const docs: { doc: Doc, chat: Chat }[] = res.map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
           objectsByClass = objectsByClass.set(_class, { docs, total: res.total })
+          answeredClasses.add(_class)
+          reportLoaded(classes)
         },
         {
           total: true,
@@ -145,7 +162,7 @@
     }, searchDebounceMs)
   }
 
-  $: loadObjects(model, pinned, debouncedSearch)
+  $: if (active) loadObjects(model, pinned, debouncedSearch)
 
   onDestroy(() => {
     if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
