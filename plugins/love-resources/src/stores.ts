@@ -1,4 +1,4 @@
-import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
+import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
 import { type AccountUuid, type Ref } from '@hcengineering/core'
@@ -158,6 +158,7 @@ export const selectedRoomPlace = writable<{ _id: Ref<Room>, x: number, y: number
 
 async function filterParticipantInfo (value: ParticipantInfo[]): Promise<ParticipantInfo[]> {
   const map = new Map<string, ParticipantInfo>()
+  await ensureAiBotIdentityLoaded()
   const aiSid = get(aiBotSocialIdentityStore)
   const aiPerson = aiSid !== undefined ? await getPersonRefByPersonId(aiSid._id) : undefined
   for (const val of value) {

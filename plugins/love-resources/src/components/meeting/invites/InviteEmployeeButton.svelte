@@ -25,10 +25,11 @@
   import {
     aiBotPerson,
     currentMeetingMinutes,
-    ensureWorkspaceMembersLoaded,
     infos,
-    workspaceMemberAccounts
+    workspaceMemberAccounts,
+    ensureWorkspaceMembersLoaded
   } from '../../../stores'
+  import { ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
 
   export let employee: Employee | undefined = undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
@@ -41,6 +42,7 @@
   const hierarchy = getClient().getHierarchy()
 
   void ensureWorkspaceMembersLoaded()
+  void ensureAiBotIdentityLoaded()
 
   // Yourself, the AI assistant, deactivated employees and pending invites cannot be called.
   $: mixin = employee !== undefined ? hierarchy.as(employee, contact.mixin.Employee) : undefined

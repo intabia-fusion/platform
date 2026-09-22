@@ -18,7 +18,7 @@
   import { Project, type Issue } from '@hcengineering/tracker'
   import { Button, ButtonKind, ButtonSize, ProgressCircle } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
-  import { listIssueStatusOrder, relatedIssues, type IssueRef } from '../../../utils'
+  import { ensureRelatedIssuesLoaded, listIssueStatusOrder, relatedIssues, type IssueRef } from '../../../utils'
   import RelatedIssuePopup from './RelatedIssuePopup.svelte'
 
   export let object: WithLookup<Doc> | undefined
@@ -30,6 +30,8 @@
   export let justify: 'left' | 'center' = 'left'
   export let width: string | undefined = 'min-contet'
   export let compactMode: boolean = false
+
+  ensureRelatedIssuesLoaded()
 
   $: _object = object ?? value
 

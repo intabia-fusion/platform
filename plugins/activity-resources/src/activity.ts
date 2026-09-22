@@ -13,15 +13,14 @@
 // limitations under the License.
 //
 import activity, { type ActivityMessage, type SavedMessage } from '@hcengineering/activity'
-import core, { type Ref, SortingOrder, type WithLookup } from '@hcengineering/core'
+import core, { type Ref, SortingOrder } from '@hcengineering/core'
 import { createQuery, onClient } from '@hcengineering/presentation'
 import { writable } from 'svelte/store'
-import attachment from '@hcengineering/attachment'
 import { getCurrentLocation, location as locationStore, navigate } from '@hcengineering/ui'
 
 import { getMessageFromLoc } from './utils'
 
-export const savedMessagesStore = writable<Array<WithLookup<SavedMessage>>>([])
+export const savedMessagesStore = writable<SavedMessage[]>([])
 export const messageInFocus = writable<Ref<ActivityMessage> | undefined>(undefined)
 export const editingMessageStore = writable<Ref<ActivityMessage> | undefined>(undefined)
 
@@ -51,21 +50,8 @@ onClient(() => {
     activity.class.SavedMessage,
     { space: core.space.Workspace },
     (res) => {
-      savedMessagesStore.set(res.filter(({ $lookup }) => $lookup?.attachedTo !== undefined))
+      savedMessagesStore.set(res)
     },
-    {
-      lookup: {
-        attachedTo: [
-          activity.class.ActivityMessage,
-          {
-            _id: {
-              attachments: attachment.class.Attachment,
-              reactions: activity.class.Reaction
-            }
-          }
-        ]
-      },
-      sort: { modifiedOn: SortingOrder.Descending }
-    }
+    { sort: { modifiedOn: SortingOrder.Descending } }
   )
 })

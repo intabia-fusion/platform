@@ -22,7 +22,7 @@ import { markupToJSON } from '@hcengineering/text'
 import { markupToMarkdown } from '@hcengineering/text-markdown'
 import { get } from 'svelte/store'
 
-import { aiBotSocialIdentityStore } from './utils'
+import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from './utils'
 
 /** Chunks are separated by `---`, so a body containing one at line start would split the file. */
 function escapeChunkSeparators (md: string): string {
@@ -61,6 +61,7 @@ export async function exportConversationMdx (root: ChatMessage, title: string): 
     { attachedTo: root._id },
     { sort: { createdOn: SortingOrder.Ascending }, limit }
   )
+  await ensureAiBotIdentityLoaded()
   const botSocialId = get(aiBotSocialIdentityStore)?._id
 
   const chunks: string[] = [
