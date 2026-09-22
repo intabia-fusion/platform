@@ -124,12 +124,15 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('says nothing about calling it off when the workspace goes right away', async () => {
+    await clearMail()
     const cancelled = await adminOp('performWorkspaceOperation', {
       workspaceId: wsUuid,
       event: 'cancel-delete',
       params: []
     })
     expect(cancelled.error).toBeUndefined()
+    // The cancel letter lands asynchronously: cleared too early, it poses as the next one.
+    expect((await waitForMail(email))?.Subject).toContain('will not be deleted')
     await clearMail()
 
     const res = await adminOp('performWorkspaceOperation', { workspaceId: wsUuid, event: 'delete-now', params: [] })

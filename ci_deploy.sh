@@ -251,6 +251,12 @@ while :; do
           $2 ~ /^Up / { next }
           $2 ~ /^Exited \(0\)/ { next }
           { print }')
+  # A failed pull leaves nothing to list, so an empty stand would pass the check above.
+  if [ -z "$(docker ps -q --filter "label=com.docker.compose.project=$project" \
+        --filter "label=com.docker.compose.service=account")" ]; then
+    bad="${bad:+$bad
+}account|not running"
+  fi
   # Two clean passes: a crash-looping container shows up as "Up" between restarts, which is
   # how a broken image slipped past a single check.
   if [ -z "$bad" ]; then
@@ -281,8 +287,7 @@ READY
     printf 'seed_password=%s\n' "$(shq "$STAND_SEED_PASSWORD")"
     # Same steps as the sanity stand in dev/test-base/src/stands.ts.
     cat <<'SEED'
-# This script is bash's stdin: a child that reads it would swallow the rest.
-tool() { ./run-tool.sh "$@" < /dev/null; }
+tool() { ./run-tool.sh "$@"; }
 tool create-account admin -p "$seed_password" -f Super -l Admin
 tool create-account user1 -p "$seed_password" -f John -l Appleseed
 tool create-account user2 -p "$seed_password" -f Kainin -l Dirak
@@ -322,4 +327,4 @@ echo "Deploy [$mode] $CICD_ENV_VERSION from $registry to $ENV ($STAND_HOST, $STA
 ssh -o 'StrictHostKeyChecking no' \
   -i "$key_file" "$STAND_SSH_USER@$STAND_ADDRESS" \
   -p "$STAND_SSH_PORT" \
-  'bash -s' < ./deploy.sh
+  'f=$(mktemp); trap "rm -f $f" EXIT; cat > "$f" && bash "$f" < /dev/null' < ./deploy.sh

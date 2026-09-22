@@ -30,4 +30,6 @@
   Поэтому не в update.
 - tool глотает ошибки (`withAccountDatabase` ловит и печатает, exit 0), поэтому после сидирования
   идёт проверка через RPC account: `login` user1 + `selectWorkspace sanity-ws`.
-- Команды tool идут с `< /dev/null`: `deploy.sh` - это stdin bash, читающий его потомок съест остаток.
+- `deploy.sh` на стенде запускается из временного файла со stdin `/dev/null`, а не `bash -s`: при `bash -s`
+  `up.sh` (docker compose) съедал кусок stdin, bash продолжал с середины base64 дампа sanity-ws
+  (`bash: line 14: T+ZYMj0tQKY2: command not found`), seed и проверка готовности не выполнялись.
