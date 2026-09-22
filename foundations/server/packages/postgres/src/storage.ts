@@ -50,6 +50,7 @@ import core, {
   type ReverseLookups,
   type SessionData,
   shouldShowArchived,
+  SortingOrder,
   type SortingQuery,
   type StorageIterator,
   systemAccountUuid,
@@ -510,7 +511,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
             sqlChunks.push(secJoin)
           }
           if (options?.sort !== undefined) {
-            sqlChunks.push(this.buildOrder(_class, domain, options.sort, joins))
+            sqlChunks.push(this.buildOrder(vars, _class, domain, options.sort, joins))
           }
           if (options?.limit !== undefined) {
             sqlChunks.push(`LIMIT ${escape(options.limit)}`)
@@ -1077,6 +1078,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
   }
 
   private buildOrder<T extends Doc>(
+    vars: ValuesVariables,
     _class: Ref<Class<T>>,
     baseDomain: string,
     sort: SortingQuery<T>,
@@ -1091,6 +1093,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
       }
       if (typeof val === 'number') {
         const key = escape(_key)
+        const reverseOrder = this.getReverseLookupOrder(vars, key, joins, val)
+        if (reverseOrder !== undefined) {
+          res.push(reverseOrder)
+          continue
+        }
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
           res.push(`(${this.getKey(_class, baseDomain, key, joins)})::numeric ${val === 1 ? 'ASC' : 'DESC'}`)
         } else if (attr?.type._class === core.class.TypeIdentifier) {
@@ -1226,6 +1233,26 @@ abstract class PostgresAdapterBase implements DbAdapter {
       value = value.$in[0]
     }
     return value
+  }
+
+  // A reverse lookup is a jsonb_agg alias in SELECT, and Postgres can't use an output alias inside
+  // an ORDER BY expression, so aggregate the key again: min for ASC, max for DESC, like Mongo arrays.
+  private getReverseLookupOrder (
+    vars: ValuesVariables,
+    key: string,
+    joins: JoinProps[],
+    order: SortingOrder
+  ): string | undefined {
+    if (!key.startsWith('$lookup')) return
+    const arr = key.split('.').filter((p) => p !== '$lookup')
+    const tKey = arr.pop() ?? ''
+    const join = joins.find((p) => p.path === arr.join('.'))
+    if (join?.isReverse !== true) return
+    const attr = join.toClass !== undefined ? this.hierarchy.findAttribute(join.toClass, tKey) : undefined
+    const value = isDataField(join.table, tKey) ? `${join.toAlias}."data"#>>'{${tKey}}'` : `${join.toAlias}."${tKey}"`
+    const typed = attr !== undefined && NumericTypes.includes(attr.type._class) ? `(${value})::numeric` : value
+    const agg = order === SortingOrder.Ascending ? 'min' : 'max'
+    return `(SELECT ${agg}(${typed}) ${this.getReverseFrom(vars, join)}) ${order === SortingOrder.Ascending ? 'ASC' : 'DESC'}`
   }
 
   private getKey<T extends Doc>(
@@ -1472,7 +1499,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
         : `${tkey} @> '${typeof value === 'string' ? '"' + escape(value) + '"' : value}'`
   }
 
-  private getReverseProjection (vars: ValuesVariables, join: JoinProps): string[] {
+  private getReverseFrom (vars: ValuesVariables, join: JoinProps): string {
     let classsesQuery = ''
     if (join.classes !== undefined) {
       if (join.classes.length === 1) {
@@ -1482,9 +1509,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
       }
     }
     const wsId = vars.add(this.workspaceId, '::uuid')
-    return [
-      `(SELECT jsonb_agg(${join.toAlias}.*) FROM ${join.table} AS ${join.toAlias} WHERE ${join.toAlias}."${join.toField}" = ${join.fromAlias}${join.fromAlias !== '' ? '.' : ''}${join.fromField} AND ${join.toAlias}."workspaceId" = ${wsId}${classsesQuery}) AS ${join.toAlias}`
-    ]
+    return `FROM ${join.table} AS ${join.toAlias} WHERE ${join.toAlias}."${join.toField}" = ${join.fromAlias}${join.fromAlias !== '' ? '.' : ''}${join.fromField} AND ${join.toAlias}."workspaceId" = ${wsId}${classsesQuery}`
+  }
+
+  private getReverseProjection (vars: ValuesVariables, join: JoinProps): string[] {
+    return [`(SELECT jsonb_agg(${join.toAlias}.*) ${this.getReverseFrom(vars, join)}) AS ${join.toAlias}`]
   }
 
   private getProjectionsAliases (vars: ValuesVariables, join: JoinProps): string[] {
