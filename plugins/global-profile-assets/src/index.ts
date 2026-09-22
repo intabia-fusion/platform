@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import globalProfile, { globalProfileId } from '@hcengineering/global-profile'
-
-addStringsLoader(globalProfileId, async (lang: string) => await import(`../lang/${lang}.json`))
+import { loadMetadata } from '@hcengineering/platform'
+import globalProfile from '@hcengineering/global-profile'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 const ProfileBackground = require('../assets/hero-dark.png') as string // eslint-disable-line

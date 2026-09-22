@@ -731,7 +731,7 @@ catalog:
   uuid: ^11.1.1
   vite: ^5.4.21
   vitest: ^2.1.9
-  webpack: ^5.97.1
+  webpack: ^5.111.1
   webpack-bundle-analyzer: ^4.10.2
   webpack-cli: ^5.1.4
   webpack-dev-server: ^4.11.1

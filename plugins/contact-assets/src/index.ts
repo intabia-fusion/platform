@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,8 +14,8 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import contact, { contactId } from '@hcengineering/contact'
+import { loadMetadata } from '@hcengineering/platform'
+import contact from '@hcengineering/contact'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(contact.icon, {
@@ -49,7 +50,6 @@ loadMetadata(contact.icon, {
   Chat: `${icons}#chat`,
   User: `${icons}#user`
 })
-addStringsLoader(contactId, async (lang: string) => await import(`../lang/${lang}.json`))
 
 const ProfileBackground = require('../assets/profile-background.png') as string // eslint-disable-line
 const ProfileBackgroundLight = require('../assets/profile-background-light.png') as string // eslint-disable-line
