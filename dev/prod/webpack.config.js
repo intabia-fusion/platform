@@ -49,7 +49,8 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
 const doValidate = !prod || process.env.DO_VALIDATE === 'true'
 
-const doCompression = prod
+// Precompressed .gz/.br only matter for release images; front falls back to plain files.
+const doCompression = prod && process.env.DO_COMPRESS === 'true'
 
 const useCache = process.env.USE_CACHE === 'true'
 
@@ -695,11 +696,13 @@ module.exports = [
           new CompressionPlugin({
             filename: '[path][base].gz',
             algorithm: 'gzip',
+            exclude: /\.map$/
           }),
           new CompressionPlugin({
             filename: '[path][base].br',
             algorithm: 'brotliCompress',
-            compressionOptions: { level: 11 }
+            compressionOptions: { level: 11 },
+            exclude: /\.map$/
           })
         ]
         : []),

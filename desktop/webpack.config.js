@@ -8,7 +8,6 @@ const sass = require('../common/scripts/sass-quiet.js')
 
 const Dotenv = require('dotenv-webpack')
 const path = require('path')
-const CompressionPlugin = require('compression-webpack-plugin')
 const DefinePlugin = require('webpack').DefinePlugin
 const ContextReplacementPlugin = require('webpack').ContextReplacementPlugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -350,7 +349,6 @@ module.exports = [
           isWindows: true
         }
       }),
-      ...(!dev ? [new CompressionPlugin()] : []),
       // new MiniCssExtractPlugin({
       //   filename: '[name].[id][contenthash].css'
       // }),

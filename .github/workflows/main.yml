@@ -481,6 +481,9 @@ jobs:
             '--platform=linux/amd64,linux/arm64' || '--platform=linux/amd64' }}
           DOCKER_BUILDKIT: 1
           DOCKER_BUILD_CLEANUP: true
+          # Precompressed .gz/.br front assets, only for images that get pushed.
+          DO_COMPRESS: ${{ (startsWith(github.ref, 'refs/tags/v') ||
+            startsWith(github.ref, 'refs/tags/s')) && 'true' || 'false' }}
           # Bakes the license public key into the release bundles (esbuild define). Absent -> edition
           # 'dev'. Only this release job sets it; test/uitest jobs stay dev. See fusion-deployment/licensing.
           LICENSE_PUBLIC_KEY: ${{ secrets.LICENSE_PUBLIC_KEY }}
