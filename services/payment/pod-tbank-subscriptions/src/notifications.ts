@@ -43,7 +43,8 @@ export { resolveLang }
 
 const PLAN_LABEL_TIMEOUT_MS = 10_000
 const PLAN_CONFIG_TTL_MS = 10 * 60 * 1000 // plan config is static; refresh every 10 min
-let planConfigCache: { data: PlanConfigLike, fetchedAt: number } | null = null
+const PLAN_CONFIG_FAIL_TTL_MS = 30_000 // negative result is cached too, on a short TTL
+let planConfigCache: { data: PlanConfigLike | null, fetchedAt: number } | null = null
 
 /**
  * Get plan/package label from plan-config. Falls back to the raw plan id.
@@ -53,10 +54,15 @@ let planConfigCache: { data: PlanConfigLike, fetchedAt: number } | null = null
 async function loadPlanConfig (config: Config): Promise<PlanConfigLike | null> {
   if (config.PaymentUrl === undefined) return null
   const now = Date.now()
-  if (planConfigCache === null || now - planConfigCache.fetchedAt > PLAN_CONFIG_TTL_MS) {
-    // Single best-effort attempt (no retry loop) — a slow/unreachable pod-payment must not block the email.
-    const data = await fetchPlanConfig(config.PaymentUrl, { attempts: 1, timeoutMs: PLAN_LABEL_TIMEOUT_MS })
-    planConfigCache = { data, fetchedAt: now }
+  const ttl = planConfigCache?.data === null ? PLAN_CONFIG_FAIL_TTL_MS : PLAN_CONFIG_TTL_MS
+  if (planConfigCache === null || now - planConfigCache.fetchedAt > ttl) {
+    try {
+      // Single best-effort attempt (no retry loop) — a slow/unreachable pod-payment must not block the email.
+      const data = await fetchPlanConfig(config.PaymentUrl, { attempts: 1, timeoutMs: PLAN_LABEL_TIMEOUT_MS })
+      planConfigCache = { data, fetchedAt: now }
+    } catch {
+      planConfigCache = { data: null, fetchedAt: now }
+    }
   }
   return planConfigCache.data
 }

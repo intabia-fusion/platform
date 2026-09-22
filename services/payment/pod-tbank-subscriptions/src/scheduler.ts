@@ -402,7 +402,7 @@ async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionSto
 /**
  * Expire one-off subscriptions once their paid period runs out.
  *
- * A tier is canceled and th workspace switches to the free plan.
+ * A tier is canceled and the workspace switches to the free plan.
  * A package simply terminates.
  */
 async function expireOneOffSubscriptions (
@@ -414,6 +414,9 @@ async function expireOneOffSubscriptions (
     const now = Date.now()
     let expired = 0
 
+    // Tier/Package only.
+    // Purchase does not expire by design (periodEnd means nothing for it).
+    // Support is not used currently.
     const isExpiredOneOff = (sub: Subscription): boolean =>
       (sub.type === SubscriptionType.Tier || sub.type === SubscriptionType.Package) &&
       sub.status === SubscriptionStatus.Active &&
@@ -539,10 +542,11 @@ async function enforceScheduledCancel (
     const now = Date.now()
     let canceled = 0
 
-    // Skip sending letter for canceled one-off subscription.
     const isDueScheduledCancel = (sub: Subscription): boolean =>
       sub.status === SubscriptionStatus.Active &&
       sub.providerData?.pending !== true &&
+      // one-off is retired by expireOneOffSubscriptions at the same date (willCancelAt == periodEnd);
+      // without this check both cycles match it and the user gets two letters
       sub.providerData?.recurrent !== false &&
       sub.willCancelAt != null &&
       sub.willCancelAt <= now

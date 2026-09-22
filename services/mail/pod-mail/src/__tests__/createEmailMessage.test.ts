@@ -67,9 +67,33 @@ describe('createEmailMessage', () => {
     expect(msg.replyTo).toBe('support@intabia.ru')
   })
 
-  test('a custom sender keeps its own reply-to behaviour (none forced)', async () => {
+  test('another sender in our domain gets the reply-to too', async () => {
     const msg = createEmailMessage(notification({ from: 'billing@intabia.ru' }))
-    expect(msg.replyTo).toBeUndefined()
+    expect(msg.replyTo).toBe('support@intabia.ru')
+  })
+
+  test('an out-of-domain sender falls back to the configured source', async () => {
+    // Not thrown away: the message is already committed to the queue, and throwing in the consumer
+    // would redeliver it forever.
+    const ctx = { warn: jest.fn() } as any
+    const msg = createEmailMessage(notification({ from: 'attacker@evil.example' }), ctx)
+    expect(msg.from).toBe('platform@intabia.ru')
+    expect(ctx.warn).toHaveBeenCalled()
+  })
+
+  test('an out-of-domain sender gets the reply-to after falling back to source', async () => {
+    const msg = createEmailMessage(notification({ from: 'attacker@evil.example' }))
+    expect(msg.replyTo).toBe('support@intabia.ru')
+  })
+
+  test('the object form of a sender is understood', async () => {
+    const msg = createEmailMessage(notification({ from: { name: 'Billing', address: 'billing@intabia.ru' } }))
+    expect(msg.from).toEqual({ name: 'Billing', address: 'billing@intabia.ru' })
+  })
+
+  test('the object form is checked against the domain too', async () => {
+    const msg = createEmailMessage(notification({ from: { name: 'Spoof', address: 'a@evil.example' } }))
+    expect(msg.from).toBe('platform@intabia.ru')
   })
 
   test('the payload is passed through untouched', async () => {

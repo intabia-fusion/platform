@@ -93,6 +93,7 @@ const config: Config = {
   Secret: 'secret',
   AccountsUrl: 'https://accounts.example.test',
   FrontUrl: 'https://front.example.test',
+  UpcomingNoticeDays: 5,
   Provider: 'stripe',
   PlanConfig: '/fake/plan-config.yaml',
   StripeApiKey: 'sk_test',

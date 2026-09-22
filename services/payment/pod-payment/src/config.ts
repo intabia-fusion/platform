@@ -50,6 +50,9 @@ export interface Config {
   // Dev override: sweep every N minutes instead of once a night
   TrialExpiryIntervalMinutes?: number
 
+  // Days before trialEnd the "trial is ending" reminder is sent; 0 disables it.
+  UpcomingNoticeDays: number
+
   // Explicit opt-in for the mock provider (activates plans without payment) — never set in production
   AllowMockProvider?: boolean
 
@@ -121,6 +124,7 @@ const config: Config = (() => {
     ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES),
     TrialExpiryHourUtc: parseNumber(process.env.TRIAL_EXPIRY_HOUR_UTC),
     TrialExpiryIntervalMinutes: parseNumber(process.env.TRIAL_EXPIRY_INTERVAL_MINUTES),
+    UpcomingNoticeDays: parseNumber(process.env.UPCOMING_NOTICE_DAYS) ?? 5,
     AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true',
     RunWindowBackfill: process.env.RUN_WINDOW_BACKFILL === 'true',
     SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX),

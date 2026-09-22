@@ -33,10 +33,20 @@ export interface EmailNotification {
 }
 
 /**
+ * Reject a sender address (MAIL_FROM) that is malformed at startup.
+ */
+function assertValidFrom (from: string): void {
+  if (!/^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(from)) {
+    throw new Error(`MAIL_FROM is not a valid email address: ${from}`)
+  }
+}
+
+/**
  * Publish billing mail to the platform notification queue. *
  * `from` is optional — omit it to let pod-mail use its configured SOURCE.
  */
 export function createQueueSender (producer: PlatformQueueProducer<EmailNotification>, from?: string): MailSender {
+  if (from !== undefined) assertValidFrom(from)
   return async (ctx: MeasureContext, to: string, msg: MailMessage): Promise<void> => {
     await producer.send(
       ctx,

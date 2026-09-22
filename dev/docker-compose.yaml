@@ -255,6 +255,8 @@ services:
       # set it in .env to sweep every N minutes instead (testing only).
       - TRIAL_EXPIRY_HOUR_UTC=${TRIAL_EXPIRY_HOUR_UTC:-21}
       - TRIAL_EXPIRY_INTERVAL_MINUTES=${TRIAL_EXPIRY_INTERVAL_MINUTES:-}
+      # Days before trialEnd the "trial is ending" reminder goes out; 0 disables it.
+      - UPCOMING_NOTICE_DAYS=${UPCOMING_NOTICE_DAYS:-5}
       - MAIL_FROM=platform@intabia.ru
       - SUPPORT_EMAIL=${SUPPORT_EMAIL:-platform@intabia.ru}
       - SUPPORT_URL=${SUPPORT_URL:-https://t.me/intabia}

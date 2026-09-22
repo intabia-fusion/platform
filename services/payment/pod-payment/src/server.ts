@@ -629,7 +629,8 @@ export async function createServer (
     freePlanName !== undefined ? (workspace) => buildFreeSubscription(workspace) : undefined,
     { hourUtc: config.TrialExpiryHourUtc ?? 21, intervalMinutes: config.TrialExpiryIntervalMinutes },
     logOperation,
-    mailContext
+    mailContext,
+    config.UpcomingNoticeDays
   )
 
   // Fills the AI window on subscriptions predating it. Reads every active subscription, so it is
