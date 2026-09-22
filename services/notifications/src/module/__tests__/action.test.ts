@@ -13,14 +13,16 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, Ref, TxCUD, Space } from '@hcengineering/core'
-import { DocNotifyContext, ReadNotificationAction } from '@hcengineering/notification'
+import core, { AccountUuid, readOnlyGuestAccountUuid, Ref, TxCUD, Space } from '@hcengineering/core'
+import { CreateNotificationAction, DocNotifyContext, ReadNotificationAction } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
 
-import { Client, Result } from '../../types'
+import { Client, Result, TxCache } from '../../types'
 import Cache from '../../cache'
-import { handleReadNotificationAction } from '../action'
+import { handleCreateNotificationAction, handleReadNotificationAction } from '../action'
 import { emptyResult } from '../../utils/result'
+import { pushNotification } from '../notification'
+import { getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../../utils/utils'
 
 jest.mock('../../config', () => ({
   __esModule: true,
@@ -38,6 +40,10 @@ jest.mock('../../utils/utils', () => {
     getObjectDisplayData: jest.fn()
   }
 })
+
+jest.mock('../notification', () => ({
+  pushNotification: jest.fn()
+}))
 
 describe('handleReadNotificationAction', () => {
   let mockClient: {
@@ -245,5 +251,112 @@ describe('handleReadNotificationAction', () => {
         $inc: { unreadCount: -2 }
       }
     })
+  })
+})
+
+describe('handleCreateNotificationAction', () => {
+  let mockClient: {
+    ctx: { warn: jest.Mock }
+    findOne: jest.Mock
+    branding: undefined
+  }
+  let mockCache: {
+    getDoc: jest.Mock
+    getReceivers: jest.Mock
+    getSettings: jest.Mock
+    getContext: jest.Mock
+    getPushSubscriptions: jest.Mock
+    getSender: jest.Mock
+  }
+  let result: Result
+
+  const makeTx = (): TxCUD<CreateNotificationAction> =>
+    ({
+      _id: 'tx-1',
+      _class: core.class.TxCreateDoc,
+      objectId: 'action-1',
+      modifiedBy: 'social-1',
+      modifiedOn: 100,
+      attributes: {
+        attachedTo: 'doc-1',
+        attachedToClass: 'love:class:MeetingMinutes',
+        account: 'guest-account' as AccountUuid,
+        notification: {}
+      }
+    }) as unknown as TxCUD<CreateNotificationAction>
+
+  const makeReceiver = (account: string, role: 'USER' | 'GUEST'): unknown => ({
+    account,
+    role,
+    employeeRef: 'emp-1',
+    space: 'space-1',
+    socialIds: ['social-9'],
+    online: false,
+    language: 'en'
+  })
+
+  beforeEach(() => {
+    mockClient = { ctx: { warn: jest.fn() }, findOne: jest.fn(), branding: undefined }
+    mockCache = {
+      getDoc: jest.fn().mockResolvedValue({ _id: 'doc-1', _class: 'love:class:MeetingMinutes', space: 'space-1' }),
+      getReceivers: jest.fn(),
+      getSettings: jest.fn().mockResolvedValue({}),
+      getContext: jest.fn().mockResolvedValue(undefined),
+      getPushSubscriptions: jest.fn().mockResolvedValue([]),
+      getSender: jest.fn().mockResolvedValue({ socialId: 'social-1' })
+    }
+    result = emptyResult()
+    jest.clearAllMocks()
+    ;(getBaseDisplayParams as jest.Mock).mockResolvedValue({ intlParams: {}, intlParamsNotLocalized: {} })
+    ;(getObjectDisplayData as jest.Mock).mockResolvedValue({})
+    ;(getEmptyTxCache as jest.Mock).mockReturnValue({})
+    ;(pushNotification as jest.Mock).mockResolvedValue(undefined)
+  })
+
+  it('marks the notification unread for a regular user', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver('user-1', 'USER')])
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      makeTx()
+    )
+
+    expect(pushNotification).toHaveBeenCalledTimes(1)
+    expect((pushNotification as jest.Mock).mock.calls[0][4].unreadCommon).toBeDefined()
+  })
+
+  it('still delivers to the shared read-only guest account, but not as unread', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver(readOnlyGuestAccountUuid, 'GUEST')])
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      makeTx()
+    )
+
+    expect(pushNotification).toHaveBeenCalledTimes(1)
+    const data = (pushNotification as jest.Mock).mock.calls[0][4]
+    expect(data.unreadCommon).toBeUndefined()
+    // Delivery itself must be untouched — only the unread counter is suppressed.
+    expect(data.notification).toBeDefined()
+  })
+
+  it('keeps a named guest account unread — only the shared guest account is suppressed', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver('named-guest', 'GUEST')])
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      makeTx()
+    )
+
+    expect((pushNotification as jest.Mock).mock.calls[0][4].unreadCommon).toBeDefined()
   })
 })

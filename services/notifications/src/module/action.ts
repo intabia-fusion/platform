@@ -13,7 +13,15 @@
 // limitations under the License.
 //
 
-import core, { Doc, DocumentUpdate, Ref, TxCreateDoc, TxCUD, TxProcessor } from '@hcengineering/core'
+import core, {
+  Doc,
+  DocumentUpdate,
+  readOnlyGuestAccountUuid,
+  Ref,
+  TxCreateDoc,
+  TxCUD,
+  TxProcessor
+} from '@hcengineering/core'
 import notification, {
   CreateNotificationAction,
   DocNotifyContext,
@@ -229,6 +237,9 @@ export async function handleCreateNotificationAction (
   }
 
   const notifyProviders: NotifyProviders = type != null ? Object.fromEntries(providers.map((p) => [p, [type]])) : {}
+  // The read-only guest account is shared by everyone who opens a public link, so its unread
+  // counter is nobody's to clear and would only grow. Deliver the notification, but born read.
+  const isSharedGuest = receiver.role === 'GUEST' && receiver.account === readOnlyGuestAccountUuid
   await pushNotification(client, getEmptyTxCache(), result, context, {
     receiver,
     objectId: doc._id,
@@ -239,7 +250,7 @@ export async function handleCreateNotificationAction (
     pushSubscriptions,
     notifyProviders,
     intl,
-    unreadCommon: commonNotification
+    unreadCommon: isSharedGuest ? undefined : commonNotification
   })
 }
 

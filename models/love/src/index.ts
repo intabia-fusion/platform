@@ -993,7 +993,7 @@ export function createModel (builder: Builder): void {
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
     provider: notification.providers.InboxNotificationProvider,
     ignoredTypes: [],
-    enabledTypes: [love.ids.MeetingMinutesChatNotification]
+    enabledTypes: [love.ids.MeetingMinutesChatNotification, love.ids.InviteNotification]
   })
 
   builder.createDoc(notification.class.NotificationProviderDefaults, core.space.Model, {
