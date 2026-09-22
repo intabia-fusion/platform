@@ -24,6 +24,11 @@ badly - most hits are `jest.mock`ed. Files that looked like integration and are 
 
 The decisive check is not the grep, it is running the unit group with the stand stopped.
 
+Two more were found only by that check, after the first split: `elastic/src/__tests__/search.test.ts`
+(real bulk index) and `postgres/src/__tests__/storage-coverage.test.ts` (`CREATE DATABASE`). CI hid
+them - `ci_test.sh` raises the stand before `pnpm test` - so they passed there and failed on any
+machine without it. Both are `*.itest.ts` now.
+
 ## collectCoverageFrom is a trap in a multi-project jest run
 
 Without it, coverage only counts files a test happened to load: 500 files, a flattering 56.55%.

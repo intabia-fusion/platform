@@ -98,7 +98,8 @@ describe('ModernDropdownLabels', () => {
       items: ITEMS,
       multiselect: false,
       selected: 'b',
-      enableSearch: false
+      enableSearch: false,
+      categoryKind: 'divider'
     })
   })
 
