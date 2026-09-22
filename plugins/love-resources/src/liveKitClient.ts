@@ -29,7 +29,7 @@ import { addNotification, NotificationSeverity } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import LastParticipantNotification from './components/meeting/LastParticipantNotification.svelte'
 import love from './plugin'
-import { $myPreferences, ensureOfficeDetailsLoaded } from './stores'
+import { $myPreferences } from './stores'
 import { leaveMeeting } from './meetings'
 
 export enum ScreenSharingState {
@@ -144,8 +144,8 @@ export class LiveKitClient {
 
     lkIsConnecting.set(true)
     this.currentSessionSupportsVideo = withVideo
-    // The device preferences are loaded on demand; the session is set up from them.
-    await ensureOfficeDetailsLoaded()
+    // `$myPreferences` is whatever is loaded by now: the workbench join awaits the office details
+    // before calling here, the guest join has no workspace client and no preferences at all.
     const ncEnabled = $myPreferences?.noiseCancellation ?? true
     this.liveKitRoom.options.audioCaptureDefaults = {
       ...this.liveKitRoom.options.audioCaptureDefaults,
