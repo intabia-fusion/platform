@@ -209,6 +209,8 @@ export interface MeetingMinutes extends Space {
   startWithRecording?: boolean
   // If defined, should start with transcription
   startWithTranscription?: boolean
+
+  traceId?: string
 }
 
 /**
