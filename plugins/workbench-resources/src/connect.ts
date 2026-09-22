@@ -262,6 +262,16 @@ export async function connect (title: string): Promise<Client | undefined> {
   }
   _token = token
 
+  // TODO: should we take the function from some resource like fetchWorkspace/selectWorkspace
+  // to remove account client dependency?
+  // Social ids need only the token, so the accounts round trip runs while the socket comes up.
+  // A failure surfaces at the await below; the no-op catch only keeps it from being reported
+  // as unhandled in the meantime.
+  const accountsUrl = getMetadata(login.metadata.AccountsUrl)
+  const accountClient = getAccountClient(accountsUrl, token)
+  const socialIdsPromise = ctx.with('get-social-ids', {}, async () => await accountClient.getSocialIds(true))
+  socialIdsPromise.catch(() => undefined)
+
   const clientFactory = await getResource(client.function.GetClient)
   let version: Version | undefined
   const newClient = await ctx.with(
@@ -496,11 +506,7 @@ export async function connect (title: string): Promise<Client | undefined> {
 
   _client = newClient
 
-  // TODO: should we take the function from some resource like fetchWorkspace/selectWorkspace
-  // to remove account client dependency?
-  const accountsUrl = getMetadata(login.metadata.AccountsUrl)
-  const accountClient = getAccountClient(accountsUrl, token)
-  const socialIds: SocialId[] = await accountClient.getSocialIds(true)
+  const socialIds: SocialId[] = await socialIdsPromise
 
   const me: Account = {
     uuid: account,
@@ -512,7 +518,10 @@ export async function connect (title: string): Promise<Client | undefined> {
 
   // Ensure employee and social identifiers
   if (workspaceLoginInfo.role !== AccountRole.Admin) {
-    const employee = await ensureEmployee(ctx, me, newClient, socialIds, getGlobalPerson)
+    const [employee, spaceByAccount] = await Promise.all([
+      ensureEmployee(ctx, me, newClient, socialIds, getGlobalPerson),
+      newClient.findOne(contact.class.PersonSpace, { members: account }, { projection: { _id: 1, person: 1 } })
+    ])
 
     if (employee == null) {
       console.log('Failed to ensure employee')
@@ -523,7 +532,11 @@ export async function connect (title: string): Promise<Client | undefined> {
       return
     }
 
-    const space = await newClient.findOne(contact.class.PersonSpace, { person: employee }, { projection: { _id: 1 } })
+    // A first login creates the employee, and with it the space, only during ensureEmployee.
+    const space =
+      spaceByAccount?.person === employee
+        ? spaceByAccount
+        : await newClient.findOne(contact.class.PersonSpace, { person: employee }, { projection: { _id: 1 } })
 
     setCurrentEmployee(employee)
     if (space !== undefined) {
