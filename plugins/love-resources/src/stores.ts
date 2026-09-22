@@ -66,12 +66,27 @@ aiBotSocialIdentityStore.subscribe((sid) => {
 // Undefined until the account service answers, so callers can tell "not loaded yet" from "not a member".
 export const workspaceMemberAccounts = writable<Set<AccountUuid> | undefined>(undefined)
 
-onClient(() => {
-  void getAccountClient(getMetadata(login.metadata.AccountsUrl), getMetadata(presentation.metadata.Token))
+let workspaceMembersLoaded: Promise<void> | undefined
+
+export async function ensureWorkspaceMembersLoaded (): Promise<void> {
+  workspaceMembersLoaded ??= getAccountClient(
+    getMetadata(login.metadata.AccountsUrl),
+    getMetadata(presentation.metadata.Token)
+  )
     .getWorkspaceMembers()
     .then((members) => {
       workspaceMemberAccounts.set(new Set(members.map((m) => m.person)))
     })
+  await workspaceMembersLoaded
+}
+
+onClient(() => {
+  workspaceMemberAccounts.set(undefined)
+  // Requested under the previous client: fetch again for this one.
+  if (workspaceMembersLoaded !== undefined) {
+    workspaceMembersLoaded = undefined
+    void ensureWorkspaceMembersLoaded()
+  }
 })
 
 export const myInfo = derived(infos, (val) => {
@@ -167,25 +182,24 @@ function isNewerParticipantInfo (a: ParticipantInfo, b: ParticipantInfo): boolea
 
 const officeLoaded = writable(false)
 
+// Loaded with the client: the top bar shows the running meetings from these, and a refreshed
+// page finds the meeting to rejoin in them.
 const query = createQuery(true)
 const statusQuery = createQuery(true)
+const meetingsQuery = createQuery(true)
+// Loaded on demand: only the office pages, the device settings and a joined meeting read these.
+// Startup goes out over a slow link as one queue, and every query in it delays the chat.
 const floorsQuery = createQuery(true)
 const preferencesQuery = createQuery(true)
-const meetingsQuery = createQuery(true)
 const pendingRecordingQuery = createQuery(true)
+
+let officeDetailsLoaded: Promise<void> | undefined
+let officePersonsUnsubscribe: (() => void) | undefined
 
 onClient(() => {
   const roomPromise = new Promise<void>((resolve) =>
     query.query(love.class.Room, {}, (res) => {
       rooms.set(res)
-
-      // cache for all office persons
-      void getPersonsByPersonRefs(
-        res
-          .filter((it) => isOffice(it))
-          .map((it) => it.person)
-          .filter((it) => it != null)
-      )
       resolve()
     })
   )
@@ -193,19 +207,6 @@ onClient(() => {
     statusQuery.query(love.class.ParticipantInfo, {}, async (res) => {
       allInfos.set(res)
       infos.set(await filterParticipantInfo(res))
-      resolve()
-    })
-  )
-  const floorPromise = new Promise<void>((resolve) =>
-    floorsQuery.query(love.class.Floor, {}, (res) => {
-      floors.set(res)
-      resolve()
-    })
-  )
-  const preferencePromise = new Promise<void>((resolve) =>
-    preferencesQuery.query(love.class.DevicesPreference, {}, (res) => {
-      myPreferences.set(res[0])
-      $myPreferences = res[0]
       resolve()
     })
   )
@@ -224,24 +225,58 @@ onClient(() => {
     )
   )
 
-  const pendingRecordingPromise = new Promise<void>((resolve) => {
-    pendingRecordingQuery.query(love.class.PendingRecording, {}, (result) => {
-      pendingRecordings.set(result)
-      resolve()
-    })
-  })
-
-  void Promise.all([
-    roomPromise,
-    infoPromise,
-    floorPromise,
-    preferencePromise,
-    meetingsPromise,
-    pendingRecordingPromise
-  ]).then(() => {
+  void Promise.all([roomPromise, infoPromise, meetingsPromise]).then(() => {
     officeLoaded.set(true)
   })
+
+  // Requested under the previous client: load again for this one.
+  if (officeDetailsLoaded !== undefined) {
+    officeDetailsLoaded = undefined
+    void ensureOfficeDetailsLoaded()
+  }
 })
+
+/**
+ * Floors, device preferences, pending recordings and the persons of the offices. Call before
+ * reading `floors`, `myPreferences` or the recording stores; the first call starts the queries.
+ */
+export async function ensureOfficeDetailsLoaded (): Promise<void> {
+  officeDetailsLoaded ??= (async () => {
+    const floorPromise = new Promise<void>((resolve) =>
+      floorsQuery.query(love.class.Floor, {}, (res) => {
+        floors.set(res)
+        resolve()
+      })
+    )
+    const preferencePromise = new Promise<void>((resolve) =>
+      preferencesQuery.query(love.class.DevicesPreference, {}, (res) => {
+        myPreferences.set(res[0])
+        $myPreferences = res[0]
+        resolve()
+      })
+    )
+    const pendingRecordingPromise = new Promise<void>((resolve) => {
+      pendingRecordingQuery.query(love.class.PendingRecording, {}, (result) => {
+        pendingRecordings.set(result)
+        resolve()
+      })
+    })
+
+    // cache for all office persons: the floor plan shows their names
+    officePersonsUnsubscribe?.()
+    officePersonsUnsubscribe = rooms.subscribe((res) => {
+      void getPersonsByPersonRefs(
+        res
+          .filter((it) => isOffice(it))
+          .map((it) => it.person)
+          .filter((it) => it != null)
+      )
+    })
+
+    await Promise.all([floorPromise, preferencePromise, pendingRecordingPromise])
+  })()
+  await officeDetailsLoaded
+}
 
 export async function waitForOfficeLoaded (): Promise<void> {
   if (!get(officeLoaded)) {

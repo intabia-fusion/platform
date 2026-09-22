@@ -29,7 +29,8 @@
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import lovePlg from '../plugin'
-  import { floors, lockedRoom, selectedFloor } from '../stores'
+  import { ensureOfficeDetailsLoaded, floors, lockedRoom, selectedFloor } from '../stores'
+
   import { FloorSize, RGBAColor, ResizeInitParams, RoomSide, shadowError, shadowNormal } from '../types'
   import { calculateFloorSize } from '../utils'
   import AddRoomPopup from './AddRoomPopup.svelte'
@@ -42,6 +43,8 @@
 
   const client = getClient()
   const dispatch = createEventDispatcher()
+
+  void ensureOfficeDetailsLoaded()
 
   let divScroll: HTMLElement
   let resizeInitParams: ResizeInitParams | undefined = undefined

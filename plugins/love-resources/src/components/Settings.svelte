@@ -4,10 +4,12 @@
   import { getClient } from '@hcengineering/presentation'
   import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
   import love from '../plugin'
-  import { myPreferences } from '../stores'
+  import { ensureOfficeDetailsLoaded, myPreferences } from '../stores'
   import { liveKitClient } from '../utils'
 
   const client = getClient()
+
+  void ensureOfficeDetailsLoaded()
 
   async function saveMicPreference (myPreferences: DevicesPreference | undefined, value: boolean): Promise<void> {
     if (myPreferences !== undefined) {

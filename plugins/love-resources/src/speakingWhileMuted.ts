@@ -17,7 +17,7 @@ import { getSelectedMicId, releaseStream } from '@hcengineering/media'
 import { get } from 'svelte/store'
 import { state as mediaState } from '@hcengineering/media-resources'
 import { lkSessionConnected } from './liveKitClient'
-import { myPreferences, speakingWhileMuted } from './stores'
+import { ensureOfficeDetailsLoaded, myPreferences, speakingWhileMuted } from './stores'
 
 const RMS_THRESHOLD = 0.02 // ~ -34 dBFS; above room noise, below normal speech
 const POLL_MS = 100
@@ -141,6 +141,7 @@ function evaluateSharedWatch (): void {
 
 export function acquireSpeakingWhileMutedWatch (): () => void {
   mountedIndicators++
+  void ensureOfficeDetailsLoaded()
   if (unsubStores.length === 0) {
     unsubStores = [
       mediaState.subscribe(evaluateSharedWatch),

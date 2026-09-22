@@ -29,7 +29,7 @@ import { addNotification, NotificationSeverity } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import LastParticipantNotification from './components/meeting/LastParticipantNotification.svelte'
 import love from './plugin'
-import { $myPreferences } from './stores'
+import { $myPreferences, ensureOfficeDetailsLoaded } from './stores'
 import { leaveMeeting } from './meetings'
 
 export enum ScreenSharingState {
@@ -144,6 +144,8 @@ export class LiveKitClient {
 
     lkIsConnecting.set(true)
     this.currentSessionSupportsVideo = withVideo
+    // The device preferences are loaded on demand; the session is set up from them.
+    await ensureOfficeDetailsLoaded()
     const ncEnabled = $myPreferences?.noiseCancellation ?? true
     this.liveKitRoom.options.audioCaptureDefaults = {
       ...this.liveKitRoom.options.audioCaptureDefaults,

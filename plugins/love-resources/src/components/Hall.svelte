@@ -18,9 +18,12 @@
   import { Floor as FloorType, Office, Room, isOffice } from '@hcengineering/love'
   import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
-  import { activeFloor, floors, rooms, selectedFloor } from '../stores'
+  import { activeFloor, ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
+
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
+
+  void ensureOfficeDetailsLoaded()
 
   function getRooms (rooms: Room[], floor: Ref<FloorType>): Room[] {
     return rooms.filter((p) => p.floor === floor)
