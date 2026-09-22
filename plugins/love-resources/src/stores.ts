@@ -228,12 +228,6 @@ onClient(() => {
   void Promise.all([roomPromise, infoPromise, meetingsPromise]).then(() => {
     officeLoaded.set(true)
   })
-
-  // Requested under the previous client: load again for this one.
-  if (officeDetailsLoaded !== undefined) {
-    officeDetailsLoaded = undefined
-    void ensureOfficeDetailsLoaded()
-  }
 })
 
 /**

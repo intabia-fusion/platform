@@ -94,7 +94,9 @@ describe('office stores loaded on demand', () => {
     expect(names(detailClasses)).toEqual(details)
   })
 
-  it('loads the details again for a new client once they were requested', async () => {
+  it('does not re-issue the detail queries when the client is set again', async () => {
+    // Global queries follow the new client by themselves; a second query() with the same arguments
+    // would not call back, and the loader promise would never settle.
     const love = (await import('../plugin')).default
     await import('../stores')
     const floor = String(love.class.Floor)
@@ -102,7 +104,7 @@ describe('office stores loaded on demand', () => {
 
     for (const cb of mockOnClientCallbacks) cb()
 
-    expect(queriedClasses().filter((it) => it === floor).length).toBe(before + 1)
+    expect(queriedClasses().filter((it) => it === floor).length).toBe(before)
   })
 
   it('fetches the workspace members on the first ensureWorkspaceMembersLoaded call only', async () => {
