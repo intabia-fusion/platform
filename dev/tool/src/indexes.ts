@@ -39,6 +39,11 @@ export interface IndexesFile {
   domains: Record<string, IndexRecord[]>
 }
 
+// Accepts pg_indexes.indexdef as the database renders it: expression columns nest up to 3 levels
+// of parentheses, INCLUDE lists covering columns; ';' is never allowed, so no statement chaining.
+export const safeIndexRe =
+  /^CREATE\s+(UNIQUE\s+)?INDEX\s+(IF\s+NOT\s+EXISTS\s+)?([A-Za-z0-9_]+)\s+ON\s+(?:public\.)?"?([A-Za-z0-9_]+)"?\s*(?:USING\s+[A-Za-z0-9_]+\s*)?\((?:[^();]|\((?:[^();]|\([^();]*\))*\))*\)(?:\s+INCLUDE\s*\([^();]*\))?(?:\s+WHERE\s+[^;]+)?\s*;?\s*$/i
+
 interface ExpectedIndex {
   name: string
   table: string
@@ -142,6 +147,12 @@ export async function dumpIndexes (ctx: MeasureContext, dbUrl: string, txes: Tx[
   }
 }
 
+function throwOnRejected (rejected: number): void {
+  if (rejected > 0) {
+    throw new Error(`${rejected} index definition(s) from file rejected, see warnings above`)
+  }
+}
+
 export async function syncIndexes (
   ctx: MeasureContext,
   dbUrl: string,
@@ -199,8 +210,7 @@ export async function syncIndexes (
         }
       }
     }
-    const safeIndexRe =
-      /^CREATE\s+(UNIQUE\s+)?INDEX\s+(IF\s+NOT\s+EXISTS\s+)?([A-Za-z0-9_]+)\s+ON\s+(?:public\.)?([A-Za-z0-9_]+)\s*(?:USING\s+[A-Za-z0-9_]+\s*)?\([^();]*\)(?:\s+WHERE\s+[^;]+)?\s*;?\s*$/i
+    let rejected = 0
     for (const [domain, list] of fromFiles) {
       if (!physical.has(domain)) continue
       for (const r of list) {
@@ -209,14 +219,17 @@ export async function syncIndexes (
         const def = r.definition.trim().replace(/;\s*$/, '')
         const match = safeIndexRe.exec(def)
         if (match == null) {
+          rejected++
           ctx.warn('skip unsafe index definition', { domain, name: r.name, definition: r.definition })
           continue
         }
         if (match[4].toLowerCase() !== domain.toLowerCase()) {
+          rejected++
           ctx.warn('skip index targeting different table', { domain, name: r.name, table: match[4] })
           continue
         }
         if (match[3].toLowerCase() !== r.name.toLowerCase()) {
+          rejected++
           ctx.warn('skip index with mismatched name', { domain, declared: r.name, parsed: match[3] })
           continue
         }
@@ -227,7 +240,7 @@ export async function syncIndexes (
       }
     }
 
-    if (toCreate.length === 0) {
+    if (toCreate.length === 0 && rejected === 0) {
       ctx.info('all indexes present, nothing to do')
       return
     }
@@ -242,6 +255,7 @@ export async function syncIndexes (
 
     if (!apply) {
       ctx.info('dry run, no changes')
+      throwOnRejected(rejected)
       return
     }
 
@@ -262,6 +276,7 @@ export async function syncIndexes (
       }
     }
     ctx.info('sync complete', { created, failed })
+    throwOnRejected(rejected)
   } finally {
     dbRef.close()
   }
