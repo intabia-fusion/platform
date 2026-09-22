@@ -32,6 +32,7 @@ import core, {
   type TxCreateDoc,
   type TxMixin,
   type TxResult,
+  type TxUpdateDoc,
   type WithLookup,
   toFindResult
 } from '@hcengineering/core'
@@ -103,16 +104,15 @@ function createMockClient (scenario: Scenario = {}): {
     createdBy: mockSocialId
   }
 
+  // Employee attributes live on the person document under the mixin id, as the server returns them.
   const findOne = jest.fn(
     async <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>): Promise<WithLookup<T> | undefined> => {
       if (_class === contact.class.Person && (query as DocumentQuery<Person>)?.personUuid === TEST_UUID) {
-        return personExists ? (mockPerson as unknown as WithLookup<T>) : undefined
-      }
-      if (_class === contact.mixin.Employee) {
-        return employeeExists ? ({ ...mockPerson, active: true } as unknown as WithLookup<T>) : undefined
-      }
-      if (_class === contact.class.SocialIdentity) {
-        return undefined
+        if (!personExists) return undefined
+        const person = employeeExists
+          ? { ...mockPerson, [contact.mixin.Employee]: { active: true, role: 'USER' } }
+          : mockPerson
+        return person as unknown as WithLookup<T>
       }
       return undefined
     }
@@ -273,34 +273,28 @@ function createConcurrentMockClient (
   const reject: TxApplyResult = { success: false, serverTime: 0 }
   const accept: TxApplyResult = { success: true, serverTime: 0 }
 
+  // A person is returned the way the server stores it: employee attributes under the mixin id.
+  const withEmployee = (p: PersonRecord): PersonRecord => {
+    const employee = state.employees.get(p._id)
+    return employee === undefined
+      ? p
+      : { ...p, [contact.mixin.Employee]: { active: employee.active, role: employee.role } }
+  }
+
   const findOne = jest.fn(
     async <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>): Promise<WithLookup<T> | undefined> => {
       if (_class === contact.class.Person) {
         const q = query as DocumentQuery<Person>
         if (q?.personUuid !== undefined) {
           for (const p of state.persons.values()) {
-            if (p.personUuid === q.personUuid) return p as unknown as WithLookup<T>
+            if (p.personUuid === q.personUuid) return withEmployee(p) as unknown as WithLookup<T>
           }
         }
-        return undefined
-      }
-      if (_class === contact.class.SocialIdentity) {
-        const q = query as DocumentQuery<SocialIdentity>
-        const idClause = q?._id
-        if (typeof idClause === 'object' && idClause !== null && '$in' in idClause) {
-          const ids = (idClause as { $in: SocialIdentityRef[] }).$in
-          for (const id of ids) {
-            const found = state.socialIds.get(id)
-            if (found !== undefined) return found as unknown as WithLookup<T>
-          }
+        if (typeof q?._id === 'string') {
+          const p = state.persons.get(q._id)
+          return p === undefined ? undefined : (withEmployee(p) as unknown as WithLookup<T>)
         }
         return undefined
-      }
-      if (_class === contact.mixin.Employee) {
-        const q = query as DocumentQuery<Doc>
-        const id = q?._id as Ref<Person> | undefined
-        if (id === undefined) return undefined
-        return (state.employees.get(id) as unknown as WithLookup<T> | undefined) ?? undefined
       }
       return undefined
     }
@@ -553,6 +547,92 @@ describe('ensureEmployeeForPerson concurrency', () => {
     expect(state.employees.size).toBe(1)
     const emp = [...state.employees.values()][0]
     expect(emp.role).toBe('GUEST')
+  })
+})
+
+describe('ensureEmployeeForPerson round trips', () => {
+  const testCtx = new MeasureMetricsContext('test', {})
+  const sid = 'sid-rt-1' as PersonId
+  const sidRef = sid as unknown as SocialIdentityRef
+  const personId = 'person-rt' as Ref<Person>
+  const uuid = 'uuid-rt' as PersonUuid
+
+  function makeAccount (): Account {
+    return {
+      uuid: uuid as unknown as AccountUuid,
+      primarySocialId: sid,
+      role: AccountRole.User,
+      socialIds: [sid],
+      fullSocialIds: [{ _id: sid, type: SocialIdType.EMAIL, value: 'rt@b.com', key: 'email:rt@b.com', verifiedOn: 1 }]
+    }
+  }
+
+  function makeState (personUuid: PersonUuid | undefined): SharedState {
+    const state: SharedState = { persons: new Map(), socialIds: new Map(), employees: new Map(), txLog: [] }
+    state.persons.set(personId, {
+      _id: personId,
+      _class: contact.class.Person,
+      personUuid: personUuid as PersonUuid,
+      name: 'R T',
+      avatarType: AvatarType.COLOR
+    })
+    state.socialIds.set(sidRef, {
+      _id: sidRef,
+      _class: contact.class.SocialIdentity,
+      type: SocialIdType.EMAIL,
+      value: 'rt@b.com',
+      key: 'email:rt@b.com',
+      attachedTo: personId,
+      verifiedOn: 1,
+      isDeleted: false
+    })
+    state.employees.set(personId, { _id: personId, active: true, role: 'USER' })
+    return state
+  }
+
+  it('an existing employee costs one round of reads and no writes', async () => {
+    const state = makeState(uuid)
+    const client = createConcurrentMockClient(state)
+    const getGlobalPerson = jest.fn(async () => ({ uuid, firstName: 'R', lastName: 'T' }))
+    const { ensureEmployeeForPerson } = await import('../utils')
+    const account = makeAccount()
+
+    const result = await ensureEmployeeForPerson(
+      testCtx,
+      account,
+      account,
+      client,
+      account.fullSocialIds,
+      getGlobalPerson
+    )
+
+    expect(result).toBe(personId)
+    expect(getGlobalPerson).toHaveBeenCalledTimes(1)
+    expect(client.findOne).toHaveBeenCalledTimes(1)
+    expect(client.findOne).toHaveBeenCalledWith(contact.class.Person, { personUuid: uuid })
+    expect(client.findAll).toHaveBeenCalledTimes(1)
+    expect(client.findAll).toHaveBeenCalledWith(contact.class.SocialIdentity, { _id: { $in: [sid] } })
+    expect(state.txLog).toEqual([])
+  })
+
+  it('a person found through a social identity gets its personUuid and is read for the employee check', async () => {
+    const state = makeState(undefined)
+    const client = createConcurrentMockClient(state)
+    const { ensureEmployeeForPerson } = await import('../utils')
+    const account = makeAccount()
+
+    const result = await ensureEmployeeForPerson(testCtx, account, account, client, account.fullSocialIds, {
+      uuid,
+      firstName: 'R',
+      lastName: 'T'
+    })
+
+    expect(result).toBe(personId)
+    expect(client.findOne).toHaveBeenCalledWith(contact.class.Person, { _id: personId })
+    expect(state.txLog).toEqual([{ type: core.class.TxUpdateDoc }])
+    const update = client.tx.mock.calls.map(([tx]) => tx)[0] as TxUpdateDoc<Person>
+    expect(update.objectId).toBe(personId)
+    expect(update.operations).toEqual({ personUuid: uuid })
   })
 })
 
