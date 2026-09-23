@@ -771,6 +771,84 @@ export const main = async (): Promise<void> => {
     }
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.post('/kickParticipant', async (req, res) => {
+    const { meetingId, workspaceId } = decodeMeetingToken(req, res)
+    if (meetingId === undefined || workspaceId === undefined) {
+      res.status(400).send({ error: 'Missing meetingId or workspaceId' })
+      return
+    }
+
+    const targetAccount = req.body?.targetAccount
+    if (typeof targetAccount !== 'string' || targetAccount === '') {
+      res.status(400).send({ error: 'Missing targetAccount' })
+      return
+    }
+
+    const callerToken = extractToken(req.headers)
+    if (callerToken === undefined) {
+      res.status(401).send({ error: 'Unauthorized' })
+      return
+    }
+
+    try {
+      const wsClient = await WorkspaceClient.create(workspaceId, ctx)
+      const meeting = await wsClient.findMeetingById(meetingId)
+      if (meeting === undefined) {
+        res.status(404).send({ error: 'Meeting not found' })
+        return
+      }
+
+      const callerAccount = decodeToken(callerToken).account
+      const isMeetingOwner = (meeting.owners ?? []).includes(callerAccount)
+
+      let isWorkspaceOwner = false
+      if (!isMeetingOwner) {
+        try {
+          const wsLoginInfo = await getAccountClient(callerToken).getLoginInfoByToken()
+          isWorkspaceOwner = isWorkspaceLoginInfo(wsLoginInfo) && wsLoginInfo.role === AccountRole.Owner
+        } catch (err: any) {
+          ctx.warn('Failed to resolve caller role', { error: err?.message ?? String(err) })
+        }
+      }
+
+      if (!isMeetingOwner && !isWorkspaceOwner) {
+        res.status(403).send({ error: 'Forbidden: only owners can kick participants' })
+        return
+      }
+
+      const targetPerson = await wsClient.findPersonByAccount(targetAccount as AccountUuid)
+      if (targetPerson === undefined) {
+        ctx.warn('[kickParticipant] Target person not found', { targetAccount })
+        res.status(404).send({ error: 'Person not found' })
+        return
+      }
+
+      const roomName = getRoomName(workspaceId, meetingId)
+      try {
+        await roomClient.removeParticipant(roomName, targetPerson)
+        ctx.info('[kickParticipant] Successfully removed from LiveKit', { targetPerson })
+      } catch (err: any) {
+        ctx.error('[kickParticipant] Failed to remove from LiveKit', {
+          err: err?.message ?? String(err),
+          targetPerson
+        })
+      }
+
+      await wsClient.cleanupParticipantFromMeeting(meetingId, targetPerson)
+
+      res.status(200).send({ success: true })
+    } catch (err: any) {
+      ctx.error('[kickParticipant] failed', {
+        workspaceId,
+        meetingId,
+        targetAccount,
+        error: err?.message ?? String(err)
+      })
+      res.status(500).send({ error: 'Internal server error' })
+    }
+  })
+
   const workspaceConsumer = queue.createConsumer<QueueWorkspaceMessage>(
     ctx,
     QueueTopic.Workspace,

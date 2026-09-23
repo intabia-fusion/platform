@@ -112,7 +112,11 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
 // ParticipantInfo - otherwise the stale row races us back into the room.
 let leavingMeeting = false
 
-export async function leaveMeeting (): Promise<void> {
+export interface LeaveOptions {
+  requestFinish?: boolean
+}
+
+export async function leaveMeeting (options: LeaveOptions = { requestFinish: true }): Promise<void> {
   // If we're still in the process of connecting, don't disconnect
   if (get(lkIsConnecting)) {
     return
@@ -132,11 +136,41 @@ export async function leaveMeeting (): Promise<void> {
     currentMeeting = undefined
     currentMeetingRoom = undefined
 
-    if (meetingId !== undefined) {
+    if (meetingId !== undefined && options.requestFinish !== false) {
       void loveClient.requestFinishMeeting(meetingId)
     }
   } finally {
     leavingMeeting = false
+  }
+}
+
+let watchedMeetingId: Ref<MeetingMinutes> | undefined
+let lastMembers: AccountUuid[] | undefined
+
+function leaveFromMeetingIfRemoved (mm: MeetingMinutes | undefined): void {
+  if (leavingMeeting) return
+  if (currentMeeting === undefined) return
+  if (!get(lkSessionConnected)) return
+
+  if (mm?._id !== currentMeeting) {
+    return
+  }
+
+  if (mm._id !== watchedMeetingId) {
+    watchedMeetingId = mm._id
+    lastMembers = undefined
+  }
+
+  const me = getCurrentAccount().uuid
+  const members = mm.members ?? []
+  const wasRemoved = (lastMembers === undefined || lastMembers.includes(me)) && !members.includes(me)
+
+  lastMembers = members
+
+  if (wasRemoved) {
+    watchedMeetingId = undefined
+    lastMembers = undefined
+    void leaveMeeting({ requestFinish: false })
   }
 }
 
@@ -506,8 +540,9 @@ onClient(() => {
     void reconnectToCurrentMeeting()
     // Either store may populate after `officeLoaded` resolves; the loop is guarded
     // by `reconnecting`/`currentMeeting`.
-    currentMeetingMinutes.subscribe(() => {
+    currentMeetingMinutes.subscribe((mm) => {
       void reconnectToCurrentMeeting()
+      leaveFromMeetingIfRemoved(mm)
     })
     meetings.subscribe(() => {
       if (recallActiveMeeting() !== undefined) {
