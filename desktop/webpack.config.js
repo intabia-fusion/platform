@@ -18,7 +18,18 @@ const prod = mode === 'production'
 const dev = (process.env.CLIENT_TYPE ?? '') === 'dev' || mode === 'development'
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 console.log('mode', mode)
-const { EsbuildPlugin } = require('esbuild-loader')
+const MinimizerPlugin = require('minimizer-webpack-plugin')
+const minifiers = {
+  swc: { minify: MinimizerPlugin.swcMinify, minimizerOptions: { ecma: 2022 } },
+  // Same as the server bundles (common/scripts/esbuild.js): keep names, no syntax lowering.
+  esbuild: { minify: MinimizerPlugin.esbuildMinify, minimizerOptions: { target: 'esnext', keepNames: true, charset: 'utf8' } },
+  terser: { minify: MinimizerPlugin.terserMinify }
+}
+// MINIFIER=esbuild|swc|terser selects the JS minifier for production builds; esbuild by default.
+const minifier = minifiers[process.env.MINIFIER ?? 'esbuild']
+if (minifier === undefined) {
+  throw new Error(`Unknown MINIFIER=${process.env.MINIFIER}, expected one of: ${Object.keys(minifiers).join(', ')}`)
+}
 
 const doValidate = !prod || process.env.DO_VALIDATE === 'true'
 
@@ -39,7 +50,7 @@ module.exports = [
           use: {
             loader: 'esbuild-loader',
             options: {
-              target: 'es2021',
+              target: 'es2022',
               keepNames: true,
               minify: prod,
               sourcemap: true
@@ -99,7 +110,7 @@ module.exports = [
           use: {
             loader: 'esbuild-loader',
             options: {
-              target: 'es2021',
+              target: 'es2022',
               keepNames: true,
               minify: prod,
               sourcemap: true
@@ -162,12 +173,7 @@ module.exports = [
     optimization: prod
       ? {
           minimize: true,
-          minimizer: [
-            new EsbuildPlugin({
-              target: 'es2021',
-              minify: true
-            })
-          ]
+          minimizer: [new MinimizerPlugin(minifier)]
         }
       : {
           minimize: false,
@@ -180,7 +186,7 @@ module.exports = [
           test: /\.ts?$/,
           loader: 'esbuild-loader',
           options: {
-            target: 'es2021',
+            target: 'es2022',
             keepNames: true,
             minify: prod,
             sourcemap: true

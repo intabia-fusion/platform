@@ -81,3 +81,63 @@
   was 7-14 during runs, so +-5 s is noise. Code generation dropped from 3.7 s to under 1.7 s.
 - No package.json in the repo has `sideEffects`; ui-profile packages (69) have `main: src/index.ts`, so webpack
   compiles their sources and never reads their lib.
+
+## webpack-cli 7 + webpack-dev-server 6 (2026-09-23)
+
+- dev-server >=5 needs `proxy` as an array: dev/prod maps the old `{ '/path': opts }` tables with
+  `Object.entries(...).map(([context, o]) => ({ context: [context], ...o }))`.
+- http-proxy-middleware v3+ removed `logLevel`; replaced by `logger: console`. `pathRewrite` unchanged at root mount.
+- webpack-cli 5 does not support dev-server 6; cli 7 is required (Node >=20.9, dev-server 6 needs Node >=22.15).
+- cli 7 renames the process to `webpack`: `pkill -f "webpack serve"` no longer matches a running dev-server.
+- Checked: prod build (0 errors), desktop build, dev-server first compile 28.6 s, touch rebuild 2.2 s,
+  static/history fallback/proxy (504 without backend)/HMR websocket 101, login page renders.
+
+## Repeated runs: old (5.102.1/cli 5/dev-server 4) vs new (5.111.1/cli 7/dev-server 6), 2026-09-23
+
+Supersedes the single-run table above. prod n=5, desktop n=3, one build at a time, no compression.
+
+| | wall median (min-max) | peak RSS median (min-max) |
+|---|---|---|
+| prod old | 54.5 s (52.2-69.2) | 11.20 GB (7.96-11.48) |
+| prod new | 51.8 s (48.6-57.4) | 10.28 GB (7.20-10.89) |
+| desktop old | 46.1 s (45.5-46.3) | 5.81 GB (5.37-5.85) |
+| desktop new | 39.6 s (38.0-40.4) | 5.54 GB (5.52-5.61) |
+
+- desktop is really ~14% faster (ranges do not overlap). prod time: ranges overlap, no proven gain.
+- prod peak RSS is bimodal (~7-8 GB or ~10-11.5 GB) on both stacks, so the earlier "-26% memory" was a sampling
+  artifact; the real prod memory gain is at most ~1 GB.
+- Background load matters: a foreign `foundation4` webpack build pushed load average to 37 and one run to 69 s.
+
+## Where prod build time goes (webpack 5.111, 2026-09-23)
+
+- Minification ~18-24 s of ~52 s. Without minify the build is 34 s; main-thread CPU then: svelte compiler 11.3 s,
+  webpack 8.0 s, GC/native 6.2 s, typescript (svelte-preprocess) 2.5 s, sass 0.8 s; esbuild-loader ~0.
+- `--cpu-prof` on the full build swaps the machine (every minimizer worker thread profiles); profile with minimize off.
+- stats `--json` is 1.1 GB, too big for JSON.parse; use a hook-based timing plugin in a wrapper config instead.
+- swc minifier (`MinimizerPlugin.swcMinify`, @swc/core already in lockfile), 3 runs: 37.9-38.8 s, peak 2.9-3.4 GB
+  (terser: median 51.8 s, 10.3 GB). JS raw +2.1%, but gzip -0.3%, brotli -0.15%. Runtime correctness not verified.
+
+## thread-loader for svelte (experiment, 2026-09-23)
+
+- svelte-loader keeps emitted component CSS in an in-process `Map` (`index.js` virtualModules) and serves it to a
+  later `svelte-loader?cssPath=` request; with thread-loader the component compiles in a worker and the main
+  process misses it. Patch `common/pnpm-patches/svelte-loader@3.2.4.patch`: opt-in `cssInQuery` passes CSS as
+  base64url in the query.
+- thread-loader JSON-serializes loader options, so `preprocess: sveltePreprocess(...)` is lost (ParseError on
+  `lang="ts"`). Preprocess must run in its own loader that builds svelte-preprocess inside the worker.
+- `poolTimeout: Infinity` keeps workers alive and the non-watch build never exits.
+- Result (swc minifier, 8 workers): 22.1-24.5 s vs 36.6 s single-threaded, same RSS; unique CSS rules identical
+  (7493). Inline CSS source maps grow 0.45 MB -> 7.77 MB (map of the separate preprocess step merges in).
+  Baseline prod CSS already ships 135 inline data-URI source maps (0.45 MB).
+- Chunk ids change because module identifiers include the CSS query.
+
+## terser vs swc vs esbuild output (dev/prod, 2026-09-23)
+
+- All 366 files parse with acorn (ecmaVersion latest). JS / gzip-9: terser 52.51 / 12.14 MB, swc 52.19 / 12.08 MB,
+  esbuild 53.24 / 12.68 MB (+4.5% gzip: keeps UMD wrappers and function declarations terser/swc fold away).
+- esbuild minifier target must match the loaders (dev/prod `es2022`, desktop `es2021`); with `es2021` it lowered
+  all 656 class fields and 986 `static {}` blocks into helpers - a real semantic-risk transform.
+- swc: pass `ecma` (2022/2021). Its codegen defaults to ES5 and escapes Latin-1 and astral chars
+  (`\xe9`, surrogate pairs; emoji-data chunks +6-9%). `format.asciiOnly` has no effect.
+- swc turns every `const` into `let` (44836 -> 6) and moves `module.exports =` to the end of the sequence; both
+  semantically equivalent.

@@ -102,12 +102,16 @@ export async function removeStaleStands (projects: string[], cwd: string): Promi
  * @public
  */
 export async function composeUp (opts: ComposeOptions, attempts = 3, retryDelayMs = 5000): Promise<void> {
+  // applyEnv() rewrites process.env for the host-side tool while `up` runs; a retry must not pass that
+  // env (QUEUE_CONFIG=localhost:19093) to compose, where it overrides .env inside the containers.
+  const startEnv = { ...process.env }
   for (let attempt = 1; ; attempt++) {
     try {
+      const env = { ...Object.fromEntries(Object.keys(process.env).map((key) => [key, undefined])), ...startEnv }
       await exec(
         'docker',
         [...composeArgs(opts), 'up', '-d', '--force-recreate', '--renew-anon-volumes', '--remove-orphans'],
-        { cwd: opts.cwd, prefix: attempt === 1 ? 'compose up' : `compose up (retry ${attempt - 1})` }
+        { cwd: opts.cwd, env, prefix: attempt === 1 ? 'compose up' : `compose up (retry ${attempt - 1})` }
       )
       return
     } catch (err: unknown) {

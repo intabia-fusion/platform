@@ -71,7 +71,10 @@
     "eslint-plugin-n": "catalog:",
     "eslint-plugin-promise": "catalog:",
     "eslint-plugin-svelte": "catalog:",
-    "@stylistic/eslint-plugin": "catalog:"
+    "@stylistic/eslint-plugin": "catalog:",
+    "@swc/core": "catalog:",
+    "minimizer-webpack-plugin": "catalog:",
+    "thread-loader": "catalog:"
   },
   "dependencies": {
     "@hcengineering/achievement": "workspace:^0.7.0",
