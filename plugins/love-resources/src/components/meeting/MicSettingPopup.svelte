@@ -4,11 +4,14 @@
   import { getClient } from '@hcengineering/presentation'
   import { Component, Label, Loading, Toggle } from '@hcengineering/ui'
   import love from '../../plugin'
-  import { myPreferences } from '../../stores'
+  import { ensureOfficeDetailsLoaded, myPreferences } from '../../stores'
+
   import { liveKitClient } from '../../utils'
   import mediaPlugin, { getMediaDevices } from '@hcengineering/media'
 
   const client = getClient()
+
+  void ensureOfficeDetailsLoaded()
 
   function isNoiseCancellationSupported (): boolean {
     try {

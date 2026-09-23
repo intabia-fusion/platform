@@ -18,10 +18,17 @@
   import { isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'
-  import { currentMeetingMinutes, currentVideoRecording, isCancellingVideoRecording } from '../../../stores'
+  import {
+    currentMeetingMinutes,
+    currentVideoRecording,
+    ensureOfficeDetailsLoaded,
+    isCancellingVideoRecording
+  } from '../../../stores'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
+
+  void ensureOfficeDetailsLoaded()
 
   // State comes from documents, not from LiveKit room metadata: the metadata flag
   // travels through the event queue and goes stale whenever the queue is degraded.

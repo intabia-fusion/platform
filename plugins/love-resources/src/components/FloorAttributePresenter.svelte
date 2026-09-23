@@ -17,10 +17,12 @@
   import { Floor } from '@hcengineering/love'
   import { Ref } from '@hcengineering/core'
 
-  import { floors } from '../stores'
+  import { ensureOfficeDetailsLoaded, floors } from '../stores'
 
   export let value: Ref<Floor>
   export let inline: boolean = false
+
+  void ensureOfficeDetailsLoaded()
 
   $: floor = $floors.find((f) => f._id === value)
 </script>

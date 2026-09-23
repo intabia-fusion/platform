@@ -29,7 +29,8 @@ import {
   meetings,
   currentMeetingMinutes,
   waitForOfficeLoaded,
-  withConnectingToMeeting
+  withConnectingToMeeting,
+  ensureOfficeDetailsLoaded
 } from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
@@ -299,6 +300,7 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room, silent = false
   myConnectingSessionId.set(sessionId)
 
   try {
+    await ensureOfficeDetailsLoaded()
     await liveKitClient.connect(wsURL, token, room?.type === RoomType.Video)
     await navigateToMeetingMinutes(mm)
   } catch (err: any) {

@@ -144,6 +144,8 @@ export class LiveKitClient {
 
     lkIsConnecting.set(true)
     this.currentSessionSupportsVideo = withVideo
+    // `$myPreferences` is whatever is loaded by now: the workbench join awaits the office details
+    // before calling here, the guest join has no workspace client and no preferences at all.
     const ncEnabled = $myPreferences?.noiseCancellation ?? true
     this.liveKitRoom.options.audioCaptureDefaults = {
       ...this.liveKitRoom.options.audioCaptureDefaults,

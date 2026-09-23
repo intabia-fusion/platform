@@ -22,7 +22,13 @@
   import { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { sendInvites } from '../../../invites'
-  import { aiBotPerson, currentMeetingMinutes, infos, workspaceMemberAccounts } from '../../../stores'
+  import {
+    aiBotPerson,
+    currentMeetingMinutes,
+    ensureWorkspaceMembersLoaded,
+    infos,
+    workspaceMemberAccounts
+  } from '../../../stores'
 
   export let employee: Employee | undefined = undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
@@ -33,6 +39,8 @@
 
   const dispatch = createEventDispatcher()
   const hierarchy = getClient().getHierarchy()
+
+  void ensureWorkspaceMembersLoaded()
 
   // Yourself, the AI assistant, deactivated employees and pending invites cannot be called.
   $: mixin = employee !== undefined ? hierarchy.as(employee, contact.mixin.Employee) : undefined

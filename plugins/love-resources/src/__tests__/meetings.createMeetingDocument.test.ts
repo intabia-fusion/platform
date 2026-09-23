@@ -123,6 +123,7 @@ jest.mock('../stores', () => {
     myInfos: writable([]),
     currentMeetingMinutes: writable(undefined),
     waitForOfficeLoaded: jest.fn(async () => {}),
+    ensureOfficeDetailsLoaded: jest.fn(async () => {}),
     withConnectingToMeeting: jest.fn(async (op: () => Promise<unknown>) => await op())
   }
 })
