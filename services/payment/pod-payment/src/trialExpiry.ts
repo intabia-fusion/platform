@@ -185,7 +185,12 @@ export async function remindUpcomingTrials (
     try {
       await accountClient.upsertSubscription({
         ...sub,
-        providerData: { ...sub.providerData, upcomingNotifiedFor: sub.trialEnd }
+        providerData: {
+          ...sub.providerData,
+          upcomingNotifiedFor: sub.trialEnd,
+          // Trials carry no modifiedAt; 0 lets the stale-write guard skip this if the trial was superseded meanwhile.
+          modifiedAt: sub.providerData?.modifiedAt ?? 0
+        }
       })
     } catch (err: any) {
       ctx.error('failed to mark trial reminder', { workspace: sub.workspaceUuid, err })

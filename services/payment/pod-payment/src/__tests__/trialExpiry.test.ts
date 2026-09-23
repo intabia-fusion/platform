@@ -498,6 +498,8 @@ describe('remindUpcomingTrials', () => {
     await remindUpcomingTrials(ctx, accountClient, NOTICE_DAYS, mailContext())
     const write = accountClient.upsertSubscription.mock.calls[0][0]
     expect(write.providerData.upcomingNotifiedFor).toBe(NOW + 3 * DAY)
+    // Keeps the stale-write guard armed against a trial superseded between read and write.
+    expect(write.providerData.modifiedAt).toBe(0)
   })
 
   it('the trial itself does not count as a granting tier', async () => {

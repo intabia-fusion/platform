@@ -371,5 +371,3 @@ export async function notifyReceiptBlocked (
     }
   }
 }
-
-// POST one message to pod-mail; throws on transport/HTTP errors (callers log and swallow).
