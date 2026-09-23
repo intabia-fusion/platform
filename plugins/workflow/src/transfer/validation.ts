@@ -76,7 +76,7 @@ export function sanitizeWorkflowConfig (client: Client, input: unknown): Sanitiz
       report('workflow', workflow.string.ImportWarningInvalidWorkflow, { name: nameOf(w) })
     }
   )
-  if (workflows.length === 0) {
+  if (workflows.length === 0 && input.workflows.length > 0) {
     throw new Error('Workflow import: config has no valid workflows')
   }
 

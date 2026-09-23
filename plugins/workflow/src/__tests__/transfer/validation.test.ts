@@ -157,6 +157,13 @@ describe('Workflow config sanitizing', () => {
     expect(() => sanitizeWorkflowConfig(client, { ...jiraConfig(), workflows: [{}] })).toThrow()
   })
 
+  it('accepts a config without workflows, e.g. screens only', () => {
+    const client = createMockTx()
+    const { config } = sanitizeWorkflowConfig(client, { ...jiraConfig(), workflows: [] })
+    expect(config.workflows).toEqual([])
+    expect(config.statuses?.length).toBeGreaterThan(0)
+  })
+
   it('normalizes attribute names deterministically', () => {
     expect(normalizeAttributeName('priority')).toBe('priority')
     expect(normalizeAttributeName('select-color')).toBe('select-color')
