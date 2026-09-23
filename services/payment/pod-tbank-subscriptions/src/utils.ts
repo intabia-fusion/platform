@@ -144,8 +144,8 @@ export interface PlanPricing {
 // Display name: plans carry a localized `label`; packages have no `label`, only a `description`.
 export interface PlanConfigLike {
   plans?: Record<
-  string,
-  { priceMonthlyPerUser?: number, yearlyDiscount?: number, label?: Record<string, string>, currency?: string }
+    string,
+    { priceMonthlyPerUser?: number, yearlyDiscount?: number, label?: Record<string, string>, currency?: string }
   >
   packages?: Record<string, { priceMonthly?: number, description?: Record<string, string>, currency?: string }>
   // One-time catalog purchases: flat-priced, charged once (no renewal).
