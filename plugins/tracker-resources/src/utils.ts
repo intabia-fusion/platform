@@ -44,7 +44,7 @@ import core, {
 } from '@hcengineering/core'
 import { translateCB, type IntlString } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
-import { createQuery, getClient, onClient } from '@hcengineering/presentation'
+import { createQuery, getClient } from '@hcengineering/presentation'
 import task, { getStatusIndex, makeRank, type TaskType, type ProjectType } from '@hcengineering/task'
 import {
   selectedTaskTypeStore,
@@ -662,7 +662,11 @@ export type IssueReverseRevMap = Map<Ref<Doc>, IssueRef[]>
 export const relatedIssues = writable<IssueReverseRevMap>(new Map())
 
 const relatedIssuesQuery = createQuery(true)
-onClient(() => {
+let relatedIssuesLoaded = false
+
+export function ensureRelatedIssuesLoaded (): void {
+  if (relatedIssuesLoaded) return
+  relatedIssuesLoaded = true
   relatedIssuesQuery.query(
     tracker.class.Issue,
     { 'relations._id': { $exists: true } },
@@ -682,7 +686,7 @@ onClient(() => {
       }
     }
   )
-})
+}
 
 export function reportedTimeApplier (
   doc: Issue,

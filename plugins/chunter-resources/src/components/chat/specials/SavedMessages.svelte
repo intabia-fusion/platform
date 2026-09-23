@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment, SavedAttachments } from '@hcengineering/attachment'
+  import attachment, { Attachment, SavedAttachments } from '@hcengineering/attachment'
   import { AttachmentPreview, savedAttachmentsStore } from '@hcengineering/attachment-resources'
   import { getName as getContactName } from '@hcengineering/contact'
   import { getPersonByPersonId } from '@hcengineering/contact-resources'
-  import { getDisplayTime, Ref, WithLookup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import core, { getDisplayTime, Ref, SortingOrder, WithLookup } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { Label, Scroller, Lazy } from '@hcengineering/ui'
   import activity, { ActivityMessage, SavedMessage } from '@hcengineering/activity'
-  import { ActivityMessagePresenter, savedMessagesStore } from '@hcengineering/activity-resources'
+  import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
 
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
@@ -29,11 +29,27 @@
   import BlankView from '../../BlankView.svelte'
 
   const client = getClient()
+  const savedMessagesQuery = createQuery()
 
   let savedMessages: WithLookup<SavedMessage>[] = []
   let savedAttachments: WithLookup<SavedAttachments>[] = []
 
-  $: savedMessages = $savedMessagesStore
+  $: savedMessagesQuery.query(
+    activity.class.SavedMessage,
+    { space: core.space.Workspace },
+    (res) => {
+      savedMessages = res.filter(({ $lookup }) => $lookup?.attachedTo !== undefined)
+    },
+    {
+      lookup: {
+        attachedTo: [
+          activity.class.ActivityMessage,
+          { _id: { attachments: attachment.class.Attachment, reactions: activity.class.Reaction } }
+        ]
+      },
+      sort: { modifiedOn: SortingOrder.Descending }
+    }
+  )
   $: savedAttachments = $savedAttachmentsStore
 
   async function openAttachment (attach?: Attachment): Promise<void> {

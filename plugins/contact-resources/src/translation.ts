@@ -11,12 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createQuery, onClient } from '@hcengineering/presentation'
-import { getCurrentEmployee, type Translation } from '@hcengineering/contact'
-import { writable } from 'svelte/store'
-
-import contact from './plugin'
-
 export const languagesDisplayData: Record<string, { emoji: string, label: string }> = {
   bg: { emoji: '🇧🇬', label: 'Български' },
   ca: { emoji: '🇨🇦', label: 'Català' },
@@ -53,14 +47,3 @@ export const languagesDisplayData: Record<string, { emoji: string, label: string
   uk: { emoji: '🇺🇦', label: 'Українська' },
   vi: { emoji: '🇻🇳', label: 'Tiếng Việt' }
 }
-
-export const translationStore = writable<Translation | undefined>(undefined)
-
-const translationQuery = createQuery(true)
-
-onClient(() => {
-  const me = getCurrentEmployee()
-  translationQuery.query(contact.class.Translation, { attachedTo: me }, (res) => {
-    translationStore.set(res[0])
-  })
-})

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { aiBotSocialIdentityStore } from '@hcengineering/ai-bot-resources'
+  import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
   import ParticipantView from './ParticipantView.svelte'
   import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
@@ -17,6 +17,8 @@
     participant: Participant
     isAgent: boolean
   }
+
+  void ensureAiBotIdentityLoaded()
 
   let aiPersonRef: Ref<Person> | undefined
   $: if ($aiBotSocialIdentityStore != null) {
