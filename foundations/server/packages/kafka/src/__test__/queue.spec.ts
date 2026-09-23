@@ -1,5 +1,7 @@
 import { generateId, MeasureMetricsContext, type WorkspaceUuid } from '@hcengineering/core'
+import { Kafka } from 'kafkajs'
 import { createPlatformQueue, parseQueueConfig } from '..'
+import { REDPANDA_START_TIMEOUT, startRedpanda, type TestBroker } from './redpanda'
 
 jest.setTimeout(60000) // Reduced for faster tests
 const testCtx = new MeasureMetricsContext('test', {})
@@ -16,9 +18,21 @@ async function waitConnected (handle: any): Promise<void> {
 }
 
 describe('queue', () => {
+  let broker: TestBroker
+
+  beforeAll(async () => {
+    broker = await startRedpanda({ autoCreateTopics: true })
+  }, REDPANDA_START_TIMEOUT)
+
+  afterAll(async () => {
+    await broker?.container.stop()
+  })
+
   it('check-queue', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
     const docsCount = 50 // Reduced from 100 for faster tests
     try {
       let msgCount = 0
@@ -75,7 +89,9 @@ describe('queue', () => {
 
   it('check-processing-errors', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
 
     try {
       let counter = 2
@@ -125,7 +141,9 @@ describe('queue', () => {
 
   it('check-batches', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
     const docsCount = 50 // number of messages to produce
     try {
       let msgCount = 0
@@ -187,7 +205,9 @@ describe('queue', () => {
 
   it('check-batch-processing-errors', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
 
     try {
       let attempts = 0
@@ -240,7 +260,9 @@ describe('queue', () => {
   it('check-ordering', async () => {
     const genId = generateId()
     const topic = 'order-test-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
     const docsCount = 20
 
     try {
@@ -298,7 +320,9 @@ describe('queue', () => {
   it('check-batch-timeout-flush', async () => {
     const genId = generateId()
     const topic = 'batch-timeout-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
 
     try {
       let handlerCalled = 0
@@ -353,7 +377,9 @@ describe('queue', () => {
   it('check-create-topic', async () => {
     const genId = generateId()
     const topic = 'topic-create-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
 
     try {
       await queue.createTopic(topic, 3)
@@ -402,7 +428,9 @@ describe('queue', () => {
   it('batch-pump-keeps-consumer-alive-without-manual-heartbeat', async () => {
     const genId = generateId()
     const topic = 'batch-pump-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
     try {
       let invocations = 0
       let processed = 0
@@ -455,7 +483,9 @@ describe('queue', () => {
   it('pause-and-heartbeat-keeps-consumer-alive', async () => {
     const genId = generateId()
     const topic = 'pause-heartbeat-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
     try {
       let processed = 0
       let processingStartedResolve: (() => void) | undefined
@@ -532,6 +562,48 @@ describe('queue', () => {
       await queue.shutdown()
       await queue.deleteTopics([topic])
       await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  })
+
+  it.each([true, false])('deleteGroupOnClose=%s controls whether the group outlives the consumer', async (del) => {
+    const genId = generateId()
+    const topic = 'group-del-' + genId
+    const groupId = 'grp-' + genId
+    const queue = createPlatformQueue(
+      parseQueueConfig(broker.brokers + ';-queue_testing-' + genId, 'test-' + genId, '')
+    )
+    const admin = new Kafka({ brokers: [broker.brokers] }).admin()
+    await admin.connect()
+    const groups = async (): Promise<string[]> =>
+      (await admin.listGroups()).groups.map((g) => g.groupId).filter((g) => g.endsWith('-' + groupId))
+    try {
+      await queue.createTopic(topic, 1)
+      let got = 0
+      const handle = queue.createConsumer<string>(
+        testCtx,
+        topic,
+        groupId,
+        async () => {
+          got++
+        },
+        { fromBegining: true, deleteGroupOnClose: del }
+      )
+      await queue.getProducer<string>(testCtx, topic).send(testCtx, genId as any as WorkspaceUuid, ['m'])
+      await new Promise<void>((resolve) => {
+        const check = setInterval(() => {
+          if (got > 0) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 100)
+      })
+      expect(await groups()).toHaveLength(1)
+
+      await handle.close()
+      expect(await groups()).toHaveLength(del ? 0 : 1)
+    } finally {
+      await admin.disconnect()
+      await queue.shutdown()
     }
   })
 })

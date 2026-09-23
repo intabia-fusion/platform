@@ -9,6 +9,8 @@ import { AdminPage } from '../model/admin.page'
  */
 test.describe('Workspace and account deletion', () => {
   test('admin schedules a workspace and the account behind it', async ({ page, request }) => {
+    // Waits for the workspace service to purge the database.
+    test.setTimeout(240000)
     const api: ApiEndpoint = new ApiEndpoint(request)
     const wsId = generateId(5)
     const email = `admin-purge-${wsId}@example.com`
@@ -48,6 +50,8 @@ test.describe('Workspace and account deletion', () => {
       await row.getByRole('button', { name: 'Delete', exact: true }).click()
       await adminPage.toggleDeleteNow()
       await adminPage.confirmOtp()
+      // The purge pipeline has to finish, not stall in pending-deletion.
+      await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'deleted', 150000)
     })
 
     // Only now: an account that is still the sole owner of a live workspace cannot be marked at all.
