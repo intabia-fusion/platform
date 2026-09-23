@@ -167,12 +167,17 @@
     })
   }
 
+  function getClassLabel (_class: Ref<Class<Doc>>): IntlString | undefined {
+    const hierarchy = client.getHierarchy()
+    return hierarchy.hasClass(_class) ? hierarchy.getClass(_class).label : undefined
+  }
+
   function getAttrType (type: Type<any>): IntlString | undefined {
     switch (type._class) {
       case core.class.RefTo:
-        return client.getHierarchy().getClass((type as RefTo<Doc>).to)?.label
+        return getClassLabel((type as RefTo<Doc>).to)
       case core.class.Collection:
-        return client.getHierarchy().getClass((type as Collection<AttachedDoc>).of)?.label
+        return getClassLabel((type as Collection<AttachedDoc>).of)
       case core.class.ArrOf:
         return (type as ArrOf<Doc>).of?.label
       default:

@@ -30,7 +30,7 @@ import { jsonToMarkup } from '@hcengineering/text'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 import { get } from 'svelte/store'
 
-import { aiBotSocialIdentityStore } from './utils'
+import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from './utils'
 
 /** Optional link back to the object that started the conversation. */
 export interface ConversationOrigin {
@@ -46,6 +46,7 @@ export interface StartedConversation {
 
 /** Resolve the AI bot's account uuid from its cached social identity. */
 export async function getBotAccount (): Promise<AccountUuid | undefined> {
+  await ensureAiBotIdentityLoaded()
   const identity = get(aiBotSocialIdentityStore)
   if (identity === undefined) return undefined
   const client = getClient()

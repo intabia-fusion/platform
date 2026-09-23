@@ -20,11 +20,15 @@
   import ui, { type DropdownIntlItem, Label, ModernDropdown, ModernEditbox } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
+  import type { ImportWarning } from '@hcengineering/workflow'
+
   import plugin from '../../../plugin'
+  import ImportWarnings from './ImportWarnings.svelte'
 
   export let projectType: ProjectType
   export let workflowName: string = ''
   export let selectedTaskTypeId: Ref<TaskType> | undefined = undefined
+  export let warnings: ImportWarning[] = []
 
   $: availableTaskTypes = Array.from($taskTypeStore.values()).filter((tt) => tt.parent === projectType._id)
 
@@ -56,6 +60,12 @@
       width="100%"
     />
   </div>
+
+  {#if warnings.length > 0}
+    <div class="mt-4">
+      <ImportWarnings {warnings} />
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">

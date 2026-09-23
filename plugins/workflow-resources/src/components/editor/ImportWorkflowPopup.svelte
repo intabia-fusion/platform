@@ -255,7 +255,7 @@
         on:reset={handleFileReset}
       />
     {:else if selectedStep === 'general'}
-      <ImportGeneralStep {projectType} bind:workflowName bind:selectedTaskTypeId />
+      <ImportGeneralStep {projectType} bind:workflowName bind:selectedTaskTypeId warnings={report?.warnings ?? []} />
     {:else if selectedStep === 'statuses'}
       <ImportStatusesStep {projectType} {selectedTaskTypeId} {report} bind:statusMap bind:createMissingStatuses />
     {:else if selectedStep === 'screens'}

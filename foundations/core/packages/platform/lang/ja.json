@@ -27,6 +27,7 @@
     "WorkspaceReadOnly": "このワークスペースは現在読み取り専用です。",
     "InviteNotFound": "メール:{email} の招待が見つかりません。",
     "WorkspaceLimitReached": "作成可能なワークスペースの上限に達しました。お問い合わせください",
+    "ApiKeyLimitReached": "このワークスペースのAPIキーの上限（{limit}件）に達しました。",
     "ReadOnlyAccount": "匿名ゲストデモ",
     "SystemAccount": "システムアカウント",
     "SocialIdAlreadyExists": "ソーシャルIDは既に存在します"

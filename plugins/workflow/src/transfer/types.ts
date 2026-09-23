@@ -225,7 +225,29 @@ export interface ScreenCompatibilityItem {
   matchingScreenName?: string
 }
 
+export type ImportWarningKind =
+  | 'workflow'
+  | 'status'
+  | 'attribute'
+  | 'enum'
+  | 'screen'
+  | 'transition'
+  | 'rule'
+  | 'condition'
+  | 'project'
+
+/**
+ * Something in the imported config that is dropped or changed because it cannot be imported as is.
+ */
+export interface ImportWarning {
+  kind: ImportWarningKind
+  message: IntlString
+  params: Record<string, string>
+}
+
 export interface WorkflowCompatibilityReport {
+  /** Items of the config that are dropped or changed on import. */
+  warnings: ImportWarning[]
   statuses: StatusCompatibilityItem[]
   attributes: AttributeCompatibilityItem[]
   transitions: TransitionCompatibilityItem[]

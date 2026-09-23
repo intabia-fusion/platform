@@ -176,6 +176,16 @@ export class Worker {
     }
   }
 
+  // Restore and upgrade rewrite the model in the DB; the next tx loads the workspace afresh.
+  async dropWorkspace (ws: WorkspaceUuid): Promise<void> {
+    // A load started before the event would cache the stale model; the tx consumer reports its errors.
+    await this.loadingWorkspaces.get(ws)?.catch(() => undefined)
+    const workspace = this.workspaces.get(ws)
+    if (workspace === undefined) return
+    this.workspaces.delete(ws)
+    await workspace.close()
+  }
+
   public close (): void {
     clearInterval(this.interval)
   }

@@ -13,7 +13,7 @@
 
 <script lang="ts">
   import core, { Data } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import view from '@hcengineering/view'
@@ -22,14 +22,16 @@
   import contact from '../plugin'
   import LanguageEditor from './LanguageEditor.svelte'
   import LanguagesArrayEditor from './LanguagesArrayEditor.svelte'
-  import { translationStore } from '../translation'
 
   const client = getClient()
   const me = getCurrentEmployee()
+  const query = createQuery()
 
   let settings: Translation | undefined = undefined
 
-  $: settings = $translationStore
+  $: query.query(contact.class.Translation, { attachedTo: me }, (res) => {
+    settings = res[0]
+  })
   $: enabled = settings?.enabled ?? false
 
   async function toggle (data: Partial<Data<Translation>>): Promise<void> {

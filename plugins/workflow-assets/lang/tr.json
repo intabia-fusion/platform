@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Tüm öznitelikler hedef görev türünde zaten mevcut",
     "UnresolvableAttributesWarning": "Bazı alanlar, eksik tür veya sınıflara başvurduğu için içe aktarılamıyor:",
     "UnresolvableAttributesDescription": "Bu özniteliklere başvuran alanlar ve kurallar otomatik olarak atlanacaktır.",
-    "UnresolvableTypeMissingClass": "Başvurulan sınıf veya tür çalışma alanında eksik"
+    "UnresolvableTypeMissingClass": "Başvurulan sınıf veya tür çalışma alanında eksik",
+    "UnresolvableTypeUnsupported": "Bu öznitelik türü içe aktarılamaz",
+    "UnresolvableNotDescribed": "Öznitelik dosyada tanımlanmamış",
+    "ImportWarningsTitle": "Dosyanın bir kısmı atlanacak veya değiştirilecek",
+    "ImportWarningsDescription": "Bu öğeler desteklenmiyor veya geçersiz bir biçime sahip",
+    "ImportWarningInvalidWorkflow": "«{name}» iş akışı atlandı: geçersiz biçim",
+    "ImportWarningInvalidStatus": "«{name}» durumu atlandı: geçersiz biçim",
+    "ImportWarningUnknownStatusCategory": "«{name}» durumunun kategorisi bilinmiyor ve aktif olarak oluşturulacak",
+    "ImportWarningInvalidEnum": "«{name}» sabit listesi atlandı: geçerli değer yok",
+    "ImportWarningInvalidAttribute": "«{name}» özniteliği atlandı: geçersiz biçim",
+    "ImportWarningInvalidScreen": "«{name}» ekranı atlandı: geçersiz biçim",
+    "ImportWarningInvalidTransition": "«{name}» geçişi atlandı: geçersiz biçim",
+    "ImportWarningUnsupportedRule": "«{transition}» geçişindeki {rule} kuralı desteklenmiyor ve atlandı",
+    "ImportWarningUnsupportedCondition": "«{transition}» geçişindeki {rule} koşulu desteklenmiyor ve atlandı",
+    "ImportWarningInvalidProject": "«{name}» proje bağlantısı atlandı: geçersiz biçim"
   }
 }

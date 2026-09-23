@@ -57,6 +57,7 @@ export interface Config {
   VERSION: string
   STREAM_URL?: string
   BACKUP_URL?: string
+  WEBHOOK_SERVICE_URL?: string
   PUBLIC_SCHEDULE_URL?: string
   CALDAV_SERVER_URL?: string
   EXPORT_URL?: string

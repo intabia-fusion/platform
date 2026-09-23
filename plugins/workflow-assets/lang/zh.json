@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "所有属性已存在于目标任务类型中",
     "UnresolvableAttributesWarning": "某些字段无法导入，因为它们引用了工作区中缺失的类型或类：",
     "UnresolvableAttributesDescription": "引用这些属性的字段和规则将被自动跳过。",
-    "UnresolvableTypeMissingClass": "引用的类或类型在工作区中缺失"
+    "UnresolvableTypeMissingClass": "引用的类或类型在工作区中缺失",
+    "UnresolvableTypeUnsupported": "此属性类型无法导入",
+    "UnresolvableNotDescribed": "文件中未描述该属性",
+    "ImportWarningsTitle": "文件的部分内容将被跳过或更改",
+    "ImportWarningsDescription": "这些项目不受支持或格式无效",
+    "ImportWarningInvalidWorkflow": "工作流「{name}」已跳过：格式无效",
+    "ImportWarningInvalidStatus": "状态「{name}」已跳过：格式无效",
+    "ImportWarningUnknownStatusCategory": "状态「{name}」的类别未知，将被创建为活动状态",
+    "ImportWarningInvalidEnum": "枚举「{name}」已跳过：没有有效值",
+    "ImportWarningInvalidAttribute": "属性「{name}」已跳过：格式无效",
+    "ImportWarningInvalidScreen": "界面「{name}」已跳过：格式无效",
+    "ImportWarningInvalidTransition": "过渡「{name}」已跳过：格式无效",
+    "ImportWarningUnsupportedRule": "过渡「{transition}」中的规则{rule}不受支持，已跳过",
+    "ImportWarningUnsupportedCondition": "过渡「{transition}」中的条件{rule}不受支持，已跳过",
+    "ImportWarningInvalidProject": "项目绑定「{name}」已跳过：格式无效"
   }
 }

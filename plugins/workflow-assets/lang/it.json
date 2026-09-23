@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Tutti gli attributi sono già presenti nel tipo di attività di destinazione",
     "UnresolvableAttributesWarning": "Alcuni campi non possono essere importati perché fanno riferimento a tipi o classi mancanti:",
     "UnresolvableAttributesDescription": "I campi e le regole che fanno riferimento a questi attributi verranno saltati automaticamente.",
-    "UnresolvableTypeMissingClass": "La classe o il tipo di riferimento non è presente nell'area di lavoro"
+    "UnresolvableTypeMissingClass": "La classe o il tipo di riferimento non è presente nell'area di lavoro",
+    "UnresolvableTypeUnsupported": "Questo tipo di attributo non può essere importato",
+    "UnresolvableNotDescribed": "L'attributo non è descritto nel file",
+    "ImportWarningsTitle": "Parte del file verrà saltata o modificata",
+    "ImportWarningsDescription": "Questi elementi non sono supportati o hanno un formato non valido",
+    "ImportWarningInvalidWorkflow": "Il flusso di lavoro «{name}» viene saltato: formato non valido",
+    "ImportWarningInvalidStatus": "Lo stato «{name}» viene saltato: formato non valido",
+    "ImportWarningUnknownStatusCategory": "Lo stato «{name}» ha una categoria sconosciuta e verrà creato come attivo",
+    "ImportWarningInvalidEnum": "L'enumerazione «{name}» viene saltata: nessun valore valido",
+    "ImportWarningInvalidAttribute": "L'attributo «{name}» viene saltato: formato non valido",
+    "ImportWarningInvalidScreen": "La schermata «{name}» viene saltata: formato non valido",
+    "ImportWarningInvalidTransition": "La transizione «{name}» viene saltata: formato non valido",
+    "ImportWarningUnsupportedRule": "La regola {rule} nella transizione «{transition}» non è supportata e viene saltata",
+    "ImportWarningUnsupportedCondition": "La condizione {rule} nella transizione «{transition}» non è supportata e viene saltata",
+    "ImportWarningInvalidProject": "L'associazione al progetto «{name}» viene saltata: formato non valido"
   }
 }

@@ -26,7 +26,7 @@
   import { Avatar } from '@hcengineering/contact-resources'
 
   import aiBot from '../plugin'
-  import { aiBotNameStore, aiBotSocialIdentityStore } from '../utils'
+  import { aiBotNameStore, aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from '../utils'
   import { issueAssistFits, issueAssistOpened, issueDraftApplier } from '../stores'
   import {
     archiveConversation,
@@ -104,6 +104,8 @@
       { limit: 1 }
     )
   }
+
+  void ensureAiBotIdentityLoaded()
 
   $: if ($aiBotSocialIdentityStore !== undefined) {
     botQuery.query(

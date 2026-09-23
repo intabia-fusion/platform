@@ -18,6 +18,7 @@ import {
   type WorkspaceIds
 } from '@hcengineering/core'
 import {
+  ApiKeyPermissionsMiddleware,
   ApplyTxMiddleware,
   BroadcastMiddleware,
   ConfigurationMiddleware,
@@ -176,6 +177,7 @@ export function createServerPipeline (
       SpacePermissionsMiddleware.create,
       SeatLimitsMiddleware.create,
       GuestPermissionsMiddleware.create,
+      ApiKeyPermissionsMiddleware.create,
       ConfigurationMiddleware.create,
       ContextNameMiddleware.create,
       MarkDerivedEntryMiddleware.create,

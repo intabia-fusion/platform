@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Všechny atributy jsou již přítomny v cílovém typu úkolu",
     "UnresolvableAttributesWarning": "Některá pole nelze importovat, protože odkazují na chybějící typy nebo třídy:",
     "UnresolvableAttributesDescription": "Pole a pravidla odkazující na tyto atributy budou automaticky přeskočena.",
-    "UnresolvableTypeMissingClass": "Odkazovaná třída nebo typ chybí v pracovním prostoru"
+    "UnresolvableTypeMissingClass": "Odkazovaná třída nebo typ chybí v pracovním prostoru",
+    "UnresolvableTypeUnsupported": "Atribut s tímto typem nelze importovat",
+    "UnresolvableNotDescribed": "Atribut není popsán v souboru",
+    "ImportWarningsTitle": "Část souboru bude přeskočena nebo změněna",
+    "ImportWarningsDescription": "Tyto položky nejsou podporovány nebo mají neplatný formát",
+    "ImportWarningInvalidWorkflow": "Workflow «{name}» je přeskočen: neplatný formát",
+    "ImportWarningInvalidStatus": "Stav «{name}» je přeskočen: neplatný formát",
+    "ImportWarningUnknownStatusCategory": "Stav «{name}» má neznámou kategorii a bude vytvořen jako aktivní",
+    "ImportWarningInvalidEnum": "Výčet «{name}» je přeskočen: žádné platné hodnoty",
+    "ImportWarningInvalidAttribute": "Atribut «{name}» je přeskočen: neplatný formát",
+    "ImportWarningInvalidScreen": "Obrazovka «{name}» je přeskočena: neplatný formát",
+    "ImportWarningInvalidTransition": "Přechod «{name}» je přeskočen: neplatný formát",
+    "ImportWarningUnsupportedRule": "Pravidlo {rule} v přechodu «{transition}» není podporováno a je přeskočeno",
+    "ImportWarningUnsupportedCondition": "Podmínka {rule} v přechodu «{transition}» není podporována a je přeskočena",
+    "ImportWarningInvalidProject": "Vazba na projekt «{name}» je přeskočena: neplatný formát"
   }
 }

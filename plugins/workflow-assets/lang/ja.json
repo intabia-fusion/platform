@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "すべての属性はターゲットタスクタイプに既に存在します",
     "UnresolvableAttributesWarning": "ワークスペースに存在しないタイプまたはクラスを参照しているため、一部のフィールドをインポートできません:",
     "UnresolvableAttributesDescription": "これらの属性を参照するフィールドとルールは自動的にスキップされます。",
-    "UnresolvableTypeMissingClass": "参照されたクラスまたはタイプがワークスペースにありません"
+    "UnresolvableTypeMissingClass": "参照されたクラスまたはタイプがワークスペースにありません",
+    "UnresolvableTypeUnsupported": "この属性タイプはインポートできません",
+    "UnresolvableNotDescribed": "この属性はファイル内で定義されていません",
+    "ImportWarningsTitle": "ファイルの一部はスキップまたは変更されます",
+    "ImportWarningsDescription": "これらの項目はサポートされていないか、形式が無効です",
+    "ImportWarningInvalidWorkflow": "ワークフロー「{name}」はスキップされます: 形式が無効です",
+    "ImportWarningInvalidStatus": "ステータス「{name}」はスキップされます: 形式が無効です",
+    "ImportWarningUnknownStatusCategory": "ステータス「{name}」のカテゴリが不明なため、アクティブとして作成されます",
+    "ImportWarningInvalidEnum": "列挙型「{name}」はスキップされます: 有効な値がありません",
+    "ImportWarningInvalidAttribute": "属性「{name}」はスキップされます: 形式が無効です",
+    "ImportWarningInvalidScreen": "画面「{name}」はスキップされます: 形式が無効です",
+    "ImportWarningInvalidTransition": "トランジション「{name}」はスキップされます: 形式が無効です",
+    "ImportWarningUnsupportedRule": "トランジション「{transition}」内のルール{rule}はサポートされていないためスキップされます",
+    "ImportWarningUnsupportedCondition": "トランジション「{transition}」内の条件{rule}はサポートされていないためスキップされます",
+    "ImportWarningInvalidProject": "プロジェクトの紐付け「{name}」はスキップされます: 形式が無効です"
   }
 }

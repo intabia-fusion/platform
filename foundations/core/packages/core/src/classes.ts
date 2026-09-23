@@ -926,6 +926,7 @@ export interface WorkspaceInfo {
   passwordAgingRule?: number | null // in days, null disables the rule
   disabledFeaturesOverride?: string[] // Features from DISABLED_FEATURES to re-enable for this workspace
   language?: string
+  maxApiKeys?: number | null // Admin override for the active-API-key quota, null uses the server default
 }
 
 export interface BackupStatus {
@@ -979,7 +980,9 @@ export enum SocialIdType {
   HULY = 'huly',
   TELEGRAM = 'telegram',
   HULY_ASSISTANT = 'huly-assistant',
-  LOVE = 'office'
+  LOVE = 'office',
+  // Integration API key. Value is the key id, so the social key reads webhook:<keyId>
+  WEBHOOK = 'webhook'
 }
 
 export interface SocialId {

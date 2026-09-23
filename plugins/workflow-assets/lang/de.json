@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Alle Attribute sind bereits im Zielaufgabentyp vorhanden",
     "UnresolvableAttributesWarning": "Einige Felder können nicht importiert werden, da sie auf fehlende Typen oder Klassen verweisen:",
     "UnresolvableAttributesDescription": "Felder und Regeln, die auf diese Attribute verweisen, werden automatisch übersprungen.",
-    "UnresolvableTypeMissingClass": "Referenzierte Klasse oder Typ fehlt im Arbeitsbereich"
+    "UnresolvableTypeMissingClass": "Referenzierte Klasse oder Typ fehlt im Arbeitsbereich",
+    "UnresolvableTypeUnsupported": "Dieser Attributtyp kann nicht importiert werden",
+    "UnresolvableNotDescribed": "Das Attribut ist in der Datei nicht beschrieben",
+    "ImportWarningsTitle": "Ein Teil der Datei wird übersprungen oder geändert",
+    "ImportWarningsDescription": "Diese Elemente werden nicht unterstützt oder haben ein ungültiges Format",
+    "ImportWarningInvalidWorkflow": "Workflow «{name}» wird übersprungen: ungültiges Format",
+    "ImportWarningInvalidStatus": "Status «{name}» wird übersprungen: ungültiges Format",
+    "ImportWarningUnknownStatusCategory": "Status «{name}» hat eine unbekannte Kategorie und wird als aktiv erstellt",
+    "ImportWarningInvalidEnum": "Enum «{name}» wird übersprungen: keine gültigen Werte",
+    "ImportWarningInvalidAttribute": "Attribut «{name}» wird übersprungen: ungültiges Format",
+    "ImportWarningInvalidScreen": "Maske «{name}» wird übersprungen: ungültiges Format",
+    "ImportWarningInvalidTransition": "Übergang «{name}» wird übersprungen: ungültiges Format",
+    "ImportWarningUnsupportedRule": "Regel {rule} im Übergang «{transition}» wird nicht unterstützt und übersprungen",
+    "ImportWarningUnsupportedCondition": "Bedingung {rule} im Übergang «{transition}» wird nicht unterstützt und übersprungen",
+    "ImportWarningInvalidProject": "Projektzuordnung «{name}» wird übersprungen: ungültiges Format"
   }
 }
