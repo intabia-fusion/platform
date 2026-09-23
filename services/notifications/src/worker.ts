@@ -344,6 +344,16 @@ export class Worker {
     return await promise
   }
 
+  // Restore and upgrade rewrite the model and documents in the DB without txes; the next tx loads the workspace afresh.
+  async dropWorkspace (ws: WorkspaceUuid): Promise<void> {
+    // A load started before the event would cache the stale state; the tx consumer reports its errors.
+    await this.pendingWorkspaces.get(ws)?.catch(() => undefined)
+    const workspace = this.workspaces.get(ws)
+    if (workspace === undefined) return
+    this.workspaces.delete(ws)
+    await workspace.close()
+  }
+
   public async close (): Promise<void> {
     clearInterval(this.clearInterval)
     clearInterval(this.flushInterval)

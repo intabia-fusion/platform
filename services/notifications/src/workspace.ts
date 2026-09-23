@@ -93,7 +93,7 @@ export function isTransientError (e: unknown): boolean {
 class Workspace {
   public readonly cache: WorkspaceCache
 
-  private inProgress = false
+  private inProgressPromise: Promise<void> | undefined
   private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System, true)
@@ -116,12 +116,13 @@ class Workspace {
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
-    this.inProgress = true
     this.lastUpdate = Date.now()
+    const run = this.processTx(tx)
+    this.inProgressPromise = run
     try {
-      await this.processTx(tx)
+      await run
     } finally {
-      this.inProgress = false
+      if (this.inProgressPromise === run) this.inProgressPromise = undefined
     }
   }
 
@@ -277,7 +278,7 @@ class Workspace {
   }
 
   public isInProgress (): boolean {
-    return this.inProgress
+    return this.inProgressPromise !== undefined
   }
 
   public getLastTxDate (): Timestamp | undefined {
@@ -337,6 +338,8 @@ class Workspace {
   }
 
   async close (): Promise<void> {
+    // A restore event can drop the workspace mid-tx; the pipeline has to outlive that tx.
+    await this.inProgressPromise?.catch(() => undefined)
     try {
       await this.pipeline.close()
     } catch (e) {

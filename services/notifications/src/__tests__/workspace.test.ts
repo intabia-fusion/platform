@@ -154,3 +154,29 @@ describe('Workspace.applyResult (private, exercised via a bare instance)', () =>
     expect(instance.cache.resetContexts).not.toHaveBeenCalled()
   })
 })
+
+describe('Workspace.close', () => {
+  it('waits for the tx in progress before closing the pipeline', async () => {
+    const instance: any = Object.create((Workspace as any).prototype)
+    const order: string[] = []
+    let release: () => void = () => {}
+    instance.ctx = { error: jest.fn() }
+    instance.pipeline = { close: jest.fn(async () => order.push('pipeline closed')) }
+    instance.processTx = async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      order.push('tx done')
+    }
+
+    const tx = instance.tx({ _id: 'tx-1' })
+    const closing = instance.close()
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(instance.pipeline.close).not.toHaveBeenCalled()
+
+    release()
+    await Promise.all([tx, closing])
+    expect(order).toEqual(['tx done', 'pipeline closed'])
+    expect(instance.isInProgress()).toBe(false)
+  })
+})

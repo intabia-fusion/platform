@@ -14,11 +14,16 @@
 // limitations under the License.
 //
 
-import { MeasureContext, newMetrics, Tx } from '@hcengineering/core'
+import { generateId, MeasureContext, newMetrics, Tx } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import serverCore, { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
+import serverCore, {
+  initStatisticsContext,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceMessage
+} from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { Analytics } from '@hcengineering/analytics'
@@ -95,6 +100,24 @@ async function main (): Promise<void> {
     }
   })
 
+  // Own group per process, like the transactor: every replica holds its own workspace cache.
+  const wsConsumer = queue.createConsumer<QueueWorkspaceMessage>(
+    ctx,
+    QueueTopic.Workspace,
+    `${queue.getClientId()}-${generateId()}`,
+    async (ctx, queueMessage) => {
+      const type = queueMessage.value.type
+      if (
+        type === QueueWorkspaceEvent.Restored ||
+        type === QueueWorkspaceEvent.Upgraded ||
+        type === QueueWorkspaceEvent.Deleted
+      ) {
+        ctx.info('dropping cached workspace', { workspace: queueMessage.workspace, type })
+        await worker.dropWorkspace(queueMessage.workspace)
+      }
+    }
+  )
+
   const sync = (): Promise<void> => withRetry(() => worker.resolveAiBotAccount())
 
   // Initial delay of 5 seconds to give other services a head start.
@@ -104,7 +127,7 @@ async function main (): Promise<void> {
 
   const shutdown = (): void => {
     void worker.close()
-    void Promise.all([txConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
+    void Promise.all([txConsumer.close(), wsConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 
   process.once('SIGINT', shutdown)
