@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Todos os atributos já estão presentes no tipo de tarefa de destino",
     "UnresolvableAttributesWarning": "Alguns campos não podem ser importados porque referenciam tipos ou classes ausentes:",
     "UnresolvableAttributesDescription": "Os campos e regras que referenciam estes atributos serão ignorados automaticamente.",
-    "UnresolvableTypeMissingClass": "A classe ou tipo referenciado está ausente no espaço de trabalho"
+    "UnresolvableTypeMissingClass": "A classe ou tipo referenciado está ausente no espaço de trabalho",
+    "UnresolvableTypeUnsupported": "Este tipo de atributo não pode ser importado",
+    "UnresolvableNotDescribed": "O atributo não está descrito no ficheiro",
+    "ImportWarningsTitle": "Parte do ficheiro será ignorada ou alterada",
+    "ImportWarningsDescription": "Estes itens não são suportados ou têm um formato inválido",
+    "ImportWarningInvalidWorkflow": "O fluxo de trabalho «{name}» é ignorado: formato inválido",
+    "ImportWarningInvalidStatus": "O estado «{name}» é ignorado: formato inválido",
+    "ImportWarningUnknownStatusCategory": "O estado «{name}» tem uma categoria desconhecida e será criado como ativo",
+    "ImportWarningInvalidEnum": "A enumeração «{name}» é ignorada: sem valores válidos",
+    "ImportWarningInvalidAttribute": "O atributo «{name}» é ignorado: formato inválido",
+    "ImportWarningInvalidScreen": "O ecrã «{name}» é ignorado: formato inválido",
+    "ImportWarningInvalidTransition": "A transição «{name}» é ignorada: formato inválido",
+    "ImportWarningUnsupportedRule": "A regra {rule} na transição «{transition}» não é suportada e é ignorada",
+    "ImportWarningUnsupportedCondition": "A condição {rule} na transição «{transition}» não é suportada e é ignorada",
+    "ImportWarningInvalidProject": "A associação de projeto «{name}» é ignorada: formato inválido"
   }
 }

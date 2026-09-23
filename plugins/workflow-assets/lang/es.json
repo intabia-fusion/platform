@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Todos los atributos ya están presentes en el tipo de tarea de destino",
     "UnresolvableAttributesWarning": "Algunos campos no se pueden importar porque hacen referencia a tipos o clases que faltan:",
     "UnresolvableAttributesDescription": "Los campos y reglas que hacen referencia a estos atributos se omitirán automáticamente.",
-    "UnresolvableTypeMissingClass": "La clase o tipo referenciado falta en el espacio de trabajo"
+    "UnresolvableTypeMissingClass": "La clase o tipo referenciado falta en el espacio de trabajo",
+    "UnresolvableTypeUnsupported": "Este tipo de atributo no se puede importar",
+    "UnresolvableNotDescribed": "El atributo no está descrito en el archivo",
+    "ImportWarningsTitle": "Parte del archivo se omitirá o se modificará",
+    "ImportWarningsDescription": "Estos elementos no son compatibles o tienen un formato no válido",
+    "ImportWarningInvalidWorkflow": "El flujo de trabajo «{name}» se omite: formato no válido",
+    "ImportWarningInvalidStatus": "El estado «{name}» se omite: formato no válido",
+    "ImportWarningUnknownStatusCategory": "El estado «{name}» tiene una categoría desconocida y se creará como activo",
+    "ImportWarningInvalidEnum": "La enumeración «{name}» se omite: no tiene valores válidos",
+    "ImportWarningInvalidAttribute": "El atributo «{name}» se omite: formato no válido",
+    "ImportWarningInvalidScreen": "La pantalla «{name}» se omite: formato no válido",
+    "ImportWarningInvalidTransition": "La transición «{name}» se omite: formato no válido",
+    "ImportWarningUnsupportedRule": "La regla {rule} en la transición «{transition}» no es compatible y se omite",
+    "ImportWarningUnsupportedCondition": "La condición {rule} en la transición «{transition}» no es compatible y se omite",
+    "ImportWarningInvalidProject": "La asociación de proyecto «{name}» se omite: formato no válido"
   }
 }

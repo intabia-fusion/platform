@@ -42,6 +42,15 @@ describe('Workflow Import', () => {
       exportDate: '2026-08-31T00:00:00.000Z',
       workspace: ws1,
       projectTypeId,
+      attributes: [
+        {
+          id: 'attr-old' as any,
+          name: 'missingField',
+          label: getEmbeddedLabel('missingField'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
       workflows: [
         {
           id: workflowId,
@@ -242,6 +251,15 @@ describe('Workflow Import', () => {
       exportDate: '2026-08-31T00:00:00.000Z',
       workspace: ws1,
       projectTypeId,
+      attributes: [
+        {
+          id: 'attr-intl' as any,
+          name: 'intlField',
+          label: getEmbeddedLabel('intlField'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
       workflows: [
         {
           id: workflowId,
@@ -350,6 +368,15 @@ describe('Workflow Import', () => {
       exportDate: '2026-08-31T00:00:00.000Z',
       workspace: ws1,
       projectTypeId,
+      attributes: [
+        {
+          id: 'attr-reported-time' as any,
+          name: 'reportedTime',
+          label: getEmbeddedLabel('reportedTime'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
       screens: [
         {
           id: '6a8d21f4a0bb1bdb4108762b' as Ref<Screen>,
@@ -596,7 +623,22 @@ describe('Workflow Import', () => {
   })
 
   it('remaps target and source attribute references in UpdateFieldValue post-function', async () => {
-    const client = createMockTx()
+    const client = createMockTx({
+      docs: [
+        {
+          _id: 'attr-mapped-target',
+          _class: core.class.Attribute,
+          name: 'mappedTarget',
+          attributeOf: 'tracker:class:Issue'
+        },
+        {
+          _id: 'attr-mapped-source',
+          _class: core.class.Attribute,
+          name: 'mappedSource',
+          attributeOf: 'tracker:class:Issue'
+        }
+      ] as any
+    })
     const config: WorkflowConfig = {
       version: 1,
       exportDate: '2026-08-31T00:00:00.000Z',

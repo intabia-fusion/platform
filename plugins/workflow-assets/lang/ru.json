@@ -273,7 +273,21 @@
     "NoAttributesToCreate": "Все атрибуты уже присутствуют в целевом типе задачи",
     "UnresolvableAttributesWarning": "Некоторые поля не могут быть импортированы, так как ссылаются на отсутствующие в системе типы или классы:",
     "UnresolvableAttributesDescription": "Поля и правила, ссылающиеся на эти атрибуты, будут автоматически пропущены.",
-    "UnresolvableTypeMissingClass": "Ссылка на отсутствующий в системе класс или тип"
+    "UnresolvableTypeMissingClass": "Ссылка на отсутствующий в системе класс или тип",
+    "UnresolvableTypeUnsupported": "Атрибут с таким типом нельзя импортировать",
+    "UnresolvableNotDescribed": "Атрибут не описан в файле",
+    "ImportWarningsTitle": "Часть файла будет пропущена или изменена",
+    "ImportWarningsDescription": "Эти элементы не поддерживаются или записаны в неверном формате",
+    "ImportWarningInvalidWorkflow": "Воркфлоу «{name}» пропущен: неверный формат",
+    "ImportWarningInvalidStatus": "Статус «{name}» пропущен: неверный формат",
+    "ImportWarningUnknownStatusCategory": "У статуса «{name}» неизвестная категория, он будет создан как активный",
+    "ImportWarningInvalidEnum": "Перечисление «{name}» пропущено: нет допустимых значений",
+    "ImportWarningInvalidAttribute": "Атрибут «{name}» пропущен: неверный формат",
+    "ImportWarningInvalidScreen": "Экран «{name}» пропущен: неверный формат",
+    "ImportWarningInvalidTransition": "Переход «{name}» пропущен: неверный формат",
+    "ImportWarningUnsupportedRule": "Правило {rule} в переходе «{transition}» не поддерживается и пропущено",
+    "ImportWarningUnsupportedCondition": "Условие {rule} в переходе «{transition}» не поддерживается и пропущено",
+    "ImportWarningInvalidProject": "Привязка проекта «{name}» пропущена: неверный формат"
   },
   "status": {
     "InitialStatusNotAllowed": "Начальный статус не разрешен",

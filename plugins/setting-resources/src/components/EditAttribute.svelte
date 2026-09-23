@@ -287,7 +287,7 @@
         <Label label={setting.string.UnknownAttributeType} />
       </span>
     {:else if exist}
-      <Label label={attribute.type.label} />
+      <Label label={attribute.type.label ?? hierarchy.getClass(attribute.type._class).label} />
     {:else}
       <DropdownLabelsIntl
         label={setting.string.Type}

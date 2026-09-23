@@ -18,6 +18,7 @@ import core, {
   generateId,
   type AnyAttribute,
   type ArrOf,
+  type Attribute,
   type Class,
   type Doc,
   type EnumOf,
@@ -80,9 +81,9 @@ import {
   type StatusConfig,
   type WorkflowConfig,
   type WorkflowImportResolution,
-  type WorkflowMixinConfig,
-  WorkflowConfigVersion
+  type WorkflowMixinConfig
 } from './types'
+import { sanitizeWorkflowConfig } from './validation'
 
 type StatusResolver = (sourceId: Ref<Status>) => Ref<Status> | undefined
 
@@ -92,8 +93,20 @@ export function filterAndRemapRuleProps (
   attrResolutions: Record<string, AttributeResolutionConfig>,
   targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>,
   screenResolutions?: Record<string, ScreenResolutionConfig>,
-  resolver?: NameResolver
+  resolver?: NameResolver,
+  attributeExists?: (ref: Ref<AnyAttribute>) => boolean
 ): { valid: boolean, props: Record<string, any> } {
+  // A config from another system can carry attribute ids that mean nothing here (e.g. `attr-assignee` for
+  // the built-in assignee); fall back to the attribute the field key names, and drop the field if there is none
+  const ensureExisting = (attribute: Ref<AnyAttribute>, fieldKey: string): Ref<AnyAttribute> | undefined => {
+    // Source ids of attributes created or bound by this import point at the target attribute
+    const bound = targetAttributeById?.get(attribute)
+    if (bound !== undefined) return bound._id
+    if (attributeExists === undefined || attributeExists(attribute)) return attribute
+    const byKey = resolver?.getRef<AnyAttribute>(AttributeToken, fieldKey)
+    return byKey !== undefined && attributeExists(byKey) ? byKey : undefined
+  }
+
   if (ruleId === workflow.request.ScreenRequest) {
     const screenProp =
       (props as { screen?: string, screenId?: string }).screen ?? (props as { screenId?: string }).screenId
@@ -128,6 +141,9 @@ export function filterAndRemapRuleProps (
       } else if (f.attribute === undefined) {
         targetAttr = resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ?? f.attribute
       }
+      const existingAttr = ensureExisting(targetAttr, f.fieldKey)
+      if (existingAttr === undefined) continue
+      targetAttr = existingAttr
 
       const targetKey =
         (res?.action === 'map' && res.targetAttributeId !== undefined
@@ -165,6 +181,10 @@ export function filterAndRemapRuleProps (
         targetAttr = attrRes.targetAttributeId
         targetKey = targetAttributeById?.get(attrRes.targetAttributeId)?.name ?? f.fieldKey
       }
+      const existingAttr = ensureExisting(targetAttr, targetKey)
+      if (existingAttr === undefined) continue
+      targetAttr = existingAttr
+      targetKey = targetAttributeById?.get(targetAttr)?.name ?? targetKey
 
       let updatedVal = f.value
       if (f.value.type === 'this' || f.value.type === 'parent') {
@@ -173,13 +193,16 @@ export function filterAndRemapRuleProps (
         if (sourceRes?.action === 'skip') {
           continue
         }
-        const srcTargetAttr =
+        const srcTargetAttr = ensureExisting(
           (sourceRes?.action === 'map' && sourceRes.targetAttributeId !== undefined
             ? sourceRes.targetAttributeId
             : undefined) ??
-          resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.attribute) ??
-          resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.fieldKey) ??
-          sourceVal.attribute
+            resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.attribute) ??
+            resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.fieldKey) ??
+            sourceVal.attribute,
+          sourceVal.fieldKey
+        )
+        if (srcTargetAttr === undefined) continue
         const srcTargetKey =
           (sourceRes?.action === 'map' && sourceRes.targetAttributeId !== undefined
             ? targetAttributeById?.get(sourceRes.targetAttributeId)?.name
@@ -259,7 +282,8 @@ export function importRules<TRule extends WorkflowRule> (
   resolver: NameResolver,
   attrResolutions?: Record<string, AttributeResolutionConfig>,
   targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>,
-  screenResolutions?: Record<string, ScreenResolutionConfig>
+  screenResolutions?: Record<string, ScreenResolutionConfig>,
+  attributeExists?: (ref: Ref<AnyAttribute>) => boolean
 ): WorkflowRuleConfig<TRule>[] | undefined {
   if (rules === undefined || rules.length === 0) return undefined
   const importedRules: WorkflowRuleConfig<TRule>[] = []
@@ -272,7 +296,8 @@ export function importRules<TRule extends WorkflowRule> (
         attrResolutions ?? {},
         targetAttributeById,
         screenResolutions,
-        resolver
+        resolver,
+        attributeExists
       )
       if (!filtered.valid) {
         continue
@@ -333,6 +358,41 @@ function createStatusResolver (
     }
     return undefined
   }
+}
+
+/**
+ * Finds a status to reuse for a config status or creates a new one.
+ *
+ * The config id is never used as the id of a new document: configs from other systems use ids like
+ * `status-done`, and a later config with the same id but a different name would silently get this status.
+ * An existing document is reused by id only when it is the same status (a config exported from this
+ * workspace); otherwise statuses are matched by name, attribute and category, as `createState` users do.
+ */
+export async function findOrCreateStatus (
+  client: TxOperations,
+  sc: StatusConfig,
+  ofAttribute: Ref<Attribute<Status>>
+): Promise<Ref<Status>> {
+  const category = sc.category ?? task.statusCategory.Active
+  const sameName = (s: Status): boolean => s.name.trim().toLowerCase() === sc.name.trim().toLowerCase()
+
+  const byId = await client.findOne(core.class.Status, { _id: sc.id })
+  if (byId?.ofAttribute === ofAttribute && sameName(byId)) {
+    return byId._id
+  }
+
+  const candidates = (await client.findAll(core.class.Status, { ofAttribute, category })).filter(sameName)
+  if (candidates.length > 0) {
+    // Statuses are shared workspace-wide and the same name can resolve to several docs, take a stable one
+    return candidates.map((s) => s._id).sort()[0]
+  }
+
+  return await createState(client, core.class.Status, {
+    name: sc.name,
+    color: sc.color,
+    category,
+    ofAttribute
+  })
 }
 
 /**
@@ -657,15 +717,22 @@ async function autoCreateTargetClassAttributes (
       continue
     }
 
+    const existingOnTarget =
+      (attrRes?.targetAttributeId !== undefined ? targetAttributeById.get(attrRes.targetAttributeId) : undefined) ??
+      hierarchy.findAttribute(targetClass, attrName)
+    // Not described in the file and not on the target class: never create it with a guessed type
+    const isMapped = attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
+    if (attrConfig === undefined && existingOnTarget === undefined && !isMapped) {
+      continue
+    }
+
     if (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined) {
       resolver.setRef(AttributeToken, attrId, attrRes.targetAttributeId)
       resolver.setRef(AttributeToken, attrName, attrRes.targetAttributeId)
       continue
     }
 
-    const existingAttr =
-      (attrRes?.targetAttributeId !== undefined ? targetAttributeById.get(attrRes.targetAttributeId) : undefined) ??
-      hierarchy.findAttribute(targetClass, attrName)
+    const existingAttr = existingOnTarget
     if (existingAttr !== undefined && isAttributeTypeCompatible(hierarchy, attrType, existingAttr.type)) {
       bindExistingAttribute(existingAttr, attrId, attrName, resolver, targetAttributeById, attrRes)
     } else {
@@ -834,6 +901,7 @@ async function importScreens (
   mixinIdMapping: Map<Ref<Mixin<Doc>>, Ref<Mixin<Doc>>>,
   resolver: NameResolver,
   result: ImportResult,
+  attributeExists: (ref: Ref<AnyAttribute>) => boolean,
   resolution?: WorkflowImportResolution
 ): Promise<void> {
   const hierarchy = client.getHierarchy()
@@ -920,6 +988,7 @@ async function importScreens (
               hierarchy.findAttribute(screenTargetClass, f.fieldKey)?._id ??
               f.attribute
           }
+          if (!attributeExists(attributeRef)) continue
           const fieldKey =
             (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
               ? targetAttributeById.get(attrRes.targetAttributeId)?.name
@@ -1038,12 +1107,10 @@ function skipUnresolvableAttributes (
 export async function importWorkflowConfig (
   client: TxOperations,
   projectTypeId: Ref<ProjectType>,
-  config: WorkflowConfig,
+  rawConfig: WorkflowConfig,
   resolution?: WorkflowImportResolution
 ): Promise<ImportResult> {
-  if (config.version !== WorkflowConfigVersion) {
-    throw new Error(`Workflow import: unsupported version ${config.version}`)
-  }
+  const { config } = sanitizeWorkflowConfig(client, rawConfig)
 
   const op = client.apply()
 
@@ -1120,6 +1187,16 @@ export async function importWorkflowConfig (
     )
   }
 
+  // Attributes created by this import are not committed yet, they are known from targetAttributeById only.
+  // Anything else must be an attribute of the target class, one of its ancestors or one of its mixins.
+  const attributeExists = (ref: Ref<AnyAttribute>): boolean => {
+    if (targetAttributeById.has(ref)) return true
+    const doc = client.getModel().findObject(ref)
+    if (doc === undefined || !hierarchy.isDerived(doc._class, core.class.Attribute)) return false
+    const attributeOf = (doc as AnyAttribute).attributeOf
+    return hierarchy.isDerived(targetClass, attributeOf) || hierarchy.isDerived(attributeOf, targetClass)
+  }
+
   const screenResolutionLookup = buildScreenResolutionLookup(
     config.screens,
     resolution?.screenResolutions as Record<string, ScreenResolutionConfig> | undefined
@@ -1138,6 +1215,7 @@ export async function importWorkflowConfig (
     mixinIdMapping,
     resolver,
     result,
+    attributeExists,
     resolution
   )
 
@@ -1182,17 +1260,7 @@ export async function importWorkflowConfig (
       for (const sc of config.statuses) {
         const mappedTargetId = resolution.statusMap[sc.id]
         if (mappedTargetId === undefined) {
-          const createdStatusId = await createState(
-            op,
-            core.class.Status,
-            {
-              name: sc.name,
-              color: sc.color,
-              category: sc.category,
-              ofAttribute: statusAttr._id
-            },
-            sc.id
-          )
+          const createdStatusId = await findOrCreateStatus(op, sc, statusAttr._id)
 
           if (!existingStatusIds.has(createdStatusId)) {
             updatedStatuses.push(createdStatusId)
@@ -1319,21 +1387,24 @@ export async function importWorkflowConfig (
         resolver,
         attrResolutions,
         targetAttributeById,
-        screenResolutions
+        screenResolutions,
+        attributeExists
       )
       const importedValidators = importRules(
         t.validators,
         resolver,
         attrResolutions,
         targetAttributeById,
-        screenResolutions
+        screenResolutions,
+        attributeExists
       )
       const importedPostFunctions = importRules(
         t.postFunctions,
         resolver,
         attrResolutions,
         targetAttributeById,
-        screenResolutions
+        screenResolutions,
+        attributeExists
       )
 
       if (importedRequests !== undefined || importedValidators !== undefined || importedPostFunctions !== undefined) {

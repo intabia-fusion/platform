@@ -401,7 +401,21 @@ export default plugin(workflowId, {
     NoAttributesToCreate: '' as IntlString,
     UnresolvableAttributesWarning: '' as IntlString,
     UnresolvableAttributesDescription: '' as IntlString,
-    UnresolvableTypeMissingClass: '' as IntlString
+    UnresolvableTypeMissingClass: '' as IntlString,
+    UnresolvableTypeUnsupported: '' as IntlString,
+    UnresolvableNotDescribed: '' as IntlString,
+    ImportWarningsTitle: '' as IntlString,
+    ImportWarningsDescription: '' as IntlString,
+    ImportWarningInvalidWorkflow: '' as IntlString,
+    ImportWarningInvalidStatus: '' as IntlString,
+    ImportWarningUnknownStatusCategory: '' as IntlString,
+    ImportWarningInvalidEnum: '' as IntlString,
+    ImportWarningInvalidAttribute: '' as IntlString,
+    ImportWarningInvalidScreen: '' as IntlString,
+    ImportWarningInvalidTransition: '' as IntlString,
+    ImportWarningUnsupportedRule: '' as IntlString,
+    ImportWarningUnsupportedCondition: '' as IntlString,
+    ImportWarningInvalidProject: '' as IntlString
   },
   status: {
     InitialStatusNotAllowed: '' as StatusCode,

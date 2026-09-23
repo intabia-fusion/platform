@@ -1006,8 +1006,6 @@ function filterKeys (hierarchy: Hierarchy, keys: KeyedAttribute[], ignoreKeys: s
   const docKeys: Set<string> = new Set<string>(hierarchy.getAllAttributes(core.class.AttachedDoc).keys())
   keys = keys.filter((k) => !docKeys.has(k.key) || k.attr.editor !== undefined)
   keys = keys.filter((k) => !ignoreKeys.includes(k.key))
-  // An attribute may reference a type class missing from the model (e.g. created by an import);
-  // there is nothing to render or edit it with, so it is managed only from class settings
   keys = keys.filter((k) => hierarchy.hasClass(k.attr.type._class))
   return keys
 }
