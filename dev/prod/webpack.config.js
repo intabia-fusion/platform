@@ -354,7 +354,7 @@ const cacheConfig = (name) => useCache
     compression: 'gzip',
     cacheLocation: path.resolve(__dirname, `.build_dev/${name}`),
     buildDependencies: {
-      config: [__filename, path.resolve(__dirname, 'package.json')]
+      config: [__filename, path.resolve(__dirname, 'package.json'), path.resolve(__dirname, '../../pnpm-lock.yaml')]
     }
   }
   : { type: 'memory' }
