@@ -19,7 +19,7 @@ jest.mock('svelte/store', () => require('./svelteStoreDouble'))
 
 jest.mock('@hcengineering/ai-bot-resources', () => {
   const { writable } = require('svelte/store')
-  return { aiBotSocialIdentityStore: writable(undefined) }
+  return { aiBotSocialIdentityStore: writable(undefined), ensureAiBotIdentityLoaded: jest.fn(async () => {}) }
 })
 
 jest.mock('@hcengineering/contact', () => ({
