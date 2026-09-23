@@ -38,6 +38,7 @@ import type {
   AccountAggregatedInfo,
   AccountsFilter,
   AdminActionsQuery,
+  CanDeleteAccountResult,
   AdminActionsResult,
   AccountsSortKey,
   TransactorEndpointInfo,
@@ -80,7 +81,8 @@ import type {
   RegistrationStats,
   WorkspaceActivityPoint,
   WorkspaceMemberDetails,
-  AccountActivityStats
+  AccountActivityStats,
+  DeletionPolicy
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -200,7 +202,10 @@ export interface AccountClient {
     order?: 'asc' | 'desc'
   ) => Promise<AccountAggregatedInfo[]>
   getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
-  deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
+  deleteAccount: (uuid: AccountUuid, otpCode?: string, force?: boolean) => Promise<void>
+  cancelAccountDeletion: () => Promise<void>
+  canDeleteAccount: (uuid?: AccountUuid) => Promise<CanDeleteAccountResult>
+  getDeletionPolicy: () => Promise<DeletionPolicy>
 
   workerHandshake: (region: string, version: Data<Version>, operation: WorkspaceOperation) => Promise<void>
   getPendingWorkspace: (
@@ -222,7 +227,9 @@ export interface AccountClient {
   listWorkspaces: (
     region?: string | null,
     mode?: WorkspaceMode | null,
-    visited?: number
+    visited?: number,
+    /** null includes disabled workspaces; omitted keeps the enabled-only default. */
+    isDisabled?: boolean | null
   ) => Promise<WorkspaceInfoWithStatus[]>
   listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
   getWorkspacesSummary: () => Promise<WorkspacesSummary>
@@ -270,6 +277,7 @@ export interface AccountClient {
   adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
   adminReleaseSocialId: (personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string) => Promise<void>
   adminDeletePerson: (personUuid: PersonUuid, otpCode: string) => Promise<void>
+  adminSetAccountBlocked: (accountUuid: AccountUuid, blocked: boolean, otpCode: string) => Promise<void>
   listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   performWorkspaceOperation: (
     workspaceId: string | string[],
@@ -284,6 +292,8 @@ export interface AccountClient {
   ) => Promise<boolean>
   assignWorkspace: (email: string, workspaceUuid: string, role: AccountRole) => Promise<void>
   updateBackupInfo: (info: BackupStatus) => Promise<void>
+  // Workspace comes from the token. false: not taken (acquire) or lost (renew) - stop the backup.
+  updateBackupLease: (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number) => Promise<boolean>
   updateUsageInfo: (info: UsageStatus) => Promise<void>
   updateWorkspaceRoleBySocialKey: (socialKey: string, targetRole: AccountRole) => Promise<void>
   ensurePerson: (
@@ -1044,11 +1054,12 @@ class AccountClientImpl implements AccountClient {
   async listWorkspaces (
     region?: string | null,
     mode: WorkspaceMode | null = null,
-    visited?: number
+    visited?: number,
+    isDisabled?: boolean | null
   ): Promise<WorkspaceInfoWithStatus[]> {
     const request = {
       method: 'listWorkspaces' as const,
-      params: { region, mode, visited }
+      params: { region, mode, visited, isDisabled }
     }
 
     return ((await this.rpc<any[]>(request)) ?? []).map((ws) => this.flattenStatus(ws))
@@ -1217,6 +1228,10 @@ class AccountClientImpl implements AccountClient {
     await this.rpc({ method: 'adminDeletePerson' as const, params: { personUuid, otpCode } })
   }
 
+  async adminSetAccountBlocked (accountUuid: AccountUuid, blocked: boolean, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminSetAccountBlocked' as const, params: { accountUuid, blocked, otpCode } })
+  }
+
   async listAdminActions (query: AdminActionsQuery): Promise<AdminActionsResult> {
     return await this.rpc({ method: 'listAdminActions' as const, params: query })
   }
@@ -1232,6 +1247,10 @@ class AccountClientImpl implements AccountClient {
     }
 
     await this.rpc(request)
+  }
+
+  async updateBackupLease (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number): Promise<boolean> {
+    return await this.rpc<boolean>({ method: 'updateBackupLease' as const, params: { owner, action, ttlMs } })
   }
 
   async updateUsageInfo (usageInfo: UsageStatus): Promise<void> {
@@ -1377,13 +1396,35 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async deleteAccount (uuid: AccountUuid, otpCode?: string): Promise<void> {
+  async deleteAccount (uuid: AccountUuid, otpCode?: string, force?: boolean): Promise<void> {
     const request = {
       method: 'deleteAccount' as const,
-      params: { uuid, otpCode }
+      params: { uuid, otpCode, force }
     }
 
     await this.rpc(request)
+  }
+
+  async cancelAccountDeletion (): Promise<void> {
+    const request = {
+      method: 'cancelAccountDeletion' as const,
+      params: {}
+    }
+
+    await this.rpc(request)
+  }
+
+  async getDeletionPolicy (): Promise<DeletionPolicy> {
+    return await this.rpc({ method: 'getDeletionPolicy' as const, params: {} })
+  }
+
+  async canDeleteAccount (uuid?: AccountUuid): Promise<CanDeleteAccountResult> {
+    const request = {
+      method: 'canDeleteAccount' as const,
+      params: { uuid }
+    }
+
+    return await this.rpc(request)
   }
 
   async releaseSocialId (

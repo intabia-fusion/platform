@@ -67,6 +67,8 @@
     loadPlanOptions,
     performWorkspaceOperationWithOtp,
     requestAdminOtpCode,
+    requestAdminOtpConfirm,
+    runAdminAction,
     type PlanOptions,
     type WorkspaceInfo,
     adminFetch
@@ -87,10 +89,20 @@
   }
 
   // Every workspace operation requires an emailed OTP code; ask before running.
+  // runAdminAction surfaces a refusal - these used to fail into the console only.
   async function otpGuardedOp (ws: string | string[], event: WorkspaceUserOperation, ...params: any[]): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
-    await performWorkspaceOperationWithOtp(ws, event, code, ...params)
+    await runAdminAction(async () => await performWorkspaceOperationWithOtp(ws, event, code, ...params))
+  }
+
+  // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
+  async function deleteWorkspace (ws: string): Promise<void> {
+    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+    if (res === undefined) return
+    await runAdminAction(
+      async () => await performWorkspaceOperationWithOtp(ws, res.option ? 'delete-now' : 'delete', res.code)
+    )
   }
 
   enum SortingRule {
@@ -918,7 +930,9 @@
                       {/if}
                     </td>
                     <td>
-                      {#if workspace.backupInfo != null}
+                      {#if workspace.backupInfo?.backups === 0}
+                        -
+                      {:else if workspace.backupInfo != null}
                         {@const sz = Math.max(
                           workspace.backupInfo.backupSize,
                           workspace.backupInfo.dataSize + workspace.backupInfo.blobsSize
@@ -935,7 +949,9 @@
                       {/if}
                     </td>
                     <td>
-                      {#if workspace.backupInfo != null}
+                      {#if workspace.backupInfo?.backups === 0}
+                        -
+                      {:else if workspace.backupInfo != null}
                         {@const hours = Math.round((now - workspace.backupInfo.lastBackup) / (1000 * 3600))}
                         {#if hours > 24}
                           {Math.round(hours / 24)} days
@@ -990,14 +1006,31 @@
                             }}
                           />
                         {/if}
-                        {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
+                        {#if !readOnly && workspace.deleteOn != null}
+                          <Button
+                            icon={IconStart}
+                            size={'small'}
+                            kind={'ghost'}
+                            label={adminRes.string.CancelDeletion}
+                            showTooltip={{
+                              label: adminRes.string.DeletionScheduled,
+                              props: { date: new Date(workspace.deleteOn).toLocaleDateString() }
+                            }}
+                            on:click={() => {
+                              void otpGuardedOp(workspace.uuid, 'cancel-delete').then(() => {
+                                void loadPage()
+                              })
+                            }}
+                          />
+                        {/if}
+                        {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))}
                           <Button
                             icon={IconStop}
                             size={'small'}
                             kind={'dangerous'}
                             label={adminRes.string.Delete}
                             on:click={() => {
-                              void otpGuardedOp(workspace.uuid, 'delete').then(() => {
+                              void deleteWorkspace(workspace.uuid).then(() => {
                                 void loadPage()
                               })
                             }}

@@ -195,6 +195,18 @@
     "Actions": "Aktionen",
     "NoTrial": "Ohne Testphase",
     "Sessions": "Sitzungen",
-    "Ops5m": "Operationen (5 Min.)"
+    "Ops5m": "Operationen (5 Min.)",
+    "CancelDeletion": "Löschung abbrechen",
+    "DeletionScheduled": "Löschung am {date}",
+    "CannotDeleteOwnAccount": "Ein Administrator kann das eigene Konto nicht löschen.",
+    "OwnedWorkspacesBlockDeletion": "Alleiniger Besitzer von: {workspaces}. Löschen Sie diese Arbeitsbereiche zuerst oder übergeben Sie sie.",
+    "WorkspaceNotFound": "Arbeitsbereich nicht gefunden - möglicherweise schon gelöscht.",
+    "ActionFailed": "Aktion fehlgeschlagen",
+    "NothingChanged": "Nichts geändert",
+    "Block": "Sperren",
+    "Unblock": "Entsperren",
+    "Blocked": "Gesperrt",
+    "BlockedOnly": "Nur gesperrte",
+    "DeleteNow": "Sofort löschen"
   }
 }

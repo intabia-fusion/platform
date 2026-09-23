@@ -10,6 +10,12 @@ export class AdminPage {
 
   // ACTIONS
   async gotoAdmin (): Promise<void> {
+    // login() returns before its own redirect lands; navigating on top of it drops the session and
+    // /login/admin bounces back to the login form.
+    await this.page.waitForURL(
+      (url) => url.pathname.startsWith('/login/selectWorkspace') || url.pathname.startsWith('/workbench/'),
+      { timeout: 30000 }
+    )
     await (await this.page.goto(`${PlatformURI}/login/admin`))?.finished()
     await this.openAdminSession()
   }
@@ -30,6 +36,34 @@ export class AdminPage {
 
   async openWorkspacesTab (): Promise<void> {
     await this.page.locator('[data-id="tab-workspaces"]').click()
+  }
+
+  async openAccountsTab (): Promise<void> {
+    await this.page.locator('[data-id="tab-accounts"]').click()
+  }
+
+  async searchAccount (query: string): Promise<void> {
+    const input = this.page.locator('[data-testid="account-search-container"] input')
+    await input.click()
+    await input.fill(query)
+    await input.press('Enter')
+  }
+
+  async deleteAccount (uuid: string, force: boolean = false): Promise<void> {
+    await this.page.locator(`[id="${uuid}"]`).getByRole('button', { name: 'Delete', exact: true }).click()
+    if (force) {
+      await this.toggleDeleteNow()
+    }
+    await this.confirmOtp()
+  }
+
+  // Skips the deferral: the identity is purged as soon as the code is accepted.
+  async deleteAccountNow (uuid?: string): Promise<void> {
+    await this.page.locator(`[id="${uuid}"]`).getByRole('button', { name: 'Delete now', exact: true }).click()
+  }
+
+  async toggleDeleteNow (): Promise<void> {
+    await this.page.locator('[data-id="otpConfirmOptional"] .checkbox-container').click()
   }
 
   async searchWorkspace (uuid: string): Promise<void> {

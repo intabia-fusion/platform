@@ -259,9 +259,10 @@ export class ClientSession implements Session {
     broadcastPromise: Promise<void>
     asyncsPromise: Promise<void> | undefined
   }> {
-    // Read-only sessions (guests, operator impersonation) never write, not even derived tx.
+    // Read-only sessions (guests, impersonation, a workspace archived or scheduled for deletion)
+    // never write, not even derived tx. Its own status: this is not a missing permission.
     if (this.token.extra?.readonly === 'true') {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceReadOnly, {}))
     }
     this.lastRequest = Date.now()
     this.total.tx++

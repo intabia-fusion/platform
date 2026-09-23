@@ -22,6 +22,7 @@ import core, {
   DOMAIN_MODEL_TX,
   DOMAIN_TRANSIENT,
   DOMAIN_TX,
+  generateId,
   MeasureContext,
   PersonUuid,
   Ref,
@@ -44,10 +45,10 @@ import { createReadStream, createWriteStream, mkdtempSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { PassThrough } from 'node:stream'
-import { createGzip } from 'node:zlib'
+import { promisify } from 'node:util'
+import { gzip, gunzip, createGzip, type ZlibOptions } from 'node:zlib'
 import { join } from 'path'
 import { Pack, pack } from 'tar-stream'
-import { gunzipSync, gzipSync } from 'zlib'
 import { BackupStorage } from './storage'
 import {
   BackupDocId,
@@ -78,6 +79,11 @@ const dataBlobSize = 250 * 1024 * 1024
 const batchSize = 5000
 
 const defaultLevel = 9
+
+// Sync gzip/gunzip blocks the event loop long enough to starve the lease-renewal timer
+// (service.ts); the index/size files go through these instead of gzipSync/gunzipSync.
+const gzipAsync = promisify(gzip)
+const gunzipAsync = promisify(gunzip)
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -180,21 +186,59 @@ export async function backup (
     const blobInfoFile = 'blob-info.json.gz'
 
     if (await storage.exists(infoFile)) {
-      backupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+      backupInfo = JSON.parse((await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString())
     }
     backupInfo.version = '0.6.2'
+
+    // Two writers (this pod and workspace-service archiving) share the index; refuse to write
+    // if another writer moved it on since we last saw it, instead of last-writer-wins.
+    let lastRevision = backupInfo.revision
+
+    // Re-reads the index and checks lastRevision. Shared by writeBackupInfo and by callers
+    // of checkBackupIntegrity/compactBackup, which rewrite the index without this check.
+    const revisionIsOurs = async (): Promise<boolean> => {
+      let onDisk: BackupInfo | undefined
+      if (await storage.exists(infoFile)) {
+        onDisk = JSON.parse((await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString())
+      }
+      if (onDisk?.revision !== lastRevision) {
+        ctx.error('backup index was updated by another writer, aborting to avoid overwriting it', {
+          workspace: workspaceId
+        })
+        _canceled = true
+        result.result = false
+        return false
+      }
+      return true
+    }
+
+    const writeBackupInfo = async (gzipOptions: ZlibOptions = { level: defaultLevel }): Promise<void> => {
+      if (canceled()) {
+        return
+      }
+      if (!(await revisionIsOurs())) {
+        return
+      }
+      lastRevision = generateId()
+      backupInfo.revision = lastRevision
+      await storage.writeFile(infoFile, await gzipAsync(JSON.stringify(backupInfo, undefined, 2), gzipOptions))
+    }
 
     backupInfo.migrations ??= {}
 
     // Apply verification to backup, since we know it should have broken blobs
     if (backupInfo.migrations.zeroCheckSize == null) {
+      if (!(await revisionIsOurs())) {
+        return result
+      }
       await checkBackupIntegrity(ctx, storage)
       if (await storage.exists(infoFile)) {
-        backupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+        backupInfo = JSON.parse((await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString())
+        lastRevision = backupInfo.revision
       }
       backupInfo.migrations ??= {}
       backupInfo.migrations.zeroCheckSize = true
-      await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+      await writeBackupInfo()
     }
 
     backupInfo.workspace = workspaceId
@@ -216,13 +260,17 @@ export async function backup (
 
     if (backupInfo.snapshots.length > options.keepSnapshots || forceCompact) {
       // We need to perform compaction
+      if (!(await revisionIsOurs())) {
+        return result
+      }
       ctx.warn('Compacting backup')
       await compactBackup(ctx, storage, true, {
         blobLimit: options.blobDownloadLimit,
         skipContentTypes: options.skipBlobContentTypes,
         msg: { workspaceId, url: wsIds.url }
       })
-      backupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+      backupInfo = JSON.parse((await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString())
+      lastRevision = backupInfo.revision
 
       // Enable full check, just in case.
       fullCheck = true
@@ -717,10 +765,7 @@ export async function backup (
               processedChanges.removed = []
               processedChanges.updated.clear()
               domainChanges++
-              await storage.writeFile(
-                infoFile,
-                gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel, memLevel: 9 })
-              )
+              await writeBackupInfo({ level: defaultLevel, memLevel: 9 })
             }
           }
           if (_pack === undefined) {
@@ -927,7 +972,7 @@ export async function backup (
         await _packClose()
         domainChanges++
         // This will allow to retry in case of critical error.
-        await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+        await writeBackupInfo()
       }
 
       if (missingBlobs > 0 || mismatchedBlobs > 0) {
@@ -1179,10 +1224,7 @@ export async function backup (
             changed = false
             domainChanges++
 
-            await storage.writeFile(
-              infoFile,
-              gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel, memLevel: 9 })
-            )
+            await writeBackupInfo({ level: defaultLevel, memLevel: 9 })
           }
 
           // prepare new snapshot package if needed
@@ -1291,7 +1333,7 @@ export async function backup (
         await _packClose()
         domainChanges++
         // This will allow to retry in case of critical error.
-        await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+        await writeBackupInfo()
       }
     }
 
@@ -1326,7 +1368,8 @@ export async function backup (
       await options.progress?.(Math.round((domainProgress / domains.length) * 10000) / 100)
     }
 
-    result.result = true
+    // A revision conflict marks canceled mid-loop; do not let this overwrite that with success.
+    result.result = !canceled()
 
     if (!canceled() && domainChanges > 0) {
       backupInfo.lastTxId = lastTx?._id ?? '0' // We could store last tx, since full backup is complete
@@ -1335,14 +1378,19 @@ export async function backup (
       backupInfo.dataSize = result.dataSize
       backupInfo.blobsSize = result.blobsSize
       backupInfo.backupSize = result.backupSize
-      await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+      await writeBackupInfo()
+      if (canceled()) {
+        // Foreign revision detected above; the index write was skipped, so stop here
+        // instead of overwriting the other writer's blob-info/size files.
+        return result
+      }
 
-      await storage.writeFile(blobInfoFile, gzipSync(JSON.stringify(blobInfo), { level: defaultLevel }))
+      await storage.writeFile(blobInfoFile, await gzipAsync(JSON.stringify(blobInfo), { level: defaultLevel }))
 
       await rebuildSizeInfo(storage, recheckSizes, ctx, result, backupInfo, infoFile, blobInfoFile)
 
       // Same one more time with recalculated sizes
-      await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+      await writeBackupInfo()
     }
 
     return result

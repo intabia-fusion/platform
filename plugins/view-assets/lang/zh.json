@@ -150,6 +150,8 @@
     "ReadOnlyWarningMessage": "您处于只读模式。选择您的路径：加入此工作区协作（作为访客）或创建您自己的空间来完全管理项目 — 任务、截止日期、团队！",
     "ReadOnlyJoinWorkspace": "加入工作区",
     "ReadOnlySignUp": "创建工作区",
+    "ReadOnlyWorkspaceWarningTitle": "工作区为只读",
+    "ReadOnlyWorkspaceWarningMessage": "该工作区当前不接受更改：它已归档、已计划删除，或者您正在只读会话中查看它。",
     "PermissionWarningTitle": "✨ 提升您的访问权限！",
     "PermissionWarningMessage": "您当前角色的权限有限。要解锁此功能和其他高级功能，请让您的工作区管理员升级您的访问权限！",
     "PlanLimitWarningTitle": "已达到计划限制",

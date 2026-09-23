@@ -20,6 +20,8 @@ export interface LoginInfo {
   name?: string
   socialId?: PersonId
   token?: string
+  // Set when the account is scheduled for deletion: the client asks whether to call it off.
+  deleteOn?: number
 }
 
 export interface EndpointInfo {
@@ -174,6 +176,8 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   hasAccount?: boolean
   // Earliest email social id - what the admin list shows and sorts by
   primaryEmail?: string
+  // Set while the admin keeps the account out: no login, no workspace access
+  blockedOn?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
@@ -210,6 +214,8 @@ export interface AccountsFilter {
   inactiveDays?: number
   /** Unfinished signups only: person + social ids without an account row */
   pendingOnly?: boolean
+  /** Blocked accounts only */
+  blockedOnly?: boolean
 }
 
 /** Transactor endpoint entry for admin manage calls */
@@ -528,4 +534,16 @@ export interface AccountWorkspaceActivity {
 export interface AccountActivityStats {
   workspaces: AccountWorkspaceActivity[]
   weekly: WorkspaceActivityPoint[]
+}
+
+/** Deferral windows the deletion warnings quote. Configured per installation. */
+export interface DeletionPolicy {
+  graceDays: number
+  readonlyDays: number
+}
+
+/** Whether the caller may purge their own account, and the workspaces that stand in the way. */
+export interface CanDeleteAccountResult {
+  canDelete: boolean
+  ownedWorkspaces: Array<{ uuid: WorkspaceUuid, name: string, url: string }>
 }

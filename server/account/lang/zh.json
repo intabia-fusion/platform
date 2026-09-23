@@ -19,6 +19,27 @@
     "ResendInviteSubject": "重新邀请加入 {ws}",
     "AdminOtpSubject": "Confirmation code for an administrator action",
     "AdminOtpText": "You are about to perform a sensitive administrator action in {app} (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).\n\nYour confirmation code is:\n\n{code}\n\nEnter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.",
-    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>"
+    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>",
+    "OperationOtpSubject": "{app} 操作确认码",
+    "OperationOtpText": "您请求在 {app} 中退出工作区、删除工作区或删除账户。\n\n您的确认码是：\n\n{code}\n\n请在您发起此操作的窗口中输入。如果这不是您本人的请求，请勿与任何人分享此确认码，并检查您的账户安全。",
+    "OperationOtpHTML": "<p>您请求在 <b>{app}</b> 中退出工作区、删除工作区或删除账户。</p><p>您的确认码是：</p><h2>{code}</h2><p>请在您发起此操作的窗口中输入。如果这不是您本人的请求，请勿与任何人分享此确认码，并检查您的账户安全。</p>",
+    "WorkspaceDeletionScheduledSubject": "工作区 {ws} 已计划删除",
+    "WorkspaceDeletionScheduledText": "工作区 {ws}（{url}）将于 {date} 被删除。{readonlyDays, plural, =0 {} other {它会以只读方式再开放 # 天，便于导出数据。}}随后归档；到期当天工作区及其备份将被永久删除。在此之前，任何所有者都可以取消删除：{link}",
+    "WorkspaceDeletionScheduledHTML": "<p>工作区 <b>{ws}</b>（{url}）将于 <b>{date}</b> 被删除。</p><p>{readonlyDays, plural, =0 {} other {它会以只读方式再开放 # 天，便于导出数据。}}随后归档；到期当天工作区及其备份将被永久删除。</p><p>在此之前，任何所有者都可以取消删除：<a href={link}>{link}</a></p>",
+    "WorkspaceDeletedSubject": "工作区 {ws} 正在被删除",
+    "WorkspaceDeletedText": "工作区 {ws}（{url}）正在被立即删除，没有通常的缓冲期。数据及其备份无法恢复。",
+    "WorkspaceDeletedHTML": "<p>工作区 <b>{ws}</b>（{url}）正在被立即删除，没有通常的缓冲期。</p><p>数据及其备份无法恢复。</p>",
+    "AccountDeletionScheduledSubject": "您的账户已计划删除",
+    "AccountDeletionScheduledText": "您的账户将于 {date} 被删除。在该日期之前登录即可取消删除：{link}",
+    "AccountDeletionScheduledHTML": "<p>您的账户将于 <b>{date}</b> 被删除。</p><p>在该日期之前登录即可取消删除：<a href={link}>{link}</a></p>",
+    "AccountDeletedSubject": "您的账户已被删除",
+    "AccountDeletedText": "您的账户已被删除。所有可识别您身份的信息均已清除，该邮箱可用于重新注册。",
+    "AccountDeletedHTML": "<p>您的账户已被删除。</p><p>所有可识别您身份的信息均已清除，该邮箱可用于重新注册。</p>",
+    "AccountDeletionCancelledSubject": "您的 {app} 账户已重新激活",
+    "AccountDeletionCancelledText": "您 {app} 账户的删除已取消 - 账户已重新激活。\n\n感谢您继续留在我们这里！\n\n您提交删除的工作区仍按计划保留，每个都需要单独恢复：{link}",
+    "AccountDeletionCancelledHTML": "<p>您 <b>{app}</b> 账户的删除已取消 - 账户已重新激活。</p><p>感谢您继续留在我们这里！</p><p>您提交删除的工作区仍按计划保留，每个都需要单独恢复：<a href={link}>{link}</a></p>",
+    "WorkspaceDeletionCancelledSubject": "工作区 {ws} 将不会被删除",
+    "WorkspaceDeletionCancelledText": "工作区 {ws}（{url}）的删除已被取消。{state, select, archived {它已被归档 - 任何所有者都可以恢复它：{link}} restoring {它正在从归档中恢复，很快将重新可用：{link}} other {它已完全恢复可用：{link}}}\n\n感谢您继续留在我们这里！",
+    "WorkspaceDeletionCancelledHTML": "<p>工作区 <b>{ws}</b>（{url}）的删除已被取消。</p><p>{state, select, archived {它已被归档 - 任何所有者都可以恢复它：<a href={link}>{link}</a>} restoring {它正在从归档中恢复，很快将重新可用：<a href={link}>{link}</a>} other {它已完全恢复可用：<a href={link}>{link}</a>}}</p><p>感谢您继续留在我们这里！</p>"
   }
 }

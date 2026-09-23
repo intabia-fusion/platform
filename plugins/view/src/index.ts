@@ -270,6 +270,8 @@ const view = plugin(viewId, {
     ReadOnlyWarningMessage: '' as IntlString,
     ReadOnlySignUp: '' as IntlString,
     ReadOnlyJoinWorkspace: '' as IntlString,
+    ReadOnlyWorkspaceWarningTitle: '' as IntlString,
+    ReadOnlyWorkspaceWarningMessage: '' as IntlString,
     PermissionWarningTitle: '' as IntlString,
     PermissionWarningMessage: '' as IntlString,
     PlanLimitWarningTitle: '' as IntlString,

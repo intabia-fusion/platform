@@ -16,14 +16,17 @@ import {
 } from '@hcengineering/integration-client'
 import login from '@hcengineering/login'
 import { getMetadata } from '@hcengineering/platform'
-import presentation, { getClient } from '@hcengineering/presentation'
+import presentation, {
+  getClient,
+  OtpConfirmDialog,
+  type OtpConfirmProps,
+  type OtpConfirmResult
+} from '@hcengineering/presentation'
 import type { PersonRating } from '@hcengineering/rating'
 import setting from '@hcengineering/setting'
 import { type TemplateDataProvider } from '@hcengineering/templates'
 import { showPopup } from '@hcengineering/ui'
 import { get } from 'svelte/store'
-
-import OperationOtpDialog from './components/OperationOtpDialog.svelte'
 
 function isEditable (hierarchy: Hierarchy, p: Class<Doc>): boolean {
   let ancestors = [p._id]
@@ -128,8 +131,17 @@ export async function getIntegrationClient (kind: IntegrationKind): Promise<Inte
 /** Prompts for the email confirmation code required by self-service destructive actions. */
 export async function requestOperationOtpCode (): Promise<string | undefined> {
   return await new Promise<string | undefined>((resolve) => {
-    showPopup(OperationOtpDialog, {}, undefined, (code) => {
-      resolve(typeof code === 'string' && code.length > 0 ? code : undefined)
+    const props: OtpConfirmProps = {
+      label: setting.string.ConfirmOperation,
+      okLabel: setting.string.Confirm,
+      codeLabel: setting.string.OtpCode,
+      sendLabel: setting.string.SendCode,
+      sentLabel: setting.string.OtpSent,
+      failedLabel: setting.string.OtpSendFailed,
+      requestCode: async () => await getAccountClient().requestOperationOtp()
+    }
+    showPopup(OtpConfirmDialog, props, undefined, (res?: OtpConfirmResult) => {
+      resolve(res != null && res.code.length > 0 ? res.code : undefined)
     })
   })
 }

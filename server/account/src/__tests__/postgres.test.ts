@@ -337,6 +337,8 @@ describe('AccountPostgresDbCollection', () => {
         a.automatic,
         a.max_workspaces,
         a.failed_login_attempts,
+        a.delete_on,
+        a.blocked_on,
         p.hash,
         p.salt
       FROM global_account.account as a
@@ -344,7 +346,23 @@ describe('AccountPostgresDbCollection', () => {
     ) WHERE "uuid" = $1`,
         ['acc1']
       )
-      expect(result).toEqual(mockResult)
+      // Every timestamp column is normalised, so an absent delete_on comes back as null.
+      expect(result).toEqual(mockResult.map((r) => ({ ...r, deleteOn: null, blockedOn: null })))
+    })
+
+    it('selects every column it promises to convert', async () => {
+      // The clause lists columns by name: one left out is read as undefined everywhere, which is
+      // how blocked_on once slipped past the login guard.
+      mockClient.unsafe.mockResolvedValue([])
+      await collection.find({ uuid: 'acc1' as AccountUuid })
+
+      const sql: string = mockClient.unsafe.mock.calls[0][0]
+      for (const field of collection.timestampFields) {
+        const column = String(field)
+          .replace(/([A-Z])/g, '_$1')
+          .toLowerCase()
+        expect(sql).toContain(`a.${column}`)
+      }
     })
 
     it('should convert buffer fields from database', async () => {
@@ -693,7 +711,8 @@ describe('PostgresAccountDB', () => {
                 'processing_attempts', s.processing_attempts,
                 'processing_message', s.processing_message,
                 'backup_info', s.backup_info,
-                'usage_info', s.usage_info
+                'usage_info', s.usage_info,
+                'delete_on', s.delete_on
               ) status
                FROM global_account.workspace as w
                INNER JOIN global_account.workspace_status as s ON s.workspace_uuid = w.uuid
@@ -701,11 +720,12 @@ describe('PostgresAccountDB', () => {
                AND s.mode <> 'manual-creation'
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $1)
+               AND (NOT (s.mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean', 'archiving-clean') OR s.mode IN ('migration-backup', 'migration-pending-backup', 'migration-clean', 'migration-pending-clean') OR s.mode IN ('pending-restore', 'restoring') OR s.mode IN ('pending-deletion', 'deleting')) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $2)
                AND (w.region IS NULL OR w.region = '')
                ORDER BY s.last_visit DESC
                LIMIT 1`.replace(/\s+/g, ' ')
         )
-        expect(mockClient.unsafe.mock.calls[0][1]).toEqual([NOW - processingTimeoutMs])
+        expect(mockClient.unsafe.mock.calls[0][1]).toEqual([NOW - processingTimeoutMs, NOW])
       })
 
       it('should get workspace pending upgrade', async () => {
@@ -738,7 +758,8 @@ describe('PostgresAccountDB', () => {
                 'processing_attempts', s.processing_attempts,
                 'processing_message', s.processing_message,
                 'backup_info', s.backup_info,
-                'usage_info', s.usage_info
+                'usage_info', s.usage_info,
+                'delete_on', s.delete_on
               ) status
                FROM global_account.workspace as w
                INNER JOIN global_account.workspace_status as s ON s.workspace_uuid = w.uuid
@@ -762,6 +783,7 @@ describe('PostgresAccountDB', () => {
                AND s.mode <> 'manual-creation'
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
+               AND (NOT (s.mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean', 'archiving-clean') OR s.mode IN ('migration-backup', 'migration-pending-backup', 'migration-clean', 'migration-pending-clean') OR s.mode IN ('pending-restore', 'restoring') OR s.mode IN ('pending-deletion', 'deleting')) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $6)
                AND (w.region IS NULL OR w.region = '')
                ORDER BY s.last_visit DESC
                LIMIT 1`
@@ -774,7 +796,8 @@ describe('PostgresAccountDB', () => {
           version.minor,
           version.patch,
           NOW - wsLivenessMs,
-          NOW - processingTimeoutMs
+          NOW - processingTimeoutMs,
+          NOW
         ])
       })
 
@@ -808,7 +831,8 @@ describe('PostgresAccountDB', () => {
                 'processing_attempts', s.processing_attempts,
                 'processing_message', s.processing_message,
                 'backup_info', s.backup_info,
-                'usage_info', s.usage_info
+                'usage_info', s.usage_info,
+                'delete_on', s.delete_on
               ) status
                FROM global_account.workspace as w
                INNER JOIN global_account.workspace_status as s ON s.workspace_uuid = w.uuid
@@ -836,6 +860,7 @@ describe('PostgresAccountDB', () => {
                AND s.mode <> 'manual-creation'
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
+               AND (NOT (s.mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean', 'archiving-clean') OR s.mode IN ('migration-backup', 'migration-pending-backup', 'migration-clean', 'migration-pending-clean') OR s.mode IN ('pending-restore', 'restoring') OR s.mode IN ('pending-deletion', 'deleting')) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $6)
                AND (w.region IS NULL OR w.region = '')
                ORDER BY s.last_visit DESC
                LIMIT 1`
@@ -848,7 +873,8 @@ describe('PostgresAccountDB', () => {
           version.minor,
           version.patch,
           NOW - wsLivenessMs,
-          NOW - processingTimeoutMs
+          NOW - processingTimeoutMs,
+          NOW
         ])
       })
 
@@ -882,7 +908,8 @@ describe('PostgresAccountDB', () => {
                 'processing_attempts', s.processing_attempts,
                 'processing_message', s.processing_message,
                 'backup_info', s.backup_info,
-                'usage_info', s.usage_info
+                'usage_info', s.usage_info,
+                'delete_on', s.delete_on
               ) status
                FROM global_account.workspace as w
                INNER JOIN global_account.workspace_status as s ON s.workspace_uuid = w.uuid
@@ -928,6 +955,7 @@ describe('PostgresAccountDB', () => {
                AND s.mode <> 'manual-creation'
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
+               AND (NOT (s.mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean', 'archiving-clean') OR s.mode IN ('migration-backup', 'migration-pending-backup', 'migration-clean', 'migration-pending-clean') OR s.mode IN ('pending-restore', 'restoring') OR s.mode IN ('pending-deletion', 'deleting')) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $6)
                AND (w.region IS NULL OR w.region = '')
                ORDER BY s.last_visit DESC
                LIMIT 1`
@@ -940,7 +968,8 @@ describe('PostgresAccountDB', () => {
           version.minor,
           version.patch,
           NOW - wsLivenessMs,
-          NOW - processingTimeoutMs
+          NOW - processingTimeoutMs,
+          NOW
         ])
       })
 
@@ -975,7 +1004,8 @@ describe('PostgresAccountDB', () => {
                 'processing_attempts', s.processing_attempts,
                 'processing_message', s.processing_message,
                 'backup_info', s.backup_info,
-                'usage_info', s.usage_info
+                'usage_info', s.usage_info,
+                'delete_on', s.delete_on
               ) status
                FROM global_account.workspace as w
                INNER JOIN global_account.workspace_status as s ON s.workspace_uuid = w.uuid
@@ -983,14 +1013,15 @@ describe('PostgresAccountDB', () => {
                AND s.mode <> 'manual-creation'
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $1)
-               AND region = $2
+               AND (NOT (s.mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean', 'archiving-clean') OR s.mode IN ('migration-backup', 'migration-pending-backup', 'migration-clean', 'migration-pending-clean') OR s.mode IN ('pending-restore', 'restoring') OR s.mode IN ('pending-deletion', 'deleting')) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $2)
+               AND region = $3
                ORDER BY s.last_visit DESC
                LIMIT 1`
             .replace(/\s+/g, ' ')
             .replace(/\(\s/g, '(')
             .replace(/\s\)/g, ')')
         )
-        expect(mockClient.unsafe.mock.calls[0][1]).toEqual([NOW - processingTimeoutMs, region])
+        expect(mockClient.unsafe.mock.calls[0][1]).toEqual([NOW - processingTimeoutMs, NOW, region])
       })
 
       // Should also verify update after fetch

@@ -195,6 +195,18 @@
     "Actions": "Ações",
     "NoTrial": "Sem período de teste",
     "Sessions": "Sessões",
-    "Ops5m": "Operações (5 min)"
+    "Ops5m": "Operações (5 min)",
+    "CancelDeletion": "Cancelar exclusão",
+    "DeletionScheduled": "exclusão em {date}",
+    "CannotDeleteOwnAccount": "Um administrador não pode excluir a própria conta.",
+    "OwnedWorkspacesBlockDeletion": "Único proprietário de: {workspaces}. Exclua esses workspaces ou transfira-os primeiro.",
+    "WorkspaceNotFound": "Workspace não encontrado - pode já ter sido excluído.",
+    "ActionFailed": "A ação falhou",
+    "NothingChanged": "Nada mudou",
+    "Block": "Bloquear",
+    "Unblock": "Desbloquear",
+    "Blocked": "Bloqueado",
+    "BlockedOnly": "Apenas bloqueados",
+    "DeleteNow": "Excluir agora"
   }
 }

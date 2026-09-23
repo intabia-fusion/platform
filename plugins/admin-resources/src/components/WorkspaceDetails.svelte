@@ -20,14 +20,16 @@
     WorkspaceMemberDetails
   } from '@hcengineering/account-client'
   import { grantsPlan } from '@hcengineering/account-client'
-  import { AccountRole, type AccountUuid } from '@hcengineering/core'
+  import { AccountRole, isArchivingMode, isDeletingMode, type AccountUuid } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import { getEmbeddedLabel, getMetadata, setMetadata } from '@hcengineering/platform'
   import presentation, {
     copyTextToClipboard,
     isAdminUser,
     isBillingAdminUser,
-    MessageBox
+    MessageBox,
+    OtpConfirmDialog,
+    type OtpConfirmResult
   } from '@hcengineering/presentation'
   import {
     Button,
@@ -55,12 +57,15 @@
   import { currencyOf } from '@hcengineering/billing'
 
   import adminRes from '../plugin'
-  import AdminOtpDialog from './AdminOtpDialog.svelte'
   import EditSubscriptionDialog from './EditSubscriptionDialog.svelte'
   import {
+    adminOtpProps,
     fmtAmount,
     getAccountClient,
+    performWorkspaceOperationWithOtp,
     requestAdminOtpCode,
+    requestAdminOtpConfirm,
+    runAdminAction,
     getWorkspaceActivityStats,
     loadPlanOptions,
     type PlanOptions,
@@ -82,17 +87,43 @@
 
   // Destructive member operations require an emailed OTP code
   function withOtp (action: (otpCode: string) => Promise<void>): void {
-    showPopup(AdminOtpDialog, {}, undefined, (code) => {
-      if (typeof code === 'string' && code.length > 0) {
-        void action(code)
-          .then(() => {
-            void load()
-          })
-          .catch((err) => {
-            console.error('Admin operation failed:', err)
-          })
-      }
+    showPopup(OtpConfirmDialog, adminOtpProps(), undefined, (res?: OtpConfirmResult) => {
+      if (res == null || res.code.length === 0) return
+      void runAdminAction(async () => {
+        await action(res.code)
+        return true
+      }).then(() => {
+        void load()
+      })
     })
+  }
+
+  // Same rule as the Workspaces tab: an archived workspace may still be scheduled, one already
+  // on its way out may not.
+  $: canDelete =
+    !readOnly && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))
+
+  // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
+  async function deleteWorkspace (): Promise<void> {
+    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+    if (res === undefined) return
+    const ok = await runAdminAction(
+      async () => await performWorkspaceOperationWithOtp(workspace.uuid, res.option ? 'delete-now' : 'delete', res.code)
+    )
+    if (ok) {
+      await load()
+    }
+  }
+
+  async function cancelDeletion (): Promise<void> {
+    const code = await requestAdminOtpCode()
+    if (code === undefined) return
+    const ok = await runAdminAction(
+      async () => await performWorkspaceOperationWithOtp(workspace.uuid, 'cancel-delete', code)
+    )
+    if (ok) {
+      await load()
+    }
   }
 
   const memberRoles = [AccountRole.Guest, AccountRole.User, AccountRole.Maintainer, AccountRole.Owner]
@@ -403,6 +434,38 @@
   {#if loading}
     <Loading />
   {:else}
+    <div class="flex-row-center flex-wrap mb-2">
+      <span class="mr-2 content-dark-color">{workspace.url} - {workspace.mode}</span>
+      {#if workspace.deleteOn != null}
+        <span class="error-color mr-2">
+          <Label
+            label={adminRes.string.DeletionScheduled}
+            params={{ date: new Date(workspace.deleteOn).toLocaleDateString() }}
+          />
+        </span>
+        {#if !readOnly}
+          <Button
+            size={'small'}
+            label={adminRes.string.CancelDeletion}
+            on:click={() => {
+              void cancelDeletion()
+            }}
+          />
+        {/if}
+      {/if}
+      {#if canDelete}
+        <Button
+          icon={IconStop}
+          size={'small'}
+          kind={'dangerous'}
+          label={adminRes.string.Delete}
+          on:click={() => {
+            void deleteWorkspace()
+          }}
+        />
+      {/if}
+    </div>
+
     <div class="flex-row-top flex-wrap">
       <div class="mr-8 mb-2">
         <div class="fs-title mb-1"><Label label={adminRes.string.Usage} /></div>

@@ -62,6 +62,8 @@ export interface Datalake {
     options: { range?: string }
   ) => Promise<BlobBody | null>
   delete: (ctx: MeasureContext, workspace: WorkspaceUuid, name: string | string[]) => Promise<void>
+  /** Marks every blob of a deleted workspace, leaving the files for a later sweep. */
+  deleteWorkspace: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<void>
   put: (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,

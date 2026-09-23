@@ -195,6 +195,18 @@
     "Actions": "Actions",
     "NoTrial": "Sans essai",
     "Sessions": "Sessions",
-    "Ops5m": "Opérations (5 min)"
+    "Ops5m": "Opérations (5 min)",
+    "CancelDeletion": "Annuler la suppression",
+    "DeletionScheduled": "suppression le {date}",
+    "CannotDeleteOwnAccount": "Un administrateur ne peut pas supprimer son propre compte.",
+    "OwnedWorkspacesBlockDeletion": "Seul propriétaire de : {workspaces}. Supprimez ces espaces de travail ou transférez-les d'abord.",
+    "WorkspaceNotFound": "Espace de travail introuvable - il a peut-être déjà été supprimé.",
+    "ActionFailed": "L'action a échoué",
+    "NothingChanged": "Rien n'a changé",
+    "Block": "Bloquer",
+    "Unblock": "Débloquer",
+    "Blocked": "Bloqué",
+    "BlockedOnly": "Bloqués uniquement",
+    "DeleteNow": "Supprimer maintenant"
   }
 }

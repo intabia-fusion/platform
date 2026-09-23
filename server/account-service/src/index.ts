@@ -15,10 +15,20 @@ import account, {
   type CrmNotification,
   parseFreePlanLimits,
   initRegionConfig,
-  generateShortId
+  generateShortId,
+  sweepScheduledDeletions
 } from '@hcengineering/account'
+import accountCs from '@hcengineering/account/lang/cs.json'
+import accountDe from '@hcengineering/account/lang/de.json'
 import accountEn from '@hcengineering/account/lang/en.json'
+import accountEs from '@hcengineering/account/lang/es.json'
+import accountFr from '@hcengineering/account/lang/fr.json'
+import accountIt from '@hcengineering/account/lang/it.json'
+import accountPtBr from '@hcengineering/account/lang/pt-br.json'
+import accountPt from '@hcengineering/account/lang/pt.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
+import accountTr from '@hcengineering/account/lang/tr.json'
+import accountZh from '@hcengineering/account/lang/zh.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
 import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
@@ -55,6 +65,21 @@ export type * from './migration/types'
 
 const SERVICE_ID = 'account'
 const AUTH_TOKEN_COOKIE = 'account-metadata-Token'
+
+// Keyed by Branding.defaultLanguage. A language without a file here gets the English letters.
+const accountStrings: Record<string, Record<string, Record<string, string>>> = {
+  cs: accountCs,
+  de: accountDe,
+  en: accountEn,
+  es: accountEs,
+  fr: accountFr,
+  it: accountIt,
+  'pt-br': accountPtBr,
+  pt: accountPt,
+  ru: accountRu,
+  tr: accountTr,
+  zh: accountZh
+}
 
 const KEEP_ALIVE_HEADERS = {
   'Content-Type': 'application/json',
@@ -131,16 +156,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const subscriptionProducer = platformQueue.getProducer<QueueSubscriptionMessage>(measureCtx, QueueTopic.Subscription)
   setMetadata(accountPlugin.metadata.SubscriptionQueue, subscriptionProducer)
 
-  addStringsLoader(accountId, async (lang: string) => {
-    switch (lang) {
-      case 'en':
-        return accountEn
-      case 'ru':
-        return accountRu
-      default:
-        return accountEn
-    }
-  })
+  addStringsLoader(accountId, async (lang: string) => accountStrings[lang] ?? accountEn)
 
   const frontURL = process.env.FRONT_URL
   const productName = process.env.PRODUCT_NAME
@@ -275,6 +291,13 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       },
       3 * 60 * 1000
     )
+    const sweep = (): void => {
+      void sweepScheduledDeletions(measureCtx, db, brandings).catch((err) => {
+        measureCtx.error('Scheduled deletion sweep failed', { err })
+      })
+    }
+    setInterval(sweep, 60 * 60 * 1000)
+    sweep()
   })
 
   const extractAuthorizationToken = (headers: IncomingHttpHeaders): string | undefined => {

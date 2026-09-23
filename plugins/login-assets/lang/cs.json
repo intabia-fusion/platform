@@ -116,6 +116,19 @@
     "ConfirmationFailed": "Registraci se nepodařilo dokončit",
     "NoFreeSeats": "Žádná volná místa",
     "NoFreeSeatsDescription": "Tento pracovní prostor dosáhl limitu míst tarifu. Obraťte se prosím na správce pracovního prostoru.",
-    "NoFreeSeatsForInvite": "Tarif nemá volná místa, nový odkaz s pozvánkou nelze vytvořit."
+    "NoFreeSeatsForInvite": "Tarif nemá volná místa, nový odkaz s pozvánkou nelze vytvořit.",
+    "ScheduledForDeletion": "smazání {date}",
+    "WorkspaceDeletionScheduledDesc": "Tento pracovní prostor je naplánován ke smazání {date}. Zrušení jen odvolá smazání - pokud už byl archivován, obnovte jej zvlášť. Po tomto datu zmizí i se zálohou.",
+    "CancelWorkspaceDeletion": "Zrušit smazání",
+    "AccountDeletionScheduled": "Účet je naplánován ke smazání",
+    "AccountDeletionScheduledDesc": "Váš účet bude smazán {date}. Zrušte smazání, pokud si jej chcete ponechat. Naplánované pracovní prostory zůstávají naplánované - obnovte každý zvlášť.",
+    "CancelAccountDeletion": "Zrušit smazání",
+    "DeleteAccount": "Smazat účet",
+    "DeleteAccountConfirm": "Účet bude označen ke smazání a za {days, plural, one {# den} few {# dny} many {# dne} other {# dní}} nenávratně odstraněn. Pokud se do té doby přihlásíte, můžete smazání zrušit. Pokračovat?",
+    "DeleteAccountBlockedAdmin": "Účet administrátora zde nelze smazat.",
+    "DeleteAccountBlocked": "Jste jediný vlastník: {workspaces}. Nejprve tyto pracovní prostory smažte nebo je předejte někomu jinému.",
+    "CodeSent": "Potvrzovací kód byl odeslán na váš e-mail.",
+    "EnterCode": "Zadejte kód",
+    "WorkspaceArchivedDesc": "Pracovní prostor byl archivován kvůli nečinnosti."
   }
 }

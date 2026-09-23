@@ -108,7 +108,12 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV39Migration(ns, flavor),
     getV40Migration(ns),
     getV41Migration(ns),
-    getV42Migration(ns, flavor)
+    getV42Migration(ns, flavor),
+    getV43Migration(ns, flavor),
+    getV44Migration(ns, flavor),
+    getV45Migration(ns, flavor),
+    getV46Migration(ns, flavor),
+    getV47Migration(ns, flavor)
   ]
 }
 
@@ -1194,6 +1199,61 @@ function getV42Migration (ns: string, flavor: DBFlavor): [string, string] {
     `
     ALTER TABLE ${ns}.workspace
     ADD COLUMN IF NOT EXISTS language ${types.string};
+    `
+  ]
+}
+
+function getV43Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v43_workspace_delete_on',
+    /* Deferred deletion: the moment the workspace gets purged for good. Null means not scheduled. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS delete_on ${types.int8};
+    `
+  ]
+}
+
+function getV44Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v44_account_delete_on',
+    /* Separate migration on purpose: a multi-statement batch is parsed as a whole. */
+    `
+    ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS delete_on ${types.int8};
+    `
+  ]
+}
+
+function getV45Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v45_account_blocked_on',
+    /* Admin block: when the account was blocked. Null means not blocked. */
+    `
+    ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS blocked_on ${types.int8};
+    `
+  ]
+}
+
+function getV46Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v46_workspace_backup_lease_until',
+    /* Separate migration on purpose: a multi-statement batch is parsed as a whole. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS backup_lease_until ${types.int8};
+    `
+  ]
+}
+
+function getV47Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v47_workspace_backup_lease_owner',
+    /* Backup pod identity holding the lease. Null means no live lease. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS backup_lease_owner ${types.string};
     `
   ]
 }

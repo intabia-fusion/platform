@@ -118,6 +118,9 @@ services:
     expose:
       - 9000
       - 9001
+    # backup-tests assert on the archive bucket from the host.
+    ports:
+      - 9002:9000
     healthcheck:
       test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
@@ -210,7 +213,41 @@ services:
       - ADMIN_OTP_DEV_CODE=000000
       # OTP codes are short-lived by design; tests need room between requesting and entering one.
       - OTP_TIME_TO_LIVE=600
+      - DELETION_GRACE_DAYS=21
+      - DELETION_READONLY_DAYS=7
       - OTP_RETRY_DELAY=1
+    restart: unless-stopped
+  backup:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/backup:${DOCKER_TAG:-latest}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    links:
+      - minio
+      - postgres
+      - stats
+      - account
+    environment:
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - ACCOUNTS_DB_URL=${DB_PG_URL}
+      - STATS_URL=http://stats:4901
+      - DB_URL=${DB_URL}
+      - REGION=
+      - BUCKET_NAME=${BACKUP_BUCKET_NAME}
+      - STORAGE=${BACKUP_STORAGE_CONFIG}
+      - WORKSPACE_STORAGE=${STORAGE_CONFIG}
+      # INTERVAL doubles as the "visited recently" window: a workspace whose lastVisit is older is
+      # skipped entirely. A week keeps every workspace a test just created in scope.
+      - INTERVAL=604800
+      - COOL_DOWN=30
+      - PARALLEL=2
+      # Retention of a deleted workspace's archive. Tests move `last_processing_time` back in the
+      # account DB instead of waiting, so the production default is what runs here.
+      - DELETED_RETENTION_DAYS=7
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
   stats:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stats:${DOCKER_TAG:-latest}"
@@ -491,6 +528,43 @@ services:
       - SECRET=secret
       - BRANDING_PATH=/var/cfg/branding.json
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
+
+  # OTP for sign up and login is emailed, so a stand without mail cannot complete either.
+  # mail reads the notification queue and drops the message into mailpit; nothing leaves the host.
+  mail:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    depends_on:
+      redpanda:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    environment:
+      # queue mode sends to SMTP itself; server mode only relays to a connected mail client.
+      - MODE=queue
+      - PORT=8097
+      - SOURCE=hello@localhost
+      - REPLY_TO=hello@localhost
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION=
+      - SMTP_HOST=mailpit
+      - SMTP_USERNAME=platform
+      - SMTP_PASSWORD=platform
+      - SMTP_PORT=1025
+      - SMTP_TLS_MODE=ignore
+      - SMTP_ALLOW_SELF_SIGNED=true
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit
+    # Shifted off the dev stand's 8025/1025 so both can run at once.
+    ports:
+      - 8026:8025
+      - 1026:1025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
     restart: unless-stopped
 
 volumes:

@@ -150,6 +150,13 @@ export class DatalakeImpl implements Datalake {
     }
   }
 
+  async deleteWorkspace (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
+    // No per-blob Tx events here: the workspace itself is gone, and a deleted one can hold
+    // millions of blobs.
+    await this.db.deleteWorkspaceBlobs(ctx, workspace)
+    ctx.info('workspace blobs marked as deleted', { workspace })
+  }
+
   async put (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,

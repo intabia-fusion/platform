@@ -146,7 +146,8 @@ export function decodeToken (token: string, verify: boolean = true, secret?: str
         // Re-insert at the back: eviction walks insertion order, so a token in active use
         // must not age out just because its session started early.
         verifiedTokens.set(key, cached)
-        return cached
+        // Callers mutate `extra`; a shared payload would leak that into every later decode.
+        return structuredClone(cached)
       }
     }
   }
@@ -161,7 +162,7 @@ export function decodeToken (token: string, verify: boolean = true, secret?: str
           if (--n === 0) break
         }
       }
-      verifiedTokens.set(key, res)
+      verifiedTokens.set(key, structuredClone(res))
     }
     return res
   } catch (err: any) {

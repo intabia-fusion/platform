@@ -150,6 +150,8 @@
     "ReadOnlyWarningMessage": "Sie sind im Ansichtsmodus. Wählen Sie Ihren Weg: Treten Sie diesem Arbeitsbereich bei, um zusammenzuarbeiten (als Gast) oder erstellen Sie Ihren eigenen Bereich, um Projekte vollständig zu verwalten — Aufgaben, Fristen, Team!",
     "ReadOnlyJoinWorkspace": "Arbeitsbereich beitreten",
     "ReadOnlySignUp": "Arbeitsbereich erstellen",
+    "ReadOnlyWorkspaceWarningTitle": "Arbeitsbereich ist schreibgeschützt",
+    "ReadOnlyWorkspaceWarningMessage": "Dieser Arbeitsbereich nimmt derzeit keine Änderungen an: Er ist archiviert, zum Löschen vorgemerkt, oder Sie sehen ihn in einer schreibgeschützten Sitzung.",
     "PermissionWarningTitle": "✨ Erweitern Sie Ihren Zugriff!",
     "PermissionWarningMessage": "Ihre aktuelle Rolle hat eingeschränkte Berechtigungen. Um diese und andere erweiterte Funktionen freizuschalten, bitten Sie Ihren Arbeitsbereich-Administrator, Ihr Zugriffslevel zu erhöhen!",
     "PlanLimitWarningTitle": "Plan-Limit erreicht",
