@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures'
-import { openBotDirect } from '../API/AiBot'
+import { BOT_REPLY_TIMEOUT, openBotDirect } from '../API/AiBot'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
@@ -37,7 +37,7 @@ test.describe('ai-bot tool calls', () => {
     const card = page
       .locator('.hulyComponent .activityMessage')
       .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     // The title lands in an editable field, so it is the input value and not the card's text.
     await expect(card.locator('input').first()).toHaveValue(title, { timeout: 10000 })
     // Nothing is created until the user presses the button.
@@ -55,7 +55,7 @@ test.describe('ai-bot tool calls', () => {
     const card = page
       .locator('.hulyComponent .activityMessage')
       .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     await expect(card).toContainText('Write notes', { timeout: 10000 })
     await expect(card).toContainText('Tag the build')
   })
@@ -67,7 +67,7 @@ test.describe('ai-bot tool calls', () => {
 
     // The sent message repeats the tool name, so match the reply by what only it can contain.
     const reply = page.locator('.hulyComponent .activityMessage', { hasText: 'does not exist' })
-    await expect(reply).toBeVisible({ timeout: 60000 })
+    await expect(reply).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     await expect(reply).toContainText('no_such_tool')
   })
 })

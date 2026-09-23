@@ -14,6 +14,9 @@ const aiBotUrl = (): string => LocalUrl.replace(/_account\/?$/, '_aibot')
 export const BOT = { firstName: 'Julia', lastName: 'AI', email: '', password: '' }
 export const BOT_DIRECT = `${BOT.lastName} ${BOT.firstName}` // rendered as "AI Julia"
 
+/** Anything the mock provider posts: reply, proposal card, edit. Measured max 4.9s. */
+export const BOT_REPLY_TIMEOUT = 15000
+
 /** Opens a direct chat with the AI bot; it provisions itself asynchronously, so retry until it appears. */
 export async function openBotDirect (
   leftSideMenuPage: LeftSideMenuPage,
@@ -23,8 +26,10 @@ export async function openBotDirect (
   await leftSideMenuPage.clickChunter()
   await expect(async () => {
     await chunterPage.createDirectChat(BOT)
-  }).toPass({ intervals: retryIntervals, timeout: 60000 })
-  await channelPage.clickChooseChannel(BOT_DIRECT)
+  }).toPass({ intervals: retryIntervals, timeout: 30000 })
+  // createDirectChat already opens the chat. Its navigator entry appears only once the
+  // DocNotifyContext arrives, which these tests do not need and which lags behind.
+  await channelPage.waitOpenedChannel(BOT_DIRECT)
 }
 
 /** Set the workspace-wide AI level (AISpaceSettings). Uses a system token. */

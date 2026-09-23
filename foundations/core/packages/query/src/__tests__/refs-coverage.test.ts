@@ -483,8 +483,7 @@ describe('Refs Class Coverage Tests', () => {
     expect(stored).toBeDefined()
     // Newer (later processed) document should replace the earlier one despite equal modifiedOn
     expect(stored.doc).toBe(doc2)
-    expect(stored.queries).toEqual(expect.arrayContaining([q1.id, q2.id]))
-    expect(stored.queries).toHaveLength(2)
+    expect(stored.queries).toEqual(new Set([q1.id, q2.id]))
   })
 
   it('Refs internals: maintains queries and removes doc only when all queries are gone', () => {
@@ -501,12 +500,11 @@ describe('Refs Class Coverage Tests', () => {
     const classKey = (core.class.Space as string) + ':' + JSON.stringify({}) + ':' + JSON.stringify({})
     const docMap = (refs as any).documentRefs.get(classKey)
     const stored = docMap.get('unit-doc3')
-    expect(stored.queries).toEqual(expect.arrayContaining([q1.id, q2.id]))
-    expect(stored.queries).toHaveLength(2)
+    expect(stored.queries).toEqual(new Set([q1.id, q2.id]))
 
     // Remove only q1 association; entry must remain and contain q2
     refs.updateDocuments(q1, [doc], true)
-    expect(docMap.get('unit-doc3').queries).toEqual([q2.id])
+    expect(docMap.get('unit-doc3').queries).toEqual(new Set([q2.id]))
 
     // Remove q2 as well; entry must be deleted
     refs.updateDocuments(q2, [doc], true)

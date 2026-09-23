@@ -74,11 +74,14 @@ test.describe('Chat image container space reservation tests', () => {
     test(`Verify image loading flow for ${description}: 1) space reserved immediately, 2) preview exists, 3) dimensions unchanged after load`, async ({
       page
     }) => {
-      // Intercept preview image render requests (_preview/image) to delay the load. 2.5s is enough:
-      // the "reserved before load" checks below run within ~1.5s of sending, and every extra second
-      // here is paid by all five variants of this test.
+      // Hold the preview request until the "before load" checks are done. A fixed delay raced the
+      // message render itself: under load the message appeared after the delay had already run out.
+      let releasePreview = (): void => {}
+      const previewHeld = new Promise<void>((resolve) => {
+        releasePreview = resolve
+      })
       await page.route('**/_preview/image/**', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 2500))
+        await previewHeld
         await route.continue()
       })
 
@@ -97,8 +100,8 @@ test.describe('Chat image container space reservation tests', () => {
 
       // Find the reserved container directly via page.getByTestId (mapped to data-id)
       const container = page.getByTestId('attachment-image-preview').first()
-      // Container lookup must succeed immediately (within 1s), well before network response
-      await expect(container).toBeVisible({ timeout: 1000 })
+      // The route above holds the image, so "before load" holds however long the message takes.
+      await expect(container).toBeVisible({ timeout: 15000 })
 
       // ==========================================
       // 1. Space reserved immediately (BEFORE LOAD) - Exact expected value assertion
@@ -115,15 +118,14 @@ test.describe('Chat image container space reservation tests', () => {
       // ==========================================
       // 2. Preview exists (Blurhash canvas during network loading)
       // ==========================================
-      // Check preview immediately within 1s (while network request is delayed by 5s)
+      // The blurhash canvas stands in while the image request is still held.
       const canvasPreview = container.locator('canvas').first()
-      await expect(canvasPreview).toBeVisible({ timeout: 1000 })
+      await expect(canvasPreview).toBeVisible({ timeout: 15000 })
 
       // ==========================================
       // 3. Dimensions after load remain unchanged - Exact expected value assertion
       // ==========================================
-      // The route above holds the image for 5s. Wait for it to actually arrive rather than for a
-      // sleep long enough to cover it - the assertion below is about the size after the load.
+      releasePreview()
       const imgElement = container.locator('img').first()
       await expect(imgElement).toBeVisible({ timeout: 15000 })
 

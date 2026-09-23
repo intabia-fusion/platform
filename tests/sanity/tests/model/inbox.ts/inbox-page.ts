@@ -1,6 +1,6 @@
 import { expect, type Locator } from '@playwright/test'
 import { CommonPage } from '../common-page'
-import { retryIntervals } from '../../retry'
+import { retryIntervals, waitStable } from '../../retry'
 
 export class InboxPage extends CommonPage {
   readonly taskName = (taskName: string): Locator => this.page.getByRole('paragraph').getByTitle(taskName)
@@ -71,14 +71,21 @@ export class InboxPage extends CommonPage {
   }
 
   // Notifications from a fresh join keep landing after the click, so clear until the list stays
-  // empty instead of assuming one pass emptied it.
+  // empty instead of assuming one pass emptied it. Reading zero once is not enough: the server
+  // adds the new member to `general` and `random` well after the join, and the notification that
+  // produces lands after the clear - the caller then blames whatever it does next.
   async clearAll (): Promise<void> {
     await expect(async () => {
       await this.menuButton().click()
       await this.page.getByRole('button', { name: 'Clear all' }).click()
       await expect(this.page.getByText('Remove all notifications?').nth(0)).toBeVisible()
       await this.page.getByRole('button', { name: 'Ok' }).click()
-      await expect(this.notificationCard()).toHaveCount(0, { timeout: 3000 })
-    }).toPass({ intervals: retryIntervals, timeout: 30000 })
+      const settled = await waitStable(async () => await this.notificationCard().count(), {
+        stableFor: 1000,
+        interval: 250,
+        timeout: 10000
+      })
+      expect(settled).toBe(0)
+    }).toPass({ intervals: retryIntervals, timeout: 60000 })
   }
 }

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '../fixtures'
+import { BOT_REPLY_TIMEOUT } from '../API/AiBot'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { IssuesPage } from '../model/tracker/issues-page'
@@ -38,7 +39,7 @@ async function openAssistant (page: Page): Promise<void> {
   await expect(async () => {
     await page.locator('[data-id="btnDiscussWithAI"]').click()
     await expect(page.locator('#sidebar div.text-editor-view')).toBeVisible({ timeout: 15000 })
-  }).toPass({ intervals: retryIntervals, timeout: 90000 })
+  }).toPass({ intervals: retryIntervals, timeout: 30000 })
 }
 
 /** The assistant thread lives in the chat sidebar, next to whatever object opened it. */
@@ -94,7 +95,7 @@ test.describe('ai-bot scenarios', () => {
     await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"${proposedTitle}"}`)
 
     const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     await expect(card.locator('input').first()).toHaveValue(proposedTitle, { timeout: 15000 })
 
     await test.step('Creating from the card produces a real issue', async () => {
@@ -103,7 +104,7 @@ test.describe('ai-bot scenarios', () => {
       const createButton = card.getByRole('button', { name: 'Create task' })
       await expect(createButton).toBeEnabled({ timeout: 15000 })
       await createButton.click()
-      await expect(card.getByRole('button', { name: 'Task created' })).toBeVisible({ timeout: 60000 })
+      await expect(card.getByRole('button', { name: 'Task created' })).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     })
   })
 
@@ -120,11 +121,11 @@ test.describe('ai-bot scenarios', () => {
     await openAssistant(page)
     await sendToAssistant(page, 'первое сообщение')
     await expect(page.locator('#sidebar .activityMessage', { hasText: 'первое сообщение' })).toBeVisible({
-      timeout: 60000
+      timeout: BOT_REPLY_TIMEOUT
     })
     // Unscripted text gets the mock's menu of available calls, not an answer.
     await expect(page.locator('#sidebar .activityMessage', { hasText: 'Мок-модель' })).toBeVisible({
-      timeout: 60000
+      timeout: BOT_REPLY_TIMEOUT
     })
 
     // The button only shows up for an AI context root, so its presence is part of the assertion.
@@ -133,7 +134,7 @@ test.describe('ai-bot scenarios', () => {
 
     // The echo reply quotes the prompt, so there is more than one match to clear - count them.
     await expect(page.locator('#sidebar .activityMessage', { hasText: 'первое сообщение' })).toHaveCount(0, {
-      timeout: 60000
+      timeout: BOT_REPLY_TIMEOUT
     })
   })
 
@@ -144,7 +145,7 @@ test.describe('ai-bot scenarios', () => {
     await sendToAssistant(page, `перепиши документ\ncall:propose_new_document {"markdown":"# Plan\\n\\n${body}"}`)
 
     const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiEditProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
 
     await test.step('Apply writes the proposal into the open document', async () => {
       // Apply goes through the open editor, so the document must stay on screen - that is exactly
@@ -153,7 +154,7 @@ test.describe('ai-bot scenarios', () => {
       // Not documentContentPage.inputContent(): the card's diff preview is a tiptap view too, and
       // only the document's own editor is editable.
       const docEditor = page.locator('div.textInput div.tiptap[contenteditable="true"]')
-      await expect(docEditor).toContainText(body, { timeout: 60000 })
+      await expect(docEditor).toContainText(body, { timeout: BOT_REPLY_TIMEOUT })
       await expect(card.getByRole('button', { name: 'Applied' })).toBeVisible({ timeout: 30000 })
     })
   })
@@ -170,13 +171,13 @@ test.describe('ai-bot scenarios', () => {
 
     const drafted = `Drafted by the assistant ${generateId()}`
     const input = panel.locator('div.text-editor-view')
-    await expect(input).toBeVisible({ timeout: 60000 })
+    await expect(input).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
     await input.fill(`поправь черновик\ncall:edit_issue_draft {"title":"${drafted}"}`)
     await panel.locator('g#Send').click()
 
     // The tool only stages the draft; the card's own button is what pushes it into the form.
     const card = panel.locator('.activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
 
     // Nothing is created from a draft card - the dialog behind it owns the project, so the card
     // must not offer its own project selector.
@@ -214,7 +215,7 @@ test.describe('ai-bot scenarios', () => {
     await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"Pick ${generateId()}"}`)
 
     const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
 
     const selector = card.locator('[id="space.selector"]')
     await expect(selector).toBeVisible({ timeout: 30000 })
@@ -230,7 +231,9 @@ test.describe('ai-bot scenarios', () => {
       const reloaded = page
         .locator('#sidebar .activityMessage')
         .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-      await expect(reloaded.locator('[id="space.selector"]')).toContainText(target.title, { timeout: 60000 })
+      await expect(reloaded.locator('[id="space.selector"]')).toContainText(target.title, {
+        timeout: BOT_REPLY_TIMEOUT
+      })
     })
   })
 
@@ -251,7 +254,7 @@ test.describe('ai-bot scenarios', () => {
     await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"${proposedTitle}"}`)
 
     const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
 
     const body = card.locator('[data-id="aiTaskProposalBody"]')
     await expect(body).toBeVisible({ timeout: 15000 })
@@ -276,7 +279,7 @@ test.describe('ai-bot scenarios', () => {
     await sendToAssistant(page, `перепиши документ\ncall:propose_new_document {"markdown":"${long}\\n\\n${marker}"}`)
 
     const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiEditProposal"]') })
-    await expect(card).toBeVisible({ timeout: 60000 })
+    await expect(card).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
 
     const showMore = card.locator('.showMore')
     await expect(showMore).toContainText('Show more', { timeout: 30000 })
