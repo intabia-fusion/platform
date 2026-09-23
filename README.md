@@ -81,12 +81,14 @@ Details, dev-server mode, watch builds and troubleshooting:
 | Document | Contents |
 | --- | --- |
 | [Getting started](./docs/getting-started.md) | Pre-requisites, install, build, dev mode, common commands, troubleshooting |
+| [Feature map](./docs/features/README.md) | Every product area: what it does, how it works, which packages and files implement it |
+| [Architecture](./docs/architecture.md) | Monorepo layers, plugin anatomy, request path client -> transactor -> DB, pods and services |
 | [Testing](./docs/testing.md) | Unit tests, Playwright UI tests, integration stands |
 | [API client](./docs/api-client.md) | `@intabia-fusion/api` npm bundle, REST and LiveQuery examples |
 | [WSL build guide](./docs/wsl.md) | Building on Windows through WSL |
 | [Features](./features.md) | What this fork changes relative to upstream Platform |
 | [AGENTS.md](./AGENTS.md) | Repository layout, code style, build workflow, conventions |
-| [docs/](./docs) | Per-topic engineering notes (LLM, meetings, billing, regions, ...) |
+| [docs/](./docs/README.md) | Index of all per-topic engineering notes (LLM, meetings, billing, regions, ...) |
 | [Changelog](./changelog.md) | Changes per version |
 
 ## Versions

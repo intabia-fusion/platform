@@ -1,38 +1,28 @@
 # Юля ИИ (ai-bot): конфигурация, деплой, масштабирование
 
-Один бинарь `intabiafusion/ai-bot`, роль через `MODE`. Развязка ролей - Kafka-очереди,
-роли масштабируются независимо. Устройство и сценарии: `docs/llm.md`.
+Один бинарь `intabiafusion/ai-bot`, роль через `MODE`. Развязка ролей - Kafka-очереди, роли масштабируются независимо. Устройство и сценарии: `docs/llm.md`.
 
 ## Роли (MODE)
 
-`Mode: 'all' | 'queue' | 'client' | 'event-router' | 'llm-router' | 'stt-worker'`
-(`config.ts`), дефолт `queue` (= `all`). Switch - `index.ts`.
+`Mode: 'all' | 'queue' | 'client' | 'event-router' | 'llm-router' | 'stt-worker'` (`config.ts`), дефолт `queue` (= `all`). Switch - `index.ts`.
 
 | MODE | Читает из Kafka | Поднимает | Назначение |
 |------|-----------------|-----------|------------|
-| `all` (= `queue`) | ai-queue, llm-`<id>`, love, stt | всё + ClisrServer (llm+stt) | Всё в одном поде. Dev / малый прод. |
+| `all` (= `queue`) | ai-queue, llm-`<id>`, love, stt, ai-summary | всё + ClisrServer (llm+stt) | Всё в одном поде. Dev / малый прод. |
 | `event-router` | ai-queue | - (Kafka->Kafka) | Резолв модели по `event.level`, перекладка в `llm-<id>`. Точка входа для transactor. |
-| `llm-router` | llm-`<id>` (свои) | ClisrServer (llm) только если есть clisr-провайдер | Выполняет LLM-запросы. Для clisr-моделей к нему подключаются обработчики. |
+| `llm-router` | llm-`<id>` (свои), ai-summary | ClisrServer (llm) только если есть clisr-провайдер | Выполняет LLM-запросы и суммаризацию (`startSummary`). Для clisr-моделей к нему подключаются обработчики. |
 | `stt-worker` | stt-queue | ClisrServer (transcription) + Deepgram poll | Транскрибация. Транскрибаторы подключаются как clisr-клиенты. |
 | `client` | - | clisr-клиент | Обработчик: коннектится к router/серверу, выполняет LLM/ASR. Опт-ауты `LLM_PROVIDER=none`/`STT_PROVIDER=none` живут тут. |
 
-**stt-ingest вездесущ.** Приём аудио (`/love/send_raw`, `/love/send_session`), placeholder,
-постановка в `TranscriptionQueue`, meeting-lifecycle (`LoveQueue`) запускаются в КАЖДОЙ роли
-кроме `client` (`startSttIngest`). Stateless и дёшево -> love шлёт аудио на любой под.
+**stt-ingest и workspace-консьюмеры вездесущи.** Приём аудио (`/love/send_raw`, `/love/send_session`), placeholder, постановка в `TranscriptionQueue`, meeting-lifecycle (`LoveQueue`) - через `startSttIngest`; покупки/лимиты (`workspace`) и приветствие новых сотрудников (`tx`) - через `startWorkspaceConsumer`. Оба запускаются в КАЖДОЙ роли кроме `client`. Stateless и дёшево -> love шлёт аудио на любой под.
 
-**REST API** (`/levels`, `/asr-levels`, `/translate`, `/summarize`, `/love/*`) поднимается
-во всех ролях кроме `client`. `GET /levels` / `GET /asr-levels` отдают каталог уровней для
-UI-пикера - каталог живёт в поде, не в БД.
+**REST API** (`/levels`, `/asr-levels`, `/translate`, `/summarize`, `/love/*`) поднимается во всех ролях кроме `client`. `GET /levels` / `GET /asr-levels` отдают каталог уровней для UI-пикера - каталог живёт в поде, не в БД.
 
-## Ключевое ограничение: ClisrServer = состояние пода
+## Ограничение: ClisrServer = состояние пода
 
-clisr-воркер (`MODE=client`) коннектится по WebSocket к ОДНОМУ поду (`SERVER_URL`). Раздача
-задач (`requestWithFilter` для LLM, `binaryRequest` для ASR) - round-robin ТОЛЬКО по сессиям
-этого пода. Реплики clisr-приёмника друг о друге не знают.
+clisr-воркер (`MODE=client`) коннектится по WebSocket к ОДНОМУ поду (`SERVER_URL`). Раздача задач (`requestWithFilter` для LLM, `binaryRequest` для ASR) - round-robin ТОЛЬКО по сессиям этого пода (`packages/clisr/src/server.ts`). Реплики clisr-приёмника друг о друге не знают - состояние сессий держится в локальной `Map`, без общего стора.
 
-Следствие: под, раздающий задачи через clisr (`stt-worker`, или `llm-router` с
-clisr-провайдером), должен быть **1 точкой входа** - иначе воркеры расколются по репликам,
-а Kafka-партиция может попасть на реплику без подключённых воркеров -> запрос зависнет.
+Следствие: под, раздающий задачи через clisr (`stt-worker`, или `llm-router` с clisr-провайдером), должен быть **1 точкой входа** - иначе воркеры расколются по репликам, а Kafka-партиция может попасть на реплику без подключённых воркеров -> запрос зависнет.
 
 **Веерная раздача транскрибации требует 1 clisr-приёмник + N воркеров-клиентов.**
 
@@ -40,28 +30,22 @@ clisr-провайдером), должен быть **1 точкой входа
 
 | Механизм | Что даёт | Ограничение |
 |----------|----------|-------------|
-| `concurrency` (per провайдер, yaml) | Макс ОДНОВРЕМЕННЫХ in-flight на 1 поде (`RateLimiter`) | Не rps: rps ≈ concurrency / avg_latency |
+| `concurrency` (per провайдер, yaml) | Макс ОДНОВРЕМЕННЫХ in-flight на 1 поде (`RateLimiter`, лимит по числу активных запросов, не по времени) | Не rps: rps ≈ concurrency / avg_latency |
 | реплики роли | Kafka consumer-group делит партиции топика | Реплик не больше числа партиций |
 | `batch` (per провайдер) | Размер Kafka batch-consumer pull | Буфер, не троттл |
 | N воркеров `client` | Горизонтально масштабируют выполнение за 1 clisr-приёмником | Все коннектятся к 1 `SERVER_URL` |
 
-**Нет time-based rps-троттла в коде.** Провайдерский лимит "N/сек" задаётся через
-`concurrency` (одновременные) и/или число реплик. Строгий rps не гарантируется - зависит
-от латентности провайдера.
+**Нет time-based rps-троттла в коде.** Провайдерский лимит "N/сек" задаётся через `concurrency` (одновременные) и/или число реплик. Строгий rps не гарантируется - зависит от латентности провайдера.
 
 ### Решение: 1 под на LLM-модель + concurrency
 
-**llm-router - тонкий прокси:** нет CPU/памяти-нагрузки, только проброс провайдеру. Масштаб
-репликами не нужен - **1 под на провайдера (модель)**, пропускную даёт `concurrency`
-(напр. 10 параллельных). Разные уровни (`serves: low/pro/max`) обслуживает один под.
+**llm-router - тонкий прокси:** нет CPU/памяти-нагрузки, только проброс провайдеру. Масштаб репликами не нужен - **1 под на провайдера (модель)**, пропускную даёт `concurrency` (напр. 10 параллельных). Разные уровни (`serves: low/pro/max`) обслуживает один под.
 
-Топики создаются с 1 партицией (`createTopic(topic, 1)`) - лишние реплики простаивали бы
-(1 партиция = 1 активный consumer в группе). Реплики llm-router НЕ нужны.
+Топики `llm-<id>` создаются с 1 партицией (`queue.createTopic(topic, 1)` в `startEventRouter`) - лишние реплики простаивали бы (1 партиция = 1 активный consumer в группе). Реплики llm-router НЕ нужны.
 
 ### Consumer groups
 
-Каждая роль читает в своей группе - общая группа на все топики означала бы, что ребаланс
-одной роли тормозит остальные:
+Каждая роль читает в своей группе - общая группа на все топики означала бы, что ребаланс одной роли тормозит остальные:
 
 | Топик | Группа | Семантика |
 |---|---|---|
@@ -69,30 +53,28 @@ clisr-провайдером), должен быть **1 точкой входа
 | `llm-<providerId>` | `ai-bot-llm-<providerId>` | делится между репликами роли |
 | `love-queue` | `ai-bot-stt-ingest` | делится |
 | `transcription-queue` | `ai-bot-transcription` | делится |
+| `tx` | `ai-bot-welcome` | делится; фильтрует по активации Employee, шлёт приветствие |
+| `ai-summary` | `ai-bot-summary` | делится; отдельная группа, чтобы долгая суммаризация не блокировала love-queue |
 | `workspace` (покупки) | `ai-bot` | **ровно один** обработчик на событие |
 | `workspace` (LimitsChanged / Up) | `ai-bot-state-<podId>` | **broadcast**: событие получает каждый под |
 
-`podId` берётся из `CLIENT_ID`, иначе из `HOSTNAME`. Broadcast нужен потому, что окно лимитов
-кэшируется в каждом поде (30 с) - при shared-группе событие доставалось бы одной реплике,
-а остальные до истечения кэша работали бы по устаревшим лимитам. Пустые группы удаляет брокер
-по своему offset retention.
+`podId` берётся из `CLIENT_ID`, иначе из `HOSTNAME`, иначе из `process.pid` (`podGroupId` в `queue.ts`). Broadcast нужен потому, что окно лимитов кэшируется в каждом поде (30 с) - при shared-группе событие доставалось бы одной реплике, а остальные до истечения кэша работали бы по устаревшим лимитам. Пустые группы удаляет брокер по своему offset retention.
 
-Смена имени группы = чтение с `latest`: неразобранный хвост топика пропадает. Поэтому группа
-покупок сохраняет историческое имя `ai-bot`.
+Смена имени группы = чтение с `latest`: неразобранный хвост топика пропадает. Поэтому группа покупок сохраняет историческое имя `ai-bot`.
 
-## Провайдерский concurrency (одновременные запросы)
+## Concurrency провайдеров в примерах конфигурации
 
-| Тариф / провайдер | `concurrency` | Комментарий |
-|-------------------|---------------|-------------|
-| GigaChat персональный | **1** | 1 одновременный запрос |
-| GigaChat бизнес | **10** | 10 одновременных |
-| clisr (локальные воркеры) | = число воркеров | Раздача веером |
-| openai / cloud | по лимиту аккаунта | Обычно высокий |
+`concurrency` - произвольное число в yaml, не привязано к жёсткому тарифному лимиту платформы; конкретное значение выбирает деплой под своей квотой у провайдера.
+
+| Провайдер | `concurrency` | Где |
+|-----------|----------------|-----|
+| clisr (локальные воркеры) | 4 | `config.example.yaml`, `dev/config-aibot.yaml` - раздаётся clisr-воркерам этого пода |
+| gigachat | 1 | `services/ai-bot/pod-ai-bot/config.example.yaml` |
+| gigachat | 2 | `dev/config-aibot.yaml` (dev-стенд, тариф `GIGACHAT_API_PERS`) |
 
 ## Реестр провайдеров (yaml)
 
-Источник - YAML (`CONFIG_PATH` = путь, или `CONFIG_YAML` = base64). `expandEnv` раскрывает
-`${VAR:-default}`. Один yaml может держать и `llm:`, и `asr:`.
+Источник - YAML (`CONFIG_PATH` = путь, или `CONFIG_YAML` = base64). `expandEnv` раскрывает `${VAR:-default}`. Один yaml может держать и `llm:`, и `asr:`.
 
 ```yaml
 llm:
@@ -103,8 +85,8 @@ llm:
     max:    { order: 2, label: 'Профи',    tokenMultiplier: 4 }
   providers:
     - id: gigachat           # = суффикс топика llm-gigachat
-      provider: gigachat     # openai | gigachat | clisr
-      concurrency: 1         # персональный тариф. Бизнес -> 10
+      provider: gigachat     # openai | gigachat | clisr | mock
+      concurrency: 1         # RateLimiter на весь провайдер
       batch: 1
       endpointConfig:        # общий auth (один клиент на провайдер)
         credentials: '${GIGACHAT_AUTH_KEY}'
@@ -115,6 +97,7 @@ llm:
     - id: clisr
       provider: clisr
       concurrency: 4         # раздаётся clisr-воркерам этого пода
+      endpoint: ws://aibot:4010
       serves:
         low: { model: local }
 
@@ -124,7 +107,7 @@ asr:                         # зеркалит llm:
     default: { order: 0, label: 'Базовый', tokenMultiplier: 1 }  # multiplier за СЕКУНДУ аудио
   providers:
     - id: clisr
-      provider: server       # раздаётся clisr-воркерам этого пода
+      provider: server       # раздаётся clisr-воркерам этого пода (SttProviderType не знает значения 'clisr')
       serves:
         default: { model: default }
     - id: openai
@@ -133,16 +116,11 @@ asr:                         # зеркалит llm:
         premium: { model: whisper-1, url: 'http://...', apiKey: '...' }
 ```
 
-Валидация: каждый уровень обслуживается ровно одним провайдером (иначе throw).
-Если `llm.providers` пуст - реестр синтезируется из legacy env (`LLM_PROVIDER` + `OPENAI_*`
-/ `GIGACHAT_*`) как один провайдер уровня `defaultLevel`. Если `asr:` пуст - транскрибация
-отключена.
+Валидация: каждый уровень обслуживается ровно одним провайдером (`assertUniqueLevelOwner`, иначе throw). Если `llm.providers` пуст - реестр синтезируется из legacy env (`LLM_PROVIDER` + `OPENAI_*` / `GIGACHAT_*`) как один провайдер уровня `defaultLevel`. Если `asr:` пуст - транскрибация отключена.
 
-- `AILevel` = свободная строка-id (не enum). UI читает из `GET /levels`, сортирует по
-  `order`, показывает `label`/`description`.
-- `tokenMultiplier`: `billedTokens = ceil((prompt+completion) * tokenMultiplier)`.
-- Уровень запроса = свойство запроса; пространство задаёт потолок (`AISpaceSettings`).
-  Server-trigger кладёт активный уровень в `event.level`.
+- `AILevel` = свободная строка-id (не enum). UI читает из `GET /levels`, сортирует по `order`, показывает `label` (поле `description` в yaml существует только для читаемости файла - API его не отдаёт).
+- `tokenMultiplier` определяет `billedTokens`, формула и биллинг - в `docs/features/ai.md`.
+- Уровень запроса = свойство запроса; пространство задаёт потолок (`AISpaceSettings`, детали - `docs/features/ai.md`).
 
 ## Переменные окружения
 
@@ -170,17 +148,16 @@ asr:                         # зеркалит llm:
 | `LLM_PROVIDER` | legacy: `openai`\|`gigachat`\|`clisr` (если нет yaml.providers) |
 | `LLM_BATCH` | legacy размер батча |
 | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`, `OPENAI_SUMMARY_MODEL`, `OPENAI_TRANSLATE_MODEL` | OpenAI |
-| `GIGACHAT_CREDENTIALS`, `GIGACHAT_SCOPE`, `GIGACHAT_MODEL`, `GIGACHAT_BASE_URL`, `GIGACHAT_TIMEOUT` | GigaChat |
+| `GIGACHAT_CREDENTIALS`, `GIGACHAT_SCOPE`, `GIGACHAT_MODEL`, `GIGACHAT_BASE_URL`, `GIGACHAT_TIMEOUT`, `GIGACHAT_MAX_TOKENS` | GigaChat |
 
 ### ASR
-Провайдер/модель - из yaml `asr:` реестра. Legacy `STT_URL`/`STT_API_KEY`/`STT_MODEL`/`stt:`
-**УБРАНЫ**.
+Провайдер/модель - из yaml `asr:` реестра. Legacy `STT_URL`/`STT_API_KEY`/`STT_MODEL`/`stt:` **УБРАНЫ**.
 
 | Env | Назначение |
 |-----|------------|
 | `STT_PROVIDER` | опт-аут: `none` = отключить ASR (в client-режиме). Иначе провайдер из реестра |
-| `STT_BATCH` | размер батча транскрипции |
-| `STT_CAPACITY` | сколько чанков роутер держит в полёте на воркер, дефолт 4. Работает только при `STT_BATCH > 1` |
+| `STT_BATCH` | размер Kafka-батча для consumer'а `transcription-queue` на `stt-worker` |
+| `STT_CAPACITY` | сколько запросов ClisrServer держит одновременно открытыми на сессию воркера, дефолт 4 (`packages/clisr/src/server.ts`) |
 | `VAD_RMS_THRESHOLD`, `VAD_SPEECH_RATIO_THRESHOLD` | VAD |
 | `DEEPGRAM_API_KEY`, `DEEPGRAM_PROJECT_ID`, `DEEPGRAM_TAG`, `DEEPGRAM_POLL_INTERVAL_MINUTES` | Deepgram |
 
@@ -195,14 +172,11 @@ asr:                         # зеркалит llm:
 
 ## Per-client учёт (экономика воркеров)
 
-`CLIENT_ID` (env или yaml `clientId`) - логический id воркера. Эхом возвращается в
-результатах LLM/ASR, роутер атрибутирует usage этому id (admin -> «Использование»). Пусто =
-прямой провайдер (без воркера). Задавай уникальный на каждый `client`-под.
+`CLIENT_ID` (env или yaml `clientId`) - логический id воркера. Эхом возвращается в результатах LLM/ASR, роутер атрибутирует usage этому id (admin -> "Использование"). Пусто = прямой провайдер (без воркера). Задавай уникальный на каждый `client`-под.
 
 ## Опт-аут capability на общем конфиге
 
-Один yaml может содержать и `llm:`, и `asr:`. `client`-под поднимает ОБЕ capability по
-наличию блока. Для разделения на отдельные поды:
+Один yaml может содержать и `llm:`, и `asr:`. `client`-под поднимает ОБЕ capability по наличию блока. Для разделения на отдельные поды:
 - `LLM_PROVIDER=none` - не регистрировать LLM (ASR-only воркер).
 - `STT_PROVIDER=none` - не регистрировать ASR (LLM-only воркер).
 
@@ -237,8 +211,7 @@ love -> POST /love/send_raw -> любой под (stt-ingest) -> stt-queue -> [s
 Правила реплик:
 - `event-router` - **N реплик** (stateless, Kafka делит ai-queue).
 - `stt-worker` - **1 реплика** (clisr-приёмник ASR; веер на воркеры).
-- `llm-router` (1 под на провайдера/модель) - **1 реплика**. Тонкий прокси: пропускную
-  даёт `concurrency`. Разные уровни - в одном поде через `serves`.
+- `llm-router` (1 под на провайдера/модель) - **1 реплика**. Тонкий прокси: пропускную даёт `concurrency`. Разные уровни - в одном поде через `serves`.
 - `llm-router` (clisr-провайдер) - **1 реплика** (clisr-приёмник LLM).
 - `client` (воркеры) - **M реплик**, коннектятся к нужному приёмнику по `SERVER_URL`.
 
@@ -256,17 +229,21 @@ love -> POST /love/send_raw -> любой под (stt-ingest) -> stt-queue -> [s
 ## docker-compose dev
 
 `dev/docker-compose.yaml`:
-- `aibot` `MODE=all` - всё в одном (event-router + llm-router + stt-worker + ingest).
-- `aibot_client_llm` `MODE=client` (`SERVER_URL=ws://aibot:4010`, openai) - LLM-обработчик.
-- `aibot_client_stt` `MODE=client` (openai stt) - STT-обработчик.
-- `transactor.AI_BOT_URL=http://aibot:4010`, `love.AGENTS`, `love-agent.PLATFORM_URL`.
+- `aibot` `MODE=all` - всё в одном (event-router + llm-router + stt-worker + ingest), реестр `dev/config-aibot.yaml`, GigaChat через `LLM_PROVIDER=server` + `GIGACHAT_AUTH_KEY`.
+- `aibot_client_llm` `MODE=client` (`SERVER_URL=ws://aibot:4010`) - LLM-обработчик, провайдер `openai` в `dev/config-aibot-client.yaml`, указывает на локальный OpenAI-совместимый эндпоинт (LM Studio/llama.cpp через `CLISR_HOST`/`CLISR_MODEL`), опт-аут `STT_PROVIDER=none`.
+- `aibot_client_stt` `MODE=client` - STT-обработчик, тот же реестр, ASR-блок `provider: openai` на локальный whisper-эндпоинт, опт-аут `LLM_PROVIDER=none`.
+- `transactor.AI_BOT_URL=http://aibot:4010`, `love.AGENTS=transcribe-dev`, `love-agent.PLATFORM_URL=http://aibot:4010`.
 
-Разделённая топология: заменить `aibot` тремя сервисами `MODE=event-router` /
-`MODE=llm-router` (+`LLM_PROVIDER_IDS`) / `MODE=stt-worker`, направить клиентов на нужный
-router (`SERVER_URL`).
+Разделённая топология: заменить `aibot` тремя сервисами `MODE=event-router` / `MODE=llm-router` (+`LLM_PROVIDER_IDS`) / `MODE=stt-worker`, направить клиентов на нужный router (`SERVER_URL`).
 
 ## Config через YAML / env
 
-Приоритет: YAML (`CONFIG_PATH`/`CONFIG_YAML`) > env. Storage - только явно (`STORAGE_CONFIG`
-или `storage.config` в yaml), неявные `MINIO_*` не используются -> без storage под не
-стартует.
+Приоритет: YAML (`CONFIG_PATH`/`CONFIG_YAML`) > env. Storage - только явно (`STORAGE_CONFIG` или `storage.config` в yaml), неявные `MINIO_*` не используются -> без storage под не стартует.
+
+## Связанные документы
+
+- `docs/features/ai.md` - карта "фича -> файл" всего AI-ассистента, биллинг токенов, `AISpaceSettings`.
+- `docs/llm.md` - устройство LLM/ASR-пайплайна и сценарии.
+- `docs/ai-harness.md` - tool loop, промпты, harness для тестов.
+- `docs/aibot.md` - функциональность бота для пользователя.
+- `docs/memory/ai_bot_context_and_settings.md` - yaml-реестр моделей, dev-конфиги, контекст и настройки (заметки сессии).
