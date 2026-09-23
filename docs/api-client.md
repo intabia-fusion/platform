@@ -2,15 +2,10 @@
 
 [← README](../README.md)
 
-Foundation ships a single npm bundle for programmatic access:
-[`@intabia-fusion/api`](https://www.npmjs.com/package/@intabia-fusion/api).
+Intabia Platform ships a single npm bundle for programmatic access: [`@intabia-fusion/api`](https://www.npmjs.com/package/@intabia-fusion/api).
 
-- Connect to a workspace, read and write documents over REST, subscribe to reactive updates
-  over WebSocket (LiveQuery).
-- Flat subpath exports mirror the source packages:
-  `@intabia-fusion/api/api-client`, `@intabia-fusion/api/core`,
-  `@intabia-fusion/api/tracker`, `@intabia-fusion/api/contact`,
-  `@intabia-fusion/api/chunter`, `@intabia-fusion/api/query`, etc.
+- Connect to a workspace, read and write documents over REST, subscribe to reactive updates over WebSocket (LiveQuery).
+- Flat subpath exports mirror the source packages: `@intabia-fusion/api/api-client`, `@intabia-fusion/api/core`, `@intabia-fusion/api/tracker`, `@intabia-fusion/api/contact`, `@intabia-fusion/api/chunter`, `@intabia-fusion/api/query`, etc.
 
 ## Install
 
@@ -34,14 +29,14 @@ await client.close()
 
 ## Examples
 
-Runnable examples covering tracker, contact, chunter, documents and WebSocket live-query:
-[`intabia-fusion/platform-examples`](https://github.com/intabia-fusion/platform-examples/tree/main/platform-api).
+Runnable examples covering tracker, contact, chunter, documents and WebSocket live-query: [`intabia-fusion/platform-examples`](https://github.com/intabia-fusion/platform-examples/tree/main/platform-api).
 
-The API is mostly compatible with upstream Platform and is kept stable between minor
-versions.
+The API is mostly compatible with upstream Platform and is kept stable between minor versions.
 
 ## Building the bundle
 
-Sources and build pipeline live in [`dev/api`](../dev/api/README.md): the bundle is produced
-with `node scripts/build-bundle.js` + `tsc` + `npm pack`, and the exported surface is
-configured in `dev/api/config.yml`.
+Sources and build pipeline live in [`dev/api`](../dev/api/README.md): the bundle is produced with `node scripts/build-bundle.js` + `tsc` + `npm pack`, and the exported surface is configured in `dev/api/config.yml`.
+
+## Связанные документы
+
+- [integrations.md](./features/integrations.md)

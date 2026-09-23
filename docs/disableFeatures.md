@@ -11,7 +11,7 @@ Please set a DISABLED_FEATURES environment variable for front service container,
 - github - Will disable Github
 - mailboxes - Will disable Platform Mail
 - export - Will disable export
-- integration - Will disable all integrations
+- integrations - Will disable the Settings > Integrations page (the `integration` key only hides the per-channel "add integration" button in the contact editor, not the Settings page)
 - backup - Will disable backup UI
 - invites - Will disable invites UI
 - documents - Will disable Control Documents
@@ -25,5 +25,9 @@ Please set a DISABLED_FEATURES environment variable for front service container,
 - training - Will disable trainings
 - testManagement - Will disable test management
 - process - Will disable process module
-- cards - Will disable cards
+- card - Will disable cards
 - hide-ru-banned-channels - Will hide channels banned in Russia
+
+## Связанные документы
+
+- [platform-infra.md](./features/platform-infra.md)

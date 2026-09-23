@@ -1,50 +1,47 @@
-# Foundation Platform
+# Intabia Platform
 
 TypeScript/Svelte 4 monorepo. pnpm workspaces, Node 24 (`.nvmrc`; engines accept >=20 <25), Webpack 5, Electron, Jest.
 
 ## Repository Structure
 
 - `models/*` - Shared types/models. New components go to api/resources/model package
-- `server/*`, `server-*`, `server-plugins/*` - Server packages
-- `plugins/*` - Client plugins
-- `packages/*` - Reusable utilities
+- `server/*`, `server-plugins/*` - Server packages (account, workspace, backup, pipeline; per-plugin triggers)
+- `plugins/*` - Client plugins: `<x>` (ids/types), `<x>-resources` (Svelte UI), `<x>-assets` (i18n, icons)
+- `foundations/*` - Core framework: `core` (model, client, query), `server` (server core, middleware, DB/storage/Kafka adapters), `hulylake`, `stream` (Go media service), `net`, `utils`
+- `packages/*` - Reusable utilities, UI kit (`packages/ui`, `packages/presentation`)
 - `pods/*` - Deployable service bundles
-- `services/*` - Standalone services
+- `services/*` - Standalone services (ai-bot, love, billing, telegram, calendar, ...)
 - `desktop/`, `desktop-package/` - Electron app
 - `dev/` - Dev-server, docker-compose, local tooling
 - `tests/`, `ws-tests/`, `qms-tests/` - Integration/e2e (Playwright, Docker)
-- `common/` - Shared Rush config, scripts
-- `docs/` - Project documentation (per-topic files)
+- `common/` - Shared scripts, config, pnpm patches, git hooks
+- `docs/` - Project documentation, index in [`docs/README.md`](docs/README.md)
 
 Projects sit 2-3 levels deep, each with its own `package.json`.
 
+## Where features live
+
+Before searching the code for a feature, open the feature map [`docs/features/README.md`](docs/features/README.md): one file per product area (tracker, chat, meetings, documents/QMS, AI, billing, ...) with the packages, data model, main flows with files and symbols, and a "where to look if you need to..." list. How the pieces fit together (plugin layers, client -> transactor -> DB path, pods and services): [`docs/architecture.md`](docs/architecture.md).
+
+The map is maintained with the code: a change that adds, moves or removes a user-visible feature, a key class or an entry point updates the matching `docs/features/<area>.md` in the same PR. Each file carries the commit it was last checked against; a path in it that no longer exists is a bug in the docs.
+
 ## Session memory (`docs/memory/`)
 
-One file per topic, for what the code and git history do NOT already say: a root cause that took
-digging, a third-party quirk with its file:line, a constant whose value came from a measurement.
+One file per topic, for what the code and git history do NOT already say: a root cause that took digging, a third-party quirk with its file:line, a constant whose value came from a measurement.
 
-Keep it minimal. No narrative, no restating the fix, no "what we tried" — a fact per line, with the
-number or the reference that makes it checkable. If a line would be obvious to anyone reading the
-code it touches, drop it. Prefer editing an existing file over adding a near-duplicate; delete a
-note once it stops being true.
+Keep it minimal. No narrative, no restating the fix, no "what we tried" - a fact per line, with the number or the reference that makes it checkable. If a line would be obvious to anyone reading the code it touches, drop it. Prefer editing an existing file over adding a near-duplicate; delete a note once it stops being true.
 
 ## UI Components
 
-Before writing a new `.svelte` component, check [`docs/ui-components/`](docs/ui-components/README.md): catalogs of
-`@hcengineering/ui`, `@hcengineering/presentation` and `plugins/view-resources` (purpose + key props per component,
-"which of the similar ones" guide, `view.component.*` registry) and the two ways to reuse a component across plugins
-without a dependency cycle.
+Before writing a new `.svelte` component, check [`docs/ui-components/`](docs/ui-components/README.md): catalogs of `@hcengineering/ui`, `@hcengineering/presentation` and `plugins/view-resources` (purpose + key props per component, "which of the similar ones" guide, `view.component.*` registry) and the two ways to reuse a component across plugins without a dependency cycle.
 
-The catalog is maintained with the code, in the same PR: adding, renaming or removing an exported component (or its
-key props, or a `view.component.*` id) in those three packages updates the matching table row; a new component that
-overlaps an existing one gets a bullet in "Выбор между похожими". Rules in the catalog README.
+The catalog is maintained with the code, in the same PR: adding, renaming or removing an exported component (or its key props, or a `view.component.*` id) in those three packages updates the matching table row; a new component that overlaps an existing one gets a bullet in "Выбор между похожими". Rules in the catalog README.
 
 ## Build & Validation
 
 Use `pnpm build:*` from the repo root. All accept `--to PKG` to scope to a package + dependencies.
 
-Type checking is **part of the build**: one native `tsc` (TypeScript 7) pass per package emits
-`lib/` and `types/` together. There is no separate validate phase.
+Type checking is **part of the build**: one native `tsc` (TypeScript 7) pass per package emits `lib/` and `types/` together. There is no separate validate phase.
 
 ```bash
 pnpm install --frozen-lockfile    # Install deps
@@ -59,13 +56,9 @@ pnpm --filter PKG add DEP         # Add dependency to a package (from anywhere)
 pnpm -w run SCRIPT                # Run a root script from any directory in the tree
 ```
 
-`pnpm run` only sees the nearest `package.json`, so from inside a package use `pnpm -w run` to
-reach the root scripts (`pnpm -w run docker:up`). After adding a dependency by hand, run
-`pnpm check-versions` — nothing enforces a single version across packages on its own.
+`pnpm run` only sees the nearest `package.json`, so from inside a package use `pnpm -w run` to reach the root scripts (`pnpm -w run docker:up`). After adding a dependency by hand, run `pnpm check-versions` - nothing enforces a single version across packages on its own.
 
-The workspace is plain pnpm: projects are listed in `pnpm-workspace.yaml`, the lockfile is
-`pnpm-lock.yaml` at the root. Rush is gone; `rush`/`rushx` no longer exist.
-`pnpm check-versions` replaces `rush check`.
+The workspace is plain pnpm: projects are listed in `pnpm-workspace.yaml`, the lockfile is `pnpm-lock.yaml` at the root. Rush is gone; `rush`/`rushx` no longer exist. `pnpm check-versions` replaces `rush check`.
 
 Flags: `--to PKG`, `--list`, `-v/--verbose`, `--force` (disable cache).
 
@@ -90,11 +83,7 @@ pnpm run build
 
 Not every package defines `lint`. On "command not defined", use `pnpm run build` or `pnpm build:lint --to <pkg>`.
 
-Two TypeScript versions are in play: packages depend on 6.0.3, which eslint, ts-jest and a package's
-own `node_modules/.bin/tsc` use, while the build compiles with the `typescript7` alias
-(`npm:typescript@7.0.2`) through `compile`. The two are companion releases of the same checker (7 is
-the Go port), so `./node_modules/.bin/tsc --noEmit -p tsconfig.json` inside a package is a valid
-quick typecheck — `pnpm run build` remains the authoritative one.
+Two TypeScript versions are in play: packages depend on 6.0.3, which eslint, ts-jest and a package's own `node_modules/.bin/tsc` use, while the build compiles with the `typescript7` alias (`npm:typescript@7.0.2`) through `compile`. The two are companion releases of the same checker (7 is the Go port), so `./node_modules/.bin/tsc --noEmit -p tsconfig.json` inside a package is a valid quick typecheck - `pnpm run build` remains the authoritative one.
 
 Do NOT:
 - Run `pnpm build` without `--to` for error checking (hits unrelated broken packages).
@@ -185,8 +174,7 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `pnpm run uitest` - it
-wires `LOCAL_URL`, `DEV_URL` and the config.
+Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `pnpm run uitest` - it wires `LOCAL_URL`, `DEV_URL` and the config.
 
 ```bash
 cd tests/sanity
@@ -202,32 +190,19 @@ Flags:
 - `-g "<name>"` or append `:LINE` to the spec path to run a single test.
 - Extra playwright flags pass through `pnpm run uitest` unchanged.
 
-Do not run bare `npx playwright test` - without `pnpm run uitest`'s env wiring and
-`-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on
-login with `BadRequest`.
+Do not run bare `npx playwright test` - without `pnpm run uitest`'s env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on login with `BadRequest`.
 
 ### Tracing and retries
 
-`on-first-retry` everywhere, local and CI alike. A green run then pays nothing, and a failure that
-reproduces is traced by its own retry. Override with `TRACE_MODE` (`retain-on-failure`, `on`,
-`off`, `on-all-retries`); an unknown value warns and falls back to the default.
+`on-first-retry` everywhere, local and CI alike. A green run then pays nothing, and a failure that reproduces is traced by its own retry. Override with `TRACE_MODE` (`retain-on-failure`, `on`, `off`, `on-all-retries`); an unknown value warns and falls back to the default.
 
-**Turn tracing up when hunting a flake.** `on-first-retry` traces the retry, which for a flake is
-the attempt that *passed* — the trace shows a green run and says nothing about why the first one
-failed. `TRACE_MODE=retain-on-failure` keeps the failing attempt's trace instead, at the cost of
-recording every test: a full trace (`snapshots` + `screenshots` + `sources`, ~18MB per test) is
-written for all of them and thrown away on pass. That is the whole reason it is not the default —
-it roughly doubles a local run. Turn it on for the run where you are chasing the flake, off again
-after.
+**Turn tracing up when hunting a flake.** `on-first-retry` traces the retry, which for a flake is the attempt that *passed* - the trace shows a green run and says nothing about why the first one failed. `TRACE_MODE=retain-on-failure` keeps the failing attempt's trace instead, at the cost of recording every test: a full trace (`snapshots` + `screenshots` + `sources`, ~18MB per test) is written for all of them and thrown away on pass. That is the whole reason it is not the default - it roughly doubles a local run. Turn it on for the run where you are chasing the flake, off again after.
 
-`--retries=0` is no longer needed to keep runs fast either way. The same default and the same
-`TRACE_MODE` override apply to `qms-tests/sanity` and `ws-tests/sanity`.
+`--retries=0` is no longer needed to keep runs fast either way. The same default and the same `TRACE_MODE` override apply to `qms-tests/sanity` and `ws-tests/sanity`.
 
-`html` is configured with `open: 'never'`; without it the reporter parks a server on failure and
-hangs the terminal.
+`html` is configured with `open: 'never'`; without it the reporter parks a server on failure and hangs the terminal.
 
-Reports after a run: `playwright-report/index.html`, `playwright-report.json` (machine-readable
-twin), `allure-results/`, traces under `test-results/`.
+Reports after a run: `playwright-report/index.html`, `playwright-report.json` (machine-readable twin), `allure-results/`, traces under `test-results/`.
 
 ### Reading a failed run
 
@@ -238,16 +213,9 @@ cd tests/sanity && node analyze_failures.js     # real failures vs flakes, group
 node analyze_failures.js --all                  # every test, not just the top ones
 ```
 
-A test that passed on a retry is a flake; one still red after its retries is a real failure. The
-tool groups both by error class and by file, prints ready-to-paste `show-trace` commands and the
-slowest tests. Locally the suite runs at roughly 7% first-attempt flakiness, so a large flake
-count is normal - what matters is the real-failure number. Local-only failures around
-love/meetings usually mean LiveKit, not a regression; CI is the reference.
+A test that passed on a retry is a flake; one still red after its retries is a real failure. The tool groups both by error class and by file, prints ready-to-paste `show-trace` commands and the slowest tests. Locally the suite runs at roughly 7% first-attempt flakiness, so a large flake count is normal - what matters is the real-failure number. Local-only failures around love/meetings usually mean LiveKit, not a regression; CI is the reference.
 
-The evidence of a run is destroyed by the next one. `test-results/` is wiped when a run starts,
-and *any* invocation through this config rewrites `playwright-report.json` and
-`playwright-report/` - including `playwright test --list`, which leaves a report of 416 skipped
-tests behind. Copy what you need before rerunning:
+The evidence of a run is destroyed by the next one. `test-results/` is wiped when a run starts, and *any* invocation through this config rewrites `playwright-report.json` and `playwright-report/` - including `playwright test --list`, which leaves a report of 416 skipped tests behind. Copy what you need before rerunning:
 
 ```bash
 cp -r test-results /tmp/run-$(date +%s)      # error-context.md, screenshots, traces
@@ -267,10 +235,6 @@ cd tests
 ./do-test.sh --report-only         # re-report from ./profiles
 ```
 
-The service list is generated from the running compose project by `gen-profile-overlay.js`, so a
-branch that adds or drops a pod needs no edit. Profiles land in `tests/profiles/<service>/`; `./profile-report.sh` resolves frames back to source
-through each bundle's source map and refuses to resolve when the bundle on disk no longer matches
-the one the container ran. Collect only via `./profile-collect.sh` or `docker compose stop` - a
-SIGKILL loses the profile. Details in `tests/readme.md`.
+The service list is generated from the running compose project by `gen-profile-overlay.js`, so a branch that adds or drops a pod needs no edit. Profiles land in `tests/profiles/<service>/`; `./profile-report.sh` resolves frames back to source through each bundle's source map and refuses to resolve when the bundle on disk no longer matches the one the container ran. Collect only via `./profile-collect.sh` or `docker compose stop` - a SIGKILL loses the profile. Details in `tests/readme.md`.
 
 For everything love/meetings (model, protocols, defects, test setup with LiveKit and `meetings-ws`), see [`docs/love.md`](docs/love.md).

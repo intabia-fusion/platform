@@ -81,15 +81,15 @@ sh ./scripts/fast-start.sh
 | Документ | Содержание |
 | --- | --- |
 | [Getting started](./docs/getting-started.md) | Требования, установка, сборка, dev-режим, команды, разбор проблем |
+| [Карта фич](./docs/features/README.md) | Все продуктовые области: что делают, как работают, в каких пакетах и файлах реализованы |
+| [Архитектура](./docs/architecture.md) | Слои монорепо, устройство плагина, путь запроса клиент -> транзактор -> БД, поды и сервисы |
 | [Testing](./docs/testing.md) | Юнит-тесты, UI-тесты Playwright, интеграционные стенды |
 | [API client](./docs/api-client.md) | npm-пакет `@intabia-fusion/api`, примеры REST и LiveQuery |
 | [WSL build guide](./docs/wsl.md) | Сборка на Windows через WSL |
 | [Features](./features.md) | Что этот форк меняет относительно upstream Platform |
 | [AGENTS.md](./AGENTS.md) | Структура репозитория, стиль кода, процесс сборки, соглашения |
-| [docs/](./docs) | Заметки по темам (LLM, встречи, биллинг, регионы, ...) |
+| [docs/](./docs/README.md) | Оглавление всех заметок по темам (LLM, встречи, биллинг, регионы, ...) |
 | [Changelog](./changelog.md) | Изменения по версиям |
-
-Документация в `docs/` ведётся на английском.
 
 ## Версии
 

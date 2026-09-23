@@ -56,7 +56,7 @@ workspaces:                        # optional per-workspace overrides
 | YAML over env-encoded strings | Readable, validated at startup, supports comments |
 | `external` / `internal` instead of positional `;` | Self-documenting, no parsing ambiguity |
 | `workspaces` section | Allows dedicated infrastructure for specific heavy or compliance-sensitive workspaces |
-| Region key `''` (empty string) = default | Matches current behavior — workspaces without explicit region fall here |
+| Region key `''` (empty string) = default | Matches current behavior - workspaces without explicit region fall here |
 | Arrays for transactors/collaborators | Hash-based selection across the array via `hashWorkspace` |
 
 ## TypeScript Types
@@ -115,10 +115,10 @@ This means zero changes needed for existing deployments until they opt in.
 **Package:** `server/account/src/utils.ts` (extend existing endpoint logic)
 
 1. Add `RegionConfig`, `RegionEndpoints`, `EndpointEntry` interfaces to `server/account/src/types.ts`
-2. Add config loader: `loadRegionConfig()` — reads YAML/JSON or falls back to legacy env vars
+2. Add config loader: `loadRegionConfig()` - reads YAML/JSON or falls back to legacy env vars
 3. Refactor `getEndpointInfo()` to use `RegionConfig` internally
-4. Add `getCollaboratorEndpoint(workspace, region, kind)` — same logic as `getEndpoint` but for collaborators
-5. Add `resolveEndpoints(config, workspaceUuid, region)` → returns `{ transactor: EndpointEntry, collaborator: EndpointEntry }` — single place for the full selection algorithm including workspace overrides
+4. Add `getCollaboratorEndpoint(workspace, region, kind)` - same logic as `getEndpoint` but for collaborators
+5. Add `resolveEndpoints(config, workspaceUuid, region)` → returns `{ transactor: EndpointEntry, collaborator: EndpointEntry }` - single place for the full selection algorithm including workspace overrides
 
 ### Phase 2: Account service
 
@@ -145,8 +145,8 @@ This means zero changes needed for existing deployments until they opt in.
 **Package:** `packages/presentation`, `plugins/text-editor-resources`, `dev/prod`
 
 1. After login (when workspace is selected), re-fetch or update `CollaboratorUrl` metadata from the login response (`LoginInfoWorkspace.collaboratorEndpoint`)
-2. `presentation/src/collaborator.ts` — no changes needed if metadata is already correct
-3. `text-editor-resources/src/provider/utils.ts` — no changes needed if metadata is already correct
+2. `presentation/src/collaborator.ts` - no changes needed if metadata is already correct
+3. `text-editor-resources/src/provider/utils.ts` - no changes needed if metadata is already correct
 
 This is the cleanest approach: the account service returns the correct collaborator URL per workspace, and the client just uses it.
 
@@ -169,21 +169,21 @@ This is the cleanest approach: the account service returns the correct collabora
 ### Phase 6: Cleanup
 
 1. Deprecate `TRANSACTOR_URL` and `COLLABORATOR_URL` env variables (keep working, log warning)
-2. Remove duplicate `hashWorkspace` from `fulltext.ts` middleware — import from shared location
+2. Remove duplicate `hashWorkspace` from `fulltext.ts` middleware - import from shared location
 3. Update docker-compose files and deployment docs with examples of the new config format
 
 ## Migration Path
 
 | Deployment state | Action needed |
 |-----------------|---------------|
-| Single transactor + single collaborator | None — old env vars work as before |
-| Multiple transactors (current `;,` format) | None — old format still parsed |
+| Single transactor + single collaborator | None - old env vars work as before |
+| Multiple transactors (current `;,` format) | None - old format still parsed |
 | Want to add multiple collaborators | Set `REGION_CONFIG` or `REGION_CONFIG_JSON` with the new YAML format |
 | Want per-workspace overrides | Set `workspaces` section in YAML config |
 
 ## Decisions
 
-1. **Config hot-reload** — Not required, load once at startup.
-2. **`LoginInfoWorkspace`** — Add `collaboratorEndpoint: EndpointInfo` alongside existing `endpoint: EndpointInfo`.
-3. **YAML parser** — Add `js-yaml` dependency to `server/account`.
-4. **Per-workspace overrides** — Only one entry per service type is valid (no array-based hash selection for workspace overrides — a workspace override pins to a specific server).
+1. **Config hot-reload** - Not required, load once at startup.
+2. **`LoginInfoWorkspace`** - Add `collaboratorEndpoint: EndpointInfo` alongside existing `endpoint: EndpointInfo`.
+3. **YAML parser** - Add `js-yaml` dependency to `server/account`.
+4. **Per-workspace overrides** - Only one entry per service type is valid (no array-based hash selection for workspace overrides - a workspace override pins to a specific server).

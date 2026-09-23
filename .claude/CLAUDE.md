@@ -1,11 +1,14 @@
 Please read AGENTS.md in the repository root first.
 
+To locate a feature, start from `docs/features/README.md` (feature map) and `docs/architecture.md`, then grep.
+A change to a feature's entry points or model updates its `docs/features/<area>.md` in the same change.
+
 ## Session Memory (docs/memory)
 
 Each session: capture important project moments into `docs/memory/<topic>.md`.
 - Record non-obvious decisions, root causes, edge cases, integration quirks discovered during the session
 - One file per topic; update incrementally, keep concise
-- Follow `AGENTS.md` "Documentation Policy" — skip obvious behavior and trivial setup
+- Follow `AGENTS.md` "Session memory" — skip obvious behavior and trivial setup
 - Before starting work, scan `docs/memory/` for relevant existing notes
 
 ## Translations

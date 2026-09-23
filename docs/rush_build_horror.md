@@ -2,9 +2,7 @@
 
 ## TL;DR
 
-After running `rush update --recheck`, your first `rush build` can take **8x longer** than subsequent builds. 
-The root cause is that `pnpm install --force` **recreates all files in node_modules with new inodes**, 
-invalidating the OS page cache and forcing Node.js to read everything from disk.
+After running `rush update --recheck`, your first `rush build` can take **8x longer** than subsequent builds. The root cause is that `pnpm install --force` **recreates all files in node_modules with new inodes**, invalidating the OS page cache and forcing Node.js to read everything from disk.
 
 
 | Scenario | Build Time |
@@ -38,7 +36,7 @@ $ rush build
 rush build (10.97 seconds)  # FAST! Not what we expected
 ```
 
-**Page cache eviction is NOT the cause** — build is still fast after `sudo purge`.
+**Page cache eviction is NOT the cause** - build is still fast after `sudo purge`.
 
 ### Measuring Per-Package Times
 
@@ -52,7 +50,7 @@ Total sum: 1172 seconds
 
 **Subsequent build:**
 ```
-Average per package: 0.30 seconds  
+Average per package: 0.30 seconds
 Total sum: 135 seconds
 ```
 
@@ -77,7 +75,7 @@ $ rm -rf ./common/temp/build-cache
 $ rush build
 rush build (1 minute 21.8 seconds)  # SLOW!
 
-$ rm -rf ./common/temp/build-cache  
+$ rm -rf ./common/temp/build-cache
 $ rush build
 rush build (12.04 seconds)  # Fast again
 ```
@@ -95,12 +93,12 @@ $ ls -li ./common/temp/node_modules/.pnpm/esbuild@0.25.12/.../main.js
 
 $ pnpm install --force
 
-# After pnpm install --force  
+# After pnpm install --force
 $ ls -li ./common/temp/node_modules/.pnpm/esbuild@0.25.12/.../main.js
 233691414 -rw-r--r--  1 user  staff  88706 main.js
 ```
 
-**The inode changed!** This means `pnpm install --force` **recreates the files** — they are new files as far as the OS is concerned.
+**The inode changed!** This means `pnpm install --force` **recreates the files** - they are new files as far as the OS is concerned.
 
 ## Root Cause
 
@@ -112,9 +110,9 @@ $ ls -li ./common/temp/node_modules/.pnpm/esbuild@0.25.12/.../main.js
    - Files get new inodes (even if content is identical)
    - This takes ~2 minutes for 2.4GB of node_modules
 
-3. **OS page cache is inode-based** — new inode = cache miss
+3. **OS page cache is inode-based** - new inode = cache miss
    - Even though `sudo purge` clears page cache, the files with OLD inodes would still be quickly re-cached
-   - With NEW inodes, there's nothing to re-cache — they're brand new files
+   - With NEW inodes, there's nothing to re-cache - they're brand new files
 
 4. **First `rush build`** must read 2.4GB from disk
    - 459 packages × Node.js startup = lots of file reads
@@ -181,7 +179,7 @@ For normal development, plain `rush update` is sufficient and **much** faster.
    ```yaml
    # Use this
    - run: rush update
-   
+
    # Not this (unless you have a reason)
    - run: rush update --recheck
    ```
@@ -207,7 +205,7 @@ Key insight: **It's not about cache eviction, it's about cache invalidation thro
 
 Understanding this behavior helps you:
 - Make informed decisions about when to use `--recheck`
-- Properly diagnose "slow build" issues  
+- Properly diagnose "slow build" issues
 - Optimize your CI/CD pipelines
 - Know that the second build will always be fast
 

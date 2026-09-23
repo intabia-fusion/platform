@@ -42,6 +42,10 @@ The following table summarizes which clients receive live updates:
 
 ## Deletion Handling
 
-When a space is deleted, it is immediately removed from the active `spacesMap`. To prevent deletion events from falling back to a global broadcast (which would leak the space deletion to unauthorized users), `SpaceSecurityMiddleware` retrieves the deleted space's metadata from `ctx.contextData.removedMap` (which is populated during the transaction flow).
+When a space is deleted, it is removed from the active `spacesMap`. `SpaceSecurityMiddleware`'s `getTxSpaceInfo` helper falls back to `ctx.contextData.removedMap` (populated during the transaction flow) to still find the space's metadata and restrict the broadcast of the deletion transaction (both for the space itself and any objects deleted inside it) to its members/owners.
 
-The broadcast target resolver retrieves the deleted space metadata from this map to correctly restrict the broadcast of the deletion transaction (both for the space itself and any objects deleted inside it) to its authorized members/owners. If a space does not exist anywhere (neither in `spacesMap` nor in `removedMap`), the transaction is broadcasted to no one by returning `{ target: [] }`.
+If a space is not found in either `spacesMap` or `removedMap`, `getTxSpaceInfo` returns `undefined`. An `undefined` target is treated by `BroadcastMiddleware.doBroadcast` as "no restriction": the transaction is broadcast to all workspace sessions, not to none.
+
+## Связанные документы
+
+- [architecture.md](architecture.md) - серверный pipeline и `BroadcastMiddleware`.

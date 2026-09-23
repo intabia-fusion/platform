@@ -1,195 +1,90 @@
 # Отложенное удаление пространств и аккаунтов
 
-Спека: `foundation-tasks/docs/admin/2026-09-10-101-deferred-deletion.md` (блок TSK-2026-09-10-101..200).
+Область: [Аутентификация, авторизация и онбординг](../features/auth-onboarding.md)
 
 ## Модель
 
-Две колонки `delete_on` (миграции v43 workspace_status, v44 account) вместо новых режимов.
+Две колонки `delete_on` (миграция v43 `workspace_status`, v44 `account`) вместо новых режимов жизненного цикла.
 
-Пространство: `deleteOn` выставлен, mode остаётся `active` -> 7 дней readonly -> планировщик
-переводит в `archiving-pending-backup` -> `archived` -> в `deleteOn` переводит в `pending-deletion`.
-`archived` без `deleteOn` - это по-прежнему ручной архив админа, он не истекает.
+Пространство: `deleteOn` выставлен, mode остаётся `active` -> 7 дней readonly -> планировщик переводит в `archiving-pending-backup` -> `archived` -> по достижении `deleteOn` переводит в `pending-deletion`. `archived` без `deleteOn` - это ручной архив админа, он не истекает.
 
-Отмена (`cancel-delete`) снимает только `deleteOn` и не трогает mode: "не удаляй", а не "отменить
-архивацию". Если к моменту отмены пространство уже уехало в архив, оно там и остаётся - обратно
-его возвращает отдельный `unarchive`. Поэтому `delete` разрешён и для `archived`: такое
-пространство просто ждёт дедлайн, а readonly-окно к нему не применяется.
+Отмена (`cancel-delete`) снимает только `deleteOn` и не трогает mode: "не удаляй", а не "отменить архивацию". Если пространство уже уехало в архив, оно там и остаётся - обратно возвращает отдельный `unarchive`. Поэтому `delete` разрешён и для `archived`: такое пространство просто ждёт дедлайн, readonly-окно к нему не применяется.
 
-Аккаунт: только метка, ничего не чистится. Логин работает, `LoginInfo.deleteOn` заставляет клиента
-спросить, отменять ли удаление. `cancelAccountDeletion` - явное действие, автоотмены на входе нет.
+Аккаунт: только метка, ничего не чистится сразу. Логин работает, `LoginInfo.deleteOn` заставляет клиента спросить, отменять ли удаление. `cancelAccountDeletion` - явное действие, автоотмены на входе нет.
+
+## Семантика purge
+
+`person` и `social_id` не удаляются, а обезличиваются - строки нужны, т.к. на `person` ссылаются `workspace.created_by`/`billing_account` (FK без ON DELETE), а `_id` социального идентификатора продолжает резолвиться в данных пространств.
+
+- `social_id`: `value` -> `value#<_id>`, `isDeleted: true`, `verifiedOn` сброшен - email свободен для новой регистрации, сам идентификатор не переиспользуется.
+- `person`: `firstName`/`lastName`/`phoneHint` очищены, строка остаётся.
+- Hard delete: `account` (+`account_passwords` явным DELETE, FK без CASCADE), `workspace_members`, `user_profile`, `mailbox`/`mailbox_secrets`, `integrations`/`integration_secrets`, `subscription` и `workspace_permission` (`subscription_account_fk`/`workspace_permissions_account_fk` - обе NOT NULL, чистятся перед удалением строки account).
+
+Гвард "единственный owner" - одно правило для self и админа: нельзя удалить аккаунт, пока человек единственный owner пространства, которое не в `isDeletingMode` и у которого `deleteOn == null` (пространство уже поставленное на удаление гвард не блокирует). - `findOrphanedWorkspaces`, `server/account/src/deletion.ts`; наружу торчит read-only RPC `canDeleteAccount`.
+
+Не удаляется при удалении пространства: дропается только БД (`server/workspace-service/src/service.ts`, `doCleanup`). Остаются блобы в S3/datalake (потребителя `QueueWorkspaceEvent.Deleted` для очистки блобов нет), бэкапы (backup-воркер только пропускает неактивные, `deleteRecursive` у S3-стораджа - заглушка).
 
 ## Что переиспользовано, а не написано
 
-- Readonly: `extra.readonly === 'true'` в токене. Транзактор режет все транзакции
-  (`foundations/server/packages/server/src/client.ts:263`), collaborator открывает документы на
-  чтение (`server/collaborator/src/extensions/authentication.ts:45`).
+- Readonly: `extra.readonly === 'true'` в токене - транзактор режет все транзакции (`foundations/server/packages/server/src/client.ts`), collaborator открывает документы на чтение (`server/collaborator/src/extensions/authentication.ts`).
 - Архивирование и восстановление: существующая цепочка `archiving-*` -> `archived` -> `unarchive`.
-- Отказ во входе для архива: транзактор на `isArchivingMode`
-  (`foundations/server/packages/server/src/sessionManager.ts:679`).
+- Отказ во входе для архива: транзактор на `isArchivingMode` (`foundations/server/packages/server/src/sessionManager.ts`).
+- `selectWorkspace` намеренно выдаёт токен архивированного пространства: `performWorkspaceOperation` требует токен того же пространства, и без него `unArchive` из UI не вызвать - альтернатива для этого случая - проверка роли Owner на целевом пространстве.
 
-## Ловушки, найденные по ходу
+## Ловушки
 
-- `selectWorkspace` намеренно выдаёт токен архивированного пространства: `performWorkspaceOperation`
-  требует токен того же пространства (`serviceOperations.ts:921`), и без этого токена `unArchive`
-  из UI не вызвать. Добавлена альтернатива - проверка роли Owner на целевом пространстве.
-- `doCleanup` (`server/workspace-service/src/service.ts:408`) игнорирует параметр `cleanIndexes` и
-  всегда сносит только БД. Блобы не удаляет ни архивирование, ни удаление - открытый хвост
-  TSK-2026-09-10-166.
-- Очистка поля через `undefined` в `Operations<T>`: `buildUpdateClause` берёт `Object.keys(ops)`,
-  так что ключ со значением `undefined` попадает в SET и становится NULL.
-- В тестах `process.env.X = undefined` записывает строку "undefined" и ломает `parseInt` в
-  последующих тестах - восстанавливать через `delete`.
-- Ожидаемые SQL-строки в `postgres.test.ts` перечисляют колонки статуса буквально: любое поле в
-  json_build_object нужно добавить и туда.
+- `doCleanup` игнорирует параметр `cleanIndexes` и всегда сносит только БД - блобы не удаляет ни архивирование, ни удаление.
+- Очистка поля через `undefined` в `Operations<T>`: `buildUpdateClause` берёт `Object.keys(ops)`, поэтому ключ со значением `undefined` попадает в SET и становится NULL.
+- В тестах `process.env.X = undefined` записывает строку `"undefined"` и ломает `parseInt` в последующих тестах - восстанавливать через `delete`.
+- Ожидаемые SQL-строки в `postgres.test.ts` перечисляют колонки статуса буквально - новое поле в `json_build_object` нужно добавить и туда.
+- Новый `IntlString`, объявленный в клиентском плагине (`login`), может пересекаться с ключом, уже объявленным в `mergeIds` соответствующего `*-resources` - `identify()` падает, `LoadHelper` после 5 неудачных попыток загрузки уходит в `location.reload()` по кругу; в консоли браузера видно причину, в логах пода - нет.
+- `delete_on` должен быть в `timestampFields` коллекции (`postgres.ts`), иначе `deleteOn` в ответе API приходит как строка миллисекунд (`"1791056586129"`), и `new Date(строка)` в UI даёт Invalid Date.
 
-## Конфигурация
+## Немедленное удаление и блокировка (админ)
 
-`DELETION_GRACE_DAYS` (21), `DELETION_READONLY_DAYS` (7) - account-service.
-`DELETED_RETENTION_DAYS` (было 7, стало 1) - backup pod; 0 и меньше выключает чистку архива,
-этим пользуется одноразовый пайплайн workspace-service.
+`delete-now` (`WorkspaceUserOperation`): mode -> `pending-deletion`, `isDisabled`, `deleteOn` сбрасывается, attempts обнуляются; для аккаунта - `deleteAccount(force=true)` -> `purgeAccount`. Не-админу недоступно: self-service список в `performWorkspaceOperation` - только `unarchive` и `cancel-delete`.
 
-## CI PR #434
+`account.blocked_on` (миграция v45). Проверка - `ensureNotBlocked` (`server/account/src/utils.ts`) в четырёх точках выдачи токена: `login`, `validateOtp`, `loginOrSignUpWithProvider`, `selectWorkspace`. Уже выданный workspace-токен транзактор проверяет сам, без похода в account, поэтому открытая вкладка живёт до следующего `selectWorkspace`. RPC `adminSetAccountBlocked` - OTP + audit, себя заблокировать нельзя.
 
-**Бесконечный reload страницы логина (uitest-pg, uitest-qms).** Дублирующийся IntlString: я добавил
-`Copied` в `plugins/login/src/index.ts`, а он уже объявлен в mergeIds
-`plugins/login-resources/src/plugin.ts:44`. `identify()` падает с
-`Error: 'identify' overwrites 'Copied' for login:string`, следом `failed to load login
-TypeError: t.default is not a function`, и `LoadHelper` (`dev/prod/src/platform.ts:440`) после 5
-попыток делает `location.reload()` - по кругу. Проверять новые строки на пересечение с mergeIds
-соответствующего *-resources.
+`runAdminAction` (`admin-resources/src/utils.ts`) показывает MessageBox с переводом статуса вместо `console.error`. Перед удалением аккаунта панель спрашивает `canDeleteAccount(uuid)` - он принимает чужой uuid для админа и возвращает `canDelete: false` и тогда, когда админ удаляет сам себя.
 
-Диагностируется так: собрать `dev/prod` (`rushx package`), `docker cp dist/. sanity-front0-1:/app/dist/`
-и открыть страницу - в консоли видно всё сразу. По логам CI не видно ничего: артефакты Playwright
-консоль браузера не сохраняют, а в логах account-пода запросов от браузера просто нет.
+## Окна отсрочки и письма
 
-**BIGINT приезжает строкой.** `delete_on` не был в `timestampFields` коллекций, поэтому
-`workspaceStatus`/`account` отдавали `deleteOn` как `"1791056586129"`. В UI это `new Date(строка)` -
-Invalid Date. Лечится добавлением поля в `timestampFields` (`postgres.ts:464` и `:595`), после чего
-отсутствующее значение приезжает как `null`, а не `undefined`.
+`getDeletionPolicy` (публичный RPC) отдаёт `graceDays`/`readonlyDays` из ENV; строки подтверждения берут их параметрами (ICU plural во всех локалях `server/account/lang`) вместо захардкоженных чисел.
 
-## Немедленное удаление (админ)
+`notifyWorkspaceDeletionScheduled` - владельцам, с датой и ссылкой на отмену; при `delete-now` (и при финальном переводе в `pending-deletion` из sweep) - текст без отмены. Принимает `schedule?: {deleteOn, readonlyDays}`; `readonlyDays: 0`, если пространство уже было `archived` на момент планирования - ICU-plural с веткой `=0` убирает фразу про read-only.
 
-`delete-now` в `WorkspaceUserOperation`: mode -> `pending-deletion`, `isDisabled`, `deleteOn` сбрасывается,
-attempts обнуляются. Кнопки "Delete now" на вкладках Workspaces и Accounts (у аккаунта это
-`deleteAccount(force=true)` -> `purgeAccount`). Не-админу недоступно: self-service список в
-`performWorkspaceOperation` - только `unarchive` и `cancel-delete`.
+`notifyAccountDeletion` - на email аккаунта; при purge отправляется до `db.deleteAccount`, иначе адрес уже обезличен. Код подтверждения (`sendOperationOtp`) общий для админки и self-service, шаблон выбирает точка входа (`OtpKind`): `requestAdminOperationOtp` -> `AdminOtp*`, `requestOperationOtp` -> `OperationOtp*` - без этого владелец при удалении своего пространства получал письмо "действие администратора..." вместо своего.
 
-## Что вскрылось при проверке на стенде
+`sweepScheduledDeletions` резолвит branding письма через `getBranding`; у `purgeAccount` источника языка нет - `Account.locale` есть в типе, но нигде не пишется в `server/account`, поэтому остаётся `null`.
 
-- **Чистка аккаунта падала на FK.** `subscription_account_fk` и `workspace_permissions_account_fk`
-  - единственные оставшиеся ссылки на `account` (остальные миграции перевели на `person`).
-  Обе колонки NOT NULL, поэтому `deleteAccount` (`postgres.ts`) теперь удаляет эти строки перед
-  удалением аккаунта. Касалось и отложенного `sweepScheduledDeletions`, не только force.
-- **Пометка аккаунта молча не срабатывает**, если он единственный владелец живого пространства:
-  сервер отдаёт Forbidden, а AccountsTab просто пишет в консоль. Сначала пространство - потом аккаунт.
-- **Пайплайн удаления живёт только при `WS_OPERATION=all+backup`** (`getPendingWorkspace` отдаёт
-  `pending-deletion` только для этого режима). На стенде `tests/` его нет, есть в `ws-tests/`.
-  Поэтому sanity-тест ждёт `pending-deletion`, а не `deleted`.
-- **CI uitest-workspaces (PR #434).** `AdminPage.gotoAdmin` уходил на `/login/admin` до того, как
-  редирект логина завершится: сессия терялась, панель отдавала форму логина, тест падал на
-  `[data-id="tab-workspaces"]`. Ожидание `selectWorkspace|workbench` перенесено внутрь `gotoAdmin`.
+Локали писем: файл в `server/account/lang` сам по себе ничего не даёт - строки отдаёт загрузчик `accountStrings` (`server/account-service/src/index.ts`), который должен явно знать каждую локаль; до FUSIO-1339 знал только `en`/`ru`. Паритет ключей и плейсхолдеров с `plugin.ts`/`en.json` держит `server/account/src/__tests__/lang.test.ts`.
 
-## Блокировка аккаунта (админ)
-
-`account.blocked_on` (миграция v45). Проверка - `ensureNotBlocked` (`utils.ts`) в четырёх точках выдачи
-токена: `login`, `validateOtp`, `loginOrSignUpWithProvider`, `selectWorkspace`. Уже выданный
-workspace-токен транзактор проверяет сам, без похода в account, поэтому открытая вкладка живёт до
-следующего `selectWorkspace` (не дольше времени жизни токена). RPC `adminSetAccountBlocked` -
-OTP + audit, себя заблокировать нельзя. Фильтр `blockedOnly` в `listAccounts`.
-
-## Обратная связь в админке
-
-`runAdminAction` (`admin-resources/src/utils.ts`) показывает MessageBox с переводом статуса вместо
-`console.error`; `false` от `performWorkspaceOperation` (ops == 0) тоже виден. Перед удалением
-аккаунта панель спрашивает `canDeleteAccount(uuid)` - он теперь принимает чужой uuid для админа и
-возвращает `canDelete: false` ещё и тогда, когда админ удаляет сам себя (совпадает с `deleteAccount`).
-
-## "Удалить сейчас" как галка
-
-`OtpConfirmDialog` с `optionLabel` закрывается объектом `{ code, option }` вместо строки; без пропа
-контракт прежний. Отдельная кнопка DeleteNow убрана и в Accounts, и в Workspaces.
-
-## Окна отсрочки в текстах
-
-`getDeletionPolicy` (публичный RPC) отдаёт `graceDays`/`readonlyDays` из ENV; строки подтверждения
-берут их параметрами (`{days}`, `{readonlyDays}`, ICU plural в ru/en/cs). Раньше 7 и 21 были
-зашиты в переводы - замечание из ревью PR #434. Сами переменные проброшены в `dev/docker-compose.yaml`
-и `ws-tests/docker-compose.yaml`.
-
-## Письма
-
-`notifyWorkspaceDeletionScheduled` - владельцам: дата и ссылка на отмену, а при `delete-now` (и при
-финальном переводе в `pending-deletion` из sweep) текст без отмены. `notifyAccountDeletion` - на
-email аккаунта; при purge отправляется ДО `db.deleteAccount`, иначе адрес уже обезличен.
-Строки - `server/account/lang` (en + ru, остальные языки падают на en).
-
-Код подтверждения: `sendOperationOtp` общий для админки и self-service, шаблон выбирает точка входа
-(`OtpKind`): `requestAdminOperationOtp` -> `AdminOtp*`, `requestOperationOtp` -> `OperationOtp*`. До
-этого владелец при удалении своего пространства получал письмо "действие администратора... введите в
-админ-панели". На стенде не видно: при `ADMIN_OTP_DEV_CODE` письмо с кодом не отправляется вовсе.
-
-`notifyWorkspaceDeletionScheduled` берёт `schedule?: {deleteOn, readonlyDays}` вместо голого `deleteOn`;
-`readonlyDays: 0`, если пространство уже было `archived` на момент планирования (ICU-plural с веткой
-`=0` во всех 11 локалях `server/account/lang` убирает фразу про read-only). `sweepScheduledDeletions(ctx,
-db, brandings)` резолвит branding письма через `getBranding(brandings, workspace.branding)` из
-`@hcengineering/core`; у `purgeAccount` источника языка нет - `Account.locale` есть в типе, но нигде не
-пишется в server/account, поэтому остаётся `null`.
-
-`cancelAccountDeletion` шлёт `notifyAccountDeletionCancelled` ("аккаунт снова активен" + напоминание, что
-отправленные на удаление пространства остаются запланированными). Только если `deleteOn` реально стоял:
-RPC вызывается и без метки, письмо на каждый такой вызов было бы спамом.
-
-Локали писем: файл в `server/account/lang` сам по себе ничего не даёт - строки отдаёт загрузчик в
-`server/account-service/src/index.ts` (`accountStrings`), и до FUSIO-1339 он знал только `en`/`ru`, остальные
-9 файлов не читались вовсе. Новая локаль = файл + строка в `accountStrings`. Паритет ключей и плейсхолдеров
-с `plugin.ts`/`en.json` держит `server/account/src/__tests__/lang.test.ts` (так нашлась опечатка
-`InviteSubjectRU` в `ru.json`: тема приглашения на русском молча уходила по-английски).
-
-`notifyWorkspaceDeletionCancelled` - владельцам, из `performWorkspaceOperation`: на `cancel-delete` и на
-`unarchive` пространства с `deleteOn` (он тоже снимает срок). Фраза о текущем состоянии - ICU select по
-`state`: `active` / `archived` (отмена архивацию не откатывает) / `restoring`. В e2e после `cancel-delete`
-письмо надо дождаться, а не сразу `clearMail`: оно идёт через очередь и иначе прилетит в следующий тест.
-
+`notifyWorkspaceDeletionCancelled` - владельцам, из `performWorkspaceOperation`: на `cancel-delete` и на `unarchive` пространства с `deleteOn` (он тоже снимает срок). Фраза о текущем состоянии - ICU select по `state`: `active`/`archived` (отмена не откатывает архивацию)/`restoring`.
 
 ## Почта на ws-стенде
 
-У `ws-tests` не было ни mailpit, ни сервиса `mail`, поэтому OTP регистрации и входа некуда было
-доставить (`ADMIN_OTP_DEV_CODE` перекрывает только `verifyOperationOtp` - админские операции и
-self-service подтверждения, но не `sendOtp`). Добавлены `mail` + `mailpit` в
-`ws-tests/docker-compose.yaml`, UI на 8026 и SMTP на 1026 (у dev-стенда 8025/1025, чтобы жили рядом).
-
-`MODE=server` только раздаёт письма подключённому mail-клиенту и без него висит в
-`request waiting for available client`. Нужен `MODE=queue`: читает очередь уведомлений и шлёт в SMTP
-сам (`services/mail/pod-mail/src/main.ts:145`). API_KEY при этом не нужен.
-
-Письма об удалении проверяются через mailpit API в
-`ws-tests/api-tests/src/__tests__/deletion-emails.test.ts` (хелперы `waitForMail`/`mailBody`/
-`clearMail` в `admin.fixtures.ts`).
+`ws-tests` без mailpit/сервиса `mail` - OTP регистрации и входа некуда доставить (`ADMIN_OTP_DEV_CODE` перекрывает только `verifyOperationOtp` - админские операции и self-service подтверждения, но не `sendOtp`). `MODE=server` у `pod-mail` только раздаёт письма подключённому mail-клиенту и без него висит; нужен `MODE=queue` - читает очередь уведомлений и шлёт в SMTP сам, API_KEY при этом не нужен.
 
 ## Аренда бэкапа
 
-`workspace_status.backup_lease_until`/`backup_lease_owner` (v46/v47). `updateBackupLease` (postgres.ts): acquire - `mode='active' AND is_disabled IS NOT TRUE` и lease свободен/истёк/свой; renew - `owner=X AND mode='active'` (смена mode - мгновенный отказ, а не ожидание конца бэкапа); release - `owner=X`, поля в NULL. `getPendingWorkspace` не отдаёт migration-*/archiving-*/restoring/deleting с живым lease, create/upgrade не задеты.
+`workspace_status.backup_lease_until`/`backup_lease_owner` (миграции v46/v47). `updateBackupLease`: acquire требует `mode='active' AND is_disabled IS NOT TRUE` и свободный/истёкший/свой lease; renew требует `owner=X AND mode='active'` (смена mode - мгновенный отказ renew, а не ожидание конца бэкапа); release снимает по `owner=X`. `getPendingWorkspace` не отдаёт `migration-*`/`archiving-*`/`restoring`/`deleting` с живым чужим lease.
 
-**Rebase на develop 2026-09-22:** develop занял v42 (workspace.language), наши миграции сдвинуты на v43-v47. Git автосмёрживает новые `getVNMigration` без конфликта - после rebase проверять дубли номеров.
+## Selfhost
 
-## Selfhost: workspace-сервис и WS_OPERATION
+`getPendingWorkspace` отдаёт `pending-deletion`/`archiving-*`/`restoring`/`migration-*` только при `WS_OPERATION=all+backup`; дефолт `all` берёт лишь создание и апгрейд - без явной переменной `delete-now` висит в `pending-deletion` навсегда. На selfhost backup-service нет, поэтому очистка архива удалённого через архивацию пространства не работает.
 
-`getPendingWorkspace` отдаёт `pending-deletion`/`archiving-*`/`restoring`/`migration-*` только для
-`WS_OPERATION=all+backup`; дефолт `all` берёт лишь создание и апгрейд. На selfhost переменная не была
-задана - `delete-now` навечно висел в `pending-deletion`. Исправлено в foundation-selfhost 2c78e83
-(`all+backup` + minio bucket `backups`). backup-service на selfhost нет, поэтому
-`cleanupDeletedBackups` не работает: архив удалённого через архивацию пространства остаётся в `backups`.
+## Readonly после cancel-delete
 
-## Readonly "залипал" после cancel-delete
+`selectWorkspace` копирует `extra` из входящего токена (клиент передаёт текущий workspace-токен). Readonly по статусу (`isReadOnlyWorkspace`) переезжал в каждый новый токен и переживал отмену удаления - readonly по статусу теперь помечается отдельным полем и сбрасывается при следующем select; readonly без метки (impersonation) переносится как раньше. Токены, выданные до фикса, не имеют метки - нужен перелогин.
 
-`selectWorkspace` копирует `extra` из входящего токена, а клиент передаёт текущий workspace-токен
-(`presentation.metadata.Token`). Readonly по статусу (`isReadOnlyWorkspace`) переезжал в каждый новый
-токен и переживал отмену удаления. Теперь такой readonly помечается `workspaceReadonly: 'true'` и
-сбрасывается при следующем select; readonly без метки (impersonation) переносится как раньше.
-Токены, выданные до фикса, метки не имеют - нужен перелогин.
+Второй слой той же проблемы: LRU-кэш `decodeToken` (`foundations/core/packages/token`) отдаёт один и тот же объект, а `selectWorkspace` мутировал `decodedToken.extra` на месте - логин-токен без `iat` детерминирован, поэтому каждый новый логин попадал в испорченную запись кеша. Кеш хранит и отдаёт `structuredClone`.
 
-Перелогин НЕ помогал из-за второй причины: кеш `decodeToken` (foundations/core/packages/token)
-отдавал один и тот же объект, а `selectWorkspace` мутировал `decodedToken.extra`. Логин-токен без
-`iat` детерминирован, поэтому каждый новый логин попадал в испорченную запись кеша, и `PUT /cookie`
-клал в куку токен с `readonly`. Кеш теперь хранит и отдаёт `structuredClone`. Разлипить без деплоя -
-рестарт account.
+## Тесты
+
+`server/account/src/__tests__/{deletion-real,deferred-deletion}.test.ts` - реальная БД, инварианты purge/FK, `findOrphanedWorkspaces`/`purgeAccount`. `ws-tests/api-tests/src/__tests__/{identity-deletion,deletion-emails,account-blocking}.test.ts` - сквозной путь через админский RPC и почту (mailpit), требует поднятый стенд.
+
+## Связанные документы
+
+- [Аутентификация, авторизация и онбординг](../features/auth-onboarding.md)
+- [Account DB migrations](account_db_migrations.md)

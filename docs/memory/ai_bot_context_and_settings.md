@@ -1,130 +1,69 @@
-# Юля ИИ: контекст разговоров, настройки, модели (FUSIO-886)
+# Юля ИИ: контекст разговоров, настройки, модели
 
-## Контекст по месту (workspaceClient.processMessageEvent)
-- **Direct top-level**: бот отвечает inline в Direct (ChatMessage в DirectMessage),
-  НЕ тредом. Триггер `server-plugins/ai-bot-resources` -> `getMessageData` (НЕ
-  `getDirectThreadData`, тот удалён). Тредовая модель T7 отброшена - неудобно.
-- **Граница контекста**: top-level в Space (`event.objectIdIsSpace`=true для
-  Direct/Channel, оба extends ChunterSpace) -> только текущий день
-  (`modifiedOn >= startOfToday`). Тред (objectIdIsSpace=false) -> весь.
-- Tool `load_thread_history(beforeIso, limit)` догружает старше дня
-  (`WorkspaceClient.loadThreadHistory`; reqCtx{objectId,objectClass} прокинут через
-  getTools 4-м параметром -> ToolFunc).
+Область: [AI](../features/ai.md)
 
-## КРИТ-БАГ: пустой тред при наличии сообщения в БД
-- workspaceClient.ts ~465: было `(event as any).objectIdIsSpace != null ? objectId
-  : event.objectSpace`. `objectIdIsSpace` всегда boolean -> `false != null`=true ->
-  бот писал ThreadMessage с `space = parentMsg._id` вместо `DirectMessage.space`.
-- `channelDataProvider.ts` metadataQuery фильтрует `space: this.space`
-  (=parent.space) -> сообщения с чужим space отсеяны -> тред пуст, хотя в БД есть,
-  счётчик replies растёт. Фикс: `event.objectIdIsSpace ? objectId : event.objectSpace`.
-- Диагностика: сообщения chunter лежат в pg-таблице `activity` (не `chunter` -
-  там только ChatSyncInfo); поля `message` внутри `data` json.
+## Контекст по месту
 
-## Память всегда в промпте -> get-тулы убраны
-- assistantMemory/userMemory/sharedContext инжектятся в prompts.yaml `{{...}}` блоки
-  всегда. get_assistant_memory/get_user_memory/get_shared_context УДАЛЕНЫ из
-  utils/tools.ts (дублировали промпт). Остались update_*/clear_*.
-- Слабые модели (gpt-oss-20b) без серверного tool-parser возвращают function-call
-  ТЕКСТОМ (`<|function_call|>{...}`), не нативным tool_calls -> тулы не выполняются,
-  юзер видит сырой токен. Лечится на LLM-сервере: vLLM `--enable-auto-tool-choice
-  --tool-call-parser`, llama.cpp `--jinja`. НЕ наш код.
-- `services/ai-bot/pod-ai-bot/src/utils/openai.ts` - МЁРТВЫЙ файл (0 импортов),
-  держит старые hardcoded промпты. Живые промпты - llms/openai.ts + prompts.yaml (T15).
+- Top-level в Space (`event.objectIdIsSpace`) - контекст только текущего дня (`modifiedOn >= startOfToday`); тред (`objectIdIsSpace=false`) - весь. Граница резолвится в `workspace/workspaceClient.ts`.
+- Триггер сервера собирает событие через `getMessageData` (`server-plugins/ai-bot-resources/src/index.ts`) - тредовой ветки для top-level Direct нет, бот отвечает inline.
+- Тул `load_thread_history(beforeIso, limit)` догружает историю старше дня (`WorkspaceClient.loadThreadHistory`).
+- Баг (исправлен): `objectIdIsSpace` всегда `boolean`, поэтому `!= null` было всегда true - бот писал `ThreadMessage.space = parentMsg._id` вместо `DirectMessage.space`, а `channelDataProvider.ts` фильтрует по `space`, так что тред казался пустым при непустой БД. Строка - `workspace/workspaceClient.ts`.
 
-## Реестр моделей по уровням (yaml)
-- `services/ai-bot/pod-ai-bot/config.example.yaml` - референс реестра
-  (`llm.providers[]`: id/provider/concurrency/batch/levels). Грузится через
-  CONFIG_PATH env. НЕ в docker-образе (деплоймент монтирует).
-- Dev: `dev/config-aibot.yaml` (server, clisr 2 уровня) +
-  `dev/config-aibot-client.yaml` (client, openai 2 модели на host :8000/v1).
-  docker-compose: volume mount + CONFIG_PATH для aibot/aibot_client_llm.
-- 1 clisr-клиент обслуживает N моделей: выбор по level через свой реестр
-  (`resolveModel(level).model.model`). client.ts пробрасывает `request.level` в
-  provider-методы (был баг - level игнорировался, всегда defaultLevel).
-- config.ts ~394 баг: `yamlConfig?.stt.batch` (точка) -> `?.stt?.batch` - крэш при
-  yaml без stt-секции.
-- env-интерполяции `${VAR}` в yaml НЕТ - секреты литералами.
+## Память всегда в промпте
 
-## UI настроек Юля ИИ (plugins/ai-bot-resources)
-- Одна settings-категория `ai-settings` (role Guest), внутри NavItem-навигация
-  Основные/Персональные - паттерн billing Settings.svelte (hulyComponent-content__
-  container columns + Separator + location path[5]). НЕ TabList.
-- AISettings.svelte (wrapper) -> AISpaceSettingsEditor (Basic, readonly если не
-  Owner/Maintainer) + AIPersonalDataSettings (Personal).
-- AILevelCards.svelte - компактные чипы (label + ×multiplier, без описаний).
-- AILanguageSelector.svelte - переиспользует `ui.string.*` + `ui.metadata.Languages`
-  (НЕ love). Auto-опция: DropdownLabelsIntl игнорирует пустой id (`if(result)`),
-  поэтому id='auto' маппится '<->' '' на границе.
-- Грабли: класс `flex-gap-8` НЕ существует (макс flex-gap-4); `ui` - default-импорт
-  не named.
+`get_assistant_memory`/`get_user_memory`/`get_shared_context` в `utils/tools.ts` нет - `assistantMemory`/`userMemory`/`sharedContext` инжектятся в `prompts.yaml` безусловно, а не тулами. Слабые модели без серверного tool-parser (напр. gpt-oss-20b) возвращают function-call текстом (`<|function_call|>{...}`) вместо нативного `tool_calls` - лечится на LLM-сервере (vLLM `--enable-auto-tool-choice --tool-call-parser`, llama.cpp `--jinja`), не в коде ai-bot.
 
-## Сессия FUSIO-886 rebase+фиксы (tbank-integration2)
+## Реестр моделей (yaml)
 
-### paidMultiplier over-limit + downgrade-баг
-- config-aibot.yaml low: `paidMultiplier: 0.5` (было 0). Paid low всегда 0.5 (под лимитом+over).
-  Free over-limit -> block; paid over-limit -> low доступен (clisr, медленно).
-- КРИТ-баг исполнения: `decideLevel` (windowLimit.ts) даунгрейдил requested->low при
-  over-limit, но `processMessageEvent` не применял: `llm`(effProvider) + `level` оставались
-  исходными -> исполнялся/биллился requested (pro), не low. Фикс: при
-  `effectiveLevel!==requestedLevel` перерезолв `llm=providers.get(resolved.provider.id)`,
-  передача `effectiveLevel` в createChatCompletionWithTools. `providers` map прокинут
-  controller.ts->processMessageEvent.
-- `donePatch` (AIRequest.billedTokens) был статичный tokenMultiplier -> теперь plan-aware
-  `planMultiplier(resolved.model, plan, hasPackages)`.
+- Референс-реестр - `services/ai-bot/pod-ai-bot/config.example.yaml`, не в docker-образе (монтируется деплойментом).
+- Dev: `dev/config-aibot.yaml` (server) + `dev/config-aibot-client.yaml` (client).
+- Один clisr-клиент обслуживает N моделей: провайдер выбирает модель по `level` через свой реестр (`resolveModel(level).model.model`).
+- env-интерполяции `${VAR}` в yaml нет - секреты только литералами.
 
-### Free не блокировался (resolveWorkspacePlan)
-- billing.ts `resolveWorkspacePlan`: было `plan = active?.plan ?? latest?.plan ?? 'free'` ->
-  unpaid тир с freeLimits читался по имени как paid -> decideLevel не блокировал free.
-  Фикс: `plan = grantingTier?.plan ?? 'free'` (grantsPlan filter). Нет оплаченной/trial -> 'free'.
+## UI настроек (plugins/ai-bot-resources)
 
-### LLM error handling (глотание)
-- openai.ts/gigachat.ts chatToolStep/createChatCompletionWithTools: `catch->return undefined`
-  глотал ECONNREFUSED -> worker возвращал success-undefined -> WS не reject ->
-  requestWithFilter (clisr/server.ts) retry не срабатывал -> pod hasResult:false -> тихо.
-  Фикс: API-вызов в `withRetry(maxRetries:3, retryNetworkErrors)` (@hcengineering/retry),
-  catch -> throw. Pod catch: failedPatch + лог, В ЧАТ НЕ ПИШЕМ, не rethrow. TODO(inbox).
+- Одна settings-категория `ai-settings` (`components/AISettings.svelte`): `AISpaceSettingsEditor` (Basic, readonly не-Owner/Maintainer) + `AIPersonalDataSettings` (Personal).
+- `AILanguageSelector.svelte`: `DropdownLabelsIntl` игнорирует пустой id, поэтому опция "Auto" мапится `'auto' <-> ''` на границе компонента.
+- Класс `flex-gap-8` не существует (максимум `flex-gap-4`, `packages/theme/styles/_layouts.scss:305`).
+- `ui` (`@hcengineering/ui`) - default-импорт, не named (`packages/ui/src/index.ts`).
 
-### Промпты (prompts.yaml + prompts.ts + promptStore.ts)
-- Имя унифицировано "Юля" (было direct=Юля/thread=Юля ИИ), платформа "Intabia Fusion".
-- Добавлено `{{currentDateTime}}` (nowForPrompt локализ) + `Always reply in {{lang}}`.
-- Язык ответа: `AIPersonalData.language?` (personal override для direct); резолв
-  `resolveChatLanguage` в wsClient (direct: personal->space->ws->default; thread: без personal).
-  Протянут `lang` param через LLMProvider interface->openai/gigachat/server/mock->WS request
-  (ChatCompletionWithToolsRequest.lang)->client dispatch->buildSystemPrompt. UI:
-  AILanguageSelector в AIPersonalDataSettings.svelte.
+## free план не блокировался (исправлено)
 
-### Typing "Юля печатает"
-- pulse.class.TypingIndicator TTL=3с (models/pulse TransientTTL). Один create протухает.
-- `startTyping` (wsClient) через RestClient createDoc/updateDoc, refresh-таймер 2с (<3с),
-  возвращает stop(). id `typing:${objectId}:${socialId}`. Обёртка try/finally вокруг
-  generateAndReply (вынесен из processMessageEvent). pulse добавлен в deps.
+`resolveWorkspacePlan` (`services/billing/pod-billing/src/billing.ts`) резолвит план как `grantingTier?.plan ?? 'free'` (фильтр `grantsPlan`), не `active?.plan ?? latest?.plan` - иначе unpaid-тир читался по имени как paid и лимит не блокировал free.
 
-### Юля online (транзактор, sessionManager.ts)
-- UserStatus = {online:bool} БЕЗ TTL, side-effect WS-сессии. Юля на REST -> всегда offline.
-- Фикс: addSession при `token.extra?.service==='aibot'` -> trySetStatus(online:true).
-  close-tick: skip offline для aibot (`isAiBot`). Online пока workspace жив, без пинга.
+## LLM-провайдеры: сетевые ошибки не глотаются
 
-### Admin set-usage (тест billing по кейсам)
-- pod-billing db.setWorkspaceUsed(ws, value, level): DELETE ai_tokens_usage за месяц +
-  INSERT total_tokens=value level=<выбран>. endpoint POST /api/v1/admin/:ws/set-used.
-  billing-client.setWorkspaceUsed(ws, value, level). UI WorkspaceTokenInfo (в admin
-  WorkspaceDetails): EditBox число + DropdownLabels уровень (listAiModelRegistry) + Set/Reset.
-- TokenWindows.svelte: `detailed` prop (admin) -> per-level разбивка level:tokens(%);
-  compact -> сжатая строка. resetTime -> относительное "через N" (Intl.RelativeTimeFormat).
-- LimitsIndicator: 2 полоски (диск+токены/мес, убрана meeting-минуты).
+`openai.ts`/`gigachat.ts` оборачивают вызов провайдера в `withRetry(maxRetries: 3, retryNetworkErrors)` (`@hcengineering/retry`) и бросают исключение вместо `catch -> return undefined` - раньше это глушило `ECONNREFUSED`, и запрос тихо повисал без ответа.
 
-### Корни контекстов (FUSIO-1271)
-- issue-draft корень создаётся на открытие панели ассистента (`$issueAssistOpened` глобальный),
-  не на первое сообщение (инпут живёт в chunter ThreadView, без корня писать нечем).
-  Против "туч": `startIssueDraftConversation` переиспользует пустой корень (`replies==0`,
-  без `resultId`, не archived) и удаляет остальные пустые; при `session++` (create-and-new)
-  панель закрывается. Кнопка "Новый контекст" disabled пока `replies==0`.
-- `resetObjectConversation`: archive -> сразу `createObjectContext` (server-side `notMatch`).
-  НЕ через `findObjectConversation`: `client.findAll` идёт в кэш LiveQuery, `archived:true`
-  доезжает broadcast'ом позже резолва `update()` -> lookup вернёт только что заархивированный
-  корень (CI: "new context button resets" 3/3 fail).
-- Mock через clisr-воркер: нужен `chatToolStep` (сервер гоняет `runToolCalls`, ждёт
-  `content`/`toolCalls`); без него fallback `createChatCompletionWithTools([] as any)` -> 0 тулов
-  и `completion`, которое loop не читает -> в чат ничего. Прямой путь мока = тот же
-  `chatToolStep` + `runToolCalls`.
+## Промпты
+
+- Имя бота унифицировано "Юля" везде (`prompts.yaml`), платформа - "Intabia Fusion".
+- `{{currentDateTime}}` и `Always reply in {{lang}}` - в системном промпте (`prompts.yaml`).
+- Язык ответа резолвится `resolveChatLanguage` (direct: personal -> space -> workspace -> default; тред: без personal).
+
+## Typing-индикатор
+
+`pulse.class.TypingIndicator` TTL 3с (models/pulse `TransientTTL`); `startTyping` (`workspace/workspaceClient.ts`) освежает документ каждые 2с (< TTL) и возвращает `stop()`.
+
+## Юля online (сессии)
+
+`UserStatus = {online: bool}` без TTL. Бот работает через REST и без явного маркера был бы всегда offline: `addSession` при `token.extra?.service === 'aibot'` ставит online, close-tick пропускает offline для aibot (`foundations/server/packages/server/src/sessionManager.ts`).
+
+## Admin set-usage
+
+`POST /api/v1/admin/:workspace/set-used` (`services/billing/pod-billing/src/server.ts`, `handleSetWorkspaceUsed` -> `billing.ts`) - DELETE usage за месяц + INSERT `total_tokens=value` на выбранном уровне; используется для тестирования биллинга по кейсам.
+
+## Корни контекстов issue-draft (FUSIO-1271)
+
+- `startIssueDraftConversation` (`plugins/ai-bot-resources/src/conversation.ts`) переиспользует пустой корень (`replies===0`, без `resultId`, не archived) и удаляет остальные пустые - панель заводится при открытии, а не на первое сообщение.
+- `resetObjectConversation` (`conversation.ts`) архивирует и сразу создаёт новый контекст напрямую (`createObjectContext`), не через `findObjectConversation`: LiveQuery-кэш клиента может вернуть только что заархивированный корень раньше, чем `archived: true` дойдёт broadcast'ом.
+
+## Mock-провайдер через clisr
+
+Мок должен реализовывать `chatToolStep` (`llms/mock.ts`), потому что сервер гоняет `runToolCalls` и ждёт `content`/`toolCalls`; без него нет тулов и в чат ничего не приходит.
+
+## Связанные документы
+
+- [`../features/ai.md`](../features/ai.md)
+- [`ai_bot_proactive.md`](ai_bot_proactive.md)
+- [`ai_harness_progress_cancel.md`](ai_harness_progress_cancel.md)
