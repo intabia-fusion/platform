@@ -24,6 +24,7 @@ import accountEn from '@hcengineering/account/lang/en.json'
 import accountEs from '@hcengineering/account/lang/es.json'
 import accountFr from '@hcengineering/account/lang/fr.json'
 import accountIt from '@hcengineering/account/lang/it.json'
+import accountJa from '@hcengineering/account/lang/ja.json'
 import accountPtBr from '@hcengineering/account/lang/pt-br.json'
 import accountPt from '@hcengineering/account/lang/pt.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -60,6 +61,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { handlePresenceBatch } from './presence'
+import { apiKeyLoginRateLimit } from './rateLimit'
 export * from './migration/utils'
 export type * from './migration/types'
 
@@ -74,6 +76,7 @@ const accountStrings: Record<string, Record<string, Record<string, string>>> = {
   es: accountEs,
   fr: accountFr,
   it: accountIt,
+  ja: accountJa,
   'pt-br': accountPtBr,
   pt: accountPt,
   ru: accountRu,
@@ -487,6 +490,21 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       const body = JSON.stringify(response)
       ctx.res.writeHead(404, KEEP_ALIVE_HEADERS)
       ctx.res.end(body)
+      return
+    }
+
+    const rateLimit = apiKeyLoginRateLimit(request.method, ctx.request.headers, ctx.request.ip)
+    if (rateLimit !== undefined) {
+      // Same shape the transactor answers a rate limit with, so clients handle both alike.
+      ctx.res.writeHead(429, {
+        ...KEEP_ALIVE_HEADERS,
+        'Retry-After': `${Math.max(Math.round((rateLimit.retryAfter ?? 0) / 1000), 1)}`,
+        'Retry-After-ms': `${rateLimit.retryAfter ?? 1000}`,
+        'X-RateLimit-Limit': `${rateLimit.limit}`,
+        'X-RateLimit-Remaining': `${rateLimit.remaining}`,
+        'X-RateLimit-Reset': `${rateLimit.reset}`
+      })
+      ctx.res.end(JSON.stringify({ id: request.id, error: unknownStatus('Rate limit') }))
       return
     }
 

@@ -113,7 +113,10 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV44Migration(ns, flavor),
     getV45Migration(ns, flavor),
     getV46Migration(ns, flavor),
-    getV47Migration(ns, flavor)
+    getV47Migration(ns, flavor),
+    getV48Migration(ns, flavor),
+    getV49Migration(ns),
+    getV50Migration(ns)
   ]
 }
 
@@ -1254,6 +1257,49 @@ function getV47Migration (ns: string, flavor: DBFlavor): [string, string] {
     /* Backup pod identity holding the lease. Null means no live lease. */
     `
     ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS backup_lease_owner ${types.string};
+    `
+  ]
+}
+
+function getV48Migration (ns: string, flavor: DBFlavor): [string, string] {
+  // Enum value alone: PostgreSQL forbids using a value added in the same transaction.
+  const addValueSql =
+    flavor === 'postgres'
+      ? `
+    DO $$     BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumlabel = 'webhook'
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'social_id_type' AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '${ns}'))
+        ) THEN
+            ALTER TYPE ${ns}.social_id_type ADD VALUE 'webhook';
+        END IF;
+    END $$;
+    `
+      : `
+    ALTER TYPE ${ns}.social_id_type ADD VALUE IF NOT EXISTS 'webhook';
+    `
+
+  return ['account_db_v48_add_webhook_social_id_type', addValueSql]
+}
+
+function getV49Migration (ns: string): [string, string] {
+  return [
+    'account_db_v49_integration_secrets_kind_key_idx',
+    /* API key check hashes the presented key and looks the row up by (kind, key); the PK starts with
+       social_id, so without this every check scans the table. */
+    `
+    CREATE INDEX IF NOT EXISTS integration_secrets_kind_key_idx ON ${ns}.integration_secrets (kind, key);
+    `
+  ]
+}
+
+function getV50Migration (ns: string): [string, string] {
+  return [
+    'account_db_v50_add_workspace_max_api_keys',
+    `
+    ALTER TABLE ${ns}.workspace
+    ADD COLUMN IF NOT EXISTS max_api_keys SMALLINT;
     `
   ]
 }

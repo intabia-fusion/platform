@@ -40,6 +40,12 @@
     "AccountDeletionCancelledHTML": "<p>The deletion of your <b>{app}</b> account has been called off - the account is active again.</p><p>Thank you for staying with us!</p><p>Workspaces you sent for deletion stay scheduled, each one has to be restored separately: <a href={link}>{link}</a></p>",
     "WorkspaceDeletionCancelledSubject": "Workspace {ws} will not be deleted",
     "WorkspaceDeletionCancelledText": "The deletion of the workspace {ws} ({url}) has been called off. {state, select, archived {It has already been archived - any owner can restore it: {link}} restoring {It is being restored from the archive and will be available again shortly: {link}} other {It is fully available again: {link}}}\n\nThank you for staying with us!",
-    "WorkspaceDeletionCancelledHTML": "<p>The deletion of the workspace <b>{ws}</b> ({url}) has been called off.</p><p>{state, select, archived {It has already been archived - any owner can restore it: <a href={link}>{link}</a>} restoring {It is being restored from the archive and will be available again shortly: <a href={link}>{link}</a>} other {It is fully available again: <a href={link}>{link}</a>}}</p><p>Thank you for staying with us!</p>"
+    "WorkspaceDeletionCancelledHTML": "<p>The deletion of the workspace <b>{ws}</b> ({url}) has been called off.</p><p>{state, select, archived {It has already been archived - any owner can restore it: <a href={link}>{link}</a>} restoring {It is being restored from the archive and will be available again shortly: <a href={link}>{link}</a>} other {It is fully available again: <a href={link}>{link}</a>}}</p><p>Thank you for staying with us!</p>",
+    "ApiKeyCreatedSubject": "New API key issued in {ws}",
+    "ApiKeyCreatedText": "An API key was issued in {ws}.\n\nName: {name}\nKey: {masked}\nAllowed operations: {ops}\n{hasExpiry, select, yes {Expires: {expiresOn}} other {No expiration}}\nIssued by: {actor}\n\nIf you did not expect this, revoke the key in workspace settings.",
+    "ApiKeyCreatedHTML": "<p>An API key was issued in <b>{ws}</b>.</p><p>Name: {name}<br/>Key: {masked}<br/>Allowed operations: {ops}<br/>{hasExpiry, select, yes {Expires: {expiresOn}} other {No expiration}}<br/>Issued by: {actor}</p><p>If you did not expect this, revoke the key in workspace settings.</p>",
+    "ApiKeyRevokedSubject": "API key revoked in {ws}",
+    "ApiKeyRevokedText": "An API key was revoked in {ws}.\n\nName: {name}\nKey: {masked}\nRevoked by: {actor}",
+    "ApiKeyRevokedHTML": "<p>An API key was revoked in <b>{ws}</b>.</p><p>Name: {name}<br/>Key: {masked}<br/>Revoked by: {actor}</p>"
   }
 }

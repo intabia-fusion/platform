@@ -261,6 +261,28 @@ describe('rest-api-server', () => {
     expect(spaces.filter((it) => it.name === spaceName).length).toBe(1)
   })
 
+  // /api/v1/create runs under the caller's session, where async triggers are only queued.
+  // OnCollaboratorAdded is one: without it the creator gets no Chat, so no navigator entry.
+  it('create runs async triggers', async () => {
+    const conn = connect()
+    const account = await conn.getAccount()
+    const channel = await conn.createDoc(chunter.class.Channel, core.space.Space, {
+      name: generateId(),
+      description: '',
+      private: false,
+      archived: false,
+      members: [account.uuid],
+      topic: ''
+    })
+
+    let chats = 0
+    for (let i = 0; i < 50 && chats === 0; i++) {
+      chats = (await conn.findAll(chunter.class.Chat, { attachedTo: channel, account: account.uuid })).length
+      if (chats === 0) await new Promise((resolve) => setTimeout(resolve, 200))
+    }
+    expect(chats).toBe(1)
+  })
+
   it('get-model', async () => {
     const conn = connect()
     const { hierarchy, model } = await conn.getModel()

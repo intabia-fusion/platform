@@ -28,6 +28,7 @@
     "WorkspaceReadOnly": "Este espaço de trabalho está apenas de leitura neste momento.",
     "InviteNotFound": "Convite com e-mail:{email} não encontrado.",
     "WorkspaceLimitReached": "Você atingiu o limite de espaço de trabalho. Entre em contato conosco...",
+    "ApiKeyLimitReached": "Atingiu o limite de {limit} chaves de API para este espaço de trabalho.",
     "ReadOnlyAccount": "Demonstração anônima de convidado",
     "SystemAccount": "Conta do sistema",
     "SocialIdAlreadyExists": "ID social já existe"

@@ -32,6 +32,7 @@ import core, {
   type Ref,
   type SearchResult,
   type SessionData,
+  type Space,
   type Tx,
   type TxResult,
   type TxWorkspaceEvent,
@@ -183,6 +184,7 @@ export class SessionDataImpl implements SessionData {
   _removedMap: Map<Ref<Doc>, Doc> | undefined
   _contextCache: Map<string, any> | undefined
   _broadcast: SessionData['broadcast'] | undefined
+  asyncRequests: SessionData['asyncRequests']
 
   constructor (
     readonly account: Account,
@@ -202,7 +204,9 @@ export class SessionDataImpl implements SessionData {
       }
     >,
     readonly service: string,
-    readonly grant?: PermissionsGrant
+    readonly grant?: PermissionsGrant,
+    readonly apiKey?: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[] },
+    public opsApi?: boolean
   ) {
     this._removedMap = _removedMap
     this._contextCache = _contextCache
@@ -263,43 +267,68 @@ export function wrapPipeline (
   ctx: MeasureContext,
   pipeline: Pipeline,
   wsIds: WorkspaceIds,
-  doBroadcast: boolean = false
+  doBroadcast: boolean = false,
+  // Without this the caller's identity is replaced by a system/admin one, and every middleware that
+  // scopes writes (space security, api key grants, seat limits) stops seeing who is actually writing.
+  sessionData?: SessionData
 ): Client & BackupClient {
-  const contextData = new SessionDataImpl(
-    systemAccount,
-    'pipeline',
-    true,
-    { targets: {}, txes: [], queue: [], sessions: {} },
-    wsIds,
-    true,
-    undefined,
-    undefined,
-    pipeline.context.modelDb,
-    new Map(),
-    'transactor'
-  )
+  const contextData =
+    sessionData ??
+    new SessionDataImpl(
+      systemAccount,
+      'pipeline',
+      true,
+      { targets: {}, txes: [], queue: [], sessions: {} },
+      wsIds,
+      true,
+      undefined,
+      undefined,
+      pipeline.context.modelDb,
+      new Map(),
+      'transactor'
+    )
   ctx.contextData = contextData
   if (pipeline.context.lowLevelStorage === undefined) {
     throw new PlatformError(unknownError('Low level storage is not available'))
   }
   const backupOps = new BackupClientOps(pipeline.context.lowLevelStorage)
 
+  // LookupMiddleware strips scalar query fields from returned docs; ws and rest clients put them
+  // back, in-process callers had no such step and got `findOne(X, { _id })` without `_id`.
+  function revertStrippedQueryFields<T extends Doc> (docs: T[], _class: Ref<Class<T>>, query: DocumentQuery<T>): T[] {
+    for (const doc of docs) {
+      doc._class ??= _class
+      for (const [k, v] of Object.entries(query)) {
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+          if ((doc as any)[k] == null) {
+            ;(doc as any)[k] = v
+          }
+        }
+      }
+    }
+    return docs
+  }
+
   return {
     findAll: async (_class, query, options) => {
       const result = await pipeline.findAll(ctx, _class, query, options)
       return toFindResult(
-        result.map((v) => {
-          return pipeline.context.hierarchy.updateLookupMixin(_class, v, options)
-        }),
+        revertStrippedQueryFields(
+          result.map((v) => pipeline.context.hierarchy.updateLookupMixin(_class, v, options)),
+          _class,
+          query
+        ),
         result.total
       )
     },
     findOne: async (_class, query, options) => {
       const result = await pipeline.findAll(ctx, _class, query, { ...options, limit: 1 })
       return toFindResult(
-        result.map((v) => {
-          return pipeline.context.hierarchy.updateLookupMixin(_class, v, options)
-        }),
+        revertStrippedQueryFields(
+          result.map((v) => pipeline.context.hierarchy.updateLookupMixin(_class, v, options)),
+          _class,
+          query
+        ),
         result.total
       )[0]
     },
@@ -322,6 +351,15 @@ export function wrapPipeline (
       if (doBroadcast) {
         await pipeline.handleBroadcast(ctx)
       }
+      // A caller's session data is not an async context: triggers queue async work here instead of
+      // running it, and only the ws path drains that queue.
+      const asyncs = contextData.asyncRequests ?? []
+      contextData.asyncRequests = []
+      for (const r of asyncs) {
+        await r(ctx)
+      }
+      // processAsyncTriggers swaps in its own session data.
+      ctx.contextData = contextData
       // One SessionData for the whole run: without draining, broadcast.txes grows
       // unbounded and per-tx scanners (permissions) turn O(n^2).
       contextData.broadcast.txes.length = 0

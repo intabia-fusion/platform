@@ -40,6 +40,12 @@
     "AccountDeletionCancelledHTML": "<p>Удаление вашего аккаунта в <b>{app}</b> отменено - аккаунт снова активен.</p><p>Спасибо, что остаётесь с нами!</p><p>Пространства, которые вы отправили на удаление, остаются запланированными - каждое нужно восстановить отдельно: <a href={link}>{link}</a></p>",
     "WorkspaceDeletionCancelledSubject": "Пространство {ws} не будет удалено",
     "WorkspaceDeletionCancelledText": "Удаление пространства {ws} ({url}) отменено. {state, select, archived {Оно уже в архиве - любой владелец может восстановить его: {link}} restoring {Оно восстанавливается из архива и скоро снова будет доступно: {link}} other {Оно снова полностью доступно: {link}}}\n\nСпасибо, что остаётесь с нами!",
-    "WorkspaceDeletionCancelledHTML": "<p>Удаление пространства <b>{ws}</b> ({url}) отменено.</p><p>{state, select, archived {Оно уже в архиве - любой владелец может восстановить его: <a href={link}>{link}</a>} restoring {Оно восстанавливается из архива и скоро снова будет доступно: <a href={link}>{link}</a>} other {Оно снова полностью доступно: <a href={link}>{link}</a>}}</p><p>Спасибо, что остаётесь с нами!</p>"
+    "WorkspaceDeletionCancelledHTML": "<p>Удаление пространства <b>{ws}</b> ({url}) отменено.</p><p>{state, select, archived {Оно уже в архиве - любой владелец может восстановить его: <a href={link}>{link}</a>} restoring {Оно восстанавливается из архива и скоро снова будет доступно: <a href={link}>{link}</a>} other {Оно снова полностью доступно: <a href={link}>{link}</a>}}</p><p>Спасибо, что остаётесь с нами!</p>",
+    "ApiKeyCreatedSubject": "Выпущен новый API-ключ в {ws}",
+    "ApiKeyCreatedText": "В {ws} выпущен новый API-ключ.\n\nНазвание: {name}\nКлюч: {masked}\nРазрешённые операции: {ops}\n{hasExpiry, select, yes {Срок действия: {expiresOn}} other {Без срока действия}}\nВыпустил: {actor}\n\nЕсли вы не ожидали этого письма, отзовите ключ в настройках воркспейса.",
+    "ApiKeyCreatedHTML": "<p>В <b>{ws}</b> выпущен новый API-ключ.</p><p>Название: {name}<br/>Ключ: {masked}<br/>Разрешённые операции: {ops}<br/>{hasExpiry, select, yes {Срок действия: {expiresOn}} other {Без срока действия}}<br/>Выпустил: {actor}</p><p>Если вы не ожидали этого письма, отзовите ключ в настройках воркспейса.</p>",
+    "ApiKeyRevokedSubject": "API-ключ отозван в {ws}",
+    "ApiKeyRevokedText": "В {ws} отозван API-ключ.\n\nНазвание: {name}\nКлюч: {masked}\nОтозвал: {actor}",
+    "ApiKeyRevokedHTML": "<p>В <b>{ws}</b> отозван API-ключ.</p><p>Название: {name}<br/>Ключ: {masked}<br/>Отозвал: {actor}</p>"
   }
 }
