@@ -42,6 +42,8 @@
     "Classes": "Classes",
     "Attributes": "Attributs",
     "DeleteAttribute": "Supprimer l'attribut",
+    "UnknownAttributeType": "Type inconnu. L'attribut peut seulement être supprimé",
+    "UnknownType": "Type inconnu",
     "DeleteAttributeConfirm": "Voulez-vous supprimer cet attribut ?",
     "DeleteAttributeExistConfirm": "Voulez-vous supprimer cet attribut ? Les données seront perdues",
     "DeleteMixin": "Supprimer le Mixin",

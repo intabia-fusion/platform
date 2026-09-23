@@ -220,6 +220,10 @@ describe('Workflow Compatibility Check', () => {
     expect(
       isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'non:existent:Class' as any } as any)
     ).toBe(false)
+    expect(isAttributeTypeResolvable(hierarchy, { _class: 'non:existent:Class' } as any)).toBe(false)
+    expect(
+      isAttributeTypeResolvable(hierarchy, { _class: core.class.ArrOf, of: { _class: 'non:existent:Class' } } as any)
+    ).toBe(false)
   })
 
   it('matches screens by structure/signature', async () => {

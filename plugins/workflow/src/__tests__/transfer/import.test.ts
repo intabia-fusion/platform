@@ -1177,6 +1177,60 @@ describe('Workflow Import', () => {
     )
   })
 
+  it('skips attributes of an unknown type and strips them from rules without an explicit resolution', async () => {
+    const client = createMockTx()
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-09-17T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      attributes: [
+        {
+          id: 'attr-customfield-11001' as any,
+          name: 'Intangible asset',
+          label: getEmbeddedLabel('Intangible asset'),
+          // Stands in for a type class that is missing from the model, e.g. `core:class:Text`
+          type: { _class: 'non:existent:Class' } as any,
+          isCustom: true
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with unknown attribute type',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: [
+            {
+              id: 'trans-unknown-type' as Ref<WorkflowTransition>,
+              name: 'InProgress',
+              from: [statusOpenId],
+              to: statusDoneId,
+              validators: [
+                {
+                  id: 'rule-val-unknown-type',
+                  rule: workflow.validator.FieldRequired,
+                  ruleClass: workflow.class.WorkflowValidator,
+                  props: {
+                    fields: [{ attribute: 'attr-customfield-11001' as any, fieldKey: 'customfield_11001' }]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, { targetTaskTypeId })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    const createdAttributes = (client.createDoc as jest.Mock).mock.calls.filter(([cls]) => cls === core.class.Attribute)
+    expect(createdAttributes).toHaveLength(0)
+    // The only validator referenced the skipped attribute, so it is dropped
+    expect(client.updateCollection).not.toHaveBeenCalled()
+  })
+
   it('does not create attribute when it is only used in a screen that is skipped', async () => {
     const client = createMockTx()
     const screenOnlyKey = 'screen_only_field'

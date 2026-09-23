@@ -429,6 +429,9 @@ export function isAttributeTypeResolvable (
   visited.add(type)
 
   try {
+    if (!hierarchy.hasClass(type._class)) {
+      return false
+    }
     if (type._class === core.class.RefTo) {
       const to = (type as RefTo<Doc>).to
       if (to !== undefined && !hierarchy.hasClass(to)) {

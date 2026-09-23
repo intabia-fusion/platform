@@ -42,6 +42,8 @@
     "Classes": "类别",
     "Attributes": "属性",
     "DeleteAttribute": "删除属性",
+    "UnknownAttributeType": "未知类型。该属性只能删除",
+    "UnknownType": "未知类型",
     "DeleteAttributeConfirm": "您确定要删除此属性吗？",
     "DeleteAttributeExistConfirm": "您确定要删除此属性吗？数据将会丢失",
     "DeleteMixin": "删除 Mixin",

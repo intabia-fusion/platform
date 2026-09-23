@@ -42,6 +42,8 @@
     "Classes": "Classi",
     "Attributes": "Attributi",
     "DeleteAttribute": "Elimina attributo",
+    "UnknownAttributeType": "Tipo sconosciuto. L'attributo può essere solo eliminato",
+    "UnknownType": "Tipo sconosciuto",
     "DeleteAttributeConfirm": "Vuoi eliminare questo attributo?",
     "DeleteAttributeExistConfirm": "Vuoi eliminare questo attributo? I dati andranno persi",
     "DeleteMixin": "Elimina Mixin",

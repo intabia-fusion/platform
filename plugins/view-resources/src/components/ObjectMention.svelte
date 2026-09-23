@@ -123,8 +123,9 @@
   async function updateDocLabel (doc?: Doc, _class?: Ref<Class<Doc>>): Promise<void> {
     const resultClass = doc?._class ?? _class
 
-    if (resultClass != null) {
-      translateCB(hierarchy.getClass(resultClass).label, {}, $themeStore.language, (res) => {
+    const label = resultClass != null ? hierarchy.getClass(resultClass).label : undefined
+    if (label !== undefined) {
+      translateCB(label, {}, $themeStore.language, (res) => {
         docLabel = res
       })
     } else {

@@ -34,6 +34,8 @@
     "Classes": "Třídy",
     "Attributes": "Atributy",
     "DeleteAttribute": "Smazat atribut",
+    "UnknownAttributeType": "Neznámý typ. Atribut lze pouze smazat",
+    "UnknownType": "Neznámý typ",
     "DeleteAttributeConfirm": "Chcete tento atribut smazat?",
     "DeleteAttributeExistConfirm": "Chcete tento atribut smazat? Data budou ztracena",
     "DeleteMixin": "Smazat mixin",

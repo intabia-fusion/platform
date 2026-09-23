@@ -42,6 +42,8 @@
     "Classes": "Sınıflar",
     "Attributes": "Öznitelikler",
     "DeleteAttribute": "Özniteliği sil",
+    "UnknownAttributeType": "Bilinmeyen tip. Öznitelik yalnızca silinebilir",
+    "UnknownType": "Bilinmeyen tip",
     "DeleteAttributeConfirm": "Bu özniteliği silmek istiyor musunuz?",
     "DeleteAttributeExistConfirm": "Bu özniteliği silmek istiyor musunuz? Veriler kaybolacak",
     "DeleteMixin": "Mixin'i Sil",

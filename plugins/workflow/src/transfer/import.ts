@@ -997,6 +997,44 @@ async function restoreProjectWorkflows (
 /**
  * Creates workflows, transitions, rules and screens from a config.
  */
+/**
+ * Marks every attribute whose type cannot be resolved in this workspace as skipped, under each key the import
+ * looks resolutions up by (field key, attribute id and name). Otherwise the attribute itself is not created
+ * but rules and screen fields keep pointing at it.
+ */
+function skipUnresolvableAttributes (
+  hierarchy: Hierarchy,
+  config: WorkflowConfig,
+  attrResolutions: Record<string, AttributeResolutionConfig>
+): Record<string, AttributeResolutionConfig> {
+  const result = { ...attrResolutions }
+  const unresolvable = new Map<string, AttributeConfig>()
+  const allAttributes = [...(config.attributes ?? []), ...(config.mixins ?? []).flatMap((m) => m.attributes ?? [])]
+  for (const ac of allAttributes) {
+    if (isAttributeTypeResolvable(hierarchy, ac.type)) continue
+    unresolvable.set(ac.name, ac)
+    if (ac.id !== undefined) unresolvable.set(ac.id, ac)
+  }
+  if (unresolvable.size === 0) return result
+
+  const skip = (key: string): void => {
+    result[key] = { action: 'skip' }
+  }
+  for (const ac of new Set(unresolvable.values())) {
+    skip(ac.name)
+    if (ac.id !== undefined) skip(ac.id)
+  }
+  for (const [fieldKey, usage] of collectAttributeUsages(config)) {
+    if (
+      unresolvable.has(fieldKey) ||
+      (usage.sourceAttributeId !== undefined && unresolvable.has(usage.sourceAttributeId))
+    ) {
+      skip(fieldKey)
+    }
+  }
+  return result
+}
+
 export async function importWorkflowConfig (
   client: TxOperations,
   projectTypeId: Ref<ProjectType>,
@@ -1028,8 +1066,10 @@ export async function importWorkflowConfig (
     }
   }
 
+  const hierarchy = client.getHierarchy()
+
   // Handle attribute creation on target task type if requested
-  const attrResolutions = resolution?.attributeResolutions ?? {}
+  const attrResolutions = skipUnresolvableAttributes(hierarchy, config, resolution?.attributeResolutions ?? {})
   let targetTaskType: TaskType | undefined
   if (resolution?.targetTaskTypeId !== undefined) {
     targetTaskType = await client.findOne(task.class.TaskType, { _id: resolution.targetTaskTypeId })
@@ -1043,7 +1083,6 @@ export async function importWorkflowConfig (
     }
   }
 
-  const hierarchy = client.getHierarchy()
   const targetClass = targetTaskType?.targetClass ?? task.class.Task
   const allTargetAttributes = hierarchy.getAllAttributes(targetClass, core.class.Doc)
   const targetAttributeById = new Map<Ref<AnyAttribute>, AnyAttribute>()

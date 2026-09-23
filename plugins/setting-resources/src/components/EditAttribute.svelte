@@ -122,11 +122,16 @@
   }
 
   const items = getTypes()
+  const isKnownType = hierarchy.hasClass(attribute.type._class)
   let selectedType: Ref<Class<Type<PropertyType>>> = attribute.type._class
 
   $: selectedType && selectType(selectedType)
 
   function selectType (type: Ref<Class<Type<PropertyType>>>): void {
+    if (!hierarchy.hasClass(type)) {
+      is = undefined
+      return
+    }
     const _class = hierarchy.getClass(type)
     const editor = hierarchy.as(_class, view.mixin.ObjectEditor)
     if (editor.editor !== undefined) {
@@ -242,7 +247,7 @@
   type={'type-aside'}
   okLabel={presentation.string.Save}
   okAction={save}
-  canSave={!(name === undefined || name.trim().length === 0) && !disabled}
+  canSave={!(name === undefined || name.trim().length === 0) && !disabled && isKnownType}
   onCancel={clearSettingsStore}
   {noTopIndent}
 >
@@ -277,7 +282,11 @@
     <span class="label">
       <Label label={setting.string.Type} />
     </span>
-    {#if exist}
+    {#if !isKnownType}
+      <span class="unknown-type">
+        <Label label={setting.string.UnknownAttributeType} />
+      </span>
+    {:else if exist}
       <Label label={attribute.type.label} />
     {:else}
       <DropdownLabelsIntl
@@ -324,6 +333,11 @@
 </Modal>
 
 <style lang="scss">
+  .unknown-type {
+    color: var(--global-error-TextColor);
+    overflow-wrap: anywhere;
+  }
+
   .grid {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
