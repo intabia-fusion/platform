@@ -11,7 +11,9 @@ import { PlatformURI, generateTestData } from '../utils'
 // Real-LLM suite (@llm): the `middle` level is served by the aibot_client_llm worker against a
 // local model on the host. Run via `pnpm run run-uitests`; setup in tests/readme.md.
 
-test.describe.configure({ mode: 'serial' })
+// Must clear two REPLY_TIMEOUTs plus the sign-up; under the default 60s the wait never ran out,
+// so failures read as a bare "Test timeout exceeded" with no locator named.
+test.describe.configure({ mode: 'serial', timeout: 120000 })
 
 test.describe('ai-bot with a real local model @llm', () => {
   let leftSideMenuPage: LeftSideMenuPage
@@ -21,8 +23,8 @@ test.describe('ai-bot with a real local model @llm', () => {
   let api: ApiEndpoint
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
-  // A real model is far slower than the mock.
-  const REPLY_TIMEOUT = 180000
+  // The provider client gives up after ~7s, so a longer wait only delays a failure already decided.
+  const REPLY_TIMEOUT = 30000
 
   // Own messages are activity messages too — exclude what we sent to isolate bot replies.
   function botReplies (page: import('@playwright/test').Page, sent: string[]): import('@playwright/test').Locator {

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022-2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -21,11 +22,12 @@
     AccountUuid,
     Configuration,
     getCurrentAccount,
+    isActiveMode,
     pickPrimarySocialId,
     readOnlyGuestAccountUuid,
     WorkspaceAccountPermission
   } from '@hcengineering/core'
-  import { loginId } from '@hcengineering/login'
+  import login, { loginId } from '@hcengineering/login'
   import { translateCB } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
   import { WorkspaceSetting } from '@hcengineering/setting'
@@ -64,6 +66,8 @@
   let allowReadOnlyGuests: boolean
   let allowGuestSignUp: boolean
   let passwordAgingRule: number | undefined = undefined
+  let workspaceDeleteOn: number | undefined = undefined
+  let workspaceActive = true
 
   const accountClient = getAccountClient()
   const disabledSet = ['\n', '<', '>', '/', '\\']
@@ -81,6 +85,10 @@
       name.trim() === '' ||
       disabledSet.some((it) => name.includes(it)))
 
+  // Already scheduled or mid-transition (archiving/restoring/etc) - deleting again is either
+  // redundant or unsafe.
+  $: deleteWorkspaceDisabled = workspaceDeleteOn != null || !workspaceActive
+
   void loadWorkspaceName()
 
   async function loadWorkspaceName (): Promise<void> {
@@ -92,6 +100,8 @@
     allowReadOnlyGuests = res.allowReadOnlyGuest ?? false
     allowGuestSignUp = res.allowGuestSignUp ?? false
     passwordAgingRule = res.passwordAgingRule ?? undefined
+    workspaceDeleteOn = res.deleteOn
+    workspaceActive = isActiveMode(res.mode)
     loading = false
   }
 
@@ -112,10 +122,16 @@
     isEditingName = false
   }
 
+  // Deleting a workspace wipes it for every member, so only its owners get the button at all.
+  const isWorkspaceOwner = getCurrentAccount().role === AccountRole.Owner
+
   async function handleDelete (): Promise<void> {
+    // Deferral windows come from the account pod - they are configurable per installation.
+    const policy = await accountClient.getDeletionPolicy().catch(() => ({ graceDays: 21, readonlyDays: 7 }))
     showPopup(MessageBox, {
       label: settingsRes.string.DeleteWorkspace,
       message: settingsRes.string.DeleteWorkspaceConfirm,
+      params: { days: policy.graceDays, readonlyDays: policy.readonlyDays },
       dangerous: true,
       action: async () => {
         // Irreversible for every member: a code sent to the owner's email confirms it.
@@ -414,17 +430,25 @@
             </div>
           </div> -->
 
-          <div class="flex-col flex-gap-4 mt-6">
-            <div class="title"><Label label={settingsRes.string.DangerZone} /></div>
-            <div class="w-32">
-              <Button
-                label={settingsRes.string.DeleteWorkspace}
-                kind="dangerous"
-                on:click={handleDelete}
-                showTooltip={{ label: settingsRes.string.DeleteWorkspace }}
-              />
+          {#if isWorkspaceOwner}
+            <div class="flex-col flex-gap-4 mt-6">
+              <div class="title"><Label label={settingsRes.string.DangerZone} /></div>
+              <div class="w-32">
+                <Button
+                  label={settingsRes.string.DeleteWorkspace}
+                  kind="dangerous"
+                  disabled={deleteWorkspaceDisabled}
+                  on:click={handleDelete}
+                  showTooltip={workspaceDeleteOn != null
+                    ? {
+                        label: login.string.WorkspaceDeletionScheduledDesc,
+                        props: { date: new Date(workspaceDeleteOn).toLocaleDateString() }
+                      }
+                    : { label: settingsRes.string.DeleteWorkspace }}
+                />
+              </div>
             </div>
-          </div>
+          {/if}
         </div>
       </Scroller>
     {/if}

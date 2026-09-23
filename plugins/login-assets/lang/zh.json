@@ -116,6 +116,17 @@
     "ConfirmationFailed": "无法完成注册",
     "NoFreeSeats": "没有空闲席位",
     "NoFreeSeatsDescription": "该工作区已达到套餐席位上限。请联系工作区管理员。",
-    "NoFreeSeatsForInvite": "套餐已无空闲席位，无法创建新的邀请链接。"
+    "NoFreeSeatsForInvite": "套餐已无空闲席位，无法创建新的邀请链接。",
+    "ScheduledForDeletion": "{date} 删除",
+    "WorkspaceDeletionScheduledDesc": "此工作区计划于 {date} 删除。取消只会撤销删除；若届时已归档，请另行恢复。该日期之后，工作区及其备份都将消失。",
+    "CancelWorkspaceDeletion": "取消删除",
+    "AccountDeletionScheduled": "账户已计划删除",
+    "AccountDeletionScheduledDesc": "您的账户将于 {date} 删除。若要保留，请取消删除。已计划删除的工作区仍保持计划状态，请分别恢复。",
+    "CancelAccountDeletion": "取消删除",
+    "DeleteAccount": "删除账户",
+    "DeleteAccountConfirm": "账户将被标记为删除，并在 {days} 天后彻底移除。在此之前登录即可取消。是否继续?",
+    "DeleteAccountBlockedAdmin": "管理员账户无法在此删除。",
+    "DeleteAccountBlocked": "您是以下工作区的唯一所有者：{workspaces}。请先删除这些工作区或将其移交他人。",
+    "CodeSent": "确认码已发送到您的邮箱。"
   }
 }

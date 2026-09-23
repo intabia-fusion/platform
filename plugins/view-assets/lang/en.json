@@ -150,6 +150,8 @@
     "ReadOnlyWarningMessage": "You're in view-only mode. Choose your path: Join this workspace to collaborate (as guest) or create your own space to fully manage projects — tasks, deadlines, team!",
     "ReadOnlyJoinWorkspace": "Join workspace",
     "ReadOnlySignUp": "Create workspace",
+    "ReadOnlyWorkspaceWarningTitle": "Workspace is read-only",
+    "ReadOnlyWorkspaceWarningMessage": "This workspace does not accept changes right now. It is archived, scheduled for deletion, or you are viewing it in a read-only session.",
     "PermissionWarningTitle": "✨ Level up your access!",
     "PermissionWarningMessage": "Your current role has limited permissions. To unlock this and other advanced features, ask your workspace admin to upgrade your access level!",
     "PlanLimitWarningTitle": "Plan limit reached",

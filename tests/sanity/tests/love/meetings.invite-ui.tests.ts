@@ -16,21 +16,13 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import {
+  clickFirstAvailableRoom,
   closeMeetingContexts,
   loveWindow,
   startOrJoin,
   waitConnected,
   waitForActiveMeetingsToFinish
 } from './meeting-helpers'
-
-async function clickFirstMeetingRoom (page: Page): Promise<void> {
-  const room = page
-    .locator('div.floorGrid-room')
-    .filter({ hasText: /Meeting Room/i })
-    .first()
-  await expect(room).toBeVisible({ timeout: 15000 })
-  await room.click()
-}
 
 async function inviteByLastName (page: Page, lastName: string): Promise<void> {
   await page.locator('[data-id="invite-button"]').first().click()
@@ -68,7 +60,7 @@ export function registerInviteUiTests (): void {
       const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
       const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await clickFirstMeetingRoom(page2)
+        await clickFirstAvailableRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
 
@@ -96,7 +88,7 @@ export function registerInviteUiTests (): void {
       const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
       const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await clickFirstMeetingRoom(page2)
+        await clickFirstAvailableRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
 
@@ -124,7 +116,7 @@ export function registerInviteUiTests (): void {
       const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
       const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await clickFirstMeetingRoom(page2)
+        await clickFirstAvailableRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
 
@@ -185,7 +177,7 @@ export function registerInviteUiTests (): void {
       const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
       const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await clickFirstMeetingRoom(page2)
+        await clickFirstAvailableRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
 
@@ -212,7 +204,7 @@ export function registerInviteUiTests (): void {
       const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
       const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await clickFirstMeetingRoom(page2)
+        await clickFirstAvailableRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
 

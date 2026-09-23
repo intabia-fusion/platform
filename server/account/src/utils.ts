@@ -21,6 +21,7 @@ import {
   generateId,
   hashWorkspace,
   isActiveMode,
+  isArchivingMode,
   type MeasureContext,
   type Person,
   type PersonId,
@@ -48,7 +49,13 @@ import { pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
-import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } from '@hcengineering/server-token'
+import {
+  decodeTokenVerbose,
+  generateToken,
+  isHumanAdmin,
+  type PermissionsGrant,
+  TokenError
+} from '@hcengineering/server-token'
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'
 import {
@@ -84,7 +91,7 @@ import {
   type WorkspaceLoginInfo,
   type WorkspaceStatus
 } from './types'
-import { isAdminEmail, isBillingAdminEmail } from './admin'
+import { getBillingAdminEmails, isAdminEmail, isBillingAdminEmail } from './admin'
 
 export const GUEST_ACCOUNT = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
 
@@ -386,6 +393,18 @@ export function isAccountPasswordLocked (account: Account): boolean {
   return failedAttempts >= maxFailedLoginAttempts
 }
 
+/** Scheduled for deletion or archived: the data can still be taken out, but not changed. */
+export function isReadOnlyWorkspace (status: { mode: WorkspaceMode, deleteOn?: number }): boolean {
+  return (status.deleteOn != null && isActiveMode(status.mode)) || isArchivingMode(status.mode)
+}
+
+/** Blocked by an admin: every path that hands out a token must refuse. */
+export function ensureNotBlocked (account: Pick<Account, 'blockedOn'> | null): void {
+  if (account?.blockedOn != null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountBlocked, {}))
+  }
+}
+
 /**
  * Record a failed login attempt for an account.
  * Increments the failed attempts counter.
@@ -532,13 +551,16 @@ export function getSignUpLinkTtlMs (): number {
   return (getMetadata(accountPlugin.metadata.SignUpLinkTimeToLiveSec) ?? 7 * 24 * 60 * 60) * 1000
 }
 
+/** Which letter carries the code: sign in, admin panel action, or a person's own destructive action. */
+export type OtpKind = 'login' | 'admin' | 'operation'
+
 export async function sendOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   socialId: SocialId,
   ttlSec?: number,
-  adminAction: boolean = false
+  kind: OtpKind = 'login'
 ): Promise<OtpInfo> {
   const ts = Date.now()
   const otpData = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
@@ -558,9 +580,9 @@ export async function sendOtp (
   // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
   // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
   const link =
-    !adminAction && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
+    kind === 'login' && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
 
-  await sendOtpEmail(ctx, branding, code, socialId.value, adminAction, link)
+  await sendOtpEmail(ctx, branding, code, socialId.value, kind, link)
   await db.otp.insertOne({ socialId: socialId._id, code, expiresOn: ts + ttlMs, createdOn: ts })
 
   return { sent: true, retryOn: ts + retryDelayMs }
@@ -571,7 +593,7 @@ export async function sendOtpEmail (
   branding: Branding | null,
   otp: string,
   email: string,
-  adminAction: boolean = false,
+  kind: OtpKind = 'login',
   link?: string
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
@@ -580,19 +602,20 @@ export async function sendOtpEmail (
 
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
-  // Admin-operation OTP uses a distinct message so the admin knows what they are confirming.
+  // Admin and self-service codes name what is being confirmed; the admin one points at the admin panel.
   // The sign up variant carries an activation link; a template cannot include one conditionally.
-  const textKey = adminAction
-    ? accountPlugin.string.AdminOtpText
-    : link !== undefined
-      ? accountPlugin.string.SignUpOtpText
-      : accountPlugin.string.OtpText
-  const htmlKey = adminAction
-    ? accountPlugin.string.AdminOtpHTML
-    : link !== undefined
-      ? accountPlugin.string.SignUpOtpHTML
-      : accountPlugin.string.OtpHTML
-  const subjectKey = adminAction ? accountPlugin.string.AdminOtpSubject : accountPlugin.string.OtpSubject
+  let textKey = link !== undefined ? accountPlugin.string.SignUpOtpText : accountPlugin.string.OtpText
+  let htmlKey = link !== undefined ? accountPlugin.string.SignUpOtpHTML : accountPlugin.string.OtpHTML
+  let subjectKey = accountPlugin.string.OtpSubject
+  if (kind === 'admin') {
+    textKey = accountPlugin.string.AdminOtpText
+    htmlKey = accountPlugin.string.AdminOtpHTML
+    subjectKey = accountPlugin.string.AdminOtpSubject
+  } else if (kind === 'operation') {
+    textKey = accountPlugin.string.OperationOtpText
+    htmlKey = accountPlugin.string.OperationOtpHTML
+    subjectKey = accountPlugin.string.OperationOtpSubject
+  }
 
   const params = { code: otp, app, link }
   const text = await translate(textKey, params, lang)
@@ -669,7 +692,7 @@ export function getAdminOtpDevCode (): string | undefined {
   return code != null && code !== '' ? code : undefined
 }
 
-export async function getAdminEmailSocialId (ctx: MeasureContext, db: AccountDB, token: string): Promise<SocialId> {
+export async function getCallerEmailSocialId (ctx: MeasureContext, db: AccountDB, token: string): Promise<SocialId> {
   const { account } = decodeTokenVerbose(ctx, token)
   // Deterministic: pick the earliest verified email so OTP always goes to a trusted address.
   const emails = (
@@ -682,28 +705,36 @@ export async function getAdminEmailSocialId (ctx: MeasureContext, db: AccountDB,
   return sid
 }
 
-export async function requestAdminOtp (
+/**
+ * Sends a code to the caller's own verified email. The admin panel and the self-service actions
+ * (leave, delete) share it; only the admin ones belong in the audit trail.
+ */
+export async function sendOperationOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  kind: OtpKind = 'operation'
 ): Promise<OtpInfo> {
+  const audit = isHumanAdmin(decodeTokenVerbose(ctx, token))
   if (getAdminOtpDevCode() !== undefined) {
-    await logAdminAction(ctx, db, token, 'otp_issued')
+    if (audit) {
+      await logAdminAction(ctx, db, token, 'otp_issued')
+    }
     return { sent: true, retryOn: Date.now() }
   }
-  const sid = await getAdminEmailSocialId(ctx, db, token)
+  const sid = await getCallerEmailSocialId(ctx, db, token)
   const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
-  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, kind)
   const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
   // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
-  if (after !== before) {
+  if (audit && after !== before) {
     await logAdminAction(ctx, db, token, 'otp_issued')
   }
   return info
 }
 
-export async function verifyAdminOtp (
+export async function verifyOperationOtp (
   ctx: MeasureContext,
   db: AccountDB,
   token: string,
@@ -719,7 +750,7 @@ export async function verifyAdminOtp (
     }
     return
   }
-  const sid = await getAdminEmailSocialId(ctx, db, token)
+  const sid = await getCallerEmailSocialId(ctx, db, token)
   // Atomic consume: only the caller that deletes the row succeeds. Prevents one code
   // confirming two concurrent ops; each wrong guess deletes nothing (no reuse).
   const ok = await db.consumeOtp(sid._id, otpCode)
@@ -878,6 +909,12 @@ export async function selectWorkspace (
     accountUuid = decodedToken.account
     workspace ??= await getWorkspaceById(db, decodedToken.workspace)
     extra = decodedToken.extra
+    // The status-derived readonly is recomputed below; carried over, it outlives a cancelled deletion.
+    if (extra?.workspaceReadonly === 'true') {
+      extra = { ...extra }
+      delete extra.readonly
+      delete extra.workspaceReadonly
+    }
     grant = decodedToken.grant
     sub = decodedToken.sub
     exp = decodedToken.exp
@@ -984,7 +1021,14 @@ export async function selectWorkspace (
 
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUrl }))
     }
+
+    // Scheduled for deletion or archived: open for taking the data out, closed for writing.
+    if (isReadOnlyWorkspace(wsStatus) && extra?.readonly !== 'true') {
+      extra = { ...extra, readonly: 'true', workspaceReadonly: 'true' }
+    }
   }
+
+  ensureNotBlocked(await db.account.findOne({ uuid: accountUuid }))
 
   const person = await db.person.findOne({ uuid: accountUuid })
   if (person == null) {
@@ -1841,6 +1885,8 @@ export async function loginOrSignUpWithProvider (
       await db.socialId.update({ key: emailSocialId.key }, { verifiedOn: Date.now() })
     }
 
+    ensureNotBlocked(await db.account.findOne({ uuid: personUuid as AccountUuid }))
+
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true' }
@@ -2046,6 +2092,215 @@ export async function sendEmail (info: EmailInfo, ctx: MeasureContext): Promise<
     ],
     to
   )
+}
+
+function escapeHtml (value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+/**
+ * Deleting a workspace is irreversible for everyone in it, and an owner can do it without an admin
+ * ever being involved - so the people who watch the account get told out of band.
+ */
+export async function notifyWorkspaceDeleted (
+  ctx: MeasureContext,
+  db: AccountDB,
+  token: string,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string }
+): Promise<void> {
+  const recipients = getBillingAdminEmails()
+  if (recipients.length === 0) return
+
+  try {
+    const { account } = decodeTokenVerbose(ctx, token)
+    const actor = (await getPersonEmail(db, account)) ?? account
+    const subject = `Workspace deleted: ${workspace.name}`
+    const text = `${actor} deleted workspace "${workspace.name}" (${workspace.url}, ${workspace.uuid}) at ${new Date().toISOString()}.`
+
+    for (const to of recipients) {
+      await sendEmail({ to, subject, text, html: `<p>${escapeHtml(text)}</p>` }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify billing admins about a workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
+/** Primary verified email of a person. A retired or unproven address is not one. */
+export async function getPersonEmail (db: AccountDB, person: PersonUuid): Promise<string | undefined> {
+  const emails = (await db.socialId.find({ personUuid: person, type: SocialIdType.EMAIL })).filter(
+    (sid) => sid.isDeleted !== true && sid.verifiedOn != null
+  )
+  return emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value
+}
+
+/** Where a person goes to see - and call off - a scheduled deletion. */
+function getSelectWorkspaceLink (branding: Branding | null): string {
+  return concatLink(getFrontUrl(branding), '/login/selectWorkspace')
+}
+
+/**
+ * Tells the owners their workspace is on its way out. `schedule` undefined means it goes now,
+ * with no deferral and nothing to call off. `readonlyDays` is 0 when the workspace was already
+ * archived when scheduled - no read-only window applies to it.
+ */
+export async function notifyWorkspaceDeletionScheduled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string },
+  schedule: { deleteOn: number, readonlyDays: number } | undefined
+): Promise<void> {
+  try {
+    const lang = branding?.defaultLanguage
+    const owners = (await db.getWorkspaceMembers(workspace.uuid)).filter((m) => m.role === AccountRole.Owner)
+    const params = {
+      ws: workspace.name !== '' ? workspace.name : workspace.url,
+      url: workspace.url,
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
+      date: schedule != null ? new Date(schedule.deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      readonlyDays: schedule?.readonlyDays ?? 0,
+      link: getSelectWorkspaceLink(branding)
+    }
+    const scheduled = schedule != null
+    const info = {
+      subject: await translate(
+        scheduled
+          ? accountPlugin.string.WorkspaceDeletionScheduledSubject
+          : accountPlugin.string.WorkspaceDeletedSubject,
+        params,
+        lang
+      ),
+      text: await translate(
+        scheduled ? accountPlugin.string.WorkspaceDeletionScheduledText : accountPlugin.string.WorkspaceDeletedText,
+        params,
+        lang
+      ),
+      html: await translate(
+        scheduled ? accountPlugin.string.WorkspaceDeletionScheduledHTML : accountPlugin.string.WorkspaceDeletedHTML,
+        params,
+        lang
+      )
+    }
+
+    for (const owner of owners) {
+      const to = await getPersonEmail(db, owner.person)
+      if (to === undefined) continue
+      await sendEmail({ ...info, to }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify the owners about a workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
+/** Tells the owners the scheduled deletion was called off. `state` picks the sentence about what it is now. */
+export async function notifyWorkspaceDeletionCancelled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string },
+  state: 'active' | 'archived' | 'restoring'
+): Promise<void> {
+  try {
+    const lang = branding?.defaultLanguage
+    const owners = (await db.getWorkspaceMembers(workspace.uuid)).filter((m) => m.role === AccountRole.Owner)
+    const params = {
+      ws: workspace.name !== '' ? workspace.name : workspace.url,
+      url: workspace.url,
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
+      state,
+      link: getSelectWorkspaceLink(branding)
+    }
+    const info = {
+      subject: await translate(accountPlugin.string.WorkspaceDeletionCancelledSubject, params, lang),
+      text: await translate(accountPlugin.string.WorkspaceDeletionCancelledText, params, lang),
+      html: await translate(accountPlugin.string.WorkspaceDeletionCancelledHTML, params, lang)
+    }
+
+    for (const owner of owners) {
+      const to = await getPersonEmail(db, owner.person)
+      if (to === undefined) continue
+      await sendEmail({ ...info, to }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify the owners about a cancelled workspace deletion', { workspace: workspace.uuid, err })
+  }
+}
+
+/** Tells the person their account is on its way out. `deleteOn` null means it is already gone. */
+export async function notifyAccountDeletion (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  account: AccountUuid,
+  deleteOn: number | undefined
+): Promise<void> {
+  try {
+    const to = await getPersonEmail(db, account)
+    if (to === undefined) return
+
+    const lang = branding?.defaultLanguage
+    const scheduled = deleteOn != null
+    const params = {
+      date: scheduled ? new Date(deleteOn).toLocaleDateString(lang ?? 'en') : '',
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
+      link: getSelectWorkspaceLink(branding)
+    }
+
+    await sendEmail(
+      {
+        to,
+        subject: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledSubject : accountPlugin.string.AccountDeletedSubject,
+          params,
+          lang
+        ),
+        text: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledText : accountPlugin.string.AccountDeletedText,
+          params,
+          lang
+        ),
+        html: await translate(
+          scheduled ? accountPlugin.string.AccountDeletionScheduledHTML : accountPlugin.string.AccountDeletedHTML,
+          params,
+          lang
+        )
+      },
+      ctx
+    )
+  } catch (err) {
+    ctx.warn('Failed to notify about an account deletion', { account, err })
+  }
+}
+
+/** Tells the person the scheduled deletion of their account was called off. */
+export async function notifyAccountDeletionCancelled (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  account: AccountUuid
+): Promise<void> {
+  try {
+    const to = await getPersonEmail(db, account)
+    if (to === undefined) return
+
+    const lang = branding?.defaultLanguage
+    const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
+      link: getSelectWorkspaceLink(branding)
+    }
+
+    await sendEmail(
+      {
+        to,
+        subject: await translate(accountPlugin.string.AccountDeletionCancelledSubject, params, lang),
+        text: await translate(accountPlugin.string.AccountDeletionCancelledText, params, lang),
+        html: await translate(accountPlugin.string.AccountDeletionCancelledHTML, params, lang)
+      },
+      ctx
+    )
+  } catch (err) {
+    ctx.warn('Failed to notify about a cancelled account deletion', { account, err })
+  }
 }
 
 export function sanitizeEmail (email: string): string {

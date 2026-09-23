@@ -195,6 +195,18 @@
     "Actions": "Akce",
     "NoTrial": "Bez zkušební verze",
     "Sessions": "Relace",
-    "Ops5m": "Operace (5 min)"
+    "Ops5m": "Operace (5 min)",
+    "CancelDeletion": "Zrušit smazání",
+    "DeletionScheduled": "smazání {date}",
+    "CannotDeleteOwnAccount": "Administrátor nemůže smazat vlastní účet.",
+    "OwnedWorkspacesBlockDeletion": "Jediný vlastník: {workspaces}. Nejprve tyto pracovní prostory smažte nebo je předejte.",
+    "WorkspaceNotFound": "Pracovní prostor nenalezen - možná už byl smazán.",
+    "ActionFailed": "Akce selhala",
+    "NothingChanged": "Nic se nezměnilo",
+    "Block": "Zablokovat",
+    "Unblock": "Odblokovat",
+    "Blocked": "Zablokován",
+    "BlockedOnly": "Pouze zablokované",
+    "DeleteNow": "Smazat ihned"
   }
 }

@@ -195,6 +195,18 @@
     "Actions": "操作",
     "NoTrial": "トライアルを除く",
     "Sessions": "セッション",
-    "Ops5m": "操作数 (5分)"
+    "Ops5m": "操作数 (5分)",
+    "CancelDeletion": "削除を取り消す",
+    "DeletionScheduled": "{date} に削除",
+    "CannotDeleteOwnAccount": "管理者は自分のアカウントを削除できません。",
+    "OwnedWorkspacesBlockDeletion": "次のワークスペースの唯一の所有者です: {workspaces}。先に削除するか、他の人に引き継いでください。",
+    "WorkspaceNotFound": "ワークスペースが見つかりません。すでに削除された可能性があります。",
+    "ActionFailed": "操作に失敗しました",
+    "NothingChanged": "変更はありません",
+    "Block": "ブロック",
+    "Unblock": "ブロック解除",
+    "Blocked": "ブロック済み",
+    "BlockedOnly": "ブロック済みのみ",
+    "DeleteNow": "今すぐ削除"
   }
 }

@@ -215,6 +215,7 @@ export class LiveQuery implements WithTx, Client {
       callback(toFindResult([], 0))
     })
     q.result = new ResultArray([], this.getHierarchy())
+    q.refsRegistered = false
     q.total = -1
   }
 
@@ -377,6 +378,8 @@ export class LiveQuery implements WithTx, Client {
         if (update) {
           if (!(q.result instanceof Promise)) {
             this.refs.updateDocuments(q, q.result.getDocs(), true)
+            // Unregistered from Refs, so a revived query has to register the result again.
+            q.refsRegistered = false
           }
         }
         return true
@@ -448,7 +451,8 @@ export class LiveQuery implements WithTx, Client {
       options,
       callbacks: new Map(),
       refresh: reduceCalls(() => this.doRefresh(q)),
-      refreshId: 0
+      refreshId: 0,
+      refsRegistered: false
     }
     if (callback !== undefined) {
       q.callbacks.set(callback.callbackId, callback.callback as unknown as Callback)
@@ -490,6 +494,7 @@ export class LiveQuery implements WithTx, Client {
     if (removed) {
       if (!(q.result instanceof Promise)) {
         this.refs.updateDocuments(q, q.result.getDocs(), true)
+        q.refsRegistered = false
       }
     }
   }
@@ -790,13 +795,18 @@ export class LiveQuery implements WithTx, Client {
         // from the server at this exact modifiedOn timestamp (in which case it already
         // incorporates the $inc from the database).
         const isLoadedAtSameTs = q.result.isLoadedAtModifiedOn(tx.objectId, tx.modifiedOn)
-        const incOnlyAtSameTime =
-          !isLoadedAtSameTs &&
-          updatedDoc.modifiedOn === tx.modifiedOn &&
-          tx.operations.$inc != null &&
-          Object.keys(tx.operations).every((k) => k === '$inc')
+        const isIncOnly = tx.operations.$inc != null && Object.keys(tx.operations).every((k) => k === '$inc')
+        const incOnlyAtSameTime = !isLoadedAtSameTs && updatedDoc.modifiedOn === tx.modifiedOn && isIncOnly
+        // A re-delivered tx (reconnect replay, double notify) must change nothing at all. Applying
+        // it moves the doc to tx.modifiedOn, so the repeat arrives as an equal-timestamp $inc.
+        if (incOnlyAtSameTime && q.result.isIncApplied(tx.objectId, tx._id, tx.modifiedOn)) {
+          return
+        }
         if (updatedDoc.modifiedOn < tx.modifiedOn || incOnlyAtSameTime || tx.meta?.forceApply === true) {
           await this.__updateDoc(q, updatedDoc, tx)
+          if (isIncOnly) {
+            q.result.markIncApplied(tx.objectId, tx._id, tx.modifiedOn)
+          }
           const updateRefresh = this.checkUpdatedDocMatch(q, q.result, updatedDoc)
           if (updateRefresh) {
             return
@@ -965,6 +975,7 @@ export class LiveQuery implements WithTx, Client {
     const res = await this.client.findAll(q._class, q.query, q.options)
     if (q.refreshId === qid && (!deepEqual(res, q.result) || (res.total !== q.total && q.options?.total === true))) {
       q.result = new ResultArray(res, this.getHierarchy())
+      q.refsRegistered = false
       q.total = res.total
       await this.callback(q)
     }
@@ -1046,10 +1057,9 @@ export class LiveQuery implements WithTx, Client {
         const doc = res[0]
         const pos = q.result.findDoc(doc._id)
         if (pos !== undefined) {
-          q.result.updateDoc(doc)
-          this.refs.updateDocuments(q, [doc])
+          this.refs.updateDocuments(q, [q.result.updateDoc(doc)])
         } else {
-          q.result.push(doc)
+          this.refs.updateDocuments(q, [q.result.push(doc)])
           if (q.options?.total === true) {
             q.total++
           }
@@ -1174,7 +1184,7 @@ export class LiveQuery implements WithTx, Client {
         if (match === undefined) return
       }
 
-      q.result.push(doc)
+      const stored = q.result.push(doc)
       if (q.options?.total === true) {
         q.total++
       }
@@ -1184,10 +1194,21 @@ export class LiveQuery implements WithTx, Client {
       }
 
       if (q.options?.limit !== undefined && q.result.length > q.options.limit) {
-        if (q.result.pop()?._id !== doc._id || q.options?.total === true) {
+        // Whatever leaves the window is held by this query no longer, and the clean pass only
+        // walks the result - unregister it here or it stays in Refs forever.
+        const popped = q.result.pop()
+        if (popped !== undefined) {
+          this.refs.updateDocuments(q, [popped], true)
+        }
+        const kept = popped?._id !== doc._id
+        if (kept) {
+          this.refs.updateDocuments(q, [stored])
+        }
+        if (kept || q.options?.total === true) {
           await this.callback(q, true)
         }
       } else {
+        this.refs.updateDocuments(q, [stored])
         await this.callback(q, true)
       }
     }
@@ -1200,7 +1221,10 @@ export class LiveQuery implements WithTx, Client {
 
     const result = q.result
 
-    this.refs.updateDocuments(q, result.getDocs())
+    if (!q.refsRegistered) {
+      this.refs.updateDocuments(q, result.getDocs())
+      q.refsRegistered = true
+    }
 
     if (bulkUpdate) {
       this.queriesToUpdate.set(q.id, q)
@@ -1576,6 +1600,8 @@ export class LiveQuery implements WithTx, Client {
               Analytics.handleError(err)
               console.error(err)
             }
+          } else {
+            this.removeQueue(q)
           }
         }
       }
@@ -1605,6 +1631,8 @@ export class LiveQuery implements WithTx, Client {
               Analytics.handleError(err)
               console.error(err)
             }
+          } else {
+            this.removeQueue(q)
           }
         }
       }
@@ -1754,7 +1782,11 @@ export class LiveQuery implements WithTx, Client {
         await this.refresh(q)
         return
       }
-      if (res.pop()?._id !== updatedDoc._id) {
+      const popped = res.pop()
+      if (popped !== undefined) {
+        this.refs.updateDocuments(q, [popped], true)
+      }
+      if (popped?._id !== updatedDoc._id) {
         await this.callback(q, true)
       }
     } else {

@@ -131,6 +131,7 @@ export interface BlobDB {
   setMeta: (ctx: MeasureContext, blobId: BlobId, meta: BlobMeta) => Promise<void>
   setParent: (ctx: MeasureContext, blob: BlobId, parent: BlobId | null) => Promise<void>
   deleteBlobList: (ctx: MeasureContext, list: BlobIds) => Promise<void>
+  deleteWorkspaceBlobs: (ctx: MeasureContext, workspace: string) => Promise<void>
   getStats: (ctx: MeasureContext) => Promise<StatsResult>
   getWorkspaceStats: (ctx: MeasureContext, workspace: string) => Promise<WorkspaceStatsResult>
   getWorkspaceStatsByType: (ctx: MeasureContext, workspace: string) => Promise<WorkspaceStatsByTypeResult[]>
@@ -362,6 +363,19 @@ export class PostgresDB implements BlobDB {
     )
   }
 
+  async deleteWorkspaceBlobs (ctx: MeasureContext, workspace: string): Promise<void> {
+    // The workspace is gone: every blob of it is marked at once, so a later sweep can drop the
+    // files themselves. Repeating it is harmless - an already marked row is skipped.
+    await this.execute(
+      `
+      UPDATE blob.blob
+      SET deleted_at = now()
+      WHERE workspace = $1 AND deleted_at IS NULL
+    `,
+      [workspace]
+    )
+  }
+
   async getMeta (ctx: MeasureContext, blobId: BlobId): Promise<BlobMeta | null> {
     const { workspace, name } = blobId
 
@@ -543,6 +557,10 @@ export class RetryDB implements BlobDB {
     await retry(() => this.db.deleteBlob(ctx, blob), this.options)
   }
 
+  async deleteWorkspaceBlobs (ctx: MeasureContext, workspace: string): Promise<void> {
+    await retry(() => this.db.deleteWorkspaceBlobs(ctx, workspace), this.options)
+  }
+
   async getMeta (ctx: MeasureContext, blobId: BlobId): Promise<BlobMeta | null> {
     return await retry(() => this.db.getMeta(ctx, blobId), this.options)
   }
@@ -612,6 +630,12 @@ export class LoggedDB implements BlobDB {
   async deleteBlob (ctx: MeasureContext, blob: BlobId): Promise<void> {
     const params = { workspace: blob.workspace }
     await ctx.with('db.deleteBlob', {}, () => this.db.deleteBlob(this.ctx, blob), params)
+  }
+
+  async deleteWorkspaceBlobs (ctx: MeasureContext, workspace: string): Promise<void> {
+    await ctx.with('db.deleteWorkspaceBlobs', {}, () => this.db.deleteWorkspaceBlobs(this.ctx, workspace), {
+      workspace
+    })
   }
 
   async getMeta (ctx: MeasureContext, blobId: BlobId): Promise<BlobMeta | null> {

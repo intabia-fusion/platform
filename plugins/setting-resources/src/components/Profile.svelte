@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { requestOperationOtpCode } from '../utils'
+  import { getAccountClient, requestOperationOtpCode } from '../utils'
   import contact, { combineName, getFirstName, getLastName } from '@hcengineering/contact'
   import { ChannelsEditor, EditableAvatar, myEmployeeStore } from '@hcengineering/contact-resources'
   import { AccountRole, getCurrentAccount, SocialIdType } from '@hcengineering/core'
@@ -77,7 +77,23 @@
 
   const manager = createFocusManager()
 
+  /** The workspace cannot be left without an owner, and asking for a code first would waste it. */
+  async function isLastOwner (): Promise<boolean> {
+    if (account.role !== AccountRole.Owner) return false
+    const members = await getAccountClient().getWorkspaceMembers()
+    return members.filter((m) => m.role === AccountRole.Owner).length === 1
+  }
+
   async function leave (): Promise<void> {
+    if (await isLastOwner()) {
+      showPopup(MessageBox, {
+        label: setting.string.LastOwnerLeaveTitle,
+        message: setting.string.LastOwnerLeaveMessage,
+        canSubmit: false
+      })
+      return
+    }
+
     showPopup(MessageBox, {
       label: setting.string.Leave,
       message: setting.string.LeaveDescr,
@@ -111,6 +127,36 @@
             throw err
           }
         }
+      }
+    })
+  }
+
+  async function deleteAccount (): Promise<void> {
+    const { canDelete, ownedWorkspaces } = await getAccountClient().canDeleteAccount()
+    if (!canDelete) {
+      showPopup(MessageBox, {
+        label: setting.string.DeleteAccount,
+        message: setting.string.DeleteAccountBlocked,
+        params: { workspaces: ownedWorkspaces.map((ws) => ws.name).join(', ') },
+        canSubmit: false
+      })
+      return
+    }
+
+    const policy = await getAccountClient()
+      .getDeletionPolicy()
+      .catch(() => ({ graceDays: 21, readonlyDays: 7 }))
+    showPopup(MessageBox, {
+      label: setting.string.DeleteAccount,
+      message: setting.string.DeleteAccountConfirm,
+      params: { days: policy.graceDays },
+      dangerous: true,
+      action: async () => {
+        const code = await requestOperationOtpCode()
+        if (code === undefined) return
+        await getAccountClient().deleteAccount(account.uuid, code)
+        await logOut()
+        navigate({ path: [loginId] })
       }
     })
   }
@@ -200,6 +246,13 @@
       <SocialIdsEditor rating={personRating} />
       <div class="footer">
         <Button
+          label={setting.string.DeleteAccount}
+          kind="dangerous"
+          on:click={() => {
+            void deleteAccount()
+          }}
+        />
+        <Button
           icon={setting.icon.Signout}
           label={setting.string.Leave}
           kind="dangerous"
@@ -229,6 +282,8 @@
   }
 
   .footer {
+    display: flex;
+    gap: 0.5rem;
     margin-top: 2rem;
     align-self: flex-end;
   }

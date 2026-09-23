@@ -15,11 +15,15 @@
 
 import { type AccountDB, type Person as GlobalPerson, type SocialId } from '@hcengineering/account'
 import { type MeasureContext, type PersonUuid } from '@hcengineering/core'
-import { gunzipSync } from 'zlib'
+import { promisify } from 'node:util'
+import { gunzip } from 'zlib'
 import { collectAccountObjects } from './restore'
 import { BackupStorage } from './storage'
 import type { BackupInfo, BackupSnapshot } from './types'
 import { toAccountDomain } from './utils'
+
+// Same rationale as backup.ts: keep the index read off the event loop.
+const gunzipAsync = promisify(gunzip)
 
 // account_db uses snake_case columns; person.uuid is the PK referenced by many FKs.
 const accountSchema = 'global_account'
@@ -88,7 +92,9 @@ export async function analyzeAccountRemap (
   if (!(await storage.exists(infoFile))) {
     throw new Error(`${infoFile} should present to analyze`)
   }
-  const backupInfo: BackupInfo = JSON.parse(gunzipSync(new Uint8Array(await storage.loadFile(infoFile))).toString())
+  const backupInfo: BackupInfo = JSON.parse(
+    (await gunzipAsync(new Uint8Array(await storage.loadFile(infoFile)))).toString()
+  )
   let snapshots: BackupSnapshot[] = backupInfo.snapshots
   if (date !== -1) {
     const bk = backupInfo.snapshots.findIndex((s) => s.date === date)

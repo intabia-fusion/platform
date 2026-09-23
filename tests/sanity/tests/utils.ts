@@ -38,7 +38,10 @@ export function generateTestData (): TestData {
   }
 
   return {
-    workspaceName: faker.lorem.word(),
+    // A faker word is not an identifier: its word list is finite, and on a collision the account
+    // service hands the workspace a url of its own (`<name>-<id>`). Every test that builds a url
+    // from this name then lands in somebody else's workspace - i.e. on the login form.
+    workspaceName: `${faker.lorem.word()}-${generateId(8)}`,
     userName: faker.internet.userName(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
@@ -65,7 +68,7 @@ export function getNextHourTimeForPlanner (): string {
 }
 
 // Consistent data
-export const workspaceName = faker.lorem.word()
+export const workspaceName = `${faker.lorem.word()}-${faker.string.alphanumeric(8).toLowerCase()}`
 export const userName = faker.internet.userName()
 export const firstName = faker.person.firstName()
 export const lastName = faker.person.lastName()

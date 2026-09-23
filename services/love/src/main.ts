@@ -270,21 +270,31 @@ export const main = async (): Promise<void> => {
         break
       }
       case QueueMeetingEvent.started: {
-        const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
-        const mm = await wsClient.findMeetingById(queueMsg.meetingId)
-        if (mm?.startWithRecording === true) {
-          const sysToken = generateToken(systemAccountUuid, msg.workspace, { service: 'love' })
-          const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
-          if (!isWorkspaceLoginInfo(wsLoginInfo)) {
-            break
+        // A failed auto-start costs one recording; a throw here costs the whole topic, because
+        // the consumer redelivers a failing message without limit.
+        try {
+          const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
+          const mm = await wsClient.findMeetingById(queueMsg.meetingId)
+          if (mm?.startWithRecording === true) {
+            const sysToken = generateToken(systemAccountUuid, msg.workspace, { service: 'love' })
+            const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
+            if (!isWorkspaceLoginInfo(wsLoginInfo)) {
+              break
+            }
+            await recordingProcessor.startRecording(
+              getRoomName(msg.workspace, queueMsg.meetingId),
+              msg.workspace,
+              queueMsg.meetingId,
+              wsLoginInfo,
+              mm.name
+            )
           }
-          await recordingProcessor.startRecording(
-            getRoomName(msg.workspace, queueMsg.meetingId),
-            msg.workspace,
-            queueMsg.meetingId,
-            wsLoginInfo,
-            mm.name
-          )
+        } catch (err: any) {
+          ctx.error('Failed to auto-start recording for a started meeting', {
+            meetingId: queueMsg.meetingId,
+            workspace: msg.workspace,
+            error: err?.message ?? String(err)
+          })
         }
         break
       }

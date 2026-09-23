@@ -150,6 +150,8 @@
     "ReadOnlyWarningMessage": "Jste v režimu prohlížení. Vyberte si cestu: Připojte se k tomuto prostoru pro spolupráci (jako host) nebo si vytvořte vlastní prostor pro plnou správu projektů — úkoly, termíny, tým!",
     "ReadOnlyJoinWorkspace": "Připojit se k prostoru",
     "ReadOnlySignUp": "Vytvořit prostor",
+    "ReadOnlyWorkspaceWarningTitle": "Pracovní prostor je jen pro čtení",
+    "ReadOnlyWorkspaceWarningMessage": "Tento pracovní prostor nyní nepřijímá změny: je archivovaný, naplánovaný ke smazání, nebo jej máte otevřený v relaci jen pro čtení.",
     "PermissionWarningTitle": "✨ Zvyšte svůj přístup!",
     "PermissionWarningMessage": "Vaše současná role má omezená oprávnění. Chcete-li odemknout tuto a další pokročilé funkce, požádejte správce svého pracovního prostoru o zvýšení úrovně přístupu!",
     "PlanLimitWarningTitle": "Dosažen limit plánu",

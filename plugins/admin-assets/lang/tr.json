@@ -195,6 +195,18 @@
     "Actions": "İşlemler",
     "NoTrial": "Denemesiz",
     "Sessions": "Oturumlar",
-    "Ops5m": "İşlemler (5 dk)"
+    "Ops5m": "İşlemler (5 dk)",
+    "CancelDeletion": "Silmeyi iptal et",
+    "DeletionScheduled": "{date} tarihinde silinecek",
+    "CannotDeleteOwnAccount": "Yönetici kendi hesabını silemez.",
+    "OwnedWorkspacesBlockDeletion": "Tek sahibi: {workspaces}. Önce bu çalışma alanlarını silin veya devredin.",
+    "WorkspaceNotFound": "Çalışma alanı bulunamadı - zaten silinmiş olabilir.",
+    "ActionFailed": "İşlem başarısız",
+    "NothingChanged": "Değişiklik yok",
+    "Block": "Engelle",
+    "Unblock": "Engeli kaldır",
+    "Blocked": "Engellendi",
+    "BlockedOnly": "Yalnızca engellenenler",
+    "DeleteNow": "Şimdi sil"
   }
 }

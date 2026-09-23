@@ -14,6 +14,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
+import { get } from 'svelte/store'
 import {
   getClient as getAccountClientRaw,
   type AccountClient,
@@ -31,11 +32,24 @@ import {
 } from '@hcengineering/account-client'
 import { type WorkspaceInfoWithStatus, type WorkspaceUserOperation } from '@hcengineering/core'
 import login, { loginId } from '@hcengineering/login'
-import { getMetadata, PlatformError, setMetadata } from '@hcengineering/platform'
-import presentation, { decodeTokenPayload } from '@hcengineering/presentation'
-import { navigate, showPopup } from '@hcengineering/ui'
+import {
+  getEmbeddedLabel,
+  getMetadata,
+  type IntlString,
+  PlatformError,
+  setMetadata,
+  translate
+} from '@hcengineering/platform'
+import presentation, {
+  decodeTokenPayload,
+  MessageBox,
+  OtpConfirmDialog,
+  type OtpConfirmProps,
+  type OtpConfirmResult
+} from '@hcengineering/presentation'
+import { navigate, showPopup, themeStore } from '@hcengineering/ui'
 
-import AdminOtpDialog from './components/AdminOtpDialog.svelte'
+import adminRes from './plugin'
 
 export { getBillingClient } from '@hcengineering/billing-resources'
 
@@ -169,11 +183,9 @@ export async function performWorkspaceOperation (
   try {
     return (await getAccountClient().performWorkspaceOperation(workspace, operation, ...params)) ?? false
   } catch (err: any) {
+    // Swallowing a non-platform error here would read as "nothing changed" in the panel.
     Analytics.handleError(err)
-    if (err instanceof PlatformError) {
-      throw err
-    }
-    return false
+    throw err
   }
 }
 
@@ -194,10 +206,7 @@ export async function performWorkspaceOperationWithOtp (
     )
   } catch (err: any) {
     Analytics.handleError(err)
-    if (err instanceof PlatformError) {
-      throw err
-    }
-    return false
+    throw err
   }
 }
 
@@ -234,11 +243,57 @@ export async function openAdminSession (otpCode: string): Promise<void> {
   await getAccountClient(token).setCookie()
 }
 
+/** Labels and the request behind the admin code dialog; the dialog itself is generic. */
+export function adminOtpProps (): OtpConfirmProps {
+  return {
+    label: adminRes.string.OtpConfirmTitle,
+    okLabel: adminRes.string.Confirm,
+    codeLabel: adminRes.string.OtpCode,
+    sendLabel: adminRes.string.SendCode,
+    sentLabel: adminRes.string.OtpSent,
+    failedLabel: adminRes.string.OtpSendFailed,
+    requestCode: async () => await getAccountClient().requestAdminOperationOtp()
+  }
+}
+
+/** Reports what came of an admin action: a refusal, or `false` for "nothing was touched". */
+export async function runAdminAction (action: () => Promise<boolean | undefined>): Promise<boolean> {
+  try {
+    const res = await action()
+    if (res === false) {
+      showPopup(MessageBox, {
+        label: adminRes.string.ActionFailed,
+        message: adminRes.string.NothingChanged,
+        canSubmit: false
+      })
+      return false
+    }
+    return true
+  } catch (err: any) {
+    Analytics.handleError(err)
+    const message =
+      err instanceof PlatformError
+        ? await translate(err.status.code as IntlString, err.status.params ?? {}, get(themeStore).language)
+        : String(err?.message ?? err)
+    showPopup(MessageBox, {
+      label: adminRes.string.ActionFailed,
+      message: getEmbeddedLabel(message),
+      canSubmit: false
+    })
+    return false
+  }
+}
+
 /** Show the admin OTP dialog and resolve with the entered code, or undefined if cancelled */
 export async function requestAdminOtpCode (): Promise<string | undefined> {
-  return await new Promise<string | undefined>((resolve) => {
-    showPopup(AdminOtpDialog, {}, undefined, (code) => {
-      resolve(typeof code === 'string' && code.length > 0 ? code : undefined)
+  return (await requestAdminOtpConfirm())?.code
+}
+
+/** With `optionLabel` the dialog carries a checkbox - the delete actions offer "delete now" there. */
+export async function requestAdminOtpConfirm (optionLabel?: IntlString): Promise<OtpConfirmResult | undefined> {
+  return await new Promise<OtpConfirmResult | undefined>((resolve) => {
+    showPopup(OtpConfirmDialog, { ...adminOtpProps(), optionLabel }, undefined, (res?: OtpConfirmResult) => {
+      resolve(res != null && res.code.length > 0 ? res : undefined)
     })
   })
 }

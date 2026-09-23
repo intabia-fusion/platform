@@ -21,12 +21,14 @@
   import { createEventDispatcher } from 'svelte'
 
   import lovePlg from '../plugin'
-  import { floors, selectedFloor } from '../stores'
+  import { ensureOfficeDetailsLoaded, floors, selectedFloor } from '../stores'
 
   export let rooms: Room[] = []
   export let floor: Ref<Floor>
 
   const dispatch = createEventDispatcher()
+
+  void ensureOfficeDetailsLoaded()
 
   let viewlet: WithLookup<Viewlet> | undefined
   let preference: ViewletPreference | undefined

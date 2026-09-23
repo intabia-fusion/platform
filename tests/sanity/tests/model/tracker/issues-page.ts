@@ -248,6 +248,20 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async clickButtonCreateIssue (): Promise<void> {
+    try {
+      await expect(this.buttonCreateIssue()).toBeEnabled({ timeout: 30000 })
+    } catch {
+      // `canSave` wants a title, a status, a task type and a loaded currentProject; a click on the
+      // disabled button burns 30s naming none of them. No task type selector = no currentProject.
+      const form = this.page.locator('form[id="tracker:string:NewIssue"]')
+      const title = await this.inputPopupCreateNewIssueTitle()
+        .inputValue()
+        .catch(() => '<no input>')
+      const hasKind = (await form.locator('[data-id="btnSelectTaskType"]').count()) > 0
+      throw new Error(
+        `"Create issue" stayed disabled: title="${title}", task type selector ${hasKind ? 'present' : 'missing - the project has not loaded'}`
+      )
+    }
     await this.buttonCreateIssue().click()
   }
 
@@ -539,17 +553,26 @@ export class IssuesPage extends CommonTrackerPage {
       await this.inputSearchIcon().click({ timeout: 5000 })
       await this.inputSearch().fill(issueName, { timeout: 5000 })
       const v = await this.inputSearch().inputValue()
-      if (v === issueName) {
-        await this.inputSearch().press('Enter')
-      }
+      // Returning here left the list unfiltered and the caller then hunted its row among every
+      // issue other specs had created - a click that can never resolve.
+      if (v !== issueName) throw new Error(`search box holds "${v}", not "${issueName}"`)
+      await this.inputSearch().press('Enter')
     }).toPass(retryOptions)
   }
 
   // The list re-renders as other specs touch issues and detaches the row mid-click; a short timeout
   // sends us back to a freshly resolved one.
   async openIssueByName (issueName: string): Promise<void> {
-    await this.expandCollapsedCategories()
+    // Inside the retry: a live update from another spec re-renders the list and collapses the
+    // categories again, hiding the row that a single expand up front had just revealed.
     await retry(async () => {
+      await this.expandCollapsedCategories()
+      // A category renders its first 50 rows only, so on a stand nobody restored the issue can be
+      // behind "Show more" - expanding the category alone never brings it into the DOM.
+      const showMore = this.page.locator('div.listGrid.showMore')
+      while ((await this.issueByName(issueName).count()) === 0 && (await showMore.count()) > 0) {
+        await showMore.first().click({ timeout: 3000 })
+      }
       await this.issueByName(issueName).click({ timeout: 5000 })
     })
   }
@@ -569,6 +592,12 @@ export class IssuesPage extends CommonTrackerPage {
   async checkAllIssuesInStatus (statusId?: string, statusName?: string): Promise<void> {
     if (statusId === undefined) throw new Error(`Unknown status id ${statusId}`)
 
+    // A just-applied filter leaves the list empty for a moment, and `iterateLocator` waits for a
+    // stable count, not a non-empty one - an empty list reads as a filter that matched nothing.
+    await expect(this.issuesList().first(), `no issue row under the "${statusName}" filter`).toBeVisible({
+      timeout: 15000
+    })
+
     let checked = 0
     for await (const locator of iterateLocator(this.issuesList())) {
       const square = locator.locator('div[class*="square"] > div')
@@ -577,7 +606,7 @@ export class IssuesPage extends CommonTrackerPage {
       await expect(square).toHaveAttribute('id', `${statusId}:${statusName}`)
       checked++
     }
-    expect(checked).toBeGreaterThan(0)
+    expect(checked, `every row under the "${statusName}" filter was out of the virtual list`).toBeGreaterThan(0)
   }
 
   async checkParentIssue (issueName: string, parentName: string): Promise<void> {
@@ -704,7 +733,18 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async checkCommentsCount (issueName: string, count: string): Promise<void> {
-    await expect(this.commentCountLocator(issueName)).toHaveText(count)
+    try {
+      await expect(this.commentCountLocator(issueName)).toHaveText(count)
+    } catch {
+      // issue.comments has drifted from the database before. The popup queries the messages
+      // themselves, so it says whether the server or the client copy is wrong.
+      const shown = await this.commentCountLocator(issueName)
+        .textContent({ timeout: 5000 })
+        .catch(() => '<absent>')
+      await this.openCommentPopupForIssueByName(issueName)
+      const real = await this.page.locator('div[class*="commentPopup"] div.messages > div.item').count()
+      throw new Error(`comment counter is "${shown}", expected "${count}", popup lists ${real} messages`)
+    }
   }
 
   // The row re-renders when its comment counter arrives and takes the popup anchored to it with it,

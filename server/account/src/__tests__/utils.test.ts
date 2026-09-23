@@ -1059,6 +1059,16 @@ describe('account utils', () => {
             // Degrades to a code-only email instead of breaking sign in entirely.
             expect(sentHtml()).toContain('account:string:OtpHTML')
           })
+
+          test('a self-service action gets its own letter, not the admin panel one', async () => {
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId, 300, 'operation')
+            expect(sentHtml()).toContain('account:string:OperationOtpHTML')
+            expect(sentHtml()).not.toContain('/login/confirm')
+
+            mailSend.mockClear()
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId, 300, 'admin')
+            expect(sentHtml()).toContain('account:string:AdminOtpHTML')
+          })
         })
 
         test('should throw error for unsupported social id type', async () => {
@@ -1352,6 +1362,32 @@ describe('account utils', () => {
           workspaceUrl: mockWorkspace.url,
           workspaceDataId: mockWorkspace.dataId,
           role: AccountRole.User
+        })
+      })
+
+      test('should drop status readonly once deletion is cancelled, keep an explicit one', async () => {
+        ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
+        ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
+        const select = async (extra: Record<string, string>, status: Record<string, any>): Promise<any> => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+            account: mockAccount.uuid,
+            workspace: 'workspace-uuid',
+            extra
+          })
+          ;(mockDb.workspaceStatus.findOne as jest.Mock).mockResolvedValue({ isDisabled: false, ...status })
+          await selectWorkspace(mockCtx, mockDb, mockBranding, userToken, { workspaceUrl, kind: 'external' })
+          return (generateToken as jest.Mock).mock.calls.at(-1)?.[2]
+        }
+
+        const scheduled = await select({}, { mode: 'active', deleteOn: Date.now() + 1000 })
+        expect(scheduled).toEqual({ readonly: 'true', workspaceReadonly: 'true' })
+
+        expect(await select(scheduled, { mode: 'active' })).toEqual({})
+        expect(await select({ impersonatedBy: 'admin', readonly: 'true' }, { mode: 'active' })).toEqual({
+          impersonatedBy: 'admin',
+          readonly: 'true'
         })
       })
 

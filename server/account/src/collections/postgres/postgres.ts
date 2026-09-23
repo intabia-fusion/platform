@@ -461,7 +461,7 @@ export class AccountPostgresDbCollection
     ns?: string,
     withRetryClient?: PostgresDbCollectionOptions<Account, 'uuid'>['withRetryClient']
   ) {
-    super('account', client, { idKey: 'uuid', ns, withRetryClient })
+    super('account', client, { idKey: 'uuid', ns, timestampFields: ['deleteOn', 'blockedOn'], withRetryClient })
   }
 
   getPasswordsTableName (): string {
@@ -482,6 +482,8 @@ export class AccountPostgresDbCollection
         a.automatic,
         a.max_workspaces,
         a.failed_login_attempts,
+        a.delete_on,
+        a.blocked_on,
         p.hash,
         p.salt
       FROM ${this.getTableName()} as a
@@ -591,7 +593,7 @@ export class PostgresAccountDB implements AccountDB {
     })
     this.workspaceStatus = new PostgresDbCollection<WorkspaceStatus>('workspace_status', client, {
       ns,
-      timestampFields: ['lastProcessingTime', 'lastVisit'],
+      timestampFields: ['lastProcessingTime', 'lastVisit', 'deleteOn'],
       withRetryClient
     })
     this.workspace = new PostgresDbCollection<Workspace, 'uuid'>('workspace', client, {
@@ -1013,7 +1015,8 @@ export class PostgresAccountDB implements AccountDB {
             'processing_attempts', s.processing_attempts,
             'processing_message', s.processing_message,
             'backup_info', s.backup_info,
-            'usage_info', s.usage_info
+            'usage_info', s.usage_info,
+            'delete_on', s.delete_on
           ) status
            FROM ${this.getWsMembersTableName()} as m
            INNER JOIN ${this.workspace.getTableName()} as w ON m.workspace_uuid = w.uuid
@@ -1028,6 +1031,7 @@ export class PostgresAccountDB implements AccountDB {
       for (const row of res) {
         row.created_on = convertTimestamp(row.created_on)
         row.status.last_processing_time = convertTimestamp(row.status.last_processing_time)
+        row.status.delete_on = row.status.delete_on != null ? convertTimestamp(row.status.delete_on) : undefined
         row.status.last_visit = convertTimestamp(row.status.last_visit)
         row.password_aging_rule = convertTimestamp(row.password_aging_rule)
       }
@@ -1068,7 +1072,8 @@ export class PostgresAccountDB implements AccountDB {
             'processing_attempts', s.processing_attempts,
             'processing_message', s.processing_message,
             'backup_info', s.backup_info,
-            'usage_info', s.usage_info
+            'usage_info', s.usage_info,
+            'delete_on', s.delete_on
           ) status
            FROM ${this.workspace.getTableName()} as w
            INNER JOIN ${this.workspaceStatus.getTableName()} as s ON s.workspace_uuid = w.uuid
@@ -1120,6 +1125,13 @@ export class PostgresAccountDB implements AccountDB {
     whereChunks.push(`(s.last_processing_time IS NULL OR s.last_processing_time < $${values.length + 1})`)
     values.push(Date.now() - processingTimeoutMs)
 
+    // A live backup lease blocks operations that read/write backup or data; create/upgrade never
+    // touch those modes, so this is a no-op for them.
+    whereChunks.push(
+      `(NOT (${archivingSql} OR ${migrationSql} OR ${restoringSql} OR ${deletingSql}) OR s.backup_lease_until IS NULL OR s.backup_lease_until < $${values.length + 1})`
+    )
+    values.push(Date.now())
+
     if (region !== '') {
       whereChunks.push(`region = $${values.length + 1}`)
       values.push(region)
@@ -1145,6 +1157,54 @@ export class PostgresAccountDB implements AccountDB {
       }
 
       return convertKeysToCamelCase(res[0]) as WorkspaceInfoWithStatus
+    })
+  }
+
+  async updateBackupLease (
+    workspace: WorkspaceUuid,
+    owner: string,
+    action: 'acquire' | 'renew' | 'release',
+    now: number,
+    until: number
+  ): Promise<boolean> {
+    const table = this.workspaceStatus.getTableName()
+    return await this.withRetry(async (rTx) => {
+      let res: any
+      switch (action) {
+        case 'acquire':
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = $1, backup_lease_owner = $2
+             WHERE workspace_uuid = $3
+               AND (mode = 'active' OR mode IS NULL)
+               AND (is_disabled IS NOT TRUE)
+               AND (backup_lease_until IS NULL OR backup_lease_until < $4 OR backup_lease_owner = $2)
+             RETURNING workspace_uuid`,
+            [until, owner, workspace, now]
+          )
+          break
+        case 'renew':
+          // mode <> 'active' fails renew at once, instead of making archiving wait a whole backup.
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = $1, backup_lease_owner = $2
+             WHERE workspace_uuid = $3 AND backup_lease_owner = $2 AND (mode = 'active' OR mode IS NULL)
+               AND (is_disabled IS NOT TRUE)
+             RETURNING workspace_uuid`,
+            [until, owner, workspace]
+          )
+          break
+        case 'release':
+          res = await rTx.unsafe(
+            `UPDATE ${table}
+             SET backup_lease_until = NULL, backup_lease_owner = NULL
+             WHERE workspace_uuid = $1 AND backup_lease_owner = $2
+             RETURNING workspace_uuid`,
+            [workspace, owner]
+          )
+          break
+      }
+      return (res?.length ?? 0) > 0
     })
   }
 
@@ -1179,13 +1239,33 @@ export class PostgresAccountDB implements AccountDB {
 
       await this.mailbox.deleteMany({ accountUuid }, rTx)
 
-      await this.socialId.update({ personUuid: accountUuid }, { verifiedOn: undefined }, rTx)
+      // Social ids stay as rows so their _id keeps resolving in workspace data, but the value is
+      // mangled and flagged: the identifier can never be handed to a new person, and a fresh signup
+      // with the same email no longer finds anything to reuse.
+      for (const socialIdObj of socialIds) {
+        if (socialIdObj.isDeleted === true) continue
+        await this.socialId.update(
+          { _id: socialIdObj._id },
+          { value: `${socialIdObj.value}#${socialIdObj._id}`, isDeleted: true, verifiedOn: undefined },
+          rTx
+        )
+      }
 
       // Unassign from all workspaces
       await rTx`DELETE FROM ${this.client(this.getWsMembersTableName())} WHERE account_uuid = ${accountUuid}`
 
+      // The last two tables still pointing at the account row. Both columns are NOT NULL, so the
+      // rows go with it; the payment ledger keeps the billing history on its own.
+      await this.subscription.deleteMany({ accountUuid }, rTx)
+      await this.workspacePermission.deleteMany({ accountUuid }, rTx)
+
+      await this.userProfile.deleteMany({ personUuid: accountUuid }, rTx)
+
       // This removes the account along with the password if any
       await this.account.deleteMany({ uuid: accountUuid }, rTx)
+
+      // The person row outlives the account (workspace rows reference it), so strip what it carried.
+      await this.person.update({ uuid: accountUuid }, { firstName: '', lastName: '', phoneHint: undefined }, rTx)
     })
   }
 
@@ -1226,6 +1306,7 @@ export class PostgresAccountDB implements AccountDB {
           a.locale,
           a.automatic,
           a.max_workspaces,
+          a.blocked_on,
           (a.uuid IS NOT NULL) as has_account,
           p.first_name,
           p.last_name,
@@ -1325,6 +1406,9 @@ export class PostgresAccountDB implements AccountDB {
     // Filters use the CTE's aggregated columns, so they belong to the outer WHERE.
     // The CTE is person-based, so accounts must be selected explicitly (default behaviour).
     const outerWhere: string[] = [filter?.pendingOnly === true ? 'has_account = FALSE' : 'has_account = TRUE']
+    if (filter?.blockedOnly === true) {
+      outerWhere.push('blocked_on IS NOT NULL')
+    }
     if (filter?.noWorkspaces === true) {
       outerWhere.push('(workspaces IS NULL OR jsonb_array_length(workspaces) = 0)')
     }
@@ -1387,6 +1471,7 @@ export class PostgresAccountDB implements AccountDB {
 
         converted.lastVisit = convertTimestamp(converted.lastVisit)
         converted.registeredOn = convertTimestamp(converted.registeredOn)
+        converted.blockedOn = convertTimestamp(converted.blockedOn)
 
         return converted as AccountAggregatedInfo
       })
@@ -1442,7 +1527,8 @@ export class PostgresAccountDB implements AccountDB {
             'processing_attempts', ${alias}.processing_attempts,
             'processing_message', ${alias}.processing_message,
             'backup_info', ${alias}.backup_info,
-            'usage_info', ${alias}.usage_info
+            'usage_info', ${alias}.usage_info,
+            'delete_on', ${alias}.delete_on
           )`
   }
 
@@ -1547,6 +1633,7 @@ export class PostgresAccountDB implements AccountDB {
         row.created_on = convertTimestamp(row.created_on)
         row.billing_period_end = row.billing_period_end != null ? convertTimestamp(row.billing_period_end) : undefined
         row.status.last_processing_time = convertTimestamp(row.status.last_processing_time)
+        row.status.delete_on = row.status.delete_on != null ? convertTimestamp(row.status.delete_on) : undefined
         row.status.last_visit = convertTimestamp(row.status.last_visit)
       }
       return { workspaces: convertKeysToCamelCase(res), total }

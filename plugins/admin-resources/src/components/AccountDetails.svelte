@@ -16,15 +16,64 @@
   import type { AccountAggregatedInfo, AccountActivityStats } from '@hcengineering/account-client'
   import { type SocialIdType } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
-  import { Button, Dialog, IconCopy, IconStop, Label, Loading } from '@hcengineering/ui'
+  import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
+  import { Button, Dialog, IconCopy, IconDetails, IconStop, Label, Loading, showPopup } from '@hcengineering/ui'
+  import { createEventDispatcher } from 'svelte'
 
   import adminRes from '../plugin'
-  import { getAccountClient, requestAdminOtpCode } from '../utils'
+  import WorkspaceDetails from './WorkspaceDetails.svelte'
+  import {
+    getAccountClient,
+    listWorkspacesPaged,
+    requestAdminOtpCode,
+    requestAdminOtpConfirm,
+    runAdminAction
+  } from '../utils'
 
   export let account: AccountAggregatedInfo
 
   const accountClient = getAccountClient()
+  const dispatch = createEventDispatcher()
+
+  let blockedOn: number | undefined = account.blockedOn
+
+  async function setBlocked (blocked: boolean): Promise<void> {
+    const code = await requestAdminOtpCode()
+    if (code === undefined) return
+    const ok = await runAdminAction(async () => {
+      await accountClient.adminSetAccountBlocked(account.uuid, blocked, code)
+      return true
+    })
+    if (ok) {
+      blockedOn = blocked ? Date.now() : undefined
+    }
+  }
+
+  // The checkbox in the dialog skips the deferral and purges the identity right away.
+  async function deleteAccount (): Promise<void> {
+    const check = await accountClient.canDeleteAccount(account.uuid).catch(() => undefined)
+    if (check?.canDelete === false) {
+      const blocking = check.ownedWorkspaces.map((ws) => ws.name)
+      showPopup(MessageBox, {
+        label: adminRes.string.Delete,
+        message:
+          blocking.length > 0 ? adminRes.string.OwnedWorkspacesBlockDeletion : adminRes.string.CannotDeleteOwnAccount,
+        params: { workspaces: blocking.join(', ') },
+        canSubmit: false
+      })
+      return
+    }
+
+    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+    if (res === undefined) return
+    const ok = await runAdminAction(async () => {
+      await accountClient.deleteAccount(account.uuid, res.code, res.option)
+      return true
+    })
+    if (ok) {
+      dispatch('close')
+    }
+  }
 
   const readOnly = isBillingAdminUser() && !isAdminUser()
 
@@ -45,6 +94,21 @@
     } finally {
       releasing = undefined
     }
+  }
+
+  // Walk the person's workspaces one by one: the account cannot go while it owns a live one.
+  async function openWorkspace (uuid: string): Promise<void> {
+    const page = await listWorkspacesPaged({ search: uuid, limit: 1 })
+    const workspace = page?.workspaces?.find((ws) => ws.uuid === uuid)
+    if (workspace == null) {
+      showPopup(MessageBox, {
+        label: adminRes.string.Workspace,
+        message: adminRes.string.WorkspaceNotFound,
+        canSubmit: false
+      })
+      return
+    }
+    showPopup(WorkspaceDetails, { workspace })
   }
 
   const ACTIVITY_WEEKS = 12
@@ -94,6 +158,29 @@
         </div>
         {#if account.timezone != null}
           <div><Label label={adminRes.string.Timezone} />: {account.timezone}</div>
+        {/if}
+        {#if blockedOn != null}
+          <div class="error-color"><Label label={adminRes.string.Blocked} /></div>
+        {/if}
+        {#if !readOnly}
+          <div class="flex-row-center mt-1">
+            <Button
+              size={'small'}
+              label={blockedOn != null ? adminRes.string.Unblock : adminRes.string.Block}
+              on:click={() => {
+                void setBlocked(blockedOn == null)
+              }}
+            />
+            <Button
+              icon={IconStop}
+              size={'small'}
+              kind={'dangerous'}
+              label={adminRes.string.Delete}
+              on:click={() => {
+                void deleteAccount()
+              }}
+            />
+          </div>
         {/if}
       </div>
 
@@ -147,6 +234,15 @@
                       kind={'ghost'}
                       on:click={() => copyTextToClipboard(ws.uuid)}
                       showTooltip={{ label: adminRes.string.CopyUuid }}
+                    />
+                    <Button
+                      icon={IconDetails}
+                      size={'small'}
+                      kind={'ghost'}
+                      label={adminRes.string.Details}
+                      on:click={() => {
+                        void openWorkspace(ws.uuid)
+                      }}
                     />
                   </div>
                 </td>

@@ -145,6 +145,8 @@
     "ReadOnlyWarningMessage": "Vous êtes en mode consultation. Choisissez votre voie : Rejoignez cet espace pour collaborer (en tant qu'invité) ou créez votre propre espace pour gérer pleinement les projets — tâches, délais, équipe !",
     "ReadOnlyJoinWorkspace": "Rejoindre l'espace",
     "ReadOnlySignUp": "Créer un espace",
+    "ReadOnlyWorkspaceWarningTitle": "L'espace de travail est en lecture seule",
+    "ReadOnlyWorkspaceWarningMessage": "Cet espace de travail n'accepte pas de modifications pour le moment : il est archivé, programmé pour suppression, ou vous le consultez dans une session en lecture seule.",
     "PermissionWarningTitle": "✨ Améliorez votre accès !",
     "PermissionWarningMessage": "Votre rôle actuel a des autorisations limitées. Pour débloquer cette fonctionnalité et d'autres fonctionnalités avancées, demandez à l'administrateur de votre espace de travail de mettre à jour votre niveau d'accès !",
     "PlanLimitWarningTitle": "Limite du plan atteinte",

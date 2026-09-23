@@ -68,6 +68,8 @@ export interface Account {
   salt?: Buffer | null
   maxWorkspaces?: number
   failedLoginAttempts?: number // Number of consecutive failed login attempts
+  deleteOn?: Timestamp // Deferred deletion: when the identity gets purged for good
+  blockedOn?: Timestamp // Admin block: no login, no workspace access
 }
 
 // TODO: type data with generic type
@@ -134,6 +136,7 @@ export interface WorkspaceStatus extends WorkspaceVersion {
   processingMessage?: string
   backupInfo?: BackupStatus
   usageInfo?: UsageStatus
+  deleteOn?: Timestamp
 
   targetRegion?: string
 }
@@ -607,6 +610,15 @@ export interface AccountDB {
     processingTimeoutMs: number,
     wsLivenessMs?: number
   ) => Promise<WorkspaceInfoWithStatus | undefined>
+  // Per-workspace backup lease: acquire only while active, renew only while still active,
+  // release by owner. True when the conditional update matched a row.
+  updateBackupLease: (
+    workspace: WorkspaceUuid,
+    owner: string,
+    action: 'acquire' | 'renew' | 'release',
+    now: number,
+    until: number
+  ) => Promise<boolean>
   setPassword: (accountId: AccountUuid, passwordHash: Buffer, salt: Buffer) => Promise<void>
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
@@ -725,6 +737,8 @@ export interface LoginInfo {
   name?: string
   socialId?: PersonId
   token?: string
+  // Set when the account is scheduled for deletion: the client asks whether to call it off.
+  deleteOn?: Timestamp
 }
 
 export interface LoginInfoRequestData {
@@ -824,6 +838,7 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   registeredOn?: number
   // False for an unfinished signup: person + social ids exist, but no account row yet
   hasAccount?: boolean
+  blockedOn?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
@@ -833,6 +848,7 @@ export interface AccountsFilter {
   noWorkspaces?: boolean
   inactiveDays?: number
   pendingOnly?: boolean
+  blockedOnly?: boolean
 }
 
 /** Transactor endpoint entry for admin manage calls (mirrors account-client type) */

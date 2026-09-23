@@ -1,9 +1,12 @@
 <script lang="ts">
   import { Component, Label, Loading, Progress, Toggle } from '@hcengineering/ui'
   import love from '../../plugin'
-  import { myPreferences } from '../../stores'
+  import { ensureOfficeDetailsLoaded, myPreferences } from '../../stores'
+
   import { blurProcessor, updateBlurRadius } from '../../utils'
   import mediaPlugin, { getMediaDevices } from '@hcengineering/media'
+
+  void ensureOfficeDetailsLoaded()
 
   $: blurRadius = $myPreferences?.blurRadius ?? 0
 </script>

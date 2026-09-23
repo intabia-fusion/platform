@@ -36,7 +36,14 @@ import {
   type WorkspaceMemberInfo,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
+import platform, {
+  getMetadata,
+  PlatformError,
+  Severity,
+  Status,
+  translate,
+  unknownError
+} from '@hcengineering/platform'
 import {
   decodeToken,
   decodeTokenVerbose,
@@ -49,11 +56,10 @@ import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { requireAdminOp } from './adminOp'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
-import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
+import { cancelWorkspaceSubscriptions, type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
   type Account,
   type AccountDB,
-  AccountEventType,
   type AccountMethodHandler,
   type LoginInfo,
   type LoginInfoRequest,
@@ -115,6 +121,7 @@ import {
   getWorkspaceRole,
   getWorkspaceRoles,
   getWorkspacesInfoWithStatusByIds,
+  ensureNotBlocked,
   GUEST_ACCOUNT,
   isAccountPasswordLocked,
   isAllowReadOnlyGuests,
@@ -138,13 +145,24 @@ import {
   updatePasswordAgingRule,
   updateWorkspaceRole,
   logAdminAction,
-  requestAdminOtp,
-  verifyAdminOtp,
+  notifyAccountDeletion,
+  notifyAccountDeletionCancelled,
+  notifyWorkspaceDeleted,
+  notifyWorkspaceDeletionScheduled,
+  sendOperationOtp,
+  verifyOperationOtp,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
   wrap
 } from './utils'
+import {
+  deletionDeadline,
+  findOrphanedWorkspaces,
+  getDeletionGraceDays,
+  getDeletionReadonlyDays,
+  purgeAccount
+} from './deletion'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
 // to the database layer when searching/inserting as they may contain SQL injection
@@ -224,6 +242,8 @@ export async function login (
       )
     }
 
+    ensureNotBlocked(existingAccount)
+
     const person = await db.person.findOne({ uuid: emailSocialId.personUuid })
     if (person == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
@@ -254,7 +274,8 @@ export async function login (
       account: existingAccount.uuid,
       token: isConfirmed ? generateToken(existingAccount.uuid, undefined, extraToken) : undefined,
       name: getPersonName(person),
-      socialId: emailSocialId._id
+      socialId: emailSocialId._id,
+      deleteOn: existingAccount.deleteOn
     }
   } catch (err: any) {
     Analytics.handleError(err)
@@ -470,6 +491,7 @@ export async function validateOtp (
     await db.otp.deleteMany({ socialId: emailSocialId._id })
 
     const targetAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
+    ensureNotBlocked(targetAccount)
 
     if (action !== 'verify') {
       // login/sign up
@@ -566,7 +588,8 @@ export async function validateOtp (
       account: emailSocialId.personUuid as AccountUuid,
       name: getPersonName(person),
       socialId: emailSocialId._id,
-      token: generateToken(emailSocialId.personUuid, undefined, extraToken)
+      token: generateToken(emailSocialId.personUuid, undefined, extraToken),
+      deleteOn: targetAccount?.deleteOn
     }
   } catch (err: any) {
     Analytics.handleError(err)
@@ -1276,6 +1299,8 @@ export async function checkAutoJoin (
   if (emailSocialId != null) {
     const targetAccount = await getAccount(db, emailSocialId.personUuid as AccountUuid)
     if (targetAccount != null) {
+      ensureNotBlocked(targetAccount)
+
       if (targetAccount.automatic == null || !targetAccount.automatic) {
         if (token == null) {
           // Login required
@@ -1413,6 +1438,8 @@ export async function confirm (
   }
 
   await confirmHulyIds(ctx, db, account)
+
+  ensureNotBlocked(await db.account.findOne({ uuid: account }))
 
   const person = await db.person.findOne({ uuid: account })
   if (person == null) {
@@ -1597,12 +1624,6 @@ export async function leaveWorkspace (
   const initiatorRole = await db.getWorkspaceRole(account, workspace)
   const targetRole = await db.getWorkspaceRole(targetAccount, workspace)
 
-  if (account === targetAccount) {
-    // Leaving on your own is not undoable by yourself: confirm with a code sent to your email.
-    // Removing someone else stays role-gated - it is the workspace admin's routine action.
-    await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
-  }
-
   if (account !== targetAccount) {
     if (initiatorRole == null || getRolePower(initiatorRole) < getRolePower(AccountRole.Maintainer)) {
       ctx.error("Need to be at least maintainer to remove someone else's account from workspace", {
@@ -1636,6 +1657,12 @@ export async function leaveWorkspace (
       })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
+  }
+
+  if (account === targetAccount) {
+    // Leaving on your own is not undoable by yourself: confirm with a code sent to your email.
+    // Removing someone else stays role-gated - it is the workspace admin's routine action.
+    await verifyOperationOtp(ctx, db, token, params.otpCode ?? '')
   }
 
   await db.unassignWorkspace(targetAccount, workspace)
@@ -1721,7 +1748,7 @@ export async function requestOperationOtp (
   token: string,
   _params: Record<string, unknown>
 ): Promise<OtpInfo> {
-  return await requestAdminOtp(ctx, db, branding, token)
+  return await sendOperationOtp(ctx, db, branding, token)
 }
 
 export async function deleteWorkspace (
@@ -1739,18 +1766,38 @@ export async function deleteWorkspace (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  // Irreversible for everyone in the workspace: confirm with a code sent to the owner's email.
-  await verifyAdminOtp(ctx, db, token, params?.otpCode ?? '')
+  const ws = await getWorkspaceInfoWithStatusById(db, workspace)
 
-  await db.workspaceStatus.update(
-    { workspaceUuid: workspace },
-    {
-      isDisabled: true,
-      mode: 'pending-deletion',
-      // A workspace that had already exhausted its retries would never be picked up again.
-      processingAttempts: 0
-    }
-  )
+  // Same guard as the admin 'delete' case in performWorkspaceOperation.
+  if (ws != null && ws.status.mode !== 'active' && ws.status.mode !== 'archived') {
+    throw new PlatformError(unknownError('Delete allowed only for active or archived workspaces'))
+  }
+
+  // Repeat click: the deadline is already set and the owners were told - a no-op, same as the
+  // admin path's alreadyScheduled dedup.
+  if (ws?.status.deleteOn != null) {
+    return
+  }
+
+  // Irreversible for everyone in the workspace: confirm with a code sent to the owner's email.
+  await verifyOperationOtp(ctx, db, token, params?.otpCode ?? '')
+
+  // Deferred: the workspace stays open read-only, gets archived, and is purged only when the
+  // deadline arrives. sweepScheduledDeletions moves it between those states.
+  const deleteOn = deletionDeadline()
+  await db.workspaceStatus.update({ workspaceUuid: workspace }, { deleteOn })
+
+  await cancelWorkspaceSubscriptions(ctx, db, workspace)
+  await logAdminAction(ctx, db, token, 'workspace_delete', workspace, ws?.name ?? ws?.url)
+  if (ws != null) {
+    await notifyWorkspaceDeleted(ctx, db, token, ws)
+    // The other owners did not push the button: they learn the deadline the same way as from the
+    // admin panel.
+    await notifyWorkspaceDeletionScheduled(ctx, db, branding, ws, {
+      deleteOn,
+      readonlyDays: isActiveMode(ws.status.mode) ? getDeletionReadonlyDays() : 0
+    })
+  }
 }
 
 /* =================================== */
@@ -2048,7 +2095,9 @@ export async function getLoginInfoByToken (
     account: accountUuid,
     name: getPersonName(person),
     socialId: socialId?._id,
-    token: generateToken(accountUuid, workspaceUuid, extra, undefined, { grant, nbf, exp, sub })
+    token: generateToken(accountUuid, workspaceUuid, extra, undefined, { grant, nbf, exp, sub }),
+    // Every sign-in lands on the workspace picker, which is where the deletion notice is shown.
+    deleteOn: isDocGuest || isSystem ? undefined : (await getAccount(db, accountUuid))?.deleteOn
   }
 
   if (!isSystem) {
@@ -2699,56 +2748,121 @@ export async function releaseSocialId (
   return await doReleaseSocialId(db, personUuid, type, value, extra?.service ?? account, deleteIntegrations)
 }
 
+/**
+ * Workspaces the account would orphan by leaving: it is their only owner and they are still alive.
+ * Workspaces already on their way out keep a member row forever, so they never block a purge.
+ */
+/**
+ * Whether the account may be purged, and what stands in the way if not. Without `uuid` it answers
+ * for the caller; an admin may ask about anybody, so the panel can say why before asking for a code.
+ */
+export async function canDeleteAccount (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { uuid?: AccountUuid } = {}
+): Promise<{ canDelete: boolean, ownedWorkspaces: Array<{ uuid: WorkspaceUuid, name: string, url: string }> }> {
+  const decoded = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decoded
+  const uuid = params.uuid ?? account
+  const isAdmin = extra?.admin === 'true'
+
+  if (uuid !== account && !isAdmin) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const blocking = await findOrphanedWorkspaces(db, uuid)
+  // Matches deleteAccount: an admin purging themselves would also break the OTP-email lookup.
+  const selfAdmin = uuid === account && isAdmin
+
+  return {
+    canDelete: blocking.length === 0 && !selfAdmin,
+    ownedWorkspaces: blocking.map((ws) => ({ uuid: ws.uuid, name: ws.name, url: ws.url }))
+  }
+}
+
+/** Deferral windows the UI puts into its warnings. Public: the texts are shown before signing in. */
+export async function getDeletionPolicy (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<{ graceDays: number, readonlyDays: number }> {
+  return { graceDays: getDeletionGraceDays(), readonlyDays: getDeletionReadonlyDays() }
+}
+
 export async function deleteAccount (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { uuid?: AccountUuid, otpCode?: string }
+  params: { uuid?: AccountUuid, otpCode?: string, force?: boolean }
 ): Promise<void> {
-  const { account } = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decodeTokenVerbose(ctx, token)
 
-  const { uuid } = params
+  const uuid = params.uuid ?? account
 
   if (uuid == null || uuid === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  // Irreversible identity purge — human admin, fresh session, emailed OTP confirmation.
-  await requireAdminOp(ctx, db, token, 'delete_account', params.otpCode ?? '', uuid)
+  const isSelf = uuid === account
 
-  if (uuid === account) {
+  if (isSelf && extra?.admin === 'true') {
     // Admin must not delete their own account (would also break the OTP-email lookup).
     ctx.warn('Refusing to delete an account: the admin is deleting themselves', { uuid })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  // Refuse if the target is the sole owner of any workspace — that would orphan it.
-  const workspaces = await db.getAccountWorkspaces(uuid)
-  for (const ws of workspaces) {
-    const members = await db.getWorkspaceMembers(ws.uuid)
-    const owners = members.filter((m) => m.role === AccountRole.Owner)
-    if (owners.length === 1 && owners[0].person === uuid) {
-      ctx.warn('Refusing to delete an account: sole owner of a workspace', { uuid, workspace: ws.uuid, url: ws.url })
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-    }
+  if (isSelf) {
+    // Irreversible for the person themselves: confirm with a code sent to their email.
+    await verifyOperationOtp(ctx, db, token, params.otpCode ?? '')
+  } else {
+    // Irreversible identity purge — human admin, fresh session, emailed OTP confirmation.
+    await requireAdminOp(ctx, db, token, 'delete_account', params.otpCode ?? '', uuid)
+  }
+
+  const orphaned = await findOrphanedWorkspaces(db, uuid)
+  if (orphaned.length > 0) {
+    ctx.warn('Refusing to delete an account: sole owner of a workspace', {
+      uuid,
+      workspaces: orphaned.map((ws) => ws.url)
+    })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   const person = await db.person.findOne({ uuid })
-  await db.deleteAccount(uuid)
-  await db.accountEvent.insertOne({
-    accountUuid: uuid,
-    eventType: AccountEventType.ACCOUNT_DELETED,
-    time: Date.now()
-  })
-  await logAdminAction(
-    ctx,
-    db,
-    token,
-    'delete_account',
-    uuid,
-    `${person?.firstName ?? ''} ${person?.lastName ?? ''}`.trim()
-  )
+  const label = `${person?.firstName ?? ''} ${person?.lastName ?? ''}`.trim()
+
+  // force is the support path: the person asked to have everything gone right now.
+  if (params.force === true && !isSelf) {
+    await purgeAccount(ctx, db, uuid)
+    await logAdminAction(ctx, db, token, 'delete_account', uuid, label)
+    return
+  }
+
+  const deleteOn = deletionDeadline()
+  await db.account.update({ uuid }, { deleteOn })
+  await notifyAccountDeletion(ctx, db, branding, uuid, deleteOn)
+  await logAdminAction(ctx, db, token, 'account_delete_scheduled', uuid, label)
+}
+
+/** Takes the deletion mark off the caller's own account. Scheduled workspaces stay scheduled. */
+export async function cancelAccountDeletion (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<void> {
+  const { account } = decodeTokenVerbose(ctx, token)
+
+  // Nothing was scheduled: no state to change and no letter to send.
+  if ((await db.account.findOne({ uuid: account }))?.deleteOn == null) return
+
+  await db.account.update({ uuid: account }, { deleteOn: undefined })
+  ctx.info('Account deletion cancelled', { account })
+  await notifyAccountDeletionCancelled(ctx, db, branding, account)
 }
 
 // Social ids that resolve to an account on their own, and therefore hand over the ability to
@@ -3313,6 +3427,9 @@ export type AccountMethods =
   | 'refreshHulyAssistantToken'
   | 'releaseSocialId'
   | 'deleteAccount'
+  | 'canDeleteAccount'
+  | 'getDeletionPolicy'
+  | 'cancelAccountDeletion'
   | 'canMergeSpecifiedPersons'
   | 'mergeSpecifiedPersons'
   | 'setMyProfile'
@@ -3378,6 +3495,9 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     refreshHulyAssistantToken: wrap(refreshHulyAssistantToken),
     releaseSocialId: wrap(releaseSocialId),
     deleteAccount: wrap(deleteAccount),
+    canDeleteAccount: wrap(canDeleteAccount),
+    getDeletionPolicy: wrap(getDeletionPolicy),
+    cancelAccountDeletion: wrap(cancelAccountDeletion),
     canMergeSpecifiedPersons: wrap(canMergeSpecifiedPersons),
     mergeSpecifiedPersons: wrap(mergeSpecifiedPersons),
     setMyProfile: wrap(setMyProfile),

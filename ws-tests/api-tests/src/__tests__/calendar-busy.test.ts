@@ -138,7 +138,7 @@ describe('calendar busy slots (api-tests)', () => {
         await removeEvent(id)
       } catch {}
     }
-  })
+  }, 30000)
 
   /** Creates a plain (non-recurring) Event owned by user1 in user1's PersonSpace. */
   async function createEvent (opts: {

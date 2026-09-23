@@ -44,6 +44,9 @@ export class ChannelPage extends CommonPage {
   readonly chooseChannel = (channel: string): Locator =>
     this.page.locator('div.antiPanel-navigator').getByRole('button', { name: channel })
 
+  readonly openedChannelHeader = (channel: string): Locator =>
+    this.page.locator('.hulyHeader-container .hulyHeader-titleGroup').filter({ hasText: channel }).first()
+
   readonly closePopupWindow = (): Locator => this.page.locator('.notifyPopup button[data-id="btnNotifyClose"]')
   readonly openAddMemberToChannel = (userName: string): Locator => this.page.getByRole('button', { name: userName })
   readonly addMemberToChannelTableButton = (userName: string, channel: string): Locator =>
@@ -73,6 +76,8 @@ export class ChannelPage extends CommonPage {
   readonly pinnedMessage = (message: string): Locator => this.page.locator('.antiPopup').getByText(message)
   readonly closeReplyButton = (): Locator => this.page.locator('.hulyHeader-container > button.iconOnly')
   readonly openReplyMessage = (): Locator => this.page.getByText('1 reply Last reply less than')
+  // `exact`: the name match is a substring one, so any channel in the navigator whose faker name
+  // contains "edit" ("Ampeditd7bac...") is a second match and the click dies on strict mode.
   readonly editMessageButton = (): Locator => this.page.getByRole('button', { name: 'Edit', exact: true })
   readonly copyLinkButton = (): Locator => this.page.getByRole('button', { name: 'Copy link' })
   readonly deleteMessageButton = (): Locator => this.page.getByRole('button', { name: 'Delete' })
@@ -267,6 +272,11 @@ export class ChannelPage extends CommonPage {
 
   async checkIfMessageIsCopied (message: string): Promise<void> {
     expect(await this.getClipboardCopyMessage()).toContain(message)
+  }
+
+  /** The chat is open when its header carries the name; the navigator entry can lag behind. */
+  async waitOpenedChannel (channel: string): Promise<void> {
+    await expect(this.openedChannelHeader(channel)).toBeVisible({ timeout: 30000 })
   }
 
   async clickChooseChannel (channel: string): Promise<void> {

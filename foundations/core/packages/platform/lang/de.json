@@ -24,6 +24,8 @@
     "WorkspaceAlreadyExists": "Arbeitsbereich existiert bereits",
     "InvalidOtp": "Ungültiger Code",
     "PasswordLoginLocked": "Die Passwort-Anmeldung ist aufgrund zu vieler fehlgeschlagener Versuche gesperrt. Bitte verwenden Sie eine OTP-Anmeldungsmethode, um Ihr Konto freizuschalten.",
+    "AccountBlocked": "Ihr Konto wurde vom Administrator gesperrt.",
+    "WorkspaceReadOnly": "Dieser Arbeitsbereich ist derzeit schreibgeschützt.",
     "InviteNotFound": "Einladung mit E-Mail:{email} nicht gefunden.",
     "WorkspaceLimitReached": "Sie haben das Arbeitsbereichslimit erreicht. Bitte kontaktieren Sie uns...",
     "ReadOnlyAccount": "Anonymer Gast-Demo",

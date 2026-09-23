@@ -16,7 +16,7 @@
   import { type AccountAggregatedInfo, type AccountsFilter, type AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
-  import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
+  import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
   import {
     Button,
     ButtonMenu,
@@ -33,7 +33,7 @@
   import adminRes from '../../plugin'
   import AccountDetails from '../AccountDetails.svelte'
   import { downloadReport, type ReportFormat } from '../../reports'
-  import { getAccountClient, requestAdminOtpCode } from '../../utils'
+  import { getAccountClient, requestAdminOtpCode, requestAdminOtpConfirm, runAdminAction } from '../../utils'
 
   export let refreshTick: number = 0
 
@@ -76,6 +76,7 @@
 
   let noWorkspaces = false
   let pendingOnly = false
+  let blockedOnly = false
   let inactiveDays: number | undefined
   // ButtonMenu drops falsy ids (`if (result)`), so ids must be non-empty strings
   const inactiveItems = [
@@ -86,6 +87,7 @@
   $: filter = {
     noWorkspaces: noWorkspaces ? true : undefined,
     pendingOnly: pendingOnly ? true : undefined,
+    blockedOnly: blockedOnly ? true : undefined,
     inactiveDays
   }
 
@@ -103,7 +105,7 @@
   })
 
   let prevKey = ''
-  $: key = `${refreshTick}:${sortKey}:${String(sortAsc)}:${String(noWorkspaces)}:${String(pendingOnly)}:${inactiveDays ?? ''}`
+  $: key = [refreshTick, sortKey, sortAsc, noWorkspaces, pendingOnly, blockedOnly, inactiveDays ?? ''].join(':')
   $: if (key !== prevKey) {
     if (prevKey !== '') accountSkip = 0
     prevKey = key
@@ -162,30 +164,42 @@
     return new Date(ms).toISOString().slice(0, 10)
   }
 
-  // Account deletion is an irreversible identity purge -> OTP-gated on the server
-  function deleteAccount (uuid: AccountUuid): void {
-    void requestAdminOtpCode().then((code) => {
-      if (code === undefined) return
-      void accountClient
-        .deleteAccount(uuid, code)
-        .then(() => loadAccounts(accountSearch, accountSkip, accountLimit))
-        .catch((err) => {
-          console.error('Failed to delete account:', err)
-        })
+  // Account deletion is an irreversible identity purge -> OTP-gated on the server.
+  // The dialog checkbox skips the deferral and purges the identity right away.
+  async function deleteAccount (uuid: AccountUuid): Promise<void> {
+    // The server refuses an account that still owns a workspace alone. Say so before asking
+    // for a code, otherwise the refusal arrives after the whole OTP dance.
+    const check = await accountClient.canDeleteAccount(uuid).catch(() => undefined)
+    if (check?.canDelete === false) {
+      const blocking = check.ownedWorkspaces.map((ws) => ws.name)
+      showPopup(MessageBox, {
+        label: adminRes.string.Delete,
+        message:
+          blocking.length > 0 ? adminRes.string.OwnedWorkspacesBlockDeletion : adminRes.string.CannotDeleteOwnAccount,
+        params: { workspaces: blocking.join(', ') },
+        canSubmit: false
+      })
+      return
+    }
+
+    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+    if (res === undefined) return
+    await runAdminAction(async () => {
+      await accountClient.deleteAccount(uuid, res.code, res.option)
+      return true
     })
+    await loadAccounts(accountSearch, accountSkip, accountLimit)
   }
 
   // Unfinished signup has no account row - purge person + social ids instead
-  function deletePerson (uuid: AccountUuid): void {
-    void requestAdminOtpCode().then((code) => {
-      if (code === undefined) return
-      void accountClient
-        .adminDeletePerson(uuid, code)
-        .then(() => loadAccounts(accountSearch, accountSkip, accountLimit))
-        .catch((err) => {
-          console.error('Failed to delete person:', err)
-        })
+  async function deletePerson (uuid: AccountUuid): Promise<void> {
+    const code = await requestAdminOtpCode()
+    if (code === undefined) return
+    await runAdminAction(async () => {
+      await accountClient.adminDeletePerson(uuid, code)
+      return true
     })
+    await loadAccounts(accountSearch, accountSkip, accountLimit)
   }
 
   async function accountSearchChanged (ev: CustomEvent<string>): Promise<void> {
@@ -207,7 +221,7 @@
     </div>
   {/if}
 </div>
-<div class="fs-title p-3 flex-no-shrink">
+<div class="fs-title p-3 flex-no-shrink" data-testid="account-search-container">
   <SearchEdit bind:value={accountSearch} width={'100%'} on:change={accountSearchChanged} />
 </div>
 
@@ -242,6 +256,11 @@
   <div class="flex-row-center mr-4">
     <CheckBox bind:checked={pendingOnly} />
     <span class="ml-1"><Label label={adminRes.string.PendingSignups} /></span>
+  </div>
+
+  <div class="flex-row-center mr-4">
+    <CheckBox bind:checked={blockedOnly} />
+    <span class="ml-1"><Label label={adminRes.string.BlockedOnly} /></span>
   </div>
 
   <span class="mr-1"><Label label={adminRes.string.InactiveOver} /></span>
@@ -365,9 +384,15 @@
           </tr>
         {/if}
         {#each group.items as account}
-          <tr class="focused-button">
+          <tr class="focused-button" id={account.uuid}>
             <td>
-              <div class="fs-title">{account.firstName} {account.lastName}</div>
+              <div class="fs-title">
+                {account.firstName}
+                {account.lastName}
+                {#if account.blockedOn != null}
+                  <span class="error-color ml-1"><Label label={adminRes.string.Blocked} /></span>
+                {/if}
+              </div>
               <div class="content-dark-color flex-row-center">
                 {account.uuid}
                 <Button
@@ -392,7 +417,10 @@
                   kind={'ghost'}
                   label={adminRes.string.Details}
                   on:click={() => {
-                    showPopup(AccountDetails, { account })
+                    // The dialog is where blocking and deletion live now - reload on the way back.
+                    showPopup(AccountDetails, { account }, undefined, () => {
+                      void loadAccounts(accountSearch, accountSkip, accountLimit)
+                    })
                   }}
                 />
                 {#if !readOnly && accountSuperAdminMode}
@@ -403,9 +431,9 @@
                     label={adminRes.string.Delete}
                     on:click={() => {
                       if (account.hasAccount === false) {
-                        deletePerson(account.uuid)
+                        void deletePerson(account.uuid)
                       } else {
-                        deleteAccount(account.uuid)
+                        void deleteAccount(account.uuid)
                       }
                     }}
                   />
