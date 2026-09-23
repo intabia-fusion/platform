@@ -42,6 +42,8 @@
     "Classes": "クラス",
     "Attributes": "属性",
     "DeleteAttribute": "属性を削除",
+    "UnknownAttributeType": "不明なタイプ。この属性は削除のみ可能です",
+    "UnknownType": "不明なタイプ",
     "DeleteAttributeConfirm": "この属性を削除しますか？",
     "DeleteAttributeExistConfirm": "この属性を削除しますか？データは失われます",
     "DeleteMixin": "Mixinを削除",

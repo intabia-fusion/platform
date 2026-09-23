@@ -271,6 +271,20 @@
     "NoAttributesToCreate": "Tous les attributs sont déjà présents dans le type de tâche cible",
     "UnresolvableAttributesWarning": "Certains champs ne peuvent pas être importés car ils font référence à des types ou classes manquants :",
     "UnresolvableAttributesDescription": "Les champs et règles faisant référence à ces attributs seront automatiquement ignorés.",
-    "UnresolvableTypeMissingClass": "La classe ou le type référencé est manquant dans l'espace de travail"
+    "UnresolvableTypeMissingClass": "La classe ou le type référencé est manquant dans l'espace de travail",
+    "UnresolvableTypeUnsupported": "Ce type d'attribut ne peut pas être importé",
+    "UnresolvableNotDescribed": "L'attribut n'est pas décrit dans le fichier",
+    "ImportWarningsTitle": "Une partie du fichier sera ignorée ou modifiée",
+    "ImportWarningsDescription": "Ces éléments ne sont pas pris en charge ou ont un format non valide",
+    "ImportWarningInvalidWorkflow": "Le flux de travail «{name}» est ignoré : format non valide",
+    "ImportWarningInvalidStatus": "Le statut «{name}» est ignoré : format non valide",
+    "ImportWarningUnknownStatusCategory": "Le statut «{name}» a une catégorie inconnue et sera créé comme actif",
+    "ImportWarningInvalidEnum": "L'énumération «{name}» est ignorée : aucune valeur valide",
+    "ImportWarningInvalidAttribute": "L'attribut «{name}» est ignoré : format non valide",
+    "ImportWarningInvalidScreen": "L'écran «{name}» est ignoré : format non valide",
+    "ImportWarningInvalidTransition": "La transition «{name}» est ignorée : format non valide",
+    "ImportWarningUnsupportedRule": "La règle {rule} dans la transition «{transition}» n'est pas prise en charge et est ignorée",
+    "ImportWarningUnsupportedCondition": "La condition {rule} dans la transition «{transition}» n'est pas prise en charge et est ignorée",
+    "ImportWarningInvalidProject": "L'association de projet «{name}» est ignorée : format non valide"
   }
 }

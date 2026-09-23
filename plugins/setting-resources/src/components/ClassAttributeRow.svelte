@@ -34,6 +34,10 @@
     | undefined = undefined
 
   const client = getClient()
+  $: isKnownType = client.getHierarchy().hasClass(attribute.type._class)
+  $: typeLabel = isKnownType
+    ? (attribute.type.label ?? client.getHierarchy().getClass(attribute.type._class).label)
+    : undefined
 
   async function getEnumName (type: Type<any>): Promise<string | undefined> {
     const ref = (type as EnumOf).of
@@ -73,7 +77,13 @@
     <svelte:component this={attributeMapper.component} {...attributeMapper.props} {attribute} />
   {/if}
   <div class="hulyTableAttr-content__row-type font-medium-12">
-    <Label label={attribute.type.label} />
+    {#if !isKnownType}
+      <span class="unknown-type" use:tooltip={{ label: setting.string.UnknownAttributeType }}>
+        <Label label={setting.string.UnknownType} />
+      </span>
+    {:else if typeLabel !== undefined}
+      <Label label={typeLabel} />
+    {/if}
     {#if attributeType !== undefined}
       : <Label label={attributeType} />
     {/if}
@@ -102,6 +112,10 @@
     align-items: center;
     min-width: 0;
     gap: var(--spacing-0_5);
+  }
+
+  .unknown-type {
+    color: var(--global-error-TextColor);
   }
 
   .required-marker {

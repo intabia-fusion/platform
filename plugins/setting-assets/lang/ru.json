@@ -47,6 +47,8 @@
     "Classes": "Классы",
     "Attributes": "Атрибуты",
     "DeleteAttribute": "Удалить атрибут",
+    "UnknownAttributeType": "Неизвестный тип. Атрибут можно только удалить",
+    "UnknownType": "Неизвестный тип",
     "DeleteAttributeConfirm": "Вы действительно хотите удалить этот атрибут?",
     "DeleteAttributeExistConfirm": "Вы действительно хотите удалить этот атрибут? Данные будут утеряны",
     "DeleteMixin": "Удалить Миксин",

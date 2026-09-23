@@ -41,6 +41,8 @@ export default mergeIds(settingId, setting, {
     DeleteStatus: '' as IntlString,
     DeleteStatusConfirm: '' as IntlString,
     DeleteAttribute: '' as IntlString,
+    UnknownAttributeType: '' as IntlString,
+    UnknownType: '' as IntlString,
     DeleteAttributeConfirm: '' as IntlString,
     DeleteAttributeExistConfirm: '' as IntlString,
     DeleteMixin: '' as IntlString,

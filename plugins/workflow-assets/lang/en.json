@@ -273,7 +273,21 @@
     "NoAttributesToCreate": "All attributes are already present in the target task type",
     "UnresolvableAttributesWarning": "Some fields cannot be imported because they reference missing types or classes:",
     "UnresolvableAttributesDescription": "Fields and rules referencing these attributes will be skipped automatically.",
-    "UnresolvableTypeMissingClass": "Referenced class or type is missing in workspace"
+    "UnresolvableTypeMissingClass": "Referenced class or type is missing in workspace",
+    "UnresolvableTypeUnsupported": "This attribute type cannot be imported",
+    "UnresolvableNotDescribed": "The attribute is not described in the file",
+    "ImportWarningsTitle": "Part of the file will be skipped or changed",
+    "ImportWarningsDescription": "These items are not supported or have an invalid format",
+    "ImportWarningInvalidWorkflow": "Workflow \"{name}\" is skipped: invalid format",
+    "ImportWarningInvalidStatus": "Status \"{name}\" is skipped: invalid format",
+    "ImportWarningUnknownStatusCategory": "Status \"{name}\" has an unknown category and will be created as active",
+    "ImportWarningInvalidEnum": "Enum \"{name}\" is skipped: no valid values",
+    "ImportWarningInvalidAttribute": "Attribute \"{name}\" is skipped: invalid format",
+    "ImportWarningInvalidScreen": "Screen \"{name}\" is skipped: invalid format",
+    "ImportWarningInvalidTransition": "Transition \"{name}\" is skipped: invalid format",
+    "ImportWarningUnsupportedRule": "Rule {rule} in transition \"{transition}\" is not supported and is skipped",
+    "ImportWarningUnsupportedCondition": "Condition {rule} in transition \"{transition}\" is not supported and is skipped",
+    "ImportWarningInvalidProject": "Project binding \"{name}\" is skipped: invalid format"
   },
   "status": {
     "InitialStatusNotAllowed": "Initial status is not allowed",

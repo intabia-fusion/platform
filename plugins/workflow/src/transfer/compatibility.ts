@@ -50,15 +50,17 @@ import type {
   WorkflowConfig
 } from './types'
 import { extractRuleFieldReferences, getEnumRefFromType } from './utils'
+import { sanitizeWorkflowConfig } from './validation'
 
 /**
  * Checks a workflow configuration for compatibility against a target TaskType (statuses & attributes).
  */
 export async function checkWorkflowCompatibility (
   client: TxOperations,
-  config: WorkflowConfig,
+  rawConfig: WorkflowConfig,
   targetTaskTypeId: Ref<TaskType>
 ): Promise<WorkflowCompatibilityReport> {
+  const { config, warnings } = sanitizeWorkflowConfig(client, rawConfig)
   const targetTaskType = await client.findOne(task.class.TaskType, { _id: targetTaskTypeId })
   if (targetTaskType == null) {
     throw new Error(`Target task type "${targetTaskTypeId}" not found`)
@@ -71,6 +73,7 @@ export async function checkWorkflowCompatibility (
   const hasScreens = hasScreensInConfig(config)
 
   return {
+    warnings,
     statuses,
     attributes,
     transitions,
@@ -417,36 +420,62 @@ export function collectAttributeUsages (
 }
 
 /**
- * Checks whether an attribute type is resolvable within the current workspace hierarchy.
+ * Type classes an attribute can be imported with: the ones a user can pick when creating an attribute in
+ * class settings. `TypeIdentifier` is left out, it is bound to a sequence of the source workspace.
  */
-export function isAttributeTypeResolvable (
+const importableTypeClasses = new Set<Ref<Class<Type<any>>>>([
+  core.class.TypeString,
+  core.class.TypeHyperlink,
+  core.class.TypeBoolean,
+  core.class.TypeDate,
+  core.class.TypeMarkup,
+  core.class.TypeNumber,
+  core.class.RefTo,
+  core.class.EnumOf,
+  core.class.ArrOf
+])
+
+/** Only references and enums can be the element type of an array, as in class settings. */
+const importableArrayItemClasses = new Set<Ref<Class<Type<any>>>>([core.class.RefTo, core.class.EnumOf])
+
+/**
+ * Returns why an attribute of this type cannot be imported, or `undefined` when it can.
+ */
+export function getAttributeTypeProblem (
   hierarchy: Hierarchy,
   type: Type<PropertyType> | undefined,
-  visited = new Set<Type<PropertyType>>()
-): boolean {
-  if (type === undefined) return true
-  if (visited.has(type)) return true
-  visited.add(type)
-
-  try {
-    if (type._class === core.class.RefTo) {
-      const to = (type as RefTo<Doc>).to
-      if (to !== undefined && !hierarchy.hasClass(to)) {
-        return false
-      }
-    }
-    if (type._class === core.class.EnumOf) {
-      // Enums are documents in Model space and are created on import if missing
-      return true
-    }
-    if (type._class === core.class.ArrOf) {
-      const of = (type as ArrOf<Doc>).of
-      return isAttributeTypeResolvable(hierarchy, of, visited)
-    }
-    return true
-  } catch {
-    return false
+  isArrayItem = false
+): IntlString | undefined {
+  if (type === undefined) return undefined
+  // Configs produced outside Fusion (e.g. a Jira migration) may name a type class that does not exist,
+  // like `core:class:Text`; an attribute created with it breaks every place that resolves its type.
+  if (typeof type !== 'object' || typeof type._class !== 'string' || !hierarchy.hasClass(type._class)) {
+    return workflow.string.UnresolvableTypeMissingClass
   }
+  const allowed = isArrayItem ? importableArrayItemClasses : importableTypeClasses
+  if (!allowed.has(type._class)) {
+    return workflow.string.UnresolvableTypeUnsupported
+  }
+  if (type._class === core.class.RefTo) {
+    const to = (type as RefTo<Doc>).to
+    if (typeof to !== 'string' || !hierarchy.hasClass(to)) {
+      return workflow.string.UnresolvableTypeMissingClass
+    }
+  }
+  if (type._class === core.class.ArrOf) {
+    const of = (type as ArrOf<Doc>).of
+    if (of === undefined) return workflow.string.UnresolvableTypeUnsupported
+    return getAttributeTypeProblem(hierarchy, of, true)
+  }
+  // Enums are documents in Model space and are created on import if missing
+  return undefined
+}
+
+/**
+ * Checks whether an attribute type can be imported into the current workspace.
+ */
+export function isAttributeTypeResolvable (hierarchy: Hierarchy, type: Type<PropertyType> | undefined): boolean {
+  return getAttributeTypeProblem(hierarchy, type) === undefined
 }
 
 /**
@@ -564,7 +593,13 @@ function checkAttributesCompatibility (
       (rawLabel !== undefined ? attributesByLabel.get(rawLabel) : undefined)
 
     const sourceType = attrConfig?.type
-    const isResolvable = isAttributeTypeResolvable(hierarchy, sourceType)
+    // A field the file only mentions in a rule or a screen: there is nothing to create it from, and guessing
+    // a type would make an attribute nobody asked for
+    const typeProblem =
+      attrConfig === undefined && matchedAttr === undefined
+        ? workflow.string.UnresolvableNotDescribed
+        : getAttributeTypeProblem(hierarchy, sourceType)
+    const isResolvable = typeProblem === undefined
 
     const enumMapping = new Map<Ref<Enum>, Ref<Enum>>()
     if (matchedAttr !== undefined) {
@@ -589,7 +624,7 @@ function checkAttributesCompatibility (
       isMatched: isCompatible,
       targetAttributeId: isCompatible ? matchedAttr?._id : undefined,
       unresolvable: !isResolvable,
-      unresolvableReason: !isResolvable ? workflow.string.UnresolvableTypeMissingClass : undefined
+      unresolvableReason: typeProblem
     })
   }
 

@@ -142,8 +142,26 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
     )
   } as unknown as Hierarchy
 
+  // Model docs the import validates against: rules by their id prefix, status categories and attributes
+  const modelDocClassByPrefix: Array<[string, Ref<Class<Doc>>]> = [
+    ['workflow:validator:', workflow.class.WorkflowValidator],
+    ['workflow:postFunction:', workflow.class.WorkflowPostFunction],
+    ['workflow:request:', workflow.class.WorkflowRequest],
+    ['task:statusCategory:', core.class.StatusCategory]
+  ]
+  const mockModel = {
+    findObject: jest.fn((_id: any): any => {
+      if (typeof _id !== 'string') return undefined
+      if (_id === assigneeAttr._id) return { ...assigneeAttr, _class: core.class.Attribute }
+      const byPrefix = modelDocClassByPrefix.find(([prefix]) => _id.startsWith(prefix))
+      if (byPrefix !== undefined) return { _id, _class: byPrefix[1] }
+      return allDocs.find((d) => d._id === _id)
+    })
+  }
+
   const client: Partial<TxOperations> & { commit: any } = {
     getHierarchy: () => mockHierarchy,
+    getModel: (() => mockModel) as any,
     apply: jest.fn((): any => client),
     commit: jest.fn(async () => ({ result: true, time: 0, serverTime: 0 })),
     findOne: jest.fn(async (_cls: Ref<Class<Doc>>, query: any): Promise<any> => {
@@ -164,7 +182,12 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
         if (query._id?.$in !== undefined) {
           return allDocs.filter((d) => d._class === core.class.Status && query._id.$in.includes(d._id) === true)
         }
-        return allDocs.filter((d) => d._class === core.class.Status)
+        return allDocs.filter(
+          (d: any) =>
+            d._class === core.class.Status &&
+            (query.ofAttribute === undefined || d.ofAttribute === query.ofAttribute) &&
+            (query.category === undefined || d.category === query.category)
+        )
       }
       if (cls === workflow.class.Workflow) {
         if (query.projectType !== undefined) {
