@@ -14,8 +14,8 @@
 */
 
 /**
- * Build phase - one native tsc pass per package, emitting JS and .d.ts together.
- * Replaces the former transpile (esbuild) + validate (ts.createProgram) pair.
+ * Build phase - tsc checks and emits .d.ts only, esbuild alone writes lib/.
+ * Two emitters in one lib/ leave it mixed: tsc's incremental state skips files esbuild rewrote.
  */
 
 const { join } = require('path')
@@ -44,15 +44,9 @@ async function runEsbuildPackage (packagePath) {
   await generateSvelteTypes({ cwd: packagePath })
 }
 
-// The pre-tsc7 docker path: esbuild writes JS and nothing else. No type check and no .d.ts,
-// which only downstream *compilation* needs — a bundle never reads them.
+// The only writer of lib/ for non-svelte packages.
 async function runEsbuildEmit (packagePath) {
-  const { collectFiles, performESBuild } = require('../compile.js')
-  const files = collectFiles(join(packagePath, 'src'))
-  if (files.length > 0) {
-    const relative = files.map((f) => f.replace(packagePath + '/', ''))
-    await performESBuild(relative, { srcDir: 'src', cwd: packagePath, outDir: 'lib' })
-  }
+  await require('../compile.js').emitLib(packagePath)
   return { success: true }
 }
 
@@ -102,7 +96,8 @@ async function runTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
 async function runBuildPhase (graph, packageNames, concurrency, options = {}) {
   const { force = false, packageHashes, noTypeCheck = false, esbuildEmit = false } = options
   // A skipped-check build must never satisfy a checked one, so it caches under its own key.
-  const phaseKey = `build${noTypeCheck ? '-nocheck' : ''}${esbuildEmit ? '-esbuild' : ''}`
+  // `-split` marks the esbuild-only lib/, so a lib/ left by the tsc emit is rebuilt once.
+  const phaseKey = `build-split${noTypeCheck ? '-nocheck' : ''}${esbuildEmit ? '-esbuild' : ''}`
   const startTime = performance.now()
   const results = {
     successCount: 0,
@@ -175,7 +170,10 @@ async function runBuildPhase (graph, packageNames, concurrency, options = {}) {
         ? { success: true }
         : await runEsbuildEmit(packagePath).catch((err) => ({ success: false, error: err }))
     } else {
-      result = await runTsc(packagePath, isUi, noTypeCheck)
+      result = await runTsc(packagePath, true, noTypeCheck)
+      if (result.success && !isUi) {
+        result = await runEsbuildEmit(packagePath).catch((err) => ({ success: false, error: err }))
+      }
     }
     const pkgTime = Math.round(performance.now() - pkgStart)
 

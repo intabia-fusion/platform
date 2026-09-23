@@ -139,6 +139,73 @@ describe('compile_all end to end', () => {
     assert.match(out, /unrecognised|unknown|not recognized/i)
   })
 
+  // index <-> utils cycle with a default import, the shape of @hcengineering/setting.
+  const CYCLE = {
+    '@mini/cycle': {
+      compilerOptions: { incremental: true, isolatedModules: true },
+      files: {
+        'src/index.ts': "export * from './utils'\nconst plugin = { name: 'mini' }\nexport default plugin\n",
+        'src/utils.ts': "import plugin from './index'\nexport function pluginName (): string {\n  return plugin.name\n}\n"
+      }
+    }
+  }
+
+  // index.js first: utils.js then sees it half-loaded, which is where a mixed lib breaks.
+  function loadPluginName (dir) {
+    const r = spawnSync(process.execPath, ['-e', "console.log(require('./lib/index.js').pluginName())"], { cwd: dir, encoding: 'utf8' })
+    return (r.stdout ?? '').trim() + (r.stderr ?? '')
+  }
+
+  test('lib is written by esbuild only, tsc emits declarations', { timeout: T }, () => {
+    repo = createMiniRepo(CYCLE)
+    const { code, out } = compileAll(repo.root, ['--parallel', '1'])
+    assert.equal(code, 0, out)
+
+    const dir = repo.pkgDir('@mini/cycle')
+    for (const f of ['index.js', 'utils.js']) {
+      assert.doesNotMatch(fs.readFileSync(join(dir, 'lib', f), 'utf8'), /__createBinding|__importDefault/, `${f} emitted by tsc`)
+    }
+    assert.ok(fs.existsSync(join(dir, 'types', 'utils.d.ts')))
+    assert.equal(loadPluginName(dir), 'mini')
+  })
+
+  // Regression: tsc's incremental state re-emitted only index.js over an esbuild lib/, and the
+  // esbuild utils.js snapshotted the half-loaded tsc index.js without `default`.
+  test('a docker esbuild emit between builds does not leave a mixed lib', { timeout: T }, () => {
+    repo = createMiniRepo(CYCLE)
+    const dir = repo.pkgDir('@mini/cycle')
+    assert.equal(compileAll(repo.root, ['--parallel', '1']).code, 0)
+    assert.equal(compileAll(repo.root, ['--parallel', '1', '--esbuild-emit']).code, 0)
+
+    fs.writeFileSync(join(dir, 'src', 'index.ts'), "export * from './utils'\nconst plugin = { name: 'mini' }\nexport const extra = 1\nexport default plugin\n")
+    const { code, out } = compileAll(repo.root, ['--parallel', '1'])
+    assert.equal(code, 0, out)
+
+    assert.equal(loadPluginName(dir), 'mini')
+  })
+
+  // Regression: esbuild read ./src only, so the sanity packages (rootDir ./tests) got no lib/ at all.
+  test('esbuild emits from the tsconfig rootDir', { timeout: T }, () => {
+    repo = createMiniRepo({
+      '@mini/tests': {
+        files: {
+          'tsconfig.json': JSON.stringify({
+            compilerOptions: { module: 'CommonJS', strict: true, declaration: true, skipLibCheck: true, rootDir: './tests', outDir: 'lib', declarationDir: 'types' },
+            include: ['tests/**/*.ts']
+          }),
+          'tests/index.ts': "export * from './model/page'\n",
+          'tests/model/page.ts': 'export const page = 1\n'
+        }
+      }
+    })
+    const { code, out } = compileAll(repo.root, ['--parallel', '1'])
+    assert.equal(code, 0, out)
+
+    const dir = repo.pkgDir('@mini/tests')
+    assert.ok(fs.existsSync(join(dir, 'lib', 'index.js')))
+    assert.ok(fs.existsSync(join(dir, 'lib', 'model', 'page.js')))
+  })
+
   test('--to restricts the run to a package and its dependencies', { timeout: T }, () => {
     repo = createMiniRepo({
       ...TWO_PACKAGES,
