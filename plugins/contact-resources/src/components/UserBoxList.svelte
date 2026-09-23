@@ -18,7 +18,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { ObjectCreate, getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
-  import { Button, Label, showPopup } from '@hcengineering/ui'
+  import { Button, Label, showPopup, PopupResult } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../plugin'
   import { getPersonByPersonRefStore } from '../utils'
@@ -42,6 +42,19 @@
   export let create: ObjectCreate | undefined = undefined
 
   export let sort: ((a: Person, b: Person) => number) | undefined = undefined
+  export let protectedItems: Ref<Person>[] = []
+
+  let popupResult: PopupResult | undefined = undefined
+  let prevReadonly: boolean = readonly
+
+  $: if (readonly !== prevReadonly) {
+    const wasReadonly = prevReadonly
+    prevReadonly = readonly
+
+    if (readonly && !wasReadonly && popupResult !== undefined) {
+      popupResult.close()
+    }
+  }
 
   function filter (items: Ref<Person>[] | undefined): Ref<Person>[] {
     return (items ?? []).filter((it, idx, arr) => arr.indexOf(it) === idx)
@@ -63,6 +76,7 @@
       multiSelect: true,
       allowDeselect: false,
       selectedUsers: filter(items),
+      disallowDeselect: filter(protectedItems),
       filter: (it: Doc) => {
         const h = getClient().getHierarchy()
         if (h.hasMixin(it, contact.mixin.Employee)) {
@@ -78,11 +92,11 @@
     if (sort !== undefined) {
       popupProps.sort = sort
     }
-    showPopup(UsersPopup, popupProps, evt.target as HTMLElement, undefined, (result) => {
-      if (result != null) {
-        items = filter(result)
-        dispatch('update', items)
-      }
+
+    popupResult = showPopup(UsersPopup, popupProps, evt.target as HTMLElement, undefined, (result) => {
+      if (result == null || readonly) return
+      items = filter(result)
+      dispatch('update', items)
     })
   }
 </script>
@@ -95,7 +109,6 @@
   {kind}
   {size}
   {justify}
-  disabled={readonly}
   showTooltip={label ? { label, direction: labelDirection } : undefined}
   on:click={addPerson}
 >

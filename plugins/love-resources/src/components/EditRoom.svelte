@@ -24,7 +24,7 @@
   } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { getMetadata, IntlString } from '@hcengineering/platform'
-  import presentation from '@hcengineering/presentation'
+  import presentation, { createQuery } from '@hcengineering/presentation'
   import { AccountRole, getCurrentAccount, Ref } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
 
@@ -178,7 +178,6 @@
       <div class="name">
         <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
       </div>
-
       {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
         <div data-id="meeting-connect">
           <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />

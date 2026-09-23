@@ -305,8 +305,12 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
 
   language!: RoomLanguage
 
-  @Prop(ArrOf(TypeAccountUuid()), love.string.Organizators)
+  @Prop(ArrOf(TypeAccountUuid()), love.string.Organizators, { editor: love.component.MeetingAccessAttributeEditor })
   declare owners: AccountUuid[]
+
+  @Prop(ArrOf(TypeAccountUuid()), core.string.Members, { editor: love.component.MeetingAccessAttributeEditor })
+  @Index(IndexKind.Indexed)
+  declare members: AccountUuid[]
 }
 
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
