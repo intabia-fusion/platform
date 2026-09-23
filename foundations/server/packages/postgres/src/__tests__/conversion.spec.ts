@@ -18,7 +18,7 @@ import { PostgresAdapter } from '../storage'
 import { convertArrayParams, decodeArray, filterProjection } from '../utils'
 import { genMinModel, test, type ComplexClass } from './minmodel'
 import { createDummyClient, type TypedQuery } from './utils'
-import { ConnectionMgr } from '@hcengineering/postgres-base'
+import { ConnectionMgr, type DBFlavor } from '@hcengineering/postgres-base'
 
 describe('array conversion', () => {
   it('should handle undefined parameters', () => {
@@ -168,8 +168,13 @@ function createTestContext (): { adapter: PostgresAdapter, ctx: MeasureMetricsCo
 }
 
 describe('number comparison on jsonb fields', () => {
-  function translate (tkey: string, value: any): { sql: string | undefined, values: any[] } {
+  function translate (
+    tkey: string,
+    value: any,
+    flavor: DBFlavor = 'postgres'
+  ): { sql: string | undefined, values: any[] } {
     const { adapter } = createTestContext()
+    ;(adapter as any).dbFlavor = flavor
     const values: any[] = []
     let idx = 1
     const vars = {
@@ -185,21 +190,33 @@ describe('number comparison on jsonb fields', () => {
     return { sql: (adapter as any).translateQueryValue(vars, tkey, value, 'common'), values }
   }
 
+  // The shape numericJsonKey builds: the field's text as numeric, when Postgres accepts it as one.
+  function numericKey (text: string): string {
+    return `(CASE WHEN pg_input_is_valid(${text}, 'numeric') THEN (${text})::numeric END)`
+  }
+
   it('compares a jsonb field with a number as a number, not as text', () => {
     // Text orders '10' before '9': `number > 9 AND number < 100` used to match nothing.
     const { sql, values } = translate("task.data#>>'{number}'", { $gt: 9, $lt: 100 })
 
-    const key = "(CASE WHEN jsonb_typeof(task.data#>'{number}') = 'number' THEN (task.data#>>'{number}')::numeric END)"
+    const key = numericKey("task.data#>>'{number}'")
     expect(sql).toEqual(`${key} > $1::numeric AND ${key} < $2::numeric`)
     expect(values).toEqual([9, 100])
   })
 
   it('does the same for a field of a joined document and for an arrow path', () => {
     expect(translate('lookup_activity_attachedTo."data"#>>\'{replies}\'', { $gte: 1 }).sql).toEqual(
-      "(CASE WHEN jsonb_typeof(lookup_activity_attachedTo.\"data\"#>'{replies}') = 'number' " +
-        'THEN (lookup_activity_attachedTo."data"#>>\'{replies}\')::numeric END) >= $1::numeric'
+      `${numericKey('lookup_activity_attachedTo."data"#>>\'{replies}\'')} >= $1::numeric`
     )
-    expect(translate("data->'a'->'b'", { $lte: 5 }).sql).toEqual(
+    expect(translate("data->'a'->'b'", { $lte: 5 }).sql).toEqual(`${numericKey("data->'a'->>'b'")} <= $1::numeric`)
+  })
+
+  it('falls back to the json type check where pg_input_is_valid does not exist (cockroach, unknown)', () => {
+    const fallback =
+      "(CASE WHEN jsonb_typeof(task.data#>'{number}') = 'number' THEN (task.data#>>'{number}')::numeric END)"
+    expect(translate("task.data#>>'{number}'", { $gt: 9 }, 'cockroach').sql).toEqual(`${fallback} > $1::numeric`)
+    expect(translate("task.data#>>'{number}'", { $gt: 9 }, 'unknown').sql).toEqual(`${fallback} > $1::numeric`)
+    expect(translate("data->'a'->'b'", { $lte: 5 }, 'cockroach').sql).toEqual(
       "(CASE WHEN jsonb_typeof(data->'a'->'b') = 'number' THEN (data->'a'->>'b')::numeric END) <= $1::numeric"
     )
   })

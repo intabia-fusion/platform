@@ -1107,16 +1107,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           continue
         }
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
-          // A jsonb value is text and needs the cast; a real bigint/integer column does not, and
-          // the cast would keep Postgres from ordering by the column's btree index.
-          const columnType = columnTypeOf(baseDomain, key)
-          const numericColumn = columnType === 'bigint' || columnType === 'integer'
+          const sqlKey = this.getKey(_class, baseDomain, key, joins)
           const dir = val === 1 ? 'ASC' : 'DESC'
-          res.push(
-            numericColumn
-              ? `${this.getKey(_class, baseDomain, key, joins)} ${dir}`
-              : `(${this.getKey(_class, baseDomain, key, joins)})::numeric ${dir}`
-          )
+          res.push(`${numericOrderKey(sqlKey, columnTypeOf(baseDomain, key), this.dbFlavor)} ${dir}`)
         } else if (attr?.type._class === core.class.TypeIdentifier) {
           res.push(
             `regexp_replace(COALESCE(${this.getKey(_class, baseDomain, key, joins)}, ''), '-?\\d+$', '') ${val === 1 ? 'ASC' : 'DESC'}`
@@ -1267,7 +1260,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if (join?.isReverse !== true) return
     const attr = join.toClass !== undefined ? this.hierarchy.findAttribute(join.toClass, tKey) : undefined
     const value = isDataField(join.table, tKey) ? `${join.toAlias}."data"#>>'{${tKey}}'` : `${join.toAlias}."${tKey}"`
-    const typed = attr !== undefined && NumericTypes.includes(attr.type._class) ? `(${value})::numeric` : value
+    const typed =
+      attr !== undefined && NumericTypes.includes(attr.type._class)
+        ? numericOrderKey(value, columnTypeOf(join.table, tKey), this.dbFlavor)
+        : value
     const agg = order === SortingOrder.Ascending ? 'min' : 'max'
     return `(SELECT ${agg}(${typed}) ${this.getReverseFrom(vars, join)}) ${order === SortingOrder.Ascending ? 'ASC' : 'DESC'}`
   }
@@ -1396,7 +1392,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
         // a number.
         const rangeOperator = rangeOperators[operator]
         if (rangeOperator !== undefined && tkeyData && typeof value[operator] === 'number') {
-          res.push(`${numericJsonKey(tkey)} ${rangeOperator} ${vars.add(value[operator], '::numeric')}`)
+          res.push(`${numericJsonKey(tkey, this.dbFlavor)} ${rangeOperator} ${vars.add(value[operator], '::numeric')}`)
           continue
         }
 
@@ -2314,14 +2310,30 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
 const rangeOperators: Record<string, string | undefined> = { $gt: '>', $gte: '>=', $lt: '<', $lte: '<=' }
 
 /**
- * A jsonb field as a number. Guarded by its json type: the same field holds a string in an old or
- * foreign document, and a bare cast would fail the whole query on it; such a row just does not match.
+ * A jsonb field as a number. The same field holds 'n/a', a boolean or an object in an old or
+ * foreign document, and a bare cast would fail the whole query on it; such a row is null here, so
+ * it does not match a range and sorts last.
  */
-function numericJsonKey (tkey: string): string {
-  // `data#>>'{a,b}'` reads text, `data#>'{a,b}'` the json value; `data->'a'->'b'` is json already.
-  const json = tkey.replace('#>>', '#>')
+function numericJsonKey (tkey: string, flavor: DBFlavor | undefined): string {
+  // `data#>>'{a,b}'` already reads text; `data->'a'->'b'` is json and needs `->>` on the last step.
   const text = tkey.includes('#>>') ? tkey : tkey.replace(/->(?!.*->)/, '->>')
+  if (flavor === 'postgres') {
+    return `(CASE WHEN pg_input_is_valid(${text}, 'numeric') THEN (${text})::numeric END)`
+  }
+  const json = tkey.replace('#>>', '#>')
   return `(CASE WHEN jsonb_typeof(${json}) = 'number' THEN (${text})::numeric END)`
+}
+
+/**
+ * A numeric attribute as an ORDER BY key. A real bigint/integer column orders as is: a cast would
+ * keep Postgres from using the column's btree index, for the sort itself or for the min/max of a
+ * reverse lookup. A jsonb path is read as a number (see numericJsonKey), so a stray string sorts
+ * as null instead of failing the query. Any other column is cast.
+ */
+function numericOrderKey (sqlKey: string, columnType: DataType | undefined, flavor: DBFlavor | undefined): string {
+  if (columnType === 'bigint' || columnType === 'integer') return sqlKey
+  if (sqlKey.includes('->') || sqlKey.includes('#>>')) return numericJsonKey(sqlKey, flavor)
+  return `(${sqlKey})::numeric`
 }
 
 function prepareJsonValue (tkey: string, valType: string): { tlkey: string, arrowCount: number } {
