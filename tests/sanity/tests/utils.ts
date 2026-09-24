@@ -164,6 +164,10 @@ export async function getSecondPageByInvite (
   await newPage.goto(linkText ?? '')
   const joinPage: SignInJoinPage = new SignInJoinPage(newPage)
   await joinPage.join(newUser)
+  // The click only starts the login: return before the workbench is up and the first side-menu
+  // lookup waits out its timeout on a menu that is not there.
+  await expect(newPage).toHaveURL(/workbench/)
+  await expect(newPage.locator('#profile-button')).toBeVisible()
 
   return {
     page: newPage,

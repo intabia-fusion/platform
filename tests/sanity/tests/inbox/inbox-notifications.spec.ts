@@ -36,6 +36,9 @@ interface SecondUser {
 
 test.describe.configure({ mode: 'parallel' })
 
+// The second member per workspace, not per test: a seat per test recycled the workspace every few tests.
+const others = new Map<string, { member: ChatMember, user: SignUpData }>()
+
 /**
  * Inbox behaviour driven by chat: what lands there, what the badges say, and what the clear/read
  * actions do. Every test carries its own id so the shared workspace cannot leak between them.
@@ -51,11 +54,13 @@ test.describe('Inbox notification tests', () => {
   let uniq: string
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
-    // One seat per test: past the cap a guest silently drops to read-only.
-    shared = await sharedWorkspace(1)
+    // The second member takes a seat like an invited one, once per workspace.
+    shared = await sharedWorkspace(0)
+    if (!others.has(shared.ws.workspace)) {
+      shared = await sharedWorkspace(1)
+    }
     uniq = `${testInfo.testId}${testInfo.retry}`
     data = { ...shared.data, channelName: `${generateTestData().channelName}${uniq}` }
-    newUser2 = generateUser()
 
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
@@ -72,8 +77,16 @@ test.describe('Inbox notification tests', () => {
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
     await channelPage.checkIfChannelDefaultExist(true, channelName)
     const owner = await connectOwner(shared.ws, `${data.lastName} ${data.firstName}`)
-    const member = await joinWorkspace(shared.ws, newUser2)
     const channel = await owner.findChannel(channelName)
+
+    let entry = others.get(shared.ws.workspace)
+    if (entry === undefined) {
+      const user = generateUser()
+      entry = { member: await joinWorkspace(shared.ws, user), user }
+      others.set(shared.ws.workspace, entry)
+    }
+    newUser2 = entry.user
+    const member = entry.member
     await owner.addMember(channel, member.account)
 
     // An open channel reads its messages on arrival, which would zero every badge below.
@@ -101,6 +114,9 @@ test.describe('Inbox notification tests', () => {
       },
       dispose: async () => {
         await opened?.context.close()
+        // The member is reused across tests: their DM with the owner must not carry a stale
+        // unread count into the next test that reopens it.
+        await owner.readEverything()
       }
     }
   }

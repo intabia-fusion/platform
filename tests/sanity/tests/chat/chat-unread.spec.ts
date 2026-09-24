@@ -688,17 +688,23 @@ test.describe('Chat unread state tests', () => {
 
   test('A reply lifts a thread from beyond the loaded page to the top', async ({ page }) => {
     const chat = await createChat()
-    // One more than a page holds. Replies go in order, so the first thread is the oldest one.
-    const parents: Array<{ id: Ref<Doc>, text: string }> = []
-    for (let i = 1; i <= 101; i++) {
-      const text = `Thread-${String(i).padStart(3, '0')}-${uniq}`
-      parents.push({ id: await chat.me.sendMessage(chat.channel, text), text })
-    }
-    for (const parent of parents) {
-      await chat.other.reply(chat.channel, parent.id, `Reply ${uniq}`)
-    }
+    // One more than a page holds. Rank comes from reply time, not parent creation time, so parents
+    // go out concurrently; Promise.all keeps the result array in request order regardless.
+    const parents = await Promise.all(
+      Array.from({ length: 101 }, async (_, i) => {
+        const text = `Thread-${String(i + 1).padStart(3, '0')}-${uniq}`
+        return { id: await chat.me.sendMessage(chat.channel, text), text }
+      })
+    )
     const oldest = parents[0]
     const newest = parents[100]
+    // Oldest's reply must land before every other one, newest's after every other one - that is
+    // all the ranking below depends on, so only those two are pinned; the rest can race.
+    await chat.other.reply(chat.channel, oldest.id, `Reply ${uniq}`)
+    await Promise.all(
+      parents.slice(1, 100).map(async (parent) => await chat.other.reply(chat.channel, parent.id, `Reply ${uniq}`))
+    )
+    await chat.other.reply(chat.channel, newest.id, `Reply ${uniq}`)
 
     await unread.navItem('Threads').click()
 

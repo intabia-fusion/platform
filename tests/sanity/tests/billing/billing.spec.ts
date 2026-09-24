@@ -463,7 +463,8 @@ test.describe('Billing API — data that UI displays', () => {
     const meeting2End = new Date(yesterday)
     meeting2End.setHours(13, 15, 0, 0)
 
-    await request.post(`${BILLING_URL}/api/v1/livekit/participants`, {
+    // Checked, not retried: an unchecked failed seed surfaced two calls later as "expected 23, received 0".
+    const res = await request.post(`${BILLING_URL}/api/v1/livekit/participants`, {
       headers: getAdminHeaders(),
       data: [
         {
@@ -486,6 +487,7 @@ test.describe('Billing API — data that UI displays', () => {
         }
       ]
     })
+    expect(res.status(), `seed answered ${res.status()}: ${await res.text()}`).toBe(204)
 
     const stats = await getStats(request, workspaceUuid, ownerToken)
     const avDuration = stats.participantDailyStats.reduce(

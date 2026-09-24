@@ -22,7 +22,27 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`hasText` matches a substring**, so a strict locator throws on grouped copy - `.first()`.
 - **The pointer stays where the previous step dropped it.** A tooltip then covers the next control, and a second `hover()` on the element it already rests on fires no mousemove, so a retried hover reopens nothing. Park it (`mouse.move(0, 0)`) before clicking.
 - **Chromium raises dragstart on the first move after `mouse.down()`** - anything between the two (scrolling, a settle wait) means `dragCard` is never set and every drop is a silent no-op. Assert the app saw it (the card takes `dragged`) before moving on.
+- **A one-shot request cannot be waited out.** Chat search runs `searchFulltext` once, so retrying
+  the assertion polls a DOM nothing will change - re-issue the request (retype; `setSearch` ignores
+  an unchanged value, Enter opens a row when the list is not empty).
+- **The open app has no icon in the list.** It can open between the url check and the click, so
+  `openApp` waits for the url to change, never for the button.
+- **An unverified popup click fails somewhere else.** A swallowed assignee click left the old value
+  and broke the *other* user's test - every popup write in `editIssue` re-reads what it set.
+- **Ask the server, do not widen the window.** A settled field proves nothing when the stored value
+  arrives after it. `Component.description` is a plain `Markup` field: read it over REST
+  (`readComponentDescription`, markup JSON - match the text inside) instead of raising `stableFor`.
+- **Uploading a file is not idempotent.** Retrying "hover + send" attached it twice and the name
+  then resolved to two nodes for good - retry the send and the wait separately.
+- **Never pick "the first row" when the one asked for is missing.** A shared faker surname got a
+  stranger assigned and the test failed far away; `selectMenuItem` now throws, listing the rows.
+- **An absolute threshold breaks in a shared workspace.** `sharedWorkspace` is per worker, so the
+  previous test's leftovers already satisfy it - count from a baseline taken before the action.
 - **Escape does not close a panel the app opened through a url**, and the close it *did* start lands a beat later and tears down whatever opened after it. Wait for the new panel's own content and re-check it.
+- **A "reopen if missing" guard must test the popup, not the item.** A list still loading inside an open popup
+  looks "missing"; re-clicking the trigger hits the popup's own overlay and closes it (`selectFilter`).
+- **Check every seed write's status.** An unchecked failed seed surfaces later as a wrong number
+  (`billing` avgMeetingDuration: "23 vs 0"); suspect `RetryDB` with no backoff under load, unproven.
 
 ## Product-side causes
 
@@ -43,10 +63,25 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `CreateCustomer.svelte`'s reactive `findContacts` call never cancels the previous duplicate lookup | contact | The empty-name answer overtakes the typed one, `matches` stays empty for good |
 | `getAILevels()` turns a failed request into an empty list, runs once in `onMount` | `ai-bot-resources/src/requests.ts` | Cards never appear however long the wait; only a reload helps |
 | The account service gives a colliding workspace its own url (`<name>-<id>`) | `server/account/src/utils.ts` | A url built from the requested name lands in someone else's workspace, i.e. on the login form |
+| Chat search is one-shot (`searchFulltext`, no live query) | `chunter-resources/src/search/store.ts:114` | A message indexed after the query ran never appears until it is re-issued |
+| Channel nav entry waits for a trigger-created `Chat` tracking doc | `ChatNavGroup.svelte` | The creator's own nav can lag its just-created channel past a UI timeout |
 
 ## Open
 
-- **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup", 3/10 on 2026-09-16 and again 3/10 on 2026-09-21). A re-delivered `$inc` tx could apply twice because `__updateDoc` cleared `loadedModifiedOn` on every apply, so a repeat at the same timestamp looked fresh; fixed by `ResultArray.markIncApplied`/`isIncApplied` (`foundations/core/packages/query/src/results.ts`, tests in `inc-match.test.ts`). The flake itself has not been observed since, so the causal link is unconfirmed until the front image carries the fix.
+- **Calendar specs share the second account's hours and clean up nothing.** Never run them with
+  `--repeat-each`: the day fills up and every one fails with `no free hour left in the calendar
+  widget` until `./prepare-pg.sh`. A per-worker scan offset was tried and reverted.
+
+- **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup",
+  ~3/10). Measured: `counter "3", expected "2", popup lists 2, stored 2` - only the browser copy
+  drifts. Client-side dedup cannot fix it: the derived `$inc` is broadcast-only (`triggers.ts:301`
+  builds it into `DerivedTx`, `txPush.ts:55` keeps it out of DOMAIN_TX) and gets a fresh `_id` per
+  build (`tx.ts:542`), so a duplicate is indistinguishable from a second real increment - the two
+  `inc-match.test.ts` cases pin both sides. Fix belongs on the server: carry the source event id, or
+  stop sending it twice. Same drift on thread `replies` (same `Collection` counter): "3 replies" for 2. Both times
+  only on the AUTHOR's client. Ruled out by reading: server sends the derived `$inc` once, not in the
+  tx response (`txRaw` second broadcast needs async-trigger output or `hasDomainBroadcast`, neither
+  holds); `notifyEarly` never incs the parent. Mechanism still unfound - needs runtime evidence.
 - **`ai-bot-scenarios` "assistant button ... proposes a task"** (1/10 on 2026-09-21): "Create issue" stayed `disabled` for the whole 30s. `canSave` in `CreateIssue.svelte` needs a title, a status, a task type *and* `currentProject`, which comes from a query filtered by `members: getCurrentAccount().uuid` - an empty result leaves it `undefined` for good, and `TaskKindSelector` (hence `kind`) does not even render without it. Which of the four was missing is unknown; `clickButtonCreateIssue` now reports the title and whether the task type selector is in the DOM, so the next occurrence says it.
 - **`subissues.spec.ts` "Sub-issues move with parent issue"**: moving an issue closes the panel; reopening from the list renders the identifier as a breadcrumb instead of `div.title.not-active`
   - 4 failures in 20 versus 1 flake in a full run, so the retry was reverted. Needs a locator matching both renderings.
@@ -88,6 +123,8 @@ Reproducing love flakes: `--project=Love -g "<title>" --repeat-each 8 --workers 
 - **Accumulated data crosses product render limits.** Measured on an unrestored stand: 431 issues, 91 tags, 48 components, 62 todos, 28 templates - past `TagsPopup`'s 50 and enough to bury a fresh template below the fold. Tests that passed for months start failing with no code change. `plan.spec.ts` and `template.spec.ts` drop their own leftovers in `beforeAll`.
 - love tests share rooms in `meetings-ws`. `waitForActiveMeetingsToFinish` gives up after 20s and logs what was left.
 
+**Only local runs apply `tests/indexes.yaml`** (`dotest.sh:32`, `sync-indexes --apply` after `db-migrator`); CI never does, so an index dropped by a migration but still listed there breaks local runs only - keep the yaml in step with migrations.
+
 **Recreating one container breaks nginx** - it resolves upstreams at startup. `docker restart sanity-nginx-1` after any `--force-recreate`.
 
 ## Wall time
@@ -114,6 +151,9 @@ Where the time went on a clean 5-worker run (1054s of step time over ~250s wall)
 - **Context reuse was tried twice and removed - do not reach for it again.** A single shared context gives half the suite the wrong user (53 specs declare their own `storageState`). A pool keyed by context options is correct on two specs (896 → 130 requests) and gives *exactly the same* wall time; the full suite then went 363 passed / 23 failed in 8.3m against 386 passed in 4.9m. What leaks is not storage but the live websocket session of the page kept open to write localStorage, which workspace tests see as an extra participant.
 - **4 workers on `ubuntu-latest` buy exactly nothing.** Work went 3159s → 5899s and every action's p50 doubled while wall stayed at 1744s vs 1813s - 4 vCPU with the whole 34-container stand is saturated at 2 workers. `workers` left unset (cores/2).
 - Browser cache is per BrowserContext (fresh context 6 `bundle*` hits, new page in it 0). `step-reporter.ts` is not a cost (18836 rows / 4MB).
+
+**`sharedWorkspace(n)` with n>0 per test recycles the workspace every few tests** (~5.5s each): take a seat once
+per workspace and reuse the REST member (`others` map, as in chat-unread), `$pull` it from the channel on dispose.
 
 ## Tooling traps
 

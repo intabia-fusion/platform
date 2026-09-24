@@ -96,6 +96,11 @@ export class ChatMember {
     await this.client.updateDoc(channel._class, channel.space, channel._id, { $push: { members: account } } as any)
   }
 
+  /** Reverses addMember: a member reused across tests must leave each test's channel behind it. */
+  async removeMember (channel: ChannelDoc, account: AccountUuid): Promise<void> {
+    await this.client.updateDoc(channel._class, channel.space, channel._id, { $pull: { members: account } } as any)
+  }
+
   async sendMessage (channel: ChannelDoc, text: string): Promise<Ref<Doc>> {
     return await this.send(channel, [{ type: 'text', text }])
   }

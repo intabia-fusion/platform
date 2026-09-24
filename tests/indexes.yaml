@@ -207,14 +207,6 @@ domains:
   notification_dnc:
     - name: notification_dnc_pkey
       definition: CREATE UNIQUE INDEX notification_dnc_pkey ON public.notification_dnc USING btree ("workspaceId", _id)
-    - name: notification_dnc_workspaceid_objectid__class_storing_rec_idx
-      definition: >-
-        CREATE INDEX notification_dnc_workspaceid_objectid__class_storing_rec_idx ON public.notification_dnc USING btree ("workspaceId", "objectId", _class) INCLUDE (space, "modifiedBy", "createdBy",
-        "modifiedOn", "createdOn", "%hash%", "objectClass", "user", data)
-    - name: notification_dnc_workspaceid_user__class_storing_rec_idx
-      definition: >-
-        CREATE INDEX notification_dnc_workspaceid_user__class_storing_rec_idx ON public.notification_dnc USING btree ("workspaceId", "user", _class) INCLUDE (space, "modifiedBy", "createdBy",
-        "modifiedOn", "createdOn", "%hash%", "objectId", "objectClass", data)
   notification_read_state:
     - name: notification_read_state__class__index
       definition: CREATE INDEX notification_read_state__class__index ON public.notification_read_state USING btree (_class)
