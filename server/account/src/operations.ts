@@ -150,7 +150,6 @@ import {
   isAllowReadOnlyGuests,
   isEmail,
   isOtpValid,
-  getOtpRetryDelayMs,
   normalizePhone,
   normalizeValue,
   publishMembersChanged,
@@ -311,7 +310,7 @@ export async function login (
 
 /**
  * Given an email sends an OTP code and returns the OTP information.
- * Never reveals whether the email is known. A person without an account is an unfinished sign up.
+ * A person without an account is an unfinished sign up.
  */
 export async function loginOtp (
   ctx: MeasureContext,
@@ -331,9 +330,7 @@ export async function loginOtp (
   const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
   if (emailSocialId == null) {
-    // Nothing is created: the login form must not become a sign up form. retryOn matches a fresh
-    // code so the timer cannot be used to probe existence.
-    return { sent: true, retryOn: Date.now() + getOtpRetryDelayMs() }
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
   }
 
   return await sendOtp(ctx, db, branding, emailSocialId)
@@ -488,8 +485,6 @@ export async function validateOtp (
     let emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
-      // Indistinguishable from a wrong code on purpose: a separate error here would undo the
-      // anti-enumeration in loginOtp - two requests would tell whether an address is registered.
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 

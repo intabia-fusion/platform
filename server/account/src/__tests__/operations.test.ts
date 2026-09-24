@@ -1521,17 +1521,14 @@ describe('account operations', () => {
         expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
       })
 
-      test('should not reveal that the email is unknown', async () => {
+      test('should fail for an unknown email', async () => {
         jest.spyOn(utils, 'cleanEmail').mockReturnValue(mockEmail)
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
         jest.spyOn(utils, 'sendOtp')
 
-        const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail
-        })
-
-        expect(result.sent).toBe(true)
-        // No email is sent and nothing is created: the login form must not become a sign up form.
+        await expect(loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })).rejects.toThrow(
+          new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+        )
         expect(utils.sendOtp).not.toHaveBeenCalled()
       })
 
@@ -2357,7 +2354,6 @@ describe('account operations', () => {
       test('should answer an unknown email exactly like a wrong code', async () => {
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
 
-        // A distinct error here would undo the anti-enumeration in loginOtp.
         await expect(
           validateOtp(mockCtx, mockDb, mockBranding, mockToken, {
             email: mockEmail,

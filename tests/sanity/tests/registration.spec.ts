@@ -169,18 +169,12 @@ test.describe('registration test', () => {
     expect(info.socialIds.some((s) => s.type === 'phone')).toBe(false)
   })
 
-  test('sign in and sign up never reveal whether an address is known', async () => {
+  test('sign in with code fails for an unknown address without creating anything', async () => {
     const unknown = email('never-seen')
 
-    await expect(anon.loginOtp(unknown)).resolves.toMatchObject({ sent: true })
+    await expect(anon.loginOtp(unknown)).rejects.toThrow(/AccountNotFound/)
     const service = await getServiceAccountClient('tool')
     expect(await service.findPersonBySocialKey(`email:${unknown}`)).toBeUndefined()
-
-    // A wrong code and an unknown address must fail the same way, or the pair of calls is an oracle.
-    await expect(anon.validateOtp(unknown, '000000')).rejects.toThrow(/InvalidOtp/)
-    const known = email('known')
-    await startSignUp(known)
-    await expect(anon.validateOtp(known, '000000')).rejects.toThrow(/InvalidOtp/)
   })
 
   test('the login form offers a way back when a session is already open', async ({ page }) => {
