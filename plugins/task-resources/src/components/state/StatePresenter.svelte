@@ -25,7 +25,8 @@
     IconSize,
     getColorNumberByText,
     getPlatformColorDef,
-    themeStore
+    themeStore,
+    resolvePaletteColor
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
@@ -85,14 +86,9 @@
 
   $: projectState = type?.statuses.find((p) => p._id === value?._id)
 
-  $: color = getPlatformColorDef(
-    projectState?.color !== undefined && typeof projectState?.color !== 'string'
-      ? projectState?.color
-      : value?.color !== undefined && typeof value?.color !== 'string'
-        ? value?.color
-        : (category?.color ?? getColorNumberByText(value?.name ?? '')),
-    $themeStore.dark
-  )
+  $: colorIndex =
+    resolvePaletteColor(projectState?.color, value?.color, category?.color) ?? getColorNumberByText(value?.name ?? '')
+  $: color = getPlatformColorDef(colorIndex, $themeStore.dark)
   $: void updateCategory(value)
 
   const updateCategory = reduceCalls(async function (value: Status | undefined): Promise<void> {
@@ -120,9 +116,7 @@
   $: index = sameCategory.findIndex((it) => it._id === value?._id) + 1
   $: emojiIcon = projectState?.icon === view.ids.IconWithEmoji
   $: icon = emojiIcon ? IconWithEmoji : projectState?.icon
-  $: iconProps = emojiIcon
-    ? { icon: projectState?.color ?? value?.color ?? category?.color }
-    : { fill: projectState?.color ?? value?.color ?? category?.color ?? 0 }
+  $: iconProps = emojiIcon ? { icon: projectState?.color ?? value?.color ?? category?.color } : { fill: colorIndex }
 
   const dispatchAccentColor = (color?: ColorDefinition, icon?: Asset | typeof IconWithEmoji): void => {
     if (icon == null) {

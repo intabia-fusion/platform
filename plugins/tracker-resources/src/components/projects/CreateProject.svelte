@@ -41,7 +41,7 @@
     Component,
     EditBox,
     getColorNumberByText,
-    getPlatformColorDef,
+    getPaletteColorDef,
     getPlatformColorForTextDef,
     Label,
     Modal,
@@ -517,9 +517,8 @@
           ? { icon: color, size: 'medium' }
           : {
               fill:
-                color !== undefined && typeof color !== 'string'
-                  ? getPlatformColorDef(color, $themeStore.dark).icon
-                  : getPlatformColorForTextDef(name, $themeStore.dark).icon
+                getPaletteColorDef(color, $themeStore.dark)?.icon ??
+                getPlatformColorForTextDef(name, $themeStore.dark).icon
             }}
         size={'large'}
         on:click={chooseIcon}

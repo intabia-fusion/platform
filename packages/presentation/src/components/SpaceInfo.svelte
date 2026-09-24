@@ -22,7 +22,7 @@
     IconFolder,
     IconSize,
     Label,
-    getPlatformColorDef,
+    getPaletteColorDef,
     themeStore
   } from '@hcengineering/ui'
   import IconWithEmoji from './IconWithEmoji.svelte'
@@ -46,10 +46,7 @@
       iconProps={value.icon === iconWithEmoji && iconWithEmoji
         ? { icon: value.color }
         : {
-            fill:
-              value.color !== undefined && typeof value.color !== 'string'
-                ? getPlatformColorDef(value.color, $themeStore.dark).icon
-                : 'currentColor'
+            fill: getPaletteColorDef(value.color, $themeStore.dark)?.icon ?? 'currentColor'
           }}
     />
   </div>

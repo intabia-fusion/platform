@@ -16,7 +16,7 @@
   import { Ref } from '@hcengineering/core'
   import { IconWithEmoji, createQuery } from '@hcengineering/presentation'
   import { Project } from '@hcengineering/tracker'
-  import { Icon, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
+  import { Icon, getPaletteColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import view from '@hcengineering/view'
 
@@ -41,9 +41,8 @@
           ? { icon: project.color }
           : {
               fill:
-                project.color !== undefined && typeof project.color !== 'string'
-                  ? getPlatformColorDef(project.color, $themeStore.dark).icon
-                  : getPlatformColorForTextDef(project.name ?? '', $themeStore.dark).icon
+                getPaletteColorDef(project.color, $themeStore.dark)?.icon ??
+                getPlatformColorForTextDef(project.name ?? '', $themeStore.dark).icon
             }}
       <Icon {icon} {iconProps} size="small" />
     {/if}

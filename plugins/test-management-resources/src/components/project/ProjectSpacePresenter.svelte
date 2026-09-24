@@ -17,7 +17,7 @@
   import { getResource } from '@hcengineering/platform'
   import { TestProject } from '@hcengineering/test-management'
   import { IconWithEmoji } from '@hcengineering/presentation'
-  import { getPlatformColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@hcengineering/ui'
+  import { getPaletteColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { NavLink, TreeNode } from '@hcengineering/view-resources'
   import { SpacesNavModel, SpecialNavModel } from '@hcengineering/workbench'
@@ -66,9 +66,8 @@
       ? { icon: space.color }
       : {
           fill:
-            space.color !== undefined && typeof space.color !== 'string'
-              ? getPlatformColorDef(space.color, $themeStore.dark).icon
-              : getPlatformColorForTextDef(space.name, $themeStore.dark).icon
+            getPaletteColorDef(space.color, $themeStore.dark)?.icon ??
+            getPlatformColorForTextDef(space.name, $themeStore.dark).icon
         }}
     title={space.name}
     type={'nested'}
