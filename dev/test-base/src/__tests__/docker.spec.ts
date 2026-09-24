@@ -68,6 +68,21 @@ describe('composeUp', () => {
     expect(spawn).toHaveBeenCalledTimes(2)
   })
 
+  it('retries with the env it started with, not the tool env applied meanwhile', async () => {
+    delete process.env.QUEUE_CONFIG
+    spawn
+      .mockImplementationOnce(() => {
+        process.env.QUEUE_CONFIG = 'localhost:19093;-staging'
+        return child(1)
+      })
+      .mockImplementationOnce(() => child(0))
+
+    await composeUp(opts, 3, 1)
+
+    expect(spawn.mock.calls[1][2].env.QUEUE_CONFIG).toBeUndefined()
+    delete process.env.QUEUE_CONFIG
+  })
+
   it('gives up after the attempt limit and reports the failure', async () => {
     spawn.mockImplementation(() => child(1))
 

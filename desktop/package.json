@@ -78,7 +78,10 @@
     "jest-environment-jsdom": "catalog:",
     "eslint-config-standard": "catalog:",
     "eslint-plugin-svelte": "catalog:",
-    "@stylistic/eslint-plugin": "catalog:"
+    "@stylistic/eslint-plugin": "catalog:",
+    "@swc/core": "catalog:",
+    "minimizer-webpack-plugin": "catalog:",
+    "thread-loader": "catalog:"
   },
   "dependencies": {
     "@hcengineering/platform": "workspace:^0.7.19",

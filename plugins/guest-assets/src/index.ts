@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,11 +14,10 @@
 // limitations under the License.
 //
 
-import { addStringsLoader, loadMetadata } from '@hcengineering/platform'
-import guest, { guestId } from '@hcengineering/guest'
+import { loadMetadata } from '@hcengineering/platform'
+import guest from '@hcengineering/guest'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(guest.icon, {
   Link: `${icons}#link`
 })
-addStringsLoader(guestId, async (lang: string) => await import(`../lang/${lang}.json`))
