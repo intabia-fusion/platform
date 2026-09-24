@@ -183,7 +183,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.generalDocumentation = page.getByRole('button', { name: 'General documentation' })
     this.newDocumentArrow = page.locator('.w-full > button:nth-child(2)')
     this.newTemplate = page.getByRole('button', { name: 'New template', exact: true })
-    this.filter = page.getByRole('button', { name: 'Filter' })
+    this.filter = page.getByRole('button', { name: 'Filter', exact: true })
     this.filterCategory = page.locator('span').filter({ hasText: /^Category$/ })
     this.qualityButtonDots = page.getByRole('button', { name: 'Quality documents' }).getByRole('button')
     this.editDocumentSpace = page.getByRole('button', { name: 'Edit documents space' })
@@ -459,7 +459,7 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async checkIfFolderExists (folderName: string): Promise<void> {
-    await expect(this.page.getByRole('button', { name: folderName })).toBeVisible()
+    await expect(this.page.getByRole('button', { name: folderName, exact: true })).toBeVisible()
   }
 
   async clickAddFolderButton (): Promise<void> {
@@ -510,7 +510,7 @@ export class DocumentContentPage extends DocumentCommonPage {
   async checkIfUserCanCreateDocument (spaceName: string): Promise<void> {
     await this.page.getByRole('button', { name: 'New document', exact: true }).click()
     await this.page.locator('[id="space\\.selector"]').click()
-    await expect(this.page.locator('.selectPopup').getByRole('button', { name: spaceName })).not.toBeVisible()
+    await expect(this.page.locator('.selectPopup').getByRole('button', { name: spaceName, exact: true })).not.toBeVisible()
   }
 
   async fillDocumentAndSetMemberPrivate (spaceName: string): Promise<void> {
@@ -527,7 +527,10 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async clickOnTeamspaceOrArrow (): Promise<void> {
-    const teamspaceOrArrow = await this.page.isVisible('.w-full > button:nth-child(2)')
+    // Until the Documents app is open, the arrow found is the Controlled Documents "New document" one.
+    await expect(this.page).toHaveURL(/\/document(\/|\?|$)/)
+    await this.teamspaceArrow.or(this.createTeamspace).first().waitFor()
+    const teamspaceOrArrow = await this.teamspaceArrow.isVisible()
     if (teamspaceOrArrow) {
       await this.clickTeamspaceArrow()
       await this.createTeamspace.click()
@@ -574,8 +577,8 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async changeTeamspaceMembers (spaceName: string): Promise<void> {
-    await this.page.getByRole('button', { name: spaceName }).hover()
-    await this.page.getByRole('button', { name: spaceName }).getByRole('button').nth(1).click()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).hover()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).getByRole('button').nth(1).click()
     await this.page.getByRole('button', { name: 'Edit teamspace' }).click()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).first().click()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(2).click()
@@ -590,8 +593,8 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async changeDocumentSpaceMembers (spaceName: string): Promise<void> {
-    await this.page.getByRole('button', { name: spaceName }).hover()
-    await this.page.getByRole('button', { name: spaceName }).getByRole('button').click()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).hover()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).getByRole('button').click()
     await this.editDocumentSpace.click()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).first().click()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(3).click()
@@ -615,8 +618,8 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async addThirdUserToMembers (spaceName: string): Promise<void> {
-    await this.page.getByRole('button', { name: spaceName }).hover()
-    await this.page.getByRole('button', { name: spaceName }).getByRole('button').click()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).hover()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).getByRole('button').click()
     await this.editDocumentSpace.click()
     await this.clickMembersButton()
     await this.page.getByRole('button', { name: 'VC Velasquez Cain' }).click()
@@ -627,15 +630,15 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async checkIfTheSpaceIsVisible (spaceName: string, visible: boolean): Promise<void> {
     if (visible) {
-      await expect(this.page.getByRole('button', { name: spaceName })).toBeVisible()
+      await expect(this.page.getByRole('button', { name: spaceName, exact: true })).toBeVisible()
     } else {
-      await expect(this.page.getByRole('button', { name: spaceName })).not.toBeVisible()
+      await expect(this.page.getByRole('button', { name: spaceName, exact: true })).not.toBeVisible()
     }
   }
 
   async checkIfEditSpaceButtonExists (spaceName: string, visible: boolean): Promise<void> {
-    await this.page.getByRole('button', { name: spaceName }).hover()
-    await this.page.getByRole('button', { name: spaceName }).getByRole('button').click()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).hover()
+    await this.page.getByRole('button', { name: spaceName, exact: true }).getByRole('button').click()
     if (visible) {
       await expect(this.editDocumentSpace).toBeVisible()
       await expect(this.qualityButtonMembers).toBeVisible()
@@ -649,18 +652,18 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async checkSpaceFormIsCreated (spaceName: string): Promise<void> {
-    await expect(this.page.getByRole('button', { name: spaceName })).toBeVisible()
+    await expect(this.page.getByRole('button', { name: spaceName, exact: true })).toBeVisible()
   }
 
   async createNewDocumentInsideFolder (folderName: string): Promise<void> {
-    await this.page.getByRole('button', { name: folderName }).hover()
-    await this.page.getByRole('button', { name: folderName }).getByRole('button').click()
+    await this.page.getByRole('button', { name: folderName, exact: true }).hover()
+    await this.page.getByRole('button', { name: folderName, exact: true }).getByRole('button').click()
     await this.createNewDocument.click()
   }
 
   async clickLeaveFolder (folderName: string): Promise<void> {
-    await this.page.getByRole('button', { name: folderName }).hover()
-    await this.page.getByRole('button', { name: folderName }).getByRole('button').click()
+    await this.page.getByRole('button', { name: folderName, exact: true }).hover()
+    await this.page.getByRole('button', { name: folderName, exact: true }).getByRole('button').click()
     await this.leaveFolder.click()
   }
 

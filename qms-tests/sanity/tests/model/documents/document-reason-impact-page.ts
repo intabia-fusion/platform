@@ -3,7 +3,6 @@ import { DocumentCommonPage } from './document-common-page'
 
 export class DocumentReasonAndImpactPage extends DocumentCommonPage {
   readonly page: Page
-  readonly buttonReasonAndImpactTabSelected: Locator
   readonly textAreaDescription: Locator
   readonly textAreaReason: Locator
   readonly textAreaImpactAnalysis: Locator
@@ -16,7 +15,6 @@ export class DocumentReasonAndImpactPage extends DocumentCommonPage {
   constructor (page: Page) {
     super(page)
     this.page = page
-    this.buttonReasonAndImpactTabSelected = page.locator('div.tab.selected', { hasText: 'Reason & Impact' })
     this.textAreaDescription = page.locator('div.box textarea.root').first()
     this.textAreaReason = page.locator('div.box textarea.root').nth(1)
     this.textAreaImpactAnalysis = page.locator('div.box textarea.root').last()
@@ -55,7 +53,9 @@ export class DocumentReasonAndImpactPage extends DocumentCommonPage {
     await this.buttonImpactedDocuments.click()
     await this.selectListItem(this.page, documentName)
 
-    await this.buttonReasonAndImpactTabSelected.click({ force: true })
+    // An outside click does not always close the popup; its overlay then blocks the next step.
+    await this.page.keyboard.press('Escape')
+    await expect(this.page.locator('div.selectPopup')).toBeHidden()
   }
 
   async checkReasonAndImpactData (

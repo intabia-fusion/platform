@@ -58,7 +58,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
       await loginPage.login('user4', '1234')
       const swp = new SelectWorkspacePage(anotherPage)
       await swp.selectWorkspace(PlatformWs)
-      await page.waitForURL((url) => {
+      await anotherPage.waitForURL((url) => {
         return url.pathname.startsWith(`/workbench/${PlatformWs}/`)
       })
       // We should wait for the user's client to finish creating social ids and ensuring employee
