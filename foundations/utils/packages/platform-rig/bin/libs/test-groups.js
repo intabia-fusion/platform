@@ -28,7 +28,7 @@ const { listWorkspaceProjects, findWorkspaceRoot } = require('./workspace')
 // (`+(spec|test)` cannot decompose `itest`), so a rename alone takes a file out of the unit run.
 const GROUPS = {
   unit: { file: /\.(test|spec)\.(ts|js|tsx|jsx)$/ },
-  integration: { file: /\.itest\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)itest.[jt]s?(x)'] },
+  integration: { file: /\.itest\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)itest.[jt]s?(x)'], testTimeout: 300000 },
   bench: { file: /\.bench\.(ts|js|tsx|jsx)$/, testMatch: ['**/?(*.)bench.[jt]s?(x)'], testTimeout: 600000 }
 }
 

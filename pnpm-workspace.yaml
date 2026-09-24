@@ -60,6 +60,7 @@ packages:
   - foundations/server/packages/s3
   - foundations/server/packages/server
   - foundations/server/packages/server-storage
+  - foundations/server/packages/test-containers
   - foundations/stream
   - foundations/utils/common/scripts
   - foundations/utils/packages/platform-rig
@@ -500,6 +501,7 @@ allowBuilds:
   '@swc/core': true
   bufferutil: true
   core-js: true
+  cpu-features: false
   electron: true
   es5-ext: true
   esbuild: true
@@ -508,6 +510,7 @@ allowBuilds:
   protobufjs: true
   puppeteer: true
   sharp: true
+  ssh2: false
   svelte-preprocess: true
   utf-8-validate: true
   zeromq: true
@@ -590,6 +593,7 @@ catalog:
   '@tiptap/starter-kit': ^2.11.7
   '@tiptap/suggestion': ^2.11.7
   '@tsconfig/node16': ^16.1.9
+  '@testcontainers/redpanda': ^12.1.0
   '@types/body-parser': ~1.19.2
   '@types/compression': ~1.7.2
   '@types/cors': ^2.8.12
@@ -725,6 +729,7 @@ catalog:
   svelte-preprocess: ^6.0.5
   svgo-loader: ^3.0.0
   tar-stream: 3.1.9
+  testcontainers: ^12.1.0
   thread-loader: ^4.0.4
   ts-jest: ^29.4.12
   ts-loader: ^9.2.5

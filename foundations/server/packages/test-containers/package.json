@@ -1,10 +1,9 @@
 {
-  "name": "@hcengineering/minio",
-  "version": "0.7.17",
+  "name": "@hcengineering/test-containers",
+  "version": "0.7.0",
   "main": "lib/index.js",
-  "svelte": "src/index.ts",
   "types": "types/index.d.ts",
-  "author": "Anticrm Platform Contributors",
+  "author": "Copyright © 2026 Intabia Fusion.",
   "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
@@ -18,7 +17,6 @@
   },
   "devDependencies": {
     "@hcengineering/platform-rig": "workspace:^0.7.19",
-    "@hcengineering/test-containers": "workspace:^0.7.0",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "eslint-plugin-import": "catalog:",
     "eslint-plugin-promise": "catalog:",
@@ -36,33 +34,7 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/server-core": "workspace:^0.7.18",
-    "minio": "^8.0.7"
-  },
-  "repository": "https://github.com/hcengineering/huly.server",
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "lib/**/*",
-    "types/**/*",
-    "src/**/*",
-    "!lib/**/*.test.*",
-    "!lib/**/*.spec.*",
-    "!lib/__tests__/**/*",
-    "!lib/__test__/**/*",
-    "!lib/tests/**/*",
-    "!types/**/*.test.*",
-    "!types/**/*.spec.*",
-    "!types/__tests__/**/*",
-    "!types/__test__/**/*",
-    "!types/tests/**/*",
-    "!src/**/*.test.*",
-    "!src/**/*.spec.*",
-    "!src/__tests__/**/*",
-    "!src/__test__/**/*",
-    "!src/tests/**/*"
-  ]
+    "testcontainers": "catalog:",
+    "@testcontainers/redpanda": "catalog:"
+  }
 }

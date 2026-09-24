@@ -17,8 +17,9 @@
 // Coverage for the whole workspace, as one number and one table.
 //
 //   pnpm coverage                    unit tests only
-//   pnpm coverage --integration      unit + integration (needs tests/prepare-tests.sh)
+//   pnpm coverage --integration      unit + integration (starts its own containers)
 //   pnpm coverage --allow-failures   report even when a test failed (exit 0)
+//   pnpm coverage --server           server code only: what is untested, worst first
 //
 // Writes into coverage/: coverage-final.json (merged istanbul), lcov.info, cobertura-coverage.xml
 // and html/. CI reads the cobertura file; the last line of the output is the summary GitLab's
@@ -30,7 +31,7 @@
 
 const { spawnSync } = require('child_process')
 const { join, relative } = require('path')
-const { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } = require('fs')
+const { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, rmSync } = require('fs')
 const libCoverage = require('istanbul-lib-coverage')
 const libReport = require('istanbul-lib-report')
 const istanbulReports = require('istanbul-reports')
@@ -40,6 +41,7 @@ const { listWorkspaceProjects, findWorkspaceRoot } = require('./libs/workspace')
 const args = process.argv.slice(2)
 const groups = ['unit', ...(args.includes('--integration') ? ['integration'] : [])]
 const allowFailures = args.includes('--allow-failures')
+const serverOnly = args.includes('--server')
 let failed = false
 
 const root = findWorkspaceRoot()
@@ -200,12 +202,14 @@ const projects = listWorkspaceProjects(root).sort((a, b) => b.fullPath.length - 
 const perPackage = new Map(projects.map((p) => [p.name, { files: 0, covered: 0, total: 0 }]))
 let covered = 0
 let totalStatements = 0
+const fileRows = []
 for (const [file, entry] of Object.entries(merged)) {
   const counts = Object.values(entry.s ?? {})
   const hit = counts.filter((v) => v > 0).length
   covered += hit
   totalStatements += counts.length
   const owner = projects.find((p) => file.startsWith(p.fullPath + '/'))
+  fileRows.push({ file, hit, total: counts.length, owner: owner?.name })
   if (owner === undefined) continue
   const acc = perPackage.get(owner.name)
   acc.files++
@@ -219,10 +223,80 @@ const noTests = projects
   .filter((p) => !withTests.has(p.name) && perPackage.get(p.name).files === 0 && existsSync(join(p.fullPath, 'src')))
   .map((p) => p.name)
 
+// Everything that runs on a server: the libraries, the deployable bundles and the standalone
+// services. Plugins, models and the web packages are someone else's lane.
+const SERVER_DIRS = ['foundations/net/', 'foundations/server/', 'pods/', 'server/', 'server-plugins/', 'services/']
+const isServer = (path) => SERVER_DIRS.some((d) => relative(root, path).startsWith(d))
+// Asset and model packages sit under services/ too, and are declarations rather than server code.
+const isNoise = (name) => name.endsWith('-assets') || /(^|\/)model-/.test(name)
+
+const SOURCE = /\.[cm]?tsx?$/
+const NOT_SOURCE = /\.(test|spec|itest|bench|d)\.[cm]?tsx?$/
+
+/** Size of a package that has no istanbul report at all - lines, so the biggest gaps come first. */
+function countSource (dir) {
+  let files = 0
+  let lines = 0
+  const walk = (d) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      if (e.name === 'node_modules' || e.name.startsWith('__test')) continue
+      const p = join(d, e.name)
+      if (e.isDirectory()) walk(p)
+      else if (SOURCE.test(e.name) && !NOT_SOURCE.test(e.name)) {
+        files++
+        lines += readFileSync(p, 'utf-8').split('\n').length
+      }
+    }
+  }
+  const src = join(dir, 'src')
+  if (existsSync(src)) walk(src)
+  return { files, lines }
+}
+
+/** Where to start writing tests: never-run packages first, then files no test ever reached. */
+function reportServer () {
+  const serverProjects = projects.filter(
+    (p) => isServer(p.fullPath) && !isNoise(p.name) && existsSync(join(p.fullPath, 'src'))
+  )
+
+  const untested = serverProjects
+    .filter((p) => perPackage.get(p.name).files === 0)
+    .map((p) => ({ name: p.name, path: relative(root, p.fullPath), ...countSource(p.fullPath) }))
+    .filter((p) => p.files > 0)
+    .sort((a, b) => b.lines - a.lines)
+  console.log('\n=== Server packages with no coverage report at all (no test ever runs) ===')
+  for (const p of untested) {
+    console.log(`  ${String(p.lines).padStart(6)} lines  ${String(p.files).padStart(4)} files  ${p.name}  (${p.path})`)
+  }
+  console.log(`  ${untested.length} packages, ${untested.reduce((s, p) => s + p.lines, 0)} lines`)
+
+  const zero = fileRows
+    .filter((f) => f.hit === 0 && f.total > 0 && isServer(f.file) && !isNoise(f.owner ?? ''))
+    .sort((a, b) => b.total - a.total)
+  console.log('\n=== Server files at 0%, inside packages that do run tests (biggest first) ===')
+  for (const f of zero.slice(0, 40)) {
+    console.log(`  ${String(f.total).padStart(5)} statements  ${relative(root, f.file)}`)
+  }
+  if (zero.length > 40) console.log(`  ... ${zero.length - 40} more files, ${zero.reduce((s, f) => s + f.total, 0)} statements in total`)
+
+  const serverRows = rows.filter(([name]) => serverProjects.some((p) => p.name === name))
+  console.log('\n=== Server packages by coverage, worst first ===')
+  for (const [name, v] of serverRows) {
+    console.log(`  ${pct(v.covered, v.total)}  ${String(v.covered).padStart(6)}/${String(v.total).padEnd(6)} ${name}`)
+  }
+  const sc = serverRows.reduce((s, [, v]) => s + v.covered, 0)
+  const st = serverRows.reduce((s, [, v]) => s + v.total, 0)
+  console.log(`\n  SERVER ${pct(sc, st)}  ${sc}/${st} statements in ${serverRows.length} packages with a report`)
+}
+
 const rows = [...perPackage.entries()].filter(([, v]) => v.total > 0).sort((a, b) => a[1].covered / a[1].total - b[1].covered / b[1].total)
-console.log('\n=== Coverage by package (statements, worst first) ===')
-for (const [name, v] of rows) {
-  console.log(`  ${pct(v.covered, v.total)}  ${String(v.covered).padStart(6)}/${String(v.total).padEnd(6)} ${name}`)
+if (serverOnly) {
+  reportServer()
+} else {
+  console.log('\n=== Coverage by package (statements, worst first) ===')
+  for (const [name, v] of rows) {
+    console.log(`  ${pct(v.covered, v.total)}  ${String(v.covered).padStart(6)}/${String(v.total).padEnd(6)} ${name}`)
+  }
 }
 console.log(`\n  TOTAL ${pct(covered, totalStatements)}  ${covered}/${totalStatements} statements over ${Object.keys(merged).length} files in ${rows.length} packages`)
 console.log(`  ${noTests.length} more packages have a src/ but no ${groups.join('/')} test at all, and are not in the number above`)

@@ -36,7 +36,7 @@ import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 import { createDoc, test, type TestDocument } from './minmodel'
 
-import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare } from './utils'
+import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, startServices } from './utils'
 
 prepare()
 jest.mock('franc-min', () => ({ franc: () => 'en' }), { virtual: true })
@@ -135,6 +135,7 @@ describe('fulltext batch-removal scenarios', () => {
   let txProducer: any
 
   beforeAll(async () => {
+    await startServices()
     h = new Harness(toolCtx)
     await h.start()
     txProducer = h.queue.getProducer<Tx>(toolCtx, QueueTopic.Tx)
@@ -145,7 +146,7 @@ describe('fulltext batch-removal scenarios', () => {
     const warmup = createDoc(test.class.TestDocument, { title: 'warm-up', description: 'warmup-' + generateId() })
     await txProducer.send(toolCtx, wsId, [warmup])
     await h.waitFor(() => h.indexed.has(String(warmup.objectId)), 30000, 'warm-up indexed')
-  })
+  }, 300000)
 
   afterAll(async () => {
     await h.close()

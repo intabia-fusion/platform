@@ -16,15 +16,23 @@
 
 import { Class, Doc, MeasureMetricsContext, PersonId, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
 import type { FullTextAdapter, IndexedDoc } from '@hcengineering/server-core'
+import { elasticUrl } from '@hcengineering/test-containers'
 
 import { createElasticAdapter } from '../adapter'
 
 describe('Elastic Adapter', () => {
   let adapter: FullTextAdapter
+  let url: string
   const ctx = new MeasureMetricsContext('-', {})
   const ws1 = 'ws1' as WorkspaceUuid
+
+  // Starting the container is well past the 5s a hook gets by default.
+  beforeAll(async () => {
+    url = await elasticUrl()
+  }, 300000)
+
   beforeEach(async () => {
-    adapter = await createElasticAdapter(process.env.ELASTIC_URL ?? 'http://localhost:9201/')
+    adapter = await createElasticAdapter(url)
   })
 
   afterEach(async () => {

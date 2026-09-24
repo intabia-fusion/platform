@@ -28,16 +28,23 @@ wrong group.
 ## Integration tests (`pnpm integration`)
 
 ```bash
-cd tests && ./prepare-tests.sh    # postgres, elastic, redpanda + migrations
-cd .. && pnpm integration
-pnpm integration -t 'name'        # jest flags pass through
+pnpm integration             # needs a running Docker, and nothing else
+pnpm integration -t 'name'   # jest flags pass through
 ```
 
+Each suite starts the services it needs itself, through `@hcengineering/test-containers`
+(testcontainers): `postgresUrl()`, `elasticUrl()`, `kafkaBrokers()`, `minioConfig()`. One container
+per kind per jest worker, started on first use, removed when the process ends - a suite that needs
+only postgres never starts elasticsearch. `tests/prepare-tests.sh` is for the Playwright stand now;
+the integration group does not use it.
+
+An address already in the environment wins and no container is started for it, so a prepared stand
+still works: `DB_URL`, `ELASTIC_URL`, `QUEUE_CONFIG`, `MINIO_ENDPOINT`.
+
 Nine packages have `*.itest.ts` files: `postgres`, `elastic`, `minio`, `s3`, `kafka`,
-`pod-fulltext`, `account`, `pod-ai-bot`, `pod-telegram-bot`. `minio`/`s3` and the `pod-ai-bot`
-e2e suites skip themselves unless their env is configured (`AI_BOT_E2E=1`,
-`AI_BOT_QUEUE_E2E=1`). `kafka` and `pod-fulltext` carry `testIsolated` and run one at a time -
-together they exhaust the test redpanda's partition budget.
+`pod-fulltext`, `account`, `pod-ai-bot`, `pod-telegram-bot`. Two suites still skip themselves:
+`s3` wants a real S3 (`S3_ENDPOINT`), and the `pod-ai-bot` LLM suites want a local model server
+(`AI_BOT_E2E=1`). `kafka` and `pod-fulltext` carry `testIsolated` and run one at a time.
 
 ## Benchmarks (`pnpm bench`)
 
@@ -49,8 +56,9 @@ Never part of a CI phase. jest packages run through their own `jest.config.js` w
 
 ```bash
 pnpm coverage                    # unit only
-pnpm coverage --integration      # unit + integration, needs the stand
+pnpm coverage --integration      # unit + integration, starts its own containers
 pnpm coverage --allow-failures   # report even when a test failed (exit 0)
+pnpm coverage --server           # server code only: what is untested, worst first
 ```
 
 Prints a per-package table worst-first and one total, and writes into `coverage/`:
@@ -75,6 +83,19 @@ Two things the number does not include, both reported as separate lines:
 - packages with a `src/` and no test at all - they are in neither report, so they cannot be
   told apart from 0% any other way
 - `.svelte` outside `packages/ui`, which no runner mounts
+
+### `--server`: where to write the next test
+
+`pnpm coverage --integration --server` replaces the per-package table with three lists over
+`foundations/net`, `foundations/server`, `pods`, `server`, `server-plugins` and `services`
+(`-assets` and `model-*` packages are left out - they are declarations):
+
+1. **Server packages with no coverage report at all.** No test ever runs there, so they are in no
+   istanbul report; size is counted from `src/` in lines, biggest gap first.
+2. **Server files at 0%, inside packages that do run tests.** These are in the report only because
+   of `--collectCoverageFrom`; no test ever reached them.
+3. **Server packages by coverage, worst first**, plus a SERVER total over the packages that have a
+   report.
 
 ## UI tests (Playwright)
 

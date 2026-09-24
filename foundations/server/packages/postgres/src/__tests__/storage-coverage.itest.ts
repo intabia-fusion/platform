@@ -59,6 +59,7 @@ import {
 } from './minmodel'
 import { createTaskModel, TaskReproduce, type Task, type TaskComment, taskPlugin } from './tasks'
 import { withDatabase } from './utils'
+import { postgresUrl } from '@hcengineering/test-containers'
 
 const txes = genMinModel()
 createTaskModel(txes)
@@ -129,7 +130,7 @@ txes.push(
 const contextVars: Record<string, any> = {}
 
 describe('PostgreSQL storage.ts coverage', () => {
-  const baseDbUri: string = process.env.DB_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
+  let baseDbUri: string
 
   let adminClientRef: PostgresClientReference
 
@@ -141,7 +142,8 @@ describe('PostgreSQL storage.ts coverage', () => {
   let operations: TxOperations
   let serverStorage: DbAdapter
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    baseDbUri = await postgresUrl()
     adminClientRef = getDBClient(baseDbUri)
   })
 

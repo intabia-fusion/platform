@@ -16,6 +16,7 @@
 import { Class, Doc, MeasureMetricsContext, PersonId, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import serverCore, { type FullTextAdapter, type IndexedDoc } from '@hcengineering/server-core'
+import { elasticUrl } from '@hcengineering/test-containers'
 
 import { createElasticAdapter } from '../adapter'
 
@@ -70,7 +71,7 @@ describe('Elastic search string', () => {
   const ws = 'ws-search' as WorkspaceUuid
 
   beforeAll(async () => {
-    adapter = await createElasticAdapter(process.env.ELASTIC_URL ?? 'http://localhost:9201/')
+    adapter = await createElasticAdapter(await elasticUrl())
     await adapter.initMapping(ctx)
 
     const docs: IndexedDoc[] = [

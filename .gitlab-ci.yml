@@ -183,9 +183,6 @@ test:
   extends: .linux
   needs:
     - bundle
-  variables:
-    DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
-    ELASTIC_URL: "http://localhost:9201"
   before_script:
     - !reference [.linux, before_script]
     - !reference [.lock_stand, script]

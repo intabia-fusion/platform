@@ -1,4 +1,5 @@
 import { generateId, MeasureMetricsContext, type WorkspaceUuid } from '@hcengineering/core'
+import { kafkaBrokers } from '@hcengineering/test-containers'
 import { createPlatformQueue, parseQueueConfig } from '..'
 
 jest.setTimeout(60000) // Reduced for faster tests
@@ -16,9 +17,15 @@ async function waitConnected (handle: any): Promise<void> {
 }
 
 describe('queue', () => {
+  let brokers: string
+
+  beforeAll(async () => {
+    brokers = await kafkaBrokers()
+  })
+
   it('check-queue', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
     const docsCount = 50 // Reduced from 100 for faster tests
     try {
       let msgCount = 0
@@ -75,7 +82,7 @@ describe('queue', () => {
 
   it('check-processing-errors', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
 
     try {
       let counter = 2
@@ -125,7 +132,7 @@ describe('queue', () => {
 
   it('check-batches', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
     const docsCount = 50 // number of messages to produce
     try {
       let msgCount = 0
@@ -187,7 +194,7 @@ describe('queue', () => {
 
   it('check-batch-processing-errors', async () => {
     const genId = generateId()
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
 
     try {
       let attempts = 0
@@ -240,7 +247,7 @@ describe('queue', () => {
   it('check-ordering', async () => {
     const genId = generateId()
     const topic = 'order-test-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
     const docsCount = 20
 
     try {
@@ -298,7 +305,7 @@ describe('queue', () => {
   it('check-batch-timeout-flush', async () => {
     const genId = generateId()
     const topic = 'batch-timeout-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
 
     try {
       let handlerCalled = 0
@@ -353,7 +360,7 @@ describe('queue', () => {
   it('check-create-topic', async () => {
     const genId = generateId()
     const topic = 'topic-create-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
 
     try {
       await queue.createTopic(topic, 3)
@@ -402,7 +409,7 @@ describe('queue', () => {
   it('batch-pump-keeps-consumer-alive-without-manual-heartbeat', async () => {
     const genId = generateId()
     const topic = 'batch-pump-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
     try {
       let invocations = 0
       let processed = 0
@@ -455,7 +462,7 @@ describe('queue', () => {
   it('pause-and-heartbeat-keeps-consumer-alive', async () => {
     const genId = generateId()
     const topic = 'pause-heartbeat-' + genId
-    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
     try {
       let processed = 0
       let processingStartedResolve: (() => void) | undefined

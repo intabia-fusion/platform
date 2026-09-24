@@ -14,21 +14,32 @@
 //
 
 import { MeasureMetricsContext, type WorkspaceDataId, type WorkspaceUuid, generateId } from '@hcengineering/core'
-import { objectsToArray, type StorageConfiguration } from '@hcengineering/server-core'
-import { MinioService, processConfigFromEnv, type MinioConfig } from '..'
+import { objectsToArray } from '@hcengineering/server-core'
+import { minioConfig } from '@hcengineering/test-containers'
+
+import { MinioService, type MinioConfig } from '..'
 
 describe('minio operations', () => {
-  const config: StorageConfiguration = { default: 'minio', storages: [] }
-  const minioConfigVar = processConfigFromEnv(config)
-  if (minioConfigVar !== undefined || config.storages[0] === undefined) {
-    console.error('No Minio config env is configured:' + minioConfigVar)
-    it.skip('No Minio config env is configured', async () => {})
-    return
-  }
   const toolCtx = new MeasureMetricsContext('test', {})
+  let minioService: MinioService
+
+  beforeAll(async () => {
+    const cfg = await minioConfig()
+    const config: MinioConfig = {
+      kind: 'minio',
+      name: 'minio',
+      endpoint: cfg.endPoint,
+      port: cfg.port,
+      accessKey: cfg.accessKey,
+      secretKey: cfg.secretKey,
+      useSSL: cfg.useSSL,
+      rootBucket: 'test-bucket'
+    }
+    minioService = new MinioService(config)
+  })
+
   it('check root bucket', async () => {
     jest.setTimeout(50000)
-    const minioService = new MinioService({ ...(config.storages[0] as MinioConfig), rootBucket: 'test-bucket' })
 
     let existingTestBuckets = await minioService.listBuckets(toolCtx)
     // Delete old buckets

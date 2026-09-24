@@ -20,6 +20,7 @@
 import { randomUUID } from 'node:crypto'
 import postgres from 'postgres'
 import { type AccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { postgresUrl } from '@hcengineering/test-containers'
 import { PostgresDB } from '../db'
 import { type ChannelRecord, type MessageRecord, type OtpRecord, type ReplyRecord } from '../types'
 
@@ -45,10 +46,8 @@ jest.mock('../config', () => ({
 jest.setTimeout(90000)
 
 describe('PostgresDB real database tests', () => {
-  // 5433 is the port the test stand publishes postgres on (see tests/docker-compose.yaml).
-  const postgresDB: string = process.env.DB_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
-
-  let pgDbUri = postgresDB
+  let postgresDB: string
+  let pgDbUri: string
 
   // Administrative client for creating/dropping test databases
   let adminClientPG: postgres.Sql
@@ -63,6 +62,9 @@ describe('PostgresDB real database tests', () => {
   const testWorkspace = randomUUID() as WorkspaceUuid
 
   beforeAll(async () => {
+    postgresDB = await postgresUrl()
+    pgDbUri = postgresDB
+
     // Get admin client for database creation/deletion
     adminClientPG = postgres(postgresDB, {
       connection: {

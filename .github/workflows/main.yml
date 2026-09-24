@@ -168,40 +168,19 @@ jobs:
       - name: Generating model...
         run: pnpm --filter @hcengineering/pod-server run get-model
 
-      - name: Prepare server (with rate limit retry)
-        run: |
-          set -o pipefail
-          cd ./tests
-          if ./prepare-tests.sh 2>&1 | tee /tmp/prepare-tests.log; then
-            echo "Prepare succeeded"
-          else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-tests.log; then
-              echo "Rate limit hit, logging in to Docker Hub and retrying..."
-              echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              ./prepare-tests.sh
-            else
-              echo "Prepare failed (not a rate limit issue)"
-              cat /tmp/prepare-tests.log
-              exit 1
-            fi
-          fi
       # Unit group only (*.test.ts / *.spec.ts): no service needed, and it fails fast with a
       # per-package report. The coverage step below re-runs it together with the integration group.
       - name: Testing...
         run: pnpm test --verbose
-        env:
-          DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
-          ELASTIC_URL: "http://localhost:9201"
 
       # Runs unit + integration (*.itest.ts) again under istanbul and writes coverage/. This is also
-      # the gate for the integration group, so a failure here fails the job.
+      # the gate for the integration group, so a failure here fails the job. The integration suites
+      # start their own containers (testcontainers), so no stand is prepared here - and no service
+      # url is set in the environment, since one would be used instead of a container.
       - name: Coverage...
         run: |
           set -o pipefail
           pnpm coverage --integration | tee /tmp/coverage.log
-        env:
-          DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
-          ELASTIC_URL: "http://localhost:9201"
 
       - name: Coverage summary
         if: always()

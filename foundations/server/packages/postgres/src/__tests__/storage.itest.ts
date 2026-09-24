@@ -42,6 +42,7 @@ import {
 import { genMinModel } from './minmodel'
 import { createTaskModel, type Task, type TaskComment, type TStat, taskPlugin } from './tasks'
 import { withDatabase } from './utils'
+import { postgresUrl } from '@hcengineering/test-containers'
 
 const txes = genMinModel()
 
@@ -50,15 +51,20 @@ createTaskModel(txes)
 const contextVars: Record<string, any> = {}
 
 describe('postgres operations', () => {
-  const baseDbUri: string = process.env.DB_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
+  let baseDbUri: string
   let dbUuid = crypto.randomUUID() as WorkspaceUuid
-  let dbUri: string = withDatabase(baseDbUri, dbUuid)
-  const clientRef: PostgresClientReference = getDBClient(baseDbUri)
+  let dbUri: string
+  let clientRef: PostgresClientReference
   let hierarchy: Hierarchy
   let model: ModelDb
   let client: Client
   let operations: TxOperations
   let serverStorage: DbAdapter | undefined
+
+  beforeAll(async () => {
+    baseDbUri = await postgresUrl()
+    clientRef = getDBClient(baseDbUri)
+  })
 
   afterAll(async () => {
     clientRef.close()

@@ -67,9 +67,16 @@ time and is the only honest number.
 
 ## What the total still leaves out
 
-`pnpm coverage` reports 31.8% (unit) / 32.6% (+integration) over ~1350 files in ~155 packages,
-plus a line for the 299 packages that have a `src/` and no test at all - they appear in no
-istanbul report, so there is no other way to tell them from 0%. Playwright (`tests/sanity`,
+`pnpm coverage` reports 36.7% (unit, 1557 files in 173 packages) / 37.4% (+integration, 1583 files
+in 178 packages, 341s), plus a line for the 290 packages that have a `src/` and no test at all -
+they appear in no istanbul report, so there is no other way to tell them from 0%.
+
+The integration group moves the repository total by less than a point, and that is the wrong place
+to read it: per package it is most of what `postgres` (27.0% -> 81.2%) and `kafka` (56.8% -> 82.1%)
+have, some of `account` (55.6% -> 58.3%), and the only report at all for `elastic` (55.3%),
+`minio` (59.4%), `pod-fulltext` (40.8%) and `pod-telegram-bot` (5.2%).
+
+Playwright (`tests/sanity`,
 `qms-tests`, `ws-tests`) contributes nothing: it drives the built bundle, and collecting from it
 needs either an istanbul-instrumented front build or `page.coverage` plus `v8-to-istanbul`.
 
@@ -146,3 +153,63 @@ not elasticsearch answered. It now exits 1, and takes the host from `ELASTIC_HOS
   an object literal, so a helper that merges defaults assigns to a named const first.
   `ModeSelector` is the one component svelte-check sees as generic and tsc does not; its test spells
   its props out by hand instead of naming the component type.
+
+## Integration group runs on testcontainers (2026-09-24)
+
+`tests/prepare-tests.sh` is no longer part of the integration group: every `*.itest.ts` gets its
+services from `@hcengineering/test-containers` (`foundations/server/packages/test-containers`),
+which wraps `testcontainers` 12. `postgresUrl()` / `elasticUrl()` / `kafkaBrokers()` /
+`minioConfig()` start one container per kind per process, and return an address from the
+environment (`DB_URL`, `ELASTIC_URL`, `QUEUE_CONFIG`, `MINIO_ENDPOINT`) without starting anything
+when one is set - that is how a prepared stand still works. Whole group: 232 tests, ~157s, no stand.
+
+What that cost, each found by a failing run:
+
+- **Elasticsearch needs the analysis-icu plugin.** `adapter.ts` maps `icu_transform` and
+  `icu_folding`, so a bare `elasticsearch:8.19.1` fails `initMapping`. The helper builds
+  `docker/elastic/Dockerfile` (`FROM elasticsearch:8.19.1` + plugin install) once with
+  `deleteOnExit: false`; the first build downloads the plugin for ~90s, later runs hit the cache.
+- **The fulltext pipeline needs a migrated database.** A fresh postgres has no schema version and
+  `waitForSchemaVersion` in the platform adapter never returns, so indexing silently never happens
+  and every test times out with no error in the log. `pods/fulltext/src/__tests__/utils.ts` runs
+  `@hcengineering/pod-db-migrator` as a child process against the container url. The migrator has
+  no migration files yet - on an empty database it only writes schema version 10, which is exactly
+  what the adapter waits for. The postgres package's own itests mock `EXPECTED_SCHEMA_VERSION`
+  instead, which is why they never needed the stand's migration.
+- **The helper cannot depend on the migrator.** `pod-db-migrator` -> `@hcengineering/postgres` ->
+  (dev) `test-containers` is a cycle the build phase refuses. The migrator call lives in the one
+  suite that needs it.
+- **Hook timeouts.** Jest gives a hook the file's `testTimeout`, 5s by default, and starting a
+  container is well past that. `GROUPS.integration` in `libs/test-groups.js` now carries
+  `testTimeout: 300000`; a file with its own `jest.setTimeout` (fulltext: 30s) overrides that, so
+  those `beforeAll`s take an explicit third argument.
+- **testcontainers pulls ssh2**, whose native build pnpm 10+ refuses to run unattended. Both it and
+  `cpu-features` are denied in `allowBuilds:` in `pnpm-workspace.yaml`; the JS fallback is fine.
+
+Still skipped, and not worth a container: `s3.itest.ts` (wants a real S3; its rootBucket is even
+hardcoded to a personal bucket) and the three `pod-ai-bot` LLM suites (want a local model server).
+`kafka-clisr-e2e.itest.ts` lost its `AI_BOT_QUEUE_E2E` gate - the gate existed because it needed
+the stand's redpanda, and it now starts its own.
+
+## `pnpm coverage --server` (2026-09-24)
+
+Replaces the per-package table with what to attack first over `foundations/net`,
+`foundations/server`, `pods`, `server`, `server-plugins`, `services` (minus `-assets` and
+`model-*`, which are declarations):
+
+1. server packages with no istanbul report at all - no test ever runs there, so they cannot be told
+   from 0% any other way; sized by counting `src/` lines, biggest first
+2. server files at 0% inside packages that do run tests - they are in the report only because of
+   `--collectCoverageFrom`, and no test ever reached them
+3. server packages by coverage, worst first, plus a SERVER total
+
+First reading (unit + integration): **SERVER 37.3%, 19003/50964 statements in 60 packages with a
+report**, and 84 packages with 31583 lines that no test touches. Largest untested packages:
+`pod-calendar` (3939 lines), `pod-notifications` (3328), `server-process-resources` (2942),
+`pod-telegram` (2239). Largest 0% files: `pod-github/src/worker.ts` (793 statements),
+`pod-github/src/platform.ts` (542), `services/love/src/main.ts` (414),
+`server/indexer/src/indexer/indexer.ts` (393).
+
+`network-backrpc`'s zmq suite fails under a loaded coverage run (two tests, `check diff order` and
+`check multiple requests from same client`) and passes on its own - the 30s timeout the coverage run
+gives it is not the whole story, the sockets themselves are timing-sensitive.

@@ -49,6 +49,7 @@ import {
 import { genMinModel } from './minmodel'
 import { createTaskModel, TaskReproduce, TaskStatus, type Task, type TaskComment, taskPlugin } from './tasks'
 import { withDatabase } from './utils'
+import { postgresUrl } from '@hcengineering/test-containers'
 
 const txes = genMinModel()
 createTaskModel(txes)
@@ -57,7 +58,7 @@ const contextVars: Record<string, any> = {}
 
 describe('PostgreSQL Integration Tests (Real Database)', () => {
   // Use environment variable or default to localhost CockroachDB
-  const baseDbUri: string = process.env.DB_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
+  let baseDbUri: string
 
   // Administrative client for creating/dropping test databases
   // This connects to 'defaultdb' and is used ONLY for DB admin operations
@@ -72,9 +73,9 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
   let operations: TxOperations
   let serverStorage: DbAdapter
 
-  beforeAll(() => {
-    // Get admin client for database creation/deletion
-    // This client stays connected to 'defaultdb' for admin operations only
+  beforeAll(async () => {
+    baseDbUri = await postgresUrl()
+    // Admin client for database creation/deletion; stays on the server's default database.
     adminClientRef = getDBClient(baseDbUri)
   })
 

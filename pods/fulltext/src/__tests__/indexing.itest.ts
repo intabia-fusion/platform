@@ -28,7 +28,7 @@ import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 import { createDoc, test, type TestDocument } from './minmodel'
 
-import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline } from './utils'
+import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline, startServices } from './utils'
 
 prepare()
 jest.mock('franc-min', () => ({ franc: () => 'en' }), { virtual: true })
@@ -134,10 +134,12 @@ describe('full-text-indexing', () => {
   // while every test is already isolated by its own random workspace.
   let queue: TestQueue
 
+  // Containers plus the first kafka group join do not fit the file's 30s budget.
   beforeAll(async () => {
+    await startServices()
     queue = new TestQueue(toolCtx)
     await queue.start()
-  })
+  }, 300000)
 
   afterAll(async () => {
     await queue.close()

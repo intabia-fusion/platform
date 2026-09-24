@@ -26,18 +26,15 @@ import { MeasureMetricsContext, newMetrics, type MeasureContext, type WorkspaceU
 import { createPlatformQueue, parseQueueConfig } from '@hcengineering/kafka'
 import type { ConsumerHandle, PlatformQueue } from '@hcengineering/server-core'
 import { ClisrServer, createCallbackClient, type ClisrClient } from '@intabiafusion/clisr'
+import { kafkaBrokers } from '@hcengineering/test-containers'
 import { randomUUID } from 'crypto'
 import { createServerProvider } from '../transcription/providers/server'
 import type { TranscriptionOptions } from '../transcription/types'
 /* eslint-enable import/first */
 
-const E2E = process.env.AI_BOT_QUEUE_E2E === '1'
-const BROKERS = process.env.QUEUE_CONFIG ?? 'localhost:19093'
 const TOKEN = 'queue-e2e-token'
 const OPTIONS: TranscriptionOptions = { audioFormat: 'ogg' }
 const WORKSPACE = 'e2e-workspace' as WorkspaceUuid
-
-const d = E2E ? describe : describe.skip
 
 interface Task {
   id: number
@@ -163,9 +160,15 @@ async function runScenario (
   }
 }
 
-d('e2e: kafka -> clisr -> worker', () => {
+describe('e2e: kafka -> clisr -> worker', () => {
   const ctx = new MeasureMetricsContext('queue-e2e', {}, {}, newMetrics())
-  const queue = createPlatformQueue(parseQueueConfig(BROKERS, 'clisr-e2e', ''))
+  let brokers: string
+  let queue: PlatformQueue
+
+  beforeAll(async () => {
+    brokers = await kafkaBrokers()
+    queue = createPlatformQueue(parseQueueConfig(brokers, 'clisr-e2e', ''))
+  })
 
   const TASKS = 200
   const WORK_MS = 1
@@ -201,7 +204,7 @@ d('e2e: kafka -> clisr -> worker', () => {
       expect(run.maxInFlight).toBe(1)
     }
 
-    console.info(`\ntasks=${TASKS}, work=${WORK_MS}ms, brokers=${BROKERS}`)
+    console.info(`\ntasks=${TASKS}, work=${WORK_MS}ms, brokers=${brokers}`)
     console.table(runs)
   })
 })
