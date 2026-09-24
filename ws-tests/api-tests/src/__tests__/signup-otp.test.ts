@@ -143,12 +143,14 @@ describe('signup-otp', () => {
     await expect(anon.loginOtp(value)).resolves.toMatchObject({ sent: true })
   })
 
-  it('does not reveal whether an email is known', async () => {
+  it('rejects the login form for an unknown email without creating a person', async () => {
     const unknown = email('never-seen')
 
-    await expect(anon.loginOtp(unknown)).resolves.toMatchObject({ sent: true })
+    await expect(anon.loginOtp(unknown)).rejects.toThrow(/AccountNotFound/)
     expect(await personOf(unknown)).toBeUndefined()
+  })
 
+  it('does not reveal through the sign up form whether an email is known', async () => {
     const existing = email('already-signed-up')
     await anon.signUpOtp(existing, 'Test', 'Person', phone)
     const person = await personOf(existing)
