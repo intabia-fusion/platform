@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.47] - 2026-09-24
+
+* 🚀 FEATURES: · FUSIO-848 Letters for subscriptions moved to queue ([#419](https://github.com/hcengineering/platform/issues/419))
+* 🐛 BUG FIXES: · FUSIO-1411: status color propagation ([#471](https://github.com/hcengineering/platform/issues/471)) · Fix stats issue on uptrace ([#472](https://github.com/hcengineering/platform/issues/472)) · FUSIO-1405: Fix OTP dialog shown for unregistered users ([#470](https://github.com/hcengineering/platform/issues/470))
+
 ## [0.8.46] - 2026-09-24
 
 * 🚀 FEATURES: · FUSIO-1151: Api keys + Webhooks ([#406](https://github.com/hcengineering/platform/issues/406)) · FUSIO-1339: Allow users to delete account/workspace ([#434](https://github.com/hcengineering/platform/issues/434)) · fusio-1348: search by messages ([#445](https://github.com/hcengineering/platform/issues/445)) · Improvements to message search ([#461](https://github.com/hcengineering/platform/issues/461)) · FUSIO-209: Новый пресет для записи встречи ([#449](https://github.com/hcengineering/platform/issues/449)) · FUSIO-261 - Добавление телеметрии и логов в звонки · FUSIO-462 - Доработка локализации календаря, планировщика комнат в офисе
