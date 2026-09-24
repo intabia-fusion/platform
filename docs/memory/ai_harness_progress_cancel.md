@@ -1,49 +1,27 @@
-# AI harness: прогресс запроса и отмена (17.08.2026)
+# AI harness: прогресс запроса и отмена
 
-## Баг: AIRequest никогда не создавался (FUSIO-886, найден 17.08)
+Область: [AI](../features/ai.md)
 
-`createAIRequest` брал space через `findOne(contact.class.PersonSpace, {account: personUuid})` от
-имени бота. PersonSpace **приватный**, `members = [владелец]`, бот-аккаунт (обычный, токен
-`generateToken(botPersonUuid, ws, {service:'aibot'})`, не system) его не видит -> findOne = undefined
--> `createAIRequest` тихо возвращал undefined. Проверка на dev-стенде: `select count(*) from ai
-where "_class"='ai-bot:class:AIRequest'` = 0 при десятках запросов к боту.
+## Транспорт прогресса - AIRequest, а не TypingIndicator
 
-Фикс: AIRequest создаётся в **space самого чата** (тот же, куда бот пишет ответ) — виден и боту, и
-юзеру, что и нужно UI прогресса. Ошибка createDoc теперь глушится (warn) — телеметрия не должна
-стоить пользователю ответа.
+`pulse.TypingIndicator` умеет только `status: IntlString` без параметров - счётчик токенов через него не пробросить. Прогресс и отмена делят один документ `AIRequest` (домен `DOMAIN_AI`, space чата): `objectId` (чат/тред) + `iteration`, статус `'cancelled'`.
 
-## Транспорт прогресса — AIRequest, а не TypingIndicator
+- Под пишет: `WorkspaceClient.requestHooks` (`workspace/workspaceClient.ts`) - апдейт на каждом раунде модели.
+- Под читает: `findOne(AIRequest, {_id})` между раундами (RestClient, liveQuery на поде нет) - `isRequestCancelled`, `workspace/workspaceClient.ts`.
+- UI: `plugins/chunter-resources/src/components/AIRequestProgress.svelte`, liveQuery `{objectId, status:'processing'}`.
 
-`pulse.TypingIndicator` умеет только `status: IntlString` (без params), поэтому счётчик токенов
-через него не пробросить без правки модели pulse. Взяли уже существующий `AIRequest` (DOMAIN_AI,
-space чата): добавили `objectId` (чат/тред) + `iteration`, статус `'cancelled'`.
-Один док = и прогресс, и канал отмены.
+`createAIRequest` (`workspace/workspaceClient.ts`) берёт `space` параметром - space чата, куда бот и так пишет ответ. Раньше искал `contact.class.PersonSpace` от имени бота, который её не видит (space приватный), и тихо возвращал `undefined` - AIRequest не создавался вовсе. Ошибка `createDoc` теперь глушится (`ctx.warn`) - телеметрия не должна стоить пользователю ответа.
 
-- pod пишет: `WorkspaceClient.requestHooks` (workspaceClient.ts) — update на каждом раунде модели.
-- pod читает: `findOne(AIRequest, {_id})` между раундами (RestClient, liveQuery на поде нет).
-- UI: `plugins/chunter-resources/src/components/AIRequestProgress.svelte`, liveQuery
-  `{objectId, status:'processing'}`, рядом с `ChannelTypingInfo` в `ChatMessageInput`.
+## Отмена = переиспользование ветки "кончились итерации"
 
-## Отмена = переиспользование ветки «кончились итерации»
+`runToolCalls` (`llms/toolLoop.ts`) при исчерпании `MAX_TOOL_ITERATIONS` уже уходит в финальный раунд без тулов; отмена делает `break` из цикла до выполнения тулов и идёт той же веткой - ноль новой логики сборки ответа.
 
-`runToolCalls` уже имел выход «maxIterations исчерпан -> digest всех tool-результатов ->
-`ask(digest, true)` без тулов». Отмена просто делает `break` из цикла ДО выполнения тулов —
-дальше та же ветка. Ноль новой логики сборки ответа, требование «за 1 шаг отдать что есть»
-выполняется само.
+## Все три провайдера на одном цикле
 
-## Все три провайдера на одном цикле (17.08)
+`openai.ts` раньше крутил SDK `client.beta.chat.completions.runTools` - свой цикл внутри SDK, куда хуки не доходили. Переведён на `runToolCalls` через `chatToolStep`. При переносе всплыло: биллинг у SDK-пути шёл один раз в конце, а `chatToolStep` биллит каждый раунд - финальный `billUsage` пришлось убрать, иначе двойной счёт.
 
-`openai.ts` раньше крутил SDK `client.beta.chat.completions.runTools` — свой цикл внутри SDK, hooks
-туда не доходили. Переведён на `runToolCalls` через собственный `chatToolStep` (он и так умел
-inline tool calls, truncated, retry). **Важно при таком переносе**: биллинг у SDK-пути был один раз
-в конце, а `chatToolStep` биллит каждый раунд — финальный `billUsage` надо убрать, иначе двойной
-счёт. Очистка `</think>` жила только в SDK-пути, перенесена на итоговый completion.
+## Связанные документы
 
-## Голосовые: где реально висло
-
-Клиент НЕ ждал транскрибацию (HUD `onSend` -> upload -> `dispatch('send')`), но фаза загрузки была
-подписана «Распознавание...», что читалось как ожидание ASR. Настоящие зависания:
-`asrProvider.transcribe` в `processChatVoice` без таймаута -> `AudioTranscribe` навсегда `pending`
-(спиннер в отправленном сообщении вечно). Починено `Promise.race` на 120s -> `state:'failed'`.
-Ответ бота ждёт транскрипт до 60s (`VOICE_TRANSCRIPT_WAIT_MS`) и при отсутствии текста подставляет
-в промпт пометку о неудачной расшифровке.
+- [`../features/ai.md`](../features/ai.md)
+- [`../ai-harness.md`](../ai-harness.md)
+- [`ai_bot_proactive.md`](ai_bot_proactive.md)

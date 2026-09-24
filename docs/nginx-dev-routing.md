@@ -1,12 +1,10 @@
 # Dev Nginx Path-Based Routing
 
+[← Getting started](./getting-started.md)
+
 ## Architecture
 
-All external traffic goes through nginx on port 8087. Services no longer expose ports to the host except:
-- nginx: 8087, 8080 (webpack dev server)
-- transactor: 9229 (kept for direct WS connections and debug)
-- postgres: 5432, redis: 6379
-- mailpit: 8025
+All external traffic goes through nginx on port 8087 (`dev/docker-compose.yaml`, `nginx` service). Debug ports on `front` and `transactor` are commented out by default in `dev/docker-compose.yaml` (`NODE_OPTIONS=--inspect`), not exposed. Ports exposed to the host: nginx 8087, postgres 5432, redis 6379, mailpit 8025 (+ 1025 SMTP), redpanda 19092, love 8096. Port 8080 is not a docker service port - it is the separate local webpack dev server (`cd dev/prod && pnpm run dev-server`, see [getting-started.md](./getting-started.md)).
 
 ## Nginx Config Location
 
@@ -27,6 +25,8 @@ All external traffic goes through nginx on port 8087. Services no longer expose 
 | `/_stream` | stream:1080 (no `/` required in capture) |
 | `/_preview` | preview:4040 (no `/` required in capture) |
 | `/_billing` | billing:4041 |
+| `/_payment` | payment:4040 |
+| `/_tbank_subscriptions` | tbank-subscriptions:4042 |
 | `/_ai` | aibot:4010 (WebSocket) |
 | `/_love` | love:8096 (WebSocket) |
 | `/_fulltext` | fulltext:4702 |
@@ -59,3 +59,8 @@ All external traffic goes through nginx on port 8087. Services no longer expose 
 ## Env Var Changes (transactor service)
 
 - `FILES_URL` -> `http://localhost:8087/_datalake/blob/:workspace/:blobId/:filename`
+
+## Связанные документы
+
+- [Getting started](./getting-started.md)
+- [platform-infra.md](./features/platform-infra.md)

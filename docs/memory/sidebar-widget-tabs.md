@@ -1,5 +1,7 @@
 # Sidebar widget tabs
 
+Область: [Платформа: рабочее место, настройки, экспорт, бэкап, desktop](../features/platform-infra.md)
+
 ## Model: three states per tab, like VSCode editors
 
 `WidgetTab` carries two additive flags (`plugins/workbench/src/types.ts`):
@@ -10,8 +12,7 @@
 | kept | `isKept` | `primary` | no |
 | pinned | `isPinned` (+`isKept`) | `secondary`, no close, sorted first | no |
 
-Flags, not a `mode` enum, because widget state is persisted in localStorage per workspace
-(`sidebar.ts` `getSidebarStateFromLocalStorage`) - adding a field needs no migration.
+Flags, not a `mode` enum, because widget state is persisted in localStorage per workspace (`sidebar.ts` `getSidebarStateFromLocalStorage`) - adding a field needs no migration.
 
 `createWidgetTab(widget, tab)` (`plugins/workbench-resources/src/sidebar.ts`):
 
@@ -19,40 +20,18 @@ Flags, not a `mode` enum, because widget state is persisted in localStorage per 
 - otherwise it replaces the widget's single **preview** tab (active one first, then any preview)
 - no preview tab -> appended
 
-Promotion preview -> kept is a **double click on the tab**, caught by the wrapper in
-`SidebarTabs.svelte` so custom `tabComponent`s (`ChatWidgetTab`, `CardWidgetTab`) get it for free.
-`unpinWidgetTab` drops to kept, not preview - otherwise unpinning would make the tab vanish on the
-next open.
+Tabs are never auto-closed by navigation: only a widget's preview slot gets replaced (by the next object opened in that widget); kept and pinned tabs live until the user closes them.
 
-Widgets are independent: opening a card does not touch the chat widget state, only which widget is
-active in the sidebar.
+Promotion preview -> kept is a **double click on the tab**, caught by the wrapper in `SidebarTabs.svelte` so custom `tabComponent`s (`ChatWidgetTab`, `CardWidgetTab`) get it for free. `unpinWidgetTab` drops to kept, not preview - otherwise unpinning would make the tab vanish on the next open.
 
-Tab ids must be deterministic per object, otherwise repeated opening produces duplicates:
-`chunter_${_id}` (channel), `thread_${_id}`, `cardId`, `Ref<Blob>` (file), `preview_${_id}`
-(universal doc preview - tracker, documents, anything with an `ObjectPanel`),
-`'video'`/`'chat'`/`'transcription'` (meeting).
+Widgets are independent: opening a card does not touch the chat widget state, only which widget is active in the sidebar.
 
-The universal preview id used to be the literal `'preview'`, which meant tracker and documents
-always reused one tab and had no tab model at all.
+Tab ids must be deterministic per object, otherwise repeated opening produces duplicates: `chunter_${_id}` (channel), `thread_${_id}`, `cardId`, `Ref<Blob>` (file), `preview_${_id}` (universal doc preview - tracker, documents, anything with an `ObjectPanel`), `'video'`/`'chat'`/`'transcription'` (meeting).
 
-## Removed: allowedPath auto-close
-
-Before, `WidgetTab.allowedPath` + `closeWrongTabs` in `SidebarExpanded.svelte` closed unpinned
-tabs whenever the URL left the allowed prefix - a chat thread died on app switch. Worse, the check
-lived in a component mounted only in `EXPANDED` and only scanned the active widget's tabs, so the
-behavior depended on whether the sidebar happened to be open. Both are gone; tabs live until the
-user closes them or they get replaced by the scratch rule.
-
-`openThreadInSidebar` still keeps its `force` flag: `force=false` is used by `Chat.svelte` to
-restore a thread from the URL and must not steal the sidebar from another widget.
+`openThreadInSidebar`'s `force` flag defaults to `true`; `Chat.svelte` calls it with `force=false` when restoring a thread from the URL, so it does not steal the sidebar from another widget (`plugins/chunter-resources/src/navigation.ts`).
 
 ## Mobile
 
-Not changed, but relevant:
-
-- `Workbench.svelte`: any location change collapses the sidebar to `MINI` on `mobileAdaptive`;
-  tab state survives, only the variant changes.
-- `docWidth <= 1024` (`FLOAT_ASIDE`) -> `float` overlay; navigator and sidebar are mutually
-  exclusive on narrow screens.
-- `sidebar.ts` forces `variant = MINI` both when reading and writing localStorage on
-  `isMobile && minWidth`, so the expanded state is effectively not persisted on mobile.
+- `Workbench.svelte`: any location change collapses the sidebar to `MINI` on `mobileAdaptive`; tab state survives, only the variant changes.
+- `docWidth <= 1024` (`FLOAT_ASIDE`) -> `float` overlay; navigator and sidebar are mutually exclusive on narrow screens.
+- `sidebar.ts` forces `variant = MINI` both when reading and writing localStorage on `isMobile && minWidth`, so on mobile the expanded state is not persisted.

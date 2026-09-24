@@ -1,30 +1,14 @@
-# Lint Phase Memory & Performance Optimization
+# Lint phase memory
 
-## Problem
-Lint phase used ~24GB RAM on 8-core machines: `validationWorkers` (up to 8) was passed as concurrency,
-creating 8 ESLint worker threads simultaneously, each holding large AST/rule caches in heap.
+Lint concurrency and per-worker heap come from a single measured profile, not a hardcoded cap: `PHASE_MEMORY.lint = { minHeapMB: 2048, heapMB: 2560 }` (`foundations/utils/packages/platform-rig/bin/libs/utils.js`, `getOptimalWorkerCount`). `@typescript-eslint` 8 builds a bigger type graph than 6 did - `pod-gmail` OOMs below 2048MB per worker. Worker count is `budgetMB / minHeapMB` capped by CPU, so a low-memory box runs fewer, not smaller, workers.
 
-## Changes (2026-04-11)
+Each worker gets a hard V8 heap ceiling (`resourceLimits: { maxOldGenerationSizeMb: heapMB, maxYoungGenerationSizeMb: 512 }`, `phases/lint.js`) instead of relying on manual GC - `--expose-gc`/`global.gc()` are not used. A worker recycles after 15 packages or once it reports memory above 80% of its heap ceiling (`recycleAfter`/ `recycleMemoryMB`, `getNamedWorkerPool` in `libs/workers.js`), so heap growth within one long-lived worker cannot accumulate across the whole run.
 
-### phases/lint.js
-- Concurrency capped: `lintConcurrency = Math.max(1, Math.min(concurrency, 2))` — max 2 lint workers
-- Pool created with `workerOptions: { execArgv: ['--expose-gc'] }` to enable manual GC in worker
-- Per-package timing with `performance.now()` before/after `pool.runTask`
-- Log format: `[L] N/total name linted Xms YMB`
-- After Promise.all: prints top-5 slowest packages and peak worker memory
+`lint-worker.js` lints files in chunks of 50 (`chunkSize`) - ESLint retains AST/messages for every file in a `lintFiles()` call, so chunking bounds peak retention regardless of package size. ESLint's own file cache is content-keyed (`cacheStrategy: 'content'`, per-package `.eslintcache`) rather than mtime-keyed, because a git checkout changes mtimes without changing content.
 
-### lint-worker.js
-- After `eslint.lintFiles` + format: `eslint = null; results = null` to release heap refs
-- Calls `global.gc()` if available (enabled by `--expose-gc` execArgv)
-- Returns `memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)` in every response
+The phase-level cache key is a composite hash, not the plain package hash: own source plus every transitive dependency's `types/` hash plus `.eslintrc.js`/`.eslintrc.json`/`eslint.config.js` (`compositeHashFromTypes`, `libs/composite-hash.js`) - lint only ever sees a dependency through its emitted `.d.ts`, so keying on dependency sources would re-lint the whole downstream closure on any upstream edit.
 
-### libs/workers.js
-- `GenericWorkerPool` constructor accepts optional 3rd arg `poolOptions = {}`
-- `poolOptions.workerOptions` forwarded to `new Worker(path, workerOptions)` — enables per-pool execArgv
-- `getNamedWorkerPool` accepts 4th arg `poolOptions` and passes to constructor
-- Fully backward-compatible (validate pool unchanged, no poolOptions passed there)
+## Связанные документы
 
-## Expected Impact
-- Memory: ~24GB -> ~6GB (2 workers x ~3GB each instead of 8)
-- Time: minimal regression (lint is I/O bound, 2 concurrent workers still saturate disk)
-- GC after each package prevents heap growth within a single worker session
+- [getting-started.md](getting-started.md) - build commands.
+- [memory/fast-build-tooling.md](memory/fast-build-tooling.md) - platform-rig/bin worker pool internals.

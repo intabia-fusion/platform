@@ -5,11 +5,11 @@
 The time tracking system provides estimation, time reporting, and progress visualization for Issues. It supports hierarchical issue structures (parent/sub-issues) with automatic aggregation of time data across the tree.
 
 **Key concepts:**
-- **Estimation** — planned effort (in man-hours) set manually on each issue
-- **TimeSpendReport** — individual time entries recorded against an issue
-- **reportedTime** — auto-computed sum of all TimeSpendReport values for an issue
-- **remainingTime** — auto-computed via `reduceChildInfoTree`, accounts for the full subtree
-- **childInfo** — denormalized cache of child issues' estimation/reportedTime on the parent, with `parentId` for tree-based aggregation
+- **Estimation** - planned effort (in man-hours) set manually on each issue
+- **TimeSpendReport** - individual time entries recorded against an issue
+- **reportedTime** - auto-computed sum of all TimeSpendReport values for an issue
+- **remainingTime** - auto-computed via `reduceChildInfoTree`, accounts for the full subtree
+- **childInfo** - denormalized cache of child issues' estimation/reportedTime on the parent, with `parentId` for tree-based aggregation
 
 ---
 
@@ -41,9 +41,9 @@ interface IssueChildInfo {
 }
 ```
 
-The `parentId` field stores the `attachedTo` reference of the descendant issue — i.e., its **direct parent** in the hierarchy. This turns the flat `childInfo` array into a tree structure, enabling correct bottom-up aggregation without double-counting.
+The `parentId` field stores the `attachedTo` reference of the descendant issue - i.e., its **direct parent** in the hierarchy. This turns the flat `childInfo` array into a tree structure, enabling correct bottom-up aggregation without double-counting.
 
-> **Important:** `childInfo` contains entries for **all descendants at all levels**, not just direct children. When a sub-sub-issue is created, its `childInfo` entry is pushed to every ancestor in its `parents` chain — the immediate parent, the grandparent, etc. This is because `parents` stores the full ancestor chain, and `updateIssueParentEstimations` iterates over all of them.
+> **Important:** `childInfo` contains entries for **all descendants at all levels**, not just direct children. When a sub-sub-issue is created, its `childInfo` entry is pushed to every ancestor in its `parents` chain - the immediate parent, the grandparent, etc. This is because `parents` stores the full ancestor chain, and `updateIssueParentEstimations` iterates over all of them.
 
 > **Legacy compatibility:** The `parentId` field is optional. Data created before the migration will not have it. The `reduceChildInfoTree` function detects this and falls back to flat summation for backward compatibility.
 
@@ -69,8 +69,9 @@ interface TimeSpendReport extends AttachedDoc {
   attachedTo: Ref<Issue>          // The issue this report belongs to
   employee: Ref<Employee> | null  // Who spent the time
   date: Timestamp | null          // When the work was done
-  value: number                   // Time spent in man-hours (supports up to 3 decimal places)
+  value: number                   // Time spent in man-hours
   description: string             // Free-text description of work done
+  workslot?: Ref<WorkSlot>        // Set when the report mirrors a planner work slot, kept in sync with it
 }
 ```
 
@@ -166,7 +167,7 @@ Issue REPARENT (attachedTo change)
     → OnIssueUpdate
     → doIssueUpdate()
     → Update own parents[] array
-    → updateSubIssues() — recursive parents[] update in all descendants
+    → updateSubIssues() - recursive parents[] update in all descendants
     → updateIssueParentEstimations(sourceParents=old, targetParents=new, overrideParentId=newParent)
     → migrate childInfo with updated parentId
 ```
@@ -205,8 +206,8 @@ Issue REPARENT (attachedTo change)
 
 This function maintains the `childInfo` array on parent issues **incrementally** (not via full recomputation):
 
-1. For every parent in `sourceParents`: emit `$pull { childInfo: { childId: issue._id } }` — remove old entry
-2. For every parent in `targetParents`: emit `$push { childInfo: { childId, estimation, reportedTime, parentId } }` — insert updated entry
+1. For every parent in `sourceParents`: emit `$pull { childInfo: { childId: issue._id } }` - remove old entry
+2. For every parent in `targetParents`: emit `$push { childInfo: { childId, estimation, reportedTime, parentId } }` - insert updated entry
 
 The `parentId` in each pushed entry is set to `overrideParentId ?? issue.attachedTo`. The `overrideParentId` parameter is used during reparent operations where `issue.attachedTo` still holds the old value but the new parent is known.
 
@@ -228,15 +229,14 @@ issue.remainingTime = Math.max(0, Math.max(issue.estimation, totalEstimation) - 
 ```
 
 This ensures that if child issues have more estimation than the parent, the remaining time reflects the actual work scope. It is marked `@ReadOnly()` in the model. Recalculated in:
-- `doTimeReportUpdate()` — after any TimeSpendReport change
-- `doIssueUpdate()` — after estimation or reportedTime is directly modified
+- `doTimeReportUpdate()` - after any TimeSpendReport change
+- `doIssueUpdate()` - after estimation or reportedTime is directly modified
 
 ---
 
 ## UI Components
 
-All time-tracking components are in:
-`plugins/tracker-resources/src/components/issues/timereport/`
+All time-tracking components are in: `plugins/tracker-resources/src/components/issues/timereport/`
 
 All UI components use `reduceChildInfoTree` to aggregate child data instead of flat `map/reduce` summation.
 
@@ -275,8 +275,8 @@ Formats a number (man-hours) into human-readable string like "2h 30m". Calculate
 
 #### EstimationProgressCircle
 SVG circular progress bar (16x16). Supports multiple concentric rings (for own issue + child issues):
-- **Green gradient** (0–100%): on track
-- **Red gradient** (100–200%): over estimation
+- **Green gradient** (0-100%): on track
+- **Red gradient** (100-200%): over estimation
 - **Black** (>200%): severely over
 - Animated transitions (0.6s ease)
 
@@ -305,8 +305,8 @@ For each root issue (no parent in current set), uses `reduceChildInfoTree` to co
 
 #### TimeSpendReportPopup
 Form for creating/editing a TimeSpendReport:
-- Numeric input for hours (up to 3 decimal places)
-- Quick buttons: 1h, 2h, 4h, 6h, 7h, 8h
+- Duration text field (`DurationInput.svelte`, `parseDuration`/`formatDuration` from `plugins/tracker/src/duration.ts`, format like "2h 30m"), not a plain decimal number
+- Quick buttons: 0.25h / 0.5h / 1h / 2h / 4h / 8h
 - Employee selector
 - Day type: "Current Work Day" / "Previous Work Day"
 - Date picker
@@ -324,14 +324,14 @@ Grid-based calendar view showing time reports per person per day:
 
 ## Migration
 
-### `childInfo-parentId` (upgrade migration)
+### `childInfo-parentId-v2` (upgrade migration)
 
-Defined in `models/tracker/src/migration.ts`. Populates the `parentId` field on existing `childInfo` entries:
+`migrateChildInfoParentId` in `models/tracker/src/migration.ts`. Populates the `parentId` field on existing `childInfo` entries:
 
-1. Loads all Issues with projection `{ _id, childInfo }`
+1. Loads all Issues once with projection `{ _id, childInfo, attachedTo }`
 2. Filters issues that have non-empty `childInfo`
 3. Collects `childId`s from entries missing `parentId`
-4. Loads those child issues with projection `{ _id, attachedTo }`
+4. Builds a `childId -> attachedTo` map from the same already-loaded issues (no second query)
 5. Updates each parent issue's `childInfo` array, setting `parentId = child.attachedTo`
 
 After migration, `reduceChildInfoTree` switches from legacy flat summation to tree-based aggregation automatically.
@@ -340,16 +340,23 @@ After migration, `reduceChildInfoTree` switches from legacy flat summation to tr
 
 ## Known Behaviors and Edge Cases
 
-1. **childInfo is incremental, not recomputed** — The `childInfo` array on parent issues is maintained via `$pull` + `$push` operations on each change. There is no periodic or bulk recomputation. If data gets out of sync (e.g., due to a failed transaction), it may require manual correction.
+1. **childInfo is incremental, not recomputed** - The `childInfo` array on parent issues is maintained via `$pull` + `$push` operations on each change. There is no periodic or bulk recomputation. If data gets out of sync (e.g., due to a failed transaction), it may require manual correction.
 
-2. **remainingTime cannot go negative** — The formula uses `Math.max(0, ...)`, so even if `reportedTime > estimation`, `remainingTime` will be 0.
+2. **remainingTime cannot go negative** - The formula uses `Math.max(0, ...)`, so even if `reportedTime > estimation`, `remainingTime` will be 0.
 
-3. **childInfo propagates to ALL ancestors** — When a sub-sub-issue's estimation changes, the `childInfo` update propagates up through every level of the hierarchy (parent, grandparent, etc.), not just the immediate parent. Each ancestor gets a separate `childInfo` entry for the changed descendant with the same `parentId` (the descendant's direct parent).
+3. **childInfo propagates to ALL ancestors** - When a sub-sub-issue's estimation changes, the `childInfo` update propagates up through every level of the hierarchy (parent, grandparent, etc.), not just the immediate parent. Each ancestor gets a separate `childInfo` entry for the changed descendant with the same `parentId` (the descendant's direct parent).
 
-4. **TimeSpendReport value reconstruction** — When updating or deleting a TimeSpendReport, the server reconstructs the old document by replaying all previous transactions. This ensures correct delta calculation even if the original document state isn't directly available.
+4. **TimeSpendReport value reconstruction** - When updating or deleting a TimeSpendReport, the server reconstructs the old document by replaying all previous transactions. This ensures correct delta calculation even if the original document state isn't directly available.
 
-5. **Legacy data handling** — If any `childInfo` entry lacks `parentId`, `reduceChildInfoTree` falls back to flat summation (pre-migration behavior). This ensures backward compatibility during rolling upgrades.
+5. **Legacy data handling** - If any `childInfo` entry lacks `parentId`, `reduceChildInfoTree` falls back to flat summation (pre-migration behavior). This ensures backward compatibility during rolling upgrades.
 
-6. **Tree aggregation prevents double-counting** — With `parentId`, the tree structure ensures that a sub-sub-issue's estimation is counted once through its parent, not independently added at each ancestor level. For example: Epic(est=10) → Task(est=0) → Subtask(est=20) yields totalEstimation=20 for Epic, not 20+20=40.
+6. **Tree aggregation prevents double-counting** - With `parentId`, the tree structure ensures that a sub-sub-issue's estimation is counted once through its parent, not independently added at each ancestor level. For example: Epic(est=10) → Task(est=0) → Subtask(est=20) yields totalEstimation=20 for Epic, not 20+20=40.
 
-7. **Reparent uses overrideParentId** — During reparent, `issue.attachedTo` still holds the old parent. The `overrideParentId` parameter ensures the new `parentId` is written to `childInfo` entries pushed to the new ancestor chain.
+7. **Reparent uses overrideParentId** - During reparent, `issue.attachedTo` still holds the old parent. The `overrideParentId` parameter ensures the new `parentId` is written to `childInfo` entries pushed to the new ancestor chain.
+
+## Связанные документы
+
+- [features/tracker.md](features/tracker.md) - место time tracking в общей архитектуре трекера.
+- [features/planner-calendar.md](features/planner-calendar.md) - `WorkSlot`, чей отчёт зеркалится в `TimeSpendReport.workslot`.
+- [time-tracking-examples.md](time-tracking-examples.md) - разбор кейсов агрегации дерева оценок.
+- [memory/planner-todo-issue-decoupling.md](memory/planner-todo-issue-decoupling.md) - откуда взялось поле `TimeSpendReport.workslot` и триггеры `OnWorkSlotCreate/Update/Remove`.

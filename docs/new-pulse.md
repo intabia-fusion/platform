@@ -1,4 +1,4 @@
-# New Pulse — Transient Docs Plan
+# New Pulse - Transient Docs Plan
 
 Replace `foundations/hulypulse` (Rust WS service) and `packages/hulypulse-client` with transient docs inside the existing transactor. Use existing `DOMAIN_TRANSIENT` + `TransientTTL` mixin + `createQuery` live queries. No new server code, no new WS connection.
 
@@ -8,17 +8,17 @@ Replace `foundations/hulypulse` (Rust WS service) and `packages/hulypulse-client
 - Transactor already has `DOMAIN_TRANSIENT` (`InMemory` adapter) wired via `server-pipeline/src/pipeline.ts`.
 - `TransientMiddleware` already runs a 1s ticker, cleans expired docs, broadcasts `TxRemoveDoc`, and refreshes TTL on any CUD (heartbeat via update = free).
 - `createQuery` + `client.createDoc/updateDoc/removeDoc` already give live sets + writes.
-- `SpaceSecurityMiddleware` already filters by `doc.space` — private doc visibility handled automatically if we set space = target doc's space.
+- `SpaceSecurityMiddleware` already filters by `doc.space` - private doc visibility handled automatically if we set space = target doc's space.
 
 ## Real Usages Found
 
 Only two patterns in the whole codebase:
 
-1. **Document presence** — who is currently viewing a document.
+1. **Document presence** - who is currently viewing a document.
    - `plugins/presence-resources/src/presence.ts`: `subscribePresence`, `updatePresence`, `deletePresence`.
    - `PresenceContext.svelte` writes every `presenceUpdateSeconds=2`, TTL `presenceTtlSeconds=5`.
    - `PresenceAvatars.svelte` reads.
-2. **Typing indicator** — who is typing in a chat/card.
+2. **Typing indicator** - who is typing in a chat/card.
    - `plugins/presence-resources/src/typing.ts`: `subscribeTyping`, `setTyping`, `clearTyping`.
    - `MessageInput.svelte` / `ChatMessageInput.svelte` write with 2s TTL.
    - `objectId` is a composite string (e.g. `peer:${card.peerId}`), not necessarily a real `Ref<Doc>`.
@@ -139,7 +139,7 @@ export interface UserActivity extends Doc {
 }
 ```
 - TTL ~30s, class-level.
-- `space: core.space.Workspace` (everyone sees everyone — same as existing `UserStatus`).
+- `space: core.space.Workspace` (everyone sees everyone - same as existing `UserStatus`).
 - Key: `_id` = hash(personId) → single doc per user.
 
 **Client writer (single place, e.g. `workbench-resources`):**

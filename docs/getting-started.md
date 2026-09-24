@@ -4,11 +4,9 @@
 
 ## Pre-requisites
 
-- [Node.js](https://nodejs.org/en/download/) 24.x - pinned in [`.nvmrc`](../.nvmrc),
-  `package.json` requires `>=24.0.0 <25.0.0`
+- [Node.js](https://nodejs.org/en/download/) 24.x - pinned in [`.nvmrc`](../.nvmrc), `package.json` requires `>=24.0.0 <25.0.0`
 - [pnpm](https://pnpm.io) 12.x - activated through Corepack, no global install needed
-- [Docker](https://docs.docker.com/get-docker/) and
-  [Docker Compose](https://docs.docker.com/compose/install/)
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
 Verify Docker is available:
 
@@ -21,9 +19,7 @@ Both amd64 and arm64 containers are supported on Linux and macOS.
 
 ## Installation
 
-The repository is a [pnpm](https://pnpm.io) workspace: projects are listed in
-`pnpm-workspace.yaml`, with a single `pnpm-lock.yaml` at the root. Rush is gone -
-`rush` / `rushx` no longer exist, and `pnpm check-versions` replaces `rush check`.
+The repository is a [pnpm](https://pnpm.io) workspace: projects are listed in `pnpm-workspace.yaml`, with a single `pnpm-lock.yaml` at the root.
 
 1. Activate pnpm. Corepack ships with Node and pins the version from `packageManager`:
 
@@ -50,8 +46,7 @@ Then open <http://localhost:8087>.
 
 ## Build and run
 
-All commands run from the repository root and accept `--to <package>` to scope the run to a
-package and its dependencies.
+All commands run from the repository root and accept `--to <package>` to scope the run to a package and its dependencies.
 
 ```bash
 pnpm build          # Compile every package: JS, .d.ts and sourcemaps in one tsc pass
@@ -65,9 +60,7 @@ pnpm docker:up      # Start all containers
 pnpm boot           # pnpm docker && pnpm docker:up
 ```
 
-Type checking is part of `pnpm build` - one native `tsc` (TypeScript 7) pass per package
-emits `lib/` and `types/` together. There is no separate validate step. `pnpm docker` and
-`pnpm docker:build` run build, bundle and package automatically.
+Type checking is part of `pnpm build` - one native `tsc` (TypeScript 7) pass per package emits `lib/` and `types/` together. There is no separate validate step. `pnpm docker` and `pnpm docker:build` run build, bundle and package automatically.
 
 Alternatively:
 
@@ -75,8 +68,7 @@ Alternatively:
 sh ./scripts/build.sh
 ```
 
-Docker volumes named `dev_db`, `dev_elastic` and `dev_files` are created for the database,
-Elasticsearch and MinIO instances. <http://localhost:8087> then serves the app.
+`docker compose` names its volumes after the compose project (the `dev` directory), so the named volumes in `dev/docker-compose.yaml` (`db`, `dbpg`, `files`, `elastic`, ...) come up as `dev_db`, `dev_dbpg`, `dev_files`, `dev_elastic`, and so on. <http://localhost:8087> then serves the app.
 
 Partial stands are available when you only need part of the system:
 
@@ -86,14 +78,11 @@ pnpm docker:up:love     # meetings, AI bot, billing, payment, nginx
 pnpm docker:up:backup   # main stand + backup service
 ```
 
-**Limitation:** a local installation does not send emails, so password recovery and email
-notifications are unavailable.
+**Limitation:** a local installation does not send emails, so password recovery and email notifications are unavailable.
 
 ## Run in development mode
 
-Development mode gives live reloading and a faster edit-check cycle. It talks to the
-services from the local Docker stand, so start the stand first (`pnpm docker:up` or
-`pnpm boot`).
+Development mode gives live reloading and a faster edit-check cycle. It talks to the services from the local Docker stand, so start the stand first (`pnpm docker:up` or `pnpm boot`).
 
 ```bash
 pnpm build --to @hcengineering/prod
@@ -103,8 +92,7 @@ pnpm run dev-server
 
 Then go to <http://localhost:8080>.
 
-Select "Sign up" on the right panel, click "Sign up with password" at the bottom, enter the
-new user's credentials and create a workspace for them.
+Select "Sign up" on the right panel, click "Sign up with password" at the bottom, enter the new user's credentials and create a workspace for them.
 
 The desktop (Electron) app:
 
@@ -128,9 +116,7 @@ pnpm model-version      # Show the current model version
 pnpm ts-clean           # Drop TypeScript incremental state (*.tsbuildinfo)
 ```
 
-`pnpm run` only sees the nearest `package.json`. From inside a package use
-`pnpm -w run <script>` to reach the root scripts, and `pnpm --filter <pkg> add <dep>` to add
-a dependency.
+`pnpm run` only sees the nearest `package.json`. From inside a package use `pnpm -w run <script>` to reach the root scripts, and `pnpm --filter <pkg> add <dep>` to add a dependency.
 
 ## Repository structure
 
@@ -151,9 +137,7 @@ Projects sit 2-3 levels deep, each with its own `package.json`.
 | `common/` | Shared config and scripts |
 | `docs/` | Project documentation, one file per topic |
 
-Before writing a new `.svelte` component, check
-[`docs/ui-components/`](./ui-components/README.md) - it catalogs the existing components of
-`@hcengineering/ui`, `@hcengineering/presentation` and `plugins/view-resources`.
+Before writing a new `.svelte` component, check [`docs/ui-components/`](./ui-components/README.md) - it catalogs the existing components of `@hcengineering/ui`, `@hcengineering/presentation` and `plugins/view-resources`.
 
 ## Update project structure and database
 
@@ -178,13 +162,27 @@ To also drop the TypeScript incremental state:
 pnpm ts-clean
 ```
 
-After adding a dependency by hand, run `pnpm check-versions` - nothing enforces a single
-version across packages on its own.
+After adding a dependency by hand, run `pnpm check-versions` - nothing enforces a single version across packages on its own.
 
 Building on Windows: see the [WSL build guide](./wsl.md).
 
 ## Package publishing
 
 ```bash
-node ./common/scripts/bump.js -p projectName
+node ./common/scripts/bump.js <version>            # bump every @hcengineering/* package to <version>
+node ./common/scripts/bump.js --publish <version>  # bump and publish
 ```
+
+## Связанные документы
+
+- [../AGENTS.md](../AGENTS.md) - "Build & Validation": scoped check after edits, license headers, sanity tests.
+- [memory/typescript7-migration.md](memory/typescript7-migration.md) - tsc7 compile path.
+- [memory/fast-build-tooling.md](memory/fast-build-tooling.md), [memory/fast_build_cache_external_deps.md](memory/fast_build_cache_external_deps.md) - platform-rig/bin internals and cache gaps.
+- [memory/dependency-upgrade-tooling.md](memory/dependency-upgrade-tooling.md) - `common/scripts/outdated*.js`, version pins.
+- [memory/go-docker-build.md](memory/go-docker-build.md) - `foundations/stream` Go build, base image pins.
+- [memory/eslint8_upgrade_fix_patterns.md](memory/eslint8_upgrade_fix_patterns.md) - `@typescript-eslint` quirks.
+- [ui-components/README.md](ui-components/README.md) - Svelte component catalog.
+- [wsl.md](wsl.md) - building on Windows.
+- [memory/ci-deploy-stands.md](memory/ci-deploy-stands.md) - ci_deploy.sh и стенды selfhost
+- [memory/test-stand-nodejs.md](memory/test-stand-nodejs.md) - Test stand setup in node (dev/test-base)
+- [memory/upstream-sync.md](memory/upstream-sync.md) - Синк с upstream (Platform-Collective/platform)

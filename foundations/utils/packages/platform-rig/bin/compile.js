@@ -103,6 +103,7 @@ async function performESBuild(filesToTranspile, options = {}) {
     bundle: false,
     minify: false,
     outdir: outDir,
+    outbase: srcDir,
     keepNames: true,
     sourcemap: 'linked',
     allowOverwrite: true,
@@ -111,6 +112,14 @@ async function performESBuild(filesToTranspile, options = {}) {
     logLevel: 'error',
     absWorkingDir: cwd
   })
+}
+
+// rootDir comes from the package's tsconfig: the sanity test packages compile ./tests, not ./src.
+async function emitLib(cwd) {
+  const m = /"rootDir"\s*:\s*"([^"]+)"/.exec(readFileSync(join(cwd, 'tsconfig.json'), 'utf8'))
+  const srcDir = m?.[1] ?? 'src'
+  const files = collectFiles(join(cwd, srcDir)).map((f) => relative(cwd, f))
+  await performESBuild(files, { srcDir, cwd, outDir: 'lib' })
 }
 
 async function performESBuildWithSvelte(filesToTranspile, options = {}) {
@@ -310,8 +319,15 @@ if (require.main === module) {
     case 'build':
     default: {
       const st = performance.now()
-      tscCompile({ cwd: process.cwd() })
-      console.log('Build time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
+      tscCompile({ cwd: process.cwd(), emitDeclarationOnly: true })
+      emitLib(process.cwd())
+        .then(() => {
+          console.log('Build time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
+        })
+        .catch((err) => {
+          console.error('Build failed:', err)
+          process.exit(1)
+        })
       break
     }
   }
@@ -321,6 +337,7 @@ if (require.main === module) {
 module.exports = {
   collectFiles,
   performESBuild,
+  emitLib,
   performESBuildWithSvelte,
   generateSvelteTypes,
   tscCompile,

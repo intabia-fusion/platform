@@ -49,7 +49,21 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
 const doValidate = !prod || process.env.DO_VALIDATE === 'true'
 
-const doCompression = prod
+// Precompressed .gz/.br only matter for release images; front falls back to plain files.
+const doCompression = prod && process.env.DO_COMPRESS === 'true'
+
+const MinimizerPlugin = require('minimizer-webpack-plugin')
+const minifiers = {
+  swc: { minify: MinimizerPlugin.swcMinify, minimizerOptions: { ecma: 2022 } },
+  // Same as the server bundles (common/scripts/esbuild.js): keep names, no syntax lowering.
+  esbuild: { minify: MinimizerPlugin.esbuildMinify, minimizerOptions: { target: 'esnext', keepNames: true, charset: 'utf8' } },
+  terser: { minify: MinimizerPlugin.terserMinify }
+}
+// MINIFIER=esbuild|swc|terser selects the JS minifier for production builds; esbuild by default.
+const minifier = minifiers[process.env.MINIFIER ?? 'esbuild']
+if (minifier === undefined) {
+  throw new Error(`Unknown MINIFIER=${process.env.MINIFIER}, expected one of: ${Object.keys(minifiers).join(', ')}`)
+}
 
 const useCache = process.env.USE_CACHE === 'true'
 
@@ -63,29 +77,29 @@ const devProxy = {
   '/_account': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_tr': {
     target: 'http://localhost:8087',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_cl': {
     target: 'http://localhost:8087',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_rekoni': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_stats': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_webhook': {
     target: 'http://localhost:8087',
@@ -95,85 +109,85 @@ const devProxy = {
   '/_datalake': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_stream': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_preview': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_billing': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_payment': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_ai': {
     target: 'http://localhost:8087',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_love': {
     target: 'http://localhost:8087',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_print': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_sign': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_export': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_link-preview': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_mail': {
     target: 'http://localhost:8087',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_fulltext': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/files': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/api/v1': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/import': {
     target: 'http://localhost:8087',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   }
 }
 
@@ -181,69 +195,69 @@ const devProxyTest = {
   '/_account': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_tr': {
     target: 'http://localhost:8083',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_cl': {
     target: 'http://localhost:8083',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_rekoni': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_stats': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_datalake': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_stream': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_fulltext': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_billing': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/_payment': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/files': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/api/v1': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/import': {
     target: 'http://localhost:8083',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   }
 }
 
@@ -252,24 +266,24 @@ const devHulyProxy = {
     target: 'https://platform.intabia.ru/_account',
     changeOrigin: true,
     pathRewrite: { '^/account': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/api/v1': {
     target: 'http://platform.intabia.ru',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/files': {
     target: 'https://platform.intabia.ru/files',
     changeOrigin: true,
     pathRewrite: { '^/files': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/rekoni/recognize': {
     target: 'https://platform.intabia.ru/_rekoni',
     changeOrigin: true,
     pathRewrite: { '^/rekoni/recognize': '/recognize' },
-    logLevel: 'debug'
+    logger: console
   }
 }
 
@@ -278,24 +292,24 @@ const devBoldProxy = {
     target: 'https://account.bold.ru/',
     changeOrigin: true,
     pathRewrite: { '^/account': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/files': {
     target: 'https://app.bold.ru/files',
     changeOrigin: true,
     pathRewrite: { '^/files': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/api/v1': {
     target: 'http://app.bold.ru',
     changeOrigin: true,
-    logLevel: 'debug'
+    logger: console
   },
   '/rekoni/recognize': {
     target: 'https://rekoni.bold.ru',
     changeOrigin: true,
     pathRewrite: { '^/rekoni/recognize': '/recognize' },
-    logLevel: 'debug'
+    logger: console
   }
 }
 
@@ -304,19 +318,19 @@ const devFrontProxy = {
     target: 'https://account.hc.engineering/',
     changeOrigin: true,
     pathRewrite: { '^/account': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/files': {
     target: 'https://front.hc.engineering/files',
     changeOrigin: true,
     pathRewrite: { '^/files': '' },
-    logLevel: 'debug'
+    logger: console
   },
   '/rekoni/recognize': {
     target: 'https://rekoni.hc.enigneering',
     changeOrigin: true,
     pathRewrite: { '^/rekoni/recognize': '/recognize' },
-    logLevel: 'debug'
+    logger: console
   }
 }
 
@@ -340,7 +354,7 @@ const cacheConfig = (name) => useCache
     compression: 'gzip',
     cacheLocation: path.resolve(__dirname, `.build_dev/${name}`),
     buildDependencies: {
-      config: [__filename, path.resolve(__dirname, 'package.json')]
+      config: [__filename, path.resolve(__dirname, 'package.json'), path.resolve(__dirname, '../../pnpm-lock.yaml')]
     }
   }
   : { type: 'memory' }
@@ -429,6 +443,7 @@ module.exports = [
     },
     optimization: {
       minimize: prod,
+      minimizer: [new MinimizerPlugin(minifier)],
       //moduleIds: 'named',
       chunkIds: prod ? 'deterministic' : 'named',
       // chunkIds: 'named',
@@ -695,11 +710,13 @@ module.exports = [
           new CompressionPlugin({
             filename: '[path][base].gz',
             algorithm: 'gzip',
+            exclude: /\.map$/
           }),
           new CompressionPlugin({
             filename: '[path][base].br',
             algorithm: 'brotliCompress',
-            compressionOptions: { level: 11 }
+            compressionOptions: { level: 11 },
+            exclude: /\.map$/
           })
         ]
         : []),
@@ -764,7 +781,7 @@ module.exports = [
         },
         progress: false
       },
-      proxy: proxy[clientType]
+      proxy: Object.entries(proxy[clientType] ?? {}).map(([context, options]) => ({ context: [context], ...options }))
     }
   }
 ]
