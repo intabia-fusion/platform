@@ -21,7 +21,8 @@
     defaultBackground,
     getColorNumberByText,
     getPlatformColorDef,
-    themeStore
+    themeStore,
+    resolvePaletteColor
   } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import { typeStore } from '../..'
@@ -47,24 +48,10 @@
 
   $: void update(value, space, $typeStore)
 
-  $: viewState = getViewState(type, value)
-
-  $: color = viewState
-    ? getPlatformColorDef(viewState.color ?? category?.color ?? getColorNumberByText(viewState.name), $themeStore.dark)
-    : undefined
-
-  function getViewState (type: ProjectType | undefined, state: Status | undefined): Status | undefined {
-    if (state === undefined) return
-    if (type === undefined) return state
-    const statusColor = type?.statuses?.find((p) => p._id === state._id)?.color
-    const targetColor =
-      statusColor === undefined || typeof statusColor !== 'string' ? statusColor : (state.color ?? category?.color)
-    if (targetColor === undefined) return state
-    return {
-      ...state,
-      color: targetColor
-    }
-  }
+  $: projectColor = type?.statuses?.find((p) => p._id === value?._id)?.color
+  $: colorIndex =
+    value && (resolvePaletteColor(projectColor, value.color, category?.color) ?? getColorNumberByText(value.name))
+  $: color = colorIndex !== undefined ? getPlatformColorDef(colorIndex, $themeStore.dark) : undefined
 
   async function updateCategory (value: Status | undefined): Promise<void> {
     if (value === undefined) return

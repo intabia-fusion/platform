@@ -19,7 +19,7 @@
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import {
     IconEdit,
-    getPlatformColorDef,
+    getPaletteColorDef,
     getPlatformColorForTextDef,
     themeStore,
     Action,
@@ -269,9 +269,8 @@
       ? { icon: space.color }
       : {
           fill:
-            space.color !== undefined && typeof space.color !== 'string'
-              ? getPlatformColorDef(space.color, $themeStore.dark).icon
-              : getPlatformColorForTextDef(space.name, $themeStore.dark).icon
+            getPaletteColorDef(space.color, $themeStore.dark)?.icon ??
+            getPlatformColorForTextDef(space.name, $themeStore.dark).icon
         }}
     title={space.name}
     type={'nested'}
@@ -312,10 +311,7 @@
           iconProps={item.icon === view.ids.IconWithEmoji
             ? { icon: visibleItem.color }
             : {
-                fill:
-                  item.color !== undefined && typeof item.color !== 'string'
-                    ? getPlatformColorDef(item.color, $themeStore.dark).icon
-                    : 'currentColor'
+                fill: getPaletteColorDef(item.color, $themeStore.dark)?.icon ?? 'currentColor'
               }}
           title={item.title}
           selected

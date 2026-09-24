@@ -14,7 +14,15 @@
 //
 
 import { describe, it, expect } from 'vitest'
-import { getPlatformColorByName, getPlatformAvatarColorByName, avatarWhiteColors, avatarDarkColors } from '../colors'
+import {
+  getPlatformColorByName,
+  getPlatformAvatarColorByName,
+  avatarWhiteColors,
+  avatarDarkColors,
+  resolvePaletteColor,
+  getPaletteColorDef,
+  whitePalette
+} from '../colors'
 
 describe('colors module tests', () => {
   describe('getPlatformColorByName', () => {
@@ -53,6 +61,52 @@ describe('colors module tests', () => {
 
       expect(result).toBeDefined()
       expect(result).toEqual(firstColorFromPalette)
+    })
+  })
+
+  describe('resolvePaletteColor', () => {
+    const green = 14
+    const orange = 7
+
+    it('takes the first color in priority order', () => {
+      expect(resolvePaletteColor(orange, 3, green)).toBe(orange)
+      expect(resolvePaletteColor(undefined, 3, green)).toBe(3)
+      expect(resolvePaletteColor(undefined, undefined, green)).toBe(green)
+    })
+
+    // null used to reach getPlatformColorDef, which maps it to palette[0] (red)
+    it('skips null colors', () => {
+      expect(resolvePaletteColor(null, undefined, green)).toBe(green)
+      expect(resolvePaletteColor(undefined, null, green)).toBe(green)
+      expect(resolvePaletteColor(null, null, green)).toBe(green)
+    })
+
+    it('skips string colors (emoji and blob refs)', () => {
+      expect(resolvePaletteColor('blob-ref', orange, green)).toBe(orange)
+      expect(resolvePaletteColor('blob-ref', null, green)).toBe(green)
+    })
+
+    it('keeps 0 and array colors', () => {
+      expect(resolvePaletteColor(0, orange, green)).toBe(0)
+      expect(resolvePaletteColor([orange, 1], 3, green)).toEqual([orange, 1])
+    })
+
+    it('returns undefined when nothing usable is set', () => {
+      expect(resolvePaletteColor(null, undefined, 'blob-ref')).toBeUndefined()
+      expect(resolvePaletteColor()).toBeUndefined()
+    })
+  })
+
+  describe('getPaletteColorDef', () => {
+    it('returns the palette entry for an index', () => {
+      expect(getPaletteColorDef(5, false)).toBe(whitePalette[5])
+      expect(getPaletteColorDef([5, 1], false)).toBe(whitePalette[5])
+    })
+
+    it('returns undefined for null, undefined and strings', () => {
+      expect(getPaletteColorDef(null, false)).toBeUndefined()
+      expect(getPaletteColorDef(undefined, false)).toBeUndefined()
+      expect(getPaletteColorDef('blob-ref', false)).toBeUndefined()
     })
   })
 })
