@@ -12,7 +12,9 @@ tsgo does not compile `.svelte`. Only one package still routes through esbuild-s
 
 `pnpm-workspace.yaml`: `strictPeerDependencies: true` with `peerDependencyRules.ignoreMissing` covering `@emnapi/core`, `@rspack/core`, `@types/dom-mediacapture-record`, `@types/dom-mediacapture-transform`, `electron-builder-squirrel-windows` - all optional peers nothing in the repo actually pulls in (wasm variants of `sharp`, a Windows-only electron-builder target, unused rspack/WebRTC types).
 
-esbuild's remaining roles after the tsc7 migration: bundler for pods/services with a docker phase (`--bundle=true`, externals, single-file output) and the ui-test svelte compiler above. Plain `.ts` transpile no longer goes through esbuild.
+Non-UI packages: tsc runs with `--emitDeclarationOnly` and writes only `types/`, esbuild alone writes `lib/` (`emitLib`, `compile.js`, sources taken from the tsconfig `rootDir` - the sanity test packages use `./tests`). A single writer is required: `pnpm docker` (`--esbuild-emit`) and the regular build share `lib/`, and incremental tsc re-emits only changed files, leaving a mixed `lib/`. In a mixed `lib/` an esbuild module importing the default export of a half-loaded tsc module through an import cycle snapshots its exports without `default` (`__toESM`), e.g. `setting.component` undefined in `getRoleAttributeProps`. The build phase cache key is `build-split*`.
+
+esbuild is also the bundler for pods/services with a docker phase (`--bundle=true`, externals, single-file output) and the ui-test svelte compiler above.
 
 ## Связанные документы
 
