@@ -55,10 +55,7 @@ function splitRecipients (recipients: Recipients): Recipient[] {
 /**
  * Drops blocked addresses from to/cc/bcc. Returns undefined when nobody is left to send to.
  */
-export function withoutBlockedRecipients (
-  message: SendMailOptions,
-  blocked: Set<string>
-): SendMailOptions | undefined {
+export function withoutBlockedRecipients (message: SendMailOptions, blocked: Set<string>): SendMailOptions | undefined {
   if (blocked.size === 0) return message
 
   let removed = false
