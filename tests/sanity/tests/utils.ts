@@ -17,11 +17,15 @@ export const PlatformTransactor = process.env.PLATFORM_TRANSACTOR as string
 export const PlatformUser = process.env.PLATFORM_USER as string
 export const PlatformUserSecond = process.env.PLATFORM_USER_SECOND as string
 export const PlatformUserThird = process.env.PLATFORM_USER_THIRD as string
+export const PlatformUserFourth = process.env.PLATFORM_USER_FOURTH as string
+export const PlatformUserFifth = process.env.PLATFORM_USER_FIFTH as string
 export const PlatformAdmin = process.env.PLATFORM_ADMIN as string
 export const PlatformWs = process.env.PLATFORM_WS as string
 export const PlatformSetting = process.env.SETTING as string
 export const PlatformSettingSecond = process.env.SETTING_SECOND as string
 export const PlatformSettingThird = process.env.SETTING_THIRD as string
+export const PlatformSettingFourth = process.env.SETTING_FOURTH as string
+export const PlatformSettingFifth = process.env.SETTING_FIFTH as string
 export const PlatformWorkspaceRegion = process.env.WORKSPACE_REGION as string
 
 export const DefaultWorkspace = 'sanity-ws'

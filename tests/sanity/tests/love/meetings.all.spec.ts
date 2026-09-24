@@ -25,6 +25,7 @@ import { registerDeviceTests } from './meetings.devices.tests'
 import { registerFinishedTokenTests } from './meetings.finished-token.tests'
 import { registerHostRefreshTests } from './meetings.host-refresh.tests'
 import { registerNetworkTests } from './meetings.network.tests'
+import { registerParticipantTilesTests } from './meetings.participant-tiles.tests'
 import { registerPresenceTests } from './meetings.presence.tests'
 import { registerGuestTests } from './meetings.guest.tests'
 import { registerInviteTests } from './meetings.invite.tests'
@@ -67,6 +68,7 @@ test.describe('love (meetings) — suite', () => {
   registerDeviceTests()
   registerNetworkTests()
   registerPresenceTests()
+  registerParticipantTilesTests()
   registerKnockOfficeTests()
   registerClientCreateTests()
   registerScenariosTests()

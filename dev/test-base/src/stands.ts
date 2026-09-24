@@ -68,6 +68,9 @@ const sanity: StandConfig = {
     { name: 'user2', first: 'Kainin', last: 'Dirak' },
     { name: 'user3', first: 'Muffin', last: 'Muram' },
     { name: 'user4', first: 'Armin', last: 'Karmin' },
+    // user5 exists only to give the love suite a fifth body: the participant-tile tests need five
+    // people in one room, which is where the reported "joined but not rendered" defect shows up.
+    { name: 'user5', first: 'Vera', last: 'Solano' },
     { name: 'admin', first: 'Super', last: 'User' }
   ],
   workspaces: [
@@ -83,7 +86,13 @@ const sanity: StandConfig = {
       name: 'meetings-ws',
       owner: 'user1',
       restore: './meetings-ws',
-      members: [{ account: 'user1', role: 'OWNER' }, { account: 'user2' }, { account: 'user3' }],
+      members: [
+        { account: 'user1', role: 'OWNER' },
+        { account: 'user2' },
+        { account: 'user3' },
+        { account: 'user4' },
+        { account: 'user5' }
+      ],
       configure: true,
       plan: 'business'
     }

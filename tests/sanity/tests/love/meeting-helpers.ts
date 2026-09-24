@@ -271,12 +271,14 @@ export async function openLove (page: Page): Promise<OfficePage> {
   return office
 }
 
-export type LoveUser = 'first' | 'second' | 'third'
+export type LoveUser = 'first' | 'second' | 'third' | 'fourth' | 'fifth'
 
 const LOVE_STORAGE: Record<LoveUser, string> = {
   first: '.auth/storage.json',
   second: '.auth/storageSecond.json',
-  third: '.auth/storageThird.json'
+  third: '.auth/storageThird.json',
+  fourth: '.auth/storageFourth.json',
+  fifth: '.auth/storageFifth.json'
 }
 
 export interface LoveWindow {
