@@ -53,10 +53,10 @@
 ## incoming permission (ApiKeySecret.incoming)
 - New independent gate, unrelated to `ops`/`unrestricted`. `verifyApiKey` computes
   `incoming: secret.incoming === true` into `ApiKeyCheck` (non-optional there, unlike the optional storage field).
-- `pod-webhook`'s `handleIngest` checks it right after `check === null` (auth-level, before body/action
-  parsing) and returns the *exact same* 401 `unauthorized` response as an unknown key - the caller must not
-  be able to distinguish "wrong key" from "valid key, ingest not permitted". Only the internal `logCall`
-  result string differs (`incoming_disabled` vs `unauthorized`).
+- `pod-webhook`'s `authenticateIngest` checks it right after key verification (before body/action parsing)
+  and returns 403 `forbidden` (FUSIO-1378). Hiding it behind 401 protected nothing: a 256-bit key can't be
+  guessed, and `loginWithApiKey`/REST accept the key regardless of `incoming`.
+- The flag is set only at creation (`CreateApiKeyPopup`); no operation changes it on an existing key.
 - Test gotcha: `server.test.ts`'s shared `baseCheck` needed `incoming: true` added, otherwise every existing
   auth/ops/rate-limit test that reused it would start failing at the new gate.
 

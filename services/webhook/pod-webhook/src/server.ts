@@ -272,10 +272,8 @@ async function authenticateIngest (deps: IngestDeps, req: Request, res: Response
   }
   const check = verification.check
   if (!check.incoming) {
-    // Same response as an unknown key - a caller must not be able to tell "wrong key" apart from
-    // "valid key, but not permitted on ingest routes". Only our own log tells the two apart.
     logCall(ctx, check.keyId, undefined, keySource, 'incoming_disabled')
-    sendError(res, 401, 'unauthorized')
+    sendError(res, 403, 'forbidden', 'Incoming webhooks are disabled for this API key')
     return { ok: false }
   }
   return { ok: true, check }
