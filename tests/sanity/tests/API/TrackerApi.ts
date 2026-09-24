@@ -204,3 +204,24 @@ export async function deleteIssuesByTitlePrefix (client: TxOperations, prefix: s
   }
   return issues.length
 }
+
+// Whether a comment counter that disagrees with the UI drifted on the server or only in the
+// browser copy - the popup already says how many messages really exist.
+export async function readStoredCommentCount (issueTitle: string): Promise<number | undefined> {
+  const { client } = await connectTracker()
+  try {
+    return (await client.findOne(tracker.class.Issue, { title: issueTitle }))?.comments
+  } finally {
+    await client.close()
+  }
+}
+
+/** Whether a component edit actually reached the server - the panel can render a value it never saved. */
+export async function readComponentDescription (label: string): Promise<string | undefined> {
+  const { client } = await connectTracker()
+  try {
+    return (await client.findOne(tracker.class.Component, { label }))?.description
+  } finally {
+    await client.close()
+  }
+}

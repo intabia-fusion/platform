@@ -165,8 +165,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await this.selectMenuItem(this.page, data.priority)
     }
     if (data.assignee != null) {
-      await this.buttonAssignee().click()
-      await this.selectAssignee(this.page, data.assignee)
+      const assignee = data.assignee
+      // Same swallowed popup click as the status above: unchecked, the failure lands on the other
+      // user waiting for an issue that was never assigned.
+      await expect(async () => {
+        await this.buttonAssignee().click()
+        await this.selectAssignee(this.page, assignee)
+        await expect(this.buttonAssignee()).toContainText(assignee, { timeout: 3000 })
+      }).toPass({ intervals: retryIntervals, timeout: 20000 })
     }
     if (data.labels != null && data.createLabel != null) {
       if (data.createLabel) {

@@ -1,7 +1,8 @@
 import { expect, type Locator } from '@playwright/test'
 import { NewComponent } from './types'
 import { CommonTrackerPage } from './common-tracker-page'
-import { retry, waitStable } from '../../retry'
+import { retry } from '../../retry'
+import { readComponentDescription } from '../../API/TrackerApi'
 
 export class ComponentsDetailsPage extends CommonTrackerPage {
   inputComponentName = (): Locator => this.page.locator('div.antiEditBox input')
@@ -23,14 +24,11 @@ export class ComponentsDetailsPage extends CommonTrackerPage {
         await this.inputComponentDescription().fill(description)
         // Click outside the description field to trigger save
         await this.inputComponentName().click()
-        // Wait for the field to stop changing rather than for one matching read: the stored value
-        // arrives over the fresh one a moment later, and the check further down then fails instead.
-        const settled = await waitStable(async () => (await this.inputComponentDescription().textContent()) ?? '', {
-          stableFor: 1000,
-          interval: 200,
-          timeout: 10000
-        })
-        expect(settled).toBe(description)
+        // The panel can overwrite its own edit with an in-flight server answer, so both have to
+        // hold: the write reached the server (markup JSON, hence toContain) and the field kept it.
+        const stored = await readComponentDescription(name ?? (await this.inputComponentName().inputValue()))
+        expect(stored ?? '').toContain(description)
+        await expect(this.inputComponentDescription()).toHaveText(description, { timeout: 3000 })
       })
     }
     if (lead != null) {

@@ -22,6 +22,22 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`hasText` matches a substring**, so a strict locator throws on grouped copy - `.first()`.
 - **The pointer stays where the previous step dropped it.** A tooltip then covers the next control, and a second `hover()` on the element it already rests on fires no mousemove, so a retried hover reopens nothing. Park it (`mouse.move(0, 0)`) before clicking.
 - **Chromium raises dragstart on the first move after `mouse.down()`** - anything between the two (scrolling, a settle wait) means `dragCard` is never set and every drop is a silent no-op. Assert the app saw it (the card takes `dragged`) before moving on.
+- **A one-shot request cannot be waited out.** Chat search runs `searchFulltext` once, so retrying
+  the assertion polls a DOM nothing will change - re-issue the request (retype; `setSearch` ignores
+  an unchanged value, Enter opens a row when the list is not empty).
+- **The open app has no icon in the list.** It can open between the url check and the click, so
+  `openApp` waits for the url to change, never for the button.
+- **An unverified popup click fails somewhere else.** A swallowed assignee click left the old value
+  and broke the *other* user's test - every popup write in `editIssue` re-reads what it set.
+- **Ask the server, do not widen the window.** A settled field proves nothing when the stored value
+  arrives after it. `Component.description` is a plain `Markup` field: read it over REST
+  (`readComponentDescription`, markup JSON - match the text inside) instead of raising `stableFor`.
+- **Uploading a file is not idempotent.** Retrying "hover + send" attached it twice and the name
+  then resolved to two nodes for good - retry the send and the wait separately.
+- **Never pick "the first row" when the one asked for is missing.** A shared faker surname got a
+  stranger assigned and the test failed far away; `selectMenuItem` now throws, listing the rows.
+- **An absolute threshold breaks in a shared workspace.** `sharedWorkspace` is per worker, so the
+  previous test's leftovers already satisfy it - count from a baseline taken before the action.
 - **Escape does not close a panel the app opened through a url**, and the close it *did* start lands a beat later and tears down whatever opened after it. Wait for the new panel's own content and re-check it.
 
 ## Product-side causes
@@ -43,10 +59,22 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `CreateCustomer.svelte`'s reactive `findContacts` call never cancels the previous duplicate lookup | contact | The empty-name answer overtakes the typed one, `matches` stays empty for good |
 | `getAILevels()` turns a failed request into an empty list, runs once in `onMount` | `ai-bot-resources/src/requests.ts` | Cards never appear however long the wait; only a reload helps |
 | The account service gives a colliding workspace its own url (`<name>-<id>`) | `server/account/src/utils.ts` | A url built from the requested name lands in someone else's workspace, i.e. on the login form |
+| Chat search is one-shot (`searchFulltext`, no live query) | `chunter-resources/src/search/store.ts:114` | A message indexed after the query ran never appears until it is re-issued |
 
 ## Open
 
-- **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup", 3/10 on 2026-09-16 and again 3/10 on 2026-09-21). A re-delivered `$inc` tx could apply twice because `__updateDoc` cleared `loadedModifiedOn` on every apply, so a repeat at the same timestamp looked fresh; fixed by `ResultArray.markIncApplied`/`isIncApplied` (`foundations/core/packages/query/src/results.ts`, tests in `inc-match.test.ts`). The flake itself has not been observed since, so the causal link is unconfirmed until the front image carries the fix.
+- **Calendar specs share the second account's hours and clean up nothing.** Never run them with
+  `--repeat-each`: the day fills up and every one fails with `no free hour left in the calendar
+  widget` until `./prepare-pg.sh`. A per-worker scan offset was tried and reverted.
+
+- **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup",
+  ~3/10). Measured: `counter "3", expected "2", popup lists 2, stored 2` - only the browser copy
+  drifts. Client-side dedup cannot fix it: the derived `$inc` is broadcast-only (`triggers.ts:301`
+  builds it into `DerivedTx`, `txPush.ts:55` keeps it out of DOMAIN_TX) and gets a fresh `_id` per
+  build (`tx.ts:542`), so a duplicate is indistinguishable from a second real increment - the two
+  `inc-match.test.ts` cases pin both sides. Fix belongs on the server: carry the source event id, or
+  stop sending it twice. Unproven candidate: `txRaw` never resets `ctx.contextData.broadcast.txes`
+  before its second `handleBroadcast`, unlike `domainRequestRaw` (`server/src/client.ts:518`).
 - **`ai-bot-scenarios` "assistant button ... proposes a task"** (1/10 on 2026-09-21): "Create issue" stayed `disabled` for the whole 30s. `canSave` in `CreateIssue.svelte` needs a title, a status, a task type *and* `currentProject`, which comes from a query filtered by `members: getCurrentAccount().uuid` - an empty result leaves it `undefined` for good, and `TaskKindSelector` (hence `kind`) does not even render without it. Which of the four was missing is unknown; `clickButtonCreateIssue` now reports the title and whether the task type selector is in the DOM, so the next occurrence says it.
 - **`subissues.spec.ts` "Sub-issues move with parent issue"**: moving an issue closes the panel; reopening from the list renders the identifier as a breadcrumb instead of `div.title.not-active`
   - 4 failures in 20 versus 1 flake in a full run, so the retry was reverted. Needs a locator matching both renderings.

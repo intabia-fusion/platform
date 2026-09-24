@@ -122,10 +122,14 @@
     })
   }
 
-  $: if (keepOriginalAttribytes) {
-    setOriginalAttributes()
-  } else if (targetProject !== undefined) {
-    setReplacementAttributres(targetProject)
+  // Both branches iterate `toMove`, so it belongs in the dependencies: a target picked before
+  // `collectIssues` resolved used to leave `issueToUpdate` empty and the toggle disabled for good.
+  $: if (toMove.length > 0) {
+    if (keepOriginalAttribytes) {
+      setOriginalAttributes()
+    } else if (targetProject !== undefined) {
+      setReplacementAttributres(targetProject)
+    }
   }
 
   const componentQuery = createQuery()

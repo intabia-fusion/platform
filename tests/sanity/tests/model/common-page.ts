@@ -157,6 +157,12 @@ export class CommonPage {
         await exact.first().click()
         return
       }
+      // None of the rows is the one asked for: picking the first silently assigns a stranger and
+      // the test fails somewhere else.
+      const rows = await this.selectPopupListItemFirst().allInnerTexts()
+      if (rows.length > 1) {
+        throw new Error(`"${name}" is not in the list filtered by "${filterText}": ${JSON.stringify(rows)}`)
+      }
     }
     await this.selectPopupListItemFirst().first().click()
   }

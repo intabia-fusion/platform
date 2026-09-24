@@ -60,14 +60,15 @@ export class MessageSearchPage extends CommonPage {
     await this.inputSearch().fill(text)
   }
 
-  /**
-   * Indexing is asynchronous, so a message that was just sent is not searchable the instant the
-   * request returns. Everything that asserts on a result has to be retried rather than awaited
-   * once - the debounce alone is 500ms, and the indexer adds its own lag.
-   */
+  // The search is one-shot, so a message indexed after it ran never turns up on its own: retyping
+  // re-issues the query, while Enter would open a row whenever the list is not empty.
   async checkResultExists (text: string): Promise<void> {
     await retry(async () => {
-      await expect(this.result(text)).toBeVisible({ timeout: 1000 })
+      if (await this.result(text).isVisible()) return
+      await this.inputSearch().fill('')
+      await this.inputSearch().fill(text)
+      // Debounce is 500ms, then the request itself.
+      await expect(this.result(text)).toBeVisible({ timeout: 2000 })
     })
   }
 
