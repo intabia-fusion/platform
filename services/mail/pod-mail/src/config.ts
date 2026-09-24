@@ -26,6 +26,8 @@ export interface Config {
   port: number
   source?: string
   replyTo?: string
+  // Addresses that never get mail
+  blockedRecipients: Set<string>
   sesConfig?: SesConfig
   smtpConfig?: SmtpConfig
 
@@ -86,6 +88,7 @@ const envMap = {
   Port: 'PORT',
   Source: 'SOURCE',
   ReplyTo: 'REPLY_TO',
+  BlockedRecipients: 'BLOCKED_RECIPIENTS', // Comma-separated
   DefaultProtocol: 'DEFAULT_PROTOCOL',
 
   SesAccessKey: 'SES_ACCESS_KEY',
@@ -108,6 +111,16 @@ const envMap = {
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
 const isEmpty = (str: string | undefined): boolean => str === undefined || str.trim().length === 0
+
+const DEFAULT_BLOCKED_RECIPIENTS = 'huly.ai.bot@hc.engineering'
+
+const parseAddressList = (str: string): Set<string> =>
+  new Set(
+    str
+      .split(',')
+      .map((it) => it.trim().toLowerCase())
+      .filter((it) => it.length > 0)
+  )
 
 const normalizeTlsMode = (mode: string | undefined): TlsOptions | undefined => {
   if (mode === undefined || mode === '') return undefined
@@ -199,6 +212,7 @@ const config: Config = (() => {
     apiKey: process.env[envMap.ApiKey], // Api key may be missing of local case, but not for server<->client case
     source: process.env[envMap.Source],
     replyTo: process.env[envMap.ReplyTo],
+    blockedRecipients: parseAddressList(process.env[envMap.BlockedRecipients] ?? DEFAULT_BLOCKED_RECIPIENTS),
     sesConfig: isSesConfig ? buildSesConfig() : undefined,
     smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined,
     accountsUrl: process.env.ACCOUNTS_URL ?? 'http://localhost:3000',

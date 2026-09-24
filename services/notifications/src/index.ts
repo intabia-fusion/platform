@@ -42,7 +42,6 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
-import { withRetry } from '@hcengineering/retry'
 
 import { Worker } from './worker'
 import config from './config'
@@ -117,13 +116,6 @@ async function main (): Promise<void> {
       }
     }
   )
-
-  const sync = (): Promise<void> => withRetry(() => worker.resolveAiBotAccount())
-
-  // Initial delay of 5 seconds to give other services a head start.
-  setTimeout(() => {
-    void sync()
-  }, 5 * 1000)
 
   const shutdown = (): void => {
     void worker.close()

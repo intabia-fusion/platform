@@ -58,6 +58,9 @@ import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils/utils'
 import config from './config'
 
+// The bot can be created after the service starts, so an unresolved lookup is repeated.
+const AI_BOT_LOOKUP_INTERVAL_MS = 60 * 1000
+
 export class Worker {
   private readonly sysHierarchy = new Hierarchy()
   private readonly sysModel = new ModelDb(this.sysHierarchy)
@@ -79,6 +82,9 @@ export class Worker {
   private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
 
   private aiBotAccountUuid?: AccountUuid
+  private aiBotLookup?: Promise<void>
+  private aiBotInitialLookup?: Promise<void>
+  private aiBotLookupAt = 0
 
   private readonly brandingMap = loadBrandingMap(config.BrandingPath)
 
@@ -170,7 +176,25 @@ export class Worker {
     }
   }
 
-  public async resolveAiBotAccount (): Promise<void> {
+  public async getAiBotAccount (): Promise<AccountUuid | undefined> {
+    if (
+      this.aiBotAccountUuid == null &&
+      this.aiBotLookup == null &&
+      Date.now() - this.aiBotLookupAt >= AI_BOT_LOOKUP_INTERVAL_MS
+    ) {
+      this.aiBotLookupAt = Date.now()
+      this.aiBotLookup = this.resolveAiBotAccount().finally(() => {
+        this.aiBotLookup = undefined
+      })
+      this.aiBotInitialLookup ??= this.aiBotLookup
+    }
+    // Only the first lookup is awaited; later ones run in the background so a slow account
+    // service never stalls tx processing while the bot does not exist.
+    await this.aiBotInitialLookup
+    return this.aiBotAccountUuid
+  }
+
+  private async resolveAiBotAccount (): Promise<void> {
     if (this.aiBotAccountUuid != null) return
     try {
       const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
@@ -239,7 +263,7 @@ export class Worker {
     _tx: TxCUD<DocNotifyContext>
   ): Promise<void> {
     const user = await this.getTxUser(ctx, wsUuid, _tx)
-    if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
+    if (user == null || user === systemAccountUuid || user === (await this.getAiBotAccount())) return
 
     if (_tx._class === core.class.TxCreateDoc) {
       this.scheduleStatusUpdate(user, wsUuid, true)
@@ -322,7 +346,8 @@ export class Worker {
           client,
           branding,
           this.txTypes,
-          this.producer
+          this.producer,
+          async () => await this.getAiBotAccount()
         )
 
         this.workspaces.set(ws, workspace)

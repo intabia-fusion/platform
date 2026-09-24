@@ -1267,6 +1267,28 @@ describe('WorkspaceCache', () => {
       expect(receivers[0].employeeRef).toBe('emp-1')
     })
 
+    it('never resolves the AI bot account as a receiver', async () => {
+      const BOT = 'bot-acc' as AccountUuid
+      const botCache = new WorkspaceCache(mockCtx, mockClient, async () => BOT)
+      mockReceiverLookups([{ _id: 'emp-1', personUuid: ACC, role: 'USER', active: true }])
+
+      const receivers = await botCache.getReceivers([BOT, ACC])
+
+      expect(receivers.map((it) => it.account)).toEqual([ACC])
+      expect(mockClient.findAll).toHaveBeenCalledWith(
+        contact.mixin.Employee,
+        { personUuid: { $in: [ACC] }, active: true },
+        expect.anything()
+      )
+    })
+
+    it('never resolves the system account as a receiver', async () => {
+      mockClient.findAll.mockClear()
+
+      expect(await cache.getReceivers([core.systemAccountUuid])).toEqual([])
+      expect(mockClient.findAll).not.toHaveBeenCalled()
+    })
+
     it('drops an employee that is inactive in the freshly loaded batch', async () => {
       mockReceiverLookups([{ _id: 'emp-1', personUuid: ACC, role: 'USER', active: false }])
 

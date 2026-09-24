@@ -21,6 +21,7 @@ import { MeasureContext } from '@hcengineering/core'
 
 import config from './config'
 import { getDefaultTransport, getSmtpTransport } from './transport'
+import { withoutBlockedRecipients } from './utils'
 
 export class MailClient {
   private readonly transporter: Transporter
@@ -44,7 +45,12 @@ export class MailClient {
     })
   }
 
-  async sendMessage (message: SendMailOptions, ctx: MeasureContext, password?: string | undefined): Promise<void> {
+  async sendMessage (original: SendMailOptions, ctx: MeasureContext, password?: string | undefined): Promise<void> {
+    const message = withoutBlockedRecipients(original, config.blockedRecipients)
+    if (message === undefined) {
+      ctx.info('Skipping email to blocked recipients', { to: original.to })
+      return
+    }
     const from = message.from as string
     const transporter = this.getTransporter(from, password)
     await ctx.with('send', {}, async (ctx) => {

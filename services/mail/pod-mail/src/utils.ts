@@ -19,7 +19,7 @@ import { ClisrServer } from '@intabiafusion/clisr'
 import { ConsumerControl } from '@hcengineering/server-core'
 
 import config from './config'
-import { MailClient } from './mail'
+import { type MailClient } from './mail'
 import { EmailNotification } from './types'
 
 function isAllowedFrom (from: NonNullable<SendMailOptions['from']>): boolean {
@@ -28,6 +28,56 @@ function isAllowedFrom (from: NonNullable<SendMailOptions['from']>): boolean {
   if (config.source === undefined) return true
   // Nodemailer accepts both 'a@b.c' and { name, address }.
   return domainOf(typeof from === 'string' ? from : from.address) === domainOf(config.source)
+}
+
+type Recipients = SendMailOptions['to']
+type Recipient = Exclude<NonNullable<Recipients>, any[]>
+
+function addressOf (recipient: Recipient): string {
+  const value = typeof recipient === 'string' ? recipient : recipient.address
+  // 'Name <user@host>' carries the address in angle brackets.
+  const match = /<([^>]*)>/.exec(value)
+  return (match?.[1] ?? value).trim().toLowerCase()
+}
+
+function splitRecipients (recipients: Recipients): Recipient[] {
+  if (recipients == null) return []
+  return (Array.isArray(recipients) ? recipients : [recipients]).flatMap((it) =>
+    typeof it === 'string'
+      ? it
+          .split(',')
+          .map((part): Recipient => part.trim())
+          .filter((part) => part !== '')
+      : [it]
+  )
+}
+
+/**
+ * Drops blocked addresses from to/cc/bcc. Returns undefined when nobody is left to send to.
+ */
+export function withoutBlockedRecipients (
+  message: SendMailOptions,
+  blocked: Set<string>
+): SendMailOptions | undefined {
+  if (blocked.size === 0) return message
+
+  let removed = false
+  const filter = (recipients: Recipients): Recipients => {
+    if (recipients == null) return recipients
+    const all = splitRecipients(recipients)
+    const kept = all.filter((it) => !blocked.has(addressOf(it)))
+    if (kept.length === all.length) return recipients
+    removed = true
+    return kept.length > 0 ? kept : undefined
+  }
+
+  const to = filter(message.to)
+  const cc = filter(message.cc)
+  const bcc = filter(message.bcc)
+  if (!removed) return message
+  if (to == null && cc == null && bcc == null) return undefined
+
+  return { ...message, to, cc, bcc }
 }
 
 /**

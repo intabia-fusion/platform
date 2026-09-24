@@ -61,6 +61,10 @@ jest.mock('@hcengineering/server-storage', () => ({
   storageConfigFrom: () => ({})
 }))
 jest.mock('@hcengineering/server-token', () => ({ generateToken: () => 'token' }))
+const mockFindAiBot = jest.fn()
+jest.mock('@hcengineering/server-client', () => ({
+  getAccountClient: () => ({ findFullSocialIdBySocialKey: mockFindAiBot })
+}))
 jest.mock('../workspace', () => ({
   __esModule: true,
   default: {
@@ -165,5 +169,75 @@ describe('Worker after workspace restore', () => {
   it('ignores a drop of a workspace it never loaded', async () => {
     await worker.dropWorkspace(ws)
     expect(mockCreated).toHaveLength(0)
+  })
+})
+
+const flush = async (): Promise<void> => {
+  await new Promise((resolve) => setImmediate(resolve))
+}
+
+describe('Worker AI bot account', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+  let worker: Worker
+  let now: number
+
+  beforeEach(() => {
+    now = 1_000_000
+    jest.spyOn(Date, 'now').mockImplementation(() => now)
+    mockFindAiBot.mockReset()
+    worker = new Worker(ctx, createModel(), queue)
+  })
+
+  afterEach(async () => {
+    jest.restoreAllMocks()
+    await worker.close()
+  })
+
+  it('finds a bot created after the service started', async () => {
+    mockFindAiBot.mockResolvedValueOnce(null)
+    expect(await worker.getAiBotAccount()).toBeUndefined()
+
+    mockFindAiBot.mockResolvedValue({ personUuid: 'bot-acc' })
+    // Within the interval the lookup is not repeated.
+    now += 1000
+    expect(await worker.getAiBotAccount()).toBeUndefined()
+    expect(mockFindAiBot).toHaveBeenCalledTimes(1)
+
+    now += 60 * 1000
+    await worker.getAiBotAccount()
+    await flush()
+    expect(await worker.getAiBotAccount()).toBe('bot-acc')
+    expect(mockFindAiBot).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not wait for a hanging repeated lookup', async () => {
+    mockFindAiBot.mockResolvedValueOnce(null)
+    await worker.getAiBotAccount()
+
+    mockFindAiBot.mockReturnValue(new Promise(() => {}))
+    now += 60 * 1000
+    expect(await worker.getAiBotAccount()).toBeUndefined()
+    expect(await worker.getAiBotAccount()).toBeUndefined()
+    expect(mockFindAiBot).toHaveBeenCalledTimes(2)
+  })
+
+  it('shares one lookup between concurrent callers', async () => {
+    mockFindAiBot.mockResolvedValue({ personUuid: 'bot-acc' })
+
+    const results = await Promise.all([worker.getAiBotAccount(), worker.getAiBotAccount()])
+
+    expect(results).toEqual(['bot-acc', 'bot-acc'])
+    expect(mockFindAiBot).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries after a failed lookup', async () => {
+    mockFindAiBot.mockRejectedValueOnce(new Error('account service down'))
+    expect(await worker.getAiBotAccount()).toBeUndefined()
+
+    mockFindAiBot.mockResolvedValue({ personUuid: 'bot-acc' })
+    now += 60 * 1000
+    await worker.getAiBotAccount()
+    await flush()
+    expect(await worker.getAiBotAccount()).toBe('bot-acc')
   })
 })

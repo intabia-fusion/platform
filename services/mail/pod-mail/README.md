@@ -13,6 +13,7 @@ Environment variables should be set to configure the Mail Service:
 - `API_KEY`: An API key that clients must pass. The parameter is optional, should be provided when external access to the service is allowed.
 - `SOURCE`: The sender source (fallback for when emails emit from the system).
 - `REPLY_TO`: (optional) Email to use for replies (useful for uni-directional STMP setups where emails are only emitted, but not received).
+- `BLOCKED_RECIPIENTS`: (optional) Comma-separated addresses that never get mail; they are dropped from to/cc/bcc, and a message with no recipients left is skipped. Default: `huly.ai.bot@hc.engineering` (the AI bot account has a confirmed email, but its domain does not accept mail). Set to an empty string to disable.
 
 Settings for SMTP or SES email service should be specified, simultaneous use of both protocols is not supported
 

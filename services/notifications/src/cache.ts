@@ -199,7 +199,8 @@ class WorkspaceCache {
 
   constructor (
     private readonly ctx: MeasureContext,
-    private readonly client: Client
+    private readonly client: Client,
+    private readonly getAiBotAccount: () => Promise<AccountUuid | undefined> = async () => undefined
   ) {}
 
   // ==========================================
@@ -485,7 +486,9 @@ class WorkspaceCache {
   /**
    * Assembles the receiver definitions list for active document collaborators.
    */
-  public async getReceivers (collaborators: AccountUuid[]): Promise<Receiver[]> {
+  public async getReceivers (accounts: AccountUuid[]): Promise<Receiver[]> {
+    const aiBot = await this.getAiBotAccount()
+    const collaborators = accounts.filter((it) => it !== systemAccountUuid && it !== aiBot)
     if (collaborators.length === 0) return []
 
     const employees: EmployeeInfo[] = await this.getEmployeesInfo(collaborators)

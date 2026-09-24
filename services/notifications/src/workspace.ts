@@ -15,6 +15,7 @@
 //
 
 import core, {
+  AccountUuid,
   Branding,
   Class,
   Doc,
@@ -109,10 +110,11 @@ class Workspace {
     private readonly storage: StorageAdapter,
     private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[],
-    private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
+    private readonly producer: PlatformQueueProducer<QueueNotificationMessage>,
+    getAiBotAccount: () => Promise<AccountUuid | undefined>
   ) {
     this.client = this.getClient()
-    this.cache = new WorkspaceCache(this.ctx, this.client)
+    this.cache = new WorkspaceCache(this.ctx, this.client, getAiBotAccount)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
@@ -295,7 +297,8 @@ class Workspace {
     rest: RestClient,
     branding: Branding | undefined,
     txTypes: TxNotificationType[],
-    producer: PlatformQueueProducer<QueueNotificationMessage>
+    producer: PlatformQueueProducer<QueueNotificationMessage>,
+    getAiBotAccount: () => Promise<AccountUuid | undefined> = async () => undefined
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
       disableTriggers: true,
@@ -334,7 +337,19 @@ class Workspace {
       throw new Error('Low level storage is not defined')
     }
 
-    return new Workspace(ctx, ws, pipeline, hierarchy, modelDb, rest, storage, branding, txTypes, producer)
+    return new Workspace(
+      ctx,
+      ws,
+      pipeline,
+      hierarchy,
+      modelDb,
+      rest,
+      storage,
+      branding,
+      txTypes,
+      producer,
+      getAiBotAccount
+    )
   }
 
   async close (): Promise<void> {
