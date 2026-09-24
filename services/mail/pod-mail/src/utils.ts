@@ -22,20 +22,33 @@ import config from './config'
 import { MailClient } from './mail'
 import { EmailNotification } from './types'
 
+function isAllowedFrom (from: NonNullable<SendMailOptions['from']>): boolean {
+  const domainOf = (addr: string): string | undefined => addr.split('@').pop()?.toLowerCase()
+  // No SOURCE to compare against: keep the pre-existing behaviour.
+  if (config.source === undefined) return true
+  // Nodemailer accepts both 'a@b.c' and { name, address }.
+  return domainOf(typeof from === 'string' ? from : from.address) === domainOf(config.source)
+}
+
 /**
  * Creates an email message object from notification data.
  */
-export function createEmailMessage (data: EmailNotification): SendMailOptions {
+export function createEmailMessage (data: EmailNotification, ctx?: MeasureContext): SendMailOptions {
   const emailMessage: SendMailOptions = {
     ...(data as SendMailOptions)
   }
 
-  // Set from address
-  const fromAddress = config.source
+  const requested = (data as SendMailOptions).from
+  // A producer may name its own sender, but only within the domain we send for.
+  const allowed = requested == null || isAllowedFrom(requested)
+  if (!allowed) {
+    ctx?.warn('Ignoring out-of-domain from address', { from: requested, source: config.source })
+  }
+  const fromAddress = allowed ? (requested ?? config.source) : config.source
   emailMessage.from = fromAddress
 
-  // Set reply-to if configured and from address matches source
-  if (config.replyTo !== undefined && fromAddress === config.source) {
+  // Set reply-to if configured and the sender is one of ours.
+  if (config.replyTo !== undefined && fromAddress != null && isAllowedFrom(fromAddress)) {
     emailMessage.replyTo = config.replyTo
   }
 

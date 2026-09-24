@@ -30,7 +30,7 @@
     eventToHTMLElement,
     getEventPositionElement,
     getFocusManager,
-    getPlatformColorDef,
+    getPaletteColorDef,
     getPlatformColorForTextDef,
     showPopup,
     themeStore
@@ -149,9 +149,8 @@
         ? undefined
         : {
             fill:
-              selected?.color !== undefined && typeof selected?.color !== 'string'
-                ? getPlatformColorDef(selected?.color ?? 0, $themeStore.dark).icon
-                : getPlatformColorForTextDef(selected?.name ?? '', $themeStore.dark).icon
+              getPaletteColorDef(selected?.color, $themeStore.dark)?.icon ??
+              getPlatformColorForTextDef(selected?.name ?? '', $themeStore.dark).icon
           }}
     {size}
     {kind}

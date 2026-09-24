@@ -6,6 +6,7 @@ import { SelectWorkspacePage } from './model/select-workspace-page'
 import { CommonTrackerPage } from './model/tracker/common-tracker-page'
 import { TrackerNavigationMenuPage } from './model/tracker/tracker-navigation-menu-page'
 import { SignUpPage } from './model/signup-page'
+import { OtpPage } from './model/otp-page'
 
 test.describe('login test', () => {
   let loginPage: LoginPage
@@ -37,6 +38,13 @@ test.describe('login test', () => {
     await expect(async () => {
       await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
+  })
+
+  test('login with code for an unknown user shows an error instead of the code screen', async ({ page }) => {
+    await loginPage.loginWithCode(`unknown-${Date.now()}@test.local`)
+    await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
+    await expect(new OtpPage(page).title()).toBeHidden()
+    await expect(loginPage.inputEmail()).toBeVisible()
   })
 
   test('check if user is able to go to to recovery, then login and then signup', async ({ page }) => {

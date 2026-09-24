@@ -142,18 +142,15 @@ test.describe('otp signup', () => {
     expect(await accountOf(value)).toBeDefined()
   })
 
-  test('an unknown address gets the code screen and a wrong code, never a hint', async ({ page }) => {
+  test('an unknown address gets an error instead of the code screen', async ({ page }) => {
     const value = email('unknown')
 
     await loginPage.goto()
     await loginPage.loginWithCode(value)
 
-    // Nothing is created and nothing is revealed - the screen looks like any other sign in.
-    await otpPage.checkIfCodeScreenIsShown(value)
+    await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
+    await expect(otpPage.title()).toBeHidden()
     expect(await personOf(value)).toBeUndefined()
-
-    await otpPage.enterCode('000000')
-    await expect(otpPage.invalidCodeMessage()).toBeVisible()
   })
 
   test('the activation link completes a sign up whose code was never entered', async ({ page }) => {

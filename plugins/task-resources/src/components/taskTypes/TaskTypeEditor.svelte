@@ -35,6 +35,7 @@
     ModernEditbox,
     getCurrentLocation,
     navigate,
+    resolvePaletteColor,
     showPopup
   } from '@hcengineering/ui'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
@@ -71,7 +72,7 @@
   $: taskType = taskTypes.find((tt) => tt._id === objectId)
   $: name = taskType?.name
   $: icon = taskType?.icon
-  $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
+  $: color = resolvePaletteColor(taskType?.color)
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
 

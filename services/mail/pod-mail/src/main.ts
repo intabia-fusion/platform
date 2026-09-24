@@ -166,7 +166,7 @@ function createNotificationHandler (
 ) {
   return async (ctx: MeasureContext, message: { value: AccountNotification }, control: any) => {
     if (message.value.type === 'email') {
-      const emailMessage = createEmailMessage(message.value.data as EmailNotification)
+      const emailMessage = createEmailMessage(message.value.data as EmailNotification, ctx)
 
       ctx.info('Received email from notification queue', { to: emailMessage.to, mode: config.mode })
       switch (config.mode) {

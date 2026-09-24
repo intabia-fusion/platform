@@ -27,7 +27,8 @@
     languageStore,
     Loading,
     showPopup,
-    themeStore
+    themeStore,
+    resolvePaletteColor
   } from '@hcengineering/ui'
   import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
@@ -98,11 +99,8 @@
 
       const category = s.category ? categoryMap.get(s.category) : undefined
       const colorNum =
-        s.color !== undefined && typeof s.color !== 'string'
-          ? s.color
-          : (category?.color ??
-            (s.category ? defaultCategoryColors[s.category] : undefined) ??
-            getColorNumberByText(s.name))
+        resolvePaletteColor(s.color, category?.color, s.category ? defaultCategoryColors[s.category] : undefined) ??
+        getColorNumberByText(s.name)
       const colorDef = getPlatformColorDef(colorNum, isDark)
 
       const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')

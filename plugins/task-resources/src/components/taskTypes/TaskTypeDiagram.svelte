@@ -23,6 +23,7 @@
     Label,
     languageStore,
     Loading,
+    resolvePaletteColor,
     themeStore,
     Toggle
   } from '@hcengineering/ui'
@@ -191,7 +192,7 @@
       const label = sanitizeLabel(t.name) + icon
       lines.push(`  ${nodeId}(["${label}"])`)
 
-      const colorNum = t.color !== undefined && typeof t.color !== 'string' ? t.color : getColorNumberByText(t.name)
+      const colorNum = resolvePaletteColor(t.color) ?? getColorNumberByText(t.name)
       const colorDef = getPlatformColorDef(colorNum, isDark)
 
       const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')

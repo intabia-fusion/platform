@@ -21,9 +21,13 @@ import {
   type SubscriptionData,
   type SubscriptionUpsert
 } from '@hcengineering/account-client'
+import { type BillingMailContext, notifyExpired, notifyUpcoming } from '@hcengineering/billing-mail'
 import { hasGrantingTier } from './utils'
 
 const TRIAL_EXPIRED = 'TRIAL_EXPIRED'
+
+const HOUR = 60 * 60 * 1000
+const DAY = 24 * HOUR
 
 /** Subscriptions written per bulk call. */
 const BATCH_SIZE = 100
@@ -41,7 +45,8 @@ export async function expireTrials (
   ctx: MeasureContext,
   accountClient: AccountClient,
   buildFreeSubscription: FreeSubscriptionBuilder | undefined,
-  logOperation?: OperationLogger
+  logOperation?: OperationLogger,
+  mail?: BillingMailContext
 ): Promise<void> {
   const now = Date.now()
 
@@ -55,7 +60,8 @@ export async function expireTrials (
       buildFreeSubscription,
       logOperation,
       trials.slice(i, i + BATCH_SIZE),
-      now
+      now,
+      mail
     )
   }
 
@@ -71,7 +77,8 @@ async function expireBatch (
   buildFreeSubscription: FreeSubscriptionBuilder | undefined,
   logOperation: OperationLogger | undefined,
   batch: Subscription[],
-  now: number
+  now: number,
+  mail?: BillingMailContext
 ): Promise<number> {
   const writes: SubscriptionUpsert[] = []
 
@@ -128,6 +135,9 @@ async function expireBatch (
 
     if (isCancel) {
       ctx.info('trial expired', { workspace: write.workspaceUuid, plan: write.plan, trialEnd: write.trialEnd })
+      if (mail !== undefined) {
+        await notifyExpired(ctx, mail, write as SubscriptionData, 'trial', write.trialEnd ?? now)
+      }
       expired++
     } else {
       ctx.info('free subscription created for workspace', { workspace: write.workspaceUuid, plan: write.plan })
@@ -137,8 +147,64 @@ async function expireBatch (
   return expired
 }
 
-const HOUR = 60 * 60 * 1000
-const DAY = 24 * HOUR
+/**
+ * Remind owners whose trial ends within `noticeDays`. *
+ * `providerData.upcomingNotifiedFor` holds the trialEnd a reminder was last sent for, so a trial
+ * is mailed once even though the sweep runs repeatedly.
+ */
+export async function remindUpcomingTrials (
+  ctx: MeasureContext,
+  accountClient: AccountClient,
+  noticeDays: number,
+  mail: BillingMailContext
+): Promise<void> {
+  if (noticeDays <= 0) return
+  const now = Date.now()
+  const until = now + noticeDays * DAY
+
+  // Server-side bound: trials ending before `until`.
+  const trials = await accountClient.getSubscriptionsByProvider('trial', [SubscriptionStatus.Trialing], until)
+
+  let sent = 0
+  for (const sub of trials) {
+    if (sub.trialEnd == null || sub.trialEnd <= now) continue
+    if (sub.providerData?.upcomingNotifiedFor === sub.trialEnd) continue
+
+    try {
+      // Re-read: the workspace may have bought a paid tier since the listing. The trial itself is
+      // still granting (trialEnd is in the future), so exclude it or it would cancel its own mail.
+      const fresh = await accountClient.getSubscriptions(sub.workspaceUuid, false)
+      if (hasGrantingTier(fresh.filter((s) => s.id !== sub.id))) continue
+    } catch (err: any) {
+      ctx.error('failed to check trial workspace for reminder', { workspace: sub.workspaceUuid, err })
+      continue
+    }
+
+    // Mark before sending: a duplicate email is worse than a missed one, and the next sweep retries
+    // nothing either way.
+    try {
+      await accountClient.upsertSubscription({
+        ...sub,
+        providerData: {
+          ...sub.providerData,
+          upcomingNotifiedFor: sub.trialEnd,
+          // Trials carry no modifiedAt; 0 lets the stale-write guard skip this if the trial was superseded meanwhile.
+          modifiedAt: sub.providerData?.modifiedAt ?? 0
+        }
+      })
+    } catch (err: any) {
+      ctx.error('failed to mark trial reminder', { workspace: sub.workspaceUuid, err })
+      continue
+    }
+
+    await notifyUpcoming(ctx, mail, sub as SubscriptionData, 'trial', sub.trialEnd)
+    sent++
+  }
+
+  if (sent > 0) {
+    ctx.info('upcoming-trial reminders sent', { sent, noticeDays })
+  }
+}
 
 /** Milliseconds until the next occurrence of hourUtc:00. Never 0, so a sweep at the hour mark waits a full day. */
 export function msUntilHour (hourUtc: number, from: number = Date.now()): number {
@@ -162,12 +228,20 @@ export function startTrialExpiry (
   accountClient: AccountClient,
   buildFreeSubscription: FreeSubscriptionBuilder | undefined,
   schedule: { hourUtc: number, intervalMinutes?: number },
-  logOperation?: OperationLogger
+  logOperation?: OperationLogger,
+  mail?: BillingMailContext,
+  noticeDays: number = 0
 ): () => void {
   const run = (): void => {
-    void expireTrials(ctx, accountClient, buildFreeSubscription, logOperation).catch((err: any) => {
+    void expireTrials(ctx, accountClient, buildFreeSubscription, logOperation, mail).catch((err: any) => {
       ctx.error('trial expiry sweep failed', { err })
     })
+    // Same cadence as the sweep: both only need to run once a day.
+    if (mail !== undefined) {
+      void remindUpcomingTrials(ctx, accountClient, noticeDays, mail).catch((err: any) => {
+        ctx.error('upcoming-trial reminder failed', { err })
+      })
+    }
   }
 
   const freePlanConfigured = buildFreeSubscription !== undefined

@@ -16,7 +16,7 @@
   import { getCurrentAccount, Ref } from '@hcengineering/core'
   import presentation, { createQuery, IconWithEmoji } from '@hcengineering/presentation'
   import { Project } from '@hcengineering/tracker'
-  import { Icon, Label, getPlatformColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
+  import { Icon, Label, getPaletteColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { NavLink } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
@@ -54,9 +54,8 @@
           ? { icon: projectObj.color }
           : {
               fill:
-                projectObj.color !== undefined && typeof projectObj.color !== 'string'
-                  ? getPlatformColorDef(projectObj.color, $themeStore.dark).icon
-                  : getPlatformColorForTextDef(projectObj.name, $themeStore.dark).icon
+                getPaletteColorDef(projectObj.color, $themeStore.dark)?.icon ??
+                getPlatformColorForTextDef(projectObj.name, $themeStore.dark).icon
             }}
         size="small"
       />

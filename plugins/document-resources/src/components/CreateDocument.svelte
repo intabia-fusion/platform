@@ -24,7 +24,7 @@
     createFocusManager,
     EditBox,
     FocusHandler,
-    getPlatformColorDef,
+    getPaletteColorDef,
     showPopup,
     themeStore
   } from '@hcengineering/ui'
@@ -132,10 +132,7 @@
         iconProps={object.icon === view.ids.IconWithEmoji
           ? { icon: object.color, size: 'medium' }
           : {
-              fill:
-                object.color !== undefined && typeof object.color !== 'string'
-                  ? getPlatformColorDef(object.color, $themeStore.dark).icon
-                  : 'currentColor'
+              fill: getPaletteColorDef(object.color, $themeStore.dark)?.icon ?? 'currentColor'
             }}
         on:click={chooseIcon}
       />

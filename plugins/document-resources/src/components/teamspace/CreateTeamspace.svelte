@@ -37,7 +37,7 @@
     Label,
     Toggle,
     getColorNumberByText,
-    getPlatformColorDef,
+    getPaletteColorDef,
     getPlatformColorForTextDef,
     showPopup,
     themeStore
@@ -362,9 +362,8 @@
           ? { icon: color }
           : {
               fill:
-                color !== undefined && typeof color !== 'string'
-                  ? getPlatformColorDef(color, $themeStore.dark).icon
-                  : getPlatformColorForTextDef(name, $themeStore.dark).icon
+                getPaletteColorDef(color, $themeStore.dark)?.icon ??
+                getPlatformColorForTextDef(name, $themeStore.dark).icon
             }}
         size={'large'}
         on:click={chooseIcon}

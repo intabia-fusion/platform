@@ -22,6 +22,7 @@
     IconSize,
     getColorNumberByText,
     getPlatformColorDef,
+    resolvePaletteColor,
     themeStore
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
@@ -38,9 +39,7 @@
   }
 
   $: color = getPlatformColorDef(
-    value?.color !== undefined && typeof value?.color !== 'string'
-      ? value?.color
-      : getColorNumberByText(value?.name ?? ''),
+    resolvePaletteColor(value?.color) ?? getColorNumberByText(value?.name ?? ''),
     $themeStore.dark
   )
   $: dispatchAccentColor(color)
