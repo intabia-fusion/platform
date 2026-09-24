@@ -18,6 +18,7 @@ import { chunterId, type Channel } from '@hcengineering/chunter'
 import chunter from '@hcengineering/chunter-resources/src/plugin'
 import { type Doc, type Ref } from '@hcengineering/core'
 import { type NotificationGroup } from '@hcengineering/notification'
+import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
 import type { IntlString, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import type { AnyComponent, Location } from '@hcengineering/ui/src/types'
@@ -32,6 +33,10 @@ import type {
 import { type WidgetTab, type LocationData } from '@hcengineering/workbench'
 
 export default mergeIds(chunterId, chunter, {
+  completion: {
+    ChannelQuery: '' as Resource<ObjectSearchFactory>,
+    ChannelCategory: '' as Ref<ObjectSearchCategory>
+  },
   component: {
     ChannelPresenter: '' as AnyComponent,
     DmPresenter: '' as AnyComponent,
@@ -115,6 +120,8 @@ export default mergeIds(chunterId, chunter, {
     CanDeleteMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanCopyMessageLink: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     GetChunterSpaceLinkFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
+    GetChunterSpaceLinkId: '' as Resource<(doc: Doc) => Promise<string>>,
+    ParseChunterSpaceLinkId: '' as Resource<(id: string) => Promise<Ref<Doc> | undefined>>,
     GetThreadLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
     ReplyToThread: '' as Resource<(doc: ActivityMessage, event: MouseEvent) => Promise<void>>,
     CanReplyToThread: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,

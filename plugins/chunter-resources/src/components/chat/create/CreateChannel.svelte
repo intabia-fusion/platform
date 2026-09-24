@@ -21,7 +21,7 @@
 
   import Lock from '../../icons/Lock.svelte'
   import chunter from '../../../plugin'
-  import { openChannel } from '../../../navigation'
+  import { openChunterSpace } from '../../../navigation'
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -66,7 +66,7 @@
       owners: [myAcc]
     })
 
-    openChannel(channelId, chunter.class.Channel)
+    await openChunterSpace(channelId, chunter.class.Channel)
   }
 
   function handleCancel (): void {

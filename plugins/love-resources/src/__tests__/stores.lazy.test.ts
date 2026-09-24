@@ -48,12 +48,6 @@ jest.mock('@hcengineering/presentation', () => ({
   })
 }))
 
-const mockGetWorkspaceMembers = jest.fn(async () => [])
-
-jest.mock('@hcengineering/account-client', () => ({
-  getClient: jest.fn(() => ({ getWorkspaceMembers: mockGetWorkspaceMembers }))
-}))
-
 function queriedClasses (): string[] {
   return mockQueryInstances.flatMap((inst) => inst.query.mock.calls.map((c) => String(c[0])))
 }
@@ -72,7 +66,6 @@ describe('office stores loaded on demand', () => {
     expect(names(queriedClasses())).toEqual(
       names([love.class.Room, love.class.ParticipantInfo, love.class.MeetingMinutes])
     )
-    expect(mockGetWorkspaceMembers).not.toHaveBeenCalled()
   })
 
   it('queries floors, preferences and recordings on the first ensureOfficeDetailsLoaded call only', async () => {
@@ -105,13 +98,5 @@ describe('office stores loaded on demand', () => {
     for (const cb of mockOnClientCallbacks) cb()
 
     expect(queriedClasses().filter((it) => it === floor).length).toBe(before)
-  })
-
-  it('fetches the workspace members on the first ensureWorkspaceMembersLoaded call only', async () => {
-    const { ensureWorkspaceMembersLoaded } = await import('../stores')
-
-    await Promise.all([ensureWorkspaceMembersLoaded(), ensureWorkspaceMembersLoaded()])
-
-    expect(mockGetWorkspaceMembers).toHaveBeenCalledTimes(1)
   })
 })

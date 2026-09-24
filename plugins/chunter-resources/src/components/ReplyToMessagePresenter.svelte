@@ -25,7 +25,7 @@
   import { AttachmentSimplePreview } from '@hcengineering/attachment-resources'
   import { isEmptyMarkup } from '@hcengineering/text'
   import { IntlString } from '@hcengineering/platform'
-  import { encodeObjectURI } from '@hcengineering/view'
+  import { encodeChatURI } from '../navigation'
   import { setFilters } from '@hcengineering/view-resources'
 
   export let replyTo: WithLookup<ChatMessage>
@@ -97,11 +97,11 @@
 
     if (hierarchy.isDerived(message.attachedToClass, activity.class.ActivityMessage)) {
       if (parentMsg == null) return undefined
-      newLocation.path[3] = encodeObjectURI(parentMsg.attachedTo, parentMsg.attachedToClass)
+      newLocation.path[3] = encodeChatURI(parentMsg.attachedTo, parentMsg.attachedToClass)
       newLocation.path[4] = message.attachedTo
       newLocation.path.length = 5
     } else {
-      newLocation.path[3] = encodeObjectURI(message.attachedTo, message.attachedToClass)
+      newLocation.path[3] = encodeChatURI(message.attachedTo, message.attachedToClass)
       newLocation.path.length = 4
     }
 

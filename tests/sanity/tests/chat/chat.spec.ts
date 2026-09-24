@@ -289,7 +289,7 @@ test.describe('Channel tests', () => {
     // Take the workspace segment from the URL: when the generated name is already taken the
     // account service appends a suffix, and the workspace url stops matching its name.
     const workspaceUrl = new URL(page.url()).pathname.split('/')[2]
-    const expectedUrl = `${baseURL}/workbench/${workspaceUrl}/chunter/chunter%3Aspace%3ARandom%7Cchunter%3Aclass%3AChannel?message=`
+    const expectedUrl = `${baseURL}/workbench/${workspaceUrl}/chunter/chunter-space-Random?message=`
     await channelPage.sendMessage(message)
     await channelPage.clickOpenMoreButton(message)
     await channelPage.clickCopyLinkButton()

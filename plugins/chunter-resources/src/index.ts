@@ -20,6 +20,7 @@ import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
+import { parseChunterSpaceLinkId } from './linkId'
 import {
   getNotificationsCount,
   InboxNotificationsClientImpl,
@@ -98,6 +99,8 @@ import {
   forwardMessage,
   replyToMessage,
   openDirectForPerson,
+  getChunterSpaceLinkId,
+  queryChannels,
   CommentsApplier
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
@@ -219,6 +222,8 @@ export default async (): Promise<Resources> => ({
     CanDeleteMessage: canDeleteMessage,
     CanCopyMessageLink: canCopyMessageLink,
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
+    GetChunterSpaceLinkId: getChunterSpaceLinkId,
+    ParseChunterSpaceLinkId: parseChunterSpaceLinkId,
     GetUnreadThreadsCount: getUnreadThreadsCount,
     GetThreadLink: getThreadLink,
     ReplyToThread: replyToThread,
@@ -259,6 +264,9 @@ export default async (): Promise<Resources> => ({
       }
       return false
     }
+  },
+  completion: {
+    ChannelQuery: queryChannels
   },
   actionImpl: {
     ArchiveChannel,

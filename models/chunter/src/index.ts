@@ -114,6 +114,29 @@ export function createModel (builder: Builder): void {
 
   const spaceClasses = [chunter.class.Channel, chunter.class.DirectMessage]
 
+  builder.createDoc(
+    presentation.class.ObjectSearchCategory,
+    core.space.Model,
+    {
+      icon: chunter.icon.Hashtag,
+      label: chunter.string.Channels,
+      title: chunter.string.Channels,
+      query: chunter.completion.ChannelQuery,
+      context: ['search', 'mention', 'spotlight'],
+      classToSearch: chunter.class.Channel,
+      priority: 500
+    },
+    chunter.completion.ChannelCategory
+  )
+
+  // ChunterSpace itself decodes class-less chat links, whose concrete class is not known yet.
+  for (const spaceClass of [chunter.class.ChunterSpace, chunter.class.Channel, chunter.class.DirectMessage]) {
+    builder.mixin(spaceClass, core.class.Class, view.mixin.LinkIdProvider, {
+      encode: chunter.function.GetChunterSpaceLinkId,
+      decode: chunter.function.ParseChunterSpaceLinkId
+    })
+  }
+
   spaceClasses.forEach((spaceClass) => {
     builder.mixin(spaceClass, core.class.Class, activity.mixin.ActivityDoc, {})
 

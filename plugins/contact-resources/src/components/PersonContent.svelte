@@ -54,6 +54,8 @@
   export let inlineBlock = false
   export let shrink: boolean = false
   export let clickable: boolean = true
+  export let highlight: string | undefined = undefined
+  export let transparent: boolean = false
 
   const client = getClient()
 
@@ -84,6 +86,8 @@
         {value}
         {name}
         {inline}
+        {highlight}
+        {transparent}
         {disabled}
         {clickable}
         {shouldShowAvatar}
@@ -110,6 +114,8 @@
       {value}
       {name}
       {inline}
+      {highlight}
+      {transparent}
       {disabled}
       {clickable}
       {shouldShowAvatar}

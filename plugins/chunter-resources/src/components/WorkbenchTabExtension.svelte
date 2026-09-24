@@ -25,7 +25,8 @@
   import { InboxNotification } from '@hcengineering/notification'
   import { onDestroy } from 'svelte'
   import { concatLink, Doc, Ref } from '@hcengineering/core'
-  import view, { decodeObjectURI } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import { decodeChatURI } from '../navigation'
   import { chunterId } from '@hcengineering/chunter'
   import { parseLinkId } from '@hcengineering/view-resources'
   import { parseLocation } from '@hcengineering/ui'
@@ -59,7 +60,7 @@
 
     const client = getClient()
     const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-    const [id, _class] = decodeObjectURI(loc.path[3])
+    const [id, _class] = decodeChatURI(loc.path[3])
     objectId = await parseLinkId(providers, id, _class)
   }
 

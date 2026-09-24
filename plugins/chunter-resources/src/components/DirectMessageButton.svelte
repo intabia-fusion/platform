@@ -39,6 +39,7 @@
     iconSize="small"
     {type}
     {kind}
+    dataId="btnDirectMessage"
     on:click={openDirect}
   />
 </div>

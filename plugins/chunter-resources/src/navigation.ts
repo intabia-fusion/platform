@@ -24,7 +24,7 @@ import { notificationId } from '@hcengineering/notification'
 import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
 import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
-import view, { encodeObjectURI, decodeObjectURI } from '@hcengineering/view'
+import view, { encodeObjectURI } from '@hcengineering/view'
 import {
   closeWidgetTab,
   createWidgetTab,
@@ -38,8 +38,19 @@ import { get } from 'svelte/store'
 
 import { chatSpecials } from './components/chat/utils'
 import { getChannelName, isThreadMessage } from './utils'
+import { decodeChatURI } from './linkId'
 import chunter from './plugin'
 import { threadMessagesStore } from './stores'
+
+// Channels and directs are addressed by their link id alone (`<name>-<id>`), other docs as `<id>|<class>`.
+export function encodeChatURI (id: string, _class: Ref<Class<Doc>>): string {
+  const hierarchy = getClient().getHierarchy()
+  // An unknown class (removed plugin, stale attachedToClass) keeps the old form instead of throwing.
+  const isSpace = hierarchy.hasClass(_class) && hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+  return isSpace ? id : encodeObjectURI(id, _class)
+}
+
+export { decodeChatURI }
 
 export function openChannel (
   _id: string,
@@ -48,7 +59,7 @@ export function openChannel (
   forceApplication = false
 ): void {
   const loc = getCurrentLocation()
-  const id = encodeObjectURI(_id, _class)
+  const id = encodeChatURI(_id, _class)
 
   if (loc.path[3] === id) {
     return
@@ -59,7 +70,8 @@ export function openChannel (
   }
 
   loc.path[3] = id
-  loc.query = { ...loc.query, message: null }
+  loc.query = { ...loc.query }
+  delete loc.query.message
 
   if (thread !== undefined) {
     loc.path[4] = thread
@@ -70,6 +82,15 @@ export function openChannel (
   }
 
   navigate(loc)
+}
+
+export async function openChunterSpace (
+  _id: Ref<Doc>,
+  _class: Ref<Class<Doc>>,
+  forceApplication = false
+): Promise<void> {
+  const providers = getClient().getModel().findAllSync(view.mixin.LinkIdProvider, {})
+  openChannel(await getObjectLinkId(providers, _id, _class), _class, undefined, forceApplication)
 }
 
 export async function openMessageFromSpecial (message?: ActivityMessage): Promise<void> {
@@ -84,12 +105,12 @@ export async function openMessageFromSpecial (message?: ActivityMessage): Promis
   if (isThreadMessage(message)) {
     const id = await getObjectLinkId(providers, message.objectId, message.objectClass)
 
-    loc.path[3] = encodeObjectURI(id, message.objectClass)
+    loc.path[3] = encodeChatURI(id, message.objectClass)
     loc.path[4] = message.attachedTo
   } else {
     const id = await getObjectLinkId(providers, message.attachedTo, message.attachedToClass)
 
-    loc.path[3] = encodeObjectURI(id, message.attachedToClass)
+    loc.path[3] = encodeChatURI(id, message.attachedToClass)
   }
 
   loc.query = { ...loc.query, message: message._id }
@@ -109,12 +130,12 @@ export async function openSearchResult (doc: SearchResultDoc['doc']): Promise<vo
 
   if (isThread && objectId !== undefined && objectClass !== undefined) {
     const id = await getObjectLinkId(providers, objectId, objectClass)
-    loc.path[3] = encodeObjectURI(id, objectClass)
+    loc.path[3] = encodeChatURI(id, objectClass)
     loc.path[4] = doc.attachedTo as string
     loc.path.length = 5
   } else if (doc.attachedTo !== undefined && doc.attachedToClass !== undefined) {
     const id = await getObjectLinkId(providers, doc.attachedTo, doc.attachedToClass)
-    loc.path[3] = encodeObjectURI(id, doc.attachedToClass)
+    loc.path[3] = encodeChatURI(id, doc.attachedToClass)
     loc.path[4] = ''
     loc.path.length = 4
   } else {
@@ -151,7 +172,7 @@ export async function getMessageLink (message: ActivityMessage): Promise<string>
     _class = message.attachedToClass
   }
 
-  const id = encodeURIComponent(encodeObjectURI(_id, _class))
+  const id = encodeURIComponent(encodeChatURI(_id, _class))
   const frontUrl = getMetadata(presentation.metadata.FrontUrl)
   const protocolAndHost = frontUrl ?? `${window.location.protocol}//${window.location.host}`
   const path = `${workbenchId}/${location.path[1]}/${chunterId}/${id}${threadParent}?message=${message._id}`
@@ -169,7 +190,7 @@ export async function chunterSpaceLinkFragmentProvider (doc: ChunterSpace): Prom
   loc.fragment = undefined
   loc.query = undefined
   loc.path[2] = chunterId
-  loc.path[3] = encodeObjectURI(id, doc._class)
+  loc.path[3] = encodeChatURI(id, doc._class)
 
   return loc
 }
@@ -186,7 +207,7 @@ export async function buildThreadLink (
   const id = await getObjectLinkId(providers, _id, _class, doc)
 
   const specials = chatSpecials.map(({ id }) => id)
-  const objectURI = encodeObjectURI(id, _class)
+  const objectURI = encodeChatURI(id, _class)
   const isSameChannel = loc.path[3] === objectURI
 
   if (!isSameChannel) {
@@ -266,7 +287,7 @@ export async function resetChunterLocIfEqual (_id: Ref<Doc>, _class: Ref<Class<D
   const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
   const id = await getObjectLinkId(providers, _id, _class, doc)
 
-  const [locId] = decodeObjectURI(loc.path[3])
+  const [locId] = decodeChatURI(loc.path[3])
 
   if (locId !== id) {
     return
@@ -489,7 +510,7 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   const hierarchy = client.getHierarchy()
   const lang = get(languageStore)
 
-  const [id, _class] = decodeObjectURI(loc.path[3])
+  const [id, _class] = decodeChatURI(loc.path[3])
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
   const _id: Ref<Doc> | undefined = await parseLinkId(linkProviders, id, _class)
 
@@ -497,10 +518,10 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   if (object === undefined) return { name: await translate(chunter.string.Chat, {}, lang) }
 
   const titleIntl = client.getHierarchy().getClass(object._class).label
-  const iconMixin = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIcon)
-  const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
-  const isChunterSpace = hierarchy.isDerived(_class, chunter.class.ChunterSpace)
-  const name = (await getChannelName(_id, _class, object, lang)) ?? (await translate(titleIntl, {}, lang))
+  const iconMixin = hierarchy.classHierarchyMixin(object._class, view.mixin.ObjectIcon)
+  const isDirect = hierarchy.isDerived(object._class, chunter.class.DirectMessage)
+  const isChunterSpace = hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
+  const name = (await getChannelName(_id, object._class, object, lang)) ?? (await translate(titleIntl, {}, lang))
 
   return {
     objectId: object._id,

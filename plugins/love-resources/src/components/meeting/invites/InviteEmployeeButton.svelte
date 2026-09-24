@@ -16,19 +16,14 @@
 <script lang="ts">
   import { ButtonBaseSize, IconSize, ModernButton, showPopup } from '@hcengineering/ui'
   import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
+  import contactRes from '@hcengineering/contact-resources/src/plugin'
   import love from '../../../plugin'
   import { SelectUsersPopup } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
   import { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { sendInvites } from '../../../invites'
-  import {
-    aiBotPerson,
-    currentMeetingMinutes,
-    infos,
-    workspaceMemberAccounts,
-    ensureWorkspaceMembersLoaded
-  } from '../../../stores'
+  import { aiBotPerson, currentMeetingMinutes, infos } from '../../../stores'
   import { ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
 
   export let employee: Employee | undefined = undefined
@@ -41,18 +36,13 @@
   const dispatch = createEventDispatcher()
   const hierarchy = getClient().getHierarchy()
 
-  void ensureWorkspaceMembersLoaded()
   void ensureAiBotIdentityLoaded()
 
-  // Yourself, the AI assistant, deactivated employees and pending invites cannot be called.
-  $: mixin = employee !== undefined ? hierarchy.as(employee, contact.mixin.Employee) : undefined
-  $: hidden =
+  // Yourself and the AI assistant are not offered a call; anyone but an active employee gets a disabled button.
+  $: hidden = employee !== undefined && (employee._id === getCurrentEmployee() || employee._id === $aiBotPerson)
+  $: disabled =
     employee !== undefined &&
-    (employee._id === getCurrentEmployee() ||
-      employee._id === $aiBotPerson ||
-      mixin?.active !== true ||
-      mixin.personUuid == null ||
-      $workspaceMemberAccounts?.has(mixin.personUuid) === false)
+    !(hierarchy.hasMixin(employee, contact.mixin.Employee) && hierarchy.as(employee, contact.mixin.Employee).active)
 
   async function invite (): Promise<void> {
     if (employee !== undefined) {
@@ -93,6 +83,12 @@
       {iconSize}
       {type}
       {kind}
+      {disabled}
+      tooltip={disabled
+        ? { label: contactRes.string.Inactive }
+        : type === 'type-button-icon'
+          ? { label: love.string.Invite }
+          : undefined}
       on:click={invite}
     />
   </div>

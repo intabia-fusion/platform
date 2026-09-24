@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { getDocTitle } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
-  import { Channel } from '@hcengineering/chunter'
+  import { Class, Doc, Ref, reduceCalls } from '@hcengineering/core'
+  import { getDocTitle, openDoc } from '@hcengineering/view-resources'
+  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
+  import { Channel, DirectMessage } from '@hcengineering/chunter'
   import { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
-  import contact from '@hcengineering/contact'
+  import contact, { Person } from '@hcengineering/contact'
   import view from '@hcengineering/view'
-  import { languageStore } from '@hcengineering/ui'
+  import { ButtonIcon, languageStore } from '@hcengineering/ui'
 
   import Header from './Header.svelte'
   import chunter from '../plugin'
-  import { getObjectIcon, getChannelName } from '../utils'
+  import { getObjectIcon, getChannelName, getDmPersons } from '../utils'
   import PinnedMessages from './PinnedMessages.svelte'
 
   export let _id: Ref<Doc>
@@ -65,6 +65,20 @@
     }
   }
 
+  // A direct with no messages yet has no author to click, so the header is the only way to the person card.
+  let directPerson: Person | undefined = undefined
+  // Serialized, so a slower answer for the previous direct cannot land on the one opened since.
+  const updateDirectPerson = reduceCalls(async (object: Doc | undefined, _class: Ref<Class<Doc>>): Promise<void> => {
+    if (object === undefined || !hierarchy.isDerived(_class, chunter.class.DirectMessage)) {
+      directPerson = undefined
+      return
+    }
+    const dm = object as DirectMessage
+    const res = await getDmPersons(client, dm)
+    directPerson = dm.members.length === 2 && res.length === 1 ? res[0] : undefined
+  })
+  $: void updateDirectPerson(object, _class)
+
   $: isPerson =
     hierarchy.isDerived(_class, chunter.class.DirectMessage) || hierarchy.isDerived(_class, contact.class.Person)
 </script>
@@ -97,6 +111,20 @@
     <slot name="search" />
   </svelte:fragment>
   <svelte:fragment slot="actions">
+    {#if directPerson !== undefined}
+      <ComponentExtensions
+        extension={chunter.extensions.DirectHeaderExtension}
+        props={{ employee: directPerson, type: 'type-button-icon', size: 'small', withBackground: false }}
+      />
+      <ButtonIcon
+        icon={contact.icon.User}
+        size="small"
+        iconSize="small"
+        tooltip={{ label: contact.string.ViewProfile }}
+        dataId="btnDirectViewProfile"
+        on:click={() => directPerson && openDoc(hierarchy, directPerson)}
+      />
+    {/if}
     <slot name="actions" />
   </svelte:fragment>
   {#if object}

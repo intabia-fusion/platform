@@ -74,7 +74,8 @@
   function closeThread (): void {
     const loc = getCurrentLocation()
     loc.path.length = 4
-    loc.query = { ...loc.query, message: null }
+    loc.query = { ...loc.query }
+    delete loc.query.message
     navigate(loc)
   }
 

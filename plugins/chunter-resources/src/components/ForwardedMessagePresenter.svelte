@@ -33,7 +33,7 @@
   import { getDocIdentifier, getDocTitle, setFilters } from '@hcengineering/view-resources'
 
   import chunter from '../plugin'
-  import { encodeObjectURI } from '@hcengineering/view'
+  import { encodeChatURI } from '../navigation'
 
   export let object: Doc | undefined
   export let parent: WithLookup<ChatMessage>
@@ -190,11 +190,11 @@
       location.path[2] = chunterId
       if (hierarchy.isDerived(_class, activity.class.ActivityMessage)) {
         const message = doc as ActivityMessage
-        location.path[3] = encodeObjectURI(message.attachedTo, message.attachedToClass)
+        location.path[3] = encodeChatURI(message.attachedTo, message.attachedToClass)
         location.path[4] = message._id
         location.path.length = 5
       } else {
-        location.path[3] = encodeObjectURI(_id, _class)
+        location.path[3] = encodeChatURI(_id, _class)
         location.path.length = 4
       }
     }

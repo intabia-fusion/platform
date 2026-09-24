@@ -15,6 +15,8 @@ export class EmployeeDetailsPage extends CommonPage {
   readonly textActivityContent = (): Locator => this.page.locator('div.activityMessage div[class*="content"]')
   readonly textEmployeeFirstName = (): Locator => this.page.locator('input[placeholder="First name"]')
   readonly textEmployeeLastName = (): Locator => this.page.locator('input[placeholder="Last name"]')
+  // The card header one: the employee tooltip renders the same button.
+  readonly buttonDirectMessage = (): Locator => this.page.locator('.hulyHeader-container [data-id="btnDirectMessage"]')
 
   async checkActivityExist (activityHeader: string, activityContent: string): Promise<void> {
     await expect(this.textActivity().filter({ hasText: activityHeader }).first()).toBeVisible()
