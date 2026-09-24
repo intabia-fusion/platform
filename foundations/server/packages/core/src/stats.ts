@@ -177,8 +177,10 @@ export function initStatisticsContext (
     let lastCheck = 0
     // stats bumps this on wipe; services send cumulative trees, so they have to clear their own.
     let seenReset = -1
-    // No exp on a service token, so mint it once instead of on every push and heartbeat.
-    const statsToken = generateToken(systemAccountUuid, undefined, { service: serviceName })
+    // Kept only after stats accepts it: services set the secret after initStatisticsContext,
+    // so a token minted at init signs with the default one.
+    let bakedToken: string | undefined
+    const statsToken = (): string => bakedToken ?? generateToken(systemAccountUuid, undefined, { service: serviceName })
     let lastOperations = -1
     let lastContact = 0
     let lastFullPush = 0
@@ -243,7 +245,7 @@ export function initStatisticsContext (
             // Nothing to report yet - only prove we are alive, and only if a push has not.
             if (lastContact !== 0 && now - lastContact >= HEARTBEAT_INTERVAL) {
               lastContact = now
-              void sendHeartbeat(statsUrl, statsToken, serviceId, applyRate).then((known) => {
+              void sendHeartbeat(statsUrl, statsToken(), serviceId, applyRate).then((known) => {
                 if (!known) {
                   lastOperations = -1
                 }
@@ -268,15 +270,17 @@ export function initStatisticsContext (
             'sendStatistics',
             {},
             async (ctx) => {
+              const token = statsToken()
               prev = fetch(concatLink(statsUrl, '/api/v1/statistics') + `/?name=${serviceId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/octet-stream',
-                  authorization: `Bearer ${statsToken}`
+                  authorization: `Bearer ${token}`
                 },
                 body: statData
               })
                 .then(async (res) => {
+                  bakedToken = res.ok ? token : undefined
                   try {
                     applyRate(await res.json())
                   } catch {
