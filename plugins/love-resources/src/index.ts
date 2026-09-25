@@ -49,6 +49,7 @@ import MeetingMinutesListItem from './components/MeetingMinutesListItem.svelte'
 import RoomsView from './components/RoomsView.svelte'
 import RoomTablePresenter from './components/RoomTablePresenter.svelte'
 import RoomListItem from './components/RoomListItem.svelte'
+import MeetingAccessAttributeEditor from './components/MeetingAccessAttributeEditor.svelte'
 
 import {
   copyGuestLink,
@@ -142,7 +143,8 @@ export default async (): Promise<Resources> => ({
     MeetingMinutesListItem,
     RoomsView,
     RoomTablePresenter,
-    RoomListItem
+    RoomListItem,
+    MeetingAccessAttributeEditor
   },
   function: {
     CreateMeeting: createMeeting,

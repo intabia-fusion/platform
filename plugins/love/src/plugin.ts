@@ -195,7 +195,8 @@ const love = plugin(loveId, {
     FloorMeetingMinutesList: '' as AnyComponent,
     RoomAttributePresenter: '' as AnyComponent,
     MeetingMinutesMessagesPresenter: '' as AnyComponent,
-    MeetingMinutesTranscriptionPresenter: '' as AnyComponent
+    MeetingMinutesTranscriptionPresenter: '' as AnyComponent,
+    MeetingAccessAttributeEditor: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,
