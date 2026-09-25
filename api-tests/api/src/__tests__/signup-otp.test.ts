@@ -34,7 +34,7 @@ describe('signup-otp', () => {
   let runId: string
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
     anon = getAccountClient(config.ACCOUNTS_URL)
     // findPersonBySocialKey wants a service token, getPersonInfo takes admin or a service - one token for both.
     service = getAccountClient(

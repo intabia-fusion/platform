@@ -23,14 +23,14 @@ import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 // Workspace api-tests-volume is dedicated: its billing state survives across tests in run.
 describe('plan-volume', () => {
   const wsName = 'api-tests-volume'
-  const datalakeUrl = 'http://localhost:8083/_datalake'
+  const datalakeUrl = 'http://localhost:8183/_datalake'
   let config: ServerConfig
   let owner: WorkspaceToken
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
     owner = await getWorkspaceToken(
-      'http://localhost:8083',
+      'http://localhost:8183',
       { email: 'user1', password: '1234', workspace: wsName },
       config
     )

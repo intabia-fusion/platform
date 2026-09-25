@@ -82,6 +82,9 @@ async function convert (service, dir, bundle) {
     for (const [path, entry] of Object.entries(istanbul)) {
       if (path.includes('node_modules') || path.endsWith('bundle.js')) continue
       if (!path.startsWith(root + '/')) continue
+      // esbuild plugin namespaces (`bundle/ignore-arrow:apache-arrow`) map to no file; the colon also
+      // breaks the artifact upload of the html report.
+      if (!existsSync(path)) continue
       map.merge({ [path]: entry })
     }
     used++

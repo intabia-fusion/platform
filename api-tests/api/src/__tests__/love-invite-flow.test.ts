@@ -48,7 +48,7 @@ import contact, { ensureEmployee, type Person, type PersonSpace } from '@hcengin
 import love, { type MeetingMinutes, type Office, type UserMeetingInvite } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
 
-const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8083'
+const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
 const WORKSPACE = 'api-tests'
 
 describe('love invite flow (api-tests)', () => {

@@ -21,7 +21,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { Worker } from 'worker_threads'
 
-const URL = process.env.BENCH_URL ?? 'http://localhost:8083'
+const URL = process.env.BENCH_URL ?? 'http://localhost:8183'
 const WS = process.env.BENCH_WS ?? 'api-tests'
 const SUBS = parseInt(process.env.BENCH_SUBS ?? '20')
 const DOCS = parseInt(process.env.BENCH_DOCS ?? '500')

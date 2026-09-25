@@ -41,7 +41,7 @@ describe('plan-trial', () => {
   let admin: AccountClient // admin scoped: adminCreateSubscription
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
     const listAdmin = getAccountClient(
       config.ACCOUNTS_URL,
       generateToken(systemAccountUuid, undefined, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')

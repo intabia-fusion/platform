@@ -51,7 +51,7 @@ describe('plan-seats', () => {
   let seatlessOps: TxOperations
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
 
     // Onboard all members (business has 10 seats at boot). Seat winners are decided later by role
     // priority then account uuid, not by onboarding order.
@@ -83,7 +83,7 @@ describe('plan-seats', () => {
   }
 
   async function login (email: string): Promise<WorkspaceToken> {
-    return await getWorkspaceToken('http://localhost:8083', { email, password: '1234', workspace: wsName }, config)
+    return await getWorkspaceToken('http://localhost:8183', { email, password: '1234', workspace: wsName }, config)
   }
 
   async function ensureEmployeeFor (ws: WorkspaceToken): Promise<void> {

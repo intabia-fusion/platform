@@ -48,10 +48,10 @@ describe('error-handling', () => {
   let accountClient: AccountClient
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
 
     apiWorkspace = await getWorkspaceToken(
-      'http://localhost:8083',
+      'http://localhost:8183',
       {
         email: 'user3',
         password: '1234',

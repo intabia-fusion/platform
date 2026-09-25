@@ -71,15 +71,15 @@ export async function shutdown (): Promise<void> {
  * database (ws-tests/postgres-init): workspace data is in region_main, account in postgres.
  */
 const DEFAULTS = {
-  DB_URL: 'postgresql://postgres:postgres@localhost:5433/region_main',
-  ACCOUNT_DB_URL: 'postgresql://postgres:postgres@localhost:5433/postgres',
-  ACCOUNTS_URL: 'http://localhost:8083/_account',
-  STORAGE_CONFIG: 'datalake|http://localhost:8083/_datalake',
-  // The archive bucket, reached straight from the host (compose publishes minio on 9002).
-  BACKUP_STORAGE_CONFIG: 'minio|localhost:9002?accessKey=minioadmin&secretKey=minioadmin',
+  DB_URL: 'postgresql://postgres:postgres@localhost:5533/region_main',
+  ACCOUNT_DB_URL: 'postgresql://postgres:postgres@localhost:5533/postgres',
+  ACCOUNTS_URL: 'http://localhost:8183/_account',
+  STORAGE_CONFIG: 'datalake|http://localhost:8183/_datalake',
+  // The archive bucket, reached straight from the host (compose publishes minio on 9102).
+  BACKUP_STORAGE_CONFIG: 'minio|localhost:9102?accessKey=minioadmin&secretKey=minioadmin',
   BACKUP_BUCKET_NAME: 'ws-dev-backups',
   SERVER_SECRET: 'secret',
-  FRONT_URL: 'http://localhost:8083'
+  FRONT_URL: 'http://localhost:8183'
 }
 
 export function env (name: keyof typeof DEFAULTS | string, def?: string): string {

@@ -32,7 +32,7 @@ describe('plan-ledger', () => {
   let admin: AccountClient // admin — reads the audit
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
     const listAdmin = getAccountClient(
       config.ACCOUNTS_URL,
       generateToken(systemAccountUuid, undefined, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')

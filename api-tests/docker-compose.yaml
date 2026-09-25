@@ -13,7 +13,7 @@ services:
       - fulltext
       - aiBot
     ports:
-      - 8083:8083
+      - 8183:8083
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
@@ -22,7 +22,7 @@ services:
     pull_policy: ${DOCKER_PULL_POLICY:-never}
     environment:
       - STREAM_ENDPOINT_URL=datalake://datalake:4031
-      - STREAM_BASE_URL=http://localhost:8083/_stream
+      - STREAM_BASE_URL=http://localhost:8183/_stream
       - STREAM_INSECURE=true
       - STREAM_SERVER_SECRET=secret
       - STREAM_REGION=
@@ -74,7 +74,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - 5433:5433
+      - 5533:5433
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -96,9 +96,9 @@ services:
     command:
       - redpanda
       - start
-      - --kafka-addr internal://0.0.0.0:9093,external://0.0.0.0:19093
+      - --kafka-addr internal://0.0.0.0:9093,external://0.0.0.0:19193
       - --advertise-kafka-addr
-        internal://redpanda:9093,external://localhost:19093
+        internal://redpanda:9093,external://localhost:19193
       - --pandaproxy-addr internal://0.0.0.0:8084,external://0.0.0.0:18084
       - --advertise-pandaproxy-addr
         internal://redpanda:8084,external://localhost:18084
@@ -110,7 +110,7 @@ services:
       - --default-log-level=info
       - --memory 768M
     ports:
-      - 19093:19093
+      - 19193:19193
     healthcheck:
       # No SASL on this broker: with credentials rpk fails with ILLEGAL_SASL_STATE forever.
       test: ['CMD', 'rpk', 'cluster', 'info']
@@ -125,7 +125,7 @@ services:
       - 9001
     # backup-tests assert on the archive bucket from the host.
     ports:
-      - 9002:9000
+      - 9102:9000
     healthcheck:
       test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
@@ -167,7 +167,7 @@ services:
       /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node
       -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
     ports:
-      - 9201:9200
+      - 9301:9200
     volumes:
       - elastic-plugins:/usr/share/elasticsearch/plugins
     depends_on:
@@ -208,10 +208,10 @@ services:
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - FRONT_URL=http://localhost:8083
+      - FRONT_URL=http://localhost:8183
       # - LAST_NAME_FIRST=true
       # - WS_LIVENESS_DAYS=1
-      - ACCOUNTS_URL=http://localhost:8083/_account
+      - ACCOUNTS_URL=http://localhost:8183/_account
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
       # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
@@ -364,20 +364,20 @@ services:
       - SERVER_PORT=8083
       - SERVER_SECRET=secret
       - ACCOUNTS_URL_INTERNAL=http://account:3003
-      - ACCOUNTS_URL=http://localhost:8083/_account
+      - ACCOUNTS_URL=http://localhost:8183/_account
       - STATS_URL=http://stats:4901
       - UPLOAD_URL=/files
       - GMAIL_URL=http://localhost:8088
       - CALENDAR_URL=http://localhost:8095
       - TELEGRAM_URL=http://localhost:8086
-      - REKONI_URL=http://localhost:8083/_rekoni
+      - REKONI_URL=http://localhost:8183/_rekoni
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - GITHUB_URL=http://localhost:3501
       - PRINT_URL=http://localhost:4006
       - SIGN_URL=http://localhost:4007
-      - BRANDING_URL=http://localhost:8083/branding-test.json
-      - STATS_API=http://localhost:8083/_stats
-      - STREAM_URL=http://localhost:8083/_stream/recording
+      - BRANDING_URL=http://localhost:8183/branding-test.json
+      - STATS_API=http://localhost:8183/_stats
+      - STREAM_URL=http://localhost:8183/_stream/recording
       # - DISABLE_SIGNUP=true
       # OTP is on here so tests drive the real sign in flow; they read the code from account_db.
     restart: unless-stopped
@@ -402,7 +402,7 @@ services:
       - METRICS_CONSOLE=false
       - METRICS_FILE=metrics.txt
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - FRONT_URL=http://localhost:8083
+      - FRONT_URL=http://localhost:8183
       - ACCOUNTS_URL=http://account:3003
       - LAST_NAME_FIRST=true
       - BRANDING_PATH=/var/cfg/branding.json
@@ -434,7 +434,7 @@ services:
       - METRICS_CONSOLE=false
       - METRICS_FILE=metrics.txt
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - FRONT_URL=http://localhost:8083
+      - FRONT_URL=http://localhost:8183
       - ACCOUNTS_URL=http://account:3003
       - LAST_NAME_FIRST=true
       - BRANDING_PATH=/var/cfg/branding.json
@@ -564,8 +564,8 @@ services:
     image: axllent/mailpit
     # Shifted off the dev stand's 8025/1025 so both can run at once.
     ports:
-      - 8026:8025
-      - 1026:1025
+      - 8126:8025
+      - 1126:1025
     environment:
       MP_MAX_MESSAGES: 5000
       MP_SMTP_AUTH_ACCEPT_ANY: 1

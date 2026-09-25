@@ -68,7 +68,7 @@ import {
 export { createIssue, createProject, createProjectTypeWith, eventually, uniqueSuffix }
 export type { CreateIssueOptions, ProjectContext }
 
-export const PLANNER_PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8083'
+export const PLANNER_PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
 export const PLANNER_WORKSPACE = process.env.API_TESTS_WS ?? 'api-tests'
 
 /** One workspace account, fully bootstrapped: Person, Employee, PersonSpace, default Calendar. */

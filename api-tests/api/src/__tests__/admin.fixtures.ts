@@ -16,12 +16,12 @@
 import { type ServerConfig } from '@hcengineering/api-client'
 import { getClient as getAccountClient, type AccountClient } from '@hcengineering/account-client'
 
-export const STAND_URL = 'http://localhost:8083'
+export const STAND_URL = 'http://localhost:8183'
 export const TRANSACTOR_URL = `${STAND_URL}/_tr`
 export const STATS_URL = `${STAND_URL}/_stats`
 export const DEV_OTP = '000000'
 /** Mailpit of the ws stand: every email the services send lands here and nowhere else. */
-export const MAILPIT_URL = 'http://localhost:8026'
+export const MAILPIT_URL = 'http://localhost:8126'
 export const WRONG_OTP = '999999'
 
 /** Raw RPC result: account returns HTTP 200 with `{ error: Status }` for handled failures. */

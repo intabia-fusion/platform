@@ -54,7 +54,7 @@ describe('plan-unpaid', () => {
   let memberOps: TxOperations
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8083')
+    config = await loadServerConfig('http://localhost:8183')
 
     owner = await login('user1')
     member = await login('user2')
@@ -66,7 +66,7 @@ describe('plan-unpaid', () => {
   }, 30000)
 
   async function login (email: string): Promise<WorkspaceToken> {
-    return await getWorkspaceToken('http://localhost:8083', { email, password: '1234', workspace: wsName }, config)
+    return await getWorkspaceToken('http://localhost:8183', { email, password: '1234', workspace: wsName }, config)
   }
 
   async function ensureEmployeeFor (ws: WorkspaceToken): Promise<void> {

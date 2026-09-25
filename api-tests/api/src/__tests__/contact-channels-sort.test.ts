@@ -26,7 +26,7 @@ import {
 import { generateId, SortingOrder, type Ref, type TxOperations } from '@hcengineering/core'
 import contact, { AvatarType, type Person } from '@hcengineering/contact'
 
-const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8083'
+const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
 const WORKSPACE = 'api-tests'
 
 describe('contact channels sort (api-tests)', () => {

@@ -5,16 +5,16 @@ regions:
   '':
     name: America
     transactors:
-      - external: ws://localhost:8083/_tr
+      - external: ws://localhost:8183/_tr
         internal: ws://transactor:3334
     collaborators:
-      - external: ws://localhost:8083/_cl
+      - external: ws://localhost:8183/_cl
         internal: ws://collaborator:3079
   europe:
     name: Europe
     transactors:
-      - external: ws://localhost:8083/_tr_europe
+      - external: ws://localhost:8183/_tr_europe
         internal: ws://transactor-europe:3335
     collaborators:
-      - external: ws://localhost:8083/_cl
+      - external: ws://localhost:8183/_cl
         internal: ws://collaborator:3079
