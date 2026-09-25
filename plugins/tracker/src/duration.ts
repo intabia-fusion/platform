@@ -126,6 +126,9 @@ export function parseDuration (input: string | number): number | undefined {
   return totalMinutes / MINUTES_IN_HOUR
 }
 
+/**
+ * Zero is shown in hours (`0h`), not minutes: it is the unit the estimation columns are read in.
+ */
 export function formatDuration (hours: number, language: string = 'en'): string {
   if (!Number.isFinite(hours) || hours < 0) return ''
   const totalMin = Math.round(hours * MINUTES_IN_HOUR)
@@ -136,7 +139,7 @@ export function formatDuration (hours: number, language: string = 'en'): string 
   ]
 
   const visible = units.filter(([value]) => value > 0)
-  if (visible.length === 0) return `0${unitLabel(1, language)}`
+  if (visible.length === 0) return `0${unitLabel(MINUTES_IN_HOUR, language)}`
 
   return visible.map(([value, minutes]) => `${value}${unitLabel(minutes, language)}`).join(' ')
 }
@@ -157,7 +160,7 @@ export function formatDurationCompact (hours: number, language: string = 'en'): 
   ]
 
   const first = units.findIndex(([value]) => value > 0)
-  if (first === -1) return `0${unitLabel(1, language)}`
+  if (first === -1) return `0${unitLabel(MINUTES_IN_HOUR, language)}`
 
   const visible = units.slice(first, first + 2).filter(([value]) => value > 0)
 
