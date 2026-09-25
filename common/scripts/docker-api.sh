@@ -1,6 +1,6 @@
 #!/bin/bash
-# Images for the ws-tests stand the api-tests and backup-tests run against - the services in
-# ws-tests/docker-compose.yaml and nothing else. No web UI: front is built with an empty dist/,
+# Images for the stand the api-tests and backup-tests run against - the services in
+# api-tests/docker-compose.yaml and nothing else. No web UI: front is built with an empty dist/,
 # since the api-tests only need its /config.json, and the webpack bundle is most of the build.
 set -eo pipefail
 

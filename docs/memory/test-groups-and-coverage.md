@@ -292,3 +292,31 @@ What the stand does not reach, and what is therefore worth a test of its own: `p
 - `rest.test.ts` `find avg` measured 26ms under `NODE_V8_COVERAGE` (bound 10, CI 20); it returns early when `STAND_COVERAGE=true`, so CI no longer checks that timing anywhere.
 
 Clean clone on 10.0.2.2 (12 cores, warm pnpm store, base images present): install 10s, `pnpm bundle` 34-73s, `ci_test.sh` 506s - docker-api ~30s, prepare 31s, api-tests 45s, backup-tests 17s, stop 27s, `coverage:stand` 12s, `coverage --integration --stand` the rest (~300s alone). Result: api 318 passed, backup 12, unit 511 suites, integration 13; STAND 77.8%, TOTAL 69.8% (was 37.4%). A GitHub runner has 4 cores, so expect the jest part to take 2-3x longer there.
+
+## api-tests on their own stand, and where ci_test.sh spent its time (2026-09-25)
+
+`ws-tests/api-tests` and `ws-tests/backup-tests` moved to `api-tests/api` and `api-tests/backup`, with their own compose in `api-tests/` (the ws-tests one minus `redpanda_console`). jest `globalSetup` (`api-tests/api/src/stand.ts`, compiled to `lib/`, the backup package points at it through `node_modules/@hcengineering/api-tests/lib`) brings it up as a testcontainers `DockerComposeEnvironment` and seeds it with `dev/test-base/run.sh api seed` - `seedStand` is `prepareStand` minus compose, stand `api` is `ws` with another dir and project.
+
+testcontainers traps met on the way:
+
+- `withNoRecreate()` sets the project name to `testcontainers-node`; call it before `withProjectName`, or the stand runs under that name and `docker compose -p api-tests ps` finds nothing.
+- `down({ timeout })` is milliseconds (`toSeconds()` inside); `timeout: 60` became `-t 0` and killed every pod before it wrote its V8 profile - STAND 0%.
+- The default wait strategy honours container healthchecks. The ws-tests redpanda healthcheck passes SASL credentials to a broker without SASL and fails forever (`ILLEGAL_SASL_STATE`); `prepare.sh` never waited on it, testcontainers does. api-tests' copy runs plain `rpk cluster info`; ws-tests still carries the broken one.
+
+Timeline of `ci_test.sh` on 10.0.2.2 (12 cores, images warm), before -> after:
+
+| step | before | after |
+|---|---|---|
+| images | 18s | 10s |
+| stand up + seed | 37s | 30s |
+| api-tests | 42s | 29s |
+| backup-tests | 21s | 18s |
+| stand stop | 68s | 12s |
+| unit | 64s | 52s |
+| integration + vitest | 154s + 61s in a row | 67s side by side |
+| total | 483s | 234s |
+
+- The stop was the `backup` pod: `backupService`'s shutdown only set `canceled`, so on SIGTERM the process stayed up until SIGKILL at the 60s timeout and its profile was lost. `server/backup-service` now exits after it.
+- Integration runs overlap (shared, `kafka`, `pod-fulltext`) and vitest runs beside them. Unit runs stay one after another: side by side, desktop and the shared run took 77s against 48s.
+- Under that load the elastic container takes over 60s to boot; `search.itest.ts`'s `beforeAll` had an explicit 60s timeout, now 240s.
+- `admin-gates` #11 counted every `read_accounts` audit row, and `account-blocking` lists accounts in a parallel worker - it now counts only its own actor's rows.

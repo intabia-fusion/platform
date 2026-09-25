@@ -197,8 +197,8 @@ test:
     paths:
       - coverage/html/
       - coverage/lcov.info
-      - ws-tests/api-tests/playwright-report/
-      - ws-tests/api-tests/logs/
+      - api-tests/logs/
+      - api-tests/sanity/logs/
     reports:
       coverage_report:
         coverage_format: cobertura

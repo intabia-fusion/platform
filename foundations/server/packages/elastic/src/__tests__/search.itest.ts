@@ -70,6 +70,7 @@ describe('Elastic search string', () => {
   const ctx = new MeasureMetricsContext('-', {})
   const ws = 'ws-search' as WorkspaceUuid
 
+  // elasticUrl() gives the container 180s to boot, and a loaded runner can use all of it.
   beforeAll(async () => {
     adapter = await createElasticAdapter(await elasticUrl())
     await adapter.initMapping(ctx)
@@ -97,7 +98,7 @@ describe('Elastic search string', () => {
     })
     // updateMany goes through the bulk API, which refreshes the index for us.
     await adapter.updateMany(ctx, ws, docs)
-  }, 60000)
+  }, 240000)
 
   afterAll(async () => {
     await adapter.clean(ctx, ws)

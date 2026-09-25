@@ -483,8 +483,8 @@ packages:
   - services/webhook/pod-webhook-mock
   - services/worker
   - tests/sanity
-  - ws-tests/api-tests
-  - ws-tests/backup-tests
+  - api-tests/api
+  - api-tests/backup
   - ws-tests/sanity
 
 allowBuilds:

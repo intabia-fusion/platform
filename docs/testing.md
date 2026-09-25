@@ -28,8 +28,16 @@ wrong group.
 ## Integration tests (`pnpm integration`)
 
 ```bash
-pnpm integration             # needs a running Docker, and nothing else
+pnpm integration             # builds, then runs; needs a running Docker, and nothing else
 pnpm integration -t 'name'   # jest flags pass through
+```
+
+The build comes first because workspace dependencies resolve to their `lib/`; on a built tree it is a cache hit. `pnpm api-test` does the same for `api-tests/` (plus `common/scripts/docker-api.sh` for the stand images; jest args narrow the api-tests and skip the backup-tests), and `pnpm fulltest` runs unit, integration and both api suites in a row - everything but Playwright. All three live in `common/scripts/test-suite.sh`.
+
+```bash
+pnpm api-test                                  # api-tests, then backup-tests, stand up and down
+pnpm api-test src/__tests__/rest.test.ts       # one api-tests file
+API_STAND=keep pnpm api-test                   # leave the stand running afterwards
 ```
 
 Each suite starts the services it needs itself, through `@hcengineering/test-containers`
@@ -44,7 +52,7 @@ still works: `DB_URL`, `ELASTIC_URL`, `QUEUE_CONFIG`, `MINIO_ENDPOINT`.
 Nine packages have `*.itest.ts` files: `postgres`, `elastic`, `minio`, `s3`, `kafka`,
 `pod-fulltext`, `account`, `pod-ai-bot`, `pod-telegram-bot`. Two suites still skip themselves:
 `s3` wants a real S3 (`S3_ENDPOINT`), and the `pod-ai-bot` LLM suites want a local model server
-(`AI_BOT_E2E=1`). `kafka` and `pod-fulltext` carry `testIsolated` and run one at a time.
+(`AI_BOT_E2E=1`). `kafka` and `pod-fulltext` carry `testIsolated`: they get a jest of their own, run one at a time by `pnpm test` and side by side by `pnpm coverage`.
 
 ## Benchmarks (`pnpm bench`)
 
@@ -86,24 +94,18 @@ Two things the number does not include, both reported as separate lines:
 
 ### Stand coverage (`pnpm coverage:stand`)
 
-`ws-tests/api-tests` (26 files, 301 cases) and the Playwright suites drive a live stand, so the
-server code they exercise runs inside containers where istanbul cannot see it. V8 can: each pod is
-started with `NODE_V8_COVERAGE` and drops a profile of its bundle when it exits, and the pods'
-external sourcemaps map that back onto `src/`.
+`api-tests/api` (26 files, 301 cases), `api-tests/backup` and the Playwright suites drive a live stand, so the server code they exercise runs inside containers where istanbul cannot see it. V8 can: each pod is started with `NODE_V8_COVERAGE` and drops a profile of its bundle when it exits, and the pods' external sourcemaps map that back onto `src/`.
 
 ```bash
-cd ws-tests
-STAND_EXTRA_COMPOSE=docker-compose.coverage.yaml ./prepare.sh
-cd api-tests && pnpm run api-test && cd ..
-docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p sanity stop -t 60
-cd .. && pnpm coverage:stand              # writes coverage-stand.json
+common/scripts/docker-api.sh               # images from the checkout
+cd api-tests/api && STAND_COVERAGE=true pnpm run api-test && cd ../..
+pnpm coverage:stand                        # writes coverage-stand.json
 pnpm coverage --integration --stand        # folds it into the whole-repo number
 ```
 
 Two rules, both of which silently produce nothing when broken:
 
-- **Stop the stand, never kill it.** V8 writes the profile as the process exits; `down`, `kill` and
-  a stop that runs past its grace period lose everything that pod collected.
+- **Let the pods exit on their own.** V8 writes the profile as the process exits; `kill`, and a stop or `down` that runs past its grace period, lose everything that pod collected. The api-tests stand gives them 60s.
 - **The images must be built from the checkout.** The profile carries ranges of the bundle in the
   image, and the sourcemap used to decode it is the one on disk - a stale image maps its ranges
   onto whatever lines that file has now.
@@ -145,16 +147,17 @@ Flags (`-g "<title>"`, `--workers=1` for love/meetings), tracing, flake diagnosi
 
 ## Integration tests
 
-- `ws-tests/` - workspace, API and backup integration tests. `ws-tests/prepare.sh` sets up the stand, `prepare_data.sh` seeds it. Run with `cd ws-tests/api-tests && pnpm run api-test` and `cd ws-tests/backup-tests && pnpm run backup-test`.
+- `api-tests/` - API (`api-tests/api`) and backup (`api-tests/backup`) tests against a stand of their own, without the web UI. The stand is a testcontainers compose environment that the jest run brings up itself (`api-tests/api/src/stand.ts`) and seeds through `dev/test-base/run.sh api seed`. Run with `cd api-tests/api && pnpm run api-test` and `cd api-tests/backup && pnpm run backup-test`, after `common/scripts/docker-api.sh` for the images. `API_STAND` picks what a run does with the stand: unset - start it unless it is up, take down only a stand this run started; `keep` - leave it running (a second run reuses it without re-seeding); `stop` - take it down at the end either way; `external` - touch nothing. `STAND_COVERAGE=true` adds `docker-compose.coverage.yaml`.
+- `ws-tests/` - the workspace-admin Playwright suite (`ws-tests/sanity`). `ws-tests/prepare.sh` sets up its stand.
 - `qms-tests/` - controlled-documents (QMS) suite, its own stand (`./prepare-qms.sh`, same ports as `tests/` - run one at a time). UI tests: `cd qms-tests/sanity && pnpm run uitest`.
 
 ## CI
 
 All server-side checks run in one job, `ci_test.sh`, right after `pnpm bundle`:
 
-1. `common/scripts/docker-api.sh` builds the images of the services in `ws-tests/docker-compose.yaml` from the bundles on disk. No web UI: `front` is built with an empty `dist/`, since the api-tests only need its `/config.json`, and the webpack bundle is most of a full image build.
-2. The ws-tests stand comes up with `docker-compose.coverage.yaml`, `ws-tests/api-tests` and `ws-tests/backup-tests` run against it, the stand is stopped (not downed) and `pnpm coverage:stand` turns the pods' V8 profiles into `coverage-stand.json`.
-3. `pnpm coverage --integration --stand` runs the unit and integration groups under istanbul, folds the stand run in and is the gate for both jest groups.
+1. `common/scripts/docker-api.sh` builds the images of the services in `api-tests/docker-compose.yaml` from the bundles on disk. No web UI: `front` is built with an empty `dist/`, since the api-tests only need its `/config.json`, and the webpack bundle is most of a full image build.
+2. `api-tests/api` runs with `API_STAND=keep` and brings the stand up with the coverage overlay, `api-tests/backup` reuses it with `API_STAND=stop` and takes it down (logs go to `api-tests/logs/`), then `pnpm coverage:stand` turns the pods' V8 profiles into `coverage-stand.json`.
+3. `pnpm coverage --integration --stand` runs the unit and integration groups under istanbul, folds the stand run in and is the gate for both jest groups. The integration group and the vitest run go side by side, and packages with `testIsolated` run alongside the shared jest - each jest process starts its own containers - unless `QUEUE_CONFIG` points at a shared stand.
 
 `STAND_COVERAGE=true` is set for the api-tests; `rest.test.ts`'s `find avg` timing check returns early under it, since pods under `NODE_V8_COVERAGE` answer 2-3x slower.
 

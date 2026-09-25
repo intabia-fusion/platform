@@ -1,15 +1,9 @@
-# Coverage overlay for the stand. Adds NODE_V8_COVERAGE to the pods whose code the api-tests and
-# the sanity suites actually drive, and mounts a directory per image to collect the profiles:
+# Coverage overlay for the api-tests stand, on when STAND_COVERAGE=true. Adds NODE_V8_COVERAGE to the
+# pods and mounts a directory per image for the profiles; `pnpm coverage:stand` maps them back onto
+# src/ through each image's bundle sourcemap - the directory name is the image name.
 #
-#   docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p ws up -d
-#   cd api-tests && pnpm run api-test
-#   docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p ws stop -t 30
-#   node ../foundations/utils/packages/platform-rig/bin/stand-coverage.js --profiles ws-tests/coverage
-#
-# V8 writes a profile when the process exits, so the stand has to be stopped rather than killed:
-# `down`, `kill` and a stop that runs out of its grace period all lose everything the pod collected.
-# The directory name is the image name - that is how stand-coverage.js finds the bundle and its
-# sourcemap to map the profile back onto src/.
+# V8 writes a profile as the process exits, so the pods must shut down cleanly within the stop
+# timeout (api/src/stand.ts gives them 60s); a pod that is killed leaves nothing.
 
 services:
   transactor:

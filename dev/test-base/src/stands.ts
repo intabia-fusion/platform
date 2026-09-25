@@ -320,6 +320,16 @@ const wsCockroach: StandConfig = {
   waitPorts: [...(ws.waitPorts ?? []), ['localhost', 26258]]
 }
 
+// ws-tests' accounts and workspaces on api-tests/'s compose, which testcontainers brings up.
+const api: StandConfig = {
+  ...ws,
+  project: 'api-tests',
+  dir: 'api-tests',
+  composeFiles: ['docker-compose.yaml'],
+  env: { ...ws.env, REGION_CONFIG: resolve(repoRoot, 'api-tests/region-config.yaml') },
+  cleanup: []
+}
+
 /**
  * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
  * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
@@ -328,6 +338,7 @@ const wsCockroach: StandConfig = {
 export const stands: Record<string, StandConfig> = {
   sanity,
   ws,
+  api,
   'ws-cockroach': wsCockroach,
   qms,
   full: mergeStands(sanity, qms)

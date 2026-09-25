@@ -42,6 +42,7 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
+    "testcontainers": "catalog:",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-token": "workspace:^0.7.17",

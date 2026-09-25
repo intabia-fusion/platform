@@ -2,7 +2,7 @@
 
 Область: [Планировщик / Календарь](../features/planner-calendar.md)
 
-`ws-tests/api-tests/src/__tests__/planner.fixtures.ts` (reusable helpers) + `planner-spaces.test.ts` cover where `time.class.WorkSlot` / `time.class.ProjectToDo` actually live: a project todo's slot lives in the project's own space (`getWorkSlotSpace` in `plugins/time-resources/src/utils.ts`, synced server-side by `changeIssueDataHandler` in `server-plugins/time-resources/src/index.ts`).
+`api-tests/api/src/__tests__/planner.fixtures.ts` (reusable helpers) + `planner-spaces.test.ts` cover where `time.class.WorkSlot` / `time.class.ProjectToDo` actually live: a project todo's slot lives in the project's own space (`getWorkSlotSpace` in `plugins/time-resources/src/utils.ts`, synced server-side by `changeIssueDataHandler` in `server-plugins/time-resources/src/index.ts`).
 
 ## `tracker.class.Project` must be `private: true` to test membership at all
 

@@ -138,8 +138,8 @@ jobs:
         with:
           name: api-tests
           path: |
-            ws-tests/api-tests/playwright-report/
-            ws-tests/api-tests/logs/
+            api-tests/logs/
+            api-tests/sanity/logs/
           if-no-files-found: ignore
 
   svelte-check:

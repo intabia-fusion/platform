@@ -288,9 +288,12 @@ describe('admin-gates', () => {
   }, 120000)
 
   it('11. PII reads are audited (A2)', async () => {
-    const before = (await auditActions('read_accounts')).length
+    // Only this admin's rows: account-blocking lists accounts too, in a parallel worker.
+    const reads = async (): Promise<number> =>
+      (await auditActions('read_accounts')).filter((a) => a.actor === adminAccount).length
+    const before = await reads()
     expect((await rpc(config, adminSession, 'listAccounts', { limit: 5 })).error).toBeUndefined()
-    expect((await auditActions('read_accounts')).length).toBe(before + 1)
+    expect(await reads()).toBe(before + 1)
 
     await requestOtp()
     const exported = await rpc(config, adminSession, 'adminConfirmExport', {

@@ -10,7 +10,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TESTS_DIR="${TESTS_DIR:-$ROOT/tests}"
-API_DIR="$ROOT/ws-tests/api-tests"
+API_DIR="$ROOT/api-tests/api"
 OUT_DIR="${BENCH_STATS_DIR:-/tmp/bench-stats}"
 
 export BENCH_SUBS="${BENCH_SUBS:-50}"

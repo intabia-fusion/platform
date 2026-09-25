@@ -14,13 +14,13 @@
   limitations under the License.
 */
 
-// Coverage of the server code that runs inside the stand's containers - what ws-tests/api-tests,
+// Coverage of the server code that runs inside the stand's containers - what api-tests/,
 // the Playwright suites and anything else driving a live stand actually exercise.
 //
-//   node bin/stand-coverage.js [--profiles ws-tests/coverage] [--out coverage-stand.json]
+//   node bin/stand-coverage.js [--profiles api-tests/coverage] [--out coverage-stand.json]
 //
 // The containers are started with NODE_V8_COVERAGE pointing at a mounted directory (see
-// ws-tests/docker-compose.coverage.yaml), so each pod drops a V8 profile of its own bundle when it
+// api-tests/docker-compose.coverage.yaml), so each pod drops a V8 profile of its own bundle when it
 // exits. Those profiles are per-bundle, not per-source-file; the pods' esbuild bundles carry an
 // external sourcemap, which is what turns a profile back into the repository's `src/` files here.
 //
@@ -41,7 +41,7 @@ const flag = (name, fallback) => {
 }
 
 const root = findWorkspaceRoot()
-const profilesDir = resolve(root, flag('--profiles', join('ws-tests', 'coverage')))
+const profilesDir = resolve(root, flag('--profiles', join('api-tests', 'coverage')))
 // Not inside coverage/: `pnpm coverage` wipes that directory, and a stand run is expensive to redo.
 const outFile = resolve(root, flag('--out', 'coverage-stand.json'))
 
@@ -92,7 +92,7 @@ async function convert (service, dir, bundle) {
 
 async function main () {
   if (!existsSync(profilesDir)) {
-    console.error(`No profiles in ${relative(root, profilesDir)} - start the stand through ws-tests/docker-compose.coverage.yaml and stop it with \`docker compose stop\`.`)
+    console.error(`No profiles in ${relative(root, profilesDir)} - run the api-tests with STAND_COVERAGE=true.`)
     process.exit(1)
   }
   const dirs = imageDirs()

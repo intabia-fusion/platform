@@ -2,7 +2,7 @@
 
 ## REST find avg
 
-`ws-tests/api-tests/src/__tests__/rest.test.ts:checkFindPerformance` measures average `findAll(core.class.Space, {}, { limit: 1 })` latency over 200 attempts per round.
+`api-tests/api/src/__tests__/rest.test.ts:checkFindPerformance` measures average `findAll(core.class.Space, {}, { limit: 1 })` latency over 200 attempts per round.
 
 Thresholds (`maxAvgMs`): local dev `< 10ms`, CI (`process.env.CI === 'true'`) `< 20ms`, best of up to 3 rounds (CI only, stops early once a round beats the threshold) - GitHub runners are noisier under shared load.
 

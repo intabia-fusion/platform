@@ -2,7 +2,7 @@
 
 Область: [Планировщик / Календарь](../features/planner-calendar.md)
 
-`ws-tests/api-tests/src/__tests__/calendar-busy.test.ts` covers the FUSIO-1308 BusySlot trigger (`server-plugins/calendar-resources/src/index.ts` `syncBusySlot`/`removeBusySlot`, invoked from `OnEvent`).
+`api-tests/api/src/__tests__/calendar-busy.test.ts` covers the FUSIO-1308 BusySlot trigger (`server-plugins/calendar-resources/src/index.ts` `syncBusySlot`/`removeBusySlot`, invoked from `OnEvent`).
 
 ## Non-obvious facts
 
