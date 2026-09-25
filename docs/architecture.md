@@ -118,7 +118,7 @@ trigger: {
 | Сервис | Главный файл | Назначение |
 | --- | --- | --- |
 | `services/activity` | `services/activity/src/index.ts` | Строит ленту активности (`DocUpdateMessage`) из `Tx`, консьюмер Kafka |
-| `services/notifications` | `services/notifications/src/index.ts` | Генерация уведомлений/упоминаний из `Tx` |
+| `services/notifications` | `services/notifications/src/index.ts` | Генерация уведомлений/упоминаний из `Tx`: пишет встроенные уведомления в `DocNotifyContext`, продюсер `UserNotifications` и user-статусов ([features/notifications.md](features/notifications.md)) |
 | `services/ai-bot` | `pod-ai-bot/src/index.ts` (+ `love-agent/src/start.ts`) | AI-бот (режимы event-router/llm-router/stt-worker) и voice-агент для Love; самый насыщенный по Kafka-топикам |
 | `services/love` | `services/love/src/main.ts` | Видео-звонки (LiveKit), продюсер/консьюмер `LoveQueue`/`Workspace`/`Tx` |
 | `services/billing` | `pod-billing/src/main.ts` | Биллинг и лимиты воркспейсов, продюсер `Workspace`/`NotificationQueue` |
@@ -138,7 +138,7 @@ trigger: {
 | `services/rating` | `services/rating/src/index.ts` | Индексатор рейтинга/скоринга контактов |
 | `services/process` | `services/process/src/main.ts` | Исполнитель бизнес-процессов над карточками |
 | `services/worker` | `services/worker/src/index.ts` | Воркер отложенных задач ("time machine") |
-| `services/notification` | `pod-notification/src/main.ts` | Push-уведомления (Web Push/APNs/FCM) |
+| `services/notification` | `pod-notification/src/main.ts` | Push-уведомления (Web Push/APNs/FCM), консьюмер `UserNotifications`, без HTTP |
 | `services/analytics-collector` | `pod-analytics-collector/src/main.ts` | Сбор аналитики/геолокации |
 | `services/backup` | `backup-api-pod/src/main.ts` | HTTP API поверх бэкапов |
 

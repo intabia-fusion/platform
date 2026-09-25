@@ -36,6 +36,6 @@ ToDo больше не управляет статусом Issue. Убрано �
 
 Закрытие задачи ToDo не гасит. Вместо этого:
 - диалог `MessageBox` у того, кто закрыл: `time.function.SuggestCloseToDos` (реализация в `time-resources/utils.ts`, зовётся через `getResource` из `StatusEditor.svelte` и `task-resources/StatusSelector.svelte` - tracker-resources и task-resources не зависят от time-resources, только от `@hcengineering/time`). Канбан-drag и workflow-переходы идут мимо диалога;
-- inbox `time.ids.IssueClosedToDo` - `TxNotificationType` по `field: 'status'` объекта Issue, `notifyAuthor: false` (инициатор не получает, за это отвечает `getNotifyResult` в `services/notifications`), `match`/`create` проверяют, что статус Won/Lost и у получателя есть открытый ToDo.
+- inbox `time.ids.IssueClosedToDo` - `TxNotificationType` по `field: 'status'` объекта Issue, `notifyAuthor: false` (инициатор не получает, за это отвечает `resolveNotifyProviders` в `services/notifications/src/utils/providers.ts`), `match`/`create` проверяют, что статус Won/Lost и у получателя есть открытый ToDo.
 
-`TxNotificationType` обрабатывает отдельный сервис `services/notifications` (`isMatchedTxType` в `src/utils.ts`), а не триггеры транзактора - в server-plugins потребителя нет.
+`TxNotificationType` обрабатывает отдельный сервис `services/notifications` (`isMatchedTxType` в `src/utils/providers.ts`), а не триггеры транзактора - в server-plugins потребителя нет.

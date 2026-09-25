@@ -9,7 +9,8 @@
 | Область | Документ | Основные пакеты |
 | --- | --- | --- |
 | Трекер: проекты, задачи, статусы, типы задач, workflow, учёт времени, метки | [tracker.md](tracker.md) | `tracker`, `task`, `workflow`, `time` (отчёты), `tags`, `view` |
-| Чат и уведомления: каналы, DM, треды, inbox, read receipts, push, поиск | [chat.md](chat.md) | `chunter`, `notification`, `activity`, `services/notification(s)` |
+| Чат: каналы, DM, треды, окно сообщений, чтение при скролле, навигатор, поиск | [chat.md](chat.md) | `chunter`, `activity` |
+| Уведомления: DocNotifyContext, inbox, бейджи, push, email, упоминания, реакции, mute | [notifications.md](notifications.md) | `notification`, `services/notifications`, `services/notification`, `services/mail` |
 | Виртуальный офис и встречи: этаж, комнаты, LiveKit, knock, запись, транскрипция | [office-meetings.md](office-meetings.md) | `love`, `services/love`, `recorder`, `media` |
 | Документы и QMS: вики, совместный редактор, controlled documents, история версий | [documents-qms.md](documents-qms.md) | `document`, `controlled-documents`, `text-editor`, `server/collaborator` |
 | AI-ассистент "Юля ИИ": ответы в чатах, транскрипция, саммари, уровни моделей | [ai.md](ai.md) | `ai-bot`, `services/ai-bot/*` |
@@ -34,7 +35,8 @@
 | Workflow, переходы статусов, валидаторы, post-functions | [tracker.md](tracker.md) |
 | Process (визуальные процессы над карточками) | [integrations.md](integrations.md) |
 | Card (generic-карточки) | [tracker.md](tracker.md) |
-| Сообщение, тред, реакция, упоминание, прочитано, push, inbox | [chat.md](chat.md) |
+| Сообщение, тред, канал, DM, поиск по чату, "New"-разделитель | [chat.md](chat.md) |
+| Уведомление, inbox, реакция, упоминание, прочитано, push, email, бейдж, mute | [notifications.md](notifications.md) |
 | Лента активности (`DocUpdateMessage`) | [chat.md](chat.md) |
 | Комната, этаж, звонок, LiveKit, knock, приглашение, запись встречи | [office-meetings.md](office-meetings.md) |
 | Транскрипция и саммари встречи | [office-meetings.md](office-meetings.md), [ai.md](ai.md) |
