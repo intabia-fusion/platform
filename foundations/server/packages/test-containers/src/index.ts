@@ -28,7 +28,7 @@ import { RedpandaContainer, type StartedRedpandaContainer } from '@testcontainer
 const POSTGRES_IMAGE = 'postgres:18.1'
 const ELASTIC_ICU_IMAGE = 'hcengineering/elasticsearch-icu:8.19.1'
 const REDPANDA_IMAGE = 'docker.redpanda.com/redpandadata/redpanda:v24.3.6'
-const MINIO_IMAGE = 'quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z'
+const MINIO_IMAGE = 'pgsty/silo:RELEASE.2026-09-16T00-00-00Z'
 
 const started = new Map<string, Promise<unknown>>()
 const running: Array<StartedTestContainer | StartedRedpandaContainer> = []

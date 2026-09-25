@@ -57,8 +57,10 @@ describe('zmq-tests', () => {
 
     await request.send('Hello1')
     await request2.send('Hello2')
-    const data = await router.receive()
-    const data2 = await router.receive()
+    // Router fair-queues between peers, so arrival order across two clients is not guaranteed.
+    const [data, data2] = [await router.receive(), await router.receive()].sort((a, b) =>
+      a[2].toString().localeCompare(b[2].toString())
+    )
 
     expect(data[2].toString()).toBe('Hello1')
 
