@@ -40,7 +40,11 @@ export const mediaPlugin = plugin(mediaId, {
     TurnOnCam: '' as IntlString,
     TurnOffCam: '' as IntlString,
     TurnOnMic: '' as IntlString,
-    TurnOffMic: '' as IntlString
+    TurnOffMic: '' as IntlString,
+    CameraInUseMessage: '' as IntlString,
+    CameraInUseRetry: '' as IntlString,
+    CameraNotAllowed: '' as IntlString,
+    DefaultCameraError: '' as IntlString
   }
 })
 

@@ -14,6 +14,10 @@
     "NoMic": "Žádný mikrofon",
     "NoSpeaker": "Žádný reproduktor",
     "On": "Zapnuto",
-    "Off": "Vypnuto"
+    "Off": "Vypnuto",
+    "CameraInUseMessage": "Kameru používá jiná aplikace. Zavřete ji a zkuste to znovu.",
+    "CameraInUseRetry": "Zkusit znovu",
+    "CameraNotAllowed": "Přístup k fotoaparátu pro tento web je odepřen, zkontrolujte prosím nastavení prohlížeče.",
+    "DefaultCameraError": "Chyba při připojování kamery"
   }
 }

@@ -14,6 +14,10 @@
     "NoMic": "Mikrofon yok",
     "NoSpeaker": "Hoparlör yok",
     "On": "Açık",
-    "Off": "Kapalı"
+    "Off": "Kapalı",
+    "CameraInUseMessage": "Kamera başka bir uygulama tarafından kullanılıyor. Uygulamayı kapatıp tekrar deneyin.",
+    "CameraInUseRetry": "Tekrar dene",
+    "CameraNotAllowed": "Bu site için kamera erişimi engellendi. Lütfen tarayıcı ayarlarınızı kontrol edin.",
+    "DefaultCameraError": "Kameraya bağlanırken hata oluştu."
   }
 }
