@@ -93,7 +93,8 @@
 
   import tracker from '../../plugin'
   import { componentStore } from '../../component'
-  import { activeProjects, IssuePriorityColor } from '../../utils'
+  import { activeProjects, IssuePriorityColor, sortSwimLaneValues } from '../../utils'
+  import { orderSwimLanes } from '../../swimLanes'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
   import AssigneeEditor from './AssigneeEditor.svelte'
@@ -462,20 +463,44 @@
       if (empty) unassigned = lane
       else lanes.push(lane)
     }
-    if (field === 'priority') {
-      lanes.sort(
-        (a, b) =>
-          defaultPriorities.indexOf(b.value as IssuePriority) - defaultPriorities.indexOf(a.value as IssuePriority)
-      )
-    } else {
-      // Stable, deterministic order by lane id (ascending) — prevents lane jumps on task reorder.
-      lanes.sort((a, b) => a._id.localeCompare(b._id))
-    }
     if (unassigned !== undefined) lanes.unshift(unassigned)
     return lanes
   }
 
-  $: swimLanes = buildGenericLanes(swimLaneBy, effectiveTasks)
+  // Order of the lanes without a sort function for the field: components by label, employees by name,
+  // the rest by value id (stable, no lane jumps on task reorder).
+  function laneFallbackKey (lane: SwimLane): string {
+    if (swimLaneBy === 'assignee') {
+      const emp = $employeeByIdStore.get(lane.value as Ref<Employee>)
+      if (emp !== undefined) return getName(client.getHierarchy(), emp)
+    }
+    return lane.title !== '' ? lane.title : lane._id
+  }
+
+  // The empty lane stays first; the rest follow the field's sort function (statuses by category and task
+  // type, priorities, milestones) and fall back to `laneFallbackKey`. The previous lanes stay on screen
+  // until the new order is known, and only the latest request may apply.
+  let laneOrderSeq = 0
+  async function orderLanes (field: string, lanes: SwimLane[]): Promise<void> {
+    const seq = ++laneOrderSeq
+    const unassigned = lanes.filter((it) => it._id === UNASSIGNED_SWIM)
+    const rest = lanes.filter((it) => it._id !== UNASSIGNED_SWIM)
+    const sorted =
+      rest.length > 1
+        ? await sortSwimLaneValues(
+          client,
+          _class,
+          space,
+          field,
+          rest.map((it) => it.value),
+          viewlet.descriptor
+        )
+        : undefined
+    if (seq !== laneOrderSeq) return
+    swimLanes = [...unassigned, ...orderSwimLanes(rest, sorted, laneFallbackKey)]
+  }
+
+  $: void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
     if (swimLaneBy === 'none' || swimLaneBy === '') return undefined

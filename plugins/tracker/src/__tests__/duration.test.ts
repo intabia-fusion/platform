@@ -4,7 +4,7 @@ describe('duration formatting', () => {
   it('keeps every unit in the full form', () => {
     expect(formatDuration(18 * 5 * 8 + 3 * 8 + 5.5)).toEqual('749h 30m')
     expect(formatDuration(8 + 4)).toEqual('12h')
-    expect(formatDuration(0)).toEqual('0m')
+    expect(formatDuration(0)).toEqual('0h')
   })
 
   it('keeps the largest unit and the next one down', () => {
@@ -14,7 +14,7 @@ describe('duration formatting', () => {
     expect(formatDurationCompact(2 + 20 / 60)).toEqual('2h 20m')
     expect(formatDurationCompact(2)).toEqual('2h')
     expect(formatDurationCompact(0.5)).toEqual('30m')
-    expect(formatDurationCompact(0)).toEqual('0m')
+    expect(formatDurationCompact(0)).toEqual('0h')
   })
 
   it('drops the second unit when it is zero', () => {

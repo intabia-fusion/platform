@@ -63,7 +63,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 2. **Переход статуса под workflow.** Любой CUD на `Task`/`Issue` проходит через `WorkflowMiddleware.tx` (`server-plugins/workflow/src/middleware.ts`): проверка `InitialStatusNotAllowed`/`ForbiddenTransition`/`SelfTransitionNotAllowed`/`TransitionConflict` (`hasSelfTransition`/`getTransitionConflict` - `plugins/workflow/src/utils.ts`), затем исполнение серверных валидаторов/пост-функций правила перехода.
 3. **Учёт времени: TimeSpendReport -> Issue.reportedTime.** `OnIssueUpdate` (`server-plugins/tracker-resources/src/index.ts`) ловит CUD на `TimeSpendReport`, `doTimeReportUpdate` инкрементально пересчитывает `reportedTime`; `remainingTime` и суммарная оценка дерева считаются через `reduceChildInfoTree` (`plugins/tracker/src/index.ts`, bottom-up по `childInfo`, оценка родителя = max(своя, сумма по дереву), legacy flat-фоллбэк для старых данных без `parentId`).
 4. **ToDo/WorkSlot <-> TimeSpendReport (FUSIO-38).** Назначение исполнителя или перевод Issue в Active/ToDo создаёт `ToDo` планировщика (`createIssueHandler`/`getCreateToDoTx`, `server-plugins/time-resources/src/index.ts`); обратной связи "закрыл ToDo -> сдвинулся статус Issue" больше нет. `OnWorkSlotCreate/Update/Remove` создают/пересчитывают/удаляют `TimeSpendReport` 1:1 через поле `TimeSpendReport.workslot`. Подробности переезда/переназначения - `docs/memory/planner-todo-issue-decoupling.md` и `../features/planner-calendar.md`.
-5. **Kanban: группировка и drag/drop.** `KanbanView.svelte` (`plugins/tracker-resources/src/components/issues/KanbanView.svelte`) рендерит `IssueKanban` viewlet (`tracker.viewlet.Kanban` - `models/tracker/src/viewlets.ts`); `swimLaneBy` (none/assignee/priority/component/milestone/status/attachedTo/space) и `compactMode` - опции `issuesOptions(true)` (`models/tracker/src/viewlets.ts`); перетаскивание меняет `rank` (lexorank) карточки.
+5. **Kanban: группировка и drag/drop.** `KanbanView.svelte` (`plugins/tracker-resources/src/components/issues/KanbanView.svelte`) рендерит `IssueKanban` viewlet (`tracker.viewlet.Kanban` - `models/tracker/src/viewlets.ts`); `swimLaneBy` (none/assignee/priority/component/milestone/status/attachedTo/space) и `compactMode` - опции `issuesOptions(true)` (`models/tracker/src/viewlets.ts`); перетаскивание меняет `rank` (lexorank) карточки. Порядок дорожек: пустая дорожка первой, дальше функция сортировки поля через `sortSwimLaneValues` (`plugins/tracker-resources/src/utils.ts`: статусы, приоритеты, вехи), без неё - `orderSwimLanes` (`plugins/tracker-resources/src/swimLanes.ts`) по метке компонента, имени сотрудника или id.
 6. **Экспорт/импорт конфигурации workflow.** `plugins/workflow/src/transfer/export.ts` сериализует статусы/переходы/правила в `WorkflowConfig` с токенами `$status:`/`$taskType:`/`$screen:`/`$attr:` (`resolver.ts`); `compatibility.ts` строит отчёт совместимости (матчинг статусов/атрибутов/ экранов); `import.ts` атомарно применяет конфиг к целевому проекту.
 
 ## Фичи
@@ -79,7 +79,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **Разбивка "потрачено/запланировано".** `splitReportedTime` - конец слота-отчёта восстанавливается как `date + value`, идущий слот делится пропорционально; для самих слотов планировщика есть аналог `splitEventsDuration` в `plugins/time-resources/src/utils.ts`. - `plugins/tracker/src/index.ts`.
 - **Диалог отчёта.** `TimeSpendReportPopup` (действие `T`), быстрые кнопки часов, выбор сотрудника, `TimeReportDayType` (Current/Previous Work Day). - `plugins/tracker-resources/src/components/issues/timereport/`.
 - **UI оценки.** `EstimationEditor`/`EstimationPopup`/`EstimationStatsPresenter`/ `SubIssuesEstimations`/`TimeSpendReportList`/`ReportedTimeEditor` - круговой прогресс, список отчётов по саб-issues, календарь "люди x дни". - `plugins/tracker-resources/src/components/issues/timereport/`.
-- **Формат длительности.** `parseDuration`/`formatDuration`/`formatDurationCompact` (алиасы единиц по языку m/h/d/w), `durationFormatHint`. - `plugins/tracker/src/duration.ts`.
+- **Формат длительности.** `parseDuration`/`formatDuration`/`formatDurationCompact` (алиасы единиц по языку m/h/d/w), `durationFormatHint`; ноль показывается как `0h`. - `plugins/tracker/src/duration.ts`.
 
 ### Task types и статусы
 - **Иерархия типов задач.** `TaskType.allowedAsChildOf`/`allowAnyParent`/`isRootTaskType`; диаграмма `TaskTypesDiagram` в настройках проекта. - `models/task/src/index.ts`.
@@ -97,6 +97,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 ### Views (list/kanban)
 - **Viewlet'ы трекера.** `IssueList` (список с priority/identifier/status/kind/title/labels/ Milestone/Component/dueDate/reportedTime/estimation/assignee), `IssueKanban`, `SubIssues`/`ParentIssues`, `MilestoneIssuesList`, `ComponentIssuesList`. - `models/tracker/src/viewlets.ts`.
 - **Группировка/сортировка.** `issuesOptions(kanban)`: groupBy status/kind/assignee/priority/space/ component/milestone/attachedTo/createdBy/modifiedBy/estimation/remainingTime/reportedTime; для kanban - `swimLaneBy` (8 значений) + `compactMode`. - `models/tracker/src/viewlets.ts`.
+- **Порядок групп по статусу.** `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
 - **Опции показа.** `shouldShowSubIssues`, `shouldShowAll`, `hideArchived`. - `models/tracker/src/viewlets.ts`.
 
 ### Проекты, компоненты, вехи
@@ -135,6 +136,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 ## Связанные документы
 
 - [../time-tracking.md](../time-tracking.md) - модель данных и UI учёта времени на Issue (estimation/reportedTime/remainingTime, childInfo-агрегация).
+- [../status-order.md](../status-order.md) - порядок статусов при группировке по статусу: категории, слияние порядков типов задач, примеры.
 - [../time-tracking-examples.md](../time-tracking-examples.md) - разбор кейсов агрегации дерева оценок.
 - [../workflow.md](../workflow.md) - покрытие тестами фичи Workflow (jest/Playwright/ручные сценарии).
 - [../memory/workflow-tests.md](../memory/workflow-tests.md) - заметки по тестам workflow.

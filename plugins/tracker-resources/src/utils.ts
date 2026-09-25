@@ -44,8 +44,14 @@ import core, {
 } from '@hcengineering/core'
 import { translateCB, type IntlString } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
-import { createQuery, getClient } from '@hcengineering/presentation'
-import task, { getStatusIndex, makeRank, type TaskType, type ProjectType } from '@hcengineering/task'
+import { createQuery, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
+import task, {
+  getOrderedTaskTypes,
+  makeRank,
+  sortTaskTypesByName,
+  statusOrderComparator,
+  type ProjectType
+} from '@hcengineering/task'
 import {
   selectedTaskTypeStore,
   activeProjects as taskActiveProjects,
@@ -64,9 +70,10 @@ import {
   type TimeSpendReport as TimeSpendReportDoc
 } from '@hcengineering/tracker'
 import { areDatesEqual, isWeekend, PaletteColorIndexes, themeStore } from '@hcengineering/ui'
-import { type AttributeApplierResult, type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
+import view, { type AttributeApplierResult, type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
 import {
   CategoryQuery,
+  groupByCategory,
   ListSelectionProvider,
   statusStore,
   selectionStore,
@@ -177,16 +184,6 @@ const CUSTOM_INCLUDE_TYPES: Array<Ref<Class<any>>> = [
   core.class.EnumOf
 ]
 
-function getTaskTypesStatusIndex (joinedTaskTypes: TaskType[], status: Ref<Status>): number {
-  for (const taskType of joinedTaskTypes) {
-    const indexx = taskType.statuses.indexOf(status)
-    if (indexx >= 0) {
-      return indexx
-    }
-  }
-  return -1
-}
-
 export async function issueStatusSort (
   client: TxOperations,
   value: Array<Ref<IssueStatus>>,
@@ -217,44 +214,42 @@ export async function issueStatusSort (
   const taskType = taskTypeId !== undefined ? taskTypes.get(taskTypeId) : undefined
 
   const statuses = get(statusStore).byId
-  // TODO: How we track category updates.
 
   const isKanban = viewletDescriptorId === tracker.viewlet.Kanban
   const order = isKanban ? listIssueKanbanStatusOrder : listIssueStatusOrder
 
-  value.sort((a, b) => {
-    const aVal = statuses.get(a)
-    const bVal = statuses.get(b)
-    const aCatIndex = aVal?.category != null ? order.indexOf(aVal.category) : -1
-    const bCatIndex = bVal?.category != null ? order.indexOf(bVal.category) : -1
-    const aCat = aCatIndex >= 0 ? aCatIndex : order.length
-    const bCat = bCatIndex >= 0 ? bCatIndex : order.length
-    const res = aCat - bCat
-    if (res === 0) {
-      if (taskType != null) {
-        const aIndex = taskType.statuses.findIndex((p) => p === a)
-        const bIndex = taskType.statuses.findIndex((p) => p === b)
-        if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
-        if (aIndex >= 0) return -1
-        if (bIndex >= 0) return 1
-      }
-      if (type != null) {
-        const aIndex = getStatusIndex(type, taskTypes, a)
-        const bIndex = getStatusIndex(type, taskTypes, b)
-        if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
-        if (aIndex >= 0) return -1
-        if (bIndex >= 0) return 1
-      }
-      const aIndex = getTaskTypesStatusIndex(joinedTaskTypes, a)
-      const bIndex = getTaskTypesStatusIndex(joinedTaskTypes, b)
-      if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
-      if (aIndex >= 0) return -1
-      if (bIndex >= 0) return 1
-      return (aVal?.name ?? '').localeCompare(bVal?.name ?? '')
-    }
-    return res
-  })
+  // Task types in the order the settings screen shows them: the selected one first, then the project's own
+  // types, then the types of every joined project (views without a project). Inside a category a status is
+  // placed by its task type and then by its position in that task type.
+  const orderedTaskTypes = [
+    ...(taskType != null ? [taskType] : []),
+    ...getOrderedTaskTypes(type, taskTypes),
+    ...sortTaskTypesByName(joinedTaskTypes)
+  ].filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
+
+  value.sort(statusOrderComparator(order, orderedTaskTypes, statuses))
   return value
+}
+
+/**
+ * Swim lane values in the order of the field's sort function (`view.mixin.SortFuncs` of the attribute class:
+ * statuses by category and task type, priorities by weight, milestones by date). `undefined` when the field
+ * has no sort function, so the caller falls back to its own order.
+ */
+export async function sortSwimLaneValues (
+  client: TxOperations,
+  _class: Ref<Class<Doc>>,
+  space: Ref<Space> | undefined,
+  field: string,
+  values: unknown[],
+  viewletDescriptorId?: Ref<ViewletDescriptor>
+): Promise<unknown[] | undefined> {
+  const h = client.getHierarchy()
+  const attr = h.findAttribute(_class, field)
+  if (attr === undefined) return undefined
+  const attrClass = getAttributePresenterClass(h, attr.type).attrClass
+  if (h.classHierarchyMixin(attrClass, view.mixin.SortFuncs) === undefined) return undefined
+  return await groupByCategory(client, _class, space, field, values as any[], viewletDescriptorId)
 }
 
 export async function issuePrioritySort (client: TxOperations, value: IssuePriority[]): Promise<IssuePriority[]> {

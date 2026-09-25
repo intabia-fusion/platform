@@ -35,7 +35,7 @@ export const DEFAULT_STATUSES_ID = new Map([
 ])
 
 export const TEST_ESTIMATIONS = [
-  '0m',
+  '0h',
   '30m',
   '1h',
   '1h 15m',
@@ -276,7 +276,7 @@ export function floorFractionDigits (n: number | string, amount: number): number
 
 export async function toTime (value: number): Promise<string> {
   if (value <= 0) {
-    return '0m'
+    return '0h'
   }
 
   return convertEstimation(value)
@@ -344,7 +344,7 @@ export function parseEstimationInput (input: string): number {
 
 export function convertEstimation (estimation: number | string): string {
   const hours = typeof estimation === 'number' ? estimation : parseEstimationInput(estimation)
-  if (hours === 0 || Number.isNaN(hours)) return '0m'
+  if (hours === 0 || Number.isNaN(hours)) return '0h'
 
   const totalMin = Math.round(hours * 60)
   const h = Math.floor(totalMin / 60)
@@ -354,5 +354,5 @@ export function convertEstimation (estimation: number | string): string {
   if (h > 0) parts.push(`${h}h`)
   if (m > 0) parts.push(`${m}m`)
 
-  return parts.length > 0 ? parts.join(' ') : '0m'
+  return parts.length > 0 ? parts.join(' ') : '0h'
 }
