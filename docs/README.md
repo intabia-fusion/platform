@@ -41,6 +41,7 @@
 | [password_policy.md](password_policy.md) | Политика паролей (только на клиенте) |
 | [controlDocumentsOverview.md](controlDocumentsOverview.md) | Controlled Documents (QMS): функционал по sanity-тестам |
 | [time-tracking.md](time-tracking.md) | Оценки и учёт времени в трекере, агрегация по дереву задач |
+| [status-order.md](status-order.md) | Порядок статусов при группировке задач: категории, слияние порядков типов задач, примеры |
 | [workflow.md](workflow.md) | Workflow: что покрыто тестами |
 
 ## Тесты и производительность

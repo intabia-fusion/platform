@@ -22,10 +22,12 @@ import core, {
   Doc,
   Hierarchy,
   IdMap,
+  notEmpty,
   type Rank,
   Ref,
   type RefTo,
   Status,
+  type StatusCategory,
   TxOperations
 } from '@hcengineering/core'
 import { getEmbeddedLabel, PlatformError, unknownStatus } from '@hcengineering/platform'
@@ -93,20 +95,122 @@ export function getTaskTypeStates (
 
 /**
  * @public
+ * Status categories in the order of the "process states" settings screen.
+ * A function, not a constant: `task` is not initialised yet when this module is first evaluated.
  */
-export function getStatusIndex (type: ProjectType, taskTypes: IdMap<TaskType>, status: Ref<Status>): number {
-  if (type.statuses !== undefined && type.statuses.length > 0) {
-    const idx = type.statuses.findIndex((s) => s._id === status)
-    if (idx >= 0) return idx
+export function getStatusCategoryOrder (): Array<Ref<StatusCategory>> {
+  return [
+    task.statusCategory.UnStarted,
+    task.statusCategory.ToDo,
+    task.statusCategory.Active,
+    task.statusCategory.Won,
+    task.statusCategory.Lost
+  ]
+}
+
+/**
+ * @public
+ * Task types sorted the way the project type settings screen lists them (by name).
+ * `ProjectType.tasks` keeps creation order, which the user never sees.
+ */
+export function sortTaskTypesByName (taskTypes: TaskType[]): TaskType[] {
+  return [...taskTypes].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/**
+ * @public
+ * Task types of a project type in the order the settings screen lists them.
+ */
+export function getOrderedTaskTypes (type: ProjectType | undefined, taskTypes: IdMap<TaskType>): TaskType[] {
+  const res = (type?.tasks ?? []).map((it) => taskTypes.get(it)).filter(notEmpty)
+  return sortTaskTypesByName(res)
+}
+
+/**
+ * @public
+ * Merges the status sequences of the task types into one rank per status that keeps every task type's own
+ * order: a status shared by several task types goes after everything that precedes it in any of them. Ties,
+ * and conflicting orders, resolve by task type order, then by position in that task type.
+ */
+export function mergeStatusOrder (orderedTaskTypes: TaskType[]): Map<Ref<Status>, number> {
+  const keys = new Map<Ref<Status>, [number, number]>()
+  const successors = new Map<Ref<Status>, Set<Ref<Status>>>()
+  const indegree = new Map<Ref<Status>, number>()
+
+  orderedTaskTypes.forEach((taskType, taskTypeIndex) => {
+    const statuses = (taskType.statuses ?? []).filter((it, idx, arr) => arr.indexOf(it) === idx)
+    statuses.forEach((status, statusIndex) => {
+      if (!keys.has(status)) {
+        keys.set(status, [taskTypeIndex, statusIndex])
+        successors.set(status, new Set())
+        indegree.set(status, 0)
+      }
+      if (statusIndex > 0) {
+        const next = successors.get(statuses[statusIndex - 1]) as Set<Ref<Status>>
+        if (!next.has(status)) {
+          next.add(status)
+          indegree.set(status, (indegree.get(status) ?? 0) + 1)
+        }
+      }
+    })
+  })
+
+  const compareKeys = (a: Ref<Status>, b: Ref<Status>): number => {
+    const [aType, aIndex] = keys.get(a) as [number, number]
+    const [bType, bIndex] = keys.get(b) as [number, number]
+    return aType !== bType ? aType - bType : aIndex - bIndex
   }
-  for (const taskId of type.tasks ?? []) {
-    const taskType = taskTypes.get(taskId)
-    const idx = taskType?.statuses?.indexOf(status)
-    if (idx !== undefined && idx >= 0) {
-      return idx
+
+  const remaining = new Set(keys.keys())
+  const rank = new Map<Ref<Status>, number>()
+  while (remaining.size > 0) {
+    // The smallest status nothing remaining precedes. Only a cycle (task types disagreeing on the order)
+    // leaves no such status: then the smallest one at all, so task type order wins.
+    let pick: Ref<Status> | undefined
+    for (const status of remaining) {
+      if (indegree.get(status) === 0 && (pick === undefined || compareKeys(status, pick) < 0)) pick = status
+    }
+    if (pick === undefined) {
+      for (const status of remaining) {
+        if (pick === undefined || compareKeys(status, pick) < 0) pick = status
+      }
+    }
+    const picked = pick as Ref<Status>
+    remaining.delete(picked)
+    rank.set(picked, rank.size)
+    for (const next of successors.get(picked) ?? []) {
+      if (remaining.has(next)) indegree.set(next, (indegree.get(next) ?? 1) - 1)
     }
   }
-  return -1
+  return rank
+}
+
+/**
+ * @public
+ * Comparator for status refs used by grouped views: by category (`categoryOrder`), then by the merged order
+ * of the task types (`mergeStatusOrder`), then by name. Unknown categories and statuses outside
+ * `orderedTaskTypes` go after the known ones.
+ */
+export function statusOrderComparator (
+  categoryOrder: ReadonlyArray<Ref<StatusCategory>>,
+  orderedTaskTypes: TaskType[],
+  statuses: IdMap<Status>
+): (a: Ref<Status>, b: Ref<Status>) => number {
+  const rank = mergeStatusOrder(orderedTaskTypes)
+  const unknownRank = rank.size
+  const categoryIndex = (status: Status | undefined): number => {
+    const idx = status?.category != null ? categoryOrder.indexOf(status.category) : -1
+    return idx >= 0 ? idx : categoryOrder.length
+  }
+  return (a, b) => {
+    const aVal = statuses.get(a)
+    const bVal = statuses.get(b)
+    const byCategory = categoryIndex(aVal) - categoryIndex(bVal)
+    if (byCategory !== 0) return byCategory
+    const byRank = (rank.get(a) ?? unknownRank) - (rank.get(b) ?? unknownRank)
+    if (byRank !== 0) return byRank
+    return (aVal?.name ?? '').localeCompare(bVal?.name ?? '')
+  }
 }
 
 /**

@@ -29,8 +29,10 @@ import {
 import { type IntlString, type Resources } from '@hcengineering/platform'
 import { createQuery, onClient } from '@hcengineering/presentation'
 import task, {
-  getStatusIndex,
+  getOrderedTaskTypes,
   makeRank,
+  getStatusCategoryOrder,
+  statusOrderComparator,
   type Project,
   type ProjectType,
   type Rank,
@@ -243,19 +245,7 @@ async function statusSort (
   const taskTypes = get(taskTypeStore)
 
   if (type !== undefined) {
-    value.sort((a, b) => {
-      const aVal = statuses.get(a) as Status
-      const bVal = statuses.get(b) as Status
-      if (type != null) {
-        const aIndex = getStatusIndex(type, taskTypes, a)
-        const bIndex = getStatusIndex(type, taskTypes, b)
-        return aIndex - bIndex
-      } else if (aVal != null && bVal != null) {
-        return aVal.name.localeCompare(bVal.name)
-      } else {
-        return 0
-      }
-    })
+    value.sort(statusOrderComparator(getStatusCategoryOrder(), getOrderedTaskTypes(type, taskTypes), statuses))
   } else {
     const res = new Map<Ref<Status>, Rank>()
     let prevRank: Rank | undefined
