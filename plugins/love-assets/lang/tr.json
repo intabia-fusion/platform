@@ -102,6 +102,7 @@
     "MeetingStart": "Toplantı başlangıcı",
     "MeetingEnd": "Toplantı bitişi",
     "EndMeeting": "Toplantıyı bitir",
+    "MeetingScheduledDate": "Planlanan toplantı tarihi",
     "Status": "Durum",
     "Active": "Aktif",
     "Finished": "Bitti",

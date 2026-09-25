@@ -102,6 +102,7 @@
     "MeetingStart": "Начало встречи",
     "MeetingEnd": "Конец встречи",
     "EndMeeting": "Завершить встречу",
+    "MeetingScheduledDate": "Запланированная дата встречи",
     "Status": "Статус",
     "Active": "Активно",
     "Finished": "Завершено",

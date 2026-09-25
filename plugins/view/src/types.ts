@@ -129,6 +129,7 @@ export interface FilteredView extends Doc {
 export interface ClassFilters extends Class<Doc> {
   filters: (KeyFilterPreset | string)[]
   ignoreKeys?: string[]
+  hideIfEmpty?: string[]
 
   // Ignore attributes not specified in the "filters" array
   strict?: boolean

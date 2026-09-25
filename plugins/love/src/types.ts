@@ -193,6 +193,7 @@ export interface MeetingMinutes extends Space {
   meetingEnd?: Timestamp
 
   meetingScheduledDate?: Timestamp
+  startedAt?: Timestamp
 
   transcription?: number
   messages?: number
