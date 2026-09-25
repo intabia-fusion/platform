@@ -280,3 +280,15 @@ bound there; it is the only one of the 319 that failed.
 What the stand does not reach, and what is therefore worth a test of its own: `pod-github` (5.5%,
 3914 statements - `worker.ts` 793 and `platform.ts` 542 are still flat zero), `pod-rating` (0%),
 `pod-preview` (1.5%), `mongo` (2.9%), `pod-telegram-bot` (5.2%).
+
+## One server job: bundle, stand, api-tests, coverage (2026-09-25)
+
+`ci_test.sh` now carries everything server-side: `docker-api.sh` images, the ws-tests stand with the coverage overlay, api-tests + backup-tests, `coverage:stand`, `pnpm coverage --integration --stand`. GitHub runs it in `build` after `pnpm bundle` (the separate `test` job is gone, `docker-build` needs `build`); GitLab in `test`. `ws-tests` uitest jobs run Playwright only. The duplicate `pnpm test --verbose` pass was dropped - the coverage run repeats the unit group anyway.
+
+- The api-tests need `front` only for `/config.json` (`loadServerConfig`), and `pods/front/Dockerfile` copies just `bundle.js` + `dist/`. An empty `dist/` gives a working `front` without the `dev/prod` webpack build. `backup-tests` do not touch `front` at all, but nginx `depends_on` it.
+- `docker-api.sh` builds the 18 images `ws-tests/docker-compose.yaml` uses, not the 39 of `docker-fast.sh`. The images are thin (COPY of a bundle over a base), 29s with `--no-cache` on a 12-core Mac.
+- GitLab sets `DOCKER_REGISTRY` in project variables and compose prefixes our images with it, while `docker_build.sh` tags without a registry - `ci_test.sh` clears it for the stand.
+- `pod-webhook` tags `intabiafusion/webhook` regardless of `DOCKER_NAMESPACE`; a stand with another namespace does not find it.
+- `rest.test.ts` `find avg` measured 26ms under `NODE_V8_COVERAGE` (bound 10, CI 20); it returns early when `STAND_COVERAGE=true`, so CI no longer checks that timing anywhere.
+
+Clean clone on 10.0.2.2 (12 cores, warm pnpm store, base images present): install 10s, `pnpm bundle` 34-73s, `ci_test.sh` 506s - docker-api ~30s, prepare 31s, api-tests 45s, backup-tests 17s, stop 27s, `coverage:stand` 12s, `coverage --integration --stand` the rest (~300s alone). Result: api 318 passed, backup 12, unit 511 suites, integration 13; STAND 77.8%, TOTAL 69.8% (was 37.4%). A GitHub runner has 4 cores, so expect the jest part to take 2-3x longer there.

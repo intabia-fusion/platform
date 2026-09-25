@@ -1,5 +1,5 @@
 name: 'UI Test'
-description: 'Run UI tests with optional API tests support'
+description: 'Run UI tests'
 
 inputs:
   test-folder:
@@ -11,14 +11,6 @@ inputs:
   build-package:
     description: 'Package to build before tests'
     required: true
-  run-api-tests:
-    description: 'Whether to run API tests (true/false)'
-    required: false
-    default: 'false'
-  run-backup-tests:
-    description: 'Whether to run backup tests (true/false)'
-    required: false
-    default: 'false'
   artifact-name-suffix:
     description: 'Suffix for artifact names'
     required: true
@@ -72,22 +64,6 @@ runs:
       run: |
         cd ./${{ inputs.test-folder }}/sanity
         pnpm run ci
-
-    - name: Run API tests
-      if: inputs.run-api-tests == 'true'
-      shell: bash
-      run: |
-        pnpm build --to @hcengineering/api-tests
-        cd ./${{ inputs.test-folder }}/api-tests
-        pnpm run api-test --verbose
-
-    - name: Run backup tests
-      if: inputs.run-backup-tests == 'true'
-      shell: bash
-      run: |
-        pnpm build --to @hcengineering/backup-tests
-        cd ./${{ inputs.test-folder }}/backup-tests
-        pnpm run backup-test --verbose
 
     - name: Start profiling
       if: inputs.enable-profiling == 'true'
@@ -194,13 +170,6 @@ runs:
         mkdir -p logs
         cd logs
         docker ps -a --format '{{.Names}}' | xargs -I {} sh -c 'docker logs {} > {}_logs.log 2>&1'
-
-    - name: Upload API test results
-      if: always()
-      uses: actions/upload-artifact@v5
-      with:
-        name: playwright-results-api-${{ inputs.artifact-name-suffix }}
-        path: ./${{ inputs.test-folder }}/api-tests/playwright-report/
 
     - name: Upload UI test results
       if: always()

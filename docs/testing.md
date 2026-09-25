@@ -150,26 +150,18 @@ Flags (`-g "<title>"`, `--workers=1` for love/meetings), tracing, flake diagnosi
 
 ## CI
 
-Both pipelines run the unit group and then the coverage run, which repeats it together with the
-integration group and is also that group's gate:
+All server-side checks run in one job, `ci_test.sh`, right after `pnpm bundle`:
 
-```bash
-pnpm test --verbose        # unit, fails fast with a per-package report
-pnpm coverage --integration
-```
+1. `common/scripts/docker-api.sh` builds the images of the services in `ws-tests/docker-compose.yaml` from the bundles on disk. No web UI: `front` is built with an empty `dist/`, since the api-tests only need its `/config.json`, and the webpack bundle is most of a full image build.
+2. The ws-tests stand comes up with `docker-compose.coverage.yaml`, `ws-tests/api-tests` and `ws-tests/backup-tests` run against it, the stand is stopped (not downed) and `pnpm coverage:stand` turns the pods' V8 profiles into `coverage-stand.json`.
+3. `pnpm coverage --integration --stand` runs the unit and integration groups under istanbul, folds the stand run in and is the gate for both jest groups.
 
-- GitHub - the `test` job in `.github/workflows/main.yml`. The tail of the run goes into the job
-  summary and `coverage/` goes up as the `coverage` artifact.
-- GitLab - the `test` job in `.gitlab-ci.yml`, which runs `ci_test.sh` on a shell runner that
-  already has Docker. The job reads the percentage off the last line with its `coverage:` regex and
-  publishes `cobertura-coverage.xml` as the merge-request coverage report; `html/` and `lcov.info`
-  go up as artifacts.
+`STAND_COVERAGE=true` is set for the api-tests; `rest.test.ts`'s `find avg` timing check returns early under it, since pods under `NODE_V8_COVERAGE` answer 2-3x slower.
 
-The GitLab `test` job holds the per-host stand lock (`.lock_stand`), so it cannot overlap a
-`uitest:*` job on the same runner.
+- GitHub - the `build` job in `.github/workflows/main.yml` (bundle, then `ci_test.sh`); `docker-build` and `dist-build` hang off it. The job summary carries the TOTAL/STAND lines and the per-package table, `coverage/` goes up as the `coverage` artifact.
+- GitLab - the `test` job in `.gitlab-ci.yml`, which runs `ci_test.sh` on a shell runner under the per-host stand lock (`.lock_stand`). The job reads the percentage off the last line with its `coverage:` regex and publishes `cobertura-coverage.xml` as the merge-request coverage report. `DOCKER_REGISTRY` is cleared for the stand: the images are local and tagged without one.
 
-The Playwright suites (`tests/sanity`, `qms-tests`, `ws-tests`) are their own `uitest:*` jobs in
-GitLab and `uitest-*` jobs in GitHub; neither the unit nor the integration group touches them.
+The Playwright suites (`tests/sanity`, `qms-tests`, `ws-tests/sanity`) stay in their own `uitest:*` jobs in GitLab and `uitest-*` jobs in GitHub, on full images including the web UI.
 
 `wait-elastic.sh` takes its host from `ELASTIC_HOST` (default `localhost`) and now exits non-zero
 when elasticsearch never answers, instead of reporting a healthy stand.
