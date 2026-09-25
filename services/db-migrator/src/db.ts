@@ -80,6 +80,12 @@ export async function markAllAsApplied (sql: Sql, files: string[]): Promise<void
   })
 }
 
+const markAppliedSql = `
+  INSERT INTO system._migrations (name)
+  VALUES ($1)
+  ON CONFLICT (name) DO NOTHING
+`
+
 // One transaction per file together with its `_migrations` row. A failure is rethrown, not marked
 // as applied: the schema would lag behind the version and the adapter would silently keep the
 // missing columns in `data`. The file is retried on the next run.
@@ -90,14 +96,7 @@ export async function applyMigration (sql: Sql, fileName: string, dir: string, c
       async () => {
         await sql.begin(async (txn: TransactionSql) => {
           await txn.unsafe(sqlContent)
-          await txn.unsafe(
-            `
-          INSERT INTO system._migrations (name)
-          VALUES ($1)
-          ON CONFLICT (name) DO NOTHING
-        `,
-            [fileName]
-          )
+          await txn.unsafe(markAppliedSql, [fileName])
         })
       },
       {

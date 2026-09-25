@@ -527,6 +527,7 @@ function mapToCommonNotification (inboxNotification: CommonInboxNotification): C
 
 export async function migrateNotificationsToEmbedded (client: MigrationClient): Promise<void> {
   let processed = 0
+  let failed = 0
 
   const iterator = await client.traverse<DocNotifyContextOld>(DOMAIN_DOC_NOTIFY, {
     _class: notification.class.DocNotifyContext,
@@ -544,321 +545,343 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
       const chunkSize = 100
       for (let i = 0; i < contextsBatch.length; i += chunkSize) {
         const chunk = contextsBatch.slice(i, i + chunkSize)
-        const chunkIds = chunk.map((c) => c._id).filter((id) => id != null)
-        const toRemove = new Set<Ref<DocNotifyContextOld>>()
-        const chunkNotifications = await client.find<InboxNotification>(DOMAIN_NOTIFICATION, {
-          docNotifyContext: { $in: chunkIds }
-        })
-
-        const reactionIds = new Set<Ref<Reaction>>()
-        for (const n of chunkNotifications) {
-          if (n._class === 'notification:class:ReactionInboxNotification') {
-            const ref = (n as ReactionInboxNotification).ref
-            if (ref != null) {
-              reactionIds.add(ref)
-            }
-          }
-        }
-
-        const cleanReactionIds = Array.from(reactionIds).filter((id) => id != null)
-        const reactions =
-          cleanReactionIds.length > 0
-            ? await client.find<Reaction>(DOMAIN_REACTION, { _id: { $in: cleanReactionIds } })
-            : []
-
-        const reactionMap = toIdMap(reactions)
-
-        const objectIdsByDomain = new Map<Domain, Ref<Doc>[]>()
-        for (const context of chunk) {
-          const objectId = context.objectId
-          const objectClass = context.objectClass
-
-          if (objectId != null && objectClass != null) {
-            const domain = client.hierarchy.findDomain(objectClass)
-            if (domain !== undefined) {
-              let list = objectIdsByDomain.get(domain)
-              if (list === undefined) {
-                list = []
-                objectIdsByDomain.set(domain, list)
-              }
-              list.push(objectId)
-            }
-          }
-        }
-
-        const objectsMap = new Map<Ref<Doc>, Doc>()
-        for (const [domain, ids] of objectIdsByDomain.entries()) {
-          const cleanIds = ids.filter((id) => id != null)
-          if (cleanIds.length === 0) continue
-          const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
-          for (const doc of docs) {
-            if (!client.hierarchy.hasClass(doc._class)) continue
-            objectsMap.set(doc._id, doc)
-          }
-        }
-
-        const parentIdsByDomain = new Map<Domain, Ref<Doc>[]>()
-        for (const doc of objectsMap.values()) {
-          if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
-            const message = doc as ActivityMessage
-            const parentId = message.attachedTo
-            const parentClass = message.attachedToClass
-            if (parentId != null && parentClass != null) {
-              const parentDomain = client.hierarchy.findDomain(parentClass)
-              if (parentDomain !== undefined) {
-                let list = parentIdsByDomain.get(parentDomain)
-                if (list === undefined) {
-                  list = []
-                  parentIdsByDomain.set(parentDomain, list)
-                }
-                list.push(parentId)
-              }
-            }
-          }
-        }
-
-        const parentObjectMap = new Map<Ref<Doc>, Doc>()
-        for (const [domain, ids] of parentIdsByDomain.entries()) {
-          const cleanIds = ids.filter((id) => id != null)
-          if (cleanIds.length === 0) continue
-          const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
-          for (const doc of docs) {
-            if (!client.hierarchy.hasClass(doc._class)) continue
-            parentObjectMap.set(doc._id, doc)
-          }
-        }
-
-        // Combine both maps for reference lookups
-        const cache = new Map<Ref<Doc>, Doc>([...objectsMap, ...parentObjectMap])
-
-        // Fetch all ActivityMessage documents referenced by chunkNotifications in the chunk
-        const activityIds = new Set<Ref<ActivityMessage>>()
-        for (const n of chunkNotifications) {
-          if (n._class === 'notification:class:ActivityInboxNotification') {
-            const attachedTo = (n as ActivityInboxNotification).attachedTo
-            if (attachedTo != null) {
-              activityIds.add(attachedTo)
-            }
-          } else if (n._class === 'notification:class:ReactionInboxNotification') {
-            const attachedTo = (n as ReactionInboxNotification).attachedTo
-            if (attachedTo != null) {
-              activityIds.add(attachedTo)
-            }
-          } else if (n._class === 'notification:class:MentionInboxNotification') {
-            const mentionNotif = n as MentionInboxNotification
-            if (
-              mentionNotif.mentionedIn != null &&
-              client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
-            ) {
-              activityIds.add(mentionNotif.mentionedIn as Ref<ActivityMessage>)
-            }
-          }
-        }
-
-        const cleanActivityIds = Array.from(activityIds).filter((id) => id != null)
-        const loadAttachments = new Set<Ref<ActivityMessage>>()
-        if (cleanActivityIds.length > 0) {
-          const activityMessages = await client.find<ActivityMessage>(DOMAIN_ACTIVITY, {
-            _id: { $in: cleanActivityIds }
-          })
-          for (const msg of activityMessages) {
-            cache.set(msg._id, msg)
-
-            if (((msg as ChatMessage)?.attachments ?? 0) > 0) {
-              loadAttachments.add(msg._id)
-            }
-          }
-        }
-
-        const attachmentsByMessage = new Map<Ref<ActivityMessage>, BlobType[]>()
-
-        const cleanLoadAttachments = Array.from(loadAttachments).filter((id) => id != null)
-        if (cleanLoadAttachments.length > 0) {
-          const attachments = await client.find<Attachment>(DOMAIN_ATTACHMENT, {
-            attachedTo: { $in: cleanLoadAttachments }
-          })
-          for (const att of attachments) {
-            let list = attachmentsByMessage.get(att.attachedTo as Ref<ActivityMessage>)
-            if (list === undefined) {
-              list = []
-              attachmentsByMessage.set(att.attachedTo as Ref<ActivityMessage>, list)
-            }
-            list.push({
-              file: att.file,
-              type: att.type,
-              name: att.name,
-              size: att.size,
-              metadata: att.metadata
-            })
-          }
-        }
-
-        const updates: {
-          filter: MigrationDocumentQuery<DocNotifyContextOld>
-          update: MigrateUpdate<DocNotifyContext>
-        }[] = []
-
-        for (const context of chunk) {
-          const inboxNotifications = chunkNotifications.filter((n) => n.docNotifyContext === context._id)
-          const targetDoc = await getDoc(client, context.objectId, context.objectClass, cache)
-
-          if (targetDoc == null) {
-            toRemove.add(context._id)
-            continue
-          }
-
-          const objectTitle = await getDocTitleFallback(client, targetDoc, personByAccountUuid, cache, context.user)
-          const objectIdentifier: string | undefined = await getDocIdentifierFallback(client, targetDoc, cache)
-          const objectLabel = getDocLabelFallback(targetDoc, client.hierarchy)
-          const objectIcon = getDocIconFallback(client, targetDoc, context.user)
-
-          let object: Partial<Doc> | undefined
-
-          let parentObjectId: Ref<Doc> | undefined
-          let parentObjectClass: Ref<Class<Doc>> | undefined
-          let parentObjectTitle: string | undefined
-          let parentObjectIdentifier: string | undefined
-          let parentObjectLabel: IntlString | undefined
-          let parentObjectIcon: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> } | undefined
-
-          if (client.hierarchy.isDerived(targetDoc._class, activity.class.ActivityMessage)) {
-            const message = targetDoc as ActivityMessage
-            object = compactNotificationMessage(message, client.hierarchy)
-
-            const parentId = message.attachedTo
-            const parentClass = message.attachedToClass
-            const parentDoc = await getDoc(client, parentId, parentClass, cache)
-            if (parentDoc != null) {
-              parentObjectId = parentId
-              parentObjectClass = parentClass
-              parentObjectTitle = await getDocTitleFallback(client, parentDoc, personByAccountUuid, cache, context.user)
-              parentObjectIdentifier = await getDocIdentifierFallback(client, parentDoc, cache)
-              parentObjectLabel = getDocLabelFallback(parentDoc, client.hierarchy)
-              parentObjectIcon = getDocIconFallback(client, parentDoc, context.user)
-            }
-          }
-
-          // Sort notifications by createdOn ascending (oldest first)
-          inboxNotifications.sort((a, b) => getTimestamp(a) - getTimestamp(b))
-
-          const unreadMessages: UnreadMessage[] = []
-          const unreadReactions: UnreadReaction[] = []
-          const unreadMentions: UnreadMention[] = []
-          const unreadCommons: CommonNotification[] = []
-
-          for (const inboxNotification of inboxNotifications) {
-            const isViewed = inboxNotification.isViewed
-            if (!isViewed) {
-              const notifClass = inboxNotification._class
-              if (notifClass === 'notification:class:ActivityInboxNotification') {
-                const activityNotif = inboxNotification as ActivityInboxNotification
-                unreadMessages.push({
-                  id: activityNotif.attachedTo,
-                  createdOn: getTimestamp(activityNotif),
-                  notified: true
-                })
-              } else if (notifClass === 'notification:class:ReactionInboxNotification') {
-                const reactNotif = inboxNotification as ReactionInboxNotification
-                unreadReactions.push({
-                  id: reactNotif.ref,
-                  attachedTo: reactNotif.attachedTo
-                })
-              } else if (notifClass === 'notification:class:MentionInboxNotification') {
-                const mentionNotif = inboxNotification as MentionInboxNotification
-                if (
-                  mentionNotif.mentionedInClass != null &&
-                  client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
-                ) {
-                  unreadMessages.push({
-                    id: mentionNotif.mentionedIn as Ref<ActivityMessage>,
-                    createdOn: getTimestamp(mentionNotif),
-                    notified: true,
-                    mentioned: true
-                  })
-                } else {
-                  unreadMentions.push({
-                    id: inboxNotification._id
-                  })
-                }
-              } else if (notifClass === 'notification:class:CommonInboxNotification') {
-                unreadCommons.push(mapToCommonNotification(inboxNotification as CommonInboxNotification))
-              }
-            }
-          }
-
-          // Keep up to 5 latest context notifications
-          const latestNotifications: ContextNotification[] = []
-
-          for (const n of [...inboxNotifications].reverse()) {
-            if (latestNotifications.length === 5) break
-            const t = await mapToContextNotification(client, n, reactionMap, cache, attachmentsByMessage)
-            if (t == null) continue
-            latestNotifications.push(t)
-          }
-
-          // Every migrated message entry is `notified`, so the message part of unreadCount is the total.
-          const unreadMessagesCount = getUnreadMessagesTotal(unreadMessages)
-          const unreadCount =
-            unreadMessagesCount + unreadMentions.length + unreadCommons.length + unreadReactions.length
-          const lastNotify =
-            inboxNotifications.length > 0 ? getTimestamp(inboxNotifications[inboxNotifications.length - 1]) : 0
-
-          updates.push({
-            filter: { _id: context._id },
-            update: {
-              latestNotifications,
-              unreadReactions,
-              unreadMentions,
-              // Kept flat up to the limit, older entries folded into chunks like the service does on append.
-              unreadMessages: collapseUnreadMessages(unreadMessages),
-              unreadCommons,
-              unreadCount,
-              unreadMessagesCount,
-              notifiedMessagesCount: unreadMessagesCount,
-              lastNotify,
-              objectTitle,
-              objectIdentifier,
-              objectLabel,
-              objectIcon,
-              object,
-              parentObjectId,
-              parentObjectClass,
-              parentObjectTitle,
-              parentObjectIdentifier,
-              parentObjectLabel,
-              parentObjectIcon
-            }
-          })
-        }
-
-        if (updates.length > 0) {
-          await client.bulk(DOMAIN_DOC_NOTIFY, updates)
-        }
-
-        if (toRemove.size > 0) {
-          const toRemoveArray = Array.from(toRemove).filter((id) => id != null)
-          if (toRemoveArray.length > 0) {
-            await client.deleteMany(DOMAIN_DOC_NOTIFY, {
-              _id: { $in: toRemoveArray }
-            })
-            await client.deleteMany(DOMAIN_NOTIFICATION, {
-              docNotifyContext: { $in: toRemoveArray }
-            })
-          }
-        }
-
-        // Delete the migrated notifications for this chunk of contexts
-        if (chunkIds.length > 0) {
-          await client.deleteMany(DOMAIN_NOTIFICATION, {
+        try {
+          const chunkIds = chunk.map((c) => c._id).filter((id) => id != null)
+          const toRemove = new Set<Ref<DocNotifyContextOld>>()
+          const chunkNotifications = await client.find<InboxNotification>(DOMAIN_NOTIFICATION, {
             docNotifyContext: { $in: chunkIds }
           })
-        }
 
-        processed += chunk.length
-        client.logger.log('...processed embedded notification chunk by contexts', { count: processed })
+          const reactionIds = new Set<Ref<Reaction>>()
+          for (const n of chunkNotifications) {
+            if (n._class === 'notification:class:ReactionInboxNotification') {
+              const ref = (n as ReactionInboxNotification).ref
+              if (ref != null) {
+                reactionIds.add(ref)
+              }
+            }
+          }
+
+          const cleanReactionIds = Array.from(reactionIds).filter((id) => id != null)
+          const reactions =
+            cleanReactionIds.length > 0
+              ? await client.find<Reaction>(DOMAIN_REACTION, { _id: { $in: cleanReactionIds } })
+              : []
+
+          const reactionMap = toIdMap(reactions)
+
+          const objectIdsByDomain = new Map<Domain, Ref<Doc>[]>()
+          for (const context of chunk) {
+            const objectId = context.objectId
+            const objectClass = context.objectClass
+
+            if (objectId != null && objectClass != null) {
+              const domain = client.hierarchy.findDomain(objectClass)
+              if (domain !== undefined) {
+                let list = objectIdsByDomain.get(domain)
+                if (list === undefined) {
+                  list = []
+                  objectIdsByDomain.set(domain, list)
+                }
+                list.push(objectId)
+              }
+            }
+          }
+
+          const objectsMap = new Map<Ref<Doc>, Doc>()
+          for (const [domain, ids] of objectIdsByDomain.entries()) {
+            const cleanIds = ids.filter((id) => id != null)
+            if (cleanIds.length === 0) continue
+            const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
+            for (const doc of docs) {
+              if (!client.hierarchy.hasClass(doc._class)) continue
+              objectsMap.set(doc._id, doc)
+            }
+          }
+
+          const parentIdsByDomain = new Map<Domain, Ref<Doc>[]>()
+          for (const doc of objectsMap.values()) {
+            if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+              const message = doc as ActivityMessage
+              const parentId = message.attachedTo
+              const parentClass = message.attachedToClass
+              if (parentId != null && parentClass != null) {
+                const parentDomain = client.hierarchy.findDomain(parentClass)
+                if (parentDomain !== undefined) {
+                  let list = parentIdsByDomain.get(parentDomain)
+                  if (list === undefined) {
+                    list = []
+                    parentIdsByDomain.set(parentDomain, list)
+                  }
+                  list.push(parentId)
+                }
+              }
+            }
+          }
+
+          const parentObjectMap = new Map<Ref<Doc>, Doc>()
+          for (const [domain, ids] of parentIdsByDomain.entries()) {
+            const cleanIds = ids.filter((id) => id != null)
+            if (cleanIds.length === 0) continue
+            const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
+            for (const doc of docs) {
+              if (!client.hierarchy.hasClass(doc._class)) continue
+              parentObjectMap.set(doc._id, doc)
+            }
+          }
+
+          // Combine both maps for reference lookups
+          const cache = new Map<Ref<Doc>, Doc>([...objectsMap, ...parentObjectMap])
+
+          // Fetch all ActivityMessage documents referenced by chunkNotifications in the chunk
+          const activityIds = new Set<Ref<ActivityMessage>>()
+          for (const n of chunkNotifications) {
+            if (n._class === 'notification:class:ActivityInboxNotification') {
+              const attachedTo = (n as ActivityInboxNotification).attachedTo
+              if (attachedTo != null) {
+                activityIds.add(attachedTo)
+              }
+            } else if (n._class === 'notification:class:ReactionInboxNotification') {
+              const attachedTo = (n as ReactionInboxNotification).attachedTo
+              if (attachedTo != null) {
+                activityIds.add(attachedTo)
+              }
+            } else if (n._class === 'notification:class:MentionInboxNotification') {
+              const mentionNotif = n as MentionInboxNotification
+              if (
+                mentionNotif.mentionedIn != null &&
+                client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
+              ) {
+                activityIds.add(mentionNotif.mentionedIn as Ref<ActivityMessage>)
+              }
+            }
+          }
+
+          const cleanActivityIds = Array.from(activityIds).filter((id) => id != null)
+          const loadAttachments = new Set<Ref<ActivityMessage>>()
+          if (cleanActivityIds.length > 0) {
+            const activityMessages = await client.find<ActivityMessage>(DOMAIN_ACTIVITY, {
+              _id: { $in: cleanActivityIds }
+            })
+            for (const msg of activityMessages) {
+              cache.set(msg._id, msg)
+
+              if (((msg as ChatMessage)?.attachments ?? 0) > 0) {
+                loadAttachments.add(msg._id)
+              }
+            }
+          }
+
+          const attachmentsByMessage = new Map<Ref<ActivityMessage>, BlobType[]>()
+
+          const cleanLoadAttachments = Array.from(loadAttachments).filter((id) => id != null)
+          if (cleanLoadAttachments.length > 0) {
+            const attachments = await client.find<Attachment>(DOMAIN_ATTACHMENT, {
+              attachedTo: { $in: cleanLoadAttachments }
+            })
+            for (const att of attachments) {
+              let list = attachmentsByMessage.get(att.attachedTo as Ref<ActivityMessage>)
+              if (list === undefined) {
+                list = []
+                attachmentsByMessage.set(att.attachedTo as Ref<ActivityMessage>, list)
+              }
+              list.push({
+                file: att.file,
+                type: att.type,
+                name: att.name,
+                size: att.size,
+                metadata: att.metadata
+              })
+            }
+          }
+
+          const updates: {
+            filter: MigrationDocumentQuery<DocNotifyContextOld>
+            update: MigrateUpdate<DocNotifyContext>
+          }[] = []
+
+          for (const context of chunk) {
+            const inboxNotifications = chunkNotifications.filter((n) => n.docNotifyContext === context._id)
+            const targetDoc = await getDoc(client, context.objectId, context.objectClass, cache)
+
+            if (targetDoc == null) {
+              toRemove.add(context._id)
+              continue
+            }
+
+            const objectTitle = await getDocTitleFallback(client, targetDoc, personByAccountUuid, cache, context.user)
+            const objectIdentifier: string | undefined = await getDocIdentifierFallback(client, targetDoc, cache)
+            const objectLabel = getDocLabelFallback(targetDoc, client.hierarchy)
+            const objectIcon = getDocIconFallback(client, targetDoc, context.user)
+
+            let object: Partial<Doc> | undefined
+
+            let parentObjectId: Ref<Doc> | undefined
+            let parentObjectClass: Ref<Class<Doc>> | undefined
+            let parentObjectTitle: string | undefined
+            let parentObjectIdentifier: string | undefined
+            let parentObjectLabel: IntlString | undefined
+            let parentObjectIcon: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> } | undefined
+
+            if (client.hierarchy.isDerived(targetDoc._class, activity.class.ActivityMessage)) {
+              const message = targetDoc as ActivityMessage
+              object = compactNotificationMessage(message, client.hierarchy)
+
+              const parentId = message.attachedTo
+              const parentClass = message.attachedToClass
+              const parentDoc = await getDoc(client, parentId, parentClass, cache)
+              if (parentDoc != null) {
+                parentObjectId = parentId
+                parentObjectClass = parentClass
+                parentObjectTitle = await getDocTitleFallback(
+                  client,
+                  parentDoc,
+                  personByAccountUuid,
+                  cache,
+                  context.user
+                )
+                parentObjectIdentifier = await getDocIdentifierFallback(client, parentDoc, cache)
+                parentObjectLabel = getDocLabelFallback(parentDoc, client.hierarchy)
+                parentObjectIcon = getDocIconFallback(client, parentDoc, context.user)
+              }
+            }
+
+            // Sort notifications by createdOn ascending (oldest first)
+            inboxNotifications.sort((a, b) => getTimestamp(a) - getTimestamp(b))
+
+            const unreadMessages: UnreadMessage[] = []
+            const unreadReactions: UnreadReaction[] = []
+            const unreadMentions: UnreadMention[] = []
+            const unreadCommons: CommonNotification[] = []
+
+            for (const inboxNotification of inboxNotifications) {
+              const isViewed = inboxNotification.isViewed
+              if (!isViewed) {
+                const notifClass = inboxNotification._class
+                if (notifClass === 'notification:class:ActivityInboxNotification') {
+                  const activityNotif = inboxNotification as ActivityInboxNotification
+                  unreadMessages.push({
+                    id: activityNotif.attachedTo,
+                    createdOn: getTimestamp(activityNotif),
+                    notified: true
+                  })
+                } else if (notifClass === 'notification:class:ReactionInboxNotification') {
+                  const reactNotif = inboxNotification as ReactionInboxNotification
+                  unreadReactions.push({
+                    id: reactNotif.ref,
+                    attachedTo: reactNotif.attachedTo
+                  })
+                } else if (notifClass === 'notification:class:MentionInboxNotification') {
+                  const mentionNotif = inboxNotification as MentionInboxNotification
+                  if (
+                    mentionNotif.mentionedInClass != null &&
+                    client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
+                  ) {
+                    unreadMessages.push({
+                      id: mentionNotif.mentionedIn as Ref<ActivityMessage>,
+                      createdOn: getTimestamp(mentionNotif),
+                      notified: true,
+                      mentioned: true
+                    })
+                  } else {
+                    unreadMentions.push({
+                      id: inboxNotification._id
+                    })
+                  }
+                } else if (notifClass === 'notification:class:CommonInboxNotification') {
+                  unreadCommons.push(mapToCommonNotification(inboxNotification as CommonInboxNotification))
+                }
+              }
+            }
+
+            // Keep up to 5 latest context notifications
+            const latestNotifications: ContextNotification[] = []
+
+            for (const n of [...inboxNotifications].reverse()) {
+              if (latestNotifications.length === 5) break
+              const t = await mapToContextNotification(client, n, reactionMap, cache, attachmentsByMessage)
+              if (t == null) continue
+              latestNotifications.push(t)
+            }
+
+            // Every migrated message entry is `notified`, so the message part of unreadCount is the total.
+            const unreadMessagesCount = getUnreadMessagesTotal(unreadMessages)
+            const unreadCount =
+              unreadMessagesCount + unreadMentions.length + unreadCommons.length + unreadReactions.length
+            const lastNotify =
+              inboxNotifications.length > 0 ? getTimestamp(inboxNotifications[inboxNotifications.length - 1]) : 0
+
+            updates.push({
+              filter: { _id: context._id },
+              update: {
+                latestNotifications,
+                unreadReactions,
+                unreadMentions,
+                // Kept flat up to the limit, older entries folded into chunks like the service does on append.
+                unreadMessages: collapseUnreadMessages(unreadMessages),
+                unreadCommons,
+                unreadCount,
+                unreadMessagesCount,
+                notifiedMessagesCount: unreadMessagesCount,
+                lastNotify,
+                objectTitle,
+                objectIdentifier,
+                objectLabel,
+                objectIcon,
+                object,
+                parentObjectId,
+                parentObjectClass,
+                parentObjectTitle,
+                parentObjectIdentifier,
+                parentObjectLabel,
+                parentObjectIcon
+              }
+            })
+          }
+
+          if (updates.length > 0) {
+            await client.bulk(DOMAIN_DOC_NOTIFY, updates)
+          }
+
+          if (toRemove.size > 0) {
+            const toRemoveArray = Array.from(toRemove).filter((id) => id != null)
+            if (toRemoveArray.length > 0) {
+              await client.deleteMany(DOMAIN_DOC_NOTIFY, {
+                _id: { $in: toRemoveArray }
+              })
+              await client.deleteMany(DOMAIN_NOTIFICATION, {
+                docNotifyContext: { $in: toRemoveArray }
+              })
+            }
+          }
+
+          // Delete the migrated notifications for this chunk of contexts
+          if (chunkIds.length > 0) {
+            await client.deleteMany(DOMAIN_NOTIFICATION, {
+              docNotifyContext: { $in: chunkIds }
+            })
+          }
+
+          processed += chunk.length
+          client.logger.log('...processed embedded notification chunk by contexts', { count: processed })
+        } catch (err: any) {
+          // One broken context must not stop the upgrade of the workspace: the chunk keeps its old
+          // notifications, stays without `latestNotifications` and is picked up by the next run.
+          failed += chunk.length
+          client.logger.error('Failed to migrate a chunk of contexts to embedded notifications, skipped', {
+            err,
+            contextIds: chunk.map((c) => c._id)
+          })
+        }
       }
     }
   } finally {
     await iterator.close()
+  }
+
+  if (failed > 0) {
+    client.logger.error('Contexts left unmigrated to embedded notifications, rerun the upgrade after the fix', {
+      failed
+    })
   }
 }

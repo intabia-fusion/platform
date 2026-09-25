@@ -1,7 +1,7 @@
 -- Denormalized count of unread chat messages that produced a notification (a mentions-only or
 -- muted document keeps unread messages without one): chunks count by their `notifiedCount`. The
 -- notification service keeps it in step with `unreadMessages`; the chat application marker reads
--- the number and never the array. Idempotent.
+-- the number and never the array. Idempotent. The partial index for the application marker is in 0010.
 
 ALTER TABLE notification_dnc
     ADD COLUMN IF NOT EXISTS "notifiedMessagesCount" integer NOT NULL DEFAULT 0;
@@ -39,8 +39,3 @@ BEGIN
             ADD CONSTRAINT notification_dnc_notifiedmessagescount_check CHECK ("notifiedMessagesCount" >= 0);
     END IF;
 END $$;
-
--- Chat application marker: contexts of a user with unread messages that produced a notification
-CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_notifiedMessages__index
-    ON notification_dnc ("workspaceId", "user", "notifiedMessagesCount")
-    WHERE "notifiedMessagesCount" > 0;

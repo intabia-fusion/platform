@@ -186,7 +186,7 @@ Inbox не запрашивает объекты: заголовок, идент
 
 - `WorkspaceCache` (services/notifications/src/cache.ts): LRU по 1000 на коллабораторов, контексты, документы, настройки документов, `ReadState`, персоны, `PersonSpace`, employee, social ids, подписки; настройки провайдеров/типов и `UserStatus` - без лимита. Обновляется по входящим Tx; свои Tx помечены в `serviceTxes` (LRU 10000), чтобы эхо не применялось дважды; чужой апдейт контекста инвалидирует запись. Tx старше кэшированного `modifiedOn` игнорируется.
 - Второй consumer `workspace`-топика (своя группа `${clientId}-${generateId()}` на реплику): `Restored`/`Upgraded`/`Deleted` -> `Worker.dropWorkspace` (ждёт идущую загрузку) -> `Workspace.close()` (ждёт текущую Tx). Неактивные 5 минут воркспейсы закрываются.
-- Tx, падающая дольше `giveUpAfterMs` (5 минут), логируется и дропается. Нетранзиентная ошибка `TxApplyIf` - батч дропается, кэш контекстов сбрасывается; транзиентная - Tx уходит на повтор.
+- Tx, падающая дольше `giveUpAfterMs` (5 минут), логируется и дропается, воркспейс уходит в cooldown (`WorkspaceBreaker`, см. «Известные ограничения»). Нетранзиентная ошибка `TxApplyIf` - батч дропается, кэш контекстов сбрасывается; транзиентная - Tx уходит на повтор.
 - `getWorkspaceInfo` (utils/workspace.ts) ретраит `ECONNRESET`/`ECONNREFUSED`/`ENOTFOUND`; отключённый воркспейс - не загружается; `Forbidden`/`WorkspaceNotFound` - «удалён», без повторов. Аккаунт ai-bot резолвится раз в минуту в фоне, ждём только первый запрос.
 
 ## Фичи
@@ -214,7 +214,7 @@ Inbox не запрашивает объекты: заголовок, идент
 - **Открытие документа = прочитано.** - plugins/view-resources/src/components/EditDoc.svelte и `Edit*` панели плагинов.
 - **Звук.** `playThrottledSound`: не чаще раза в `THROTTLE_WINDOW_MS=15000`, при `THROTTLE_MAX_PENDING=5` отложенных - сразу; `AudioContext` закрывается при нуле активных воспроизведений (иначе на iOS мешает CarPlay и звонку). - packages/presentation/src/sound.ts.
 - **Фокус окна.** `isAppFocusedStore` по `focus/blur` окна, а не `document.hasFocus()` в момент события. - packages/ui/src/components/internal/Root.svelte.
-- **Кэш объектов для карточек активности.** `objectCache.ts`: батч-поиск по id/классу, `maxSize=50`, любая не-create Tx инвалидирует запись. - plugins/activity-resources/src/objectCache.ts.
+- **Кэш объектов для карточек активности.** `objectCache.ts`: батч-поиск по id/классу, LRU на `maxSize=50`, любая не-create Tx инвалидирует запись. - plugins/activity-resources/src/objectCache.ts.
 - **Deep-link из inbox/push.** `resolveLocation`/`navigateToInboxDoc`/`selectInboxContext`. - plugins/notification-resources/src/utils.ts.
 
 ### Миграции
@@ -229,7 +229,19 @@ Inbox не запрашивает объекты: заголовок, идент
 6. `hide-inactive-chats-v1` - разово скрыть чаты без сообщений 2 недели и без notified-непрочитанного (то же правило, что `syncChat`). - migration.ts.
 7. `init-badge-statuses-v1` - пересчитать кросс-воркспейс статусы в account-сервис батчами. - migration.ts.
 
-SQL (services/db-migrator/migrations): `0001_reworkNotifications.sql` (колонки, дедуп контекстов, индексы, `notification_read_state`, `activity` индекс), `0002_dropOversizedDncIndexes.sql` (старые covering-индексы с `INCLUDE data` после встраивания превышали лимит btree-строки 2704 байт и ломали запись), `0003_unreadMessagesCount.sql`, `0004_notifiedMessagesCount.sql`, `0005_activityReplies.sql`. `EXPECTED_SCHEMA_VERSION` = 15 (foundations/server/packages/postgres/src/version.ts); SQL-миграция без повышения версии не применится. `applyMigration` (services/db-migrator/src/db.ts) теперь не помечает упавшую миграцию применённой; `getTableSchema` логирует, если у таблицы нет объявленной в `schemas.ts` колонки.
+SQL (services/db-migrator/migrations), по файлу на флавор БД, мигратор выбирает `.pg.sql` или `.crdb.sql` по `SELECT version()` и отказывается работать при неизвестном флаворе:
+
+- Postgres: `0001_reworkNotifications.pg.sql` (колонки `notification_dnc` и `notification_read_state`, бэкфилл из `data`, `NOT NULL`, `CHECK`, удаление дублей контекстов), `0002_dropOversizedDncIndexes.sql` (старые covering-индексы с `INCLUDE data` после встраивания превышали лимит btree-строки 2704 байт и ломали запись), `0003_unreadMessagesCount.pg.sql`, `0004_notifiedMessagesCount.pg.sql`, `0005_activityReplies.pg.sql` (колонка + бэкфилл), `0010_reworkNotificationsIndexes.pg.sql` (все 12 индексов).
+- CockroachDB не видит колонку, добавленную ранее в том же файле, поэтому цепочка разнесена: `0001`-`0005.crdb.sql` только добавляют колонки, `0006_reworkNotificationsBackfill`, `0007_unreadCountersBackfill`, `0008_activityRepliesBackfill` заполняют их, `0009_reworkNotificationsConstraints` ставит `NOT NULL`/`CHECK` (`ADD CONSTRAINT IF NOT EXISTS`) и удаляет дубли, `0010_reworkNotificationsIndexes.crdb.sql` строит индексы. Парность индексов и «колонка не используется в файле, который её добавляет» проверяет тест services/db-migrator/src/__tests__/utils.test.ts.
+
+`EXPECTED_SCHEMA_VERSION` = 16 (foundations/server/packages/postgres/src/version.ts); версия - счётчик наборов изменений, не файлов; SQL-миграция без повышения версии не применится. `applyMigration` (services/db-migrator/src/db.ts) выполняет файл одной транзакцией и не помечает упавшую миграцию применённой; `getTableSchema` логирует, если у таблицы нет объявленной в `schemas.ts` колонки. Все файлы идемпотентны, поэтому переименованный файл безопасно применяется повторно.
+
+## Известные ограничения
+
+- **Потеря push/email при недоступном брокере.** `applyResult` сначала применяет контексты, затем публикует `queueMessages`; повторная доставка Tx распознаётся как уже записанная (`isNotificationRecorded`) и повторно не публикует. Продюсер ретраится 8 раз (около минуты), после чего пишет `Failed to publish user notifications, push and email of this batch are lost` с id уведомлений и аккаунтами: карточки в inbox есть, push и письма по этому батчу нет. Строка лога - точка для алерта. - services/notifications/src/workspace.ts.
+- **Сломанный воркспейс и партиция.** Tx, падающая дольше 5 минут, дропается, а воркспейс переводится в cooldown на 5 минут (`WorkspaceBreaker`, services/notifications/src/breaker.ts): его Tx пропускаются без обработки, затем одна Tx-проба с бюджетом 30 секунд либо закрывает breaker, либо открывает снова. Пропущенные Tx уведомлений не создают.
+- **Telegram-доставка отключена** (см. п.5).
+- **Миграция embedded:** сбойный чанк из 100 контекстов пропускается с логом `Failed to migrate a chunk of contexts`, апгрейд воркспейса продолжается; такие контексты остаются без `latestNotifications` и подхватываются следующим апгрейдом, их старые уведомления до этого лежат в таблице `notification`.
 
 ## Куда смотреть, если нужно...
 
@@ -247,7 +259,7 @@ SQL (services/db-migrator/migrations): `0001_reworkNotifications.sql` (коло�
 - Поменять бейджи -> `publishUnread` (client.ts), `Applications.svelte`, `updateUserNotifyStatus` (services/notifications/src/worker.ts), desktop/src/ui/notifications.ts.
 - Web Push подписка/клик -> plugins/notification-resources/src/webpush.ts, plugins/notification/src/serviceWorker.ts.
 - Включить Telegram-доставку -> services/telegram-bot/pod-telegram-bot/src/{start,worker}.ts (закомментированный consumer; топика и продюсера пока нет).
-- Отладить «уведомление не пришло» -> логи `services/notifications` (`No receivers resolved`, `notification already recorded`, `Tx batch rejected`), затем `providers` в сообщении топика `user-notifications`, затем логи пода.
+- Отладить «уведомление не пришло» -> логи `services/notifications` (`No receivers resolved`, `notification already recorded`, `Tx batch rejected`, `push and email of this batch are lost`, `workspace txes are skipped for a cooldown`), затем `providers` в сообщении топика `user-notifications`, затем логи пода.
 
 ## Настройки и конфигурация
 
@@ -260,9 +272,11 @@ SQL (services/db-migrator/migrations): `0001_reworkNotifications.sql` (коло�
 
 ## Тесты
 
-- Unit, сервис: services/notifications/src/{__tests__,module/__tests__,utils/__tests__} - cache, worker (drop/ai-bot), workspace (retry/close), message, notification, mention, reaction, read, action, providers, context (`setUnreadMessagesCounts`), display, workspace utils.
+- Unit, сервис: services/notifications/src/{__tests__,module/__tests__,utils/__tests__} - cache, worker (drop/ai-bot), workspace (retry/close/потеря публикации), breaker, message, notification, mention, reaction, read, action, providers, context (`setUnreadMessagesCounts`), display, workspace utils.
 - Unit, транзактор: server-plugins/notification/src/__tests__/middleware.test.ts; foundations/server/packages/middleware/src/__tests__/triggers.test.ts (`isTriggerCtx`); foundations/core/packages/core/src/__tests__/operator.test.ts (`$push.$slice`); server-plugins/notification-resources/src/__tests__/docClassChanged.test.ts.
 - Unit, клиент: plugins/notification/src/__tests__/{collapse,compact,utils}.test.ts; plugins/notification-resources/src/__tests__/{client,stores}.test.ts; desktop/src/__test__/ui/notifications.test.ts.
+- Unit, мигратор: services/db-migrator/src/__tests__/utils.test.ts (выбор файлов по флавору, парность индексов, разнос колонок для Cockroach).
+- Unit, клиент: plugins/activity-resources/src/__tests__/objectCache.test.ts (LRU кэша объектов).
 - Unit, поды: services/notification/pod-notification/src/main.test.ts, src/__tests__/mobile.test.ts; services/mail/pod-mail/src/__tests__/{blockedRecipients,createEmailMessage}.test.ts.
 - Sanity (Playwright): tests/sanity/tests/inbox/{inbox,inbox-notifications}.spec.ts (карточки, фильтр Unreads, вкладки, Read all / Clear all, unsubscribe, muted-канал, mention в mentions-only); tests/sanity/tests/chat/{chat-unread,chat-notifications}.spec.ts; page objects tests/sanity/tests/model/inbox.ts/inbox-page.ts, model/chat-unread-page.ts; REST-помощник tests/sanity/tests/API/ChatApi.ts.
 

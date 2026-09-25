@@ -83,6 +83,18 @@ const applyBackoff = DelayStrategyFactory.exponentialBackoff({
   jitter: 0.2
 })
 
+// The context txes are applied by the time the queue messages go out, and a redelivered tx is
+// recognised as already recorded, so a message that fails to publish is not retried later: push
+// and email of that batch are lost. The producer is therefore retried for about a minute before
+// giving up, longer than a broker leader change or a short outage takes.
+const publishAttempts = 8
+const publishBackoff = DelayStrategyFactory.exponentialBackoff({
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffFactor: 2,
+  jitter: 0.2
+})
+
 // Network failures and transactor-side outages are worth a retry; a rejected batch (bad request,
 // policy reject, forbidden) is not.
 export function isTransientError (e: unknown): boolean {
@@ -228,14 +240,18 @@ class Workspace {
     if (result.queueMessages.length > 0) {
       try {
         await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, result.queueMessages), {
-          maxRetries: applyAttempts,
+          maxRetries: publishAttempts,
           isRetryable: () => true,
-          delayStrategy: applyBackoff
+          delayStrategy: publishBackoff
         })
       } catch (e: any) {
-        this.ctx.error('Failed to publish user notifications', {
+        // Known limitation, see docs/features/notifications.md: the inbox entries exist, the
+        // push and email of this batch do not. The line is the alert hook.
+        this.ctx.error('Failed to publish user notifications, push and email of this batch are lost', {
           error: e?.message ?? String(e),
-          count: result.queueMessages.length
+          count: result.queueMessages.length,
+          notificationIds: result.queueMessages.map((it) => it.id),
+          accounts: Array.from(new Set(result.queueMessages.map((it) => it.account)))
         })
       }
     }

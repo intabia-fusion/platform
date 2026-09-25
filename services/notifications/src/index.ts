@@ -44,6 +44,7 @@ import {
 } from '@hcengineering/postgres'
 
 import { Worker } from './worker'
+import { WorkspaceBreaker } from './breaker'
 import config from './config'
 
 void main().catch((err) => {
@@ -75,25 +76,36 @@ async function main (): Promise<void> {
 
   // The queue retries a failing message forever, and a partition is consumed in order: one tx that
   // can never succeed (a batch the transactor keeps rejecting with 500, a broken workspace) would
-  // stop the notifications of every workspace. It is retried for a while, outages pass, then dropped.
-  const giveUpAfterMs = 5 * 60 * 1000
-  const failingSince = new Map<string, number>()
+  // stop the notifications of every workspace. It is retried for a while, outages pass, then
+  // dropped, and the workspace is skipped for a cooldown so that its next txes do not each spend
+  // the same budget on the partition (see WorkspaceBreaker).
+  const breaker = new WorkspaceBreaker({
+    giveUpAfterMs: 5 * 60 * 1000,
+    cooldownMs: 5 * 60 * 1000,
+    probeGiveUpAfterMs: 30 * 1000
+  })
 
   const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     const ws = queueMessage.workspace
     const tx = queueMessage.value
+    if (breaker.shouldSkip(ws)) return
     try {
       await worker.tx(ctx, ws, tx)
-      failingSince.delete(tx._id)
+      const skipped = breaker.succeeded(ws, tx._id)
+      if (skipped !== undefined) {
+        ctx.warn('Workspace recovered, tx processing resumed', { wsUuid: ws, skippedTxes: skipped })
+      }
     } catch (e) {
-      const since = failingSince.get(tx._id) ?? Date.now()
-      if (Date.now() - since >= giveUpAfterMs) {
-        failingSince.delete(tx._id)
-        ctx.error('Tx message dropped after repeated failures', { e, wsUuid: ws, tx, failingForMs: Date.now() - since })
+      const verdict = breaker.failed(ws, tx._id)
+      if (verdict.action === 'drop') {
+        ctx.error(
+          verdict.opened
+            ? 'Tx message dropped after repeated failures, workspace txes are skipped for a cooldown'
+            : 'Tx message dropped after repeated failures',
+          { e, wsUuid: ws, tx, failingForMs: verdict.failingForMs }
+        )
         return
       }
-      if (failingSince.size > 100) failingSince.clear()
-      failingSince.set(tx._id, since)
       ctx.error('Failed to process tx message', { e, wsUuid: ws, tx })
       throw e
     }

@@ -24,6 +24,24 @@ const found = new Map<Ref<Doc>, Doc>()
 const inflight = new Map<Ref<Doc>, Promise<Doc | undefined>>()
 const maxSize = 50
 
+function recall (_id: Ref<Doc>): Doc | undefined {
+  const doc = found.get(_id)
+  if (doc !== undefined) {
+    found.delete(_id)
+    found.set(_id, doc)
+  }
+  return doc
+}
+
+function remember (_id: Ref<Doc>, doc: Doc): void {
+  found.delete(_id)
+  if (found.size >= maxSize) {
+    const oldest = found.keys().next().value
+    if (oldest !== undefined) found.delete(oldest)
+  }
+  found.set(_id, doc)
+}
+
 interface Batch {
   ids: Set<Ref<Doc>>
   promise: Promise<Map<Ref<Doc>, Doc>>
@@ -46,7 +64,7 @@ function batchOf (_class: Ref<Class<Doc>>): Batch {
 }
 
 export async function getObjectById (_class: Ref<Class<Doc>>, _id: Ref<Doc>): Promise<Doc | undefined> {
-  const cached = found.get(_id)
+  const cached = recall(_id)
   if (cached !== undefined) return cached
 
   let pending = inflight.get(_id)
@@ -57,8 +75,7 @@ export async function getObjectById (_class: Ref<Class<Doc>>, _id: Ref<Doc>): Pr
       .then((docs) => {
         const doc = docs.get(_id)
         if (doc !== undefined) {
-          if (found.size >= maxSize) found.clear()
-          found.set(_id, doc)
+          remember(_id, doc)
         }
         return doc
       })

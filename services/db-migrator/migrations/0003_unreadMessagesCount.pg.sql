@@ -1,6 +1,6 @@
 -- Denormalized count of unread chat messages per context: chunks count by their size. The
 -- notification service keeps it in step with `unreadMessages`; clients read the number and never
--- the array. Idempotent.
+-- the array. Idempotent. The partial index for the chat badges is in 0010.
 
 ALTER TABLE notification_dnc
     ADD COLUMN IF NOT EXISTS "unreadMessagesCount" integer NOT NULL DEFAULT 0;
@@ -12,7 +12,10 @@ SET "unreadMessagesCount" = COALESCE((
         -- A JSON null or a scalar here would abort the whole migration.
         CASE WHEN jsonb_typeof(data->'unreadMessages') = 'array' THEN data->'unreadMessages' ELSE '[]'::jsonb END
     ) e
-), 0);
+), 0)
+-- The column arrives as 0: only rows that carry unread messages need the sum.
+WHERE jsonb_typeof(data->'unreadMessages') = 'array'
+  AND jsonb_array_length(data->'unreadMessages') > 0;
 
 -- The default stays: a pod that loaded the table schema before this migration keeps inserting
 -- without the column until it restarts.
@@ -28,8 +31,3 @@ BEGIN
             ADD CONSTRAINT notification_dnc_unreadmessagescount_check CHECK ("unreadMessagesCount" >= 0);
     END IF;
 END $$;
-
--- Chat badges: contexts of a user that still have unread messages
-CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unreadMessages__index
-    ON notification_dnc ("workspaceId", "user", "unreadMessagesCount")
-    WHERE "unreadMessagesCount" > 0;

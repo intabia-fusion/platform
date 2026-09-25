@@ -137,6 +137,23 @@ describe('Workspace.applyResult (private, exercised via a bare instance)', () =>
     expect(sendMock).toHaveBeenCalledWith(instance.ctx, 'ws-1', result.queueMessages)
   })
 
+  it('retries a failing producer eight times, then logs the lost batch without throwing', async () => {
+    const sendMock = jest.fn().mockRejectedValue(new Error('broker unavailable'))
+    const instance = makeInstance({ send: sendMock })
+
+    const result = resultWithOneTx()
+    result.queueMessages.push({ id: 'q-1', account: 'acc-1' } as any, { id: 'q-2', account: 'acc-1' } as any)
+
+    await flushRetries((instance.applyResult as (r: Result) => Promise<void>)(result))
+
+    expect(sendMock).toHaveBeenCalledTimes(8)
+    expect(instance.cache.tx).toHaveBeenCalledTimes(1)
+    expect(instance.ctx.error).toHaveBeenCalledWith(
+      'Failed to publish user notifications, push and email of this batch are lost',
+      expect.objectContaining({ count: 2, notificationIds: ['q-1', 'q-2'], accounts: ['acc-1'] })
+    )
+  })
+
   it('on success calls cache.tx(tx, true) for each tx in the batch', async () => {
     const txMock = jest.fn().mockResolvedValue(undefined)
     const instance = makeInstance({ tx: txMock })
