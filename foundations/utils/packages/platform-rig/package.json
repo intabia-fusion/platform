@@ -37,7 +37,8 @@
     "svelte-preprocess": "catalog:",
     "svelte2tsx": "^0.7.61",
     "typescript": "catalog:",
-    "typescript7": "npm:typescript@7.0.2"
+    "typescript7": "npm:typescript@7.0.2",
+    "v8-to-istanbul": "catalog:"
   },
   "bin": {
     "format": "./bin/format.js",

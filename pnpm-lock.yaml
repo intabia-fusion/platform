@@ -743,6 +743,9 @@ catalogs:
     uuid:
       specifier: ^11.1.1
       version: 11.1.1
+    v8-to-istanbul:
+      specifier: ^9.3.0
+      version: 9.3.0
     vite:
       specifier: ^5.4.21
       version: 5.4.21
@@ -6851,6 +6854,9 @@ importers:
       typescript7:
         specifier: npm:typescript@7.0.2
         version: typescript@7.0.2
+      v8-to-istanbul:
+        specifier: 'catalog:'
+        version: 9.3.0
 
   foundations/utils/packages/ui-test:
     dependencies:

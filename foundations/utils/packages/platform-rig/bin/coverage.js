@@ -20,6 +20,7 @@
 //   pnpm coverage --integration      unit + integration (starts its own containers)
 //   pnpm coverage --allow-failures   report even when a test failed (exit 0)
 //   pnpm coverage --server           server code only: what is untested, worst first
+//   pnpm coverage --stand [file]     fold in a stand run collected by bin/stand-coverage.js
 //
 // Writes into coverage/: coverage-final.json (merged istanbul), lcov.info, cobertura-coverage.xml
 // and html/. CI reads the cobertura file; the last line of the output is the summary GitLab's
@@ -42,10 +43,19 @@ const args = process.argv.slice(2)
 const groups = ['unit', ...(args.includes('--integration') ? ['integration'] : [])]
 const allowFailures = args.includes('--allow-failures')
 const serverOnly = args.includes('--server')
+// What the containers executed during a stand run (ws-tests, sanity): bin/stand-coverage.js turns
+// their V8 profiles into an istanbul report, and it merges here like any other runner's.
+const standArg = args.indexOf('--stand')
+const next = standArg === -1 ? undefined : args[standArg + 1]
+const standFile = standArg === -1
+  ? null
+  : (next === undefined || next.startsWith('--') ? 'coverage-stand.json' : next)
 let failed = false
 
 const root = findWorkspaceRoot()
 const outDir = join(root, 'coverage')
+// The stand report usually lives in coverage/ too, and the next line wipes that directory.
+const standReport = standFile === null ? null : JSON.parse(readFileSync(join(root, standFile), 'utf-8'))
 rmSync(outDir, { recursive: true, force: true })
 mkdirSync(outDir, { recursive: true })
 
@@ -187,6 +197,37 @@ const coverageMap = libCoverage.createCoverageMap({})
 for (const path of reports) {
   if (!existsSync(path)) continue
   coverageMap.merge(libCoverage.createCoverageMap(JSON.parse(readFileSync(path, 'utf-8'))))
+}
+if (standReport !== null) {
+  // Only files no jest run reported. A V8 profile decoded through a sourcemap has its own, coarser
+  // statement and function map for the same file (`rpc.ts`: 828 statements and 8 functions against
+  // istanbul's 1077 and 68), and istanbul merges counters by index - merging both maps for one file
+  // adds counts of one structure to slots of another. Whole files are safe, halves are not.
+  const jest = coverageMap.data
+  const fresh = {}
+  const replaced = []
+  for (const [file, entry] of Object.entries(standReport)) {
+    const existing = jest[file]
+    if (existing === undefined) {
+      fresh[file] = entry
+      continue
+    }
+    // A file jest loaded but never executed reads as 0% while the stand actually ran it; the stand's
+    // view of that file replaces the zero. Everywhere else jest's numbers stand, because they are
+    // the finer ones.
+    const hit = Object.values(existing.data?.s ?? existing.s ?? {}).some((v) => v > 0)
+    if (!hit) {
+      delete jest[file]
+      fresh[file] = entry
+      replaced.push(file)
+    }
+  }
+  const kept = Object.keys(standReport).length - Object.keys(fresh).length
+  console.log(`Folding in the stand run from ${standFile}: ` +
+    `${Object.keys(fresh).length - replaced.length} files no test run reached, ` +
+    `${replaced.length} that jest loaded but never executed, ` +
+    `${kept} left as jest measured them`)
+  coverageMap.merge(libCoverage.createCoverageMap(fresh))
 }
 const merged = coverageMap.toJSON()
 writeFileSync(join(outDir, 'coverage-final.json'), JSON.stringify(merged))

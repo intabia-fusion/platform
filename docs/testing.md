@@ -84,6 +84,33 @@ Two things the number does not include, both reported as separate lines:
   told apart from 0% any other way
 - `.svelte` outside `packages/ui`, which no runner mounts
 
+### Stand coverage (`pnpm coverage:stand`)
+
+`ws-tests/api-tests` (26 files, 301 cases) and the Playwright suites drive a live stand, so the
+server code they exercise runs inside containers where istanbul cannot see it. V8 can: each pod is
+started with `NODE_V8_COVERAGE` and drops a profile of its bundle when it exits, and the pods'
+external sourcemaps map that back onto `src/`.
+
+```bash
+cd ws-tests
+STAND_EXTRA_COMPOSE=docker-compose.coverage.yaml ./prepare.sh
+cd api-tests && pnpm run api-test && cd ..
+docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p sanity stop -t 60
+cd .. && pnpm coverage:stand              # writes coverage-stand.json
+pnpm coverage --integration --stand        # folds it into the whole-repo number
+```
+
+Two rules, both of which silently produce nothing when broken:
+
+- **Stop the stand, never kill it.** V8 writes the profile as the process exits; `down`, `kill` and
+  a stop that runs past its grace period lose everything that pod collected.
+- **The images must be built from the checkout.** The profile carries ranges of the bundle in the
+  image, and the sourcemap used to decode it is the one on disk - a stale image maps its ranges
+  onto whatever lines that file has now.
+
+`docker-compose.coverage.yaml` mounts one directory per image name, which is how
+`stand-coverage.js` finds each pod's bundle. Adding a pod to the collection is one more block there.
+
 ### `--server`: where to write the next test
 
 `pnpm coverage --integration --server` replaces the per-package table with three lists over

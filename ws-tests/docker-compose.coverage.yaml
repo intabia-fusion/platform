@@ -1,0 +1,127 @@
+# Coverage overlay for the stand. Adds NODE_V8_COVERAGE to the pods whose code the api-tests and
+# the sanity suites actually drive, and mounts a directory per image to collect the profiles:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p ws up -d
+#   cd api-tests && pnpm run api-test
+#   docker compose -f docker-compose.yaml -f docker-compose.coverage.yaml -p ws stop -t 30
+#   node ../foundations/utils/packages/platform-rig/bin/stand-coverage.js --profiles ws-tests/coverage
+#
+# V8 writes a profile when the process exits, so the stand has to be stopped rather than killed:
+# `down`, `kill` and a stop that runs out of its grace period all lose everything the pod collected.
+# The directory name is the image name - that is how stand-coverage.js finds the bundle and its
+# sourcemap to map the profile back onto src/.
+
+services:
+  transactor:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/transactor:/coverage
+
+  transactor-europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/transactor:/coverage
+
+  account:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/account:/coverage
+
+  workspace:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/workspace:/coverage
+
+  workspace_europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/workspace:/coverage
+
+  datalake:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/datalake:/coverage
+
+  billing:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/billing:/coverage
+
+  fulltext:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/fulltext:/coverage
+
+  fulltext-europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/fulltext:/coverage
+
+  collaborator:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/collaborator:/coverage
+
+  backup:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/backup:/coverage
+
+  stats:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/stats:/coverage
+
+  front:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/front:/coverage
+
+  stream:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/stream:/coverage
+
+  webhook:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/webhook:/coverage
+
+  time-machine:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/worker:/coverage
+
+  activity:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/activity:/coverage
+
+  aiBot:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/ai-bot:/coverage
+
+  mail:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/mail:/coverage

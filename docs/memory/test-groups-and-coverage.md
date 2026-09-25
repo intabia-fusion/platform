@@ -213,3 +213,70 @@ report**, and 84 packages with 31583 lines that no test touches. Largest unteste
 `network-backrpc`'s zmq suite fails under a loaded coverage run (two tests, `check diff order` and
 `check multiple requests from same client`) and passes on its own - the 30s timeout the coverage run
 gives it is not the whole story, the sockets themselves are timing-sensitive.
+
+## Stand coverage from V8 profiles (2026-09-24)
+
+`ws-tests/api-tests` is 26 files and 301 cases against a live stand, and none of it was in any
+coverage number: the server code runs inside containers, jest runs on the host. `bin/stand-coverage.js`
+closes that gap - `NODE_V8_COVERAGE` per pod (`ws-tests/docker-compose.coverage.yaml`,
+opt-in through the runner's existing `STAND_EXTRA_COMPOSE`), then `v8-to-istanbul` over each
+profile, then a merge into the same istanbul shape everything else uses (`pnpm coverage --stand`).
+
+Measured while wiring it up:
+
+- A **cold transactor that never finished booting** already reports 56.8% (60954/107388 statements
+  over 566 repository files). Bundle top-level code counts as executed the moment a module is
+  imported, exactly as it does under istanbul - so stand numbers are not a different currency, but
+  a large part of that 56.8% is import-time code, not behaviour under test.
+- **esbuild's `--sourcemap=external` writes no `sourceMappingURL` comment**, so `v8-to-istanbul`
+  finds no map on its own and returns a single entry for `bundle.js` (371153 statements, useless).
+  The map has to be handed over explicitly: `v8toIstanbul(bundle, 0, { source, sourceMap: { sourcemap } })`.
+  With it, one profile decodes into 3220 files, 566 of them in the repository, in under a second.
+- **`pods/account` shipped no sourcemap** - its Dockerfile copied `bundle.js` alone. Fixed; every
+  other pod already copies the `.map`.
+- The V8 profile is written **as the process exits**, so the stand must be stopped
+  (`docker compose stop -t 60`), not `down`ed or killed. A pod that hits the grace period loses
+  everything it collected, with no error anywhere.
+- The bundle on disk has to be the one in the image. The profile addresses ranges in the image's
+  bundle; the sourcemap that decodes them is read from the checkout.
+- Image name is the join key: `docker-compose.coverage.yaml` mounts `./coverage/<image>`, and
+  `stand-coverage.js` finds the package by grepping each `package.json` for `docker_build.sh <name>`
+  (so `pods/server` is `transactor`, `services/datalake/pod-datalake` is `datalake`).
+
+## First full stand run (2026-09-25)
+
+`pnpm docker` (283s) -> stand with the coverage overlay (26s) -> `pnpm run api-test` (33s, 316
+passed / 1 failed / 2 skipped) -> `docker compose stop -t 60` (66s) -> `pnpm coverage:stand` (11s).
+17 profiles from 14 pods; `stream` is skipped because `foundations/stream` has no `bundle/`.
+
+| number | unit + integration | + stand |
+|---|---|---|
+| TOTAL | 37.4% | 68.7% |
+| SERVER | 37.3% | 61.0% |
+| server packages with no report at all | 84 (31583 lines) | 18 (15941 lines) |
+| `server-core` | 23.8% | 92.2% |
+| `account-service` | 3.2% | 63.1% |
+| `pod-datalake` | 18.7% | 55.6% |
+| `pods/server` | 31.7% | 51.1% |
+
+**The two reports cannot be merged file by file.** A V8 profile decoded through a sourcemap has a
+coarser map than istanbul's instrumentation for the same file - `pods/server/src/rpc.ts` is 828
+statements and 8 functions from the stand against 1077 and 68 from jest - and istanbul merges
+counters by index, so merging both maps for one file adds one structure's counts into another's
+slots. The first attempt did exactly that and read 70.2%, which is meaningless. `coverage.js` now
+merges whole files only: a file jest never saw comes from the stand, a file jest loaded but never
+executed (0 statements hit) is *replaced* by the stand's version, and anything jest actually
+measured stays as jest measured it. For this run: 1106 + 221 + 357 files.
+
+Stand-only numbers, for the record: 76.6% of statements but 45.4% of functions (3464/7634). The gap
+is import-time code - a pod's bundle executes every module's top level at boot, so statements look
+generous while functions say how much was actually called. Read the function column when judging
+what the api-tests really exercise.
+
+**Collecting coverage breaks performance assertions.** `rest.test.ts`'s `find avg` expects < 10ms
+and measured 10.2ms under `NODE_V8_COVERAGE`. Either skip that test in a coverage run or raise its
+bound there; it is the only one of the 319 that failed.
+
+What the stand does not reach, and what is therefore worth a test of its own: `pod-github` (5.5%,
+3914 statements - `worker.ts` 793 and `platform.ts` 542 are still flat zero), `pod-rating` (0%),
+`pod-preview` (1.5%), `mongo` (2.9%), `pod-telegram-bot` (5.2%).

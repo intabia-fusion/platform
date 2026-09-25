@@ -14,6 +14,7 @@
     "integration": "node ./foundations/utils/packages/platform-rig/bin/test-group.js integration",
     "bench": "node ./foundations/utils/packages/platform-rig/bin/test-group.js bench",
     "coverage": "node ./foundations/utils/packages/platform-rig/bin/coverage.js",
+    "coverage:stand": "node ./foundations/utils/packages/platform-rig/bin/stand-coverage.js",
     "bundle": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle",
     "package": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --bundle --package",
     "docker:build": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --docker-build",
