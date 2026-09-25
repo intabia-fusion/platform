@@ -102,6 +102,7 @@
     "MeetingStart": "会議開始",
     "MeetingEnd": "会議終了",
     "EndMeeting": "会議を終了",
+    "MeetingScheduledDate": "ミーティング予定日",
     "Status": "ステータス",
     "Active": "アクティブ",
     "Finished": "終了",

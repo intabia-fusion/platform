@@ -102,6 +102,7 @@
     "MeetingStart": "会议开始",
     "MeetingEnd": "会议结束",
     "EndMeeting": "结束会议",
+    "MeetingScheduledDate": "会议预定日期",
     "Status": "状态",
     "Active": "活跃",
     "Finished": "已完成",

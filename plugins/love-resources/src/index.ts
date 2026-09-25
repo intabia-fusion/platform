@@ -30,6 +30,8 @@ import MeetingMinutesTranscriptionPresenter from './components/MeetingMinutesTra
 import RoomPresenter from './components/RoomPresenter.svelte'
 import MeetingMinutesDocEditor from './components/MeetingMinutesDocEditor.svelte'
 import MeetingMinutesStatusPresenter from './components/MeetingMinutesStatusPresenter.svelte'
+import MeetingStartPresenter from './components/MeetingStartPresenter.svelte'
+import MeetingScheduledDatePresenter from './components/MeetingScheduledDatePresenter.svelte'
 import MeetingMinutesTranscriptionStatePresenter from './components/MeetingMinutesTranscriptionStatePresenter.svelte'
 import MeetingSummaryEditor from './components/MeetingSummaryEditor.svelte'
 import MeetingMinutesRecordingStatePresenter from './components/MeetingMinutesRecordingStatePresenter.svelte'
@@ -124,6 +126,8 @@ export default async (): Promise<Resources> => ({
     RoomPresenter,
     MeetingMinutesDocEditor,
     MeetingMinutesStatusPresenter,
+    MeetingStartPresenter,
+    MeetingScheduledDatePresenter,
     MeetingMinutesTranscriptionStatePresenter,
     MeetingSummaryEditor,
     MeetingMinutesRecordingStatePresenter,

@@ -102,6 +102,7 @@
     "MeetingStart": "Início da reunião",
     "MeetingEnd": "Fim da reunião",
     "EndMeeting": "Terminar reunião",
+    "MeetingScheduledDate": "Data agendada da reunião",
     "Status": "Estado",
     "Active": "Ativo",
     "Finished": "Finalizado",

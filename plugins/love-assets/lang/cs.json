@@ -102,6 +102,7 @@
     "MeetingStart": "Začátek schůzky",
     "MeetingEnd": "Konec schůzky",
     "EndMeeting": "Ukončit schůzku",
+    "MeetingScheduledDate": "Plánované datum setkání",
     "Status": "Stav",
     "Active": "Aktivní",
     "Finished": "Dokončeno",
