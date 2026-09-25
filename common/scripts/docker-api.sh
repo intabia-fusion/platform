@@ -1,7 +1,7 @@
 #!/bin/bash
 # Images for the stand the api-tests and backup-tests run against - the services in
-# api-tests/docker-compose.yaml and nothing else. No web UI: front is built with an empty dist/,
-# since the api-tests only need its /config.json, and the webpack bundle is most of the build.
+# api-tests/docker-compose.yaml and nothing else. No web UI: front runs as `front-api` with an empty
+# dist/, since the api-tests only need its /config.json, and the webpack bundle is most of the build.
 set -eo pipefail
 
 ./common/scripts/node_modules/.bin/compile-all . --parallel 4 --docker-build --esbuild-emit \
@@ -25,7 +25,11 @@ set -eo pipefail
 --to @hcengineering/tool
 
 ./common/scripts/node_modules/.bin/compile-all . --parallel 4 --bundle --esbuild-emit --to @hcengineering/pod-front
-cd pods/front
-rm -rf dist
-mkdir dist
-../../common/scripts/docker_build.sh front
+# Built next to pods/front, not in it: its dist/ holds the web UI a full `pnpm docker` packs, and
+# `front` is the image the Playwright stands run.
+ctx=$(mktemp -d)
+trap 'rm -rf "$ctx"' EXIT
+mkdir "$ctx/bundle" "$ctx/dist"
+cp pods/front/Dockerfile "$ctx/"
+cp pods/front/bundle/bundle.js pods/front/bundle/bundle.js.map "$ctx/bundle/"
+docker build ${DOCKER_EXTRA} -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" "$ctx"

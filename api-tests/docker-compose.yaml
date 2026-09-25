@@ -349,7 +349,7 @@ services:
       - STATS_URL=http://stats:4901
     restart: unless-stopped
   front:
-    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/front:${DOCKER_TAG:-latest}"
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/front-api:${DOCKER_TAG:-latest}"
     pull_policy: ${DOCKER_PULL_POLICY:-never}
     links:
       - account
