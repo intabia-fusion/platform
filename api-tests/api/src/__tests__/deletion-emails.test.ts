@@ -88,7 +88,8 @@ describe('deletion-emails', () => {
     const status = (await rpc(config, adminSession, 'listWorkspaces', {})).result?.find(
       (it: any) => it.uuid === wsUuid
     )?.status
-    expect(body).toContain(new Date(status.deleteOn).toLocaleDateString('en'))
+    // The account pod formats in its own zone, UTC on the stand; the host's zone is a day off at night.
+    expect(body).toContain(new Date(status.deleteOn).toLocaleDateString('en', { timeZone: 'UTC' }))
     expect(body).toContain('/login/selectWorkspace')
   }, 120000)
 

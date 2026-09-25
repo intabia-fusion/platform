@@ -21,13 +21,15 @@ pnpm build --to @hcengineering/api-tests --to @hcengineering/backup-tests
 export DOCKER_REGISTRY=
 export STAND_COVERAGE=true
 rm -rf "${project_dir}/api-tests/coverage"
+logs="${project_dir}/api-tests/logs"
+mkdir -p "$logs"
 
 # Reports and coverage must survive a failing test run.
 status=0
 cd "${project_dir}/api-tests/api"
-API_STAND=keep pnpm run api-test --verbose || status=$?
+API_STAND=keep pnpm run api-test --verbose --json --outputFile="$logs/api-tests.json" || status=$?
 cd "${project_dir}/api-tests/backup"
-API_STAND=stop pnpm run backup-test --verbose || status=$?
+API_STAND=stop pnpm run backup-test --verbose --json --outputFile="$logs/backup-tests.json" || status=$?
 
 cd "${project_dir}"
 # No profiles when the stand never came up; the jest groups still run and report without it.
@@ -39,5 +41,10 @@ pnpm coverage:stand || { status=1; stand=; }
 # The integration suites start their own containers, so no service url is exported - an exported
 # one would be used instead of a container.
 pnpm coverage --integration ${stand} || status=$?
+
+# The api reports scroll far above by now.
+echo
+echo "=== api-tests / backup-tests ==="
+node ./common/scripts/jest-failures.js "$logs/api-tests.json" "$logs/backup-tests.json"
 
 exit $status
