@@ -80,8 +80,12 @@ export async function stopStand (): Promise<void> {
 
   // On Linux the pods write their profiles as root; the host user has to read and later delete them.
   if (existsSync(join(standDir, 'coverage'))) {
-    spawnSync('docker', ['run', '--rm', '-v', `${join(standDir, 'coverage')}:/c`, 'nginx:alpine', 'chmod', '-R', 'a+rwX', '/c'], {
-      stdio: 'inherit'
-    })
+    spawnSync(
+      'docker',
+      ['run', '--rm', '-v', `${join(standDir, 'coverage')}:/c`, 'nginx:alpine', 'chmod', '-R', 'a+rwX', '/c'],
+      {
+        stdio: 'inherit'
+      }
+    )
   }
 }
