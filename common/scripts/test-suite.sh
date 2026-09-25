@@ -58,7 +58,7 @@ if [ "$what" = api ] || [ "$what" = full ]; then
 fi
 
 echo
-echo "=== Summary ==="
+echo "=== Test summary ==="
 printf '%s\n' "${summary[@]}"
 if [ ${#reports[@]} -gt 0 ]; then
   node ./common/scripts/jest-failures.js "${reports[@]}"
