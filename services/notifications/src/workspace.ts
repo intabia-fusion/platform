@@ -30,6 +30,8 @@ import core, {
   Tx,
   TxCUD,
   TxFactory,
+  TxUpdateDoc,
+  UserStatus,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
@@ -72,6 +74,7 @@ import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
 import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
+import { PendingPushHolder } from './pendingPush'
 
 const transientHttpStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
 // Attempts of one tx batch on a transient transactor error before the source tx goes back to the queue.
@@ -111,6 +114,7 @@ class Workspace {
 
   private readonly txFactory = new TxFactory(core.account.System, true)
   readonly client: Client
+  readonly pendingPush: PendingPushHolder
 
   private constructor (
     private readonly ctx: MeasureContext,
@@ -125,6 +129,30 @@ class Workspace {
     private readonly producer: PlatformQueueProducer<QueueNotificationMessage>,
     getAiBotAccount: () => Promise<AccountUuid | undefined>
   ) {
+    this.pendingPush = new PendingPushHolder({
+      holdMs: config.PushHoldMs,
+      publish: async (message) => {
+        await this.publish([message])
+      },
+      // Straight from the DB, not the LRU cache: a timer has no tx to refresh the cache with.
+      isRead: async (account, objectId, createdOn) => {
+        const [state] = await this.pipeline.findAll<ReadState>(
+          this.ctx,
+          notification.class.ReadState,
+          { attachedTo: objectId },
+          { limit: 1 }
+        )
+        const position = state?.[account]
+        return position != null && position.timestamp >= createdOn
+      },
+      onError: (err, held) => {
+        this.ctx.error('Failed to release a held push, it is lost', {
+          error: err instanceof Error ? err.message : String(err),
+          notificationId: held.notificationId,
+          account: held.account
+        })
+      }
+    })
     this.client = this.getClient()
     this.cache = new WorkspaceCache(this.ctx, this.client, getAiBotAccount)
   }
@@ -159,6 +187,10 @@ class Workspace {
       this.cache.reset()
     }
 
+    if (this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
+      await this.releaseHeldPushes(tx)
+      return
+    }
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.AppPushNotification)) return
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) return
@@ -239,11 +271,7 @@ class Workspace {
 
     if (result.queueMessages.length > 0) {
       try {
-        await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, result.queueMessages), {
-          maxRetries: publishAttempts,
-          isRetryable: () => true,
-          delayStrategy: publishBackoff
-        })
+        await this.publish(result.queueMessages)
       } catch (e: any) {
         // Known limitation, see docs/features/notifications.md: the inbox entries exist, the
         // push and email of this batch do not. The line is the alert hook.
@@ -255,6 +283,29 @@ class Workspace {
         })
       }
     }
+  }
+
+  private async publish (messages: QueueNotificationMessage[]): Promise<void> {
+    await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, messages), {
+      maxRetries: publishAttempts,
+      isRetryable: () => true,
+      delayStrategy: publishBackoff
+    })
+  }
+
+  // The receiver left the computer (away) or the workspace (offline): what waited for them goes
+  // out now. The status is read from the cache as it was before this tx; a status the cache never
+  // saw cannot be mapped to its account, and the cap releases those pushes instead.
+  private async releaseHeldPushes (tx: TxCUD<Doc>): Promise<void> {
+    if (this.pendingPush.size === 0) return
+    const status = this.cache.getCachedUserStatus(tx.objectId as Ref<UserStatus>)
+    if (status === undefined) return
+    const gone =
+      tx._class === core.class.TxRemoveDoc ||
+      (tx._class === core.class.TxUpdateDoc &&
+        ((tx as TxUpdateDoc<UserStatus>).operations.away === true ||
+          (tx as TxUpdateDoc<UserStatus>).operations.online === false))
+    if (gone) await this.pendingPush.flushByAccount(status.user)
   }
 
   // The batch is applied by now: a failure here is a cache problem, not a rejected batch.
@@ -278,6 +329,7 @@ class Workspace {
       hierarchy: this.hierarchy,
       model: this.model,
       branding: this.branding,
+      pendingPush: this.pendingPush,
       findAll: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -371,6 +423,8 @@ class Workspace {
   async close (): Promise<void> {
     // A restore event can drop the workspace mid-tx; the pipeline has to outlive that tx.
     await this.inProgressPromise?.catch(() => undefined)
+    // Held pushes go out before the pipeline closes: their read check runs through it.
+    await this.pendingPush.flushAll()
     try {
       await this.pipeline.close()
     } catch (e) {

@@ -42,7 +42,7 @@ import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
-import { pushDismissMessage, readUnread } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, readUnread } from './dismiss'
 import { pushNotification } from './notification'
 import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
 
@@ -171,6 +171,7 @@ export async function handleReadNotificationAction (
 
   // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
   const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
+  cancelHeldPushes(client, context, readPosition)
   await pushDismissMessage(
     cache,
     result,

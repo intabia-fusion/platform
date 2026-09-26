@@ -15,7 +15,14 @@
 
 import type { Class, Doc, Ref } from '@hcengineering/core'
 
-import { apnsAlertPayload, apnsDismissPayload, fcmAlertMessage, fcmDismissMessage, PushKind, pushTarget } from '../mobile'
+import {
+  apnsAlertPayload,
+  apnsDismissPayload,
+  fcmAlertMessage,
+  fcmDismissMessage,
+  PushKind,
+  pushTarget
+} from '../mobile'
 
 jest.mock('../config', () => ({
   __esModule: true,

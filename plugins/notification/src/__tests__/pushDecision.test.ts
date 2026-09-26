@@ -20,7 +20,12 @@ import { shouldSuppressPush, type PushVisibilityState, type PushWindowClient } f
 const objectId = '66aa1234abcd' as Ref<Doc>
 const origin = 'https://app.example.com'
 
-function client (url: string, focused = true, visibilityState: PushVisibilityState = 'visible', id?: string): PushWindowClient {
+function client (
+  url: string,
+  focused = true,
+  visibilityState: PushVisibilityState = 'visible',
+  id?: string
+): PushWindowClient {
   return { id, focused, visibilityState, url }
 }
 
@@ -31,13 +36,15 @@ describe('shouldSuppressPush', () => {
 
   it('suppresses when the tab addresses the object as id|class, percent-encoded', () => {
     const segment = encodeURIComponent(`${objectId}|chunter:class:Channel`)
-    expect(shouldSuppressPush({ objectId }, [client(`${origin}/workbench/ws/notification/ctx-1/${segment}?message=m`)])).toBe(
-      true
-    )
+    expect(
+      shouldSuppressPush({ objectId }, [client(`${origin}/workbench/ws/notification/ctx-1/${segment}?message=m`)])
+    ).toBe(true)
   })
 
   it('suppresses for a thread open by its root message id', () => {
-    expect(shouldSuppressPush({ objectId }, [client(`${origin}/workbench/ws/chunter/general-c1/${objectId}`)])).toBe(true)
+    expect(shouldSuppressPush({ objectId }, [client(`${origin}/workbench/ws/chunter/general-c1/${objectId}`)])).toBe(
+      true
+    )
   })
 
   it('shows when the tab with the document is not focused or is hidden', () => {
@@ -85,7 +92,11 @@ describe('shouldSuppressPush', () => {
     it('falls back to the url when the tab did not answer', () => {
       const viewing = new Map<string, Array<Ref<Doc>>>()
       expect(
-        shouldSuppressPush({ objectId }, [client(`${origin}/workbench/ws/chunter/general-${objectId}`, true, 'visible', 'c1')], viewing)
+        shouldSuppressPush(
+          { objectId },
+          [client(`${origin}/workbench/ws/chunter/general-${objectId}`, true, 'visible', 'c1')],
+          viewing
+        )
       ).toBe(true)
     })
 

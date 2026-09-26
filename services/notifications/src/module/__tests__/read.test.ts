@@ -30,6 +30,7 @@ describe('handleReadState', () => {
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
+    pendingPush: { cancelByObject: jest.Mock }
   }
   let mockCache: {
     getReadState: jest.Mock
@@ -40,6 +41,7 @@ describe('handleReadState', () => {
 
   beforeEach(() => {
     mockClient = {
+      pendingPush: { cancelByObject: jest.fn() },
       ctx: {
         warn: jest.fn(),
         error: jest.fn()
@@ -356,6 +358,7 @@ describe('handleReadState', () => {
 
       await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
+      expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 150)
       expect(mockCache.getPushSubscriptions).toHaveBeenCalledWith('user-1')
       expect(result.queueMessages).toHaveLength(1)
       expect(result.queueMessages[0]).toEqual({

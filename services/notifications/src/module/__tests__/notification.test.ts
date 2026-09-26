@@ -14,7 +14,11 @@
 //
 
 import { AccountUuid, Doc, Ref, Space, Class } from '@hcengineering/core'
-import notificationPlugin, { DocNotifyContext, UnreadMessage } from '@hcengineering/notification'
+import notificationPlugin, {
+  DocNotifyContext,
+  type QueueNotifyMessage,
+  UnreadMessage
+} from '@hcengineering/notification'
 import { ActivityMessage } from '@hcengineering/activity'
 
 import { Result, TxCache } from '../../types'
@@ -541,7 +545,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(result.queueMessages[0].template).toEqual({
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toEqual({
         text: 'translated text body',
         html: 'translated html body',
         subject: 'translated subject'
@@ -561,7 +565,7 @@ describe('pushNotification', () => {
       const result2 = emptyResult()
       await pushNotification(mockClient, txCache, result2, undefined, mockData)
       expect(mockTranslate).not.toHaveBeenCalled()
-      expect(result2.queueMessages[0].template).toEqual({
+      expect((result2.queueMessages[0] as QueueNotifyMessage).template).toEqual({
         text: 'translated text body',
         html: 'translated html body',
         subject: 'translated subject'
@@ -593,7 +597,7 @@ describe('pushNotification', () => {
         'Failed to generate template',
         expect.objectContaining({ notificationId: 'notify-1' })
       )
-      expect(result.queueMessages[0].template).toBeUndefined()
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toBeUndefined()
     })
   })
 
@@ -740,7 +744,7 @@ describe('pushNotification', () => {
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
       expect(result.queueMessages).toHaveLength(1)
-      expect(Object.keys(result.queueMessages[0].providers).sort()).toEqual(
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers).sort()).toEqual(
         [
           notificationPlugin.providers.InboxNotificationProvider,
           notificationPlugin.providers.PushNotificationProvider,
@@ -748,6 +752,73 @@ describe('pushNotification', () => {
         ].sort()
       )
       expect(result.createAppPushNotificationTx).toHaveLength(1)
+    })
+  })
+
+  describe('holding the native push while the receiver is at the computer', () => {
+    const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x' }
+    const native = { _id: 'sub-apns', endpoint: 'apns://token' }
+    const providers = {
+      [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+      [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+      [notificationPlugin.providers.SoundNotificationProvider]: [{ _id: 'type-1' }],
+      'email-provider': [{ _id: 'type-1' }]
+    }
+
+    beforeEach(() => {
+      mockClient.pendingPush = { hold: jest.fn() }
+      mockData.notifyProviders = providers
+      mockData.pushSubscriptions = [web, native]
+      mockData.holdNative = true
+      mockData.receiver = { ...mockData.receiver, online: true, away: false }
+    })
+
+    it('sends the browser push and the letter at once and holds the phone push', async () => {
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(1)
+      expect(result.queueMessages[0]).toMatchObject({ id: 'notify-1', pushSubscriptions: [web] })
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers)).toHaveLength(4)
+
+      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
+      const held = mockClient.pendingPush.hold.mock.calls[0][0]
+      expect(held).toMatchObject({ account: 'user-1', notificationId: 'notify-1', objectId: 'doc-1', createdOn: 100 })
+      expect(held.message.pushSubscriptions).toEqual([native])
+      expect(Object.keys(held.message.providers).sort()).toEqual(
+        [
+          notificationPlugin.providers.PushNotificationProvider,
+          notificationPlugin.providers.SoundNotificationProvider
+        ].sort()
+      )
+      expect(held.message.template).toBeUndefined()
+    })
+
+    it('queues nothing immediately when only the phone would be notified', async () => {
+      mockData.pushSubscriptions = [native]
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(0)
+      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
+    })
+
+    it.each([
+      ['the receiver is away', { receiver: { online: true, away: true } }],
+      ['the receiver is offline', { receiver: { online: false, away: false } }],
+      ['the notification is not a chat message', { holdNative: undefined }],
+      ['there is no native subscription', { pushSubscriptions: [web] }]
+    ])('sends everything at once when %s', async (_name, overrides: any) => {
+      mockData = { ...mockData, ...overrides, receiver: { ...mockData.receiver, ...(overrides.receiver ?? {}) } }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.pendingPush.hold).not.toHaveBeenCalled()
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual(mockData.pushSubscriptions)
     })
   })
 })

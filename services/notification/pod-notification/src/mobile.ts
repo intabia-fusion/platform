@@ -166,7 +166,11 @@ export async function sendApnsDismiss (token: string, data: PushDismissData): Pr
   return await apnsRequest(token, { 'apns-push-type': 'background', 'apns-priority': '5' }, apnsDismissPayload(data))
 }
 
-async function apnsRequest (token: string, headers: Record<string, string>, body: Record<string, unknown>): Promise<Delivery> {
+async function apnsRequest (
+  token: string,
+  headers: Record<string, string>,
+  body: Record<string, unknown>
+): Promise<Delivery> {
   const payload = JSON.stringify(body)
 
   return await new Promise<Delivery>((resolve) => {

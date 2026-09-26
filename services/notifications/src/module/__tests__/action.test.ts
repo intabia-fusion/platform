@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, readOnlyGuestAccountUuid, Ref, TxCUD, Space } from '@hcengineering/core'
+import core, { AccountUuid, readOnlyGuestAccountUuid, Ref, TxCUD, TxCreateDoc, Space } from '@hcengineering/core'
 import { CreateNotificationAction, DocNotifyContext, ReadNotificationAction } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
 
@@ -52,6 +52,7 @@ describe('handleReadNotificationAction', () => {
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
+    pendingPush: { cancelByObject: jest.Mock }
   }
   let mockCache: {
     getContext: jest.Mock
@@ -64,6 +65,7 @@ describe('handleReadNotificationAction', () => {
     mockClient = {
       ctx: { warn: jest.fn() },
       findAll: jest.fn(),
+      pendingPush: { cancelByObject: jest.fn() },
       txFactory: {
         createTxUpdateDoc: jest.fn().mockImplementation((cls: string, space: string, id: string, payload: unknown) => ({
           _class: core.class.TxUpdateDoc,
@@ -291,6 +293,7 @@ describe('handleReadNotificationAction', () => {
 
     await handleReadNotificationAction(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
+    expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 150)
     expect(result.queueMessages).toEqual([
       {
         kind: 'dismiss',

@@ -36,7 +36,10 @@ describe('readUnread', () => {
   })
 
   it('dismisses nothing when no notified message was read', () => {
-    const read: UnreadMessage[] = [{ id: id('b'), createdOn: 20 }, { from: 1, to: 9, count: 5 }]
+    const read: UnreadMessage[] = [
+      { id: id('b'), createdOn: 20 },
+      { from: 1, to: 9, count: 5 }
+    ]
     expect(readUnread(read, 40)).toEqual({ tags: [], readUpTo: 0 })
     expect(readUnread([], 40)).toEqual({ tags: [], readUpTo: 0 })
   })

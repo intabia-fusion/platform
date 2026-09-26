@@ -33,6 +33,8 @@ export interface Config {
   FrontUrl: string
   BrandingPath: string
   LatestNotificationsSliceSize: number
+  // The cap on holding a native push while its receiver is at the computer.
+  PushHoldMs: number
 }
 
 function getAllowedProviders (): (Ref<NotificationProvider> | 'all')[] {
@@ -55,7 +57,8 @@ const config: Config = (() => {
     ApplyTxBatchSize: parseInt(process.env.APPLY_TX_BATCH_SIZE ?? '100'),
     FrontUrl: process.env.FRONT_URL,
     BrandingPath: process.env.BRANDING_PATH ?? '',
-    LatestNotificationsSliceSize: parseInt(process.env.LATEST_NOTIFICATIONS_SLICE_SIZE ?? '5')
+    LatestNotificationsSliceSize: parseInt(process.env.LATEST_NOTIFICATIONS_SLICE_SIZE ?? '5'),
+    PushHoldMs: parseInt(process.env.PUSH_HOLD_MS ?? '60000')
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

@@ -51,6 +51,7 @@ import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 import { UserMentionInfo } from '@hcengineering/activity'
 import { IntlString } from '@hcengineering/platform'
+import type { PendingPushHolder } from './pendingPush'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]
@@ -83,6 +84,9 @@ export interface Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
+
+  // Native pushes waiting for their receiver to read or leave; absent in tests that do not care.
+  pendingPush?: PendingPushHolder
 }
 
 export interface MentionResult {

@@ -23,7 +23,7 @@ import {
 } from '@hcengineering/notification'
 
 import Cache from '../cache'
-import { Result } from '../types'
+import { Client, Result } from '../types'
 
 /** What a read takes out of `unreadMessages`, in the terms a dismiss needs. */
 export interface ReadUnread {
@@ -48,6 +48,11 @@ export function readUnread (read: UnreadMessage[], readPosition: Timestamp): Rea
     }
   }
   return { tags, readUpTo: tags.length > 0 || notified ? readPosition : 0 }
+}
+
+/** The person read the document up to `readUpTo`: pushes still waiting for that are not needed. */
+export function cancelHeldPushes (client: Client, context: DocNotifyContext, readUpTo: Timestamp): void {
+  client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo)
 }
 
 /**

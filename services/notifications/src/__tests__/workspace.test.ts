@@ -15,6 +15,8 @@
 
 // '../config' throws at import time without env vars, so it's mocked (like other test files);
 // server-pipeline/middleware resolve fine as real deps under ts-jest.
+import core from '@hcengineering/core'
+
 import Workspace, { isTransientError } from '../workspace'
 import { emptyResult } from '../utils/utils'
 import type { Result } from '../types'
@@ -175,6 +177,7 @@ describe('Workspace.close', () => {
     let release: () => void = () => {}
     instance.ctx = { error: jest.fn() }
     instance.pipeline = { close: jest.fn(async () => order.push('pipeline closed')) }
+    instance.pendingPush = { flushAll: jest.fn(async () => order.push('held pushes flushed')) }
     instance.processTx = async () => {
       await new Promise<void>((resolve) => {
         release = resolve
@@ -189,7 +192,48 @@ describe('Workspace.close', () => {
 
     release()
     await Promise.all([tx, closing])
-    expect(order).toEqual(['tx done', 'pipeline closed'])
+    expect(order).toEqual(['tx done', 'held pushes flushed', 'pipeline closed'])
     expect(instance.isInProgress()).toBe(false)
+  })
+})
+
+describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)', () => {
+  function makeInstance (status: { user: string } | undefined, size = 1): any {
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.pendingPush = { size, flushByAccount: jest.fn().mockResolvedValue(undefined) }
+    instance.cache = { getCachedUserStatus: jest.fn().mockReturnValue(status) }
+    return instance
+  }
+  const update = (operations: Record<string, unknown>): any => ({
+    _class: core.class.TxUpdateDoc,
+    objectClass: core.class.UserStatus,
+    objectId: 'us-1',
+    operations
+  })
+
+  it("releases the account's held pushes when it goes away or offline, or its status is removed", async () => {
+    for (const tx of [
+      update({ away: true }),
+      update({ online: false }),
+      { _class: core.class.TxRemoveDoc, objectClass: core.class.UserStatus, objectId: 'us-1' }
+    ]) {
+      const instance = makeInstance({ user: 'acc-1' })
+      await instance.releaseHeldPushes(tx)
+      expect(instance.pendingPush.flushByAccount).toHaveBeenCalledWith('acc-1')
+    }
+  })
+
+  it('does nothing when the person comes back, when nothing is held, or when the status is unknown', async () => {
+    const back = makeInstance({ user: 'acc-1' })
+    await back.releaseHeldPushes(update({ away: false }))
+    expect(back.pendingPush.flushByAccount).not.toHaveBeenCalled()
+
+    const empty = makeInstance({ user: 'acc-1' }, 0)
+    await empty.releaseHeldPushes(update({ away: true }))
+    expect(empty.cache.getCachedUserStatus).not.toHaveBeenCalled()
+
+    const unknown = makeInstance(undefined)
+    await unknown.releaseHeldPushes(update({ away: true }))
+    expect(unknown.pendingPush.flushByAccount).not.toHaveBeenCalled()
   })
 })

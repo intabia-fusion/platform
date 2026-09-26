@@ -26,7 +26,7 @@ import {
 
 import { Client, Result } from '../types'
 import Cache from '../cache'
-import { pushDismissMessage, readUnread } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, readUnread } from './dismiss'
 
 const skipKeys = [
   '_id',
@@ -129,5 +129,6 @@ async function readContext (
     )
   }
 
+  cancelHeldPushes(client, context, ts)
   await pushDismissMessage(cache, result, context, readUnread([...unreadMessagesToRead, ...unreadChunksToRead], ts))
 }

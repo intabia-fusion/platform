@@ -28,7 +28,8 @@ import notificationPlugin, {
   translateNotification,
   NotificationTemplate,
   QueueNotifyMessage,
-  appendAndCollapseUnreadMessages
+  appendAndCollapseUnreadMessages,
+  isNativePushEndpoint
 } from '@hcengineering/notification'
 import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
@@ -62,6 +63,10 @@ interface CreateNotificationData {
   pushSubscriptions: PushSubscription[]
 
   alreadyRead?: boolean
+
+  // Chat messages only: while the receiver is at the computer, the push to their phone waits
+  // (client.pendingPush) for them to read the message there first. Other notifications go at once.
+  holdNative?: boolean
 
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
@@ -117,7 +122,7 @@ export async function pushNotification (
   const url = getNotificationUrl(client, contextId, notification, objectId, objectClass)
 
   if (hasDeliveryProvider(notifyProviders)) {
-    result.queueMessages.push({
+    const message: QueueNotifyMessage = {
       id: notification.id,
       title,
       body,
@@ -132,7 +137,31 @@ export async function pushNotification (
       objectSpace,
       createdOn: data.notification.createdOn,
       template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
-    })
+    }
+    const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
+    const holds =
+      data.holdNative === true &&
+      client.pendingPush !== undefined &&
+      receiver.online &&
+      !receiver.away &&
+      native.length > 0 &&
+      (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0
+    if (holds) {
+      // The browser gets its push and the letter goes at once; the phone waits.
+      const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
+      if (web.length > 0 || hasDeliveryProvider(withoutPushProviders(notifyProviders))) {
+        result.queueMessages.push({ ...message, pushSubscriptions: web })
+      }
+      client.pendingPush?.hold({
+        account: receiver.account,
+        notificationId: notification.id,
+        objectId,
+        createdOn: data.notification.createdOn,
+        message: { ...message, pushSubscriptions: native, providers: pushProvidersOnly(providers), template: undefined }
+      })
+    } else {
+      result.queueMessages.push(message)
+    }
   }
   if (context != null) {
     const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
@@ -213,6 +242,26 @@ export async function pushNotification (
 function inboxProvidersOnly (providers: NotifyProviders): NotifyProviders {
   const inbox = providers[notificationPlugin.providers.InboxNotificationProvider]
   return inbox != null ? { [notificationPlugin.providers.InboxNotificationProvider]: inbox } : {}
+}
+
+// Push and its dependent Sound: the providers a held (native) push carries on its own.
+function isPushProvider (provider: string): boolean {
+  return (
+    provider === notificationPlugin.providers.PushNotificationProvider ||
+    provider === notificationPlugin.providers.SoundNotificationProvider
+  )
+}
+
+function withoutPushProviders (providers: NotifyProviders): NotifyProviders {
+  return Object.fromEntries(
+    Object.entries(providers).filter(([provider]) => !isPushProvider(provider))
+  ) as NotifyProviders
+}
+
+function pushProvidersOnly (providers: QueueNotifyMessage['providers']): QueueNotifyMessage['providers'] {
+  return Object.fromEntries(
+    Object.entries(providers).filter(([provider]) => isPushProvider(provider))
+  ) as QueueNotifyMessage['providers']
 }
 
 function hasDeliveryProvider (providers: NotifyProviders): boolean {

@@ -69,8 +69,8 @@ interface WorkerScope {
   }
   skipWaiting: () => Promise<void>
   addEventListener: ((type: 'push', listener: (event: PushEvent) => void) => void) &
-  ((type: 'notificationclick', listener: (event: NotificationClickEvent) => void) => void) &
-  ((type: 'install' | 'activate', listener: (event: ExtendableEvent) => void) => void)
+    ((type: 'notificationclick', listener: (event: NotificationClickEvent) => void) => void) &
+    ((type: 'install' | 'activate', listener: (event: ExtendableEvent) => void) => void)
 }
 
 declare const self: WorkerScope
