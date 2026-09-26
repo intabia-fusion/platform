@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type PushData } from '@hcengineering/notification'
+import { NATIVE_PUSH_SCHEMES, type PushData } from '@hcengineering/notification'
 import { createPrivateKey, sign } from 'crypto'
 import { connect, constants, type ClientHttp2Session } from 'http2'
 import config from './config'
@@ -39,8 +39,8 @@ export type PushTarget =
   | { kind: PushKind.RuStore, token: string }
 
 export function pushTarget (endpoint: string): PushTarget {
-  for (const kind of [PushKind.Apns, PushKind.Fcm, PushKind.RuStore]) {
-    const scheme = `${kind}://`
+  for (const kind of [PushKind.Apns, PushKind.Fcm, PushKind.RuStore] as const) {
+    const scheme = NATIVE_PUSH_SCHEMES[kind]
     if (endpoint.startsWith(scheme)) return { kind, token: endpoint.slice(scheme.length) }
   }
   return { kind: PushKind.Web }

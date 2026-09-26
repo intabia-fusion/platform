@@ -66,6 +66,16 @@ export function getNotificationMessageId (inboxNotification: ContextNotification
   return inboxNotification.messageId
 }
 
+export const NATIVE_PUSH_SCHEMES = {
+  apns: 'apns://',
+  fcm: 'fcm://',
+  rustore: 'rustore://'
+} as const
+
+export function isNativePushEndpoint (endpoint: string): boolean {
+  return Object.values(NATIVE_PUSH_SCHEMES).some((scheme) => endpoint.startsWith(scheme))
+}
+
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
 export const PUSH_NOTIFICATION_BODY_SIZE = 150
 
