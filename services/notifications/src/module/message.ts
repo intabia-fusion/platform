@@ -15,6 +15,7 @@
 
 import core, {
   AccountUuid,
+  BlobType,
   TxCreateDoc,
   TxCUD,
   TxRemoveDoc,
@@ -182,7 +183,8 @@ async function handleCreateMessage (
         txCache,
         type,
         notifyResult,
-        attachments
+        attachments,
+        alreadyRead
       )
     } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
@@ -494,7 +496,8 @@ async function handleUpdateDUM (
         txCache,
         type,
         notifyResult,
-        []
+        [],
+        alreadyRead
       )
     } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
@@ -630,7 +633,8 @@ async function pushNotification (
   txCache: TxCache,
   type: NotificationType,
   notifyResult: NotifyProviders,
-  attachments: any[]
+  attachments: BlobType[],
+  alreadyRead: boolean
 ): Promise<void> {
   const content = await getMessageIntl(client, txCache, type, doc, message, sender, receiver.language)
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
@@ -662,6 +666,7 @@ async function pushNotification (
     intl: content,
     notifyProviders: notifyResult,
     pushSubscriptions,
+    alreadyRead,
     markup: (message as Partial<ChatMessage>).message
   })
 }

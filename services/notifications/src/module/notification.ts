@@ -61,6 +61,8 @@ interface CreateNotificationData {
   receiver: Receiver
   pushSubscriptions: PushSubscription[]
 
+  alreadyRead?: boolean
+
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
   markup?: Markup
@@ -71,8 +73,10 @@ export async function pushNotification (
   txCache: TxCache,
   result: Result,
   context: DocNotifyContext | undefined,
-  data: CreateNotificationData
+  _data: CreateNotificationData
 ): Promise<void> {
+  const data: CreateNotificationData =
+    _data.alreadyRead === true ? { ..._data, notifyProviders: inboxProvidersOnly(_data.notifyProviders) } : _data
   const {
     notification,
     unreadMessage,
@@ -112,22 +116,24 @@ export async function pushNotification (
   const contextId = context?._id ?? generateId<DocNotifyContext>()
   const url = getNotificationUrl(client, contextId, notification, objectId, objectClass)
 
-  result.queueMessages.push({
-    id: notification.id,
-    title,
-    body,
-    url,
-    domain,
-    pushSubscriptions,
-    language: receiver.language,
-    account: receiver.account,
-    providers,
-    objectId,
-    objectClass,
-    objectSpace,
-    createdOn: data.notification.createdOn,
-    template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
-  })
+  if (hasDeliveryProvider(notifyProviders)) {
+    result.queueMessages.push({
+      id: notification.id,
+      title,
+      body,
+      url,
+      domain,
+      pushSubscriptions,
+      language: receiver.language,
+      account: receiver.account,
+      providers,
+      objectId,
+      objectClass,
+      objectSpace,
+      createdOn: data.notification.createdOn,
+      template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
+    })
+  }
   if (context != null) {
     const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
 
@@ -202,6 +208,17 @@ export async function pushNotification (
   }
 
   createAppPushNotification(client, result, data, contextId)
+}
+
+function inboxProvidersOnly (providers: NotifyProviders): NotifyProviders {
+  const inbox = providers[notificationPlugin.providers.InboxNotificationProvider]
+  return inbox != null ? { [notificationPlugin.providers.InboxNotificationProvider]: inbox } : {}
+}
+
+function hasDeliveryProvider (providers: NotifyProviders): boolean {
+  return Object.entries(providers).some(
+    ([provider, types]) => provider !== notificationPlugin.providers.InboxNotificationProvider && types.length > 0
+  )
 }
 
 function createAppPushNotification (

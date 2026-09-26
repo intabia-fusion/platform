@@ -22,7 +22,7 @@
 
 ## Гонки клиента и сервиса
 
-- Клиент часто успевает прочитать документ раньше, чем сервис обработает Tx сообщения. Если `ReadState[account].timestamp >= createdOn` (`alreadyRead`, `module/message.ts`), сообщение попадает в `latestNotifications`, но не в `unreadMessages`/`unreadCount`: карточка в inbox есть, бейдж не растёт.
+- Клиент часто успевает прочитать документ раньше, чем сервис обработает Tx сообщения. Если `ReadState[account].timestamp >= createdOn` (`alreadyRead`, `module/message.ts`), сообщение попадает в `latestNotifications`, но не в `unreadMessages`/`unreadCount`: карточка в inbox есть, бейдж не растёт. С тем же флагом `pushNotification` (`module/notification.ts`) оставляет только Inbox-провайдер: push, звук и письмо о прочитанном не уходят, и в очередь такое сообщение не публикуется (inbox-only сообщения никто не потребляет).
 - Открытый канал: сервис увеличивает счётчик сразу, клиент читает документ round-trip'ом позже, бейдж мигал бы +1/-1 на каждое сообщение. Клиент помечает документ `setDocReading` и вычитает его `min(notifiedMessagesCount, unreadCount)` из `totalUnreadCount` (`publishUnread`, `plugins/notification-resources/src/client.ts`).
 - Повторная доставка Kafka-сообщения: `isNotificationRecorded` (`module/notification.ts`) ищет карточку с тем же id в контексте и выходит; для упоминания без `messageId` id генерируется заново на каждый проход, поэтому сравнение идёт по `createdOn`.
 - Чужой `TxUpdateDoc<DocNotifyContext>` (не из `serviceTxes`) инвалидирует запись кэша, а не патчит её: это либо эхо записи, пережившей рестарт сервиса, либо чужая правка; перечитать безопаснее, чем накладывать (`updateNotifyContext`, `cache.ts`).

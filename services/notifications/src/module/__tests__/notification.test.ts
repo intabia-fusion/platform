@@ -524,7 +524,8 @@ describe('pushNotification', () => {
             _id: 'inbox-type-1',
             templates
           } as any
-        ]
+        ],
+        'email-provider': [{ _id: 'inbox-type-1' } as any]
       }
 
       mockData.intl.intlParamsNotLocalized = {
@@ -580,7 +581,8 @@ describe('pushNotification', () => {
             _id: 'inbox-type-1',
             templates
           } as any
-        ]
+        ],
+        'email-provider': [{ _id: 'inbox-type-1' } as any]
       }
 
       mockTranslate.mockRejectedValue(new Error('translation error'))
@@ -652,7 +654,8 @@ describe('pushNotification', () => {
 
     it('never skips when the context is new (context undefined)', async () => {
       mockData.notifyProviders = {
-        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        'test-provider': [{ _id: 'type-1' }]
       }
       mockClient.ctx.info = jest.fn()
 
@@ -665,7 +668,7 @@ describe('pushNotification', () => {
   })
 
   describe('alreadyRead checks (no unread payload)', () => {
-    it('does not increment unreadCount but creates queue messages and updates latestNotifications', async () => {
+    it('does not increment unreadCount and updates latestNotifications; an inbox-only notification is not queued', async () => {
       mockData.notifyProviders = {
         [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
       }
@@ -690,8 +693,61 @@ describe('pushNotification', () => {
       expect(op.$inc).toBeUndefined() // No unreadCount increment!
       expect(op.unreadMessages).toBeUndefined() // No unread messages updated!
 
-      // It should queue push/email messages
+      // Nobody consumes an inbox-only message: push and mail pods filter by their own provider.
+      expect(result.queueMessages).toHaveLength(0)
+    })
+
+    it('keeps the inbox card but drops push, sound, mail and the app push when alreadyRead is set', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.SoundNotificationProvider]: [{ _id: 'type-1' }],
+        'email-provider': [{ _id: 'type-1' }]
+      }
+      mockData.pushSubscriptions = [{ _id: 'sub-1', endpoint: 'apns://token' }]
+      mockData.alreadyRead = true
+
+      const context: DocNotifyContext = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        user: 'user-1',
+        unreadMessages: [],
+        unreadCount: 0,
+        lastNotify: 50,
+        latestNotifications: []
+      } as any
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(result.updateContextTx).toHaveLength(1)
+      const op = result.updateContextTx[0].operations as any
+      expect(op.$push.latestNotifications).toBeDefined()
+      expect(op.$inc).toBeUndefined()
+      expect(result.queueMessages).toHaveLength(0)
+      expect(result.createAppPushNotificationTx).toHaveLength(0)
+    })
+
+    it('queues every provider and creates the app push when the message is not read yet', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+        'email-provider': [{ _id: 'type-1' }]
+      }
+      mockData.unreadMessage = { id: 'notify-1', createdOn: 100, notified: true }
+      mockData.alreadyRead = false
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
       expect(result.queueMessages).toHaveLength(1)
+      expect(Object.keys(result.queueMessages[0].providers).sort()).toEqual(
+        [
+          notificationPlugin.providers.InboxNotificationProvider,
+          notificationPlugin.providers.PushNotificationProvider,
+          'email-provider'
+        ].sort()
+      )
+      expect(result.createAppPushNotificationTx).toHaveLength(1)
     })
   })
 })

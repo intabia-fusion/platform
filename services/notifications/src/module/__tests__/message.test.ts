@@ -516,10 +516,34 @@ describe('message module', () => {
           undefined,
           expect.objectContaining({
             unreadMessage: undefined,
+            alreadyRead: true,
             receiver,
             objectId: 'doc-1',
             objectClass: 'DocClass',
             notifyProviders: expect.any(Object)
+          })
+        )
+      })
+
+      it('passes alreadyRead: false when the message is newer than the read position', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getDocReadState.mockResolvedValue({
+          [receiver.account]: { timestamp: 50 }
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).toHaveBeenCalledWith(
+          mockClient,
+          txCache,
+          result,
+          undefined,
+          expect.objectContaining({
+            unreadMessage: expect.objectContaining({ id: 'msg-1', notified: true }),
+            alreadyRead: false
           })
         )
       })
