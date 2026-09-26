@@ -21,7 +21,7 @@ The phase is 84.6s rather than 37.7s because `@hcengineering/kafka` (19.7s) and 
 
 `testIsolated` is set on `@hcengineering/kafka` and `pod-fulltext`. Both create their own postfixed topics, and together they exhaust the partition budget of the test stand's redpanda (`--smp 1 --memory 1G`): the run dies with `KafkaJSNonRetriableError: Number of partitions is invalid`. Raising the container's memory would let them join the shared run and take the phase to roughly 40s - untried.
 
-`--coverage` is dropped in the shared run: coverage is per-run, not per-project. No package sets a `coverageThreshold` and CI does not read the reports, so nothing checks it; `pnpm test --no-test-group` still collects it per package.
+`--coverage` is dropped in the shared run: coverage is per-run, not per-project. No package sets a `coverageThreshold` and CI does not read the reports, so nothing checks it; `pnpm test --no-test-group` still collects it per package. Whole-workspace coverage has its own entry point, `pnpm coverage` - see `test-groups-and-coverage.md`, which also covers why `collectCoverageFrom` only works when it is declared globally with package-relative patterns.
 
 ## Leftover kafka topics wedge the next run
 

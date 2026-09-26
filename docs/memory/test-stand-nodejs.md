@@ -26,7 +26,7 @@ Stands (`dev/test-base/src/stands.ts`): `sanity` (tests/, accounts admin/user1-4
 
 Legacy `prepare-pg.sh`: 42s wall / 16s CPU. New: ~41s wall / 3.3s CPU. Wall clock is dominated by `docker compose down+up` (~21s), not by seeding. `full` (4 workspaces, 6 accounts): ~56s.
 
-`api-tests` needs a worker cap locally: `pnpm run api-test` (`ws-tests/api-tests/package.json`) lets jest use its default `cpus-1` workers, and 11 suites connecting at once starve the transactor into 60s `connect()` timeouts. `-w 3` (what a CI runner ends up with) is green. Unrelated to the stand.
+`api-tests` needs a worker cap locally: `pnpm run api-test` (`api-tests/api/package.json`) lets jest use its default `cpus-1` workers, and 11 suites connecting at once starve the transactor into 60s `connect()` timeouts. `-w 3` (what a CI runner ends up with) is green. Unrelated to the stand.
 
 ## Merging stands
 

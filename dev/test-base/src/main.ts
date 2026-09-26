@@ -13,15 +13,23 @@
 // limitations under the License.
 //
 
-import { prepareStand, restoreStand } from './stand'
+import { prepareStand, restoreStand, seedStand } from './stand'
 import { stands } from './stands'
+import { type StandConfig } from './stand'
 
 const name = process.argv[2]
 const mode = process.argv[3] ?? 'prepare'
 const cfg = stands[name]
 
-if (cfg === undefined || (mode !== 'prepare' && mode !== 'restore')) {
-  console.error(`usage: dev/test-base/run.sh <${Object.keys(stands).join('|')}> [prepare|restore]`)
+const modes: Record<string, (cfg: StandConfig) => Promise<void>> = {
+  prepare: prepareStand,
+  restore: restoreStand,
+  // A stand that is already up, e.g. started through testcontainers by api-tests.
+  seed: seedStand
+}
+
+if (cfg === undefined || modes[mode] === undefined) {
+  console.error(`usage: dev/test-base/run.sh <${Object.keys(stands).join('|')}> [${Object.keys(modes).join('|')}]`)
   process.exit(1)
 }
 
@@ -33,7 +41,7 @@ const extra = (process.env.STAND_EXTRA_COMPOSE ?? '')
 
 const target = { ...cfg, composeFiles: [...cfg.composeFiles, ...extra] }
 
-void (mode === 'restore' ? restoreStand(target) : prepareStand(target))
+void modes[mode](target)
   .then(() => {
     process.exit(0)
   })

@@ -1,0 +1,121 @@
+# Coverage overlay for the api-tests stand, on when STAND_COVERAGE=true. Adds NODE_V8_COVERAGE to the
+# pods and mounts a directory per image for the profiles; `pnpm coverage:stand` maps them back onto
+# src/ through each image's bundle sourcemap - the directory name is the image name.
+#
+# V8 writes a profile as the process exits, so the pods must shut down cleanly within the stop
+# timeout (api/src/stand.ts gives them 60s); a pod that is killed leaves nothing.
+
+services:
+  transactor:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/transactor:/coverage
+
+  transactor-europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/transactor:/coverage
+
+  account:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/account:/coverage
+
+  workspace:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/workspace:/coverage
+
+  workspace_europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/workspace:/coverage
+
+  datalake:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/datalake:/coverage
+
+  billing:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/billing:/coverage
+
+  fulltext:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/fulltext:/coverage
+
+  fulltext-europe:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/fulltext:/coverage
+
+  collaborator:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/collaborator:/coverage
+
+  backup:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/backup:/coverage
+
+  stats:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/stats:/coverage
+
+  front:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/front:/coverage
+
+  stream:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/stream:/coverage
+
+  webhook:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/webhook:/coverage
+
+  time-machine:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/worker:/coverage
+
+  activity:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/activity:/coverage
+
+  aiBot:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/ai-bot:/coverage
+
+  mail:
+    environment:
+      - NODE_V8_COVERAGE=/coverage
+    volumes:
+      - ./coverage/mail:/coverage

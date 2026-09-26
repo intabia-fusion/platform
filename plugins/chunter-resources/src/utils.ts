@@ -24,6 +24,7 @@ import {
   type Channel,
   type ChatMessage,
   chunterId,
+  type ChunterSpace,
   createDirect,
   type DirectMessage,
   type ThreadMessage
@@ -36,19 +37,22 @@ import core, {
   type Class,
   type Client,
   type Doc,
+  type DocumentQuery,
   generateId,
   getCurrentAccount,
   hasAccountRole,
   type Markup,
   notEmpty,
   type Ref,
+  type RelatedDocument,
   type Space,
   type Timestamp,
   type WithLookup
 } from '@hcengineering/core'
 import { type AttributeApplierResult } from '@hcengineering/view'
 import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
+import { getClient, type ObjectSearchResult } from '@hcengineering/presentation'
+import ChannelPresenter from './components/ChannelPresenter.svelte'
 import {
   type AnySvelteComponent,
   closePopup,
@@ -67,7 +71,8 @@ import { notificationId } from '@hcengineering/notification'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
-import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from './navigation'
+import { openChannelInSidebar, openChunterSpace, resetChunterLocIfEqual } from './navigation'
+import { decodeChatURI, parseChunterSpaceLinkId, toChunterSpaceLinkId } from './linkId'
 import chunter from './plugin'
 import {
   replyingToMessageStore,
@@ -79,7 +84,36 @@ import {
   stopSummarizing
 } from './stores'
 import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
-import view, { decodeObjectURI } from '@hcengineering/view'
+import view from '@hcengineering/view'
+
+export async function queryChannels (
+  client: Client,
+  search: string,
+  filter?: { in?: RelatedDocument[], nin?: RelatedDocument[] }
+): Promise<ObjectSearchResult[]> {
+  const q: DocumentQuery<Channel> = { name: { $like: `%${search}%` }, archived: false }
+  if (filter?.in !== undefined || filter?.nin !== undefined) {
+    q._id = {}
+    if (filter.in !== undefined) q._id.$in = filter.in.map((it) => it._id as Ref<Channel>)
+    if (filter.nin !== undefined) q._id.$nin = filter.nin.map((it) => it._id as Ref<Channel>)
+  }
+  const channels = await client.findAll(chunter.class.Channel, q, { limit: 200 })
+  return channels.map((doc) => ({
+    doc,
+    title: doc.name,
+    icon: chunter.icon.Hashtag,
+    component: ChannelPresenter,
+    componentProps: { type: 'text' }
+  }))
+}
+
+export async function getChunterSpaceLinkId (doc: ChunterSpace): Promise<string> {
+  const client = getClient()
+  const name = client.getHierarchy().isDerived(doc._class, chunter.class.DirectMessage)
+    ? await getDmName(client, doc as DirectMessage)
+    : doc.name
+  return toChunterSpaceLinkId(doc._id, name)
+}
 
 export async function getDmName (client: Client, space?: DirectMessage): Promise<string> {
   if (space === undefined) {
@@ -403,20 +437,22 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
 
 export async function openDirectForPerson (person: Person, forceSidebar = false): Promise<void> {
   const client = getClient()
-  if (!client.getHierarchy().hasMixin(person, contact.mixin.Employee)) return
-  if (!(person as Employee).active || person.personUuid == null) return
+  const hierarchy = client.getHierarchy()
+  if (!hierarchy.hasMixin(person, contact.mixin.Employee)) return
+  // A plain Person keeps mixin fields under the mixin key, so `active` must be read via `as`.
+  if (!hierarchy.as(person, contact.mixin.Employee).active || person.personUuid == null) return
 
   const dm = await createDirect(client, [getCurrentAccount().uuid, person.personUuid as AccountUuid])
   if (dm == null) return
 
   const loc = getCurrentLocation()
-  const [openedId] = decodeObjectURI(loc.path[3]) ?? []
-  if (openedId === dm) return
+  const [openedId] = decodeChatURI(loc.path[3])
+  if (parseChunterSpaceLinkId(openedId) === dm) return
 
   // Chat apps show the direct inline; elsewhere the sidebar keeps the user where they were.
   const app = loc.path[2]
   if (!forceSidebar && (app === chunterId || app === notificationId)) {
-    openChannel(dm, chunter.class.DirectMessage, undefined, true)
+    await openChunterSpace(dm, chunter.class.DirectMessage, true)
   } else {
     await openChannelInSidebar(dm, chunter.class.DirectMessage)
   }
@@ -428,7 +464,7 @@ export async function openBotDirect (): Promise<void> {
   const client = getClient()
   const dm = await createDirect(client, [getCurrentAccount().uuid, botAccount])
   if (dm == null) return
-  openChannel(dm, chunter.class.DirectMessage, undefined, true)
+  await openChunterSpace(dm, chunter.class.DirectMessage, true)
 }
 
 export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?: number | number[]): Promise<void> {

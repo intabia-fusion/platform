@@ -3,15 +3,13 @@
 set -eo pipefail
 
 # Job variables, mirrors .github/actions/ui-test: test_folder, prepare_script,
-# build_package, run_api_tests, run_backup_tests, enable_profiling
+# build_package, enable_profiling
 export project_dir=$(pwd)
 echo "=== Exported Variables ==="
 echo "project_dir: $project_dir"
 echo "test_folder: $test_folder"
 echo "prepare_script: $prepare_script"
 echo "build_package: $build_package"
-echo "run_api_tests: ${run_api_tests:-false}"
-echo "run_backup_tests: ${run_backup_tests:-false}"
 echo "enable_profiling: ${enable_profiling:-false}"
 
 # A stand left running recreates its bind mounts as root and breaks the next checkout.
@@ -38,20 +36,6 @@ if sudo -n true 2>/dev/null; then
 else
   echo "No passwordless sudo on $(hostname) - installing chromium without system deps"
   pnpm exec playwright install chromium
-fi
-
-if [[ "${run_api_tests}" == "true" ]]; then
-    cd "${project_dir}"
-    pnpm build --to @hcengineering/api-tests
-    cd "${project_dir}/${test_folder}/api-tests"
-    pnpm run api-test --verbose
-fi
-
-if [[ "${run_backup_tests}" == "true" ]]; then
-    cd "${project_dir}"
-    pnpm build --to @hcengineering/backup-tests
-    cd "${project_dir}/${test_folder}/backup-tests"
-    pnpm run backup-test --verbose
 fi
 
 if [[ "${enable_profiling}" == "true" ]]; then

@@ -100,6 +100,8 @@ export async function runWorker (): Promise<void> {
 
   const ctx = new MeasureMetricsContext(SERVICE_NAME, {})
   const queue = getPlatformQueue(SERVICE_NAME, config.QueueRegion)
+  // Producers (webhook retries, process timers) rely on this service to own the topic: brokers do not auto-create it.
+  await queue.createTopic(QueueTopic.TimeMachine, 1)
 
   const consumer = queue.createConsumer<TimeMachineMessage>(
     ctx,

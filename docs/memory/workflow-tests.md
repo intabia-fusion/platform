@@ -14,7 +14,7 @@ Import reuses screens and workflows whose name already exists instead of duplica
 
 ## Where the tests live
 
-`ws-tests/api-tests/src/__tests__/workflow.*.test.ts` - jest against a live stand, not Playwright. `workflow.fixtures.ts` builds project types, projects, issues and status changes over `TxOperations`.
+`api-tests/api/src/__tests__/workflow.*.test.ts` - jest against a live stand, not Playwright. `workflow.fixtures.ts` builds project types, projects, issues and status changes over `TxOperations`.
 
 Two things that are easy to get wrong there:
 

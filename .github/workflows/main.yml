@@ -87,6 +87,61 @@ jobs:
           path: dev/api/bundle/intabia-fusion-api-*.tgz
           if-no-files-found: error
 
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
+
+      # Server images from the bundles above (no web UI), the ws-tests stand with api-tests and
+      # backup-tests, then unit + integration under istanbul with the stand's V8 coverage folded in.
+      - name: Testing...
+        run: |
+          set -o pipefail
+          if [ -n "$DOCKER_ACCESS_TOKEN" ]; then
+            echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
+          fi
+          ./ci_test.sh | tee /tmp/coverage.log
+        env:
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          DOCKER_CLI_HINTS: false
+          DOCKER_BUILDKIT: 1
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo '### Coverage'
+            echo ''
+            grep -E '^\s+(TOTAL|STAND) ' /tmp/coverage.log || true
+            echo ''
+            echo '<details><summary>By package, worst first</summary>'
+            echo ''
+            echo '```'
+            sed -n '/=== Coverage by package/,/TOTAL/p' /tmp/coverage.log || true
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage
+          path: |
+            coverage/lcov.info
+            coverage/cobertura-coverage.xml
+            coverage/html
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload API test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: api-tests
+          path: |
+            api-tests/logs/
+            api-tests/sanity/logs/
+          if-no-files-found: ignore
+
   svelte-check:
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -143,55 +198,6 @@ jobs:
           git diff '*.js' '*.ts' '*.svelte' '*.json' '*.yaml' | cat
           [ -z "$(git diff --name-only '*.js' '*.ts' '*.svelte' '*.json' '*.yaml' | cat)" ]
           echo '================================================================'
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          filter: tree:0
-          submodules: recursive
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: ".nvmrc"
-          cache: 'pnpm'
-
-      - name: Installing...
-        run: pnpm install --frozen-lockfile
-
-      - name: Building...
-        run: pnpm build
-
-      # pods/server's compression test reads bundle/model.json, which only the bundle phase writes.
-      - name: Generating model...
-        run: pnpm --filter @hcengineering/pod-server run get-model
-
-      - name: Prepare server (with rate limit retry)
-        run: |
-          set -o pipefail
-          cd ./tests
-          if ./prepare-tests.sh 2>&1 | tee /tmp/prepare-tests.log; then
-            echo "Prepare succeeded"
-          else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-tests.log; then
-              echo "Rate limit hit, logging in to Docker Hub and retrying..."
-              echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              ./prepare-tests.sh
-            else
-              echo "Prepare failed (not a rate limit issue)"
-              cat /tmp/prepare-tests.log
-              exit 1
-            fi
-          fi
-      - name: Testing...
-        run: pnpm test --verbose
-        env:
-          DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
-          ELASTIC_URL: "http://localhost:9201"
-          MONGO_URL: "mongodb://localhost:27018"
-
   uitest-cockroach:
     if: inputs.run-cockroach == true
     runs-on: ubuntu-latest
@@ -415,12 +421,10 @@ jobs:
           prepare-script: ./prepare.sh
           build-package: "@hcengineering/tests-ws-sanity"
           artifact-name-suffix: ws
-          run-api-tests: "true"
-          run-backup-tests: "true"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   docker-build:
-    needs: [uitest-workspaces]
+    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

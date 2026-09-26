@@ -20,6 +20,7 @@
   "devDependencies": {
     "@hcengineering/platform-rig": "workspace:^0.7.19",
     "@stylistic/eslint-plugin": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@types/dompurify": "catalog:",
     "@typescript-eslint/eslint-plugin": "catalog:",

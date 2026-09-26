@@ -216,7 +216,6 @@ function otherStandProjects (project: string): string[] {
  * @public
  */
 export async function prepareStand (cfg: StandConfig): Promise<void> {
-  const concurrency = cfg.concurrency ?? 3
   initLogs(resolve(standDir(cfg), 'sanity/logs/prepare'))
   log(`Preparing stand '${cfg.project}' in ${cfg.dir}`)
 
@@ -240,6 +239,17 @@ export async function prepareStand (cfg: StandConfig): Promise<void> {
   // Held until the await below: if the warmup throws first, `up` is never awaited and its rejection
   // would otherwise surface as an unhandled one.
   up.catch(() => {})
+  await seedStand(cfg, up)
+}
+
+/**
+ * Everything after `docker compose up`: migrations, accounts, workspaces and their data. `up` is
+ * awaited after the tool warmup, so the two overlap; a stand someone else started passes nothing.
+ * @public
+ */
+export async function seedStand (cfg: StandConfig, up?: Promise<void>): Promise<void> {
+  const concurrency = cfg.concurrency ?? 3
+  initLogs(resolve(standDir(cfg), 'sanity/logs/prepare'))
   applyEnv(envFor(cfg))
   await phase('tool warmup', async () => {
     warmupTool()

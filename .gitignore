@@ -125,3 +125,4 @@ tests/sanity/step-report.ndjson
 
 .profile-tests
 .tmp-shots/
+coverage-stand.json

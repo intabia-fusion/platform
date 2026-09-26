@@ -15,7 +15,7 @@
 
 // Populates a workspace with tracker projects/issues, personal todos, work slots and calendar
 // events so Team Planner and the calendar have something to look at. Mirrors the space-placement
-// rules exercised by ws-tests/api-tests/src/__tests__/planner.fixtures.ts (getWorkSlotSpace: a
+// rules exercised by api-tests/api/src/__tests__/planner.fixtures.ts (getWorkSlotSpace: a
 // project todo's slot lives in the project's space, a personal todo's slot lives in the owner's
 // PersonSpace) but reimplemented here for a headless CLI (no jest, real account login per user).
 

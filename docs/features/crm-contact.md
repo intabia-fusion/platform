@@ -106,7 +106,7 @@
 ## Тесты
 
 - Unit: `plugins/contact/src/__tests__/cache.test.ts`, `plugins/contact/src/__tests__/ensureEmployee.test.ts`, `plugins/contact-resources/src/__tests__/timezone.test.ts`.
-- ws-tests (регрессия Postgres-сортировки по `$lookup.channels.lastMessage`): `ws-tests/api-tests/src/__tests__/contact-channels-sort.test.ts`.
+- api-tests (регрессия Postgres-сортировки по `$lookup.channels.lastMessage`): `api-tests/api/src/__tests__/contact-channels-sort.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/contacts.spec.ts`, `tests/sanity/tests/contact.duplicate.spec.ts`; page-объекты - `tests/sanity/tests/model/contacts/*`, `tests/sanity/tests/model/leads/leads-page.ts`.
 
 ## Связанные документы

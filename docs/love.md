@@ -421,7 +421,7 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 
 Запуск: `cd services/love && npx jest` (или `pnpm run test`, `pnpm run test --coverage`).
 
-### 11.4 Integration: `ws-tests/api-tests/src/__tests__/`
+### 11.4 Integration: `api-tests/api/src/__tests__/`
 
 | Файл | Что проверяет |
 |---|---|
@@ -429,7 +429,7 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 | `love-invite-flow.benchmark.test.ts` | 200 итераций x parallel=20 без потерянных tx |
 
 ```bash
-cd ws-tests/api-tests && pnpm run api-test --testPathPattern=love-invite-flow
+cd api-tests/api && pnpm run api-test --testPathPattern=love-invite-flow
 
 BENCH_INVITE_FLOW=1 BENCH_INVITE_ITERATIONS=200 BENCH_INVITE_PARALLEL=20 \
   pnpm run api-test --testPathPattern=love-invite-flow.benchmark

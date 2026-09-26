@@ -62,6 +62,22 @@ The workspace is plain pnpm: projects are listed in `pnpm-workspace.yaml`, the l
 
 Flags: `--to PKG`, `--list`, `-v/--verbose`, `--force` (disable cache).
 
+### Tests
+
+Three groups, told apart by file name - see [`docs/testing.md`](docs/testing.md).
+
+```bash
+pnpm test           # unit (*.test.ts, *.spec.ts) - no Docker, part of the build phase
+pnpm integration    # build, then *.itest.ts - starts its own containers, needs only Docker
+pnpm api-test       # build, stand images, then api-tests + backup-tests on their own stand
+pnpm fulltest       # build, then unit, integration, api-tests and backup-tests (no Playwright)
+pnpm bench          # *.bench.ts - by hand only
+pnpm coverage       # per-package table + lcov/cobertura/html reports in coverage/
+```
+
+A test that needs a service belongs in `*.itest.ts`; renaming the file is the whole
+mechanism, nothing else lists the groups.
+
 ### Scoped check after edits
 
 ```bash

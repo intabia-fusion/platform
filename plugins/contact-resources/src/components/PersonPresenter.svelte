@@ -48,6 +48,8 @@
   export let inlineBlock = false
   export let shrink: boolean = false
   export let clickable = true
+  export let highlight: string | undefined = undefined
+  export let transparent: boolean = false
 
   const client = getClient()
 
@@ -90,6 +92,8 @@
     showTooltip={customTooltip ?? getTooltip(tooltipLabels, personValue)}
     value={personValue}
     {inline}
+    {highlight}
+    {transparent}
     {onEdit}
     {avatarSize}
     {defaultName}

@@ -14,14 +14,15 @@
 //
 
 import { getDBClient, type PostgresClientReference } from '@hcengineering/postgres'
+import { postgresUrl } from '@hcengineering/test-containers'
 import { PostgresAccountDB } from '../collections/postgres/postgres'
 import { type DBFlavor } from '../types'
 
 /** A real database the migration suite runs against. */
 export interface RealDbFlavor {
   flavor: DBFlavor
-  /** Admin connection string (points at the server's default database). */
-  adminUri: string
+  /** Resolves the admin connection string (points at the server's default database). */
+  adminUri: () => Promise<string>
   /** Build the connection string of a freshly created test database. */
   dbUri: (adminUri: string, dbUuid: string) => string
 }
@@ -34,20 +35,20 @@ function withDatabase (adminUri: string, dbUuid: string): string {
 
 // Postgres is the default stand database, so it always runs. CockroachDB is an opt-in overlay
 // (ws-tests/docker-compose.cockroach.yaml): its suite runs only when its url is given.
-const postgresAdminUri = process.env.ACCOUNT_TEST_PG_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
 const cockroachAdminUri = process.env.ACCOUNT_TEST_CR_URL
 
 export const realDbFlavors: RealDbFlavor[] = [
   {
     flavor: 'postgres',
-    adminUri: postgresAdminUri,
+    // describe.each collects flavors synchronously, so the container starts lazily, on first open.
+    adminUri: async () => process.env.ACCOUNT_TEST_PG_URL ?? (await postgresUrl()),
     dbUri: withDatabase
   },
   ...(cockroachAdminUri !== undefined
     ? [
         {
           flavor: 'cockroach' as DBFlavor,
-          adminUri: cockroachAdminUri,
+          adminUri: async () => cockroachAdminUri as string,
           dbUri: (adminUri: string, dbUuid: string) => adminUri.replace('/defaultdb', '/' + dbUuid)
         }
       ]
@@ -68,7 +69,8 @@ export async function openRealDb (
   { flavor, adminUri, dbUri }: RealDbFlavor
 ): Promise<{ dbUuid: string, dbRef: PostgresClientReference, account: PostgresAccountDB, close: () => void }> {
   const dbUuid = `${suite}_${flavor}`
-  const adminRef = getDBClient(adminUri)
+  const resolvedAdminUri = await adminUri()
+  const adminRef = getDBClient(resolvedAdminUri)
   try {
     const admin = await adminRef.getClient()
     // Postgres has no IF NOT EXISTS for CREATE DATABASE; a duplicate is the normal reuse path.
@@ -81,7 +83,7 @@ export async function openRealDb (
     adminRef.close()
   }
 
-  const uri = dbUri(adminUri, dbUuid)
+  const uri = dbUri(resolvedAdminUri, dbUuid)
   const dbRef = getDBClient(uri)
   const account = new PostgresAccountDB(await dbRef.getClient(), dbUuid, flavor)
   await migrateRealDb(account, uri)

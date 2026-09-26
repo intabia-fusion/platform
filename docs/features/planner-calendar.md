@@ -124,7 +124,7 @@
 
 - Unit (jest): `plugins/calendar/src/__tests__/busy-slot-data.test.ts`, `busy.test.ts`; `plugins/calendar-resources/src/__tests__/layout.test.ts`; `plugins/time-resources/src/__tests__/queries.test.ts`, `splitEventsDuration.test.ts`; `plugins/time-resources/src/components/team/__tests__/dayGroups.test.ts`, `utils.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/planning/team-planner.spec.ts`, `todos.spec.ts`, `plan.spec.ts`; `tests/sanity/tests/calendar/calendar-recurring.spec.ts`, `calendar-participants.spec.ts`, `calendar.spec.ts`.
-- ws-tests (API): `ws-tests/api-tests/src/__tests__/calendar-busy.test.ts`, `planner-spaces.test.ts`, `planner.fixtures.ts`.
+- api-tests (API): `api-tests/api/src/__tests__/calendar-busy.test.ts`, `planner-spaces.test.ts`, `planner.fixtures.ts`.
 
 ## Связанные документы
 

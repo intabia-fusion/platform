@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "svelte": "src/index.ts",
   "types": "types/index.d.ts",
-  "author": "Copyright \u00a9 Hardcore Engineering Inc.",
+  "author": "Copyright © Hardcore Engineering Inc.",
   "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
   "scripts": {
@@ -32,7 +32,8 @@
     "@types/node": "catalog:",
     "eslint-plugin-svelte": "catalog:",
     "eslint-config-standard": "catalog:",
-    "@stylistic/eslint-plugin": "catalog:"
+    "@stylistic/eslint-plugin": "catalog:",
+    "@hcengineering/test-containers": "workspace:^0.7.0"
   },
   "dependencies": {
     "postgres": "catalog:",

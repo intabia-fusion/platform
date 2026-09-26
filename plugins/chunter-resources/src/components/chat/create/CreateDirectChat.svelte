@@ -24,7 +24,7 @@
   import chunter from '../../../plugin'
   import { buildDmName } from '../../../utils'
   import ChannelMembers from '../../ChannelMembers.svelte'
-  import { openChannel } from '../../../navigation'
+  import { openChunterSpace } from '../../../navigation'
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -60,7 +60,7 @@
 
       const dmId = await createDirect(client, accounts)
       if (dmId == null) return
-      openChannel(dmId, chunter.class.DirectMessage)
+      await openChunterSpace(dmId, chunter.class.DirectMessage)
       dispatch('close')
     } finally {
       creating = false

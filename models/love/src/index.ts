@@ -1056,6 +1056,11 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: chunter.extensions.DirectHeaderExtension,
+    component: love.component.InviteEmployeeButton
+  })
+
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: view.extensions.EditDocPreTitleExtension,
     component: love.component.MeetingMinutesBreadcrumb
   })

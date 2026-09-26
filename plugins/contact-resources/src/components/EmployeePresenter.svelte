@@ -26,6 +26,8 @@
   export let noUnderline: boolean = false
   export let compact: boolean = false
   export let showStatus: boolean = false
+  export let highlight: string | undefined = undefined
+  export let transparent: boolean = false
 
   const client = getClient()
   const h = client.getHierarchy()
@@ -46,6 +48,8 @@
   {shouldShowPlaceholder}
   {disabled}
   {inline}
+  {highlight}
+  {transparent}
   {colorInherit}
   {accent}
   {defaultName}

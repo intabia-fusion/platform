@@ -248,7 +248,9 @@ export default plugin(chunterId, {
   },
   extensions: {
     // Buttons in the thread header (above the root message). Contributors filter by root class.
-    ThreadHeaderExtension: '' as ComponentExtensionId
+    ThreadHeaderExtension: '' as ComponentExtensionId,
+    // Buttons in the header of a 1:1 direct, props: { employee }.
+    DirectHeaderExtension: '' as ComponentExtensionId
   },
   app: {
     Chunter: '' as Ref<Doc>

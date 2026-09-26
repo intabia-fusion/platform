@@ -20,6 +20,7 @@ import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 import { type NotificationAppearancePreference } from '@hcengineering/notification'
+import { parseChunterSpaceLinkId } from './linkId'
 import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
 import chunter from './plugin'
@@ -93,6 +94,8 @@ import {
   forwardMessage,
   replyToMessage,
   openDirectForPerson,
+  getChunterSpaceLinkId,
+  queryChannels,
   CommentsApplier
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
@@ -214,6 +217,8 @@ export default async (): Promise<Resources> => ({
     CanDeleteMessage: canDeleteMessage,
     CanCopyMessageLink: canCopyMessageLink,
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
+    GetChunterSpaceLinkId: getChunterSpaceLinkId,
+    ParseChunterSpaceLinkId: parseChunterSpaceLinkId,
     GetUnreadThreadsCountStore: getUnreadThreadsCountStore,
     GetThreadLink: getThreadLink,
     ReplyToThread: replyToThread,
@@ -236,6 +241,9 @@ export default async (): Promise<Resources> => ({
       const unread = get(NotificationClientImpl.getClient().unreadByDoc).values()
       return Array.from(unread).some((it) => (it.notifiedMessagesCount ?? 0) > 0)
     }
+  },
+  completion: {
+    ChannelQuery: queryChannels
   },
   actionImpl: {
     ArchiveChannel,

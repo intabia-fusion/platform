@@ -652,6 +652,11 @@ export function createModel (builder: Builder): void {
     pinned: true
   })
 
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: view.extensions.EditDocTitleExtension,
+    component: contact.component.PersonHeaderActions
+  })
+
   // builder.mixin(core.class.Account, core.class.Class, view.mixin.Aggregation, {
   //   createAggregationManager: contact.aggregation.CreatePersonAggregationManager,
   //   setStoreFunc: contact.function.SetPersonStore,

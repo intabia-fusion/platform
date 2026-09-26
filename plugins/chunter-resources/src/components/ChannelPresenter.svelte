@@ -20,6 +20,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { ObjectPresenterType } from '@hcengineering/view'
 
+  import { encodeChatURI } from '../navigation'
+
   export let value: Channel
   export let inline: boolean = false
   export let shouldShowAvatar = true
@@ -32,7 +34,7 @@
 
 {#if value}
   {#if type === 'link'}
-    <NavLink app={chunterId} space={`${value._id}|${value._class}`}>
+    <NavLink app={chunterId} space={encodeChatURI(value._id, value._class)}>
       <div class="flex-presenter">
         {#if !inline && shouldShowAvatar}
           <div class="icon">

@@ -60,6 +60,7 @@ packages:
   - foundations/server/packages/s3
   - foundations/server/packages/server
   - foundations/server/packages/server-storage
+  - foundations/server/packages/test-containers
   - foundations/stream
   - foundations/utils/common/scripts
   - foundations/utils/packages/platform-rig
@@ -482,8 +483,8 @@ packages:
   - services/webhook/pod-webhook-mock
   - services/worker
   - tests/sanity
-  - ws-tests/api-tests
-  - ws-tests/backup-tests
+  - api-tests/api
+  - api-tests/backup
   - ws-tests/sanity
 
 allowBuilds:
@@ -500,6 +501,7 @@ allowBuilds:
   '@swc/core': true
   bufferutil: true
   core-js: true
+  cpu-features: false
   electron: true
   es5-ext: true
   esbuild: true
@@ -508,6 +510,7 @@ allowBuilds:
   protobufjs: true
   puppeteer: true
   sharp: true
+  ssh2: false
   svelte-preprocess: true
   utf-8-validate: true
   zeromq: true
@@ -590,6 +593,7 @@ catalog:
   '@tiptap/starter-kit': ^2.11.7
   '@tiptap/suggestion': ^2.11.7
   '@tsconfig/node16': ^16.1.9
+  '@testcontainers/redpanda': ^12.1.0
   '@types/body-parser': ~1.19.2
   '@types/compression': ~1.7.2
   '@types/cors': ^2.8.12
@@ -621,6 +625,7 @@ catalog:
   '@typescript-eslint/eslint-plugin': ^8.70.0
   '@typescript-eslint/parser': ^8.70.0
   '@vercel/webpack-asset-relocator-loader': ^1.7.3
+  '@vitest/coverage-istanbul': ^2.1.9
   allure-js-commons: ^3.10.2
   allure-playwright: ^3.10.2
   autoprefixer: ^10.4.14
@@ -667,6 +672,9 @@ catalog:
   htmlparser2: ^9.0.0
   image-size: ^2.0.2
   install: ^0.13.0
+  istanbul-lib-coverage: ^3.2.2
+  istanbul-lib-report: ^3.0.1
+  istanbul-reports: ^3.2.0
   jest: ^29.7.0
   jest-environment-jsdom: ^30.2.0
   jest-fetch-mock: ^3.0.3
@@ -721,6 +729,7 @@ catalog:
   svelte-preprocess: ^6.0.5
   svgo-loader: ^3.0.0
   tar-stream: 3.1.9
+  testcontainers: ^12.1.0
   thread-loader: ^4.0.4
   ts-jest: ^29.4.12
   ts-loader: ^9.2.5
@@ -733,6 +742,7 @@ catalog:
   update-browserslist-db: ^1.1.3
   url-loader: ~4.1.1
   utf-8-validate: ^6.0.6
+  v8-to-istanbul: ^9.3.0
   uuid: ^11.1.1
   vite: ^5.4.21
   vitest: ^2.1.9

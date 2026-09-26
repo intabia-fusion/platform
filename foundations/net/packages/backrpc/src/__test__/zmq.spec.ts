@@ -57,8 +57,10 @@ describe('zmq-tests', () => {
 
     await request.send('Hello1')
     await request2.send('Hello2')
-    const data = await router.receive()
-    const data2 = await router.receive()
+    // Router fair-queues between peers, so arrival order across two clients is not guaranteed.
+    const [data, data2] = [await router.receive(), await router.receive()].sort((a, b) =>
+      a[2].toString().localeCompare(b[2].toString())
+    )
 
     expect(data[2].toString()).toBe('Hello1')
 
@@ -82,7 +84,8 @@ describe('zmq-tests', () => {
     const router = new zmq.Pull()
     await router.bind('tcp://0.0.0.0:7654')
 
-    const routerPub = new zmq.Publisher()
+    // XPublisher reports the subscription; a plain one may send before it lands and drop it all.
+    const routerPub = new zmq.XPublisher()
     await routerPub.bind('tcp://0.0.0.0:7655')
 
     // Create request socket (client)
@@ -105,6 +108,7 @@ describe('zmq-tests', () => {
     expect(d2[0].toString()).toBe('Hello2')
     expect(d3[0].toString()).toBe('Hello3')
 
+    await routerPub.receive()
     await routerPub.send(['client1', '', 'World1'])
     await routerPub.send(['client1', '', 'World2'])
     await routerPub.send(['client1', '', 'World3'])
