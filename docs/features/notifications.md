@@ -50,7 +50,7 @@ AppPushNotification                          от сервиса                
 
 | Пакет | Путь | Роль |
 | --- | --- | --- |
-| notification | plugins/notification/src | Типы (`types.ts`), интерфейс `NotificationClient`, `collapse.ts` (чанки непрочитанного), `utils.ts` (счётчики, перевод, компакция встроенных сообщений), `serviceWorker.ts` (Web Push) |
+| notification | plugins/notification/src | Типы (`types.ts`), интерфейс `NotificationClient`, `collapse.ts` (чанки непрочитанного), `utils.ts` (счётчики, перевод, компакция встроенных сообщений, `isNativePushEndpoint`), `pushDecision.ts` (показывать ли Web Push при открытой вкладке), `serviceWorker.ts` (Web Push) |
 | model-notification | models/notification/src | T-классы, домены, индексы, провайдеры, actions, миграции (`migration.ts`, `migrations/*`) |
 | notification-resources | plugins/notification-resources/src | `NotificationClientImpl` (`client.ts`), сторы inbox (`stores.ts`), действия (`actions.ts`), in-app push (`appPush.ts`), Web Push подписка (`webpush.ts`), UI inbox и настроек (`components/`) |
 | notification-assets | plugins/notification-assets/src | Иконки и переводы |
@@ -151,9 +151,9 @@ AppPushNotification                          от сервиса                
 
 - `appPush.ts` (plugins/notification-resources/src) при старте пробует системный push: на мобильном не подписывается вовсе; если Web Push уже разрешён или `subscribePush()` вернул `success` - live-запрос `AppPushNotification` не держится (системный push покроет). Иначе `appPushStore` получает новые записи.
 - `subscribePush` (webpush.ts): регистрирует `/serviceWorker.js` со scope воркспейса, `Notification.requestPermission`, `PushManager.subscribe` с VAPID-ключом `notification.metadata.PushPublicKey`, создаёт `PushSubscription`.
-- `AppNotificator.svelte`: на каждую запись `appPushStore` (кроме мобильного и desktop с включённым системным push) проверяет, что документ не открыт в текущей локации или сайдбаре, переводит `titleIntl/bodyIntl` и показывает тост через `addNotification`; `Notification.svelte` при `soundAlert` играет `playThrottledSound`; запись удаляется `removeAppPush` (гость не удаляет).
+- `AppNotificator.svelte`: на каждую запись `appPushStore` (кроме мобильного и desktop с включённым системным push) проверяет, что документ не открыт в текущей локации (`getObjectIdFromLocation`, utils.ts) или сайдбаре, переводит `titleIntl/bodyIntl` и показывает тост через `addNotification`; `Notification.svelte` при `soundAlert` играет `playThrottledSound`; запись удаляется `removeAppPush` (гость не удаляет).
 - Desktop (desktop/src/ui/notifications.ts): `electronAPI.sendNotification` по `appPushStore` с учётом `preferences.showNotifications/playSound/bounceAppIcon`; бейдж дока по `totalUnreadCount` (`updateBadge`), при нуле и наличии кросс-воркспейс непрочитанного - точка.
-- Service worker (plugins/notification/src/serviceWorker.ts): на `push` показывает уведомление с `tag` и `data {domain, url, notificationId}`; на клик ищет вкладку с тем же путём, иначе тем же origin, шлёт `postMessage({type: 'notification-click', url, _id})` и фокусирует, без вкладки - `openWindow`. Вкладка (`addWorkerListener`, webpush.ts) делает `navigate` по url и `cleanTag` - удаляет `AppPushNotification` с этим `tag`.
+- Service worker (plugins/notification/src/serviceWorker.ts): на `push` спрашивает каждую видимую вкладку в фокусе, что она показывает (`MessageChannel`, сообщение `viewing-query`, ответ `viewing` с id объекта главной панели и сайдбара - `getViewedObjectIds`, plugins/notification-resources/src/utils.ts, ответ ждётся 300 мс), и решает через `shouldSuppressPush` (plugins/notification/src/pushDecision.ts): если документ из `PushData.objectId` открыт в такой вкладке - в главной панели, через inbox или в сайдбаре - уведомление не показывается, сообщение уже на экране. Вкладка, не ответившая вовремя, сверяется по адресу (сегмент пути `<id>`, `<id>|<class>` или `<name>-<id>`, тред - по id корневого сообщения). Иначе показывает уведомление с `tag` и `data {domain, url, notificationId}`; на клик ищет вкладку с тем же путём, иначе тем же origin, шлёт `postMessage({type: 'notification-click', url, _id})` и фокусирует, без вкладки - `openWindow`. Вкладка (`addWorkerListener`, webpush.ts) делает `navigate` по url и `cleanTag` - удаляет `AppPushNotification` с этим `tag`.
 
 ### 7. Inbox
 
@@ -258,7 +258,7 @@ SQL (services/db-migrator/migrations), по файлу на флавор БД, �
 - Обновлять заголовок контекста при изменении поля -> `triggerFields` презентера в `models/server-<x>/src/index.ts`; `OnDocUpdate`, server-plugins/notification-resources/src/index.ts.
 - Изменить ленту inbox -> plugins/notification-resources/src/stores.ts, components/inbox/{Inbox,InboxHeader,InboxGroupedListView}.svelte.
 - Поменять бейджи -> `publishUnread` (client.ts), `Applications.svelte`, `updateUserNotifyStatus` (services/notifications/src/worker.ts), desktop/src/ui/notifications.ts.
-- Web Push подписка/клик -> plugins/notification-resources/src/webpush.ts, plugins/notification/src/serviceWorker.ts.
+- Web Push подписка/клик -> plugins/notification-resources/src/webpush.ts, plugins/notification/src/serviceWorker.ts; правило «не показывать по открытому чату» -> plugins/notification/src/pushDecision.ts.
 - Включить Telegram-доставку -> services/telegram-bot/pod-telegram-bot/src/{start,worker}.ts (закомментированный consumer; топика и продюсера пока нет).
 - Отладить «уведомление не пришло» -> логи `services/notifications` (`No receivers resolved`, `notification already recorded`, `Tx batch rejected`, `push and email of this batch are lost`, `workspace txes are skipped for a cooldown`), затем `providers` в сообщении топика `user-notifications`, затем логи пода.
 
@@ -275,7 +275,7 @@ SQL (services/db-migrator/migrations), по файлу на флавор БД, �
 
 - Unit, сервис: services/notifications/src/{__tests__,module/__tests__,utils/__tests__} - cache, worker (drop/ai-bot), workspace (retry/close/потеря публикации), breaker, message, notification, mention, reaction, read, action, providers, context (`setUnreadMessagesCounts`), display, workspace utils.
 - Unit, транзактор: server-plugins/notification/src/__tests__/middleware.test.ts; foundations/server/packages/middleware/src/__tests__/triggers.test.ts (`isTriggerCtx`); foundations/core/packages/core/src/__tests__/operator.test.ts (`$push.$slice`); server-plugins/notification-resources/src/__tests__/docClassChanged.test.ts.
-- Unit, клиент: plugins/notification/src/__tests__/{collapse,compact,utils}.test.ts; plugins/notification-resources/src/__tests__/{client,stores}.test.ts; desktop/src/__test__/ui/notifications.test.ts.
+- Unit, клиент: plugins/notification/src/__tests__/{collapse,compact,utils,pushDecision}.test.ts; plugins/notification-resources/src/__tests__/{client,stores}.test.ts; desktop/src/__test__/ui/notifications.test.ts.
 - Unit, мигратор: services/db-migrator/src/__tests__/utils.test.ts (выбор файлов по флавору, парность индексов, разнос колонок для Cockroach).
 - Unit, клиент: plugins/activity-resources/src/__tests__/objectCache.test.ts (LRU кэша объектов).
 - Unit, поды: services/notification/pod-notification/src/main.test.ts, src/__tests__/mobile.test.ts; services/mail/pod-mail/src/__tests__/{blockedRecipients,createEmailMessage}.test.ts.

@@ -142,7 +142,9 @@ export const main = async (): Promise<void> => {
                 title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
                 body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
                 domain: value.domain,
-                url: value.url
+                url: value.url,
+                objectId: value.objectId,
+                objectClass: value.objectClass
               })
 
               if (failedSubscriptionIds.length > 0) {

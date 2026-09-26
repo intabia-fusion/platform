@@ -55,6 +55,8 @@ export interface PushData {
   icon?: string
   domain?: string
   url?: string
+  objectId?: Ref<Doc>
+  objectClass?: Ref<Class<Doc>>
 }
 
 export interface PushSubscriptionKeys {

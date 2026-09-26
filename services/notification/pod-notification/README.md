@@ -143,6 +143,8 @@ The `PushData` delivered to clients:
 | `domain` | string | No | Workspace domain the notification belongs to |
 | `url` | string | No | URL to open when notification is clicked |
 | `icon` | string | No | URL to notification icon |
+| `objectId` | string | No | Id of the document the notification is about (the chat); the web service worker skips the notification when a focused tab shows it |
+| `objectClass` | string | No | Class of that document |
 
 ## Testing
 

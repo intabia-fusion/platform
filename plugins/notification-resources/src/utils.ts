@@ -29,6 +29,7 @@ import { getResource } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
 import {
   getCurrentLocation,
+  getCurrentResolvedLocation,
   getLocation,
   type Location,
   locationStorageKeyId,
@@ -37,7 +38,7 @@ import {
 } from '@hcengineering/ui'
 import view, { decodeObjectURI, encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
 import { getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
-import type { LocationData } from '@hcengineering/workbench'
+import workbench, { type Application, type LocationData } from '@hcengineering/workbench'
 
 export async function resolveLocation (loc: Location): Promise<ResolvedLocation | undefined> {
   if (loc.path[2] !== notificationId) {
@@ -273,4 +274,46 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   } catch (e) {
     return {}
   }
+}
+
+/** The object the main panel shows at this location: the application's own resolver, else the `id|class` fragment. */
+export async function getObjectIdFromLocation (loc: Location): Promise<Ref<Doc> | undefined> {
+  const client = getClient()
+  const appAlias = loc.path[2]
+  const application = client.getModel().findAllSync<Application>(workbench.class.Application, { alias: appAlias })[0]
+
+  if (application?.locationDataResolver != null) {
+    const resolver = await getResource(application.locationDataResolver)
+    const data = await resolver(loc)
+    return data.objectId
+  }
+  if (loc.fragment == null) return
+  const [, id, _class] = decodeURIComponent(loc.fragment).split('|')
+  if (_class == null) return
+  try {
+    const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
+    return await parseLinkId(linkProviders, id, _class as Ref<Class<Doc>>)
+  } catch (err: any) {
+    Analytics.handleError(err)
+  }
+}
+
+/**
+ * What this tab shows right now: the main panel's object and the sidebar's. The service worker
+ * asks for it on every push, so the answer is a snapshot, not a subscription.
+ */
+export async function getViewedObjectIds (): Promise<Array<Ref<Doc>>> {
+  const ids: Array<Ref<Doc> | undefined> = []
+  try {
+    ids.push(await getObjectIdFromLocation(getCurrentResolvedLocation()))
+  } catch (err: any) {
+    Analytics.handleError(err)
+  }
+  try {
+    const getSidebarObject = await getResource(workbench.function.GetSidebarObject)
+    ids.push(getSidebarObject()?._id)
+  } catch (err: any) {
+    Analytics.handleError(err)
+  }
+  return ids.filter((it): it is Ref<Doc> => it != null && it !== '')
 }

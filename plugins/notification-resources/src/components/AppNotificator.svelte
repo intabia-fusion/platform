@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import type { AppPushNotification } from '@hcengineering/notification'
   import {
     translateNotification,
@@ -22,8 +22,6 @@
     PUSH_NOTIFICATION_BODY_SIZE,
     truncate
   } from '@hcengineering/notification'
-  import { getClient } from '@hcengineering/presentation'
-  import type { Location } from '@hcengineering/ui'
   import {
     addNotification,
     getCurrentResolvedLocation,
@@ -32,38 +30,12 @@
     deviceOptionsStore,
     desktopPlatform
   } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { parseLinkId } from '@hcengineering/view-resources'
-  import { Analytics } from '@hcengineering/analytics'
-  import type { Application } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
 
   import Notification from './Notification.svelte'
   import { appPushStore, removeAppPush, desktopPushEnabled } from '../appPush'
-
-  const client = getClient()
-  const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-
-  async function getObjectIdFromLocation (loc: Location): Promise<string | undefined> {
-    const appAlias = loc.path[2]
-    const application = client.getModel().findAllSync<Application>(workbench.class.Application, { alias: appAlias })[0]
-
-    if (application?.locationDataResolver != null) {
-      const resolver = await getResource(application.locationDataResolver)
-      const data = await resolver(loc)
-      return data.objectId
-    } else {
-      if (loc.fragment == null) return
-      const [, id, _class] = decodeURIComponent(loc.fragment).split('|')
-      if (_class == null) return
-      try {
-        return await parseLinkId(linkProviders, id, _class as Ref<Class<Doc>>)
-      } catch (err: any) {
-        Analytics.handleError(err)
-      }
-    }
-  }
+  import { getObjectIdFromLocation } from '../utils'
 
   $: if ($appPushStore && $appPushStore.length > 0) {
     for (const item of $appPushStore) {
