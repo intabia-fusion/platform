@@ -273,7 +273,11 @@ export class UsageWorker {
       async () => {
         try {
           const members = await account.getWorkspaceMembers()
-          return members.filter((m) => memberOccupiesSeat(m.person, m.role, aiBotAccount)).length
+          // Integration API keys are in ws_members too but take no seat, same as in seat-limits.
+          const apiKeyAccounts = new Set(await account.getApiKeyAccounts(workspace).catch(() => []))
+          return members.filter(
+            (m) => memberOccupiesSeat(m.person, m.role, aiBotAccount) && !apiKeyAccounts.has(m.person)
+          ).length
         } catch (err: any) {
           ctx.error('failed to get workspace members', { workspace, err })
           return 0

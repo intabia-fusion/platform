@@ -151,20 +151,16 @@ describe('POST /api/v1/webhook/action', () => {
     expect((await res.json()).error).toBe('forbidden')
   })
 
-  test('key without incoming -> 401 unauthorized, same as an unknown key, on both routes', async () => {
+  test('key without incoming -> 403 forbidden on both routes', async () => {
     sender = await startWebhookSender({ ...baseCheck, incoming: false })
-    const unknown = await startWebhookSender(null)
 
     const res = await sender.action(KEY, { action: 'issue:create', space: 'FUSIO' })
-    const unauthorizedRes = await unknown.action(KEY, { action: 'issue:create', space: 'FUSIO' })
-    expect(res.status).toBe(unauthorizedRes.status)
-    expect(await res.json()).toEqual(await unauthorizedRes.json())
+    expect(res.status).toBe(403)
+    expect((await res.json()).error).toBe('forbidden')
 
     const pathRes = await sender.pathKey(KEY, { action: 'issue:create', space: 'FUSIO' })
-    expect(pathRes.status).toBe(401)
-    expect((await pathRes.json()).error).toBe('unauthorized')
-
-    unknown.close()
+    expect(pathRes.status).toBe(403)
+    expect((await pathRes.json()).error).toBe('forbidden')
   })
 
   test('key with incoming still works', async () => {

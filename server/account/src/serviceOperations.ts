@@ -1996,7 +1996,7 @@ export async function getApiKeyAccounts (
   params: { workspace: WorkspaceUuid }
 ): Promise<AccountUuid[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['transactor', 'tool'], extra)
+  verifyAllowedServices(['transactor', 'tool', 'billing'], extra)
 
   const rows = await db.integrationSecret.find({ kind: apiKeyKind, workspaceUuid: params.workspace })
   const result: AccountUuid[] = []

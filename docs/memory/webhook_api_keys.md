@@ -66,6 +66,9 @@
   ссылается история задач.
 - Место снимается через `LimitsProvider.getIntegrationAccounts` (новый метод) + `seatEligible`. НЕ
   через `getSystemAccounts` - тот обходит весь enforcement.
+- Счётчик "Участники" в биллинге считается отдельно (`pod-billing/src/usage.ts`,
+  `updateWorkspaceUsageStatistics` по ws_members) - там ключи тоже вычитаются через `getApiKeyAccounts`
+  (FUSIO-1381). Бесплатных ключей не больше квоты `maxApiKeys ?? 5`, сверх неё создать нельзя.
 
 Две ловушки, найденные при ревью:
 
