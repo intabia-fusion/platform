@@ -111,7 +111,7 @@
 - `services/payment/pod-payment/src/__tests__/{server,trialExpiry,windowBackfill,middleware,reconciliation,config,utils}.test.ts` + провайдеры в `providers/{stripe,polar,mock,tbank}/__tests__/`.
 - `services/payment/pod-tbank-subscriptions/src/__tests__/{scheduler,webhook,cancel,updatePlan,storage,notifications,tbank,mockTbank,...}.test.ts`.
 - Sanity Playwright: `tests/sanity/tests/billing/billing.spec.ts`, `tests/sanity/tests/limits/{plan-limits,plan-limits-extra,billing-ui}.spec.ts`, API-хелпер `tests/sanity/tests/API/Billing.ts`.
-- ws-tests: `ws-tests/api-tests/src/__tests__/plan-{seats,seats-ui,trial,unpaid,volume}.test.ts`.
+- api-tests: `api-tests/api/src/__tests__/plan-{seats,seats-ui,trial,unpaid,volume}.test.ts`.
 
 ## Связанные документы
 

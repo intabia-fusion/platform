@@ -32,7 +32,7 @@ Branch: `FUSIO-324`. Goal: make `foundations/stream` reliable on k8s (3 nodes ×
 ## Pending
 
 - **#11 Scheduler/Transcoder e2e** - fake ffmpeg + fake datalake, exercise the full `processTask` pipeline (token → stat → get → transcode → upload → set parent → result publish). No real ffmpeg needed if we inject a fake binary path.
-- **#14 TUS upload test in `ws-tests/api-tests`** - hit `http://localhost:8083/_stream/recording` via `tus-js-client`. Stack already runs stream + datalake per `ws-tests/docker-compose.yaml`. Reuse workspace token setup from `storage.test.ts`. Cases: happy path upload → blob in datalake, resumable abort/resume, reject without token.
+- **#14 TUS upload test in `api-tests/api`** - hit `http://localhost:8083/_stream/recording` via `tus-js-client`. Stack already runs stream + datalake per `ws-tests/docker-compose.yaml`. Reuse workspace token setup from `storage.test.ts`. Cases: happy path upload → blob in datalake, resumable abort/resume, reject without token.
 - **Earlier deferred** - sharedpipe chunk release after all readers read (requires API change to track reader count; left for later).
 - **Recording handler tests** - hard to unit-test (tusd handler wraps `mediaconvert.StreamCoordinator` which needs ffmpeg). Covered better by `#14` end-to-end.
 

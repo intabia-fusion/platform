@@ -164,7 +164,7 @@
 - Unit: `server/account/src/__tests__/` - `operations.test.ts`, `utils.test.ts`, `admin-access.test.ts`, `admin-email.test.ts`, `deferred-deletion.test.ts`, `deletion-real.test.ts`, `account-block.test.ts`, `backup-lease-real.test.ts`, `lang.test.ts`, `migrations.test.ts`, `postgres.test.ts`/`postgres-real.test.ts`.
 - Unit токена: `foundations/core/packages/token/src/__tests__/token.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/login.spec.ts`, `tests/sanity/tests/workspace/onboarding-workspace.spec.ts`, `tests/sanity/tests/workspace/workspace-settings.spec.ts`, page-объекты `tests/sanity/tests/model/login-page.ts`, `tests/sanity/tests/model/select-workspace-page.ts`.
-- ws-tests (Docker, реальный стенд): `ws-tests/api-tests/src/__tests__/identity-deletion.test.ts`, `account-blocking.test.ts`, `deletion-emails.test.ts`; `ws-tests/sanity/tests/workspace/deletion.spec.ts`.
+- api-tests (Docker, реальный стенд): `api-tests/api/src/__tests__/identity-deletion.test.ts`, `account-blocking.test.ts`, `deletion-emails.test.ts`; `ws-tests/sanity/tests/workspace/deletion.spec.ts`.
 - qms-tests: `qms-tests/sanity/tests/auth/`.
 
 ## Связанные документы

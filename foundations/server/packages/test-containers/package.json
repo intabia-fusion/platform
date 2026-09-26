@@ -1,0 +1,40 @@
+{
+  "name": "@hcengineering/test-containers",
+  "version": "0.7.0",
+  "main": "lib/index.js",
+  "types": "types/index.d.ts",
+  "author": "Copyright © 2026 Intabia Fusion.",
+  "template": "@hcengineering/node-package",
+  "license": "EPL-2.0",
+  "scripts": {
+    "build": "compile",
+    "build:watch": "compile",
+    "test": "jest --passWithNoTests --silent --forceExit",
+    "format": "format src",
+    "_phase:build": "compile build",
+    "_phase:test": "jest --passWithNoTests --silent --forceExit",
+    "_phase:format": "format src"
+  },
+  "devDependencies": {
+    "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@typescript-eslint/eslint-plugin": "catalog:",
+    "eslint-plugin-import": "catalog:",
+    "eslint-plugin-promise": "catalog:",
+    "eslint-plugin-n": "catalog:",
+    "eslint": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "@types/node": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "catalog:",
+    "@types/jest": "catalog:",
+    "eslint-plugin-svelte": "catalog:",
+    "eslint-config-standard": "catalog:",
+    "@stylistic/eslint-plugin": "catalog:"
+  },
+  "dependencies": {
+    "testcontainers": "catalog:",
+    "@testcontainers/redpanda": "catalog:"
+  }
+}

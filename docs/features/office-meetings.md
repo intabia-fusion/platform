@@ -110,7 +110,7 @@
 ## Тесты
 
 - Unit: `plugins/love/src/__tests__/getFreeRoomPlace.test.ts`, `plugins/love-resources/src/__tests__/` (`stores.lazy.test.ts`, `loveClient.record.test.ts`, `meetings.*.test.ts`), `server-plugins/love-resources/src/__tests__/` (invite/knock/heartbeat/events), `services/love/src/__tests__/` (webhook, polling, recordings, finishMeeting, workspaceClient, utils, guests, edge-cases).
-- Integration: `ws-tests/api-tests/src/__tests__/love-invite-flow.test.ts` (+ `.benchmark.test.ts`).
+- Integration: `api-tests/api/src/__tests__/love-invite-flow.test.ts` (+ `.benchmark.test.ts`).
 - Sanity Playwright: `tests/sanity/tests/love/meetings.all.spec.ts` (агрегирует ~65 тестов из соседних `meetings.*.tests.ts`), page objects в `tests/sanity/tests/model/love/`.
 - Полный перечень файлов, команды запуска, окружение (`meetings-ws`, LiveKit локально) - `../love.md#11-тесты`.
 

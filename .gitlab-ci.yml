@@ -183,16 +183,26 @@ test:
   extends: .linux
   needs:
     - bundle
-  variables:
-    DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
-    ELASTIC_URL: "http://localhost:9201"
-    MONGO_URL: "mongodb://localhost:27018"
   before_script:
     - !reference [.linux, before_script]
     - !reference [.lock_stand, script]
     - !reference [.docker_login, script]
   script:
     - ./ci_test.sh
+  # Matches the last line ci_test.sh prints. Keep in step with bin/coverage.js if it changes.
+  coverage: '/^Coverage: (\d+\.\d+)% of statements/'
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - coverage/html/
+      - coverage/lcov.info
+      - api-tests/logs/
+      - api-tests/sanity/logs/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
 
 # Builds and publishes every image by commit sha; the stands below pull them from there.
 docker-build:
@@ -236,7 +246,6 @@ docker-build:
       - ${test_folder}/sanity/playwright-report.json
       - ${test_folder}/sanity/step-report.ndjson
       - ${test_folder}/sanity/logs/
-      - ${test_folder}/api-tests/playwright-report/
 
 uitest:pg:
   extends: .uitest
@@ -244,7 +253,6 @@ uitest:pg:
     test_folder: "tests"
     prepare_script: "./prepare-pg.sh"
     build_package: "@hcengineering/tests-sanity"
-    run_api_tests: "false"
     enable_profiling: "false"
 
 uitest:workspace:
@@ -253,7 +261,6 @@ uitest:workspace:
     test_folder: "ws-tests"
     prepare_script: "./prepare.sh"
     build_package: "@hcengineering/tests-ws-sanity"
-    run_api_tests: "true"
     enable_profiling: "false"
 
 uitest:qms:
@@ -262,7 +269,6 @@ uitest:qms:
     test_folder: "qms-tests"
     prepare_script: "./prepare-qms.sh"
     build_package: "@hcengineering/qms-tests-sanity"
-    run_api_tests: "false"
     enable_profiling: "false"
   rules:
     - if: $CI_COMMIT_TAG
@@ -277,7 +283,6 @@ uitest:cockroach:
     test_folder: "tests"
     prepare_script: "./prepare-cockroach.sh"
     build_package: "@hcengineering/tests-sanity"
-    run_api_tests: "false"
     enable_profiling: "true"
 
 package-desktop:

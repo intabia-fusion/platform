@@ -68,8 +68,13 @@ export function startBackup (
     config.Region
   )
 
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
+  // shutdown() only stops scheduling; without an exit the pod sits out its whole stop grace period.
+  const stop = (): void => {
+    shutdown()
+    process.exit(0)
+  }
+  process.on('SIGINT', stop)
+  process.on('SIGTERM', stop)
   process.on('uncaughtException', (e) => {
     ctx.error('uncaughtException', { err: e })
   })

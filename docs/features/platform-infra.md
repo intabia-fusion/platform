@@ -147,7 +147,7 @@
 ## Тесты
 
 - Unit: `server/backup/src/__tests__/` (`backup-index-guard`, `backup-lease`, `storage-cleanup`, `stream-errors`); `services/export/pod-export/src/__tests__/` (`workspace-exporter`, `data-mapper`, `attachment-exporter`); `desktop/src/__test__/main/` и `.../ui/` (`updateChannel`, `settings`, `trayUtils`, `config`, ...); `desktop-package/src/__test__/` (`distServer`, `verifyManifests`).
-- ws-tests: `ws-tests/backup-tests/src/__tests__/` (`backup-incremental`, `backup-retention`, `backup-service`); `ws-tests/api-tests/src/__tests__/identity-deletion.test.ts`, `deletion-emails.test.ts`.
+- api-tests: `api-tests/backup/src/__tests__/` (`backup-incremental`, `backup-retention`, `backup-service`); `api-tests/api/src/__tests__/identity-deletion.test.ts`, `deletion-emails.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/settings.spec.ts`, `tests/sanity/tests/workbench.spec.ts`, `tests/sanity/tests/workspace/workspace-settings.spec.ts`, `tests/sanity/tests/workspace/class-settings-navigation.spec.ts`; page-объекты - `tests/sanity/tests/model/settings-page.ts`, `tests/sanity/tests/model/workspace/workspace-settings-page.ts`.
 
 ## Связанные документы

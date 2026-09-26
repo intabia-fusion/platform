@@ -40,7 +40,7 @@ import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 import { createDoc, test, type TestDocument } from './minmodel'
 
-import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline } from './utils'
+import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline, startServices } from './utils'
 
 prepare()
 jest.mock('franc-min', () => ({ franc: () => 'en' }), { virtual: true })
@@ -160,6 +160,10 @@ class BenchWorkspaceManager extends WorkspaceManager {
 }
 
 describe('fulltext-indexing-bench', () => {
+  beforeAll(async () => {
+    await startServices()
+  }, 300000)
+
   const toolCtx = new MeasureMetricsContext('bench', {})
 
   afterAll(() => {

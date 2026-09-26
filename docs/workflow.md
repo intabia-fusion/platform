@@ -24,16 +24,16 @@ Workflow ограничивает переходы задачи между ст�
 
 | Уровень | Путь | Технология | Объём |
 | --- | --- | --- | --- |
-| API | `ws-tests/api-tests/src/__tests__/workflow.*.test.ts` | jest против живого стенда | 148 проверок, ~27 с |
+| API | `api-tests/api/src/__tests__/workflow.*.test.ts` | jest против живого стенда | 148 проверок, ~27 с |
 | UI | `tests/sanity/tests/workflow/*.spec.ts` | Playwright | 35 тестов, 2 сьюта |
 | Unit | `plugins/workflow/src/__tests__/`, `server-plugins/workflow/src/__tests__/` | jest, моки | 194 проверки |
 
 ### API-тесты
 
-Требуют поднятого стенда `ws-tests` (`ws-tests/docker-compose.yaml` + `ws-tests/prepare.sh`, который создаёт workspace `api-tests` и пользователя `user1/1234`).
+Стенд поднимается автоматически (jest globalSetup, testcontainers) при запуске теста, создаёт workspace `api-tests` и пользователя `user1/1234`.
 
 ```
-cd ws-tests/api-tests
+cd api-tests/api
 pnpm run api-test -- workflow          # только workflow-тесты
 ```
 

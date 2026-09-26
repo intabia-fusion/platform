@@ -320,6 +320,39 @@ const wsCockroach: StandConfig = {
   waitPorts: [...(ws.waitPorts ?? []), ['localhost', 26258]]
 }
 
+// api-tests/ publishes its ports 100 up from ws-tests (8183, 5533, 19193, 9301), so it runs beside
+// the sanity and dev stands. Same accounts and workspaces as ws; testcontainers brings it up.
+const API_ACCOUNTS_URL = 'http://localhost:8183/_account'
+const API_SERVICE_DB = 'postgresql://postgres:postgres@localhost:5533/postgres'
+const API_MAIN_DB = 'postgresql://postgres:postgres@localhost:5533/region_main'
+const API_EUROPE_DB = 'postgresql://postgres:postgres@localhost:5533/region_europe'
+const api: StandConfig = {
+  ...ws,
+  project: 'api-tests',
+  dir: 'api-tests',
+  composeFiles: ['docker-compose.yaml'],
+  env: {
+    ...ws.env,
+    STORAGE_CONFIG: 'datalake|http://localhost:8183/_datalake',
+    ACCOUNTS_URL: API_ACCOUNTS_URL,
+    REGION_CONFIG: resolve(repoRoot, 'api-tests/region-config.yaml'),
+    ACCOUNT_DB_URL: API_SERVICE_DB,
+    ELASTIC_URL: 'http://localhost:9301',
+    DB_URL: API_MAIN_DB,
+    QUEUE_CONFIG: 'localhost:19193'
+  },
+  regionEnv: { europe: { ...ws.regionEnv?.europe, DB_URL: API_EUROPE_DB } },
+  migrations: [API_SERVICE_DB, API_MAIN_DB, API_EUROPE_DB],
+  accountsUrl: API_ACCOUNTS_URL,
+  elasticPort: 9301,
+  waitPorts: [
+    ['localhost', 5533],
+    ['localhost', 19193],
+    ['localhost', 8183]
+  ],
+  cleanup: []
+}
+
 /**
  * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
  * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
@@ -328,6 +361,7 @@ const wsCockroach: StandConfig = {
 export const stands: Record<string, StandConfig> = {
   sanity,
   ws,
+  api,
   'ws-cockroach': wsCockroach,
   qms,
   full: mergeStands(sanity, qms)
