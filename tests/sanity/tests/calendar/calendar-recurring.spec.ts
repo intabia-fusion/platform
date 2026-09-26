@@ -93,10 +93,7 @@ test.describe('Calendar recurring events', () => {
     await calendarPage.navigateWidgetForward()
 
     await test.step('Tomorrow the series marks the second account busy', async () => {
-      await calendarPage.clickCellAtTime(hour)
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeVisible({ timeout: 15000 })
-      await calendarPage.closeCreateEventPopup()
+      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
     })
 
     await test.step('Second account cancels tomorrow occurrence only', async () => {
@@ -104,17 +101,11 @@ test.describe('Calendar recurring events', () => {
     })
 
     await test.step('The cancelled hour is free again, the rest of the series is not touched', async () => {
-      await calendarPage.clickCellAtTime(hour)
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeHidden({ timeout: 15000 })
-      await calendarPage.closeCreateEventPopup()
+      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, false)
 
       // The next day still carries the second occurrence.
       await calendarPage.navigateWidgetForward()
-      await calendarPage.clickCellAtTime(hour)
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeVisible({ timeout: 15000 })
-      await calendarPage.closeCreateEventPopup()
+      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
     })
   })
 })

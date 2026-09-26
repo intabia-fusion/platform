@@ -501,6 +501,28 @@ describe('duplicate delivery of one $inc tx', () => {
     expect(q.last()[0]?.rate).toBe(1)
   })
 
+  // The limit of client-side dedup: a rebuilt derived tx carries a fresh `_id` (`tx.ts:542`) and
+  // looks exactly like the legitimate batch above - only the server knows which it applied.
+  it('cannot tell a rebuilt duplicate $inc from a second real one', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 0, name: 'rebuilt' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'rebuilt' })
+    // Past the doc's own timestamp, or `isLoadedAtModifiedOn` answers instead of the dedup.
+    const ts = q.last()[0].modifiedOn + 1000
+
+    const inc = (): any =>
+      txFactory.createTxUpdateDoc<CounterSpace>(core.class.Space, core.space.Model, id, { $inc: { rate: 1 } }, false, ts)
+
+    // The server applies the increment once; the client is told about it twice.
+    await storage.tx(inc())
+    await settle()
+    await liveQuery.tx(inc())
+    await settle()
+
+    expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(1)
+    expect(q.last()[0]?.rate).toBe(2)
+  })
+
   it('ignores a re-delivered $inc tx that was first applied by timestamp', async () => {
     // The real shape of a comment counter: the issue is created well before the comment, so the
     // first delivery takes the `modifiedOn <` branch - after which the doc sits at tx.modifiedOn

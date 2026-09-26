@@ -1,5 +1,6 @@
 import { expect, type Locator } from '@playwright/test'
 import path from 'path'
+import { readStoredCommentCount } from '../../API/TrackerApi'
 import { createIssue, toTime } from '../../tracker/tracker.utils'
 import { attachScreenshot, iterateLocator } from '../../utils'
 import { retry, retryIntervals, waitStable } from '../../retry'
@@ -688,21 +689,25 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async addAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    const uploaded = this.textPopupAddAttachmentsFile().filter({ hasText: filePath })
-    // Same hover tooltip as the check below: it can close between the hover and the upload, so
-    // re-open it per attempt. Uploading the file twice is harmless - the assertion is on presence.
-    await expect(async () => {
+    const uploaded = this.textPopupAddAttachmentsFile().filter({ hasText: filePath }).first()
+    // Sending the file is not idempotent: a retried send attaches it twice and the name then
+    // resolves to two nodes.
+    await retry(async () => {
       await this.hoverAttachmentButton(issueName)
       if (await uploaded.isVisible()) return
       await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`), {
         timeout: 5000
       })
-      await expect(uploaded).toBeVisible({ timeout: 10000 })
-    }).toPass({ intervals: retryIntervals, timeout: 40000 })
+    })
+    // The tooltip can close on its own, so only re-opening and reading are retried.
+    await retry(async () => {
+      await this.hoverAttachmentButton(issueName)
+      await expect(uploaded).toBeVisible({ timeout: 2000 })
+    })
   }
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    const item = this.textPopupAddAttachmentsFile().filter({ hasText: filePath })
+    const item = this.textPopupAddAttachmentsFile().filter({ hasText: filePath }).first()
     // Same hover tooltip as the check below, and it can stay closed - one closed tooltip failed the
     // whole test. Removing an attachment that is already gone is a no-op, so retry the pair.
     await retry(async () => {
@@ -728,7 +733,9 @@ export class IssuesPage extends CommonTrackerPage {
   async checkAddAttachmentPopupContainsFile (issueName: string, filePath: string): Promise<void> {
     await expect(async () => {
       await this.hoverAttachmentButton(issueName)
-      await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ timeout: 5000 })
+      await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath }).first()).toBeVisible({
+        timeout: 5000
+      })
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
@@ -743,7 +750,11 @@ export class IssuesPage extends CommonTrackerPage {
         .catch(() => '<absent>')
       await this.openCommentPopupForIssueByName(issueName)
       const real = await this.page.locator('div[class*="commentPopup"] div.messages > div.item').count()
-      throw new Error(`comment counter is "${shown}", expected "${count}", popup lists ${real} messages`)
+      // Says whether the stored counter drifted or only the browser copy did.
+      const stored = await readStoredCommentCount(issueName).catch((err) => `unreadable (${err?.message ?? err})`)
+      throw new Error(
+        `comment counter is "${shown}", expected "${count}", popup lists ${real} messages, stored ${String(stored)}`
+      )
     }
   }
 

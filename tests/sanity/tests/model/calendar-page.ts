@@ -1,5 +1,6 @@
 import { errors, expect, Locator, Page } from '@playwright/test'
 import { CommonPage } from './common-page'
+import { retry } from '../retry'
 
 export class CalendarPage extends CommonPage {
   readonly page: Page
@@ -226,4 +227,17 @@ export class CalendarPage extends CommonPage {
   // with .busy-mark.busy; free participants get the same mark without the modifier.
   participantsRow = (name: string): Locator => this.createEventPopup().locator('div.antiOption', { hasText: name })
   participantBusyMark = (name: string): Locator => this.participantsRow(name).locator('.busy-mark.busy')
+
+  // The open popup reads the colleague's slots once, so reopen it per attempt instead of waiting
+  // inside a stale one.
+  async checkParticipantBusy (time: string, lastName: string, busy: boolean): Promise<void> {
+    await retry(async () => {
+      await this.clickCellAtTime(time)
+      await this.addEventParticipant(lastName)
+      const seen = await this.participantBusyMark(lastName).isVisible({ timeout: 5000 })
+      const rows = await this.participantsRow(lastName).count()
+      await this.closeCreateEventPopup()
+      expect(seen, `${lastName} at ${time}: busy=${seen}, expected ${busy}, participant rows ${rows}`).toBe(busy)
+    })
+  }
 }
