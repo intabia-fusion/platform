@@ -35,13 +35,13 @@ One repository, one build, a set of applications on a shared framework:
 
 | Application | Capabilities |
 | --- | --- |
-| **Tracker** | Issues, sub-issues, estimations, time reports, Kanban with swim-lanes |
+| **Tracker** | Issues, sub-issues, estimations, time reports, Kanban with swim-lanes, workflows |
 | **Chat** | Channels and DMs, threads, replies and forwards, read receipts, web push |
 | **Documents / QMS** | Collaborative editing, controlled documentation, markdown export |
 | **Meetings** | Virtual office and video on LiveKit, including self-hosted installations |
-| **AI Bot** | Kafka-backed assistant with persistent memory, meeting summaries |
+| **AI Bot** | Aassistant harness with persistent memory, meeting summaries |
 | **Planner, Drive, HR, Contacts** | Personal planning, files, org structure, CRM-style contacts |
-| **Integrations** | Telegram, Gmail, GitHub, calendars, Stripe billing, REST + WebSocket API |
+| **Integrations** | Telegram, Gmail, GitHub, calendar, REST + WebSocket API, Web hooks |
 
 <table>
   <tr>
