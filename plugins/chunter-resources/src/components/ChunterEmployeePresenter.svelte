@@ -1,5 +1,5 @@
 <script lang="ts">
-  import contact, { Person, Employee } from '@hcengineering/contact'
+  import contact, { Person } from '@hcengineering/contact'
   import { EmployeePresenter } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
   import { location, Location } from '@hcengineering/ui'
@@ -23,7 +23,7 @@
       return false
     }
 
-    return hierarchy.hasMixin(person, contact.mixin.Employee) && (person as Employee).active
+    return hierarchy.hasMixin(person, contact.mixin.Employee) && hierarchy.as(person, contact.mixin.Employee).active
   }
 
   async function openEmployeeDirect (): Promise<void> {

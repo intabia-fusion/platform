@@ -30,7 +30,7 @@
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { onMount, onDestroy } from 'svelte'
   import { Chat, chunterId } from '@hcengineering/chunter'
-  import view, { decodeObjectURI } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
   import { ActivityMessage } from '@hcengineering/activity'
   import { loadSavedAttachments } from '@hcengineering/attachment-resources'
@@ -39,7 +39,7 @@
   import ChannelView from '../ChannelView.svelte'
   import { chatSpecials, createRealDirectFromFake, isFakeDirect } from './utils'
   import { SelectChannelEvent } from './types'
-  import { openChannel, openThreadInSidebar } from '../../navigation'
+  import { decodeChatURI, openChannel, openThreadInSidebar } from '../../navigation'
   import chunter from '../../plugin'
 
   const notificationsClient = InboxNotificationsClientImpl.getClient()
@@ -131,7 +131,7 @@
       object = undefined
       chat = undefined
     } else {
-      const [id, _class] = decodeObjectURI(loc.path[3])
+      const [id, _class] = decodeChatURI(loc.path[3])
       selectedData = { id, _class }
     }
 

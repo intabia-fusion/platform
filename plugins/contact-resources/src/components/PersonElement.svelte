@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+<script lang="ts" context="module">
+  import { derived } from 'svelte/store'
+  import { chunterId } from '@hcengineering/chunter'
+  import { location } from '@hcengineering/ui'
+
+  // One subscription for all person links; a primitive value does not wake them on every navigation.
+  const inChat = derived(location, (loc) => loc.path[2] === chunterId)
+</script>
+
 <script lang="ts">
   import contact, { Employee, Person } from '@hcengineering/contact'
   import chunter from '@hcengineering/chunter'
@@ -43,6 +52,9 @@
   export let inlineBlock = false
   export let shrink: boolean = false
   export let clickable: boolean = true
+  // Inline mention styling, forwarded down to ObjectMention.
+  export let highlight: string | undefined = undefined
+  export let transparent: boolean = false
 
   const hierarchy = getClient().getHierarchy()
 
@@ -50,7 +62,9 @@
   // comment on the card instead of writing to the person.
   function canOpenDirect (person: Person | Employee | undefined | null): boolean {
     if (person == null || !hierarchy.hasMixin(person, contact.mixin.Employee)) return false
-    return (person as Employee).active && hasResource(chunter.function.OpenDirectForPerson) !== false
+    return (
+      hierarchy.as(person, contact.mixin.Employee).active && hasResource(chunter.function.OpenDirectForPerson) !== false
+    )
   }
 
   function openDirect (): void {
@@ -60,15 +74,17 @@
   }
 
   $: mentionClick = onEdit ?? (canOpenDirect(value) ? openDirect : undefined)
+  // In the chat a person link starts a conversation too; elsewhere it keeps opening the card.
+  $: linkClick = onEdit ?? ($inChat && canOpenDirect(value) ? openDirect : undefined)
 </script>
 
 {#if value}
   {#if inline}
-    <ObjectMention object={value} {disabled} onClick={mentionClick} />
+    <ObjectMention object={value} {disabled} {highlight} {transparent} onClick={mentionClick} />
   {:else if type === 'link'}
     <DocNavLink
       object={value}
-      onClick={onEdit}
+      onClick={linkClick}
       disabled={disabled || !clickable}
       {noUnderline}
       {colorInherit}

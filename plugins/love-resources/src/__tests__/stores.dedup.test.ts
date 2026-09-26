@@ -50,11 +50,6 @@ jest.mock('@hcengineering/presentation', () => ({
   })
 }))
 
-// stores.ts fetches ws_members on client start; the store under test does not depend on it.
-jest.mock('@hcengineering/account-client', () => ({
-  getClient: jest.fn(() => ({ getWorkspaceMembers: jest.fn(async () => []) }))
-}))
-
 function makeParticipantInfo (sessionId: string): ParticipantInfo {
   return {
     _id: `pi-${sessionId}`,

@@ -15,9 +15,9 @@
 <script lang="ts">
   import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
   import { translate } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { copyTextToClipboard, getClient } from '@hcengineering/presentation'
   import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
-  import { getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
+  import { getLink, getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
@@ -99,6 +99,18 @@
         await openChannelInSidebar(object._id, object._class, object)
       }
     })
+
+    if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
+      result.push({
+        label: chunter.string.CopyLink,
+        icon: chunter.icon.Copy,
+        group: 'edit',
+        action: async () => {
+          // The promise goes straight in: awaiting first loses the click gesture in Safari.
+          await copyTextToClipboard(getLink(object))
+        }
+      })
+    }
 
     const label = lowercaseFirstLetter(await translate(hierarchy.getClass(object._class).label, {}, $languageStore))
 

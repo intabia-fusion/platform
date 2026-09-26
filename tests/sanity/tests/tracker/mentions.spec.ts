@@ -1,10 +1,11 @@
-import { test } from '../fixtures'
+import { expect, test } from '../fixtures'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewIssue } from '../model/tracker/types'
 import { EmployeeDetailsPage } from '../model/contacts/employee-details-page'
+import { SidebarPage } from '../model/sidebar-page'
 
 test.use({
   storageState: PlatformSetting
@@ -14,11 +15,13 @@ test.describe('Mentions issue tests', () => {
   let issuesPage: IssuesPage
   let issuesDetailsPage: IssuesDetailsPage
   let employeeDetailsPage: EmployeeDetailsPage
+  let sidebarPage: SidebarPage
 
   test.beforeEach(async ({ page }) => {
     issuesPage = new IssuesPage(page)
     issuesDetailsPage = new IssuesDetailsPage(page)
     employeeDetailsPage = new EmployeeDetailsPage(page)
+    sidebarPage = new SidebarPage(page)
 
     await (await page.goto(`${PlatformURI}/workbench/sanity-ws`))?.finished()
   })
@@ -77,12 +80,20 @@ test.describe('Mentions issue tests', () => {
 
     await issuesDetailsPage.addMentions(mentionName)
     await issuesDetailsPage.checkCommentExist(`@${mentionName}`)
+    // An employee mention opens the direct with them, outside the chat in the sidebar.
     await issuesDetailsPage.openLinkFromActivitiesByText(mentionName)
+    await expect(sidebarPage.contentHeaderByTitle(mentionName).first()).toBeVisible()
 
+    await sidebarPage.content().locator('[data-id="btnDirectViewProfile"]').click()
     await employeeDetailsPage.checkEmployee({
       firstName: mentionName.split(' ')[1],
       lastName: mentionName.split(' ')[0]
     })
+
+    await sidebarPage.closeOpenedVerticalTab()
+    await expect(sidebarPage.contentHeaderByTitle(mentionName).first()).toBeHidden()
+    await employeeDetailsPage.buttonDirectMessage().click()
+    await expect(sidebarPage.contentHeaderByTitle(mentionName).first()).toBeVisible()
   })
 
   test('Checking backlinks in different spaces', async ({ page }) => {

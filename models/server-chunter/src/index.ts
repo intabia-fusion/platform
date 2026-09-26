@@ -99,6 +99,7 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(chunter.class.Channel, core.class.Class, serverCore.mixin.SearchPresenter, {
+    searchIcon: chunter.icon.Hashtag,
     title: [['name']]
   })
 

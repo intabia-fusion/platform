@@ -46,6 +46,7 @@
 - [planner-spaces-api-tests.md](planner-spaces-api-tests.md) - Planner space-ownership API tests (FUSIO-1308)
 - [planner-todo-issue-decoupling.md](planner-todo-issue-decoupling.md) - Planner ToDo <-> Issue
 - [presence-fanout.md](presence-fanout.md) - Presence: логин и кросс-воркспейс непрочитанное
+- [person_mention_direct.md](person_mention_direct.md) - Клик по упоминанию персоны открывает DM; кнопки DM/звонка в карточке персоны
 - [team-planner-filters.md](team-planner-filters.md) - Team Planner: FilterBar/FilterButton project filter (FUSIO-1308)
 
 ## Файлы и медиа - [drive-media.md](../features/drive-media.md)

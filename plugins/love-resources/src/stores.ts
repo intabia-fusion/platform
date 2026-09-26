@@ -1,8 +1,8 @@
 import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
-import { type AccountUuid, type Ref } from '@hcengineering/core'
-import presentation, { createQuery, onClient } from '@hcengineering/presentation'
+import { type Ref } from '@hcengineering/core'
+import { createQuery, onClient } from '@hcengineering/presentation'
 import {
   isOffice,
   MeetingStatus,
@@ -14,9 +14,6 @@ import {
   type ParticipantInfo,
   type Room
 } from '@hcengineering/love'
-import { getClient as getAccountClient } from '@hcengineering/account-client'
-import login from '@hcengineering/login'
-import { getMetadata } from '@hcengineering/platform'
 import { derived, get, writable } from 'svelte/store'
 
 import love from './plugin'
@@ -62,33 +59,6 @@ aiBotSocialIdentityStore.subscribe((sid) => {
     aiBotPerson.set(ref ?? undefined)
   })
 })
-// Accounts present in the account service's ws_members.
-// Undefined until the account service answers, so callers can tell "not loaded yet" from "not a member".
-export const workspaceMemberAccounts = writable<Set<AccountUuid> | undefined>(undefined)
-
-let workspaceMembersLoaded: Promise<void> | undefined
-
-export async function ensureWorkspaceMembersLoaded (): Promise<void> {
-  workspaceMembersLoaded ??= getAccountClient(
-    getMetadata(login.metadata.AccountsUrl),
-    getMetadata(presentation.metadata.Token)
-  )
-    .getWorkspaceMembers()
-    .then((members) => {
-      workspaceMemberAccounts.set(new Set(members.map((m) => m.person)))
-    })
-  await workspaceMembersLoaded
-}
-
-onClient(() => {
-  workspaceMemberAccounts.set(undefined)
-  // Requested under the previous client: fetch again for this one.
-  if (workspaceMembersLoaded !== undefined) {
-    workspaceMembersLoaded = undefined
-    void ensureWorkspaceMembersLoaded()
-  }
-})
-
 export const myInfo = derived(infos, (val) => {
   const personId = getCurrentEmployee()
   return val.find((p) => p.person === personId)

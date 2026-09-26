@@ -79,6 +79,14 @@
       >{:else if _id === contact.mention.Everyone}<span class="lower"><Label label={contact.string.Everyone} /></span
       >{:else}{title}{/if}
   </span>
+{:else if doc && hierarchy.isDerived(doc._class, contact.class.Person)}
+  <!-- Goes through the person presenter so a click opens the direct instead of the person card. -->
+  <Component
+    is={contact.component.EmployeePresenter}
+    showLoading={false}
+    inline
+    props={{ value: doc, highlight, transparent }}
+  />
 {:else if doc}
   <Component
     is={view.component.ObjectMention}

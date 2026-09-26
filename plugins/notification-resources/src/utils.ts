@@ -490,7 +490,7 @@ export function resetInboxContext (): void {
     return
   }
 
-  loc.query = { message: null }
+  loc.query = undefined
   loc.path.length = 3
 
   localStorage.setItem(`${locationStorageKeyId}_${notificationId}`, JSON.stringify(loc))

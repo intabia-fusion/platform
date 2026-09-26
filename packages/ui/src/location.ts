@@ -196,6 +196,11 @@ export function setLocationStorageKey (storageKey: string): void {
   locationStorageKeyId = storageKey
 }
 
+// Link ids carry names (`dumpa-lumpa-<id>`, document titles): analytics gets the bare id only.
+export function stripLinkSlugs (url: string): string {
+  return url.replace(/\/[^/?#]*-([0-9a-f]{24})(?=[/?#]|$)/g, '/$1')
+}
+
 export function navigate (location: PlatformLocation, replace = false): boolean {
   closePopup()
   const cur = locationToUrl(getCurrentLocation())
@@ -216,7 +221,7 @@ export function navigate (location: PlatformLocation, replace = false): boolean 
       }
     }
     locationWritable.set(location)
-    Analytics.navigate(url)
+    Analytics.navigate(stripLinkSlugs(url))
     return true
   }
   return false
