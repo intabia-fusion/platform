@@ -27,7 +27,7 @@ import notificationPlugin, {
   getNotificationMessageId,
   translateNotification,
   NotificationTemplate,
-  QueueNotificationMessage,
+  QueueNotifyMessage,
   appendAndCollapseUnreadMessages
 } from '@hcengineering/notification'
 import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
@@ -269,7 +269,7 @@ async function getTemplate (
   receiver: Receiver,
   inboxUrl: string,
   markup?: Markup
-): Promise<QueueNotificationMessage['template']> {
+): Promise<QueueNotifyMessage['template']> {
   const types = (providers[notificationPlugin.providers.InboxNotificationProvider] ?? []).filter(
     (it) => it.templates != null
   )
@@ -321,7 +321,7 @@ async function translateTemplate (
   receiver: Receiver,
   inboxUrl: string,
   markup: Markup | undefined
-): Promise<QueueNotificationMessage['template']> {
+): Promise<QueueNotifyMessage['template']> {
   const templates: NotificationTemplate = type?.templates ?? {
     text: notificationPlugin.emailTemplate.GeneratedNotificationText,
     html: notificationPlugin.emailTemplate.GeneratedNotificationHtml,

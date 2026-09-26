@@ -26,6 +26,7 @@ import {
 
 import { Client, Result } from '../types'
 import Cache from '../cache'
+import { pushDismissMessage, readUnread } from './dismiss'
 
 const skipKeys = [
   '_id',
@@ -74,11 +75,17 @@ export async function handleReadState (
 
     const context = contexts.find((it) => it.user === account)
     if (context == null) continue
-    await readContext(client, result, context, ts)
+    await readContext(client, cache, result, context, ts)
   }
 }
 
-async function readContext (client: Client, result: Result, context: DocNotifyContext, ts: Timestamp): Promise<void> {
+async function readContext (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  context: DocNotifyContext,
+  ts: Timestamp
+): Promise<void> {
   const unreadMessagesToRead: UnreadMessageId[] = []
   const unreadChunksToRead: UnreadMessageChunk[] = []
 
@@ -121,4 +128,6 @@ async function readContext (client: Client, result: Result, context: DocNotifyCo
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
     )
   }
+
+  await pushDismissMessage(cache, result, context, readUnread([...unreadMessagesToRead, ...unreadChunksToRead], ts))
 }

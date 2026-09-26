@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import { PushKind, pushTarget } from '../mobile'
+import type { Class, Doc, Ref } from '@hcengineering/core'
+
+import { apnsAlertPayload, apnsDismissPayload, fcmAlertMessage, fcmDismissMessage, PushKind, pushTarget } from '../mobile'
+
+jest.mock('../config', () => ({
+  __esModule: true,
+  default: { TTL: 86400 }
+}))
 
 describe('pushTarget', () => {
   it('reads a device token out of its scheme', () => {
@@ -26,5 +33,82 @@ describe('pushTarget', () => {
     expect(pushTarget('https://web.push.apple.com/xyz')).toEqual({ kind: PushKind.Web })
     expect(pushTarget('https://fcm.googleapis.com/fcm/send/abc')).toEqual({ kind: PushKind.Web })
     expect(pushTarget('')).toEqual({ kind: PushKind.Web })
+  })
+})
+
+const objectId = 'doc-1' as Ref<Doc>
+const objectClass = 'chunter:class:Channel' as Ref<Class<Doc>>
+
+describe('alert payloads', () => {
+  const data = {
+    tag: 'msg-1',
+    title: 'Title',
+    body: 'Body',
+    url: 'https://app/x',
+    domain: 'https://app',
+    objectId,
+    objectClass,
+    createdOn: 1000
+  }
+
+  it('APNs: an alert with the tag as thread and the reconciliation keys beside aps', () => {
+    expect(apnsAlertPayload(data)).toEqual({
+      aps: { alert: { title: 'Title', body: 'Body' }, sound: 'default', 'thread-id': 'msg-1', 'mutable-content': 1 },
+      url: 'https://app/x',
+      domain: 'https://app',
+      tag: 'msg-1',
+      objectId: 'doc-1',
+      objectClass: 'chunter:class:Channel',
+      createdOn: 1000
+    })
+  })
+
+  it('FCM: a notification block plus string-only data', () => {
+    expect(fcmAlertMessage('tok', data)).toEqual({
+      token: 'tok',
+      notification: { title: 'Title', body: 'Body' },
+      data: {
+        url: 'https://app/x',
+        domain: 'https://app',
+        tag: 'msg-1',
+        objectId: 'doc-1',
+        objectClass: 'chunter:class:Channel',
+        createdOn: '1000'
+      },
+      android: { priority: 'HIGH', ttl: '86400s', notification: { tag: 'msg-1' } }
+    })
+  })
+
+  it('FCM: leaves absent keys out of data', () => {
+    expect(fcmAlertMessage('tok', { title: 'T', body: 'B' })).toMatchObject({ data: {} })
+  })
+})
+
+describe('dismiss payloads', () => {
+  const data = { objectId, objectClass, tags: ['msg-1', 'msg-2'], readUpTo: 2000 }
+
+  it('APNs: background content-available, no alert, the dismiss keys', () => {
+    expect(apnsDismissPayload(data)).toEqual({
+      aps: { 'content-available': 1 },
+      kind: 'dismiss',
+      objectId: 'doc-1',
+      objectClass: 'chunter:class:Channel',
+      tags: ['msg-1', 'msg-2'],
+      readUpTo: 2000
+    })
+  })
+
+  it('FCM: data only, tags as a JSON string, no notification block', () => {
+    expect(fcmDismissMessage('tok', data)).toEqual({
+      token: 'tok',
+      data: {
+        kind: 'dismiss',
+        objectId: 'doc-1',
+        objectClass: 'chunter:class:Channel',
+        tags: '["msg-1","msg-2"]',
+        readUpTo: '2000'
+      },
+      android: { priority: 'HIGH', ttl: '86400s' }
+    })
   })
 })

@@ -23,6 +23,8 @@ import {
   DocNotifyContext,
   NotificationIntl,
   NotificationMessage,
+  QueueDismissMessage,
+  QueueNotificationMessage,
   UnreadMessage,
   UnreadMessageChunk,
   UnreadMessageId
@@ -74,6 +76,10 @@ export const NATIVE_PUSH_SCHEMES = {
 
 export function isNativePushEndpoint (endpoint: string): boolean {
   return Object.values(NATIVE_PUSH_SCHEMES).some((scheme) => endpoint.startsWith(scheme))
+}
+
+export function isQueueDismissMessage (message: QueueNotificationMessage): message is QueueDismissMessage {
+  return message.kind === 'dismiss'
 }
 
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80

@@ -34,6 +34,7 @@ describe('handleReadState', () => {
   let mockCache: {
     getReadState: jest.Mock
     getContexts: jest.Mock
+    getPushSubscriptions: jest.Mock
   }
   let result: Result
 
@@ -54,7 +55,8 @@ describe('handleReadState', () => {
 
     mockCache = {
       getReadState: jest.fn(),
-      getContexts: jest.fn()
+      getContexts: jest.fn(),
+      getPushSubscriptions: jest.fn().mockResolvedValue([])
     }
 
     result = emptyResult()
@@ -317,5 +319,79 @@ describe('handleReadState', () => {
     await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
     expect(result.updateContextTx).toHaveLength(2)
+  })
+
+  describe('dismiss for the native apps', () => {
+    const tx = {
+      _class: core.class.TxUpdateDoc,
+      objectId: 'rs-1',
+      operations: {
+        'user-1': { timestamp: 150 }
+      }
+    } as unknown as TxUpdateDoc<ReadState>
+    const readState = { _id: 'rs-1', attachedTo: 'doc-1' } as unknown as ReadState
+    const context = {
+      _id: 'ctx-1',
+      _class: 'DocNotifyContext',
+      space: 'space-1',
+      user: 'user-1',
+      objectId: 'doc-1',
+      objectClass: 'DocClass',
+      objectSpace: 'space-doc',
+      unreadMessages: [
+        { id: 'msg-1', createdOn: 100, notified: true },
+        { id: 'msg-2', createdOn: 120 },
+        { from: 10, to: 90, count: 3, notifiedCount: 2 },
+        { id: 'msg-3', createdOn: 200, notified: true }
+      ],
+      unreadCount: 3
+    } as unknown as DocNotifyContext
+    const native = { _id: 'sub-apns', endpoint: 'apns://token', user: 'user-1' }
+    const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x', user: 'user-1' }
+
+    it('queues one dismiss with the read tags, the read position and only the native subscriptions', async () => {
+      mockCache.getReadState.mockResolvedValue(readState)
+      mockCache.getContexts.mockResolvedValue([context])
+      mockCache.getPushSubscriptions.mockResolvedValue([web, native])
+
+      await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+      expect(mockCache.getPushSubscriptions).toHaveBeenCalledWith('user-1')
+      expect(result.queueMessages).toHaveLength(1)
+      expect(result.queueMessages[0]).toEqual({
+        kind: 'dismiss',
+        id: 'dismiss:ctx-1:150',
+        account: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'space-doc',
+        pushSubscriptions: [native],
+        tags: ['msg-1'],
+        readUpTo: 150
+      })
+    })
+
+    it('queues nothing when the account has only web subscriptions', async () => {
+      mockCache.getReadState.mockResolvedValue(readState)
+      mockCache.getContexts.mockResolvedValue([context])
+      mockCache.getPushSubscriptions.mockResolvedValue([web])
+
+      await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+      expect(result.queueMessages).toHaveLength(0)
+    })
+
+    it('queues nothing when the read clears no notified message', async () => {
+      mockCache.getReadState.mockResolvedValue(readState)
+      mockCache.getContexts.mockResolvedValue([
+        { ...context, unreadMessages: [{ id: 'msg-2', createdOn: 120 }] } as unknown as DocNotifyContext
+      ])
+      mockCache.getPushSubscriptions.mockResolvedValue([native])
+
+      await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+      expect(mockCache.getPushSubscriptions).not.toHaveBeenCalled()
+      expect(result.queueMessages).toHaveLength(0)
+    })
   })
 })

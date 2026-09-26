@@ -56,6 +56,7 @@ describe('handleReadNotificationAction', () => {
   let mockCache: {
     getContext: jest.Mock
     getAccountBySocialId: jest.Mock
+    getPushSubscriptions: jest.Mock
   }
   let result: Result
 
@@ -74,7 +75,8 @@ describe('handleReadNotificationAction', () => {
 
     mockCache = {
       getContext: jest.fn(),
-      getAccountBySocialId: jest.fn()
+      getAccountBySocialId: jest.fn(),
+      getPushSubscriptions: jest.fn().mockResolvedValue([])
     }
 
     result = emptyResult()
@@ -251,6 +253,57 @@ describe('handleReadNotificationAction', () => {
         $inc: { unreadCount: -2 }
       }
     })
+  })
+
+  it('queues a dismiss for the native apps up to the newest message read', async () => {
+    const tx = {
+      _class: core.class.TxCreateDoc,
+      objectId: 'action-dismiss',
+      modifiedBy: 'social-1',
+      attributes: {
+        attachedTo: 'doc-1',
+        account: 'user-1',
+        messageIds: ['msg-1', 'msg-2']
+      }
+    } as unknown as TxCreateDoc<ReadNotificationAction>
+
+    const context = {
+      _id: 'ctx-1',
+      _class: 'DocNotifyContext',
+      space: 'space-1' as Ref<Space>,
+      user: 'user-1' as AccountUuid,
+      objectId: 'doc-1',
+      objectClass: 'DocClass',
+      objectSpace: 'space-doc',
+      unreadMessages: [
+        { id: 'msg-1', createdOn: 100, notified: true },
+        { id: 'msg-2', createdOn: 150 },
+        { id: 'msg-3', createdOn: 200, notified: true }
+      ],
+      unreadCount: 2
+    } as unknown as DocNotifyContext
+
+    mockCache.getContext.mockResolvedValue(context)
+    mockCache.getPushSubscriptions.mockResolvedValue([
+      { _id: 'sub-web', endpoint: 'https://push.example.com/x' },
+      { _id: 'sub-fcm', endpoint: 'fcm://token' }
+    ])
+
+    await handleReadNotificationAction(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+    expect(result.queueMessages).toEqual([
+      {
+        kind: 'dismiss',
+        id: 'dismiss:ctx-1:150',
+        account: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'space-doc',
+        pushSubscriptions: [{ _id: 'sub-fcm', endpoint: 'fcm://token' }],
+        tags: ['msg-1'],
+        readUpTo: 150
+      }
+    ])
   })
 })
 

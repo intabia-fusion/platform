@@ -43,6 +43,7 @@ import {
   NotificationType,
   type NotificationTypeSetting,
   QueueNotificationMessage,
+  QueueNotifyMessage,
   ReadState
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
@@ -114,7 +115,7 @@ export interface TxCache {
   labelByDoc: Map<Ref<Doc>, IntlString>
   identifierByDoc: Map<Ref<Doc>, string>
   iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
-  templates: Map<string, QueueNotificationMessage['template']>
+  templates: Map<string, QueueNotifyMessage['template']>
 }
 
 export type ObjectDisplayData = Pick<

@@ -17,7 +17,7 @@ import webpush, { WebPushError } from 'web-push'
 import core, { type Ref, type AccountUuid, type PersonId } from '@hcengineering/core'
 import notification, { type PushSubscription } from '@hcengineering/notification'
 
-import { sendPushToSubscription } from './main'
+import { sendDismissToSubscription, sendPushToSubscription } from './main'
 
 jest.mock('./config', () => ({
   default: {
@@ -164,5 +164,33 @@ describe('sendPushToSubscription', () => {
     const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
 
     expect(failedIds).toEqual([])
+  })
+})
+
+describe('sendDismissToSubscription', () => {
+  it('sends nothing to web subscriptions and reports none of them dead', async () => {
+    jest.clearAllMocks()
+    const web: PushSubscription = {
+      _id: 'sub-web' as Ref<PushSubscription>,
+      _class: notification.class.PushSubscription,
+      space: core.space.Workspace,
+      user: 'user-1' as AccountUuid,
+      endpoint: 'https://example.com/endpoint1',
+      keys: { p256dh: 'dh1', auth: 'auth1' },
+      modifiedOn: 0,
+      modifiedBy: 'system' as PersonId
+    }
+    // APNs/FCM are not configured in this test's config, so a native subscription is skipped too.
+    const native: PushSubscription = { ...web, _id: 'sub-apns' as Ref<PushSubscription>, endpoint: 'apns://token' }
+
+    const failed = await sendDismissToSubscription([web, native], {
+      objectId: 'doc-1' as any,
+      objectClass: 'DocClass' as any,
+      tags: ['msg-1'],
+      readUpTo: 100
+    })
+
+    expect(failed).toEqual([])
+    expect(webpush.sendNotification).not.toHaveBeenCalled()
   })
 })

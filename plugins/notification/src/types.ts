@@ -57,6 +57,18 @@ export interface PushData {
   url?: string
   objectId?: Ref<Doc>
   objectClass?: Ref<Class<Doc>>
+  createdOn?: Timestamp
+}
+
+/**
+ * Sent to the native apps when the person read the document elsewhere: the notifications
+ * listed in `tags`, and any other about `objectId` created at or before `readUpTo`, are gone.
+ */
+export interface PushDismissData {
+  objectId: Ref<Doc>
+  objectClass: Ref<Class<Doc>>
+  tags: string[]
+  readUpTo: Timestamp
 }
 
 export interface PushSubscriptionKeys {
@@ -322,27 +334,47 @@ export interface UnreadReaction {
   attachedTo: Ref<ActivityMessage>
 }
 
-export interface QueueNotificationMessage {
+interface QueueMessageBase {
   id: string
-  title: string
-  body: string
-
   account: AccountUuid
-  language: string
 
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   objectSpace: Ref<Space>
+
+  pushSubscriptions: PushSubscription[]
+}
+
+/** A notification to deliver: push, mail, whatever `providers` lists. */
+export interface QueueNotifyMessage extends QueueMessageBase {
+  // Absent in messages produced before the dismiss kind existed.
+  kind?: 'notify'
+  title: string
+  body: string
+  language: string
 
   domain: string
   url: string
 
   template?: { subject: string, text: string, html: string }
 
-  pushSubscriptions: PushSubscription[]
   providers: Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
   createdOn: Timestamp
 }
+
+/**
+ * The person read the document on another device: the pushes named by `tags` (notification ids),
+ * and any other about the document created at or before `readUpTo`, should disappear from the
+ * native apps in `pushSubscriptions`. Web push is never dismissed: a push that shows nothing
+ * makes Chrome show its own "site updated in the background" notice.
+ */
+export interface QueueDismissMessage extends QueueMessageBase {
+  kind: 'dismiss'
+  tags: string[]
+  readUpTo: Timestamp
+}
+
+export type QueueNotificationMessage = QueueNotifyMessage | QueueDismissMessage
 
 export interface NotificationIntl {
   titleIntl: IntlString

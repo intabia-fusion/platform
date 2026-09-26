@@ -42,6 +42,7 @@ import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
+import { pushDismissMessage, readUnread } from './dismiss'
 import { pushNotification } from './notification'
 import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
 
@@ -167,6 +168,15 @@ export async function handleReadNotificationAction (
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, chunkOps)
     )
   }
+
+  // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
+  const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
+  await pushDismissMessage(
+    cache,
+    result,
+    context,
+    readUnread([...unreadMessagesToRead, ...unreadChunksToRead], readPosition)
+  )
 }
 
 export async function handleCreateNotificationAction (

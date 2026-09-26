@@ -116,7 +116,8 @@ docker run -d \
 The consumer listens to `QueueTopic.UserNotifications` for `QueueNotificationMessage` payloads.
 
 When a message is received:
-1. It is skipped unless the message lists `PushNotificationProvider` among its providers.
+1. A `kind: "dismiss"` message goes to `sendDismissToSubscription` (see "Dismiss"); anything
+   else is skipped unless it lists `PushNotificationProvider` among its providers.
 2. Title and body are truncated to `PUSH_NOTIFICATION_TITLE_SIZE` / `PUSH_NOTIFICATION_BODY_SIZE`.
 3. Every subscription in `pushSubscriptions` is delivered through the transport its endpoint
    selects: APNs, FCM or `web-push`.
@@ -143,8 +144,44 @@ The `PushData` delivered to clients:
 | `domain` | string | No | Workspace domain the notification belongs to |
 | `url` | string | No | URL to open when notification is clicked |
 | `icon` | string | No | URL to notification icon |
-| `objectId` | string | No | Id of the document the notification is about (the chat); the web service worker skips the notification when a focused tab shows it |
+| `objectId` | string | No | Id of the document the notification is about (the chat); the web service worker skips the notification when a focused tab shows it, a native app drops it when a dismiss with `readUpTo >= createdOn` got there first |
 | `objectClass` | string | No | Class of that document |
+| `createdOn` | number | No | Timestamp (ms) of the message the notification is about |
+
+How the alert reaches each transport:
+
+| Key | Web Push | APNs | FCM |
+|-----|----------|------|-----|
+| `title`, `body` | JSON body | `aps.alert` | `notification` |
+| `tag` | JSON body | `aps.thread-id`, `apns-collapse-id` header (so the tag is the delivered notification's identifier), custom `tag` | `data.tag`, `android.notification.tag` |
+| `url`, `domain`, `objectId`, `objectClass`, `createdOn` | JSON body | custom keys beside `aps` | `data` (strings) |
+
+APNs headers: `apns-push-type: alert`, `apns-priority: 10`, `apns-expiration: now + TTL`. FCM: `android.priority: HIGH`, `android.ttl: TTL`.
+
+### Dismiss
+
+When the person reads the document on another device, the notifications service publishes a
+`QueueNotificationMessage` with `kind: "dismiss"` (see `QueueDismissMessage` in
+`@hcengineering/notification`), and this service tells the native apps to take the pushes down.
+Web Push gets nothing: a push that shows no notification makes Chrome show its own
+"site updated in the background" notice, and the tab drops its in-app record on its own.
+
+| Key | APNs | FCM | Meaning |
+|-----|------|-----|---------|
+| headers | `apns-push-type: background`, `apns-priority: 5`, `aps: {"content-available": 1}` | data-only message, `android.priority: HIGH` | nothing to show, no sound |
+| `kind` | custom `"dismiss"` | `data.kind` | message type |
+| `objectId`, `objectClass` | custom | `data` | the document (chat) |
+| `tags` | custom, array of strings | `data.tags`, JSON-encoded array | notification ids (= message ids) to remove |
+| `readUpTo` | custom, number | `data.readUpTo`, string | remove every notification about `objectId` with `createdOn <= readUpTo` as well |
+
+What the app does: remove the delivered notifications named by `tags`, then any other about
+`objectId` with `createdOn <= readUpTo`; remember `readUpTo` per `objectId` and do not show
+an alert that arrives later with `createdOn <= readUpTo` (APNs and FCM do not order pushes);
+refresh the badge. A dismiss for a document without a pending alert is a no-op.
+
+iOS delivers a background push when it sees fit: usually within seconds, later under Low
+Power Mode, never to an app the person force-quit. Such a notification stays until the app
+is opened.
 
 ## Testing
 

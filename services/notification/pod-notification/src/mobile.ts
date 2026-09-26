@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { NATIVE_PUSH_SCHEMES, type PushData } from '@hcengineering/notification'
+import { NATIVE_PUSH_SCHEMES, type PushData, type PushDismissData } from '@hcengineering/notification'
 import { createPrivateKey, sign } from 'crypto'
 import { connect, constants, type ClientHttp2Session } from 'http2'
 import config from './config'
@@ -107,12 +107,11 @@ function apnsConnect (): ClientHttp2Session {
   return session
 }
 
-/**
- * An alert push, not a silent one: waking a sleeping phone is the whole point,
- * and `content-available` alone is throttled into "sometime later" by iOS.
- */
-export async function sendApns (token: string, data: PushData): Promise<Delivery> {
-  const payload = JSON.stringify({
+const DISMISS_KIND = 'dismiss'
+
+/** The alert payload: what iOS shows plus the keys the app routes and reconciles by. */
+export function apnsAlertPayload (data: PushData): Record<string, unknown> {
+  return {
     aps: {
       alert: { title: data.title, body: data.body },
       sound: 'default',
@@ -121,8 +120,54 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
     },
     url: data.url,
     domain: data.domain,
-    tag: data.tag
-  })
+    tag: data.tag,
+    objectId: data.objectId,
+    objectClass: data.objectClass,
+    createdOn: data.createdOn
+  }
+}
+
+/** A background push: nothing to show, the app takes down what `tags`/`readUpTo` name. */
+export function apnsDismissPayload (data: PushDismissData): Record<string, unknown> {
+  return {
+    aps: { 'content-available': 1 },
+    kind: DISMISS_KIND,
+    objectId: data.objectId,
+    objectClass: data.objectClass,
+    tags: data.tags,
+    readUpTo: data.readUpTo
+  }
+}
+
+/**
+ * An alert push, not a silent one: waking a sleeping phone is the whole point,
+ * and `content-available` alone is throttled into "sometime later" by iOS.
+ * `apns-collapse-id` makes the tag the notification's identifier on the device,
+ * so a dismiss can name it.
+ */
+export async function sendApns (token: string, data: PushData): Promise<Delivery> {
+  return await apnsRequest(
+    token,
+    {
+      'apns-push-type': 'alert',
+      'apns-priority': '10',
+      ...(data.tag !== undefined ? { 'apns-collapse-id': data.tag } : {})
+    },
+    apnsAlertPayload(data)
+  )
+}
+
+/**
+ * A background push (`content-available`, priority 5): iOS delivers it when it sees fit,
+ * usually within seconds, never to an app the person force-quit. The alert it takes down
+ * was worth a wake-up; its removal is not.
+ */
+export async function sendApnsDismiss (token: string, data: PushDismissData): Promise<Delivery> {
+  return await apnsRequest(token, { 'apns-push-type': 'background', 'apns-priority': '5' }, apnsDismissPayload(data))
+}
+
+async function apnsRequest (token: string, headers: Record<string, string>, body: Record<string, unknown>): Promise<Delivery> {
+  const payload = JSON.stringify(body)
 
   return await new Promise<Delivery>((resolve) => {
     let request
@@ -132,9 +177,8 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
         [constants.HTTP2_HEADER_PATH]: `/3/device/${token}`,
         [constants.HTTP2_HEADER_AUTHORIZATION]: `bearer ${apnsAuth()}`,
         'apns-topic': config.ApnsTopic,
-        'apns-push-type': 'alert',
-        'apns-priority': '10',
-        'apns-expiration': String(Math.floor(Date.now() / 1000) + config.TTL)
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + config.TTL),
+        ...headers
       })
     } catch (err) {
       console.error('APNs request failed', err)
@@ -143,12 +187,12 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
     }
 
     let status = 0
-    let body = ''
-    request.on('response', (headers) => {
-      status = Number(headers[constants.HTTP2_HEADER_STATUS] ?? 0)
+    let responseBody = ''
+    request.on('response', (responseHeaders) => {
+      status = Number(responseHeaders[constants.HTTP2_HEADER_STATUS] ?? 0)
     })
     request.on('data', (chunk) => {
-      body += chunk
+      responseBody += chunk
     })
     request.on('error', (err) => {
       console.error('APNs stream error', err)
@@ -162,7 +206,7 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
       // 410 is a token Apple has retired; the 400 reasons below mean it never
       // belonged here. Everything else may be transient, so the subscription stays.
       const dead = ['Unregistered', 'BadDeviceToken', 'DeviceTokenNotForTopic']
-      resolve(status === 410 || dead.some((reason) => body.includes(reason)) ? Delivery.Gone : Delivery.Error)
+      resolve(status === 410 || dead.some((reason) => responseBody.includes(reason)) ? Delivery.Gone : Delivery.Error)
     })
     request.end(payload)
   })
@@ -218,11 +262,58 @@ async function fcmAuth (): Promise<string> {
 /**
  * `notification` rather than a data-only message on purpose: with it Android
  * draws the banner itself while the process is asleep, so nothing has to run
- * on the device for the push to arrive.
+ * on the device for the push to arrive. FCM data values are strings only.
  */
 export const sendTimeoutMs = 15000
 
+function fcmData (values: Record<string, string | number | undefined>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(values)
+      .filter((entry): entry is [string, string | number] => entry[1] !== undefined)
+      .map(([key, value]) => [key, String(value)])
+  )
+}
+
+export function fcmAlertMessage (token: string, data: PushData): Record<string, unknown> {
+  return {
+    token,
+    notification: { title: data.title, body: data.body },
+    data: fcmData({
+      url: data.url,
+      domain: data.domain,
+      tag: data.tag,
+      objectId: data.objectId,
+      objectClass: data.objectClass,
+      createdOn: data.createdOn
+    }),
+    android: { priority: 'HIGH', ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+  }
+}
+
+/** Data only: nothing is drawn, `onMessageReceived` cancels the notifications named. */
+export function fcmDismissMessage (token: string, data: PushDismissData): Record<string, unknown> {
+  return {
+    token,
+    data: fcmData({
+      kind: DISMISS_KIND,
+      objectId: data.objectId,
+      objectClass: data.objectClass,
+      tags: JSON.stringify(data.tags),
+      readUpTo: data.readUpTo
+    }),
+    android: { priority: 'HIGH', ttl: `${config.TTL}s` }
+  }
+}
+
 export async function sendFcm (token: string, data: PushData): Promise<Delivery> {
+  return await fcmRequest(fcmAlertMessage(token, data))
+}
+
+export async function sendFcmDismiss (token: string, data: PushDismissData): Promise<Delivery> {
+  return await fcmRequest(fcmDismissMessage(token, data))
+}
+
+async function fcmRequest (message: Record<string, unknown>): Promise<Delivery> {
   try {
     const account = serviceAccount()
     const response = await fetch(`https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`, {
@@ -233,18 +324,7 @@ export async function sendFcm (token: string, data: PushData): Promise<Delivery>
         Authorization: `Bearer ${await fcmAuth()}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        message: {
-          token,
-          notification: { title: data.title, body: data.body },
-          data: {
-            ...(data.url !== undefined ? { url: data.url } : {}),
-            ...(data.domain !== undefined ? { domain: data.domain } : {}),
-            ...(data.tag !== undefined ? { tag: data.tag } : {})
-          },
-          android: { priority: 'HIGH', ttl: `${config.TTL}s`, notification: { tag: data.tag } }
-        }
-      })
+      body: JSON.stringify({ message })
     })
     if (response.ok) return Delivery.Ok
     const body = await response.text()

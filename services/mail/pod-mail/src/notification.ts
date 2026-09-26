@@ -37,7 +37,8 @@ export function createUserNotificationsHandler (
   ) => {
     try {
       const msg = message.value
-      if (msg.template == null) return
+      // A dismiss carries no letter; the template check is what keeps other kinds out too.
+      if (msg.kind === 'dismiss' || msg.template == null) return
       const shouldEmail = (msg.providers[gmail.providers.EmailNotificationProvider]?.length ?? 0) > 0
       if (!shouldEmail) return
 
