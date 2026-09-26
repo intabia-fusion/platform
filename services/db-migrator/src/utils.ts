@@ -88,15 +88,15 @@ export function getActiveMigrationFiles (
     .filter(notEmpty)
 }
 
-export function getCleanMigrationName (fileName: string): string {
-  const index = fileName.indexOf('_')
-  let name = index !== -1 ? fileName.substring(index + 1) : fileName
+// The names of the same migration in every flavor: `0001_x.sql`, `0001_x.pg.sql`, `0001_x.crdb.sql`.
+// A flavor file is the same change set as the generic one it replaced, and the `_migrations` row
+// keeps the name that was current when the file ran; a renamed file must not run twice.
+export function getMigrationTwins (fileName: string): string[] {
+  const base = fileName.replace(/\.(pg|crdb)\.sql$/, '.sql')
+  const stem = base.slice(0, -'.sql'.length)
+  return [base, `${stem}.pg.sql`, `${stem}.crdb.sql`]
+}
 
-  if (name.endsWith('.pg.sql')) {
-    name = name.substring(0, name.length - '.pg.sql'.length) + '.sql'
-  } else if (name.endsWith('.crdb.sql')) {
-    name = name.substring(0, name.length - '.crdb.sql'.length) + '.sql'
-  }
-
-  return name
+export function isMigrationApplied (fileName: string, applied: Set<string>): boolean {
+  return getMigrationTwins(fileName).some((name) => applied.has(name))
 }

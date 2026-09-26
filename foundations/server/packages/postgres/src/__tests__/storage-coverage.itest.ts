@@ -117,6 +117,24 @@ txes.push(
       label: 'order' as IntlString
     }
   }),
+  // `modifiedOn` is a real bigint column of every table: ordering by it must not cast the column.
+  // Declared per class: the test hierarchy does not resolve ancestors up to core.class.Doc.
+  createAttribute({
+    attributeOf: taskPlugin.class.Task,
+    name: 'modifiedOn',
+    type: {
+      _class: core.class.TypeTimestamp,
+      label: 'modifiedOn' as IntlString
+    }
+  }),
+  createAttribute({
+    attributeOf: taskPlugin.class.TaskComment,
+    name: 'modifiedOn',
+    type: {
+      _class: core.class.TypeTimestamp,
+      label: 'modifiedOn' as IntlString
+    }
+  }),
   createAttribute({
     attributeOf: test.mixin.ComplexMixin,
     name: 'stringField',
@@ -399,6 +417,122 @@ describe('PostgreSQL storage.ts coverage', () => {
       expect(comments).toHaveLength(3)
       expect(comments[2]._id).toBe(commentB)
       expect(new Set(comments.slice(0, 2).map((c) => c.message))).toEqual(new Set(['a1', 'a2']))
+    })
+  })
+
+  describe('numericOrderKey (numeric sort keys)', () => {
+    // buildOrder returns the ORDER BY clause; the spy reads the one the last findAll built.
+    async function orderClauseOf (run: () => Promise<unknown>): Promise<string> {
+      const buildOrder = jest.spyOn(serverStorage as any, 'buildOrder')
+      try {
+        await run()
+        return buildOrder.mock.results.at(-1)?.value as string
+      } finally {
+        buildOrder.mockRestore()
+      }
+    }
+
+    async function addComment (task: Ref<Task>, order: unknown): Promise<void> {
+      await operations.addCollection(
+        taskPlugin.class.TaskComment,
+        '' as Ref<Space>,
+        task,
+        taskPlugin.class.Task,
+        'comments',
+        {
+          message: `c-${String(order)}`,
+          date: new Date(),
+          order
+        } as any
+      )
+    }
+
+    it('orders by a real bigint column as is, without a ::numeric cast', async () => {
+      await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'first', description: '' })
+      await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'second', description: '' })
+
+      let tasks: Task[] = []
+      const clause = await orderClauseOf(async () => {
+        tasks = await client.findAll<Task>(taskPlugin.class.Task, {}, { sort: { modifiedOn: SortingOrder.Descending } })
+      })
+
+      expect(clause).toMatch(/"modifiedOn" DESC/)
+      expect(clause).not.toContain('::numeric')
+      const stamps = tasks.map((t) => t.modifiedOn)
+      expect(stamps).toEqual([...stamps].sort((a, b) => b - a))
+    })
+
+    it('aggregates a real bigint column of a reverse lookup without a cast', async () => {
+      const task = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 't', description: '' })
+      await addComment(task, 1)
+
+      let tasks: Task[] = []
+      const clause = await orderClauseOf(async () => {
+        tasks = await client.findAll<Task>(
+          taskPlugin.class.Task,
+          {},
+          {
+            lookup: { _id: { comments: taskPlugin.class.TaskComment } },
+            sort: { '$lookup.comments.modifiedOn': SortingOrder.Descending } as any
+          }
+        )
+      })
+
+      expect(clause).toMatch(/max\(\w+\."modifiedOn"\)/)
+      expect(clause).not.toContain('::numeric')
+      expect(tasks.map((t) => t._id)).toEqual([task])
+    })
+
+    it('sorts by a jsonb number: a numeric string counts as its number, another string orders as null, the query does not fail', async () => {
+      await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'five', description: '', rate: 5 })
+      await operations.createDoc(
+        taskPlugin.class.Task,
+        '' as Ref<Space>,
+        { name: 'text', description: '', rate: 'n/a' } as any
+      )
+      await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'one', description: '', rate: 1 })
+      await operations.createDoc(
+        taskPlugin.class.Task,
+        '' as Ref<Space>,
+        { name: 'three', description: '', rate: '3' } as any
+      )
+
+      let tasks: Task[] = []
+      const clause = await orderClauseOf(async () => {
+        tasks = await client.findAll<Task>(taskPlugin.class.Task, {}, { sort: { rate: SortingOrder.Ascending } })
+      })
+
+      expect(clause).toContain('pg_input_is_valid')
+      expect(tasks.map((t) => t.name)).toEqual(['one', 'three', 'five', 'text'])
+    })
+
+    it('sorts by a reverse-lookup jsonb number: a numeric string counts, another string orders as null', async () => {
+      const numeric = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'numeric',
+        description: ''
+      })
+      const text = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'text',
+        description: ''
+      })
+      const quoted = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'quoted',
+        description: ''
+      })
+      await addComment(numeric, 10)
+      await addComment(text, 'oops')
+      await addComment(quoted, '5')
+
+      const tasks = await client.findAll<Task>(
+        taskPlugin.class.Task,
+        { _id: { $in: [numeric, text, quoted] } },
+        {
+          lookup: { _id: { comments: taskPlugin.class.TaskComment } },
+          sort: { '$lookup.comments.order': SortingOrder.Ascending } as any
+        }
+      )
+
+      expect(tasks.map((t) => t.name)).toEqual(['quoted', 'numeric', 'text'])
     })
   })
 

@@ -14,6 +14,7 @@
 //
 
 import {
+  AccountUuid,
   Branding,
   type Class,
   type Doc,
@@ -21,25 +22,34 @@ import {
   type FindOptions,
   FindResult,
   Hierarchy,
+  Markup,
   MeasureContext,
   ModelDb,
   Ref,
-  TxCUD,
+  TxCreateDoc,
   TxFactory,
+  TxRemoveDoc,
+  TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import {
+  AppPushNotification,
   DocNotifyContext,
-  MentionInboxNotification,
+  MentionNotification,
+  NotificationIntl,
   NotificationProvider,
   type NotificationProviderSetting,
   NotificationType,
-  type NotificationTypeSetting
+  type NotificationTypeSetting,
+  QueueNotificationMessage,
+  ReadState
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
+import { UserMentionInfo } from '@hcengineering/activity'
+import { IntlString } from '@hcengineering/platform'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]
@@ -51,7 +61,7 @@ export interface NotificationSettings {
 export type EmployeeInfo = Pick<Employee, '_id' | 'personUuid' | 'role' | 'active'>
 export type SocialIdentityInfo = Pick<SocialIdentity, '_id' | 'attachedTo'>
 
-export type NotifyResult = Record<Ref<NotificationProvider>, NotificationType[]>
+export type NotifyProviders = Record<Ref<NotificationProvider>, NotificationType[]>
 
 export interface Client {
   ctx: MeasureContext
@@ -75,11 +85,49 @@ export interface Client {
 }
 
 export interface MentionResult {
-  txes: TxCUD<Doc>[]
-  data: {
-    data: Partial<MentionInboxNotification>
-    context: DocNotifyContext | undefined
-    receiver: Receiver
-    notifyResult: NotifyResult
-  }[]
+  notification: Omit<MentionNotification, 'id' | 'type' | 'createdOn' | 'createdBy'>
+  // Whole message for the email template; `notification.markup` is the excerpt kept in the context.
+  markup: Markup
+  intl: Partial<NotificationIntl>
+  context: DocNotifyContext | undefined
+  receiver: Receiver
+  notifyProviders: NotifyProviders
 }
+
+export interface Result {
+  updateContextTx: TxUpdateDoc<DocNotifyContext>[]
+  createContextTx: TxCreateDoc<DocNotifyContext>[]
+  createAppPushNotificationTx: TxCreateDoc<AppPushNotification>[]
+  // `latestMessageId/latestMessageTimestamp` of the document's ReadState.
+  updateReadStateTx: TxUpdateDoc<ReadState>[]
+
+  createUserMentionInfoTx: TxCreateDoc<UserMentionInfo>[]
+  updateUserMentionInfoTx: TxUpdateDoc<UserMentionInfo>[]
+  removeUserMentionInfoTx: TxRemoveDoc<UserMentionInfo>[]
+
+  queueMessages: QueueNotificationMessage[]
+}
+
+export interface TxCache {
+  titleByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', string>>>
+  urlByDoc: Map<Ref<Doc>, string>
+  labelByDoc: Map<Ref<Doc>, IntlString>
+  identifierByDoc: Map<Ref<Doc>, string>
+  iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
+  templates: Map<string, QueueNotificationMessage['template']>
+}
+
+export type ObjectDisplayData = Pick<
+  DocNotifyContext,
+  | 'objectTitle'
+  | 'objectIdentifier'
+  | 'objectIcon'
+  | 'objectLabel'
+  | 'object'
+  | 'parentObjectId'
+  | 'parentObjectClass'
+  | 'parentObjectTitle'
+  | 'parentObjectIdentifier'
+  | 'parentObjectLabel'
+  | 'parentObjectIcon'
+>

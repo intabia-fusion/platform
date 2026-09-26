@@ -8,7 +8,6 @@
     "PlatformNotification": "プラットフォーム内",
     "Track": "追跡",
     "DontTrack": "追跡しない",
-    "BrowserNotification": "ブラウザ内",
     "Remove": "通知を削除",
     "RemoveAll": "すべての通知を削除",
     "MarkAllAsRead": "すべての通知を既読にする",
@@ -42,6 +41,10 @@
     "MarkReadAll": "すべて既読にする",
     "RemoveAllConfirmationTitle": "すべての通知をアーカイブしますか？",
     "RemoveAllConfirmationMessage": "本当にすべての通知をアーカイブしますか？この操作は元に戻せません。",
+    "UnsubscribeConfirmationTitle": "{name} の購読を解除しますか？",
+    "UnsubscribeConfirmationMessage": "{name} の共同編集者から削除され、通知は届かなくなります。",
+    "UnsubscribeSpaceConfirmationTitle": "{name} から退出しますか？",
+    "UnsubscribeSpaceConfirmationMessage": "{name} のメンバーから削除され、アクセス権を失い、通知も届かなくなります。",
     "StarDocument": "ドキュメントにスターを付ける",
     "UnstarDocument": "ドキュメントのスターを解除",
     "Unsubscribe": "購読解除",
@@ -86,7 +89,10 @@
     "Appearance": "外観",
     "ShowChatBadge": "チャットバッジを表示",
     "HasNewNotifications": "You have new notifications",
-    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "ReactedToYourMessage": "あなたのメッセージに反応しました",
+    "Clearing": "クリア中...",
+    "Reading": "読み込み中..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

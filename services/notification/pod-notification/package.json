@@ -13,7 +13,7 @@
   "scripts": {
     "build": "compile",
     "build:watch": "compile",
-    "test": "jest --passWithNoTests --silent",
+    "test": "cross-env SOURCE=test jest --passWithNoTests --silent",
     "_phase:bundle": "pnpm run bundle",
     "_phase:docker-build": "pnpm run docker:build",
     "_phase:docker-staging": "pnpm run docker:staging",
@@ -55,9 +55,17 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/analytics-service": "workspace:^0.7.17",
+    "@hcengineering/api-client": "workspace:^0.7.18",
     "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/kafka": "workspace:^0.7.19",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/retry": "workspace:^0.7.17",
+    "@hcengineering/server-core": "workspace:^0.7.18",
+    "@hcengineering/server-client": "workspace:^0.7.17",
+    "@hcengineering/server-token": "workspace:^0.7.17",
     "cors": "catalog:",
     "dotenv": "catalog:",
     "express": "catalog:",

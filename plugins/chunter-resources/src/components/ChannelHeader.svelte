@@ -74,7 +74,7 @@
       return
     }
     const dm = object as DirectMessage
-    const res = await getDmPersons(client, dm)
+    const res = await getDmPersons(client, dm.members)
     directPerson = dm.members.length === 2 && res.length === 1 ? res[0] : undefined
   })
   $: void updateDirectPerson(object, _class)

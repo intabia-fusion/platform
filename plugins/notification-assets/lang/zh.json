@@ -8,7 +8,6 @@
     "PlatformNotification": "平台内",
     "Track": "跟踪",
     "DontTrack": "不跟踪",
-    "BrowserNotification": "浏览器内",
     "Remove": "删除通知",
     "RemoveAll": "删除所有通知",
     "MarkAllAsRead": "标记所有通知为已读",
@@ -42,6 +41,10 @@
     "MarkReadAll": "全部标记为已读",
     "RemoveAllConfirmationTitle": "归档所有通知？",
     "RemoveAllConfirmationMessage": "您确定要归档所有通知吗？此操作无法撤销。",
+    "UnsubscribeConfirmationTitle": "取消订阅 {name}？",
+    "UnsubscribeConfirmationMessage": "您将被从 {name} 的协作者中移除，并且不再接收通知。",
+    "UnsubscribeSpaceConfirmationTitle": "退出 {name}？",
+    "UnsubscribeSpaceConfirmationMessage": "您将被从 {name} 的成员中移除，失去访问权限，并且不再接收通知。",
     "StarDocument": "标记文档为星标",
     "UnstarDocument": "取消文档星标",
     "Unsubscribe": "取消订阅",
@@ -86,7 +89,10 @@
     "Appearance": "外观",
     "ShowChatBadge": "显示聊天徽章",
     "HasNewNotifications": "You have new notifications",
-    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "ReactedToYourMessage": "对您的消息做出了反应",
+    "Clearing": "正在清除...",
+    "Reading": "正在读取..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

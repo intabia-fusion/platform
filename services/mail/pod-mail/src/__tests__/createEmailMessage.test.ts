@@ -39,7 +39,7 @@ describe('createEmailMessage', () => {
   let createEmailMessage: any
 
   beforeEach(async () => {
-    createEmailMessage = (await import('../main')).createEmailMessage
+    createEmailMessage = (await import('../utils')).createEmailMessage
   })
 
   const notification = (over: Record<string, any> = {}): any => ({

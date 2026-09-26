@@ -17,7 +17,7 @@ import { EXPECTED_SCHEMA_VERSION, getDBClient } from '@hcengineering/postgres'
 import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 
 import config from './config'
-import { getActiveMigrationFiles, getCleanMigrationName, resolveMigrationsDir, setupCtx } from './utils'
+import { getActiveMigrationFiles, isMigrationApplied, resolveMigrationsDir, setupCtx } from './utils'
 import {
   applyMigration,
   ensureSystemSchema,
@@ -48,6 +48,11 @@ async function main (): Promise<void> {
 
         const dbFlavor = await getDbFlavor(sql)
         ctx.info(`Database flavor detected: ${dbFlavor}`)
+        // The schema-changing files exist per flavor only; an unknown engine would apply the few
+        // generic ones, bump the version and leave the rest silently missing.
+        if (dbFlavor === 'unknown') {
+          throw new Error('Cannot detect the database flavor (postgres or cockroach), refusing to migrate')
+        }
 
         const migrationsDir = resolveMigrationsDir()
         const files = getActiveMigrationFiles(migrationsDir, dbFlavor)
@@ -67,8 +72,7 @@ async function main (): Promise<void> {
         ctx.info(`Applied migrations count: ${appliedSet.size}, Total available: ${files.length}`)
 
         for (const file of files) {
-          const cleanName = getCleanMigrationName(file)
-          if (appliedSet.has(file) || appliedSet.has(cleanName)) {
+          if (isMigrationApplied(file, appliedSet)) {
             ctx.info(`Migration ${file} is already applied.`)
             continue
           }

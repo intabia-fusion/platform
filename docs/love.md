@@ -243,7 +243,7 @@
 ### 7.2 Сценарий A1: зовём в существующий митинг
 
 1. **caller** `$push` получателя в `meeting.members` (если owner или митинг не private), затем `createDoc invite-request { from, to, meeting, status: 'pending' }`.
-2. **Триггер** -> `createDoc invite-response` в `PersonSpace(to)` + `CommonInboxNotification(InvitingYou)` (persistent, missed-call индикатор).
+2. **Триггер** -> `createDoc invite-response` в `PersonSpace(to)` + `CreateNotificationAction(InvitingYou)` (persistent common-уведомление, missed-call индикатор; создаёт его `services/notifications`, см. [features/notifications.md](features/notifications.md)).
 3. **recipient** Accept -> `updateDoc invite-response { status: 'accepted', acceptedSessionId }`.
 4. **Триггер** -> `removeDoc invite-response` + sync `invite-request`.
 5. **caller** видит `accepted` -> `removeDoc invite-request`.

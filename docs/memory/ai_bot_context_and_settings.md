@@ -7,7 +7,7 @@
 - Top-level в Space (`event.objectIdIsSpace`) - контекст только текущего дня (`modifiedOn >= startOfToday`); тред (`objectIdIsSpace=false`) - весь. Граница резолвится в `workspace/workspaceClient.ts`.
 - Триггер сервера собирает событие через `getMessageData` (`server-plugins/ai-bot-resources/src/index.ts`) - тредовой ветки для top-level Direct нет, бот отвечает inline.
 - Тул `load_thread_history(beforeIso, limit)` догружает историю старше дня (`WorkspaceClient.loadThreadHistory`).
-- Баг (исправлен): `objectIdIsSpace` всегда `boolean`, поэтому `!= null` было всегда true - бот писал `ThreadMessage.space = parentMsg._id` вместо `DirectMessage.space`, а `channelDataProvider.ts` фильтрует по `space`, так что тред казался пустым при непустой БД. Строка - `workspace/workspaceClient.ts`.
+- Баг (исправлен): `objectIdIsSpace` всегда `boolean`, поэтому `!= null` было всегда true - бот писал `ThreadMessage.space = parentMsg._id` вместо `DirectMessage.space`, а загрузчик чата (сейчас `chatViewport.ts`, тогда `channelDataProvider.ts`) фильтрует по `space`, так что тред казался пустым при непустой БД. Строка - `workspace/workspaceClient.ts`.
 
 ## Память всегда в промпте
 

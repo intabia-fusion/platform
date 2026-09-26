@@ -13,20 +13,15 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage } from '@hcengineering/activity'
+import { type ActivityMessage } from '@hcengineering/activity'
 import { type Channel, type ChatMessage } from '@hcengineering/chunter'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
-import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
+import { type NotificationAppearancePreference } from '@hcengineering/notification'
 import { parseChunterSpaceLinkId } from './linkId'
-import {
-  getNotificationsCount,
-  InboxNotificationsClientImpl,
-  isActivityNotification,
-  isMentionNotification
-} from '@hcengineering/notification-resources'
+import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
 import chunter from './plugin'
 
@@ -88,7 +83,7 @@ import {
   canReplyToThread,
   getDmName,
   getTitle,
-  getUnreadThreadsCount,
+  getUnreadThreadsCountStore,
   translateMessage,
   showOriginalMessage,
   canTranslateMessage,
@@ -224,7 +219,7 @@ export default async (): Promise<Resources> => ({
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
     GetChunterSpaceLinkId: getChunterSpaceLinkId,
     ParseChunterSpaceLinkId: parseChunterSpaceLinkId,
-    GetUnreadThreadsCount: getUnreadThreadsCount,
+    GetUnreadThreadsCountStore: getUnreadThreadsCountStore,
     GetThreadLink: getThreadLink,
     ReplyToThread: replyToThread,
     CanReplyToThread: canReplyToThread,
@@ -237,32 +232,14 @@ export default async (): Promise<Resources> => ({
     OpenThreadInSidebar: openThreadInSidebar,
     LocationDataResolver: locationDataResolver,
     ShowNotifyMarkerFn: async (
-      contexts: DocNotifyContext[],
+      unreadCount: number,
       preference?: NotificationAppearancePreference
     ): Promise<boolean> => {
       if (preference?.showChatBadge === false) return false
+      if (unreadCount === 0) return false
 
-      const hasUpdates = contexts.some((context) => (context.lastUpdate ?? 0) > (context.lastView ?? 0))
-      if (!hasUpdates) return false
-
-      const notificationClient = InboxNotificationsClientImpl.getClient()
-      const client = getClient()
-      const hierarchy = client.getHierarchy()
-
-      for (const context of contexts) {
-        if ((context.lastUpdate ?? 0) <= (context.lastView ?? 0)) continue
-
-        const notifications = get(notificationClient.inboxNotificationsByContext).get(context._id) ?? []
-        const activityNotifications = notifications.filter(isActivityNotification)
-        const mentionNotifications = notifications
-          .filter(isMentionNotification)
-          .filter((it) => hierarchy.isDerived(it.mentionedInClass, activity.class.ActivityMessage))
-        const unreadCount = getNotificationsCount(context, [...activityNotifications, ...mentionNotifications])
-        if (unreadCount > 0) {
-          return true
-        }
-      }
-      return false
+      const unread = get(NotificationClientImpl.getClient().unreadByDoc).values()
+      return Array.from(unread).some((it) => (it.notifiedMessagesCount ?? 0) > 0)
     }
   },
   completion: {

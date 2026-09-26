@@ -80,21 +80,23 @@ export async function markAllAsApplied (sql: Sql, files: string[]): Promise<void
   })
 }
 
+const markAppliedSql = `
+  INSERT INTO system._migrations (name)
+  VALUES ($1)
+  ON CONFLICT (name) DO NOTHING
+`
+
+// One transaction per file together with its `_migrations` row. A failure is rethrown, not marked
+// as applied: the schema would lag behind the version and the adapter would silently keep the
+// missing columns in `data`. The file is retried on the next run.
 export async function applyMigration (sql: Sql, fileName: string, dir: string, ctx: MeasureContext): Promise<void> {
+  const sqlContent = fs.readFileSync(path.join(dir, fileName), 'utf8')
   try {
-    const sqlContent = fs.readFileSync(path.join(dir, fileName), 'utf8')
     await withRetry(
       async () => {
         await sql.begin(async (txn: TransactionSql) => {
           await txn.unsafe(sqlContent)
-          await txn.unsafe(
-            `
-          INSERT INTO system._migrations (name) 
-          VALUES ($1)
-          ON CONFLICT (name) DO NOTHING
-        `,
-            [fileName]
-          )
+          await txn.unsafe(markAppliedSql, [fileName])
         })
       },
       {
@@ -109,18 +111,12 @@ export async function applyMigration (sql: Sql, fileName: string, dir: string, c
     )
     ctx.info(`Successfully applied migration ${fileName}`)
   } catch (err: any) {
-    ctx.error(`Failed to apply migration ${fileName}, marking as applied anyway`, {
+    ctx.error(`Failed to apply migration ${fileName}, schema version is not updated`, {
       error: err.message,
-      code: err.code
+      code: err.code,
+      position: err.position
     })
-    await sql.unsafe(
-      `
-      INSERT INTO system._migrations (name) 
-      VALUES ($1)
-      ON CONFLICT (name) DO NOTHING
-    `,
-      [fileName]
-    )
+    throw err
   }
 }
 

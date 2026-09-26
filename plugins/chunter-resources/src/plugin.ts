@@ -18,7 +18,7 @@ import type { Client, Doc, Ref, Space } from '@hcengineering/core'
 import type { IntlString, Resource } from '@hcengineering/platform'
 import { mergeIds } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
-import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
+import type { NavCountStore } from '@hcengineering/workbench'
 
 export default mergeIds(chunterId, chunter, {
   component: {
@@ -43,9 +43,8 @@ export default mergeIds(chunterId, chunter, {
     DirectTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
     DirectLabelProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<IntlString>>,
     ChannelTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
-    GetUnreadThreadsCount: '' as Resource<
-      (inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>) => number
-    >
+    ChunterBrowserVisible: '' as Resource<(spaces: Space[]) => Promise<boolean>>,
+    GetUnreadThreadsCountStore: '' as Resource<() => Promise<NavCountStore>>
   },
   actionImpl: {},
   string: {
@@ -63,7 +62,6 @@ export default mergeIds(chunterId, chunter, {
     In: '' as IntlString,
     Replies: '' as IntlString,
     Topic: '' as IntlString,
-    Threads: '' as IntlString,
     New: '' as IntlString,
     GetNewReplies: '' as IntlString,
     TurnOffReplies: '' as IntlString,

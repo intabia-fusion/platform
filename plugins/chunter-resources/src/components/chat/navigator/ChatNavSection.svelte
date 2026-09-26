@@ -34,15 +34,9 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocIdentifier } from '@hcengineering/view-resources'
-  import {
-    getNotificationsCount,
-    InboxNotificationsClientImpl,
-    isActivityNotification,
-    isMentionNotification,
-    NotifyMarker
-  } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import { Chat } from '@hcengineering/chunter'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { getUnreadMessageCount } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
@@ -60,23 +54,26 @@
   export let actions: Action[] = []
   export let createAction: Action | undefined
   export let objectId: Ref<Doc> | undefined
-  export let pinned: Chat[] = []
   export let sortByScore: boolean = false
   export let sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = inboxClient.contextByDoc
-  const contextsStore = inboxClient.contexts
-  const notificationsByContextStore = inboxClient.inboxNotificationsByContext
+  const dispatcher = createEventDispatcher()
+  const unreadByDoc = NotificationClientImpl.getClient().unreadByDoc
 
   let sortedItems: ChatNavItemModel[] = []
   let items: ChatNavItemModel[] = []
-
-  const dispatcher = createEventDispatcher()
-
   let canShowMore = false
+  let count: number = 0
+  let isOpen = true
+
+  // A collapsed section shows the unread total of the documents it lists, from the shared unread
+  // store. Not by class: a starred channel lives in another section, hidden and archived ones in none.
+  $: sectionIds = new Set(objects.map(({ doc }) => doc._id))
+  $: count = isOpen
+    ? 0
+    : getUnreadMessageCount(Array.from($unreadByDoc.values()).filter((it) => sectionIds.has(it.objectId)))
 
   $: void getChatNavItems(
     objects,
@@ -101,7 +98,7 @@
           return (a.title ?? a.identifier).localeCompare(b.title ?? b.identifier)
         })
       : sortFn(items, {
-          contextByDoc: $contextByDocStore,
+          unreadByDoc: $unreadByDoc,
           userStatusByAccount: $statusByUserStore
         })
 
@@ -136,7 +133,7 @@
 
         let icon: AnySvelteComponent | undefined = undefined
 
-        if (iconMixin?.component) {
+        if (iconMixin?.component != null) {
           icon = await getResource(iconMixin.component)
         }
 
@@ -176,37 +173,6 @@
       menuOpened = false
     })
   }
-
-  let count: number = 0
-  let contexts: DocNotifyContext[] = []
-
-  $: pinnedIds = pinned.map((it) => it.attachedTo)
-  $: contexts =
-    _class === core.class.Doc
-      ? sortedItems.map((it) => $contextByDocStore.get(it.object._id)).filter(notEmpty)
-      : $contextsStore.filter((it) => hierarchy.isDerived(it.objectClass, _class) && !pinnedIds.includes(it.objectId))
-
-  async function calculateNotifications (
-    contexts: DocNotifyContext[],
-    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): Promise<void> {
-    const notifications = contexts
-      .flatMap((context) => notificationsByContext.get(context._id) ?? [])
-      .filter((n) => {
-        if (isActivityNotification(n)) return true
-
-        return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)
-      })
-
-    count = getNotificationsCount(contexts, notifications)
-  }
-
-  $: void calculateNotifications(contexts, $notificationsByContextStore)
-
-  $: notify = sortedItems.some((it) => {
-    const c = $contextByDocStore.get(it.id)
-    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotifiedMessage ?? 0) < (c?.lastUpdate ?? 0)
-  })
 </script>
 
 {#if sortedItems.length > 0 || showEmpty}
@@ -225,10 +191,16 @@
     contextClickType="menu"
     showMenu={menuOpened}
     testid={`section-${id}`}
+    bind:isOpen
   >
     {#each sortedItems as item (getChatNavItemKey(item))}
-      {@const context = $contextByDocStore.get(item.id)}
-      <ChatNavItem {context} isSelected={objectId === item.id} {item} type={'type-object'} on:select />
+      <ChatNavItem
+        unread={$unreadByDoc.get(item.id)}
+        isSelected={objectId === item.id}
+        {item}
+        type={'type-object'}
+        on:select
+      />
     {/each}
     {#if canShowMore}
       <div class="showMore">
@@ -237,10 +209,15 @@
     {:else}
       <span class="freeSpace" />
     {/if}
-    <svelte:fragment slot="visible" let:isOpen>
-      {#if visibleItem !== undefined && !isOpen}
-        {@const context = $contextByDocStore.get(visibleItem.id)}
-        <ChatNavItem {context} isSelected item={visibleItem} type={'type-object'} on:select />
+    <svelte:fragment slot="visible" let:isOpen={isOpenItem}>
+      {#if visibleItem !== undefined && !isOpenItem}
+        <ChatNavItem
+          unread={$unreadByDoc.get(visibleItem.id)}
+          isSelected
+          item={visibleItem}
+          type={'type-object'}
+          on:select
+        />
       {/if}
     </svelte:fragment>
 
@@ -265,18 +242,12 @@
         </button>
       {/if}
     </svelte:fragment>
-    <svelte:fragment slot="after" let:isOpen>
-      {#if !isOpen}
+    <svelte:fragment slot="after" let:isOpen={isOpenItem}>
+      {#if !isOpenItem}
         {#if count > 0}
           <div class="antiHSpacer" />
           <div class="notify">
             <NotifyMarker {count} />
-          </div>
-          <div class="antiHSpacer" />
-        {:else if notify}
-          <div class="antiHSpacer" />
-          <div class="notify">
-            <NotifyMarker count={0} kind="simple" size="xx-small" color="gray" />
           </div>
           <div class="antiHSpacer" />
         {/if}

@@ -28,7 +28,7 @@
 
     const dateStart = new Date(d).setHours(0, 0, 0, 0)
     const today = new Date(now).setHours(0, 0, 0, 0)
-    const timeStr = d.toLocaleTimeString(lang, { hour: 'numeric', minute: 'numeric' })
+    const timeStr = d.toLocaleTimeString('default', { hour: 'numeric', minute: 'numeric' })
 
     const diffTime = today - dateStart
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))

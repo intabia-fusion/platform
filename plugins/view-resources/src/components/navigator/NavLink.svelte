@@ -67,17 +67,31 @@
   }
 
   function clickHandler (e: MouseEvent): void {
-    if (e.metaKey || e.ctrlKey) return
+    if (disabled || e.metaKey || e.ctrlKey) return
     e.preventDefault()
     setFilters([])
     navigate(loc)
   }
 </script>
 
-{#if disabled}
+<!-- One element in both states: swapping the anchor for the bare slot on `disabled` re-created
+     the slot content, so the app icon of the page being left blinked on every app switch. -->
+<a
+  class:noUnderline
+  class:disabled
+  class="noBold"
+  style:flex-shrink={shrink}
+  href={disabled ? undefined : href}
+  on:click={clickHandler}
+>
   <slot />
-{:else}
-  <a class:noUnderline class="noBold" style:flex-shrink={shrink} {href} on:click={clickHandler}>
-    <slot />
-  </a>
-{/if}
+</a>
+
+<style lang="scss">
+  // Without an href the anchor is plain text: keep the look the bare slot had.
+  a.disabled {
+    color: inherit;
+    font-weight: inherit;
+    cursor: inherit;
+  }
+</style>

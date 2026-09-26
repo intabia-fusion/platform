@@ -1,5 +1,6 @@
 import { type DocumentUpdate, type Ref, type Space, type WorkspaceUuid } from '@hcengineering/core'
 import {
+  castForColumn,
   convertArrayParams,
   convertDoc,
   decodeArray,
@@ -50,9 +51,7 @@ describe('utils - inferType', () => {
   })
 
   it('should handle arrays with all null elements', () => {
-    // BUG: Arrays with only null elements return '::jsonb[]'
-    // Expected: Should probably return '' or handle as empty array
-    expect(inferType([null, null])).toBe('::jsonb[]')
+    expect(inferType([null, null])).toBe('::jsonb')
   })
 
   it('should infer Date type as text', () => {
@@ -911,5 +910,32 @@ describe('parseDoc without jsonb payload', () => {
 
     const res: any = parseDoc(doc, {} as any, true)
     expect(res['%hash%']).toBe('h')
+  })
+})
+
+describe('castForColumn', () => {
+  it('binds a whole number in the type of an integer or bigint column', () => {
+    expect(castForColumn('::numeric', 'integer', 0)).toBe('::integer')
+    expect(castForColumn('::numeric', 'integer', -2147483647)).toBe('::integer')
+    expect(castForColumn('::numeric[]', 'integer', [1, 2, 3])).toBe('::integer[]')
+    expect(castForColumn('::numeric', 'bigint', 1790000000000)).toBe('::bigint')
+    expect(castForColumn('::numeric[]', 'bigint', [10, 1790000000000])).toBe('::bigint[]')
+  })
+
+  it('keeps numeric for what a parameter of the column type would reject', () => {
+    expect(castForColumn('::numeric', 'integer', 1.5)).toBe('::numeric')
+    expect(castForColumn('::numeric', 'integer', 3000000000)).toBe('::numeric')
+    expect(castForColumn('::numeric[]', 'integer', [1, 2.5])).toBe('::numeric[]')
+    expect(castForColumn('::numeric', 'bigint', 1790000000000.5)).toBe('::numeric')
+    expect(castForColumn('::numeric', 'bigint', 2 ** 60)).toBe('::numeric')
+    expect(castForColumn('::numeric', 'bigint', Number.POSITIVE_INFINITY)).toBe('::numeric')
+    expect(castForColumn('::numeric[]', 'bigint', [10, 0.5])).toBe('::numeric[]')
+  })
+
+  it('leaves jsonb fields, other columns and other value types as they were', () => {
+    expect(castForColumn('::numeric', undefined, 10)).toBe('::numeric')
+    expect(castForColumn('::numeric', 'text', 10)).toBe('::numeric')
+    expect(castForColumn('::text', 'integer', '10')).toBe('::text')
+    expect(castForColumn('::text', 'bigint', '10')).toBe('::text')
   })
 })

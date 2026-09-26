@@ -20,11 +20,9 @@ import core, {
   Class,
   combineAttributes,
   concatLink,
-  Data,
   Doc,
   DocumentUpdate,
   generateId,
-  readOnlyGuestAccountUuid,
   Ref,
   Space,
   Tx,
@@ -48,11 +46,10 @@ import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
-import { getAccountBySocialId, getSocialStrings } from '@hcengineering/server-contact'
-import notification, { CommonInboxNotification } from '@hcengineering/notification'
+import { getAccountBySocialId } from '@hcengineering/server-contact'
+import notification from '@hcengineering/notification'
 
-import { getInviteAllowedProviders } from './utils'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -234,7 +231,7 @@ export async function OnParticipantInfo (txes: Tx[], control: TriggerControl): P
   return result
 }
 
-const meetingMinutesUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const meetingMinutesUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const meetingMinutes = doc as MeetingMinutes
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 
@@ -421,79 +418,51 @@ async function createInviteNotificationTxs (
   )[0]
   if (employee?.personUuid == null) return result
   const account = employee.personUuid
-  const socialIds = await getSocialStrings(control, employee._id)
-  const allowedProviders = await getInviteAllowedProviders(control, socialIds)
 
   let notificationObjectId: Ref<Doc>
   let notificationObjectClass: Ref<Class<Doc>>
-  let notificationObjectSpace: Ref<Space>
+
   if (source.meeting !== undefined) {
     const meeting = (
       await control.findAll(control.ctx, love.class.MeetingMinutes, { _id: source.meeting }, { limit: 1 })
     )[0]
     notificationObjectId = meeting?._id ?? source._id
     notificationObjectClass = meeting?._class ?? source._class
-    notificationObjectSpace = meeting?.space ?? source.space
   } else {
     notificationObjectId = source.from
     notificationObjectClass = contact.class.Person
-    notificationObjectSpace = contact.space.Contacts
-  }
-
-  const currentContext = (
-    await control.findAll(control.ctx, notification.class.DocNotifyContext, {
-      objectId: notificationObjectId,
-      user: account
-    })
-  )[0]
-  let contextId = currentContext?._id
-  if (contextId === undefined) {
-    const createContextTx = control.txFactory.createTxCreateDoc(
-      notification.class.DocNotifyContext,
-      recipientSpace._id,
-      {
-        objectId: notificationObjectId,
-        objectClass: notificationObjectClass,
-        objectSpace: notificationObjectSpace,
-        user: account,
-        lastNotify: modifiedOn
-      }
-    )
-    contextId = createContextTx.objectId
-    result.push(createContextTx)
-  } else {
-    result.push(
-      control.txFactory.createTxUpdateDoc(currentContext._class, currentContext.space, currentContext._id, {
-        lastNotify: modifiedOn
-      })
-    )
   }
 
   const senderName = sender !== undefined ? formatName(sender.name, control.branding?.lastNameFirst) : 'System'
   // Б flow (knock-to-private-room) — `source.room !== undefined`. The
   // recipient is the meeting owner being asked to admit a stranger, so use
-  // the IsKnocking copy ("{name} is knocking..."). Scenario A keeps the
-  // InvitingYou wording ("{name} is asking you to join").
+  // the JoinRequest copy ("{name} wants to join the meeting"). Scenario A
+  // keeps the InvitingYou wording ("{name} is asking you to join").
   const isKnock = source.room !== undefined
   const messageLabel = isKnock ? love.string.JoinRequestBody : love.string.InvitingYou
   const titleLabel = isKnock ? love.string.JoinRequestTitle : love.string.MeetingRequest
-  const data: Data<CommonInboxNotification> = {
-    docNotifyContext: contextId,
-    user: account,
-    message: messageLabel,
-    intlParams: { name: senderName, senderName },
-    title: titleLabel,
-    body: messageLabel,
-    header: titleLabel,
-    headerIcon: love.icon.Invite,
-    objectId: notificationObjectId,
-    objectClass: notificationObjectClass,
-    isViewed: employee.role === 'GUEST' && account === readOnlyGuestAccountUuid,
-    archived: false,
-    allowedProviders: Object.fromEntries(allowedProviders.map((provider) => [provider, [love.ids.InviteNotification]]))
-  }
   result.push(
-    control.txFactory.createTxCreateDoc(notification.class.CommonInboxNotification, recipientSpace._id, { ...data })
+    control.txFactory.createTxCreateDoc(
+      notification.class.CreateNotificationAction,
+      recipientSpace._id,
+      {
+        attachedTo: notificationObjectId,
+        attachedToClass: notificationObjectClass,
+        account,
+        type: love.ids.InviteNotification,
+        notification: {
+          messageIntl: messageLabel,
+          icon: love.icon.Invite
+        },
+        intl: {
+          titleIntl: titleLabel,
+          bodyIntl: messageLabel,
+          intlParams: { name: senderName }
+        }
+      },
+      undefined,
+      modifiedOn
+    )
   )
   return result
 }

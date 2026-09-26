@@ -37,7 +37,7 @@ import task, { makeRank } from '@hcengineering/task'
 import time, { ProjectToDo, ToDo, ToDoPriority, WorkSlot } from '@hcengineering/time'
 import tracker, { Issue, IssueStatus, Project, TimeSpendReport } from '@hcengineering/tracker'
 import {
-  CreateNotificationFunc,
+  CreateTxNotificationFunc,
   CreateNotificationResult,
   Receiver,
   TypeMatchClient,
@@ -538,33 +538,7 @@ async function updateIssueHandler (tx: TxUpdateDoc<Issue>, control: TriggerContr
   return res
 }
 
-const TodoCreateNotification: CreateNotificationFunc = async (
-  _client: TypeMatchClient,
-  _tx: TxCUD<Doc>,
-  attachedToDoc: Doc | undefined,
-  object: Doc,
-  receiver: Receiver
-): Promise<CreateNotificationResult | undefined> => {
-  const todo = object as ToDo
-
-  if (todo.user !== receiver.employeeRef) return undefined
-
-  return {
-    header: time.string.ToDo,
-    headerIcon: time.icon.Planned,
-    headerObjectId: todo._id,
-    headerObjectClass: todo._class,
-    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
-  }
-}
-
-const TodoReassignedMatch: TypeMatchFunc = (_client, _type, _typeObject, doc, receiver): boolean => {
-  const todo = doc as ToDo
-  // The same field is cleared when the task comes back, and that is not worth a notification.
-  return todo.reassignedTo != null && todo.doneOn == null && todo.user === receiver.employeeRef
-}
-
-const TodoReassignedNotification: CreateNotificationFunc = async (
+const TodoCreateNotification: CreateTxNotificationFunc = async (
   _client: TypeMatchClient,
   _tx: TxCUD<Doc>,
   _attachedToDoc: Doc | undefined,
@@ -576,11 +550,45 @@ const TodoReassignedNotification: CreateNotificationFunc = async (
   if (todo.user !== receiver.employeeRef) return undefined
 
   return {
-    header: time.string.ToDoReassigned,
-    headerIcon: time.icon.Planned,
-    headerObjectId: todo._id,
-    headerObjectClass: todo._class,
-    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+    notification: {
+      header: {
+        titleIntl: time.string.ToDo,
+        icon: time.icon.Planned,
+        objectId: todo._id,
+        objectClass: todo._class
+      },
+      markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+    }
+  }
+}
+
+const TodoReassignedMatch: TypeMatchFunc = (_client, _type, _typeObject, doc, receiver): boolean => {
+  const todo = doc as ToDo
+  // The same field is cleared when the task comes back, and that is not worth a notification.
+  return todo.reassignedTo != null && todo.doneOn == null && todo.user === receiver.employeeRef
+}
+
+const TodoReassignedNotification: CreateTxNotificationFunc = async (
+  _client: TypeMatchClient,
+  _tx: TxCUD<Doc>,
+  _attachedToDoc: Doc | undefined,
+  object: Doc,
+  receiver: Receiver
+): Promise<CreateNotificationResult | undefined> => {
+  const todo = object as ToDo
+
+  if (todo.user !== receiver.employeeRef) return undefined
+
+  return {
+    notification: {
+      header: {
+        titleIntl: time.string.ToDoReassigned,
+        icon: time.icon.Planned,
+        objectId: todo._id,
+        objectClass: todo._class
+      },
+      markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(todo.title))))
+    }
   }
 }
 
@@ -608,7 +616,7 @@ const IssueClosedToDoMatch: TypeMatchFunc = async (
   return await hasOpenToDo(client, issue, receiver)
 }
 
-const IssueClosedToDoNotification: CreateNotificationFunc = async (
+const IssueClosedToDoNotification: CreateTxNotificationFunc = async (
   _client: TypeMatchClient,
   _tx: TxCUD<Doc>,
   _attachedToDoc: Doc | undefined,
@@ -619,11 +627,15 @@ const IssueClosedToDoNotification: CreateNotificationFunc = async (
   const issue = object as Issue
 
   return {
-    header: time.string.IssueClosedCloseToDo,
-    headerIcon: time.icon.Planned,
-    headerObjectId: issue._id,
-    headerObjectClass: issue._class,
-    markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(issue.title))))
+    notification: {
+      header: {
+        titleIntl: time.string.IssueClosedCloseToDo,
+        icon: time.icon.Planned,
+        objectId: issue._id,
+        objectClass: issue._class
+      },
+      markup: jsonToMarkup(nodeDoc(nodeParagraph(nodeText(issue.title))))
+    }
   }
 }
 

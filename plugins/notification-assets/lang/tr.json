@@ -8,7 +8,6 @@
     "PlatformNotification": "platformda",
     "Track": "Takip et",
     "DontTrack": "Takip etme",
-    "BrowserNotification": "tarayıcıda",
     "Remove": "Bildirimi sil",
     "RemoveAll": "Tüm bildirimleri sil",
     "MarkAllAsRead": "Tümünü okundu olarak işaretle",
@@ -42,6 +41,10 @@
     "MarkReadAll": "Tümünü okundu olarak işaretle",
     "RemoveAllConfirmationTitle": "Tüm bildirimleri arşivle?",
     "RemoveAllConfirmationMessage": "Tüm bildirimleri arşivlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "UnsubscribeConfirmationTitle": "{name} aboneliğinden çıkılsın mı?",
+    "UnsubscribeConfirmationMessage": "{name} katkıda bulunanları arasından çıkarılacaksınız ve bildirim almayacaksınız.",
+    "UnsubscribeSpaceConfirmationTitle": "{name} alanından ayrılınsın mı?",
+    "UnsubscribeSpaceConfirmationMessage": "{name} üyeleri arasından çıkarılacaksınız, erişiminizi kaybedeceksiniz ve bildirim almayacaksınız.",
     "StarDocument": "Dokümanı yıldızla",
     "UnstarDocument": "Doküman yıldızını kaldır",
     "Unsubscribe": "Abonelikten çık",
@@ -86,7 +89,10 @@
     "Appearance": "Görünüm",
     "ShowChatBadge": "Uygulama chat bildirimlerindeki göstergeyi göster",
     "HasNewNotifications": "You have new notifications",
-    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "ReactedToYourMessage": "mesajınıza tepki verdi",
+    "Clearing": "Temizleniyor...",
+    "Reading": "Okunuyor..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

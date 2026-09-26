@@ -57,6 +57,7 @@
     "@hcengineering/training": "workspace:^0.7.0",
     "fast-equals": "catalog:",
     "lexorank": "catalog:",
-    "svelte": "catalog:"
+    "svelte": "catalog:",
+    "@hcengineering/notification": "workspace:^0.7.0"
   }
 }

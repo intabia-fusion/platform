@@ -21,14 +21,14 @@ import {
   type AccountUuid,
   type DocumentQuery
 } from '@hcengineering/core'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type UnreadContext } from '@hcengineering/notification'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
 import { type Chat } from '@hcengineering/chunter'
 
 export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 
 export interface SortFnOptions {
-  contextByDoc: Map<Ref<Doc>, DocNotifyContext>
+  unreadByDoc: Map<Ref<Doc>, UnreadContext>
   userStatusByAccount: Map<AccountUuid, UserStatus>
 }
 
@@ -44,6 +44,8 @@ export interface ChatNavGroupModel {
   _class?: Ref<Class<Doc>>
   skipClasses?: Array<Ref<Class<Doc>>>
   showEmpty?: boolean
+  // Loaded after the other groups have answered
+  deferred?: boolean
 }
 
 export interface ChatNavItemModel {

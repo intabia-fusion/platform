@@ -1,5 +1,6 @@
 //
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,11 +14,16 @@
 // limitations under the License.
 //
 
-import { MeasureContext, newMetrics, Tx } from '@hcengineering/core'
+import { generateId, MeasureContext, newMetrics, Tx } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import serverCore, { initStatisticsContext, QueueTopic } from '@hcengineering/server-core'
+import serverCore, {
+  initStatisticsContext,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceMessage
+} from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { Analytics } from '@hcengineering/analytics'
@@ -36,9 +42,9 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
-import { withRetry } from '@hcengineering/retry'
 
 import { Worker } from './worker'
+import { WorkspaceBreaker } from './breaker'
 import config from './config'
 
 void main().catch((err) => {
@@ -64,31 +70,68 @@ async function main (): Promise<void> {
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
+
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
   const worker = new Worker(ctx, model, queue)
 
-  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
-    try {
-      const ws = queueMessage.workspace
-      const tx = queueMessage.value
+  // The queue retries a failing message forever, and a partition is consumed in order: one tx that
+  // can never succeed (a batch the transactor keeps rejecting with 500, a broken workspace) would
+  // stop the notifications of every workspace. It is retried for a while, outages pass, then
+  // dropped, and the workspace is skipped for a cooldown so that its next txes do not each spend
+  // the same budget on the partition (see WorkspaceBreaker).
+  const breaker = new WorkspaceBreaker({
+    giveUpAfterMs: 5 * 60 * 1000,
+    cooldownMs: 5 * 60 * 1000,
+    probeGiveUpAfterMs: 30 * 1000
+  })
 
+  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
+    const ws = queueMessage.workspace
+    const tx = queueMessage.value
+    if (breaker.shouldSkip(ws)) return
+    try {
       await worker.tx(ctx, ws, tx)
+      const skipped = breaker.succeeded(ws, tx._id)
+      if (skipped !== undefined) {
+        ctx.warn('Workspace recovered, tx processing resumed', { wsUuid: ws, skippedTxes: skipped })
+      }
     } catch (e) {
-      ctx.error('Failed to process tx message', { e })
+      const verdict = breaker.failed(ws, tx._id)
+      if (verdict.action === 'drop') {
+        ctx.error(
+          verdict.opened
+            ? 'Tx message dropped after repeated failures, workspace txes are skipped for a cooldown'
+            : 'Tx message dropped after repeated failures',
+          { e, wsUuid: ws, tx, failingForMs: verdict.failingForMs }
+        )
+        return
+      }
+      ctx.error('Failed to process tx message', { e, wsUuid: ws, tx })
       throw e
     }
   })
 
-  const sync = (): Promise<void> => withRetry(() => worker.resolveAiBotAccount())
-
-  // Initial delay of 5 seconds to give other services a head start.
-  setTimeout(() => {
-    void sync()
-  }, 5 * 1000)
+  // Own group per process, like the transactor: every replica holds its own workspace cache.
+  const wsConsumer = queue.createConsumer<QueueWorkspaceMessage>(
+    ctx,
+    QueueTopic.Workspace,
+    `${queue.getClientId()}-${generateId()}`,
+    async (ctx, queueMessage) => {
+      const type = queueMessage.value.type
+      if (
+        type === QueueWorkspaceEvent.Restored ||
+        type === QueueWorkspaceEvent.Upgraded ||
+        type === QueueWorkspaceEvent.Deleted
+      ) {
+        ctx.info('dropping cached workspace', { workspace: queueMessage.workspace, type })
+        await worker.dropWorkspace(queueMessage.workspace)
+      }
+    }
+  )
 
   const shutdown = (): void => {
     void worker.close()
-    void Promise.all([txConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
+    void Promise.all([txConsumer.close(), wsConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 
   process.once('SIGINT', shutdown)

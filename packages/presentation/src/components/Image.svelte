@@ -13,6 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+<script lang="ts" context="module">
+  const loadedImages = new Set<string>()
+  const loadedImagesLimit = 2000
+
+  function rememberLoaded (key: string): void {
+    if (loadedImages.size >= loadedImagesLimit) loadedImages.clear()
+    loadedImages.add(key)
+  }
+</script>
+
 <script lang="ts">
   import type { Blob, Ref } from '@hcengineering/core'
   import { Blurhash, Image, Loading, lazyObserver, persistentLazyObserver, isLazyEnabled } from '@hcengineering/ui'
@@ -33,7 +43,13 @@
 
   const dispatch = createEventDispatcher()
 
-  let visible = !isLazyEnabled() || loading === 'eager'
+  // An image that has already loaded in this session sits in the browser cache: re-mounting it
+  // (channel switch, scrolling back into view) must not run the placeholder -> picture cycle again.
+  $: key = `${blob}:${width}x${height}`
+  const known = loadedImages.has(`${blob}:${width}x${height}`)
+
+  let visible = !isLazyEnabled() || loading === 'eager' || known
+  let loaded = known
   let blobSrc: { src: string, srcset: string } | undefined
 
   $: if (visible) {
@@ -42,18 +58,18 @@
     })
   }
 
-  $: if (!visible) {
+  $: if (!visible && !loadedImages.has(key)) {
     loaded = false
   }
 
-  let loaded = false
-
   function handleLoad (): void {
     loaded = true
+    rememberLoaded(key)
     dispatch('load')
   }
 
   function handleLoadStart (): void {
+    if (loadedImages.has(key)) return
     loaded = false
     dispatch('loadstart')
   }

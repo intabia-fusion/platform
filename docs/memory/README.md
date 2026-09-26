@@ -6,6 +6,11 @@
 
 - [workflow-tests.md](workflow-tests.md) - Workflow feature: import/export API and API tests
 
+## Чат и уведомления - [chat.md](../features/chat.md), [notifications.md](../features/notifications.md)
+
+- [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
+- [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
+
 ## Встречи - [office-meetings.md](../features/office-meetings.md)
 
 - [love-service-replication.md](love-service-replication.md) - love service: реплицируется

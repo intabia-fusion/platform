@@ -137,7 +137,6 @@ import '@hcengineering/recorder-assets'
 import '@hcengineering/view-assets'
 import '@hcengineering/workbench-assets'
 import '@hcengineering/mail-assets'
-
 import '@hcengineering/achievement-assets'
 import '@hcengineering/emoji-assets'
 import '@hcengineering/media-assets'
@@ -532,9 +531,9 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   )
   addLocation(surveyId, () => import(/* webpackChunkName: "survey" */ '@hcengineering/survey-resources'))
   addLocation(cardId, () => import(/* webpackChunkName: "card" */ '@hcengineering/card-resources'))
-
   addLocation(processId, () => import(/* webpackChunkName: "process" */ '@hcengineering/process-resources'))
   addLocation(achievementId, () => import(/* webpackChunkName: "achievement" */ '@hcengineering/achievement-resources'))
+
   addLocation(emojiId, () => import(/* webpackChunkName: "achievement" */ '@hcengineering/emoji-resources'))
   if ((config.BILLING_URL ?? '') !== '') {
     addLocation(billingId, () => import(/* webpackChunkName: "billing" */ '@hcengineering/billing-resources'))

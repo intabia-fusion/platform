@@ -16,8 +16,9 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
-  import core, { Collaborator, getCurrentAccount, notEmpty, SortingOrder, WithLookup } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import core, { getCurrentAccount, Ref, SortingOrder, Tx, TxCreateDoc } from '@hcengineering/core'
+  import { addTxListener, createQuery, getClient, removeTxListener } from '@hcengineering/presentation'
+  import { onDestroy } from 'svelte'
   import { Lazy, Loading, Scroller } from '@hcengineering/ui'
 
   import { openMessageFromSpecial } from '../../navigation'
@@ -37,45 +38,101 @@
   let limit = 100
   let hasNextPage = true
 
-  let collabs: WithLookup<Collaborator>[] = []
+  const messageClasses = h.getDescendants(activity.class.ActivityMessage)
+  const me = getCurrentAccount().uuid
 
+  const pageQuery = createQuery()
   const query = createQuery()
-  query.query(
-    core.class.Collaborator,
-    {
-      collaborator: getCurrentAccount().uuid,
-      attachedToClass: { $in: h.getDescendants(activity.class.ActivityMessage) },
-      '$lookup.attachedTo.replies': { $gte: 1 }
-    },
-    (res) => {
-      if (res.length <= limit) {
-        hasNextPage = false
-      } else {
-        res.pop()
-      }
-      collabs = res
-      threads = collabs.map((it) => it?.$lookup?.attachedTo as ActivityMessage).filter(notEmpty)
-      isLoading = false
-    },
-    {
-      lookup: {
-        attachedTo: [
-          activity.class.ActivityMessage,
-          {
-            _id: {
-              attachments: attachment.class.Attachment,
-              reactions: activity.class.Reaction
-            }
-          }
-        ]
+  let pageIds: Ref<ActivityMessage>[] | undefined
+
+  $: loadPage(limit)
+
+  function loadPage (limit: number): void {
+    pageQuery.query(
+      core.class.Collaborator,
+      {
+        collaborator: me,
+        attachedToClass: { $in: messageClasses },
+        '$lookup.attachedTo.replies': { $gte: 1 }
       },
-      sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
-      limit: limit + 1
+      (res) => {
+        hasNextPage = res.length > limit
+        pageIds = res.slice(0, limit).map((it) => it.attachedTo as Ref<ActivityMessage>)
+        liftedIds = liftedIds.filter((it) => pageIds?.includes(it) !== true)
+      },
+      {
+        lookup: { attachedTo: activity.class.ActivityMessage },
+        sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
+        limit: limit + 1
+      }
+    )
+  }
+
+  // The page query watches the collaborator docs of the user, and a reply touches none of them: my
+  // doc on my own message exists since the message was sent, when it had no replies and did not
+  // match. So a reply to a message outside the page is checked here, and a thread of mine goes into
+  // the list on its own. Asking for the page again would not help: the live query core answers an
+  // identical query from its cache.
+  let liftedIds: Ref<ActivityMessage>[] = []
+
+  async function liftThread (parent: Ref<ActivityMessage>): Promise<void> {
+    if (pageIds?.includes(parent) === true || liftedIds.includes(parent)) return
+    const mine = await client.findOne(core.class.Collaborator, { collaborator: me, attachedTo: parent })
+    if (mine === undefined || liftedIds.includes(parent)) return
+    liftedIds = [...liftedIds, parent]
+  }
+
+  function handleTx (txes: Tx[]): void {
+    for (const tx of txes) {
+      if (tx._class !== core.class.TxCreateDoc) continue
+      const createTx = tx as TxCreateDoc<ActivityMessage>
+      if (!h.isDerived(createTx.objectClass, chunter.class.ThreadMessage)) continue
+      void liftThread(createTx.attachedTo as Ref<ActivityMessage>)
     }
-  )
+  }
+
+  addTxListener(handleTx)
+
+  onDestroy(() => {
+    removeTxListener(handleTx)
+  })
+
+  // Sorted: a set of ids. The order comes from the messages themselves, and a thread moving up within
+  // the page must not re-issue the query below.
+  $: threadIds = pageIds === undefined ? undefined : [...new Set([...pageIds, ...liftedIds])].sort()
+
+  $: loadThreads(threadIds)
+
+  function loadThreads (pageIds: Ref<ActivityMessage>[] | undefined): void {
+    if (pageIds === undefined) return
+    if (pageIds.length === 0) {
+      query.unsubscribe()
+      threads = []
+      isLoading = false
+      return
+    }
+
+    query.query(
+      activity.class.ActivityMessage,
+      { _id: { $in: pageIds } },
+      (res) => {
+        threads = res
+        isLoading = false
+      },
+      {
+        lookup: {
+          _id: {
+            attachments: attachment.class.Attachment,
+            reactions: activity.class.Reaction
+          }
+        },
+        sort: { modifiedOn: SortingOrder.Descending }
+      }
+    )
+  }
 
   function handleScroll (): void {
-    if (divScroll != null && hasNextPage && threads.length === limit) {
+    if (divScroll != null && hasNextPage && threads.length >= limit) {
       const isAtBottom = divScroll.scrollTop + divScroll.clientHeight >= divScroll.scrollHeight - 400
       if (isAtBottom) {
         limit += 100

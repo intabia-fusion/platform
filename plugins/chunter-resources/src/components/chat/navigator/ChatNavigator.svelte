@@ -28,6 +28,7 @@
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'
   import { chatNavGroupModels, chatSpecials } from '../utils'
+  import { ChatNavGroupModel } from '../types'
   import { openBotDirect } from '../../../utils'
   import ChatSpecialElement from './ChatSpecialElement.svelte'
 
@@ -43,6 +44,17 @@
 
   let employees: Employee[] = []
   let pinned: Chat[] = []
+
+  let pinnedLoaded = false
+  let loadedGroups = new Set<string>()
+  $: firstWaveLoaded =
+    pinnedLoaded && chatNavGroupModels.every((model) => model.deferred === true || loadedGroups.has(model.id))
+
+  function isGroupActive (model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
+    if (model.deferred === true) return firstWaveLoaded
+    if (model.id === 'starred') return pinnedLoaded
+    return true
+  }
 
   $: pinnedChatsQuery.query(
     chunter.class.Chat,
@@ -60,6 +72,7 @@
     },
     (res) => {
       pinned = res
+      pinnedLoaded = true
     }
   )
 
@@ -150,7 +163,19 @@
 
 <Scroller shrink bottomPadding="3rem">
   {#each chatNavGroupModels as model (model.id)}
-    <ChatNavGroup {object} {chat} {model} {pinned} {search} {employees} on:select />
+    <ChatNavGroup
+      {object}
+      {chat}
+      {model}
+      {pinned}
+      {search}
+      {employees}
+      active={isGroupActive(model, pinnedLoaded, firstWaveLoaded)}
+      on:loaded={() => {
+        loadedGroups = loadedGroups.add(model.id)
+      }}
+      on:select
+    />
   {/each}
 </Scroller>
 

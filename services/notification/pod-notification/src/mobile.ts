@@ -213,11 +213,15 @@ async function fcmAuth (): Promise<string> {
  * draws the banner itself while the process is asleep, so nothing has to run
  * on the device for the push to arrive.
  */
+export const sendTimeoutMs = 15000
+
 export async function sendFcm (token: string, data: PushData): Promise<Delivery> {
   try {
     const account = serviceAccount()
     const response = await fetch(`https://fcm.googleapis.com/v1/projects/${account.project_id}/messages:send`, {
       method: 'POST',
+      // The queue consumer waits for every push: a hung request must not stall it.
+      signal: AbortSignal.timeout(sendTimeoutMs),
       headers: {
         Authorization: `Bearer ${await fcmAuth()}`,
         'Content-Type': 'application/json'

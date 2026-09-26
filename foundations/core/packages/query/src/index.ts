@@ -1002,6 +1002,9 @@ export class LiveQuery implements WithTx, Client {
 
     // we cannot handle $inc correctly, let's skip it
     const { $inc, ...ops } = tx.operations
+    const matchedByInc =
+      $inc != null &&
+      Object.keys(q.query).some((key) => checkMixinKey(key, q._class, this.client.getHierarchy()) in $inc)
 
     const emptyOps = Object.keys(ops).length === 0
     if (emptyOps && $inc != null) {
@@ -1014,8 +1017,8 @@ export class LiveQuery implements WithTx, Client {
         return false
       }
     }
-    let matched = emptyOps || Object.keys(q.query).length === 0
-    if (!emptyOps) {
+    let matched = emptyOps || Object.keys(q.query).length === 0 || matchedByInc
+    if (!emptyOps && !matchedByInc) {
       const virtualTx = {
         ...tx,
         operations: ops

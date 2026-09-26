@@ -10,17 +10,7 @@ export class ChunterPage extends CommonPage {
     this.page = page
   }
 
-  readonly buttonChannelsHeader = (): Locator =>
-    this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: 'Channels' })
-
-  readonly buttonDirectHeader = (): Locator =>
-    this.page
-      .locator('[data-testid="section-chunter:class:DirectMessage"]')
-      .getByRole('button', { name: 'Direct messages' })
-
-  readonly buttonAddChannel = (): Locator => this.page.locator('[data-testid="action-create-chunter:class:Channel"]')
-  readonly buttonAddDirectMessage = (): Locator =>
-    this.page.locator('[data-testid="action-create-chunter:class:DirectMessage"]')
+  readonly buttonNewChat = (): Locator => this.page.locator('.hulyNavPanel-header .header-actions button').last()
 
   readonly inputNewChannelName = (): Locator => this.page.getByPlaceholder('New channel')
   readonly inputDescription = (): Locator => this.page.getByPlaceholder('Description (optional)')
@@ -39,16 +29,16 @@ export class ChunterPage extends CommonPage {
 
   // ACTIONS
 
+  // Through the "new" menu of the chat header, not the "+" of a section: the "+" exists only while
+  // the pointer is over the section header, and the navigator re-renders under it as chats come in.
   async clickAddChannel (): Promise<void> {
-    await this.buttonChannelsHeader().hover()
-    expect(await this.buttonAddChannel().isVisible()).toBe(true)
-    await this.buttonAddChannel().click()
+    await this.buttonNewChat().click()
+    await this.selectFromDropdown(this.page, 'New channel')
   }
 
   async clickAddDirect (): Promise<void> {
-    await this.buttonDirectHeader().hover()
-    expect(await this.buttonAddDirectMessage().isVisible()).toBe(true)
-    await this.buttonAddDirectMessage().click()
+    await this.buttonNewChat().click()
+    await this.selectFromDropdown(this.page, 'New direct chat')
   }
 
   async createChannel (channelName: string, privateChannel: boolean): Promise<void> {

@@ -1,15 +1,29 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
+  import { get } from 'svelte/store'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
   import core, { Doc, Ref, Space } from '@hcengineering/core'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import notification from '@hcengineering/notification'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
 
   import ThreadParentMessage from './ThreadParentPresenter.svelte'
   import ReverseChannelScrollView from '../ReverseChannelScrollView.svelte'
-  import { ChannelDataProvider } from '../../channelDataProvider'
-  import chunter from '../../plugin'
+  import { ChatViewport } from '../../chatViewport'
 
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
   export let message: ActivityMessage
@@ -20,11 +34,10 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const query = createQuery()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = inboxClient.contextByDoc
+  const inboxClient = NotificationClientImpl.getClient()
 
   let channel: Doc | undefined = undefined
-  let dataProvider: ChannelDataProvider | undefined = undefined
+  let chatViewport: ChatViewport | undefined = undefined
 
   $: query.query(
     message.attachedToClass,
@@ -35,39 +48,39 @@
     { limit: 1 }
   )
 
-  $: void updateProvider(message)
+  $: updateViewport(message._id)
 
-  async function updateProvider (message: ActivityMessage): Promise<void> {
-    if (dataProvider !== undefined) {
-      return
-    }
+  // The viewport is acquired once per component, otherwise a second call would take a reference
+  // that onDestroy never releases.
+  let viewportRequested = false
 
-    const context =
-      $contextByDocStore.get(message._id) ??
-      (await client.findOne(notification.class.DocNotifyContext, { objectId: message._id }))
-    dataProvider = new ChannelDataProvider(
-      context,
-      message.space,
-      message._id,
-      chunter.class.ThreadMessage,
-      selectedMessageId,
-      true
-    )
+  function updateViewport (messageId: Ref<ActivityMessage>): void {
+    if (viewportRequested) return
+    viewportRequested = true
+    const hasUnread = (get(inboxClient.unreadByDoc).get(messageId)?.unreadMessagesCount ?? 0) > 0
+    // The read state is not awaited here: the viewport fetches the first page alongside it.
+    const readState = inboxClient.getReadState(messageId)
+    chatViewport = ChatViewport.getOrCreate(readState, messageId, selectedMessageId, 100, true, hasUnread)
   }
 
-  $: messagesStore = dataProvider?.messagesStore
+  onDestroy(() => {
+    chatViewport?.release()
+    chatViewport = undefined
+  })
+
+  $: messagesStore = chatViewport?.messages
   $: readonly = hierarchy.isDerived(message.attachedToClass, core.class.Space)
     ? ((readonly || (channel as Space)?.archived) ?? false)
     : readonly
 </script>
 
 <div class="hulyComponent-content hulyComponent-content__container noShrink">
-  {#if dataProvider !== undefined && channel !== undefined}
+  {#if chatViewport !== undefined && channel !== undefined}
     <ReverseChannelScrollView
       bind:selectedMessageId
       object={message}
       {channel}
-      provider={dataProvider}
+      viewport={chatViewport}
       {autofocus}
       fullHeight={false}
       fixedInput={false}

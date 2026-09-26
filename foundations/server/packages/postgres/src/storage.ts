@@ -38,7 +38,7 @@ import core, {
   getClassCollaborators,
   groupByArray,
   type Hierarchy,
-  isOperator,
+  hasOperator,
   type Iterator,
   type Lookup,
   type MeasureContext,
@@ -92,6 +92,7 @@ import type postgres from 'postgres'
 import {
   getDocFieldsByDomains,
   getSchema,
+  type DataType,
   getSchemaAndFields,
   type Schema,
   type SchemaAndFields,
@@ -100,6 +101,7 @@ import {
 import { type ValueType } from './types'
 import { waitForSchemaVersion } from './version'
 import {
+  castForColumn,
   convertArrayParams,
   convertDoc,
   createTables,
@@ -117,6 +119,7 @@ import {
   simpleEscape,
   toWithLookup
 } from './utils'
+
 async function * createCursorGenerator (
   client: postgres.Sql,
   sql: string,
@@ -223,6 +226,11 @@ const DB_QUERY_DURATION = 'db.query.duration'
 // with ICU support and folds case for all scripts, unlike the database LC_CTYPE
 // which only handles ASCII when the database was created with LC_CTYPE=C.
 const SEARCH_COLLATION = '"und-x-icu"'
+
+// Declared type of a real column of the domain, undefined for jsonb fields and dotted paths.
+function columnTypeOf (domain: string, key: string): DataType | undefined {
+  return key.includes('.') ? undefined : getSchema(domain)[key]?.type
+}
 
 abstract class PostgresAdapterBase implements DbAdapter {
   protected readonly _helper: DBCollectionHelper
@@ -369,7 +377,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     for (const key in query) {
       const value = query[key]
       const tkey = this.transformKey(domain, core.class.Doc, key, false)
-      const translated = this.translateQueryValue(vars, tkey, value, 'common')
+      const translated = this.translateQueryValue(vars, tkey, value, 'common', columnTypeOf(domain, key))
       if (translated !== undefined) {
         res.push(translated)
       }
@@ -387,7 +395,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if ((operations as any).$set !== undefined) {
       ;(operations as any) = { ...(operations as any).$set }
     }
-    const isOps = isOperator(operations)
+    const isOps = hasOperator(operations)
     if ((operations as any)['%hash%'] == null) {
       ;(operations as any)['%hash%'] = this.curHash()
     }
@@ -1099,7 +1107,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           continue
         }
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
-          res.push(`(${this.getKey(_class, baseDomain, key, joins)})::numeric ${val === 1 ? 'ASC' : 'DESC'}`)
+          const sqlKey = this.getKey(_class, baseDomain, key, joins)
+          const dir = val === 1 ? 'ASC' : 'DESC'
+          res.push(`${numericOrderKey(sqlKey, columnTypeOf(baseDomain, key), this.dbFlavor)} ${dir}`)
         } else if (attr?.type._class === core.class.TypeIdentifier) {
           res.push(
             `regexp_replace(COALESCE(${this.getKey(_class, baseDomain, key, joins)}, ''), '-?\\d+$', '') ${val === 1 ? 'ASC' : 'DESC'}`
@@ -1156,7 +1166,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       const key = escape(_key)
       const valueType = this.getValueType(_class, key)
       const tkey = this.getKey(_class, baseDomain, key, joins, valueType === 'dataArray')
-      const translated = this.translateQueryValue(vars, tkey, value, valueType)
+      const translated = this.translateQueryValue(vars, tkey, value, valueType, columnTypeOf(baseDomain, key))
       if (translated !== undefined) {
         res.push(translated)
       }
@@ -1250,7 +1260,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if (join?.isReverse !== true) return
     const attr = join.toClass !== undefined ? this.hierarchy.findAttribute(join.toClass, tKey) : undefined
     const value = isDataField(join.table, tKey) ? `${join.toAlias}."data"#>>'{${tKey}}'` : `${join.toAlias}."${tKey}"`
-    const typed = attr !== undefined && NumericTypes.includes(attr.type._class) ? `(${value})::numeric` : value
+    const typed =
+      attr !== undefined && NumericTypes.includes(attr.type._class)
+        ? numericOrderKey(value, columnTypeOf(join.table, tKey), this.dbFlavor)
+        : value
     const agg = order === SortingOrder.Ascending ? 'min' : 'max'
     return `(SELECT ${agg}(${typed}) ${this.getReverseFrom(vars, join)}) ${order === SortingOrder.Ascending ? 'ASC' : 'DESC'}`
   }
@@ -1341,7 +1354,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
     return key
   }
 
-  private translateQueryValue (vars: ValuesVariables, tkey: string, value: any, type: ValueType): string | undefined {
+  private translateQueryValue (
+    vars: ValuesVariables,
+    tkey: string,
+    value: any,
+    type: ValueType,
+    columnType?: DataType
+  ): string | undefined {
     const tkeyData = tkey.includes('data') && (tkey.includes('->') || tkey.includes('#>>'))
     if (tkeyData && (Array.isArray(value) || (typeof value !== 'object' && typeof value !== 'string'))) {
       value = Array.isArray(value)
@@ -1363,10 +1382,18 @@ abstract class PostgresAdapterBase implements DbAdapter {
           val = Array.isArray(val) ? val.map((it) => (it == null ? null : `${it}`)) : val == null ? null : `${val}`
         }
 
-        let valType = inferType(val)
+        let valType = castForColumn(inferType(val), columnType, val)
         const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
         if (arrowCount > 0 && valType === '::text') {
           valType = ''
+        }
+
+        // A jsonb value is read as text, and text orders '10' before '9': a number is compared as
+        // a number.
+        const rangeOperator = rangeOperators[operator]
+        if (rangeOperator !== undefined && tkeyData && typeof value[operator] === 'number') {
+          res.push(`${numericJsonKey(tkey, this.dbFlavor)} ${rangeOperator} ${vars.add(value[operator], '::numeric')}`)
+          continue
         }
 
         switch (operator) {
@@ -1378,16 +1405,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
             }
             break
           case '$gt':
-            res.push(`${tlkey} > ${vars.add(val, valType)}`)
-            break
           case '$gte':
-            res.push(`${tlkey} >= ${vars.add(val, valType)}`)
-            break
           case '$lt':
-            res.push(`${tlkey} < ${vars.add(val, valType)}`)
-            break
           case '$lte':
-            res.push(`${tlkey} <= ${vars.add(val, valType)}`)
+            res.push(`${tlkey} ${rangeOperators[operator]} ${vars.add(val, valType)}`)
             break
           case '$in':
             switch (type) {
@@ -1487,7 +1508,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       return res.length === 0 ? undefined : res.join(' AND ')
     }
 
-    let valType = inferType(value)
+    let valType = castForColumn(inferType(value), columnType, value)
     const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
     if (arrowCount > 0 && valType === '::text') {
       valType = ''
@@ -1912,7 +1933,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
           break
         case core.class.TxUpdateDoc: {
           const updateTx = tx as TxUpdateDoc<Doc>
-          if (isOperator(updateTx.operations)) {
+          if (hasOperator(updateTx.operations)) {
             ops.updates.push(updateTx)
           } else {
             const current = updateGroup.get(updateTx.objectId)
@@ -2039,7 +2060,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
     txes: TxUpdateDoc<Doc>[],
     schemaFields: SchemaAndFields
   ): Promise<TxResult[]> {
-    const byOperator = groupByArray(txes, (it) => isOperator(it.operations))
+    const byOperator = groupByArray(txes, (it) => hasOperator(it.operations))
 
     const withOperator = byOperator.get(true)
     const withoutOperator = byOperator.get(false)
@@ -2286,6 +2307,35 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
     return this.stripHash(model) as Tx[]
   }
 }
+const rangeOperators: Record<string, string | undefined> = { $gt: '>', $gte: '>=', $lt: '<', $lte: '<=' }
+
+/**
+ * A jsonb field as a number. The same field holds 'n/a', a boolean or an object in an old or
+ * foreign document, and a bare cast would fail the whole query on it; such a row is null here, so
+ * it does not match a range and sorts last.
+ */
+function numericJsonKey (tkey: string, flavor: DBFlavor | undefined): string {
+  // `data#>>'{a,b}'` already reads text; `data->'a'->'b'` is json and needs `->>` on the last step.
+  const text = tkey.includes('#>>') ? tkey : tkey.replace(/->(?!.*->)/, '->>')
+  if (flavor === 'postgres') {
+    return `(CASE WHEN pg_input_is_valid(${text}, 'numeric') THEN (${text})::numeric END)`
+  }
+  const json = tkey.replace('#>>', '#>')
+  return `(CASE WHEN jsonb_typeof(${json}) = 'number' THEN (${text})::numeric END)`
+}
+
+/**
+ * A numeric attribute as an ORDER BY key. A real bigint/integer column orders as is: a cast would
+ * keep Postgres from using the column's btree index, for the sort itself or for the min/max of a
+ * reverse lookup. A jsonb path is read as a number (see numericJsonKey), so a stray string sorts
+ * as null instead of failing the query. Any other column is cast.
+ */
+function numericOrderKey (sqlKey: string, columnType: DataType | undefined, flavor: DBFlavor | undefined): string {
+  if (columnType === 'bigint' || columnType === 'integer') return sqlKey
+  if (sqlKey.includes('->') || sqlKey.includes('#>>')) return numericJsonKey(sqlKey, flavor)
+  return `(${sqlKey})::numeric`
+}
+
 function prepareJsonValue (tkey: string, valType: string): { tlkey: string, arrowCount: number } {
   if (valType === '::string') {
     valType = '' // No need to add a string conversion

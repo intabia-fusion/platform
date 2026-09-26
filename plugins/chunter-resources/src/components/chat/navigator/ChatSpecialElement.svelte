@@ -13,12 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import { SpecialNavModel } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
-  import { Ref } from '@hcengineering/core'
   import { SavedAttachments } from '@hcengineering/attachment'
   import { SavedMessage } from '@hcengineering/activity'
   import { savedMessagesStore } from '@hcengineering/activity-resources'
@@ -32,28 +29,37 @@
 
   const dispatch = createEventDispatcher()
 
-  const notificationsClient = InboxNotificationsClientImpl.getClient()
-  const notificationsByContextStore = notificationsClient.inboxNotificationsByContext
-
-  let count: number | null = null
+  let count: number = 0
   let elementsCount = 0
 
-  $: void getNotificationsCount(special, $notificationsByContextStore).then((res) => {
-    count = res === 0 ? null : res
-  })
+  let countUnsub: (() => void) | undefined
+  let subscribedTo: SpecialNavModel | undefined
+
+  $: if (special !== subscribedTo) {
+    subscribedTo = special
+    void subscribeToCount(special)
+  }
   $: elementsCount = getElementsCount(special, $savedMessagesStore, $savedAttachmentsStore)
 
-  async function getNotificationsCount (
-    special: SpecialNavModel,
-    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-  ): Promise<number> {
-    if (!special.notificationsCountProvider) {
-      return 0
-    }
+  onDestroy(() => {
+    countUnsub?.()
+  })
+
+  async function subscribeToCount (special: SpecialNavModel): Promise<void> {
+    countUnsub?.()
+    countUnsub = undefined
+    count = 0
+
+    if (special.notificationsCountProvider == null) return
 
     const providerFn = await getResource(special.notificationsCountProvider)
+    const store = await providerFn()
 
-    return providerFn(notificationsByContext)
+    if (subscribedTo !== special) return
+
+    countUnsub = store.subscribe((value) => {
+      count = value
+    })
   }
 
   function getElementsCount (

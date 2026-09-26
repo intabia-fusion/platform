@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,12 +26,19 @@ export interface Config {
   port: number
   source?: string
   replyTo?: string
+  // Addresses that never get mail
+  blockedRecipients: Set<string>
   sesConfig?: SesConfig
   smtpConfig?: SmtpConfig
 
   // client mode operations.
   serverUrl?: string
   apiKey?: string
+
+  accountsUrl: string
+  secret: string
+  serviceId: string
+  appName: string
 }
 
 export interface SesConfig {
@@ -80,6 +88,7 @@ const envMap = {
   Port: 'PORT',
   Source: 'SOURCE',
   ReplyTo: 'REPLY_TO',
+  BlockedRecipients: 'BLOCKED_RECIPIENTS', // Comma-separated
   DefaultProtocol: 'DEFAULT_PROTOCOL',
 
   SesAccessKey: 'SES_ACCESS_KEY',
@@ -102,6 +111,16 @@ const envMap = {
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
 const isEmpty = (str: string | undefined): boolean => str === undefined || str.trim().length === 0
+
+const DEFAULT_BLOCKED_RECIPIENTS = 'huly.ai.bot@hc.engineering'
+
+const parseAddressList = (str: string): Set<string> =>
+  new Set(
+    str
+      .split(',')
+      .map((it) => it.trim().toLowerCase())
+      .filter((it) => it.length > 0)
+  )
 
 const normalizeTlsMode = (mode: string | undefined): TlsOptions | undefined => {
   if (mode === undefined || mode === '') return undefined
@@ -160,7 +179,7 @@ const buildSmtpConfig = (): SmtpConfig => {
 }
 
 const config: Config = (() => {
-  let mode: Config['mode'] = 'queue'
+  let mode: Config['mode']
 
   switch ((process.env[envMap.Mode] ?? 'queue').toLowerCase()) {
     case 'server':
@@ -193,8 +212,13 @@ const config: Config = (() => {
     apiKey: process.env[envMap.ApiKey], // Api key may be missing of local case, but not for server<->client case
     source: process.env[envMap.Source],
     replyTo: process.env[envMap.ReplyTo],
+    blockedRecipients: parseAddressList(process.env[envMap.BlockedRecipients] ?? DEFAULT_BLOCKED_RECIPIENTS),
     sesConfig: isSesConfig ? buildSesConfig() : undefined,
-    smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined
+    smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined,
+    accountsUrl: process.env.ACCOUNTS_URL ?? 'http://localhost:3000',
+    secret: process.env.SECRET ?? 'secret',
+    serviceId: process.env.SERVICE_ID ?? 'mail-service',
+    appName: process.env.APP_NAME ?? 'Platform'
   }
 
   if ((mode === 'server' || mode === 'client') && params.apiKey === undefined) {

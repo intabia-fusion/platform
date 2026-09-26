@@ -13,11 +13,13 @@
 // limitations under the License.
 //
 
-import { writable } from 'svelte/store'
+import { readable, writable } from 'svelte/store'
 import { type ChatMessage } from '@hcengineering/chunter'
 import { type Doc, type Markup, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
-import { type ActivityMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage } from '@hcengineering/activity'
+import { NotificationClientImpl } from '@hcengineering/notification-resources'
+import { getClient } from '@hcengineering/presentation'
 
 export const translatingMessagesStore = writable<Set<Ref<ChatMessage>>>(new Set())
 export const translatedMessagesStore = writable<Map<Ref<ChatMessage>, Markup>>(new Map())
@@ -51,6 +53,19 @@ export function stopSummarizing (doc: Ref<Doc>): void {
 export const threadMessagesStore = writable<ActivityMessage | undefined>(undefined)
 
 export const replyingToMessageStore = writable<ChatMessage | undefined>(undefined)
+
+export const unreadThreadsCountStore = readable<number>(0, (set) => {
+  return NotificationClientImpl.getClient().unreadByDoc.subscribe((byDoc) => {
+    let count = 0
+    // A thread hangs on any activity message, not only on a chat one.
+    const hierarchy = byDoc.size > 0 ? getClient().getHierarchy() : undefined
+    for (const it of byDoc.values()) {
+      if ((it.notifiedMessagesCount ?? 0) === 0) continue
+      if (hierarchy?.isDerived(it.objectClass, activity.class.ActivityMessage) === true) count++
+    }
+    set(count)
+  })
+})
 
 languageStore.subscribe(() => {
   translatedMessagesStore.set(new Map())

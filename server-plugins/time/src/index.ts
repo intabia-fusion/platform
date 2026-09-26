@@ -18,7 +18,7 @@ import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import { Task } from '@hcengineering/task'
-import { CreateNotificationResource, TypeMatchFuncResource } from '@hcengineering/server-notification'
+import { CreateTxNotificationResource, TypeMatchFuncResource } from '@hcengineering/server-notification'
 
 /**
  * @public
@@ -41,10 +41,10 @@ export default plugin(serverTimeId, {
   },
   function: {
     IssueToDoFactory: '' as Resource<(tx: Tx, control: TriggerControl) => Promise<Tx[]>>,
-    TodoCreateNotification: '' as CreateNotificationResource,
-    TodoReassignedNotification: '' as CreateNotificationResource,
+    TodoCreateNotification: '' as CreateTxNotificationResource,
+    TodoReassignedNotification: '' as CreateTxNotificationResource,
     TodoReassignedMatch: '' as TypeMatchFuncResource,
-    IssueClosedToDoNotification: '' as CreateNotificationResource,
+    IssueClosedToDoNotification: '' as CreateTxNotificationResource,
     IssueClosedToDoMatch: '' as TypeMatchFuncResource
   },
   trigger: {
