@@ -27,6 +27,7 @@
     "docker": "node ./common/scripts/run_in_bash.js ./common/scripts/docker-fast.sh",
     "format": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --format",
     "format:branch": "./common/scripts/fast-format.sh",
+    "check:svelte-imports": "node ./foundations/utils/packages/platform-rig/bin/check-svelte-imports.js .",
     "profile-test": "node ./common/scripts/profile-tests.js",
     "check-versions": "node ./common/scripts/check-versions.js",
     "check-catalog": "node ./common/scripts/check-catalog.js",

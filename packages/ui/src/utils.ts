@@ -19,7 +19,7 @@ import { setMetadata, translate } from '@hcengineering/platform'
 import autolinker from 'autolinker'
 import { writable } from 'svelte/store'
 import { NotificationPosition, NotificationSeverity, notificationsStore, type Notification } from '.'
-import ui, { DAY, HOUR, MINUTE } from '..'
+import ui, { DAY, HOUR, MINUTE } from '.'
 import RootStatusComponent from './components/RootStatusComponent.svelte'
 import { deviceSizes, type AnyComponent, type AnySvelteComponent, type WidthType } from './types'
 

@@ -5,7 +5,7 @@
   //
   import type { IntlString } from '@hcengineering/platform'
   import { generateId } from '@hcengineering/core'
-  import { Label } from '../..'
+  import { Label } from '..'
 
   export let id: string = generateId()
   export let group: any

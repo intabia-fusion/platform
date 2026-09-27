@@ -16,7 +16,7 @@
   import { Asset } from '@hcengineering/platform'
   import { ComponentType } from 'svelte'
 
-  import { AnySvelteComponent, Icon, IconProps } from '../..'
+  import { AnySvelteComponent, Icon, IconProps } from '..'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
   export let iconProps: Record<string, any> = {}

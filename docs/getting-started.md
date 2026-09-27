@@ -112,6 +112,7 @@ pnpm format             # Build (cached), then format sources
 pnpm format:branch      # Format only what changed against a base branch
 pnpm check-versions     # Verify a single version of each dependency across packages
 pnpm check-layers       # Verify package layering rules
+pnpm check:svelte-imports [dir...]  # .svelte imports that do not resolve or name a missing export; --types lists type imports without `type`
 pnpm model-version      # Show the current model version
 pnpm ts-clean           # Drop TypeScript incremental state (*.tsbuildinfo)
 ```

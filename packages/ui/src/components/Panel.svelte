@@ -27,7 +27,7 @@
     Header,
     HeaderAdaptive,
     IHeaderState
-  } from '../../'
+  } from '..'
   import IconClose from './icons/Close.svelte'
   import IconDetails from './icons/Details.svelte'
   import IconMaxWidth from './icons/MaxWidth.svelte'

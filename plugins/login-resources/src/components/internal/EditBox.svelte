@@ -18,8 +18,7 @@
   import { themeStore } from '@hcengineering/theme'
   import { onMount, afterUpdate, createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
-  import Label from '@hcengineering/ui/src/components/Label.svelte'
-  import { resizeObserver } from '@hcengineering/ui'
+  import { Label, resizeObserver } from '@hcengineering/ui'
 
   export let id: string | undefined = undefined
   export let label: IntlString | undefined = undefined
