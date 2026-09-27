@@ -108,7 +108,7 @@ pnpm build:watch        # Rebuild and type check changed packages on save
 pnpm build:watch:lint   # Same, plus ESLint
 pnpm build:lint         # One-shot build with ESLint
 pnpm build:check        # Build + ESLint + svelte-check
-pnpm format             # Format sources with prettier
+pnpm format             # Build (cached), then format sources
 pnpm format:branch      # Format only what changed against a base branch
 pnpm check-versions     # Verify a single version of each dependency across packages
 pnpm check-layers       # Verify package layering rules
