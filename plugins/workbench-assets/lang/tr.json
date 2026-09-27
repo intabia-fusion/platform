@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Widget'ları yapılandır",
     "Tab": "Sekme",
     "WorkspaceIsArchived": "Çalışma alanı kullanılmadığı için arşivlendi. Geri yüklemek için lütfen bizimle iletişime geçin...",
-    "WorkspaceIsMigrating": "Çalışma alanı güncelleniyor. Lütfen bekleyin..."
+    "WorkspaceIsMigrating": "Çalışma alanı güncelleniyor. Lütfen bekleyin...",
+    "SelectToOpen": "Açmak için bir şey seçin",
+    "Onboarding": "Platformu tanıyın",
+    "OnboardingProgress": "{total} üzerinden {done}",
+    "OnboardingInviteTeam": "Ekibinizi davet edin",
+    "OnboardingInviteTeamDescription": "Bir davet bağlantısı gönderin, ekip arkadaşlarınız çalışma alanına katılsın.",
+    "OnboardingOpenApp": "Aç",
+    "OnboardingShowMe": "Göster",
+    "OnboardingOpenMenuHint": "Bu menüyü açın ve \"{item}\" seçeneğini seçin",
+    "OnboardingIntro": "Uygulamalar soldaki çubukta, bunun gibi widget'lar sağda yer alır ve arama tek tık uzaklıktadır.",
+    "OnboardingTargetUnavailable": "Bu düğme burada sizin için kullanılamıyor veya geçerli görünümde gizli."
   }
 }

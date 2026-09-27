@@ -59,7 +59,15 @@
     "Icon": "Icona",
     "Color": "Colore",
     "ForbidCreateTeamspacePermission": "Vieta creazione teamspace",
-    "ForbidCreateTeamspacePermissionDescription": "Vieta agli utenti di creare nuovi teamspaces"
+    "ForbidCreateTeamspacePermissionDescription": "Vieta agli utenti di creare nuovi teamspaces",
+    "EmptyStateTeamspaceTitle": "Nessun teamspace ancora",
+    "EmptyStateTeamspaceDescription": "I teamspace raggruppano i documenti per team o argomento e controllano chi può leggerli e modificarli.",
+    "EmptyStateTeamspaceCreateLabel": "Crea teamspace",
+    "EmptyStateDocumentTitle": "Nessun documento ancora",
+    "EmptyStateDocumentDescription": "I documenti sono pagine collaborative per specifiche, note e wiki all'interno di un teamspace.",
+    "EmptyStateDocumentCreateLabel": "Crea documento",
+    "OnboardingCreateTeamspace": "Crea un teamspace",
+    "OnboardingWriteDocument": "Scrivi un documento"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

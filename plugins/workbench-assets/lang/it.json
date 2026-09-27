@@ -1,4 +1,3 @@
-
 {
   "string": {
     "More": "Di più...",
@@ -33,6 +32,24 @@
     "LogInAnyway": "Accedi comunque",
     "WorkspaceCreating": "Creazione in corso...",
     "AccessDenied": "L'oggetto non esiste o non hai autorizzazione per accedervi.",
-    "WorkspaceIsMigrating": "Il workspace è in fase di aggiornamento. Attendi..."
+    "WorkspaceIsMigrating": "Il workspace è in fase di aggiornamento. Attendi...",
+    "SelectToOpen": "Seleziona qualcosa da aprire",
+    "Onboarding": "Scopri la piattaforma",
+    "OnboardingProgress": "{done} di {total}",
+    "OnboardingInviteTeam": "Invita il tuo team",
+    "OnboardingInviteTeamDescription": "Invia un link di invito così i tuoi colleghi potranno unirsi al workspace.",
+    "UpgradeDownloadProgress": "Download aggiornamento: {percent}%",
+    "Widget": "Widget",
+    "WidgetPreferences": "Preferenze widget",
+    "OpenInSidebar": "Apri nella barra laterale",
+    "OpenInSidebarNewTab": "Apri nella barra laterale in una nuova scheda",
+    "ConfigureWidgets": "Configura widget",
+    "Tab": "Scheda",
+    "WorkspaceIsArchived": "Il workspace è stato archiviato per inutilizzo. Contattaci per ripristinarlo...",
+    "OnboardingOpenApp": "Apri",
+    "OnboardingShowMe": "Mostra",
+    "OnboardingOpenMenuHint": "Apri questo menu e scegli «{item}»",
+    "OnboardingIntro": "Le app sono nella barra a sinistra, i widget come questo a destra e la ricerca è a un clic di distanza.",
+    "OnboardingTargetUnavailable": "Questo pulsante non è disponibile per te qui oppure è nascosto nella vista corrente."
   }
 }

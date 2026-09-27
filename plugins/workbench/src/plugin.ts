@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,6 +25,8 @@ import type {
   Application,
   ApplicationNavModel,
   HiddenApplication,
+  OnboardingCard,
+  OnboardingPreference,
   SpaceView,
   Widget,
   WidgetPreference,
@@ -42,7 +45,9 @@ export const workbenchPlugin = plugin(workbenchId, {
     HiddenApplication: '' as Ref<Class<HiddenApplication>>,
     Widget: '' as Ref<Class<Widget>>,
     WidgetPreference: '' as Ref<Class<WidgetPreference>>,
-    WorkbenchTab: '' as Ref<Class<WorkbenchTab>>
+    WorkbenchTab: '' as Ref<Class<WorkbenchTab>>,
+    OnboardingCard: '' as Ref<Class<OnboardingCard>>,
+    OnboardingPreference: '' as Ref<Class<OnboardingPreference>>
   },
   mixin: {
     SpaceView: '' as Ref<Mixin<SpaceView>>
@@ -55,7 +60,11 @@ export const workbenchPlugin = plugin(workbenchId, {
     InviteLink: '' as AnyComponent,
     Archive: '' as AnyComponent,
     SpecialView: '' as AnyComponent,
-    Themes: '' as AnyComponent
+    Themes: '' as AnyComponent,
+    OnboardingWidget: '' as AnyComponent
+  },
+  ids: {
+    OnboardingWidget: '' as Ref<Widget>
   },
   string: {
     Archive: '' as IntlString,
@@ -66,7 +75,8 @@ export const workbenchPlugin = plugin(workbenchId, {
     OpenInSidebarNewTab: '' as IntlString,
     ConfigureWidgets: '' as IntlString,
     WorkspaceIsArchived: '' as IntlString,
-    WorkspaceIsMigrating: '' as IntlString
+    WorkspaceIsMigrating: '' as IntlString,
+    Onboarding: '' as IntlString
   },
   icon: {
     Search: '' as Asset
@@ -100,7 +110,8 @@ export const workbenchPlugin = plugin(workbenchId, {
     GetSidebarObject: '' as Resource<() => Partial<Pick<Doc, '_id' | '_class'>>>,
     LogIn: '' as Resource<(loginInfo: { account: string, token?: string }) => Promise<void>>,
     LogOut: '' as Resource<() => Promise<void>>,
-    OpenInNewTab: '' as Resource<(loc: Location) => Promise<void>>
+    OpenInNewTab: '' as Resource<(loc: Location) => Promise<void>>,
+    OpenOnboarding: '' as Resource<() => Promise<void>>
   },
   actionImpl: {
     Navigate: '' as ViewAction<{

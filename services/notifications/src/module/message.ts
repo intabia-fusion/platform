@@ -26,7 +26,8 @@ import core, {
   Ref,
   SortingOrder,
   Timestamp,
-  generateId
+  generateId,
+  systemAccountUuid
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
@@ -72,6 +73,12 @@ import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import config from '../config'
 import { translate } from '@hcengineering/platform'
+
+// Workspace init (chunter migration createGeneral/createRandom) and OnEmployeeCreate autoJoin add
+// members to default channels under the system account - not a real "someone added you" event.
+function isSystemChannelJoin (type: NotificationType | undefined, sender: Sender): boolean {
+  return type?._id === chunter.ids.JoinChannelNotification && sender.account === systemAccountUuid
+}
 
 export async function handleMessage (
   client: Client,
@@ -170,6 +177,8 @@ async function handleCreateMessage (
       ? await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
       : {}
     const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
+
+    if (isSystemChannelJoin(type, sender)) continue
 
     if (type != null) {
       await pushNotification(
@@ -487,6 +496,8 @@ async function handleUpdateDUM (
       ? await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
       : {}
     const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
+
+    if (isSystemChannelJoin(type, sender)) continue
 
     if (type != null) {
       await pushNotification(

@@ -372,7 +372,22 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Conheça a plataforma",
+    "ShowOnboardingHints": "Mostrar dicas e sugestões nas telas vazias",
+    "ShowOnboardingHintsDescription": "As telas vazias explicam o que deveria haver ali e oferecem links para criar o primeiro item.",
+    "OnboardingProgress": "{done} de {total}",
+    "OnboardingOpenPanel": "Abrir painel",
+    "OnboardingStartOver": "Recomeçar",
+    "SpaceTypes": "Tipos de espaço",
+    "NewSpaceType": "Novo tipo de espaço",
+    "SpaceTypeTitle": "Título do tipo de espaço",
+    "General": "Geral",
+    "Description": "Descrição",
+    "CountSpaces": "{count, plural, =0 {Nenhum espaço} =1 {# espaço} other {# espaços}}",
+    "Roles": "Funções",
+    "RoleName": "Nome da função",
+    "Permissions": "Permissões"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

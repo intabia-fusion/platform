@@ -64,6 +64,7 @@
     resizeObserver,
     resolvedLocationStore,
     Separator,
+    setNavigatorVisible,
     setResolvedLocation,
     showPanel,
     showPopup,
@@ -77,6 +78,7 @@
     ListSelectionProvider,
     migrateViewOpttions,
     NavLink,
+    openDoc,
     parseLinkId,
     updateFocus
   } from '@hcengineering/view-resources'
@@ -106,6 +108,7 @@
   import TopMenu from './icons/TopMenu.svelte'
   import WidgetsBar from './sidebar/Sidebar.svelte'
   import { sidebarStore, SidebarVariant, syncSidebarState } from '../sidebar'
+  import { maybeAutoOpenOnboarding } from '../onboarding'
   import {
     getTabDataByLocation,
     getTabLocation,
@@ -164,10 +167,12 @@
   $deviceInfo.navigator.visible = !hiddenNavigator
 
   async function toggleNav (): Promise<void> {
-    $deviceInfo.navigator.visible = !$deviceInfo.navigator.visible
-    if (!$deviceInfo.navigator.float) {
-      hiddenNavigator = !$deviceInfo.navigator.visible
-      localStorage.setItem('hiddenNavigator', `${hiddenNavigator}`)
+    const visible = !$deviceInfo.navigator.visible
+    if ($deviceInfo.navigator.float) {
+      $deviceInfo.navigator.visible = visible
+    } else {
+      hiddenNavigator = !visible
+      setNavigatorVisible(visible)
     }
     closeTooltip()
     if (currentApplication != null && navigatorModel != null) {
@@ -254,6 +259,7 @@
     })
     syncSidebarState()
     syncWorkbenchTab()
+    void maybeAutoOpenOnboarding()
   })
 
   const workspaceId = $location.path[1]
@@ -602,11 +608,21 @@
     if (spaceId.includes('|')) return
     const space = await client.findOne<Space>(core.class.Space, { _id: spaceId })
     if (space === undefined) return
-    const spaceClass = client.getHierarchy().getClass(space._class)
-    const view = client.getHierarchy().as(spaceClass, workbench.mixin.SpaceView)
-    currentView = view.view
+    const hierarchy = client.getHierarchy()
+    const spaceClass = hierarchy.getClass(space._class)
+    const spaceView = hierarchy.as(spaceClass, workbench.mixin.SpaceView)
+    currentView = spaceView.view
     createItemDialog = currentView?.createItemDialog
     createItemLabel = currentView?.createItemLabel
+    // No workbench SpaceView (e.g. Drive): the class opens through the object panel instead, or
+    // the content area is left blank. Skip if a panel is already open, to not fight its own navigate.
+    if (
+      currentView === undefined &&
+      (currentFragment == null || currentFragment.trim().length === 0) &&
+      hierarchy.classHierarchyMixin(space._class, view.mixin.ObjectPanel) !== undefined
+    ) {
+      await openDoc(hierarchy, space)
+    }
   }
 
   function setSpaceSpecial (spaceSpecial: string | undefined): void {
@@ -899,6 +915,7 @@
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             id="profile-button"
+            data-id="profile-button"
             class="cursor-pointer"
             on:click|stopPropagation={() => showPopup(AccountPopup, {}, popupPosition)}
           >
@@ -1041,7 +1058,7 @@
               <h2><Label label={workbench.string.AccessDenied} /></h2>
             </div>
           {:else}
-            <SpaceView {currentSpace} {currentView} {createItemDialog} {createItemLabel} />
+            <SpaceView {currentSpace} {currentView} {createItemDialog} {createItemLabel} {navigatorModel} />
           {/if}
         </div>
       </div>

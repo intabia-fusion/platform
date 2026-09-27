@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 import { type Doc, type Ref, type Space } from '@hcengineering/core'
 import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { workbenchId } from '@hcengineering/workbench'
+import { workbenchId, type OnboardingCard } from '@hcengineering/workbench'
 import workbench from '@hcengineering/workbench-resources/src/plugin'
 import type { ActionCategory, ViewActionAvailabilityFunction } from '@hcengineering/view'
 
@@ -27,7 +28,12 @@ export default mergeIds(workbenchId, workbench, {
   },
   string: {
     Application: '' as IntlString,
-    HiddenApplication: '' as IntlString
+    HiddenApplication: '' as IntlString,
+    OnboardingInviteTeam: '' as IntlString,
+    OnboardingInviteTeamDescription: '' as IntlString
+  },
+  ids: {
+    OnboardingInviteCard: '' as Ref<OnboardingCard>
   },
   function: {
     HasArchiveSpaces: '' as Resource<(spaces: Space[]) => Promise<boolean>>,

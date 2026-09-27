@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,17 @@
 // limitations under the License.
 //
 
-import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@hcengineering/core'
+import type {
+  AccountRole,
+  AccountUuid,
+  Class,
+  Doc,
+  DocumentQuery,
+  Obj,
+  Ref,
+  Space,
+  Timestamp
+} from '@hcengineering/core'
 import { NotificationAppearancePreference } from '@hcengineering/notification'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
@@ -222,4 +233,54 @@ export interface ViewConfiguration {
 /** @public */
 export interface SpaceView extends Class<Obj> {
   view: ViewConfiguration
+}
+
+/** @public */
+export interface OnboardingActionTarget {
+  application?: string // navigate to this app alias first, if not already there
+  selector: string // CSS selector of the real button, prefer [data-id="..."]
+  hint?: IntlString
+  menu?: boolean // the button opens a menu: the spotlight asks to pick the action label from it
+}
+
+/** @public */
+export interface OnboardingAction {
+  label: IntlString
+  component?: AnyComponent // showPopup(component, props)
+  props?: Record<string, any>
+  func?: Resource<() => Promise<void>> // for actions without a popup (start a call, open AI chat)
+  application?: string // navigate to the app alias instead
+  target?: OnboardingActionTarget // spotlight a real button instead of doing the action for the user
+}
+
+/** @public */
+export interface OnboardingCardDoneWhen {
+  _class: Ref<Class<Doc>> // auto-complete once the user has created a doc of this class
+  byMember?: boolean // match `members` instead of `createdBy`, for spaces the user joined rather than created
+}
+
+/** @public */
+export interface OnboardingCard extends Doc {
+  application?: Ref<Application> // card group; hidden together with a hidden or disabled app
+  label: IntlString
+  description: IntlString // one sentence: why and what to press
+  icon?: Asset
+  order: number
+  actions: OnboardingAction[]
+  accessLevel?: AccountRole // e.g. invite only for User and above
+  doneWhen?: OnboardingCardDoneWhen
+}
+
+/** @public */
+export interface OnboardingPreference extends Preference {
+  showHints: boolean
+  autoOpened: boolean
+  completed: Array<Ref<OnboardingCard>>
+  // Cards the user unticked after completion: auto-marking leaves them alone until "Start over".
+  dismissed?: string[]
+  // doneWhen only counts docs created since this moment, so pre-existing data does not tick steps.
+  startedAt?: Timestamp
+  // First-time timestamps by stable key: 'opened', 'hintsOff',
+  // '<cardId>:done', '<cardId>:<actionLabel>'.
+  progress: Record<string, Timestamp>
 }

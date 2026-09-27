@@ -40,6 +40,16 @@
     "ConfigureWidgets": "ウィジェットを設定",
     "Tab": "タブ",
     "WorkspaceIsArchived": "ワークスペースは未使用のためアーカイブされています。復元するにはお問い合わせください...",
-    "WorkspaceIsMigrating": "ワークスペースを更新中です。しばらくお待ちください..."
+    "WorkspaceIsMigrating": "ワークスペースを更新中です。しばらくお待ちください...",
+    "SelectToOpen": "開くものを選択してください",
+    "Onboarding": "プラットフォームを知る",
+    "OnboardingProgress": "{done}/{total}",
+    "OnboardingInviteTeam": "チームを招待",
+    "OnboardingInviteTeamDescription": "招待リンクを送ると、チームメンバーがワークスペースに参加できます。",
+    "OnboardingOpenApp": "開く",
+    "OnboardingShowMe": "見せる",
+    "OnboardingOpenMenuHint": "このメニューを開いて「{item}」を選択してください",
+    "OnboardingIntro": "アプリは左のバーに、このようなウィジェットは右側にあり、検索はワンクリックで使えます。",
+    "OnboardingTargetUnavailable": "このボタンはここでは利用できないか、現在のビューでは非表示になっています。"
   }
 }

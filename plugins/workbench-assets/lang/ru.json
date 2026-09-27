@@ -32,6 +32,7 @@
     "LogInAnyway": "Все равно войти",
     "WorkspaceCreating": "Пространство создается...",
     "AccessDenied": "Объект не существует или у вас нет прав доступа.",
+    "SelectToOpen": "Выберите, что открыть",
     "UpgradeDownloadProgress": "Загрузка обновления: {percent}%",
     "Widget": "Виджет",
     "WidgetPreferences": "Настройки виджета",
@@ -40,6 +41,15 @@
     "ConfigureWidgets": "Настроить виджеты",
     "Tab": "Вкладка",
     "WorkspaceIsArchived": "Рабочее пространство архивировано из-за неиспользования, пожалуйста, свяжитесь с нами для восстановления...",
-    "WorkspaceIsMigrating": "Рабочее пространство обновляется. Пожалуйста, подождите..."
+    "WorkspaceIsMigrating": "Рабочее пространство обновляется. Пожалуйста, подождите...",
+    "Onboarding": "Ознакомление с платформой",
+    "OnboardingProgress": "{done} из {total}",
+    "OnboardingInviteTeam": "Пригласите команду",
+    "OnboardingInviteTeamDescription": "Отправьте ссылку-приглашение, и коллеги присоединятся к пространству.",
+    "OnboardingOpenApp": "Открыть",
+    "OnboardingShowMe": "Показать",
+    "OnboardingOpenMenuHint": "Откройте это меню и выберите «{item}»",
+    "OnboardingIntro": "Приложения находятся в панели слева, виджеты вроде этого - справа, а поиск всегда под рукой.",
+    "OnboardingTargetUnavailable": "Эта кнопка вам недоступна или скрыта в текущем разделе."
   }
 }

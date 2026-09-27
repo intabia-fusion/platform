@@ -425,6 +425,18 @@ export interface DeviceOptions {
   replacedPanel?: HTMLElement
 }
 
+/**
+ * @public
+ * A text-link action rendered by EmptyState. Either a translated `label` or a plain-text `title`
+ * (e.g. an object name that has no IntlString, like a channel or space name).
+ */
+export interface EmptyStateAction {
+  label?: IntlString
+  labelParams?: Record<string, any>
+  title?: string
+  onClick: () => void
+}
+
 export interface TimelineItem {
   icon?: IconComponent
   iconSize?: IconSize

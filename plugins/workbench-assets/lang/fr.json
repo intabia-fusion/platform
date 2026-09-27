@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Configurer les widgets",
     "Tab": "Onglet",
     "WorkspaceIsArchived": "L'espace de travail est archivé en raison de son inactivité, veuillez nous contacter pour le restaurer...",
-    "WorkspaceIsMigrating": "L'espace de travail est en cours de mise à jour. Veuillez patienter..."
+    "WorkspaceIsMigrating": "L'espace de travail est en cours de mise à jour. Veuillez patienter...",
+    "SelectToOpen": "Sélectionnez ce que vous souhaitez ouvrir",
+    "Onboarding": "Découverte de la plateforme",
+    "OnboardingProgress": "{done} sur {total}",
+    "OnboardingInviteTeam": "Invitez votre équipe",
+    "OnboardingInviteTeamDescription": "Envoyez un lien d'invitation pour que vos collègues rejoignent l'espace de travail.",
+    "OnboardingOpenApp": "Ouvrir",
+    "OnboardingShowMe": "Afficher",
+    "OnboardingOpenMenuHint": "Ouvrez ce menu et choisissez « {item} »",
+    "OnboardingIntro": "Les applications sont dans la barre de gauche, les widgets comme celui-ci à droite, et la recherche est à un clic.",
+    "OnboardingTargetUnavailable": "Ce bouton n'est pas disponible pour vous ici ou il est masqué dans la vue actuelle."
   }
 }

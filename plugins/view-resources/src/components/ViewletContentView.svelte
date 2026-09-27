@@ -1,3 +1,6 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+-->
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
@@ -14,6 +17,7 @@
   export let viewlet: WithLookup<Viewlet>
   export let _class: Ref<Class<Doc>>
   export let query: DocumentQuery<Doc> = {}
+  export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let space: Ref<Space> | undefined
 
   export let viewOptions: ViewOptions
@@ -117,7 +121,8 @@
         viewOptions,
         viewOptionsConfig: viewlet.viewOptions?.other,
         space,
-        query
+        query,
+        totalQuery
       }}
     />
   {/if}

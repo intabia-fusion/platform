@@ -165,6 +165,11 @@
     "ForbidAttributeChanges": "Forbid changes: ",
     "AllowAttributeChanges": "Allow changes: ",
     "RelationshipTable": "Traceability Matrix",
-    "GroupAndSort": "Group & sort"
+    "GroupAndSort": "Group & sort",
+    "EmptyStateDescription": "Nothing here yet",
+    "NothingFound": "Nothing found",
+    "NothingFoundHidden": "{count, plural, one {# item doesn't} other {# items don't}} match the search or filters.",
+    "ChangeSearchQuery": "Try a different search query or clear the filters.",
+    "EmptyStateCreateLabel": "Create"
   }
 }

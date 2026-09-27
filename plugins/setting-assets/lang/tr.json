@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Platformu tanıyın",
+    "ShowOnboardingHints": "Boş ekranlarda ipuçları ve öneriler göster",
+    "ShowOnboardingHintsDescription": "Boş ekranlar orada ne olması gerektiğini açıklar ve ilk öğeyi oluşturmak için bağlantılar sunar.",
+    "OnboardingProgress": "{total} üzerinden {done}",
+    "OnboardingOpenPanel": "Paneli aç",
+    "OnboardingStartOver": "Baştan başla"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

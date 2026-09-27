@@ -81,7 +81,7 @@ import media from '@hcengineering/media'
 import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
-import workbench, { WidgetType } from '@hcengineering/workbench'
+import workbench, { type Application, WidgetType } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 import chunter from '@hcengineering/chunter'
 import attachment from '@hcengineering/attachment'
@@ -398,6 +398,20 @@ export function createModel (builder: Builder): void {
       accessLevel: AccountRole.DocGuest
     },
     love.ids.LoveWidget
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: love.app.Love as Ref<Application>,
+      label: love.string.OnboardingCalls,
+      description: love.string.OnboardingCallsDescription,
+      order: 70,
+      doneWhen: { _class: love.class.MeetingMinutes, byMember: true },
+      actions: []
+    },
+    love.ids.OnboardingCallsCard
   )
 
   builder.createDoc(

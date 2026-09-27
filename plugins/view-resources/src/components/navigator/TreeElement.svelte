@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -130,6 +131,7 @@
       {#if popupMenuActions.length === 1 && popupMenuActions[0].icon}
         <ButtonIcon
           id={_id}
+          dataId={_id}
           icon={popupMenuActions[0].icon}
           size={'extra-small'}
           kind={'tertiary'}
@@ -198,6 +200,7 @@
       {#if popupMenuActions.length === 1 && popupMenuActions[0].icon}
         <ButtonIcon
           id={_id}
+          dataId={_id}
           icon={popupMenuActions[0].icon}
           size={'extra-small'}
           kind={'tertiary'}

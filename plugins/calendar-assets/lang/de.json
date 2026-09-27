@@ -125,6 +125,9 @@
     "SynchronizedCalendars": "Synchronisierte Kalender",
     "Account": "Konto",
     "NoCalendars": "Keine Kalender zur Synchronisation ausgewählt",
-    "PersonalCalendar": "Persönlicher Kalender"
+    "PersonalCalendar": "Persönlicher Kalender",
+    "OnboardingMeetings": "Meetings und Termine",
+    "OnboardingMeetingsDescription": "Klicken Sie auf einen freien Zeitraum im Kalender, um einen Termin mit Teilnehmern und Raum zu planen.",
+    "OnboardingCreateEventHint": "Klicken Sie auf eine freie Zeit im Kalender, um ein Ereignis zu erstellen"
   }
 }

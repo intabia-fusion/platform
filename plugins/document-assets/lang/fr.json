@@ -59,7 +59,15 @@
     "Icon": "Icône",
     "Color": "Couleur",
     "ForbidCreateTeamspacePermission": "Interdire la création d'espace d'équipe",
-    "ForbidCreateTeamspacePermissionDescription": "Interdit aux utilisateurs de créer de nouveaux espaces d'équipe"
+    "ForbidCreateTeamspacePermissionDescription": "Interdit aux utilisateurs de créer de nouveaux espaces d'équipe",
+    "EmptyStateTeamspaceTitle": "Aucun espace d'équipe pour le moment",
+    "EmptyStateTeamspaceDescription": "Les espaces d'équipe regroupent les documents par équipe ou par sujet et déterminent qui peut les lire et les modifier.",
+    "EmptyStateTeamspaceCreateLabel": "Créer un espace d'équipe",
+    "EmptyStateDocumentTitle": "Aucun document pour le moment",
+    "EmptyStateDocumentDescription": "Les documents sont des pages collaboratives pour les spécifications, les notes et les wikis au sein d'un espace d'équipe.",
+    "EmptyStateDocumentCreateLabel": "Créer un document",
+    "OnboardingCreateTeamspace": "Créez un espace d'équipe",
+    "OnboardingWriteDocument": "Rédigez un document"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,6 +29,7 @@
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Doc> = {}
+  export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let options: FindOptions<Doc> | undefined = undefined
   export let viewlet: Viewlet
   export let config: Array<string | BuildModelKey>
@@ -85,6 +87,7 @@
       {_class}
       {space}
       {query}
+      {totalQuery}
       {config}
       {configurations}
       {options}

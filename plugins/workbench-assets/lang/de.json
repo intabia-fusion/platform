@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Widgets konfigurieren",
     "Tab": "Tab",
     "WorkspaceIsArchived": "Workspace wurde wegen Inaktivität archiviert. Bitte kontaktieren Sie uns zur Wiederherstellung...",
-    "WorkspaceIsMigrating": "Workspace wird aktualisiert. Bitte warten..."
+    "WorkspaceIsMigrating": "Workspace wird aktualisiert. Bitte warten...",
+    "SelectToOpen": "Wählen Sie aus, was geöffnet werden soll",
+    "Onboarding": "Plattform kennenlernen",
+    "OnboardingProgress": "{done} von {total}",
+    "OnboardingInviteTeam": "Laden Sie Ihr Team ein",
+    "OnboardingInviteTeamDescription": "Senden Sie einen Einladungslink, damit Ihre Kollegen dem Workspace beitreten können.",
+    "OnboardingOpenApp": "Öffnen",
+    "OnboardingShowMe": "Zeigen",
+    "OnboardingOpenMenuHint": "Öffnen Sie dieses Menü und wählen Sie „{item}“",
+    "OnboardingIntro": "Die Apps befinden sich in der Leiste links, Widgets wie dieses rechts, und die Suche ist nur einen Klick entfernt.",
+    "OnboardingTargetUnavailable": "Diese Schaltfläche ist hier für Sie nicht verfügbar oder in der aktuellen Ansicht ausgeblendet."
   }
 }

@@ -5,7 +5,6 @@
     "Channels": "Kanály",
     "DirectMessages": "Přímé zprávy",
     "CreateChannel": "Nový kanál",
-    "NewDirectMessage": "Nová přímá zpráva",
     "ChannelName": "Název",
     "ChannelNamePlaceholder": "Kanál",
     "ChannelDescription": "Popis",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Include meeting transcripts",
     "SearchFilterSelected": "Selected",
     "SearchFilterObject": "Where",
-    "SearchFilterObjectMore": "Start typing to find more"
+    "SearchFilterObjectMore": "Start typing to find more",
+    "SelectChannel": "Vyberte kanál",
+    "OnboardingChats": "Chaty",
+    "OnboardingChatsDescription": "Kanály slouží pro témata a týmy, přímé chaty pro rozhovor mezi dvěma: založte jeden a pošlete první zprávu.",
+    "OnboardingAskJulia": "Zeptejte se AI Julia",
+    "OnboardingAskJuliaDescription": "Julia je AI asistentka v přímém chatu: položte jí otázku nebo ji požádejte o shrnutí konverzace."
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",

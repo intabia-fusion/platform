@@ -125,6 +125,9 @@
     "SynchronizedCalendars": "Senkronize takvimler",
     "Account": "Hesap",
     "NoCalendars": "Senkronizasyon için takvim seçilmedi",
-    "PersonalCalendar": "Kişisel Takvim"
+    "PersonalCalendar": "Kişisel Takvim",
+    "OnboardingMeetings": "Toplantılar ve etkinlikler",
+    "OnboardingMeetingsDescription": "Katılımcılar ve bir oda ile etkinlik planlamak için takvimde boş bir zaman aralığına tıklayın.",
+    "OnboardingCreateEventHint": "Etkinlik oluşturmak için takvimde boş bir zamana tıklayın"
   }
 }

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -55,7 +56,7 @@
   const client = getClient()
 
   let category: SettingsCategory | undefined
-  let categoryId: string = ''
+  let categoryId: string | undefined = ''
 
   let categories: SettingsCategory[] = []
   const account = getCurrentAccount()
@@ -68,7 +69,7 @@
     {},
     (res) => {
       categories = res.filter((p) => hasAccountRole(account, p.role) && !isDisabled(p.feature))
-      category = findCategory(categoryId)
+      applyCategory()
     },
     { sort: { order: 1 } }
   )
@@ -80,7 +81,7 @@
     resolvedLocationStore.subscribe((loc) => {
       void (async (loc) => {
         categoryId = loc.path[3]
-        category = findCategory(categoryId)
+        applyCategory()
       })(loc)
     })
   )
@@ -90,8 +91,12 @@
     }, 500)
   })
 
-  function findCategory (name: string): SettingsCategory | undefined {
+  function findCategory (name: string | undefined): SettingsCategory | undefined {
     return categories.find((x) => x.name === name)
+  }
+  // No (or role-hidden) category in the URL: render profile when allowed, else the first available one. URL stays untouched.
+  function applyCategory (): void {
+    category = findCategory(categoryId) ?? findCategory('profile') ?? categories[0]
   }
   function selectCategory (id: string): void {
     clearSettingsStore()
@@ -162,7 +167,7 @@
               _id={_category._id}
               label={_category.label}
               categoryName={_category.name}
-              highlighted={_category.name === categoryId}
+              highlighted={_category.name === category?.name}
               tools={_category.extraComponents?.tools}
             >
               <Component
@@ -177,7 +182,7 @@
             <NavItem
               icon={_category.icon}
               label={_category.label}
-              selected={_category.name === categoryId}
+              selected={_category.name === category?.name}
               on:click={() => {
                 selectCategory(_category.name)
               }}

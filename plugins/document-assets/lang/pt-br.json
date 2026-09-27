@@ -59,7 +59,15 @@
     "Icon": "Ícone",
     "Color": "Cor",
     "ForbidCreateTeamspacePermission": "Proibir criação de espaço de trabalho",
-    "ForbidCreateTeamspacePermissionDescription": "Proíbe os utilizadores de criar novos espaços de trabalho"
+    "ForbidCreateTeamspacePermissionDescription": "Proíbe os utilizadores de criar novos espaços de trabalho",
+    "EmptyStateTeamspaceTitle": "Ainda não há espaços de trabalho",
+    "EmptyStateTeamspaceDescription": "Os espaços de trabalho agrupam documentos por equipe ou tema e controlam quem pode lê-los e editá-los.",
+    "EmptyStateTeamspaceCreateLabel": "Criar espaço de trabalho",
+    "EmptyStateDocumentTitle": "Ainda não há documentos",
+    "EmptyStateDocumentDescription": "Documentos são páginas colaborativas para especificações, notas e wikis dentro de um espaço de trabalho.",
+    "EmptyStateDocumentCreateLabel": "Criar documento",
+    "OnboardingCreateTeamspace": "Crie um espaço de trabalho",
+    "OnboardingWriteDocument": "Escreva um documento"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

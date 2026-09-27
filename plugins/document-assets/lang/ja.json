@@ -59,7 +59,15 @@
     "Icon": "アイコン",
     "Color": "色",
     "ForbidCreateTeamspacePermission": "チームスペースの作成禁止",
-    "ForbidCreateTeamspacePermissionDescription": "ユーザーが新しいチームスペースを作成することを禁止します"
+    "ForbidCreateTeamspacePermissionDescription": "ユーザーが新しいチームスペースを作成することを禁止します",
+    "EmptyStateTeamspaceTitle": "チームスペースはまだありません",
+    "EmptyStateTeamspaceDescription": "チームスペースはドキュメントをチームやトピックごとにまとめ、閲覧・編集できる人を管理します。",
+    "EmptyStateTeamspaceCreateLabel": "チームスペースを作成",
+    "EmptyStateDocumentTitle": "ドキュメントはまだありません",
+    "EmptyStateDocumentDescription": "ドキュメントは、チームスペース内で仕様書・メモ・Wikiを共同で編集するためのページです。",
+    "EmptyStateDocumentCreateLabel": "ドキュメントを作成",
+    "OnboardingCreateTeamspace": "チームスペースを作成する",
+    "OnboardingWriteDocument": "ドキュメントを書く"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

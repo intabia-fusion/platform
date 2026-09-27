@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Toplantı Odası {number}",
     "VoiceRoomNum": "Sesli Oda {number}",
     "JoinRequestTitle": "Katılma isteği",
-    "JoinRequestBody": "{name} toplantıya katılmak istiyor"
+    "JoinRequestBody": "{name} toplantıya katılmak istiyor",
+    "OnboardingCalls": "Aramalar",
+    "OnboardingCallsDescription": "Bir meslektaşınızı aramak için ofiste onun odasına tıklayın veya ekip görüşmesi için ortak bir oda açın."
   }
 }

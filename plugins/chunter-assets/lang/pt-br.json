@@ -5,7 +5,6 @@
     "Channels": "Canais",
     "DirectMessages": "Mensagens diretas",
     "CreateChannel": "Criar canal",
-    "NewDirectMessage": "Nova mensagem direta",
     "ChannelName": "Nome",
     "ChannelNamePlaceholder": "Canal",
     "ChannelDescription": "Descrição",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Include meeting transcripts",
     "SearchFilterSelected": "Selected",
     "SearchFilterObject": "Where",
-    "SearchFilterObjectMore": "Start typing to find more"
+    "SearchFilterObjectMore": "Start typing to find more",
+    "SelectChannel": "Selecione um canal",
+    "OnboardingChats": "Conversas",
+    "OnboardingChatsDescription": "Canais são para tópicos e equipes, chats diretos para conversas individuais: crie um e envie sua primeira mensagem.",
+    "OnboardingAskJulia": "Pergunte à IA Julia",
+    "OnboardingAskJuliaDescription": "A Julia é uma assistente de IA em um chat direto: faça uma pergunta ou peça que ela resuma uma conversa."
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} te enviou uma mensagem: \n\n{message}",

@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "プラットフォームを知る",
+    "ShowOnboardingHints": "空の画面にヒントとコツを表示する",
+    "ShowOnboardingHintsDescription": "空の画面では、そこに何が表示されるかを説明し、最初の項目を作成するためのリンクを提供します。",
+    "OnboardingProgress": "{done}/{total}",
+    "OnboardingOpenPanel": "パネルを開く",
+    "OnboardingStartOver": "最初からやり直す"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

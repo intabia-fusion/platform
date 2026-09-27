@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Configurar widgets",
     "Tab": "Aba",
     "WorkspaceIsArchived": "O espaço de trabalho está arquivado por estar inativo, por favor, entre em contato conosco para restaurá-lo...",
-    "WorkspaceIsMigrating": "O espaço de trabalho está sendo atualizado. Por favor, aguarde..."
+    "WorkspaceIsMigrating": "O espaço de trabalho está sendo atualizado. Por favor, aguarde...",
+    "SelectToOpen": "Selecione algo para abrir",
+    "Onboarding": "Conheça a plataforma",
+    "OnboardingProgress": "{done} de {total}",
+    "OnboardingInviteTeam": "Convide sua equipe",
+    "OnboardingInviteTeamDescription": "Envie um link de convite para que seus colegas entrem no espaço de trabalho.",
+    "OnboardingOpenApp": "Abrir",
+    "OnboardingShowMe": "Mostrar",
+    "OnboardingOpenMenuHint": "Abra este menu e escolha \"{item}\"",
+    "OnboardingIntro": "Os aplicativos ficam na barra à esquerda, widgets como este à direita, e a busca está a um clique.",
+    "OnboardingTargetUnavailable": "Este botão não está disponível para você aqui ou está oculto na visualização atual."
   }
 }

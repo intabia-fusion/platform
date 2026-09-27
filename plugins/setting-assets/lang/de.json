@@ -381,7 +381,14 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Plattform kennenlernen",
+    "ShowOnboardingHints": "Hinweise und Tipps auf leeren Bildschirmen anzeigen",
+    "ShowOnboardingHintsDescription": "Leere Bildschirme erklären, was hier zu finden sein sollte, und bieten Links zum Erstellen des ersten Elements.",
+    "OnboardingProgress": "{done} von {total}",
+    "OnboardingOpenPanel": "Panel öffnen",
+    "OnboardingStartOver": "Neu starten",
+    "BetaWarning": "Als Beta gekennzeichnete Module sind zu experimentellen Zwecken verfügbar und funktionieren möglicherweise nicht vollständig. Wir empfehlen derzeit nicht, sich auf Beta-Funktionen für kritische Arbeiten zu verlassen."
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

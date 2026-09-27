@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Sala de reuniões {number}",
     "VoiceRoomNum": "Sala de voz {number}",
     "JoinRequestTitle": "Solicitação de entrada",
-    "JoinRequestBody": "{name} quer participar da reunião"
+    "JoinRequestBody": "{name} quer participar da reunião",
+    "OnboardingCalls": "Chamadas",
+    "OnboardingCallsDescription": "Clique na sala de um colega no escritório para ligar para ele, ou abra uma sala compartilhada para uma chamada em equipe."
   }
 }

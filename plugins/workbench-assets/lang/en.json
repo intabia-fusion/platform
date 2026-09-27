@@ -32,6 +32,7 @@
     "LogInAnyway": "Log in anyway",
     "WorkspaceCreating": "Creation in progress...",
     "AccessDenied": "Object doesn't exist or you are not permitted to access it.",
+    "SelectToOpen": "Select something to open",
     "UpgradeDownloadProgress": "Downloading upgrade: {percent}%",
     "Widget": "Widget",
     "WidgetPreferences": "Widget preferences",
@@ -40,6 +41,15 @@
     "ConfigureWidgets": "Configure widgets",
     "Tab": "Tab",
     "WorkspaceIsArchived": "Workspace is archived because of being unused, Please contact us to restore...",
-    "WorkspaceIsMigrating": "Workspace is being updated. Please wait..."
+    "WorkspaceIsMigrating": "Workspace is being updated. Please wait...",
+    "Onboarding": "Getting to know the platform",
+    "OnboardingProgress": "{done} of {total}",
+    "OnboardingInviteTeam": "Invite your team",
+    "OnboardingInviteTeamDescription": "Send an invite link so your teammates can join the workspace.",
+    "OnboardingOpenApp": "Open",
+    "OnboardingShowMe": "Show me",
+    "OnboardingOpenMenuHint": "Open this menu and choose \"{item}\"",
+    "OnboardingIntro": "Apps are in the bar on the left, widgets like this one on the right, and search is one click away.",
+    "OnboardingTargetUnavailable": "This button is not available to you here, or it is hidden in the current view."
   }
 }

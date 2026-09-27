@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Configurar widgets",
     "Tab": "Pestaña",
     "WorkspaceIsArchived": "El espacio de trabajo está archivado por no estar en uso, por favor contáctenos para restaurarlo...",
-    "WorkspaceIsMigrating": "El espacio de trabajo se está actualizando. Por favor, espere..."
+    "WorkspaceIsMigrating": "El espacio de trabajo se está actualizando. Por favor, espere...",
+    "SelectToOpen": "Selecciona algo para abrir",
+    "Onboarding": "Conoce la plataforma",
+    "OnboardingProgress": "{done} de {total}",
+    "OnboardingInviteTeam": "Invita a tu equipo",
+    "OnboardingInviteTeamDescription": "Envía un enlace de invitación para que tus compañeros se unan al espacio de trabajo.",
+    "OnboardingOpenApp": "Abrir",
+    "OnboardingShowMe": "Mostrar",
+    "OnboardingOpenMenuHint": "Abra este menú y elija «{item}»",
+    "OnboardingIntro": "Las aplicaciones están en la barra de la izquierda, los widgets como este a la derecha y la búsqueda está a un clic.",
+    "OnboardingTargetUnavailable": "Este botón no está disponible para ti aquí o está oculto en la vista actual."
   }
 }

@@ -57,7 +57,17 @@
     "ConfigLabel": "Dokümanlar",
     "ConfigDescription": "İşbirlikli doküman düzenleme için uzantı",
     "Icon": "İkon",
-    "Color": "Renk"
+    "Color": "Renk",
+    "EmptyStateTeamspaceTitle": "Henüz takım alanı yok",
+    "EmptyStateTeamspaceDescription": "Takım alanları dokümanları ekibe veya konuya göre gruplar ve bunları kimin okuyup düzenleyebileceğini belirler.",
+    "EmptyStateTeamspaceCreateLabel": "Takım alanı oluştur",
+    "EmptyStateDocumentTitle": "Henüz doküman yok",
+    "EmptyStateDocumentDescription": "Dokümanlar, bir takım alanı içinde şartnameler, notlar ve wiki'ler için ortak çalışma sayfalarıdır.",
+    "EmptyStateDocumentCreateLabel": "Doküman oluştur",
+    "ForbidCreateTeamspacePermission": "Takım alanı oluşturmayı yasakla",
+    "ForbidCreateTeamspacePermissionDescription": "Kullanıcıların yeni takım alanı oluşturmasını yasakla",
+    "OnboardingCreateTeamspace": "Bir takım alanı oluşturun",
+    "OnboardingWriteDocument": "Bir doküman yazın"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",
