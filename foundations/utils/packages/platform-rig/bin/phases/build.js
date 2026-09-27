@@ -85,6 +85,18 @@ async function runTsc (packagePath, emitDeclarationOnly, noTypeCheck) {
   }
 }
 
+// A child process: emitDts builds a whole TS program synchronously and would stall the scheduler.
+function runSvelteDts (packagePath) {
+  return new Promise((resolve) => {
+    let out = ''
+    const child = spawn(process.execPath, [join(__dirname, '..', 'compile.js'), 'svelte-dts'], { cwd: packagePath })
+    child.stdout.on('data', (d) => { out += d })
+    child.stderr.on('data', (d) => { out += d })
+    child.on('error', (err) => resolve({ success: false, error: err }))
+    child.on('close', (code) => resolve(code === 0 ? { success: true } : { success: false, error: new Error(out) }))
+  })
+}
+
 /**
  * @param {Map<string, object>} graph
  * @param {string[]} packageNames
@@ -171,7 +183,9 @@ async function runBuildPhase (graph, packageNames, concurrency, options = {}) {
         : await runEsbuildEmit(packagePath).catch((err) => ({ success: false, error: err }))
     } else {
       result = await runTsc(packagePath, true, noTypeCheck)
-      if (result.success && !isUi) {
+      if (result.success && isUi) {
+        result = await runSvelteDts(packagePath)
+      } else if (result.success && !isUi) {
         result = await runEsbuildEmit(packagePath).catch((err) => ({ success: false, error: err }))
       }
     }

@@ -365,7 +365,9 @@
     objectClass={_class}
     space={getChannelSpace(object._class, object._id, object.space)}
     on:audio={onAudioAttachment}
-    on:send={() => inputRef?.submit()}
+    on:send={() => {
+      inputRef?.submit()
+    }}
     on:close={() => (recording = false)}
   />
 {/if}

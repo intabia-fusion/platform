@@ -26,7 +26,7 @@
   import { DecorationSet } from '@tiptap/pm/view'
   import { onDestroy, onMount } from 'svelte'
 
-  import { getEditorKit } from '../../src/kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { calculateDecorations } from './diff/decorations'
   import { defaultEditorAttributes } from './editor/editorProps'
 

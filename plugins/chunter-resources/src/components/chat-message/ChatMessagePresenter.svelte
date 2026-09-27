@@ -126,7 +126,7 @@
   }
 
   let stale = false
-  let markStaleId: NodeJS.Timeout | undefined
+  let markStaleId: ReturnType<typeof setTimeout> | undefined
   $: pending = value?._id !== undefined && $pendingCreatedDocs[value._id]
   $: if (pending) {
     markStaleId = setTimeout(() => {

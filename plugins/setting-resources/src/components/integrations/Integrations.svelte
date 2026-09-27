@@ -49,7 +49,7 @@
   const unsubscribers: (() => void)[] = []
 
   let loadIntegrationsPromise: Promise<void> | null = null
-  let refreshTimer: NodeJS.Timeout | null = null
+  let refreshTimer: ReturnType<typeof setInterval> | null = null
   let lastEventTime = Date.now()
 
   const viewslist: TabItem[] = [

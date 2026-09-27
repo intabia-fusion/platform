@@ -57,8 +57,8 @@
     TextEditorHandler
   } from '@hcengineering/text-editor'
   import textEditor, { CollaborationIds } from '@hcengineering/text-editor'
-  import type { EditorKitOptions } from '../../src/kits/editor-kit'
-  import { getEditorKit } from '../../src/kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { registerEditor, unregisterEditor } from '../editorRegistry'
   import { deleteAttachment } from '../command/deleteAttachment'
   import { textEditorCommandHandler } from '../commands'

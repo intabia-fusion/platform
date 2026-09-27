@@ -2,6 +2,7 @@
   "name": "@hcengineering/ai-assistant-resources",
   "version": "0.7.0",
   "main": "src/index.ts",
+  "types": "types/index.d.ts",
   "author": "Copyright \u00a9 Hardcore Engineering Inc.",
   "license": "EPL-2.0",
   "scripts": {

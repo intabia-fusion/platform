@@ -27,8 +27,8 @@
   import type { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
-  import type { EditorKitOptions } from '../../src/kits/editor-kit'
-  import { getEditorKit } from '../../src/kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { deleteAttachment } from '../command/deleteAttachment'
   import { defaultEditorAttributes } from './editor/editorProps'
 

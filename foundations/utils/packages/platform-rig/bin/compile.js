@@ -8,7 +8,8 @@ const {
   readdirSync,
   lstatSync,
   writeFileSync,
-  copyFileSync
+  copyFileSync,
+  rmSync
 } = require('fs')
 
 const { spawnSync } = require('child_process')
@@ -231,6 +232,38 @@ async function generateSvelteTypes(options = {}) {
   }
 }
 
+// tsc sees a .svelte import only through the `*.svelte` shim; these give dependents real prop types
+// through types/ instead of compiling this package's sources again.
+async function emitSvelteDts(cwd) {
+  const srcDir = join(cwd, 'src')
+  if (!collectFiles(srcDir).some((f) => f.endsWith('.svelte'))) return
+  const { emitDts } = require('svelte2tsx')
+  const outDir = join(cwd, '.build', 'svelte-dts')
+  rmSync(outDir, { recursive: true, force: true })
+  await emitDts({
+    declarationDir: outDir,
+    svelteShimsPath: require.resolve('svelte2tsx/svelte-shims-v4.d.ts'),
+    libRoot: srcDir,
+    tsconfig: join(cwd, 'tsconfig.json')
+  })
+  // The .ts declarations stay tsc 7's; only the components come from here.
+  for (const f of collectDts(outDir)) {
+    const dest = join(cwd, 'types', relative(outDir, f))
+    mkdirSync(dirname(dest), { recursive: true })
+    copyFileSync(f, dest)
+  }
+}
+
+function collectDts(dir) {
+  const result = []
+  for (const f of existsSync(dir) ? readdirSync(dir) : []) {
+    const full = join(dir, f)
+    if (lstatSync(full).isDirectory()) result.push(...collectDts(full))
+    else if (f.endsWith('.svelte.d.ts')) result.push(full)
+  }
+  return result
+}
+
 /**
  * Resolve the native TypeScript 7 `tsc` binary.
  */
@@ -312,7 +345,22 @@ if (require.main === module) {
     case 'ui': {
       const st = performance.now()
       tscCompile({ cwd: process.cwd(), emitDeclarationOnly: true })
-      console.log('Build time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
+      emitSvelteDts(process.cwd())
+        .then(() => {
+          console.log('Build time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
+        })
+        .catch((err) => {
+          console.error('Svelte declarations failed:', err)
+          process.exit(1)
+        })
+      break
+    }
+
+    case 'svelte-dts': {
+      emitSvelteDts(process.cwd()).catch((err) => {
+        console.error('Svelte declarations failed:', err)
+        process.exit(1)
+      })
       break
     }
 
@@ -340,6 +388,7 @@ module.exports = {
   emitLib,
   performESBuildWithSvelte,
   generateSvelteTypes,
+  emitSvelteDts,
   tscCompile,
   resolveTsc7
 }

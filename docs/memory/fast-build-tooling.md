@@ -7,6 +7,12 @@ Code: `foundations/utils/packages/platform-rig/bin/`. Most of the bug fixes this
 
 `compile build-ui` (UI packages, `isUi` branch in `runBuildPhase`, `phases/build.js`) still runs tsc with `--emitDeclarationOnly`: it type-checks and writes `types/`, it does not skip validation - only the JS emit is skipped, because JS comes from webpack/esbuild at bundle time instead.
 
+UI packages resolve for TypeScript through `"types": "types/index.d.ts"`, while webpack and jest keep `main: src/index.ts`. `compile build-ui` also writes `*.svelte.d.ts` (`emitSvelteDts` in `compile.js`, svelte2tsx `emitDts`, in a child process), otherwise the `./X.svelte` re-exports in `types/` resolve to nothing. Before this, every dependent's tsc/eslint/svelte-check program compiled the dependencies' sources: tracker-resources lint 13.9-16.6 s -> 8.6-9.2 s (same 279 messages), svelte-check 12.5 s -> 3.8 s, all 55 svelte-check packages 387 s -> 94 s CPU (2026-09-28). The emit costs 1-2.8 s per package, 82 s CPU for all 65 on a cold build.
+- A `.svelte.d.ts` keeps the component's relative imports: `'../../src/kits/editor-kit'` from `src/components` pointed dependents back into text-editor-resources sources (67 files per program).
+- A relative import of the package root (`'..'` from `src/utils.ts`) now resolves to the package's own `types/` and tsc fails with TS5055 "would overwrite input file".
+- Component props, slot lets and methods were `any` through the `*.svelte` shim and are typed now; `NodeJS.*` no longer arrives via dependency sources in browser packages.
+- `.eslintcache` (lint-worker, content strategy) is not cleared by `--force`; delete it for a cold lint measurement.
+
 `models/all` is resolved from `phases/bundle-phase.js` as `resolve(__dirname, '../../../../../../models/all')` (6 levels up) - get that `../` count wrong and `getModelHash()` silently returns `null`, breaking the model-change cache invalidation it implements with no visible symptom.
 
 ## Tests

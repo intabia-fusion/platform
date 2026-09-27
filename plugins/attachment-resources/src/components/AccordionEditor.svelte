@@ -48,7 +48,9 @@
       case 'opened':
         attachments[index].setEditable(false)
         items[index].state = 'closed'
-        setTimeout(() => edits[index].focus(), 0)
+        setTimeout(() => {
+          edits[index].focus()
+        }, 0)
         break
       case 'closed':
         items[index].state = 'opened'

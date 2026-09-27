@@ -1209,7 +1209,7 @@
   <svelte:fragment slot="after-buttons" let:handleOkClick let:okProcessing let:canSave let:okLabel>
     <ButtonWithDropdown
       loading={okProcessing}
-      disabled={canSave !== true}
+      disabled={!canSave}
       label={okLabel}
       kind={'primary'}
       size={'large'}

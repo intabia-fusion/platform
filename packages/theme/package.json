@@ -2,6 +2,7 @@
   "name": "@hcengineering/theme",
   "version": "0.7.0",
   "main": "src/index.ts",
+  "types": "types/index.d.ts",
   "svelte": "^4.2.5",
   "author": "Anticrm Platform Contributors",
   "license": "EPL-2.0",
