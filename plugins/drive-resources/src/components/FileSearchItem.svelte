@@ -14,8 +14,8 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { File } from '@hcengineering/drive'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { File } from '@hcengineering/drive'
   import { Icon } from '@hcengineering/ui'
 
   import { getFileTypeIcon } from '../utils'

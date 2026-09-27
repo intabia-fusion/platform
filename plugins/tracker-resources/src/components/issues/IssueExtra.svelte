@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, afterUpdate } from 'svelte'
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Issue } from '@hcengineering/tracker'
   import { Component } from '@hcengineering/ui'

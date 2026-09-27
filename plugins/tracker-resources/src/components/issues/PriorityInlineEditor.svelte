@@ -14,16 +14,8 @@
 -->
 <script lang="ts">
   import { IssuePriority } from '@hcengineering/tracker'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    Icon,
-    Label,
-    SelectPopup,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, Icon, Label, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import { defaultPriorities, issuePriorities } from '../../utils'

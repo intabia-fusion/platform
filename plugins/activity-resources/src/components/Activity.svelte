@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, {
+  import type {
     ActivityExtension,
     ActivityMessage,
     ActivityMessagesFilter,
     ActivityReference,
     WithReferences
   } from '@hcengineering/activity'
-  import { Class, Doc, getCurrentAccount, Ref, SortingOrder } from '@hcengineering/core'
+  import activity from '@hcengineering/activity'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Grid, Section, Spinner } from '@hcengineering/ui'
   import { onMount } from 'svelte'

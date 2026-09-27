@@ -12,11 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Switcher, TabItem } from '@hcengineering/ui'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { TabItem } from '@hcengineering/ui'
+  import { Switcher } from '@hcengineering/ui'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import contact from '@hcengineering/contact'
-  import { ChunterSpace } from '@hcengineering/chunter'
+  import type { ChunterSpace } from '@hcengineering/chunter'
 
   import { userSearch } from '../../../index'
   import chunter from '../../../plugin'

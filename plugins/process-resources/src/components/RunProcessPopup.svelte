@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag, Tag } from '@hcengineering/card'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Card, MasterTag, Tag } from '@hcengineering/card'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import process from '../plugin'

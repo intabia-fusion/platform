@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Project, ProjectType } from '@hcengineering/task'
+  import type { Project, ProjectType } from '@hcengineering/task'
   import { DropdownLabels, resolvedLocationStore } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import { activeProjects, selectedTypeStore, selectedTaskTypeStore, taskTypeStore, typeStore } from '..'

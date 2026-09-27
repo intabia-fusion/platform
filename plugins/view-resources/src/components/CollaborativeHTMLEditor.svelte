@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import { CollaborativeAttributeSectionBox } from '@hcengineering/text-editor-resources'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { getCollaborationUser } from '../utils'
 
   export let object: Doc

@@ -12,10 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Floor, MeetingMinutes, Room } from '@hcengineering/love'
+  import type { Floor, MeetingMinutes, Room } from '@hcengineering/love'
   import { Component, Scroller, SearchInput } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
-  import core, { DocumentQuery, FindOptions, WithLookup } from '@hcengineering/core'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { DocumentQuery, FindOptions, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     FilterBar,

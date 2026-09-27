@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { AnyAttribute, Ref, Space } from '@hcengineering/core'
-  import { ButtonKind, IconSize } from '@hcengineering/ui'
-  import { PersonLabelTooltip } from '..'
+  import type { Employee } from '@hcengineering/contact'
+  import type { AnyAttribute, Ref, Space } from '@hcengineering/core'
+  import type { ButtonKind, IconSize } from '@hcengineering/ui'
+  import type { PersonLabelTooltip } from '..'
   import EmployeeAttributePresenter from './EmployeeAttributePresenter.svelte'
 
   export let value: Ref<Employee> | Ref<Employee>[] | null | undefined

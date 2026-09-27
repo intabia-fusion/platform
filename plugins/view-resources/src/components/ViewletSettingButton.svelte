@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
-  import { ViewOptionModel, ViewOptions, Viewlet, BuildModelKey } from '@hcengineering/view'
+  import type { ViewOptionModel, ViewOptions, Viewlet, BuildModelKey } from '@hcengineering/view'
   import view from '../plugin'
   import { getViewOptions, viewOptionStore, defaultOptions, getDefaults } from '../viewOptions'
   import ViewOptionsButton from './ViewOptionsButton.svelte'

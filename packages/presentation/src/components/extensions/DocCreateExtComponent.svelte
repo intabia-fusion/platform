@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Component } from '@hcengineering/ui'
-  import { CreateExtensionKind } from '../../types'
-  import { DocCreateExtensionManager } from './manager'
-  import { Space } from '@hcengineering/core'
+  import type { CreateExtensionKind } from '../../types'
+  import type { DocCreateExtensionManager } from './manager'
+  import type { Space } from '@hcengineering/core'
 
   export let manager: DocCreateExtensionManager
   export let kind: CreateExtensionKind

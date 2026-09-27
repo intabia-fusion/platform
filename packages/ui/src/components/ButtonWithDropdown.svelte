@@ -13,20 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import {
-    AnySvelteComponent,
-    Button,
-    ButtonKind,
-    Icon,
-    Label,
-    SelectPopup,
-    SelectPopupValueType,
-    eventToHTMLElement,
-    showPopup,
-    LabelAndProps,
-    ButtonSize
-  } from '../index'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { AnySvelteComponent, ButtonKind, SelectPopupValueType, LabelAndProps, ButtonSize } from '../index'
+  import { Button, Icon, Label, SelectPopup, eventToHTMLElement, showPopup } from '../index'
   import { createEventDispatcher } from 'svelte'
 
   export let dropdownItems: SelectPopupValueType[]

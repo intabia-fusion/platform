@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import ui, { Label, Modal, ModernDropdown, ModernEditbox } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createWorkflow } from '@hcengineering/workflow'

@@ -1,6 +1,8 @@
 <script lang="ts">
-  import core, { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
-  import { IntlString, translate } from '@hcengineering/platform'
+  import type { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import {
     Breadcrumb,

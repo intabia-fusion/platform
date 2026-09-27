@@ -15,48 +15,42 @@
 -->
 <script lang="ts">
   import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
-  import {
+  import type {
     CategoryType,
     Class,
     Doc,
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
-    generateId,
-    getObjectValue,
-    groupByArray,
     Lookup,
-    mergeQueries,
     Ref,
     WithLookup
   } from '@hcengineering/core'
-  import { Item, Kanban as KanbanUI, SwimLane } from '@hcengineering/kanban'
+  import { generateId, getObjectValue, groupByArray, mergeQueries } from '@hcengineering/core'
+  import type { Item, SwimLane } from '@hcengineering/kanban'
+  import { Kanban as KanbanUI } from '@hcengineering/kanban'
   import { employeeByIdStore } from '@hcengineering/contact-resources'
-  import { Employee, getName } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
   import { defaultPriorities, issuePriorities } from '../../types'
-  import { IntlString, translate } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
   import { ActionContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import task, { DocWithRank, getStates, TaskType, Project as TaskProject } from '@hcengineering/task'
+  import type { DocWithRank, TaskType, Project as TaskProject } from '@hcengineering/task'
+  import task, { getStates } from '@hcengineering/task'
   import {
     getTaskKanbanResultQuery,
     taskTypeStore,
     typeStore,
     updateTaskKanbanCategories
   } from '@hcengineering/task-resources'
-  import {
-    Component as TrackerComponent,
-    Issue,
-    IssuePriority,
-    IssuesGrouping,
-    IssuesOrdering,
-    Project,
-    reduceChildInfoTree
-  } from '@hcengineering/tracker'
+  import type { Component as TrackerComponent, Issue, Project } from '@hcengineering/tracker'
+  import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { ColorDefinition } from '@hcengineering/ui'
   import {
     Button,
-    ColorDefinition,
     Component,
     defaultBackground,
     getPlatformAvatarColorForTextDef,
@@ -67,7 +61,9 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
-  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
   import {
     buildModel,
     enabledConfig,
@@ -82,13 +78,13 @@
     ListSelectionProvider,
     noCategory,
     openDoc,
-    SelectDirection,
     setGroupByValues,
     showMenu,
     statusStore
   } from '@hcengineering/view-resources'
   import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
-  import workflow, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import type { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
   import { onMount } from 'svelte'
 
   import tracker from '../../plugin'

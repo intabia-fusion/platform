@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State, Transition, Trigger } from '@hcengineering/process'
-  import { Component, Dropdown, DropdownIntlItem, DropdownLabelsIntl, Label, ListItem } from '@hcengineering/ui'
+  import type { Process, State, Transition, Trigger } from '@hcengineering/process'
+  import type { DropdownIntlItem, ListItem } from '@hcengineering/ui'
+  import { Component, Dropdown, DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { makeRank } from '@hcengineering/rank'

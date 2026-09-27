@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
-  import { BreadcrumbItem } from '../types'
+  import type { BreadcrumbItem } from '../types'
   import Breadcrumb from './Breadcrumb.svelte'
   import ChevronRight from './icons/ChevronRight.svelte'
   import Label from './Label.svelte'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocNotifyContext } from '@hcengineering/notification'
+  import type { DocNotifyContext } from '@hcengineering/notification'
 
   import NotifyContextIcon from './NotifyContextIcon.svelte'
 

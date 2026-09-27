@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Markup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Markup } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { EmptyMarkup } from '@hcengineering/text'
   import textEditor from '@hcengineering/text-editor'
-  import { ButtonSize, Label } from '@hcengineering/ui'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import StyledTextEditor from './StyledTextEditor.svelte'

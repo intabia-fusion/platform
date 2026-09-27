@@ -16,7 +16,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import core, { Permission, Ref, Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { Permission, Ref, Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import {
     ButtonIcon,
     Icon,

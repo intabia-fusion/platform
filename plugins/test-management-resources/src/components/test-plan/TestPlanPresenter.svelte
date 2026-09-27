@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TestPlan } from '@hcengineering/test-management'
+  import type { TestPlan } from '@hcengineering/test-management'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'

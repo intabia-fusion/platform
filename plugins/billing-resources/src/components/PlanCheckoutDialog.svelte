@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Card } from '@hcengineering/presentation'
   import { NumberInput, Label, CheckBox, Switcher, themeStore } from '@hcengineering/ui'
-  import { type BillingPeriod } from '@hcengineering/payment-client'
+  import type { BillingPeriod } from '@hcengineering/payment-client'
   import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
   import plugin from '../plugin'
 

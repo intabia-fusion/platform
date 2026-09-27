@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
   import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'

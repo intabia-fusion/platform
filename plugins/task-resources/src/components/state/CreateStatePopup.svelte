@@ -13,11 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Attribute, Class, Ref, Status, StatusCategory } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Attribute, Class, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectType, TaskType, calculateStatuses, createState } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import { calculateStatuses, createState } from '@hcengineering/task'
   import {
     Component,
     ButtonIcon,

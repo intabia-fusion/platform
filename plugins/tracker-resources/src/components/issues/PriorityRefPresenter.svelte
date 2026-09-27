@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IssuePriority } from '@hcengineering/tracker'
+  import type { IssuePriority } from '@hcengineering/tracker'
   import { Icon, Label, getPlatformColorDef, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import { IssuePriorityColor, issuePriorities } from '../../utils'

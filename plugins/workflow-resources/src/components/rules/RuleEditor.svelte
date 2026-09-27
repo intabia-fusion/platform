@@ -12,19 +12,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, generateId, Ref, Status } from '@hcengineering/core'
-  import { getResourceP, Resource } from '@hcengineering/platform'
+  import type { Class, Ref, Status } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
+  import type { Resource } from '@hcengineering/platform'
+  import { getResourceP } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import { ProjectType, TaskType } from '@hcengineering/task'
-  import { AnySvelteComponent, Label } from '@hcengineering/ui'
-  import {
-    addRuleConfig,
-    updateRuleConfig,
-    Workflow,
-    WorkflowRule,
-    WorkflowRuleConfig,
-    WorkflowTransition
-  } from '@hcengineering/workflow'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
+  import type { Workflow, WorkflowRule, WorkflowRuleConfig, WorkflowTransition } from '@hcengineering/workflow'
+  import { addRuleConfig, updateRuleConfig } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
 

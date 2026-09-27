@@ -13,15 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person, getName } from '@hcengineering/contact'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { Task } from '@hcengineering/task'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Task } from '@hcengineering/task'
   import { getClient } from '@hcengineering/presentation'
   import { UsersPopup, employeeByIdStore } from '@hcengineering/contact-resources'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { AttributeModel } from '@hcengineering/view'
   import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { getObjectPresenter } from '@hcengineering/view-resources'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import task from '../plugin'
 
   export let value: Ref<Person> | Person | null | undefined

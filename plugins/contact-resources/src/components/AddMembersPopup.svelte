@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { Employee, Person, getName } from '@hcengineering/contact'
-  import { Ref, Space, notEmpty } from '@hcengineering/core'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
+  import type { Ref, Space } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { ActionIcon, Button, IconClose, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

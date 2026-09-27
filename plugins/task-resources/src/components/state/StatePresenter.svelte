@@ -15,19 +15,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
-  import task, { Project, ProjectType, TaskType } from '@hcengineering/task'
-  import {
-    ColorDefinition,
-    Icon,
-    IconSize,
-    getColorNumberByText,
-    getPlatformColorDef,
-    themeStore,
-    resolvePaletteColor
-  } from '@hcengineering/ui'
+  import type { Project, ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { ColorDefinition, IconSize } from '@hcengineering/ui'
+  import { Icon, getColorNumberByText, getPlatformColorDef, themeStore, resolvePaletteColor } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'

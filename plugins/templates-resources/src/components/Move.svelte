@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import presentation, { Card, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import type { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
   import templates from '../plugin'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'

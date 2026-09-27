@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import task, { Project, ProjectType } from '@hcengineering/task'
+  import type { Project, ProjectType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { ColorDefinition } from '@hcengineering/ui'
   import {
-    ColorDefinition,
     defaultBackground,
     getColorNumberByText,
     getPlatformColorDef,

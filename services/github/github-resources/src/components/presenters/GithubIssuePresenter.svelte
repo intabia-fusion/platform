@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
 
   import { getClient } from '@hcengineering/presentation'
   import type { ButtonKind } from '@hcengineering/ui'

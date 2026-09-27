@@ -15,7 +15,8 @@
 <script lang="ts">
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { MeetingMinutes, MeetingStatus, PendingRecording, ParticipantInfo } from '@hcengineering/love'
+  import type { MeetingMinutes, PendingRecording, ParticipantInfo } from '@hcengineering/love'
+  import { MeetingStatus } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
@@ -23,7 +24,8 @@
   import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import ParticipantsPreview from './ParticipantsPreview.svelte'
   import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
   import { openWidgetTab } from '@hcengineering/workbench-resources'

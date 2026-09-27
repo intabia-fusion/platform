@@ -16,7 +16,7 @@
 
 <script lang="ts">
   import ui, { tooltip, themeStore } from '@hcengineering/ui'
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
 
   export let date: Timestamp

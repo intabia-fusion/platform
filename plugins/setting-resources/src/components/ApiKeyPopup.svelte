@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import presentation, { copyTextToClipboard } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { Button, Label, ticker } from '@hcengineering/ui'

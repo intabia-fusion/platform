@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
 
   import EditCardTableOfContents from './EditCardTableOfContents.svelte'
 

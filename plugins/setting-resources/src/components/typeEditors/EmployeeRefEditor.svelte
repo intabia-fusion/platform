@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import card from '@hcengineering/card'
-  import { AnyAttribute, Class, Doc, Ref, Role } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, Role } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { DropdownLabels, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

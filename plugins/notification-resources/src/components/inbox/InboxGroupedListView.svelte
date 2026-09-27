@@ -14,8 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
-  import { Ref } from '@hcengineering/core'
+  import type { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
+  import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { ListView } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'

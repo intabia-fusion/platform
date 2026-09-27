@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import calendar from '@hcengineering/calendar'
-  import { DateRangeMode, Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
+  import { DateRangeMode } from '@hcengineering/core'
   import { DatePresenter, Label } from '@hcengineering/ui'
-  import { EventPersonMapping } from '../../../types'
+  import type { EventPersonMapping } from '../../../types'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
 
   export let gitem: EventPersonMapping | undefined

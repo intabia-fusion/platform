@@ -15,19 +15,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { AnyAttribute, ArrOf, AttachedDoc, Class, Collection, Doc, Ref, RefTo, Type } from '@hcengineering/core'
-  import { IntlString, getResource } from '@hcengineering/platform'
+  import type { AnyAttribute, ArrOf, AttachedDoc, Class, Collection, Doc, Ref, RefTo, Type } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import presentation, { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import {
-    Action,
-    AnySvelteComponent,
-    IconCopy,
-    IconDelete,
-    IconEdit,
-    Menu,
-    getEventPositionElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Action, AnySvelteComponent } from '@hcengineering/ui'
+  import { IconCopy, IconDelete, IconEdit, Menu, getEventPositionElement, showPopup } from '@hcengineering/ui'
   import { getContextActions, SortableList } from '@hcengineering/view-resources'
   import settings from '../plugin'
   import ClassAttributeRow from './ClassAttributeRow.svelte'

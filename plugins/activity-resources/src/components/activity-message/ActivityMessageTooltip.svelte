@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
 
   import ActivityMessagePresenter from './ActivityMessagePresenter.svelte'
 

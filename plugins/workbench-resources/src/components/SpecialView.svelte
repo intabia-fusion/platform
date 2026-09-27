@@ -13,24 +13,25 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup, mergeQueries } from '@hcengineering/core'
-  import { Asset, getResource, IntlString, Resource } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { mergeQueries } from '@hcengineering/core'
+  import type { Asset, IntlString, Resource } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { getClient, ComponentExtensions } from '@hcengineering/presentation'
+  import type { AnyComponent, AnySvelteComponent, IModeSelector } from '@hcengineering/ui'
   import {
-    AnyComponent,
-    AnySvelteComponent,
     Breadcrumb,
     Button,
     Component,
     Header,
     IconAdd,
-    IModeSelector,
     Loading,
     ModeSelector,
     SearchInput,
     showPopup
   } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions, BuildModelKey } from '@hcengineering/view'
+  import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions, BuildModelKey } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,
@@ -43,7 +44,7 @@
   import workbench, { type ParentsNavigationModel } from '@hcengineering/workbench'
   import ComponentNavigator from './ComponentNavigator.svelte'
   import { deepEqual } from 'fast-equals'
-  import { ComponentType } from 'svelte'
+  import type { ComponentType } from 'svelte'
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined

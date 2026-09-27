@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { ClassPermission, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { ClassPermission, Ref } from '@hcengineering/core'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import { ClassAttributes } from '@hcengineering/setting-resources'
   import setting from '@hcengineering/setting-resources/src/plugin'

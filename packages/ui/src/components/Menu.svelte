@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
-  import { generateId, Ref, Doc } from '@hcengineering/core'
+  import type { Ref, Doc } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import ui from '../plugin'
   import { closePopup, showPopup } from '../popups'
-  import { Action } from '../types'
+  import type { Action } from '../types'
   import Icon from './Icon.svelte'
   import Label from './Label.svelte'
   import MouseSpeedTracker from './MouseSpeedTracker.svelte'

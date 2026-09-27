@@ -14,15 +14,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Markup } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Markup } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { EmptyMarkup } from '@hcengineering/text'
   import textEditor from '@hcengineering/text-editor'
   import type { AnySvelteComponent } from '@hcengineering/ui'
   import { Icon, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import { EditorKitOptions } from '../kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
   import StyledTextBox from './StyledTextBox.svelte'
   import IconDescription from './icons/Description.svelte'
 

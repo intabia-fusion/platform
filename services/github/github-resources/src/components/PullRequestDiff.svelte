@@ -6,7 +6,7 @@
   import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
   import { Button, Chevron, Component, ExpandCollapse, Label } from '@hcengineering/ui'
   import diffview from '@hcengineering/diffview'
-  import { GithubPatch, GithubPullRequest, GithubPullRequestReview } from '@hcengineering/github'
+  import type { GithubPatch, GithubPullRequest, GithubPullRequestReview } from '@hcengineering/github'
 
   import github from '../plugin'
   import { getCurrentEmployee } from '@hcengineering/contact'

@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Process, UserResult } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
+  import { UserResult } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
   import { DropdownLabels, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
-  import { ModeId } from '../../query'
+  import type { ModeId } from '../../query'
   import SubProcessStateCriteria from '../criterias/SubProcessStateCriteria.svelte'
 
   export let readonly: boolean

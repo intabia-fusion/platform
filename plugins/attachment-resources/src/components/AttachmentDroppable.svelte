@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { Class, Data, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { Class, Data, Doc, Ref, Space } from '@hcengineering/core'
 
   import { getClient } from '@hcengineering/presentation'
   import { createAttachments } from '../utils'

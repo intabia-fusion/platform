@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, generateId, Ref, RefTo } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, RefTo } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { getAttributeEditor, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Process, SlotModel } from '@hcengineering/process'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { Process, SlotModel } from '@hcengineering/process'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext } from '../../utils'
   import ProcessAttribute from '../ProcessAttribute.svelte'

@@ -32,8 +32,9 @@
   import SkinTonePopup from './SkinTonePopup.svelte'
   import EmojiGroup from './EmojiGroup.svelte'
   import emojiPlugin, { isCustomEmoji } from '@hcengineering/emoji'
-  import { emojiCategories, EmojiCategory } from '../types'
-  import { Ref, Blob } from '@hcengineering/core'
+  import type { EmojiCategory } from '../types'
+  import { emojiCategories } from '../types'
+  import type { Ref, Blob } from '@hcengineering/core'
 
   export let embedded = false
   export let selected: string | Ref<Blob> | undefined

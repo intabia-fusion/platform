@@ -8,7 +8,7 @@
     $controlledDocument as controlledDocument
   } from '../../../stores/editors/document'
   import documentsRes from '../../../plugin'
-  import { TeamPopupData } from '../../../utils'
+  import type { TeamPopupData } from '../../../utils'
 
   function onSendDocRequest (): void {
     if ($controlledDocument == null) {

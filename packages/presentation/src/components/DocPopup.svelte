@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { getObjectValue, VersionableDoc, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import type { VersionableDoc } from '@hcengineering/core'
+  import core, { getObjectValue, type Class, type Doc, type Ref } from '@hcengineering/core'
   import { getResource, type IntlString } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Button,
     EditWithIcon,
     FocusHandler,
@@ -36,7 +37,7 @@
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import presentation, { DocPopup } from '..'
-  import { ObjectCreate } from '../types'
+  import type { ObjectCreate } from '../types'
   import { getClient } from '../utils'
   import { Analytics } from '@hcengineering/analytics'
   import ObjectPopup from './ObjectPopup.svelte'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { Card } from '@hcengineering/card'
+  import type { Asset } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import CardPresenter from './CardPresenter.svelte'
 
   export let value: Card[] | Card | undefined

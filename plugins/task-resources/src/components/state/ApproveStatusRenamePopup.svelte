@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Card } from '@hcengineering/presentation'
   import { Button, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view-resources/src/plugin'

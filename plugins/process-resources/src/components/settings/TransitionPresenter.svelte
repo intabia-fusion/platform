@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Transition } from '@hcengineering/process'
+  import type { Transition } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
 

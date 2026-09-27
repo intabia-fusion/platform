@@ -13,21 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import core, {
-    Class,
-    Doc,
-    generateId,
-    PersonId,
-    Ref,
-    Space,
-    Timestamp,
-    TxCreateDoc,
-    TxProcessor
-  } from '@hcengineering/core'
+  import type { DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import type { Class, Doc, PersonId, Ref, Space, TxCreateDoc } from '@hcengineering/core'
+  import core, { generateId, Timestamp, TxProcessor } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component } from '@hcengineering/ui'
-  import view, { ObjectPanel } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
+  import type { ObjectPanel } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { buildRemovedDoc, DocNavLink, getDocTitle, isAttachedDoc } from '@hcengineering/view-resources'
   import contact from '@hcengineering/contact'
 

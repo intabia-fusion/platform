@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
-  import { TagElement } from '@hcengineering/tags'
-  import { AnySvelteComponent, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import type { Asset } from '@hcengineering/platform'
+  import type { TagElement } from '@hcengineering/tags'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import EditTagElement from './EditTagElement.svelte'
   import TagItem from './TagItem.svelte'
 

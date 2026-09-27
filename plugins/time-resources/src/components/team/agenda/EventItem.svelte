@@ -1,5 +1,6 @@
 <script lang="ts">
-  import calendar, { Event } from '@hcengineering/calendar'
+  import type { Event } from '@hcengineering/calendar'
+  import calendar from '@hcengineering/calendar'
   import { DateRangeMode } from '@hcengineering/core'
   import { Icon, DatePresenter, IconArrowRight } from '@hcengineering/ui'
   import TimePresenter from '../../presenters/TimePresenter.svelte'

@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { Button, IconAdd, Label, showPopup } from '@hcengineering/ui'
-  import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
+  import type { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
   import tracker from '../../../plugin'
   import QueryIssuesList from './QueryIssuesList.svelte'
-  import { ObjectSearchPopup, ObjectSearchResult, createQuery, getClient } from '@hcengineering/presentation'
+  import type { ObjectSearchResult } from '@hcengineering/presentation'
+  import { ObjectSearchPopup, createQuery, getClient } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
-  import { Viewlet } from '@hcengineering/view'
+  import type { Viewlet } from '@hcengineering/view'
   import { restrictionStore } from '@hcengineering/view-resources'
   import { updateIssueRelation } from '../../../issues'
 

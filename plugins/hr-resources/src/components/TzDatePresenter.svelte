@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TzDate } from '@hcengineering/hr'
+  import type { TzDate } from '@hcengineering/hr'
   import { DateRangePresenter } from '@hcengineering/ui'
 
   export let value: TzDate | null | undefined

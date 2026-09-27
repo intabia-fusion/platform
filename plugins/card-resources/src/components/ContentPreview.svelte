@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { WithLookup } from '@hcengineering/core'
   import { ShowMore } from '@hcengineering/ui'
 
   import ContentEditor from './ContentEditor.svelte'

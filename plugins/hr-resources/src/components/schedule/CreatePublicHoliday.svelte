@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Data, Ref, Timestamp } from '@hcengineering/core'
-  import { Department, PublicHoliday, timeToTzDate } from '@hcengineering/hr'
+  import type { Data, Ref, Timestamp } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Department, PublicHoliday } from '@hcengineering/hr'
+  import { timeToTzDate } from '@hcengineering/hr'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { Button, DateRangePresenter, EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

@@ -13,16 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Visibility } from '@hcengineering/calendar'
-  import {
-    Button,
-    ButtonMenu,
-    closeTooltip,
-    DropdownIntlItem,
-    eventToHTMLElement,
-    showPopup,
-    ModernPopup
-  } from '@hcengineering/ui'
+  import type { Visibility } from '@hcengineering/calendar'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { Button, ButtonMenu, closeTooltip, eventToHTMLElement, showPopup, ModernPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
 

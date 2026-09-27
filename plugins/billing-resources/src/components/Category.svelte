@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { AnySvelteComponent, Icon, Label } from '@hcengineering/ui'
-  import { Asset, type IntlString } from '@hcengineering/platform'
-  import { ComponentType } from 'svelte'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, Label } from '@hcengineering/ui'
+  import type { Asset } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ComponentType } from 'svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
   export let label: IntlString

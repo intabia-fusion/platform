@@ -16,7 +16,7 @@
   import { BreadcrumbsElement } from '@hcengineering/presentation'
   import { ScrollerBar } from '@hcengineering/ui'
 
-  import { type TestRunStats } from '../../testRunUtils'
+  import type { TestRunStats } from '../../testRunUtils'
 
   export let value: TestRunStats
 

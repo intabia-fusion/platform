@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, SortingOrder, Status, StatusCategory, WithLookup, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory, WithLookup } from '@hcengineering/core'
+  import core, { SortingOrder, toIdMap } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { Issue, IssueStatus } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { IssueStatus } from '@hcengineering/tracker'
   import {
     Icon,
     IconDetails,

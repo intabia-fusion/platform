@@ -18,8 +18,8 @@
   queues the job, so without this the click has no visible effect for a good while.
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
-  import { type KeyedAttribute } from '@hcengineering/presentation'
+  import type { Doc } from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import { summarizingStore, stopSummarizing } from '@hcengineering/chunter-resources'
   import { Spinner } from '@hcengineering/ui'
   import CollaborativeDocEditor from '@hcengineering/view-resources/src/components/CollaborativeDocEditor.svelte'

@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { Button, IconScribble } from '@hcengineering/ui'
-  import { Node } from '@tiptap/pm/model'
-  import { Editor } from '@tiptap/core'
+  import type { Node } from '@tiptap/pm/model'
+  import type { Editor } from '@tiptap/core'
   import { onDestroy, onMount } from 'svelte'
-  import { showBoardPopup, SavedBoard } from './extension/drawingBoard'
+  import type { SavedBoard } from './extension/drawingBoard'
+  import { showBoardPopup } from './extension/drawingBoard'
   import NodeViewWrapper from './node-view/NodeViewWrapper.svelte'
   import DrawingBoardEditor from './DrawingBoardEditor.svelte'
 

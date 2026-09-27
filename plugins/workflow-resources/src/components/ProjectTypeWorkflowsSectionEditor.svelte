@@ -13,11 +13,13 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import {
     ButtonIcon,

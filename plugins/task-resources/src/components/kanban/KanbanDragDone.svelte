@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Project } from '@hcengineering/task'
   import task, { getStates } from '@hcengineering/task'

@@ -14,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import { BlobType, WithLookup } from '@hcengineering/core'
-  import { ListSelectionProvider } from '@hcengineering/view-resources'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
+  import type { BlobType, WithLookup } from '@hcengineering/core'
+  import type { ListSelectionProvider } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { AttachmentImageSize } from '../types'
+  import type { AttachmentImageSize } from '../types'
   import { getCustomPresenter, getType, isAttachment, showAttachmentPreviewPopup } from '../utils'
   import AttachmentActions from './AttachmentActions.svelte'
   import AttachmentImagePreview from './AttachmentImagePreview.svelte'

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Metrics, type MetricsData } from '@hcengineering/core'
+  import type { Metrics } from '@hcengineering/core'
+  import type { MetricsData } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, Expandable, showPopup } from '@hcengineering/ui'
   import FixedColumn from './FixedColumn.svelte'

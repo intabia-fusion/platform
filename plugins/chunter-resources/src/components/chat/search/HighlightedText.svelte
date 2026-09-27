@@ -16,7 +16,7 @@
   import { MessageViewer } from '@hcengineering/presentation'
   import { highlightMarkup, isEmptyMarkup, jsonToMarkup, markupToJSON } from '@hcengineering/text-core'
   import ui, { ModernButton, resizeObserver } from '@hcengineering/ui'
-  import { Markup } from '@hcengineering/core'
+  import type { Markup } from '@hcengineering/core'
 
   import { matchedTerms, splitHighlight } from '../../../search/highlight'
 

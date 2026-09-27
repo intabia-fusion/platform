@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref, type WithLookup } from '@hcengineering/core'
+  import type { Blob, Ref, WithLookup } from '@hcengineering/core'
   import drive, { type File, type FileVersion } from '@hcengineering/drive'
   import { FilePreview, createQuery } from '@hcengineering/presentation'
 

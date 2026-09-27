@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { ComponentType, onMount } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { onMount } from 'svelte'
   import { checkAdaptiveMatching, deviceOptionsStore as deviceInfo } from '..'
   import { registerFocus } from '../focus'
   import { tooltip } from '../tooltips'

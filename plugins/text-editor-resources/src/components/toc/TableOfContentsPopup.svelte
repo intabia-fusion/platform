@@ -17,7 +17,7 @@
 <script lang="ts">
   import { resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { Heading } from '@hcengineering/text-editor'
   import TableOfContentsContent from './TableOfContentsContent.svelte'
 
   export let items: Heading[] = []

@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { ClassifierKind } from '@hcengineering/core'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { type ButtonKind, type ButtonSize, DropdownIntlItem, NestedDropdown } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { type ButtonKind, type ButtonSize, NestedDropdown } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
   import view from '@hcengineering/view'

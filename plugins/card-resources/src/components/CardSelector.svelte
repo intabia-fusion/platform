@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@hcengineering/card'
-  import { Class, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
   import CardPresenter from './CardPresenter.svelte'

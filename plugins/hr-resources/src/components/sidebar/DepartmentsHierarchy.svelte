@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref } from '@hcengineering/core'
-  import { Department } from '@hcengineering/hr'
+  import type { Ref } from '@hcengineering/core'
+  import type { Department } from '@hcengineering/hr'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit } from '@hcengineering/ui'
   import { getActions as getContributedActions, TreeElement } from '@hcengineering/view-resources'
   import hr from '../../plugin'
 

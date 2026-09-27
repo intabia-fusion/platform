@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
 
   import { getClient, Card } from '@hcengineering/presentation'
-  import { DirectMessage } from '@hcengineering/chunter'
+  import type { DirectMessage } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
   import { EditBox } from '@hcengineering/ui'

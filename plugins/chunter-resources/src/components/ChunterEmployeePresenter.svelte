@@ -1,8 +1,10 @@
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { EmployeePresenter } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { location, Location } from '@hcengineering/ui'
+  import type { Location } from '@hcengineering/ui'
+  import { location } from '@hcengineering/ui'
   import { chunterId } from '@hcengineering/chunter'
   import { notificationId } from '@hcengineering/notification'
 

@@ -26,9 +26,10 @@
     IconDownload,
     canLeaveWorkspace
   } from '@hcengineering/presentation'
-  import setting, { settingId, SettingsCategory } from '@hcengineering/setting'
+  import type { SettingsCategory } from '@hcengineering/setting'
+  import setting, { settingId } from '@hcengineering/setting'
+  import type { Action } from '@hcengineering/ui'
   import {
-    Action,
     closePopup,
     Component,
     deviceOptionsStore as deviceInfo,

@@ -14,12 +14,14 @@
 -->
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import activity, { ActivityMessage, ActivityReference } from '@hcengineering/activity'
+  import type { ActivityMessage, ActivityReference } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { ActivityMessagePresenter, sortActivityMessages } from '@hcengineering/activity-resources'
   import { ActionIcon, IconClose, Loading } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { ThreadMessage } from '@hcengineering/chunter'
-  import { Class, Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
+  import type { ThreadMessage } from '@hcengineering/chunter'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
 
   import chunter from '../plugin'
 

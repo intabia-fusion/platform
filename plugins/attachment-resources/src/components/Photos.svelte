@@ -14,8 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Photo } from '@hcengineering/attachment'
-  import { Class, Doc, Ref, Space, type WithLookup } from '@hcengineering/core'
+  import type { Photo } from '@hcengineering/attachment'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { createQuery, getBlobRef, getClient, uploadFile } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, Spinner } from '@hcengineering/ui'

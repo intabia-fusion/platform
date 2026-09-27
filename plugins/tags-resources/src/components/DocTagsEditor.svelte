@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagReference } from '@hcengineering/tags'
+  import type { TagReference } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import { ButtonBase, ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import tagsPlugin from '../plugin'
   import TagReferencePresenter from './TagReferencePresenter.svelte'

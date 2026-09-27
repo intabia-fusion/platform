@@ -4,7 +4,8 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
   import { createEventDispatcher } from 'svelte'
-  import emojiPlugin, { ExtendedEmoji, Emoji } from '@hcengineering/emoji'
+  import type { ExtendedEmoji, Emoji } from '@hcengineering/emoji'
+  import emojiPlugin from '@hcengineering/emoji'
   import { getEmojiByHexcode, getEmojiSkins } from '../utils'
   import EmojiButton from './EmojiButton.svelte'
   import { getSkinTone, unicodeEmojiStore } from '../store'

@@ -3,7 +3,8 @@
   import { getClient } from '@hcengineering/presentation'
   import { Grid, Label, Toggle } from '@hcengineering/ui'
 
-  import desktopPreferences, { PreferenceKey } from '@hcengineering/desktop-preferences'
+  import type { PreferenceKey } from '@hcengineering/desktop-preferences'
+  import desktopPreferences from '@hcengineering/desktop-preferences'
 
   import { activePreferences } from '../utils'
 

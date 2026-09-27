@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { MarkupNode } from '@hcengineering/text'
+  import type { MarkupNode } from '@hcengineering/text'
   import { onDestroy, onMount } from 'svelte'
   import { Doc as Ydoc, encodeStateAsUpdate, applyUpdate } from 'yjs'
 

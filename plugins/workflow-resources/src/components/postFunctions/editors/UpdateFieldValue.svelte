@@ -13,18 +13,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { AnyAttribute, Class, Doc, generateId, Mixin, notEmpty, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { generateId, notEmpty } from '@hcengineering/core'
   import presentation, { getAttributeEditor, getClient, reduceCalls } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
-  import {
-    AnySvelteComponent,
-    DropdownTextItem,
-    eventToHTMLElement,
-    languageStore,
-    ModernButton,
-    showPopup
-  } from '@hcengineering/ui'
-  import {
+  import type { TaskType } from '@hcengineering/task'
+  import type { AnySvelteComponent, DropdownTextItem } from '@hcengineering/ui'
+  import { eventToHTMLElement, languageStore, ModernButton, showPopup } from '@hcengineering/ui'
+  import type {
     CollectionOperation,
     UpdateFieldValueConfig,
     UpdateFieldValuePostFnConfig,
@@ -35,10 +30,11 @@
   } from '@hcengineering/workflow'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
-  import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
+  import type { DisplayAttribute } from '../../../utils'
+  import { getDisplayAttributes } from '../../../utils'
   import ContextSubmenuPopup from './update-field/ContextSubmenuPopup.svelte'
   import Row from './update-field/Row.svelte'
-  import { ContextOption, FieldRow, TransformOption } from './update-field/types'
+  import type { ContextOption, FieldRow, TransformOption } from './update-field/types'
   import {
     ensureFieldValue,
     EXCLUDED_FIELDS,

@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, Ref, SortingOrder, Space, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import core, { SortingOrder, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import preference, { SpacePreference } from '@hcengineering/preference'
+  import type { SpacePreference } from '@hcengineering/preference'
+  import preference from '@hcengineering/preference'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Scroller, NavItem, Component } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'

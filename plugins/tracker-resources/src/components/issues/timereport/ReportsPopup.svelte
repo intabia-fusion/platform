@@ -15,9 +15,9 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { FindOptions } from '@hcengineering/core'
+  import type { FindOptions } from '@hcengineering/core'
   import presentation, { Card } from '@hcengineering/presentation'
-  import { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
   import { Button, eventToHTMLElement, IconAdd, IconDelete, Scroller, showPopup, tableSP } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
 

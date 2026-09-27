@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
 
-  import { MessageInlineAction } from '../../types'
+  import type { MessageInlineAction } from '../../types'
 
   export let item: MessageInlineAction
 </script>

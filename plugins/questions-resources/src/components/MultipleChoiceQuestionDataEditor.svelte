@@ -3,15 +3,15 @@
 -->
 
 <script lang="ts">
-  import {
-    type QuestionDataEditorProps,
-    type QuestionDataEditorPropsSubmit,
-    type QuestionDataPresenterProps,
-    type QuestionOption,
-    type MultipleChoiceAssessment,
-    type MultipleChoiceAssessmentData,
-    type MultipleChoiceQuestion,
-    type MultipleChoiceQuestionData
+  import type {
+    QuestionDataEditorProps,
+    QuestionDataEditorPropsSubmit,
+    QuestionDataPresenterProps,
+    QuestionOption,
+    MultipleChoiceAssessment,
+    MultipleChoiceAssessmentData,
+    MultipleChoiceQuestion,
+    MultipleChoiceQuestionData
   } from '@hcengineering/questions'
   import { CheckBox } from '@hcengineering/ui'
   import { moveItem } from '../utils'

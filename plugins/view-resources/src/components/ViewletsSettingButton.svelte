@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import type { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Button, ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
-  import { ViewOptions, ViewOptionsModel, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { ViewOptionsModel } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { getDefaults, getViewOptions, viewOptionStore } from '../viewOptions'

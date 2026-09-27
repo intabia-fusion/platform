@@ -3,7 +3,8 @@
 -->
 
 <script lang="ts">
-  import { TrainingAttemptState, trainingAttemptStateOrder } from '@hcengineering/training'
+  import type { TrainingAttemptState } from '@hcengineering/training'
+  import { trainingAttemptStateOrder } from '@hcengineering/training'
   import TrainingAttemptStatePresenter from './TrainingAttemptStatePresenter.svelte'
 
   export let value: Map<number, Map<TrainingAttemptState, TrainingAttemptState[]>>

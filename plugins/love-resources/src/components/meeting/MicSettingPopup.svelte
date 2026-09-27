@@ -1,6 +1,6 @@
 <script lang="ts">
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import { DevicesPreference } from '@hcengineering/love'
+  import type { DevicesPreference } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import { Component, Label, Loading, Toggle } from '@hcengineering/ui'
   import love from '../../plugin'

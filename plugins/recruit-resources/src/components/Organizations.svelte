@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@hcengineering/contact'
-  import core, { Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import type { Organization } from '@hcengineering/contact'
+  import type { Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Applicant, Vacancy } from '@hcengineering/recruit'
+  import type { Applicant, Vacancy } from '@hcengineering/recruit'
   import { Button, Component, IconAdd, Breadcrumb, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
-  import view, { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import CreateOrganization from './CreateOrganization.svelte'

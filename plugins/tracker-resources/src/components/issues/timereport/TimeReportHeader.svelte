@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Timestamp } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import ui, {
     Label,
     areDatesEqual,

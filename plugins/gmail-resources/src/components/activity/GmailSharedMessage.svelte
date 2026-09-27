@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
-  import { SharedMessages } from '@hcengineering/gmail'
+  import type { Ref } from '@hcengineering/core'
+  import type { SharedMessages } from '@hcengineering/gmail'
 
   import gmail from '../../plugin'
   import SharedMessagesView from '../SharedMessages.svelte'

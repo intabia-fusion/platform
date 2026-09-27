@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonShape, ButtonSize, LabelAndProps, PopupResult } from '@hcengineering/ui'
   import { Button, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
 

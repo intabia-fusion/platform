@@ -20,10 +20,11 @@
   import DrawingBoardToolbar from './DrawingBoardToolbar.svelte'
   import { DrawingCommandsProcessor } from '../drawingCommandsProcessor'
   import { Doc as YDoc } from 'yjs'
-  import { ColorMetaNameOrHex } from '../drawingUtils'
+  import type { ColorMetaNameOrHex } from '../drawingUtils'
   import { themeStore } from '@hcengineering/theme'
-  import { ColorsList, ThemeAwareColor } from '../drawingColors'
-  import { DrawingCmd, CommandUid, DrawTextCmd } from '../drawingCommand'
+  import type { ColorsList } from '../drawingColors'
+  import { ThemeAwareColor } from '../drawingColors'
+  import type { DrawingCmd, CommandUid, DrawTextCmd } from '../drawingCommand'
 
   export let active = false
   export let readonly = true

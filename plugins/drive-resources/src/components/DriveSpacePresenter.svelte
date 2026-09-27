@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
-  import { Drive, Folder } from '@hcengineering/drive'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { Drive, Folder } from '@hcengineering/drive'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, navigate, IconEdit } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { navigate, IconEdit } from '@hcengineering/ui'
   import { TreeNode, TreeItem, getActions as getContributedActions } from '@hcengineering/view-resources'
   import { getResource } from '@hcengineering/platform'
 

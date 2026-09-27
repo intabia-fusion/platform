@@ -13,10 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { ButtonBaseKind, ButtonBaseSize } from '@hcengineering/ui'
   import ui, {
     ButtonBase,
-    ButtonBaseKind,
-    ButtonBaseSize,
     DatePopup,
     SimpleDatePopup,
     TimeInputBox,

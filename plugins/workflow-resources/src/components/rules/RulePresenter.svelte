@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WorkflowRule } from '@hcengineering/workflow'
+  import type { WorkflowRule } from '@hcengineering/workflow'
 
   import RuleCard from './RuleCard.svelte'
 

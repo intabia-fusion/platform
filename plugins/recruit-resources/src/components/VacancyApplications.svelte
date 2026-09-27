@@ -15,9 +15,10 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { recruitId, Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
+  import { recruitId } from '@hcengineering/recruit'
   import { Button, Icon, IconAdd, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { NavLink, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import CreateApplication from './CreateApplication.svelte'

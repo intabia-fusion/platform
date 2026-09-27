@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, WithLookup } from '@hcengineering/core'
   import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
   import { Scroller } from '@hcengineering/ui'
-  import { BuildModelKey, ViewOptions } from '@hcengineering/view'
-  import { ListSelectionProvider, SelectDirection, buildConfigLookup, focusStore } from '@hcengineering/view-resources'
+  import type { BuildModelKey, ViewOptions } from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
+  import { ListSelectionProvider, buildConfigLookup, focusStore } from '@hcengineering/view-resources'
   import CardGridItem from './CardGridItem.svelte'
 
   export let _class: Ref<Class<Card>>

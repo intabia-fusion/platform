@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import aiBot, { type AIContextMessage } from '@hcengineering/ai-bot'
   import { getResource } from '@hcengineering/platform'
   import { Button, IconDownOutline, showPopup } from '@hcengineering/ui'

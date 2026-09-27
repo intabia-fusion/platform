@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref, type WithLookup } from '@hcengineering/core'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
   import { createFileVersion, type File as DriveFile, type FileVersion } from '@hcengineering/drive'
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
   import { Button, IconMoreH } from '@hcengineering/ui'
-  import { FileUploadCallbackParams, showFilesUploadPopup } from '@hcengineering/uploader'
+  import type { FileUploadCallbackParams } from '@hcengineering/uploader'
+  import { showFilesUploadPopup } from '@hcengineering/uploader'
   import view from '@hcengineering/view'
   import { canChangeDoc, showMenu } from '@hcengineering/view-resources'
 

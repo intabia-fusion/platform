@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { convertTimeZone, showPopup, TimeZone } from '../..'
+  import type { TimeZone } from '../..'
+  import { convertTimeZone, showPopup } from '../..'
   import ClockFace from './ClockFace.svelte'
   import TimeZonesPopup from '../TimeZonesPopup.svelte'
 

@@ -23,8 +23,9 @@
     type Ref
   } from '@hcengineering/core'
   import { translateCB } from '@hcengineering/platform'
-  import { createQuery, KeyedAttribute } from '@hcengineering/presentation'
-  import { TagElement, TagReference } from '@hcengineering/tags'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { createQuery } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
   import {
     Button,
     getEventPopupPositionElement,

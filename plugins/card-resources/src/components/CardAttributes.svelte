@@ -14,18 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { PermissionsStore } from '@hcengineering/contact'
+  import type { Card } from '@hcengineering/card'
+  import type { PermissionsStore } from '@hcengineering/contact'
   import { permissionsStore } from '@hcengineering/contact-resources'
-  import core, { AnyAttribute, Class, Doc, Ref, TypedSpace } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, TypedSpace } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { toRank } from '@hcengineering/rank'
-  import {
-    AttributeBarEditor,
-    createQuery,
-    getClient,
-    isCollectionAttr,
-    KeyedAttribute
-  } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, createQuery, getClient, isCollectionAttr } from '@hcengineering/presentation'
   import { canChangeAttribute } from '@hcengineering/view-resources'
 
   export let object: Card

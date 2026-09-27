@@ -13,17 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Mixin, Ref, Space } from '@hcengineering/core'
-  import {
-    AttributeBarEditor,
-    getClient,
-    getFiltredKeys,
-    isCollectionAttr,
-    KeyedAttribute
-  } from '@hcengineering/presentation'
+  import type { Class, Doc, Mixin, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, getClient, getFiltredKeys, isCollectionAttr } from '@hcengineering/presentation'
   import { Scroller } from '@hcengineering/ui'
   import { ClassAttributeBar, getDocMixins } from '@hcengineering/view-resources'
-  import { ObjectChatPanel } from '@hcengineering/chunter'
+  import type { ObjectChatPanel } from '@hcengineering/chunter'
 
   export let object: Doc
   export let objectChatPanel: ObjectChatPanel | undefined

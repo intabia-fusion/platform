@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
-  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import type { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import type { IntlString, Asset } from '@hcengineering/platform'
-  import { IModeSelector } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { ViewletPanelHeader } from '@hcengineering/view-resources'
 
   import document from '../plugin'

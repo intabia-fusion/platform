@@ -14,11 +14,13 @@
 -->
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
-  import core, { Account, generateId, Ref } from '@hcengineering/core'
-  import { OK, Status } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import core, { Account, generateId } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/platform'
+  import { OK } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
   import type { Opinion, Review } from '@hcengineering/recruit'
-  import { Project } from '@hcengineering/task'
+  import type { Project } from '@hcengineering/task'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
   import { EditBox, Status as StatusControl } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

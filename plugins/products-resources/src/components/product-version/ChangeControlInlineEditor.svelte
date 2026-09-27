@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { ObjectBox } from '@hcengineering/view-resources'
-  import documents, { Document } from '@hcengineering/controlled-documents'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
 
   import products from '../../plugin'
 

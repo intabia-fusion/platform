@@ -16,7 +16,8 @@
 <script lang="ts">
   import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal, ModernButton } from '@hcengineering/ui'
   import presentation from '@hcengineering/presentation'
-  import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import { concatLink, getCurrentAccount } from '@hcengineering/core'
   import { createEventDispatcher, onMount } from 'svelte'
 

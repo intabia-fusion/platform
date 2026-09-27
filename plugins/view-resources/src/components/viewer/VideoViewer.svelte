@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type BlobMetadata, type Ref } from '@hcengineering/core'
+  import type { Blob, BlobMetadata, Ref } from '@hcengineering/core'
   import { getFileUrl, getVideoMeta } from '@hcengineering/presentation'
   import { HlsVideo } from '@hcengineering/hls'
   import { Video } from '@hcengineering/ui'

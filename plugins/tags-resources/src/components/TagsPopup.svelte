@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { TagCategory, TagElement, findTagCategory } from '@hcengineering/tags'
+  import type { TagCategory, TagElement } from '@hcengineering/tags'
+  import { findTagCategory } from '@hcengineering/tags'
   import {
     Button,
     EditWithIcon,

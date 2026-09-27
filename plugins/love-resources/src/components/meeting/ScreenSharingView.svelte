@@ -1,15 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
   import { liveKitClient, lk } from '../../utils'
-  import {
+  import type {
     LocalParticipant,
     LocalTrackPublication,
     RemoteParticipant,
     RemoteTrack,
-    RemoteTrackPublication,
-    RoomEvent,
-    Track
+    RemoteTrackPublication
   } from 'livekit-client'
+  import { RoomEvent, Track } from 'livekit-client'
   import { IconScale, IconScaleFull, ButtonIcon } from '@hcengineering/ui'
 
   export let hasActiveTrack: boolean = false

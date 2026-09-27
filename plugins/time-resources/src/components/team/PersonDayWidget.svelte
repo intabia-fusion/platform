@@ -13,15 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BusySlot, Event, getAllEvents } from '@hcengineering/calendar'
-  import { Person } from '@hcengineering/contact'
+  import type { BusySlot, Event } from '@hcengineering/calendar'
+  import { getAllEvents } from '@hcengineering/calendar'
+  import type { Person } from '@hcengineering/contact'
   import { PersonPresenter } from '@hcengineering/contact-resources'
-  import { IdMap, Ref } from '@hcengineering/core'
-  import { Project } from '@hcengineering/task'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { IdMap, Ref } from '@hcengineering/core'
+  import type { Project } from '@hcengineering/task'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { getResource } from '@hcengineering/platform'
   import { ButtonIcon, IconClose, Label } from '@hcengineering/ui'
-  import workbench, { Widget } from '@hcengineering/workbench'
+  import type { Widget } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
   import time from '../../plugin'
   import DayPlan from './agenda/DayPlan.svelte'
   import WithTeamData from './WithTeamData.svelte'

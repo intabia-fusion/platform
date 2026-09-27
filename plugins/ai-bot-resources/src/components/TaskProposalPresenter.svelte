@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AIContextMessage, type AITaskProposal, type AITaskProposalMessage } from '@hcengineering/ai-bot'
+  import type { AIContextMessage, AITaskProposal, AITaskProposalMessage } from '@hcengineering/ai-bot'
   import core, { type Doc, generateId, getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageViewer, SpaceSelector } from '@hcengineering/presentation'
@@ -32,7 +32,7 @@
   } from '@hcengineering/tracker'
   import { Button, Component, EditBox, Expandable, Label } from '@hcengineering/ui'
   import { ActivityMessageTemplate } from '@hcengineering/activity-resources'
-  import { type Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'

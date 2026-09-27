@@ -16,8 +16,8 @@
   import { type Person, formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
   import { Label, ModernButton } from '@hcengineering/ui'
-  import { type Ref } from '@hcengineering/core'
-  import { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
+  import type { MeetingMinutes, UserMeetingInvite } from '@hcengineering/love'
 
   import love from '../../../plugin'
   import { knockingInvitesStore, responseToInviteRequest } from '../../../invites'

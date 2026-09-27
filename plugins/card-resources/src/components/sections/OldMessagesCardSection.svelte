@@ -16,7 +16,7 @@
 <script lang="ts">
   import { Component } from '@hcengineering/ui'
   import activity from '@hcengineering/activity'
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
 
   export let doc: Card
   export let readonly: boolean = false

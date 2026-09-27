@@ -16,8 +16,8 @@
 <script lang="ts">
   import { getMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
-    Location,
     deviceOptionsStore as deviceInfo,
     fetchMetadataLocalStorage,
     getCurrentLocation,
@@ -40,7 +40,8 @@
   import SelectWorkspace from './SelectWorkspace.svelte'
   import SignupForm from './SignupForm.svelte'
   import SelectDownloads from './SelectDownloads.svelte'
-  import { Pages, pages } from '..'
+  import type { Pages } from '..'
+  import { pages } from '..'
   import { goTo, restoreSession } from '../utils'
   import login from '../plugin'
   import LoginAppBase from './LoginAppBase.svelte'

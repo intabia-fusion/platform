@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { ExecutionContext, Process, SelectedUserRequest, Transition } from '@hcengineering/process'
+  import type { ExecutionContext, Process, SelectedUserRequest, Transition } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

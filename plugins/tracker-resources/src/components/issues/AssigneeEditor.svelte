@@ -13,13 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { AssigneeBox, AssigneePopup, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import { AssigneeCategory } from '@hcengineering/contact-resources/src/assignee'
-  import { Doc, DocumentQuery, notEmpty, Ref, Space } from '@hcengineering/core'
-  import { RuleApplyResult, getClient, getDocRules } from '@hcengineering/presentation'
-  import { Component, Issue, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonKind, ButtonSize, IconSize, TooltipAlignment } from '@hcengineering/ui'
+  import type { AssigneeCategory } from '@hcengineering/contact-resources/src/assignee'
+  import type { Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
+  import type { RuleApplyResult } from '@hcengineering/presentation'
+  import { getClient, getDocRules } from '@hcengineering/presentation'
+  import type { Component, Issue } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize, IconSize, TooltipAlignment } from '@hcengineering/ui'
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
 

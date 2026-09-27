@@ -15,14 +15,14 @@
 //
 -->
 <script lang="ts">
-  import { Card, Tag } from '@hcengineering/card'
-  import { Class, Doc, Mixin, Permission, Ref, TypedSpace } from '@hcengineering/core'
+  import type { Card, Tag } from '@hcengineering/card'
+  import type { Class, Doc, Mixin, Permission, Ref, TypedSpace } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { CircleButton, eventToHTMLElement, IconAdd, IconDownOutline, SelectPopup, showPopup } from '@hcengineering/ui'
 
   import MasterTagSelector from './MasterTagSelector.svelte'
   import CardTagColored from './CardTagColored.svelte'
-  import { PermissionsStore } from '@hcengineering/contact'
+  import type { PermissionsStore } from '@hcengineering/contact'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
   import card from '../plugin'
 

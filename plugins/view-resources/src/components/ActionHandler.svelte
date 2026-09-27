@@ -14,12 +14,14 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { Doc, Ref, Space, TxRemoveDoc, type Tx } from '@hcengineering/core'
+  import type { Doc, Ref, Space, TxRemoveDoc } from '@hcengineering/core'
+  import core, { type Tx } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { addTxListener, contextStore, getClient } from '@hcengineering/presentation'
-  import { Action, ViewContextType } from '@hcengineering/view'
+  import type { Action, ViewContextType } from '@hcengineering/view'
   import { getContextActionsSync, getSelection } from '../actions'
-  import { ListSelectionProvider, SelectionStore, focusStore, selectionStore } from '../selection'
+  import type { SelectionStore } from '../selection'
+  import { ListSelectionProvider, focusStore, selectionStore } from '../selection'
   import { restrictionStore } from '../utils'
 
   export let currentSpace: Ref<Space> | undefined

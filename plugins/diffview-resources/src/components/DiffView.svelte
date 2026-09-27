@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { Diff, DiffFile, DiffFileId, DiffViewMode } from '@hcengineering/diffview'
+  import type { Diff, DiffFile, DiffFileId, DiffViewMode } from '@hcengineering/diffview'
   import DiffViewModeDropdown from './DiffViewModeDropdown.svelte'
   import FileDiffView from './FileDiffView.svelte'
   import { parseDiff } from '../parser'

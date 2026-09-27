@@ -14,9 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core, { toIdMap } from '@hcengineering/core'
   import { BreadcrumbsElement, createQuery } from '@hcengineering/presentation'
-  import task, { Project, ProjectType, getStates } from '@hcengineering/task'
+  import type { Project, ProjectType } from '@hcengineering/task'
+  import task, { getStates } from '@hcengineering/task'
   import {
     ScrollerBar,
     getColorNumberByText,

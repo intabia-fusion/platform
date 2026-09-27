@@ -13,17 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    Breadcrumbs,
-    Header,
-    BreadcrumbItem,
-    IconMaximize,
-    ButtonIcon,
-    showPopup,
-    PopupResult,
-    ticker1
-  } from '@hcengineering/ui'
-  import { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { BreadcrumbItem, PopupResult } from '@hcengineering/ui'
+  import { Breadcrumbs, Header, IconMaximize, ButtonIcon, showPopup, ticker1 } from '@hcengineering/ui'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { onDestroy } from 'svelte'
 
   import RoomModal from '../../RoomModal.svelte'

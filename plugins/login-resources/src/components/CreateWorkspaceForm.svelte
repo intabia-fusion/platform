@@ -14,9 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type RegionInfo } from '@hcengineering/account-client'
+  import type { RegionInfo } from '@hcengineering/account-client'
   import { OK, Severity, Status, getEmbeddedLabel } from '@hcengineering/platform'
-  import { LoginInfo } from '@hcengineering/login'
+  import type { LoginInfo } from '@hcengineering/login'
   import { ButtonMenu, getCurrentLocation, navigate, languageStore } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
   import { onMount } from 'svelte'

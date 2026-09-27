@@ -16,7 +16,7 @@
   import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { RangeDatePopup, SelectPopup, SimpleDatePopup, showPopup } from '@hcengineering/ui'
-  import { Filter, FilterMode } from '@hcengineering/view'
+  import type { Filter, FilterMode } from '@hcengineering/view'
   import { createEventDispatcher, onMount } from 'svelte'
   import view from '../../plugin'
 

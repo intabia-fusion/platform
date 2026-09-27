@@ -13,12 +13,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Class, Ref } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
-  import { WorkflowRule } from '@hcengineering/workflow'
+  import type { WorkflowRule } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import { RuleDisplay } from '../../types'
+  import type { RuleDisplay } from '../../types'
 
   export let _class: Ref<Class<WorkflowRule>>
   export let rulesDisplay: Record<Ref<Class<WorkflowRule>>, RuleDisplay>

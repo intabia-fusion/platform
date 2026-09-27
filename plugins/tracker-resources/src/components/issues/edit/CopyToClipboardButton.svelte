@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
   import { Button } from '@hcengineering/ui'
 

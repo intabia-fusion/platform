@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { ThreadMessage } from '@hcengineering/chunter'
-  import { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
+  import type { ThreadMessage } from '@hcengineering/chunter'
+  import type { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
 
   import ChatMessagePreview from '../chat-message/ChatMessagePreview.svelte'
 

@@ -13,19 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Employee, Person, getName } from '@hcengineering/contact'
-  import { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Contact, Employee, Person } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
+  import type { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, reduceCalls } from '@hcengineering/presentation'
+  import type { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
   import {
     ActionIcon,
     Button,
-    ButtonKind,
-    ButtonSize,
     Icon,
-    IconSize,
     Label,
-    LabelAndProps,
     getEventPositionElement,
     getFocusManager,
     showPopup,
@@ -34,8 +33,9 @@
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
-  import { PersonLabelTooltip, getPersonByPersonRefStore } from '..'
-  import { AssigneeCategory } from '../assignee'
+  import type { PersonLabelTooltip } from '..'
+  import { getPersonByPersonRefStore } from '..'
+  import type { AssigneeCategory } from '../assignee'
   import AssigneePopup from './AssigneePopup.svelte'
   import EmployeePresenter from './EmployeePresenter.svelte'
   import UserInfo from './UserInfo.svelte'

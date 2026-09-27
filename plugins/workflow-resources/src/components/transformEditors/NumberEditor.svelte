@@ -16,7 +16,7 @@
   import presentation, { Card } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { NumberEditor as ViewNumberEditor } from '@hcengineering/view-resources'
-  import { WorkflowValueFunction } from '@hcengineering/workflow'
+  import type { WorkflowValueFunction } from '@hcengineering/workflow'
 
   export let func: WorkflowValueFunction
   export let props: Record<string, any> = {}

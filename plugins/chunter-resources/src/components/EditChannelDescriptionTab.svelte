@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, ChunterSpace } from '@hcengineering/chunter'
+  import type { Channel, ChunterSpace } from '@hcengineering/chunter'
   import { getCurrentAccount } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, EditBox } from '@hcengineering/ui'

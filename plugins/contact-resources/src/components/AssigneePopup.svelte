@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Contact, Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     EditWithIcon,
     FocusHandler,
     Icon,
@@ -33,7 +34,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { AssigneeCategory } from '../assignee'
+  import type { AssigneeCategory } from '../assignee'
   import contact from '../plugin'
   import { addRecentlyUsedAssignee, getRecentlyUsedAssignees } from '../recentAssignees'
   import UserInfo from './UserInfo.svelte'

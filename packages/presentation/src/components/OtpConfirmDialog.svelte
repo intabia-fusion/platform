@@ -15,7 +15,7 @@
 <!-- Asks for a code sent by email and closes with it. Every label is a prop: the wording and the
      request itself belong to whoever opens the dialog. -->
 <script lang="ts">
-  import { type IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Button, CheckBox, EditBox, Label, ticker1 } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

@@ -1,22 +1,20 @@
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { themeStore } from '@hcengineering/ui'
-  import {
+  import type {
     ControlledDocument,
     ControlledDocumentState,
     Document,
-    DocumentState,
-    isControlledDocument
+    DocumentState
   } from '@hcengineering/controlled-documents'
+  import { isControlledDocument } from '@hcengineering/controlled-documents'
 
   import DocumentStatusTag from '../common/DocumentStatusTag.svelte'
+  import type { DocumentStateTagType, TranslatedControlledDocStates, TranslatedDocumentStates } from '../../../utils'
   import {
     statesTags,
     controlledStatesTags,
-    DocumentStateTagType,
-    TranslatedControlledDocStates,
-    TranslatedDocumentStates,
     getTranslatedControlledDocStates,
     getTranslatedDocumentStates
   } from '../../../utils'

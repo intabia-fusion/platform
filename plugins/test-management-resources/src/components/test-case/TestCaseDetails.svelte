@@ -17,8 +17,8 @@
 
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { type Class, type Ref } from '@hcengineering/core'
-  import { TestCase } from '@hcengineering/test-management'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { TestCase } from '@hcengineering/test-management'
 
   import testManagement from '../../plugin'
 

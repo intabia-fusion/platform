@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PlanItem, type PackageItem } from '@hcengineering/billing'
-  import { UsageStatus } from '@hcengineering/core'
+  import type { PlanItem, PackageItem } from '@hcengineering/billing'
+  import type { UsageStatus } from '@hcengineering/core'
   import type { SubscriptionData } from '@hcengineering/account-client'
   import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
   import UsageSection from './UsageSection.svelte'

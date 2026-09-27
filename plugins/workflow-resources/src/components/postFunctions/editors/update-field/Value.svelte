@@ -14,9 +14,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Button, IconClose, Label, tooltip } from '@hcengineering/ui'
-  import { WorkflowFieldValue } from '@hcengineering/workflow'
-  import { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { WorkflowFieldValue } from '@hcengineering/workflow'
+  import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../../../plugin'

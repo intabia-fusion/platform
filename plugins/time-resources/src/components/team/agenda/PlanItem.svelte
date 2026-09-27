@@ -1,7 +1,7 @@
 <script lang="ts">
   import calendarPlugin from '@hcengineering/calendar'
   import { Icon, Label, DatePresenter, IconArrowRight } from '@hcengineering/ui'
-  import { WorkSlotMapping } from '../../../types'
+  import type { WorkSlotMapping } from '../../../types'
   import ToDoPresenter from '../../ToDoPresenter.svelte'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import { DateRangeMode } from '@hcengineering/core'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
   import { IssuePriority } from '@hcengineering/tracker'
   import { Icon } from '@hcengineering/ui'
   import { issuePriorities } from '../../utils'

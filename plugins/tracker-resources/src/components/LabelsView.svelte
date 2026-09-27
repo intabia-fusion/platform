@@ -1,9 +1,10 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import tags, { TagElement } from '@hcengineering/tags'
+  import type { TagElement } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import { selectedTagElements } from '@hcengineering/tags-resources'
   import { Component, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import { buildFilterKey, setFilters } from '@hcengineering/view-resources'
   import tracker from '../plugin'
 

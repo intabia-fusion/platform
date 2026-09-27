@@ -1,11 +1,12 @@
 <script lang="ts">
-  import core, { Data, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import core, { Data } from '@hcengineering/core'
   import { getEmbeddedLabel, getResource } from '@hcengineering/platform'
   import { createQuery, getClient, MessageViewer, SpaceSelector } from '@hcengineering/presentation'
-  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import type { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
+  import type { Action } from '@hcengineering/ui'
   import {
-    Action,
     Button,
     EditBox,
     eventToHTMLElement,

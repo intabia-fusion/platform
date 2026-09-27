@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
   import { Component } from '@hcengineering/ui'
   import contact from '@hcengineering/contact'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
 
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined

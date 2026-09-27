@@ -15,7 +15,8 @@
 <script lang="ts">
   import attachment, { type Attachment, type Drawing } from '@hcengineering/attachment'
   import core, { SortingOrder } from '@hcengineering/core'
-  import { DrawingData, FilePreviewPopup, getClient } from '@hcengineering/presentation'
+  import type { DrawingData } from '@hcengineering/presentation'
+  import { FilePreviewPopup, getClient } from '@hcengineering/presentation'
   import { isAttachment } from '../utils'
 
   export let value: Attachment

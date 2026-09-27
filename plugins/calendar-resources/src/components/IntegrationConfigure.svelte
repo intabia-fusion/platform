@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Calendar } from '@hcengineering/calendar'
+  import type { Calendar } from '@hcengineering/calendar'
   import { getCurrentAccount } from '@hcengineering/core'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { Grid, Label, Toggle, tooltip } from '@hcengineering/ui'

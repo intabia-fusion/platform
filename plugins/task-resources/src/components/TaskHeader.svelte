@@ -15,10 +15,12 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import core, { Class, Doc, Mixin, Ref, RefTo } from '@hcengineering/core'
-  import { AttributesBar, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import type { Class, Doc, Mixin, Ref, RefTo } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributesBar, getClient } from '@hcengineering/presentation'
   import { UserBox } from '@hcengineering/contact-resources'
-  import { Task } from '@hcengineering/task'
+  import type { Task } from '@hcengineering/task'
   import task from '../plugin'
   import { DocAttributeBar } from '@hcengineering/view-resources'
 

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Project } from '@hcengineering/task'
+  import type { Person } from '@hcengineering/contact'
+  import type { Project } from '@hcengineering/task'
   import TeamCalendar from './TeamCalendar.svelte'
   import TeamCalendarDay from './TeamCalendarDay.svelte'
   import YearCalendar from './YearCalendar.svelte'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import Header from '../../Header.svelte'
   import {
     ButtonIcon,

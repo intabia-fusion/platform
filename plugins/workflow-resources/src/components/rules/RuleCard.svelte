@@ -12,8 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
-  import { Icon, IconComponent, Label } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { IconComponent } from '@hcengineering/ui'
+  import { Icon, Label } from '@hcengineering/ui'
 
   import plugin from '../../plugin'
 

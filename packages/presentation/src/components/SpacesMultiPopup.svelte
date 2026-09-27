@@ -14,18 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Ref, Space } from '@hcengineering/core'
+  import type { Class, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import {
-    AnySvelteComponent,
-    CheckBox,
-    deviceOptionsStore,
-    resizeObserver,
-    tooltip,
-    EditWithIcon,
-    IconSearch
-  } from '@hcengineering/ui'
-  import { ComponentType, createEventDispatcher } from 'svelte'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { CheckBox, deviceOptionsStore, resizeObserver, tooltip, EditWithIcon, IconSearch } from '@hcengineering/ui'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import presentation from '..'
   import { createQuery } from '../utils'
   import SpaceInfo from './SpaceInfo.svelte'

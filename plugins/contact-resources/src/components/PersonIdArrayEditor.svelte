@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, Employee, getCurrentEmployee, getName, Person } from '@hcengineering/contact'
-  import { notEmpty, PersonId, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Contact, Employee, Person } from '@hcengineering/contact'
+  import { getCurrentEmployee, getName } from '@hcengineering/contact'
+  import type { PersonId, Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import contact from '../plugin'
   import { employeeByPersonIdStore, primarySocialIdByEmployeeRefStore } from '../utils'

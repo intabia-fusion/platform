@@ -15,7 +15,8 @@
 <script lang="ts">
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { reduceChildInfoTree } from '@hcengineering/tracker'
   import { Expandable, Spinner } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import EstimationSubIssueList from './EstimationSubIssueList.svelte'

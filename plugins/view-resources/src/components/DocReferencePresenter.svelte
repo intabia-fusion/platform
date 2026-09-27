@@ -15,8 +15,8 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
-  import { IconSize } from '@hcengineering/ui'
+  import type { AttributeModel } from '@hcengineering/view'
+  import type { IconSize } from '@hcengineering/ui'
   import contact from '@hcengineering/contact'
 
   import { getObjectPresenter } from '../utils'

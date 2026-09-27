@@ -15,9 +15,11 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Data, SpaceTypeDescriptor, generateId } from '@hcengineering/core'
+  import type { Data, SpaceTypeDescriptor } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import documents, { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@hcengineering/controlled-documents'
+  import type { DocumentSpaceType, DocumentSpaceTypeDescriptor } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
   import { createSpaceType } from '@hcengineering/setting'
 
   const client = getClient()

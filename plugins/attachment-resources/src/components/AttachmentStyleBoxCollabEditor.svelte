@@ -14,11 +14,15 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import attachment, { Attachment, AttachmentsEvents } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment, { AttachmentsEvents } from '@hcengineering/attachment'
   import contact from '@hcengineering/contact'
-  import core, { BlobMetadata, Doc, PersonId, Ref, generateId, type Blob, type Space } from '@hcengineering/core'
-  import { IntlString, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { FileOrBlob, KeyedAttribute, createQuery, getClient, uploadFile } from '@hcengineering/presentation'
+  import type { BlobMetadata, Doc, PersonId, Ref } from '@hcengineering/core'
+  import core, { generateId, type Blob, type Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import type { FileOrBlob, KeyedAttribute } from '@hcengineering/presentation'
+  import { createQuery, getClient, uploadFile } from '@hcengineering/presentation'
   import textEditor, { type RefAction, type TextEditorHandler } from '@hcengineering/text-editor'
   import {
     AttachIcon,
@@ -28,13 +32,10 @@
     defaultRefActions,
     getModelRefActions
   } from '@hcengineering/text-editor-resources'
-  import { AnySvelteComponent, getEventPositionElement, getPopupPositionElement } from '@hcengineering/ui'
-  import {
-    getUploadHandlers,
-    uploadFiles,
-    UploadHandlerDefinition,
-    type FileUploadCallbackParams
-  } from '@hcengineering/uploader'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { getEventPositionElement, getPopupPositionElement } from '@hcengineering/ui'
+  import type { UploadHandlerDefinition } from '@hcengineering/uploader'
+  import { getUploadHandlers, uploadFiles, type FileUploadCallbackParams } from '@hcengineering/uploader'
   import { getCollaborationUser, getObjectId } from '@hcengineering/view-resources'
 
   import AttachmentsGrid from './AttachmentsGrid.svelte'

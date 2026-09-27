@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Blob } from '@hcengineering/core'
-  import { IconSize, fromCodePoint } from '@hcengineering/ui'
+  import type { Ref, Blob } from '@hcengineering/core'
+  import type { IconSize } from '@hcengineering/ui'
+  import { fromCodePoint } from '@hcengineering/ui'
   import { getBlobRef } from '../preview'
 
   export let icon: number | number[] | Ref<Blob>

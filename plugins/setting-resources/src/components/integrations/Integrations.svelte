@@ -18,14 +18,14 @@
   import { createQuery, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import { type IntegrationType, IntegrationError } from '@hcengineering/setting'
   import setting from '@hcengineering/setting'
-  import { type Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@hcengineering/account-client'
+  import type { TabItem } from '@hcengineering/ui'
   import {
     Header,
     Breadcrumb,
     NotificationSeverity,
     addNotification,
     themeStore,
-    TabItem,
     Switcher,
     Loading
   } from '@hcengineering/ui'
@@ -36,7 +36,7 @@
   import IntegrationErrorNotification from './IntegrationErrorNotification.svelte'
   import { getAccountClient } from '../../utils'
   import { Analytics } from '@hcengineering/analytics'
-  import { IntegrationKind } from '@hcengineering/core'
+  import type { IntegrationKind } from '@hcengineering/core'
 
   const typeQuery = createQuery()
 

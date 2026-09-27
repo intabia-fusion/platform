@@ -13,14 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, getCurrentAccount, Ref, Status, WithLookup } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref, Status, WithLookup } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Task } from '@hcengineering/task'
+  import type { Task } from '@hcengineering/task'
   import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { IModeSelector } from '@hcengineering/ui'
   import {
     Component,
-    IModeSelector,
     Breadcrumb,
     Loading,
     ModeSelector,
@@ -28,7 +29,7 @@
     SearchInput,
     Header
   } from '@hcengineering/ui'
-  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,

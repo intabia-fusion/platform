@@ -13,11 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import { AnyComponent, Component, resolvedLocationStore } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component, resolvedLocationStore } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     activeViewlet,
     getViewOptions,

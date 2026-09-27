@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Teamspace } from '@hcengineering/document'
+  import type { Teamspace } from '@hcengineering/document'
   import { IconWithEmoji } from '@hcengineering/presentation'
   import { Icon, getPaletteColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'

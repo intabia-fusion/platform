@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
-  import { Class, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { IconSize } from '@hcengineering/ui'
-  import { PersonLabelTooltip } from '..'
+  import type { IconSize } from '@hcengineering/ui'
+  import type { PersonLabelTooltip } from '..'
   import PersonPresenter from './PersonPresenter.svelte'
 
   export let value: Ref<Person> | null | undefined

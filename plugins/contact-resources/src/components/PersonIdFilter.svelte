@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person, SocialIdentity } from '@hcengineering/contact'
-  import core, { FindResult, getObjectValue, includesAny, PersonId, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Person, SocialIdentity } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { FindResult, PersonId, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core, { getObjectValue, includesAny } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
     deviceOptionsStore,
@@ -25,7 +27,8 @@
     Loading,
     resizeObserver
   } from '@hcengineering/ui'
-  import view, { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 

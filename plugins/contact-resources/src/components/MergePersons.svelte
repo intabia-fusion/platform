@@ -15,20 +15,10 @@
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
   import { Analytics } from '@hcengineering/analytics'
-  import { Channel, Person, SocialIdentity, getName } from '@hcengineering/contact'
-  import core, {
-    ArrOf,
-    Doc,
-    DocumentUpdate,
-    Mixin,
-    PersonUuid,
-    Ref,
-    RefTo,
-    SocialIdType,
-    Tx,
-    TxOperations,
-    TxProcessor
-  } from '@hcengineering/core'
+  import type { Channel, Person, SocialIdentity } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
+  import type { ArrOf, Doc, DocumentUpdate, Mixin, PersonUuid, Ref, RefTo, Tx, TxOperations } from '@hcengineering/core'
+  import core, { SocialIdType, TxProcessor } from '@hcengineering/core'
   import { Card, createQuery, getClient, updateAttribute } from '@hcengineering/presentation'
   import { Label, Spinner, Toggle } from '@hcengineering/ui'
   import { isCollectionAttr } from '@hcengineering/view-resources'

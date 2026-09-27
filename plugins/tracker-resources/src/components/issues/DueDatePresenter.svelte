@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { Issue } from '@hcengineering/tracker'
-  import { ButtonKind, ButtonSize, DueDatePresenter } from '@hcengineering/ui'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { DueDatePresenter } from '@hcengineering/ui'
 
   export let value: WithLookup<Issue>
   export let kind: ButtonKind = 'link'

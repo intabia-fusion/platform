@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ProductVersionState, productVersionStates } from '@hcengineering/products'
-  import { Button, ButtonKind, ButtonSize, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import type { ProductVersionState } from '@hcengineering/products'
+  import { productVersionStates } from '@hcengineering/products'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import products from '../../plugin'
   import { productVersionStateLabels } from '../../types'

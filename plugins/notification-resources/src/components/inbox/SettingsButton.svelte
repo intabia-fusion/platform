@@ -16,7 +16,7 @@
   import { eventToHTMLElement, showPopup, ButtonIcon, IconSettings } from '@hcengineering/ui'
 
   import SettingsPopup from './SettingsPopup.svelte'
-  import { SettingItem } from '../../types'
+  import type { SettingItem } from '../../types'
 
   export let items: SettingItem[] = []
 

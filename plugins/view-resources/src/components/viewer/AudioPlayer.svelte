@@ -22,7 +22,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob as HulyBlob, type Ref } from '@hcengineering/core'
+  import type { Blob as HulyBlob, Ref } from '@hcengineering/core'
   import { CircleButton, Progress, CheckBox, Spinner } from '@hcengineering/ui'
   import { getFileUrl } from '@hcengineering/presentation'
   import { onMount } from 'svelte'

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { IconClose, ButtonIcon, LabelAndProps, tooltip as tp } from '..'
+  import type { LabelAndProps } from '..'
+  import { IconClose, ButtonIcon, tooltip as tp } from '..'
 
   export let label: string
   export let size: 'small' | 'min' = 'small'

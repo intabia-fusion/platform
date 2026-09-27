@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { State } from '@hcengineering/process'
+  import type { State } from '@hcengineering/process'
   import { ButtonIcon, EditBox, IconDelete } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 

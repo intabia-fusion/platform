@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Department } from '@hcengineering/hr'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { Department } from '@hcengineering/hr'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { ObjectBox } from '@hcengineering/view-resources'
   import hr from '../plugin'
   import { createQuery } from '@hcengineering/presentation'

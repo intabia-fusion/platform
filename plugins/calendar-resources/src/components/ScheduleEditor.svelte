@@ -17,7 +17,8 @@
 <script lang="ts">
   import type { Schedule, ScheduleAvailability } from '@hcengineering/calendar'
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import core, { Data, generateId, Space } from '@hcengineering/core'
+  import type { Data, Space } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import {
     ComponentExtensions,
     createQuery,

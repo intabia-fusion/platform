@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Product } from '@hcengineering/products'
+  import type { WithLookup } from '@hcengineering/core'
   import products from '../../plugin'
   import DocIcon from '../DocIcon.svelte'
 

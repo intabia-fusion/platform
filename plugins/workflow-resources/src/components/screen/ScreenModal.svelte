@@ -22,7 +22,8 @@
     type Ref,
     type TxCUD
   } from '@hcengineering/core'
-  import { getEmbeddedLabel, getResource, IntlString, translate } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getResource, translate } from '@hcengineering/platform'
   import { createMarkup, getClient, updateMarkup } from '@hcengineering/presentation'
   import type { Task } from '@hcengineering/task'
   import ui, { Label, languageStore, Modal, type TabBase, TabsControl } from '@hcengineering/ui'
@@ -30,7 +31,7 @@
   import workflow, { isEmptyAttribute, type Screen, type ScreenField, type ScreenTab } from '@hcengineering/workflow'
 
   import ScreenAttributesBar from './ScreenAttributesBar.svelte'
-  import { type ScreenModalResult } from '../../types'
+  import type { ScreenModalResult } from '../../types'
 
   export let screen: Screen
   export let tabs: ScreenTab[] = []

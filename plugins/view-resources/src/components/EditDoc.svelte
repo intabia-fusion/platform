@@ -15,22 +15,25 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Hierarchy, Mixin, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { Hierarchy } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import {
     ActionContext,
     AttributesBar,
     ComponentExtensions,
-    KeyedAttribute,
     createQuery,
     getClient,
     hasResource,
     reduceCalls
   } from '@hcengineering/presentation'
-  import { AnyComponent, Button, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
-  import view, { AttributeCategory } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Button, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
+  import type { AttributeCategory } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import { DocNavLink, ParentsNavigator, getDocAttrsInfo, getDocLabel, getDocMixins, showMenu, parseLinkId } from '..'

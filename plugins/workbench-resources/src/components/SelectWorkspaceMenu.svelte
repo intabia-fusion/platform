@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { isArchivingMode, systemAccountUuid, WorkspaceInfoWithStatus } from '@hcengineering/core'
+  import type { WorkspaceInfoWithStatus } from '@hcengineering/core'
+  import { isArchivingMode, systemAccountUuid } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import { getResource } from '@hcengineering/platform'
   import presentation, {
@@ -22,6 +23,7 @@
     hasResource,
     getCurrentWorkspaceUuid
   } from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
     closePopup,
     getCurrentLocation,
@@ -29,7 +31,6 @@
     isSameSegments,
     Label,
     Loading,
-    Location,
     locationStorageKeyId,
     locationToUrl,
     navigate,

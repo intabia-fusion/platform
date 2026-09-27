@@ -1,7 +1,8 @@
 <script lang="ts">
-  import core, { IdMap, Ref, Timestamp, Tx, TxCreateDoc, TxUpdateDoc, WithLookup } from '@hcengineering/core'
+  import type { IdMap, Ref, Timestamp, Tx, TxCreateDoc, TxUpdateDoc, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, IssueStatus } from '@hcengineering/tracker'
+  import type { Issue, IssueStatus } from '@hcengineering/tracker'
   import { Label, Row, ticker } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import tracker from '../../plugin'

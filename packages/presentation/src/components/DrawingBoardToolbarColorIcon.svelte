@@ -15,8 +15,9 @@
 
 <script lang="ts">
   import { themeStore } from '@hcengineering/theme'
-  import { ColorMetaNameOrHex } from '../drawingUtils'
-  import { DrawingBoardColoringSetup, metaColorNameToHex } from '../drawingColors'
+  import type { ColorMetaNameOrHex } from '../drawingUtils'
+  import type { DrawingBoardColoringSetup } from '../drawingColors'
+  import { metaColorNameToHex } from '../drawingColors'
 
   export let color: ColorMetaNameOrHex = 'alpha'
   export let palette: DrawingBoardColoringSetup

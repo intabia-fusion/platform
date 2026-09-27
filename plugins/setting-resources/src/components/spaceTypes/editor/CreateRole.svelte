@@ -16,7 +16,7 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import { createSpaceTypeRole } from '@hcengineering/setting'
   import { Modal, ModernEditbox } from '@hcengineering/ui'
-  import { AttachedData, Role, SpaceType } from '@hcengineering/core'
+  import type { AttachedData, Role, SpaceType } from '@hcengineering/core'
 
   import settingRes from '../../../plugin'
   import { clearSettingsStore } from '../../../store'

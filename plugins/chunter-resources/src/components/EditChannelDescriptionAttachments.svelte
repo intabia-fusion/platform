@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
   import { AttachmentPresenter, FileDownload } from '@hcengineering/attachment-resources'
-  import { ChunterSpace } from '@hcengineering/chunter'
-  import { Doc, SortingOrder, getCurrentAccount, type WithLookup } from '@hcengineering/core'
+  import type { ChunterSpace } from '@hcengineering/chunter'
+  import type { Doc } from '@hcengineering/core'
+  import { SortingOrder, getCurrentAccount, type WithLookup } from '@hcengineering/core'
   import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
   import { Icon, IconMoreV, Label, Menu, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
 

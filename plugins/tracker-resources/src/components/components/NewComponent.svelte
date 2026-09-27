@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { EmployeeBox } from '@hcengineering/contact-resources'
-  import { Data, Ref } from '@hcengineering/core'
+  import type { Data, Ref } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { Card, SpaceSelector, getClient } from '@hcengineering/presentation'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { Component, Project } from '@hcengineering/tracker'
+  import type { Component, Project } from '@hcengineering/tracker'
   import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'

@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, Class } from '@hcengineering/core'
+  import type { Doc, Ref, Class } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
     Component,
     defineSeparators,
@@ -22,22 +23,22 @@
     location,
     navigate,
     Separator,
-    Location,
     restoreLocation,
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
-  import { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
+  import type { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
   import { onMount, onDestroy } from 'svelte'
-  import { Chat, chunterId } from '@hcengineering/chunter'
+  import type { Chat } from '@hcengineering/chunter'
+  import { chunterId } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
   import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
   import { loadSavedAttachments } from '@hcengineering/attachment-resources'
 
   import ChatNavigator from './navigator/ChatNavigator.svelte'
   import ChannelView from '../ChannelView.svelte'
   import { chatSpecials, createRealDirectFromFake, isFakeDirect } from './utils'
-  import { SelectChannelEvent } from './types'
+  import type { SelectChannelEvent } from './types'
   import { decodeChatURI, openChannel, openThreadInSidebar } from '../../navigation'
   import chunter from '../../plugin'
 

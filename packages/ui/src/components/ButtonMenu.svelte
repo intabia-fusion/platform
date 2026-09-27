@@ -15,9 +15,10 @@
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { deepEqual } from 'fast-equals'
-  import { ComponentType, createEventDispatcher } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import { closePopup, showPopup, type LabelAndProps, closeTooltip } from '..'
-  import { AnySvelteComponent, DropdownIntlItem } from '../types'
+  import type { AnySvelteComponent, DropdownIntlItem } from '../types'
   import ButtonBase from './ButtonBase.svelte'
   import ModernPopup from './ModernPopup.svelte'
 

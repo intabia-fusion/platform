@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
   import { translate } from '@hcengineering/platform'
-  import { ExecutionError } from '@hcengineering/process'
+  import type { ExecutionError } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
 
   export let value: ExecutionError[]

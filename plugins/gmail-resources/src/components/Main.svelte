@@ -15,14 +15,18 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import contact, { Channel, Contact, getName } from '@hcengineering/contact'
-  import { Ref, SocialIdType, getCurrentAccount } from '@hcengineering/core'
-  import { Message, SharedMessage } from '@hcengineering/gmail'
+  import type { Channel, Contact } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { SocialIdType, getCurrentAccount } from '@hcengineering/core'
+  import type { Message, SharedMessage } from '@hcengineering/gmail'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
-  import templates, { TemplateDataProvider } from '@hcengineering/templates'
+  import type { Integration } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
+  import type { TemplateDataProvider } from '@hcengineering/templates'
+  import templates from '@hcengineering/templates'
   import { Button, Dialog, eventToHTMLElement, Icon, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import gmail from '../plugin'

@@ -13,20 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref, RefTo, Space, Status } from '@hcengineering/core'
+  import type { Class, Doc, Ref, RefTo, Space, Status } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import {
-    AnyComponent,
-    Component,
-    eventToHTMLElement,
-    Icon,
-    IconClose,
-    Label,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
-  import { Filter, FilterMode } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component, eventToHTMLElement, Icon, IconClose, Label, showPopup, themeStore } from '@hcengineering/ui'
+  import type { Filter, FilterMode } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import view from '../../plugin'
   import ModeSelector from './ModeSelector.svelte'

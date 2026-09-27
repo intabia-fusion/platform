@@ -14,19 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Data } from '@hcengineering/core'
-  import { TestResult } from '@hcengineering/test-management'
+  import type { Data } from '@hcengineering/core'
+  import type { TestResult } from '@hcengineering/test-management'
   import { getClient } from '@hcengineering/presentation'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    Icon,
-    SelectPopup,
-    eventToHTMLElement,
-    showPopup,
-    Label
-  } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, Icon, SelectPopup, eventToHTMLElement, showPopup, Label } from '@hcengineering/ui'
 
   import { defaultTestRunStatuses, testRunStatusAssets } from '../../types'
   import testManagement from '../../plugin'

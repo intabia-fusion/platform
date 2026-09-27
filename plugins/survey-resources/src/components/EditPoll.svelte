@@ -15,7 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Poll, PollData, Question, QuestionKind } from '@hcengineering/survey'
+  import type { Poll, PollData, Question } from '@hcengineering/survey'
+  import { QuestionKind } from '@hcengineering/survey'
   import { createEventDispatcher } from 'svelte'
   import { hasText } from '../utils'
   import PollQuestion from './PollQuestion.svelte'

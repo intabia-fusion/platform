@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { AnyComponent, AnySvelteComponent, ButtonKind, ButtonShape, ButtonSize } from '@hcengineering/ui'
-  import { ComponentType, createEventDispatcher } from 'svelte'
-  import { ObjectCreate } from '../types'
+  import type { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { AnyComponent, AnySvelteComponent, ButtonKind, ButtonShape, ButtonSize } from '@hcengineering/ui'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
+  import type { ObjectCreate } from '../types'
   import SpaceSelect from './SpaceSelect.svelte'
 
   export let space: Ref<Space> | undefined = undefined

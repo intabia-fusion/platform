@@ -12,8 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Room, RoomType, isOffice } from '@hcengineering/love'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
+  import { RoomType, isOffice } from '@hcengineering/love'
   import { Icon } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
 

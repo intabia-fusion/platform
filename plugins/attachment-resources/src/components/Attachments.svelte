@@ -14,14 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { Class, Data, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { Class, Data, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { Icon, Label, resizeObserver, Scroller, Spinner, ButtonIcon, IconAdd } from '@hcengineering/ui'
-  import view, { BuildModelKey } from '@hcengineering/view'
+  import type { BuildModelKey } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { Table } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
+  import type { FileUploadCallbackParams } from '@hcengineering/uploader'
+  import { uploadFiles } from '@hcengineering/uploader'
   import { createEventDispatcher } from 'svelte'
 
   import attachment from '../plugin'

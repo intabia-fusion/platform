@@ -15,8 +15,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
   import { ActionContext } from '@hcengineering/presentation'
-  import { WithLookup } from '@hcengineering/core'
-  import testManagement, { TestResult, TestCase } from '@hcengineering/test-management'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { TestResult, TestCase } from '@hcengineering/test-management'
+  import testManagement from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
   import { Button } from '@hcengineering/ui'
 

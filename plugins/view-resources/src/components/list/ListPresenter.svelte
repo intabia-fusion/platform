@@ -13,14 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@hcengineering/contact'
-  import core, { AnyAttribute, Doc, Ref, TypedSpace } from '@hcengineering/core'
-  import { getEmbeddedLabel, getResource, IntlString, translate } from '@hcengineering/platform'
+  import type { PermissionsStore } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { AnyAttribute, Doc, Ref, TypedSpace } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getResource, translate } from '@hcengineering/platform'
   import { reduceCalls } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { AttributeModel } from '@hcengineering/view'
   import { themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { Readable } from 'svelte/store'
+  import type { Readable } from 'svelte/store'
   import { canChangeAttribute, FixedColumn, restrictionStore } from '../..'
   import DividerPresenter from './DividerPresenter.svelte'
 

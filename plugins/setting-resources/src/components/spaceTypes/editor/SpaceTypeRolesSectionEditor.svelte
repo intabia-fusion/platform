@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import core, { Role, SortingOrder, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import { createQuery } from '@hcengineering/presentation'
 

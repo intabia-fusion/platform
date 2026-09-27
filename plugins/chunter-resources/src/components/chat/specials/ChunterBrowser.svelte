@@ -15,7 +15,7 @@
   import attachment from '@hcengineering/attachment'
   import { FileBrowser } from '@hcengineering/attachment-resources'
   import { getCurrentLocation, navigate, Scroller, Switcher } from '@hcengineering/ui'
-  import { type SearchSortOrder } from '@hcengineering/core'
+  import type { SearchSortOrder } from '@hcengineering/core'
 
   import { SearchType } from '../../../utils'
   import { peekSearchSnapshot, takePendingSearch } from '../../../search/store'

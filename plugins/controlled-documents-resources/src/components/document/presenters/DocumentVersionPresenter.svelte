@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Document } from '@hcengineering/controlled-documents'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/controlled-documents'
   import { Label } from '@hcengineering/ui'
   import document from '../../../plugin'
 

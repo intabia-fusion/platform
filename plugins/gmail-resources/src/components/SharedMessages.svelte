@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SharedMessages } from '@hcengineering/gmail'
+  import type { SharedMessages } from '@hcengineering/gmail'
   import { showPopup } from '@hcengineering/ui'
   import FullMessagePopup from './FullMessagePopup.svelte'
   import Messages from './Messages.svelte'

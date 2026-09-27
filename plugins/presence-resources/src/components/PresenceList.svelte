@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person, formatName } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { IconSize, Scroller } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Scroller } from '@hcengineering/ui'
   import { followee, toggleFollowee } from '../store'
 
   export let persons: Person[]

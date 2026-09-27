@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, TxCUD } from '@hcengineering/core'
+  import type { Doc, Ref, TxCUD } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Component, resizeObserver } from '@hcengineering/ui'
   import { DocNavLink, ObjectPresenter } from '@hcengineering/view-resources'
-  import { ItemPresenter } from '@hcengineering/time'
+  import type { ItemPresenter } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../../../plugin'
 

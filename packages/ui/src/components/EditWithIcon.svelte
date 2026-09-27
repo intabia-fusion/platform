@@ -16,7 +16,8 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
-  import { ComponentType, createEventDispatcher } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
 
   import plugin from '../plugin'
   import type { AnySvelteComponent } from '../types'

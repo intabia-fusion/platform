@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { RelatedContext, SelectedContext } from '@hcengineering/process'
+  import type { RelatedContext, SelectedContext } from '@hcengineering/process'
   import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getRelationReduceFunc, getValueReduceFunc } from '../../utils'

@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Context, Func, Process, ProcessFunction, SelectedContext } from '@hcengineering/process'
+  import type { Context, Func, Process, ProcessFunction, SelectedContext } from '@hcengineering/process'
   import {
     ButtonIcon,
     CheckBox,
@@ -29,7 +30,7 @@
     showPopup,
     Submenu
   } from '@hcengineering/ui'
-  import { AttributeCategory } from '@hcengineering/view'
+  import type { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import FallbackEditor from '../contextEditors/FallbackEditor.svelte'

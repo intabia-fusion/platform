@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
-  import { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
 
   import BasePreview from '../BasePreview.svelte'
 

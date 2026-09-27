@@ -13,13 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { BusySlot, Calendar, Event } from '@hcengineering/calendar'
+  import type { BusySlot, Calendar, Event } from '@hcengineering/calendar'
+  import calendar from '@hcengineering/calendar'
   import { visibleCalendarStore, hidePrivateEvents, calendarByIdStore } from '@hcengineering/calendar-resources'
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { IdMap, Ref, toIdMap } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { IdMap, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import task, { Project } from '@hcengineering/task'
-  import time, { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { Project } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
+  import time from '@hcengineering/time'
 
   export let spaces: Array<Ref<Project>> = []
   export let fromDate: number

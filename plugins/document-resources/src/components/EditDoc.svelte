@@ -16,9 +16,12 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import core, { Doc, Ref, WithLookup, generateId, type Blob } from '@hcengineering/core'
-  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
+  import type { Doc, Ref, WithLookup } from '@hcengineering/core'
+  import core, { generateId, type Blob } from '@hcengineering/core'
+  import type { Document, Teamspace } from '@hcengineering/document'
+  import { DocumentEvents } from '@hcengineering/document'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
@@ -31,14 +34,14 @@
     getClient
   } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import { type MarkupNode } from '@hcengineering/text'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { MarkupNode } from '@hcengineering/text'
+  import type { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
   import TeamspacePresenter from './teamspace/TeamspacePresenter.svelte'
 
+  import type { ButtonItem } from '@hcengineering/ui'
   import {
     Button,
-    ButtonItem,
     Component,
     FocusHandler,
     IconMoreH,

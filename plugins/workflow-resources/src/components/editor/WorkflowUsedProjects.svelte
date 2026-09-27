@@ -15,8 +15,9 @@
   import { IconWithEmoji } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { Icon, IconOpenedArrow, Label } from '@hcengineering/ui'
-  import view, { IconProps } from '@hcengineering/view'
-  import { ProjectWorkflow } from '@hcengineering/workflow'
+  import type { IconProps } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { ProjectWorkflow } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { navigateToProject } from '../../location'

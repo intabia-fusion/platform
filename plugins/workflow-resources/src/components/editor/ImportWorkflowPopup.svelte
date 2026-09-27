@@ -13,10 +13,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { type Ref, type Status } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
   import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { type ProjectType, type TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { closePopup, type IWizardStep, ModernWizardDialog } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'

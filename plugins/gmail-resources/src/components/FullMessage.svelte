@@ -14,16 +14,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { NewMessage, SharedMessage } from '@hcengineering/gmail'
+  import type { NewMessage, SharedMessage } from '@hcengineering/gmail'
   import { Button, IconArrowLeft, Label, Scroller, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import gmail from '../plugin'
   import FullMessageContent from './FullMessageContent.svelte'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import attachment, { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
   import { AttachmentPresenter } from '@hcengineering/attachment-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   export let currentMessage: SharedMessage
   export let newMessage: boolean

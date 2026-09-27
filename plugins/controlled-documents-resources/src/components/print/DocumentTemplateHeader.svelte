@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
   import { createQuery, getPreviewThumbnail } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
 

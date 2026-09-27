@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
   import { AttachmentPresenter } from '@hcengineering/attachment-resources'
-  import { SharedMessage } from '@hcengineering/gmail'
+  import type { SharedMessage } from '@hcengineering/gmail'
   import { createQuery } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import gmail from '../plugin'

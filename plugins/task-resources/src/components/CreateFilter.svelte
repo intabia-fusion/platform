@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import task from '../plugin'
   import { eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { TimestampPresenter } from '@hcengineering/view-resources'

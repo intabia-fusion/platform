@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { Icon, Label } from '@hcengineering/ui'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import activity, { DocUpdateMessage, DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { DocUpdateMessage, DocUpdateMessageHistory, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import attachment from '@hcengineering/attachment'
   import view from '@hcengineering/view'
 

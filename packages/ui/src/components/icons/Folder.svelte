@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconSize } from '../../types'
+  import type { IconSize } from '../../types'
   export let size: IconSize
   const fill: string = 'currentColor'
 </script>

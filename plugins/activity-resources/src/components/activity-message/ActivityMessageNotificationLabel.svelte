@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import { Component, Icon, Label, tooltip } from '@hcengineering/ui'
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
-  import activity, { ActivityMessage, ActivityMessageLite } from '@hcengineering/activity'
+  import type { DocNotifyContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
+  import type { ActivityMessage, ActivityMessageLite } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { classIcon } from '@hcengineering/view-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'

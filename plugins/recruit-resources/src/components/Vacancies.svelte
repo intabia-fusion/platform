@@ -13,17 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    AccountRole,
-    Doc,
-    DocumentQuery,
-    Ref,
-    WithLookup,
-    getCurrentAccount,
-    hasAccountRole
-  } from '@hcengineering/core'
+  import type { Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import core, { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
   import {
     Button,
     Component,
@@ -35,7 +28,8 @@
     Header,
     Breadcrumb
   } from '@hcengineering/ui'
-  import view, { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import CreateVacancy from './CreateVacancy.svelte'

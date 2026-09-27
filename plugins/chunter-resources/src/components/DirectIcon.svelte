@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DirectMessage } from '@hcengineering/chunter'
-  import contact, { Person } from '@hcengineering/contact'
+  import type { DirectMessage } from '@hcengineering/chunter'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { Avatar, CombineAvatars } from '@hcengineering/contact-resources'
-  import { AccountUuid, Ref } from '@hcengineering/core'
+  import type { AccountUuid, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { IconSize } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
 
   import chunter from '../plugin'
   import { getDmPersons } from '../utils'

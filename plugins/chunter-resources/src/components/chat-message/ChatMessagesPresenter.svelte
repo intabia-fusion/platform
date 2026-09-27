@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
-  import { Button, ButtonKind, ButtonSize, IconThread } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, IconThread } from '@hcengineering/ui'
 
   import ChatMessagePopup from './ChatMessagePopup.svelte'
   import { restrictionStore } from '@hcengineering/view-resources'

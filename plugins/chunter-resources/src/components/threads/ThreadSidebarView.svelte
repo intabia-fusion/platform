@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ChatWidgetTab } from '@hcengineering/chunter'
+  import type { ChatWidgetTab } from '@hcengineering/chunter'
 
   import ThreadView from './ThreadView.svelte'
 

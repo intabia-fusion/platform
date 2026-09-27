@@ -3,7 +3,7 @@
 -->
 
 <script lang="ts">
-  import { type Class, type DocumentUpdate } from '@hcengineering/core'
+  import type { Class, DocumentUpdate } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Button, IconMoreV, Loading } from '@hcengineering/ui'

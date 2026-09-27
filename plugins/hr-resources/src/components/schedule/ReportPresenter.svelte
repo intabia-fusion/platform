@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Staff } from '@hcengineering/hr'
+  import type { Staff } from '@hcengineering/hr'
   import { floorFractionDigits } from '@hcengineering/ui'
 
   export let value: Staff

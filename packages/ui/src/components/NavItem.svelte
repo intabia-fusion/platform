@@ -15,12 +15,11 @@
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
+  import type { AnySvelteComponent, IconSize } from '..'
   import {
     Icon,
     Label,
     IconDown,
-    AnySvelteComponent,
-    IconSize,
     getTreeCollapsed,
     setTreeCollapsed,
     tooltip,

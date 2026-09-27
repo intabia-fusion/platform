@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import { getPlatformColor } from '../../colors'
-  import { Component, WizardModel, WizardItemPosition, themeStore } from '../..'
+  import type { WizardModel, WizardItemPosition } from '../..'
+  import { Component, themeStore } from '../..'
   import ScrollerBar from '../ScrollerBar.svelte'
   import WizardStep from './WizardStep.svelte'
 

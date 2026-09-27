@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
+  import type { MasterTag } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
   import {
     ButtonIcon,

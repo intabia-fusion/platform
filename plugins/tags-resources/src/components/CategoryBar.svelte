@@ -13,13 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, SortingOrder } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { TagCategory, TagElement } from '@hcengineering/tags'
+  import type { TagCategory, TagElement } from '@hcengineering/tags'
   import { ModernButton, getPlatformColorForTextDef, showPopup, themeStore, ScrollerBar } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
-  import { getTagStyle, TagElementInfo } from '../utils'
+  import type { TagElementInfo } from '../utils'
+  import { getTagStyle } from '../utils'
   import TagsCategoryPopup from './TagsCategoryPopup.svelte'
 
   export let targetClass: Ref<Class<Doc>>

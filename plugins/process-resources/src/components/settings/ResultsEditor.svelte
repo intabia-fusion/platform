@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Process, UserResult } from '@hcengineering/process'
+  import type { Process, UserResult } from '@hcengineering/process'
   import { Button, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

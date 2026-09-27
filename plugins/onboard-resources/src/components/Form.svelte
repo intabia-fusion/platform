@@ -18,7 +18,7 @@
   import { Button, Label, StylishEdit, deviceOptionsStore as deviceInfo, themeStore } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
-  import { BottomAction } from '..'
+  import type { BottomAction } from '..'
   import onboard from '../plugin'
 
   import BottomActionComponent from './BottomAction.svelte'

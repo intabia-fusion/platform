@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget, WidgetTab } from '@hcengineering/workbench'
+  import type { Widget, WidgetTab } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
   import presentation from '@hcengineering/presentation'
-  import { Action, Component } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   import SidebarTab from './SidebarTab.svelte'

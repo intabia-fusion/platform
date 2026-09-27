@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { Image } from '@hcengineering/ui'
   import { getMetadata } from '@hcengineering/platform'
 

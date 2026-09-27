@@ -13,20 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { Association, Class, Data, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    DropdownIntlItem,
-    DropdownLabelsIntl,
-    EditBox,
-    Label,
-    NestedDropdown,
-    Toggle
-  } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
+  import { Button, DropdownLabelsIntl, EditBox, Label, NestedDropdown, Toggle } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import card from '@hcengineering/card'
   import { createEventDispatcher } from 'svelte'

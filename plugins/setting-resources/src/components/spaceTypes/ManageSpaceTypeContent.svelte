@@ -15,30 +15,23 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import core, {
-    Class,
-    Doc,
-    IdMap,
-    Ref,
-    SpaceType,
-    WithLookup,
-    isOwnerOrMaintainer,
-    toIdMap
-  } from '@hcengineering/core'
+  import type { Class, Doc, IdMap, Ref, SpaceType, WithLookup } from '@hcengineering/core'
+  import core, { isOwnerOrMaintainer, toIdMap } from '@hcengineering/core'
+  import type { Location, AnySvelteComponent } from '@hcengineering/ui'
   import {
-    Location,
     resolvedLocationStore,
     resizeObserver,
     Breadcrumbs,
     Header,
-    AnySvelteComponent,
     navigate,
     getCurrentResolvedLocation,
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { SpaceTypeEditor } from '@hcengineering/setting'
-  import { Asset, getResource } from '@hcengineering/platform'
+  import type { SpaceTypeEditor } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
+  import type { Asset } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import view from '@hcengineering/view'
 
   import SpaceTypeEditorComponent from './editor/SpaceTypeEditor.svelte'

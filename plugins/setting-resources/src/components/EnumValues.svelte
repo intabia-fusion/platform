@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Enum } from '@hcengineering/core'
+  import type { Enum } from '@hcengineering/core'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import {
     ModernEditbox,

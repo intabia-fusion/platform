@@ -1,8 +1,10 @@
 <script lang="ts">
   import contact, { getName } from '@hcengineering/contact'
-  import core, { Space } from '@hcengineering/core'
+  import type { Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import recruit, { Applicant, Candidate } from '@hcengineering/recruit'
+  import type { Applicant, Candidate } from '@hcengineering/recruit'
+  import recruit from '@hcengineering/recruit'
   import { Icon, Label } from '@hcengineering/ui'
 
   export let value: Applicant

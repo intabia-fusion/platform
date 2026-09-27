@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { FindOptions, SortingOrder } from '@hcengineering/core'
+  import type { FindOptions } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Applicant, Vacancy } from '@hcengineering/recruit'
+  import type { Applicant, Vacancy } from '@hcengineering/recruit'
   import { Button, Label, Loading } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { DocNavLink, ObjectPresenter, Table } from '@hcengineering/view-resources'
   import recruit from '../plugin'
 

@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
-  import { Button, ButtonKind, ButtonSize, IconAttachment, tooltip } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, IconAttachment, tooltip } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
   import AttachmentPopup from './AttachmentPopup.svelte'
 

@@ -3,15 +3,15 @@
 -->
 
 <script lang="ts">
-  import {
-    type QuestionDataEditorProps,
-    type QuestionDataEditorPropsSubmit,
-    type QuestionDataPresenterProps,
-    type QuestionOption,
-    type SingleChoiceAssessment,
-    type SingleChoiceAssessmentData,
-    type SingleChoiceQuestion,
-    type SingleChoiceQuestionData
+  import type {
+    QuestionDataEditorProps,
+    QuestionDataEditorPropsSubmit,
+    QuestionDataPresenterProps,
+    QuestionOption,
+    SingleChoiceAssessment,
+    SingleChoiceAssessmentData,
+    SingleChoiceQuestion,
+    SingleChoiceQuestionData
   } from '@hcengineering/questions'
   import { moveItem } from '../utils'
   import LabelEditor from './LabelEditor.svelte'

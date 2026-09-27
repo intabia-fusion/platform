@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Document, Teamspace } from '@hcengineering/document'
+  import type { Ref } from '@hcengineering/core'
+  import type { Document, Teamspace } from '@hcengineering/document'
   import presentation, { Card, getClient, SpaceSelector } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { ObjectBox } from '@hcengineering/view-resources'

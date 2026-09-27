@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedDoc, Class, Ref } from '@hcengineering/core'
+  import type { AttachedDoc, Class, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Component } from '@hcengineering/ui'
   import view from '@hcengineering/view'

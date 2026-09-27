@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { Label, languageStore } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
-  import { AttributeModel } from '@hcengineering/view'
-  import activity, { DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import { Person } from '@hcengineering/contact'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { AttributeModel } from '@hcengineering/view'
+  import type { DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
+  import type { Person } from '@hcengineering/contact'
 
-  import { LinkData, getLinkData } from '../../activityMessagesUtils'
+  import type { LinkData } from '../../activityMessagesUtils'
+  import { getLinkData } from '../../activityMessagesUtils'
   import ActivityDocLink from '../ActivityDocLink.svelte'
   import { getIsTextType } from '../../utils'
 

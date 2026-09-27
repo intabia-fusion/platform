@@ -14,7 +14,8 @@
 <script lang="ts">
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
   import chunter from '@hcengineering/chunter'
-  import core, { generateId, Markup } from '@hcengineering/core'
+  import type { Markup } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
 
   export let focusIndex: number = -1

@@ -24,7 +24,7 @@
 
   import plugin from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
-  import { type TaskTypeRelation, type TaskTypeSelectItem } from './types'
+  import type { TaskTypeRelation, TaskTypeSelectItem } from './types'
 
   /** Selectable rows. */
   export let items: TaskTypeSelectItem[] = []

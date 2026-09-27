@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { AttributeModel } from '@hcengineering/view'
   import { getObjectPresenter } from '../utils'
   import { Analytics } from '@hcengineering/analytics'
 

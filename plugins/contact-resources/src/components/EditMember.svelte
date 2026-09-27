@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Member, Organization } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
+  import type { Contact, Member, Organization } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'

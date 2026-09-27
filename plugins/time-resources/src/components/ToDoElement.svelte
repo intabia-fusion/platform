@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder, WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
   import { Component, IconMoreV2, Spinner, showPanel, Icon } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
-  import time, { ToDo, ToDoPriority, WorkSlot } from '@hcengineering/time'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
+  import time, { ToDoPriority } from '@hcengineering/time'
   import plugin from '../plugin'
   import ToDoDuration from './ToDoDuration.svelte'
   import WorkItemPresenter from './WorkItemPresenter.svelte'

@@ -12,9 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Icon, IconOpenedArrow, Label } from '@hcengineering/ui'
-  import { Workflow } from '@hcengineering/workflow'
+  import type { Workflow } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { navigateToWorkflow } from '../../location'

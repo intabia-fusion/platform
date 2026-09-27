@@ -21,8 +21,9 @@
     NestedSelectPopup,
     type NestedSelectItem
   } from '@hcengineering/ui'
-  import { Ref, ClassifierKind, type Class, type Doc } from '@hcengineering/core'
-  import { MasterTag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import { ClassifierKind, type Class, type Doc } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import card from '../../plugin'

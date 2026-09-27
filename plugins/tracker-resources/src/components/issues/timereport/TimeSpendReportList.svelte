@@ -14,12 +14,13 @@
 -->
 
 <script lang="ts">
-  import { DocumentQuery, IdMap, PersonId, Ref, toIdMap } from '@hcengineering/core'
+  import type { DocumentQuery, IdMap, PersonId, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
   import tracker from '../../../plugin'
   import PersonCalendar from './PersonCalendar.svelte'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import {
     Button,
     ButtonIcon,

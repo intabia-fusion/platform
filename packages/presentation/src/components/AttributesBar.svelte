@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { KeyedAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
   import AttributeBarEditor from './AttributeBarEditor.svelte'
 
   export let object: Doc | Record<string, any>

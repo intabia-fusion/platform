@@ -16,7 +16,8 @@
   import core from '@hcengineering/core'
   import login from '@hcengineering/login'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { InviteSettings } from '@hcengineering/setting'
+  import type { InviteSettings } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
   import { Breadcrumb, Button, EditBox, Header, MiniToggle } from '@hcengineering/ui'
 
   const client = getClient()

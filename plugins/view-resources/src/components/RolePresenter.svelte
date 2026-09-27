@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, ClassifierKind, Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import { ClassifierKind } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { Icon, Label, themeStore, tooltip } from '@hcengineering/ui'

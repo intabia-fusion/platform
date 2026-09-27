@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Card, CardEvents, MasterTag } from '@hcengineering/card'
-  import core, { Class, Data, Doc, fillDefaults, MarkupBlobRef, Ref } from '@hcengineering/core'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import { CardEvents } from '@hcengineering/card'
+  import type { Class, Data, Doc, MarkupBlobRef, Ref } from '@hcengineering/core'
+  import core, { fillDefaults } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { ButtonIcon, getCurrentLocation, IconAdd, navigate, showPopup } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'

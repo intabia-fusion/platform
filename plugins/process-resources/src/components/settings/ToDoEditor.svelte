@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { parseContext, Process, ProcessToDo, Step, UserResult } from '@hcengineering/process'
+  import type { Process, ProcessToDo, Step, UserResult } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ParamsEditor from './ParamsEditor.svelte'

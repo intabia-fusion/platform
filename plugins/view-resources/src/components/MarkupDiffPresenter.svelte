@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Markup } from '@hcengineering/core'
+  import type { AnyAttribute, Markup } from '@hcengineering/core'
   import { EmptyMarkup, markupToJSON } from '@hcengineering/text'
   import { MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import { ShowMore } from '@hcengineering/ui'

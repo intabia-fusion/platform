@@ -15,7 +15,8 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
-  import core, { AccountUuid, reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { AccountUuid } from '@hcengineering/core'
+  import core, { reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import {
     ButtonIcon,

@@ -14,12 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
+  import type { ChangeControl, ControlledDocument, DocumentTemplate } from '@hcengineering/controlled-documents'
   import {
-    ChangeControl,
-    ControlledDocument,
     DEFAULT_PERIODIC_REVIEW_INTERVAL,
     DocumentState,
-    DocumentTemplate,
     TEMPLATE_PREFIX,
     createChangeControl,
     createDocumentTemplate
@@ -27,8 +25,8 @@
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { type AttachedData, type Class, type Data, type Ref, type Mixin, generateId } from '@hcengineering/core'
   import { MessageBox, getClient } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     addNotification,
     navigate,
     showPopup,
@@ -44,8 +42,8 @@
   import InfoStep from './steps/InfoStep.svelte'
   import LocationStep from './steps/LocationStep.svelte'
   import TeamStep from './steps/TeamStep.svelte'
+  import type { TemplateWizardStep } from '../../stores/wizards/create-document'
   import {
-    TemplateWizardStep,
     $currentStep as currentStep,
     $locationStep as locationStep,
     currentStepUpdated,

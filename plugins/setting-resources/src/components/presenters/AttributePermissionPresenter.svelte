@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, AttributePermission } from '@hcengineering/core'
+  import type { AnyAttribute, AttributePermission } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
 

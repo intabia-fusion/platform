@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { TagElement } from '@hcengineering/tags'
+  import type { Ref } from '@hcengineering/core'
+  import type { TagElement } from '@hcengineering/tags'
   import TagFilterPresenter from './TagFilterPresenter.svelte'
   import { createQuery } from '@hcengineering/presentation'
   import tags from '../plugin'

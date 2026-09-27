@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, DOMAIN_STATUS, Ref, RefTo } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, RefTo } from '@hcengineering/core'
+  import core, { DOMAIN_STATUS } from '@hcengineering/core'
   import { TypeRef } from '@hcengineering/model'
   import { getClient } from '@hcengineering/presentation'
   import { Component, DropdownLabelsIntl, Label } from '@hcengineering/ui'

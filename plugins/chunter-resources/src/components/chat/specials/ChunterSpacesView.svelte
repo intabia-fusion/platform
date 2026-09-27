@@ -13,31 +13,13 @@
 -->
 
 <script lang="ts">
-  import core, {
-    Class,
-    Doc,
-    DocumentQuery,
-    FindOptions,
-    Ref,
-    WithLookup,
-    mergeQueries,
-    getCurrentAccount
-  } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, WithLookup } from '@hcengineering/core'
+  import core, { mergeQueries, getCurrentAccount } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import {
-    AnyComponent,
-    AnySvelteComponent,
-    Breadcrumb,
-    Button,
-    Component,
-    Header,
-    IconAdd,
-    Loading,
-    SearchInput,
-    showPopup
-  } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import { Breadcrumb, Button, Component, Header, IconAdd, Loading, SearchInput, showPopup } from '@hcengineering/ui'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,
@@ -47,8 +29,9 @@
     ViewletSettingButton
   } from '@hcengineering/view-resources'
   import { deepEqual } from 'fast-equals'
-  import { ComponentType } from 'svelte'
-  import chunter, { ChunterSpace } from '@hcengineering/chunter'
+  import type { ComponentType } from 'svelte'
+  import type { ChunterSpace } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
 
   export let _class: Ref<Class<ChunterSpace>>
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined

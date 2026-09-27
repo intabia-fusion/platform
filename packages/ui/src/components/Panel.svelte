@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+  import type { ButtonItem, HeaderAdaptive, IHeaderState } from '..'
   import {
     deviceOptionsStore as deviceInfo,
     Separator,
@@ -23,10 +24,7 @@
     ButtonGroup,
     Scroller,
     panelSeparators,
-    ButtonItem,
-    Header,
-    HeaderAdaptive,
-    IHeaderState
+    Header
   } from '..'
   import IconClose from './icons/Close.svelte'
   import IconDetails from './icons/Details.svelte'

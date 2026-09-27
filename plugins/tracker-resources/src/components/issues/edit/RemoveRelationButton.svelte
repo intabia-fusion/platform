@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { Icon, IconClose, tooltip } from '@hcengineering/ui'
-  import { RelatedDocument } from '@hcengineering/core'
+  import type { RelatedDocument } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { removeIssueRelation } from '../../../issues'
   import tracker from '../../../plugin'

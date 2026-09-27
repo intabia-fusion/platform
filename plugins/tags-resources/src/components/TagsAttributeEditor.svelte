@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Class, Doc, getCurrentAccount, IdMap, Ref, toIdMap } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { AnyAttribute, Class, Doc, IdMap, Ref } from '@hcengineering/core'
+  import { getCurrentAccount, toIdMap } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagReference, TagsEvents, TagElement } from '@hcengineering/tags'
+  import type { TagReference, TagElement } from '@hcengineering/tags'
+  import tags, { TagsEvents } from '@hcengineering/tags'
   import { Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { getObjectId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import type { Doc, Mixin, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label, RadioButton } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'

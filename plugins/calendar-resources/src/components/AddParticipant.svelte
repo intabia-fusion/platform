@@ -13,12 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { CreateGuest, getPersonRefByPersonId } from '@hcengineering/contact-resources'
-  import { Ref, type PersonId } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import type { PersonId } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
+  import type { Integration } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
   import { themeStore } from '@hcengineering/theme'
   import { Button, IconAdd, closePopup, registerFocus, resizeObserver, showPopup } from '@hcengineering/ui'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import presentation, {
     ActionContext,
@@ -25,9 +25,10 @@
   } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
-  import { Issue, TrackerEvents } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { AnyComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
     Button,
     Component,
     EditBox,

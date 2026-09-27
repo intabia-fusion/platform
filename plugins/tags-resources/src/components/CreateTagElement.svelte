@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { Card, createQuery } from '@hcengineering/presentation'
-  import { findTagCategory, TagCategory } from '@hcengineering/tags'
+  import type { TagCategory } from '@hcengineering/tags'
+  import { findTagCategory } from '@hcengineering/tags'
+  import type { DropdownTextItem } from '@hcengineering/ui'
   import {
     Button,
     DropdownLabels,
-    DropdownTextItem,
     EditBox,
     eventToHTMLElement,
     getColorNumberByText,

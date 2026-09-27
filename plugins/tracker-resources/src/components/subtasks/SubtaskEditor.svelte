@@ -13,18 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId, Ref } from '@hcengineering/core'
-  import presentation, { createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
+  import type { Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import { TaskKindSelector } from '@hcengineering/task-resources'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import {
-    Component as ComponentType,
-    IssuePriority,
-    IssueTemplateChild,
-    Milestone,
-    Project
-  } from '@hcengineering/tracker'
+  import type { Component as ComponentType, IssueTemplateChild, Milestone, Project } from '@hcengineering/tracker'
+  import { IssuePriority } from '@hcengineering/tracker'
   import { Button, Component, EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'

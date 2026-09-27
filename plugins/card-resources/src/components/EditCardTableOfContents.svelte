@@ -14,16 +14,18 @@
 -->
 
 <script lang="ts">
-  import card, { Card, CardSection, CardViewDefaults } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Card, CardSection, CardViewDefaults } from '@hcengineering/card'
+  import card from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
   import { Component, Loading, Scroller } from '@hcengineering/ui'
-  import { SvelteComponent, tick } from 'svelte'
+  import type { SvelteComponent } from 'svelte'
+  import { tick } from 'svelte'
 
   import { getCardSections, getCardToc } from '../card'
-  import { CardSectionAction } from '../types'
+  import type { CardSectionAction } from '../types'
 
   export let doc: Card
   export let readonly: boolean = false

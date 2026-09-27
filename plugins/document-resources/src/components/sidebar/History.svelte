@@ -16,9 +16,9 @@
 //
 -->
 <script lang="ts">
-  import { type DocumentVersion } from '@hcengineering/collaborator-client'
+  import type { DocumentVersion } from '@hcengineering/collaborator-client'
   import { type Markup, makeDocCollabId } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
+  import type { Document } from '@hcengineering/document'
   import { getMarkup, getMarkupVersionContent, getMarkupVersions } from '@hcengineering/presentation'
   import { areEqualMarkups, markupToJSON, type MarkupNode } from '@hcengineering/text'
   import {

@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import { Product, ProductVersion } from '@hcengineering/products'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Product, ProductVersion } from '@hcengineering/products'
+  import type { WithLookup } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'

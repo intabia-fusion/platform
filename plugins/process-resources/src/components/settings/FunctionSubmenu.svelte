@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Context, Func, Process, ProcessFunction } from '@hcengineering/process'
+  import type { Context, Func, Process, ProcessFunction } from '@hcengineering/process'
   import { ButtonIcon, eventToHTMLElement, IconSettings, Label, showPopup } from '@hcengineering/ui'
   import plugin from '../../plugin'
 

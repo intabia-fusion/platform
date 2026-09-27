@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event, ReccuringEvent, ReccuringInstance, RecurringRule } from '@hcengineering/calendar'
-  import { Person } from '@hcengineering/contact'
-  import { DocumentUpdate, Ref } from '@hcengineering/core'
+  import type { Event, ReccuringEvent, ReccuringInstance, RecurringRule } from '@hcengineering/calendar'
+  import type { Person } from '@hcengineering/contact'
+  import type { DocumentUpdate, Ref } from '@hcengineering/core'
   import presentation, { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import {

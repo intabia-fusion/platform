@@ -28,7 +28,7 @@
   import MailboxEditorModal from './MailboxEditorModal.svelte'
   import { getAccountClient } from '../utils'
   import { onMount } from 'svelte'
-  import { MailboxInfo, MailboxOptions } from '@hcengineering/account-client'
+  import type { MailboxInfo, MailboxOptions } from '@hcengineering/account-client'
   import MailboxItem from './MailboxItem.svelte'
   import { Analytics } from '@hcengineering/analytics'
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Class, Data, Doc, Hierarchy, Ref } from '@hcengineering/core'
+  import type { Class, Data, Doc, Hierarchy, Ref } from '@hcengineering/core'
   import { InlineAttributeBarEditor } from '..'
-  import { KeyedAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
   import { getClient, getFiltredKeys, isCollectionAttr, isCollabAttr, isMarkupAttr } from '../utils'
 
   export let object: Doc | Data<Doc>

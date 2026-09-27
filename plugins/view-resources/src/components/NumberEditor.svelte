@@ -18,7 +18,7 @@
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { EditBox, Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
   import EditBoxPopup from './EditBoxPopup.svelte'
-  import { AnyAttribute, TypeNumber } from '@hcengineering/core'
+  import type { AnyAttribute, TypeNumber } from '@hcengineering/core'
 
   export let label: IntlString
   export let placeholder: IntlString = label

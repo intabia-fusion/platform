@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
+  import type { Doc } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import { Label, Icon } from '@hcengineering/ui'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import textEditor, { CollaborationUser } from '@hcengineering/text-editor'
+  import type { CollaborationUser } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
 
   import CollaborativeAttributeBox from './CollaborativeAttributeBox.svelte'
   import IconDescription from './icons/Description.svelte'

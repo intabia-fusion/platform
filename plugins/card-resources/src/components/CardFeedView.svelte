@@ -12,8 +12,10 @@
 <!-- limitations under the License. -->
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Card, CardSpace, type MasterTag } from '@hcengineering/card'
-  import core, { DocumentQuery, type Ref, SortingOrder } from '@hcengineering/core'
+  import type { Card, CardSpace } from '@hcengineering/card'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { DocumentQuery } from '@hcengineering/core'
+  import core, { type Ref, SortingOrder } from '@hcengineering/core'
   import ui, { Label, Scroller, Loading } from '@hcengineering/ui'
   import card from '@hcengineering/card'
 

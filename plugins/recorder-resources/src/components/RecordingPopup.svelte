@@ -19,13 +19,13 @@
   import { micAccess, camAccess } from '@hcengineering/media-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { FilePreview, getClient, MessageBox, SpaceSelector } from '@hcengineering/presentation'
+  import type { PopupResult } from '@hcengineering/ui'
   import {
     EditBox,
     IconUpOutline,
     Label,
     Modal,
     ModernButton,
-    PopupResult,
     SelectPopup,
     SplitButton,
     eventToHTMLElement,

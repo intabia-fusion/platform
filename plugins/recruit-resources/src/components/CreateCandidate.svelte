@@ -15,31 +15,21 @@
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
   import attachment, { AttachmentsEvents } from '@hcengineering/attachment'
-  import contact, {
-    AvatarType,
-    Channel,
-    ChannelProvider,
-    combineName,
-    findContacts,
-    Person
-  } from '@hcengineering/contact'
+  import type { Channel, ChannelProvider, Person } from '@hcengineering/contact'
+  import contact, { AvatarType, combineName, findContacts } from '@hcengineering/contact'
   import { ChannelsDropdown, EditableAvatar, PersonPresenter } from '@hcengineering/contact-resources'
+  import type { AttachedData, Data, Doc, MixinData, Ref, WithLookup } from '@hcengineering/core'
   import core, {
     Account,
-    AttachedData,
-    Data,
-    Doc,
     fillDefaults,
     generateId,
-    MixinData,
-    Ref,
     toIdMap,
     TxProcessor,
-    WithLookup,
     type Blob,
     type PersonId
   } from '@hcengineering/core'
   import { getMetadata, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import presentation, {
     Card,
     createQuery,
@@ -48,13 +38,14 @@
     FilePreviewPopup,
     getClient,
     InlineAttributeBar,
-    KeyedAttribute,
     MessageBox,
     MultipleDraftController
   } from '@hcengineering/presentation'
-  import { Candidate, CandidateDraft, RecruitEvents } from '@hcengineering/recruit'
+  import type { Candidate, CandidateDraft } from '@hcengineering/recruit'
+  import { RecruitEvents } from '@hcengineering/recruit'
   import { recognizeDocument } from '@hcengineering/rekoni'
-  import tags, { findTagCategory, TagElement, TagReference } from '@hcengineering/tags'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
+  import tags, { findTagCategory } from '@hcengineering/tags'
   import {
     Button,
     Component,

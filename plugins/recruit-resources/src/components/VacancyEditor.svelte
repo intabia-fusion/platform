@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, RefTo } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { Ref, RefTo } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import recruit from '../plugin'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
   import { SpaceSelect } from '@hcengineering/presentation'
 
   export let value: Ref<Vacancy> | undefined

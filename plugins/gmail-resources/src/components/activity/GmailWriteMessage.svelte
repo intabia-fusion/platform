@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
-  import { Message } from '@hcengineering/gmail'
+  import type { Ref } from '@hcengineering/core'
+  import type { Message } from '@hcengineering/gmail'
   import { showPopup } from '@hcengineering/ui'
 
   import gmail from '../../plugin'

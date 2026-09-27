@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BusySlot, Event, getAllEvents } from '@hcengineering/calendar'
+  import type { BusySlot, Event } from '@hcengineering/calendar'
+  import { getAllEvents } from '@hcengineering/calendar'
   import { calendarByIdStore } from '@hcengineering/calendar-resources'
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { IdMap, Ref } from '@hcengineering/core'
-  import { Project } from '@hcengineering/task'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { IdMap, Ref } from '@hcengineering/core'
+  import type { Project } from '@hcengineering/task'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
   import WithTeamData from '../WithTeamData.svelte'
   import { groupTeamData, toSlots } from '../utils'
   import BusyElement from './BusyElement.svelte'

@@ -15,8 +15,9 @@
 -->
 <script lang="ts">
   import type { Channel, ChannelProvider } from '@hcengineering/contact'
-  import { AttachedData, Doc, Ref, toIdMap } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { AttachedData, Doc, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import type { AnyComponent } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

@@ -13,18 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@hcengineering/contact'
-  import core, { AnyAttribute, Class, Doc, Ref, TxOperations, TypedSpace, getObjectValue } from '@hcengineering/core'
+  import type { PermissionsStore } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { AnyAttribute, Class, Doc, Ref, TxOperations, TypedSpace } from '@hcengineering/core'
+  import core, { getObjectValue } from '@hcengineering/core'
   import { getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
   import { Label, Loading, mouseAttractor } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, BuildModelOptions, Viewlet } from '@hcengineering/view'
+  import type { AttributeModel, BuildModelKey, BuildModelOptions, Viewlet } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onMount } from 'svelte'
   import { showMenu } from '../actions'
   import view from '../plugin'
   import { buildModel, restrictionStore } from '../utils'
   import { getResource } from '@hcengineering/platform'
-  import { Readable } from 'svelte/store'
+  import type { Readable } from 'svelte/store'
   import { canChangeAttribute } from '../permissions'
   import { canEditSpace } from '../visibilityTester'
 

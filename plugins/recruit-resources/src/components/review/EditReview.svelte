@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact } from '@hcengineering/contact'
+  import type { Contact } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { UserBox } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { RecruitEvents, Review } from '@hcengineering/recruit'
+  import type { Review } from '@hcengineering/recruit'
+  import { RecruitEvents } from '@hcengineering/recruit'
   import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
   import { EditBox, Grid } from '@hcengineering/ui'
   import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'

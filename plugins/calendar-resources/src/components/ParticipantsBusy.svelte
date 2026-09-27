@@ -14,9 +14,10 @@
 -->
 <!-- Data-only: resolves which participants are already booked for the event's own time slot. -->
 <script lang="ts">
-  import calendar, { BusySlot, getBusyIntervals } from '@hcengineering/calendar'
-  import { Person } from '@hcengineering/contact'
-  import { Ref, Timestamp } from '@hcengineering/core'
+  import type { BusySlot } from '@hcengineering/calendar'
+  import calendar, { getBusyIntervals } from '@hcengineering/calendar'
+  import type { Person } from '@hcengineering/contact'
+  import type { Ref, Timestamp } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
 
   export let participants: Ref<Person>[] = []

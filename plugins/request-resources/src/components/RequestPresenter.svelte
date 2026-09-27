@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import request, { Request } from '@hcengineering/request'
+  import type { Request } from '@hcengineering/request'
+  import request from '@hcengineering/request'
   import { getClient } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { Label } from '@hcengineering/ui'
 

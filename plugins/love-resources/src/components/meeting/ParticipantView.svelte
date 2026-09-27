@@ -13,27 +13,24 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { formatName, Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Label, Loading } from '@hcengineering/ui'
   import love from '../../plugin'
   import { speakingWhileMuted } from '../../stores'
   import MicDisabled from '../icons/MicDisabled.svelte'
   import { onDestroy, onMount } from 'svelte'
+  import type { ChatMessage, LocalParticipant, Participant, RemoteParticipant, TrackPublication } from 'livekit-client'
   import {
-    ChatMessage,
     ConnectionQuality,
-    LocalParticipant,
     type LocalTrackPublication,
-    Participant,
     ParticipantEvent,
-    RemoteParticipant,
     type RemoteTrack,
     type RemoteTrackPublication,
     RoomEvent,
-    Track,
-    TrackPublication
+    Track
   } from 'livekit-client'
   import BadConnection from '../icons/BadConnection.svelte'
   import { lk } from '../../utils'

@@ -2,12 +2,12 @@
   Copyright @ 2024 Hardcore Engineering Inc.
 -->
 <script lang="ts">
-  import { DocumentQuery } from '@hcengineering/core'
+  import type { DocumentQuery } from '@hcengineering/core'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
   import { type Training, TrainingState } from '@hcengineering/training'
   import { type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
   import { SpecialView } from '@hcengineering/workbench-resources'
-  import { type ComponentProps } from 'svelte'
+  import type { ComponentProps } from 'svelte'
   import { allTrainingsRoute, AllTrainingsRouteTab } from '../routing/routes/allTrainingsRoute'
   import training from '../plugin'
   import { getCurrentEmployeeRef } from '../utils'

@@ -12,14 +12,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person, formatName } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
   import { Label, ModernButton } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../../../plugin'
   import { responseToInviteRequest, allInvites } from '../../../invites'
-  import { type UserMeetingInvite } from '@hcengineering/love'
+  import type { UserMeetingInvite } from '@hcengineering/love'
   import presentation from '@hcengineering/presentation'
   import { getMetadata } from '@hcengineering/platform'
 

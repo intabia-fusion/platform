@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AccountUuid, Collaborator, Doc } from '@hcengineering/core'
+  import type { AccountUuid, Collaborator, Doc } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
 
   import { AccountArrayEditor } from '../../index'

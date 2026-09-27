@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Room } from '@hcengineering/love'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { tooltip, Icon, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'

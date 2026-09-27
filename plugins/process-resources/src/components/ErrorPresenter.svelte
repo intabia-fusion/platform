@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ExecutionError } from '@hcengineering/process'
+  import type { ExecutionError } from '@hcengineering/process'
   import { ButtonIcon, IconError } from '@hcengineering/ui'
   import ErrorTooltip from './ErrorTooltip.svelte'
 

@@ -15,12 +15,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import Button from '../Button.svelte'
   import Scroller from '../Scroller.svelte'
   import WizardBar from './ModernWizardBar.svelte'
   import ModernDialog from '../ModernDialog.svelte'
-  import { IWizardStep } from '../../types'
+  import type { IWizardStep } from '../../types'
   import ui from '../../plugin'
   import ArrowLeft from '../icons/ArrowLeft.svelte'
   import ArrowRight from '../icons/ArrowRight.svelte'

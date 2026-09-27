@@ -13,10 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, WithLookup, type Status } from '@hcengineering/core'
+  import type { Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/core'
   import task from '@hcengineering/task'
-  import { Project, type Issue } from '@hcengineering/tracker'
-  import { Button, ButtonKind, ButtonSize, ProgressCircle } from '@hcengineering/ui'
+  import type { Project } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, ProgressCircle } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import { ensureRelatedIssuesLoaded, listIssueStatusOrder, relatedIssues, type IssueRef } from '../../../utils'
   import RelatedIssuePopup from './RelatedIssuePopup.svelte'

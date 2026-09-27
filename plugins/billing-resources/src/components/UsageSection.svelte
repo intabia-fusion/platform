@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PlanItem, type PackageItem } from '@hcengineering/billing'
-  import { UsageStatus } from '@hcengineering/core'
+  import type { PlanItem, PackageItem } from '@hcengineering/billing'
+  import type { UsageStatus } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import type { SubscriptionData } from '@hcengineering/account-client'
   import plugin from '../plugin'

@@ -13,18 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { Channel, ContactEvents, Organization, findContacts } from '@hcengineering/contact'
-  import core, {
-    AttachedData,
-    fillDefaults,
-    generateId,
-    makeCollabId,
-    Ref,
-    TxOperations,
-    WithLookup
-  } from '@hcengineering/core'
+  import type { Channel, Organization } from '@hcengineering/contact'
+  import { ContactEvents, findContacts } from '@hcengineering/contact'
+  import type { AttachedData, Ref, TxOperations, WithLookup } from '@hcengineering/core'
+  import core, { fillDefaults, generateId, makeCollabId } from '@hcengineering/core'
   import { Card, createMarkup, getClient, InlineAttributeBar } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, IconInfo, Label } from '@hcengineering/ui'

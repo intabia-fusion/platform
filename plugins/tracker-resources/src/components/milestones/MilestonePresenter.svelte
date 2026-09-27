@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Milestone } from '@hcengineering/tracker'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Milestone } from '@hcengineering/tracker'
   import {
     Icon,
     getPlatformAvatarColorDef,

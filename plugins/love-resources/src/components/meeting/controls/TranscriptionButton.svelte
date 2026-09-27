@@ -19,7 +19,8 @@
   import { currentMeetingMinutes } from '../../../stores'
   import love from '../../../plugin'
   import view from '@hcengineering/view'
-  import { ButtonBaseSize, ModernButton } from '@hcengineering/ui'
+  import type { ButtonBaseSize } from '@hcengineering/ui'
+  import { ModernButton } from '@hcengineering/ui'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

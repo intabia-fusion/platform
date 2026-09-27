@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button, eventToHTMLElement, Icon, Label, showPopup } from '@hcengineering/ui'
-  import { Ref, Doc, ArrOf, RefTo } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Ref, Doc, ArrOf, RefTo } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
 
   import ArrayEditorPopup from './ArrayEditorPopup.svelte'
   import { getClient } from '@hcengineering/presentation'

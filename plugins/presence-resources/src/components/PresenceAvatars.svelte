@@ -18,7 +18,8 @@
   import { type Person, formatName, getCurrentEmployee } from '@hcengineering/contact'
   import { Avatar, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconSize, tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '@hcengineering/ui'
 
   import PresenceList from './PresenceList.svelte'
   import { presence } from '../presence'

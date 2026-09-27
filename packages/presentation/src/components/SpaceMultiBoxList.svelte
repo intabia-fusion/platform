@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref, Space } from '@hcengineering/core'
+  import type { Class, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'

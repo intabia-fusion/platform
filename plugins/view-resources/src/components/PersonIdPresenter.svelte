@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PersonId, Ref } from '@hcengineering/core'
+  import type { PersonId, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import contact, { getPersonRefByPersonIdCb, Person } from '@hcengineering/contact'
-  import { IconSize } from '@hcengineering/ui'
+  import type { Person } from '@hcengineering/contact'
+  import contact, { getPersonRefByPersonIdCb } from '@hcengineering/contact'
+  import type { IconSize } from '@hcengineering/ui'
 
   import ObjectPresenter from './ObjectPresenter.svelte'
 

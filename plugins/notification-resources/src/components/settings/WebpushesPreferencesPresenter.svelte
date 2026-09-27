@@ -2,7 +2,15 @@
   import { getClient, createQuery, MessageBox } from '@hcengineering/presentation'
   import notification, { type PushSubscription, type PushSubscriptionSetting } from '@hcengineering/notification'
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import { Button, Label, ModernToggle, showPopup, getCurrentLocation, tooltip, desktopPlatform } from '@hcengineering/ui'
+  import {
+    Button,
+    Label,
+    ModernToggle,
+    showPopup,
+    getCurrentLocation,
+    tooltip,
+    desktopPlatform
+  } from '@hcengineering/ui'
   import { onMount } from 'svelte'
   import { getMetadata } from '@hcengineering/platform'
 

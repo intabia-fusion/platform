@@ -17,7 +17,8 @@
   import { getMetadata } from '@hcengineering/platform'
   import presentation, { NavLink } from '@hcengineering/presentation'
   import { getCurrentLocation, locationToUrl } from '@hcengineering/ui'
-  import { cardId, Card, ParentInfo } from '@hcengineering/card'
+  import type { Card, ParentInfo } from '@hcengineering/card'
+  import { cardId } from '@hcengineering/card'
 
   export let value: Card | undefined
 

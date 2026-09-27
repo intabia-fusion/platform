@@ -16,8 +16,9 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { jsonToPmNode, MarkupNode } from '@hcengineering/text'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { MarkupNode } from '@hcengineering/text'
+  import { jsonToPmNode } from '@hcengineering/text'
   import presentation from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { Editor, Extension, mergeAttributes } from '@tiptap/core'

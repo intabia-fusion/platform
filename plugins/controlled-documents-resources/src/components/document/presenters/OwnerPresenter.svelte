@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import documents, { Document } from '@hcengineering/controlled-documents'
-  import { Employee, getCurrentEmployee } from '@hcengineering/contact'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
+  import type { Employee } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import { PersonPresenter, checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
 

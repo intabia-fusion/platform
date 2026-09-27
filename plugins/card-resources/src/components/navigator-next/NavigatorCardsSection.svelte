@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
-  import { Ref, SortingOrder, Timestamp } from '@hcengineering/core'
+  import type { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
+  import type { Ref, Timestamp } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import ui, { ModernButton } from '@hcengineering/ui'
 

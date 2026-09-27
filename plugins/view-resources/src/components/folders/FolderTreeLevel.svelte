@@ -15,8 +15,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { getClient } from '@hcengineering/presentation'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Action, IconEdit } from '@hcengineering/ui'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit } from '@hcengineering/ui'
   import { getResource } from '@hcengineering/platform'
 
   import { TreeItem, getActions as getContributedActions } from '../../index'

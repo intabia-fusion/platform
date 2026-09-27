@@ -14,12 +14,14 @@
  // limitations under the License.
  -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import core, { AttachedData, Doc, makeCollabId, Ref } from '@hcengineering/core'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
+  import type { AttachedData, Doc, Ref } from '@hcengineering/core'
+  import core, { makeCollabId } from '@hcengineering/core'
   import { DraftController, draftsStore, getClient, deleteFile, createMarkup } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
   import { isEmptyMarkup } from '@hcengineering/text'
-  import { Component, Issue, IssueDraft, IssueParentInfo, Milestone, Project } from '@hcengineering/tracker'
+  import type { Component, Issue, IssueDraft, IssueParentInfo, Milestone, Project } from '@hcengineering/tracker'
   import { Button, ExpandCollapse, Scroller } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import tracker from '../plugin'

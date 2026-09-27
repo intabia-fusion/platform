@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { HeaderButtonAction, SelectPopupValueType } from '../types'
-  import { checkPermission, Client, getCurrentAccount, hasAccountRole, TxOperations } from '@hcengineering/core'
+  import type { HeaderButtonAction, SelectPopupValueType } from '../types'
+  import type { Client, TxOperations } from '@hcengineering/core'
+  import { checkPermission, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { ButtonWithDropdown, Button, Loading, IconAdd, IconDropdown } from '../index'
 
   export let mainActionId: number | string | null = null

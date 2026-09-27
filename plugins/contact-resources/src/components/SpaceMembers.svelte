@@ -13,18 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
-  import {
-    AccountRole,
-    DocumentQuery,
-    Ref,
-    SortingOrder,
-    Space,
-    getCurrentAccount,
-    hasAccountRole,
-    notEmpty,
-    AccountUuid
-  } from '@hcengineering/core'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { DocumentQuery, Ref, Space, AccountUuid } from '@hcengineering/core'
+  import { AccountRole, SortingOrder, getCurrentAccount, hasAccountRole, notEmpty } from '@hcengineering/core'
   import { translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { ActionIcon, IconAdd, IconClose, Label, SearchEdit, showPopup, themeStore } from '@hcengineering/ui'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, Metadata } from '@hcengineering/platform'
+  import type { Asset, Metadata } from '@hcengineering/platform'
   import {
     ButtonIcon,
     fromCodePoint,

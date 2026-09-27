@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
+  import type { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
   import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
-  import { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
   import { createQuery } from '@hcengineering/presentation'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import { isEmptyMarkup } from '@hcengineering/text'
-  import { BlobType, Markup } from '@hcengineering/core'
+  import type { BlobType, Markup } from '@hcengineering/core'
 
   export let value: ActivityMessageLite<ChatMessage>
   export let attachments: BlobType[] | undefined = undefined

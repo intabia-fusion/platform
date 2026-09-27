@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WorkbenchTab } from '@hcengineering/workbench'
+  import type { WorkbenchTab } from '@hcengineering/workbench'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { concatLink, Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import { concatLink } from '@hcengineering/core'
   import view from '@hcengineering/view'
   import { decodeChatURI } from '../navigation'
   import { chunterId } from '@hcengineering/chunter'

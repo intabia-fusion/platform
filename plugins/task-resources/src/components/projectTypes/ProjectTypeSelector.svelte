@@ -17,8 +17,8 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
   import task from '@hcengineering/task'
-  import type { DropdownTextItem } from '@hcengineering/ui'
-  import { ButtonKind, ButtonSize, DropdownLabels } from '@hcengineering/ui'
+  import type { DropdownTextItem, ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { DropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

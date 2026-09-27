@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentReviewRequest } from '@hcengineering/controlled-documents'
+  import type { DocumentReviewRequest } from '@hcengineering/controlled-documents'
 
   import DocumentRequestPresenter from './DocumentRequestPresenter.svelte'
   import documents from '../../plugin'

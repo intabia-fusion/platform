@@ -6,7 +6,7 @@
   import { createEventDispatcher } from 'svelte'
   import { ButtonBase, closeTooltip } from '@hcengineering/ui'
 
-  import { Emoji } from '@hcengineering/emoji'
+  import type { Emoji } from '@hcengineering/emoji'
   import { getEmojiSkins } from '../utils'
 
   export let emoji: Emoji.Emoji

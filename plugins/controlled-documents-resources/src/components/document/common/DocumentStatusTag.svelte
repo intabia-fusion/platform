@@ -1,7 +1,7 @@
 <script lang="ts">
   // TODO: Refactor to use State component from 'StateTag'
 
-  import { DocumentStateTagType } from '../../../utils'
+  import type { DocumentStateTagType } from '../../../utils'
 
   export let type: DocumentStateTagType
 </script>

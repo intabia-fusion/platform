@@ -15,7 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { registerFocus, themeStore } from '@hcengineering/ui'
   import { onMount } from 'svelte'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { Header, Breadcrumb } from '@hcengineering/ui'
-  import core, { AccountUuid, Ref, Role, RolesAssignment, SpaceType, TypedSpace, WithLookup } from '@hcengineering/core'
+  import type { AccountUuid, Ref, Role, RolesAssignment, SpaceType, TypedSpace, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
 

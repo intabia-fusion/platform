@@ -13,13 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { UserInfo, getPersonByPersonRef } from '@hcengineering/contact-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
 
-  import { IconArrowLeft, Location, ModernButton, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import type { Location } from '@hcengineering/ui'
+  import { IconArrowLeft, ModernButton, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
 
-  import { MeetingMinutes, ParticipantInfo, Room, loveId } from '@hcengineering/love'
+  import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
+  import { loveId } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { getObjectLinkFragment } from '@hcengineering/view-resources'

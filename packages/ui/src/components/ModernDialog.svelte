@@ -16,7 +16,7 @@
   // Note: migrated from QMS. Should be unified with the platform solutions eventually.
   import { createEventDispatcher } from 'svelte'
   import type { IntlString } from '@hcengineering/platform'
-  import { AnySvelteComponent, ButtonKind } from '../types'
+  import type { AnySvelteComponent, ButtonKind } from '../types'
   import Button from './Button.svelte'
   import Label from './Label.svelte'
   import Scroller from './Scroller.svelte'

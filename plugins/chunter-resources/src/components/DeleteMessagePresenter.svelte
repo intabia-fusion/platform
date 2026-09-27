@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
-  import { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
 
   export let value: ChatMessage
 </script>

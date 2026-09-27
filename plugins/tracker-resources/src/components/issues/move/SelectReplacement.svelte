@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Component, Issue, Project } from '@hcengineering/tracker'
+  import type { Ref } from '@hcengineering/core'
+  import type { Component, Issue, Project } from '@hcengineering/tracker'
   import { Button, Grid, IconArrowRight, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
 
   import tracker from '../../../plugin'
-  import { ComponentToUpdate } from '../../../utils'
+  import type { ComponentToUpdate } from '../../../utils'
   import ComponentPresenter from '../../components/ComponentPresenter.svelte'
   import ComponentRefPresenter from '../../components/ComponentRefPresenter.svelte'
   import ComponentReplacementPopup from './ComponentReplacementPopup.svelte'

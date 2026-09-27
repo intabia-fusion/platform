@@ -17,7 +17,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
 
   export let process: Process
   export let params: Record<string, any>

@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref, Space, getCurrentAccount } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
   import { Button, IconAdd, eventToHTMLElement, getCurrentLocation, showPopup } from '@hcengineering/ui'
-  import { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { filterStore, removeFilter, selectedFilterStore, updateFilter } from '../../filter'
   import view from '../../plugin'

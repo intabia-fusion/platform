@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import card from '@hcengineering/card'
-  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { ObjectBox } from '@hcengineering/view-resources'
   import { Loading } from '@hcengineering/ui'

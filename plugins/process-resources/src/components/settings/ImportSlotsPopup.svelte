@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { Button, eventToHTMLElement, Label, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

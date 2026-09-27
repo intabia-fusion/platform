@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { TaskType } from '@hcengineering/task'
-  import { Button, DropdownTextItem, IconAdd, IconClose, Label, ModernDropdownLabels } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { Button, IconAdd, IconClose, Label, ModernDropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'

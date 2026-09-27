@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Request } from '@hcengineering/request'
+  import type { Request } from '@hcengineering/request'
   import { Label } from '@hcengineering/ui'
   import { DocNavLink, ObjectPresenter } from '@hcengineering/view-resources'
   import requests from '../plugin'

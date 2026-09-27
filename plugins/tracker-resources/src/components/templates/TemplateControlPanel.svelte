@@ -13,10 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId, Ref, WithLookup } from '@hcengineering/core'
-  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
-  import task, { Project } from '@hcengineering/task'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, createQuery, getClient } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
+  import type { Project } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { TaskKindSelector } from '@hcengineering/task-resources'
   import type { IssueTemplate } from '@hcengineering/tracker'
   import { Component, Label } from '@hcengineering/ui'

@@ -17,7 +17,8 @@
 <script lang="ts">
   import { IconAdd } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
-  import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '../../node-view'
+  import type { NodeViewProps } from '../../node-view'
+  import { NodeViewContent, NodeViewWrapper } from '../../node-view'
   import { findTable, insertColumn, insertRow } from './utils'
   import { TableMap, updateColumnsOnResize } from '@tiptap/pm/tables'
   import { getToolbarCursor, setToolbarMeta } from '../toolbar/toolbar'

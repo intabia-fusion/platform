@@ -14,19 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { AppPushNotification } from '@hcengineering/notification'
   import {
-    AppPushNotification,
     translateNotification,
     PUSH_NOTIFICATION_TITLE_SIZE,
     PUSH_NOTIFICATION_BODY_SIZE,
     truncate
   } from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
     addNotification,
     getCurrentResolvedLocation,
-    Location,
     NotificationSeverity,
     languageStore,
     deviceOptionsStore,
@@ -35,7 +35,8 @@
   import view from '@hcengineering/view'
   import { parseLinkId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
-  import workbench, { Application } from '@hcengineering/workbench'
+  import type { Application } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
 
   import Notification from './Notification.svelte'

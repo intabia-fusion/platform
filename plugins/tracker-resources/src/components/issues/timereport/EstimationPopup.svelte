@@ -15,16 +15,10 @@
 -->
 <script lang="ts">
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue, Project, reduceChildInfoTree } from '@hcengineering/tracker'
-  import {
-    Button,
-    EditStyle,
-    eventToHTMLElement,
-    floorFractionDigits,
-    IconAdd,
-    Label,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Issue, Project } from '@hcengineering/tracker'
+  import { reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { EditStyle } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, floorFractionDigits, IconAdd, Label, showPopup } from '@hcengineering/ui'
   import EditEstimationPopup from './EditEstimationPopup.svelte'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'

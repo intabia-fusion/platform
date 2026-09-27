@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { AccountRole, Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import { AccountRole } from '@hcengineering/core'
   import { MultipleDraftController, createQuery, getClient, isDisabled } from '@hcengineering/presentation'
   import { TrackerEvents, trackerId } from '@hcengineering/tracker'
   import { HeaderButton, showPopup } from '@hcengineering/ui'

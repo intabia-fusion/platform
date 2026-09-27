@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@hcengineering/ui'
   import { getPersonByPersonRefStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
-  import { notEmpty, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../plugin'

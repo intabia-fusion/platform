@@ -2,7 +2,7 @@
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
   import contact from '@hcengineering/contact-resources/src/plugin'
   import { getClient } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/tracker'
+  import type { Project } from '@hcengineering/tracker'
   export let value: Project
 </script>
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import textEditorPlugin from '@hcengineering/text-editor'
   import { TextEditor } from '@hcengineering/text-editor-resources'
   import { Button, IconDownOutline, Label, tooltip } from '@hcengineering/ui'

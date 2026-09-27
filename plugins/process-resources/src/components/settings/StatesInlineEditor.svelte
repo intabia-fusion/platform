@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Process, State } from '@hcengineering/process'
+  import type { Process, State } from '@hcengineering/process'
   import { makeRank } from '@hcengineering/rank'
   import { Button, IconAdd, Label } from '@hcengineering/ui'
   import { SortableDocList } from '@hcengineering/view-resources'

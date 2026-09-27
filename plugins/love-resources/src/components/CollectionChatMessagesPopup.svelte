@@ -13,9 +13,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { Doc, Ref, Space, SortingOrder } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import { ChatMessageInput } from '@hcengineering/chunter-resources'
   import ChatMessagePresenter from '@hcengineering/chunter-resources/src/components/chat-message/ChatMessagePresenter.svelte'
   import { closeTooltip, Label, Lazy, Spinner, resizeObserver } from '@hcengineering/ui'

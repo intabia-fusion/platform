@@ -17,7 +17,8 @@
   import login, { loginId } from '@hcengineering/login'
   import { getClient, createQuery, isDisabled } from '@hcengineering/presentation'
   import settingPlg from '../plugin'
-  import setting, { SettingsCategory, SettingsEvents } from '@hcengineering/setting'
+  import type { SettingsCategory } from '@hcengineering/setting'
+  import setting, { SettingsEvents } from '@hcengineering/setting'
   import {
     Component,
     Label,
@@ -44,7 +45,8 @@
     logOut
   } from '@hcengineering/workbench-resources'
   import workbench from '@hcengineering/workbench'
-  import { ComponentType, onDestroy, onMount } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { onDestroy, onMount } from 'svelte'
   import { clearSettingsStore, settingsStore } from '../store'
   import { Analytics } from '@hcengineering/analytics'
 

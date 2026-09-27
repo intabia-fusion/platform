@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MarkupMark } from '@hcengineering/text'
+  import type { MarkupMark } from '@hcengineering/text'
   import Mark from './Mark.svelte'
 
   export let marks: MarkupMark[]

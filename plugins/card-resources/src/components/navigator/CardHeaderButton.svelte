@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { ButtonIcon, getCurrentLocation, IconAdd, location, Menu, navigate, showPopup } from '@hcengineering/ui'
 
-  import { MasterTag } from '@hcengineering/card'
+  import type { MasterTag } from '@hcengineering/card'
   import card from '../../plugin'
   import CreateSpace from './CreateSpace.svelte'
   import CreateCardPopup from '../CreateCardPopup.svelte'

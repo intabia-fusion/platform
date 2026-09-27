@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { notEmpty, Ref, Status } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import ui, { DropdownIntlItem, ModernDropdown } from '@hcengineering/ui'
-  import { WorkflowTransition } from '@hcengineering/workflow'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { ModernDropdown } from '@hcengineering/ui'
+  import type { WorkflowTransition } from '@hcengineering/workflow'
 
   import TransitionPresenter from './TransitionPresenter.svelte'
 

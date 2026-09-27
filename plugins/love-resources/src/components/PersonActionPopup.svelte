@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { isOffice, Room } from '@hcengineering/love'
+  import type { Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
+  import { isOffice } from '@hcengineering/love'
   import { ActionIcon, closePopup } from '@hcengineering/ui'
   import love from '../plugin'
   import { myOffice } from '../stores'

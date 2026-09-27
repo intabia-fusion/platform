@@ -15,11 +15,11 @@
 //
 -->
 <script lang="ts">
-  import { Drive } from '@hcengineering/drive'
+  import type { Drive } from '@hcengineering/drive'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import drive from '../plugin'
 

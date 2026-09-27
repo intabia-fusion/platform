@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { getClient, ObjectPopup } from '@hcengineering/presentation'
-  import { Card } from '@hcengineering/card'
-  import { Class, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Card } from '@hcengineering/card'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import CardPresenter from './CardPresenter.svelte'

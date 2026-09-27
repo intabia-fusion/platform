@@ -26,7 +26,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { EventTimeEditor } from '@hcengineering/calendar-resources'
-  import { WorkSlot } from '@hcengineering/time'
+  import type { WorkSlot } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
   import { splitEventsDuration } from '../utils'

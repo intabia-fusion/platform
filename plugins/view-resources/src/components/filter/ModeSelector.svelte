@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { SelectPopup } from '@hcengineering/ui'
-  import { Filter, FilterMode } from '@hcengineering/view'
+  import type { Filter, FilterMode } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../../plugin'
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IntlString, OK, PlatformError, Status, unknownError } from '@hcengineering/platform'
+  import type { IntlString, Status } from '@hcengineering/platform'
+  import { OK, PlatformError, unknownError } from '@hcengineering/platform'
 
   import type { Field } from '../types'
   import Form from './Form.svelte'

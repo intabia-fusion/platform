@@ -14,14 +14,14 @@
 -->
 <script lang="ts">
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
-  import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import tags, { type TagElement, type TagReference } from '@hcengineering/tags'
-  import { IssueTemplate, IssueTemplateChild, Project } from '@hcengineering/tracker'
+  import type { IssueTemplate, IssueTemplateChild, Project } from '@hcengineering/tracker'
   import { Button, EditBox, IconMoreH, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { ObjectPresenter } from '..'
 
   export let value: Ref<Space>

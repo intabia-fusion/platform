@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { Label } from '@hcengineering/ui'
   import tracker from '../../../plugin'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import QueryIssuesList from './QueryIssuesList.svelte'
 
   export let issue: Issue

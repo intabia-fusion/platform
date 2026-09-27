@@ -3,11 +3,12 @@
 //
 -->
 <script lang="ts">
-  import core, { Ref, WithLookup, getCurrentAccount } from '@hcengineering/core'
-  import { GithubPullRequest, GithubReviewComment, GithubReviewThread } from '@hcengineering/github'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
+  import type { GithubPullRequest, GithubReviewComment, GithubReviewThread } from '@hcengineering/github'
 
   import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { EmployeePresenter, getPersonByPersonId, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'

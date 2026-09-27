@@ -3,16 +3,16 @@
 -->
 
 <script lang="ts">
-  import {
-    type QuestionDataEditorProps,
-    type QuestionDataEditorPropsSubmit,
-    type QuestionDataPresenterProps,
-    type QuestionOption,
-    type OrderingAssessment,
-    type OrderingAssessmentData,
-    type OrderingQuestion,
-    type OrderingQuestionData,
-    type OrderingPosition
+  import type {
+    QuestionDataEditorProps,
+    QuestionDataEditorPropsSubmit,
+    QuestionDataPresenterProps,
+    QuestionOption,
+    OrderingAssessment,
+    OrderingAssessmentData,
+    OrderingQuestion,
+    OrderingQuestionData,
+    OrderingPosition
   } from '@hcengineering/questions'
   import {
     Button,

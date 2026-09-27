@@ -13,19 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, toIdMap } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient, MessageBox } from '@hcengineering/presentation'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import {
-    ButtonKind,
-    ButtonSize,
-    DropdownLabelsIntl,
-    Label,
-    type DropdownIntlItem,
-    Button,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Label, type DropdownIntlItem, Button, showPopup } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import { createEventDispatcher } from 'svelte'
   import { taskTypeStore } from '../..'

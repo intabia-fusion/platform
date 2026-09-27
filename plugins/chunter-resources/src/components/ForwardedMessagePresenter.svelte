@@ -12,23 +12,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, generateId, getDay, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { ChatMessage, chunterId } from '@hcengineering/chunter'
+  import type { Class, Doc, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core, { generateId, getDay } from '@hcengineering/core'
+  import type { ChatMessage } from '@hcengineering/chunter'
+  import { chunterId } from '@hcengineering/chunter'
   import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
-  import attachment, { Attachment } from '@hcengineering/attachment'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { getPersonByPersonIdCb, PersonPresenter } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
-  import ui, {
-    Icon,
-    Label,
-    Location,
-    locationToUrl,
-    navigate,
-    ShowMore,
-    location,
-    getCurrentLocation
-  } from '@hcengineering/ui'
+  import type { Person } from '@hcengineering/contact'
+  import type { Location } from '@hcengineering/ui'
+  import ui, { Icon, Label, locationToUrl, navigate, ShowMore, location, getCurrentLocation } from '@hcengineering/ui'
   import { AttachmentList } from '@hcengineering/attachment-resources'
   import { getDocIdentifier, getDocTitle, setFilters } from '@hcengineering/view-resources'
 

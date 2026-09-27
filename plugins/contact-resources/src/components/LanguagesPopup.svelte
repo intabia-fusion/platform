@@ -11,7 +11,8 @@
 <!-- See the License for the specific language governing permissions and -->
 <!-- limitations under the License. -->
 <script lang="ts">
-  import { SelectPopup, SelectPopupValueType } from '@hcengineering/ui'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
+  import { SelectPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 

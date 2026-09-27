@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import { location as locationStore } from '@hcengineering/ui'

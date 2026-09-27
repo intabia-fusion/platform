@@ -17,7 +17,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'
   import { showPopup } from '../popups'
-  import { DateOrShift } from '../types'
+  import type { DateOrShift } from '../types'
   import DateRangePresenter from './calendar/DateRangePresenter.svelte'
   import Calendar from './icons/Calendar.svelte'
   import Close from './icons/Close.svelte'

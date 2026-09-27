@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, reduceCalls } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { reduceCalls } from '@hcengineering/core'
   import { getDocTitle, openDoc } from '@hcengineering/view-resources'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { Channel, DirectMessage } from '@hcengineering/chunter'
-  import { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
-  import contact, { Person } from '@hcengineering/contact'
+  import type { Channel, DirectMessage } from '@hcengineering/chunter'
+  import type { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import view from '@hcengineering/view'
   import { ButtonIcon, languageStore } from '@hcengineering/ui'
 

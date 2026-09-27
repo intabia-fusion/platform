@@ -25,7 +25,8 @@
 
   import { getIntegrationClient, startSync } from '../api'
   import gmail from '../plugin'
-  import core, { getCurrentAccount, Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
   import GmailColor from './icons/GmailColor.svelte'
   import { Analytics } from '@hcengineering/analytics'
 

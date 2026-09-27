@@ -15,11 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/document'
   import { ActionContext } from '@hcengineering/presentation'
   import { Label, Loading, SearchEdit } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { FilterButton, TableBrowser, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import document from '../plugin'
 

@@ -15,7 +15,7 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { AssigneeBox } from '@hcengineering/contact-resources'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { ListView, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { FixedColumn, ListSelectionProvider, showMenu } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'

@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { RecurringRule, getWeekday } from '@hcengineering/calendar'
-  import { Timestamp } from '@hcengineering/core'
+  import type { RecurringRule } from '@hcengineering/calendar'
+  import { getWeekday } from '@hcengineering/calendar'
+  import type { Timestamp } from '@hcengineering/core'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import ui, {
     Button,
     CheckBox,
     CircleButton,
-    DropdownIntlItem,
     DropdownLabelsIntl,
     Grid,
     Label,
@@ -29,7 +30,7 @@
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { SetPosRules } from '../types'
+  import type { SetPosRules } from '../types'
   import ByDateSelector from './ByDateSelector.svelte'
   import DateEditor from './DateEditor.svelte'
   import SetPosSelector from './SetPosSelector.svelte'

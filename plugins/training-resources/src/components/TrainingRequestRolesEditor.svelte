@@ -16,8 +16,9 @@
 -->
 
 <script lang="ts">
-  import core, { Ref, type Role } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import core, { type Role } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import { Button, type ButtonKind, type ButtonSize, Label, showPopup } from '@hcengineering/ui'
   import training from '../plugin'

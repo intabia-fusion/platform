@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { cardId } from '@hcengineering/card'
-  import { processId, Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
+  import { processId } from '@hcengineering/process'
   import { deviceOptionsStore as deviceInfo, NavItem, Scroller } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
   import { NavFooter, NavHeader, SavedView } from '@hcengineering/workbench-resources'
   import plugin from '../plugin'
-  import { Special } from '../types'
+  import type { Special } from '../types'
 
   export let currentSpace: string
   export let processes: Process[]

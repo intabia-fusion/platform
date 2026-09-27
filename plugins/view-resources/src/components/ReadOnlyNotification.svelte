@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getMetadata } from '@hcengineering/platform'
-  import { Button, navigate, Notification, NotificationToast } from '@hcengineering/ui'
+  import type { Notification } from '@hcengineering/ui'
+  import { Button, navigate, NotificationToast } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import presentation, { getCurrentWorkspaceUrl } from '@hcengineering/presentation'
   import { allowGuestSignUpStore } from '../utils'

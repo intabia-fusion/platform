@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
-  import { type Class, type Ref } from '@hcengineering/core'
-  import { TestSuite } from '@hcengineering/test-management'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { TestSuite } from '@hcengineering/test-management'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
   import { Panel } from '@hcengineering/panel'
   import { EditBox, Breadcrumb } from '@hcengineering/ui'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type WorkspaceDataId, type WorkspaceUuid } from '@hcengineering/core'
+  import type { WorkspaceDataId, WorkspaceUuid } from '@hcengineering/core'
   import { getMetadata } from '@hcengineering/platform'
   import { Card } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'

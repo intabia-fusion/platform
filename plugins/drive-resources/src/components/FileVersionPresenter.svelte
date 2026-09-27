@@ -15,11 +15,11 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { type FileVersion } from '@hcengineering/drive'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { FileVersion } from '@hcengineering/drive'
   import { FilePreviewPopup } from '@hcengineering/presentation'
   import { showPopup } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import { formatFileVersion } from '../utils'

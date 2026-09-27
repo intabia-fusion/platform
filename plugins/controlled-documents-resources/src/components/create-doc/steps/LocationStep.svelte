@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { TypedSpace, type Doc, type Ref, type Space } from '@hcengineering/core'
+  import type { TypedSpace } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
   import documents, {
     type DocumentSpace,
     type DocumentSpaceType,

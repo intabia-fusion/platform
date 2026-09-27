@@ -17,7 +17,7 @@
 
   import ContextSubmenuPopup from './ContextSubmenuPopup.svelte'
   import plugin from '../../../../plugin'
-  import { ContextOption } from './types'
+  import type { ContextOption } from './types'
 
   export let options: ContextOption[] = []
   export let onSelect: (val: ContextOption) => void

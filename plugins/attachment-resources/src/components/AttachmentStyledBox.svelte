@@ -13,34 +13,25 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import {
-    type Blob,
-    BlobMetadata,
-    Class,
-    Doc,
-    generateId,
-    Markup,
-    PersonId,
-    Ref,
-    Space,
-    toIdMap,
-    TxOperations
-  } from '@hcengineering/core'
-  import { IntlString, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { BlobMetadata, Class, Doc, Markup, PersonId, Ref, Space, TxOperations } from '@hcengineering/core'
+  import { type Blob, generateId, toIdMap } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import type { FileOrBlob } from '@hcengineering/presentation'
   import {
     createQuery,
     deleteFile,
     DraftController,
     draftsStore,
-    FileOrBlob,
     getClient,
     uploadFile
   } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
-  import { AttachIcon, EditorKitOptions, StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { ButtonSize } from '@hcengineering/ui'
+  import type { EditorKitOptions } from '@hcengineering/text-editor-resources'
+  import { AttachIcon, StyledTextBox } from '@hcengineering/text-editor-resources'
+  import type { ButtonSize } from '@hcengineering/ui'
   import { type FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
   import { createEventDispatcher, onDestroy } from 'svelte'
 

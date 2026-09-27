@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import calendar from '@hcengineering/calendar'
-  import { Organization } from '@hcengineering/contact'
-  import { DateRangeMode, Doc, FindOptions, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Applicant, Review } from '@hcengineering/recruit'
+  import type { Organization } from '@hcengineering/contact'
+  import type { Doc, FindOptions, Ref } from '@hcengineering/core'
+  import { DateRangeMode } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Applicant, Review } from '@hcengineering/recruit'
   import { Button, DatePresenter, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
   import recruit from '../../plugin'

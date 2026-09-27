@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, DocumentUpdate, Tx, TxCreateDoc, TxUpdateDoc } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentUpdate, Tx, TxCreateDoc, TxUpdateDoc } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { Button, EditBox, Label } from '@hcengineering/ui'
 

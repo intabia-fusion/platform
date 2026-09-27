@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref, SortingOrder } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel, translateCB } from '@hcengineering/platform'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Milestone } from '@hcengineering/tracker'
-  import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult } from '@hcengineering/ui'
-  import { Button, ButtonShape, Label, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'
+  import type { Milestone } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize, LabelAndProps, PopupResult, ButtonShape } from '@hcengineering/ui'
+  import { Button, Label, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
   import MilestoneSelectorPopup from './MilestoneSelectorPopup.svelte'

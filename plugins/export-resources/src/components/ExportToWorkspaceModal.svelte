@@ -13,9 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
   import {
-    Doc,
-    DocumentQuery,
     type WorkspaceInfoWithStatus,
     isActiveMode,
     type WorkspaceUuid,

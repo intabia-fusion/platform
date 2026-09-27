@@ -13,14 +13,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { AnyAttribute, Class, Doc, DocumentUpdate, Mixin, Ref } from '@hcengineering/core'
-  import {
-    AttributeBarEditor,
-    getClient,
-    isCollabAttr,
-    isMarkupAttr,
-    KeyedAttribute
-  } from '@hcengineering/presentation'
+  import type { AnyAttribute, Class, Doc, DocumentUpdate, Mixin, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, getClient, isCollabAttr, isMarkupAttr } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 

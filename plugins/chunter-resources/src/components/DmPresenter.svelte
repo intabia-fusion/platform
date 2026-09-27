@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { chunterId, DirectMessage } from '@hcengineering/chunter'
+  import type { DirectMessage } from '@hcengineering/chunter'
+  import { chunterId } from '@hcengineering/chunter'
   import { getClient } from '@hcengineering/presentation'
   import { NavLink } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import { tooltip } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 

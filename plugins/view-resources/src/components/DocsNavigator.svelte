@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { Breadcrumbs, BreadcrumbsModel, getClient } from '@hcengineering/presentation'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { Doc } from '@hcengineering/core'
+  import type { BreadcrumbsModel } from '@hcengineering/presentation'
+  import { Breadcrumbs, getClient } from '@hcengineering/presentation'
+  import type { AttributeModel } from '@hcengineering/view'
   import { getObjectPresenter, restrictionStore } from '../utils'
 
   export let elements: readonly Doc[]

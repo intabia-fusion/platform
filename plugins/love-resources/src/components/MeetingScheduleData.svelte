@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Room } from '@hcengineering/love'
-  import { Writable } from 'svelte/store'
+  import type { Ref } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
+  import type { Writable } from 'svelte/store'
   import RoomSelector from './RoomSelector.svelte'
 
   export let state: Writable<Record<string, any>>

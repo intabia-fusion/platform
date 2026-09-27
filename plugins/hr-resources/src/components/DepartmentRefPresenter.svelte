@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import hr, { Department } from '@hcengineering/hr'
+  import type { Ref } from '@hcengineering/core'
+  import type { Department } from '@hcengineering/hr'
+  import hr from '@hcengineering/hr'
   import DepartmentPresenter from './DepartmentPresenter.svelte'
   import { createQuery } from '@hcengineering/presentation'
 

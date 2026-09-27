@@ -14,8 +14,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import presentation, { Card } from '@hcengineering/presentation'
-  import ui, { DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
-  import { WorkflowValueFunction } from '@hcengineering/workflow'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { DropdownLabelsIntl } from '@hcengineering/ui'
+  import type { WorkflowValueFunction } from '@hcengineering/workflow'
 
   export let func: WorkflowValueFunction
   export let props: Record<string, any> = {}

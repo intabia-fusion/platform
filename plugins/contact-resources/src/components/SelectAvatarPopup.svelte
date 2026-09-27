@@ -17,13 +17,12 @@
   import MD5 from 'crypto-js/md5'
   import { AvatarType, checkHasGravatar, type AvatarInfo } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
-  import { Blob as PlatformBlob } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { Blob as PlatformBlob } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import presentation, { Card, getFileUrl, uiContext } from '@hcengineering/presentation'
+  import type { AnySvelteComponent, ColorDefinition } from '@hcengineering/ui'
   import ui, {
-    AnySvelteComponent,
     Button,
-    ColorDefinition,
     Label,
     TabList,
     eventToHTMLElement,

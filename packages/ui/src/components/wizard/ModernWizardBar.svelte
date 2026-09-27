@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import Label from '../Label.svelte'
-  import { IWizardStep } from '../../types'
+  import type { IWizardStep } from '../../types'
   import Checkmark from '../icons/Checkmark.svelte'
 
   export let steps: ReadonlyArray<IWizardStep>

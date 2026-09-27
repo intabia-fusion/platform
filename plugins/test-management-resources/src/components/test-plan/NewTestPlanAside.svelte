@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Label, tooltip } from '@hcengineering/ui'
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
   import { EmployeeBox } from '@hcengineering/contact-resources'
 
   import testManagement from '@hcengineering/test-management'

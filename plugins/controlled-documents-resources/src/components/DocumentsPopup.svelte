@@ -16,8 +16,10 @@
   import { createEventDispatcher } from 'svelte'
   import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import presentation, { getClient, ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Label } from '@hcengineering/ui'
+  import type { ObjectCreate } from '@hcengineering/presentation'
+  import presentation, { getClient, ObjectPopup } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import documents, { type Document } from '@hcengineering/controlled-documents'
 

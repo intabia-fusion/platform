@@ -14,9 +14,10 @@
 -->
 
 <script lang="ts">
-  import activity, { DocUpdateMessage } from '@hcengineering/activity'
+  import type { DocUpdateMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { employeeRefByAccountUuidStore, PersonRefPresenter } from '@hcengineering/contact-resources'
-  import { Collaborator } from '@hcengineering/core'
+  import type { Collaborator } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Icon, Label } from '@hcengineering/ui'
 

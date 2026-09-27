@@ -16,7 +16,8 @@
   import { getCurrentEmployee, type Employee } from '@hcengineering/contact'
   import { UserBoxItems, getPermittedPersons, permissionsStore } from '@hcengineering/contact-resources'
   import documents, { type ControlledDocument } from '@hcengineering/controlled-documents'
-  import { TypedSpace, type Data, type Ref } from '@hcengineering/core'
+  import type { TypedSpace } from '@hcengineering/core'
+  import type { Data, Ref } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

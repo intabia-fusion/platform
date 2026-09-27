@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { PersonRefPresenter } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { ListView } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

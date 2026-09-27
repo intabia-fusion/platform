@@ -14,22 +14,24 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import {
     ActivityMessagePresenter,
     canGroupMessages,
     messageInFocus,
     editingMessageStore
   } from '@hcengineering/activity-resources'
-  import core, { Doc, getCurrentAccount, Ref, Space, Tx, TxCUD, getDay, Timestamp, notEmpty } from '@hcengineering/core'
-  import { ReadState } from '@hcengineering/notification'
+  import type { Doc, Ref, Space, Tx, TxCUD, Timestamp } from '@hcengineering/core'
+  import core, { getCurrentAccount, getDay, notEmpty } from '@hcengineering/core'
+  import type { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller, Loading, isAppFocusedStore } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
-  import { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
 
-  import { ChatViewport } from '../chatViewport'
+  import type { ChatViewport } from '../chatViewport'
   import chunter from '../plugin'
   import {
     messageInView,

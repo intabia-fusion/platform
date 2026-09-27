@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Category } from '@hcengineering/inventory'
+  import type { Category } from '@hcengineering/inventory'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   export let value: Category

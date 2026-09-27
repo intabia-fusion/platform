@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Reaction } from '@hcengineering/activity'
-  import { Doc, getCurrentAccount, PersonId, Ref, Blob } from '@hcengineering/core'
+  import type { Reaction } from '@hcengineering/activity'
+  import type { Doc, PersonId, Ref, Blob } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { Icon, showPopup, tooltip } from '@hcengineering/ui'
   import { includesAny } from '@hcengineering/contact'
   import emojiPlugin from '@hcengineering/emoji'

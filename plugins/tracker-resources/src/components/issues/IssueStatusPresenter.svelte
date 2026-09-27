@@ -15,11 +15,12 @@
 
 <script lang="ts">
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { Issue, IssueStatus, Project } from '@hcengineering/tracker'
-  import { IconSize } from '@hcengineering/ui'
-  import { getTaskTypeStates, TaskType } from '@hcengineering/task'
+  import type { Issue, IssueStatus, Project } from '@hcengineering/tracker'
+  import type { IconSize } from '@hcengineering/ui'
+  import type { TaskType } from '@hcengineering/task'
+  import { getTaskTypeStates } from '@hcengineering/task'
   import { statusStore } from '@hcengineering/view-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   import IssueStatusIcon from './IssueStatusIcon.svelte'
 

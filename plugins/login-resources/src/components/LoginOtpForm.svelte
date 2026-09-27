@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import { LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo } from '@hcengineering/account-client'
 
   import OtpForm from './OtpForm.svelte'
   import login from '../plugin'

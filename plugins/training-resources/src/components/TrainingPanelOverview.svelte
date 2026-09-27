@@ -5,7 +5,7 @@
 <script lang="ts">
   import { Icon, Label, navigate } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
-  import { type Training } from '@hcengineering/training'
+  import type { Training } from '@hcengineering/training'
   import { Attachments, AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
   import { AttributeBarEditor, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'

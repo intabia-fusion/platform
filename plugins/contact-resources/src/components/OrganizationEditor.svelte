@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Organization } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import UserBox from './UserBox.svelte'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import contact from '../plugin'

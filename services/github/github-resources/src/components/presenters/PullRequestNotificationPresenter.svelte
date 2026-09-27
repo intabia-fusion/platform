@@ -5,8 +5,8 @@
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
 
-  import { Issue } from '@hcengineering/tracker'
-  import { GithubIssue, GithubProject, GithubPullRequest } from '@hcengineering/github'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { GithubIssue, GithubProject, GithubPullRequest } from '@hcengineering/github'
   import github from '../../plugin'
 
   export let value: GithubPullRequest

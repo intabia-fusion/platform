@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import presentation, { Card } from '@hcengineering/presentation'
-  import { ProcessFunction } from '@hcengineering/process'
+  import type { ProcessFunction } from '@hcengineering/process'
   import { StringEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'

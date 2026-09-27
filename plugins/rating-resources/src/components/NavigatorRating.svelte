@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Ref, type Class, type Doc } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import type { Class, Doc } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { FixedColumn, ObjectPresenter } from '@hcengineering/view-resources'
   import RatingEditor from './RatingEditor.svelte'

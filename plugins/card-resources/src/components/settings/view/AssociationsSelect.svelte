@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@hcengineering/card'
-  import core, { Association, Ref } from '@hcengineering/core'
+  import type { MasterTag, Tag } from '@hcengineering/card'
+  import type { Association, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { ObjectBox } from '@hcengineering/view-resources'
 

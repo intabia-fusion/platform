@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PluginConfiguration, systemAccountUuid } from '@hcengineering/core'
+  import type { PluginConfiguration } from '@hcengineering/core'
+  import { systemAccountUuid } from '@hcengineering/core'
   import {
     createQuery,
     getClient,

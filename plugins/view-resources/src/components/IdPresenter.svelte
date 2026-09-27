@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Doc, VersionableDoc } from '@hcengineering/core'
+  import type { AnyAttribute, Doc, VersionableDoc } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { LabelAndProps, tooltip } from '@hcengineering/ui'
+  import type { LabelAndProps } from '@hcengineering/ui'
+  import { tooltip } from '@hcengineering/ui'
   import DocNavLink from './DocNavLink.svelte'
 
   export let value: string | undefined

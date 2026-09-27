@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { ButtonMenu, DropdownIntlItem, IconMoreV } from '@hcengineering/ui'
-  import { Action } from '@hcengineering/view'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { ButtonMenu, IconMoreV } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/view'
   import { getResource } from '@hcengineering/platform'
   import { lkSessionConnected } from '../../../liveKitClient'
   import { getActions } from '@hcengineering/view-resources'
   import love from '../../../plugin'
-  import { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
 
   export let room: Room

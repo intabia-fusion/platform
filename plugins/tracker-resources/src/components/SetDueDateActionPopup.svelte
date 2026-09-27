@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@hcengineering/core'
+  import type { AttachedData } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Issue, IssueDraft } from '@hcengineering/tracker'
+  import type { Issue, IssueDraft } from '@hcengineering/tracker'
   import { DatePopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

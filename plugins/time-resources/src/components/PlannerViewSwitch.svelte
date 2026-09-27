@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ButtonIcon, DropdownLabelsIntl } from '@hcengineering/ui'
-  import { PlannerCalendarMode } from '..'
+  import type { PlannerCalendarMode } from '..'
   import time from '../plugin'
 
   export let calMode: PlannerCalendarMode

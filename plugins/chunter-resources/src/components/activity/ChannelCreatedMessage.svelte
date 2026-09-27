@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import { DocUpdateMessage } from '@hcengineering/activity'
-  import chunter, { Channel } from '@hcengineering/chunter'
+  import type { DocUpdateMessage } from '@hcengineering/activity'
+  import type { Channel } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import { Label } from '@hcengineering/ui'
 
   import ChannelIcon from '../ChannelIcon.svelte'

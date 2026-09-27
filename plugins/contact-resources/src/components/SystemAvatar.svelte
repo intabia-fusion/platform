@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconSize, resolvedLocationStore } from '@hcengineering/ui'
-  import { Asset } from '@hcengineering/platform'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon, resolvedLocationStore } from '@hcengineering/ui'
+  import type { Asset } from '@hcengineering/platform'
 
   export let size: IconSize
   export let variant: 'circle' | 'roundedRect' = 'roundedRect'

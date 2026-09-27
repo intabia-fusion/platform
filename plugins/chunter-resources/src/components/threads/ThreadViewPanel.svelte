@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { Ref } from '@hcengineering/core'
+  import type { ActivityMessage } from '@hcengineering/activity'
   import { location as locationStore } from '@hcengineering/ui'
 
   import ThreadView from './ThreadView.svelte'

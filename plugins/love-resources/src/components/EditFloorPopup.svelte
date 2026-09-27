@@ -3,8 +3,9 @@
   import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import core, { Ref } from '@hcengineering/core'
-  import { Floor } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Floor } from '@hcengineering/love'
 
   export let id: Ref<Floor> | undefined = undefined
 

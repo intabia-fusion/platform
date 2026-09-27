@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
 
   export let value: Ref<Process>
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Room } from '@hcengineering/love'
+  import type { Room } from '@hcengineering/love'
   import { IconMaximize, ModernButton, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
 
   import love from '../../plugin'

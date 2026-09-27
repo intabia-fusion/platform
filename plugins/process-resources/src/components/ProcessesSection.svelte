@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import core, { generateId, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State } from '@hcengineering/process'
+  import type { Process, State } from '@hcengineering/process'
   import { makeRank } from '@hcengineering/rank'
   import {
     ButtonIcon,

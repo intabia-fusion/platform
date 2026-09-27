@@ -12,8 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconComponent, languageStore, ModernTab } from '@hcengineering/ui'
-  import { Doc } from '@hcengineering/core'
+  import type { IconComponent } from '@hcengineering/ui'
+  import { languageStore, ModernTab } from '@hcengineering/ui'
+  import type { Doc } from '@hcengineering/core'
   import contact from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
   import chunter from '@hcengineering/chunter'

@@ -16,9 +16,10 @@
 -->
 <script lang="ts">
   import { ObjectNode } from '@hcengineering/presentation'
-  import { NodeViewProps } from '../../node-view'
+  import type { NodeViewProps } from '../../node-view'
   import { parseReferenceUrl } from '../reference'
-  import { EmbedCursor, shouldShowLink } from './embed'
+  import type { EmbedCursor } from './embed'
+  import { shouldShowLink } from './embed'
 
   export let editor: NodeViewProps['editor']
   export let cursor: EmbedCursor | null = null

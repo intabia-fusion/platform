@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/inventory'
+  import type { Product } from '@hcengineering/inventory'
   import { Icon } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 

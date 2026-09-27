@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Card } from '@hcengineering/presentation'
   import { NumberInput, Label, themeStore } from '@hcengineering/ui'
-  import { type SubscriptionData } from '@hcengineering/payment-client'
+  import type { SubscriptionData } from '@hcengineering/payment-client'
   import plugin from '../plugin'
   import { prorateSeats } from '@hcengineering/account-client'
 

@@ -13,24 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    Class,
-    Doc,
-    DocumentQuery,
-    FindOptions,
-    getObjectValue,
-    RateLimiter,
-    Ref,
-    RefTo,
-    Space,
-    mergeQueries
-  } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, RefTo, Space } from '@hcengineering/core'
+  import core, { getObjectValue, RateLimiter, mergeQueries } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
-  import { SelectionFocusProvider } from '../../selection'
+  import type { SelectionFocusProvider } from '../../selection'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
   import { getResultOptions, getResultQuery } from '../../viewOptions'
   import ListCategories from './ListCategories.svelte'

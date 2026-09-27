@@ -15,7 +15,8 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import documents, { ControlledDocument } from '@hcengineering/controlled-documents'
+  import type { ControlledDocument } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { Button, EditBox, Label } from '@hcengineering/ui'
 

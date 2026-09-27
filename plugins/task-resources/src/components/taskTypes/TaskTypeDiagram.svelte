@@ -13,8 +13,8 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref } from '@hcengineering/core'
-  import { TaskType } from '@hcengineering/task'
+  import type { Ref } from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
   import {
     Button,
     getColorNumberByText,

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { TimeZone } from '@hcengineering/ui'
   import {
     Button,
-    TimeZone,
     TimeZonesPopup,
     convertTimeZone,
     eventToHTMLElement,

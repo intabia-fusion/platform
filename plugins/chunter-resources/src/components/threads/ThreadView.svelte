@@ -13,20 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
+  import type { BreadcrumbItem } from '@hcengineering/ui'
   import {
     Breadcrumbs,
     location as locationStore,
     Header,
-    BreadcrumbItem,
     Loading,
     languageStore,
     ButtonIcon,
     IconBack
   } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import contact from '@hcengineering/contact'
   import attachment from '@hcengineering/attachment'

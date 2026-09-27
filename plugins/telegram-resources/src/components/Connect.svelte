@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { IntlString, PlatformError } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import platform, { PlatformError } from '@hcengineering/platform'
   import ui, { Button, EditBox, IconClose, Label, IconError } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { type Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@hcengineering/account-client'
   import { isValidPhoneNumber } from 'libphonenumber-js'
   import { Analytics } from '@hcengineering/analytics'
 

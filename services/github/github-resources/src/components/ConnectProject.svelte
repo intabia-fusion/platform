@@ -1,10 +1,13 @@
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { Ref, WithLookup, generateId } from '@hcengineering/core'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { getMetadata, translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import task, { TaskType, updateProjectType, type TaskStatusFactory } from '@hcengineering/task'
-  import tracker, { Project, createStatesData } from '@hcengineering/tracker'
+  import type { TaskType } from '@hcengineering/task'
+  import task, { updateProjectType, type TaskStatusFactory } from '@hcengineering/task'
+  import type { Project } from '@hcengineering/tracker'
+  import tracker, { createStatesData } from '@hcengineering/tracker'
   import ui, {
     Button,
     IconChevronDown,
@@ -13,12 +16,8 @@
     showPopup,
     DropdownLabelsPopup
   } from '@hcengineering/ui'
-  import {
-    GithubIntegration,
-    GithubIntegrationRepository,
-    githubPullRequestStates,
-    type GithubProject
-  } from '@hcengineering/github'
+  import type { GithubIntegration, GithubIntegrationRepository } from '@hcengineering/github'
+  import { githubPullRequestStates, type GithubProject } from '@hcengineering/github'
   import github from '../plugin'
 
   export let integration: WithLookup<GithubIntegration>

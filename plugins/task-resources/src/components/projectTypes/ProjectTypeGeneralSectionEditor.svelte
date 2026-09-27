@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type ProjectType, type ProjectTypeDescriptor } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
   import { SpaceTypeGeneralSectionEditor } from '@hcengineering/setting-resources'
   import { Component } from '@hcengineering/ui'
 

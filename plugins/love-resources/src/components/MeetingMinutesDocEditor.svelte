@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import love, { MeetingMinutes } from '@hcengineering/love'
+  import type { MeetingMinutes } from '@hcengineering/love'
+  import love from '@hcengineering/love'
   import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
   import { ActionIcon } from '@hcengineering/ui'

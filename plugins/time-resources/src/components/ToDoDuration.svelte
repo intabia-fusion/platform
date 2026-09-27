@@ -1,6 +1,6 @@
 <script lang="ts">
   import { themeStore, formatDuration, tooltip } from '@hcengineering/ui'
-  import { WorkSlot } from '@hcengineering/time'
+  import type { WorkSlot } from '@hcengineering/time'
   import time from '../plugin'
   import { splitEventsDuration } from '../utils'
 

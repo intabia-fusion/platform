@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString, translate } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import { afterUpdate } from 'svelte'
-  import { WizardItemPosition, WizardItemPositionState } from '../..'
+  import type { WizardItemPosition, WizardItemPositionState } from '../..'
   import { themeStore } from '@hcengineering/theme'
 
   export let label: IntlString

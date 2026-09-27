@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, toIdMap, groupByArray, reduceCalls } from '@hcengineering/core'
-  import {
+  import type { IdMap, Ref } from '@hcengineering/core'
+  import core, { toIdMap, groupByArray, reduceCalls } from '@hcengineering/core'
+  import type {
     NotificationType,
     NotificationProvider,
     NotificationGroup,

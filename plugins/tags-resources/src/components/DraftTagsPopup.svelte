@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData, Class, Doc, Ref } from '@hcengineering/core'
-  import { TagElement, TagReference } from '@hcengineering/tags'
+  import type { AttachedData, Class, Doc, Ref } from '@hcengineering/core'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
   import { createEventDispatcher } from 'svelte'
   import TagsPopup from './TagsPopup.svelte'
 

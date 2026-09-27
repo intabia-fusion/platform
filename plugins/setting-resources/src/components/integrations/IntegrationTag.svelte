@@ -12,16 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import {
-    getPlatformColorDef,
-    themeStore,
-    tooltip,
-    ColorDefinition,
-    Label,
-    IconClose,
-    ButtonIcon
-  } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import type { ColorDefinition } from '@hcengineering/ui'
+  import { getPlatformColorDef, themeStore, tooltip, Label, IconClose, ButtonIcon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let labelIntl: IntlString | undefined = undefined

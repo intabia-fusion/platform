@@ -12,11 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getResourceP, Resource } from '@hcengineering/platform'
+  import type { Resource } from '@hcengineering/platform'
+  import { getResourceP } from '@hcengineering/platform'
   import { reduceCalls } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import { WorkflowRule, WorkflowRuleConfig } from '@hcengineering/workflow'
+  import type { TaskType } from '@hcengineering/task'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import type { WorkflowRule, WorkflowRuleConfig } from '@hcengineering/workflow'
 
   export let config: WorkflowRuleConfig
   export let taskType: TaskType

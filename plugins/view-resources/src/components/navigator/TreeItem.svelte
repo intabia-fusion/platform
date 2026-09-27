@@ -17,7 +17,7 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { Action, IconSize } from '@hcengineering/ui'
   import TreeElement from './TreeElement.svelte'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
 
   export let _id: Ref<Doc> | string | undefined = undefined
   export let icon: Asset | AnySvelteComponent | undefined = undefined

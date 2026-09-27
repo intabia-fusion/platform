@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref } from '@hcengineering/core'
-  import { type WebhookEndpoint } from '@hcengineering/setting'
+  import type { Ref } from '@hcengineering/core'
+  import type { WebhookEndpoint } from '@hcengineering/setting'
   import { ButtonIcon, Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
   import settingsRes from '../plugin'
 

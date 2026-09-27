@@ -15,13 +15,14 @@
 
 <script lang="ts">
   import { Scroller } from '@hcengineering/ui'
-  import { MasterTag, Card, CardSpace } from '@hcengineering/card'
+  import type { MasterTag, Card, CardSpace } from '@hcengineering/card'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { SavedView } from '@hcengineering/workbench-resources'
-  import { getCurrentAccount, SortingOrder, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount, SortingOrder } from '@hcengineering/core'
 
-  import { type NavigatorConfig } from '../../types'
+  import type { NavigatorConfig } from '../../types'
   import NavigatorSpace from './NavigatorSpace.svelte'
   import NavigatorVariant from './NavigatorVariant.svelte'
 

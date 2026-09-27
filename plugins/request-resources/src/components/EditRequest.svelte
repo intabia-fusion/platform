@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Request } from '@hcengineering/request'
+  import type { Request } from '@hcengineering/request'
   import { Label } from '@hcengineering/ui'
   import { DocNavLink, ObjectPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
@@ -21,7 +21,7 @@
   import RequestActions from './RequestActions.svelte'
   import RequestDetail from './RequestDetail.svelte'
   import { createQuery } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
 
   export let object: Request
 

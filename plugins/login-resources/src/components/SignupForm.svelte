@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import { type LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo } from '@hcengineering/account-client'
   import { logIn } from '@hcengineering/workbench'
   import { signupStore } from '@hcengineering/analytics-providers'
 

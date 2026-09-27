@@ -3,7 +3,7 @@
   import { NavLink } from '@hcengineering/presentation'
   import tracker from '@hcengineering/tracker'
   import { Icon } from '@hcengineering/ui'
-  import { GithubAuthentication } from '@hcengineering/github'
+  import type { GithubAuthentication } from '@hcengineering/github'
   import github from '../plugin'
 
   export let auth: GithubAuthentication

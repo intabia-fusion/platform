@@ -13,16 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person, formatName } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { employeeByIdStore } from '@hcengineering/contact-resources'
-  import documents, {
+  import type {
     ControlledDocument,
     DocumentRequest,
-    DocumentValidationState,
-    emptyBundle
+    DocumentValidationState
   } from '@hcengineering/controlled-documents'
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import documents, { emptyBundle } from '@hcengineering/controlled-documents'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Label, Scroller } from '@hcengineering/ui'
 

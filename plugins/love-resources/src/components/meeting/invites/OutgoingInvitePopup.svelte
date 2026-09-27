@@ -12,14 +12,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person, formatName } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { Label, ModernButton, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import love from '../../../plugin'
   import { cancelInvites, allInvites } from '../../../invites'
-  import { UserMeetingInvite } from '@hcengineering/love'
+  import type { UserMeetingInvite } from '@hcengineering/love'
 
   export let person: Person
   export let invite: UserMeetingInvite

@@ -22,9 +22,9 @@
   import AwaitingMeetingButton from './AwaitingMeetingButton.svelte'
   import AwaitingMeetingPopup from './AwaitingMeetingPopup.svelte'
   import { getPersonsByPersonRefsCb } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { UserMeetingInvite } from '@hcengineering/love'
+  import type { Person } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import type { UserMeetingInvite } from '@hcengineering/love'
 
   const invitesCategory = 'meetingInvites'
 

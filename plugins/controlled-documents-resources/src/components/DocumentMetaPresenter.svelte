@@ -17,7 +17,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Icon, tooltip } from '@hcengineering/ui'
-  import documents, { Document, DocumentMeta, getDocumentName } from '@hcengineering/controlled-documents'
+  import type { Document, DocumentMeta } from '@hcengineering/controlled-documents'
+  import documents, { getDocumentName } from '@hcengineering/controlled-documents'
 
   import document from '../plugin'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ControlledDocument } from '@hcengineering/controlled-documents'
+  import type { ControlledDocument } from '@hcengineering/controlled-documents'
   import { IconCheck } from '@hcengineering/ui'
   import StatePresenter from './document/presenters/StatePresenter.svelte'
   import { getDocumentVersionString } from '../utils'

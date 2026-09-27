@@ -16,7 +16,8 @@
 -->
 
 <script lang="ts">
-  import { Notification, NotificationToast } from '@hcengineering/ui'
+  import type { Notification } from '@hcengineering/ui'
+  import { NotificationToast } from '@hcengineering/ui'
 
   export let notification: Notification
   export let onRemove: () => void

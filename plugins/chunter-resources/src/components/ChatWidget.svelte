@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { closeWidget, closeWidgetTab } from '@hcengineering/workbench-resources'
-  import { Widget } from '@hcengineering/workbench'
-  import { ChatWidgetTab } from '@hcengineering/chunter'
+  import type { Widget } from '@hcengineering/workbench'
+  import type { ChatWidgetTab } from '@hcengineering/chunter'
 
   import ChannelSidebarView from './ChannelSidebarView.svelte'
   import chunter from '../plugin'

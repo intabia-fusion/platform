@@ -15,16 +15,16 @@
 //
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import presence from '@hcengineering/presence'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
+  import type { DropdownIntlItem, IPanelState } from '@hcengineering/ui'
   import {
     Button,
     Component,
     createFocusManager,
     deviceOptionsStore as deviceInfo,
-    DropdownIntlItem,
     DropdownLabelsPopupIntl,
     EditBox,
     eventToHTMLElement,
@@ -33,7 +33,6 @@
     IconDetailsFilled,
     IconMaxWidth,
     IconMoreH,
-    IPanelState,
     navigate,
     Panel,
     showPopup

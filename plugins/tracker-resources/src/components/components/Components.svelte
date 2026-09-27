@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Component } from '@hcengineering/tracker'
+  import type { DocumentQuery } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Component } from '@hcengineering/tracker'
   import tracker from '../../plugin'
-  import { ComponentsFilterMode } from '../../utils'
+  import type { ComponentsFilterMode } from '../../utils'
   import ComponentBrowser from './ComponentBrowser.svelte'
 
   export let label: IntlString = tracker.string.Components

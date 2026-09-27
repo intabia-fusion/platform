@@ -4,7 +4,7 @@
 
 <script lang="ts">
   import type { TrainingRequest } from '@hcengineering/training'
-  import { DocumentQuery } from '@hcengineering/core'
+  import type { DocumentQuery } from '@hcengineering/core'
   import { SpecialView } from '@hcengineering/workbench-resources'
   import type { ComponentProps } from 'svelte'
   import { getCurrentEmployeeRef } from '../utils'

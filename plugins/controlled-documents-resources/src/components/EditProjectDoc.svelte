@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Loading } from '@hcengineering/ui'
   import documents, { type ControlledDocument, type ProjectDocument } from '@hcengineering/controlled-documents'

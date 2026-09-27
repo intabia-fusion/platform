@@ -13,7 +13,7 @@
 
 <script lang="ts">
   import { Label, TimeSince } from '@hcengineering/ui'
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
 
   import activity from '../../plugin'
 

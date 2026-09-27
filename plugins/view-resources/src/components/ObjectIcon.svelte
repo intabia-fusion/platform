@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import view from '@hcengineering/view'
-  import { AnySvelteComponent, Component, Icon, IconSize } from '@hcengineering/ui'
+  import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { Component, Icon } from '@hcengineering/ui'
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
 
   import { classIcon } from '../utils'
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
 
   export let value: Doc
   export let size: IconSize = 'small'

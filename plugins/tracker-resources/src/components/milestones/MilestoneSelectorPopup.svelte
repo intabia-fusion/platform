@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Project } from '@hcengineering/tracker'
-  import { Button, IconAdd, SelectPopup, SelectPopupValueType, showPopup } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Project } from '@hcengineering/tracker'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
+  import { Button, IconAdd, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import NewMilestone from './NewMilestone.svelte'

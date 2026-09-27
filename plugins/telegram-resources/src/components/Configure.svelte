@@ -29,7 +29,8 @@
   import TelegramIcon from './icons/TelegramColor.svelte'
   import telegram from '../plugin'
   import { type TelegramChannelConfig, getIntegrationClient, listChannels, restart } from '../api'
-  import core, { getCurrentAccount, Space } from '@hcengineering/core'
+  import type { Space } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
 
   export let readonly: boolean = false
 

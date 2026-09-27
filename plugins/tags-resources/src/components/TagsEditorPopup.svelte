@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagElement, TagsEvents } from '@hcengineering/tags'
+  import type { TagElement } from '@hcengineering/tags'
+  import tags, { TagsEvents } from '@hcengineering/tags'
   import { Analytics } from '@hcengineering/analytics'
 
   import TagsPopup from './TagsPopup.svelte'

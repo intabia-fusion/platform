@@ -15,25 +15,18 @@
 <script lang="ts">
   import { DateRangeMode, type MixinUpdate, Timestamp } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
-  import {
-    DatePresenter,
-    DropdownLabels,
-    Label,
-    DropdownTextItem,
-    RadioButton,
-    Scroller,
-    Toggle
-  } from '@hcengineering/ui'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { DatePresenter, DropdownLabels, Label, RadioButton, Scroller, Toggle } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import { UserBoxItems } from '@hcengineering/contact-resources'
+  import type { ControlledDocument } from '@hcengineering/controlled-documents'
   import {
     type Document,
     ControlledDocumentState,
     DEFAULT_PERIODIC_REVIEW_INTERVAL,
     DocumentState,
     type DocumentTraining,
-    periodicReviewIntervals,
-    ControlledDocument
+    periodicReviewIntervals
   } from '@hcengineering/controlled-documents'
   import {
     NullablePositiveNumberEditor,

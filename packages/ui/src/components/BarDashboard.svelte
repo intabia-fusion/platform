@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DashboardItem } from '../types'
+  import type { DashboardItem } from '../types'
   import MultiProgress from './MultiProgress.svelte'
 
   export let items: DashboardItem[] = []

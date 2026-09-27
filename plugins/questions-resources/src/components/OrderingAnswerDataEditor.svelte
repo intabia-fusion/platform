@@ -3,17 +3,17 @@
 -->
 
 <script lang="ts">
-  import {
-    type AnswerDataEditorProps,
-    type AnswerDataPresenterProps,
-    type OrderingAnswerData,
-    type OrderingAssessment,
-    type OrderingAssessmentAnswer,
-    type OrderingAssessmentData,
-    type OrderingPosition,
-    type OrderingQuestion,
-    type OrderingQuestionAnswer,
-    type OrderingQuestionData
+  import type {
+    AnswerDataEditorProps,
+    AnswerDataPresenterProps,
+    OrderingAnswerData,
+    OrderingAssessment,
+    OrderingAssessmentAnswer,
+    OrderingAssessmentData,
+    OrderingPosition,
+    OrderingQuestion,
+    OrderingQuestionAnswer,
+    OrderingQuestionData
   } from '@hcengineering/questions'
   import { Loading } from '@hcengineering/ui'
   import { moveItem } from '../utils'

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AccountRole, Ref, Space, getCurrentAccount } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core, { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { HeaderButton, showPopup } from '@hcengineering/ui'
   import { openDoc } from '@hcengineering/view-resources'

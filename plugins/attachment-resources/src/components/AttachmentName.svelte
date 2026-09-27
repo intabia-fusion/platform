@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
-  import { BlobType } from '@hcengineering/core'
+  import type { BlobType } from '@hcengineering/core'
 
   export let value: Attachment | BlobType | undefined
 </script>

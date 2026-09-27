@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Ref } from '@hcengineering/core'
+  import type { Vacancy } from '@hcengineering/recruit'
   import { TimeSince } from '@hcengineering/ui'
 
   export let value: Vacancy

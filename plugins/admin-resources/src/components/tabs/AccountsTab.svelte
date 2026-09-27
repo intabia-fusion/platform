@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AccountAggregatedInfo, type AccountsFilter, type AccountsSortKey } from '@hcengineering/account-client'
+  import type { AccountAggregatedInfo, AccountsFilter, AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'

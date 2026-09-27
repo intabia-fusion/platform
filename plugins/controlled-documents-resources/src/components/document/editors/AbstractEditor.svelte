@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
+  import type { Document } from '@hcengineering/controlled-documents'
   import { getClient } from '@hcengineering/presentation'
   import { EditBox } from '@hcengineering/ui'
   import view from '@hcengineering/view'

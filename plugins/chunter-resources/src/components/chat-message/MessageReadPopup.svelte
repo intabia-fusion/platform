@@ -1,8 +1,9 @@
 <script lang="ts">
   import { SelectPopup } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
-  import { Employee, formatName } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import { formatName } from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Avatar } from '@hcengineering/contact-resources'
 

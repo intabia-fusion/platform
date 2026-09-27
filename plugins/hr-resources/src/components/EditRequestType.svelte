@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Request, RequestType } from '@hcengineering/hr'
+  import type { Ref } from '@hcengineering/core'
+  import type { Request, RequestType } from '@hcengineering/hr'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

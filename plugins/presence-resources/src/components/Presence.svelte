@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
 
   import PresenceContext from './PresenceContext.svelte'
 

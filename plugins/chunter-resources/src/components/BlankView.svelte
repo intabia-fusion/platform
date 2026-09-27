@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Icon, Label } from '@hcengineering/ui'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
 
   export let icon: Asset
   export let header: IntlString

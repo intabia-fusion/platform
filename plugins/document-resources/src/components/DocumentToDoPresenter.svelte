@@ -1,6 +1,8 @@
 <script lang="ts">
-  import core, { Space } from '@hcengineering/core'
-  import document, { Document } from '@hcengineering/document'
+  import type { Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Document } from '@hcengineering/document'
+  import document from '@hcengineering/document'
   import { createQuery } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
 

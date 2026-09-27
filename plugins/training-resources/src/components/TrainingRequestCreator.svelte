@@ -5,7 +5,8 @@
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
   import type { Training } from '@hcengineering/training'
-  import { AttributeBarEditor, Card, KeyedAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, Card } from '@hcengineering/presentation'
   import training from '../plugin'
   import { createTrainingRequest, type CreateTrainingRequestData } from '../utils'
   import PanelTitle from './PanelTitle.svelte'

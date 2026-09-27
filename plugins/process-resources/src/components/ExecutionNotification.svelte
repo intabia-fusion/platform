@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ExecutionLog } from '@hcengineering/process'
-  import { Notification, NotificationToast } from '@hcengineering/ui'
+  import type { ExecutionLog } from '@hcengineering/process'
+  import type { Notification } from '@hcengineering/ui'
+  import { NotificationToast } from '@hcengineering/ui'
   import LogActionPresenter from './LogActionPresenter.svelte'
   import TransitionRefPresenter from './settings/TransitionRefPresenter.svelte'
   import { CardPresenter } from '@hcengineering/card-resources'

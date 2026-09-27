@@ -15,15 +15,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import type { Integration } from '@hcengineering/account-client'
-  import {
-    IntegrationClient,
-    IntegrationUpdatedData,
-    onIntegrationEvent,
-    isDisabled,
-    isUnauthorizedError
-  } from '@hcengineering/integration-client'
+  import type { IntegrationClient, IntegrationUpdatedData } from '@hcengineering/integration-client'
+  import { onIntegrationEvent, isDisabled, isUnauthorizedError } from '@hcengineering/integration-client'
   import { BaseIntegrationState, IntegrationStateRow } from '@hcengineering/setting-resources'
-  import { OK, ERROR, Status } from '@hcengineering/platform'
+  import type { Status } from '@hcengineering/platform'
+  import { OK, ERROR } from '@hcengineering/platform'
 
   import telegram from '../plugin'
   import { type TelegramChannelConfig, type TelegramChannelData, getIntegrationClient, listChannels } from '../api'

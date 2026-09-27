@@ -13,10 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccessLevel, Calendar, generateEventId } from '@hcengineering/calendar'
-  import { Employee, getCurrentEmployee, getCurrentEmployeeSpace } from '@hcengineering/contact'
+  import type { Calendar } from '@hcengineering/calendar'
+  import { AccessLevel, generateEventId } from '@hcengineering/calendar'
+  import type { Employee } from '@hcengineering/contact'
+  import { getCurrentEmployee, getCurrentEmployeeSpace } from '@hcengineering/contact'
   import { UserBoxList } from '@hcengineering/contact-resources'
-  import { Class, DateRangeMode, Doc, Ref, getCurrentAccount } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { DateRangeMode, getCurrentAccount } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import ui, { DateRangePresenter, EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

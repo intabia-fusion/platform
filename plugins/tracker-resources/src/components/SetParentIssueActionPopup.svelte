@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AttachedData, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
+  import type { AttachedData, FindOptions, Ref } from '@hcengineering/core'
+  import core, { type Rank, SortingOrder } from '@hcengineering/core'
   import { ObjectPopup, getClient } from '@hcengineering/presentation'
-  import { makeRank, TaskType } from '@hcengineering/task'
-  import { Issue, IssueDraft } from '@hcengineering/tracker'
+  import type { TaskType } from '@hcengineering/task'
+  import { makeRank } from '@hcengineering/task'
+  import type { Issue, IssueDraft } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../plugin'
   import IssueStatusIcon from './issues/IssueStatusIcon.svelte'

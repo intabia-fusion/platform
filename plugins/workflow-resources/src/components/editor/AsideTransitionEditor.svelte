@@ -13,15 +13,14 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
+  import type { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
   import { translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { StatePresenter } from '@hcengineering/task-resources'
+  import type { DropdownIntlItem, DropdownTextItem } from '@hcengineering/ui'
   import ui, {
-    DropdownIntlItem,
-    DropdownTextItem,
     IconError,
     Label,
     languageStore,
@@ -33,14 +32,8 @@
     showPopup,
     Spinner
   } from '@hcengineering/ui'
-  import {
-    ConflictInfo,
-    getTransitionConflict,
-    removeTransition,
-    updateTransition,
-    Workflow,
-    WorkflowTransition
-  } from '@hcengineering/workflow'
+  import type { ConflictInfo, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import { getTransitionConflict, removeTransition, updateTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import RulesNavGroup from '../rules/RulesNavGroup.svelte'

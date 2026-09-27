@@ -12,12 +12,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
+  import type { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { Issue, Project, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonMenu, type DropdownIntlItem, IconMoreH, IModeSelector, showPopup, themeStore } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Issue, Project } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { ButtonMenu, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     FilterBar,
     selectionStore,
@@ -28,7 +32,8 @@
   } from '@hcengineering/view-resources'
   import task, { type Project as TaskProject } from '@hcengineering/task'
   import { TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
-  import workflow, { ProjectWorkflow } from '@hcengineering/workflow'
+  import type { ProjectWorkflow } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
 
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'

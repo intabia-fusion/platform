@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type ApiKeyInfo } from '@hcengineering/account-client'
-  import { type Ref, type Space } from '@hcengineering/core'
+  import type { ApiKeyInfo } from '@hcengineering/account-client'
+  import type { Ref, Space } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import settingsRes from '../plugin'
   import ApiKeyRow from './ApiKeyRow.svelte'

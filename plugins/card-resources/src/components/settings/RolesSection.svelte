@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Role, Tag } from '@hcengineering/card'
+  import type { MasterTag, Role, Tag } from '@hcengineering/card'
   import contact from '@hcengineering/contact'
   import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'

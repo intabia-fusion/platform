@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import { TagElement, TagReference } from '@hcengineering/tags'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
   import tags from '../plugin'
   import TagsEditor from './TagsEditor.svelte'
 

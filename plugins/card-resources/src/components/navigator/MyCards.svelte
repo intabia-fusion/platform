@@ -13,16 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import core, { DocumentQuery, getCurrentAccount, QuerySelector, Ref } from '@hcengineering/core'
-  import { type Asset, type IntlString } from '@hcengineering/platform'
+  import type { Card } from '@hcengineering/card'
+  import type { DocumentQuery, QuerySelector, Ref } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { resolvedLocationStore } from '@hcengineering/ui'
   import { SpecialView } from '@hcengineering/workbench-resources'
   import { createEventDispatcher } from 'svelte'
 
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import time, { ToDo } from '@hcengineering/time'
+  import type { ToDo } from '@hcengineering/time'
+  import time from '@hcengineering/time'
   import card from '../../plugin'
 
   export let config: [string, IntlString, object][] = []

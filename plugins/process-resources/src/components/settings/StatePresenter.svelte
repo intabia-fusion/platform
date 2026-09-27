@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import process, { State } from '@hcengineering/process'
+  import type { State } from '@hcengineering/process'
+  import process from '@hcengineering/process'
 
   export let value: Ref<State>
 

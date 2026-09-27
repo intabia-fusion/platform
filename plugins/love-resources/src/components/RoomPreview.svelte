@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import { Avatar, myEmployeeStore, getPersonByPersonRef, statusByUserStore } from '@hcengineering/contact-resources'
-  import { MeetingMinutes, ParticipantInfo, Room, RoomType, MeetingStatus, isOffice, Office } from '@hcengineering/love'
+  import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
+  import { RoomType, MeetingStatus, isOffice, Office } from '@hcengineering/love'
   import { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getClient } from '@hcengineering/presentation'
@@ -33,9 +35,10 @@
     busyPersons
   } from '../stores'
   import { getRoomLabel } from '../utils'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
-  import { AccountUuid, clone, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import { clone, getCurrentAccount } from '@hcengineering/core'
   // import RoomLanguage from './RoomLanguage.svelte'
   import PersonActionPopup from './PersonActionPopup.svelte'
 

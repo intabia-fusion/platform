@@ -1,19 +1,10 @@
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State, Transition, Trigger } from '@hcengineering/process'
+  import type { Process, State, Transition, Trigger } from '@hcengineering/process'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import {
-    ButtonIcon,
-    Component,
-    Dropdown,
-    DropdownIntlItem,
-    DropdownLabelsIntl,
-    IconDelete,
-    Label,
-    ListItem,
-    Modal
-  } from '@hcengineering/ui'
+  import type { DropdownIntlItem, ListItem } from '@hcengineering/ui'
+  import { ButtonIcon, Component, Dropdown, DropdownLabelsIntl, IconDelete, Label, Modal } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import TransitionPresenter from './TransitionPresenter.svelte'
 

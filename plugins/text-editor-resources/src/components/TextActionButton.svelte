@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { type Editor } from '@tiptap/core'
-  import { type TextEditorAction, type ActionContext } from '@hcengineering/text-editor'
+  import type { Editor } from '@tiptap/core'
+  import type { TextEditorAction, ActionContext } from '@hcengineering/text-editor'
   import { getResource } from '@hcengineering/platform'
-  import { Icon, IconSize, tooltip, type LabelAndProps } from '@hcengineering/ui'
-  import { Transaction } from '@tiptap/pm/state'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon, tooltip, type LabelAndProps } from '@hcengineering/ui'
+  import type { Transaction } from '@tiptap/pm/state'
 
   export let action: TextEditorAction
   export let size: IconSize

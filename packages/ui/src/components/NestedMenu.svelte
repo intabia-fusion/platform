@@ -16,7 +16,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { Label, Scroller, Submenu } from '..'
   import { resizeObserver } from '../resize'
-  import { DropdownIntlItem } from '../types'
+  import type { DropdownIntlItem } from '../types'
   import { LocalizedSearch } from '../search'
   import NestedMenu from './NestedMenu.svelte'
   import SearchEdit from './SearchEdit.svelte'

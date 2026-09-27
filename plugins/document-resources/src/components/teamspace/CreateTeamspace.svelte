@@ -15,21 +15,20 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
+  import type {
     Data,
     DocumentUpdate,
     RolesAssignment,
     Ref,
     Role,
     SpaceType,
-    generateId,
-    getCurrentAccount,
     WithLookup,
-    notEmpty,
     AccountUuid
   } from '@hcengineering/core'
-  import document, { Teamspace, DocumentEvents } from '@hcengineering/document'
-  import { Asset } from '@hcengineering/platform'
+  import core, { generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
+  import type { Teamspace } from '@hcengineering/document'
+  import document, { DocumentEvents } from '@hcengineering/document'
+  import type { Asset } from '@hcengineering/platform'
   import presentation, { IconWithEmoji, Card, getClient, reduceCalls } from '@hcengineering/presentation'
   import {
     Button,

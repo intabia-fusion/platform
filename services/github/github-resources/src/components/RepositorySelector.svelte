@@ -3,11 +3,12 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ButtonKind, ButtonShape, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
   import { ButtonWithDropdown, Icon, IconDropdown, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+  import type { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

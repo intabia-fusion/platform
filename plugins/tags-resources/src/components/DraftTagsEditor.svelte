@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { TagReference } from '@hcengineering/tags'
-  import { Button, ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { TagReference } from '@hcengineering/tags'
+  import type { ButtonKind } from '@hcengineering/ui'
+  import { Button, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tagsPlugin from '../plugin'
   import DraftTagsPopup from './DraftTagsPopup.svelte'

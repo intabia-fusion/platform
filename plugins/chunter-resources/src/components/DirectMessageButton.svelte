@@ -15,8 +15,8 @@
 <script lang="ts">
   import { ModernButton } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { Employee } from '@hcengineering/contact'
-  import { Asset } from '@hcengineering/platform'
+  import type { Employee } from '@hcengineering/contact'
+  import type { Asset } from '@hcengineering/platform'
 
   import chunter from '../plugin'
   import { openDirectForPerson } from '../utils'

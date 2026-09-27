@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { DocumentMeta } from '@hcengineering/controlled-documents'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { DocumentMeta } from '@hcengineering/controlled-documents'
 
   import DocumentIcon from './icons/DocumentIcon.svelte'
 

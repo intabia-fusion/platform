@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Markup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Markup } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import presentation, { MessageViewer, getFileUrl, getImageSize, imageSizeToRatio } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import textEditor, { RefAction } from '@hcengineering/text-editor'
+  import type { RefAction } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
+  import type { ButtonSize, PopupAlignment } from '@hcengineering/ui'
   import {
     ActionIcon,
-    ButtonSize,
     IconCheck,
     IconClose,
     IconEdit,
     Label,
-    PopupAlignment,
     ShowMore,
     getEventPositionElement,
     getPopupPositionElement,
@@ -22,10 +22,10 @@
 
   import StyledTextEditor from './StyledTextEditor.svelte'
 
-  import { EditorKitOptions } from '../kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
   import { addTableHandler } from '../utils'
   import view from '@hcengineering/view'
-  import { type FileAttachFunction } from './extension/types'
+  import type { FileAttachFunction } from './extension/types'
   import { inlineCommandsConfig } from './extensions'
 
   export let label: IntlString | undefined = undefined

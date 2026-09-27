@@ -13,8 +13,9 @@
 -->
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
-  import { MeetingMinutes } from '@hcengineering/love'
-  import { Button, ButtonKind, ButtonSize, IconThread } from '@hcengineering/ui'
+  import type { MeetingMinutes } from '@hcengineering/love'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, IconThread } from '@hcengineering/ui'
 
   import CollectionChatMessagesPopup from './CollectionChatMessagesPopup.svelte'
 

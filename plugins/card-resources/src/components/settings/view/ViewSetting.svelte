@@ -15,21 +15,23 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import core, {
+  import type {
     AnyAttribute,
     Association,
     AssociationQuery,
     Class,
-    Client,
     Doc,
     Ref,
     TxOperations,
     Type
   } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, IntlString, translate } from '@hcengineering/platform'
+  import core, { Client } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
   import { Loading, resizeObserver } from '@hcengineering/ui'
-  import view, { BuildModelKey, Viewlet } from '@hcengineering/view'
+  import type { BuildModelKey, Viewlet } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     buildConfigLookup,
     canResolveAttribute,

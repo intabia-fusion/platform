@@ -15,9 +15,9 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
   import { Icon, getPlatformAvatarColorForTextDef, themeStore, tooltip } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 

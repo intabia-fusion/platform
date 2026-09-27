@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { ComponentType } from 'svelte'
+  import type { ComponentType } from 'svelte'
   import type { AnySvelteComponent, TooltipAlignment } from '../types'
 
   import { tooltip } from '../tooltips'

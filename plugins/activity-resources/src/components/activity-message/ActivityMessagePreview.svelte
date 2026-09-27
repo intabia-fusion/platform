@@ -14,10 +14,12 @@
 -->
 
 <script lang="ts">
-  import { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import type { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, Component } from '@hcengineering/ui'
-  import { BlobType, Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Action } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
+  import type { BlobType, Doc, Ref, Space } from '@hcengineering/core'
+  import { Class } from '@hcengineering/core'
 
   import activity from '../../plugin'
 

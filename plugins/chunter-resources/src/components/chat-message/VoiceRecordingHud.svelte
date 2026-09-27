@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import aiBot, { AudioTranscribe } from '@hcengineering/ai-bot'
-  import { Class, Doc, generateId, getCurrentAccount, Ref, Space } from '@hcengineering/core'
+  import type { AudioTranscribe } from '@hcengineering/ai-bot'
+  import aiBot from '@hcengineering/ai-bot'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { generateId, getCurrentAccount } from '@hcengineering/core'
   import { getClient, uploadFile } from '@hcengineering/presentation'
   import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
   import { ButtonIcon, IconClose, IconCheck, IconSend, Label, Spinner } from '@hcengineering/ui'

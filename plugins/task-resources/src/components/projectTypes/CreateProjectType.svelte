@@ -14,9 +14,11 @@
 -->
 
 <script lang="ts">
-  import { SpaceTypeDescriptor, generateId } from '@hcengineering/core'
+  import type { SpaceTypeDescriptor } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { ProjectTypeDescriptor, createProjectType } from '@hcengineering/task'
+  import type { ProjectTypeDescriptor } from '@hcengineering/task'
+  import { createProjectType } from '@hcengineering/task'
   import { ToggleWithLabel } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'

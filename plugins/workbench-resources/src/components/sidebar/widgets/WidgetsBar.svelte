@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import workbench, { Widget, WidgetPreference, WidgetType } from '@hcengineering/workbench'
+  import type { Widget, WidgetPreference } from '@hcengineering/workbench'
+  import workbench, { WidgetType } from '@hcengineering/workbench'
   import { IconSettings, ModernButton, showPopup, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { ComponentExtensions } from '@hcengineering/presentation'
 
   import WidgetPresenter from './/WidgetPresenter.svelte'

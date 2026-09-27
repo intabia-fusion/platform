@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { PermissionsStore } from '@hcengineering/contact'
+  import type { Card } from '@hcengineering/card'
+  import type { PermissionsStore } from '@hcengineering/contact'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import core, { Doc, FindOptions, Ref, SortingOrder, TypedSpace } from '@hcengineering/core'
+  import type { Doc, FindOptions, Ref, TypedSpace } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Execution, Process } from '@hcengineering/process'
+  import type { Execution, Process } from '@hcengineering/process'
   import {
     Button,
     eventToHTMLElement,
@@ -29,14 +30,10 @@
     Section,
     showPopup
   } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
-  import {
-    List,
-    ListSelectionProvider,
-    noCategory,
-    SelectDirection,
-    ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
+  import { List, ListSelectionProvider, noCategory, ViewletsSettingButton } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../plugin'
   import RunProcessPopup from './RunProcessPopup.svelte'

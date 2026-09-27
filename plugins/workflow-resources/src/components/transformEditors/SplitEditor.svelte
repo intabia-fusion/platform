@@ -16,7 +16,7 @@
   import presentation, { Card } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { StringEditor } from '@hcengineering/view-resources'
-  import { WorkflowValueFunction } from '@hcengineering/workflow'
+  import type { WorkflowValueFunction } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
 

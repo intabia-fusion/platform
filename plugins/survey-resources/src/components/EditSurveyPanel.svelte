@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Survey } from '@hcengineering/survey'
+  import type { Survey } from '@hcengineering/survey'
   import {
     Breadcrumb,
     Button,

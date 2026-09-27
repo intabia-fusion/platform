@@ -14,21 +14,23 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Ref, SortingOrder, Space, generateId } from '@hcengineering/core'
-  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
+  import type { Ref, Space } from '@hcengineering/core'
+  import { SortingOrder, generateId } from '@hcengineering/core'
+  import type { Document, Teamspace } from '@hcengineering/document'
+  import { DocumentEvents } from '@hcengineering/document'
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
+  import type { Action } from '@hcengineering/ui'
   import {
     IconEdit,
     getPaletteColorDef,
     getPlatformColorForTextDef,
     themeStore,
-    Action,
     IconAdd,
     closeTooltip
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TreeNode, openDoc, getActions as getContributedActions } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  import type { SpacesNavModel } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
 
   import document from '../../plugin'

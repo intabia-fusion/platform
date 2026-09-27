@@ -1,10 +1,10 @@
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     Button,
     type ButtonKind,
     type ButtonSize,
-    DropdownIntlItem,
     DropdownLabelsPopupIntl,
     eventToHTMLElement,
     Label,

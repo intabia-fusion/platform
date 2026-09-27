@@ -14,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref } from '@hcengineering/core'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, IssueStatus, Project } from '@hcengineering/tracker'
-  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import type { Issue, IssueStatus, Project } from '@hcengineering/tracker'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { resolvedLocationStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import tracker from '../../plugin'

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
   import ui, { ModernButton } from '@hcengineering/ui'
-  import { GithubProject } from '@hcengineering/github'
+  import type { GithubProject } from '@hcengineering/github'
   import github from '../plugin'
   import { githubAuth, githubProjects, onAuthorize } from './utils'
   import { getMetadata } from '@hcengineering/platform'

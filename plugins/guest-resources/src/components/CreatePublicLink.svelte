@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Timestamp } from '@hcengineering/core'
-  import { PublicLink, createPublicLink } from '@hcengineering/guest'
+  import type { Doc, Timestamp } from '@hcengineering/core'
+  import type { PublicLink } from '@hcengineering/guest'
+  import { createPublicLink } from '@hcengineering/guest'
   import presentaion, {
     Card,
     MessageBox,

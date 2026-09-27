@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { slide } from 'svelte/transition'
-  import { Data, Ref, WithLookup } from '@hcengineering/core'
+  import type { Data, Ref, WithLookup } from '@hcengineering/core'
   import { IconCollapseArrow, RadioButton } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import documents, {

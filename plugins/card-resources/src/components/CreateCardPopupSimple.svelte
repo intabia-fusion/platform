@@ -12,10 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import card, { Card as TypeCard, CardSpace, type CreateCardExtension, MasterTag } from '@hcengineering/card'
+  import type { Card as TypeCard, CardSpace, MasterTag } from '@hcengineering/card'
+  import card, { type CreateCardExtension } from '@hcengineering/card'
   import presentation, { Card, createQuery, getClient, SpaceSelector } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import core, { Data, generateId, Ref, Markup, getCurrentAccount } from '@hcengineering/core'
+  import type { Data, Ref, Markup } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount } from '@hcengineering/core'
   import { getResource, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import { Label, Modal, ModernEditbox, languageStore } from '@hcengineering/ui'
   import { EmptyMarkup } from '@hcengineering/text'

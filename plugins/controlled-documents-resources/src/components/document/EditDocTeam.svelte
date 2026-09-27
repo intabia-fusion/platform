@@ -13,15 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
-  import documents, {
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type {
     ControlledDocument,
-    ControlledDocumentState,
     DocumentApprovalRequest,
-    DocumentReviewRequest,
-    DocumentState
+    DocumentReviewRequest
   } from '@hcengineering/controlled-documents'
-  import core, { AccountUuid, DocumentUpdate, notEmpty, PersonUuid, Ref } from '@hcengineering/core'
+  import documents, { ControlledDocumentState, DocumentState } from '@hcengineering/controlled-documents'
+  import type { DocumentUpdate, Ref } from '@hcengineering/core'
+  import core, { AccountUuid, notEmpty, PersonUuid } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Scroller } from '@hcengineering/ui'
 

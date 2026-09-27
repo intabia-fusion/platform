@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Class, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import type { Class, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import type { IntlString, Asset } from '@hcengineering/platform'
-  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { resolvedLocationStore } from '@hcengineering/ui'
   import { type Document, DocumentState } from '@hcengineering/controlled-documents'
 
   import Documents from './Documents.svelte'

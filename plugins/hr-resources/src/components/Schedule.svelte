@@ -16,8 +16,8 @@
   import { onDestroy } from 'svelte'
   import { CalendarMode } from '@hcengineering/calendar-resources'
   import calendar from '@hcengineering/calendar-resources/src/plugin'
-  import { DocumentQuery, Ref } from '@hcengineering/core'
-  import { Department, Staff } from '@hcengineering/hr'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Department, Staff } from '@hcengineering/hr'
   import { createQuery } from '@hcengineering/presentation'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { TabItem, DropdownIntlItem } from '@hcengineering/ui'
@@ -37,7 +37,8 @@
     tableToCSV,
     showPopup
   } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import { getCurrentEmployee } from '@hcengineering/contact'
 

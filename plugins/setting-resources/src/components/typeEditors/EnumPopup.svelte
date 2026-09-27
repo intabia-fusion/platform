@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Enum, Ref } from '@hcengineering/core'
-  import { ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
+  import type { ObjectCreate } from '@hcengineering/presentation'
+  import { ObjectPopup } from '@hcengineering/presentation'
 
   export let _class: Ref<Class<Enum>>
   export let selected: Ref<Enum> | undefined

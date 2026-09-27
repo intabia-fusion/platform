@@ -14,22 +14,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
-  import {
-    ActivityDocLink,
-    ActivityMessageTemplate,
-    MessageInlineAction,
-    editingMessageStore
-  } from '@hcengineering/activity-resources'
-  import { Attachment } from '@hcengineering/attachment'
-  import { AttachmentDocList, AttachmentImageSize } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
-  import contact, { Employee, getCurrentEmployee, Person, SocialIdentity } from '@hcengineering/contact'
+  import type { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
+  import type { MessageInlineAction } from '@hcengineering/activity-resources'
+  import { ActivityDocLink, ActivityMessageTemplate, editingMessageStore } from '@hcengineering/activity-resources'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { AttachmentImageSize } from '@hcengineering/attachment-resources'
+  import { AttachmentDocList } from '@hcengineering/attachment-resources'
+  import type { ChatMessage } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
+  import type { Employee, Person, SocialIdentity } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { CombineAvatars, getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
-  import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'

@@ -19,7 +19,7 @@
   import { getImageDimensions } from '../utils'
   import LinkPreviewIcon from './LinkPreviewIcon.svelte'
   import LinkPreviewImage from './LinkPreviewImage.svelte'
-  import { LinkPreviewData } from '../types'
+  import type { LinkPreviewData } from '../types'
 
   export let linkPreview: LinkPreviewData
   export let isOwn = false

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Button, DropdownLabelsIntl, IconBack, IconForward } from '@hcengineering/ui'
 
-  import { CalendarMode } from '../index'
+  import type { CalendarMode } from '../index'
   import calendar from '../plugin'
 
   export let ddItems: {

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { BusySlot, Event } from '@hcengineering/calendar'
+  import type { BusySlot, Event } from '@hcengineering/calendar'
   import { calendarByIdStore } from '@hcengineering/calendar-resources'
-  import { IdMap, Timestamp } from '@hcengineering/core'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { IdMap, Timestamp } from '@hcengineering/core'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { groupTeamData } from '../utils'
   import PlanPerson from './PlanPerson.svelte'

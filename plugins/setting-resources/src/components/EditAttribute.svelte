@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
+  import type {
     AnyAttribute,
     AttributePermission,
     Class,
@@ -23,13 +23,14 @@
     Ref,
     Type
   } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, getResource, translateCB } from '@hcengineering/platform'
+  import core from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getResource, translateCB } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
+  import type { AnyComponent, DropdownIntlItem } from '@hcengineering/ui'
   import {
-    AnyComponent,
     ButtonIcon,
     Component,
-    DropdownIntlItem,
     DropdownLabelsIntl,
     IconDelete,
     Label,

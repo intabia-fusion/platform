@@ -13,14 +13,16 @@
 -->
 <script lang="ts">
   import activity from '@hcengineering/activity'
-  import { Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, languageStore, Loading, TabItem, TabList } from '@hcengineering/ui'
+  import type { TabItem } from '@hcengineering/ui'
+  import { Label, languageStore, Loading, TabList } from '@hcengineering/ui'
   import chunter from '@hcengineering/chunter'
   import { translate } from '@hcengineering/platform'
 
   import notification from '../../plugin'
-  import { InboxFilter } from '../../types'
+  import type { InboxFilter } from '../../types'
   import InboxMenuButton from './InboxMenuButton.svelte'
   import SettingsButton from './SettingsButton.svelte'
   import { NotificationClientImpl } from '../../client'

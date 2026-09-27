@@ -15,14 +15,16 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { reduceCalls } from '@hcengineering/presentation'
-  import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
-  import { FieldRequiredProps, FieldRequiredValidatorConfig } from '@hcengineering/workflow'
-  import { TaskType } from '@hcengineering/task'
-  import { AnyAttribute, Ref } from '@hcengineering/core'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import ui, { Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
+  import type { FieldRequiredProps, FieldRequiredValidatorConfig } from '@hcengineering/workflow'
+  import type { TaskType } from '@hcengineering/task'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../../plugin'
-  import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
+  import type { DisplayAttribute } from '../../../utils'
+  import { getDisplayAttributes } from '../../../utils'
 
   export let taskType: TaskType
   export let config: FieldRequiredValidatorConfig | undefined = undefined

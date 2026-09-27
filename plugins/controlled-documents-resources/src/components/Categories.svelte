@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
-  import { Class, DocumentQuery, Ref, TypedSpace } from '@hcengineering/core'
+  import type { DocumentCategory } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
+  import type { Class, DocumentQuery, Ref, TypedSpace } from '@hcengineering/core'
   import { ActionContext } from '@hcengineering/presentation'
   import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 

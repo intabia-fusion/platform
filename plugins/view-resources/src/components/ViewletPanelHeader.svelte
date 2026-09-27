@@ -4,19 +4,13 @@
 //
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
-  import {
-    Breadcrumb,
-    Header,
-    HeaderAdaptive,
-    IModeSelector,
-    ModeSelector,
-    SearchInput,
-    themeStore
-  } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference, type ViewletViewAction } from '@hcengineering/view'
+  import type { HeaderAdaptive, IModeSelector } from '@hcengineering/ui'
+  import { Breadcrumb, Header, ModeSelector, SearchInput, themeStore } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view, { type ViewletViewAction } from '@hcengineering/view'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { getViewletSpecialActions } from '../viewletUtils'
 

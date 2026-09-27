@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import type { Product, ProductVersion } from '@hcengineering/products'
-  import core, { FindOptions, SortingOrder } from '@hcengineering/core'
+  import type { FindOptions } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Label, Loading } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { DocNavLink, ObjectPresenter, Table } from '@hcengineering/view-resources'
   import products from '../../plugin'
 

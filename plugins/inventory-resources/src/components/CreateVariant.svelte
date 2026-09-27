@@ -14,12 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { generateId, PersonId, Ref } from '@hcengineering/core'
+  import type { PersonId, Ref } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import { EditBox, Grid } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import inventory from '../plugin'
-  import { Product, Variant } from '@hcengineering/inventory'
+  import type { Product, Variant } from '@hcengineering/inventory'
 
   export let product: Ref<Product>
 

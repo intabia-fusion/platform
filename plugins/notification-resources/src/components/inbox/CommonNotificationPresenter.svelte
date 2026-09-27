@@ -13,10 +13,11 @@
 -->
 <script lang="ts">
   import { BasePreview } from '@hcengineering/activity-resources'
-  import { Markup, reduceCalls } from '@hcengineering/core'
+  import type { Markup } from '@hcengineering/core'
+  import { reduceCalls } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/ui'
-  import { CommonNotification } from '@hcengineering/notification'
+  import type { CommonNotification } from '@hcengineering/notification'
 
   export let value: CommonNotification
 

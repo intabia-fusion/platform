@@ -14,14 +14,15 @@
 -->
 
 <script lang="ts">
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { humanReadableFileSize, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
 
   import IconCompleted from './icons/Completed.svelte'
 
   import plugin from '../plugin'
   import { downloads } from '../store'
-  import { DownloadItemState } from '@hcengineering/desktop-downloads'
+  import type { DownloadItemState } from '@hcengineering/desktop-downloads'
 
   const labels: Record<DownloadItemState, IntlString> = {
     completed: plugin.string.Completed,

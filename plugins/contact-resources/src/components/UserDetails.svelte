@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { IconSize } from '@hcengineering/ui'
-  import { Person, getName } from '@hcengineering/contact'
+  import type { IconSize } from '@hcengineering/ui'
+  import type { Person } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
 
   import Avatar from './Avatar.svelte'
 

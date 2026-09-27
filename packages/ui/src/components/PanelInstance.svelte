@@ -18,7 +18,8 @@
   import { afterUpdate, onMount } from 'svelte'
 
   import { deviceOptionsStore as deviceInfo, resizeObserver } from '..'
-  import { closePanel, PanelProps, panelstore } from '../panelup'
+  import type { PanelProps } from '../panelup'
+  import { closePanel, panelstore } from '../panelup'
   import { fitPopupElement, popupstore } from '../popups'
   import type { AnySvelteComponent, DeviceOptions, PopupOptions } from '../types'
   import Spinner from './Spinner.svelte'

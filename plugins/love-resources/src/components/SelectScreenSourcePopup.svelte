@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Card } from '@hcengineering/presentation'
   import { Button } from '@hcengineering/ui'
-  import { ScreenSource } from '@hcengineering/love'
+  import type { ScreenSource } from '@hcengineering/love'
 
   import love from '../plugin'
 

@@ -12,11 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
-  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
-  import { Floor, Room } from '@hcengineering/love'
-  import { IModeSelector, themeStore } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
+  import type { Floor, Room } from '@hcengineering/love'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { themeStore } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
 
   import love from '../plugin'

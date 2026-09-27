@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Context, Func, Process } from '@hcengineering/process'
+  import type { Context, Func, Process } from '@hcengineering/process'
   import { Component, Label } from '@hcengineering/ui'
 
   export let value: Func

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@hcengineering/card'
+  import type { MasterTag, Tag } from '@hcengineering/card'
   import core from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import { EditBox } from '@hcengineering/ui'

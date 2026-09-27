@@ -13,13 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { Action, closeTooltip, IconMoreV, showPopup } from '@hcengineering/ui'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
+  import type { Action } from '@hcengineering/ui'
+  import { closeTooltip, IconMoreV, showPopup } from '@hcengineering/ui'
   import { actionGroupOrder, getActions, Menu } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { getResource } from '@hcengineering/platform'
-  import view, { Action as ViewAction } from '@hcengineering/view'
-  import { Ref } from '@hcengineering/core'
+  import type { Action as ViewAction } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { Ref } from '@hcengineering/core'
 
   import ActivityMessageAction from './ActivityMessageAction.svelte'
   import { savedMessagesStore } from '../activity'

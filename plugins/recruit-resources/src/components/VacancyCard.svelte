@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
-  import contact, { Channel, Organization } from '@hcengineering/contact'
+  import type { Channel, Organization } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { ChannelsEditor } from '@hcengineering/contact-resources'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
   import { Component, Label } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
   import recruit from '../plugin'

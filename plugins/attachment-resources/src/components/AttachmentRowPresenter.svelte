@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { MessageBox } from '@hcengineering/presentation'

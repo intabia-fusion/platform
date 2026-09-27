@@ -19,11 +19,11 @@
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
   import { Icon, IconInfo, Label, languageStore, tooltip } from '@hcengineering/ui'
-  import {
-    type ScreenConfig,
-    type ScreenResolutionConfig,
-    type WorkflowCompatibilityReport,
-    type WorkflowConfig
+  import type {
+    ScreenConfig,
+    ScreenResolutionConfig,
+    WorkflowCompatibilityReport,
+    WorkflowConfig
   } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'

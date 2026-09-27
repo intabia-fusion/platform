@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
-  import { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
+  import type { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
   import { closePopup, deviceOptionsStore, EditWithIcon, IconSearch } from '@hcengineering/ui'
   import { groupBy } from '@hcengineering/view-resources'
   import templates from '../plugin'

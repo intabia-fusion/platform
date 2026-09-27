@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ComponentExtensions } from '@hcengineering/presentation'
-  import { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
   import task from '../../plugin'
 
   export let type: ProjectType | undefined

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getMetadata } from '@hcengineering/platform'
   import presentation, { MessageBox } from '@hcengineering/presentation'
   import { Breadcrumb, Button, DropdownLabelsIntl, Header, Label, Scroller, showPopup } from '@hcengineering/ui'

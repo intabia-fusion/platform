@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { DateRangeMode, convertToDay } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import {
     ActionIcon,

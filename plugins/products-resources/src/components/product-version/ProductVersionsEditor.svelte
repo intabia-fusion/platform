@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
-  import { type Ref } from '@hcengineering/core'
+  import type { Product } from '@hcengineering/products'
+  import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
   import { Table, openDocFromRef } from '@hcengineering/view-resources'

@@ -12,11 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { notEmpty, Ref, Status } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
-  import ui, { DropdownIntlItem, Icon, Label, ModernDropdown } from '@hcengineering/ui'
-  import { Workflow } from '@hcengineering/workflow'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { Icon, Label, ModernDropdown } from '@hcengineering/ui'
+  import type { Workflow } from '@hcengineering/workflow'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../plugin'

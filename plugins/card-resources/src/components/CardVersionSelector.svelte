@@ -15,10 +15,13 @@
 //
 -->
 <script lang="ts">
-  import { Card, cardId } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import { cardId } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, DropdownLabels, DropdownTextItem, getCurrentLocation, navigate, showPopup } from '@hcengineering/ui'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { Button, DropdownLabels, getCurrentLocation, navigate, showPopup } from '@hcengineering/ui'
   import card from '../plugin'
   import { createNewVersion } from '../utils'
 

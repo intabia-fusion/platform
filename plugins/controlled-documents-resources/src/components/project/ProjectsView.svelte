@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
-  import { IntlString, translate } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/ui'
-  import { Viewlet, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewOptions } from '@hcengineering/view'
   import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
-  import { Project, DocumentSpace } from '@hcengineering/controlled-documents'
+  import type { Project, DocumentSpace } from '@hcengineering/controlled-documents'
 
   export let space: Ref<DocumentSpace>
   export let _class: Ref<Class<Project>>

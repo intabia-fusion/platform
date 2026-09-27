@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { IconWithEmoji, createQuery } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/tracker'
+  import type { Project } from '@hcengineering/tracker'
   import { Icon, getPaletteColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import view from '@hcengineering/view'

@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IssueStatus, Project } from '@hcengineering/tracker'
+  import type { IssueStatus, Project } from '@hcengineering/tracker'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
   import { createQuery } from '@hcengineering/presentation'
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core, { toIdMap } from '@hcengineering/core'
   import { statusStore } from '@hcengineering/view-resources'
 
   export let value: Ref<IssueStatus>[]

@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { AccessLevel, Calendar, getPrimaryCalendar, PrimaryCalendar } from '@hcengineering/calendar'
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Calendar, PrimaryCalendar } from '@hcengineering/calendar'
+  import { AccessLevel, getPrimaryCalendar } from '@hcengineering/calendar'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Dropdown, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

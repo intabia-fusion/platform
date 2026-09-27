@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { ColorDefinition, IconSize, getPlatformColorDef, themeStore } from '@hcengineering/ui'
+  import type { ColorDefinition, IconSize } from '@hcengineering/ui'
+  import { getPlatformColorDef, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   export let size: IconSize = 'small'

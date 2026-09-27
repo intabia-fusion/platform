@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, generateId, Ref, RefTo, Space } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, RefTo, Space } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { findAttributeEditor, getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component, Label } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 

@@ -15,26 +15,17 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
   import { AccountArrayEditor, AssigneeBox, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
-    AccountUuid,
-    Data,
-    DocumentUpdate,
-    generateId,
-    getCurrentAccount,
-    notEmpty,
-    Ref,
-    Role,
-    RolesAssignment,
-    SortingOrder,
-    SpaceType
-  } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { AccountUuid, Data, DocumentUpdate, Ref, Role, RolesAssignment, SpaceType } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, notEmpty, SortingOrder } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import task, { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
+  import type { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
-  import { IssueStatus, Project, TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
+  import type { IssueStatus, Project } from '@hcengineering/tracker'
+  import { TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
   import {
     Button,
     ButtonIcon,
@@ -51,7 +42,8 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
-  import workflow, { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
+  import type { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
   import { deepEqual } from 'fast-equals'
 
   import tracker from '../../plugin'

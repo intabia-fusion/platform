@@ -1,12 +1,12 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { Ref, getCurrentAccount, toIdMap } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount, toIdMap } from '@hcengineering/core'
   import { copyTextToClipboard, createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
+  import type { Action, Location } from '@hcengineering/ui'
   import {
-    Action,
     IconAdd,
-    Location,
     SelectPopup,
     eventToHTMLElement,
     getEventPopupPositionElement,
@@ -17,7 +17,8 @@
     navigate,
     showPopup
   } from '@hcengineering/ui'
-  import view, { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     EditBoxPopup,
     TreeItem,

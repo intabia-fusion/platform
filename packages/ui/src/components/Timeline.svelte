@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { fly } from 'svelte/transition'
-  import { Timestamp } from '@hcengineering/core'
-  import { TimelinePoint, TimelineRow, TimelineState } from '../types'
+  import type { Timestamp } from '@hcengineering/core'
+  import type { TimelinePoint, TimelineRow, TimelineState } from '../types'
   import ui, {
     CheckBox,
     Icon,

@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@hcengineering/contact'
+  import type { Channel } from '@hcengineering/contact'
   import type { AttachedData, Doc, Ref } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
   import { CircleButton, eventToHTMLElement, IconAdd, Label, showPopup } from '@hcengineering/ui'

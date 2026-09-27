@@ -4,14 +4,11 @@
 //
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
   import { UserBoxItems, getPermittedPersons, permissionsStore } from '@hcengineering/contact-resources'
-  import documents, {
-    ControlledDocument,
-    ControlledDocumentState,
-    DocumentRequest
-  } from '@hcengineering/controlled-documents'
-  import { Class, Ref, TxOperations } from '@hcengineering/core'
+  import type { ControlledDocument, DocumentRequest } from '@hcengineering/controlled-documents'
+  import documents, { ControlledDocumentState } from '@hcengineering/controlled-documents'
+  import type { Class, Ref, TxOperations } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { RequestStatus } from '@hcengineering/request'
   import { Label, ModernDialog, showPopup } from '@hcengineering/ui'

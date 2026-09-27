@@ -16,7 +16,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { ProgressCircle, showPopup, tooltip } from '@hcengineering/ui'
 
-  import { type Upload } from '../store'
+  import type { Upload } from '../store'
 
   import IconError from './icons/Error.svelte'
   import FileUploadStatusPopup from './FileUploadStatusPopup.svelte'

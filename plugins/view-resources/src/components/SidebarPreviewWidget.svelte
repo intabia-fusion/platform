@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import workbench, { Widget, WidgetTab } from '@hcengineering/workbench'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Widget, WidgetTab } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
   import { getClient } from '@hcengineering/presentation'
   import { getResource } from '@hcengineering/platform'
-  import { AnyComponent, Component } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
 
   import { getSidebarObjectComponent } from '../utils'
 

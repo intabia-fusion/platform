@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { DocumentQuery, Ref } from '@hcengineering/core'
-  import { Project } from '@hcengineering/task'
-  import { ToDo } from '@hcengineering/time'
+  import type { Person } from '@hcengineering/contact'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Project } from '@hcengineering/task'
+  import type { ToDo } from '@hcengineering/time'
   import { Header } from '@hcengineering/ui'
   import { FilterBar, FilterButton } from '@hcengineering/view-resources'
-  import { PlannerCalendarMode } from '../..'
+  import type { PlannerCalendarMode } from '../..'
   import time from '../../plugin'
   import PlannerViewSwitch from '../PlannerViewSwitch.svelte'
   import Agenda from './agenda/Agenda.svelte'

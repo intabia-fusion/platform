@@ -1,7 +1,9 @@
 <script lang="ts">
   import { SelectPopup } from '@hcengineering/ui'
-  import notification, { DocNotificationMode, DocNotificationSetting } from '@hcengineering/notification'
-  import { Doc, getCurrentAccount } from '@hcengineering/core'
+  import type { DocNotificationMode, DocNotificationSetting } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
+  import type { Doc } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'

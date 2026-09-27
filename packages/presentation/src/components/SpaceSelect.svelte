@@ -13,20 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ComponentType, createEventDispatcher } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
 
-  import { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import {
+  import type { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type {
     AnyComponent,
     AnySvelteComponent,
-    Button,
     ButtonKind,
     ButtonShape,
     ButtonSize,
+    TooltipAlignment
+  } from '@hcengineering/ui'
+  import {
+    Button,
     IconFolder,
     Label,
-    TooltipAlignment,
     eventToHTMLElement,
     getEventPositionElement,
     getFocusManager,
@@ -35,9 +38,10 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
-  import view, { IconProps } from '@hcengineering/view'
+  import type { IconProps } from '@hcengineering/view'
+  import view from '@hcengineering/view'
 
-  import { ObjectCreate } from '../types'
+  import type { ObjectCreate } from '../types'
   import { getClient, reduceCalls } from '../utils'
   import SpacesPopup from './SpacesPopup.svelte'
   import IconWithEmoji from './IconWithEmoji.svelte'

@@ -1,17 +1,16 @@
 <script lang="ts">
-  import documents, {
+  import type {
     ControlledDocument,
-    ControlledDocumentState,
     DocumentRequest,
-    DocumentState,
-    DocumentValidationState,
-    emptyBundle
+    DocumentValidationState
   } from '@hcengineering/controlled-documents'
+  import documents, { ControlledDocumentState, DocumentState, emptyBundle } from '@hcengineering/controlled-documents'
 
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Label, Scroller } from '@hcengineering/ui'
 
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import documentsRes from '../../../plugin'
   import {
     $controlledDocument as controlledDocument,
@@ -22,7 +21,7 @@
   import DocumentApprovalItem from './DocumentApprovalItem.svelte'
   import RightPanelTabHeader from './RightPanelTabHeader.svelte'
   import { extractValidationWorkflow } from '../../../utils'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   const client = getClient()
   const hierarchy = client.getHierarchy()

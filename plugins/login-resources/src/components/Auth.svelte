@@ -4,8 +4,9 @@
   import Label from './internal/Label.svelte'
   import { logIn } from '@hcengineering/workbench'
   import { trackOAuthCompletion } from '@hcengineering/analytics-providers'
-  import { type LoginInfoRequest, type LoginInfoByToken } from '@hcengineering/account-client'
-  import platform, { OK, PlatformError, Status, unknownError } from '@hcengineering/platform'
+  import type { LoginInfoRequest, LoginInfoByToken } from '@hcengineering/account-client'
+  import type { Status } from '@hcengineering/platform'
+  import platform, { OK, PlatformError, unknownError } from '@hcengineering/platform'
 
   import type { Field } from '../types'
   import {

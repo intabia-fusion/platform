@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
-  import notification, { NotificationClient, UnreadContext } from '@hcengineering/notification'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
+  import type { NotificationClient, UnreadContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Readable } from 'svelte/store'
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Readable } from 'svelte/store'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { onMount } from 'svelte'
 
   import RepliedPersons from './RepliedPersons.svelte'

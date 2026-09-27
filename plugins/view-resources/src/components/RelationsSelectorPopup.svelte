@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Doc, Ref, Relation } from '@hcengineering/core'
+  import type { Association, Doc, Ref, Relation } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient, ObjectPopup } from '@hcengineering/presentation'
   import ObjectPresenter from './ObjectPresenter.svelte'
 

@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref, type Status } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import task, { type TaskType } from '@hcengineering/task'
   import { taskTypeStore, TaskTypeIcon } from '@hcengineering/task-resources'
-  import { type Issue, type IssueStatus, type Project } from '@hcengineering/tracker'
+  import type { Issue, IssueStatus, Project } from '@hcengineering/tracker'
   import ui, {
     type DropdownIntlItem,
     Icon,

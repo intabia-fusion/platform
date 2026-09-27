@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { Avatar, EmployeePresenter, UsersPopup } from '@hcengineering/contact-resources'
-  import { Ref, WithLookup } from '@hcengineering/core'
-  import { Department, Staff } from '@hcengineering/hr'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import type { Department, Staff } from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, closeTooltip, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { openDoc, showMenu } from '@hcengineering/view-resources'

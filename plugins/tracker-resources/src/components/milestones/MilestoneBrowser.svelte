@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Milestone } from '@hcengineering/tracker'
-  import { Button, IconAdd, SearchInput, TabItem, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Milestone } from '@hcengineering/tracker'
+  import type { TabItem } from '@hcengineering/ui'
+  import { Button, IconAdd, SearchInput, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
-  import { MilestoneViewMode, getIncludedMilestoneStatuses, milestoneTitleMap } from '../../utils'
+  import type { MilestoneViewMode } from '../../utils'
+  import { getIncludedMilestoneStatuses, milestoneTitleMap } from '../../utils'
   import MilestoneContent from './MilestoneContent.svelte'
   import NewMilestone from './NewMilestone.svelte'
 

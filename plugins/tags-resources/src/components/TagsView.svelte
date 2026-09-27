@@ -13,26 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { TagCategory, TagElement } from '@hcengineering/tags'
-  import {
-    AnySvelteComponent,
-    Breadcrumb,
-    Button,
-    Header,
-    IconAdd,
-    SearchInput,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
+  import type { TagCategory, TagElement } from '@hcengineering/tags'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Breadcrumb, Button, Header, IconAdd, SearchInput, showPopup, themeStore } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
   import tags from '../plugin'
   import CategoryBar from './CategoryBar.svelte'
   import CreateTagElement from './CreateTagElement.svelte'
   // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
-  import { TagElementInfo } from '../utils'
+  import type { TagElementInfo } from '../utils'
 
   export let title: IntlString = tags.string.Tags
   export let icon: Asset | AnySvelteComponent = tags.icon.Tags

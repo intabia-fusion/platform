@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { TestCase } from '@hcengineering/test-management'
+  import type { TestCase } from '@hcengineering/test-management'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'

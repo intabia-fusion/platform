@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
-  import { Class, Ref, Space } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Class, Ref, Space } from '@hcengineering/core'
   import { SpaceMultiBoxList } from '@hcengineering/presentation'
   import { Component, DropdownLabelsIntl } from '@hcengineering/ui'
   import attachment from '../plugin'

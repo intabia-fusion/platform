@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { ProductVersion } from '@hcengineering/products'
+  import type { ProductVersion } from '@hcengineering/products'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   import { getProductVersionVersion } from '../../utils'

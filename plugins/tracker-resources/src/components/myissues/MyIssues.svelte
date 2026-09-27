@@ -14,11 +14,13 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import core, { DocumentQuery, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
   import type { IntlString, Asset } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Issue, IssueStatus } from '@hcengineering/tracker'
-  import { IModeSelector, resolvedLocationStore } from '@hcengineering/ui'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { resolvedLocationStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import task from '@hcengineering/task'

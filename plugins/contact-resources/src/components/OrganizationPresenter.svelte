@@ -14,11 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@hcengineering/contact'
+  import type { Organization } from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import contact from '../plugin'
   import Company from './icons/Company.svelte'

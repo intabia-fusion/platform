@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, getObjectValue } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
+  import { getObjectValue } from '@hcengineering/core'
   import presentation, { Card, getAttrEditor, getClient } from '@hcengineering/presentation'
-  import { ContextId, ExecutionContext, UserResult } from '@hcengineering/process'
+  import type { ContextId, ExecutionContext, UserResult } from '@hcengineering/process'
   import { Component, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

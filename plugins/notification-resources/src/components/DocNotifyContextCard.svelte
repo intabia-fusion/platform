@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
+  import type { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
   import { createEventDispatcher } from 'svelte'
 
   import DocNotifyContextCardHeader from './DocNotifyContextCardHeader.svelte'

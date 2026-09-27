@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { Project } from '@hcengineering/tracker'
+  import type { Project } from '@hcengineering/tracker'
   import { IconWithEmoji } from '@hcengineering/presentation'
   import { getPaletteColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { NavLink, TreeNode } from '@hcengineering/view-resources'
-  import { SpacesNavModel, SpecialNavModel } from '@hcengineering/workbench'
+  import type { SpacesNavModel, SpecialNavModel } from '@hcengineering/workbench'
   import { SpecialElement } from '@hcengineering/workbench-resources'
 
   export let space: Project

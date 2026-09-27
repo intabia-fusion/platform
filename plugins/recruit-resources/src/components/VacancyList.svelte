@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
   import { Button, Icon, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
-  import view, { BuildModelKey } from '@hcengineering/view'
+  import type { BuildModelKey } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { Table } from '@hcengineering/view-resources'
   import recruit from '../plugin'
   import CreateVacancy from './CreateVacancy.svelte'

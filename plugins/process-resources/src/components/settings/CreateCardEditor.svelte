@@ -13,12 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag } from '@hcengineering/card'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
   import { TypeSelector } from '@hcengineering/card-resources'
-  import core, { AnyAttribute, Class, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { createContext, Process, Step } from '@hcengineering/process'
+  import type { Process, Step } from '@hcengineering/process'
+  import { createContext } from '@hcengineering/process'
   import { Button, eventToHTMLElement, Label, SelectPopup, showPopup, Toggle, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import ParamsEditor from './ParamsEditor.svelte'

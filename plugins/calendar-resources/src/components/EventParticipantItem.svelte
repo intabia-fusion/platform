@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { ContactRefPresenter } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Button, Icon, IconCheck, IconClose, IconError, tooltip } from '@hcengineering/ui'
   import calendar from '../plugin'
 

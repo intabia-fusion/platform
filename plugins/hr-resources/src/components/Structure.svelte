@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import type { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
   import type { Department, Staff } from '@hcengineering/hr'
   import { createQuery } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, Scroller, SearchEdit, eventToHTMLElement, showPopup } from '@hcengineering/ui'

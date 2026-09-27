@@ -14,21 +14,11 @@
 -->
 <script lang="ts">
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import contact, { Organization } from '@hcengineering/contact'
+  import type { Organization } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { AccountArrayEditor, UserBox } from '@hcengineering/contact-resources'
-  import core, {
-    AttachedData,
-    Data,
-    Ref,
-    Role,
-    RolesAssignment,
-    SortingOrder,
-    fillDefaults,
-    generateId,
-    getCurrentAccount,
-    makeCollabId,
-    AccountUuid
-  } from '@hcengineering/core'
+  import type { AttachedData, Data, Ref, Role, RolesAssignment, AccountUuid } from '@hcengineering/core'
+  import core, { SortingOrder, fillDefaults, generateId, getCurrentAccount, makeCollabId } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import {
     Card,
@@ -38,11 +28,14 @@
     createQuery,
     getClient
   } from '@hcengineering/presentation'
-  import { RecruitEvents, Vacancy, Vacancy as VacancyClass } from '@hcengineering/recruit'
+  import type { Vacancy, Vacancy as VacancyClass } from '@hcengineering/recruit'
+  import { RecruitEvents } from '@hcengineering/recruit'
   import tags from '@hcengineering/tags'
-  import task, { ProjectType } from '@hcengineering/task'
+  import type { ProjectType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { selectedTypeStore, typeStore } from '@hcengineering/task-resources'
-  import tracker, { Issue, IssueStatus, IssueTemplate, IssueTemplateData, Project } from '@hcengineering/tracker'
+  import type { Issue, IssueStatus, IssueTemplate, IssueTemplateData, Project } from '@hcengineering/tracker'
+  import tracker from '@hcengineering/tracker'
   import {
     Button,
     Component,

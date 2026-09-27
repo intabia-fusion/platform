@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { ObjectBox } from '@hcengineering/view-resources'
-  import view, { ViewletDescriptor } from '@hcengineering/view'
-  import { IntlString } from '@hcengineering/platform'
+  import type { ViewletDescriptor } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { IntlString } from '@hcengineering/platform'
   import card from '../../../plugin'
 
   export let value: Ref<ViewletDescriptor> | undefined = undefined

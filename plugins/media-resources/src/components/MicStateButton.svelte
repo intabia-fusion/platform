@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type MicState } from '@hcengineering/media'
+  import type { MicState } from '@hcengineering/media'
   import { Icon, tooltip } from '@hcengineering/ui'
 
   import media from '../plugin'

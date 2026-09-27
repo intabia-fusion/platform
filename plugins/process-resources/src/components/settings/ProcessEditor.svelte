@@ -13,15 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox, IconDownload } from '@hcengineering/presentation'
-  import { Process, State, Transition } from '@hcengineering/process'
+  import type { Process, State, Transition } from '@hcengineering/process'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     ButtonIcon,
     ButtonMenu,
     defineSeparators,
-    DropdownIntlItem,
     EditBox,
     getCurrentLocation,
     IconDelete,

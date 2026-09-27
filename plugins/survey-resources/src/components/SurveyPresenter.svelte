@@ -16,9 +16,10 @@
 -->
 <script lang="ts">
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import { Icon, Label } from '@hcengineering/ui'
-  import survey, { Survey, Poll } from '@hcengineering/survey'
+  import type { Survey, Poll } from '@hcengineering/survey'
+  import survey from '@hcengineering/survey'
   import { hasText } from '../utils'
 
   export let value: Survey | Poll | undefined | null

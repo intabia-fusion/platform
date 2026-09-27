@@ -12,9 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { notEmpty, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
 
   export let repliedPersons: Ref<Person>[] = []
 

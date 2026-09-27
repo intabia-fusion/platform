@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
-  import { ComponentType } from 'svelte'
+  import type { Asset } from '@hcengineering/platform'
+  import type { ComponentType } from 'svelte'
 
-  import { AnySvelteComponent, Icon, IconProps } from '..'
+  import type { AnySvelteComponent } from '..'
+  import { Icon, IconProps } from '..'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
   export let iconProps: Record<string, any> = {}

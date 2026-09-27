@@ -15,9 +15,8 @@
 
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
-    AnySvelteComponent,
     Component,
     IconMenuOpen,
     IconMenuClose,
@@ -31,7 +30,8 @@
     twoPanelsSeparators,
     resizeObserver
   } from '@hcengineering/ui'
-  import { Class, Doc, DocumentQuery, Ref, Space, mergeQueries } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import { mergeQueries } from '@hcengineering/core'
   import ClassHeader from './ClassHeader.svelte'
 
   export let space: Ref<Space> | undefined = undefined

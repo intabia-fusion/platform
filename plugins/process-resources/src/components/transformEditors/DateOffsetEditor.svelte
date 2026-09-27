@@ -16,7 +16,8 @@
   import { Card } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import process from '../../plugin'
-  import ui, { DropdownIntlItem, DropdownLabelsIntl, NumberInput } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { DropdownLabelsIntl, NumberInput } from '@hcengineering/ui'
 
   export let props: Record<string, any>
 

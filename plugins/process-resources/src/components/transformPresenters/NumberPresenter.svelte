@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Context, Func, parseContext, Process } from '@hcengineering/process'
+  import type { Context, Func, Process } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import plugin from '../../plugin'
   import ContextValuePresenter from '../attributeEditors/ContextValuePresenter.svelte'
 

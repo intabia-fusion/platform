@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, DocumentQuery, FindOptions, Ref, Status } from '@hcengineering/core'
+  import type { Class, DocumentQuery, FindOptions, Ref, Status } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Project, Task, getStates } from '@hcengineering/task'
+  import type { Project, Task } from '@hcengineering/task'
+  import { getStates } from '@hcengineering/task'
   import type { TabItem } from '@hcengineering/ui'
   import { ScrollerBar, TabList, Switcher } from '@hcengineering/ui'
   import { TableBrowser, statusStore } from '@hcengineering/view-resources'

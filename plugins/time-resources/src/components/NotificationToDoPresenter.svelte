@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { ToDo } from '@hcengineering/time'
+  import type { ToDo } from '@hcengineering/time'
   import time from '../plugin'
 
   export let value: ToDo

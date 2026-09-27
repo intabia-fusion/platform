@@ -13,13 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { ActionContext } from '@hcengineering/presentation'
-  import { AnyComponent, Scroller, resizeObserver } from '@hcengineering/ui'
-  import { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Scroller, resizeObserver } from '@hcengineering/ui'
+  import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { onMount } from 'svelte'
-  import { ListSelectionProvider, SelectDirection, focusStore } from '../..'
+  import type { SelectDirection } from '../..'
+  import { ListSelectionProvider, focusStore } from '../..'
 
   import List from './List.svelte'
 

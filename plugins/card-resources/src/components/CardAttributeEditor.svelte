@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, MasterTag } from '@hcengineering/card'
-  import { Doc, Mixin } from '@hcengineering/core'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import type { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, Grid, IconDownOutline, IconUpOutline, Switcher, resizeObserver } from '@hcengineering/ui'
   import { onMount } from 'svelte'

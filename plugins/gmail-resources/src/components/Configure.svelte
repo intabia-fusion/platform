@@ -16,13 +16,14 @@
   import { createEventDispatcher } from 'svelte'
 
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
-  import { AccountUuid } from '@hcengineering/core'
+  import type { AccountUuid } from '@hcengineering/core'
   import presentation, { Card, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
+  import type { Integration } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
   import { Grid, Label, Toggle } from '@hcengineering/ui'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { isWorkspaceIntegration } from '@hcengineering/integration-client'
-  import { Integration as AccountIntegration } from '@hcengineering/account-client'
+  import type { Integration as AccountIntegration } from '@hcengineering/account-client'
 
   import ConfigureV2 from './ConfigureV2.svelte'
   import { getIntegrationClient } from '../api'

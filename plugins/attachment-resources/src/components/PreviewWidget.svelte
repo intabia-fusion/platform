@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import workbench, { Widget, WidgetTab } from '@hcengineering/workbench'
+  import type { Widget, WidgetTab } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
   import { FilePreview, DownloadFileButton, FilePreviewPopup, FileTypeIcon } from '@hcengineering/presentation'
   import { Breadcrumbs, Button, closeTooltip, Header, showPopup } from '@hcengineering/ui'
   import { getResource } from '@hcengineering/platform'

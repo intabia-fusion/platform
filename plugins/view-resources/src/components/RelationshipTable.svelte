@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@hcengineering/contact'
-  import core, {
+  import type { PermissionsStore } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type {
     AnyAttribute,
     Association,
     AssociationQuery,
@@ -24,13 +25,11 @@
     FindOptions,
     Lookup,
     Ref,
-    SortingOrder,
     TxOperations,
     TypedSpace,
-    WithLookup,
-    getObjectValue,
-    mergeQueries
+    WithLookup
   } from '@hcengineering/core'
+  import core, { SortingOrder, getObjectValue, mergeQueries } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
   import ui, {
@@ -42,10 +41,16 @@
     resizeObserver,
     showPopup
   } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type {
+    AttributeModel,
+    BuildModelKey,
+    BuildModelOptions,
+    ViewOptionModel,
+    ViewOptions
+  } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
-  import { Readable } from 'svelte/store'
+  import type { Readable } from 'svelte/store'
   import { showMenu } from '../actions'
   import { canChangeAttribute } from '../permissions'
   import view from '../plugin'

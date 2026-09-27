@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Doc, WithLookup } from '@hcengineering/core'
+  import type { Doc, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { TagReference } from '@hcengineering/tags'
   import tags from '@hcengineering/tags'

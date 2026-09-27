@@ -17,9 +17,10 @@
 <script lang="ts">
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Survey } from '@hcengineering/survey'
+  import type { Survey } from '@hcengineering/survey'
   import { Button, IconAdd, Label, Section, navigate, showPopup, Scroller } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton, getObjectLinkFragment } from '@hcengineering/view-resources'
   import SurveyPopup from './SurveyPopup.svelte'
   import survey from '../plugin'

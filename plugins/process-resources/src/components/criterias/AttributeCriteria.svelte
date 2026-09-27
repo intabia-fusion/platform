@@ -14,9 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
   import { Component, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getCriteriaEditor, getContext } from '../../utils'

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
 
   import VideoPopup from '../../VideoPopup.svelte'
 

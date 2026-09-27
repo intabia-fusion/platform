@@ -13,12 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, mergeQueries, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { mergeQueries } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Project, ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
-  import { AnyComponent, Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
-  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Project, ProjectTypeDescriptor } from '@hcengineering/task'
+  import { ProjectType } from '@hcengineering/task'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
+  import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,

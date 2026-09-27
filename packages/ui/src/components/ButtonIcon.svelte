@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import type { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent, IconSize, LabelAndProps } from '../types'
-  import { ComponentType } from 'svelte'
+  import type { AnySvelteComponent, IconSize, LabelAndProps } from '../types'
+  import type { ComponentType } from 'svelte'
   import ButtonBase from './ButtonBase.svelte'
 
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'

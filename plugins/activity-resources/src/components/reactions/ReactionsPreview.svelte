@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
+  import type { ActivityMessage, Reaction } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { showPopup } from '@hcengineering/ui'
   import { SortingOrder } from '@hcengineering/core'

@@ -16,9 +16,10 @@
 -->
 
 <script lang="ts">
-  import { Class, type Doc, type DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Class, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
   import { Component, SearchEdit } from '@hcengineering/ui'
-  import { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
 
   // TODO: Move to Platform?

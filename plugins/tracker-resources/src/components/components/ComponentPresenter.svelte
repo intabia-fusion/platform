@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { translateCB } from '@hcengineering/platform'
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
   import { Icon, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'

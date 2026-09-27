@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getMetadata, IntlString, translate } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getMetadata, translate } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import support from '@hcengineering/support'
   import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Icon,
     IconArrowLeft,
     Label,
@@ -33,7 +34,8 @@
     topSP
   } from '@hcengineering/ui'
   import { themeStore } from '@hcengineering/theme'
-  import view, { Action, ActionCategory } from '@hcengineering/view'
+  import type { Action, ActionCategory } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { WorkbenchEvents } from '@hcengineering/workbench'
   import { Analytics } from '@hcengineering/analytics'
 

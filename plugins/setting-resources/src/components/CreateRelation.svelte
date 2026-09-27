@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import cardPlugin from '@hcengineering/card'
-  import core, { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { DropdownIntlItem, DropdownLabelsIntl, EditBox, Label, NestedDropdown, Toggle } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, EditBox, Label, NestedDropdown, Toggle } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'

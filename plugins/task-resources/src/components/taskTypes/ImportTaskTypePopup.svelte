@@ -14,23 +14,17 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { type Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Severity, Status, getEmbeddedLabel, setPlatformStatus, translateCB } from '@hcengineering/platform'
-  import task, {
-    ProjectType,
-    TaskType,
-    TaskTypeConfigEntry,
-    TaskTypeExportConfig,
-    findIncompatibleAttributes,
-    importTaskTypeConfig
-  } from '@hcengineering/task'
+  import type { ProjectType, TaskType, TaskTypeConfigEntry, TaskTypeExportConfig } from '@hcengineering/task'
+  import task, { findIncompatibleAttributes, importTaskTypeConfig } from '@hcengineering/task'
   import { Icon, IconError, type IWizardStep, Label, ModernWizardDialog, themeStore, tooltip } from '@hcengineering/ui'
 
   import plugin from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import TaskTypeSelectList from './TaskTypeSelectList.svelte'
-  import { type TaskTypeRelation, type TaskTypeSelectItem } from './types'
+  import type { TaskTypeRelation, TaskTypeSelectItem } from './types'
 
   export let projectType: ProjectType
   export let taskTypes: TaskType[] = []

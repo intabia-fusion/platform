@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { createQuery } from '@hcengineering/presentation'
   import { Label, Section, Scroller } from '@hcengineering/ui'
   import {
@@ -24,7 +24,7 @@
     ViewletSettingButton,
     ViewletsSettingButton
   } from '@hcengineering/view-resources'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   import love from '../plugin'
 

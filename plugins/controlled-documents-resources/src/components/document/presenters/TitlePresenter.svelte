@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Document } from '@hcengineering/controlled-documents'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import type { WithLookup } from '@hcengineering/core'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'

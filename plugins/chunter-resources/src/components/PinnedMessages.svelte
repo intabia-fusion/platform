@@ -17,7 +17,7 @@
   import PinnedMessagesPopup from './PinnedMessagesPopup.svelte'
   import { createQuery } from '@hcengineering/presentation'
   import activity from '@hcengineering/activity'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 

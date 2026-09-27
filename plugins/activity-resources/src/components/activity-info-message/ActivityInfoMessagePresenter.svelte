@@ -13,15 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityInfoMessage } from '@hcengineering/activity'
+  import type { ActivityInfoMessage } from '@hcengineering/activity'
   import { Avatar, SystemAvatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { translateCB } from '@hcengineering/platform'
   import { HTMLViewer } from '@hcengineering/presentation'
-  import { Action, themeStore } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { themeStore } from '@hcengineering/ui'
 
   import ActivityMessageHeader from '../activity-message/ActivityMessageHeader.svelte'
   import ActivityMessageTemplate from '../activity-message/ActivityMessageTemplate.svelte'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
 
   export let value: ActivityInfoMessage
   export let showNotify: boolean = false

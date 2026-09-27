@@ -6,7 +6,7 @@
   import emojiPlugin, { shortcodeRegex } from '@hcengineering/emoji'
   import { createEventDispatcher } from 'svelte'
   import { getClient, MessageBox, uploadFile } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   const client = getClient()
   const dispatch = createEventDispatcher()

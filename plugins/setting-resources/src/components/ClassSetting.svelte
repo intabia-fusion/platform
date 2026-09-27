@@ -14,19 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    Class,
-    ClassifierKind,
-    Doc,
-    Obj,
-    PluginConfiguration,
-    Ref,
-    isOwnerOrMaintainer
-  } from '@hcengineering/core'
-  import { Asset, IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Class, Doc, Obj, PluginConfiguration, Ref } from '@hcengineering/core'
+  import core, { ClassifierKind, isOwnerOrMaintainer } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Scroller,
     ButtonIcon,
     IconDescription,

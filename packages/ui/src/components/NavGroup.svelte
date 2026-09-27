@@ -17,11 +17,10 @@
   import { createEventDispatcher } from 'svelte'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import type { AnyComponent, IconSize, AnySvelteComponent } from '..'
+  import type { AnyComponent, IconSize, AnySvelteComponent, Action } from '..'
   import {
     showPopup,
     Menu,
-    Action,
     Label,
     Component,
     IconDown,

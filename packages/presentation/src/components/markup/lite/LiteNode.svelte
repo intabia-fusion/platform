@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MarkupNode } from '@hcengineering/text'
+  import type { MarkupNode } from '@hcengineering/text'
 
   import LiteNodeContent from './LiteNodeContent.svelte'
   import NodeMarks from '../NodeMarks.svelte'
-  import { ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import type { ParsedTextWithEmojis } from '@hcengineering/emoji'
 
   export let node: MarkupNode
   export let colorInherit: boolean = false

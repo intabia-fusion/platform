@@ -4,7 +4,7 @@
 
 <script lang="ts">
   import { type TrainingAttempt, TrainingAttemptState } from '@hcengineering/training'
-  import { DocumentQuery } from '@hcengineering/core'
+  import type { DocumentQuery } from '@hcengineering/core'
   import { type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
   import { SpecialView } from '@hcengineering/workbench-resources'
   import type { ComponentProps } from 'svelte'

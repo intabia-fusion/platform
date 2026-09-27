@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getName, Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
   import { tooltip } from '@hcengineering/ui'

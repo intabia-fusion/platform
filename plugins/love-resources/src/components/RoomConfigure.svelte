@@ -13,20 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact, Person } from '@hcengineering/contact'
+  import type { Contact, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { AssigneeBox } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { ActionIcon, EditBox, Icon, IconDelete, resizeObserver } from '@hcengineering/ui'
-  import { Room, RoomType, isOffice } from '@hcengineering/love'
+  import type { Room } from '@hcengineering/love'
+  import { RoomType, isOffice } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
   import love from '../plugin'
   import { infos, lockedRoom } from '../stores'
-  import { RoomSide, shadowNormal } from '../types'
+  import type { RoomSide } from '../types'
+  import { shadowNormal } from '../types'
   import { getRoomLabel } from '../utils'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let room: Room
   export let cellSize: number

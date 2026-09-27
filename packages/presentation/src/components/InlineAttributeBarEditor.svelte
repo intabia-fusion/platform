@@ -15,9 +15,10 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
+  import { getAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'
 
   export let key: KeyedAttribute | string

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { highlightRuns } from '@hcengineering/text'
   import { Component, Icon, Label, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'

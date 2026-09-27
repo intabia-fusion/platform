@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
+  import type { FileUploadCallbackParams } from '@hcengineering/uploader'
+  import { uploadFiles } from '@hcengineering/uploader'
   import UploadDuo from './icons/UploadDuo.svelte'
 
   export let doc: Card

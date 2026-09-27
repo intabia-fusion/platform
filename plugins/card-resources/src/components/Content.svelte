@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card } from '@hcengineering/card'
-  import { BlobType } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import card from '@hcengineering/card'
+  import type { BlobType } from '@hcengineering/core'
   import presentation, {
     deleteFile,
     FilePreview,

@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core, { toIdMap } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ColorDefinition } from '@hcengineering/ui'
   import {
-    ColorDefinition,
     getColorNumberByText,
     getPlatformColorDef,
     resizeObserver,

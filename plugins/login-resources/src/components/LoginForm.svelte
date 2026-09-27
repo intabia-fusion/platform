@@ -31,7 +31,7 @@
   import LoginOtpForm from './LoginOtpForm.svelte'
   import BottomActionComponent from './BottomAction.svelte'
   import login from '../plugin'
-  import { LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo } from '@hcengineering/account-client'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false

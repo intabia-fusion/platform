@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label, Menu, showPopup, ModernButton, IconOptions } from '@hcengineering/ui'
   import { FileBrowserSortMode } from '..'
   import attachment from '../plugin'

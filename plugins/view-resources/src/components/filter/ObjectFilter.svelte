@@ -13,18 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    Doc,
-    DocumentQuery,
-    FindResult,
-    getObjectValue,
-    IndexKind,
-    Ref,
-    RefTo,
-    SortingOrder,
-    Space,
-    type WithLookup
-  } from '@hcengineering/core'
+  import type { Doc, DocumentQuery, FindResult, Ref, RefTo, Space } from '@hcengineering/core'
+  import { getObjectValue, IndexKind, SortingOrder, type WithLookup } from '@hcengineering/core'
   import { getResourceC, translate } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
@@ -39,7 +29,7 @@
     resizeObserver,
     themeStore
   } from '@hcengineering/ui'
-  import { Filter, GrouppingManager } from '@hcengineering/view'
+  import type { Filter, GrouppingManager } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '../../filter'
   import view from '../../plugin'

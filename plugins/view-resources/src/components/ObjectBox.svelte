@@ -14,21 +14,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref, mergeQueries } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import presentation, { ObjectCreate, getClient } from '@hcengineering/presentation'
-  import {
-    ActionIcon,
-    AnySvelteComponent,
-    Button,
-    ButtonKind,
-    ButtonSize,
-    Label,
-    LabelAndProps,
-    getEventPositionElement,
-    getFocusManager,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import { Hierarchy, mergeQueries } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { ObjectCreate } from '@hcengineering/presentation'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import type { AnySvelteComponent, ButtonKind, ButtonSize, LabelAndProps } from '@hcengineering/ui'
+  import { ActionIcon, Button, Label, getEventPositionElement, getFocusManager, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ObjectBoxPopup from './ObjectBoxPopup.svelte'

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum, EnumOf, IndexKind, Ref } from '@hcengineering/core'
+  import type { Enum, EnumOf, Ref } from '@hcengineering/core'
+  import core, { IndexKind } from '@hcengineering/core'
   import { TypeEnum } from '@hcengineering/model'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Button, Label, showPopup } from '@hcengineering/ui'

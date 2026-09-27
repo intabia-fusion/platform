@@ -14,9 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { PermissionsStore } from '@hcengineering/contact'
+  import type { PermissionsStore } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import attachment, { type Attachment } from '@hcengineering/attachment'
-  import core, { BlobType, type WithLookup } from '@hcengineering/core'
+  import type { BlobType } from '@hcengineering/core'
+  import core, { type WithLookup } from '@hcengineering/core'
   import presentation, {
     canPreviewFile,
     getBlobRef,
@@ -31,7 +33,7 @@
   import { filesize } from 'filesize'
   import { createEventDispatcher, onMount } from 'svelte'
   import { getResource } from '@hcengineering/platform'
-  import { Readable } from 'svelte/store'
+  import type { Readable } from 'svelte/store'
   import {
     getCustomPresenter,
     getType,

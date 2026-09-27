@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Class, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ControlledDocument, DocumentApprovalRequest } from '@hcengineering/controlled-documents'
+  import type { ControlledDocument, DocumentApprovalRequest } from '@hcengineering/controlled-documents'
 
   import EditDoc from '../EditDoc.svelte'
 

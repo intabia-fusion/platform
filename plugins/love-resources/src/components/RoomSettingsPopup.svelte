@@ -15,9 +15,9 @@
 <script lang="ts">
   import { Modal, NavItem } from '@hcengineering/ui'
   import presentation from '@hcengineering/presentation'
-  import { Room } from '@hcengineering/love'
+  import type { Room } from '@hcengineering/love'
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   import RoomTranscriptionSettings from './RoomTranscriptionSettings.svelte'
   import love from '../plugin'

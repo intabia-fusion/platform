@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TaskType } from '@hcengineering/task'
-  import { UpdateFieldValuePostFnConfig } from '@hcengineering/workflow'
+  import type { TaskType } from '@hcengineering/task'
+  import type { UpdateFieldValuePostFnConfig } from '@hcengineering/workflow'
 
   import FieldsListPresenter from '../../presenters/FieldsListPresenter.svelte'
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { TaskTypeIcon } from '@hcengineering/task-resources'
-  import { type IconSize } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
 
   export let value: TaskType | undefined
   export let size: IconSize = 'small'

@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { ActionContext, createQuery } from '@hcengineering/presentation'
   import { TaskKindSelector } from '@hcengineering/task-resources'
-  import tracker, { Component, IssueDraft, Milestone, Project } from '@hcengineering/tracker'
+  import type { Component, IssueDraft, Milestone, Project } from '@hcengineering/tracker'
+  import tracker from '@hcengineering/tracker'
   import { IconCircles, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

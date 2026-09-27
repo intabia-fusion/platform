@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Card, CardEvents, MasterTag } from '@hcengineering/card'
-  import { AnyAttribute, fillDefaults, Ref } from '@hcengineering/core'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import { CardEvents } from '@hcengineering/card'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
+  import { fillDefaults } from '@hcengineering/core'
   import { Card as CardModal, getClient } from '@hcengineering/presentation'
   import ui, { Label } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'

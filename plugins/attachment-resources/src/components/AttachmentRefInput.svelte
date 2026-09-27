@@ -14,8 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment, AttachmentMetadata } from '@hcengineering/attachment'
-  import {
+  import type { Attachment, AttachmentMetadata } from '@hcengineering/attachment'
+  import type {
     Blob as PlatformBlob,
     BlobMetadata,
     Class,
@@ -23,13 +23,13 @@
     IdMap,
     Markup,
     PersonId,
-    RateLimiter,
     Ref,
-    Space,
-    generateId,
-    toIdMap
+    Space
   } from '@hcengineering/core'
-  import { Asset, IntlString, getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import { RateLimiter, generateId, toIdMap } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import type { LinkPreviewAttachmentMetadata } from '@hcengineering/presentation'
   import {
     DraftController,
     canDisplayLinkPreview,
@@ -40,7 +40,6 @@
     getClient,
     isLinkPreviewEnabled,
     uploadFile,
-    LinkPreviewAttachmentMetadata,
     generateFileId,
     MessageBox
   } from '@hcengineering/presentation'

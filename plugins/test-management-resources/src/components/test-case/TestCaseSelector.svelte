@@ -14,13 +14,14 @@
 -->
 
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
-  import { Button, ButtonKind, ButtonShape, ButtonSize, Label } from '@hcengineering/ui'
-  import { TestCase, TestProject } from '@hcengineering/test-management'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonShape, ButtonSize } from '@hcengineering/ui'
+  import { Button, Label } from '@hcengineering/ui'
+  import type { TestCase, TestProject } from '@hcengineering/test-management'
 
   import testManagement from '../../plugin'
   import { showSelectTestCasesPopup } from '../../utils'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   export let objects: TestCase[]
   export let label: IntlString = testManagement.string.SelectedTestCases

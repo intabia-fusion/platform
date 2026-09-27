@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ProcessContextView } from '../../types'
+  import type { ProcessContextView } from '../../types'
   import ProcessContextRawPresenter from './ProcessContextRawPresenter.svelte'
 
   export let context: ProcessContextView

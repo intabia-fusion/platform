@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { FindOptions, SortingOrder } from '@hcengineering/core'
+  import type { FindOptions } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { ObjectPopup, getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/task'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
   import IssueStatusIcon from '../IssueStatusIcon.svelte'

@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { FindOptions, Ref, SortingOrder } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import type { FindOptions, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import presentation, { Card } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
   import { Button, IconAdd, Scroller, showPopup, tableSP } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'

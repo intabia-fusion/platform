@@ -1,6 +1,6 @@
 <script lang="ts" generics="T extends string">
   import Switcher from './Switcher.svelte'
-  import { IModeSelector } from '../utils'
+  import type { IModeSelector } from '../utils'
 
   export let props: IModeSelector
   export let kind: 'nuance' | 'subtle' = 'nuance'

@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { getName, Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
   import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
   import { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'

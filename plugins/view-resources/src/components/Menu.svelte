@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
-  import { Action, Menu } from '@hcengineering/ui'
-  import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
+  import type { Action } from '@hcengineering/ui'
+  import { Menu } from '@hcengineering/ui'
+  import type { Action as ViewAction, ViewContextType } from '@hcengineering/view'
   import { actionGroupOrder, getActions, invokeAction } from '../actions'
 
   export let object: Doc | Doc[]

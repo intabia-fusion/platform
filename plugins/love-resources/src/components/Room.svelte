@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ActionContext } from '@hcengineering/presentation'
-  import { Room as TypeRoom } from '@hcengineering/love'
+  import type { Room as TypeRoom } from '@hcengineering/love'
   import { getMetadata } from '@hcengineering/platform'
   import { Label, Loading, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'

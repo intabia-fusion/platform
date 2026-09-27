@@ -16,7 +16,7 @@
   import { Component, SelectPopup, showPopup } from '@hcengineering/ui'
   import type { MouseTargetEvent } from '@hcengineering/ui'
   import { NavLink } from '../..'
-  import { BreadcrumbsModel } from './types'
+  import type { BreadcrumbsModel } from './types'
   import { hasComponent } from './utils'
 
   export let models: readonly BreadcrumbsModel[]

@@ -16,7 +16,7 @@
 <script lang="ts">
   import platform, { getMetadata, setMetadata, OK, Severity, Status } from '@hcengineering/platform'
   import { Analytics } from '@hcengineering/analytics'
-  import { type LoginInfo, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
   import presentation from '@hcengineering/presentation'
   import { type Location, getCurrentLocation, navigate, setMetadataLocalStorage } from '@hcengineering/ui'
   import { logIn, workbenchId } from '@hcengineering/workbench'

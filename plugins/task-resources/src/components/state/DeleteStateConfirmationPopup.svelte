@@ -1,9 +1,10 @@
 <script lang="ts">
   import { DeleteConfirmationPopup } from '@hcengineering/contact-resources'
-  import { Status } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import task, { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { ButtonMenu } from '@hcengineering/ui'
 
   export let object: Status

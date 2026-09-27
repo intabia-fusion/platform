@@ -13,15 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { SocialIdentity, SocialIdentityProvider, SocialIdentityRef } from '@hcengineering/contact'
+  import type { SocialIdentity, SocialIdentityProvider, SocialIdentityRef } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { SocialIdentityPresenter } from '@hcengineering/contact-resources'
-  import {
-    getCurrentAccount,
-    loginSocialTypes,
-    pickPrimarySocialId,
-    setCurrentAccount,
-    SocialId
-  } from '@hcengineering/core'
+  import type { SocialId } from '@hcengineering/core'
+  import { getCurrentAccount, loginSocialTypes, pickPrimarySocialId, setCurrentAccount } from '@hcengineering/core'
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import { getPlatformColorDef, Label, PaletteColorIndexes, showPopup, themeStore } from '@hcengineering/ui'

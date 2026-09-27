@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@hcengineering/contact'
-  import { Data } from '@hcengineering/core'
-  import { translateCB, IntlString } from '@hcengineering/platform'
+  import type { Channel } from '@hcengineering/contact'
+  import type { Data } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { copyTextToClipboard, isDisabled } from '@hcengineering/presentation'
+  import type { PopupOptions } from '@hcengineering/ui'
   import {
     Button,
     FocusHandler,
@@ -24,7 +26,6 @@
     IconBlueCheck,
     IconClose,
     IconMoreV,
-    PopupOptions,
     createFocusManager,
     getEventPopupPositionElement,
     registerFocus,

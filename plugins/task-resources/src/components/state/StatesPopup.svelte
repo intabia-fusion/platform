@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, Status } from '@hcengineering/core'
+  import type { IdMap, Ref, Status } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import task, { Project, ProjectType } from '@hcengineering/task'
+  import type { Project, ProjectType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { resizeObserver } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

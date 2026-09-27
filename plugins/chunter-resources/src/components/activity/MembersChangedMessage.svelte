@@ -14,11 +14,12 @@
 -->
 
 <script lang="ts">
-  import { DocAttributeUpdates, DocUpdateMessage } from '@hcengineering/activity'
-  import { Employee, Person } from '@hcengineering/contact'
-  import { AccountUuid, notEmpty, PersonId } from '@hcengineering/core'
+  import type { DocAttributeUpdates, DocUpdateMessage } from '@hcengineering/activity'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import type { AccountUuid, PersonId } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { PersonPresenter, employeeByAccountStore, employeeByPersonIdStore } from '@hcengineering/contact-resources'
-  import { ChunterSpace } from '@hcengineering/chunter'
+  import type { ChunterSpace } from '@hcengineering/chunter'
   import { Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 

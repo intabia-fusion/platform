@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Doc, Mixin } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Doc, Mixin } from '@hcengineering/core'
   import { getDocMixins } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
 

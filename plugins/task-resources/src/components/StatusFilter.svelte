@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, FindResult, IdMap, Ref, RefTo, Space, Status, toIdMap } from '@hcengineering/core'
+  import type { Doc, FindResult, IdMap, Ref, RefTo, Space, Status } from '@hcengineering/core'
+  import core, { toIdMap } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
   import ui, {
     EditWithIcon,
     Icon,
@@ -29,7 +30,7 @@
     resizeObserver,
     themeStore
   } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import {
     FILTER_DEBOUNCE_MS,
     FilterRemovedNotification,

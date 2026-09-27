@@ -14,22 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Space } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import {
-    AnySvelteComponent,
-    Icon,
-    IconFolder,
-    IconSize,
-    Label,
-    getPaletteColorDef,
-    themeStore
-  } from '@hcengineering/ui'
+  import type { Space } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { Icon, IconFolder, Label, getPaletteColorDef, themeStore } from '@hcengineering/ui'
   import IconWithEmoji from './IconWithEmoji.svelte'
-  import view, { IconProps } from '@hcengineering/view'
+  import type { IconProps } from '@hcengineering/view'
+  import view from '@hcengineering/view'
 
   import presentation from '..'
-  import { ComponentType } from 'svelte'
+  import type { ComponentType } from 'svelte'
 
   export let value: Space & IconProps
   export let subtitle: string | undefined = undefined

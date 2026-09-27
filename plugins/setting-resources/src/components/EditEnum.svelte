@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum } from '@hcengineering/core'
+  import type { Enum } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import {
     IconAdd,
@@ -35,7 +36,7 @@
   import EnumValuesList from './EnumValuesList.svelte'
   import IconBulletList from './icons/BulletList.svelte'
   import Report from './icons/Report.svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let value: Enum | undefined
   export let name: string = value?.name ?? ''

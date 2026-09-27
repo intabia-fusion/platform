@@ -14,31 +14,22 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import {
+  import type {
     ContextId,
-    createContext,
     MethodParams,
-    parseContext,
     Process,
     ProcessToDo,
     SelectedContext,
     SelectedExecutionContext
   } from '@hcengineering/process'
-  import ui, {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    eventToHTMLElement,
-    Label,
-    SelectPopup,
-    SelectPopupValueType,
-    showPopup
-  } from '@hcengineering/ui'
+  import { createContext, parseContext } from '@hcengineering/process'
+  import type { ButtonKind, ButtonSize, SelectPopupValueType } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Label, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'
   import ProcessContextPresenter from './ProcessContextPresenter.svelte'
-  import { Class, Ref } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
 
   export let readonly: boolean
   export let process: Process

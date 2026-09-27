@@ -17,10 +17,11 @@
 <script lang="ts">
   import { getResource } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import textEditor, { ActionContext, TextEditorAction } from '@hcengineering/text-editor'
-  import { NodeViewProps } from '../../node-view'
+  import type { ActionContext, TextEditorAction } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
+  import type { NodeViewProps } from '../../node-view'
   import TextActionButton from '../../TextActionButton.svelte'
-  import { type ToolbarCursor } from './toolbar'
+  import type { ToolbarCursor } from './toolbar'
   import { Component } from '@hcengineering/ui'
 
   export let editor: NodeViewProps['editor']

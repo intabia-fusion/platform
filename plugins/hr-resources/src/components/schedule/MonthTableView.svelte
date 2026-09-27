@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import type { Doc, Ref } from '@hcengineering/core'
   import type { Request, RequestType, Staff } from '@hcengineering/hr'
-  import { Department } from '@hcengineering/hr'
+  import type { Department } from '@hcengineering/hr'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, DropdownIntlItem, Label, Loading, showPopup, tableToCSV } from '@hcengineering/ui'
-  import { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { TableBrowser, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import hr from '../../plugin'
+  import type { EmployeeReports } from '../../utils'
   import {
-    EmployeeReports,
     getEndDate,
     getHolidayDatesForEmployee,
     getMonth,

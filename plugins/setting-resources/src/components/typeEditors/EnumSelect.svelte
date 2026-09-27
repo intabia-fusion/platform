@@ -14,19 +14,12 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import {
-    Label,
-    showPopup,
-    IconFolder,
-    Button,
-    eventToHTMLElement,
-    getFocusManager,
-    TooltipAlignment
-  } from '@hcengineering/ui'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Label, showPopup, IconFolder, Button, eventToHTMLElement, getFocusManager } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
   import EnumPopup from './EnumPopup.svelte'
-  import core, { Ref, Class, DocumentQuery, Enum } from '@hcengineering/core'
-  import { ObjectCreate } from '@hcengineering/presentation'
+  import type { Ref, Class, DocumentQuery, Enum } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { ObjectCreate } from '@hcengineering/presentation'
 
   export let label: IntlString
   export let value: Enum | undefined

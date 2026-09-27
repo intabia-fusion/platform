@@ -5,7 +5,7 @@
   //
   import { createEventDispatcher } from 'svelte'
   import { Label, closeTooltip, ModernCheckbox } from '@hcengineering/ui'
-  import { Emoji } from '@hcengineering/emoji'
+  import type { Emoji } from '@hcengineering/emoji'
   import { skinTones } from '../types'
   import { getEmojiSkins } from '../utils'
 

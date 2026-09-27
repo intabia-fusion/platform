@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let label: IntlString | undefined = undefined
   export let rawLabel: string | undefined = undefined

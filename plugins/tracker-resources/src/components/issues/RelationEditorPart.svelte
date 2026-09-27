@@ -1,9 +1,10 @@
 <script lang="ts">
   import chunter from '@hcengineering/chunter'
-  import { Class, Doc, Ref, RelatedDocument, WithLookup } from '@hcengineering/core'
-  import { IntlString, getResource } from '@hcengineering/platform'
+  import type { Class, Doc, Ref, RelatedDocument, WithLookup } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { Component, Icon, IconClose, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import activity from '@hcengineering/activity'

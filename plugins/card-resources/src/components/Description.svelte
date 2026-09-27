@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
-  import { Card } from '@hcengineering/card'
-  import { Blob, BlobMetadata, Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Blob, Ref } from '@hcengineering/core'
+  import { BlobMetadata } from '@hcengineering/core'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
   import { createEventDispatcher } from 'svelte'
 

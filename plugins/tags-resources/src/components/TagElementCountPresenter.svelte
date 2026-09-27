@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { TagElement } from '@hcengineering/tags'
-  import { AnySvelteComponent, Icon } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import type { TagElement } from '@hcengineering/tags'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
   import tags from '../plugin'
 
   export let value: TagElement

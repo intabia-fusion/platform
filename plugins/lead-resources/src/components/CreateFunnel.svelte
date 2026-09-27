@@ -15,19 +15,13 @@
 -->
 <script lang="ts">
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
-    getCurrentAccount,
-    Ref,
-    Role,
-    RolesAssignment,
-    SpaceType,
-    WithLookup,
-    notEmpty,
-    AccountUuid
-  } from '@hcengineering/core'
-  import lead, { Funnel, LeadEvents } from '@hcengineering/lead'
+  import type { Ref, Role, RolesAssignment, SpaceType, WithLookup, AccountUuid } from '@hcengineering/core'
+  import core, { getCurrentAccount, notEmpty } from '@hcengineering/core'
+  import type { Funnel } from '@hcengineering/lead'
+  import lead, { LeadEvents } from '@hcengineering/lead'
   import presentation, { getClient, SpaceCreateCard } from '@hcengineering/presentation'
-  import task, { ProjectType } from '@hcengineering/task'
+  import type { ProjectType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import ui, { Component, EditBox, Label, Toggle, ToggleWithLabel } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'

@@ -17,7 +17,7 @@
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { getCurrentAccount } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { ToDo } from '@hcengineering/time'
+  import type { ToDo } from '@hcengineering/time'
   import { CheckBox, Label } from '@hcengineering/ui'
   import time from '../plugin'
   import WorkItemPresenter from './WorkItemPresenter.svelte'

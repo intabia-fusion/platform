@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, getCurrentAccount, Ref, Space } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
   import {
     Button,
     defineSeparators,
@@ -27,9 +28,9 @@
     panelSeparators,
     Separator
   } from '@hcengineering/ui'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
-  import { Channel, ObjectChatPanel } from '@hcengineering/chunter'
+  import type { Channel, ObjectChatPanel } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
   import { messageInFocus } from '@hcengineering/activity-resources'
   import { Presence } from '@hcengineering/presence-resources'

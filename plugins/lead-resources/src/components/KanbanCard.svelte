@@ -25,7 +25,7 @@
   import task from '@hcengineering/task'
   import { AssigneePresenter, StateRefPresenter } from '@hcengineering/task-resources'
   import { ActionIcon, Component, DueDatePresenter, IconMoreH } from '@hcengineering/ui'
-  import { BuildModelKey } from '@hcengineering/view'
+  import type { BuildModelKey } from '@hcengineering/view'
   import { enabledConfig, openDoc, showMenu, statusStore } from '@hcengineering/view-resources'
   import tracker from '@hcengineering/tracker'
 

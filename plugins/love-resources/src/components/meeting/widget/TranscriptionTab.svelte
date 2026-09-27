@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes, Room } from '@hcengineering/love'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { ChannelEmbeddedContent } from '@hcengineering/chunter-resources'
-  import { WidgetState } from '@hcengineering/workbench-resources'
+  import type { WidgetState } from '@hcengineering/workbench-resources'
 
   export let widgetState: WidgetState
   export let meetingMinutes: MeetingMinutes

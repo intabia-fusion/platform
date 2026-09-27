@@ -14,20 +14,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@hcengineering/core'
-  import { IntlString, Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
+  import type { Class, Data, Ref, RefTo, Status } from '@hcengineering/core'
+  import core, { ClassifierKind, generateId, toIdMap } from '@hcengineering/core'
+  import type { IntlString, Resource } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getResource } from '@hcengineering/platform'
   import presentation, { getClient, hasResource } from '@hcengineering/presentation'
+  import type { ProjectType, ProjectTypeDescriptor, Task, TaskType, TaskTypeDescriptor } from '@hcengineering/task'
+  import { createState, findStatusAttr } from '@hcengineering/task'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
-    ProjectType,
-    ProjectTypeDescriptor,
-    Task,
-    TaskType,
-    TaskTypeDescriptor,
-    createState,
-    findStatusAttr
-  } from '@hcengineering/task'
-  import {
-    DropdownIntlItem,
     Icon,
     IconError,
     Modal,
