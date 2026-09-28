@@ -109,10 +109,22 @@ describe('shouldSuppressPush', () => {
 
 describe('canSuppressPush', () => {
   it('allows a silent push on Chromium, which exempts a focused tab, and refuses it on WebKit', () => {
-    expect(canSuppressPush('Mozilla/5.0 (Macintosh) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36')).toBe(true)
-    expect(canSuppressPush('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 Edg/130.0')).toBe(true)
+    expect(
+      canSuppressPush('Mozilla/5.0 (Macintosh) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36')
+    ).toBe(true)
+    expect(
+      canSuppressPush(
+        'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 Edg/130.0'
+      )
+    ).toBe(true)
     expect(canSuppressPush('Mozilla/5.0 (X11; Linux) Gecko/20100101 Firefox/130.0')).toBe(true)
-    expect(canSuppressPush('Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15')).toBe(false)
-    expect(canSuppressPush('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1')).toBe(false)
+    expect(
+      canSuppressPush('Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15')
+    ).toBe(false)
+    expect(
+      canSuppressPush(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
+      )
+    ).toBe(false)
   })
 })

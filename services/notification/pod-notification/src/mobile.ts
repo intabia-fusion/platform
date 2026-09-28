@@ -109,7 +109,6 @@ function apnsConnect (): ClientHttp2Session {
 
 const DISMISS_KIND = 'dismiss'
 
-/** The alert payload: what iOS shows plus the keys the app routes and reconciles by. */
 export function apnsAlertPayload (data: PushData): Record<string, unknown> {
   return {
     aps: {
@@ -127,7 +126,6 @@ export function apnsAlertPayload (data: PushData): Record<string, unknown> {
   }
 }
 
-/** A background push: nothing to show, the app takes down what `tags`/`readUpTo` name. */
 export function apnsDismissPayload (data: PushDismissData): Record<string, unknown> {
   return {
     aps: { 'content-available': 1 },
@@ -139,12 +137,8 @@ export function apnsDismissPayload (data: PushDismissData): Record<string, unkno
   }
 }
 
-/**
- * An alert push, not a silent one: waking a sleeping phone is the whole point,
- * and `content-available` alone is throttled into "sometime later" by iOS.
- * `apns-collapse-id` makes the tag the notification's identifier on the device,
- * so a dismiss can name it.
- */
+// An alert, not a silent push: iOS throttles `content-available` alone. `apns-collapse-id`
+// makes the tag the notification's identifier on the device, so a dismiss can name it.
 export async function sendApns (token: string, data: PushData): Promise<Delivery> {
   return await apnsRequest(
     token,
@@ -157,11 +151,7 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
   )
 }
 
-/**
- * A background push (`content-available`, priority 5): iOS delivers it when it sees fit,
- * usually within seconds, never to an app the person force-quit. The alert it takes down
- * was worth a wake-up; its removal is not.
- */
+// A background push, priority 5: iOS delivers it when it sees fit, never to a force-quit app.
 export async function sendApnsDismiss (token: string, data: PushDismissData): Promise<Delivery> {
   return await apnsRequest(token, { 'apns-push-type': 'background', 'apns-priority': '5' }, apnsDismissPayload(data))
 }
@@ -294,7 +284,6 @@ export function fcmAlertMessage (token: string, data: PushData): Record<string, 
   }
 }
 
-/** Data only: nothing is drawn, `onMessageReceived` cancels the notifications named. */
 export function fcmDismissMessage (token: string, data: PushDismissData): Record<string, unknown> {
   return {
     token,
@@ -361,7 +350,6 @@ export function rustoreAlertMessage (token: string, data: PushData): Record<stri
   }
 }
 
-/** The FCM dismiss shape. */
 export function rustoreDismissMessage (token: string, data: PushDismissData): Record<string, unknown> {
   return {
     token,

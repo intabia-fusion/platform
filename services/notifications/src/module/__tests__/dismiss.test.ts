@@ -91,7 +91,13 @@ describe('dismissScopeOf with pushes still held', () => {
 })
 
 describe('pushDismissMessage with many tags', () => {
-  const context = { _id: 'ctx-1', user: 'user-1', objectId: 'doc-1', objectClass: 'DocClass', objectSpace: 'space-doc' } as any
+  const context = {
+    _id: 'ctx-1',
+    user: 'user-1',
+    objectId: 'doc-1',
+    objectClass: 'DocClass',
+    objectSpace: 'space-doc'
+  } as any
   const cache: any = { getPushSubscriptions: jest.fn().mockResolvedValue([{ _id: 'apns', endpoint: 'apns://t' }]) }
 
   it('splits the tags into messages of fifty, each with the read position and its own id', async () => {

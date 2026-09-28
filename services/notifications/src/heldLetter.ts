@@ -19,23 +19,21 @@ import type { QueueTopic } from '@hcengineering/server-core'
 import type { HeldPush } from './pendingPush'
 import type { Result, TimeMachineMessage } from './types'
 
-// A letter waits an hour or more, too long for a process redeployed daily: it is scheduled in the
-// time machine (services/worker), which fires it back on QueueTopic.HeldNotifications, where
-// Workspace.releaseHeld publishes it unless the person read the notification meanwhile.
+// A letter waits an hour or more: too long for memory, so it is scheduled in the time machine
+// (services/worker), which fires it back on QueueTopic.HeldNotifications (Workspace.releaseHeld).
 
 const LETTER = 'letter'
 
-// QueueTopic.HeldNotifications, spelled out: the module tests mock @hcengineering/core, and importing
-// server-core here would touch the real one while the mock is still being set up (heldLetter.test
+// Spelled out: importing server-core here breaks the module tests that mock core (heldLetter.test
 // checks the two agree).
 export const HELD_NOTIFICATIONS_TOPIC = 'held-notifications' as QueueTopic.HeldNotifications
 
-/** The time machine key: a second schedule of the same letter moves its due date, as a hold would. */
+/** The time machine key; a second schedule of it moves the due date. */
 export function heldLetterId (held: Pick<HeldPush, 'account' | 'notificationId' | 'provider'>): string {
   return `${LETTER}:${held.account}:${held.notificationId}:${held.provider}`
 }
 
-/** Every letter of the notification, whatever the provider (`%` is the time machine's wildcard). */
+/** Every letter of the notification, whatever the provider. */
 export function heldLetterPattern (account: AccountUuid, notificationId: string): string {
   return `${LETTER}:${account}:${notificationId}:%`
 }
@@ -51,7 +49,6 @@ export function scheduleLetter (result: Result, held: HeldPush, holdMs: number, 
   result.timeMachine.push(schedule)
 }
 
-/** The notifications were read or are gone: their letters are not needed. */
 export function cancelLetters (result: Result, account: AccountUuid, notificationIds: string[]): void {
   for (const id of notificationIds) {
     const cancel: TimeMachineMessage = { type: 'cancel', id: heldLetterPattern(account, id) }

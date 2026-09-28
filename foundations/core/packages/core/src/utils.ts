@@ -1017,6 +1017,16 @@ export function pickPrimarySocialId (socialIds: SocialId[]): SocialId {
   return hulySocialIds[0] ?? activeSocialIds[0]
 }
 
+export function pickVerifiedEmail (socialIds: SocialId[]): string | undefined {
+  return socialIds.find(
+    (id) =>
+      (id.type === SocialIdType.EMAIL || id.type === SocialIdType.GOOGLE) &&
+      id.verifiedOn !== undefined &&
+      id.verifiedOn > 0 &&
+      id.isDeleted !== true
+  )?.value
+}
+
 export const loginSocialTypes = [SocialIdType.EMAIL, SocialIdType.GOOGLE, SocialIdType.GITHUB, SocialIdType.OIDC]
 
 export function notEmpty<T> (id: T | undefined | null): id is T {

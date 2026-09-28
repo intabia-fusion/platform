@@ -62,7 +62,7 @@ export function cancelHeldPushes (
 ): Set<string> {
   const cancelled = new Set<string>()
   if (readUpTo > 0) {
-    for (const id of client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo) ?? []) cancelled.add(id)
+    for (const id of client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo) ?? []) { cancelled.add(id) }
   }
   for (const id of notificationIds) {
     if (client.pendingPush?.cancel(context.user, id) === true) cancelled.add(id)
@@ -92,7 +92,10 @@ export async function pushDismissMessage (
   for (const tags of chunks) {
     const message: QueueDismissMessage = {
       kind: 'dismiss',
-      id: read.readUpTo > 0 ? `dismiss:${context._id}:${read.readUpTo}${tags === chunks[0] ? '' : `:${tags[0]}`}` : `dismiss:${context._id}:${tags[0]}`,
+      id:
+        read.readUpTo > 0
+          ? `dismiss:${context._id}:${read.readUpTo}${tags === chunks[0] ? '' : `:${tags[0]}`}`
+          : `dismiss:${context._id}:${tags[0]}`,
       account: context.user,
       objectId: context.objectId,
       objectClass: context.objectClass,

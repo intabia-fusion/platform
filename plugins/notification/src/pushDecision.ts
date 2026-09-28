@@ -16,9 +16,8 @@
 import type { Doc, Ref } from '@hcengineering/core'
 import type { PushData } from './types'
 
-// Messages between a tab and the service worker.
-
-/** The worker asks a tab what it shows; the reply comes back over the port sent with the query. */
+// Messages between a tab and the service worker: the worker asks what a tab shows (the reply
+// comes back over the port sent along), and tells a tab that a notification was clicked.
 export const VIEWING_QUERY = 'viewing-query'
 export interface ViewingQueryMessage {
   type: typeof VIEWING_QUERY
@@ -27,11 +26,9 @@ export interface ViewingQueryMessage {
 export const VIEWING_REPLY = 'viewing'
 export interface ViewingReplyMessage {
   type: typeof VIEWING_REPLY
-  // The main panel's object and the sidebar's, when there is one.
   objectIds: Array<Ref<Doc>>
 }
 
-/** The worker tells a tab that a notification was clicked; the tab navigates and drops the app push. */
 export const NOTIFICATION_CLICK = 'notification-click'
 export interface NotificationClickMessage {
   type: typeof NOTIFICATION_CLICK
@@ -41,16 +38,12 @@ export interface NotificationClickMessage {
 
 export type PushVisibilityState = 'visible' | 'hidden'
 
-/**
- * Whether a push may show nothing when a focused tab shows the document. Chromium exempts a
- * focused tab of the origin from its "show something" rule; WebKit does not and revokes the
- * subscription after a few silent pushes, so there the notification is shown regardless.
- */
+// Chromium lets a focused tab of the origin skip the notification; WebKit revokes the
+// subscription after a few silent pushes instead.
 export function canSuppressPush (userAgent: string): boolean {
   return !(userAgent.includes('AppleWebKit') && !/Chrom(e|ium)|Edg|OPR/.test(userAgent))
 }
 
-/** The part of a service worker `WindowClient` the decision needs. */
 export interface PushWindowClient {
   id?: string
   focused: boolean
@@ -58,17 +51,11 @@ export interface PushWindowClient {
   url: string
 }
 
-/** What each tab reported it shows, by client id; a tab that did not answer in time is absent. */
+// What each tab reported it shows, by client id; a tab that did not answer is absent.
 export type ViewedObjects = ReadonlyMap<string, ReadonlyArray<Ref<Doc>>>
 
-/**
- * A push about a document the person is looking at right now is noise: the message is already
- * on the screen. "Looking at" means a focused, visible window that shows the document either in
- * its main panel or in the sidebar. The tab reports both when the worker asks (`viewing`); the
- * path is the fallback for a tab that did not answer: it addresses a document as `<id>`,
- * `<id>|<class>` (objects) or `<name>-<id>` (channels and directs, see chunter-resources
- * `encodeChatURI`), and a thread by its root message id.
- */
+// No push about a document a focused, visible tab shows (main panel or sidebar, as the tab
+// reported); for a tab that did not answer, the URL path decides.
 export function shouldSuppressPush (
   payload: Pick<PushData, 'objectId'>,
   clients: readonly PushWindowClient[],
@@ -83,6 +70,7 @@ export function shouldSuppressPush (
   })
 }
 
+// A path segment names a document as `<id>`, `<id>|<class>` or `<name>-<id>` (encodeChatURI).
 function pathAddresses (url: string, objectId: Ref<Doc>): boolean {
   let pathname: string
   try {

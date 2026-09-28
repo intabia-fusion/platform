@@ -104,15 +104,10 @@ const publishBackoff = DelayStrategyFactory.exponentialBackoff({
 
 // Network failures and transactor-side outages are worth a retry; a rejected batch (bad request,
 // policy reject, forbidden) is not.
-// Ids per query when the held pushes of many documents are checked at once.
 const READ_CHECK_CHUNK = 200
 
-/**
- * Which of the held pushes the person read meanwhile, one answer per push in order. From the DB,
- * not the cache: a read the cache knows of already cancelled its hold. A message is read when
- * the `ReadState` position passed it; the rest when its id left the context's unread list (a
- * context that is gone has nothing left to push). One query per chunk of documents.
- */
+// Which held pushes were read meanwhile, one answer per push in order. From the DB, not the
+// cache: a read the cache knows of already cancelled its hold. One query per chunk of documents.
 export async function areHeldPushesRead (ctx: MeasureContext, pipeline: Pipeline, held: HeldPush[]): Promise<boolean[]> {
   const byPosition = held.filter((it) => it.readBy === 'position')
   const byList = held.filter((it) => it.readBy !== 'position')
@@ -172,7 +167,6 @@ export function isTransientError (e: unknown): boolean {
 class Workspace {
   public readonly cache: WorkspaceCache
 
-  // Txes and fired letters are processed concurrently: close() waits for all of them.
   private readonly inProgress = new Set<Promise<void>>()
   private lastUpdate: Timestamp | undefined = Date.now()
 
@@ -224,8 +218,7 @@ class Workspace {
     await this.track(this.processTx(tx))
   }
 
-  // A letter the time machine fired at its due time: it goes out unless the person read the
-  // notification meanwhile (see heldLetter.ts).
+  // A letter the time machine fired: out unless read meanwhile (heldLetter.ts).
   async releaseHeld (held: HeldPush): Promise<void> {
     await this.track(
       (async () => {
@@ -236,7 +229,6 @@ class Workspace {
     )
   }
 
-  // Work that close() has to wait for, and that keeps the workspace from idling out.
   private async track (run: Promise<void>): Promise<void> {
     this.lastUpdate = Date.now()
     this.inProgress.add(run)
@@ -258,8 +250,7 @@ class Workspace {
       this.model.addTxes(this.ctx, [tx], true)
     }
 
-    // The status as the cache knew it before this tx: a removal takes the record out of the
-    // cache, and the account it belonged to is only known from this copy.
+    // The status before this tx: a removal takes it out of the cache, and only this copy names the account.
     const isUserStatus = this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)
     const statusBefore = isUserStatus ? this.cache.getCachedUserStatus(tx.objectId as Ref<UserStatus>) : undefined
 
@@ -355,7 +346,7 @@ class Workspace {
       }
     }
 
-    // The inbox entries are in by now; the native pushes about them start waiting.
+    // The inbox entries are in; now the native pushes about them wait.
     for (const held of result.heldPushes) this.pendingPush.hold(held)
 
     if (result.queueMessages.length > 0) {
@@ -380,8 +371,7 @@ class Workspace {
           delayStrategy: publishBackoff
         })
       } catch (e: unknown) {
-        // A lost schedule is a letter that never goes; a lost cancel is a letter the check when it
-        // fires will still drop if the notification was read.
+        // A lost cancel is harmless: the check when the letter fires drops it if read.
         this.ctx.error('Failed to send held letters to the time machine, they are lost', {
           error: e instanceof Error ? e.message : String(e),
           count: result.timeMachine.length,
@@ -399,9 +389,8 @@ class Workspace {
     })
   }
 
-  // The receiver left the computer (away) or the workspace (offline): what waited for them goes
-  // out now. `status` is the record as the cache knew it before this tx; a status the cache never
-  // saw cannot be mapped to its account, and the cap releases those pushes instead.
+  // The receiver left (away, offline): what waited for them goes out. A status the cache never
+  // saw names no account; the cap releases those pushes instead.
   private async releaseHeldPushes (tx: TxCUD<Doc>, status: UserStatus | undefined): Promise<void> {
     if (this.pendingPush.size === 0) return
     if (status === undefined) return
@@ -530,7 +519,7 @@ class Workspace {
   async close (): Promise<void> {
     // A restore event can drop the workspace mid-tx; the pipeline has to outlive that tx.
     await Promise.allSettled(Array.from(this.inProgress))
-    // Held pushes go out before the pipeline closes: their read check runs through it.
+    // Before the pipeline closes: the read check runs through it.
     await this.pendingPush.flushAll()
     try {
       await this.pipeline.close()

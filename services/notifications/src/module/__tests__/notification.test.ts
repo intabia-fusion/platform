@@ -887,7 +887,10 @@ describe('pushNotification', () => {
     })
 
     it('schedules no letter for a notification without a template: nothing waits, the email provider goes at once', async () => {
-      mockData.notifyProviders = { ...providers, [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }] }
+      mockData.notifyProviders = {
+        ...providers,
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+      }
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 

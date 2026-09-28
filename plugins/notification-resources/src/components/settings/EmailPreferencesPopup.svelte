@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
+  import { getCurrentAccount, pickVerifiedEmail } from '@hcengineering/core'
   import notification, {
     type NotificationProvider,
     type NotificationProviderSetting
@@ -31,19 +31,12 @@
 
   const dispatch = createEventDispatcher()
 
-  // The popup outlives a change of the setting made inside it: follow the document.
   const settingQuery = createQuery()
   $: settingQuery.query(notification.class.NotificationProviderSetting, { attachedTo: provider._id }, (result) => {
     setting = result[0] ?? setting
   })
 
-  const email = getCurrentAccount().fullSocialIds.find(
-    (it) =>
-      (it.type === SocialIdType.EMAIL || it.type === SocialIdType.GOOGLE) &&
-      it.verifiedOn !== undefined &&
-      it.verifiedOn > 0 &&
-      it.isDeleted !== true
-  )?.value
+  const email = pickVerifiedEmail(getCurrentAccount().fullSocialIds)
 </script>
 
 <Modal

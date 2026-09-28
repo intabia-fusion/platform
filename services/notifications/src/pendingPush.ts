@@ -16,48 +16,38 @@
 import type { AccountUuid, Doc, Ref, Timestamp } from '@hcengineering/core'
 import type { ContextNotification, NotificationProvider, QueueNotifyMessage } from '@hcengineering/notification'
 
-/**
- * How a read of the held notification shows up: a chat message is read when the account's
- * `ReadState` position passes its `createdOn`; a reaction, a mention outside a message or a
- * common notification is read when its id leaves the matching `unread*` list of the context.
- */
+// How a read shows up: a message by the `ReadState` position, the rest by its id leaving the
+// context's `unread*` list.
 export type HeldReadBy = 'position' | 'reactions' | 'mentions' | 'commons'
 
 export interface HeldPush {
   account: AccountUuid
-  // The notification id, the push's tag.
   notificationId: ContextNotification['id']
   objectId: Ref<Doc>
   createdOn: Timestamp
   readBy: HeldReadBy
   provider: Ref<NotificationProvider>
-  // The part of the queue message this provider delivers, published if the hold ends unread.
+  // What this provider delivers, published if the hold ends unread.
   message: QueueNotifyMessage
 }
 
 export interface PendingPushOptions {
-  // The cap: a held push that is neither read nor released goes out after this.
+  // The cap on a hold.
   holdMs: number
-  // How often the due pushes are looked for; the tick runs only while something is held.
   sweepMs?: number
   publish: (message: QueueNotifyMessage) => Promise<void>
-  // Which of the pushes the person read meanwhile (see HeldReadBy), one answer per push in order.
-  // One call per batch: the pushes of one document need one lookup, not one each.
+  // Which of the pushes were read meanwhile, one answer per push in order; one call per batch.
   areRead: (held: HeldPush[]) => Promise<boolean[]>
-  // A failed check (the DB is away) is retried this much later, this many times; then the push
-  // goes out unchecked: a push the person may have read beats a push they never get.
+  // A failed check is retried this much later, this many times; then the push goes out unchecked.
   checkRetryMs?: number
   checkAttempts?: number
-  // A push that could not be published: it is lost.
   onError: (err: unknown, held: HeldPush) => void
-  // A check failed and the push waits for another try.
   onCheckFailed?: (err: unknown, held: HeldPush, attempt: number) => void
 }
 
 interface Entry {
   held: HeldPush
   dueAt: number
-  // Read checks that failed for this push so far.
   checkFailures: number
 }
 
@@ -65,13 +55,12 @@ export const DEFAULT_SWEEP_MS = 1000
 export const DEFAULT_CHECK_RETRY_MS = 5000
 export const DEFAULT_CHECK_ATTEMPTS = 3
 
-// While the receiver is at the computer the native push waits here: a read there cancels it,
-// leaving (away, offline) or the cap releases it. In memory only: a crash loses what waited, a
-// graceful close publishes it. One tick a second releases everything due in one batch.
+// The native pushes of people at the computer wait here: a read cancels, leaving or the cap
+// releases. In memory only; one tick a second releases everything due in one batch.
 export class PendingPushHolder {
   private readonly entries = new Map<string, Entry>()
   private timer: ReturnType<typeof setInterval> | undefined
-  // Releases in flight (their batch is out of `entries`), so that flushAll can wait for them.
+  // Releases in flight, for flushAll to wait for.
   private readonly inFlight = new Set<Promise<void>>()
   private closed = false
 
@@ -89,10 +78,9 @@ export class PendingPushHolder {
     return this.entries.size
   }
 
-  // A second hold of the same push (a redelivered tx) restarts its cap rather than doubling it.
+  // A second hold of the same push (a redelivered tx) restarts its cap.
   hold (held: HeldPush): void {
     if (this.closed) {
-      // Nothing waits after flushAll: out at once, unchecked.
       void this.options.publish(held.message).catch((err) => {
         this.options.onError(err, held)
       })
@@ -112,7 +100,6 @@ export class PendingPushHolder {
     }
   }
 
-  // The notification was read or is gone: nothing of it goes out, by any provider.
   cancel (account: AccountUuid, notificationId: string): boolean {
     const prefix = this.prefix(account, notificationId)
     let cancelled = false
@@ -122,8 +109,7 @@ export class PendingPushHolder {
     return cancelled
   }
 
-  // The account read the document up to `readUpTo`: the pushes read by position (messages) up
-  // to there are cancelled; the rest waits for its own id.
+  // Only the pushes read by position (messages): the rest waits for its own id.
   cancelByObject (account: AccountUuid, objectId: Ref<Doc>, readUpTo: Timestamp): string[] {
     const cancelled: string[] = []
     for (const [key, entry] of this.entries) {
@@ -140,13 +126,11 @@ export class PendingPushHolder {
     return cancelled
   }
 
-  // The account left the computer: what waited for it goes out now.
   async flushByAccount (account: AccountUuid): Promise<void> {
     await this.release((entry) => entry.held.account === account)
   }
 
-  // The service is closing: the releases in flight finish first, then the rest goes out, and a
-  // failed check publishes unchecked since nothing can wait for another try.
+  // Closing: the releases in flight finish, then the rest goes out, a failed check unchecked.
   async flushAll (): Promise<void> {
     this.closed = true
     while (this.inFlight.size > 0) await Promise.allSettled(Array.from(this.inFlight))
@@ -173,8 +157,7 @@ export class PendingPushHolder {
     return dropped
   }
 
-  // Ends the hold of every matching push: each goes out unless the person read it meanwhile.
-  // The batch is taken out first, so a cancel arriving during the check finds nothing to cancel.
+  // The batch leaves `entries` before the check: a cancel arriving meanwhile finds nothing.
   private async releaseWhere (match: (entry: Entry) => boolean, final = false): Promise<void> {
     const batch: Entry[] = []
     for (const [key, entry] of this.entries) {
@@ -188,7 +171,6 @@ export class PendingPushHolder {
     try {
       read = await this.options.areRead(batch.map((it) => it.held))
     } catch (err) {
-      // A deferred push counts as read for this round: it is not published now.
       read = batch.map((entry) => this.deferAfterFailedCheck(entry, err, final))
     }
     await Promise.all(
@@ -203,8 +185,7 @@ export class PendingPushHolder {
     )
   }
 
-  // Puts the push back for a later try; false when it is out of tries (or the holder is closing)
-  // and the push goes out unchecked.
+  // Back for a later try; false when out of tries or closing: the push goes out unchecked.
   private deferAfterFailedCheck (entry: Entry, err: unknown, final: boolean): boolean {
     const attempt = entry.checkFailures + 1
     if (final || this.closed || attempt >= (this.options.checkAttempts ?? DEFAULT_CHECK_ATTEMPTS)) return false
