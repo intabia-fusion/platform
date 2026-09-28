@@ -40,8 +40,10 @@ import {
   fcmConfigured,
   PushKind,
   pushTarget,
+  rustoreConfigured,
   sendApns,
   sendFcm,
+  sendRustore,
   sendTimeoutMs
 } from './mobile'
 import { getCtx } from './utils'
@@ -67,6 +69,16 @@ export async function sendPushToSubscription (
     }
     if (target.kind === PushKind.Fcm) {
       if (fcmConfigured() && (await sendFcm(target.token, data)) === Delivery.Gone) {
+        return subscription._id
+      }
+      return null
+    }
+    if (target.kind === PushKind.RuStore) {
+      if (!rustoreConfigured()) {
+        console.warn(`RuStore is not configured, skipping subscription ${subscription._id}`)
+        return null
+      }
+      if ((await sendRustore(target.token, data)) === Delivery.Gone) {
         return subscription._id
       }
       return null

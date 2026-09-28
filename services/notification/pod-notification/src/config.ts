@@ -35,6 +35,10 @@ interface Config {
   // FCM: the service-account JSON, verbatim.
   FcmServiceAccount?: string
 
+  // RuStore: project id and service token from RuStore Console -> Push notifications -> Projects.
+  RustoreProjectId?: string
+  RustoreServiceToken?: string
+
   TTL: number
 
   AccountsUrl: string
@@ -57,7 +61,9 @@ const envMap: { [key in keyof Required<Config>]: string } = {
   ApnsKey: 'APNS_KEY',
   ApnsTopic: 'APNS_TOPIC',
   ApnsProduction: 'APNS_PRODUCTION',
-  FcmServiceAccount: 'FCM_SERVICE_ACCOUNT'
+  FcmServiceAccount: 'FCM_SERVICE_ACCOUNT',
+  RustoreProjectId: 'RUSTORE_PROJECT_ID',
+  RustoreServiceToken: 'RUSTORE_SERVICE_TOKEN'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => {
@@ -85,7 +91,9 @@ const config: Config = (() => {
     ApnsKey: process.env[envMap.ApnsKey]?.replace(/\\n/g, '\n'),
     ApnsTopic: process.env[envMap.ApnsTopic],
     ApnsProduction: process.env[envMap.ApnsProduction] !== 'false',
-    FcmServiceAccount: process.env[envMap.FcmServiceAccount]
+    FcmServiceAccount: process.env[envMap.FcmServiceAccount],
+    RustoreProjectId: process.env[envMap.RustoreProjectId],
+    RustoreServiceToken: process.env[envMap.RustoreServiceToken]
   }
 
   const required: Array<keyof Config> = ['Source', 'AccountsUrl', 'Secret']
