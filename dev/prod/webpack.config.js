@@ -49,8 +49,11 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
 const doValidate = !prod || process.env.DO_VALIDATE === 'true'
 
-// Precompressed .gz/.br only matter for release images; front falls back to plain files.
-const doCompression = prod && process.env.DO_COMPRESS === 'true'
+// Precompressed assets; front falls back to plain files. Default .gz only (brotli 11 is most of the
+// compression time), DO_COMPRESS=true adds .br for release images, DO_COMPRESS=false skips both.
+const compress = process.env.DO_COMPRESS ?? 'gzip'
+const doCompression = prod && compress !== 'false'
+const doBrotli = prod && compress === 'true'
 
 const MinimizerPlugin = require('minimizer-webpack-plugin')
 const minifiers = {
@@ -712,12 +715,16 @@ module.exports = [
             algorithm: 'gzip',
             exclude: /\.map$/
           }),
-          new CompressionPlugin({
-            filename: '[path][base].br',
-            algorithm: 'brotliCompress',
-            compressionOptions: { level: 11 },
-            exclude: /\.map$/
-          })
+          ...(doBrotli
+            ? [
+                new CompressionPlugin({
+                  filename: '[path][base].br',
+                  algorithm: 'brotliCompress',
+                  compressionOptions: { level: 11 },
+                  exclude: /\.map$/
+                })
+              ]
+            : [])
         ]
         : []),
       new Dotenv({ path: prod ? '.env-prod' : '.env' }),

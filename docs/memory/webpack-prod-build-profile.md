@@ -43,6 +43,7 @@
 
 - Terser stays (esbuild gains ~4 s only).
 - Compression gated: `DO_COMPRESS=true` only in the GitHub release docker build step for `refs/tags/v*`/`s*` (the pushed images). Local, GitLab and uitest docker builds skip .gz/.br.
+- 2026-09-29: prod builds precompress .gz by default (`DO_COMPRESS` unset or `gzip`); `DO_COMPRESS=true` adds .br and is set only in the GitHub docker-build job for `refs/tags/v*`/`s*`; `DO_COMPRESS=false` skips both. Without precompressed files the stand shipped ~29 MB of plain JS per test, and nginx gzip on the fly cost more CPU than all services (see sanity_run_comparability.md). With only .gz present, a client sending `Accept-Encoding: br` without `gzip` would share the front static cache key with one that gets .gz; Chrome always sends both.
 - desktop: CompressionPlugin removed. electron-builder packs `./dist/**` into asar and windows use `loadFile`, so .gz were never read.
 - `package` phase cache hash does not include `DO_COMPRESS`: a cached local dist stays uncompressed.
 - front `index.ts` checks `request.accepts().includes('gzip')` (Accept, not Accept-Encoding), so it serves plain `index.html` either way.
