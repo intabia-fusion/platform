@@ -2,6 +2,12 @@
 
 Changelog.
 
+## [0.8.48] - 2026-09-28
+
+* 🚀 FEATURES: · fusio-203: Rework notifications ([#225](https://github.com/hcengineering/platform/issues/225))
+* 🐛 BUG FIXES: · FUSIO-1422: Fix love queue ([#480](https://github.com/hcengineering/platform/issues/480)) · FUSIO-1381/FUSIO-1378: Fix billing/api key response ([#475](https://github.com/hcengineering/platform/issues/475)) · FUSIO-779: Fix opening direct chat with person + links ([#474](https://github.com/hcengineering/platform/issues/474)) · fusio-1419: fix status order ([#477](https://github.com/hcengineering/platform/issues/477))
+* 🧩 OTHER: · Unit test refactor ([#443](https://github.com/hcengineering/platform/issues/443)) · Fix coverage stuck on CI · Switch to silo minio fork
+
 ## [0.8.47] - 2026-09-24
 
 * 🚀 FEATURES: · FUSIO-848 Letters for subscriptions moved to queue ([#419](https://github.com/hcengineering/platform/issues/419))
