@@ -343,8 +343,48 @@ async function fcmRequest (message: Record<string, unknown>): Promise<Delivery> 
 }
 
 // RuStore's send API mirrors FCM's shape (same message/notification/data/android
-// envelope) but authorizes with a static service token instead of a minted one.
+// envelope, data values strings only) but authorizes with a static service token
+// instead of a minted one.
+export function rustoreAlertMessage (token: string, data: PushData): Record<string, unknown> {
+  return {
+    token,
+    notification: { title: data.title, body: data.body },
+    data: fcmData({
+      url: data.url,
+      domain: data.domain,
+      tag: data.tag,
+      objectId: data.objectId,
+      objectClass: data.objectClass,
+      createdOn: data.createdOn
+    }),
+    android: { ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+  }
+}
+
+/** Data only, as for FCM: nothing is drawn, `onMessageReceived` cancels the notifications named. */
+export function rustoreDismissMessage (token: string, data: PushDismissData): Record<string, unknown> {
+  return {
+    token,
+    data: fcmData({
+      kind: DISMISS_KIND,
+      objectId: data.objectId,
+      objectClass: data.objectClass,
+      tags: JSON.stringify(data.tags),
+      readUpTo: data.readUpTo
+    }),
+    android: { ttl: `${config.TTL}s` }
+  }
+}
+
 export async function sendRustore (token: string, data: PushData): Promise<Delivery> {
+  return await rustoreRequest(rustoreAlertMessage(token, data))
+}
+
+export async function sendRustoreDismiss (token: string, data: PushDismissData): Promise<Delivery> {
+  return await rustoreRequest(rustoreDismissMessage(token, data))
+}
+
+async function rustoreRequest (message: Record<string, unknown>): Promise<Delivery> {
   try {
     const response = await fetch(
       `https://vkpns.rustore.ru/v1/projects/${config.RustoreProjectId as string}/messages:send`,
@@ -356,18 +396,7 @@ export async function sendRustore (token: string, data: PushData): Promise<Deliv
           Authorization: `Bearer ${config.RustoreServiceToken as string}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title: data.title, body: data.body },
-            data: {
-              ...(data.url !== undefined ? { url: data.url } : {}),
-              ...(data.domain !== undefined ? { domain: data.domain } : {}),
-              ...(data.tag !== undefined ? { tag: data.tag } : {})
-            },
-            android: { ttl: `${config.TTL}s`, notification: { tag: data.tag } }
-          }
-        })
+        body: JSON.stringify({ message })
       }
     )
     if (response.ok) return Delivery.Ok

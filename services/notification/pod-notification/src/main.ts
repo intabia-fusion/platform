@@ -48,6 +48,7 @@ import {
   sendFcm,
   sendFcmDismiss,
   sendRustore,
+  sendRustoreDismiss,
   sendTimeoutMs
 } from './mobile'
 import { getCtx } from './utils'
@@ -134,7 +135,12 @@ export async function sendDismissToSubscription (
       }
       return null
     }
-    // RuStore (came in with #483) gets no dismiss yet: its alert carries neither objectId nor createdOn.
+    if (target.kind === PushKind.RuStore) {
+      if (rustoreConfigured() && (await sendRustoreDismiss(target.token, data)) === Delivery.Gone) {
+        return subscription._id
+      }
+      return null
+    }
     return null
   })
   const results = await Promise.all(promises)

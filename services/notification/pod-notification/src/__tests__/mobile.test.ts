@@ -21,7 +21,9 @@ import {
   fcmAlertMessage,
   fcmDismissMessage,
   PushKind,
-  pushTarget
+  pushTarget,
+  rustoreAlertMessage,
+  rustoreDismissMessage
 } from '../mobile'
 
 jest.mock('../config', () => ({
@@ -89,6 +91,22 @@ describe('alert payloads', () => {
   it('FCM: leaves absent keys out of data', () => {
     expect(fcmAlertMessage('tok', { title: 'T', body: 'B' })).toMatchObject({ data: {} })
   })
+
+  it('RuStore: the FCM shape with the same reconciliation keys in data', () => {
+    expect(rustoreAlertMessage('tok', data)).toEqual({
+      token: 'tok',
+      notification: { title: 'Title', body: 'Body' },
+      data: {
+        url: 'https://app/x',
+        domain: 'https://app',
+        tag: 'msg-1',
+        objectId: 'doc-1',
+        objectClass: 'chunter:class:Channel',
+        createdOn: '1000'
+      },
+      android: { ttl: '86400s', notification: { tag: 'msg-1' } }
+    })
+  })
 })
 
 describe('dismiss payloads', () => {
@@ -116,6 +134,20 @@ describe('dismiss payloads', () => {
         readUpTo: '2000'
       },
       android: { priority: 'HIGH', ttl: '86400s' }
+    })
+  })
+
+  it('RuStore: data only, the FCM dismiss shape', () => {
+    expect(rustoreDismissMessage('tok', data)).toEqual({
+      token: 'tok',
+      data: {
+        kind: 'dismiss',
+        objectId: 'doc-1',
+        objectClass: 'chunter:class:Channel',
+        tags: '["msg-1","msg-2"]',
+        readUpTo: '2000'
+      },
+      android: { ttl: '86400s' }
     })
   })
 })
