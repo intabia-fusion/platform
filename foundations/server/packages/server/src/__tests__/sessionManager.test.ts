@@ -2180,6 +2180,12 @@ describe('TSessionManager', () => {
       ;(sessionManager as any).queueStatus(wsId, phone, true)
       expect(pending()).toEqual({ session: phone, online: true, away: true })
 
+      // A terminal left open counts no more than a phone: it reports no idleness.
+      const terminal = session('user-1', false, 'cli')
+      sessionManager.workspaces.set(wsId, { sessions: new Map([['s1', { session: terminal }]]) } as any)
+      ;(sessionManager as any).queueStatus(wsId, terminal, true)
+      expect(pending()).toEqual({ session: terminal, online: true, away: true })
+
       const desk = session('user-1', false)
       sessionManager.workspaces.set(wsId, {
         sessions: new Map([

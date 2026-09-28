@@ -122,6 +122,8 @@ export interface Result {
 
   queueMessages: QueueNotificationMessage[]
   timeMachine: TimeMachineMessage[]
+
+  notified: Set<AccountUuid>
 }
 
 export interface TxCache {

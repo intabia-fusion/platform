@@ -265,6 +265,7 @@ export async function pushNotification (
   }
 
   createAppPushNotification(client, result, data, contextId)
+  result.notified.add(receiver.account)
 }
 
 // A message is read by the chat's read position; the rest by the

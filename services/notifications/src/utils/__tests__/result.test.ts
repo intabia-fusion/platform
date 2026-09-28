@@ -30,6 +30,7 @@ describe('result utils', () => {
         updateReadStateTx: [],
         queueMessages: [],
         timeMachine: [],
+        notified: new Set(),
         createUserMentionInfoTx: [],
         updateUserMentionInfoTx: [],
         removeUserMentionInfoTx: []
@@ -93,7 +94,7 @@ describe('result utils', () => {
   })
 
   describe('getNotifiedUsers', () => {
-    it('should extract unique and non-unique accounts from queueMessages', () => {
+    it('extracts the accounts of queueMessages, each once', () => {
       const result: Result = {
         ...emptyResult(),
         queueMessages: [
@@ -103,7 +104,13 @@ describe('result utils', () => {
         ] as unknown as QueueNotificationMessage[]
       }
 
-      expect(getNotifiedUsers(result)).toEqual(['user1', 'user2', 'user1'])
+      expect(getNotifiedUsers(result)).toEqual(['user1', 'user2'])
+    })
+
+    it('counts an account whose push was held or letter scheduled, which never reaches queueMessages', () => {
+      const result = emptyResult()
+      result.notified.add('held' as AccountUuid)
+      expect(getNotifiedUsers(result)).toEqual(['held'])
     })
 
     it('should return an empty array if queueMessages is empty', () => {

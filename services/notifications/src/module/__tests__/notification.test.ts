@@ -927,6 +927,18 @@ describe('pushNotification', () => {
       expect(result.queueMessages).toHaveLength(0)
     })
 
+    it('marks the receiver notified even when everything waits and nothing is queued', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+        [email]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(0)
+      expect(Array.from(result.notified)).toEqual(['user-1'])
+    })
+
     it('holds the phone push in memory and schedules the letter while the person is at the computer', async () => {
       mockData.pushSubscriptions = [web, native]
       mockData.receiver = { ...mockData.receiver, online: true, away: false }

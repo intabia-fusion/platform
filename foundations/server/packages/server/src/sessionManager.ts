@@ -128,9 +128,12 @@ export interface Timeouts {
 
 type PendingStatuses = Map<AccountUuid, { session: Session, online: boolean, away: boolean }>
 
-// Whether a session keeps its person "at the computer": a mobile session never does.
+// Whether a session keeps its person "at the computer": a phone never does, and neither does a
+// terminal (TUI, CLI, MCP): it reports no idleness, and a terminal left open must not delay pushes.
+const NEVER_PRESENT: ReadonlyArray<Session['clientKind']> = ['mobile', 'cli']
+
 function sessionAway (session: Session): boolean {
-  return session.clientKind === 'mobile' || session.away
+  return NEVER_PRESENT.includes(session.clientKind) || session.away
 }
 
 export class TSessionManager implements SessionManager {
