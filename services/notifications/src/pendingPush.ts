@@ -76,7 +76,6 @@ export class PendingPushHolder {
 
   constructor (private readonly options: PendingPushOptions) {}
 
-
   private prefix (account: AccountUuid, notificationId: string): string {
     return `${account}:${notificationId}:`
   }

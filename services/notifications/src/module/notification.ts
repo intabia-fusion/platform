@@ -17,6 +17,7 @@ import notificationPlugin, {
   ContextNotification,
   DocNotifyContext,
   NotificationProvider,
+  NotificationProviderSetting,
   NotificationType,
   UnreadMessage,
   UnreadReaction,
@@ -276,6 +277,13 @@ function heldReadBy (data: CreateNotificationData): HeldReadBy | undefined {
   return undefined
 }
 
+// The receiver's own setting for the provider, found like the provider toggles are: by author social id.
+function receiverSetting (data: CreateNotificationData, provider: Ref<NotificationProvider>): NotificationProviderSetting | undefined {
+  return data.settings?.settingsByProvider
+    .get(provider)
+    ?.find((it) => it.createdBy !== undefined && data.receiver.socialIds.includes(it.createdBy))
+}
+
 interface LetterHold {
   provider: Ref<NotificationProvider>
   holdMs: number
@@ -289,10 +297,7 @@ function letterHolds (client: Client, data: CreateNotificationData): LetterHold[
   for (const provider of client.model.findAllSync(notificationPlugin.class.NotificationProvider, {})) {
     if (provider.holdMs === undefined) continue
     if ((data.notifyProviders[provider._id]?.length ?? 0) === 0) continue
-    const setting = data.settings?.settingsByProvider
-      .get(provider._id)
-      ?.find((it) => it.createdBy !== undefined && data.receiver.socialIds.includes(it.createdBy))
-    const holdMs = setting?.holdMs ?? provider.holdMs
+    const holdMs = receiverSetting(data, provider._id)?.holdMs ?? provider.holdMs
     if (holdMs > 0) holds.push({ provider: provider._id, holdMs })
   }
   return holds

@@ -24,6 +24,8 @@ import CollaboratorsChanged from './components/activity/CollaboratorsChanged.sve
 import GeneralPreferencesGroup from './components/settings/GeneralPreferencesGroup.svelte'
 import WebpushesPreferencesPresenter from './components/settings/WebpushesPreferencesPresenter.svelte'
 import ProviderHoldPreferences from './components/settings/ProviderHoldPreferences.svelte'
+import ProviderEmailPreferences from './components/settings/ProviderEmailPreferences.svelte'
+import EmailPreferencesPopup from './components/settings/EmailPreferencesPopup.svelte'
 import MutePopup from './components/MutePopup.svelte'
 import NotificationAppearancePreferencesPresenter from './components/settings/NotificationAppearancePreferencesPresenter.svelte'
 
@@ -62,6 +64,8 @@ export default async (): Promise<Resources> => ({
     GeneralPreferencesGroup,
     WebpushesPreferencesPresenter,
     ProviderHoldPreferences,
+    ProviderEmailPreferences,
+    EmailPreferencesPopup,
     MutePopup,
     NotificationAppearancePreferencesPresenter
   },
