@@ -132,6 +132,7 @@ export default plugin(platformId, {
     UnknownError: '' as StatusCode<{ message: string }>,
     InvalidId: '' as StatusCode<{ id: string }>,
     ConnectionClosed: '' as StatusCode,
+    ServiceUnavailable: '' as StatusCode,
 
     LoadingPlugin: '' as StatusCode<{ plugin: string }>,
     NoLocationForPlugin: '' as StatusCode<{ plugin: Plugin }>,

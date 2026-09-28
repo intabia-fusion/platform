@@ -147,6 +147,7 @@
     .then(({ allowed }) => {
       allowReadonlyGuests = allowed
     })
+    .catch(() => {})
 </script>
 
 {#if method === LoginMethods.Otp}

@@ -11,6 +11,7 @@
     "Unauthorized": "Não autorizado",
     "UnknownMethod": "Método desconhecido: {method}",
     "InternalServerError": "Erro interno do servidor",
+    "ServiceUnavailable": "O serviço está indisponível. Verifique sua conexão ou tente novamente mais tarde.",
     "MaintenanceWarning": "Manutenção programada dentro de",
     "MaintenanceWarningTime": "{time, plural, =1 {menos de um minuto} other {# minutos}}",
     "AccountNotFound": "Conta não encontrada",
