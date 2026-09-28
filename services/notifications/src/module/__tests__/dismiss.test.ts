@@ -78,3 +78,30 @@ describe('pushDismissMessage', () => {
     expect(result.queueMessages).toEqual([])
   })
 })
+
+describe('dismissScopeOf with pushes still held', () => {
+  it('leaves out the tags whose push never left, and dismisses nothing when none did', () => {
+    const read: UnreadMessage[] = [
+      { id: id('a'), createdOn: 10, notified: true },
+      { id: id('c'), createdOn: 30, notified: true }
+    ]
+    expect(dismissScopeOf(read, 40, new Set(['a']))).toEqual({ tags: ['c'], readUpTo: 40 })
+    expect(dismissScopeOf(read, 40, new Set(['a', 'c']))).toEqual({ tags: [], readUpTo: 0 })
+  })
+})
+
+describe('pushDismissMessage with many tags', () => {
+  const context = { _id: 'ctx-1', user: 'user-1', objectId: 'doc-1', objectClass: 'DocClass', objectSpace: 'space-doc' } as any
+  const cache: any = { getPushSubscriptions: jest.fn().mockResolvedValue([{ _id: 'apns', endpoint: 'apns://t' }]) }
+
+  it('splits the tags into messages of fifty, each with the read position and its own id', async () => {
+    const result = emptyResult()
+    const tags = Array.from({ length: 120 }, (_, i) => `m-${i}`)
+    await pushDismissMessage(cache, result, context, { tags, readUpTo: 500 })
+    expect(result.queueMessages.map((it: any) => [it.id, it.tags.length, it.readUpTo])).toEqual([
+      ['dismiss:ctx-1:500', 50, 500],
+      ['dismiss:ctx-1:500:m-50', 50, 500],
+      ['dismiss:ctx-1:500:m-100', 20, 500]
+    ])
+  })
+})

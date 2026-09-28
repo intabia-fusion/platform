@@ -53,7 +53,7 @@ import { Receiver } from '@hcengineering/server-notification'
 import { UserMentionInfo } from '@hcengineering/activity'
 import { IntlString } from '@hcengineering/platform'
 import type { QueueTopic } from '@hcengineering/server-core'
-import type { PendingPushHolder } from './pendingPush'
+import type { HeldPush, PendingPushHolder } from './pendingPush'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]
@@ -122,6 +122,7 @@ export interface Result {
 
   queueMessages: QueueNotificationMessage[]
   timeMachine: TimeMachineMessage[]
+  heldPushes: HeldPush[]
 
   notified: Set<AccountUuid>
 }

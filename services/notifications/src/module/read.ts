@@ -129,12 +129,20 @@ async function readContext (
     )
   }
 
-  cancelHeldPushes(
+  // The newest moment the read really covers, not the position itself: the position is the
+  // client's clock, and a fast one must not read what has not arrived yet.
+  const readUpTo = Math.max(0, ...unreadMessagesToRead.map((it) => it.createdOn), ...unreadChunksToRead.map((it) => it.to))
+  const cancelled = cancelHeldPushes(
     client,
     result,
     context,
-    ts,
+    readUpTo,
     unreadMessagesToRead.map((it) => it.id)
   )
-  await pushDismissMessage(cache, result, context, dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], ts))
+  await pushDismissMessage(
+    cache,
+    result,
+    context,
+    dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readUpTo, cancelled)
+  )
 }

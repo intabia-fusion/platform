@@ -26,6 +26,7 @@ export function emptyResult (): Result {
 
     queueMessages: [],
     timeMachine: [],
+    heldPushes: [],
     notified: new Set(),
 
     createUserMentionInfoTx: [],
@@ -54,6 +55,7 @@ export function isEmptyResult (result: Result): boolean {
     result.updateReadStateTx.length === 0 &&
     result.queueMessages.length === 0 &&
     result.timeMachine.length === 0 &&
+    result.heldPushes.length === 0 &&
     result.createUserMentionInfoTx.length === 0 &&
     result.updateUserMentionInfoTx.length === 0 &&
     result.removeUserMentionInfoTx.length === 0

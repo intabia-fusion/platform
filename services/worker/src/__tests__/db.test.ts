@@ -18,7 +18,7 @@ import { TimeMachineDB, type DelayedEventRecord } from '../db'
 
 /**
  * Minimal in-memory stand-in for postgres.Sql, enough for TimeMachineDB's four queries;
- * dispatches on keywords, exercising real upsert/ILIKE/date/limit behaviour.
+ * dispatches on keywords, exercising real upsert/LIKE/date/limit behaviour.
  */
 export function createFakeClient (): { client: any, rows: DelayedEventRecord[] } {
   const rows: DelayedEventRecord[] = []
@@ -41,9 +41,9 @@ export function createFakeClient (): { client: any, rows: DelayedEventRecord[] }
       else rows.push(record)
       return []
     }
-    if (text.includes('DELETE FROM') && text.includes('ILIKE')) {
+    if (text.includes('DELETE FROM') && text.includes(' LIKE ')) {
       const [workspace, idPattern] = values
-      const pattern = new RegExp(`^${String(idPattern).replace(/%/g, '.*').replace(/_/g, '.')}$`, 'i')
+      const pattern = new RegExp(`^${String(idPattern).replace(/%/g, '.*').replace(/_/g, '.')}$`)
       for (let i = rows.length - 1; i >= 0; i--) {
         if (rows[i].workspace === workspace && pattern.test(rows[i].id)) rows.splice(i, 1)
       }

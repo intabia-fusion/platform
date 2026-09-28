@@ -361,7 +361,7 @@ export function rustoreAlertMessage (token: string, data: PushData): Record<stri
   }
 }
 
-/** Data only, as for FCM: nothing is drawn, `onMessageReceived` cancels the notifications named. */
+/** The FCM dismiss shape. */
 export function rustoreDismissMessage (token: string, data: PushDismissData): Record<string, unknown> {
   return {
     token,

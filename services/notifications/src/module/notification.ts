@@ -170,11 +170,12 @@ export async function pushNotification (
         providers: pushProvidersOnly(providers),
         template: undefined
       })
-      if (push !== undefined) client.pendingPush?.hold(push)
+      if (push !== undefined) result.heldPushes.push(push)
     }
     // A letter waits its own, longer while wherever the person is (it is for what they did not
     // see), in the time machine rather than in memory.
-    const letters = readBy !== undefined ? letterHolds(client, data) : []
+    // No template, no letter: pod-mail would drop it, so nothing is scheduled for it either.
+    const letters = readBy !== undefined && message.template != null ? letterHolds(client, data) : []
     for (const letter of letters) {
       const held = heldPart(letter.provider, {
         pushSubscriptions: [],
@@ -307,6 +308,7 @@ interface LetterHold {
 // means at once.
 function letterHolds (client: Client, data: CreateNotificationData): LetterHold[] {
   const holds: LetterHold[] = []
+  if (!config.HoldLetters) return holds
   for (const provider of client.model.findAllSync(notificationPlugin.class.NotificationProvider, {})) {
     if (provider.holdMs === undefined) continue
     if ((data.notifyProviders[provider._id]?.length ?? 0) === 0) continue

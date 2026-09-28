@@ -19,10 +19,9 @@ import type { QueueTopic } from '@hcengineering/server-core'
 import type { HeldPush } from './pendingPush'
 import type { Result, TimeMachineMessage } from './types'
 
-// A letter waits an hour or more: too long for the memory of a process that is redeployed
-// daily. It is scheduled in the time machine (services/worker, a Postgres table) instead, which
-// fires it back on QueueTopic.HeldNotifications; the service then checks whether the person read
-// the notification meanwhile and publishes the letter only if not (Workspace.releaseHeld).
+// A letter waits an hour or more, too long for a process redeployed daily: it is scheduled in the
+// time machine (services/worker), which fires it back on QueueTopic.HeldNotifications, where
+// Workspace.releaseHeld publishes it unless the person read the notification meanwhile.
 
 const LETTER = 'letter'
 

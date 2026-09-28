@@ -30,6 +30,7 @@ function createEmptyResult (): Result {
     updateReadStateTx: [],
     queueMessages: [],
     timeMachine: [],
+    heldPushes: [],
     notified: new Set(),
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
@@ -721,6 +722,8 @@ describe('mention module', () => {
       mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
       mockCache.getDocSettings.mockResolvedValue([])
       mockCache.getReceivers.mockResolvedValue([])
+      const pendingPush = { cancel: jest.fn() }
+      ;(mockClient as any).pendingPush = pendingPush
 
       await handleMention(mockClient, mockCache, txCache, result, tx, doc, doc, 'test-type' as any)
 
@@ -733,6 +736,9 @@ describe('mention module', () => {
         },
         $inc: { unreadCount: -1 }
       })
+      // A push or a letter still waiting for the removed mention is dropped with it.
+      expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'n-doc')
+      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:n-doc:%' }])
     })
 
     it('keeps the mentions of an @everyone message when it is edited without touching the mention', async () => {

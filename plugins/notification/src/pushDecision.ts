@@ -41,6 +41,15 @@ export interface NotificationClickMessage {
 
 export type PushVisibilityState = 'visible' | 'hidden'
 
+/**
+ * Whether a push may show nothing when a focused tab shows the document. Chromium exempts a
+ * focused tab of the origin from its "show something" rule; WebKit does not and revokes the
+ * subscription after a few silent pushes, so there the notification is shown regardless.
+ */
+export function canSuppressPush (userAgent: string): boolean {
+  return !(userAgent.includes('AppleWebKit') && !/Chrom(e|ium)|Edg|OPR/.test(userAgent))
+}
+
 /** The part of a service worker `WindowClient` the decision needs. */
 export interface PushWindowClient {
   id?: string

@@ -24,7 +24,8 @@ import {
   type PushWindowClient,
   type ViewedObjects,
   type ViewingQueryMessage,
-  type ViewingReplyMessage
+  type ViewingReplyMessage,
+  canSuppressPush
 } from './pushDecision'
 
 // The package compiles against the DOM lib, which has no service worker types; the pieces of
@@ -59,6 +60,7 @@ interface WorkerWindowClient extends PushWindowClient {
 
 interface WorkerScope {
   location: { href: string }
+  navigator: { userAgent: string }
   clients: {
     matchAll: (options: { type: 'window', includeUncontrolled: boolean }) => Promise<readonly WorkerWindowClient[]>
     openWindow: (url: string) => Promise<WorkerWindowClient | null>
@@ -109,14 +111,15 @@ async function handlePush (payload: PushData): Promise<void> {
   // Only such tabs are asked what they show: the sidebar is not in the URL.
   const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
   const viewing = new Map<string, Array<Ref<Doc>>>()
-  if (payload.objectId != null) {
+  const suppressible = canSuppressPush(self.navigator.userAgent)
+  if (suppressible && payload.objectId != null) {
     const candidates = windowClients.filter((it) => it.focused && it.visibilityState === 'visible')
     const replies = await Promise.all(candidates.map(async (it) => [it.id, await askViewing(it)] as const))
     for (const [id, ids] of replies) {
       if (ids !== undefined) viewing.set(id, ids)
     }
   }
-  if (shouldSuppressPush(payload, windowClients, viewing satisfies ViewedObjects)) return
+  if (suppressible && shouldSuppressPush(payload, windowClients, viewing satisfies ViewedObjects)) return
 
   await self.registration.showNotification(payload.title, {
     body: payload.body,

@@ -18,7 +18,7 @@ The Time Machine service is an autonomous, generic service responsible for handl
 | Type | Description |
 | :--- | :--- |
 | `schedule` | Schedules a new timer or updates an existing one. Requires `id`, `targetDate`, `topic`, and `data`. |
-| `cancel` | Removes scheduled timers. The `id` supports pattern matching via `ILIKE` (e.g., `prefix_%`). |
+| `cancel` | Removes scheduled timers. The `id` supports pattern matching via `LIKE` (e.g., `prefix_%`; case-sensitive, served by an index on `(workspace, id)`). |
 
 ### Produced (Outgoing)
 **Topic**: Dynamic (specified in `schedule` command)

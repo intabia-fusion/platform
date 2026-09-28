@@ -2,6 +2,12 @@ import { SocialIdType, type PersonId, type SocialId } from '@hcengineering/core'
 
 import { pickNotificationEmail } from '../notification'
 
+// notification.ts pulls in config, which throws without the service's env.
+jest.mock('../config', () => ({
+  __esModule: true,
+  default: { source: 'platform@intabia.ru', replyTo: 'support@intabia.ru', mode: 'queue', port: 1025 }
+}))
+
 const id = (
   _id: string,
   value: string,

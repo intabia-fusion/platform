@@ -358,7 +358,7 @@ describe('handleReadState', () => {
 
       await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
-      expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 150)
+      expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 120)
       // The letters of the messages read (notified or not) are dropped; a chunk names no id.
       expect(result.timeMachine).toEqual([
         { type: 'cancel', id: 'letter:user-1:msg-1:%' },
@@ -368,14 +368,14 @@ describe('handleReadState', () => {
       expect(result.queueMessages).toHaveLength(1)
       expect(result.queueMessages[0]).toEqual({
         kind: 'dismiss',
-        id: 'dismiss:ctx-1:150',
+        id: 'dismiss:ctx-1:120',
         account: 'user-1',
         objectId: 'doc-1',
         objectClass: 'DocClass',
         objectSpace: 'space-doc',
         pushSubscriptions: [native],
         tags: ['msg-1'],
-        readUpTo: 150
+        readUpTo: 120
       })
     })
 

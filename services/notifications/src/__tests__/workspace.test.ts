@@ -61,6 +61,7 @@ describe('isTransientError', () => {
 describe('Workspace.applyResult (private, exercised via a bare instance)', () => {
   function makeInstance (overrides: { tx?: jest.Mock, send?: jest.Mock, schedule?: jest.Mock }): any {
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn(), getCachedContext: jest.fn() }
     instance.client = { findOne: jest.fn() }
@@ -177,6 +178,7 @@ describe('Workspace.applyResult: the time machine', () => {
   it('sends the letter commands after the batch is applied, keyed by the workspace', async () => {
     const schedule = jest.fn().mockResolvedValue(undefined)
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
     instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
@@ -196,6 +198,7 @@ describe('Workspace.applyResult: the time machine', () => {
     jest.useFakeTimers()
     try {
       const instance: any = Object.create((Workspace as any).prototype)
+      instance.inProgress = new Set()
       instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
       instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
       instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
@@ -244,6 +247,7 @@ describe('Workspace.releaseHeld', () => {
   }
   function instanceWith (states: unknown[]): any {
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
     instance.ws = { uuid: 'ws-1' }
     instance.pipeline = { findAll: jest.fn().mockResolvedValue(states) }
@@ -268,6 +272,7 @@ describe('Workspace.releaseHeld', () => {
 describe('Workspace.close', () => {
   it('waits for the tx in progress before closing the pipeline', async () => {
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     const order: string[] = []
     let release: () => void = () => {}
     instance.ctx = { error: jest.fn() }
@@ -295,6 +300,7 @@ describe('Workspace.close', () => {
 describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)', () => {
   function makeInstance (status: { user: string } | undefined, size = 1): any {
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     instance.pendingPush = { size, flushByAccount: jest.fn().mockResolvedValue(undefined) }
     instance.status = status
     instance.release = async (tx: any) => await instance.releaseHeldPushes(tx, instance.status)
@@ -337,6 +343,7 @@ describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)',
   // copy taken before the cache applied the tx, or a removal never releases anything.
   it('releases on a status removal even though the cache has already forgotten the record', async () => {
     const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
     const statuses = new Map<string, { user: string }>([['us-1', { user: 'acc-1' }]])
     instance.pendingPush = { size: 1, flushByAccount: jest.fn().mockResolvedValue(undefined) }
     instance.cache = {
@@ -422,5 +429,65 @@ describe('areHeldPushesRead', () => {
     expect(p.findAll).toHaveBeenCalledTimes(1)
     expect(await areHeldPushesRead(ctx, p, [])).toEqual([])
     expect(p.findAll).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Workspace holds the native pushes of an applied batch (bare instance)', () => {
+  function bare (): any {
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
+    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
+    instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
+    instance.timeMachine = { send: jest.fn().mockResolvedValue(undefined) }
+    instance.ws = { uuid: 'ws-1' }
+    instance.rest = { tx: jest.fn().mockResolvedValue(undefined) }
+    instance.txFactory = { createTxApplyIf: jest.fn().mockReturnValue({ _id: 'apply-tx' }) }
+    instance.pendingPush = { hold: jest.fn() }
+    return instance
+  }
+  const held: any = {
+    account: 'acc-1',
+    notificationId: 'n-1',
+    objectId: 'doc-1',
+    createdOn: 1,
+    readBy: 'position',
+    provider: 'push',
+    message: { id: 'n-1' }
+  }
+
+  it('registers the hold only after the batch is applied', async () => {
+    const instance = bare()
+    const order: string[] = []
+    instance.rest.tx.mockImplementation(async () => {
+      order.push('tx')
+    })
+    instance.pendingPush.hold.mockImplementation(() => {
+      order.push('hold')
+    })
+    const result = emptyResult()
+    result.createContextTx.push({ _id: 'ctx-tx-1', modifiedOn: 1, attributes: {} } as any)
+    result.heldPushes.push(held)
+
+    await instance.applyResult(result)
+
+    expect(order).toEqual(['tx', 'hold'])
+    expect(instance.pendingPush.hold).toHaveBeenCalledWith(held)
+  })
+
+  it('an inbox-only tx keeps neither the hold nor the scheduled letter, only the cancels', () => {
+    const instance = bare()
+    const result = emptyResult()
+    result.heldPushes.push(held)
+    result.queueMessages.push({ id: 'n-1' } as any)
+    result.createAppPushNotificationTx.push({ _id: 'app' } as any)
+    result.timeMachine.push({ type: 'schedule', id: 'letter:a:n-1:email' }, { type: 'cancel', id: 'letter:a:n-0:%' })
+
+    instance.keepInboxProviderOnly(result)
+
+    expect(result.heldPushes).toEqual([])
+    expect(result.queueMessages).toEqual([])
+    expect(result.createAppPushNotificationTx).toEqual([])
+    expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:a:n-0:%' }])
   })
 })

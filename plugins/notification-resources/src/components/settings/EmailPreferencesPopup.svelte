@@ -13,11 +13,6 @@
 // limitations under the License.
 -->
 
-<!--
-  The email provider's settings: how long a letter waits, and the address it goes to. The address
-  is not a choice: pod-mail writes to the person's first verified email (pickNotificationEmail),
-  and this shows the same one; another address is added or released in the profile.
--->
 <script lang="ts">
   import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
   import notification, {
@@ -64,7 +59,6 @@
   canSave
   on:close
 >
-  <!-- The modal's own padding is enough: the set adds none and the line no top border; the address is a plain sentence. -->
   <div class="hulyModal-content__settingsSet" style="padding: 0">
     <p class="note hint"><Label label={notification.string.EmailHoldHint} /></p>
     <ProviderHoldPreferences {provider} {setting} {enabled} />

@@ -94,12 +94,58 @@ describe('PendingPushHolder', () => {
     holder.hold(held({ notificationId: 'newer', createdOn: 200 }))
     holder.hold(held({ notificationId: 'theirs', createdOn: 100, account: other }))
 
-    expect(holder.cancelByObject(acc, doc, 150)).toBe(1)
+    expect(holder.cancelByObject(acc, doc, 150)).toEqual(['old'])
     expect(holder.size).toBe(2)
 
     jest.advanceTimersByTime(60_000)
     await flushPromises()
     expect(publish.mock.calls.map(([m]) => m.id).sort((a, b) => a.localeCompare(b))).toEqual(['newer', 'theirs'])
+  })
+
+  it('leaves a push read by its own id alone when the document is read by position', async () => {
+    const { holder, publish } = make()
+    holder.hold(held({ notificationId: 'msg', createdOn: 100 }))
+    holder.hold(held({ notificationId: 'reaction', createdOn: 120, readBy: 'reactions' }))
+    holder.hold(held({ notificationId: 'mention', createdOn: 130, readBy: 'mentions' }))
+    holder.hold(held({ notificationId: 'common', createdOn: 140, readBy: 'commons' }))
+
+    expect(holder.cancelByObject(acc, doc, 200)).toEqual(['msg'])
+    expect(holder.size).toBe(3)
+    expect(holder.cancel(acc, 'reaction')).toBe(true)
+
+    jest.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(publish.mock.calls.map(([m]) => m.id).sort((a, b) => a.localeCompare(b))).toEqual(['common', 'mention'])
+  })
+
+  it('publishes at once what is held after flushAll, and flushAll waits for a release in flight', async () => {
+    const { holder, publish, areRead } = make()
+    let answer: (read: boolean[]) => void = () => {}
+    areRead.mockImplementationOnce(
+      async () =>
+        await new Promise<boolean[]>((resolve) => {
+          answer = resolve
+        })
+    )
+    holder.hold(held({ notificationId: 'in-flight' }))
+    jest.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(holder.size).toBe(0)
+
+    let flushed = false
+    const flushing = holder.flushAll().then(() => {
+      flushed = true
+    })
+    await flushPromises()
+    expect(flushed).toBe(false)
+    answer([false])
+    await flushing
+    expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['in-flight'])
+
+    holder.hold(held({ notificationId: 'late' }))
+    await flushPromises()
+    expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['in-flight', 'late'])
+    expect(holder.size).toBe(0)
   })
 
   it('cancels one push by id and reports whether it was there', () => {

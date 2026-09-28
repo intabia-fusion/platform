@@ -468,6 +468,22 @@ describe('handleCreateNotificationAction', () => {
     expect((pushNotification as jest.Mock).mock.calls[0][4].unreadCommon).toBeDefined()
   })
 
+  it('hands the receiver settings on, so the letter waits the window the person chose', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver('user-1', 'USER')])
+    const settings = { settingsByProvider: new Map(), typesByProvider: new Map() }
+    mockCache.getSettings.mockResolvedValue(settings)
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      makeTx()
+    )
+
+    expect((pushNotification as jest.Mock).mock.calls[0][4].settings).toBe(settings)
+  })
+
   it('still delivers to the shared read-only guest account, but not as unread', async () => {
     mockCache.getReceivers.mockResolvedValue([makeReceiver(readOnlyGuestAccountUuid, 'GUEST')])
 

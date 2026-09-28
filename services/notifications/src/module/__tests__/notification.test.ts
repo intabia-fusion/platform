@@ -28,7 +28,8 @@ import { emptyResult, getEmptyTxCache } from '../../utils/result'
 jest.mock('../../config', () => ({
   __esModule: true,
   default: {
-    LatestNotificationsSliceSize: 5
+    LatestNotificationsSliceSize: 5,
+    HoldLetters: true
   },
   LatestNotificationsSliceSize: 5
 }))
@@ -781,8 +782,8 @@ describe('pushNotification', () => {
       expect(result.queueMessages[0]).toMatchObject({ id: 'notify-1', pushSubscriptions: [web] })
       expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers)).toHaveLength(4)
 
-      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
-      const held = mockClient.pendingPush.hold.mock.calls[0][0]
+      expect(result.heldPushes).toHaveLength(1)
+      const held = result.heldPushes[0]
       expect(held).toMatchObject({
         account: 'user-1',
         notificationId: 'notify-1',
@@ -814,8 +815,8 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
-      expect(mockClient.pendingPush.hold.mock.calls[0][0]).toMatchObject({ notificationId: 'notify-1', readBy })
+      expect(result.heldPushes).toHaveLength(1)
+      expect(result.heldPushes[0]).toMatchObject({ notificationId: 'notify-1', readBy })
     })
 
     it('queues nothing immediately when only the phone would be notified', async () => {
@@ -828,7 +829,7 @@ describe('pushNotification', () => {
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
       expect(result.queueMessages).toHaveLength(0)
-      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
+      expect(result.heldPushes).toHaveLength(1)
     })
 
     it.each([
@@ -841,7 +842,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(mockClient.pendingPush.hold).not.toHaveBeenCalled()
+      expect(result.heldPushes).toHaveLength(0)
       expect(result.queueMessages).toHaveLength(1)
       expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual(mockData.pushSubscriptions)
     })
@@ -885,10 +886,21 @@ describe('pushNotification', () => {
       jest.useRealTimers()
     })
 
+    it('schedules no letter for a notification without a template: nothing waits, the email provider goes at once', async () => {
+      mockData.notifyProviders = { ...providers, [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }] }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(0)
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toBeUndefined()
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers)).toContain(email)
+    })
+
     it('schedules the letter for the provider default when the person has no setting; the push goes at once', async () => {
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(mockClient.pendingPush.hold).not.toHaveBeenCalled()
+      expect(result.heldPushes).toHaveLength(0)
       expect(result.timeMachine).toHaveLength(1)
       const [schedule] = result.timeMachine
       expect(schedule).toMatchObject({
@@ -960,8 +972,8 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
-      expect(mockClient.pendingPush.hold.mock.calls[0][0]).toMatchObject({
+      expect(result.heldPushes).toHaveLength(1)
+      expect(result.heldPushes[0]).toMatchObject({
         provider: notificationPlugin.providers.PushNotificationProvider
       })
       expect(result.timeMachine).toHaveLength(1)

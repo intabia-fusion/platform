@@ -108,12 +108,10 @@ const publishBackoff = DelayStrategyFactory.exponentialBackoff({
 const READ_CHECK_CHUNK = 200
 
 /**
- * Which of the held pushes the person read meanwhile, one answer per push in order. Straight
- * from the DB, not the LRU cache: everything the cache knows of already cancelled its hold when
- * that tx went through, so what is still held can only have been read by a tx still on its way.
- * A message is read when the account's `ReadState` position passed it; a reaction, a mention or
- * a common notification when its id left the context's unread list, and a context that is gone
- * has nothing left to push. One query per chunk of documents, whatever the number of pushes.
+ * Which of the held pushes the person read meanwhile, one answer per push in order. From the DB,
+ * not the cache: a read the cache knows of already cancelled its hold. A message is read when
+ * the `ReadState` position passed it; the rest when its id left the context's unread list (a
+ * context that is gone has nothing left to push). One query per chunk of documents.
  */
 export async function areHeldPushesRead (ctx: MeasureContext, pipeline: Pipeline, held: HeldPush[]): Promise<boolean[]> {
   const byPosition = held.filter((it) => it.readBy === 'position')
@@ -174,7 +172,8 @@ export function isTransientError (e: unknown): boolean {
 class Workspace {
   public readonly cache: WorkspaceCache
 
-  private inProgressPromise: Promise<void> | undefined
+  // Txes and fired letters are processed concurrently: close() waits for all of them.
+  private readonly inProgress = new Set<Promise<void>>()
   private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System, true)
@@ -240,11 +239,11 @@ class Workspace {
   // Work that close() has to wait for, and that keeps the workspace from idling out.
   private async track (run: Promise<void>): Promise<void> {
     this.lastUpdate = Date.now()
-    this.inProgressPromise = run
+    this.inProgress.add(run)
     try {
       await run
     } finally {
-      if (this.inProgressPromise === run) this.inProgressPromise = undefined
+      this.inProgress.delete(run)
     }
   }
 
@@ -317,6 +316,8 @@ class Workspace {
   private keepInboxProviderOnly (res: Result): void {
     res.queueMessages = []
     res.createAppPushNotificationTx = []
+    res.heldPushes = []
+    res.timeMachine = res.timeMachine.filter((it) => it.type !== 'schedule')
   }
 
   private async applyResult (result: Result): Promise<void> {
@@ -353,6 +354,9 @@ class Workspace {
         }
       }
     }
+
+    // The inbox entries are in by now; the native pushes about them start waiting.
+    for (const held of result.heldPushes) this.pendingPush.hold(held)
 
     if (result.queueMessages.length > 0) {
       try {
@@ -449,7 +453,7 @@ class Workspace {
   }
 
   public isInProgress (): boolean {
-    return this.inProgressPromise !== undefined
+    return this.inProgress.size > 0
   }
 
   public getLastTxDate (): Timestamp | undefined {
@@ -525,7 +529,7 @@ class Workspace {
 
   async close (): Promise<void> {
     // A restore event can drop the workspace mid-tx; the pipeline has to outlive that tx.
-    await this.inProgressPromise?.catch(() => undefined)
+    await Promise.allSettled(Array.from(this.inProgress))
     // Held pushes go out before the pipeline closes: their read check runs through it.
     await this.pendingPush.flushAll()
     try {

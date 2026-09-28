@@ -86,8 +86,17 @@ async function main (): Promise<void> {
     probeGiveUpAfterMs: 30 * 1000
   })
 
-  // One message of a workspace, under the breaker: retried while the failure lasts, dropped after.
+  // Letters fire on their own topic and fail for their own reasons (the broker, the DB): they
+  // must not open the txes' breaker, nor be dropped because the txes did.
+  const heldBreaker = new WorkspaceBreaker({
+    giveUpAfterMs: 5 * 60 * 1000,
+    cooldownMs: 5 * 60 * 1000,
+    probeGiveUpAfterMs: 30 * 1000
+  })
+
+  // One message of a workspace, under a breaker: retried while the failure lasts, dropped after.
   async function guarded (
+    breaker: WorkspaceBreaker,
     ctx: MeasureContext,
     ws: WorkspaceUuid,
     id: string,
@@ -121,13 +130,13 @@ async function main (): Promise<void> {
   const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     const ws = queueMessage.workspace
     const tx = queueMessage.value
-    await guarded(ctx, ws, tx._id, 'Tx message', { tx }, async () => {
+    await guarded(breaker, ctx, ws, tx._id, 'Tx message', { tx }, async () => {
       await worker.tx(ctx, ws, tx)
     })
   })
 
-  // A letter the time machine fired at its due time (see heldLetter.ts). The same group as the
-  // txes: the workspace's partition, whichever replica holds it.
+  // A letter the time machine fired at its due time (see heldLetter.ts). Its own consumer group;
+  // the replica that gets it opens the workspace if it has to.
   const heldConsumer = queue.createConsumer<HeldPush>(
     ctx,
     QueueTopic.HeldNotifications,
@@ -135,9 +144,17 @@ async function main (): Promise<void> {
     async (ctx, queueMessage) => {
       const ws = queueMessage.workspace
       const held = queueMessage.value
-      await guarded(ctx, ws, held.notificationId, 'Held letter', { notificationId: held.notificationId }, async () => {
-        await worker.heldNotification(ctx, ws, held)
-      })
+      await guarded(
+        heldBreaker,
+        ctx,
+        ws,
+        held.notificationId,
+        'Held letter',
+        { notificationId: held.notificationId },
+        async () => {
+          await worker.heldNotification(ctx, ws, held)
+        }
+      )
     }
   )
 

@@ -1346,6 +1346,14 @@ export class TSessionManager implements SessionManager {
                   if (user !== guestAccount && user !== systemAccountUuid && !isAiBot) {
                     this.queueStatus(workspaceUuid, sessionRef.session, false)
                   }
+                } else if (another !== -1 && !workspace.maintenance) {
+                  // A session of the person remains (a phone, a terminal): the closed one may have
+                  // been the only one that kept them "here", so their presence is recomputed.
+                  const remaining = Array.from(workspace.sessions.values())[another].session
+                  const isAiBot = remaining.token.extra?.service === 'aibot'
+                  if (user !== guestAccount && user !== systemAccountUuid && !isAiBot) {
+                    this.queueStatus(workspaceUuid, remaining, true)
+                  }
                 }
               }
             }

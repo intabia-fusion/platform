@@ -47,6 +47,7 @@ function createEmptyResult (): Result {
     updateReadStateTx: [],
     queueMessages: [],
     timeMachine: [],
+    heldPushes: [],
     notified: new Set(),
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],

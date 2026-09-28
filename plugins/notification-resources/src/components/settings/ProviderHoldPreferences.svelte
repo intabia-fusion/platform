@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import core from '@hcengineering/core'
+  import core, { type Ref } from '@hcengineering/core'
   import notification, {
     type NotificationProvider,
     type NotificationProviderSetting
@@ -41,19 +41,28 @@
 
   $: selected = setting?.holdMs ?? provider.holdMs ?? 0
 
+  let created: Ref<NotificationProviderSetting> | undefined
+  let saving = false
+
   async function select (
     event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined>
   ): Promise<void> {
     const holdMs = event.detail
-    if (typeof holdMs !== 'number' || holdMs === selected) return
-    if (setting !== undefined) {
-      await client.update(setting, { holdMs })
-    } else {
-      await client.createDoc(notification.class.NotificationProviderSetting, core.space.Workspace, {
-        attachedTo: provider._id,
-        enabled,
-        holdMs
-      })
+    if (typeof holdMs !== 'number' || holdMs === selected || saving) return
+    saving = true
+    try {
+      const id = setting?._id ?? created
+      if (id !== undefined) {
+        await client.updateDoc(notification.class.NotificationProviderSetting, core.space.Workspace, id, { holdMs })
+      } else {
+        created = await client.createDoc(notification.class.NotificationProviderSetting, core.space.Workspace, {
+          attachedTo: provider._id,
+          enabled,
+          holdMs
+        })
+      }
+    } finally {
+      saving = false
     }
   }
 </script>

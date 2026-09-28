@@ -65,14 +65,15 @@ export const DEFAULT_SWEEP_MS = 1000
 export const DEFAULT_CHECK_RETRY_MS = 5000
 export const DEFAULT_CHECK_ATTEMPTS = 3
 
-// A push to a phone about something the person is about to see on the computer is noise. While
-// the receiver is at the computer the native push waits here: reading it there cancels the push,
-// leaving the computer (away, offline) or the cap releases it. The hold lives in memory only: a
-// crash loses what was waiting, a graceful close publishes it. One tick a second releases
-// everything due, so a burst of pushes ends in one batch and one read check.
+// While the receiver is at the computer the native push waits here: a read there cancels it,
+// leaving (away, offline) or the cap releases it. In memory only: a crash loses what waited, a
+// graceful close publishes it. One tick a second releases everything due in one batch.
 export class PendingPushHolder {
   private readonly entries = new Map<string, Entry>()
   private timer: ReturnType<typeof setInterval> | undefined
+  // Releases in flight (their batch is out of `entries`), so that flushAll can wait for them.
+  private readonly inFlight = new Set<Promise<void>>()
+  private closed = false
 
   constructor (private readonly options: PendingPushOptions) {}
 
@@ -90,6 +91,13 @@ export class PendingPushHolder {
 
   // A second hold of the same push (a redelivered tx) restarts its cap rather than doubling it.
   hold (held: HeldPush): void {
+    if (this.closed) {
+      // Nothing waits after flushAll: out at once, unchecked.
+      void this.options.publish(held.message).catch((err) => {
+        this.options.onError(err, held)
+      })
+      return
+    }
     this.put({ held, dueAt: Date.now() + this.options.holdMs, checkFailures: 0 })
   }
 
@@ -114,13 +122,19 @@ export class PendingPushHolder {
     return cancelled
   }
 
-  // The account read the document up to `readUpTo`: every held push about it up to there is cancelled.
-  cancelByObject (account: AccountUuid, objectId: Ref<Doc>, readUpTo: Timestamp): number {
-    let cancelled = 0
+  // The account read the document up to `readUpTo`: the pushes read by position (messages) up
+  // to there are cancelled; the rest waits for its own id.
+  cancelByObject (account: AccountUuid, objectId: Ref<Doc>, readUpTo: Timestamp): string[] {
+    const cancelled: string[] = []
     for (const [key, entry] of this.entries) {
       const { held } = entry
-      if (held.account === account && held.objectId === objectId && held.createdOn <= readUpTo) {
-        if (this.drop(key)) cancelled++
+      if (
+        held.readBy === 'position' &&
+        held.account === account &&
+        held.objectId === objectId &&
+        held.createdOn <= readUpTo
+      ) {
+        if (this.drop(key)) cancelled.push(held.notificationId)
       }
     }
     return cancelled
@@ -128,17 +142,26 @@ export class PendingPushHolder {
 
   // The account left the computer: what waited for it goes out now.
   async flushByAccount (account: AccountUuid): Promise<void> {
-    await this.releaseWhere((entry) => entry.held.account === account)
+    await this.release((entry) => entry.held.account === account)
   }
 
-  // The service is closing: nothing can wait for another try, a failed check publishes unchecked.
+  // The service is closing: the releases in flight finish first, then the rest goes out, and a
+  // failed check publishes unchecked since nothing can wait for another try.
   async flushAll (): Promise<void> {
-    await this.releaseWhere(() => true, true)
+    this.closed = true
+    while (this.inFlight.size > 0) await Promise.allSettled(Array.from(this.inFlight))
+    await this.release(() => true, true)
   }
 
   private sweep (): void {
     const now = Date.now()
-    void this.releaseWhere((entry) => entry.dueAt <= now)
+    void this.release((entry) => entry.dueAt <= now)
+  }
+
+  private release (match: (entry: Entry) => boolean, final = false): Promise<void> {
+    const run = this.releaseWhere(match, final).finally(() => this.inFlight.delete(run))
+    this.inFlight.add(run)
+    return run
   }
 
   private drop (key: string): boolean {
@@ -184,7 +207,7 @@ export class PendingPushHolder {
   // and the push goes out unchecked.
   private deferAfterFailedCheck (entry: Entry, err: unknown, final: boolean): boolean {
     const attempt = entry.checkFailures + 1
-    if (final || attempt >= (this.options.checkAttempts ?? DEFAULT_CHECK_ATTEMPTS)) return false
+    if (final || this.closed || attempt >= (this.options.checkAttempts ?? DEFAULT_CHECK_ATTEMPTS)) return false
     this.put({
       ...entry,
       checkFailures: attempt,

@@ -366,11 +366,8 @@ export interface QueueNotifyMessage extends QueueMessageBase {
 }
 
 /**
- * The person read the document on another device: the pushes named by `tags` (notification ids:
- * messages, reactions, mentions, commons), and any other about the document created at or before
- * `readUpTo`, should disappear from the native apps in `pushSubscriptions`. A `readUpTo` of zero
- * names nothing beyond the tags. Web push is never dismissed: a push that shows nothing makes
- * Chrome show its own "site updated in the background" notice.
+ * The dismiss for the native apps in `pushSubscriptions` (the keys as in PushDismissData). Web
+ * push is never dismissed: a push that shows nothing makes Chrome show its own notice.
  */
 export interface QueueDismissMessage extends QueueMessageBase {
   kind: 'dismiss'

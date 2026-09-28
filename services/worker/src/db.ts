@@ -53,6 +53,8 @@ export class TimeMachineDB {
         );
 
         CREATE INDEX IF NOT EXISTS idx_delayed_events_target_date ON ${delayedEventsTable} (target_date);
+        -- Cancels match a prefix pattern (LIKE 'prefix%'): text_pattern_ops lets the index serve it.
+        CREATE INDEX IF NOT EXISTS idx_delayed_events_workspace_id_pattern ON ${delayedEventsTable} (workspace, id text_pattern_ops);
     `
 
     await client.unsafe(sql)
@@ -70,10 +72,11 @@ export class TimeMachineDB {
     `
   }
 
+  // LIKE, not ILIKE: ids are generated, never differ by case, and only LIKE can use the index.
   async removeEvents (workspace: WorkspaceUuid, idPattern: string): Promise<void> {
     await this.client`
       DELETE FROM time_machine.delayed_events 
-      WHERE workspace = ${workspace} AND id ILIKE ${idPattern}
+      WHERE workspace = ${workspace} AND id LIKE ${idPattern}
     `
   }
 

@@ -175,9 +175,12 @@ export async function handleReadNotificationAction (
 
   // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
   const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
-  cancelHeldPushes(client, result, context, readPosition, [...unreadMessagesToRead.map((it) => it.id), ...readIds])
-  const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition)
-  read.tags.push(...readIds)
+  const cancelled = cancelHeldPushes(client, result, context, readPosition, [
+    ...unreadMessagesToRead.map((it) => it.id),
+    ...readIds
+  ])
+  const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition, cancelled)
+  read.tags.push(...readIds.filter((id) => !cancelled.has(id)))
   await pushDismissMessage(cache, result, context, read)
 }
 
@@ -260,6 +263,7 @@ export async function handleCreateNotificationAction (
     objectDisplayData,
     notification: commonNotification,
     pushSubscriptions,
+    settings,
     notifyProviders,
     intl,
     unreadCommon: isSharedGuest ? undefined : commonNotification

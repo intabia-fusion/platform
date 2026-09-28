@@ -30,6 +30,7 @@ describe('result utils', () => {
         updateReadStateTx: [],
         queueMessages: [],
         timeMachine: [],
+        heldPushes: [],
         notified: new Set(),
         createUserMentionInfoTx: [],
         updateUserMentionInfoTx: [],

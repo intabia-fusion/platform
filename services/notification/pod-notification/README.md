@@ -49,6 +49,8 @@ The service is configured via environment variables:
 | `APNS_TOPIC` | No | - | App bundle id, e.g. `intabia.platform.mobile` |
 | `APNS_PRODUCTION` | No | `true` | `false` sends to the APNs sandbox |
 | `FCM_SERVICE_ACCOUNT` | No | - | Firebase service-account JSON, verbatim |
+| `RUSTORE_PROJECT_ID` | No | - | RuStore push project id |
+| `RUSTORE_SERVICE_TOKEN` | No | - | RuStore service token (Console, Push notifications, Projects) |
 
 Each transport is optional: a subscription whose transport is unconfigured is skipped
 rather than failed, so a deployment that only serves browsers needs no new variables.
@@ -184,8 +186,11 @@ an alert that arrives later with `createdOn <= readUpTo` (no transport orders pu
 refresh the badge. A dismiss for a document without a pending alert is a no-op.
 
 iOS delivers a background push when it sees fit: usually within seconds, later under Low
-Power Mode, never to an app the person force-quit. Such a notification stays until the app
-is opened.
+Power Mode, never to an app the person force-quit, and Apple budgets them (a few per hour is
+the guidance), so a dismiss can lag or be dropped when reads are frequent. Such a notification
+stays until the app takes it down itself. The notifications service sends a dismiss only for
+pushes that left the service (a push still held and cancelled by the read gets none), and splits
+a long tag list into several messages of 50 tags to stay under the 4 KB payload.
 
 ## Testing
 
