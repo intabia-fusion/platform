@@ -14,14 +14,8 @@
 // limitations under the License.
 //
 
-// Bumps an external dependency version across all workspace package.json files.
-// Version data comes from combined_dependencies/upgrade_plan.tsv (see outdated.js).
-// Usage:
-//   node common/scripts/outdated-apply.js <package> <version> [--dry]
-//   node common/scripts/outdated-apply.js [--category ui] [--bump patch] [--except pkg1,pkg2] [--dry]
-// --category selects dependencies of that category (see UPGRADE.md), but bumps them
-// everywhere: pnpm check-versions requires a single version per dependency across the repo.
-// Writes combined_dependencies/verify.sh with the check commands for touched packages.
+// Bumps external dependency versions across all workspace package.json files. pnpm
+// check-versions requires a single version per dependency across the repo.
 
 const fs = require('fs')
 const path = require('path')

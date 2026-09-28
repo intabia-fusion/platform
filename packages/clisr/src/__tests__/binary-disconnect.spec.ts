@@ -14,12 +14,8 @@
 // limitations under the License.
 //
 
-// Disconnect/recovery tests for server-initiated binary requests.
-// Reproduces hangs that happen when a worker dies silently and verifies that
-// round-robin retry / reconnect-resend keep tasks flowing without manual restart.
-//
-// To keep tests fast we shrink ping/reconnect/hang thresholds on the server instance
-// instead of waiting for production-sized timeouts.
+// Reproduces hangs when a worker dies silently mid-request; retry/reconnect-resend keeps tasks
+// flowing without a restart. Thresholds are shrunk, not production-sized, for test speed.
 
 import WebSocket from 'ws'
 import { ClisrServer } from '../server'
@@ -364,7 +360,7 @@ describe('binary request disconnect/recovery', () => {
         undefined,
         (s) => s.clientHost === 'silent'
       )
-      // Start a guard observer: when the promise rejects (round-robin retries), we will
+      // Start a guard observer: when the promise rejects (round-robin retries), we
       // exit the inner round-robin via a fake healthy client matching the same filter.
       void reqP.catch(() => {})
 

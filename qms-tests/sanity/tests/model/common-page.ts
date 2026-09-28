@@ -3,8 +3,8 @@ import { expect, Page } from '@playwright/test'
 export class CommonPage {
   async selectListItemWithSearch (page: Page, name: string): Promise<void> {
     if (name !== 'first') {
-      // Person popup uses fulltext ($search) over Person.name stored as "last,first"; typing the displayed
-      // "Last First" filters everything out. The list is short, so click the item directly without searching.
+      // Person popup searches Person.name stored as 'last,first'; typing displayed 'Last
+      // First' filters everything out. List is short - click directly, skip searching.
       const item = page.locator('div.selectPopup div.list-item', { hasText: name })
       await item.waitFor({ state: 'visible' })
       await item.click({ delay: 100 })

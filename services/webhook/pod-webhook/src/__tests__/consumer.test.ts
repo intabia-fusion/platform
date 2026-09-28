@@ -193,7 +193,8 @@ describe('processJob', () => {
     store.createJob('wh_5', 'ws-1' as any, 'key_1')
     const queue: any = { getProducer: jest.fn() }
 
-    // attempt >= max retries so the failure dead-letters immediately, no time-machine round trip to mock.
+    // attempt >= max retries so it dead-letters immediately, no time-machine round trip to
+    // mock.
     await processJob(newCtx(), testConfig, queue, store, baseJob({ jobId: 'wh_5', attempt: 5 }))
 
     const job = store.getJob('wh_5')

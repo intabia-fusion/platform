@@ -104,9 +104,8 @@ export class SignUpPage extends CommonPage {
       await this.page.locator(`input[name="otp${i + 1}"]`).fill(code[i])
     }
 
-    // Password sign up ends on the create form, OTP sign up on select workspace, and a sign up
-    // through a join link goes straight into the workspace. Callers expect the create form, so take
-    // the extra click here rather than in every spec.
+    // Password sign up ends on the create form, OTP on select workspace, join-link sign up lands in
+    // the workspace. Callers expect the create form - take the extra click here, not in every spec.
     await this.page.waitForURL(afterSignUp)
     if (this.page.url().includes('/login/selectWorkspace')) {
       await this.page.locator('button > span', { hasText: 'Create workspace' }).click()

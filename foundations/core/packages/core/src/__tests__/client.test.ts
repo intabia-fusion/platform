@@ -268,7 +268,8 @@ describe('client model transactions', () => {
   it('renames an attribute of the loaded model via client.tx and via remote txes', async () => {
     const factory = new TxFactory(core.account.System)
     const attrId = 'attr-1' as Ref<AnyAttribute>
-    // Attribute comes with the model, so the hierarchy references the ModelDb instance and skips its updates.
+    // Attribute comes with the model; hierarchy references the ModelDb instance and skips its
+    // updates.
     const extra: Tx[] = [
       factory.createTxCreateDoc(
         core.class.Class,

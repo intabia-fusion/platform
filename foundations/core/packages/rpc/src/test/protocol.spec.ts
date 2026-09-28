@@ -31,9 +31,8 @@ const trace: (msg: string) => void =
     : () => {}
 
 /**
- * Canonical description of a value. Unlike JSON.stringify it keeps what the protocols disagree
- * about: key presence for undefined values, -0, NaN, array holes, non-index array props and the
- * concrete class of Date/Map/Set/typed arrays.
+ * Canonical description of a value: unlike JSON.stringify, keeps undefined-key presence, -0, NaN,
+ * array holes, non-index array props, and the concrete class of Date/Map/Set/typed arrays.
  */
 function sig (v: any, seen = new Set<any>(), depth: number = 0): string {
   if (depth > 12) return '...'

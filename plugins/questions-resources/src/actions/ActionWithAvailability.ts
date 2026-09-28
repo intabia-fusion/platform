@@ -83,19 +83,8 @@ export function anyActionWithAvailability<T extends Doc, E extends Event = Event
 }
 
 /**
- * A special case of `any` action that performs an individual independent operation on each item,
- * and only if it is available for all items. Very opinionated about how to iterate items during
- * availability check and action invocation.
- *
- * If you're building an action different from that, consider using a general purpose
- * {@link anyActionWithAvailability()} and implementing your own iteration logic.
- *
- * @param isAvailable
- * @param action
- * @param isParallel Whether to run {@link action} in parallel for all items, or sequentially one by one.
- *  Note that {@link isAvailable} always runs in parallel.
- *
- * @see ViewActionInput
+ * Performs individual operation on each item only if available for all. If different iteration
+ * logic is needed, use anyActionWithAvailability.
  */
 export function eachItemActionWithAvailability<T extends Doc, E extends Event = Event, P = never> (
   isAvailable: (doc: T) => Promise<boolean>,

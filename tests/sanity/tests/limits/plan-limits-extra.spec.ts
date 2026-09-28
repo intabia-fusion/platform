@@ -7,9 +7,8 @@ import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import type { Page } from '@playwright/test'
 
-// Attach `count` unique 0.5 MB files into the New Issue form, watching for the datalake 413
-// (the "storage limit exceeded" response). Returns whether a 413 fired. `stopOnReject` breaks
-// the loop as soon as a 413 is seen (block A); leave false to upload the full count (block A2).
+// Attaches `count` unique 0.5 MB files to the New Issue form, watching for a datalake 413;
+// returns whether one fired. `stopOnReject`: stop at first 413 (block A) or upload all (A2).
 async function uploadChunksWatching413 (page: Page, count: number, stopOnReject: boolean): Promise<boolean> {
   let rejected = false
   page.on('response', (r) => {
@@ -125,8 +124,8 @@ test.describe('unpaid stays usable', () => {
     await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
     await expect(page.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 15000 })
 
-    // Canceled directly in the DB is NOT the user-cancel queue event, so no Active-free is provisioned
-    // and canceled alone shows no free chip. Limits fail open -> no billing read-only banner either.
+    // DB-direct cancel isn't the user-cancel queue event, so no Active-free is provisioned
+    // and no free chip shows; limits fail open too, so no billing read-only banner either.
     await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'canceled' })
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
@@ -155,9 +154,8 @@ test.describe('limits indicator', () => {
   })
 })
 
-// NOTE: flat-tier plan switch (storage-mini <-> storage-medium) via UI was removed. Those are
-// test-only synthetic plans (priceMonthly, not per-user) that the tbank provider's catalog does not
-// carry — tbank handles the real per-seat business tier + add-on packages, covered in billing-ui.spec.ts.
+// Flat-tier plan switch via UI is removed - those are test-only synthetic plans; real per-seat
+// tiers are covered in billing-ui.spec.ts.
 
 // ── F. seat downgrade puts the over-limit member into read-only ──────────────
 // A FRESH workspace per run (no shared state): user1 OWNER + user2 USER, plan usersLimit=2 so both
@@ -184,15 +182,13 @@ test.describe('seat downgrade read-only', () => {
     using member = await getSecondPage(browser)
     const memberPage = member.page
 
-    // Owner loads first and takes seat #1. The limits indicator only mounts once the Employee mixin
-    // is active, so it is a positive proof of onboarding (an absent read-only banner is not — the
-    // whole billing extension is hidden until the mixin exists).
+    // Owner loads first and takes seat #1; the indicator mounts only once the Employee mixin
+    // is active - proof of onboarding (an absent banner isn't: it's hidden too until then).
     await (await ownerPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
     await expect(ownerPage.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 20000 })
 
-    // Member onboarding races the async plan publish (LimitsChanged -> shared plan map). If the seat
-    // limit is still stale at 1 when the member first connects, its mixin activation is rejected and
-    // never retried in that session. Reload until the indicator mounts -> mixin created on 2 seats.
+    // Onboarding races the async plan publish (LimitsChanged -> shared map): a stale limit at
+    // first connect rejects mixin activation for good - reload until the indicator mounts.
     await expect(async () => {
       await (await memberPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(memberPage.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 5000 })

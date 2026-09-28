@@ -64,7 +64,8 @@ function createFakeClient (opts: { meeting: MeetingMinutes, room?: Room, partici
 }
 
 function makeWorkspaceClient (ctx: MeasureContext, client: any): WorkspaceClient {
-  // Bypass private constructor - upsertParticipantFromLiveKit only reaches ctx/client, never the network plumbing.
+  // Bypass private constructor - upsertParticipantFromLiveKit only touches ctx/client, no
+  // network.
   const wc = Object.create(WorkspaceClient.prototype)
   wc.ctx = ctx
   wc.client = client
@@ -84,7 +85,7 @@ describe('WorkspaceClient.upsertParticipantFromLiveKit → new ParticipantInfo s
   })
 })
 
-// The guard itself runs in the transactor; what this side owns is sending check and insert as one tx.
+// The guard runs in the transactor; this side owns sending check and insert as one tx.
 describe('WorkspaceClient.createPendingRecording → reservation is one conditional write', () => {
   const meeting = createMockMeeting()
   const params = {

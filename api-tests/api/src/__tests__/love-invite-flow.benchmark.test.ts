@@ -6,20 +6,11 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-// Benchmark / soak-test variant of love-invite-flow.test.ts. We do not
-// re-build the trigger or test the server logic — we already cover that in
-// the unit-style test next to this one. The goal here is to push the same
-// invite-flow through the live ws-tests stand many times back-to-back, in
-// optional parallel batches, and:
-//   * collect per-step latencies (response delivery, accept sync, lazy
-//     meeting patch, cleanup broadcast),
-//   * flag any iteration where a broadcast didn't reach a liveQuery in the
-//     expected window (the "stale invite" we hit in the browser),
-//   * print a per-step histogram so server-side concurrency hot spots
-//     (trigger run time, RestClient broadcast tail) become visible.
-//
-// Skipped by default. Enable with BENCH_INVITE_FLOW=1 and tune iterations
-// via BENCH_INVITE_ITERATIONS / BENCH_INVITE_PARALLEL.
+// Soak-test variant of love-invite-flow.test.ts: pushes the invite flow through the live
+// ws-tests stand many times (optional parallel batches) to collect per-step latencies,
+// flag iterations where a broadcast missed its liveQuery window, and print histograms that
+// surface server-side concurrency hot spots. Skipped by default; enable with
+// BENCH_INVITE_FLOW=1 (tune via BENCH_INVITE_ITERATIONS / BENCH_INVITE_PARALLEL).
 
 import {
   connect,
@@ -50,10 +41,8 @@ import { generateToken } from '@hcengineering/server-token'
 const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
 const WORKSPACE = 'api-tests'
 const ITERATIONS = parseInt(process.env.BENCH_INVITE_ITERATIONS ?? '20')
-// Per-iteration parallelism. 1 = strictly sequential (matches the manual
-// user flow). Higher values fire N iterations at once on the same user
-// pair — surfaces server-side concurrency issues (e.g. trigger picking up
-// stale meeting members from a sibling cycle).
+// Per-iteration parallelism: 1 = sequential (manual flow); higher values fire N iterations at
+// once on the same user pair, surfacing bugs like stale meeting members from a sibling cycle.
 const PARALLEL = parseInt(process.env.BENCH_INVITE_PARALLEL ?? '1')
 const STEP_TIMEOUT_MS = parseInt(process.env.BENCH_INVITE_STEP_TIMEOUT_MS ?? '15000')
 
@@ -165,9 +154,8 @@ dtest('love invite flow benchmark', () => {
     await user2Client.close?.()
   })
 
-  // One persistent liveQuery per side for the whole benchmark — re-creating
-  // queries per iteration would dwarf the actual server work in latency.
-  // We just scan the latest snapshot for the iteration's invite ids.
+  // One persistent liveQuery per side for the whole benchmark; recreating queries per iteration
+  // would dwarf the server work in latency, so we scan the latest snapshot for invite ids.
   function setupWatcher (
     client: PlatformClient,
     space: Ref<Space>
@@ -201,10 +189,8 @@ dtest('love invite flow benchmark', () => {
   ): Promise<IterStats> {
     const t0 = Date.now()
     const inviteRequestId = generateId<UserMeetingInvite>()
-    // Unique meeting marker so concurrent iterations can disambiguate each
-    // other's invite-response on the recipient side. We pretend the caller
-    // already had a meeting (A1 flow); benchmark cares about the broadcast
-    // path, not the meeting itself.
+    // Unique meeting marker lets concurrent iterations disambiguate invite-responses; we pretend
+    // the caller already had a meeting (A1 flow) since the benchmark targets the broadcast path.
     const meetingMarker = ('benchmark:meeting:' + index) as unknown as Ref<MeetingMinutes>
 
     // 1) Create invite-request on caller side.
@@ -315,9 +301,8 @@ dtest('love invite flow benchmark', () => {
         }
         const benchMs = Date.now() - benchStart
 
-        // Print a compact histogram. Every step has its own column so a
-        // slow tail in any single step (e.g. cleanupRecipient lagging
-        // behind cleanupCaller) points straight at the offending broadcast.
+        // Compact histogram, one column per step, so a slow tail in any step (e.g. cleanupRecipient
+        // lagging cleanupCaller) points straight at the offending broadcast.
         const cols: Array<keyof IterStats> = [
           'responseDeliveryMs',
           'acceptSyncMs',

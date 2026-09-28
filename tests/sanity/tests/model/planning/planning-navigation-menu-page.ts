@@ -36,9 +36,8 @@ export class PlanningNavigationMenuPage {
   }
 
   async compareCountersUnplannedToDos (): Promise<void> {
-    // Both numbers have to come from one DOM snapshot. Read as two separate calls they disagree
-    // whenever another worker creates a ToDo in the shared workspace in between, and since those
-    // keep arriving the surrounding retry never sees them agree.
+    // Both numbers must come from one DOM snapshot; read separately, they disagree whenever another
+    // worker creates a ToDo in the shared workspace, and the retry never converges.
     const counts = await this.page.evaluate(() => {
       const label = Array.from(
         document.querySelectorAll('button[class*="hulyNavItem-container"] span[class*="hulyNavItem-label"]')

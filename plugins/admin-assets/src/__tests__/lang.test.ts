@@ -2,8 +2,8 @@ import { makeLocalesTest } from '@hcengineering/platform'
 
 const langs = ['cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'ru', 'tr', 'zh']
 
-// Keys whose English wording is also correct in at least one of the locales above
-// (loanwords and internationalisms). A newly added key does not belong here - translate it instead.
+// Keys whose English wording is also correct in at least one locale above
+// (loanwords/internationalisms). New keys don't belong here - translate them.
 const sameAsEnglish = new Set([
   'AI', // tab label is the product term
   'Actions', // fr

@@ -32,7 +32,8 @@ describe('buildThreadContext', () => {
 
   it('drops oldest messages to fit the token budget', () => {
     const messages = [msg('user', 'old', 50), msg('assistant', 'mid', 30), msg('user', 'new', 20)]
-    // budget 100, prompt 10 -> remaining 90: 'new'(20)+'mid'(30)=50 fit, +'old'(50)=100 > 90 -> drop 'old'
+    // budget 100, prompt 10 -> remaining 90: 'new'(20)+'mid'(30)=50 fit, +'old'(50)=100 > 90 ->
+    // drop 'old'
     const out = buildThreadContext(messages, 10, 100)
     expect(out).toEqual([
       { role: 'assistant', content: 'mid' },

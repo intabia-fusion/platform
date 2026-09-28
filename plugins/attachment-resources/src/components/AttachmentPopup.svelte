@@ -25,7 +25,6 @@
   import { AttachmentPresenter } from '..'
   import attachment from '../plugin'
 
-  // export let attachments: number
   export let object: Doc
   export let canAdd = true
   export let canRemove = true

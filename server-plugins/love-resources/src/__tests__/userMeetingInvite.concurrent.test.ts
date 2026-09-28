@@ -204,10 +204,8 @@ describe('OnUserMeetingInvite - concurrent invites from the same pair', () => {
       space: recipientPersonSpaceRef
     })
 
-    // sourceDoc lookup happens via findAll _id; we simulate the
-    // "request was just removed" by serving it from `removedMap` and not
-    // from `invites`. This mirrors the real trigger pipeline where the
-    // TxRemoveDoc fires AFTER the doc is gone from storage.
+    // sourceDoc lookup uses findAll _id; simulate 'just removed' via `removedMap`, not
+    // `invites` - mirrors the real pipeline where TxRemoveDoc fires after the doc is gone.
     const removedMap = new Map<Ref<Doc>, Doc>([[req1._id, req1]])
     const fixtures: Fixtures = {
       // req1 removed from storage; req2/resp1/resp2 still present.
@@ -219,9 +217,8 @@ describe('OnUserMeetingInvite - concurrent invites from the same pair', () => {
 
     const result = await OnUserMeetingInvite([tx], control)
 
-    // Cancellation of req1 should remove ONLY the invite-response that
-    // corresponds to req1. resp2 belongs to a different in-flight call
-    // and must stay.
+    // Cancelling req1 must remove only its own invite-response; resp2 belongs to a different
+    // in-flight call and must stay.
     const removes = findRemoves(result, love.class.UserMeetingInvite)
     const removedIds = new Set(removes.map((r) => r.objectId))
     expect(removedIds.has(resp2._id)).toBe(false)

@@ -7,22 +7,13 @@ import { FallbackStorageAdapter, buildStorage } from './fallback'
 import { ReadonlyStorageAdapter } from './readonly'
 
 /*
-
-  A ';' separated list of URI's to configure the storage adapters. A new lines will be ommited during parse.
-
-  Each config is in `kind(,name)?|uri|contentTypes` format.
-
-  * kind - an storage kind minior/s3 for now.
-  * name - a symbolic name for provider, name could be ommited in case kind will be used as name.
-  * uri - an storage URI with encoded parameters.
-
-  Last one is used as default one, or one with conrent type matched will be used.
-
-  Example:
-  STORAGE_CONFIG=kind|minio|minio:9000?accessKey=minio&secretKey=minio&useSSL=false;\
-    s3|https://s3.amazonaws.com?accessKey=${ACCESS_KEY}&secretKey=${SECRET_KEY}&region=us-east-1
-
-*/
+ * A ';' separated list of URI's to configure the storage adapters. New lines are omitted during
+ * parse. Each config is in `kind(,name)?|uri|contentTypes` format. kind - storage kind minior/s3.
+ * name - symbolic name for provider, optional. uri - storage URI with encoded parameters. Last one
+ * is used as default, or one with content type matched. Example:
+ * STORAGE_CONFIG=kind|minio|minio:9000?accessKey=minio&secretKey=minio&useSSL=false;
+ * s3|https://s3.amazonaws.com?accessKey=${ACCESS_KEY}&secretKey=${SECRET_KEY}&region=us-east-1
+ */
 
 export function storageConfigFromEnv (configEnv?: string): StorageConfiguration {
   const storageConfig: StorageConfiguration = { default: '', storages: [] }

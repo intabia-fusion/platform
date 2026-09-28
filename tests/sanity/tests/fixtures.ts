@@ -20,8 +20,8 @@ export interface SharedWorkspace {
   token: string
 }
 
-// The free plan gives 5 seats and the AI bot takes none, so the owner plus 4 guests fit. One stays
-// spare: an invite that skips the `@invite` tag is uncounted, and past the cap a guest goes read-only.
+// Free plan gives 5 seats, AI bot takes none: owner + 4 guests fit, one spare. An invite
+// skipping `@invite` is uncounted; past the cap a guest goes read-only.
 const SEATS_PER_WORKSPACE = 3
 
 // @playwright/test's `test`, plus a flush of client counters before a context closes.
@@ -33,8 +33,8 @@ export const test = base.extend<{}, { sharedWorkspace: (invites?: number) => Pro
     await Promise.all(context.pages().map(flushTelemetry))
   },
 
-  // One workspace per worker instead of one per test: creating it costs ~1.9s of account and
-  // model-building time. Tests that invite guests spend seats, so it is recycled before it runs out.
+  // One workspace per worker, not per test: creating one costs ~1.9s account/model-building
+  // time. Tests that invite guests spend seats, so it's recycled before it runs out.
   sharedWorkspace: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {

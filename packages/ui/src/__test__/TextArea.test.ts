@@ -93,7 +93,8 @@ describe('TextArea', () => {
     textarea.dispatchEvent(new Event('change', { bubbles: true }))
     expect(onChange).toHaveBeenCalledTimes(1)
 
-    // Suspected source bug: the textarea markup lists `on:keydown` twice, so every keydown fires twice.
+    // Suspected source bug: textarea markup lists `on:keydown` twice, every keydown fires
+    // twice.
     textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
     expect(onKeydown).toHaveBeenCalledTimes(2)
 

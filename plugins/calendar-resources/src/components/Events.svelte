@@ -21,7 +21,6 @@
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector, getViewOptions, viewOptionStore } from '@hcengineering/view-resources'
   import calendar from '../plugin'
-  // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
 
   export let _class: Ref<Class<Event>> = calendar.class.Event
   export let space: Ref<Space> | undefined = undefined

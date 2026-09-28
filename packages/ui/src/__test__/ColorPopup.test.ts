@@ -37,7 +37,7 @@ function values (n: number): ColorValue[] {
   return Array.from({ length: n }, (_, i) => ({ id: i, color: i, label: `color${i}` }))
 }
 
-/** ListView throttles selection changes within 25ms of the previous one; clear the window before driving keys. */
+/** ListView throttles selection changes within 25ms; clear the window before driving keys. */
 async function settle (): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 30))
 }

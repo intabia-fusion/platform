@@ -20,8 +20,8 @@ export class AdminPage {
     await this.openAdminSession()
   }
 
-  // Entering /admin asks for a second factor: every admin RPC refuses a token without a fresh mfaAt.
-  // The panel renders the code form in place of the tabs until the session is open.
+  // Entering /admin asks for a second factor: every admin RPC refuses a token without a fresh
+  // mfaAt. The panel renders the code form in place of the tabs until the session is open.
   async openAdminSession (code = '000000'): Promise<void> {
     const codeInput = this.page.locator('input[placeholder="Code"]')
     try {

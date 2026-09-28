@@ -259,7 +259,7 @@ test.describe('ai-bot scenarios', () => {
     const body = card.locator('[data-id="aiTaskProposalBody"]')
     await expect(body).toBeVisible({ timeout: 15000 })
 
-    // The caption is the Expandable header: clicking it collapses the body, clicking again restores it.
+    // The caption is the Expandable header - click collapses the body, click again restores it.
     // ExpandCollapse keeps the node mounted and toggles `hidden`, so assert visibility, not count.
     await page.mouse.move(0, 0)
     await card.locator('[data-id="aiTaskProposal"]').click()

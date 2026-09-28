@@ -91,8 +91,8 @@ describe('NavItem', () => {
     expect(onDragStart).toHaveBeenCalledTimes(1)
   })
 
-  // isOpen is driven by getTreeCollapsed(_id)/setTreeCollapsed(_id), not by the isOpen prop directly -
-  // the reactive `$: isOpen = !getTreeCollapsed(_id, collapsedPrefix)` overrides whatever is passed in.
+  // isOpen is driven by getTreeCollapsed(_id)/setTreeCollapsed(_id), not the isOpen prop - the
+  // reactive $: isOpen = !getTreeCollapsed(...) overrides whatever's passed in.
   it('derives the fold state from persisted collapsed state for the given _id', () => {
     setTreeCollapsed('nav-1', true, 'pfx')
     const { button } = mount({ isFold: true, _id: 'nav-1', collapsedPrefix: 'pfx' })

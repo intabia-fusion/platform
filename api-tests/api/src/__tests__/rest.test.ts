@@ -128,11 +128,6 @@ describe('rest-api-server', () => {
 
     expect(account.primarySocialId).toEqual(expect.any(String))
     expect(account.role).toBe('USER')
-    // expect(account.space).toBe(core.space.Model)
-    // expect(account.modifiedBy).toBe(core.account.System)
-    // expect(account.createdBy).toBe(core.account.System)
-    // expect(typeof account.modifiedOn).toBe('number')
-    // expect(typeof account.createdOn).toBe('number')
   })
 
   it('find spaces', async () => {
@@ -160,9 +155,8 @@ describe('rest-api-server', () => {
       }
     )
     console.log('SPACES', JSON.stringify(spaces))
-    // There should be exactly 1 PersonSpace per account.
-    // If more than 1 appears it indicates a race condition in ensureEmployee / OnEmployeeCreate
-    // where multiple Person documents are created for the same account UUID.
+    // Exactly 1 PersonSpace per account; more than 1 means a race in
+    // ensureEmployee/OnEmployeeCreate creating multiple Person docs for the same account UUID.
     expect(spaces.length).toBe(1)
     expect(spaces[0].name).toBe('Personal space')
     expect(spaces[0].$lookup?.person?.name).toBe('Appleseed,John')

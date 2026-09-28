@@ -119,9 +119,8 @@ func TestCommandExecutor_Execute_Error(t *testing.T) {
 	}
 }
 
-// TestCommandExecutor_BoundedMemoryOnNoisyStderr verifies that a long-running
-// process producing large amounts of stderr does not blow up memory usage —
-// output must pass through the ring buffer with bounded retention.
+// TestCommandExecutor_BoundedMemoryOnNoisyStderr verifies a noisy-stderr long-running process
+// doesn't blow up memory - output passes through the ring buffer with bounded retention.
 func TestCommandExecutor_BoundedMemoryOnNoisyStderr(t *testing.T) {
 	// Produce ~20MB of stderr via yes(1) redirected to stderr.
 	// If the executor buffered everything, heap would grow by ~20MB.

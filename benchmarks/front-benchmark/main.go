@@ -371,10 +371,7 @@ func runBenchmark(ctx context.Context, config Config, files []string) *Stats {
 	return stats
 }
 
-// runMixedBenchmark runs two groups of workers concurrently:
-// - fileWorkers: request random files from the file list
-// - mixedWorkers: request the mixed URL (e.g., /config.json)
-// Returns separate stats for each group.
+// Runs file and mixed worker groups concurrently. Returns separate stats for each.
 func runMixedBenchmark(ctx context.Context, config Config, files []string) (*Stats, *Stats) {
 	fileStats := &Stats{MinLatency: 1<<63 - 1}
 	mixedStats := &Stats{MinLatency: 1<<63 - 1}

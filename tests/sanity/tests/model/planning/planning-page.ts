@@ -120,9 +120,8 @@ export class PlanningPage extends CalendarPage {
     await this.buttonNextDayInSchedule().click()
   }
 
-  // The target hour depends on the clock, so it can sit below the fold or under the sticky day
-  // header - and boundingBox() reports those coordinates all the same, aiming the drag at a point
-  // the mouse can never reach. Centre it instead of settling for "somewhere in view".
+  // The target hour depends on the clock, so it can sit below the fold or under the sticky header -
+  // boundingBox() still aims the drag there, at a point the mouse can't reach. Centre it instead.
   private async scrollCellIntoMiddle (time: string, column: number): Promise<void> {
     await this.selectTimeCell(time, column).evaluate((el) => {
       el.scrollIntoView({ block: 'center', inline: 'nearest' })
@@ -308,9 +307,8 @@ export class PlanningPage extends CalendarPage {
         const addSlot = popup ? this.buttonPopupCreateAddSlot() : this.buttonPanelCreateAddSlot()
         const rows = this.slotRows(popup)
         const before = await rows.count()
-        // The click is forced, so when it lands on a popup that is still closing - the tag popup
-        // right above is dismissed with Escape - it adds nothing at all and reports success. Then
-        // setTimeSlot waits out the whole test timeout on a row that was never created.
+        // The click is forced, so if it lands on the tag popup while closing (Escape), it adds
+        // nothing but reports success - setTimeSlot waits out the timeout on a row never created.
         await expect(async () => {
           if ((await rows.count()) === before) {
             await addSlot.click({ force: true })
@@ -332,9 +330,8 @@ export class PlanningPage extends CalendarPage {
   }
 
   /**
-   * TimeInputBox decides where a digit lands from its own `startTyping` flag, so a field that was
-   * already touched can swallow the first digit and clamp the hour (23 instead of 15) or push the
-   * second digit into minutes (01). Retype until the field shows what we asked for.
+   * TimeInputBox tracks digit position via its `startTyping` flag - a touched field can swallow
+   * digit one (hour clamps to 23 not 15) or push digit two into minutes (01). Retype until correct.
    */
   private async typeTime (field: Locator, value: string): Promise<void> {
     const hours = value.substring(0, 2)
@@ -394,9 +391,8 @@ export class PlanningPage extends CalendarPage {
     // timeStart
     await this.typeTime(row.locator('div.dateEditor-container:nth-child(1) .hulyButton'), slot.timeStart)
 
-    // dateEnd + timeEnd. DateEditor opens the date+time popup from the time field only while the
-    // slot fits one day. Once it spans two days that click merely focuses the field and a separate
-    // date button appears, so date and time have to be set one by one.
+    // dateEnd + timeEnd: DateEditor opens the date+time popup from the time field only within one
+    // day; across two days the click just focuses the field - set separately.
     const endContainer = row.locator('div.dateEditor-container.difference')
     const endShown = endContainer.locator('.hulyButton > div:first-child')
     const wanted = `${slot.timeEnd.substring(0, 2)} : ${slot.timeEnd.substring(2)}`
@@ -487,9 +483,8 @@ export class PlanningPage extends CalendarPage {
       await expect(this.textPanelVisible()).toHaveText(data.visible)
     }
     if (data.labels != null) {
-      // The label is rendered in the panel itself. Opening the tag popup to check it went through
-      // `div.hulyHeader-titleGroup > button:nth-child(2)`, and that index shifts once a label is
-      // attached, so the click landed on a different button and the popup never appeared.
+      // The label renders in the panel - the old tag-popup check via `div.hulyHeader-titleGroup >
+      // button:nth-child(2)` broke once a label shifted that button's index.
       await expect(this.panel().getByText(data.labels)).toBeVisible()
     }
     if (data.slots != null) {

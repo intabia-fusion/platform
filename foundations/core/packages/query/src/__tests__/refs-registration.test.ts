@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// Since the whole result is registered in Refs once (`q.refsRegistered`) instead of on every
-// callback, every single-document path has to register the right object and unregister what it
-// drops - a re-registration pass that used to paper over both is gone.
+// The whole result registers in Refs once (`q.refsRegistered`), not per callback, so every
+// path registers the right object and unregisters what it drops - the old pass is gone.
 
 import core, {
   createClient,

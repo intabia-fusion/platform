@@ -41,9 +41,8 @@ jest.mock('@hcengineering/platform', () => ({
   translate: jest.fn(async (key) => key)
 }))
 jest.mock('@hcengineering/workbench', () => ({
-  // TypeScript 6 emits the __importDefault helper, which only unwraps `default`
-  // on modules flagged as ES modules; without this a default import gets the
-  // whole mock object instead of its `default`.
+  // TS emits __importDefault, which only unwraps `default` on modules flagged ES; without it,
+  // a default import gets the whole mock object instead of `default`.
   __esModule: true,
   default: { event: { NotifyConnection: 'NotifyConnection', NotifyTitle: 'NotifyTitle' } },
   workbenchId: 'workbenchId'

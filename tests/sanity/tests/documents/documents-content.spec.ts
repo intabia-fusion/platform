@@ -212,7 +212,7 @@ test.describe('Content in the Documents tests', () => {
       })
     })
 
-    // TODO this currently fails for datalake because it downloads the image instead of opening it in the new tab
+    // TODO: fails for datalake - it downloads the image instead of opening it in a new tab.
     test.skip('Check Image can be opened in new tab', async ({ page, context }) => {
       await documentContentPage.addImageToDocument(page)
       const imageSrc = await documentContentPage.firstImageInDocument().getAttribute('src')
@@ -352,7 +352,6 @@ test.describe('Content in the Documents tests', () => {
     await documentContentPage.changeCodeBlockLanguage('Line 18', 'plaintext', 'css')
     await documentContentPage.applyNote('Line 19', 'warning', testNote)
     await documentContentPage.addImage('Line 20')
-    // await page.keyboard.type('Cat')
 
     newUser2 = generateUser()
     await createAccount(request, newUser2)
@@ -367,9 +366,8 @@ test.describe('Content in the Documents tests', () => {
     await documentsSecondPage.openTeamspace(testDocument.space)
     await documentsSecondPage.openDocument(testDocument.title)
     await documentContentSecondPage.checkDocumentTitle(testDocument.title)
-    // The title is there as soon as the document opens, but the body replays through the
-    // collaborator afterwards - wait for the image, the last edit the first page made, so a slow
-    // sync does not read as a missing link.
+    // Title appears at once; the body replays via the collaborator after. Wait for the
+    // image (the first page's last edit) so a slow sync doesn't read as a missing link.
     await expect(documentContentSecondPage.imageInContent()).toBeVisible({ timeout: 30000 })
     await documentContentSecondPage.checkLinkInTheText('Line 8', testLink)
     await documentContentSecondPage.goToByTOC('Line 15')

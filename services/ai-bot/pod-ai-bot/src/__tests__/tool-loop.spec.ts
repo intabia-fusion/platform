@@ -311,7 +311,7 @@ describe('invented tool calls', () => {
     expect(rounds.filter((r) => r === 'round').length).toBeLessThanOrEqual(3)
   })
 
-  // Silence is the worst possible answer: an output-capped final round must not erase what was said.
+  // Silence is the worst answer: an output-capped final round must not erase what was said.
   it('falls back to earlier content when the final answer is lost to the output cap', async () => {
     let n = 0
     const asks = jest.fn(async () => {

@@ -109,9 +109,7 @@ test.describe('Chat image container space reservation tests', () => {
       // The route above holds the image, so "before load" holds however long the message takes.
       await expect(container).toBeVisible({ timeout: 15000 })
 
-      // ==========================================
       // 1. Space reserved immediately (BEFORE LOAD) - Exact expected value assertion
-      // ==========================================
       const boxBeforeLoad = await container.boundingBox()
       expect(boxBeforeLoad).not.toBeNull()
       expect(boxBeforeLoad?.width).toBeCloseTo(expectedWidth, 1)
@@ -121,16 +119,12 @@ test.describe('Chat image container space reservation tests', () => {
       const styleAttr = await container.getAttribute('style')
       expect(styleAttr).toContain('aspect-ratio')
 
-      // ==========================================
       // 2. Preview exists (Blurhash canvas during network loading)
-      // ==========================================
       // The blurhash canvas stands in while the image request is still held.
       const canvasPreview = container.locator('canvas').first()
       await expect(canvasPreview).toBeVisible({ timeout: 15000 })
 
-      // ==========================================
       // 3. Dimensions after load remain unchanged - Exact expected value assertion
-      // ==========================================
       releasePreview()
       const imgElement = container.locator('img').first()
       await expect(imgElement).toBeVisible({ timeout: 15000 })

@@ -355,7 +355,7 @@ test.describe('Billing API — data that UI displays', () => {
   })
 
   test('Office — maxParticipants reflects concurrent participants in a session', async ({ request }) => {
-    // UI: maxParticipants = participantDailyStats.reduce((max, d) => Math.max(max, d.maxParticipants), 0)
+    // UI computes maxParticipants as the max of daily maxParticipants across the session.
     const now = new Date()
     const sessionStart = new Date(now.getTime() - 3600 * 1000).toISOString()
 
@@ -463,7 +463,7 @@ test.describe('Billing API — data that UI displays', () => {
     const meeting2End = new Date(yesterday)
     meeting2End.setHours(13, 15, 0, 0)
 
-    // Checked, not retried: an unchecked failed seed surfaced two calls later as "expected 23, received 0".
+    // Checked, not retried: a bad seed once surfaced 2 calls later as "expected 23, received 0".
     const res = await request.post(`${BILLING_URL}/api/v1/livekit/participants`, {
       headers: getAdminHeaders(),
       data: [

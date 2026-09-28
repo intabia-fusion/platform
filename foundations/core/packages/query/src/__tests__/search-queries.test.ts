@@ -13,17 +13,8 @@
 // limitations under the License.
 //
 
-// The mock ClientConnection (./connection.ts) has no fulltext engine: its findAll/findOne
-// run the generic matchQuery(), which treats an unknown `$search` query key like any other
-// field - a doc never has a `$search` property, so any query carrying a truthy `$search`
-// always comes back empty from the raw mock. That means LiveQuery's fulltext branches
-// (checkSearch, the $search gate in handleDocAdd, the IndexingUpdate refresh) can never be
-// driven through the raw mock's own behaviour: a doc can never even enter a $search query's
-// result to begin with. To exercise them for real we wrap the mock client with a small
-// fulltext stub (withFulltextStub below) that strips `$search`/`$searchStrict` before
-// delegating to the raw mock, then filters by a test-controlled `matches` set - a stand-in
-// fulltext index the test can edit to make a doc "enter" or "leave" the search results.
-// This is a test-local fake, not a discovery that the real server behaves this way.
+// matchQuery treats $search as an ordinary field, so raw queries return empty and fulltext never
+// fires; withFulltextStub strips $search and filters by a test set - a fake, not real behaviour.
 
 import core, {
   createClient,

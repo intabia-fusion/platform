@@ -431,7 +431,8 @@ export abstract class IssueSyncManagerBase {
     }
 
     await this.afterSync(ctx, existingIssue, accountGH, issueExternal, info)
-    // We need to trigger external version retrieval, via sync or event, to prevent move sync operations from platform before we will be sure all is updated on github.
+    // Trigger external version retrieval (via sync or event) so move-sync operations do not run
+    // before github is up to date.
     return {
       current: issueData,
       needSync: githubSyncVersion,
@@ -554,7 +555,8 @@ export abstract class IssueSyncManagerBase {
     issueExternal: IssueExternalData,
     derivedClient: TxOperations
   ): Promise<void> {
-    // TODO: Since Github integeration need to be re-written to use cards, so this is quick fix to not loose data in case of external sync while service was offline.
+    // Since GitHub integration needs to be re-written to use cards, this is a quick fix to not lose
+    // data on external sync while the service was offline.
 
     const update: IssueUpdate = {}
     const du: DocumentUpdate<DocSyncInfo> = {}
@@ -607,7 +609,6 @@ export abstract class IssueSyncManagerBase {
       syncDocs ??
       (await this.client.findAll<DocSyncInfo>(github.class.DocSyncInfo, {
         space: repo.githubProject,
-        // repository: repo._id, // If we skip repository, we will find orphaned issues, so we could connect them on.
         objectClass: _class,
         url: { $in: issues.map((it) => (it.url ?? '').toLowerCase()) }
       }))
@@ -741,7 +742,7 @@ export abstract class IssueSyncManagerBase {
         parent: (issueExternal.url ?? '').toLowerCase()
       })
       for (const u of childItems) {
-        // We need just to clean all of them, since child's for issue are comments for now.
+        // Issue children are comments; remove all of them.
         await derivedClient.remove(u)
       }
 

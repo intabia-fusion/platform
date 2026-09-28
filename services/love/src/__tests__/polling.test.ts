@@ -40,7 +40,8 @@ function createMockRoomClient (): {
   }
 }
 
-// Plain object of jest.fn props (not jest.Mocked<WorkspaceClient>) so expect(wsClient.fn) passes unbound-method lint.
+// Plain object of jest.fn props, not jest.Mocked<WorkspaceClient>, to pass unbound-method
+// lint.
 function createMockWsClient (): Record<string, jest.Mock> {
   return {
     checkUnfinishedMeetings: jest.fn().mockResolvedValue(undefined),
@@ -81,7 +82,8 @@ describe('LiveKitPollingService.poll', () => {
       },
       billingProducer as any
     )
-    // isRunning gate blocks poll() unless start()/stop() flips it; set directly to skip the setInterval side effects.
+    // isRunning gate blocks poll() unless start()/stop() flips it; set directly to skip
+    // setInterval.
     ;(service as any).isRunning = true
   })
 
@@ -213,7 +215,8 @@ describe('LiveKitPollingService.poll', () => {
       expect(wsClient.checkUnfinishedMeetings).toHaveBeenCalledTimes(1)
       dateSpy.mockRestore()
 
-      // Successful poll clears livekitFailureSince/livekitDrainedAt (also drains workspacesToCheck normally -> +1 call).
+      // Successful poll clears livekitFailureSince/DrainedAt, drains workspacesToCheck (+1
+      // call).
       roomClient.listRooms.mockResolvedValue([])
       await (service as any).poll()
       expect((service as any).livekitFailureSince).toBeNull()
@@ -341,7 +344,8 @@ describe('LiveKitPollingService.poll', () => {
       roomClient.listParticipants.mockResolvedValueOnce([participant('sid-1', Math.floor(now / 1000) - 60)])
       await (service as any).poll()
 
-      // Left after a minute, room stays up for an hour, then disappears -> final flush must add nothing.
+      // Left after a minute, room stays up an hour then disappears -> final flush must add
+      // nothing.
       roomClient.listRooms.mockResolvedValueOnce([activeRoom])
       roomClient.listParticipants.mockResolvedValueOnce([])
       dateSpy.mockReturnValue(now + 3_600_000)

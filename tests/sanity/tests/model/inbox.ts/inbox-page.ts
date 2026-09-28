@@ -178,10 +178,8 @@ export class InboxPage extends CommonPage {
     await expect(this.inboxChat(text).nth(1)).toBeVisible()
   }
 
-  // Notifications from a fresh join keep landing after the click, so clear until the list stays
-  // empty instead of assuming one pass emptied it. Reading zero once is not enough: the server
-  // adds the new member to `general` and `random` well after the join, and the notification that
-  // produces lands after the clear - the caller then blames whatever it does next.
+  // Fresh-join notifications keep landing after the click - the server adds the member to
+  // `general`/`random` late, so clear until empty, not once, or blame lands on whatever runs next.
   async clearAll (): Promise<void> {
     await expect(async () => {
       await this.menuButton().click()

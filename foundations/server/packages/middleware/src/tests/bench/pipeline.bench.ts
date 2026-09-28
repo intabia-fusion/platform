@@ -36,9 +36,8 @@ import {
 import { bench, describeBench } from '@hcengineering/measurements'
 
 /**
- * Passthrough middleware that doesn't override any pipeline method.
- * Mimics middleware like `Identity`, `ContextName`, `Modified`, etc. which
- * don't override findAll - they should be entirely skipped by shortcut wiring.
+ * Passthrough middleware overriding no pipeline method - mimics Identity/ContextName/Modified,
+ * which don't override findAll and so get skipped by shortcut wiring.
  */
 class NoopMiddleware extends BaseMiddleware implements Middleware {
   static async create (

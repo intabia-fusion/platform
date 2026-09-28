@@ -15,11 +15,8 @@
 
 /* eslint-disable no-console */
 
-//
-// The measured half of the preview bench. Runs in its own process because sharp.concurrency and
-// sharp.cache are process-global and libvips never gives thread stacks back - comparing two
-// settings inside one process measures the first setting twice.
-//
+// Runs in its own process: sharp.concurrency/cache are process-global and libvips never
+// returns thread stacks, so comparing settings in one process measures the first twice.
 
 import { MeasureMetricsContext, RateLimiter } from '@hcengineering/core'
 import { existsSync, mkdirSync, readdirSync } from 'fs'
@@ -97,9 +94,8 @@ function mulberry32 (seed: number): () => number {
 }
 
 /**
- * Photo-like content: smooth blobs from 8x-upscaled noise, plus fine grain on top. Flat colour
- * flatters every encoder and raw noise punishes them all - both would make the format comparison
- * meaningless, since what separates webp from avif is exactly how they handle fine detail.
+ * Photo-like content: smooth blobs from 8x-upscaled noise plus fine grain. Flat colour
+ * flatters every encoder, raw noise punishes all - meaningless for a webp vs avif comparison.
  */
 export async function makeSource (spec: SourceSpec, path: string): Promise<void> {
   const rnd = mulberry32(spec.seed)

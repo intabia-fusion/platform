@@ -119,10 +119,8 @@ describe('ProgressCircle', () => {
     expect(styleNum(below.circles[1], 'stroke-dashoffset')).toBeCloseTo(lenghtC) // clamped to min=0
   })
 
-  // Source bug: the `if (value > max) value = max` / `if (value < min) value = min` clamp runs once
-  // at component init, not inside a `$:` reactive block. A later prop update skips it entirely, so
-  // dashOffset (and stroke-dashoffset) can go outside the valid [0, lenghtC] range. Pinned as current
-  // behaviour, not a desired one.
+  // Bug: the value clamp (if value>max/min) runs once at init, not in a $: reactive block - a later
+  // prop update skips it, so dashOffset/stroke-dashoffset can exceed [0, lenghtC]. Pinned.
   it('pinned bug: a later out-of-range $set is not reclamped', async () => {
     const { component, circles } = mount({ value: 50, min: 0, max: 100 })
 

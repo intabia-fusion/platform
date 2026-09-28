@@ -53,8 +53,8 @@ describe('Timeline', () => {
   })
 
   it('builds the month/day grid and today marker from currentTime alone', () => {
-    // jsdom measures the header as zero-width, so offsetView is 0 and the rendered range is driven
-    // purely by currentTime - this pins the pure date math (getNextMonth/getNextWeek/getOffsetByDate).
+    // jsdom measures the header as zero-width, so offsetView is 0 and the range is driven
+    // purely by currentTime - pins the date math (getNextMonth/getNextWeek/getOffsetByDate).
     const { host } = mount({ currentTime: CURRENT_TIME })
 
     const months = host.querySelectorAll('.month')
@@ -226,8 +226,8 @@ describe('Timeline', () => {
   })
 
   it('refuses to resize the panel when the container measures narrow', () => {
-    // jsdom's real (unstubbed) getBoundingClientRect is always zero, so timelineBox.width <= 450 holds
-    // and splitterStart bails before adding any listeners - this pins that guard, not a layout fluke.
+    // jsdom's unstubbed getBoundingClientRect is always zero, so timelineBox.width <= 450 holds and
+    // splitterStart bails before adding listeners - pins the guard, not a layout fluke.
     const { host } = mount({ currentTime: CURRENT_TIME })
     const splitter = host.querySelector('.timeline-splitter') as HTMLElement
     const title = host.querySelector('.timeline-header__title') as HTMLElement
@@ -242,9 +242,8 @@ describe('Timeline', () => {
   })
 
   it('drags the splitter to resize the header panel, clamped to its min/max', async () => {
-    // Timeline mixes flex with absolutely-positioned siblings, which fakeLayout's flex-only model
-    // cannot represent (it left viewBox.width at 0 regardless). Stubbing just the two rects this
-    // component reads - the container and the viewbox - is the direct, precise alternative.
+    // fakeLayout only models flex, not Timeline's flex+absolute mix (viewBox.width stayed 0) -
+    // stub the two rects it reads: container and viewbox.
     const nativeRect = Element.prototype.getBoundingClientRect.bind(null) as (this: Element) => DOMRect
     Element.prototype.getBoundingClientRect = function (this: Element): DOMRect {
       if (this.classList.contains('timeline-container')) {

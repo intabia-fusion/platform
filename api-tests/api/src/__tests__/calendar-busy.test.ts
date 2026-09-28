@@ -6,13 +6,8 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-// API-tests for calendar.class.BusySlot: the OnEvent server trigger
-// (server-plugins/calendar-resources syncBusySlot/removeBusySlot) mirrors an
-// owner's Event into one BusySlot per participant, living in the shared
-// calendar.space.Calendar, while the Event itself now lives in the owner's
-// (and each participant's) private PersonSpace. That split is exactly what
-// these tests assert: BusySlot is world-readable inside the workspace, Event
-// is not.
+// OnEvent mirrors an owner's Event into one BusySlot per participant in the shared Calendar,
+// while Event lives in each private PersonSpace: BusySlot is world-readable, Event isn't.
 
 import {
   createRestClient,

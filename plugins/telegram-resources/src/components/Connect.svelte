@@ -133,7 +133,6 @@
                   close(number)
                 }
               }
-              // secondary: { label: telegram.string.Disconnect }
             }
           }
 

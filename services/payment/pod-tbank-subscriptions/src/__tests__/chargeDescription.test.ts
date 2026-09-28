@@ -15,8 +15,8 @@
 
 import { buildChargeDescription } from '../notifications'
 
-// No PaymentUrl -> getPlanLabel returns the raw plan id (no network), so these assert phrasing + language
-// selection deterministically. Real deployments substitute the human plan label for the id.
+// No PaymentUrl -> getPlanLabel returns the raw plan id (no network), so phrasing/language
+// assert deterministically. Real deployments substitute the human label.
 const config: any = {}
 
 describe('buildChargeDescription', () => {

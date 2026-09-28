@@ -142,9 +142,8 @@ describe('plan-unpaid', () => {
   }
 
   it('past_due runs on the free fallback: members within free seats stay writable', async () => {
-    // The account server always configures a free fallback (default 5 seats), so an unpaid workspace
-    // is NOT put into hard read-only — it runs on free limits. With only owner + one member (2 < 5),
-    // both stay writable. (Hard read-only only applies to members OVER the free seat budget — seat-limits.)
+    // Account server always configures a 5-seat free fallback; an unpaid workspace runs on
+    // free limits, not hard read-only - owner+1 member (2<5) both stay writable.
     await setSubscriptionStatus(SubscriptionStatus.Active)
     const beforeUnpaid = await pollOk(async () => await createDrive(memberOps, `unpaid-before-${generateUuid()}`))
     expect(beforeUnpaid).toBeDefined()

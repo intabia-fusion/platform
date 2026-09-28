@@ -58,35 +58,10 @@ export const main = async (): Promise<void> => {
   //       const token = extractToken(req.headers)
   //       const rawToken = extractTokenRaw(req.headers)
 
-  //       if (token === undefined || rawToken === undefined) {
-  //         res.status(401).send()
-  //         return
-  //       }
-
-  //       const { workspace } = token
-  //       const phone = req.body?.phone
-  //       if (phone === undefined) {
-  //         res.status(400).send({ err: "'phone' is missing" })
-  //         return
-  //       }
-
-  //       const existingRec = await platformWorker.getUserRecord({
-  //         phone,
-  //         workspace
-  //       })
-
   //       if (existingRec !== undefined) {
   //         const socialIds = await getSocialIds(rawToken)
 
   //         const email = socialIds.find((si) => si.type === SocialIdType.EMAIL)?.value
-
-  //         if (existingRec.email === email) {
-  //           res.send({
-  //             next: 'end'
-  //           })
-  //         } else {
-  //           res.status(400).send({ err: 'Phone number already in use' })
-  //         }
 
   //         return
   //       }
@@ -99,23 +74,6 @@ export const main = async (): Promise<void> => {
   //     '/signin/code',
   //     async (req, res) => {
   //       const token = extractToken(req.headers)
-
-  //       if (token === undefined) {
-  //         res.status(401).send()
-  //         return
-  //       }
-
-  //       const { workspace } = token
-  //       const phone = req.body?.phone
-  //       if (phone === undefined) {
-  //         res.status(400).send({ err: "'phone' is missing" })
-  //         return
-  //       }
-
-  //       const existingRec = await platformWorker.getUserRecord({
-  //         phone,
-  //         workspace
-  //       })
 
   //       if (existingRec !== undefined) {
   //         if (existingRec.email === email) {
@@ -155,23 +113,6 @@ export const main = async (): Promise<void> => {
   //     async (req, res) => {
   //       const token = extractToken(req.headers)
 
-  //       if (token === undefined) {
-  //         res.status(401).send()
-  //         return
-  //       }
-
-  //       const { email, workspace } = token
-  //       const phone = req.body?.phone
-  //       if (phone === undefined) {
-  //         res.status(400).send({ err: "'phone' is missing" })
-  //         return
-  //       }
-
-  //       const existingRec = await platformWorker.getUserRecord({
-  //         phone,
-  //         workspace
-  //       })
-
   //       if (existingRec !== undefined) {
   //         if (existingRec.email === email) {
   //           res.send({
@@ -188,16 +129,6 @@ export const main = async (): Promise<void> => {
 
   //       const conn = telegram.getConnection(phone)
 
-  //       if (conn !== undefined) {
-  //         await platformWorker.addUser({
-  //           email,
-  //           workspace,
-  //           phone,
-  //           conn
-  //         })
-  //         telegram.forgetConnection(phone)
-  //       }
-
   //       res.send({ next: 'end' })
   //     }
   //   ],
@@ -205,11 +136,6 @@ export const main = async (): Promise<void> => {
   //     '/signout',
   //     async (req, res) => {
   //       const token = extractToken(req.headers)
-
-  //       if (token === undefined) {
-  //         res.status(401).send()
-  //         return
-  //       }
 
   //       const { email, workspace } = token
   //       await platformWorker.removeUser({ email, workspace })

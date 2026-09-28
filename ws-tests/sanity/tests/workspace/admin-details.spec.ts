@@ -2,9 +2,8 @@ import { ApiEndpoint, generateId, getSecondPage, LoginPage } from '@hcengineerin
 import { expect, test } from '@playwright/test'
 import { AdminPage } from '../model/admin.page'
 
-// Exercises the workspace details dialog admin ops that our refactor introduced:
-// URL rename (OTP-gated) and member add via account search (OTP-gated). The stand sets
-// ADMIN_OTP_DEV_CODE=000000 so a fixed code is accepted and no email is sent.
+// Exercises admin ops our refactor introduced: URL rename and member add via account search
+// (both OTP-gated). ADMIN_OTP_DEV_CODE=000000 accepts a fixed code, no email sent.
 test.describe('Workspace admin details tests', () => {
   test('Rename workspace url and add a member from admin details', async ({ browser, request }) => {
     const api: ApiEndpoint = new ApiEndpoint(request)

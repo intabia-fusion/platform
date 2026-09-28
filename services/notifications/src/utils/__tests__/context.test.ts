@@ -636,9 +636,8 @@ describe('context utils', () => {
         makeClient(undefined) as unknown as Client
       )
 
-      // NOTE: this asserts against TxProcessor.updateDoc2Doc's actual $pull handling for the
-      // `{ field: { $in: [...] } }` shape (core's $pull operator matches per-field $in when the
-      // top-level key isn't itself `$in`). If core changes that semantic, this count will drift.
+      // Asserts TxProcessor.updateDoc2Doc's real $pull for `{ field: { $in: [...] } }`: core
+      // matches per-field $in unless the top key is $in. Drifts if that changes.
       expect(tx.operations.unreadMessagesCount).toBe(2)
     })
 

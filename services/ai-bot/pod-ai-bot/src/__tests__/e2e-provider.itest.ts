@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-// End-to-end coverage of every OpenAIProvider method against a real local model server. Disabled by default.
-//   AI_BOT_E2E=1 rushx test e2e-provider   (env: AI_BOT_E2E_URL, AI_BOT_E2E_KEY, AI_BOT_E2E_MODEL)
+// E2e coverage of every OpenAIProvider method against a real local model server. Disabled by
+// default: AI_BOT_E2E=1 rushx test e2e-provider (AI_BOT_E2E_URL/KEY/MODEL).
 
 const E2E = process.env.AI_BOT_E2E === '1'
 const BASE_URL = process.env.AI_BOT_E2E_URL ?? 'http://127.0.0.1:8000/v1'

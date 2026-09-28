@@ -20,9 +20,8 @@ import { elasticUrl } from '@hcengineering/test-containers'
 
 import { createElasticAdapter } from '../adapter'
 
-// An index of its own, created from the mapping in the adapter. The shared one is also written to
-// by `adapter.test.ts`, which never calls `initMapping` - running first, it would have Elastic
-// infer a mapping with no `term_vector`, and every highlight query against it then fails outright.
+// Own index: the shared one is also written by adapter.test.ts, which skips initMapping - if that
+// runs first, Elastic infers no term_vector and highlight queries there fail.
 setMetadata(serverCore.metadata.ElasticIndexName, 'search_string_test')
 
 const MESSAGE_CLASS = 'chunter:class:ChatMessage' as Ref<Class<Doc>>

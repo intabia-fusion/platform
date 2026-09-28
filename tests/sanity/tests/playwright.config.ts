@@ -9,9 +9,8 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
 }
 
-// A run that stays green needs no trace, and a stable failure is reproduced by the retry anyway.
-// Tracing every attempt costs the whole run, so it is opt-in: TRACE_MODE=retain-on-failure when
-// hunting a flake, which is the only case where the failing attempt's trace is the one you need.
+// A green run needs no trace, and a stable failure is reproduced by the retry anyway. Tracing
+// costs the whole run, so it's opt-in: TRACE_MODE=retain-on-failure when hunting a flake.
 const traceModes = ['on-first-retry', 'retain-on-failure', 'on', 'off', 'on-all-retries'] as const
 type TraceMode = (typeof traceModes)[number]
 
@@ -21,9 +20,8 @@ if (requested !== '' && requested !== traceMode) {
   console.warn(`TRACE_MODE=${JSON.stringify(requested)} is not one of ${traceModes.join(', ')}; using ${traceMode}`)
 }
 
-// love drives the wall time: meetings.all.spec.ts pulls in all 17 love files, so it is one
-// sequential ~178s job. Its own project puts it at the head of the queue instead of ~80s in,
-// where it used to finish alone while the other workers idled.
+// love drives the wall time: meetings.all.spec.ts pulls in all 17 love files as one sequential
+// ~178s job. Its own project puts it at the queue head, not ~80s in, finishing alone while idle.
 const platformUse: PlaywrightTestConfig['use'] = {
   // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner - on top of
   // #profile-button. Every click on it then waits the toast out; that cost 166s of the run
@@ -38,9 +36,8 @@ const platformUse: PlaywrightTestConfig['use'] = {
       }
     ]
   },
-  // Without it an action inherits the test timeout: a click on a covered element - a panel over the
-  // floor, a stale overlay - hangs for the full minute and reports nothing useful. 30s, not less:
-  // under five workers a button can legitimately take twenty to become clickable.
+  // Without it, an action inherits the test timeout: clicking a covered element (a panel, a stale
+  // overlay) hangs a minute with no useful report. 30s: a button can take twenty under 5 workers.
   actionTimeout: 30000,
   testIdAttribute: 'data-id',
   permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
@@ -49,9 +46,8 @@ const platformUse: PlaywrightTestConfig['use'] = {
       '--use-fake-ui-for-media-stream',
       '--use-fake-device-for-media-stream',
       '--autoplay-policy=no-user-gesture-required',
-      // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't
-      // resolve, which kills DTLS handshake. Disable mDNS obfuscation so
-      // LiveKit gets a real loopback/host IP candidate.
+      // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't resolve, killing the DTLS
+      // handshake. Disable mDNS obfuscation so LiveKit gets a real loopback/host IP candidate.
       '--disable-features=WebRtcHideLocalIpsWithMdns'
     ]
   },

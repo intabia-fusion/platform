@@ -17,9 +17,8 @@ import type { WorkspaceUuid } from '@hcengineering/core'
 import { TimeMachineDB, type DelayedEventRecord } from '../db'
 
 /**
- * A minimal in-memory stand-in for postgres.Sql, just enough to run the four fixed queries
- * TimeMachineDB issues. Dispatches on keywords in the query text rather than parsing SQL, so it
- * exercises the real upsert/ILIKE-scope/date-filter/limit behaviour instead of only recording calls.
+ * Minimal in-memory stand-in for postgres.Sql, enough for TimeMachineDB's four queries;
+ * dispatches on keywords, exercising real upsert/ILIKE/date/limit behaviour.
  */
 export function createFakeClient (): { client: any, rows: DelayedEventRecord[] } {
   const rows: DelayedEventRecord[] = []
@@ -29,7 +28,8 @@ export function createFakeClient (): { client: any, rows: DelayedEventRecord[] }
     if (text.includes('INSERT INTO')) {
       const [id, workspace, targetDate, topic, data] = values
       const idx = rows.findIndex((r) => r.id === id && r.workspace === workspace)
-      // Round-trips data through JSON, like a real jsonb column would, so a serialization bug shows up here.
+      // Round-trips data through JSON like a real jsonb column, so a serialization bug shows
+      // here.
       const record: DelayedEventRecord = {
         id,
         workspace,
@@ -141,10 +141,8 @@ describe('TimeMachineDB', () => {
       expect(rows.map((r) => r.id)).toEqual(['exec-b_t1'])
     })
 
-    // ILIKE treats '_' as "any single character", not a literal underscore. Webhook jobIds are
-    // 'wh_<generateId()>', so cancelling by a raw exact id also removes an unrelated id that only
-    // differs in that one position. This documents current behaviour, it is not a fix - a future
-    // webhook cancel path must escape '_' (and '%') in the id before calling removeEvents.
+    // ILIKE's '_' is a wildcard, so 'wh_1' also matches 'whX1'. Documents current behaviour -
+    // a future cancel path must escape '_' and '%' before calling removeEvents.
     it('an unescaped underscore in an exact id also matches a sibling id differing in that one character', async () => {
       await db.upsertEvent({ id: 'wh_1', workspace: ws1, target_date: 1000, topic: 't', data: {} })
       await db.upsertEvent({ id: 'whX1', workspace: ws1, target_date: 1000, topic: 't', data: {} })

@@ -89,8 +89,8 @@ describe('updateInboxContexts', () => {
 
     expect(_class).toBe(notification.class.DocNotifyContext)
     expect(documentQuery).toEqual({ lastNotify: { $gt: 0 }, user: 'acc-me' })
-    // No projection on purpose: the live query layer adds inclusions (_class, space, modifiedOn) and a
-    // mixed projection is treated as inclusion-only by the adapter, dropping every other field.
+    // No projection on purpose: the live query layer adds inclusions (_class, space,
+    // modifiedOn); mixed projection is inclusion-only, dropping every other field.
     expect(options).toEqual({
       sort: { lastNotify: SortingOrder.Descending },
       limit: 26

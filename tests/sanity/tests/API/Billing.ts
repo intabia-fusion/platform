@@ -68,9 +68,8 @@ function buildLimits (input: PlanLimitsInput = {}): SubscriptionLimits {
 }
 
 /**
- * Wait until the workspace has a tier subscription (the payment pod auto-provisions one — free or
- * trial — asynchronously on workspace creation). Set the plan only after it lands, so the explicit
- * plan wins deterministically instead of racing the async auto-provision.
+ * Payment pod auto-provisions a free/trial subscription async on workspace creation. Wait for it,
+ * then set plan explicitly so it wins the race.
  */
 export async function waitForTier (workspaceUuid: WorkspaceUuid, timeoutMs = 15000): Promise<void> {
   const client = await getAdmin()

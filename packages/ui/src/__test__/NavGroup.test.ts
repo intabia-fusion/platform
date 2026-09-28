@@ -76,8 +76,8 @@ describe('NavGroup', () => {
     expect(selectableHeader.classList.contains('selectableHeader')).toBe(true)
   })
 
-  // isOpen is re-derived from defaultOpen/persisted state on every mount (`$: isOpen = isStored ? ... :
-  // (defaultOpen ?? true)`), so the isOpen prop itself has no effect - defaultOpen is the real control.
+  // isOpen re-derives from defaultOpen/persisted state every mount ($: isOpen = isStored ? ... :
+  // (defaultOpen ?? true)) - the isOpen prop itself has no effect; defaultOpen is the real control.
   it('opens by default, and defaultOpen controls the initial isOpen class', () => {
     expect(mount({}).header.classList.contains('isOpen')).toBe(true)
     expect(mount({ defaultOpen: false }).header.classList.contains('isOpen')).toBe(false)

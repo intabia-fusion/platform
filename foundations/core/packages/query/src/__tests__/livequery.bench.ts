@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// Measurements, not thresholds: numbers on a laptop under ts-jest are not comparable between
-// machines, so nothing here fails on time. Run with `pnpm bench` and read the table.
-// The storage is in-memory, so every figure is LiveQuery's own cost with the server taken out.
+// Measurements, not thresholds - laptop numbers under ts-jest aren't comparable across
+// machines. Run `pnpm bench`; in-memory storage means every figure is LiveQuery's own cost.
 
 import core, {
   createClient,

@@ -203,10 +203,8 @@ test.describe('Inbox tests', () => {
       await notificationPageSecond.toggleChatMessage()
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChannel('general')
-      // Joining the workspace adds the user to `general` and `random`, but the server does it long
-      // after the join itself, and the notifications it generates then land after the clear below
-      // and look exactly like one the message would cause. The system message announcing the new
-      // member is the point where they exist, so clear only once it is on screen.
+      // Server's general/random join lands async, after this call returns; its notifications
+      // would look like it if cleared too early - wait for the join system message instead.
       await expect(channelPage.textMessage(`${newUser2.lastName} ${newUser2.firstName}`)).toBeVisible()
       await leftSideMenuPageSecond.clickNotification()
       await inboxPageSecond.clearAll()

@@ -40,8 +40,8 @@ export async function closeAccountDb (): Promise<void> {
 }
 
 /**
- * Latest live OTP code for an email. Retries: the code row is written after the mail is queued, so a
- * fast test can look before it lands.
+ * Latest live OTP code for an email. Retries: the code row is written after mail is queued, so
+ * a fast test can look before it lands.
  */
 export async function getOtpCode (email: string, timeoutMs = 10000): Promise<string> {
   const db = await getDb()

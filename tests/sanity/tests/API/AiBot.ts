@@ -17,7 +17,10 @@ export const BOT_DIRECT = `${BOT.lastName} ${BOT.firstName}` // rendered as "AI 
 /** Anything the mock provider posts: reply, proposal card, edit. Measured max 4.9s. */
 export const BOT_REPLY_TIMEOUT = 15000
 
-/** Opens a direct chat with the AI bot; it provisions itself asynchronously, so retry until it appears. */
+/**
+ * Opens a direct chat with the AI bot; it provisions asynchronously, so retry until it
+ * appears.
+ */
 export async function openBotDirect (
   leftSideMenuPage: LeftSideMenuPage,
   chunterPage: ChunterPage,

@@ -38,9 +38,8 @@ export function generateTestData (): TestData {
   }
 
   return {
-    // A faker word is not an identifier: its word list is finite, and on a collision the account
-    // service hands the workspace a url of its own (`<name>-<id>`). Every test that builds a url
-    // from this name then lands in somebody else's workspace - i.e. on the login form.
+    // Faker words aren't identifiers: the list is finite; on clash the account service gives
+    // the workspace its own url (`<name>-<id>`) - any built url hits someone else's login.
     workspaceName: `${faker.lorem.word()}-${generateId(8)}`,
     userName: faker.internet.userName(),
     firstName: faker.person.firstName(),
@@ -251,7 +250,8 @@ export async function uploadFile (page: Page, fileName: string, fileUploadTestId
   const filePath = resolveFilePath(fileName)
   await fileChooser.setFiles(filePath)
 
-  // Replace with a more reliable condition for determining when the upload is complete, if possible.
+  // Replace with a more reliable condition for determining when the upload is complete, if
+  // possible.
   await page.waitForTimeout(2000)
 }
 
@@ -309,12 +309,6 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
   await swp.selectWorkspace(data.workspaceName)
 }
 
-/**
- * Opens the workspace straight from an account token instead of walking the login form and the
- * workspace picker. The client restores the session itself: with LastAccount set and the account
- * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
- * three page loads.
- */
 // Pushes the analytics batch out before a context closes - tests are shorter than the 10s ping
 // tick and the 5s batch timer, so without this most ws traffic is never reported.
 export async function flushTelemetry (page: Page): Promise<void> {
@@ -329,6 +323,8 @@ export async function flushTelemetry (page: Page): Promise<void> {
   }
 }
 
+// Skips the login form and workspace picker: with LastAccount and the account cookie set, the
+// client fetches the token via getAccount() on first load - one navigation instead of three.
 export async function loginByToken (
   page: Page,
   accountToken: string,
@@ -372,9 +368,8 @@ export async function createAccountAndWorkspace (
   data: TestData,
   app?: string
 ): Promise<{ ws: WorkspaceLoginInfo, token: string }> {
-  // Two steps, not one: the per-test setup is a quarter of the Platform lane, and without the split
-  // the step report cannot say whether that is the account service or the client booting a new
-  // workspace.
+  // Two steps, not one: per-test setup is a quarter of the Platform lane; without the split,
+  // the report can't say if that's the account service or the client booting a workspace.
   const { ws, token } = await test.step('setup: account and workspace', async () =>
     await createAccountWithWorkspace(request, data))
   await test.step('setup: open the workspace', async () => {

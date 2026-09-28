@@ -125,9 +125,8 @@ dtest('broadcast benchmark', () => {
   it(`producer + ${SUBS} subscribers x ${DOCS} docs`, async () => {
     const producer = await connect(URL, { email: 'user1', password: '1234', workspace: WS })
 
-    // Worker-per-subscriber: each LiveQuery callback runs in its own thread, so a
-    // slow consumer (busy-spin in callback) doesn't block fast peers and keeps
-    // server-side ws.bufferedAmount climbing toward the drop threshold.
+    // Worker-per-subscriber: each LiveQuery callback runs in its own thread, so a slow busy-spin
+    // doesn't block fast peers while ws.bufferedAmount climbs toward the drop threshold.
     const workerPath = path.resolve(__dirname, '../../lib/__tests__/bench-sub.worker.js')
     const seen = new Map<number, Set<string>>()
     let totalDeliveries = 0
@@ -253,9 +252,8 @@ dtest('broadcast benchmark', () => {
         for (const id of sentIds) if (!set.has(id)) liveMissing++
       }
 
-      // Eventual consistency: ask every worker to do a fresh findAll and report
-      // how many of the sentIds are missing. After BulkUpdate refresh the LiveQuery
-      // cache is rebuilt from the server, so findAll is the source of truth.
+      // Each worker findAlls fresh, reporting missing sentIds; after a BulkUpdate refresh the
+      // LiveQuery cache rebuilds from the server, so findAll is the source of truth.
       const perSubMissing: number[] = []
       let consistencyMissing = 0
       await Promise.all(
@@ -307,9 +305,8 @@ dtest('broadcast benchmark', () => {
         fs.writeFileSync(path.join(STATS_OUT_DIR, `bench-${LABEL}.json`), JSON.stringify(result, null, 2))
       } catch {}
 
-      // The slow-client refresh path collapses many drops into a single BulkUpdate event,
-      // so liveMissing > 0 is acceptable. Eventual consistency must hold:
-      // every subscriber must see every sent doc via findAll.
+      // Slow-client refresh collapses many drops into one BulkUpdate, so liveMissing > 0 is fine;
+      // eventual consistency still needs every subscriber to see every doc via findAll.
       expect(consistencyMissing).toBe(0)
     } finally {
       await closeAll()

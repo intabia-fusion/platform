@@ -30,9 +30,8 @@ const checkoutKey = (workspaceUuid: string, type: string): string => `checkout:$
 
 // Rows the tests themselves write; cleared between tests, children before parents.
 const DIRTY_TABLES = ['payment_intent', 'subscription']
-// Fixtures seeded once in beforeAll — also cleared at startup, since the database outlives the run.
-// Children before parents: social_id/account_events/user_profile all reference person, and the
-// database is shared with the other real-db suites, so leftovers of theirs must go too.
+// Fixtures seed once in beforeAll, cleared at startup - db outlives the run. Children before
+// parents (social_id/account_events/user_profile -> person); shared with other real-db suites.
 const FIXTURE_TABLES = [
   'workspace_members',
   'workspace_status',
@@ -82,7 +81,8 @@ describe.each(realDbFlavors)('payment-intent-real [$flavor]', ({ flavor: dbFlavo
   })
 
   beforeEach(async () => {
-    // checkout claim keys are derived from the shared workspace, so intents must not leak across tests.
+    // checkout claim keys are derived from the shared workspace, so intents must not leak
+    // across tests.
     await clearTables(crClient, dbUuid, DIRTY_TABLES)
   })
 
@@ -296,7 +296,8 @@ describe.each(realDbFlavors)('payment-intent-real [$flavor]', ({ flavor: dbFlavo
       // Mark charged
       await crAccount.paymentIntent.update({ id: intentId }, { status: 'charged', updatedOn: Date.now() })
 
-      // Age heartbeat (irrelevant since status != pending, but ensures WHERE status='pending' is the blocker)
+      // Age heartbeat (irrelevant since status != pending; ensures WHERE status='pending' is
+      // the blocker).
       await crAccount.paymentIntent.update({ id: intentId }, { heartbeatAt: Date.now() - 60000 })
 
       const took = await crAccount.reclaimStaleChargeIntent(intentId, 10000)

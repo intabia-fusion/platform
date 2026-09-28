@@ -50,14 +50,14 @@ process.env.FRONT_URL = 'https://front.example.test'
 process.env.PROVIDER = 'stripe'
 process.env.PLAN_CONFIG = '/fake/plan-config.yaml'
 
-// config.ts validates the plan config at import time (every plan needs an explicit windowMonthLimit),
-// and fs is mocked above — feed it a valid file before requiring the module.
+// config.ts validates plan config at import time (every plan needs windowMonthLimit); fs is
+// mocked above, so feed it a valid file before requiring the module.
 const fsMock = jest.requireMock('fs')
 fsMock.existsSync.mockReturnValue(true)
 fsMock.readFileSync.mockReturnValue('plans:\n  business:\n    windowMonthLimit: 1000\n')
 
-// Required after the env above: server.ts builds its rate limiters from the config singleton at
-// import time, and that throws when the vars are missing.
+// Required after the env above: server.ts builds rate limiters from the config singleton at
+// import time, which throws if vars are missing.
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { createServer } = require('../server') as typeof import('../server')
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -144,7 +144,7 @@ function makeProvider (): any {
   }
 }
 
-// Pull the terminal (last) handler for a route, bypassing all auth/rate-limit middleware in front of it.
+// Pull the terminal (last) handler for a route, bypassing auth/rate-limit middleware in front.
 function getHandler (app: any, method: 'get' | 'post', path: string): (req: any, res: any) => void {
   const layer = app._router.stack.find((l: any) => l.route?.path === path && l.route?.methods[method] === true)
   if (layer === undefined) throw new Error(`route not found: ${method.toUpperCase()} ${path}`)
@@ -152,7 +152,8 @@ function getHandler (app: any, method: 'get' | 'post', path: string): (req: any,
   return stack[stack.length - 1].handle
 }
 
-// Fire-and-forget handlers signal completion via res.json/res.end; wait for that instead of the call itself.
+// Fire-and-forget handlers signal completion via res.json/res.end; wait for that, not the
+// call.
 function makeRes (): { res: any, done: Promise<any> } {
   let resolve: (v: any) => void = () => {}
   const done = new Promise<any>((_resolve) => {
@@ -358,8 +359,8 @@ describe('subscribe: same-category package replacement aborts on cancelSubscript
 })
 
 describe('updatePlan -> resolveLimits (via attachLimits on the persisted response)', () => {
-  // Real UUID: resolveSeatQuantity (per-seat branch) calls generateToken(sys, workspace, ...), which
-  // validates the workspace as a UUID before the account-client mock ever sees it.
+  // Real UUID: resolveSeatQuantity (per-seat branch) calls generateToken(sys, workspace, ...),
+  // which validates it as a UUID before the account-client mock sees it.
   const wsId = randomUUID() as any
 
   function req (id: string, body: any): any {
@@ -432,5 +433,5 @@ describe('updatePlan -> resolveLimits (via attachLimits on the persisted respons
   })
 })
 
-// A plan missing windowMonthLimit no longer warns here — config.ts refuses to start the pod at all.
+// A plan missing windowMonthLimit no longer warns here - config.ts refuses to start the pod.
 // See config.test.ts.

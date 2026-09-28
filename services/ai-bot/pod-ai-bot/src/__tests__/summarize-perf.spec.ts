@@ -38,9 +38,8 @@ function timeMs (runs: number, fn: () => void): number {
 }
 
 /**
- * Post-processing runs once per summary, on a few dozen lines, so the budgets below are generous by
- * orders of magnitude. They exist to catch a change that turns a linear pass into a quadratic one -
- * not to measure the machine.
+ * Post-processing runs once per summary on a few dozen lines: budgets are generous by orders
+ * of magnitude to catch a linear->quadratic regression, not measure the machine.
  */
 describe('summary post-processing performance', () => {
   it('handles a realistic summary in well under a millisecond', () => {

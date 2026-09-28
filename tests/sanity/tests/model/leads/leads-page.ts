@@ -51,9 +51,8 @@ export class LeadsPage {
     await this.antiCardFormDetached().waitFor({ state: 'detached' })
   }
 
-  // `CreateCustomer.svelte` looks duplicates up in a reactive block that never cancels an earlier
-  // lookup, so the empty-name answer can overtake the one for the typed name and leave `matches`
-  // empty for good. Nothing re-runs it on its own - retype to ask again.
+  // `CreateCustomer.svelte` never cancels an earlier duplicate lookup, so the empty-name answer can
+  // overtake the typed-name one and leave `matches` empty for good - retype to re-ask.
   async checkContactExistsMessage (companyName: string): Promise<void> {
     await expect(async () => {
       await this.companyNameInput().fill('')

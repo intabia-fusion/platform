@@ -26,11 +26,8 @@ export class OfficePage extends CommonPage {
 
   // Actions
   async navigateToOffice (): Promise<void> {
-    // The sidebar item re-renders frequently (presence/love widget reactivity
-    // re-mounts the link node). A bare `.click()` races that re-mount and
-    // surfaces as "element was detached from the DOM" with Playwright's auto
-    // retry burning the test timeout. Short retry loop with a wait-stable
-    // requeue keeps the action idempotent.
+    // Presence/love widget reactivity remounts the sidebar link; a bare `.click()` races it,
+    // throwing "element was detached from the DOM" and burning the timeout via Playwright's retry.
     if (/\/love(\?|#|$|\/)/.test(this.page.url())) return
     for (let attempt = 0; attempt < 5; attempt++) {
       try {

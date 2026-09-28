@@ -118,8 +118,8 @@ const settle = async (ms = 80): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-// Local-apply update branches need tx.modifiedOn strictly greater than the doc's stored
-// modifiedOn, otherwise the code takes the refresh-from-server path instead (see lookup-add.test.ts).
+// Local-apply update branches need tx.modifiedOn strictly greater than the doc's stored value,
+// else the code takes the refresh-from-server path (see lookup-add.test.ts).
 const tick = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 2))
 }
@@ -154,9 +154,8 @@ describe('processLookupUpdateDoc: unresolved nested lookup parent (index.ts L909
     const { liveQuery, factory, txErrors, close } = await getClient()
 
     const space = await createSpace(factory, 'orphan-space')
-    // Parent must exist at subscribe time: the in-memory server's own nested-lookup resolver
-    // (ModelDb.getLookupValue) cannot handle an already-missing parent, so we cannot start from
-    // an orphan - we have to orphan the child afterwards.
+    // Parent must exist at subscribe time: ModelDb.getLookupValue can't handle a missing
+    // parent, so we can't start from an orphan - we orphan the child afterwards.
     const parentComment = await factory.addCollection(
       test.class.TestComment,
       space,
@@ -192,10 +191,8 @@ describe('processLookupUpdateDoc: unresolved nested lookup parent (index.ts L909
     expect(last(mock)[0].$lookup?.attachedTo).toBeUndefined()
     const beforeSpaceUpdate = mock.mock.calls.length
 
-    // Update an unrelated Space doc. getLookupWays computes the nested way structurally (it
-    // matches on tx.objectClass, not on whether the parent lookup resolved), so
-    // processLookupUpdateDoc still runs against our comment even though $lookup.attachedTo is
-    // undefined - that obj must be skipped, not dereferenced.
+    // Updates an unrelated Space doc: getLookupWays matches by tx.objectClass alone, so it
+    // runs though attachedTo is undefined - skip, don't dereference.
     await tick()
     await factory.updateDoc(core.class.Space, core.space.Model, space, { description: 'renamed' })
     await settle()
@@ -255,7 +252,8 @@ describe('handleDocAdd: needPush flips false once $lookup resolves (index.ts L11
     const alpha = await createSpace(factory, 'Alpha')
     const beta = await createSpace(factory, 'Beta')
 
-    // '$lookup.space.name' is a dotted lookup path, not a field of AttachedComment - not in DocumentQuery<T>.
+    // '$lookup.space.name' is a dotted lookup path, not a field of AttachedComment - not in
+    // DocumentQuery<T>.
     const { mock } = await subscribe(
       liveQuery,
       test.class.TestComment,
@@ -492,9 +490,8 @@ describe('isPossibleAssociationTx: TxMixin fallback via mixin class (index.ts L8
     )
     const before = mock.mock.calls.length
 
-    // TestComment is unrelated to both classA (TestProject) and classB (ParticipantsHolder),
-    // and this is a plain TxUpdateDoc, so isPossibleAssociationTx must fall through byClass and
-    // the TxMixin check to the final `return false`.
+    // TestComment relates to neither classA (TestProject) nor classB (ParticipantsHolder);
+    // it's a plain TxUpdateDoc, so isPossibleAssociationTx falls through to `return false`.
     const space = await createSpace(factory, 'unrelated-tx-space')
     const comment = await factory.addCollection(test.class.TestComment, space, space, core.class.Space, 'comments', {
       message: 'unrelated'
@@ -558,9 +555,8 @@ describe('handleDocRemoveRelation / handleDocRemoveLookup: unrelated doc removal
       message: 'watcher'
     })
 
-    // 'space' does not derive from ParticipantsHolder, so getLookupWays returns nothing for a
-    // ParticipantsHolder removal (L1414); ParticipantsHolder is also not core.class.Relation,
-    // so handleDocRemoveRelation must return before refreshing (L1406).
+    // 'space' isn't derived from ParticipantsHolder (getLookupWays returns nothing on removal,
+    // L1414) nor core.class.Relation (cleanup returns before refresh, L1406).
     await subscribe(
       liveQuery,
       test.class.TestComment,

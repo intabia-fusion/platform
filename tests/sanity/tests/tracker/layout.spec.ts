@@ -164,28 +164,9 @@ test.describe('tracker layout tests', () => {
             return -1
           })
           .map((p) => p.name)
-        // } else if (order === 'Status') {
-        //   orderedIssueNames = [...issuesProps]
-        //     .sort((propsLeft, propsRight) => {
-        //       if (propsLeft.status !== undefined && propsRight.status !== undefined) {
-        //         if (propsLeft.status === propsRight.status) {
-        //           return 0
-        //         } else if (
-        //           DEFAULT_STATUSES.findIndex((s) => s === propsLeft.status) -
-        //             DEFAULT_STATUSES.findIndex((s) => s === propsRight.status) >
-        //           0
-        //         ) {
-        //           return 1
-        //         }
-        //       }
-
-        //       return -1
-        //     })
-        //     .map((p) => p.name)
       } else {
-        // Creation order is not modification order: setting a component or a milestone lands as a
-        // separate update, and it can arrive after the next issue was already created. Read the
-        // real modifiedOn instead of assuming it follows the order the issues were typed in.
+        // Creation order is not modification order: a component or milestone update can arrive
+        // after the next issue is created. Read the real modifiedOn, not typed order.
         const { client } = await connectTracker()
         const names = issuesProps.map((props) => props.name)
         const issues = await client.findAll(tracker.class.Issue, { title: { $in: names } })

@@ -59,7 +59,7 @@ function makeNext (): { next: Middleware, txCalled: () => boolean, lastQuery: ()
   return { next, txCalled: () => txCalled, lastQuery: () => lastQuery }
 }
 
-// Variant of makeNext() that returns a fixed result set instead of [], to prove findAll results are not filtered.
+// makeNext() variant returning a fixed set instead of [], to prove findAll isn't filtered.
 function makeNextWithResult (docs: Doc[]): { next: Middleware, lastQuery: () => DocumentQuery<Doc> | undefined } {
   let lastQuery: DocumentQuery<Doc> | undefined
   const next = {
@@ -166,8 +166,8 @@ describe('ApiKeyPermissionsMiddleware', () => {
     expect((await runTx(mw, opsKey([SPACE_A]), spaceTx(core.class.TxCreateDoc, SPACE_A))).rejected).toBe(true)
   })
 
-  // Real derived txes never reach this middleware - they enter at MarkDerivedEntryMiddleware, which is
-  // registered after it. So `space: DerivedTx` on an incoming tx is the caller's claim, not a fact.
+  // Real derived txes never reach this middleware - they enter at MarkDerivedEntryMiddleware,
+  // registered after it, so `space: DerivedTx` on an incoming tx is a claim, not a fact.
   it('a tx claiming core.space.DerivedTx still gets its objectSpace checked', async () => {
     const { next, txCalled } = makeNext()
     const mw = await ApiKeyPermissionsMiddleware.create(ctx, anyContext, next)
@@ -181,7 +181,8 @@ describe('ApiKeyPermissionsMiddleware', () => {
     const { next, txCalled } = makeNext()
     const mw = await ApiKeyPermissionsMiddleware.create(ctx, anyContext, next)
 
-    // client.ts caches no grant for a token without extra.apikey, so ctx.contextData.apiKey is undefined.
+    // client.ts caches no grant for a token without extra.apikey, so ctx.contextData.apiKey is
+    // undefined.
     await mw.tx(makeCtx(undefined), [createTx(SPACE_A)])
     expect(txCalled()).toBe(true)
   })

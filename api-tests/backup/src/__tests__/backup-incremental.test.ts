@@ -14,10 +14,8 @@
 //
 
 /**
- * Backup/restore against a live stand (FUSIO-341).
- *
- * Covers: initial backup, no-op re-backup, incremental snapshot after a real
- * workspace change, account domains (person/socialId) presence, and restore.
+ * Backup/restore against a live stand (FUSIO-341): initial backup, no-op re-backup,
+ * incremental snapshot after a real change, account-domain presence, and restore.
  */
 
 import { mkdtempSync, rmSync } from 'fs'
@@ -110,9 +108,8 @@ describe('backup', () => {
   })
 
   it('account domains are considered by the backup', async () => {
-    // account.person/socialId only get a snapshot for persons referenced by the
-    // workspace; api-tests has no DOMAIN_CONTACT docs, so nothing is written.
-    // The domains must still be walked -- assert they are not silently skipped.
+    // account.person/socialId snapshot only workspace-referenced persons; api-tests has no
+    // DOMAIN_CONTACT so nothing writes - assert domains are walked, not silently skipped.
     const info = await readInfo(storage)
     expect(info.domainHashes).toBeDefined()
     expect(info.snapshots.length).toBeGreaterThan(0)

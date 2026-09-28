@@ -22,9 +22,8 @@ export class SpotlightPopup extends CommonPage {
     if (visible) {
       await this.close()
     }
-    // The click has no timeout of its own, so a workbench that is still booting - a workspace
-    // created moments ago takes a while - turns into a bare "waiting for locator" at the test
-    // timeout. Wait for the button explicitly so the failure says which part was slow.
+    // The click has no timeout of its own; a still-booting workbench (fresh workspace, takes a
+    // while) shows a bare "waiting for locator" - wait for the button to name the slow part.
     await expect(this.statusbar.buttonSearch()).toBeVisible({ timeout: 30000 })
     await this.statusbar.clickButtonSearch()
     await expect(this.popup()).toBeVisible()

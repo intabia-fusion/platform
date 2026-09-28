@@ -12,8 +12,8 @@ export class ChannelPage extends CommonPage {
   }
 
   readonly inputMessage = (): Locator => this.page.locator('div[class~="text-editor-view"]')
-  // The ancestor button, not the icon: `disabled={!canSubmit}` sits on it (ReferenceInput.svelte),
-  // so only this locator supports toBeEnabled() and honours Playwright's own disabled check on click.
+  // Ancestor button, not the icon: `disabled={!canSubmit}` sits on it (ReferenceInput.svelte),
+  // so only this locator supports toBeEnabled() and Playwright's own disabled-click check.
   readonly buttonSendMessage = (): Locator => this.page.locator('button:has(g#Send)')
   readonly textMessage = (messageText: string, strict = false): Locator =>
     strict
@@ -208,9 +208,8 @@ export class ChannelPage extends CommonPage {
   async addMemberToChannelPreview (user: string): Promise<void> {
     const popup = this.page.locator('.hulyModal-container')
     const item = popup.getByText(user)
-    // A member who joined the workspace moments ago can be missing from the list the popup
-    // loaded, or be listed before the account behind the person is known, and then "Add" adds
-    // nobody. The whole pick-add-verify round is retried from a reopened popup: it re-issues the query.
+    // A just-joined member can be missing from the popup's loaded list, or listed before their
+    // account is known (Add then adds nobody) - retry pick-add-verify from a reopened popup.
     await expect(async () => {
       if ((await this.userAdded(user).count()) > 0) return
       if (await popup.isVisible()) {

@@ -42,9 +42,8 @@ export async function OnDelete (
       }
     }
 
-    // TODO This is not accurate way to delete collaborative document
-    // Even though we are deleting it here, the document can be currently in use by someone else
-    // and when editing session ends, the collborator service will recreate the document again
+    // Deletion here is not accurate: the document may be in use, and the collaborator service will
+    // recreate it when the editing session ends.
     if (toDelete.length > 0) {
       const toRemove: string[] = toDelete.map(makeCollabYdocId)
       if (toRemove.length > 0) {

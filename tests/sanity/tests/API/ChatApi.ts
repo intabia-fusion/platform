@@ -202,10 +202,8 @@ export class ChatMember {
   }
 
   /**
-   * What "Mark all as read" does, for every document with anything unread, and tells how many
-   * there were: a fresh workspace greets its owner with system messages and a bot, every new
-   * member adds more, and the workspace is shared with the tests that ran before.
-   * `except`: the channels under test (with their threads), which only the UI may read.
+   * Marks everything unread read, returns the count; unread includes setup/bot/join noise and
+   * leftovers from earlier tests. `except`: channels under test, which only the UI may read.
    */
   async readEverything (except: Array<Ref<Doc>> = []): Promise<number> {
     const contexts = await this.client.findAll(docNotifyContextClass, { user: this.account } as any)
@@ -329,9 +327,8 @@ async function poll (condition: () => Promise<boolean>, timeoutMs = 30000): Prom
 }
 
 /**
- * A browser of a member that joined over REST. The employee is already there, so the first login
- * writes nothing: a browser whose first write is refused (a member just joined has no seat for a
- * moment) stops on a fatal error page.
+ * Browser for a REST-joined member; employee already exists, so first login writes nothing.
+ * A first write racing a just-joined member with no seat yet is refused - fatal error page.
  */
 export async function openMemberPage (
   browser: Browser,
@@ -375,9 +372,8 @@ async function createEmployee (member: ChatMember, ws: WorkspaceLoginInfo): Prom
 }
 
 /**
- * A drop-in for `getInviteLink` + `getSecondPageByInvite`: the second user joins over the API and
- * its browser opens by token, so neither the invite link nor the join page is walked, and the
- * employee exists before the first login.
+ * Drop-in for `getInviteLink` + `getSecondPageByInvite`: second user joins via API, browser opens
+ * by token - skips the invite link and join page; employee exists before first login.
  */
 export async function getSecondPageByApi (
   browser: Browser,

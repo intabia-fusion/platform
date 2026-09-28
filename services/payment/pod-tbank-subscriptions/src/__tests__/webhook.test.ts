@@ -46,8 +46,8 @@ function makeStorage (sub: any = null): any {
   }
 }
 
-// GetState mock returns Success:false by default, so processWebhook skips the recheck branch and trusts
-// the webhook status as-is. Pass an explicit getState (Success:true) to exercise the recheck path.
+// GetState mock defaults to Success:false, so processWebhook skips the recheck and trusts the
+// webhook status; pass getState Success:true for the recheck path.
 function makeTbank (verifyResult = true, getState?: any): any {
   return {
     verifyNotificationSignature: jest.fn().mockReturnValue(verifyResult),
@@ -74,8 +74,8 @@ async function startServer (
   enqueue: any
 ): Promise<{ server: Server, url: string }> {
   const ctx = newCtx()
-  // createServer loads the shared plan-config on boot via fetch; stub only that one call, then restore
-  // the real fetch so the test's own webhook POST goes over the wire.
+  // createServer loads the shared plan-config via fetch on boot; stub just that call, then
+  // restore fetch so the test's own webhook POST goes over the wire.
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) }) as any
   const { app } = await createServer(ctx, config, tbank, storage, enqueue)
   global.fetch = realFetch
@@ -297,7 +297,8 @@ describe('processWebhook (consumer)', () => {
   test.each(['REVERSED', 'REFUNDED'])('%s (refund) on Active sub -> PastDue, NO dunning email', async (status) => {
     const storage = makeStorage(activeSub)
     const mailConfig = { ...baseConfig, MailFrom: 'noreply@x.com' }
-    // Guard: if notify regresses back in, the stubbed fetch must be observed instead of a network hang.
+    // Guard: if notify regresses back in, the stubbed fetch must fire instead of a network
+    // hang.
     const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
     global.fetch = fetchMock as any
     try {
@@ -319,7 +320,8 @@ describe('processWebhook (consumer)', () => {
   })
 
   test('REJECTED on a PastDue sub with a DIFFERENT prior status -> upsert, no notify', async () => {
-    // First time this REJECTED lands (prior providerData.status was a charge-fail marker, not REJECTED).
+    // First REJECTED landing (prior providerData.status was a charge-fail marker, not
+    // REJECTED).
     const storage = makeStorage({
       ...activeSub,
       status: SubscriptionStatus.PastDue,
@@ -509,8 +511,8 @@ describe('processWebhook (consumer)', () => {
     expect(activated.amount).toBe(720000)
     expect(activated.periodEnd).toBe(yearlyEnd)
   })
-  // The draft reaches account through the subscription queue, so a fast bank can confirm before it
-  // lands. A young webhook must retry; an old one gives up so a stray payment cannot wedge the topic.
+  // Draft reaches account via the subscription queue - a fast bank can confirm before it
+  // lands. Young webhooks retry; old ones give up so a stray payment can't wedge the topic.
   test('CONFIRMED without a draft: retries while young, gives up once stale', async () => {
     const storage = makeStorage(null)
     const notification = { PaymentId: 'pay_missing', Status: 'CONFIRMED', Amount: 100000 }

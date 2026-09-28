@@ -84,9 +84,8 @@ func TestTranscodeRealMKV(t *testing.T) {
 	}
 
 	baseArgs := mediaconvert.BuildVideoCommand(opts)
-	// Cap input read duration so the test is deterministic even on a 15GB source.
-	// Prepending -t before -i makes it an input-side constraint (ffmpeg stops
-	// reading after <duration> of decoded input), which is what we want.
+	// Cap input read duration for determinism on a 15GB source: -t before -i is an input-side
+	// constraint - ffmpeg stops after <duration> of decoded input.
 	args := append([]string{"-t", duration}, baseArgs...)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)

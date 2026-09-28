@@ -32,9 +32,8 @@ function makeRes (): any {
 }
 
 /**
- * The stream service uploads every HLS artifact with a service token. These uploads occupy the same
- * storage as a user's own file, so they must report the same billing delta - skipping them used to
- * leave the workspace usage stale until the hourly absolute recompute caught up.
+ * HLS uploads with a service token occupy the same storage as a user file, so they need the
+ * same billing delta - skipped, they left usage stale until the hourly recompute.
  */
 describe('storage delta on upload', () => {
   describe('form-data', () => {

@@ -346,8 +346,8 @@ describe('buildEventsForBatch - collapsing rules', () => {
   })
 
   test('update then remove collapses to one remove event, using a mapped remove rule', () => {
-    // No class in the production table has a mapped remove event yet (see eventTable.ts) - this proves
-    // the collapsing mechanism itself with a synthetic rule, independent of that.
+    // No class in the production table maps a remove event yet (see eventTable.ts) - this
+    // proves the collapsing mechanism with a synthetic rule instead.
     const rules: DomainRule[] = [
       ...domainRules,
       { kind: 'remove', objectClass: tracker.class.Issue, type: 'issue.removed' as WebhookEventType }

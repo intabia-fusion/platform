@@ -36,7 +36,8 @@ describe('signup-otp', () => {
   beforeAll(async () => {
     config = await loadServerConfig('http://localhost:8183')
     anon = getAccountClient(config.ACCOUNTS_URL)
-    // findPersonBySocialKey wants a service token, getPersonInfo takes admin or a service - one token for both.
+    // findPersonBySocialKey needs a service token; getPersonInfo takes admin or service - one
+    // token covers both.
     service = getAccountClient(
       config.ACCOUNTS_URL,
       generateToken(systemAccountUuid, undefined, { service: 'tool', admin: 'true' }, secret)
@@ -156,7 +157,8 @@ describe('signup-otp', () => {
     const person = await personOf(existing)
     await getAccountClient(config.ACCOUNTS_URL, confirmToken(person as PersonUuid, existing, week)).confirm()
 
-    // An account exists now; sign up must answer like any other attempt instead of AccountAlreadyExists.
+    // An account exists now; sign up must respond like any other attempt, not
+    // AccountAlreadyExists.
     await expect(anon.signUpOtp(existing, 'Test', 'Person', phone)).resolves.toMatchObject({ sent: true })
   })
 

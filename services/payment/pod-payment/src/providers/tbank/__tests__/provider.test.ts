@@ -217,7 +217,7 @@ describe('TbankProvider', () => {
       expect(error?.body).toBe('{"error":"declined"}')
     })
 
-    // force must reach pod-tbank: without it a claim conflict answers 409 other_checkout_active again.
+    // force must reach pod-tbank, or a claim conflict answers 409 other_checkout_active again.
     test('forwards force to pod-tbank so a forced switch can cancel the pending checkout', async () => {
       const provider = new TbankProvider(tbankUrl, accountClient)
       fetchMock.mockResolvedValue(mockResponse({ ok: true, json: { checkoutUrl: 'https://tbank.test/pay' } }))

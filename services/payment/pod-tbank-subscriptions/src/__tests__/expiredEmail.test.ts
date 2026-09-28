@@ -16,8 +16,8 @@
 import { SubscriptionStatus } from '@hcengineering/account-client'
 import { notifyExpired, setMailSender } from '../notifications'
 
-// Renders the real email (no module mock here — scheduler.test.ts covers when the scheduler sends it,
-// this file covers what actually lands in the mailbox).
+// Renders the real email, no module mock: scheduler.test.ts covers when it's sent, this file
+// covers what lands in the mailbox.
 const ENDED = Date.UTC(2026, 6, 22)
 const NOW = ENDED + 60 * 60 * 1000
 

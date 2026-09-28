@@ -168,9 +168,8 @@ test.describe('Team Planner tests', () => {
     await (await page2.goto(`${PlatformURI}/workbench/sanity-ws/time`))?.finished()
 
     await test.step('Second user assigns a Default project issue to himself', async () => {
-      // Assigning to self is what makes the server trigger create a ProjectToDo attached to the
-      // project's space (see getCreateToDoTx in server-plugins/time-resources) - a plain todo would
-      // land in the user's personal space instead, same as the anonymized-busy test above.
+      // Assigning to self makes the server trigger create a ProjectToDo in the project's space
+      // (getCreateToDoTx) - a plain todo lands in the personal space (anonymized-busy test above).
       const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
       const issuesPageSecond = new IssuesPage(page2)
 
@@ -249,9 +248,8 @@ test.describe('Team Planner tests', () => {
     const containerBox = await teamPage.calendarPanel().locator('xpath=..').boundingBox()
     expect(panelBox).not.toBeNull()
     expect(containerBox).not.toBeNull()
-    // The navigator is a sibling inside the same row, so the panel is never as wide as the
-    // container - what matters is that its right edge reaches the container's. A stale inline
-    // width used to stop it short and leave the right side empty (PlanView.svelte).
+    // The navigator is a sibling in the same row, so the panel never matches the container's
+    // width; what matters is its right edge - a stale inline width used to stop it short.
     const panelRight = (panelBox?.x ?? 0) + (panelBox?.width ?? 0)
     const containerRight = (containerBox?.x ?? 0) + (containerBox?.width ?? 0)
     expect(Math.abs(panelRight - containerRight)).toBeLessThanOrEqual(2)

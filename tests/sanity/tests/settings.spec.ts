@@ -56,9 +56,8 @@ test.describe('settings tests', () => {
   })
 
   test('customize-task-types', async ({ page }) => {
-    // The test edits the shared 'Default' space type, and its statuses live on the space type,
-    // not on the task type. A fixed new name collides with the one a previous run left behind:
-    // the rename then merges into that status and the state keeps its old name.
+    // This test edits the shared 'Default' space type - statuses live there, not on the task type.
+    // A fixed new name collides with a previous run's, merging in and keeping the old name.
     const suffix = generateId(4)
     const taskTypeName = `Bug-${suffix}`
     const attentionState = `Needs Attention ${suffix}`
@@ -90,30 +89,5 @@ test.describe('settings tests', () => {
     await templatePage.openSettings()
     await templatePage.goToNotifications()
     await templatePage.selectVacancies()
-
-    // await page.getByRole('button', { name: 'Recruiting', exact: true }).click()
-    // await page.locator('#navGroup-statuses').getByText('New Recruiting project type').first().click()
-
-    // // Click #create-template div
-    // await page.click('#create-template div')
-    // const tid = 'template-' + generateId()
-    // const t = page.locator('#templates div:has-text("New project type")').first()
-    // await t.click()
-    // await t.locator('input').fill(tid)
-    // // await page.locator(`#templates >> .container:has-text("${tid}")`).type('Enter')
-
-    // await page.locator('.states >> svg >> nth=1').click()
-    // await page.locator('text=Rename').click()
-    // await page.locator('.box > .antiEditBox input').fill('State1')
-    // await page.locator('button:has-text("Save")').click()
-    // await page.waitForSelector('form.antiCard', { state: 'detached' })
-    // await page.click('text=STATUS >> div')
-    // await page.locator('.box > .antiEditBox input').fill('State2')
-    // await page.locator('button:has-text("Save")').click()
-    // await page.waitForSelector('form.antiCard', { state: 'detached' })
-    // await page.click('text=STATUS >> div')
-    // await page.locator('.box > .antiEditBox input').fill('State3')
-    // await page.locator('button:has-text("Save")').click()
-    // await page.waitForSelector('form.antiCard', { state: 'detached' })
   })
 })

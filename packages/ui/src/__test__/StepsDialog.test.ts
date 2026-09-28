@@ -31,8 +31,8 @@ function steps (count: number): DialogStep[] {
 
 let target: HTMLElement
 
-// floatAside:true keeps Panel's aside shown: Panel re-derives its width from the mounted element on
-// every update and, in jsdom, that width is always 0 - which otherwise auto-collapses the aside.
+// floatAside:true keeps Panel's aside shown: it re-derives width from the mounted element every
+// update, and in jsdom that's always 0 - which would otherwise auto-collapse the aside.
 function mount (props: Partial<ComponentProps<StepsDialog>>): { host: HTMLElement, component: StepsDialog } {
   const host = document.createElement('div')
   target.appendChild(host)
@@ -76,7 +76,7 @@ describe('StepsDialog', () => {
     const buttonLabels = Array.from(
       host.querySelectorAll('.popupPanel-body__header ~ * .antiButton, button.antiButton')
     )
-    // Back is only rendered once currentStepIndex > 0; on the first step there is just the primary button.
+    // Back renders only once currentStepIndex > 0; the first step has just the primary button.
     const primaryButtons = host.querySelectorAll('button.antiButton.primary')
     const regularButtons = host.querySelectorAll('button.antiButton.regular')
     expect(primaryButtons.length).toBe(1)

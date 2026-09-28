@@ -22,8 +22,8 @@ import { adminSessionClient } from './admin.fixtures'
 /** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
 const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
 
-// Drives the payment ledger against the real account-service DB. Only the payment-service token may
-// append rows (logPaymentOperation); admin reads the audit (getPaymentOperations/Stats/MonthlyStats).
+// Payment ledger against the real account-service DB: only payment-service token appends rows
+// (logPaymentOperation); admin reads the audit (getPaymentOperations/Stats/MonthlyStats).
 describe('plan-ledger', () => {
   const wsName = 'api-tests-unpaid'
   let config: ServerConfig
@@ -117,7 +117,8 @@ describe('plan-ledger', () => {
     const before = await wsStats(from, Date.now())
     const paymentId = generateUuid()
     const actionId = `act-${generateUuid()}`
-    // init stays NEW (not money), webhook CONFIRMED is the real charge, delivered twice (at-least-once).
+    // init stays NEW (not money); webhook CONFIRMED is the real charge, delivered twice
+    // (at-least-once).
     await log({ operation: 'init_charge', status: 'NEW', paymentId, actionId, actor: 'user', amount: 99900 })
     await log({ operation: 'webhook', status: 'CONFIRMED', paymentId, actionId, actor: 'provider', amount: 99900 })
     await log({ operation: 'webhook', status: 'CONFIRMED', paymentId, actionId, actor: 'provider', amount: 99900 })

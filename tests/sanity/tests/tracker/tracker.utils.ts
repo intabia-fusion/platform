@@ -96,10 +96,8 @@ export async function fillIssueForm (page: Page, props: IssueProps): Promise<voi
   }
   if (status !== undefined) {
     const statusItem = page.locator(`.menu-item:has-text("${status}")`).first()
-    // SelectPopup gets a snapshot of the status list (StatusEditor.svelte:96), so a state
-    // renamed moments earlier is absent until the dropdown is reopened.
-    // Clicking outside the retry could land after the popup closed again, so the whole
-    // open-wait-click sequence lives in one attempt.
+    // SelectPopup snapshots the status list (StatusEditor.svelte:96); a just-renamed state is
+    // absent until reopened - outside clicks could land after it re-closes, so keep it in one.
     await retry(async () => {
       await page.click(af + '#status-editor')
       try {
@@ -311,9 +309,8 @@ export async function performPanelTest (page: Page, statuses: string[], panel: s
   }
   for (const status of statuses) {
     const column = page.locator('.panel-container', { has: page.locator(`.header:has-text("${status}")`) })
-    // A column renders only its first ten cards, and other specs leave hundreds of issues in the
-    // same project - the issue this test just created is then not in the DOM at all, which reads
-    // exactly like a missing one. Expand until it shows up.
+    // A column renders only its first ten cards; other specs leave hundreds of issues here, so
+    // a just-created one may not be in the DOM - reads like missing. Expand until it shows up.
     await retry(async () => {
       if ((await column.getByText(getIssueName(status)).count()) === 0) {
         await column

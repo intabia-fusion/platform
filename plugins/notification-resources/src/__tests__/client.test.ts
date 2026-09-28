@@ -90,7 +90,7 @@ const mockClient = {
   apply: applyMock
 }
 
-// Two live queries feed the unread store: inbox unread (unreadCount) and chat unread (unreadMessagesCount).
+// Unread store is fed by two live queries: inbox (unreadCount) and chat (unreadMessagesCount).
 let unreadQueryCallback: ((res: any[]) => void) | undefined
 let unreadMessagesQueryCallback: ((res: any[]) => void) | undefined
 // The account's doc settings come through a third live query, keyed by `account`.
@@ -452,7 +452,8 @@ describe('NotificationClientImpl', () => {
 
       const updatedById = get(client.contextById).get('ctxUpd' as any)
       const updatedByDoc = get(client.contextByDoc).get('docUpd' as any)
-      // 2 + 1 via $inc (TxProcessor.updateDoc2Doc semantics: doc[field] = (doc[field] ?? 0) + increment)
+      // 2 + 1 via $inc (TxProcessor.updateDoc2Doc: doc[field] = (doc[field] ?? 0) +
+      // increment).
       expect(updatedById?.unreadCount).toBe(3)
       expect(updatedByDoc?.unreadCount).toBe(3)
       expect(updatedById).toBe(updatedByDoc) // same patched object in both maps

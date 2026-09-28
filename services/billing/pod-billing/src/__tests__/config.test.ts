@@ -49,7 +49,8 @@ describe('config PROVIDER_PRICES parsing', () => {
     expect(config.ProviderPrices).toEqual({})
   })
 
-  // The price is the last segment, so a key may carry its own ':' (provider:model is a real key shape).
+  // Price is the last segment, so a key may carry its own ':' (provider:model is a real
+  // shape).
   it('keeps a colon-bearing key: only the last segment is the price', () => {
     const config = loadConfig({ PROVIDER_PRICES: 'gpt:4:12.5' })
     expect(config.ProviderPrices).toEqual({ 'gpt:4': 12.5 })

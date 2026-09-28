@@ -33,8 +33,8 @@ function mount (props: Partial<ComponentProps<TimeSince>>): { host: HTMLElement,
   return { host, component }
 }
 
-// No strings loader is registered for the 'ui' plugin, so translateCB always falls back to the raw
-// IntlString id - which is enough to tell which branch of formatTime fired.
+// No strings loader is registered for the 'ui' plugin, so translateCB falls back to the raw
+// IntlString id - enough to tell which formatTime branch fired.
 async function settledText (host: HTMLElement): Promise<string | null | undefined> {
   await vi.advanceTimersByTimeAsync(0)
   return host.querySelector('span')?.textContent?.trim()

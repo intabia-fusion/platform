@@ -23,8 +23,8 @@ export interface WebhookSenderOptions {
   rateLimitPathMax?: number
 }
 
-// Mimics an external caller of the webhook pod: real express app from ../server, listening on a
-// random port, driven with plain fetch - the same setup server.test.ts already used, extracted for reuse.
+// Mimics an external caller: real express app from ../server on a random port, driven with
+// plain fetch - the setup server.test.ts used, extracted for reuse.
 export interface WebhookSender {
   url: string
   server: Server

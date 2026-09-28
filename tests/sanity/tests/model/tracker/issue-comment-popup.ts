@@ -12,9 +12,8 @@ export class IssueCommentPopup extends IssuesPage {
 
   async addCommentInPopup (issueName: string, commentText: string, attachmentFileName?: string): Promise<void> {
     const popup = this.page.locator('div[class*="commentPopup"]')
-    // The popup is anchored to the issue row, and any live update to the list re-renders the row
-    // and takes the popup with it - mid-upload it left the wait below staring at nothing for its
-    // whole timeout. Reopen and refill instead of waiting a dead popup out.
+    // The popup is anchored to the issue row; any live update re-renders the row and takes the
+    // popup with it, so a mid-upload wait stares at nothing till the timeout. Reopen and refill.
     await expect(async () => {
       await this.openCommentPopupForIssueByName(issueName)
       await this.inputCommentText().fill(commentText)
@@ -24,9 +23,8 @@ export class IssueCommentPopup extends IssuesPage {
         if ((await this.textAttachFileName().count()) === 0) {
           await this.inputAttachFile().setInputFiles(path.join(__dirname, `../../files/${attachmentFileName}`))
         }
-        // AttachmentPresenter renders nothing until getBlobRef resolves, so this waits out the
-        // upload and the preview metadata round-trip - more than the 15s default allows under
-        // parallel load.
+        // AttachmentPresenter renders nothing until getBlobRef resolves; this waits out the upload
+        // and preview round-trip - more than the 15s default allows under parallel load.
         await expect(async () => {
           if ((await popup.count()) === 0) throw new Error('comment popup closed during the upload')
           await expect(this.textAttachFileName()).toHaveText(attachmentFileName, { timeout: 2000 })

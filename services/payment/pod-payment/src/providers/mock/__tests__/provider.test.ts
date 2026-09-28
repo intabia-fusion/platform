@@ -74,7 +74,8 @@ describe('MockProvider', () => {
     const req = { type: SubscriptionType.Package, plan: '1000gb' } as any
     const res = await provider.createSubscription(ctx, req, workspaceUuid, workspaceUrl, accountUuid)
     const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
-    // 1000gb priceMonthly=10000 rub -> 1000000 kopecks; regression: was 0 when packages were not merged.
+    // 1000gb priceMonthly=10000 rub -> 1000000 kopecks; regression: was 0 with unmerged
+    // packages.
     expect(sub?.amount).toBe(1000000)
   })
 

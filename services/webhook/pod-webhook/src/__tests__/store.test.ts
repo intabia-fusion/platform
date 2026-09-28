@@ -49,8 +49,8 @@ describe('WebhookStore: lazy sweep', () => {
     now += 501
     store.createJob('job-2', WORKSPACE, 'key-1') // triggers sweep() as its first step
 
-    // Reach into the private maps: getJob/getIdempotentJob already mask expiry, so only inspecting
-    // the maps directly proves the entries were deleted rather than left in place and filtered on read.
+    // Reach into the private maps: getJob/getIdempotentJob already mask expiry, so only the
+    // maps prove entries were deleted, not just filtered on read.
     const internals = store as unknown as { jobs: Map<string, unknown>, idempotency: Map<string, string> }
     expect(internals.jobs.has('job-1')).toBe(false)
     expect(internals.idempotency.has('key-1:idem-1')).toBe(false)

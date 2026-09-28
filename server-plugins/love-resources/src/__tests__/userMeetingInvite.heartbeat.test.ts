@@ -6,9 +6,8 @@
   obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 */
 
-// Heartbeat proxy: sender's no-op TxUpdateDoc on invite-request must produce
-// a touch TxUpdateDoc for every linked invite-response so the TransientTTL
-// gets refreshed on both sides.
+// Heartbeat proxy: sender's no-op TxUpdateDoc on invite-request must produce a touch
+// TxUpdateDoc for every linked invite-response, refreshing TransientTTL on both sides.
 
 import core, {
   type Class,

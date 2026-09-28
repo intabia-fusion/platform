@@ -76,9 +76,8 @@ test.describe('Calendar participants isolation', () => {
     })
 
     await test.step('A participant booked at that hour is marked busy', async () => {
-      // The mark reflects a clash with the event being created, so the colleague has to be busy
-      // at exactly that hour. They book it in their own calendar, leaving my grid cell free to
-      // click - clicking my own event would open it for editing instead.
+      // Busy mark needs the colleague busy at that exact hour, so book it in their own calendar.
+      // That leaves my grid cell free to click - clicking my own event would open it for editing.
       const busyTime = await calendarPage2.createEventInWidget(`Colleague busy ${generateId()}`, 8)
 
       await calendarPage.emptyCellAtTime(busyTime).scrollIntoViewIfNeeded()

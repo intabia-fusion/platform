@@ -108,10 +108,8 @@ export class CommonPage {
   }
 
   /**
-   * ListCategory folds a category holding more than 20 items whenever localStorage has no state
-   * for it - which is every fresh browser context. Rows inside it are not in the DOM at all, so a
-   * lookup by name waits out the whole test timeout. Categories that grow past the limit on the
-   * sanity workspace: Backlog issues and components without a lead.
+   * ListCategory folds categories over 20 items when localStorage has no state - true for
+   * fresh context. Rows aren't in the DOM, so lookup hangs. Known: Backlog, no-lead items.
    */
   async expandCollapsedCategories (): Promise<void> {
     // Empty categories carry the same class and clicking them changes nothing - skipping them
@@ -141,9 +139,8 @@ export class CommonPage {
         .catch(async () => {
           await page.waitForTimeout(300)
         })
-      // The filter is only the first word, so objects another worker created concurrently share it
-      // and stay in the list. Take the item carrying the whole name when there is one - "first"
-      // picked a teamspace from a parallel test and the document was moved into it.
+      // The filter is only the first word, so concurrent objects sharing it stay listed too -
+      // prefer the full-name item. Bug seen: "first" grabbed a parallel test's teamspace.
       const exact = this.selectPopupListItemFirst().filter({ hasText: name })
       // Ambiguous list: an employee that just joined arrives late, and the first row was another
       // person sharing the filtered word.
@@ -179,7 +176,7 @@ export class CommonPage {
     await this.popupSpanLabel(point).click()
   }
 
-  // Opens submenu of a context menu item: MouseSpeedTracker enables submenu only after slow mouse moves
+  // Opens a submenu: MouseSpeedTracker enables it only after the mouse moves slowly.
   async openSubmenu (point: string): Promise<void> {
     const item = this.popupSpanLabel(point)
     // Park first: a hover where the pointer already rests fires no mousemove.
@@ -221,9 +218,8 @@ export class CommonPage {
 
   async checkFromDropdown (page: Page, point: string): Promise<void> {
     const item = this.selectPopupSpanLines(point).first()
-    // A tag created a moment ago can be missing from the list the popup already rendered. Filtering
-    // re-runs the query instead of waiting an unchanged list out. Only the wait is retried - the
-    // click itself toggles selection and must happen once.
+    // A newly created tag may be missing from the popup's rendered list; filtering re-runs the
+    // query. Only the wait retries - the click toggles selection and must happen once.
     await expect(async () => {
       if ((await item.count()) === 0) {
         await this.selectPopupInput().fill(point)
@@ -270,9 +266,8 @@ export class CommonPage {
   async checkFromDropdownWithSearch (page: Page, point: string): Promise<void> {
     await this.selectPopupInput().fill(point)
     const item = this.selectPopupSpanLines(point)
-    // The popup keeps re-rendering while the query narrows, so a click issued right away chases a
-    // moving element and can wait out the whole timeout. Let the list settle on a single match
-    // first - clicking twice is not an option here, the row toggles selection.
+    // The popup re-renders while the query narrows; an early click chases a moving element and
+    // burns the timeout. Settle first - a second click would just re-toggle the row.
     await expect(item).toHaveCount(1, { timeout: 15000 })
     await item.click()
   }
@@ -312,9 +307,8 @@ export class CommonPage {
   }
 
   async selectMention (mentionName: string, categoryName?: string): Promise<void> {
-    // The popup fills its categories one after another (Employees, then Cards): a click issued while
-    // the list still grows selects nothing, and the popup then stays open with its overlay over the
-    // send button - the next click waits out the whole test timeout.
+    // The popup fills categories one after another (Employees, then Cards); an early click
+    // selects nothing and blocks Send with its overlay - the next click times out.
     await waitStable(async () => await this.page.locator('form.mentionPoup div.list-item').count(), {
       stableFor: 500,
       interval: 100,
@@ -350,7 +344,7 @@ export class CommonPage {
 
   async selectFilter (filter: string, filterSecondLevel?: string): Promise<void> {
     await this.buttonFilter().click()
-    // The item list loads async inside an open popup; re-clicking the trigger then hits the popup's own
+    // The item list loads async inside an open popup; re-clicking the trigger hits its own
     // overlay and closes it. Reopen only when no popup is open at all.
     const anyPopup = this.page.locator('div.selectPopup')
     await expect(async () => {
@@ -387,9 +381,8 @@ export class CommonPage {
   }
 
   /**
-   * Typing and Apply are one interaction: the popup re-renders as its rows arrive and detaches
-   * whichever of the two the action is on - retrying only the fill left Apply to burn its own 30s.
-   * A popup that is already gone means Apply landed.
+   * Typing and Apply retry as one: the popup re-renders as rows arrive, detaching whichever is
+   * targeted. Retrying only the fill left Apply burning 30s; gone popup means Apply landed.
    */
   private async applyTextFilter (input: Locator, value: string): Promise<void> {
     const popup = this.page.locator('div.selectPopup')

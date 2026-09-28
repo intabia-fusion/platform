@@ -103,7 +103,7 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // attr1 should be a slot because it is a key in params and NOT a required param of UpdateCard (requiredParams [])
+    // attr1 is a slot: a key in params, not a required UpdateCard param (requiredParams []).
     expect(bindings).toEqual({
       attr1: 'attr1'
     })
@@ -187,7 +187,8 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // title is a required param for CreateToDo, so it should NOT be a slot even if it matches an attribute on masterTag
+    // title is a required CreateToDo param, so not a slot even though it matches a masterTag
+    // attribute.
     expect(bindings).toEqual({})
     expect(slots).toEqual({})
   })
@@ -390,9 +391,8 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // Expected Slots:
-    // 1. 'custom6  ... ' (from DSL in params.user) - gets generic 'slot2' name because it starts with 'custom'
-    // 2. 'field' (from key 'field' - not required) - gets 'field' name
+    // Expected slots: custom6... (DSL in params.user) -> generic 'slot2' since it starts with
+    // 'custom'; 'field' (key 'field', not required) -> 'field'.
     expect(bindings).toEqual({
       field: 'field',
       slot2: attrId
@@ -462,9 +462,8 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // Expected Slots:
-    // Only 'custom69bc...' should be a slot (from action 2 user DSL).
-    // 'field' is NOT a slot here because we didn't addAttribute('field').
+    // Expected slots: only custom69bc... is a slot (action 2 user DSL); 'field' isn't, since
+    // addAttribute('field') was never called.
     expect(bindings).toEqual({
       slot1: attrId
     })
@@ -510,9 +509,8 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // Expected Slots:
-    // attr1Id should be detected, but attr2Id should not because it is inside a user request.
-    // It gets its ID as slot name because it is passed as 'name' to addAttribute.
+    // Expected slots: attr1Id is detected (its id becomes the slot name via addAttribute's
+    // 'name'); attr2Id isn't - it's inside a user request.
     expect(bindings).toEqual({
       [attr1Id]: attr1Id
     })
@@ -618,9 +616,8 @@ describe('detectSlots refined', () => {
 
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // Expected Slots:
-    // Slot 'rootCause' should be created.
-    // The 'type' property in slot metadata should NOT be a spread object like {0: "N", ...}
+    // Expected: slot 'rootCause' is created, and its metadata 'type' is not a spread object
+    // like {0: "N", ...}.
     expect(bindings).toEqual({
       rootCause: attrId
     })
@@ -993,7 +990,8 @@ describe('detectSlots refined', () => {
     const bindings: Record<string, string> = {}
     detectSlots({ masterTag } as any, transitions, slots, bindings, m, h)
 
-    // attrB should be detected and slotified with its correct label even though it is NOT in masterTag (ClassA)
+    // attrB is detected and slotified with its correct label even though it's not in masterTag
+    // (ClassA).
     expect(bindings.attrB).toBe(attrBId)
     expect(slots.attrB.label).toBe('Target Attribute')
     expect(slots.attrB._class).toBe('core:class:TypeString')
@@ -1204,8 +1202,8 @@ describe('detectSlots refined', () => {
     const bindings: Record<string, string> = {}
     detectSlots({ masterTag: mainClassId } as any, transitions as any[], slots, bindings, m, h)
 
-    // attempts (attemptsAttrId) belongs to mainClassId (masterTag), so its memberOf must be undefined.
-    // attemptNumber (attemptNumAttrId) belongs to testResultClassId, so its memberOf must point to the testResultClassId slot.
+    // attempts (attemptsAttrId) belongs to mainClassId -> memberOf undefined. attemptNumber
+    // (attemptNumAttrId) belongs to testResultClassId -> memberOf points there.
     const attemptsSlotName = 'attempts'
     const attemptNumSlotName = 'attemptNumber'
     const testResultSlotName = '(T) Test Result'

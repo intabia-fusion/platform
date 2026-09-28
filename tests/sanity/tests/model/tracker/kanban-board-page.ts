@@ -167,14 +167,12 @@ export class KanbanBoardPage extends CommonTrackerPage {
   }
 
   /**
-   * dragTo() moves to the target in one hop, and a single dragover is often not enough for the
-   * board to register the drop target - the drag then ends with no status change and no error.
-   * Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
+   * dragTo() moves in one hop; a single dragover often isn't enough to register the drop, ending it
+   * with no status change and no error. Walk in steps, jiggling so dragover fires repeatedly.
    */
   private async dragPointer (source: Locator, target: Locator): Promise<void> {
-    // Bounded wait for the drop target: a card can page out of a column while other tests keep
-    // modifying issues, and then evaluate/boundingBox below block until the whole test times out,
-    // leaving the caller's retry loop no turn at all.
+    // Bounded wait for the drop target: a card can page out of a column while other tests modify
+    // issues, and evaluate/boundingBox below would block until timeout, leaving the retry no turn.
     await target.waitFor({ state: 'attached', timeout: 5000 })
     let released = false
     await this.grabCard(source)
@@ -246,9 +244,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
         )
       }, DROP_ZONE)
 
-      // The board rearranges once the card is taken out of its own cell, so the target moves under
-      // the pointer after it was measured. Measure, move, check what is really there - and redo the
-      // whole thing while the card is still held rather than failing the caller's attempt.
+      // The board rearranges once the card leaves its cell, moving the target under the pointer
+      // after measuring. Measure, move, recheck - redo while held, rather than failing the attempt.
       let x = 0
       let y = 0
       let under: string | null = null
@@ -395,9 +392,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
       await this.page.locator('[data-id="kanban-column"]').first().waitFor({ state: 'visible', timeout: 10000 })
     } else {
       await this.page.locator('[data-id="kanban-swimlane"]').first().waitFor({ state: 'visible', timeout: 10000 })
-      // Lanes from the previous grouping stay in the DOM while the board
-      // re-renders, so a bare visibility wait returns stale lane ids. Wait for
-      // the id list to stop changing before the caller reads it.
+      // Lanes from the previous grouping stay in the DOM while the board re-renders, so a bare
+      // visibility wait returns stale ids. Wait for the id list to stop changing before reading it.
       let previous = ''
       await expect
         .poll(
@@ -421,10 +417,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await expect(this.swimLane(laneId)).toBeVisible()
   }
 
-  // Click "Show more" in any cell on the board until the requested card is in DOM.
-  // Cards beyond the initial limit (3 in swimlane mode) are not rendered until
-  // the user expands the cell. Tests that rely on a freshly-created card in a
-  // populated lane must reveal it before asserting visibility.
+  // Clicks "Show more" in any cell until the requested card is in DOM: cards past the initial limit
+  // (3 in swimlane mode) render only once expanded, so reveal it before asserting visibility.
   async revealCard (cardId: string, attempts: number = 30): Promise<void> {
     for (let i = 0; i < attempts; i++) {
       if ((await this.card(cardId).count()) > 0) return
@@ -435,9 +429,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
         await this.page.locator('[data-id="kanban-card"]').first().waitFor({ state: 'attached', timeout: 15000 })
         continue
       }
-      // Every Show more on the board per pass, not one: the card can sit behind any column's limit
-      // and other specs leave hundreds of issues in the shared project, so round-robin spent two
-      // thirds of its clicks on columns that did not hold the card.
+      // Clicks every Show more per pass, not one: the card can sit behind any column's limit, and
+      // other specs leave hundreds of issues there - round-robin wasted two thirds of its clicks.
       const buttons = this.page.locator('button[data-id="btn-kanban-show-more"]')
       const count = await buttons.count()
       if (count === 0) {
@@ -460,9 +453,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
     throw new Error(`card ${cardId} never rendered: ${cards} cards on the board, ${lanes} swim lanes`)
   }
 
-  // Click every "Show more" button on the board until no truncated cells remain.
-  // Use this in tests that read all cards in a cell via DOM — initialLimit can
-  // truncate the list and produce stale assertions.
+  // Clicks every "Show more" button until no truncated cells remain. Use this in tests that read
+  // all cards in a cell via DOM - initialLimit can truncate the list and produce stale assertions.
   async expandAllCells (maxClicks: number = 50): Promise<void> {
     for (let i = 0; i < maxClicks; i++) {
       const buttons = this.page.locator('button[data-id="btn-kanban-show-more"]')

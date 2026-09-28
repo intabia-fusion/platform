@@ -158,9 +158,8 @@ export interface ClientOperations {
   ) => Promise<TxResult>
 
   /**
-   * Remove a document or collection document.
-   *
-   * For documents be aware all collection documents attached will be removed as well.
+   * Remove a document or collection document. For documents be aware all collection documents
+   * attached will be removed as well.
    */
   remove: <T extends Doc>(doc: T, modifiedOn?: Timestamp, modifiedBy?: PersonId) => Promise<TxResult>
 

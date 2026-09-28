@@ -6,9 +6,8 @@
   obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 */
 
-// Knock fan-out (Scenario Б): creating an invite-request with `room` set
-// must produce one invite-response per meeting owner. Accept by one owner
-// drops sibling responses and pushes the knocker into the meeting members.
+// Knock fan-out: an invite-request with `room` set must produce one invite-response per
+// meeting owner; accepting by one owner drops siblings and adds the knocker to members.
 
 import core, {
   type AccountUuid,

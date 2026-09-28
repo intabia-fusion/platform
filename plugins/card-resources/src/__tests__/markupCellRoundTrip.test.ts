@@ -38,9 +38,8 @@ function escapeMarkdownTableCellContent (value: string): string {
     .replace(/\r?\n/g, ' ')
 }
 
-// Walk a markup tree and assert no node violates ProseMirror's table schema:
-// `tableHeader` / `tableCell` may only contain block content (paragraph, etc.),
-// and a `paragraph` may not contain block-level nodes such as tableRow.
+// Walk a markup tree, assert no node violates ProseMirror's table schema:
+// tableHeader/tableCell hold only block content, and paragraph can't nest tableRow.
 function assertNoInvalidTableNesting (node: any): void {
   if (node == null || typeof node !== 'object') return
   if (node.type === 'paragraph') {
@@ -100,10 +99,8 @@ describe('markup-in-cell round-trip', () => {
   })
 
   it('reparses the exact failing user table (custom markup column with nested table) without violating the schema', () => {
-    // This mirrors the actual table the user reported. The "TM 2" cell holds
-    // a card markup attribute whose value is a markup-table. After the fix
-    // that cell should be flat text, so re-parsing the outer table should
-    // not produce a paragraph that wraps tableRow/tableHeader/tableCell.
+    // Mirrors the reported table: 'TM 2' cell holds a card markup attribute valued as a
+    // markup-table. Fixed, it's flat text - re-parsing must not wrap it into a paragraph.
     const inner = JSON.stringify({
       type: 'doc',
       content: [

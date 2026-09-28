@@ -45,10 +45,8 @@ describe('integration: real WebSocket connections', () => {
       onConnectResolve()
     }
 
-    // socketFactory: wraps node ws into a Browser-like socket with
-    // assignable `onopen/onmessage/onclose/onerror` properties.
-    // This implementation buffers `open` and `message` events in case they
-    // happen before client assigns corresponding handlers on the wrapper.
+    // socketFactory wraps node ws in a browser-like socket with onopen/onmessage/onclose/onerror.
+    // Buffers open/message events before handlers are assigned.
     const socketFactory: ClientSocketFactory = (url: string) => {
       const real = new WebSocket(url)
 

@@ -284,10 +284,8 @@ describe('cardTableFormatter.formatCardValue (markup)', () => {
   })
 
   it('flattens markup for a custom-attribute column (attr.key === "" and label starts with "custom")', async () => {
-    // Custom markup attribute: column has empty key and a "customXXX" label;
-    // the value sits on the card under that same custom key. Without this
-    // branch the customFormatter returns undefined and the fallback emits
-    // raw <table> HTML for nested tables.
+    // Custom markup attribute (empty key, 'customXXX' label) - value sits on the card, same
+    // key. Without this branch customFormatter returns undefined, falls back to raw <table>.
     const customKey = 'custom6a05575137207bd342d60f7c'
     const markup = JSON.stringify({
       type: 'doc',

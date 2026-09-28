@@ -236,9 +236,8 @@ describe('access-ended email: which kind the scheduler picks', () => {
   })
 
   test('a canceled one-off matches both cycles but is emailed once', async () => {
-    // willCancelAt == periodEnd, so expireOneOffSubscriptions and enforceScheduledCancel both see it.
-    // getById returns the pre-cancel row, so neither is stopped by the other's write — only the
-    // recurrent check in enforceScheduledCancel keeps this from sending twice.
+    // willCancelAt == periodEnd: both expireOneOffSubscriptions and enforceScheduledCancel see
+    // the pre-cancel row via getById; only the latter's recurrent check stops a double send.
     const canceled = { ...expiredOneOff, willCancelAt: expiredOneOff.periodEnd }
     await runOneTick(makeStorage([canceled]))
     expect(notifyExpiredMock).toHaveBeenCalledTimes(1)

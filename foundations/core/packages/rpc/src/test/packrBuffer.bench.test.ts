@@ -16,7 +16,8 @@
 import { Packr } from 'msgpackr'
 import { RPCHandler } from '../rpc'
 
-// Timing/memory based, so it stays out of regular jest runs - same BENCH=1 gate as the other benches.
+// Timing/memory based, so it stays out of regular jest runs - same BENCH=1 gate as the other
+// benches
 
 /** The parts of node's process this needs - the package is isomorphic, so no @types/node. */
 interface BenchProcess {
@@ -28,13 +29,8 @@ const proc = (globalThis as { process?: BenchProcess }).process
 const nowNs = (): bigint => proc?.hrtime.bigint() ?? 0n
 const describeBench: jest.Describe = proc?.env.BENCH === '1' || proc?.env.BENCH === 'true' ? describe : describe.skip
 
-// FUSIO-1344: one oversized response left msgpackr holding a 45.7Mb packing buffer for the life of
-// the transactor, which is a third of the heap a 512Mb pod had. These numbers are what the release
-// buys and what it costs on ordinary traffic.
-//
-// msgpackr keeps `target` at module scope (pack.js:12), so the buffer is shared by every Packr in
-// the process - one handler's release gives it back for all of them, and these cases must run in
-// order rather than in parallel instances.
+// FUSIO-1344: oversized response left msgpackr holding 45.7Mb, 1/3 of a 512Mb pod's heap -
+// module-scope (pack.js:12), shared by every Packr, so cases run in order, not parallel.
 describeBench('RPCHandler packing buffer', () => {
   const mb = 1024 * 1024
 

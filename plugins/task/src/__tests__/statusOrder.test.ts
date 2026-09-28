@@ -170,8 +170,8 @@ describe('statusOrderComparator', () => {
   })
 
   it('lets a later task type push a shared status after its own predecessors (Classic project)', () => {
-    // Feature, Issue and Task share Backlog/Todo/In Progress/Canceled. Feature lists In Progress first among
-    // active statuses, Issue lists On Hold before it: On Hold goes first, as Issue's settings show.
+    // Feature/Issue/Task share Backlog/Todo/In Progress/Canceled. Feature lists In Progress
+    // first; Issue lists On Hold before it, per Issue's settings.
     const feature = taskType('feature', 'Feature', ['backlog', 'todo', 'in-progress', 'good', 'complete', 'canceled'])
     const classicIssue = taskType('c-issue', 'Issue', [
       'backlog',

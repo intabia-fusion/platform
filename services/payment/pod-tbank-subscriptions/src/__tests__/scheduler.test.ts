@@ -37,8 +37,8 @@ function makeCtx (): any {
   return { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 }
 
-// Only getCandidates is driven by the scheduler cycle; other calls in cleanup/grace/scheduledCancel
-// loops read the same list, so an empty result there keeps those cycles inert for these tests.
+// Only getCandidates drives the scheduler cycle; cleanup/grace/scheduledCancel loops read the
+// same list, so an empty result keeps them inert here.
 function makeStorage (sub: any, claim: any, extra: Partial<Record<string, any>> = {}): any {
   return {
     getCandidates: jest.fn().mockResolvedValue([sub]),
@@ -56,8 +56,8 @@ function makeStorage (sub: any, claim: any, extra: Partial<Record<string, any>> 
 
 const config: any = { GracePeriodDays: 7, TbankTaxation: 'usn_income', TbankVatTax: 'none' }
 
-// Start the scheduler, flush the immediate renewal-cycle microtasks, then close it.
-// Returns the ctx so tests can assert logged markers. Accepts a config override for mail-alert tests.
+// Starts the scheduler, flushes the immediate renewal-cycle microtasks, then closes it.
+// Returns ctx for logged-marker asserts; cfg override is for mail-alert tests.
 async function runOneTick (tbank: any, storage: any, cfg: any = config): Promise<{ ctx: any }> {
   const ctx = makeCtx()
   const handle = startScheduler(ctx, tbank, storage, cfg, 60)
@@ -278,7 +278,8 @@ describe('scheduler renewal claim outcomes', () => {
     const setSpy = jest.spyOn(global, 'setInterval')
     const clearSpy = jest.spyOn(global, 'clearInterval')
     await runOneTick(tbank, storage)
-    // Every interval id created (heartbeat + the 4 scheduler timers) was passed to clearInterval by close().
+    // Every interval id (heartbeat + the 4 scheduler timers) was passed to clearInterval by
+    // close().
     const createdIds = setSpy.mock.results.map((r) => r.value)
     const clearedIds = clearSpy.mock.calls.map((c) => c[0])
     for (const id of createdIds) expect(clearedIds).toContain(id)

@@ -151,18 +151,6 @@ test.describe('Collaborative test for issue', () => {
       await issuesDetailsPage.editIssue({ assignee: newAssignee })
     })
 
-    // TODO: rewrite checkNotificationIssue and uncomment
-    // await test.step('user2. check notification', async () => {
-    //   const leftSideMenuPageSecond = new LeftSideMenuPage(userSecondPage)
-    //   await leftSideMenuPageSecond.checkExistNewNotification(userSecondPage)
-    //   await leftSideMenuPageSecond.buttonNotification.click()
-    //
-    //   const notificationPageSecond = new NotificationPage(userSecondPage)
-    //   await notificationPageSecond.checkNotificationIssue(issue.title, newAssignee)
-    //
-    //   await leftSideMenuPageSecond.clickTracker()
-    // })
-
     await test.step('user2. check issue assignee', async () => {
       const issuesPageSecond = new IssuesPage(userSecondPage)
       await issuesPageSecond.clickLinkSidebarMyIssue()

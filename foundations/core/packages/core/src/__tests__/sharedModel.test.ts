@@ -214,8 +214,8 @@ describe('workspace model over a shared system model', () => {
   })
 })
 
-// Every workspace operation the settings UI can perform on a system document, replayed against a
-// frozen shared model. The invariant is the same for all of them: the shared model does not change.
+// Every workspace op the settings UI can run on a system document, replayed against a frozen
+// shared model - invariant: the shared model never changes.
 const MIXIN = 'test:mixin:Versionable' as Ref<Class<Doc>>
 const IFACE = 'test:interface:Marker' as Ref<Classifier>
 

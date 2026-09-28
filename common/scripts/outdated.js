@@ -14,11 +14,8 @@
 // limitations under the License.
 //
 
-// Scans workspace dependencies, pulls upstream release notes and writes
-// combined_dependencies/UPGRADE.md grouped by component.
-//
-// Usage: node common/scripts/outdated.js [--force] [--category ui,server] [--no-notes]
-// Env: SKIP_PACKAGES (default "@tiptap/"), CACHE_TTL_DAYS (default 7), MAX_RELEASES (25), MAX_PAGES (5)
+// Scans deps, pulls release notes, writes combined_dependencies/UPGRADE.md by component. Env:
+// SKIP_PACKAGES, CACHE_TTL_DAYS(7), MAX_RELEASES(25), MAX_PAGES(5).
 
 const fs = require('fs')
 const path = require('path')
@@ -134,7 +131,8 @@ function cmp (x, y) {
 
 const isStable = (v) => parse(v)?.pre === undefined
 
-// Node typings must not run ahead of the runtime the repo targets (root package.json engines.node).
+// Node typings must not run ahead of the runtime the repo targets (root package.json
+// engines.node).
 function nodeTargetMajor () {
   if (process.env.NODE_TARGET_MAJOR !== undefined) return Number(process.env.NODE_TARGET_MAJOR)
   const range = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).engines?.node

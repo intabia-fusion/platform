@@ -100,7 +100,8 @@ describe('ScrollerBar', () => {
     setGeometry(scroller, 200, 400, 100)
     scroller.dispatchEvent(new Event('scroll'))
     await tick()
-    // proc = scrollWidth / clientWidth = 2; width = clientWidth / proc = 100; left = scrollLeft / proc = 50.
+    // proc = scrollWidth / clientWidth = 2; width = clientWidth / proc = 100; left = scrollLeft /
+    // proc = 50.
     expect(bar.style.width).toBe('100px')
     expect(bar.style.left).toBe('50px')
     expect(bar.style.visibility).toBe('visible')

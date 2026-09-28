@@ -61,7 +61,8 @@ describe('Wizard', () => {
     expect((host.querySelector('label.toggle') as HTMLElement).id).toBe('step-1')
   })
 
-  // selectedItem is `items[selected]`, undefined once the index runs off the array - guarded by `{#if selectedItem}`.
+  // selectedItem is `items[selected]`, undefined once index runs off the array - guarded by `{#if
+  // selectedItem}`.
   it('renders no step content when selected is out of range', () => {
     const { host } = mount({ items, selected: 5 })
     expect(host.querySelector('label.toggle')).toBeNull()

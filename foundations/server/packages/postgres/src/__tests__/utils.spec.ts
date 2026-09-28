@@ -100,10 +100,8 @@ describe('utils - decodeArray', () => {
   })
 
   it('should decode array with commas in quoted strings', () => {
-    // BUG: decodeArray doesn't handle quoted strings with commas properly
-    // It splits on commas even inside quoted strings
-    // Expected: ['hello, world', 'test']
-    // Actual: ['hello', ' world', 'test']
+    // BUG: decodeArray splits on commas even inside quoted strings. Expected ['hello, world',
+    // 'test'], actual ['hello', ' world', 'test'].
     expect(decodeArray('{"hello, world","test"}')).toEqual(['hello', ' world', 'test'])
   })
 

@@ -34,7 +34,10 @@ function mount (props: Partial<ComponentProps<MonthSquare>>): Mounted {
   return { component, host }
 }
 
-/** Index into the flattened 7-per-row grid of the date matching `target`, built the same way the component builds it. */
+/**
+ * Index into the flattened 7-per-row grid of the date matching target, built like the component
+ * builds it.
+ */
 function indexOf (fd: Date, weeks: number, target: Date): number {
   for (let w = 0; w < weeks; w++) {
     for (let d = 0; d < 7; d++) {

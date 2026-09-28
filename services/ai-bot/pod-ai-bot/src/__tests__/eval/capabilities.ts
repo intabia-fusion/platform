@@ -14,11 +14,8 @@
 //
 
 /**
- * What the harness needs from a model, checked on the model itself.
- *
- * The checks run through `chatToolStep` of the real provider, so they exercise the model as the pod will
- * use it - with our system prompt and our tool definitions - rather than through a side channel.
- * The result is stored as a profile file; a run refuses to start on a model without a passing one.
+ * What the harness needs from a model, checked via `chatToolStep` of the real provider -
+ * system prompt + tool defs, not a side channel. Refuses to start without a passing profile.
  */
 
 import fs from 'fs'
@@ -111,8 +108,8 @@ const WEATHER_TOOL: ToolDefinition = {
 }
 
 /**
- * Raw transport probes for things `chatToolStep` does not expose. Available for an OpenAI-compatible
- * endpoint; a source without them reports those checks as skipped rather than failed.
+ * Raw transport probes for things `chatToolStep` doesn't expose - available only for an
+ * OpenAI-compatible endpoint; others report these checks skipped, not failed.
  */
 export interface RawProbes {
   /** Ask for a strict json-schema answer; returns the raw content. */
@@ -212,8 +209,8 @@ interface CheckSpec {
 }
 
 /**
- * Each entry states something the harness relies on. `required` ones gate a scenario run; the rest
- * gate one feature (the judge needs structured output, answer continuation needs the cap signal).
+ * Each entry states something the harness relies on: `required` gates a scenario run, the rest
+ * gate one feature (judge needs structured output, continuation needs the cap signal).
  */
 const CHECKS: CheckSpec[] = [
   {
@@ -352,8 +349,8 @@ export interface VerifyResult {
 }
 
 /**
- * Cheap gate before a run: the profile must exist, have passed, and still describe what the server
- * serves now. A redeployed model with a different window invalidates it.
+ * Cheap gate before a run: profile must exist, have passed, and still match what the server
+ * serves now - a redeploy with a different window invalidates it.
  */
 export function verifyProfile (ref: ModelRef, endpoint: string): VerifyResult {
   const profile = readProfile(ref)

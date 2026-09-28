@@ -1346,7 +1346,6 @@ describe('TSessionManager', () => {
 
       sessionManager.workspaces.set(workspaceId, mockWorkspace as any)
 
-      // Schedule maintenance
       sessionManager.scheduleMaintenance(5, 'Scheduled maintenance')
 
       expect(sessionManager.timeMinutes).toBe(5)

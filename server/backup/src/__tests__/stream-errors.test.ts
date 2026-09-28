@@ -215,7 +215,7 @@ describe('backup stream error handling', () => {
     const s: BackupSnapshot = { date: 1, domains: { [domain]: d } } as any
     const digest = new Map([['doc1' as Ref<Doc>, 'hash1']])
 
-    // The read error is caught inside and the file marked broken - the point is that it returns at all.
+    // Read error is caught inside, file marked broken - the point is that it returns at all.
     const res = await verifyDocsFromSnapshot(ctx, domain, d, s, storage, digest, async () => {}, 100)
     expect(res.modified).toBe(true)
     expect(res.modifiedFiles).toContain(dataFile)

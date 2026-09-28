@@ -80,9 +80,8 @@ export class CommonRecruitingPage extends CalendarPage {
   }
 
   async clickAppleseedJohn (): Promise<void> {
-    // Retry: a sibling popup-header may briefly intercept pointer events
-    // (members popup right after open). Stable solution — wait for popup to
-    // settle, then click; if interception still wins, fall back to force-click.
+    // A sibling popup-header can briefly intercept pointer events right after the members popup
+    // opens.
     const btn = this.appleseedJohnButton().last()
     await btn.waitFor({ state: 'visible', timeout: 15000 })
     try {

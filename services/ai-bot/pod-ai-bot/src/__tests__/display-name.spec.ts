@@ -24,9 +24,8 @@ const { displayName } = require('../controller') as typeof import('../controller
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 /**
- * `Contact.name` is stored as "Last,First" (contact/src/utils.ts combineName). Sending that raw
- * form to the LLM is what made it rewrite "Ostapenko,Elena" as "Остапенко,Елена": the string does
- * not look like a name, so the model normalised it.
+ * `Contact.name` is stored as 'Last,First' (combineName). Sending that raw form to the LLM
+ * made it rewrite 'Ostapenko,Elena' as 'Остапенко,Елена' - doesn't look like a name.
  */
 describe('displayName', () => {
   it('renders the stored form the way the UI does', () => {

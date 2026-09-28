@@ -161,7 +161,7 @@ describe('ClisrClient.handleMsg behavior', () => {
   it('delegates response to handleResult when provided and resolves', async () => {
     const client = createClient()
     const handleResult = jest.fn(async (value: any) => {
-      // pretend to do async transformation
+      // Simulate async work.
       await new Promise((resolve) => setTimeout(resolve, 0))
       // no-op
     })
@@ -312,10 +312,7 @@ describe('ClisrClient.handleMsg behavior', () => {
 
     expect(opSpy).toHaveBeenCalledWith(expect.anything(), 'call-me', ['p'])
 
-    // Accept several possible successful outcomes:
-    // - wsSend was invoked, or
-    // - we logged a successful compressed send, or
-    // - an error was logged because compression/send failed.
+    // Accept several outcomes: send, a compressed-send log, or a failed-compression error log.
     const errSpy = jest.spyOn((client as any).ctx, 'error')
     const sentOk = wsSend.mock.calls.length > 0
     const infoLogged = infoSpy.mock.calls.some((c) => String(c[0]).includes('sent operation response (compressed)'))
@@ -358,7 +355,7 @@ describe('ClisrClient.handleMsg behavior', () => {
     rp.sendData = jest.fn()
     ;(client as any).requests.set('_rl', rp)
 
-    // Intercept setTimeout so the retry callback runs deterministically and synchronously for this test.
+    // Intercepts setTimeout so the retry callback runs deterministically and synchronously here.
     const realSetTimeout = global.setTimeout
     try {
       global.setTimeout = ((cb: any, _t?: number) => {

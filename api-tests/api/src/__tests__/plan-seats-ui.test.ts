@@ -27,10 +27,8 @@ import { getClient as getAccountClient } from '@hcengineering/account-client'
 import contact, { type Employee, ensureEmployee } from '@hcengineering/contact'
 import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 
-// Reproduces the SANITY "seat downgrade read-only" UI check at the API level: after a downgrade
-// the UI's checkIsLimited must mark the over-limit member seatless. checkIsLimited reads
-// usageInfo.membersCount + the active subscription limits + the employee seat order. This test
-// replicates that exact computation against real server data to find why the UI banner is missing.
+// Reproduces SANITY's seat-downgrade-readonly UI check at API level: checkIsLimited reads
+// usageInfo.membersCount, subscription limits, and seat order to explain the missing banner.
 describe('plan-seats-ui', () => {
   const testCtx = new MeasureMetricsContext('test', {})
   const wsName = 'api-tests-seats-ui'
@@ -143,7 +141,8 @@ describe('plan-seats-ui', () => {
     try {
       await setUsersLimit(1)
 
-      // Poll: the UI recomputes on the LimitsChanged broadcast; replicate that data read until it settles.
+      // Poll: the UI recomputes on the LimitsChanged broadcast; replicate that data read until it
+      // settles.
       let result = { limited: false, usersLimit: 0, membersCount: 0 }
       const deadline = Date.now() + 20000
       while (Date.now() < deadline) {

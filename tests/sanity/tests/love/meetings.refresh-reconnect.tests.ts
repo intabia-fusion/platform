@@ -47,9 +47,8 @@ async function startMeeting (page: Page, room: string): Promise<void> {
 // earlier test would change what a reload is supposed to restore.
 export function registerRefreshReconnectTests (): void {
   test.describe('meeting minutes - refresh reconnect', () => {
-    // The shared windows hold a live session for the same accounts this test signs in as, and two
-    // sessions per user break presence and departure checks. Drop them; the next shared test pays
-    // one boot to get its window back.
+    // Shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence/departure checks. Drop them; next test pays one reboot.
     test.beforeAll(async () => {
       await closeLoveWindows()
     })

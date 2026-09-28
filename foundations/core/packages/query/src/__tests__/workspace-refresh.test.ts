@@ -195,9 +195,8 @@ describe('parked queries are not leaked by workspace events', () => {
 
 describe('checkUpdateEvents', () => {
   it('refreshes an active $search query for a matching class', async () => {
-    // The fake in-memory model (see connection.ts) does not implement full-text filtering, so a
-    // $search query always resolves to an empty result - matching real server content is not
-    // observable here. What is observable is that the event triggers a real server round trip.
+    // The fake in-memory model has no full-text filtering, so $search always returns empty -
+    // matching real content isn't observable here, but the round trip to a real server is.
     const { liveQuery, factory, findAllCalls } = await getClient()
     const space = await createSpace(factory, 'idx-active')
     await factory.addCollection(test.class.TestComment, space, space, core.class.Space, 'comments', {
@@ -255,7 +254,8 @@ describe('checkUpdateEvents', () => {
     await liveQuery.tx(indexingEvent(space, [test.class.TestComment]))
     await settle()
 
-    // A parked query that got evicted cannot be reused - the next identical subscribe must hit the server again.
+    // A parked query that got evicted cannot be reused - the next identical subscribe must hit the
+    // server again.
     const before = findAllCalls()
     await subscribe<any>(liveQuery, test.class.TestComment, { $search: 'anything' })
     expect(findAllCalls()).toBeGreaterThan(before)
@@ -401,9 +401,8 @@ describe('txMixin', () => {
     await settle()
     expect(q.last()[0]?.[test.mixin.TestProjectMixin]).toBeUndefined()
 
-    // A tx whose modifiedOn is NOT newer than the cached doc must be treated as stale: the live
-    // query has to re-fetch the current doc from the server rather than apply this tx's own
-    // (wrong) attributes on top of its stale cache.
+    // A tx whose modifiedOn is not newer than the cached doc is stale: the live query must re-fetch
+    // the current doc from the server, not apply this tx's own attributes over stale cache.
     const staleTx: TxMixin<TestProject, TestProjectMixin> = {
       _id: generateId(),
       _class: core.class.TxMixin,

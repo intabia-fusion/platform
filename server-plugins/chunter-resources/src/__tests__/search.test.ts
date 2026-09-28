@@ -102,9 +102,8 @@ describe('ChatMessageSearchTitleProvider', () => {
   })
 
   it('does not carry a resolved name across batches', async () => {
-    // The regression guarded here is a module level cache: the fulltext pod indexes every
-    // workspace in one process, so a name memoized forever outlives both the batch and the
-    // workspace, and keeps serving a name the person has since changed.
+    // Guards a module-level cache: the fulltext pod indexes every workspace in one process, so
+    // a name memoized forever outlives the batch/workspace and keeps serving a stale one.
     const { storage, calls } = createStorage()
 
     for (let batch = 0; batch < 2; batch++) {

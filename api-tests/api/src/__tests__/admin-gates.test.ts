@@ -32,9 +32,8 @@ import {
 } from './admin.fixtures'
 
 /**
- * Gates around the admin surface, per foundation-tasks/admin-otp-plan.md section 3.
- * Written before the implementation: every case names the step (A0..A5) at which it turns green.
- * `admin-otp.test.ts` asserts the *current* behaviour of a system+admin token and is removed by A0.
+ * Gates per foundation-tasks/admin-otp-plan.md sec 3; each case names the A0-A5 step it targets.
+ * admin-otp.test.ts covers current system+admin token behavior and is removed at A0.
  */
 describe('admin-gates', () => {
   const wsName = 'api-tests'
@@ -352,7 +351,7 @@ describe('admin-gates', () => {
     const foreign = await rpc(config, adminSession, 'selectWorkspace', { workspaceUrl: wsName })
     expect(isForbidden(foreign)).toBe(true)
 
-    // Reads stay open for the admin panel: the workspace is listed even though the admin is no member.
+    // Reads stay open for the admin panel: workspace is listed even though admin isn't a member.
     const listed = await rpc(config, adminSession, 'listWorkspacesPaged', { search: wsName, limit: 10 })
     expect(listed.error).toBeUndefined()
     expect(listed.result.workspaces.some((w: any) => w.uuid === wsUuid)).toBe(true)

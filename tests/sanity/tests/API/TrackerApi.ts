@@ -216,7 +216,7 @@ export async function readStoredCommentCount (issueTitle: string): Promise<numbe
   }
 }
 
-/** Whether a component edit actually reached the server - the panel can render a value it never saved. */
+/** Whether a component edit reached the server - the panel can render an unsaved value. */
 export async function readComponentDescription (label: string): Promise<string | undefined> {
   const { client } = await connectTracker()
   try {

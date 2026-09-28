@@ -556,17 +556,12 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async fillTeamspaceFormManager (spaceName: string): Promise<void> {
     await this.page.getByPlaceholder('New teamspace').fill(spaceName)
-    // await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).first().click()
-    // await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(2).click()
-    // await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
     await this.createButton.click()
   }
 
-  // The members button label embeds member initials and count (e.g. "AJ DK 2 members"),
-  // both of which vary with the current member set. Match by the "<n> members" suffix
-  // only, and dispatch the click so a still-settling member-picker overlay does not
-  // intercept it.
+  // Members button label embeds initials + count (e.g. 'AJ DK 2 members'), both variable -
+  // match the '<n> members' suffix. Dispatch the click: a settling overlay can intercept it.
   async clickMembersButton (): Promise<void> {
     const membersButton = this.page.getByRole('button', { name: /\d+ members?$/ }).first()
     await membersButton.waitFor({ state: 'visible' })
@@ -787,17 +782,14 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.getByText(text).click()
     await this.page.getByText(text).dblclick()
 
-    // NOTE: without the resize the menu popup might be placed in a wrong place initially
-    // and only update its position on the button click (MouseDown) which leads
-    // to the MouseUp land not on the button and the click handler is not triggered
-    // Resize event ensures that the menu popup is placed correctly before clicking
+    // Dispatch resize before click: the popup shifts between MouseDown and MouseUp, missing
+    // the target.
     await this.page.evaluate(() => {
       window.dispatchEvent(new Event('resize'))
     })
     await this.buttonAddMessageToText.waitFor({ state: 'visible' })
-    // The toolbar comment button reacts to mousedown and the popup repositions on
-    // it, so a normal click can land its mouseup off-target. Dispatch the click
-    // directly to invoke the handler reliably.
+    // Toolbar comment button reacts to mousedown and the popup repositions on it, so a normal
+    // click's mouseup can land off-target. Dispatch the click directly instead.
     await this.buttonAddMessageToText.dispatchEvent('click')
     await this.page.locator('div.popup div.tiptap').waitFor({ state: 'visible' })
     await this.addMessage(message)
@@ -856,10 +848,8 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async closeNewMessagePopup (): Promise<void> {
-    // The floating comment popup leaves a modal-overlay backdrop that intercepts
-    // every later click. Press Escape until no overlay remains in the DOM; the
-    // count check (not visibility) avoids the race where a fading overlay still
-    // intercepts pointer events.
+    // Floating comment popup leaves a modal-overlay backdrop intercepting clicks. Escape until
+    // none remain (DOM count, not visibility - a fading overlay still intercepts).
     const overlay = this.page.locator('div.modal-overlay')
     for (let i = 0; i < 8; i++) {
       if ((await overlay.count()) === 0) return

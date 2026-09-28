@@ -53,9 +53,8 @@ describe('reduceChildInfoTree', () => {
   it('should aggregate direct children correctly', () => {
     // Root issue (own est=10, rep=2), two direct children
     const childInfo: IssueChildInfo[] = [makeChildInfo('c1', 5, 1, 'root'), makeChildInfo('c2', 8, 3, 'root')]
-    // root children effectiveEst: c1=5, c2=8, sum=13
-    // totalEstimation = max(10, 13) = 13
-    // totalReportedTime = 2 + 1 + 3 = 6
+    // root children effectiveEst: c1=5, c2=8, sum=13 -> totalEstimation=max(10,13)=13,
+    // totalReportedTime=2+1+3=6.
     const result = reduceChildInfoTree(childInfo, 10, 2)
     expect(result.totalEstimation).toBe(13)
     expect(result.totalReportedTime).toBe(6)
@@ -65,9 +64,8 @@ describe('reduceChildInfoTree', () => {
     // Epic(est=10) -> Task(est=0) -> Subtask(est=20)
     // 'root' is the owner issue ID (not in childInfo)
     const childInfo: IssueChildInfo[] = [makeChildInfo('task', 0, 2, 'root'), makeChildInfo('subtask', 20, 5, 'task')]
-    // subtask: leaf, effectiveEst=20, effectiveRep=5
-    // task: effectiveEst=max(0, 20)=20, effectiveRep=2+5=7
-    // root: totalEstimation=max(10, 20)=20, totalReportedTime=1+7=8
+    // subtask leaf: effectiveEst=20, effectiveRep=5 -> task: effectiveEst=max(0,20)=20,
+    // effectiveRep=2+5=7 -> root: totalEstimation=max(10,20)=20, totalReportedTime=1+7=8.
     const result = reduceChildInfoTree(childInfo, 10, 1)
     expect(result.totalEstimation).toBe(20)
     expect(result.totalReportedTime).toBe(8)

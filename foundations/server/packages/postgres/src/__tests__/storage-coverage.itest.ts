@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-// Covers storage.ts branches integration.test.ts doesn't reach: buildOrder numeric/identifier/enum
-// casts, reverse/forward lookup sort keys, the raw/backup low-level API, and the mixin tx path.
+// storage.ts branches integration.test.ts misses: buildOrder numeric/identifier/enum casts,
+// reverse/forward sort keys, raw/backup API, mixin tx path.
 
 jest.mock('../version', () => ({
   waitForSchemaVersion: jest.fn().mockResolvedValue(undefined),

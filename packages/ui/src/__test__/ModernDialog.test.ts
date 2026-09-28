@@ -168,7 +168,7 @@ describe('ModernDialog', () => {
     await tick()
     expect(onSubmitOn).toHaveBeenCalledTimes(1)
 
-    // isForm false renders a div, which never fires a submit event, so shouldSubmitOnEnter is moot there.
+    // isForm false renders a div, which never fires submit, so shouldSubmitOnEnter is moot there.
     const off = mount({ isForm: true, shouldSubmitOnEnter: false })
     const onSubmitOff = vi.fn()
     off.component.$on('submit', onSubmitOff)

@@ -37,7 +37,6 @@
   import type { DraftTimeReportPayload, ITimeReportService } from './service'
   import { DirectTimeReportService, DraftTimeReportService } from './service'
 
-  // export let label: IntlString
   export let placeholder: IntlString
   export let object: Issue
   export let value: number

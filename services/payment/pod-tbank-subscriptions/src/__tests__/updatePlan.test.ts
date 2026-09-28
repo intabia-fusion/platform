@@ -18,9 +18,8 @@ import { handleUpdatePlan } from '../server'
 
 const DAY = 24 * 3600 * 1000
 
-// A tier subscription of `business`, 3 seats, monthly (the seat-change starting point).
-// No periodStart/periodEnd here so the claim-guard tests exercise the checkout path; the
-// proration tests below spread in a live paid period + rebillId.
+// Base: tier `business`, 3 seats/monthly, the seat-change start. No periodStart/periodEnd so
+// claim-guard tests hit checkout; proration tests add period + rebillId.
 const baseSub: any = {
   id: 'tbank_100',
   provider: 'tbank',
@@ -186,8 +185,8 @@ describe('handleUpdatePlan claim guard', () => {
     expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
   })
 
-  // Forced switch has to cancel the stale checkout at tbank first. If that cancel throws, the claim
-  // row survives in payment_intent and every later attempt dies on it — the checkout deadlocks itself.
+  // Forced switch cancels the stale tbank checkout first; if that throws, the claim row
+  // survives in payment_intent, and every later attempt dies on it - self-deadlocked.
   describe('forced switch over a stale checkout', () => {
     const staleClaim = {
       claimed: false,
@@ -287,7 +286,8 @@ describe('handleUpdatePlan claim guard', () => {
       expect(res.statusCode).toBe(200)
     })
 
-    // Success:false is RETURNED by the client, not thrown, so the ErrorCode 4 catch branch never sees it.
+    // Success:false is returned by the client, not thrown, so the ErrorCode 4 catch never sees
+    // it.
     it('cancel declined with ErrorCode 4 in the response body -> claim released', async () => {
       const storage = makeStorage(staleClaim)
       storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
@@ -427,7 +427,8 @@ describe('handleUpdatePlan proration (live paid sub with a saved card)', () => {
     expect(amount).toBeLessThanOrEqual(135000)
     // No off-session charge — the money is taken with explicit consent on the bank page.
     expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
-    // The pending draft records the FULL recurring price (720000), not the delta, so renewal bills full.
+    // Pending draft records the FULL recurring price (720000), not the delta - renewal bills
+    // full.
     const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
     expect(draft.amount).toBe(720000)
     // Renewal date is unchanged — adding seats mid-period must not reset the period to now+30d.

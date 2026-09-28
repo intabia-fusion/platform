@@ -151,7 +151,7 @@ describe('shared overlay answers like a standalone model', () => {
     classes = aloneDb.findAllSync(core.class.Class, {}).map((it) => it._id)
   })
 
-  /** Compares per class and reports the offenders, a bare boolean says nothing about which class broke. */
+  /** Compares per class and reports offenders - a bare boolean doesn't say which class broke. */
   function sameForEveryClass (
     name: string,
     fn: (m: { h: Hierarchy, db: ModelDb }, c: Ref<Class<Doc>>) => unknown

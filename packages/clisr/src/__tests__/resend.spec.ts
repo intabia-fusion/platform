@@ -163,7 +163,7 @@ describe('integration: resend end-to-end', () => {
       return wrapper
     }
 
-    // Create client and register a callbackHandler that resolves quickly (so response is sent and dropped).
+    // Client's callbackHandler resolves quickly, so the response is sent and dropped.
     let onConnectResolve!: () => void
     const onConnectP = new Promise<void>((resolve) => {
       onConnectResolve = resolve
@@ -210,10 +210,11 @@ describe('integration: resend end-to-end', () => {
       // Start the server-initiated request (server -> client)
       const serverRequestP = server.request(ctx, 'clientOp', ['foo'])
 
-      // Wait until the client's callback handler finished (the first response was attempted and dropped)
+      // Wait until the client's callback finishes - the first response was attempted and dropped.
       await handlerDoneP
 
-      // Find the in-flight request on the server side and artificially age it so it's considered long-running.
+      // Find the server-side in-flight request and age it artificially so it counts as
+      // long-running.
       const requestsMap: Map<string, any> = (server as any).requests
       let targetReqId: string | undefined
       for (const [id, rr] of requestsMap.entries()) {

@@ -35,8 +35,8 @@ describe('backfillWindowLimits', () => {
     upsertSubscriptionsBulk: jest.fn(async (batch: any[]) => batch.map((s) => ({ id: s.id, ok: true })))
   })
 
-  // Mirrors the pod's resolveLimits: per-seat plans scale the window by paid seats. `boundless` is a
-  // plan whose config sets windowMonthLimit 0 on purpose.
+  // Mirrors the pod's resolveLimits: per-seat plans scale the window by paid seats;
+  // `boundless` sets windowMonthLimit 0 on purpose.
   const resolve = (s: any): any =>
     s.plan === 'unknown'
       ? undefined

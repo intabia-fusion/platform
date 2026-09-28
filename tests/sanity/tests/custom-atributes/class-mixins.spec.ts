@@ -1,9 +1,5 @@
-// NOTE: `custom-attributes.spec.ts` is `test.describe.skip` and its
-// `CustomAttributesPage.checkIfClassesExists()` asserts mixin entries
-// (`defaultFunnel`, `defaultVacancy`) as nav buttons. Mixins are no longer
-// shown as separate nav items (they moved into the class panel's MIXINS
-// section), so if that test is un-skipped these two assertions must be
-// dropped.
+// `custom-attributes.spec.ts` is skipped; checkIfClassesExists() asserts mixin entries
+// (defaultFunnel/defaultVacancy) now in the panel's MIXINS section - drop if unskipped.
 
 import { expect, test } from '../fixtures'
 import { createAccountAndWorkspace, generateTestData } from '../utils'

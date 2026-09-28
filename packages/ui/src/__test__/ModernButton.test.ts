@@ -68,8 +68,8 @@ describe('ModernButton', () => {
     expect(button.disabled).toBe(true)
   })
 
-  // pinned behaviour, not a desired one - ModernButton always forwards a default <slot/> to ButtonBase,
-  // so ButtonBase sees $$slots.default as defined even with no content, and iconOnly can never become true.
+  // Pinned, not desired: ModernButton always forwards a default <slot/> to ButtonBase, so
+  // $$slots.default reads defined even with no content - iconOnly can never become true.
   it('never becomes icon-only, since it always forwards a default slot to ButtonBase', () => {
     const { button } = mount({ icon: ICON })
     expect(button.classList.contains('iconOnly')).toBe(false)

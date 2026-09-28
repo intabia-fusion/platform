@@ -25,9 +25,7 @@ describe('operator edge cases and potential bugs', () => {
       // This exposes a bug: when arr is null and we use $each, nothing happens
       operator(doc, { arr: { $each: [1, 2, 3] } })
 
-      // Expected: should initialize array and add items
-      // Actual: arr remains null (bug!)
-      // Uncomment to see the bug:
+      // Bug: should init the array and push items, but arr stays null; uncomment to see:
       // expect((doc as any).arr).toEqual([1, 2, 3])
 
       // Current behavior (documents the bug):
@@ -41,10 +39,8 @@ describe('operator edge cases and potential bugs', () => {
       // This exposes a bug: when arr is a non-array and we use $each, nothing happens
       operator(doc, { arr: { $each: [1, 2, 3] } })
 
-      // Expected: should report error and replace with array
-      // Actual: arr remains a string (bug!)
-      // Uncomment to see the bug:
-      // expect((doc as any).arr).toEqual([1, 2, 3])
+      // Bug: should report an error and replace with array, but arr stays a string; uncomment
+      // to see: expect((doc as any).arr).toEqual([1, 2, 3])
 
       // Current behavior (documents the bug):
       expect((doc as any).arr).toBe('string')
@@ -209,9 +205,8 @@ describe('operator edge cases and potential bugs', () => {
       // BUG: This creates a potential issue with chained renames in same operation
       operator(doc, { a: 'b', b: 'c' })
 
-      // The order of operations in the for loop determines outcome
-      // a -> b happens first (sets b to 1, deletes a)
-      // b -> c happens second (sets c to 1 [current value of b], deletes b)
+      // For-loop order determines outcome: a->b runs first (b=1, deletes a), then b->c (c=1,
+      // current b, deletes b).
       expect((doc as any).a).toBeUndefined()
       expect((doc as any).b).toBeUndefined()
       expect((doc as any).c).toBe(1) // Gets the value that was assigned to b from a

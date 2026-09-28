@@ -35,7 +35,8 @@ describe('splitReportedTime', () => {
   })
 
   it('counts a report entered by hand as fully spent', () => {
-    // The popup stamps it with the current time, so proportional splitting would report almost nothing.
+    // The popup stamps it with the current time, so proportional splitting reports almost
+    // nothing.
     expect(splitReportedTime([{ date: now, value: 2 }], now)).toEqual({ spent: 2, planned: 0 })
   })
 

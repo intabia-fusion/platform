@@ -40,9 +40,8 @@ export class TeamPage extends CommonPage {
   buttonNextDay = (): Locator =>
     this.page.locator('div.hulyComponent div.hulyHeader-container .actions button[data-id="btnNext"]')
 
-  // Calendar mode, no project selected: PersonCalendar.svelte lists all active employees.
-  // Scoped to timeline-resource-content - the sticky header carries its own timeline-resource-cell
-  // (a "N members" count) that would otherwise throw off row indexing below.
+  // Calendar mode, no project: PersonCalendar.svelte lists all active employees, scoped to
+  // timeline-resource-content - the sticky header's own "N members" cell would skew row indexing.
   employeeRow = (name?: string): Locator =>
     name != null
       ? this.page.locator('div.timeline-resource-content div.timeline-resource-cell', { hasText: name })
@@ -58,9 +57,8 @@ export class TeamPage extends CommonPage {
   // never the todo title - see BusyElement.svelte / PlanItem.svelte.
   busyBlock = (column: string): Locator => this.getItemByText(column, 'Busy')
 
-  // Calendar mode's per-person grid (PersonCalendar.svelte) renders the resource names and the
-  // day cells as two independent {#each persons} loops in the same order - the row index found
-  // in one locates the matching row in the other, since neither carries the person's ref in the DOM.
+  // PersonCalendar.svelte renders resource names and day cells as two independent {#each persons}
+  // loops in the same order; match rows by index since neither carries the person's ref in the DOM.
   async findPersonRowIndex (name: string): Promise<number> {
     // The employee list loads asynchronously after switching modes - wait for the target
     // row itself rather than racing a blind count against an empty list.
