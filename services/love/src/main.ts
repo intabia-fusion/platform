@@ -243,7 +243,19 @@ export const main = async (): Promise<void> => {
     switch (queueMsg.type) {
       case QueueMeetingEvent.webhook: {
         const event = (queueMsg as QueueWebhookMeetingMessage).webhook
-        const wsClient = await WorkspaceClient.create(msg.workspace, ctx)
+        // A deleted workspace never resolves; throwing would redeliver forever and stall the whole topic.
+        let wsClient: WorkspaceClient
+        try {
+          wsClient = await WorkspaceClient.create(msg.workspace, ctx)
+        } catch (err: any) {
+          ctx.warn('Skipping webhook: no workspace client', {
+            workspace: msg.workspace,
+            meetingId: queueMsg.meetingId,
+            event: event.event,
+            error: err?.message ?? String(err)
+          })
+          break
+        }
         const meetingDoc = await wsClient.findMeetingById(queueMsg.meetingId)
         const traceParent = meetingDoc?.traceId !== undefined ? callTraceParent(meetingDoc.traceId) : undefined
 
