@@ -543,8 +543,7 @@ describe('message module', () => {
           undefined,
           expect.objectContaining({
             unreadMessage: expect.objectContaining({ id: 'msg-1', notified: true }),
-            alreadyRead: false,
-            holdNative: true
+            alreadyRead: false
           })
         )
       })

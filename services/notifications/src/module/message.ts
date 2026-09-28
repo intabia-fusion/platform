@@ -669,7 +669,6 @@ async function pushNotification (
     notifyProviders: notifyResult,
     pushSubscriptions,
     alreadyRead,
-    holdNative: true,
     markup: (message as Partial<ChatMessage>).message
   })
 }

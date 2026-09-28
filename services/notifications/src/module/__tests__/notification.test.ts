@@ -769,7 +769,7 @@ describe('pushNotification', () => {
       mockClient.pendingPush = { hold: jest.fn() }
       mockData.notifyProviders = providers
       mockData.pushSubscriptions = [web, native]
-      mockData.holdNative = true
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 100, notified: true }
       mockData.receiver = { ...mockData.receiver, online: true, away: false }
     })
 
@@ -782,7 +782,13 @@ describe('pushNotification', () => {
 
       expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
       const held = mockClient.pendingPush.hold.mock.calls[0][0]
-      expect(held).toMatchObject({ account: 'user-1', notificationId: 'notify-1', objectId: 'doc-1', createdOn: 100 })
+      expect(held).toMatchObject({
+        account: 'user-1',
+        notificationId: 'notify-1',
+        objectId: 'doc-1',
+        createdOn: 100,
+        readBy: 'position'
+      })
       expect(held.message.pushSubscriptions).toEqual([native])
       expect(Object.keys(held.message.providers).sort()).toEqual(
         [
@@ -791,6 +797,19 @@ describe('pushNotification', () => {
         ].sort()
       )
       expect(held.message.template).toBeUndefined()
+    })
+
+    it.each([
+      ['a reaction', { unreadMessage: undefined, unreadReaction: { id: 'notify-1', attachedTo: 'msg-1' } }, 'reactions'],
+      ['a mention outside a message', { unreadMessage: undefined, unreadMention: { id: 'notify-1' } }, 'mentions'],
+      ['a common notification', { unreadMessage: undefined, unreadCommon: { id: 'notify-1' } }, 'commons']
+    ])('holds the phone push about %s, to be checked against the unread list', async (_name, overrides, readBy) => {
+      mockData = { ...mockData, ...overrides }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
+      expect(mockClient.pendingPush.hold.mock.calls[0][0]).toMatchObject({ notificationId: 'notify-1', readBy })
     })
 
     it('queues nothing immediately when only the phone would be notified', async () => {
@@ -809,7 +828,7 @@ describe('pushNotification', () => {
     it.each([
       ['the receiver is away', { receiver: { online: true, away: true } }],
       ['the receiver is offline', { receiver: { online: false, away: false } }],
-      ['the notification is not a chat message', { holdNative: undefined }],
+      ['the notification is not unread, so nothing could read it later', { unreadMessage: undefined }],
       ['there is no native subscription', { pushSubscriptions: [web] }]
     ])('sends everything at once when %s', async (_name, overrides: any) => {
       mockData = { ...mockData, ...overrides, receiver: { ...mockData.receiver, ...(overrides.receiver ?? {}) } }

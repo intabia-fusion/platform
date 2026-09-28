@@ -63,6 +63,7 @@ export interface PushData {
 /**
  * Sent to the native apps when the person read the document elsewhere: the notifications
  * listed in `tags`, and any other about `objectId` created at or before `readUpTo`, are gone.
+ * A `readUpTo` of zero names nothing beyond the tags (a read of reactions, mentions or commons).
  */
 export interface PushDismissData {
   objectId: Ref<Doc>
@@ -363,10 +364,11 @@ export interface QueueNotifyMessage extends QueueMessageBase {
 }
 
 /**
- * The person read the document on another device: the pushes named by `tags` (notification ids),
- * and any other about the document created at or before `readUpTo`, should disappear from the
- * native apps in `pushSubscriptions`. Web push is never dismissed: a push that shows nothing
- * makes Chrome show its own "site updated in the background" notice.
+ * The person read the document on another device: the pushes named by `tags` (notification ids:
+ * messages, reactions, mentions, commons), and any other about the document created at or before
+ * `readUpTo`, should disappear from the native apps in `pushSubscriptions`. A `readUpTo` of zero
+ * names nothing beyond the tags. Web push is never dismissed: a push that shows nothing makes
+ * Chrome show its own "site updated in the background" notice.
  */
 export interface QueueDismissMessage extends QueueMessageBase {
   kind: 'dismiss'

@@ -42,7 +42,8 @@ import notification, {
   QueueNotificationMessage,
   ReadState,
   ReadNotificationAction,
-  CreateNotificationAction
+  CreateNotificationAction,
+  DocNotifyContext
 } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
@@ -74,7 +75,7 @@ import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
 import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
-import { PendingPushHolder } from './pendingPush'
+import { HeldPush, PendingPushHolder } from './pendingPush'
 
 const transientHttpStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
 // Attempts of one tx batch on a transient transactor error before the source tx goes back to the queue.
@@ -100,6 +101,71 @@ const publishBackoff = DelayStrategyFactory.exponentialBackoff({
 
 // Network failures and transactor-side outages are worth a retry; a rejected batch (bad request,
 // policy reject, forbidden) is not.
+// Ids per query when the held pushes of many documents are checked at once.
+const READ_CHECK_CHUNK = 200
+
+/**
+ * Which of the held pushes the person read meanwhile, one answer per push in order. Straight
+ * from the DB, not the LRU cache: everything the cache knows of already cancelled its hold when
+ * that tx went through, so what is still held can only have been read by a tx still on its way.
+ * A message is read when the account's `ReadState` position passed it; a reaction, a mention or
+ * a common notification when its id left the context's unread list, and a context that is gone
+ * has nothing left to push. One query per chunk of documents, whatever the number of pushes.
+ */
+export async function areHeldPushesRead (
+  ctx: MeasureContext,
+  pipeline: Pipeline,
+  held: HeldPush[]
+): Promise<boolean[]> {
+  const byPosition = held.filter((it) => it.readBy === 'position')
+  const byList = held.filter((it) => it.readBy !== 'position')
+
+  const states = new Map<Ref<Doc>, ReadState>()
+  for (const ids of chunks(unique(byPosition.map((it) => it.objectId)))) {
+    for (const state of await pipeline.findAll<ReadState>(ctx, notification.class.ReadState, {
+      attachedTo: { $in: ids }
+    })) {
+      states.set(state.attachedTo, state)
+    }
+  }
+
+  const contexts = new Map<string, DocNotifyContext>()
+  for (const ids of chunks(unique(byList.map((it) => it.objectId)))) {
+    for (const context of await pipeline.findAll<DocNotifyContext>(ctx, notification.class.DocNotifyContext, {
+      objectId: { $in: ids },
+      user: { $in: unique(byList.map((it) => it.account)) }
+    })) {
+      contexts.set(`${context.user}:${context.objectId}`, context)
+    }
+  }
+
+  return held.map((it) => {
+    if (it.readBy === 'position') {
+      const position = states.get(it.objectId)?.[it.account]
+      return position != null && position.timestamp >= it.createdOn
+    }
+    const context = contexts.get(`${it.account}:${it.objectId}`)
+    if (context === undefined) return true
+    const unread: Array<{ id: string }> =
+      it.readBy === 'reactions'
+        ? context.unreadReactions ?? []
+        : it.readBy === 'mentions'
+          ? context.unreadMentions ?? []
+          : context.unreadCommons ?? []
+    return !unread.some((entry) => entry.id === it.notificationId)
+  })
+}
+
+function unique<T> (values: T[]): T[] {
+  return Array.from(new Set(values))
+}
+
+function chunks<T> (values: T[]): T[][] {
+  const result: T[][] = []
+  for (let i = 0; i < values.length; i += READ_CHECK_CHUNK) result.push(values.slice(i, i + READ_CHECK_CHUNK))
+  return result
+}
+
 export function isTransientError (e: unknown): boolean {
   if (retryNetworkErrors(e)) return true
   const httpStatus = (e as any)?.httpStatus
@@ -134,22 +200,20 @@ class Workspace {
       publish: async (message) => {
         await this.publish([message])
       },
-      // Straight from the DB, not the LRU cache: a timer has no tx to refresh the cache with.
-      isRead: async (account, objectId, createdOn) => {
-        const [state] = await this.pipeline.findAll<ReadState>(
-          this.ctx,
-          notification.class.ReadState,
-          { attachedTo: objectId },
-          { limit: 1 }
-        )
-        const position = state?.[account]
-        return position != null && position.timestamp >= createdOn
-      },
+      areRead: async (held) => await areHeldPushesRead(this.ctx, this.pipeline, held),
       onError: (err, held) => {
         this.ctx.error('Failed to release a held push, it is lost', {
           error: err instanceof Error ? err.message : String(err),
           notificationId: held.notificationId,
           account: held.account
+        })
+      },
+      onCheckFailed: (err, held, attempt) => {
+        this.ctx.warn('Failed to check whether a held push was read, retrying', {
+          error: err instanceof Error ? err.message : String(err),
+          notificationId: held.notificationId,
+          account: held.account,
+          attempt
         })
       }
     })

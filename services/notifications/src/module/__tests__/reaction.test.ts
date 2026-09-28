@@ -50,6 +50,7 @@ describe('handleReaction', () => {
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
+    pendingPush?: { cancel: jest.Mock }
   }
   let mockCache: {
     getDoc: jest.Mock
@@ -364,6 +365,7 @@ describe('handleReaction', () => {
         _id: 'ctx-1',
         _class: 'DocNotifyContext',
         space: 'space-1' as Ref<Space>,
+        user: 'user-1',
         unreadReactions: [{ id: 'react-1', attachedTo: 'msg-1' }],
         latestNotifications: [{ type: 'reaction', id: 'react-1' }],
         lastNotify: 100
@@ -372,6 +374,7 @@ describe('handleReaction', () => {
       mockCache.getDoc.mockResolvedValue(message)
       mockCache.getAccountBySocialId.mockResolvedValue('user-1')
       mockCache.getContext.mockResolvedValue(context)
+      mockClient.pendingPush = { cancel: jest.fn() }
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
@@ -389,6 +392,8 @@ describe('handleReaction', () => {
           lastNotify: 0
         }
       })
+      // A push about the removed reaction that was still waiting for the person is dropped.
+      expect(mockClient.pendingPush.cancel).toHaveBeenCalledWith('user-1', 'react-1')
     })
   })
 })

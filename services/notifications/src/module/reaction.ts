@@ -178,6 +178,8 @@ async function handleRemoveReaction (
   const contexts = context != null ? [context] : []
 
   for (const context of contexts) {
+    // A push about the reaction still waiting for the person is not needed.
+    client.pendingPush?.cancel(context.user, tx.objectId)
     const ops: DocumentUpdate<DocNotifyContext> = {}
 
     if (hasUnreadReaction(context, tx.objectId)) {

@@ -42,6 +42,7 @@ import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../
 import config from '../config'
 import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
 import { isNotificationRecorded } from '../utils/context'
+import type { HeldReadBy } from '../pendingPush'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -63,10 +64,6 @@ interface CreateNotificationData {
   pushSubscriptions: PushSubscription[]
 
   alreadyRead?: boolean
-
-  // Chat messages only: while the receiver is at the computer, the push to their phone waits
-  // (client.pendingPush) for them to read the message there first. Other notifications go at once.
-  holdNative?: boolean
 
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
@@ -139,8 +136,11 @@ export async function pushNotification (
       template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
     }
     const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
+    // While the receiver is at the computer, the push to their phone waits (client.pendingPush) for
+    // them to read the notification there first. Only an unread notification can be read later.
+    const readBy = heldReadBy(data)
     const holds =
-      data.holdNative === true &&
+      readBy !== undefined &&
       client.pendingPush !== undefined &&
       receiver.online &&
       !receiver.away &&
@@ -157,6 +157,7 @@ export async function pushNotification (
         notificationId: notification.id,
         objectId,
         createdOn: data.notification.createdOn,
+        readBy,
         message: { ...message, pushSubscriptions: native, providers: pushProvidersOnly(providers), template: undefined }
       })
     } else {
@@ -237,6 +238,16 @@ export async function pushNotification (
   }
 
   createAppPushNotification(client, result, data, contextId)
+}
+
+// A message is read by the chat's read position; the rest by the
+// explicit lists of a ReadNotificationAction. A notification recorded as read has nothing to wait for.
+function heldReadBy (data: CreateNotificationData): HeldReadBy | undefined {
+  if (data.unreadMessage != null) return 'position'
+  if (data.unreadReaction != null) return 'reactions'
+  if (data.unreadMention != null) return 'mentions'
+  if (data.unreadCommon != null) return 'commons'
+  return undefined
 }
 
 function inboxProvidersOnly (providers: NotifyProviders): NotifyProviders {

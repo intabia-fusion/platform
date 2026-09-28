@@ -171,8 +171,8 @@ Web Push gets nothing: a push that shows no notification makes Chrome show its o
 | headers | `apns-push-type: background`, `apns-priority: 5`, `aps: {"content-available": 1}` | data-only message, `android.priority: HIGH` | nothing to show, no sound |
 | `kind` | custom `"dismiss"` | `data.kind` | message type |
 | `objectId`, `objectClass` | custom | `data` | the document (chat) |
-| `tags` | custom, array of strings | `data.tags`, JSON-encoded array | notification ids (= message ids) to remove |
-| `readUpTo` | custom, number | `data.readUpTo`, string | remove every notification about `objectId` with `createdOn <= readUpTo` as well |
+| `tags` | custom, array of strings | `data.tags`, JSON-encoded array | notification ids to remove: message ids, and the ids of reactions, mentions and other notifications read in the inbox |
+| `readUpTo` | custom, number | `data.readUpTo`, string | remove every notification about `objectId` with `createdOn <= readUpTo` as well; `0` means only the tags (a read of reactions, mentions or commons, no message read) |
 
 What the app does: remove the delivered notifications named by `tags`, then any other about
 `objectId` with `createdOn <= readUpTo`; remember `readUpTo` per `objectId` and do not show

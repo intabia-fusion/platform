@@ -29,6 +29,7 @@ function held (overrides: Partial<HeldPush> = {}): HeldPush {
     notificationId: id,
     objectId: doc,
     createdOn: 100,
+    readBy: 'position',
     message: { id } as unknown as QueueNotifyMessage,
     ...overrides
   }
@@ -37,14 +38,14 @@ function held (overrides: Partial<HeldPush> = {}): HeldPush {
 function make (): {
   holder: PendingPushHolder
   publish: jest.Mock
-  isRead: jest.Mock
+  areRead: jest.Mock
   onError: jest.Mock
 } {
   const publish = jest.fn().mockResolvedValue(undefined)
-  const isRead = jest.fn().mockResolvedValue(false)
+  const areRead = jest.fn(async (held: HeldPush[]) => held.map(() => false))
   const onError = jest.fn()
-  const holder = new PendingPushHolder({ holdMs: 60_000, publish, isRead, onError })
-  return { holder, publish, isRead, onError }
+  const holder = new PendingPushHolder({ holdMs: 60_000, publish, areRead, onError })
+  return { holder, publish, areRead, onError }
 }
 
 const flushPromises = async (): Promise<void> => {
@@ -61,7 +62,7 @@ describe('PendingPushHolder', () => {
   })
 
   it('publishes an unread push when the cap ends, after checking the read position', async () => {
-    const { holder, publish, isRead } = make()
+    const { holder, publish, areRead } = make()
     holder.hold(held())
     expect(holder.size).toBe(1)
 
@@ -70,14 +71,14 @@ describe('PendingPushHolder', () => {
 
     jest.advanceTimersByTime(1)
     await flushPromises()
-    expect(isRead).toHaveBeenCalledWith(acc, doc, 100)
+    expect(areRead).toHaveBeenCalledWith([expect.objectContaining({ account: acc, objectId: doc, createdOn: 100 })])
     expect(publish).toHaveBeenCalledWith({ id: 'msg-1' })
     expect(holder.size).toBe(0)
   })
 
   it('drops the push when the person read the message meanwhile', async () => {
-    const { holder, publish, isRead } = make()
-    isRead.mockResolvedValue(true)
+    const { holder, publish, areRead } = make()
+    areRead.mockResolvedValue([true])
     holder.hold(held())
 
     jest.advanceTimersByTime(60_000)
@@ -135,13 +136,90 @@ describe('PendingPushHolder', () => {
   })
 
   it('flushAll releases everything, still skipping what was read', async () => {
-    const { holder, publish, isRead } = make()
+    const { holder, publish, areRead } = make()
     holder.hold(held({ notificationId: 'unread' }))
     holder.hold(held({ notificationId: 'read', createdOn: 50 }))
-    isRead.mockImplementation(async (_a: AccountUuid, _d: Ref<Doc>, createdOn: number) => createdOn === 50)
+    areRead.mockImplementation(async (held: HeldPush[]) => held.map((it) => it.createdOn === 50))
 
     await holder.flushAll()
     expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['unread'])
+    expect(holder.size).toBe(0)
+  })
+
+  it('releases a burst in one batch with one read check, and stops ticking once empty', async () => {
+    const { holder, publish, areRead } = make()
+    holder.hold(held({ notificationId: 'first' }))
+    // Three more within the next second: their caps end between two ticks and one tick takes all.
+    jest.advanceTimersByTime(100)
+    holder.hold(held({ notificationId: 'a' }))
+    jest.advanceTimersByTime(400)
+    holder.hold(held({ notificationId: 'b' }))
+    holder.hold(held({ notificationId: 'c', account: other }))
+    expect(jest.getTimerCount()).toBe(1)
+
+    jest.advanceTimersByTime(59_500)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(1)
+    expect(publish).toHaveBeenCalledTimes(1)
+
+    jest.advanceTimersByTime(1000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(2)
+    expect(areRead.mock.calls[1][0].map((it: HeldPush) => it.notificationId)).toEqual(['a', 'b', 'c'])
+    expect(publish).toHaveBeenCalledTimes(4)
+    expect(holder.size).toBe(0)
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  it('retries a failed read check a few times, then publishes unchecked rather than losing the push', async () => {
+    const { holder, publish, areRead, onError } = make()
+    areRead.mockRejectedValue(new Error('db down'))
+    holder.hold(held({ notificationId: 'a' }))
+    holder.hold(held({ notificationId: 'b' }))
+
+    jest.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(1)
+    expect(publish).not.toHaveBeenCalled()
+    expect(holder.size).toBe(2)
+
+    // Two more tries five seconds apart; the last failure lets the pushes go.
+    jest.advanceTimersByTime(5_000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(2)
+    expect(publish).not.toHaveBeenCalled()
+
+    jest.advanceTimersByTime(5_000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(3)
+    expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['a', 'b'])
+    expect(onError).not.toHaveBeenCalled()
+    expect(holder.size).toBe(0)
+  })
+
+  it('a check that recovers on a retry still skips what was read', async () => {
+    const { holder, publish, areRead } = make()
+    areRead.mockRejectedValueOnce(new Error('db down')).mockResolvedValueOnce([true])
+    holder.hold(held())
+
+    jest.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(5_000)
+    await flushPromises()
+    expect(areRead).toHaveBeenCalledTimes(2)
+    expect(publish).not.toHaveBeenCalled()
+    expect(holder.size).toBe(0)
+  })
+
+  it('on close a failed read check publishes unchecked at once: nothing can wait for a retry', async () => {
+    const { holder, publish, areRead, onError } = make()
+    areRead.mockRejectedValue(new Error('db down'))
+    holder.hold(held({ notificationId: 'a' }))
+
+    await holder.flushAll()
+    expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['a'])
+    expect(onError).not.toHaveBeenCalled()
     expect(holder.size).toBe(0)
   })
 

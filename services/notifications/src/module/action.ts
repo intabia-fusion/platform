@@ -42,7 +42,7 @@ import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
-import { cancelHeldPushes, pushDismissMessage, readUnread } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, dismissScopeOf } from './dismiss'
 import { pushNotification } from './notification'
 import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
 
@@ -78,6 +78,7 @@ export async function handleReadNotificationAction (
 
   const ops: DocumentUpdate<DocNotifyContext> = { $pull: {} }
   let decrease = 0
+  const readIds: string[] = []
 
   if (reactionIds.length > 0) {
     const toRead = (context.unreadReactions ?? []).filter((r) => reactionIds.includes(r.id))
@@ -87,6 +88,7 @@ export async function handleReadNotificationAction (
         unreadReactions: { id: { $in: toRead.map((r) => r.id) } }
       }
       decrease += toRead.length
+      readIds.push(...toRead.map((r) => r.id))
     }
   }
 
@@ -98,6 +100,7 @@ export async function handleReadNotificationAction (
         unreadCommons: { id: { $in: toRead.map((c) => c.id) } }
       }
       decrease += toRead.length
+      readIds.push(...toRead.map((c) => c.id))
     }
   }
 
@@ -109,6 +112,7 @@ export async function handleReadNotificationAction (
         unreadMentions: { id: { $in: toRead.map((m) => m.id) } }
       }
       decrease += toRead.length
+      readIds.push(...toRead.map((m) => m.id))
     }
   }
 
@@ -171,13 +175,10 @@ export async function handleReadNotificationAction (
 
   // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
   const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
-  cancelHeldPushes(client, context, readPosition)
-  await pushDismissMessage(
-    cache,
-    result,
-    context,
-    readUnread([...unreadMessagesToRead, ...unreadChunksToRead], readPosition)
-  )
+  cancelHeldPushes(client, context, readPosition, readIds)
+  const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition)
+  read.tags.push(...readIds)
+  await pushDismissMessage(cache, result, context, read)
 }
 
 export async function handleCreateNotificationAction (

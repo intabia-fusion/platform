@@ -17,7 +17,7 @@
 // server-pipeline/middleware resolve fine as real deps under ts-jest.
 import core from '@hcengineering/core'
 
-import Workspace, { isTransientError } from '../workspace'
+import Workspace, { areHeldPushesRead, isTransientError } from '../workspace'
 import { emptyResult } from '../utils/utils'
 import type { Result } from '../types'
 
@@ -259,5 +259,72 @@ describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)',
     instance.ctx = { error: jest.fn() }
     await instance.processTx({ _class: core.class.TxRemoveDoc, objectClass: core.class.UserStatus, objectId: 'us-1' })
     expect(instance.pendingPush.flushByAccount).toHaveBeenCalledWith('acc-1')
+  })
+})
+
+describe('areHeldPushesRead', () => {
+  const ctx: any = {}
+  const held = (overrides: Record<string, unknown>): any => ({
+    account: 'acc-1',
+    notificationId: 'n-1',
+    objectId: 'doc-1',
+    createdOn: 100,
+    readBy: 'position',
+    message: {},
+    ...overrides
+  })
+  const pipeline = (docs: unknown[]): any => ({ findAll: jest.fn().mockResolvedValue(docs) })
+  const one = async (docs: unknown[], push: any): Promise<boolean> => (await areHeldPushesRead(ctx, pipeline(docs), [push]))[0]
+
+  it('a message is read once the account read position passed it', async () => {
+    const state = (timestamp: number): unknown => ({ attachedTo: 'doc-1', 'acc-1': { timestamp } })
+    expect(await one([state(100)], held({}))).toBe(true)
+    expect(await one([state(99)], held({}))).toBe(false)
+    expect(await one([], held({}))).toBe(false)
+  })
+
+  it.each([
+    ['reactions', 'unreadReactions'],
+    ['mentions', 'unreadMentions'],
+    ['commons', 'unreadCommons']
+  ])('a %s notification is read once its id left the context unread list', async (readBy, field) => {
+    const context = (unread: unknown[]): unknown => ({ user: 'acc-1', objectId: 'doc-1', [field]: unread })
+    expect(await one([context([{ id: 'n-1' }])], held({ readBy }))).toBe(false)
+    expect(await one([context([{ id: 'other' }])], held({ readBy }))).toBe(true)
+    expect(await one([{ user: 'acc-1', objectId: 'doc-1' }], held({ readBy }))).toBe(true)
+    // No context at all: nothing is left to notify about.
+    expect(await one([], held({ readBy }))).toBe(true)
+  })
+
+  it('checks the pushes of many documents with one query per kind, answering in order', async () => {
+    const p: any = {
+      findAll: jest
+        .fn()
+        .mockResolvedValueOnce([
+          { attachedTo: 'doc-1', 'acc-1': { timestamp: 100 } },
+          { attachedTo: 'doc-2', 'acc-1': { timestamp: 10 }, 'acc-2': { timestamp: 500 } }
+        ])
+        .mockResolvedValueOnce([{ user: 'acc-1', objectId: 'doc-1', unreadReactions: [{ id: 'r-1' }] }])
+    }
+    const read = await areHeldPushesRead(ctx, p, [
+      held({ notificationId: 'm-1', objectId: 'doc-1' }),
+      held({ notificationId: 'm-2', objectId: 'doc-2' }),
+      held({ notificationId: 'm-3', objectId: 'doc-2', account: 'acc-2' }),
+      held({ notificationId: 'm-4', objectId: 'doc-1', createdOn: 101 }),
+      held({ notificationId: 'r-1', objectId: 'doc-1', readBy: 'reactions' }),
+      held({ notificationId: 'r-2', objectId: 'doc-1', readBy: 'reactions' })
+    ])
+    expect(read).toEqual([true, false, true, false, false, true])
+    expect(p.findAll).toHaveBeenCalledTimes(2)
+    expect(p.findAll.mock.calls[0][2]).toEqual({ attachedTo: { $in: ['doc-1', 'doc-2'] } })
+    expect(p.findAll.mock.calls[1][2]).toEqual({ objectId: { $in: ['doc-1'] }, user: { $in: ['acc-1'] } })
+  })
+
+  it('runs no query for a kind that is not in the batch', async () => {
+    const p: any = { findAll: jest.fn().mockResolvedValue([]) }
+    expect(await areHeldPushesRead(ctx, p, [held({})])).toEqual([false])
+    expect(p.findAll).toHaveBeenCalledTimes(1)
+    expect(await areHeldPushesRead(ctx, p, [])).toEqual([])
+    expect(p.findAll).toHaveBeenCalledTimes(1)
   })
 })

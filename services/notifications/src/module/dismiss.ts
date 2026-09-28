@@ -25,11 +25,13 @@ import {
 import Cache from '../cache'
 import { Client, Result } from '../types'
 
-/** What a read takes out of `unreadMessages`, in the terms a dismiss needs. */
-export interface ReadUnread {
-  // Ids of the notified messages read: the tags of the pushes to take down.
+/** What a read takes down from the phone: the pushes a dismiss names. */
+export interface DismissScope {
+  // Ids of the notified messages read, plus the reactions, mentions and commons read: the tags
+  // of the pushes to take down.
   tags: string[]
-  // The newest timestamp covered by the read, chunks included; zero when nothing notified was read.
+  // The newest timestamp covered by the read of messages, chunks included; zero when no
+  // notified message was read, and then only the tags are dismissed.
   readUpTo: Timestamp
 }
 
@@ -37,7 +39,7 @@ export interface ReadUnread {
  * Chunks carry no ids, only a range, so a read that clears them is described by its timestamp;
  * the devices take down every push about the document up to it.
  */
-export function readUnread (read: UnreadMessage[], readPosition: Timestamp): ReadUnread {
+export function dismissScopeOf (read: UnreadMessage[], readPosition: Timestamp): DismissScope {
   const tags: string[] = []
   let notified = false
   for (const unread of read) {
@@ -50,23 +52,32 @@ export function readUnread (read: UnreadMessage[], readPosition: Timestamp): Rea
   return { tags, readUpTo: tags.length > 0 || notified ? readPosition : 0 }
 }
 
-/** The person read the document up to `readUpTo`: pushes still waiting for that are not needed. */
-export function cancelHeldPushes (client: Client, context: DocNotifyContext, readUpTo: Timestamp): void {
-  client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo)
+/**
+ * The person read the document up to `readUpTo` and the listed notifications: pushes still
+ * waiting for that are not needed.
+ */
+export function cancelHeldPushes (
+  client: Client,
+  context: DocNotifyContext,
+  readUpTo: Timestamp,
+  notificationIds: string[] = []
+): void {
+  if (readUpTo > 0) client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo)
+  for (const id of notificationIds) client.pendingPush?.cancel(context.user, id)
 }
 
 /**
  * The person read the document elsewhere: tell the native apps to take down what was pushed.
  * One message per context and read; nothing for an account without a native subscription,
- * and nothing when the read touched no notified message (no push went out for it).
+ * and nothing when the read touched no notified message and named nothing (no push went out).
  */
 export async function pushDismissMessage (
   cache: Cache,
   result: Result,
   context: DocNotifyContext,
-  read: ReadUnread
+  read: DismissScope
 ): Promise<void> {
-  if (read.readUpTo === 0) return
+  if (read.readUpTo === 0 && read.tags.length === 0) return
   const subscriptions = (await cache.getPushSubscriptions(context.user)).filter((it) =>
     isNativePushEndpoint(it.endpoint)
   )
@@ -74,7 +85,7 @@ export async function pushDismissMessage (
 
   const message: QueueDismissMessage = {
     kind: 'dismiss',
-    id: `dismiss:${context._id}:${read.readUpTo}`,
+    id: `dismiss:${context._id}:${read.readUpTo > 0 ? read.readUpTo : read.tags[0]}`,
     account: context.user,
     objectId: context.objectId,
     objectClass: context.objectClass,
