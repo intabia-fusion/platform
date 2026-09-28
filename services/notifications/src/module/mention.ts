@@ -115,6 +115,7 @@ export async function handleMention (
       notifyProviders: mention.notifyProviders,
       objectDisplayData,
       pushSubscriptions,
+      settings: await cache.getSettings(),
       markup: mention.markup
     })
   }

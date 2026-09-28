@@ -115,6 +115,7 @@ const notification = plugin(notificationId, {
     DocNotifyContextPresenter: '' as AnyComponent,
     GeneralPreferencesGroup: '' as AnyComponent,
     WebpushesPreferencesPresenter: '' as AnyComponent,
+    ProviderHoldPreferences: '' as AnyComponent,
     MutePopup: '' as AnyComponent,
     NotificationAppearancePreferencesPresenter: '' as AnyComponent
   },
@@ -173,6 +174,9 @@ const notification = plugin(notificationId, {
     YouAddedAsCollaborator: '' as IntlString,
     YouRemovedFromCollaborators: '' as IntlString,
     Webpushes: '' as IntlString,
+    HoldLabel: '' as IntlString,
+    HoldMinutes: '' as IntlString,
+    HoldHours: '' as IntlString,
     UnknownDevice: '' as IntlString,
     RemoveWebpush: '' as IntlString,
     WebpushRemoveConfirm: '' as IntlString,

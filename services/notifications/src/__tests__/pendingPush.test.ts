@@ -30,6 +30,7 @@ function held (overrides: Partial<HeldPush> = {}): HeldPush {
     objectId: doc,
     createdOn: 100,
     readBy: 'position',
+    provider: 'push-provider' as any,
     message: { id } as unknown as QueueNotifyMessage,
     ...overrides
   }
@@ -221,6 +222,15 @@ describe('PendingPushHolder', () => {
     expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['a'])
     expect(onError).not.toHaveBeenCalled()
     expect(holder.size).toBe(0)
+  })
+
+  it('a cancel by id takes down every provider of the notification', () => {
+    const { holder } = make()
+    holder.hold(held({ notificationId: 'n' }))
+    holder.hold(held({ notificationId: 'n', provider: 'email-provider' as any }))
+    holder.hold(held({ notificationId: 'm' }))
+    expect(holder.cancel(acc, 'n')).toBe(true)
+    expect(holder.size).toBe(1)
   })
 
   it('reports a failing publish and never throws', async () => {

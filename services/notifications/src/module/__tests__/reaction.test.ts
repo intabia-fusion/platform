@@ -392,8 +392,9 @@ describe('handleReaction', () => {
           lastNotify: 0
         }
       })
-      // A push about the removed reaction that was still waiting for the person is dropped.
+      // A push or a letter about the removed reaction that was still waiting for the person is dropped.
       expect(mockClient.pendingPush.cancel).toHaveBeenCalledWith('user-1', 'react-1')
+      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:react-1:%' }])
     })
   })
 })

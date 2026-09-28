@@ -38,11 +38,12 @@ import { translate, IntlString } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import { markupToHtml } from '@hcengineering/text-html'
 
-import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
+import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from '../types'
 import config from '../config'
 import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
 import { isNotificationRecorded } from '../utils/context'
-import type { HeldReadBy } from '../pendingPush'
+import { type HeldPush, type HeldReadBy } from '../pendingPush'
+import { scheduleLetter } from '../heldLetter'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -64,6 +65,8 @@ interface CreateNotificationData {
   pushSubscriptions: PushSubscription[]
 
   alreadyRead?: boolean
+
+  settings?: NotificationSettings
 
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
@@ -136,32 +139,55 @@ export async function pushNotification (
       template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
     }
     const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
-    // While the receiver is at the computer, the push to their phone waits (client.pendingPush) for
-    // them to read the notification there first. Only an unread notification can be read later.
+    const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
+    // Only an unread notification can be read later, so only such a one waits.
     const readBy = heldReadBy(data)
-    const holds =
-      readBy !== undefined &&
+    const heldPart = (provider: Ref<NotificationProvider>, part: Partial<QueueNotifyMessage>): HeldPush | undefined =>
+      readBy === undefined
+        ? undefined
+        : {
+            account: receiver.account,
+            notificationId: notification.id,
+            objectId,
+            createdOn: data.notification.createdOn,
+            readBy,
+            provider,
+            message: { ...message, ...part }
+          }
+    // While the receiver is at the computer, the push to their phone waits (client.pendingPush,
+    // in memory) for them to read the notification there first; the browser gets its push at once.
+    const holdsPush =
       client.pendingPush !== undefined &&
+      readBy !== undefined &&
       receiver.online &&
       !receiver.away &&
       native.length > 0 &&
       (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0
-    if (holds) {
-      // The browser gets its push and the letter goes at once; the phone waits.
-      const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
-      if (web.length > 0 || hasDeliveryProvider(withoutPushProviders(notifyProviders))) {
-        result.queueMessages.push({ ...message, pushSubscriptions: web })
-      }
-      client.pendingPush?.hold({
-        account: receiver.account,
-        notificationId: notification.id,
-        objectId,
-        createdOn: data.notification.createdOn,
-        readBy,
-        message: { ...message, pushSubscriptions: native, providers: pushProvidersOnly(providers), template: undefined }
+    if (holdsPush) {
+      const push = heldPart(notificationPlugin.providers.PushNotificationProvider, {
+        pushSubscriptions: native,
+        providers: pushProvidersOnly(providers),
+        template: undefined
       })
-    } else {
-      result.queueMessages.push(message)
+      if (push !== undefined) client.pendingPush?.hold(push)
+    }
+    // A letter waits its own, longer while wherever the person is (it is for what they did not
+    // see), in the time machine rather than in memory.
+    const letters = readBy !== undefined ? letterHolds(client, data) : []
+    for (const letter of letters) {
+      const held = heldPart(letter.provider, { pushSubscriptions: [], providers: onlyProviders(providers, [letter.provider]) })
+      if (held !== undefined) scheduleLetter(result, held, letter.holdMs)
+    }
+
+    const heldProviders = [...(holdsPush ? pushProviders() : []), ...letters.map((it) => it.provider)]
+    const immediate: QueueNotifyMessage = {
+      ...message,
+      pushSubscriptions: holdsPush ? web : pushSubscriptions,
+      providers: letters.length > 0 ? withoutProviders(providers, letters.map((it) => it.provider)) : providers,
+      template: letters.length > 0 ? undefined : message.template
+    }
+    if ((holdsPush && web.length > 0) || hasDeliveryProvider(withoutNotifyProviders(notifyProviders, heldProviders))) {
+      result.queueMessages.push(immediate)
     }
   }
   if (context != null) {
@@ -250,29 +276,63 @@ function heldReadBy (data: CreateNotificationData): HeldReadBy | undefined {
   return undefined
 }
 
+interface LetterHold {
+  provider: Ref<NotificationProvider>
+  holdMs: number
+}
+
+// Providers with a hold window of their own (`NotificationProvider.holdMs`, the letter) that
+// deliver this notification: the receiver's setting wins over the provider's default, zero
+// means at once.
+function letterHolds (client: Client, data: CreateNotificationData): LetterHold[] {
+  const holds: LetterHold[] = []
+  for (const provider of client.model.findAllSync(notificationPlugin.class.NotificationProvider, {})) {
+    if (provider.holdMs === undefined) continue
+    if ((data.notifyProviders[provider._id]?.length ?? 0) === 0) continue
+    const setting = data.settings?.settingsByProvider
+      .get(provider._id)
+      ?.find((it) => it.createdBy !== undefined && data.receiver.socialIds.includes(it.createdBy))
+    const holdMs = setting?.holdMs ?? provider.holdMs
+    if (holdMs > 0) holds.push({ provider: provider._id, holdMs })
+  }
+  return holds
+}
+
 function inboxProvidersOnly (providers: NotifyProviders): NotifyProviders {
   const inbox = providers[notificationPlugin.providers.InboxNotificationProvider]
   return inbox != null ? { [notificationPlugin.providers.InboxNotificationProvider]: inbox } : {}
 }
 
-// Push and its dependent Sound: the providers a held (native) push carries on its own.
-function isPushProvider (provider: string): boolean {
-  return (
-    provider === notificationPlugin.providers.PushNotificationProvider ||
-    provider === notificationPlugin.providers.SoundNotificationProvider
-  )
+type ProviderRef = Ref<NotificationProvider>
+
+// Push and its dependent Sound: the providers a held (native) push carries on its own. Read on
+// call, not at import: the module tests mock the plugin lazily.
+function pushProviders (): ProviderRef[] {
+  return [notificationPlugin.providers.PushNotificationProvider, notificationPlugin.providers.SoundNotificationProvider]
 }
 
-function withoutPushProviders (providers: NotifyProviders): NotifyProviders {
-  return Object.fromEntries(
-    Object.entries(providers).filter(([provider]) => !isPushProvider(provider))
-  ) as NotifyProviders
+// The entries of a provider map, keyed as the refs they are (Object.entries widens keys to string).
+function providerEntries<T> (providers: Record<ProviderRef, T>): Array<[ProviderRef, T]> {
+  return Object.entries(providers) as Array<[ProviderRef, T]>
+}
+
+function withoutNotifyProviders (providers: NotifyProviders, excluded: ProviderRef[]): NotifyProviders {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => !excluded.includes(provider)))
 }
 
 function pushProvidersOnly (providers: QueueNotifyMessage['providers']): QueueNotifyMessage['providers'] {
-  return Object.fromEntries(
-    Object.entries(providers).filter(([provider]) => isPushProvider(provider))
-  ) as QueueNotifyMessage['providers']
+  return onlyProviders(providers, pushProviders())
+}
+
+function onlyProviders (providers: QueueNotifyMessage['providers'], kept: ProviderRef[]): QueueNotifyMessage['providers'] {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => kept.includes(provider)))
+}
+
+function withoutProviders (
+  providers: QueueNotifyMessage['providers'],
+  excluded: ProviderRef[]
+): QueueNotifyMessage['providers'] {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => !excluded.includes(provider)))
 }
 
 function hasDeliveryProvider (providers: NotifyProviders): boolean {

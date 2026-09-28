@@ -14,7 +14,7 @@
 //
 
 import type { AccountUuid, Doc, Ref, Timestamp } from '@hcengineering/core'
-import type { QueueNotifyMessage } from '@hcengineering/notification'
+import type { ContextNotification, NotificationProvider, QueueNotifyMessage } from '@hcengineering/notification'
 
 /**
  * How a read of the held notification shows up: a chat message is read when the account's
@@ -26,11 +26,12 @@ export type HeldReadBy = 'position' | 'reactions' | 'mentions' | 'commons'
 export interface HeldPush {
   account: AccountUuid
   // The notification id, the push's tag.
-  notificationId: string
+  notificationId: ContextNotification['id']
   objectId: Ref<Doc>
   createdOn: Timestamp
   readBy: HeldReadBy
-  // The native part of the queue message, published if the hold ends unread.
+  provider: Ref<NotificationProvider>
+  // The part of the queue message this provider delivers, published if the hold ends unread.
   message: QueueNotifyMessage
 }
 
@@ -75,8 +76,13 @@ export class PendingPushHolder {
 
   constructor (private readonly options: PendingPushOptions) {}
 
-  private key (account: AccountUuid, notificationId: string): string {
-    return `${account}:${notificationId}`
+
+  private prefix (account: AccountUuid, notificationId: string): string {
+    return `${account}:${notificationId}:`
+  }
+
+  private key (account: AccountUuid, notificationId: string, provider: Ref<NotificationProvider>): string {
+    return `${this.prefix(account, notificationId)}${provider}`
   }
 
   get size (): number {
@@ -89,7 +95,8 @@ export class PendingPushHolder {
   }
 
   private put (entry: Entry): void {
-    this.entries.set(this.key(entry.held.account, entry.held.notificationId), entry)
+    const { account, notificationId, provider } = entry.held
+    this.entries.set(this.key(account, notificationId, provider), entry)
     if (this.timer === undefined) {
       this.timer = setInterval(() => {
         this.sweep()
@@ -98,8 +105,14 @@ export class PendingPushHolder {
     }
   }
 
+  // The notification was read or is gone: nothing of it goes out, by any provider.
   cancel (account: AccountUuid, notificationId: string): boolean {
-    return this.drop(this.key(account, notificationId))
+    const prefix = this.prefix(account, notificationId)
+    let cancelled = false
+    for (const key of Array.from(this.entries.keys())) {
+      if (key.startsWith(prefix) && this.drop(key)) cancelled = true
+    }
+    return cancelled
   }
 
   // The account read the document up to `readUpTo`: every held push about it up to there is cancelled.

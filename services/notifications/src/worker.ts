@@ -55,6 +55,8 @@ import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server
 import { PersonSpace } from '@hcengineering/contact'
 
 import Workspace from './workspace'
+import type { HeldPush } from './pendingPush'
+import type { TimeMachineMessage } from './types'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils/utils'
 import config from './config'
 
@@ -80,6 +82,7 @@ export class Worker {
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
   private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
+  private readonly timeMachine: PlatformQueueProducer<TimeMachineMessage>
 
   private aiBotAccountUuid?: AccountUuid
   private aiBotLookup?: Promise<void>
@@ -102,6 +105,7 @@ export class Worker {
     )
 
     this.producer = queue.getProducer<QueueNotificationMessage>(ctx, QueueTopic.UserNotifications)
+    this.timeMachine = queue.getProducer<TimeMachineMessage>(ctx, QueueTopic.TimeMachine)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel
@@ -347,6 +351,7 @@ export class Worker {
           branding,
           this.txTypes,
           this.producer,
+          this.timeMachine,
           async () => await this.getAiBotAccount()
         )
 
@@ -392,6 +397,13 @@ export class Worker {
         await workspace.close()
       })
     )
-    await Promise.allSettled([this.userEventProducer.close(), this.producer.close()])
+    await Promise.allSettled([this.userEventProducer.close(), this.producer.close(), this.timeMachine.close()])
+  }
+
+  // A letter the time machine fired: the workspace checks it was not read and publishes it.
+  async heldNotification (ctx: MeasureContext, ws: WorkspaceUuid, held: HeldPush): Promise<void> {
+    const workspace = await this.getWorkspaceClient(ctx, ws)
+    if (workspace == null) return
+    await workspace.releaseHeld(held)
   }
 }

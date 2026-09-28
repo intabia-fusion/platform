@@ -66,6 +66,7 @@ import {
   isSender
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
+import { cancelLetters } from '../heldLetter'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import config from '../config'
@@ -221,8 +222,9 @@ async function handleRemoveMessage (
   const author = await cache.getSender(tx.removedDoc.createdBy ?? tx.removedDoc.modifiedBy ?? tx.modifiedBy)
 
   for (const context of contexts) {
-    // A push still waiting for the receiver to read this message has nothing left to say.
+    // A push or a letter still waiting for the receiver to read this message has nothing left to say.
     client.pendingPush?.cancel(context.user, tx.objectId)
+    cancelLetters(result, context.user, [tx.objectId])
     let operations: DocumentUpdate<DocNotifyContext> = {}
     const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
 
@@ -641,6 +643,7 @@ async function pushNotification (
   const content = await getMessageIntl(client, txCache, type, doc, message, sender, receiver.language)
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+  const settings = await cache.getSettings()
   await _pushNotification(client, txCache, result, context, {
     unreadMessage:
       unreadMessage == null
@@ -669,6 +672,7 @@ async function pushNotification (
     notifyProviders: notifyResult,
     pushSubscriptions,
     alreadyRead,
+    settings,
     markup: (message as Partial<ChatMessage>).message
   })
 }

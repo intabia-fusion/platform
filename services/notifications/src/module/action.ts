@@ -175,7 +175,7 @@ export async function handleReadNotificationAction (
 
   // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
   const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
-  cancelHeldPushes(client, context, readPosition, readIds)
+  cancelHeldPushes(client, result, context, readPosition, [...unreadMessagesToRead.map((it) => it.id), ...readIds])
   const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition)
   read.tags.push(...readIds)
   await pushDismissMessage(cache, result, context, read)

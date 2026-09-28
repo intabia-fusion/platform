@@ -27,6 +27,7 @@ import notification, {
 } from '@hcengineering/notification'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
+import { cancelLetters } from '../heldLetter'
 import Cache from '../cache'
 import {
   getAllowedProviders,
@@ -147,6 +148,7 @@ async function handleCreateReaction (
     ),
     notifyProviders,
     pushSubscriptions,
+    settings,
     markup: (message as Partial<ChatMessage>).message
   })
 }
@@ -178,8 +180,9 @@ async function handleRemoveReaction (
   const contexts = context != null ? [context] : []
 
   for (const context of contexts) {
-    // A push about the reaction still waiting for the person is not needed.
+    // A push or a letter about the reaction still waiting for the person is not needed.
     client.pendingPush?.cancel(context.user, tx.objectId)
+    cancelLetters(result, context.user, [tx.objectId])
     const ops: DocumentUpdate<DocNotifyContext> = {}
 
     if (hasUnreadReaction(context, tx.objectId)) {

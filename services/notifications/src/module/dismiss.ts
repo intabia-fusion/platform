@@ -24,6 +24,7 @@ import {
 
 import Cache from '../cache'
 import { Client, Result } from '../types'
+import { cancelLetters } from '../heldLetter'
 
 /** What a read takes down from the phone: the pushes a dismiss names. */
 export interface DismissScope {
@@ -53,17 +54,20 @@ export function dismissScopeOf (read: UnreadMessage[], readPosition: Timestamp):
 }
 
 /**
- * The person read the document up to `readUpTo` and the listed notifications: pushes still
- * waiting for that are not needed.
+ * The person read the document up to `readUpTo` and the listed notifications: pushes and letters
+ * still waiting for that are not needed. A letter is cancelled by id only (chunks name none;
+ * the check when it fires covers those).
  */
 export function cancelHeldPushes (
   client: Client,
+  result: Result,
   context: DocNotifyContext,
   readUpTo: Timestamp,
   notificationIds: string[] = []
 ): void {
   if (readUpTo > 0) client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo)
   for (const id of notificationIds) client.pendingPush?.cancel(context.user, id)
+  cancelLetters(result, context.user, notificationIds)
 }
 
 /**

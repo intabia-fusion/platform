@@ -151,6 +151,7 @@ describe('pushNotification', () => {
           attributes: payload
         }))
       },
+      model: { findAllSync: jest.fn().mockReturnValue([]) },
       branding: {
         title: 'Platform Brand'
       }
@@ -787,7 +788,8 @@ describe('pushNotification', () => {
         notificationId: 'notify-1',
         objectId: 'doc-1',
         createdOn: 100,
-        readBy: 'position'
+        readBy: 'position',
+        provider: notificationPlugin.providers.PushNotificationProvider
       })
       expect(held.message.pushSubscriptions).toEqual([native])
       expect(Object.keys(held.message.providers).sort()).toEqual(
@@ -838,6 +840,106 @@ describe('pushNotification', () => {
       expect(mockClient.pendingPush.hold).not.toHaveBeenCalled()
       expect(result.queueMessages).toHaveLength(1)
       expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual(mockData.pushSubscriptions)
+    })
+  })
+
+  describe('scheduling the letter in the time machine for the receiver\'s window', () => {
+    const email = 'email-provider'
+    const native = { _id: 'sub-apns', endpoint: 'apns://token' }
+    const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x' }
+    // The inbox type carries templates, so getTemplate renders the letter (translate is mocked as identity-ish).
+    const inboxType = { _id: 'type-1', templates: { text: 'text-key', html: 'html-key', subject: 'subject-key' } }
+    const providers = {
+      [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+      [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+      [email]: [{ _id: 'type-1' }]
+    }
+    const template = { subject: 'translated:subject-key', text: 'translated:text-key', html: 'translated:html-key' }
+    const settingBy = (createdBy: string, holdMs?: number): any => ({ attachedTo: email, enabled: true, createdBy, holdMs })
+    const settings = (list: any[]): any => ({ settingsByProvider: new Map([[email, list]]), typesByProvider: new Map() })
+
+    beforeEach(() => {
+      jest.useFakeTimers({ now: 1_000_000 })
+      mockClient.pendingPush = { hold: jest.fn() }
+      mockClient.model.findAllSync.mockReturnValue([{ _id: email, holdMs: 3_600_000 }])
+      mockData.notifyProviders = providers
+      mockData.pushSubscriptions = [web]
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 100, notified: true }
+      mockData.receiver = { ...mockData.receiver, online: false, away: false, socialIds: ['social-1'] }
+      mockData.settings = settings([])
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('schedules the letter for the provider default when the person has no setting; the push goes at once', async () => {
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.pendingPush.hold).not.toHaveBeenCalled()
+      expect(result.timeMachine).toHaveLength(1)
+      const [schedule] = result.timeMachine
+      expect(schedule).toMatchObject({
+        type: 'schedule',
+        id: `letter:user-1:notify-1:${email}`,
+        targetDate: 1_000_000 + 3_600_000,
+        topic: 'held-notifications'
+      })
+      const held = schedule.data as any
+      expect(held).toMatchObject({ notificationId: 'notify-1', provider: email, readBy: 'position', objectId: 'doc-1' })
+      expect(held.message).toMatchObject({ pushSubscriptions: [], providers: { [email]: ['type-1'] }, template })
+
+      expect(result.queueMessages).toHaveLength(1)
+      const immediate = result.queueMessages[0] as QueueNotifyMessage
+      expect(immediate.template).toBeUndefined()
+      expect(Object.keys(immediate.providers).sort()).toEqual(
+        [notificationPlugin.providers.InboxNotificationProvider, notificationPlugin.providers.PushNotificationProvider].sort()
+      )
+      expect(immediate.pushSubscriptions).toEqual([web])
+    })
+
+    it("uses the person's own window, matched by their social id", async () => {
+      mockData.settings = settings([settingBy('someone-else', 1), settingBy('social-1', 15 * 60 * 1000)])
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine[0]).toMatchObject({ targetDate: 1_000_000 + 15 * 60 * 1000 })
+    })
+
+    it('sends the letter at once when the person set the window to zero', async () => {
+      mockData.settings = settings([settingBy('social-1', 0)])
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(0)
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toEqual(template)
+    })
+
+    it('queues nothing at once when the letter was the only delivery', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+        [email]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(1)
+      expect(result.queueMessages).toHaveLength(0)
+    })
+
+    it('holds the phone push in memory and schedules the letter while the person is at the computer', async () => {
+      mockData.pushSubscriptions = [web, native]
+      mockData.receiver = { ...mockData.receiver, online: true, away: false }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.pendingPush.hold).toHaveBeenCalledTimes(1)
+      expect(mockClient.pendingPush.hold.mock.calls[0][0]).toMatchObject({
+        provider: notificationPlugin.providers.PushNotificationProvider
+      })
+      expect(result.timeMachine).toHaveLength(1)
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual([web])
     })
   })
 })

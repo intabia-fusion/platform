@@ -26,6 +26,7 @@ import {
   MeasureContext,
   ModelDb,
   Ref,
+  Timestamp,
   TxCreateDoc,
   TxFactory,
   TxRemoveDoc,
@@ -51,6 +52,7 @@ import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 import { UserMentionInfo } from '@hcengineering/activity'
 import { IntlString } from '@hcengineering/platform'
+import type { QueueTopic } from '@hcengineering/server-core'
 import type { PendingPushHolder } from './pendingPush'
 
 export interface NotificationSettings {
@@ -64,6 +66,14 @@ export type EmployeeInfo = Pick<Employee, '_id' | 'personUuid' | 'role' | 'activ
 export type SocialIdentityInfo = Pick<SocialIdentity, '_id' | 'attachedTo'>
 
 export type NotifyProviders = Record<Ref<NotificationProvider>, NotificationType[]>
+
+export interface TimeMachineMessage<T = unknown> {
+  type: 'schedule' | 'cancel'
+  id: string
+  targetDate?: Timestamp
+  topic?: QueueTopic
+  data?: T
+}
 
 export interface Client {
   ctx: MeasureContext
@@ -111,6 +121,7 @@ export interface Result {
   removeUserMentionInfoTx: TxRemoveDoc<UserMentionInfo>[]
 
   queueMessages: QueueNotificationMessage[]
+  timeMachine: TimeMachineMessage[]
 }
 
 export interface TxCache {

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { generateId, MeasureContext, newMetrics, Tx } from '@hcengineering/core'
+import { generateId, MeasureContext, newMetrics, Tx, WorkspaceUuid } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
@@ -45,6 +45,7 @@ import {
 
 import { Worker } from './worker'
 import { WorkspaceBreaker } from './breaker'
+import type { HeldPush } from './pendingPush'
 import config from './config'
 
 void main().catch((err) => {
@@ -85,31 +86,60 @@ async function main (): Promise<void> {
     probeGiveUpAfterMs: 30 * 1000
   })
 
-  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
-    const ws = queueMessage.workspace
-    const tx = queueMessage.value
+  // One message of a workspace, under the breaker: retried while the failure lasts, dropped after.
+  async function guarded (
+    ctx: MeasureContext,
+    ws: WorkspaceUuid,
+    id: string,
+    what: string,
+    payload: Record<string, unknown>,
+    run: () => Promise<void>
+  ): Promise<void> {
     if (breaker.shouldSkip(ws)) return
     try {
-      await worker.tx(ctx, ws, tx)
-      const skipped = breaker.succeeded(ws, tx._id)
+      await run()
+      const skipped = breaker.succeeded(ws, id)
       if (skipped !== undefined) {
         ctx.warn('Workspace recovered, tx processing resumed', { wsUuid: ws, skippedTxes: skipped })
       }
     } catch (e) {
-      const verdict = breaker.failed(ws, tx._id)
+      const verdict = breaker.failed(ws, id)
       if (verdict.action === 'drop') {
         ctx.error(
           verdict.opened
-            ? 'Tx message dropped after repeated failures, workspace txes are skipped for a cooldown'
-            : 'Tx message dropped after repeated failures',
-          { e, wsUuid: ws, tx, failingForMs: verdict.failingForMs }
+            ? `${what} dropped after repeated failures, workspace txes are skipped for a cooldown`
+            : `${what} dropped after repeated failures`,
+          { e, wsUuid: ws, ...payload, failingForMs: verdict.failingForMs }
         )
         return
       }
-      ctx.error('Failed to process tx message', { e, wsUuid: ws, tx })
+      ctx.error(`Failed to process ${what.toLowerCase()}`, { e, wsUuid: ws, ...payload })
       throw e
     }
+  }
+
+  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
+    const ws = queueMessage.workspace
+    const tx = queueMessage.value
+    await guarded(ctx, ws, tx._id, 'Tx message', { tx }, async () => {
+      await worker.tx(ctx, ws, tx)
+    })
   })
+
+  // A letter the time machine fired at its due time (see heldLetter.ts). The same group as the
+  // txes: the workspace's partition, whichever replica holds it.
+  const heldConsumer = queue.createConsumer<HeldPush>(
+    ctx,
+    QueueTopic.HeldNotifications,
+    queue.getClientId(),
+    async (ctx, queueMessage) => {
+      const ws = queueMessage.workspace
+      const held = queueMessage.value
+      await guarded(ctx, ws, held.notificationId, 'Held letter', { notificationId: held.notificationId }, async () => {
+        await worker.heldNotification(ctx, ws, held)
+      })
+    }
+  )
 
   // Own group per process, like the transactor: every replica holds its own workspace cache.
   const wsConsumer = queue.createConsumer<QueueWorkspaceMessage>(
@@ -139,7 +169,7 @@ async function main (): Promise<void> {
     deadline.unref()
     void (async () => {
       try {
-        await Promise.allSettled([txConsumer.close(), wsConsumer.close()])
+        await Promise.allSettled([txConsumer.close(), heldConsumer.close(), wsConsumer.close()])
         await worker.close()
         await queue.shutdown()
       } catch (err: any) {

@@ -17,6 +17,8 @@
 // server-pipeline/middleware resolve fine as real deps under ts-jest.
 import core from '@hcengineering/core'
 
+import { QueueTopic } from '@hcengineering/server-core'
+
 import Workspace, { areHeldPushesRead, isTransientError } from '../workspace'
 import { emptyResult } from '../utils/utils'
 import type { Result } from '../types'
@@ -57,12 +59,13 @@ describe('isTransientError', () => {
 // Workspace's constructor is private only at the type level.
 // Object.create(Workspace.prototype) builds a bare instance we hand-fill for applyResult.
 describe('Workspace.applyResult (private, exercised via a bare instance)', () => {
-  function makeInstance (overrides: { tx?: jest.Mock, send?: jest.Mock }): any {
+  function makeInstance (overrides: { tx?: jest.Mock, send?: jest.Mock, schedule?: jest.Mock }): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn(), getCachedContext: jest.fn() }
     instance.client = { findOne: jest.fn() }
     instance.producer = { send: overrides.send ?? jest.fn().mockResolvedValue(undefined) }
+    instance.timeMachine = { send: overrides.schedule ?? jest.fn().mockResolvedValue(undefined) }
     instance.ws = { uuid: 'ws-1' }
     instance.rest = { tx: overrides.tx ?? jest.fn().mockResolvedValue(undefined) }
     instance.txFactory = {
@@ -167,6 +170,92 @@ describe('Workspace.applyResult (private, exercised via a bare instance)', () =>
     expect(instance.cache.tx).toHaveBeenCalledWith(expect.objectContaining({ _id: 'ctx-tx-1' }), true)
     expect(instance.cache.tx).toHaveBeenCalledWith(expect.objectContaining({ _id: 'ctx-tx-2' }), true)
     expect(instance.cache.resetContexts).not.toHaveBeenCalled()
+  })
+})
+
+describe('Workspace.applyResult: the time machine', () => {
+  it('sends the letter commands after the batch is applied, keyed by the workspace', async () => {
+    const schedule = jest.fn().mockResolvedValue(undefined)
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
+    instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
+    instance.timeMachine = { send: schedule }
+    instance.ws = { uuid: 'ws-1' }
+    instance.rest = { tx: jest.fn().mockResolvedValue(undefined) }
+    instance.txFactory = { createTxApplyIf: jest.fn().mockReturnValue({ _id: 'apply-tx' }) }
+    const result = emptyResult()
+    result.timeMachine.push({ type: 'cancel', id: 'letter:acc:n:%' })
+
+    await instance.applyResult(result)
+
+    expect(schedule).toHaveBeenCalledWith(instance.ctx, 'ws-1', [{ type: 'cancel', id: 'letter:acc:n:%' }])
+  })
+
+  it('logs and goes on when the time machine cannot be reached', async () => {
+    jest.useFakeTimers()
+    try {
+      const instance: any = Object.create((Workspace as any).prototype)
+      instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+      instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
+      instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
+      instance.timeMachine = { send: jest.fn().mockRejectedValue(new Error('broker down')) }
+      instance.ws = { uuid: 'ws-1' }
+      instance.rest = { tx: jest.fn().mockResolvedValue(undefined) }
+      instance.txFactory = { createTxApplyIf: jest.fn().mockReturnValue({ _id: 'apply-tx' }) }
+      const result = emptyResult()
+      result.timeMachine.push({ type: 'schedule', id: 'letter:acc:n:email', targetDate: 1, topic: QueueTopic.HeldNotifications, data: {} })
+
+      let pending = true
+      const run = instance.applyResult(result).finally(() => {
+        pending = false
+      })
+      for (let i = 0; i < 20; i++) {
+        if (!pending) break
+        await jest.advanceTimersByTimeAsync(10000)
+      }
+      await run
+
+      expect(instance.ctx.error).toHaveBeenCalledWith(
+        'Failed to send held letters to the time machine, they are lost',
+        expect.objectContaining({ ids: ['letter:acc:n:email'] })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+})
+
+describe('Workspace.releaseHeld', () => {
+  const held: any = {
+    account: 'acc-1',
+    notificationId: 'n-1',
+    objectId: 'doc-1',
+    createdOn: 100,
+    readBy: 'position',
+    provider: 'email',
+    message: { id: 'n-1' }
+  }
+  function instanceWith (states: unknown[]): any {
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ws = { uuid: 'ws-1' }
+    instance.pipeline = { findAll: jest.fn().mockResolvedValue(states) }
+    instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
+    return instance
+  }
+
+  it('publishes the letter when the notification is still unread', async () => {
+    const instance = instanceWith([])
+    await instance.releaseHeld(held)
+    expect(instance.producer.send).toHaveBeenCalledWith(instance.ctx, 'ws-1', [{ id: 'n-1' }])
+    expect(instance.isInProgress()).toBe(false)
+  })
+
+  it('drops the letter when the person read the notification meanwhile', async () => {
+    const instance = instanceWith([{ attachedTo: 'doc-1', 'acc-1': { timestamp: 100 } }])
+    await instance.releaseHeld(held)
+    expect(instance.producer.send).not.toHaveBeenCalled()
   })
 })
 

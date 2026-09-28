@@ -43,7 +43,10 @@ import notification, {
   ReadState,
   ReadNotificationAction,
   CreateNotificationAction,
-  DocNotifyContext
+  DocNotifyContext,
+  UnreadReaction,
+  UnreadMention,
+  CommonNotification
 } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
@@ -68,7 +71,7 @@ import {
 
 import config from './config'
 import WorkspaceCache from './cache'
-import { Client, Result, TxCache } from './types'
+import { Client, Result, TimeMachineMessage, TxCache } from './types'
 import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils/utils'
 import { setUnreadMessagesCounts } from './utils/context'
 import { handleMessage } from './module/message'
@@ -146,7 +149,7 @@ export async function areHeldPushesRead (
     }
     const context = contexts.get(`${it.account}:${it.objectId}`)
     if (context === undefined) return true
-    const unread: Array<{ id: string }> =
+    const unread: ReadonlyArray<UnreadReaction | UnreadMention | CommonNotification> =
       it.readBy === 'reactions'
         ? context.unreadReactions ?? []
         : it.readBy === 'mentions'
@@ -193,6 +196,7 @@ class Workspace {
     private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[],
     private readonly producer: PlatformQueueProducer<QueueNotificationMessage>,
+    private readonly timeMachine: PlatformQueueProducer<TimeMachineMessage>,
     getAiBotAccount: () => Promise<AccountUuid | undefined>
   ) {
     this.pendingPush = new PendingPushHolder({
@@ -222,8 +226,24 @@ class Workspace {
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
+    await this.track(this.processTx(tx))
+  }
+
+  // A letter the time machine fired at its due time: it goes out unless the person read the
+  // notification meanwhile (see heldLetter.ts).
+  async releaseHeld (held: HeldPush): Promise<void> {
+    await this.track(
+      (async () => {
+        const [read] = await areHeldPushesRead(this.ctx, this.pipeline, [held])
+        if (read) return
+        await this.publish([held.message])
+      })()
+    )
+  }
+
+  // Work that close() has to wait for, and that keeps the workspace from idling out.
+  private async track (run: Promise<void>): Promise<void> {
     this.lastUpdate = Date.now()
-    const run = this.processTx(tx)
     this.inProgressPromise = run
     try {
       await run
@@ -352,6 +372,23 @@ class Workspace {
         })
       }
     }
+    if (result.timeMachine.length > 0) {
+      try {
+        await withRetry(() => this.timeMachine.send(this.ctx, this.ws.uuid, result.timeMachine), {
+          maxRetries: publishAttempts,
+          isRetryable: () => true,
+          delayStrategy: publishBackoff
+        })
+      } catch (e: unknown) {
+        // A lost schedule is a letter that never goes; a lost cancel is a letter the check when it
+        // fires will still drop if the notification was read.
+        this.ctx.error('Failed to send held letters to the time machine, they are lost', {
+          error: e instanceof Error ? e.message : String(e),
+          count: result.timeMachine.length,
+          ids: result.timeMachine.map((it) => it.id)
+        })
+      }
+    }
   }
 
   private async publish (messages: QueueNotificationMessage[]): Promise<void> {
@@ -434,6 +471,7 @@ class Workspace {
     branding: Branding | undefined,
     txTypes: TxNotificationType[],
     producer: PlatformQueueProducer<QueueNotificationMessage>,
+    timeMachine: PlatformQueueProducer<TimeMachineMessage>,
     getAiBotAccount: () => Promise<AccountUuid | undefined> = async () => undefined
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
@@ -484,6 +522,7 @@ class Workspace {
       branding,
       txTypes,
       producer,
+      timeMachine,
       getAiBotAccount
     )
   }

@@ -161,6 +161,7 @@ export interface NotificationProvider extends Doc {
   order: number
   presenter?: AnyComponent
   isAvailableFn?: Resource<() => boolean>
+  holdMs?: number
 }
 
 export interface NotificationProviderDefaults extends Doc {
@@ -173,6 +174,7 @@ export interface NotificationProviderDefaults extends Doc {
 export interface NotificationProviderSetting extends Preference {
   attachedTo: Ref<NotificationProvider>
   enabled: boolean
+  holdMs?: number
 }
 
 export interface NotificationTypeSetting extends Preference {

@@ -26,6 +26,8 @@ The Time Machine service is an autonomous, generic service responsible for handl
 
 When a timer expires, the service relays the exact `data` payload to the target `topic`.
 
+Clients: `services/process` (`OnTime` transitions, topic `process`), `services/webhook` (delivery retries) and `services/notifications` (a letter held until the person had a chance to read the notification, ids `letter:<account>:<notification>:<provider>`, topic `held-notifications`).
+
 ## Environment Variables
 
 | Variable | Default | Description |

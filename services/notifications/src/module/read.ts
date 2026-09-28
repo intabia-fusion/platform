@@ -129,6 +129,12 @@ async function readContext (
     )
   }
 
-  cancelHeldPushes(client, context, ts)
+  cancelHeldPushes(
+    client,
+    result,
+    context,
+    ts,
+    unreadMessagesToRead.map((it) => it.id)
+  )
   await pushDismissMessage(cache, result, context, dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], ts))
 }

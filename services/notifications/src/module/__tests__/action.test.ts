@@ -367,6 +367,11 @@ describe('handleReadNotificationAction: reactions, mentions and commons read', (
       ['user-1', 'mention-1']
     ])
     expect(mockClient.pendingPush.cancelByObject).not.toHaveBeenCalled()
+    expect(result.timeMachine).toEqual([
+      { type: 'cancel', id: 'letter:user-1:reaction-1:%' },
+      { type: 'cancel', id: 'letter:user-1:common-1:%' },
+      { type: 'cancel', id: 'letter:user-1:mention-1:%' }
+    ])
     expect(result.queueMessages).toEqual([
       expect.objectContaining({
         kind: 'dismiss',

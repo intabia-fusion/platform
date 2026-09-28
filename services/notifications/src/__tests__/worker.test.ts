@@ -34,7 +34,12 @@ const mockCreated: FakeWorkspace[] = []
 class FakeWorkspace {
   closed = false
   readonly handled: string[] = []
+  readonly released: string[] = []
   constructor (readonly classes: Set<string>) {}
+
+  async releaseHeld (held: { notificationId: string }): Promise<void> {
+    this.released.push(held.notificationId)
+  }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     // The real Workspace skips a tx whose class its model lacks (findDomain returns undefined).
@@ -113,6 +118,21 @@ function createTx (objectClass: Ref<Class<Doc>>): TxCUD<Doc> {
     attributes: {}
   } as unknown as TxCUD<Doc>
 }
+
+describe('Worker.heldNotification', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+
+  it('loads the workspace and hands it the fired letter', async () => {
+    mockModel = new Set([Issue])
+    mockGate = Promise.resolve()
+    mockCreated.length = 0
+    const worker = new Worker(ctx, createModel(), queue)
+    await worker.heldNotification(ctx, ws, { notificationId: 'n-1' } as any)
+    expect(mockCreated).toHaveLength(1)
+    expect(mockCreated[0].released).toEqual(['n-1'])
+    await worker.close()
+  })
+})
 
 describe('Worker.close', () => {
   const ctx = new MeasureMetricsContext('test', {})

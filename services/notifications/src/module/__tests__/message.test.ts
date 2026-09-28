@@ -46,6 +46,7 @@ function createEmptyResult (): Result {
     createAppPushNotificationTx: [],
     updateReadStateTx: [],
     queueMessages: [],
+    timeMachine: [],
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
     removeUserMentionInfoTx: []
@@ -647,8 +648,9 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      // The push held for the receiver to read this message first is dropped with it.
+      // The push held for the receiver to read this message first is dropped with it, the letter too.
       expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'msg-1')
+      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:msg-1:%' }])
       expect(result.updateContextTx).toHaveLength(1)
       expect(result.updateContextTx[0].operations).toEqual({
         $pull: {

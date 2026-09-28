@@ -30,7 +30,7 @@ describe('handleReadState', () => {
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
-    pendingPush: { cancelByObject: jest.Mock }
+    pendingPush: { cancelByObject: jest.Mock, cancel: jest.Mock }
   }
   let mockCache: {
     getReadState: jest.Mock
@@ -41,7 +41,7 @@ describe('handleReadState', () => {
 
   beforeEach(() => {
     mockClient = {
-      pendingPush: { cancelByObject: jest.fn() },
+      pendingPush: { cancelByObject: jest.fn(), cancel: jest.fn() },
       ctx: {
         warn: jest.fn(),
         error: jest.fn()
@@ -359,6 +359,11 @@ describe('handleReadState', () => {
       await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
       expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 150)
+      // The letters of the messages read (notified or not) are dropped; a chunk names no id.
+      expect(result.timeMachine).toEqual([
+        { type: 'cancel', id: 'letter:user-1:msg-1:%' },
+        { type: 'cancel', id: 'letter:user-1:msg-2:%' }
+      ])
       expect(mockCache.getPushSubscriptions).toHaveBeenCalledWith('user-1')
       expect(result.queueMessages).toHaveLength(1)
       expect(result.queueMessages[0]).toEqual({

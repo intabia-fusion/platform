@@ -192,6 +192,7 @@ export class TNotificationTypeSetting extends TPreference implements Notificatio
 export class TNotificationProviderSetting extends TPreference implements NotificationProviderSetting {
   declare attachedTo: Ref<TNotificationProvider>
   enabled!: boolean
+  holdMs?: number
 }
 
 @Model(notification.class.DocNotificationSetting, preference.class.Preference)
@@ -372,6 +373,7 @@ export class TNotificationProvider extends TDoc implements NotificationProvider 
   canDisable!: boolean
   presenter?: AnyComponent
   isAvailableFn?: Resource<() => boolean>
+  holdMs?: number
 }
 
 @Model(notification.class.NotificationProviderDefaults, core.class.Doc)

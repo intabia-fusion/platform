@@ -29,6 +29,7 @@ function createEmptyResult (): Result {
     createAppPushNotificationTx: [],
     updateReadStateTx: [],
     queueMessages: [],
+    timeMachine: [],
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
     removeUserMentionInfoTx: []
