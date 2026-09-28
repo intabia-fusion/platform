@@ -179,6 +179,11 @@ class Workspace {
       this.model.addTxes(this.ctx, [tx], true)
     }
 
+    // The status as the cache knew it before this tx: a removal takes the record out of the
+    // cache, and the account it belonged to is only known from this copy.
+    const isUserStatus = this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)
+    const statusBefore = isUserStatus ? this.cache.getCachedUserStatus(tx.objectId as Ref<UserStatus>) : undefined
+
     try {
       this.cache.tx(tx)
     } catch (e: any) {
@@ -187,8 +192,8 @@ class Workspace {
       this.cache.reset()
     }
 
-    if (this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
-      await this.releaseHeldPushes(tx)
+    if (isUserStatus) {
+      await this.releaseHeldPushes(tx, statusBefore)
       return
     }
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
@@ -294,11 +299,10 @@ class Workspace {
   }
 
   // The receiver left the computer (away) or the workspace (offline): what waited for them goes
-  // out now. The status is read from the cache as it was before this tx; a status the cache never
+  // out now. `status` is the record as the cache knew it before this tx; a status the cache never
   // saw cannot be mapped to its account, and the cap releases those pushes instead.
-  private async releaseHeldPushes (tx: TxCUD<Doc>): Promise<void> {
+  private async releaseHeldPushes (tx: TxCUD<Doc>, status: UserStatus | undefined): Promise<void> {
     if (this.pendingPush.size === 0) return
-    const status = this.cache.getCachedUserStatus(tx.objectId as Ref<UserStatus>)
     if (status === undefined) return
     const gone =
       tx._class === core.class.TxRemoveDoc ||

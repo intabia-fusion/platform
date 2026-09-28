@@ -221,6 +221,8 @@ async function handleRemoveMessage (
   const author = await cache.getSender(tx.removedDoc.createdBy ?? tx.removedDoc.modifiedBy ?? tx.modifiedBy)
 
   for (const context of contexts) {
+    // A push still waiting for the receiver to read this message has nothing left to say.
+    client.pendingPush?.cancel(context.user, tx.objectId)
     let operations: DocumentUpdate<DocNotifyContext> = {}
     const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
 

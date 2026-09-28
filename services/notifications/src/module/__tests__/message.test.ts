@@ -632,6 +632,7 @@ describe('message module', () => {
         _id: 'ctx-1',
         _class: 'DocNotifyContext',
         space: 'space-1',
+        user: 'user-1',
         unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }],
         unreadReactions: [{ attachedTo: 'msg-1' }],
         unreadMentions: [{ messageId: 'msg-1' }],
@@ -642,9 +643,13 @@ describe('message module', () => {
       mockGetNotificationsByMessage.mockReturnValue([{ id: 'msg-1' }])
       mockHasUnreadMentionByMessage.mockReturnValue(true)
       mockGetLastNotify.mockReturnValue(40) // lastNotify changed
+      const pendingPush = { cancel: jest.fn() }
+      ;(mockClient as any).pendingPush = pendingPush
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
+      // The push held for the receiver to read this message first is dropped with it.
+      expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'msg-1')
       expect(result.updateContextTx).toHaveLength(1)
       expect(result.updateContextTx[0].operations).toEqual({
         $pull: {

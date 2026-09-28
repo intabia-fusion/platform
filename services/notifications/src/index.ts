@@ -129,9 +129,25 @@ async function main (): Promise<void> {
     }
   )
 
+  // Intake stops first, then the worker publishes what it still holds (pending pushes) while
+  // the producer is up, then the queue goes. A hard deadline guards against a hung close.
   const shutdown = (): void => {
-    void worker.close()
-    void Promise.all([txConsumer.close(), wsConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
+    const deadline = setTimeout(() => {
+      ctx.error('Shutdown did not finish in time, exiting')
+      process.exit(1)
+    }, 30_000)
+    deadline.unref()
+    void (async () => {
+      try {
+        await Promise.allSettled([txConsumer.close(), wsConsumer.close()])
+        await worker.close()
+        await queue.shutdown()
+      } catch (err: any) {
+        ctx.error('Shutdown failed', { error: err?.message ?? String(err) })
+      } finally {
+        process.exit()
+      }
+    })()
   }
 
   process.once('SIGINT', shutdown)

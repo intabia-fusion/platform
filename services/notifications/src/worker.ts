@@ -379,10 +379,19 @@ export class Worker {
     await workspace.close()
   }
 
+  // Every open workspace closes first: its held pushes are published from `close()`, and that
+  // needs the producer still up. Only then do the producers go.
   public async close (): Promise<void> {
     clearInterval(this.clearInterval)
     clearInterval(this.flushInterval)
     this.pendingStatusUpdates.clear()
+    const open = Array.from(this.workspaces.values())
+    this.workspaces.clear()
+    await Promise.allSettled(
+      open.map(async (workspace) => {
+        await workspace.close()
+      })
+    )
     await Promise.allSettled([this.userEventProducer.close(), this.producer.close()])
   }
 }

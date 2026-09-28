@@ -201,7 +201,8 @@ describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)',
   function makeInstance (status: { user: string } | undefined, size = 1): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.pendingPush = { size, flushByAccount: jest.fn().mockResolvedValue(undefined) }
-    instance.cache = { getCachedUserStatus: jest.fn().mockReturnValue(status) }
+    instance.status = status
+    instance.release = async (tx: any) => await instance.releaseHeldPushes(tx, instance.status)
     return instance
   }
   const update = (operations: Record<string, unknown>): any => ({
@@ -218,22 +219,45 @@ describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)',
       { _class: core.class.TxRemoveDoc, objectClass: core.class.UserStatus, objectId: 'us-1' }
     ]) {
       const instance = makeInstance({ user: 'acc-1' })
-      await instance.releaseHeldPushes(tx)
+      await instance.release(tx)
       expect(instance.pendingPush.flushByAccount).toHaveBeenCalledWith('acc-1')
     }
   })
 
   it('does nothing when the person comes back, when nothing is held, or when the status is unknown', async () => {
     const back = makeInstance({ user: 'acc-1' })
-    await back.releaseHeldPushes(update({ away: false }))
+    await back.release(update({ away: false }))
     expect(back.pendingPush.flushByAccount).not.toHaveBeenCalled()
 
     const empty = makeInstance({ user: 'acc-1' }, 0)
-    await empty.releaseHeldPushes(update({ away: true }))
-    expect(empty.cache.getCachedUserStatus).not.toHaveBeenCalled()
+    await empty.release(update({ away: true }))
+    expect(empty.pendingPush.flushByAccount).not.toHaveBeenCalled()
 
     const unknown = makeInstance(undefined)
-    await unknown.releaseHeldPushes(update({ away: true }))
+    await unknown.release(update({ away: true }))
     expect(unknown.pendingPush.flushByAccount).not.toHaveBeenCalled()
+  })
+
+  // The cache drops a removed status before the release runs: the account must come from the
+  // copy taken before the cache applied the tx, or a removal never releases anything.
+  it('releases on a status removal even though the cache has already forgotten the record', async () => {
+    const instance: any = Object.create((Workspace as any).prototype)
+    const statuses = new Map<string, { user: string }>([['us-1', { user: 'acc-1' }]])
+    instance.pendingPush = { size: 1, flushByAccount: jest.fn().mockResolvedValue(undefined) }
+    instance.cache = {
+      getCachedUserStatus: (id: string) => statuses.get(id),
+      tx: (tx: any) => {
+        if (tx._class === core.class.TxRemoveDoc) statuses.delete(tx.objectId)
+      },
+      reset: jest.fn()
+    }
+    instance.hierarchy = {
+      findDomain: () => 'transient',
+      isDerived: (a: string, b: string) => a === b
+    }
+    instance.model = { addTxes: jest.fn() }
+    instance.ctx = { error: jest.fn() }
+    await instance.processTx({ _class: core.class.TxRemoveDoc, objectClass: core.class.UserStatus, objectId: 'us-1' })
+    expect(instance.pendingPush.flushByAccount).toHaveBeenCalledWith('acc-1')
   })
 })

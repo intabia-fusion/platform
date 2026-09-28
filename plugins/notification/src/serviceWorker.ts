@@ -82,19 +82,23 @@ const VIEWING_REPLY_TIMEOUT_MS = 300
 async function askViewing (client: WorkerWindowClient): Promise<Array<Ref<Doc>> | undefined> {
   return await new Promise((resolve) => {
     const channel = new MessageChannel()
+    // One answer per question: the port is closed on every exit, not left to the GC.
+    const done = (ids: Array<Ref<Doc>> | undefined): void => {
+      clearTimeout(timer)
+      channel.port1.close()
+      resolve(ids)
+    }
     const timer = setTimeout(() => {
-      resolve(undefined)
+      done(undefined)
     }, VIEWING_REPLY_TIMEOUT_MS)
     channel.port1.onmessage = (event: MessageEvent<ViewingReplyMessage | undefined>) => {
-      clearTimeout(timer)
       const ids = event.data?.type === VIEWING_REPLY ? event.data.objectIds : undefined
-      resolve(Array.isArray(ids) ? ids : undefined)
+      done(Array.isArray(ids) ? ids : undefined)
     }
     try {
       client.postMessage({ type: VIEWING_QUERY }, [channel.port2])
     } catch {
-      clearTimeout(timer)
-      resolve(undefined)
+      done(undefined)
     }
   })
 }
