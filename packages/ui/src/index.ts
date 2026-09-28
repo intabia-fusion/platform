@@ -328,6 +328,7 @@ export * from './focus'
 export * from './resize'
 export * from './lazy'
 export * from './stores'
+export * from './presence'
 
 export function createApp (target: HTMLElement): SvelteComponent {
   return new Root({ target })

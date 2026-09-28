@@ -89,6 +89,12 @@ const expose: IPCMainExposed = {
     ipcRenderer.on(IpcMessage.WindowFocusLoss, callback)
   },
 
+  onSystemIdle: (callback) => {
+    ipcRenderer.on(IpcMessage.SystemIdle, (_event, idle: boolean) => {
+      callback(idle)
+    })
+  },
+
   isOsUsingDarkTheme: async () => {
     return await ipcRenderer.invoke(IpcMessage.GetIsOsUsingDarkTheme)
   },

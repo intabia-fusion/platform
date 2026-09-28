@@ -502,7 +502,7 @@ class WorkspaceCache {
     const employeeByAccount = new Map(employees.map((it) => [it.personUuid, it]))
     const spaceByPerson = new Map(personSpaces.map((it) => [it.person, it]))
     const socialIdsByEmployee = groupByArray(socialIds, (it) => it.attachedTo)
-    const onlineByUser = new Map((await this.getUserStatuses()).map((it) => [it.user, it.online]))
+    const statusByUser = new Map((await this.getUserStatuses()).map((it) => [it.user, it]))
 
     return collaborators
       .map((it) => {
@@ -517,7 +517,8 @@ class WorkspaceCache {
           space: space._id,
           account: it,
           socialIds: socialIdsByEmployee.get(employee._id)?.map((it) => it._id) ?? [],
-          online: onlineByUser.get(it) ?? false,
+          online: statusByUser.get(it)?.online ?? false,
+          away: statusByUser.get(it)?.away ?? false,
           language: this.client.branding?.defaultLanguage ?? 'en'
         }
         return info

@@ -32,6 +32,7 @@ export interface Receiver {
   socialIds: PersonId[]
   space: Ref<PersonSpace>
   online: boolean
+  away: boolean
   language: string
 }
 

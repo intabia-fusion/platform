@@ -21,6 +21,7 @@ import {
   type Account,
   type AccountUuid,
   type Class,
+  type ClientKind,
   type Doc,
   type DocumentQuery,
   type Domain,
@@ -77,6 +78,8 @@ export class ClientSession implements Session {
   lastRequest = Date.now()
 
   lastPing: number = Date.now()
+  away = false
+  clientKind: ClientKind | undefined = undefined
 
   total: StatisticsElement = { find: 0, tx: 0 }
   current: StatisticsElement = { find: 0, tx: 0 }

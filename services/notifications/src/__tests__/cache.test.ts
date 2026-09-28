@@ -1289,6 +1289,35 @@ describe('WorkspaceCache', () => {
       expect(mockClient.findAll).not.toHaveBeenCalled()
     })
 
+    it('derives online and away from the user status; no status means offline and not away', async () => {
+      const withStatus = (status: Partial<UserStatus> | undefined): void => {
+        mockClient.findAll
+          .mockResolvedValue([] as unknown as FindResult<Doc>)
+          .mockResolvedValueOnce([
+            { _id: 'emp-1', personUuid: ACC, role: 'USER', active: true }
+          ] as unknown as FindResult<Employee>)
+          .mockResolvedValueOnce([
+            { _id: 'space-1', person: 'emp-1', account: ACC }
+          ] as unknown as FindResult<PersonSpace>)
+          .mockResolvedValueOnce([{ _id: 'social-1', attachedTo: 'emp-1' }] as unknown as FindResult<SocialIdentity>)
+          .mockResolvedValueOnce(
+            (status === undefined ? [] : [{ _id: 'us-1', user: ACC, ...status }]) as unknown as FindResult<UserStatus>
+          )
+      }
+
+      withStatus(undefined)
+      expect((await cache.getReceivers([ACC]))[0]).toMatchObject({ online: false, away: false })
+
+      // The status table is cached after the first load; a fresh cache per case.
+      const online = new WorkspaceCache(mockCtx, mockClient, async () => undefined)
+      withStatus({ online: true })
+      expect((await online.getReceivers([ACC]))[0]).toMatchObject({ online: true, away: false })
+
+      const away = new WorkspaceCache(mockCtx, mockClient, async () => undefined)
+      withStatus({ online: true, away: true })
+      expect((await away.getReceivers([ACC]))[0]).toMatchObject({ online: true, away: true })
+    })
+
     it('drops an employee that is inactive in the freshly loaded batch', async () => {
       mockReceiverLookups([{ _id: 'emp-1', personUuid: ACC, role: 'USER', active: false }])
 

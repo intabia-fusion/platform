@@ -2128,6 +2128,88 @@ describe('TSessionManager', () => {
     })
   })
 
+  describe('presence (queueStatus)', () => {
+    const wsId = 'ws-1' as WorkspaceUuid
+
+    function session (user: string, away: boolean, clientKind: string | undefined = 'web'): any {
+      return {
+        away,
+        clientKind,
+        getUser: jest.fn().mockReturnValue(user),
+        getRawAccount: jest.fn().mockReturnValue({ role: AccountRole.User, primarySocialId: 'social-1' })
+      }
+    }
+
+    function pending (): any {
+      return (sessionManager as any).pendingStatus.get(wsId)?.get('user-1')
+    }
+
+    afterEach(() => {
+      const timer = (sessionManager as any).statusFlushTimers.get(wsId)
+      if (timer !== undefined) clearTimeout(timer)
+      ;(sessionManager as any).statusFlushTimers.delete(wsId)
+      ;(sessionManager as any).pendingStatus.delete(wsId)
+      sessionManager.workspaces.delete(wsId)
+    })
+
+    it('is not away while the session says the person is here', () => {
+      const s = session('user-1', false)
+      sessionManager.workspaces.set(wsId, { sessions: new Map([['s1', { session: s }]]) } as any)
+      ;(sessionManager as any).queueStatus(wsId, s, true)
+
+      expect(pending()).toEqual({ session: s, online: true, away: false })
+    })
+
+    it('is not away while another session of the same person is here', () => {
+      const gone = session('user-1', true)
+      const here = session('user-1', false)
+      sessionManager.workspaces.set(wsId, {
+        sessions: new Map([
+          ['s1', { session: gone }],
+          ['s2', { session: here }]
+        ])
+      } as any)
+      ;(sessionManager as any).queueStatus(wsId, gone, true)
+
+      expect(pending()).toEqual({ session: gone, online: true, away: false })
+    })
+
+    // A phone in hand is not a computer: the push for that phone must not wait for its own session.
+    it('is away when the only session here is a mobile one', () => {
+      const phone = session('user-1', false, 'mobile')
+      sessionManager.workspaces.set(wsId, { sessions: new Map([['s1', { session: phone }]]) } as any)
+      ;(sessionManager as any).queueStatus(wsId, phone, true)
+      expect(pending()).toEqual({ session: phone, online: true, away: true })
+
+      const desk = session('user-1', false)
+      sessionManager.workspaces.set(wsId, {
+        sessions: new Map([
+          ['s1', { session: phone }],
+          ['s2', { session: desk }]
+        ])
+      } as any)
+      ;(sessionManager as any).queueStatus(wsId, phone, true)
+      expect(pending()).toEqual({ session: phone, online: true, away: false })
+    })
+
+    it('is away when every session of the person left, and never away offline', () => {
+      const gone = session('user-1', true)
+      const stranger = session('user-2', false)
+      sessionManager.workspaces.set(wsId, {
+        sessions: new Map([
+          ['s1', { session: gone }],
+          ['s2', { session: stranger }]
+        ])
+      } as any)
+      ;(sessionManager as any).queueStatus(wsId, gone, true)
+      expect(pending()).toEqual({ session: gone, online: true, away: true })
+
+      const left = session('user-1', true)
+      ;(sessionManager as any).queueStatus(wsId, left, false)
+      expect(pending()).toEqual({ session: left, online: false, away: false })
+    })
+  })
+
   describe('additional edge cases', () => {
     it('should handle empty reconnectIds gracefully', () => {
       expect(sessionManager.reconnectIds.size).toBeGreaterThanOrEqual(0)

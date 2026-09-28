@@ -43,5 +43,6 @@ export const IpcMessage = {
   OnDeepLinkHandler: 'on-deep-link-handler',
   HandleNotificationNavigation: 'handle-notification-navigation',
   HandleUpdateDownloadProgress: 'handle-update-download-progress',
-  HandleAuth: 'handle-auth'
+  HandleAuth: 'handle-auth',
+  SystemIdle: 'system-idle'
 } as const

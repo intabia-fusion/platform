@@ -22,4 +22,5 @@ import { TDoc } from './core'
 export class TUserStatus extends TDoc implements UserStatus {
   user!: AccountUuid
   online!: boolean
+  away?: boolean
 }

@@ -292,6 +292,7 @@ describe('handleCreateNotificationAction', () => {
     space: 'space-1',
     socialIds: ['social-9'],
     online: false,
+    away: false,
     language: 'en'
   })
 

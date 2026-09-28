@@ -75,7 +75,14 @@ import { testManagementId } from '@hcengineering/test-management'
 import { timeId } from '@hcengineering/time'
 import tracker, { trackerId } from '@hcengineering/tracker'
 import { trainingId } from '@hcengineering/training'
-import uiPlugin, { getCurrentLocation, locationStorageKeyId, navigate, setLocationStorageKey } from '@hcengineering/ui'
+import uiPlugin, {
+  getCurrentLocation,
+  isUserAway,
+  locationStorageKeyId,
+  navigate,
+  setLocationStorageKey,
+  setSystemIdle
+} from '@hcengineering/ui'
 import { mediaId } from '@hcengineering/media'
 import { uploaderId } from '@hcengineering/uploader'
 import recorder, { recorderId } from '@hcengineering/recorder'
@@ -350,6 +357,9 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
 
   const title = myBranding.title ?? 'Platform Desktop'
   ipcMain.setTitle(title)
+  ipcMain.onSystemIdle((idle) => {
+    setSystemIdle(idle)
+  })
 
   configureAnalyticsProviders(config)
 
@@ -553,6 +563,9 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(client.metadata.UseBinaryProtocol, true)
   // Disable for now, since it causes performance issues on linux/docker/kubernetes boxes for now.
   setMetadata(client.metadata.UseProtocolCompression, true)
+  // Every ping carries whether the person has left; the transactor keeps `UserStatus.away` from it.
+  setMetadata(client.metadata.PresenceProvider, () => ({ away: isUserAway() }))
+  setMetadata(client.metadata.ClientKind, 'desktop')
 
   setMetadata(uiPlugin.metadata.PlatformTitle, title)
   setMetadata(workbench.metadata.PlatformTitle, title)

@@ -414,6 +414,7 @@ describe('message module', () => {
           language: 'en',
           space: 'user-space' as Ref<PersonSpace>,
           online: true,
+          away: false,
           socialIds: ['social1', 'social2'] as PersonId[],
           employeeRef: 'employee-ref' as Ref<Employee>
         }
@@ -978,6 +979,7 @@ describe('message module', () => {
         language: 'en',
         space: 'user-space' as Ref<PersonSpace>,
         online: true,
+        away: false,
         socialIds: ['social1', 'social2'] as PersonId[],
         employeeRef: 'employee-ref' as Ref<Employee>
       }

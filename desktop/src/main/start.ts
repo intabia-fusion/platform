@@ -28,7 +28,8 @@ import {
   session,
   shell,
   systemPreferences,
-  nativeTheme
+  nativeTheme,
+  powerMonitor
 } from 'electron'
 import contextMenu from 'electron-context-menu'
 import log from 'electron-log'
@@ -466,6 +467,26 @@ function runTheApp (): void {
       }
       osIntegration?.getTray().updateTrayBadge(badge, tooltip)
     }
+  })
+
+  // Presence for the renderer: a locked screen or a sleeping machine means nobody is here,
+  // whatever the window and the input say.
+  const sendSystemIdle = (idle: boolean): void => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IpcMessage.SystemIdle, idle)
+    }
+  }
+  powerMonitor.on('lock-screen', () => {
+    sendSystemIdle(true)
+  })
+  powerMonitor.on('suspend', () => {
+    sendSystemIdle(true)
+  })
+  powerMonitor.on('unlock-screen', () => {
+    sendSystemIdle(false)
+  })
+  powerMonitor.on('resume', () => {
+    sendSystemIdle(false)
   })
 
   ipcMain.on(IpcMessage.DockBounce, (_event: any) => {

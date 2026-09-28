@@ -21,7 +21,8 @@ import client, {
   ClientSocket,
   ClientSocketReadyState,
   pingConst,
-  pongConst
+  pongConst,
+  type PresenceReport
 } from '@hcengineering/client'
 import core, {
   Account,
@@ -231,7 +232,7 @@ class Connection implements ClientConnection {
       const probeSocket = this.websocket
       void this.sendRequest({
         method: pingConst,
-        params: [],
+        params: this.pingParams(),
         once: true,
         handleResult: async () => {
           if (this.websocket === probeSocket) {
@@ -261,6 +262,12 @@ class Connection implements ClientConnection {
   async getLastHash (ctx: MeasureContext): Promise<string | undefined> {
     await this.waitOpenConnection(ctx)
     return this.lastHash
+  }
+
+  // The presence report rides on the ping: the transactor keeps `UserStatus.away` from it.
+  private pingParams (): [PresenceReport] | [] {
+    const provider = getMetadata(client.metadata.PresenceProvider)
+    return provider !== undefined ? [provider()] : []
   }
 
   private schedulePing (socketId: number): void {
@@ -303,7 +310,7 @@ class Connection implements ClientConnection {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         void this.sendRequest({
           method: pingConst,
-          params: [],
+          params: this.pingParams(),
           once: true,
           handleResult: async (result) => {
             if (this.websocket === wsocket) {
@@ -838,7 +845,8 @@ class Connection implements ClientConnection {
         params: [],
         id: -1,
         binary: useBinary,
-        compression: this.compressionMode
+        compression: this.compressionMode,
+        client: getMetadata(client.metadata.ClientKind)
       }
       ctx.withSync('send-hello', {}, () => this.websocket?.send(this.rpcHandler.serialize(helloRequest, false)))
     }
