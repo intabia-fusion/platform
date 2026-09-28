@@ -15,7 +15,10 @@
 
 <script lang="ts">
   import core from '@hcengineering/core'
-  import notification, { type NotificationProvider, type NotificationProviderSetting } from '@hcengineering/notification'
+  import notification, {
+    type NotificationProvider,
+    type NotificationProviderSetting
+  } from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import { type DropdownIntlItem, Label, ModernDropdown } from '@hcengineering/ui'
 
@@ -28,13 +31,19 @@
   const HOUR = 60 * MINUTE
 
   const items: DropdownIntlItem[] = [
-    ...[15, 30].map((minutes) => ({ id: minutes * MINUTE, label: notification.string.HoldMinutes, params: { minutes } })),
+    ...[15, 30].map((minutes) => ({
+      id: minutes * MINUTE,
+      label: notification.string.HoldMinutes,
+      params: { minutes }
+    })),
     ...[1, 4, 8, 12, 24].map((hours) => ({ id: hours * HOUR, label: notification.string.HoldHours, params: { hours } }))
   ]
 
   $: selected = setting?.holdMs ?? provider.holdMs ?? 0
 
-  async function select (event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined>): Promise<void> {
+  async function select (
+    event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined>
+  ): Promise<void> {
     const holdMs = event.detail
     if (typeof holdMs !== 'number' || holdMs === selected) return
     if (setting !== undefined) {

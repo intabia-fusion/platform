@@ -802,7 +802,11 @@ describe('pushNotification', () => {
     })
 
     it.each([
-      ['a reaction', { unreadMessage: undefined, unreadReaction: { id: 'notify-1', attachedTo: 'msg-1' } }, 'reactions'],
+      [
+        'a reaction',
+        { unreadMessage: undefined, unreadReaction: { id: 'notify-1', attachedTo: 'msg-1' } },
+        'reactions'
+      ],
       ['a mention outside a message', { unreadMessage: undefined, unreadMention: { id: 'notify-1' } }, 'mentions'],
       ['a common notification', { unreadMessage: undefined, unreadCommon: { id: 'notify-1' } }, 'commons']
     ])('holds the phone push about %s, to be checked against the unread list', async (_name, overrides, readBy) => {
@@ -843,7 +847,7 @@ describe('pushNotification', () => {
     })
   })
 
-  describe('scheduling the letter in the time machine for the receiver\'s window', () => {
+  describe("scheduling the letter in the time machine for the receiver's window", () => {
     const email = 'email-provider'
     const native = { _id: 'sub-apns', endpoint: 'apns://token' }
     const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x' }
@@ -855,8 +859,16 @@ describe('pushNotification', () => {
       [email]: [{ _id: 'type-1' }]
     }
     const template = { subject: 'translated:subject-key', text: 'translated:text-key', html: 'translated:html-key' }
-    const settingBy = (createdBy: string, holdMs?: number): any => ({ attachedTo: email, enabled: true, createdBy, holdMs })
-    const settings = (list: any[]): any => ({ settingsByProvider: new Map([[email, list]]), typesByProvider: new Map() })
+    const settingBy = (createdBy: string, holdMs?: number): any => ({
+      attachedTo: email,
+      enabled: true,
+      createdBy,
+      holdMs
+    })
+    const settings = (list: any[]): any => ({
+      settingsByProvider: new Map([[email, list]]),
+      typesByProvider: new Map()
+    })
 
     beforeEach(() => {
       jest.useFakeTimers({ now: 1_000_000 })
@@ -893,7 +905,10 @@ describe('pushNotification', () => {
       const immediate = result.queueMessages[0] as QueueNotifyMessage
       expect(immediate.template).toBeUndefined()
       expect(Object.keys(immediate.providers).sort()).toEqual(
-        [notificationPlugin.providers.InboxNotificationProvider, notificationPlugin.providers.PushNotificationProvider].sort()
+        [
+          notificationPlugin.providers.InboxNotificationProvider,
+          notificationPlugin.providers.PushNotificationProvider
+        ].sort()
       )
       expect(immediate.pushSubscriptions).toEqual([web])
     })

@@ -15,7 +15,10 @@
 
 <!-- The email provider's row: a button that opens its settings in a modal, as Telegram does. -->
 <script lang="ts">
-  import notification, { type NotificationProvider, type NotificationProviderSetting } from '@hcengineering/notification'
+  import notification, {
+    type NotificationProvider,
+    type NotificationProviderSetting
+  } from '@hcengineering/notification'
   import { ModernButton, showPopup } from '@hcengineering/ui'
 
   import EmailPreferencesPopup from './EmailPreferencesPopup.svelte'

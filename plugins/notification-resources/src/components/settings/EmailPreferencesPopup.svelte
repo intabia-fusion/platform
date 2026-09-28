@@ -20,7 +20,10 @@
 -->
 <script lang="ts">
   import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
-  import notification, { type NotificationProvider, type NotificationProviderSetting } from '@hcengineering/notification'
+  import notification, {
+    type NotificationProvider,
+    type NotificationProviderSetting
+  } from '@hcengineering/notification'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import { Label, Modal } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

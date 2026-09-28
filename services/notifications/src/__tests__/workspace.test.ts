@@ -204,7 +204,13 @@ describe('Workspace.applyResult: the time machine', () => {
       instance.rest = { tx: jest.fn().mockResolvedValue(undefined) }
       instance.txFactory = { createTxApplyIf: jest.fn().mockReturnValue({ _id: 'apply-tx' }) }
       const result = emptyResult()
-      result.timeMachine.push({ type: 'schedule', id: 'letter:acc:n:email', targetDate: 1, topic: QueueTopic.HeldNotifications, data: {} })
+      result.timeMachine.push({
+        type: 'schedule',
+        id: 'letter:acc:n:email',
+        targetDate: 1,
+        topic: QueueTopic.HeldNotifications,
+        data: {}
+      })
 
       let pending = true
       const run = instance.applyResult(result).finally(() => {
@@ -363,7 +369,8 @@ describe('areHeldPushesRead', () => {
     ...overrides
   })
   const pipeline = (docs: unknown[]): any => ({ findAll: jest.fn().mockResolvedValue(docs) })
-  const one = async (docs: unknown[], push: any): Promise<boolean> => (await areHeldPushesRead(ctx, pipeline(docs), [push]))[0]
+  const one = async (docs: unknown[], push: any): Promise<boolean> =>
+    (await areHeldPushesRead(ctx, pipeline(docs), [push]))[0]
 
   it('a message is read once the account read position passed it', async () => {
     const state = (timestamp: number): unknown => ({ attachedTo: 'doc-1', 'acc-1': { timestamp } })

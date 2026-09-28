@@ -115,11 +115,7 @@ const READ_CHECK_CHUNK = 200
  * a common notification when its id left the context's unread list, and a context that is gone
  * has nothing left to push. One query per chunk of documents, whatever the number of pushes.
  */
-export async function areHeldPushesRead (
-  ctx: MeasureContext,
-  pipeline: Pipeline,
-  held: HeldPush[]
-): Promise<boolean[]> {
+export async function areHeldPushesRead (ctx: MeasureContext, pipeline: Pipeline, held: HeldPush[]): Promise<boolean[]> {
   const byPosition = held.filter((it) => it.readBy === 'position')
   const byList = held.filter((it) => it.readBy !== 'position')
 
@@ -151,10 +147,10 @@ export async function areHeldPushesRead (
     if (context === undefined) return true
     const unread: ReadonlyArray<UnreadReaction | UnreadMention | CommonNotification> =
       it.readBy === 'reactions'
-        ? context.unreadReactions ?? []
+        ? (context.unreadReactions ?? [])
         : it.readBy === 'mentions'
-          ? context.unreadMentions ?? []
-          : context.unreadCommons ?? []
+          ? (context.unreadMentions ?? [])
+          : (context.unreadCommons ?? [])
     return !unread.some((entry) => entry.id === it.notificationId)
   })
 }

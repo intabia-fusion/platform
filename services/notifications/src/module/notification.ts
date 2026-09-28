@@ -176,7 +176,10 @@ export async function pushNotification (
     // see), in the time machine rather than in memory.
     const letters = readBy !== undefined ? letterHolds(client, data) : []
     for (const letter of letters) {
-      const held = heldPart(letter.provider, { pushSubscriptions: [], providers: onlyProviders(providers, [letter.provider]) })
+      const held = heldPart(letter.provider, {
+        pushSubscriptions: [],
+        providers: onlyProviders(providers, [letter.provider])
+      })
       if (held !== undefined) scheduleLetter(result, held, letter.holdMs)
     }
 
@@ -184,7 +187,13 @@ export async function pushNotification (
     const immediate: QueueNotifyMessage = {
       ...message,
       pushSubscriptions: holdsPush ? web : pushSubscriptions,
-      providers: letters.length > 0 ? withoutProviders(providers, letters.map((it) => it.provider)) : providers,
+      providers:
+        letters.length > 0
+          ? withoutProviders(
+              providers,
+              letters.map((it) => it.provider)
+            )
+          : providers,
       template: letters.length > 0 ? undefined : message.template
     }
     if ((holdsPush && web.length > 0) || hasDeliveryProvider(withoutNotifyProviders(notifyProviders, heldProviders))) {
@@ -279,7 +288,10 @@ function heldReadBy (data: CreateNotificationData): HeldReadBy | undefined {
 }
 
 // The receiver's own setting for the provider, found like the provider toggles are: by author social id.
-function receiverSetting (data: CreateNotificationData, provider: Ref<NotificationProvider>): NotificationProviderSetting | undefined {
+function receiverSetting (
+  data: CreateNotificationData,
+  provider: Ref<NotificationProvider>
+): NotificationProviderSetting | undefined {
   return data.settings?.settingsByProvider
     .get(provider)
     ?.find((it) => it.createdBy !== undefined && data.receiver.socialIds.includes(it.createdBy))
@@ -330,7 +342,10 @@ function pushProvidersOnly (providers: QueueNotifyMessage['providers']): QueueNo
   return onlyProviders(providers, pushProviders())
 }
 
-function onlyProviders (providers: QueueNotifyMessage['providers'], kept: ProviderRef[]): QueueNotifyMessage['providers'] {
+function onlyProviders (
+  providers: QueueNotifyMessage['providers'],
+  kept: ProviderRef[]
+): QueueNotifyMessage['providers'] {
   return Object.fromEntries(providerEntries(providers).filter(([provider]) => kept.includes(provider)))
 }
 
