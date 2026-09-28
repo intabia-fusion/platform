@@ -73,9 +73,12 @@
 
   let allowReadonlyGuests = false
 
-  void accountClient.isAllowReadOnlyGuests().then(({ allowed }) => {
-    allowReadonlyGuests = allowed
-  })
+  void accountClient
+    .isAllowReadOnlyGuests()
+    .then(({ allowed }) => {
+      allowReadonlyGuests = allowed
+    })
+    .catch(() => {})
 
   $: editNameDisabled =
     isEditingName &&

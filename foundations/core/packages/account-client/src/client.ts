@@ -465,7 +465,7 @@ class AccountClientImpl implements AccountClient {
       },
       ...(isBrowser ? { credentials: 'include' } : {})
     }
-    this.rpc = withRetryUntilTimeout(this._rpc.bind(this), retryTimeoutMs ?? 5000)
+    this.rpc = withServiceUnavailable(withRetryUntilTimeout(this._rpc.bind(this), retryTimeoutMs ?? 5000))
   }
 
   async getProviders (): Promise<ProviderInfo[]> {
@@ -491,7 +491,7 @@ class AccountClientImpl implements AccountClient {
       body: JSON.stringify(request)
     })
 
-    const result = await response.json()
+    const result = await parseRpcResponse(response)
     if (result.error != null) {
       throw new PlatformError(result.error)
     }
@@ -2003,6 +2003,35 @@ function withRetryUntilTimeout<T, F extends (...args: any[]) => Promise<T>> (f: 
     const timeout = Date.now() + timeoutMs
     const shouldFail = (err: any): boolean => !isNetworkError(err) || timeout < Date.now()
     return await withRetry(f, shouldFail)(...params)
+  } as F
+}
+
+function serviceUnavailable (): PlatformError {
+  return new PlatformError(new Status(Severity.ERROR, platform.status.ServiceUnavailable, {}))
+}
+
+// A stopped account service answers through a proxy (dev server, ingress) with a text or HTML
+// error page, e.g. "Error occurred while trying to proxy", so a JSON parse error means it is down.
+async function parseRpcResponse (response: Response): Promise<any> {
+  const text = await response.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw serviceUnavailable()
+  }
+}
+
+// Once retries are exhausted a raw fetch error ("Failed to fetch") would reach the UI as is.
+function withServiceUnavailable<T, F extends (...args: any[]) => Promise<T>> (f: F): F {
+  return async function (...params: Parameters<F>): Promise<T> {
+    try {
+      return await f(...params)
+    } catch (err: any) {
+      if (isNetworkError(err)) {
+        throw serviceUnavailable()
+      }
+      throw err
+    }
   } as F
 }
 

@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import platform, { PlatformError } from '@hcengineering/platform'
 import { getClient } from '../client'
 
 describe('AccountClient network retries', () => {
@@ -42,5 +43,33 @@ describe('AccountClient network retries', () => {
     await assertion
 
     expect(fetchMock.mock.calls.length).toBeGreaterThan(1)
+  })
+
+  it('reports an unavailable service when a proxy answers with a non-JSON page', async () => {
+    globalThis.fetch = jest.fn(
+      async () => new Response('Error occurred while trying to proxy: localhost:8080/', { status: 504 })
+    )
+
+    const err = await getClient('http://accounts.test')
+      .getRegionInfo()
+      .catch((err) => err)
+
+    expect(err).toBeInstanceOf(PlatformError)
+    expect(err.status.code).toBe(platform.status.ServiceUnavailable)
+  })
+
+  it('reports an unavailable service once network retries are exhausted', async () => {
+    globalThis.fetch = jest.fn(async () => {
+      throw new TypeError('Failed to fetch')
+    })
+
+    const result = getClient('http://accounts.test', undefined, 60)
+      .getRegionInfo()
+      .catch((err) => err)
+    await jest.advanceTimersByTimeAsync(1000)
+    const err = await result
+
+    expect(err).toBeInstanceOf(PlatformError)
+    expect(err.status.code).toBe(platform.status.ServiceUnavailable)
   })
 })
