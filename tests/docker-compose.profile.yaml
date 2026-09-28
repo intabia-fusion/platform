@@ -61,10 +61,20 @@ services:
       - PROFILE_DIR=/profiles/fulltext
       - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/fulltext --require /profile-preload.js
     volumes: *prof-volumes
+  link-preview:
+    environment:
+      - PROFILE_DIR=/profiles/link-preview
+      - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/link-preview --require /profile-preload.js
+    volumes: *prof-volumes
   love:
     environment:
       - PROFILE_DIR=/profiles/love
       - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/love --require /profile-preload.js
+    volumes: *prof-volumes
+  media:
+    environment:
+      - PROFILE_DIR=/profiles/media
+      - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/media --require /profile-preload.js
     volumes: *prof-volumes
   notifications:
     environment:
@@ -120,6 +130,11 @@ services:
     environment:
       - PROFILE_DIR=/profiles/transactor0
       - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/transactor0 --require /profile-preload.js
+    volumes: *prof-volumes
+  webhook:
+    environment:
+      - PROFILE_DIR=/profiles/webhook
+      - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/webhook --require /profile-preload.js
     volumes: *prof-volumes
   workspace:
     environment:

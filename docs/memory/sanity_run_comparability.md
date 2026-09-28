@@ -54,3 +54,11 @@
 На своих контекстах оставлены четыре файла (`meetings.network.tests.ts`, `meetings.devices.tests.ts`, `meetings.transactor-restart.tests.ts`, `meetings.refresh-reconnect.tests.ts`): `network` подменяет LIVEKIT_WS через `page.route` + CDP offline, `devices` кладет `addInitScript` поверх `enumerateDevices`, `transactor-restart` перезапускает транзактор, `refresh-reconnect` делает `page.reload` поверх sessionStorage-якоря - на общем окне ловилось `Target page, context or browser has been closed`.
 
 Флаки и стоимость love-lane по этим же тестам - [sanity_love_wall_time.md](sanity_love_wall_time.md), [sanity-flaky-tests.md](sanity-flaky-tests.md).
+
+## CI: wall зависит от модели CPU раннера (2026-09-28)
+
+В `run.json` есть `fingerprint.cpuModel`. Один и тот же набор (`0e6f947a95`, 527 тестов, 2 воркера) идет 1840s на `AMD EPYC 9V45` и 2650s на `AMD EPYC 7763`. Сравнивать wall между прогонами можно только при одинаковом `cpuModel`, иначе смотреть счетчики (`stats: operations`, docker rx/tx).
+
+Рост на 7763 с ~1800s до ~2650s (упор в `globalTimeout` 2700s в `tests/sanity/tests/playwright.config.ts`) сложился из двух шагов:
+- #463 (`b0504a5188`, `DO_COMPRESS=false` для uitest-сборки): front отдает несжатые ассеты, `nginx` стенда жмет их на лету (`gzip on`, `gzip_comp_level 6`, `gzip_proxied any` в `tests/nginx.conf`). CPU `sanity-nginx-1` 33.6s -> 689s, docker rx/tx x3, work +20% при тех же операциях. На 4-ядерном раннере `nginx` отнимает CPU у браузеров и сервисов.
+- #225 (`8ebfcffcc3`): +90 тестов в `chat/chat-notifications`, `chat/chat-unread`, `inbox/inbox-notifications`, это +886s work. Средний тест 8-13s, как у соседних chat-спеков; старые файлы не замедлились.
