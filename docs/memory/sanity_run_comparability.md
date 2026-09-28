@@ -62,3 +62,9 @@
 Рост на 7763 с ~1800s до ~2650s (упор в `globalTimeout` 2700s в `tests/sanity/tests/playwright.config.ts`) сложился из двух шагов:
 - #463 (`b0504a5188`, `DO_COMPRESS=false` для uitest-сборки): front отдает несжатые ассеты, `nginx` стенда жмет их на лету (`gzip on`, `gzip_comp_level 6`, `gzip_proxied any` в `tests/nginx.conf`). CPU `sanity-nginx-1` 33.6s -> 689s, docker rx/tx x3, work +20% при тех же операциях. На 4-ядерном раннере `nginx` отнимает CPU у браузеров и сервисов.
 - #225 (`8ebfcffcc3`): +90 тестов в `chat/chat-notifications`, `chat/chat-unread`, `inbox/inbox-notifications`, это +886s work. Средний тест 8-13s, как у соседних chat-спеков; старые файлы не замедлились.
+
+## Снапшот модели через storageState не ускоряет (2026-09-29)
+
+Пробовали `storageState({ path, indexedDB: true })` в `tests/sanity/tests/auth/auth.setup.ts`, чтобы контексты стартовали с моделью из IndexedDB `model.db.persistence`. Снапшот вышел 17.8 MB на пользователя, work на тест вырос с 3.8s до 5.7s, а в восстановленных контекстах навигатор оставался без проектов ("YOUR PROJECTS" пустой), падали tracker/planning/recruiting/settings. Откатили.
+
+HTTP-кэш бандлов между `newContext()` не переносится: каждый контекст - off-the-record профиль, `--disk-cache-dir` на него не действует. Общий кэш возможен только через `launchPersistentContext` с копией шаблонного профиля на тест.

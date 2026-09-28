@@ -12,14 +12,12 @@
 //   node telemetry/stats.js rate --interval 1000 | wipe | sample --out <f> | fetch --out <f>
 
 const crypto = require('crypto')
-const { execFileSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 
-const STATS_URL = process.env.STATS_URL ?? 'http://localhost:4901'
+// Every stand routes /_stats through its nginx on 8083; the stats port itself is not published.
+const STATS_URL = (process.env.STATS_URL ?? 'http://localhost:8083/_stats').replace(/\/$/, '')
 const SERVER_SECRET = process.env.SERVER_SECRET ?? 'secret'
-const STATS_CONTAINER = process.env.STATS_CONTAINER ?? 'sanity-stats-1'
-const STATS_INNER_PORT = process.env.STATS_INNER_PORT ?? '4901'
 
 function arg (name, fallback) {
   const i = process.argv.indexOf(`--${name}`)
@@ -48,31 +46,12 @@ function authHeader () {
   return { Authorization: `Bearer ${adminToken()}` }
 }
 
-// The stats port is not published to the host, so fall back to running the request inside it.
-async function callViaDocker (urlPath, method) {
-  const url = new URL(urlPath, `http://localhost:${STATS_INNER_PORT}`)
-  const init = { method, headers: authHeader() }
-  const script =
-    `fetch(${JSON.stringify(url.toString())},${JSON.stringify(init)})` +
-    '.then(async (r)=>{if(!r.ok)throw new Error("status "+r.status);process.stdout.write(await r.text())})' +
-    '.catch((e)=>{console.error(e.message);process.exit(1)})'
-  const out = execFileSync('docker', ['exec', STATS_CONTAINER, 'node', '-e', script], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe']
-  })
-  return out === '' ? undefined : JSON.parse(out)
-}
-
 async function call (urlPath, method) {
-  const url = new URL(urlPath, STATS_URL)
-  try {
-    const res = await fetch(url, { method, headers: authHeader() })
-    if (!res.ok) throw new Error(`${method} ${url.pathname} -> ${res.status}`)
-    const text = await res.text()
-    return text === '' ? undefined : JSON.parse(text)
-  } catch {
-    return await callViaDocker(urlPath, method)
-  }
+  const url = new URL(STATS_URL + urlPath)
+  const res = await fetch(url, { method, headers: authHeader() })
+  if (!res.ok) throw new Error(`${method} ${url.pathname} -> ${res.status}`)
+  const text = await res.text()
+  return text === '' ? undefined : JSON.parse(text)
 }
 
 // analytics returns counters accumulated since the wipe, so store per-tick deltas to get a shape.
