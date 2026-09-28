@@ -189,6 +189,14 @@ test:
     - !reference [.docker_login, script]
   script:
     - ./ci_test.sh
+  # The stand pods write coverage profiles as root; left as is, they break the next checkout on this
+  # runner. after_script also runs on cancel and timeout, where the trap in ci_test.sh may not.
+  after_script:
+    - docker ps -q | xargs -r docker stop >/dev/null 2>&1 || true
+    - |
+      if [ -d "$CI_PROJECT_DIR/api-tests/coverage" ]; then
+        docker run --rm -v "$CI_PROJECT_DIR/api-tests/coverage:/coverage" nginx:alpine chown -R "$(id -u):$(id -g)" /coverage || true
+      fi
   # Matches the last line ci_test.sh prints. Keep in step with bin/coverage.js if it changes.
   coverage: '/^Coverage: (\d+\.\d+)% of statements/'
   artifacts:
