@@ -62,7 +62,9 @@ export function cancelHeldPushes (
 ): Set<string> {
   const cancelled = new Set<string>()
   if (readUpTo > 0) {
-    for (const id of client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo) ?? []) { cancelled.add(id) }
+    for (const id of client.pendingPush?.cancelByObject(context.user, context.objectId, readUpTo) ?? []) {
+      cancelled.add(id)
+    }
   }
   for (const id of notificationIds) {
     if (client.pendingPush?.cancel(context.user, id) === true) cancelled.add(id)
