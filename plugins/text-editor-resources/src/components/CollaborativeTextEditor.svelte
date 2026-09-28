@@ -16,10 +16,10 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
+  import type { Class } from '@hcengineering/core'
   import {
     AccountRole,
     type Blob,
-    Class,
     type CollaborativeDoc,
     type Doc,
     generateId,
@@ -28,55 +28,48 @@
     makeDocCollabId,
     type Ref
   } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import {
-    DrawingCmd,
-    getAttribute,
-    getClient,
-    getFileUrl,
-    getImageSize,
-    imageSizeToRatio,
-    KeyedAttribute
-  } from '@hcengineering/presentation'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { DrawingCmd, KeyedAttribute } from '@hcengineering/presentation'
+  import { getAttribute, getClient, getFileUrl, getImageSize, imageSizeToRatio } from '@hcengineering/presentation'
   import { isDocCreatedByAccount } from '@hcengineering/contact'
   import { markupToJSON } from '@hcengineering/text'
+  import type { AnySvelteComponent, IconSize, PopupAlignment } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Button,
     getEventPositionElement,
     getPopupPositionElement,
     IconScribble,
-    IconSize,
     Loading,
-    PopupAlignment,
     themeStore,
     ThrottledCaller
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { Editor, FocusPosition, mergeAttributes } from '@tiptap/core'
+  import type { FocusPosition } from '@tiptap/core'
+  import { Editor, mergeAttributes } from '@tiptap/core'
   import { isChangeOrigin } from '@tiptap/extension-collaboration'
   import { createEventDispatcher, getContext, onDestroy, onMount, tick } from 'svelte'
   import { Doc as YDoc } from 'yjs'
 
-  import textEditor, {
-    CollaborationIds,
+  import type {
     CollaborationUser,
     RefAction,
     TextEditorCommandHandler,
     TextEditorHandler
   } from '@hcengineering/text-editor'
-  import { EditorKitOptions, getEditorKit } from '../../src/kits/editor-kit'
+  import textEditor, { CollaborationIds } from '@hcengineering/text-editor'
+  import type { EditorKitOptions } from '../kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { registerEditor, unregisterEditor } from '../editorRegistry'
   import { deleteAttachment } from '../command/deleteAttachment'
   import { textEditorCommandHandler } from '../commands'
-  import { Provider } from '../provider/types'
+  import type { Provider } from '../provider/types'
   import { createRemoteProvider } from '../provider/utils'
   import { addTableHandler } from '../utils'
 
   import { noSelectionRender, renderCursor } from './editor/collaboration'
   import { defaultEditorAttributes } from './editor/editorProps'
-  import { SavedBoard } from './extension/drawingBoard'
-  import { type FileAttachFunction } from './extension/types'
+  import type { SavedBoard } from './extension/drawingBoard'
+  import type { FileAttachFunction } from './extension/types'
   import { inlineCommandsConfig } from './extensions'
 
   export let object: Doc

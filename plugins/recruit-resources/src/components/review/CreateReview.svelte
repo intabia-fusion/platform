@@ -13,14 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { Calendar } from '@hcengineering/calendar'
+  import type { Calendar } from '@hcengineering/calendar'
+  import calendar from '@hcengineering/calendar'
   import type { Organization, Person } from '@hcengineering/contact'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
-  import core, { Class, Client, DateRangeMode, Doc, generateId, Markup, PersonId, Ref } from '@hcengineering/core'
-  import { getResource, OK, Resource, Severity, Status } from '@hcengineering/platform'
+  import type { Class, Client, Doc, Markup, PersonId, Ref } from '@hcengineering/core'
+  import core, { DateRangeMode, generateId } from '@hcengineering/core'
+  import type { Resource, Status } from '@hcengineering/platform'
+  import { getResource, OK, Severity } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
   import { UserBox, UserBoxList } from '@hcengineering/contact-resources'
-  import { Applicant, Candidate, RecruitEvents, Review } from '@hcengineering/recruit'
+  import type { Applicant, Candidate, Review } from '@hcengineering/recruit'
+  import { RecruitEvents } from '@hcengineering/recruit'
   import { EmptyMarkup } from '@hcengineering/text'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
   import { DateRangePresenter, EditBox, Status as StatusControl } from '@hcengineering/ui'
@@ -154,7 +158,7 @@
     }
   }
 
-  $: validate(doc, doc._class)
+  $: void validate(doc, doc._class)
   const updateStart = (result: any): void => {
     if (result.detail !== undefined) {
       dueDate = result.detail

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, SelectPopupValueType, showPopup } from '@hcengineering/ui'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
+  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, showPopup } from '@hcengineering/ui'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 
   import documents from '../plugin'

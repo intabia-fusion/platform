@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import presentation, { createQuery, IconWithEmoji } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/tracker'
+  import type { Project } from '@hcengineering/tracker'
   import { Icon, Label, getPaletteColorDef, getPlatformColorForTextDef, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { NavLink } from '@hcengineering/view-resources'

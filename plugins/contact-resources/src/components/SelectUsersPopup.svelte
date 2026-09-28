@@ -16,9 +16,9 @@
   import { createEventDispatcher } from 'svelte'
   import presentation from '@hcengineering/presentation'
   import { deviceOptionsStore, EditWithIcon, IconSearch, Modal, Scroller } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
-  import { Class, Ref } from '@hcengineering/core'
-  import { Employee } from '@hcengineering/contact'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
 
   import contact from '../plugin'
   import UsersList from './UsersList.svelte'

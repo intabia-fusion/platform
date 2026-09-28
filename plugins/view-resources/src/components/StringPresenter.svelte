@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { LabelAndProps, LinkWrapper, tooltip } from '@hcengineering/ui'
+  import type { LabelAndProps } from '@hcengineering/ui'
+  import { LinkWrapper, tooltip } from '@hcengineering/ui'
 
   export let value: string | string[] | null | undefined
   export let accent: boolean = false

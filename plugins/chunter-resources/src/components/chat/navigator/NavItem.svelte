@@ -13,19 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { IconSize } from '@hcengineering/ui'
   import {
     type Action,
     ActionIcon,
     type AnySvelteComponent,
     Icon,
     IconMoreH,
-    IconSize,
     Menu,
     showPopup,
     NavItem
   } from '@hcengineering/ui'
   import { NotifyMarker } from '@hcengineering/notification-resources'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
 
   export let _id: string

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import { type LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo } from '@hcengineering/account-client'
 
   import { doLogin, doLoginNavigate, goTo } from '../utils'
   import Form from './Form.svelte'

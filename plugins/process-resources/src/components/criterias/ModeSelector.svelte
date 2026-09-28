@@ -16,7 +16,7 @@
 <script lang="ts">
   import { DropdownLabelsIntl } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Mode } from '../../query'
+  import type { Mode } from '../../query'
 
   export let selectedMode: Mode
   export let readonly: boolean

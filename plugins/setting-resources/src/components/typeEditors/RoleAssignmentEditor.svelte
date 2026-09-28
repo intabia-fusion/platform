@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import { type AccountUuid, TypedSpace, notEmpty } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { TypedSpace } from '@hcengineering/core'
+  import { type AccountUuid, notEmpty } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
 
   export let object: TypedSpace | undefined
   export let label: IntlString

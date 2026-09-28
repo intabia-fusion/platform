@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import { Ref, SortingOrder } from '@hcengineering/core'
-  import { Process, State } from '@hcengineering/process'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { Process, State } from '@hcengineering/process'
   import { Dropdown, DropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

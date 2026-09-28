@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association, Class, Doc, Ref } from '@hcengineering/core'
+  import type { Association, Class, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Analytics } from '@hcengineering/analytics'
 
   export let value: Association

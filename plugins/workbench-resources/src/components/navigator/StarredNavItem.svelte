@@ -18,7 +18,8 @@
   import { getResource } from '@hcengineering/platform'
   import preference from '@hcengineering/preference'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit } from '@hcengineering/ui'
   import {
     NavLink,
     TreeItem,
@@ -26,7 +27,7 @@
     getSpacePresenter,
     classIcon
   } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  import type { SpacesNavModel } from '@hcengineering/workbench'
   import { getSpaceName } from '../../utils'
 
   export let space: Space

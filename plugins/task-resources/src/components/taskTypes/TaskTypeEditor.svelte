@@ -16,11 +16,14 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import type { Ref, Status } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import task, { calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
     ButtonIcon,
     Icon,
@@ -259,7 +262,7 @@
                   size="medium"
                   hasMenu
                   on:click={() => {
-                    showIssuesOfTaskType()
+                    void showIssuesOfTaskType()
                   }}
                 />
                 <ButtonIcon

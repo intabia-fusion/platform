@@ -19,7 +19,7 @@
   import { Card } from '@hcengineering/presentation'
   import { translate } from '@hcengineering/platform'
   import MilestonePopup from './MilestonePopup.svelte'
-  import { Milestone } from '@hcengineering/tracker'
+  import type { Milestone } from '@hcengineering/tracker'
   import { themeStore } from '@hcengineering/ui'
 
   export let milestones: Milestone[]
@@ -28,7 +28,7 @@
   let selectedMilestone: Milestone | undefined
   let noMilestoneLabel: string
 
-  $: translate(tracker.string.NoMilestone, {}, $themeStore.language).then((label) => (noMilestoneLabel = label))
+  $: void translate(tracker.string.NoMilestone, {}, $themeStore.language).then((label) => (noMilestoneLabel = label))
   $: selectedMilestoneLabel = selectedMilestone?.label ?? noMilestoneLabel
 </script>
 

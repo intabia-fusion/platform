@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { showPopup } from '@hcengineering/ui'

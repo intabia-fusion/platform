@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TestResult, TestRunStatus } from '@hcengineering/test-management'
+  import type { TestResult, TestRunStatus } from '@hcengineering/test-management'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
 
   import StatusEditor from './TestResultStatusEditor.svelte'

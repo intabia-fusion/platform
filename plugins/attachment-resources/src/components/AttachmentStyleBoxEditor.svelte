@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref, updateAttribute } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { updateAttribute } from '@hcengineering/core'
 
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getAttribute, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { createQuery, getAttribute, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import AttachmentStyledBox from './AttachmentStyledBox.svelte'
   import { EditorKitOptions } from '@hcengineering/text-editor-resources'

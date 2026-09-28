@@ -4,7 +4,8 @@
 //
 -->
 <script lang="ts">
-  import documents, { DocumentComment } from '@hcengineering/controlled-documents'
+  import type { DocumentComment } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
   import { ThreadView } from '@hcengineering/chunter-resources'
   import { Button, IconCheckCircle, Label } from '@hcengineering/ui'
   import {

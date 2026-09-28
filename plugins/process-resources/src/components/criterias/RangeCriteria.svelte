@@ -14,9 +14,10 @@
 -->
 
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
   import { findAttributeEditorByAttribute, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Context, createContext, parseContext, Process, SelectedContext } from '@hcengineering/process'
+  import type { Context, Process, SelectedContext } from '@hcengineering/process'
+  import { createContext, parseContext } from '@hcengineering/process'
   import { Button, Component, eventToHTMLElement, IconAdd, IconClose, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import ContextSelectorPopup from '../attributeEditors/ContextSelectorPopup.svelte'

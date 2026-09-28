@@ -17,7 +17,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue, Project, TimeSpendReport, reduceChildInfoTree, splitReportedTime } from '@hcengineering/tracker'
+  import type { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
+  import { reduceChildInfoTree, splitReportedTime } from '@hcengineering/tracker'
   import {
     ActionIcon,
     IconAdd,
@@ -33,12 +34,8 @@
   import ReportsPopup from './ReportsPopup.svelte'
   import TimePresenter from './TimePresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
-  import {
-    DraftTimeReportPayload,
-    ITimeReportService,
-    DirectTimeReportService,
-    DraftTimeReportService
-  } from './service'
+  import type { DraftTimeReportPayload, ITimeReportService } from './service'
+  import { DirectTimeReportService, DraftTimeReportService } from './service'
 
   // export let label: IntlString
   export let placeholder: IntlString

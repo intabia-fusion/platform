@@ -4,8 +4,8 @@
   import core, { getDisplayTime } from '@hcengineering/core'
   import { MessageViewer } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { GithubReviewComment } from '@hcengineering/github'
-  import { Person } from '@hcengineering/contact'
+  import type { GithubReviewComment } from '@hcengineering/github'
+  import type { Person } from '@hcengineering/contact'
 
   export let comment: GithubReviewComment
 

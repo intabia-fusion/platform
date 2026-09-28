@@ -13,15 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    Doc,
-    Ref,
-    SearchResultDoc,
-    Tx,
-    TxWorkspaceEvent,
-    WithLookup,
-    WorkspaceEvent
-  } from '@hcengineering/core'
+  import type { Doc, Ref, SearchResultDoc, Tx, TxWorkspaceEvent, WithLookup } from '@hcengineering/core'
+  import core, { WorkspaceEvent } from '@hcengineering/core'
   import { getResource, translate, translateCB } from '@hcengineering/platform'
   import {
     ActionContext,
@@ -49,7 +42,7 @@
     resizeObserver,
     themeStore
   } from '@hcengineering/ui'
-  import { Action, ActionCategory, ViewContext } from '@hcengineering/view'
+  import type { Action, ActionCategory, ViewContext } from '@hcengineering/view'
   import { createEventDispatcher, onMount, tick } from 'svelte'
   import { filterActions, getSelection } from '../actions'
   import view from '../plugin'

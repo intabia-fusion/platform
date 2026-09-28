@@ -13,37 +13,32 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
+  import type {
     AggregateValue,
     Class,
     Doc,
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
-    Hierarchy,
     Lookup,
     PrimitiveType,
     RateLimiter,
     Ref,
     Space
   } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { Hierarchy } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { DocWithRank, makeRank } from '@hcengineering/task'
-  import ui, {
-    AnyComponent,
-    AnySvelteComponent,
-    ExpandCollapse,
-    mouseAttractor,
-    Loading,
-    Label,
-    Scroller
-  } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { DocWithRank } from '@hcengineering/task'
+  import { makeRank } from '@hcengineering/task'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import ui, { ExpandCollapse, mouseAttractor, Loading, Label, Scroller } from '@hcengineering/ui'
+  import type { AttributeModel, BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { fade } from 'svelte/transition'
   import { showMenu } from '../../actions'
-  import { FocusSelection, SelectionFocusProvider, focusStore } from '../../selection'
+  import type { FocusSelection, SelectionFocusProvider } from '../../selection'
+  import { focusStore } from '../../selection'
   import ListHeader from './ListHeader.svelte'
   import ListItem from './ListItem.svelte'
 

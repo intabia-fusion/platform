@@ -1,6 +1,7 @@
 <script lang="ts">
   import { DocNavLink } from '@hcengineering/view-resources'
-  import { MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
+  import { MeetingStatus } from '@hcengineering/love'
   import { onMount } from 'svelte'
   import { meetings } from '../../stores'
   import { formatElapsedTime } from '../../utils'

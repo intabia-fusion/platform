@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup, mergeQueries } from '@hcengineering/core'
-  import { MasterDetailConfig, ViewOptions, Viewlet, ViewletDescriptor } from '@hcengineering/view'
+  import type { Doc, DocumentQuery, FindOptions, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core, { mergeQueries } from '@hcengineering/core'
+  import type { MasterDetailConfig, ViewOptions, Viewlet, ViewletDescriptor } from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
 
   import MasterDetailBrowser from './MasterDetailBrowser.svelte'

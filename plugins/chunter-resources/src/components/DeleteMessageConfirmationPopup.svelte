@@ -14,7 +14,7 @@
 <script lang="ts">
   import { Button, FocusHandler, Label, createFocusManager, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
-  import { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
   import presentation, { getClient } from '@hcengineering/presentation'
 

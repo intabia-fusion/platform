@@ -13,10 +13,16 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Class, Doc, matchQuery, Ref, Space } from '@hcengineering/core'
-  import { ActivityNotificationViewlet, MessageNotification, NotificationMessage } from '@hcengineering/notification'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import { matchQuery } from '@hcengineering/core'
+  import type {
+    ActivityNotificationViewlet,
+    MessageNotification,
+    NotificationMessage
+  } from '@hcengineering/notification'
   import { ActivityMessagePreview, BasePreview } from '@hcengineering/activity-resources'
-  import activity, { DocUpdateMessage } from '@hcengineering/activity'
+  import type { DocUpdateMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
   import { Analytics } from '@hcengineering/analytics'
 

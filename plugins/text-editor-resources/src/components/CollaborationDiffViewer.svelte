@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { MarkupNode } from '@hcengineering/text'
+  import type { MarkupNode } from '@hcengineering/text'
   import { onDestroy, onMount } from 'svelte'
   import { Doc as Ydoc, encodeStateAsUpdate, applyUpdate } from 'yjs'
 
@@ -24,7 +24,7 @@
   import { Plugin, PluginKey } from '@tiptap/pm/state'
   import { DecorationSet } from '@tiptap/pm/view'
 
-  import { getEditorKit } from '../../src/kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { calculateDecorations, createYdocDocument } from './diff/decorations'
   import { defaultEditorAttributes } from './editor/editorProps'
 

@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@hcengineering/core'
+  import type { AttachedData } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Issue, IssueDraft, IssuePriority, IssueTemplateData, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { Issue, IssueDraft, IssuePriority, IssueTemplateData } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
 

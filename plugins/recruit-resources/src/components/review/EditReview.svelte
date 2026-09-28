@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact } from '@hcengineering/contact'
+  import type { Contact } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { UserBox } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { RecruitEvents, Review } from '@hcengineering/recruit'
+  import type { Review } from '@hcengineering/recruit'
+  import { RecruitEvents } from '@hcengineering/recruit'
   import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
   import { EditBox, Grid } from '@hcengineering/ui'
   import { ObjectPresenter, openDoc } from '@hcengineering/view-resources'
@@ -52,7 +54,7 @@
         : undefined
   }
 
-  $: updateSelected(object)
+  $: void updateSelected(object)
 
   onMount(() => {
     Analytics.handleEvent(RecruitEvents.ReviewViewed, { id: object._id })
@@ -67,7 +69,7 @@
         kind={'large-style'}
         focusable
         on:blur={() => {
-          if (rawTitle !== object.title) client.update(object, { title: rawTitle })
+          if (rawTitle !== object.title) void client.update(object, { title: rawTitle })
         }}
       />
       <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -75,7 +77,7 @@
         class="clear-mins flex-row-center"
         on:click={() => {
           if (candidate !== undefined) {
-            openDoc(client.getHierarchy(), candidate)
+            void openDoc(client.getHierarchy(), candidate)
           }
         }}
       >
@@ -98,7 +100,7 @@
       label={recruit.string.Description}
       content={object.description}
       on:save={(res) => {
-        client.update(object, { description: res.detail })
+        void client.update(object, { description: res.detail })
       }}
     />
     <EditBox

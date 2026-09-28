@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, Markup, type Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Markup } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { EmptyMarkup } from '@hcengineering/text'
-  import textEditor, { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import type { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
   import { Button, type ButtonSize, Scroller } from '@hcengineering/ui'
   import { type Editor, mergeAttributes } from '@tiptap/core'
   import { createEventDispatcher } from 'svelte'
-  import { EditorKitOptions } from '../kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
   import { defaultRefActions, getModelRefActions } from './editor/actions'
   import TextEditor from './TextEditor.svelte'
   import { setEditorHandler } from './editor-context'

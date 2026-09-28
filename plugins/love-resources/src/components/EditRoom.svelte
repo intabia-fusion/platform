@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { EditBox, ModernButton } from '@hcengineering/ui'
+  import type { Room } from '@hcengineering/love'
   import {
-    Room,
     isOffice,
     MeetingStatus,
     isScheduledJoinable,
@@ -23,9 +23,11 @@
     type ParticipantInfo
   } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { getMetadata, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
-  import { AccountRole, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
 
   import love from '../plugin'

@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@hcengineering/card'
-  import core, { AnyAttribute, Ref } from '@hcengineering/core'
+  import type { MasterTag, Tag } from '@hcengineering/card'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { Context, Process, ProcessFunction } from '@hcengineering/process'
-  import ui, { AnySvelteComponent, DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
+  import type { Context, Process, ProcessFunction } from '@hcengineering/process'
+  import type { AnySvelteComponent, DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { DropdownLabelsIntl } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ProcessAttribute from '../ProcessAttribute.svelte'

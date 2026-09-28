@@ -13,13 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { ActionContext } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
-  import { AnyComponent, AnySvelteComponent, registerFocus } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { List, ListSelectionProvider, SelectDirection } from '@hcengineering/view-resources'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import { registerFocus } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
+  import { List, ListSelectionProvider } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
 

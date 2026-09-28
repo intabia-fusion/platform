@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
-  import { AnySvelteComponent, ColorDefinition, Icon, IconSize, resizeObserver } from '@hcengineering/ui'
+  import type { AnySvelteComponent, ColorDefinition, IconSize } from '@hcengineering/ui'
+  import { Icon, resizeObserver } from '@hcengineering/ui'
   import AvatarIcon from './icons/Avatar.svelte'
   import { createEventDispatcher } from 'svelte'
 

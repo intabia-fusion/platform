@@ -15,12 +15,16 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { Class, Ref, SpaceTypeDescriptor, generateId, SpaceType, Data } from '@hcengineering/core'
+  import type { Class, Ref, SpaceTypeDescriptor, SpaceType, Data } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
   import { Card, getClient, hasResource } from '@hcengineering/presentation'
-  import { AnySvelteComponent, EditBox } from '@hcengineering/ui'
-  import { Resource, getResource } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { EditBox } from '@hcengineering/ui'
+  import type { Resource } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { ObjectBox } from '@hcengineering/view-resources'
-  import setting, { SpaceTypeCreator, createSpaceType } from '@hcengineering/setting'
+  import type { SpaceTypeCreator } from '@hcengineering/setting'
+  import setting, { createSpaceType } from '@hcengineering/setting'
 
   import settingRes from '../../plugin'
 
@@ -68,7 +72,7 @@
       : undefined
 
   let extraComponent: AnySvelteComponent | undefined
-  $: loadExtraComponent(typeCreator)
+  $: void loadExtraComponent(typeCreator)
 
   async function loadExtraComponent (tc: SpaceTypeCreator | undefined): Promise<void> {
     if (tc === undefined) {

@@ -13,9 +13,9 @@
 -->
 <script lang="ts">
   import { AccountArrayEditor, getAccountClient } from '@hcengineering/contact-resources'
-  import { AccountUuid } from '@hcengineering/core'
+  import type { AccountUuid } from '@hcengineering/core'
   import { Analytics } from '@hcengineering/analytics'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label, Loading } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 

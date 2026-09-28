@@ -18,7 +18,7 @@
   import { getPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TableofContentsPopup from './TableOfContentsPopup.svelte'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { Heading } from '@hcengineering/text-editor'
 
   export let items: Heading[] = []
   export let selected: Heading | undefined = undefined

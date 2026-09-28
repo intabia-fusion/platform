@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData } from '@hcengineering/core'
+  import type { AttachedData } from '@hcengineering/core'
 
-  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { reduceChildInfoTree } from '@hcengineering/tracker'
   import EstimationProgressCircle from './EstimationProgressCircle.svelte'
   import TimePresenter from './TimePresenter.svelte'
 

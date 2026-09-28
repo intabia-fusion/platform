@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core, { ClassifierKind } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { NavItem } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'

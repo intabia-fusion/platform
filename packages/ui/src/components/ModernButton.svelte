@@ -5,8 +5,8 @@
   //
 
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { AnySvelteComponent, ButtonBaseSize, IconSize, LabelAndProps } from '../types'
-  import { ComponentType } from 'svelte'
+  import type { AnySvelteComponent, ButtonBaseSize, IconSize, LabelAndProps } from '../types'
+  import type { ComponentType } from 'svelte'
   import ButtonBase from './ButtonBase.svelte'
 
   export let title: string | undefined = undefined

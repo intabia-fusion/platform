@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label, PaletteColorIndexes, Progress, humanReadableFileSize, humanReadableNumbers } from '@hcengineering/ui'
   import plugin from '../plugin'
   import { formatMinutes } from '../billingFormat'

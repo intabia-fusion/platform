@@ -14,11 +14,13 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Contact, Employee, getCurrentEmployee, getName, Person } from '@hcengineering/contact'
-  import { AccountUuid, notEmpty, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Contact, Employee, Person } from '@hcengineering/contact'
+  import { getCurrentEmployee, getName } from '@hcengineering/contact'
+  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import contact from '../plugin'
   import { employeeByIdStore, employeeRefByAccountUuidStore } from '../utils'

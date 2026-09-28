@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   import type { Class, Ref, Space } from '@hcengineering/core'
-  import { type UnreadContext } from '@hcengineering/notification'
+  import type { UnreadContext } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { TreeNode } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  import type { SpacesNavModel } from '@hcengineering/workbench'
   import StarredNavItem from './StarredNavItem.svelte'
 
   export let label: IntlString

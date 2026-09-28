@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, DocumentQuery, IdMap, Ref, Status, Timestamp } from '@hcengineering/core'
+  import type { Class, DocumentQuery, IdMap, Ref, Status, Timestamp } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Project, Task } from '@hcengineering/task'
   import task, { getStates } from '@hcengineering/task'
-  import { BarDashboard, DashboardItem } from '@hcengineering/ui'
+  import type { DashboardItem } from '@hcengineering/ui'
+  import { BarDashboard } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import CreateFilter from './CreateFilter.svelte'
   import { typeStore } from '..'

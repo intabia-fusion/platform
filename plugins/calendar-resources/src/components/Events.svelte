@@ -13,21 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
-  import { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
-  import {
-    AnyComponent,
-    Button,
-    Component,
-    IconAdd,
-    Label,
-    Loading,
-    showPopup,
-    Header,
-    Breadcrumb
-  } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Event } from '@hcengineering/calendar'
+  import type { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Button, Component, IconAdd, Label, Loading, showPopup, Header, Breadcrumb } from '@hcengineering/ui'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector, getViewOptions, viewOptionStore } from '@hcengineering/view-resources'
   import calendar from '../plugin'
   // import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'

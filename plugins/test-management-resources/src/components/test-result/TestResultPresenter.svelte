@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-  import { TestCase, TestResult } from '@hcengineering/test-management'
-  import { WithLookup } from '@hcengineering/core'
+  import type { TestCase, TestResult } from '@hcengineering/test-management'
+  import type { WithLookup } from '@hcengineering/core'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Label, Scroller } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import documents, { type ChangeControl } from '@hcengineering/controlled-documents'

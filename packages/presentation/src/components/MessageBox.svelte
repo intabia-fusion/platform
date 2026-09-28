@@ -14,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Status, translate, unknownError, type IntlString } from '@hcengineering/platform'
+  import type { Status } from '@hcengineering/platform'
+  import { translate, unknownError, type IntlString } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
     Button,
     FocusHandler,
     Label,
     createFocusManager,
-    AnySvelteComponent,
     Component,
     type AnyComponent,
     Status as StatusControl

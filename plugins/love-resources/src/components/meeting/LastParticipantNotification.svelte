@@ -12,7 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, Notification, NotificationToast } from '@hcengineering/ui'
+  import type { Notification } from '@hcengineering/ui'
+  import { Button, NotificationToast } from '@hcengineering/ui'
   import love from '../../plugin'
   import { onMount } from 'svelte'
   import { playSound } from '@hcengineering/presentation'

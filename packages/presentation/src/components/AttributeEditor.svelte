@@ -19,7 +19,8 @@
   import { getResource } from '@hcengineering/platform'
   import type { AnySvelteComponent, EditStyle } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { KeyedAttribute, getAttribute, updateAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
+  import { getAttribute, updateAttribute } from '../attributes'
   import { getAttributePresenterClass, getClient } from '../utils'
 
   export let _class: Ref<Class<Doc>>

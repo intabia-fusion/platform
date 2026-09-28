@@ -18,7 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntlString } from '@hcengineering/platform'
 import type { ComponentProps } from 'svelte'
 import WizardStep from '../components/wizard/WizardStep.svelte'
-import type { WizardItemPosition, WizardItemPositionState } from '../..'
+import type { WizardItemPosition, WizardItemPositionState } from '..'
 
 const LABEL = 'wizard:string:Step1' as IntlString
 

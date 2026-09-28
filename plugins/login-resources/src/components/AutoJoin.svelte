@@ -19,7 +19,7 @@
   import { setMetadata, translate } from '@hcengineering/platform'
   import { Loading, getCurrentLocation, navigate } from '@hcengineering/ui'
   import Label from './internal/Label.svelte'
-  import { type LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo } from '@hcengineering/account-client'
   import { loginId } from '@hcengineering/login'
   import { themeStore } from '@hcengineering/theme'
   import presentation from '@hcengineering/presentation'

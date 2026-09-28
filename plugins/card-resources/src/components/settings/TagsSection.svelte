@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { ClassifierKind } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ClassHierarchy } from '@hcengineering/setting-resources'
   import { ButtonIcon, getCurrentLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'

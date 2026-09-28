@@ -14,13 +14,9 @@
 -->
 
 <script lang="ts">
-  import documents, {
-    DocumentBundle,
-    getDocumentName,
-    isFolder,
-    type Project
-  } from '@hcengineering/controlled-documents'
-  import { type Ref } from '@hcengineering/core'
+  import type { DocumentBundle } from '@hcengineering/controlled-documents'
+  import documents, { getDocumentName, isFolder, type Project } from '@hcengineering/controlled-documents'
+  import type { Ref } from '@hcengineering/core'
   import { Icon, navigate } from '@hcengineering/ui'
 
   import { getProjectDocumentLink } from '../../../../navigation'

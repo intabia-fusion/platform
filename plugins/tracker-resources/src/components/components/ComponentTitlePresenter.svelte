@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
   import { Icon } from '@hcengineering/ui'
   import tracker from '../../plugin'
 

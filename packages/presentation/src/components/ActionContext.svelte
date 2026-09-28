@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, generateId, Ref } from '@hcengineering/core'
-  import { ViewContext } from '@hcengineering/view'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
+  import type { ViewContext } from '@hcengineering/view'
   import { onDestroy } from 'svelte'
   import { ContextStore, contextStore } from '../context'
 

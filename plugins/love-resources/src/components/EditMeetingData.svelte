@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
+  import type { Event } from '@hcengineering/calendar'
   import { getCurrentAccount } from '@hcengineering/core'
   import love from '../plugin'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
+  import type { MeetingMinutes } from '@hcengineering/love'
+  import { MeetingStatus } from '@hcengineering/love'
   import { Button, Icon, IconRedo, Label } from '@hcengineering/ui'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
   import { joinMeeting, leaveMeeting } from '../meetings'

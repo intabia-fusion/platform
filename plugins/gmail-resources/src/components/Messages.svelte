@@ -16,7 +16,7 @@
 <script lang="ts">
   import type { SharedMessage } from '@hcengineering/gmail'
   import MessageView from './Message.svelte'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
 
   export let messages: SharedMessage[] = []

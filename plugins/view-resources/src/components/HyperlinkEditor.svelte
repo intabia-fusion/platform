@@ -16,7 +16,7 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { AnySvelteComponent, ButtonKind, ButtonSize, IconProps } from '@hcengineering/ui'
   import { Button, Label, eventToHTMLElement, parseURL, showPopup } from '@hcengineering/ui'
-  import { ComponentType } from 'svelte'
+  import type { ComponentType } from 'svelte'
   import HyperlinkEditorPopup from './HyperlinkEditorPopup.svelte'
 
   export let placeholder: IntlString

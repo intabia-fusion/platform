@@ -16,7 +16,8 @@
   import { DateRangeMode } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import ui from '../plugin'
-  import { DAY, DateOrShift, HOUR, MINUTE } from '../types'
+  import type { DateOrShift } from '../types'
+  import { DAY, HOUR, MINUTE } from '../types'
   import DateRangePresenter from './calendar/DateRangePresenter.svelte'
   import TimeShiftPresenter from './TimeShiftPresenter.svelte'
 

@@ -16,8 +16,9 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { jsonToPmNode, MarkupNode } from '@hcengineering/text'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { MarkupNode } from '@hcengineering/text'
+  import { jsonToPmNode } from '@hcengineering/text'
   import presentation from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { Editor, Extension, mergeAttributes } from '@tiptap/core'
@@ -25,7 +26,7 @@
   import { DecorationSet } from '@tiptap/pm/view'
   import { onDestroy, onMount } from 'svelte'
 
-  import { getEditorKit } from '../../src/kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { calculateDecorations } from './diff/decorations'
   import { defaultEditorAttributes } from './editor/editorProps'
 

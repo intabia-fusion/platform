@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person } from '@hcengineering/contact'
-  import { AccountUuid, Class, Doc, Ref } from '@hcengineering/core'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import { Class, Doc } from '@hcengineering/core'
   import { ComponentExtensions, createQuery, getClient, hasResource } from '@hcengineering/presentation'
   import { ButtonIcon, Component, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'

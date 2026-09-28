@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AggregateValue, Ref } from '@hcengineering/core'
+  import type { AggregateValue, Ref } from '@hcengineering/core'
   import ComponentPresenter from './ComponentPresenter.svelte'
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
 
   import { componentStore } from '../../component'
 

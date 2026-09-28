@@ -15,7 +15,8 @@
 <script lang="ts">
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import chunter, { ChatMessage, DirectMessage } from '@hcengineering/chunter'
+  import type { ChatMessage, DirectMessage } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import { Label } from '@hcengineering/ui'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
 

@@ -15,11 +15,12 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
+  import type { Ref } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/document'
   import { createQuery } from '@hcengineering/presentation'
   import { Label, Lazy, Scroller } from '@hcengineering/ui'
-  import activity, { ActivityReference } from '@hcengineering/activity'
+  import type { ActivityReference } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { ActivityReferencePresenter } from '@hcengineering/activity-resources'
 
   import document from '../../plugin'

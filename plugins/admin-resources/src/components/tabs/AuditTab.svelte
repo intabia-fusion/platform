@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AdminAction } from '@hcengineering/account-client'
+  import type { AdminAction } from '@hcengineering/account-client'
   import { reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, ButtonMenu, Label, SearchEdit } from '@hcengineering/ui'

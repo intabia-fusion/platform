@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import type { Issue } from '@hcengineering/tracker'
   import { DocNavLink } from '@hcengineering/view-resources'
   import tracker from '../../plugin'

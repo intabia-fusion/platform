@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import ui, { DateRangePopup, showPopup, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { translate } from '@hcengineering/platform'

@@ -13,13 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AggregateValue, Doc, PrimitiveType, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { AggregateValue, Doc, PrimitiveType, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { AnyComponent, AnySvelteComponent, ColorDefinition } from '@hcengineering/ui'
   import {
-    AnyComponent,
-    AnySvelteComponent,
     Button,
-    ColorDefinition,
     Component,
     IconAdd,
     IconBack,
@@ -32,12 +30,13 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
-  import { AttributeModel, ViewOptions } from '@hcengineering/view'
+  import type { AttributeModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
 
   import view from '../../plugin'
-  import { SelectionFocusProvider, selectionLimit } from '../../selection'
+  import type { SelectionFocusProvider } from '../../selection'
+  import { selectionLimit } from '../../selection'
   import { getCategoryReference } from '../../utils'
   import { noCategory } from '../../viewOptions'
 

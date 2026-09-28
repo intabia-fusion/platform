@@ -12,7 +12,8 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import LanguagePresenter from './LanguagePresenter.svelte'

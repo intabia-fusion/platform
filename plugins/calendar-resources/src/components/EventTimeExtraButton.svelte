@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { RecurringRule } from '@hcengineering/calendar'
+  import type { RecurringRule } from '@hcengineering/calendar'
+  import type { TimeZone } from '@hcengineering/ui'
   import {
     Button,
     CheckBox,
     Icon,
     Label,
-    TimeZone,
     TimeZonesPopup,
     convertTimeZone,
     eventToHTMLElement,

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { themeStore, formatDuration, tooltip } from '@hcengineering/ui'
-  import { WorkSlot } from '@hcengineering/time'
+  import type { WorkSlot } from '@hcengineering/time'
   import time from '../plugin'
   import { splitEventsDuration } from '../utils'
 
@@ -9,10 +9,10 @@
   let spent: string = ''
   let planned: string = ''
   $: split = splitEventsDuration(events)
-  $: formatDuration(split.spent, $themeStore.language).then((res) => {
+  $: void formatDuration(split.spent, $themeStore.language).then((res) => {
     spent = res
   })
-  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+  $: void formatDuration(split.planned, $themeStore.language).then((res) => {
     planned = res
   })
 </script>

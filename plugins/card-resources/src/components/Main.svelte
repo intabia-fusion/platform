@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, IconWithEmoji } from '@hcengineering/presentation'
   import { location } from '@hcengineering/ui'
   import view from '@hcengineering/view'

@@ -2,6 +2,7 @@
   "name": "@hcengineering/questions-resources",
   "version": "0.7.0",
   "main": "src/index.ts",
+  "types": "types/index.d.ts",
   "author": "Hardcore Engineering Inc",
   "scripts": {
     "build": "compile ui",

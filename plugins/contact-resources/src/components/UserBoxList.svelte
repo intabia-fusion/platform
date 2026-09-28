@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { ObjectCreate, getClient } from '@hcengineering/presentation'
+  import type { ObjectCreate } from '@hcengineering/presentation'
+  import { getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
   import { Button, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

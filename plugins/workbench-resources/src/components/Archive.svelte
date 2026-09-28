@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { Icon, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TableBrowser } from '@hcengineering/view-resources'
-  import { NavigatorModel } from '@hcengineering/workbench'
+  import type { NavigatorModel } from '@hcengineering/workbench'
 
   import workbench from '../plugin'
   import { getSpecialSpaceClass } from '../utils'

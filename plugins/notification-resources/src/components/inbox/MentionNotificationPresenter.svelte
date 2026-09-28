@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { BasePreview } from '@hcengineering/activity-resources'
-  import { MentionNotification } from '@hcengineering/notification'
+  import type { MentionNotification } from '@hcengineering/notification'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
   import attachment from '@hcengineering/attachment'

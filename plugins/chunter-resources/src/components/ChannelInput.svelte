@@ -14,11 +14,14 @@
 -->
 <script lang="ts">
   import { ActivityExtension as ActivityExtensionComponent } from '@hcengineering/activity-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import activity, { ActivityExtension } from '@hcengineering/activity'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { ActivityExtension } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Icon, Label, languageStore } from '@hcengineering/ui'
-  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, Label, languageStore } from '@hcengineering/ui'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import view from '@hcengineering/view'
   import { isLimited } from '@hcengineering/billing-resources'
   import billing from '@hcengineering/billing'

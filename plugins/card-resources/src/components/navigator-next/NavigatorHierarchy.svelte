@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import card, { CardSpace, MasterTag } from '@hcengineering/card'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { CardSpace, MasterTag } from '@hcengineering/card'
+  import card from '@hcengineering/card'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
 
   import type { TypesNavigatorConfig } from '../../types'

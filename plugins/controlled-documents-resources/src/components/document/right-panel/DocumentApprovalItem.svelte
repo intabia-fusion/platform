@@ -1,6 +1,6 @@
 <script lang="ts">
   import { PersonRefPresenter } from '@hcengineering/contact-resources'
-  import { DocumentValidationState } from '@hcengineering/controlled-documents'
+  import type { DocumentValidationState } from '@hcengineering/controlled-documents'
   import { Chevron, Label, tooltip } from '@hcengineering/ui'
   import { slide } from 'svelte/transition'
 

@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Folder } from '@hcengineering/drive'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Folder } from '@hcengineering/drive'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit } from '@hcengineering/ui'
   import { getActions as getContributedActions, TreeItem } from '@hcengineering/view-resources'
 
   export let folders: Ref<Folder>[]

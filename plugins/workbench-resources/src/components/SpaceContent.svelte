@@ -16,10 +16,12 @@
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component, Loading } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component, Loading } from '@hcengineering/ui'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { FilterBar } from '@hcengineering/view-resources'
 
   export let _class: Ref<Class<Doc>>

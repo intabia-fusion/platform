@@ -13,20 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@hcengineering/card'
-  import { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
-  import { Context, createContext, parseContext, Process, SelectedContext } from '@hcengineering/process'
-  import {
-    AnySvelteComponent,
-    Button,
-    eventToHTMLElement,
-    IconAdd,
-    IconClose,
-    Label,
-    showPopup,
-    tooltip
-  } from '@hcengineering/ui'
-  import { AttributeCategory } from '@hcengineering/view'
+  import type { MasterTag, Tag } from '@hcengineering/card'
+  import type { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
+  import type { Context, Process, SelectedContext } from '@hcengineering/process'
+  import { createContext, parseContext } from '@hcengineering/process'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, IconAdd, IconClose, Label, showPopup, tooltip } from '@hcengineering/ui'
+  import type { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import ContextSelectorPopup from './attributeEditors/ContextSelectorPopup.svelte'
   import ContextValue from './attributeEditors/ContextValue.svelte'

@@ -17,7 +17,7 @@
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import { LinkPreviewData } from '../types'
+  import type { LinkPreviewData } from '../types'
   import WebIcon from './icons/Web.svelte'
 
   export let value: LinkPreviewData

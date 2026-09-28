@@ -14,17 +14,18 @@
 -->
 
 <script lang="ts">
-  import activity, {
+  import type {
     ActivityMessageLite,
     ActivityMessagePreviewType,
     DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { Component, Icon } from '@hcengineering/ui'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { IntlString } from '@hcengineering/platform'
-  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
+  import type { AttributeModel } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
 
@@ -66,7 +67,7 @@
     attributeModel = model
   })
 
-  $: viewlet?.component && loadObject(value.objectId, value.objectClass, doc)
+  $: void (viewlet?.component && loadObject(value.objectId, value.objectClass, doc))
 
   async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
     if (doc?._id === _id) {

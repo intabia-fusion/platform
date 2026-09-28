@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getMetadata } from '@hcengineering/platform'
-  import { AnySvelteComponent, IconSize } from '../types'
-  import { ComponentType } from 'svelte'
+  import type { Asset } from '@hcengineering/platform'
+  import { getMetadata } from '@hcengineering/platform'
+  import type { AnySvelteComponent, IconSize } from '../types'
+  import type { ComponentType } from 'svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
   export let size: IconSize

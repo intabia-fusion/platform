@@ -4,8 +4,8 @@
 
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Ref } from '@hcengineering/core'
+  import type { Issue } from '@hcengineering/tracker'
   import { createQuery } from '@hcengineering/presentation'
   import IssuePresenter from './IssuePresenter.svelte'
   import { translateCB } from '@hcengineering/platform'

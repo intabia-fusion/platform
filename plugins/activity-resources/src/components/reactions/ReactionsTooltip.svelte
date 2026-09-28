@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PersonId } from '@hcengineering/core'
+  import type { PersonId } from '@hcengineering/core'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { getPersonRefByPersonIdStore } from '@hcengineering/contact-resources'
   import { EmojiPresenter, getEmojiByUnicode } from '@hcengineering/emoji-resources'

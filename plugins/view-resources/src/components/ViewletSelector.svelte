@@ -2,8 +2,10 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { activeViewlet, makeViewletKey, setActiveViewletId } from '../utils'
   import { resolvedLocationStore, Switcher } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletDescriptor, ViewletPreference } from '@hcengineering/view'
-  import core, { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import type { Viewlet, ViewletDescriptor, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { deepEqual } from 'fast-equals'
   import { createQuery } from '@hcengineering/presentation'
 

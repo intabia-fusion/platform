@@ -13,9 +13,10 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import attachment, { Attachment, AttachmentValue, DraftAttachment } from '@hcengineering/attachment'
-  import { Blob, Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Attachment, AttachmentValue, DraftAttachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
+  import type { Blob, Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, deleteFile, getClient, uploadFile } from '@hcengineering/presentation'
   import { Icon, IconAdd, IconClose, Label, Spinner } from '@hcengineering/ui'
   import { filesize } from 'filesize'
@@ -224,7 +225,7 @@
           on:keydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              openPreview(item)
+              void openPreview(item)
             }
           }}
         >

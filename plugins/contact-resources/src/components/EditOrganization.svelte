@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@hcengineering/contact'
-  import { getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Organization } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { IntegrationType } from '@hcengineering/setting'
+  import type { IntegrationType } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
   import { createFocusManager, EditBox, FocusHandler, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import contact from '../plugin'
@@ -42,7 +44,7 @@
 
   function nameChange () {
     serverName = name
-    client.updateDoc(object._class, object.space, object._id, { name })
+    void client.updateDoc(object._class, object.space, object._id, { name })
   }
 
   let integrations: Set<Ref<IntegrationType>> = new Set<Ref<IntegrationType>>()

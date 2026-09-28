@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonSize, TimeSince } from '@hcengineering/ui'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Button, TimeSince } from '@hcengineering/ui'
 
   export let value: number
   export let kind: 'no-border' | 'link' | 'list' = 'no-border'

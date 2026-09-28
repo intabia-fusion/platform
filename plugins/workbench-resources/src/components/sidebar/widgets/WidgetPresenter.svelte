@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget } from '@hcengineering/workbench'
+  import type { Widget } from '@hcengineering/workbench'
   import { Label, Component } from '@hcengineering/ui'
 
   import AppItem from '../../AppItem.svelte'

@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
   import { EmployeePresenter } from '@hcengineering/contact-resources'
-  import { WithLookup } from '@hcengineering/core'
-  import { Staff } from '@hcengineering/hr'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Staff } from '@hcengineering/hr'
   import { closeTooltip } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
   import hr from '../plugin'

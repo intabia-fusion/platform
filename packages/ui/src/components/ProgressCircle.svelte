@@ -15,7 +15,7 @@
 <script lang="ts">
   import { themeStore } from '@hcengineering/theme'
   import { getPlatformColor } from '../colors'
-  import { IconSize } from '../types'
+  import type { IconSize } from '../types'
 
   export let value: number
   export let min: number = 0

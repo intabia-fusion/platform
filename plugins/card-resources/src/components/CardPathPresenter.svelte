@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
+  import type { WithLookup } from '@hcengineering/core'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import TagDivider from './TagDivider.svelte'

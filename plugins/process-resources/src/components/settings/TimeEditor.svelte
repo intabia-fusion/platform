@@ -15,11 +15,12 @@
 
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { Process } from '@hcengineering/process'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

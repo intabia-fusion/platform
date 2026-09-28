@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MeetingMinutes } from '@hcengineering/love'
+  import type { MeetingMinutes } from '@hcengineering/love'
   import { DocNavLink } from '@hcengineering/view-resources'
   import { tooltip } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'

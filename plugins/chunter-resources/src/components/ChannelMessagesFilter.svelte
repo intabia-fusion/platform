@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { Button, eventToHTMLElement, IconFilter, showPopup } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
-  import activity, { ActivityMessagesFilter } from '@hcengineering/activity'
+  import type { Ref } from '@hcengineering/core'
+  import type { ActivityMessagesFilter } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import view from '@hcengineering/view-resources/src/plugin'
   import { getClient } from '@hcengineering/presentation'
   import { ActivityMessagesFilterPopup } from '@hcengineering/activity-resources'

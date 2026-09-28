@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { SelectPopupValueType } from '@hcengineering/ui'
   import {
     Button,
     IconAdd,
@@ -22,23 +23,24 @@
     IconRedo,
     IconUndo,
     SelectPopup,
-    SelectPopupValueType,
     eventToHTMLElement,
     showPopup
   } from '@hcengineering/ui'
-  import { ComponentType, createEventDispatcher, onMount } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import IconEraser from './icons/Eraser.svelte'
   import IconMove from './icons/Move.svelte'
   import IconText from './icons/Text.svelte'
   import IconRectangle from './icons/Rectangle.svelte'
   import IconEllipse from './icons/Ellipse.svelte'
   import IconLine from './icons/Line.svelte'
-  import { DrawingTool } from '../drawing'
+  import type { DrawingTool } from '../drawing'
   import presentation from '../plugin'
-  import { ColorMetaName, ColorMetaNameOrHex } from '../drawingUtils'
+  import type { ColorMetaName, ColorMetaNameOrHex } from '../drawingUtils'
   import DrawingBoardToolbarColorIcon from './DrawingBoardToolbarColorIcon.svelte'
   import DrawingBoardColorSelectorIcon from './DrawingBoardColorSelectorIcon.svelte'
-  import { ColorsList, DrawingBoardColoringSetup } from '../drawingColors'
+  import type { ColorsList } from '../drawingColors'
+  import { DrawingBoardColoringSetup } from '../drawingColors'
   import { Analytics } from '@hcengineering/analytics'
   import type { IntlString } from '@hcengineering/platform'
 

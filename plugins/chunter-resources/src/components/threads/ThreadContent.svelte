@@ -15,9 +15,11 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { get } from 'svelte/store'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
-  import core, { Doc, Ref, Space } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
 

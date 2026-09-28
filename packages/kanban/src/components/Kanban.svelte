@@ -14,23 +14,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
+  import type {
     CategoryType,
     Class,
     Doc,
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
-    type Rank,
-    RateLimiter,
     Ref,
     Space
   } from '@hcengineering/core'
+  import { type Rank, RateLimiter } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import { IconChevronDown, IconChevronRight, Scroller, themeStore, defaultBackground } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
-  import { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
+  import type { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
   import KanbanRow from './KanbanRow.svelte'
 
   export let categories: CategoryType[] = []

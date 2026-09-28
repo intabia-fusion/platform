@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import type { TaskType } from '@hcengineering/task'
   import view from '@hcengineering/view'
   import { taskTypeStore } from '../../'

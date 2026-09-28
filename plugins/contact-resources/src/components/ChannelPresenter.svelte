@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel } from '@hcengineering/contact'
+  import type { Channel } from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ButtonSize, CircleButton, tooltip } from '@hcengineering/ui'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { CircleButton, tooltip } from '@hcengineering/ui'
   import { channelProviders } from '../utils'
 
   export let value: Channel

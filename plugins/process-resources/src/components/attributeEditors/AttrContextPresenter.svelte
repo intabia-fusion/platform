@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { Context, Process, SelectedAttribute } from '@hcengineering/process'
+  import type { Context, Process, SelectedAttribute } from '@hcengineering/process'
   import { getClient } from '@hcengineering/presentation'
 
   export let process: Process

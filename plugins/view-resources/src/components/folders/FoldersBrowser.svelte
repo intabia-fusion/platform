@@ -16,13 +16,16 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { Class, Doc, DocumentQuery, Ref, SortingOrder } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, IconEdit, navigate, type Location, Scroller, location, getLocation } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit, navigate, type Location, Scroller, location, getLocation } from '@hcengineering/ui'
   import { getResource, type Resource } from '@hcengineering/platform'
-  import { IntlString, Asset } from '@hcengineering/platform'
+  import type { IntlString, Asset } from '@hcengineering/platform'
 
-  import { createFoldersStore, FoldersState, emptyFoldersState, getFoldersManager } from './store/folderStore'
+  import type { FoldersState } from './store/folderStore'
+  import { createFoldersStore, emptyFoldersState, getFoldersManager } from './store/folderStore'
   import FolderTreeLevel from './FolderTreeLevel.svelte'
   import { TreeNode, TreeItem, getActions as getContributedActions } from '../../index'
 

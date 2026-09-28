@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import love, { MeetingMinutes } from '@hcengineering/love'
+  import type { MeetingMinutes } from '@hcengineering/love'
+  import love from '@hcengineering/love'
   import { ChannelEmbeddedContent } from '@hcengineering/chunter-resources'
-  import { ActivityMessage } from '@hcengineering/activity'
-  import { updateTabData, WidgetState } from '@hcengineering/workbench-resources'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import type { WidgetState } from '@hcengineering/workbench-resources'
+  import { updateTabData } from '@hcengineering/workbench-resources'
 
   export let widgetState: WidgetState
   export let meetingMinutes: MeetingMinutes

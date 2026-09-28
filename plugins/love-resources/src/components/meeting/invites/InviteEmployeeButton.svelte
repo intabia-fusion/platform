@@ -14,13 +14,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonBaseSize, IconSize, ModernButton, showPopup } from '@hcengineering/ui'
-  import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
+  import type { ButtonBaseSize, IconSize } from '@hcengineering/ui'
+  import { ModernButton, showPopup } from '@hcengineering/ui'
+  import type { Employee } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import contactRes from '@hcengineering/contact-resources/src/plugin'
   import love from '../../../plugin'
   import { SelectUsersPopup } from '@hcengineering/contact-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { sendInvites } from '../../../invites'
   import { aiBotPerson, currentMeetingMinutes, infos } from '../../../stores'
@@ -46,7 +48,7 @@
 
   async function invite (): Promise<void> {
     if (employee !== undefined) {
-      sendInvites([employee._id])
+      void sendInvites([employee._id])
     } else {
       openSelectUsersPopup()
     }
@@ -66,7 +68,7 @@
       'top',
       (result?: Ref<Employee>[]) => {
         if (result != null) {
-          sendInvites(result)
+          void sendInvites(result)
         }
         dispatch('close')
       }

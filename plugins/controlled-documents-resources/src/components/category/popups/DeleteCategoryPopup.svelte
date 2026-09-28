@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
+  import type { DocumentCategory } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Button, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

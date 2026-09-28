@@ -15,10 +15,11 @@
 
 <script lang="ts">
   import view from '@hcengineering/view'
-  import { IconAdd, NavGroup, Action, NavItem, ButtonIcon, showPopup, languageStore } from '@hcengineering/ui'
-  import { Ref } from '@hcengineering/core'
+  import type { Action } from '@hcengineering/ui'
+  import { IconAdd, NavGroup, NavItem, ButtonIcon, showPopup, languageStore } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
-  import { CardSpace, MasterTag } from '@hcengineering/card'
+  import type { CardSpace, MasterTag } from '@hcengineering/card'
   import presentation, { IconWithEmoji, getClient } from '@hcengineering/presentation'
   import { translate, getEmbeddedLabel } from '@hcengineering/platform'
 

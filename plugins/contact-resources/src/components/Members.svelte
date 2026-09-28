@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Member } from '@hcengineering/contact'
+  import type { Member } from '@hcengineering/contact'
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import contact from '../plugin'
   import UsersPopup from './UsersPopup.svelte'
@@ -56,7 +56,7 @@
       ev.target as HTMLElement,
       (result) => {
         if (result != null) {
-          client.addCollection(contact.class.Member, space, objectId, _class, 'members', {
+          void client.addCollection(contact.class.Member, space, objectId, _class, 'members', {
             contact: result._id
           })
         }

@@ -20,7 +20,7 @@
     "@typescript-eslint/parser": "catalog:",
     "esbuild": "catalog:",
     "esbuild-plugin-copy": "~2.1.1",
-    "esbuild-svelte": "^0.9.3",
+    "esbuild-svelte": "^0.9.5",
     "eslint": "catalog:",
     "eslint-config-standard": "catalog:",
     "eslint-plugin-import": "catalog:",
@@ -48,7 +48,8 @@
     "bump-package-version": "./bin/bump-package-version.js",
     "bump-changes-from-tag": "./bin/bump-changes-from-tag.js",
     "update-deps": "./bin/update-deps.js",
-    "sync-eslint-deps": "./bin/sync-eslint-deps.js"
+    "sync-eslint-deps": "./bin/sync-eslint-deps.js",
+    "check-svelte-imports": "./bin/check-svelte-imports.js"
   },
   "files": [
     "bin/**/*",

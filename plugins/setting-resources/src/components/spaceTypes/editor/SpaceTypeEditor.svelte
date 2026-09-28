@@ -15,9 +15,10 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import core, { SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { SpaceTypeEditor } from '@hcengineering/setting'
+  import type { SpaceTypeEditor } from '@hcengineering/setting'
   import {
     ButtonIcon,
     Component,

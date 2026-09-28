@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { TaskType } from '@hcengineering/task'
+  import type { Ref } from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
   import { ButtonIcon, IconClose, IconMaximize, IconMinimize, Label, Modal } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

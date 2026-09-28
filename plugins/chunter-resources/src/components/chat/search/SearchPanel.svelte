@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc, type Ref, type SearchSortOrder, type Space } from '@hcengineering/core'
+  import type { Doc, Ref, SearchSortOrder, Space } from '@hcengineering/core'
   import { IconOptions, Label, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
   import { get } from 'svelte/store'

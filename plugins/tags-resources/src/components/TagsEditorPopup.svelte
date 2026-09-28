@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagElement, TagsEvents } from '@hcengineering/tags'
+  import type { TagElement } from '@hcengineering/tags'
+  import tags, { TagsEvents } from '@hcengineering/tags'
   import { Analytics } from '@hcengineering/analytics'
 
   import TagsPopup from './TagsPopup.svelte'
@@ -86,8 +87,8 @@
   async function onUpdate (event: CustomEvent<{ action: string, tag: TagElement }>) {
     const result = event.detail
     if (result === undefined) return
-    if (result.action === 'add') addRef(result.tag)
-    else if (result.action === 'remove') removeTag(result.tag)
+    if (result.action === 'add') void addRef(result.tag)
+    else if (result.action === 'remove') void removeTag(result.tag)
   }
 </script>
 

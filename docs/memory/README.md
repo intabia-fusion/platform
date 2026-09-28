@@ -87,6 +87,7 @@
 - [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (platform-rig/bin)
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
+- [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules and the no-duplicates fixer bug
 - [test-stand-nodejs.md](test-stand-nodejs.md) - Test stand setup in node (dev/test-base)
 - [typescript7-migration.md](typescript7-migration.md) - TypeScript 7 (tsgo) build
 - [upstream-sync.md](upstream-sync.md) - Синк с upstream (Platform-Collective/platform)

@@ -15,14 +15,18 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import contact, { Channel, Contact, getName } from '@hcengineering/contact'
-  import { Ref, SocialIdType, getCurrentAccount } from '@hcengineering/core'
-  import { Message, SharedMessage } from '@hcengineering/gmail'
+  import type { Channel, Contact } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { SocialIdType, getCurrentAccount } from '@hcengineering/core'
+  import type { Message, SharedMessage } from '@hcengineering/gmail'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import setting, { Integration } from '@hcengineering/setting'
-  import templates, { TemplateDataProvider } from '@hcengineering/templates'
+  import type { Integration } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
+  import type { TemplateDataProvider } from '@hcengineering/templates'
+  import templates from '@hcengineering/templates'
   import { Button, Dialog, eventToHTMLElement, Icon, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import gmail from '../plugin'
@@ -52,7 +56,7 @@
   let integrations: Integration[] = []
   let selectedIntegration: Integration | undefined = undefined
 
-  channel && inboxClient.forceReadDoc(channel)
+  void (channel && inboxClient.forceReadDoc(channel))
 
   const dispatch = createEventDispatcher()
 
@@ -85,7 +89,7 @@
 
   let templateProvider: TemplateDataProvider | undefined
 
-  getResource(templates.function.GetTemplateDataProvider).then((p) => {
+  void getResource(templates.function.GetTemplateDataProvider).then((p) => {
     templateProvider = p()
   })
 
@@ -118,10 +122,12 @@
     }
   )
 
-  $: gmailMessage &&
+  $: void (
+    gmailMessage &&
     channel &&
     object &&
     convertMessage(object, channel, gmailMessage).then((p) => (currentMessage = p))
+  )
 </script>
 
 {#if channel && object}

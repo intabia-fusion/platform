@@ -25,7 +25,8 @@
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { searchFor, type SearchItem } from '..'
-  import { ObjectCreate, type ObjectSearchCategory } from '../types'
+  import type { ObjectCreate } from '../types'
+  import type { ObjectSearchCategory } from '../types'
   import { createQuery } from '../utils'
   import DocPopup from './DocPopup.svelte'
 

@@ -14,21 +14,15 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import { AttachedDoc, Class, DocumentQuery, getCurrentAccount, Ref } from '@hcengineering/core'
-  import { Lead } from '@hcengineering/lead'
-  import { IntlString, Asset } from '@hcengineering/platform'
+  import type { AttachedDoc, Class, DocumentQuery, Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { Lead } from '@hcengineering/lead'
+  import type { IntlString, Asset } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import {
-    IModeSelector,
-    Breadcrumb,
-    Loading,
-    ModeSelector,
-    resolvedLocationStore,
-    SearchInput,
-    Header
-  } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { IModeSelector } from '@hcengineering/ui'
+  import { Breadcrumb, Loading, ModeSelector, resolvedLocationStore, SearchInput, Header } from '@hcengineering/ui'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import { MILLISECONDS_IN_MINUTE, tooltip } from '@hcengineering/ui'
   import time from '../../../plugin'
 

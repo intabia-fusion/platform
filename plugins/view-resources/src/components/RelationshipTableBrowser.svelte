@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, generateId, SortingOrder } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { ActionContext } from '@hcengineering/presentation'
   import { Scroller, tableSP } from '@hcengineering/ui'
-  import { BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type { BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { onDestroy, onMount } from 'svelte'
   import { type ViewletContext, ViewletContextStore, viewletContextStore } from '../viewletContextStore'
   import RelationshipTable from './RelationshipTable.svelte'

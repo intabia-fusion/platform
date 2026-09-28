@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TestResult } from '@hcengineering/test-management'
+  import type { TestResult } from '@hcengineering/test-management'
   import TestResultPresenter from './TestResultPresenter.svelte'
 
   export let object: TestResult

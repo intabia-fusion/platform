@@ -13,17 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    AccessLevel,
-    Calendar,
-    Event,
-    ReccuringEvent,
-    RecurringRule,
-    Visibility,
-    generateEventId
-  } from '@hcengineering/calendar'
-  import { getCurrentEmployee, getCurrentEmployeeSpace, Person } from '@hcengineering/contact'
-  import core, { Class, Doc, Markup, Ref, Space, generateId, getCurrentAccount } from '@hcengineering/core'
+  import type { Calendar, Event, ReccuringEvent, RecurringRule, Visibility } from '@hcengineering/calendar'
+  import { AccessLevel, generateEventId } from '@hcengineering/calendar'
+  import type { Person } from '@hcengineering/contact'
+  import { getCurrentEmployee, getCurrentEmployeeSpace } from '@hcengineering/contact'
+  import type { Class, Doc, Markup, Ref, Space } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount } from '@hcengineering/core'
   import presentation, {
     createQuery,
     DocCreateExtComponent,

@@ -12,15 +12,18 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import card, { Card, CardSpace, type CreateCardExtension, MasterTag } from '@hcengineering/card'
+  import type { Card, CardSpace, MasterTag } from '@hcengineering/card'
+  import card, { type CreateCardExtension } from '@hcengineering/card'
   import presentation, { createQuery, getClient, SpaceSelector } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import core, { Data, generateId, Ref, Markup, getCurrentAccount } from '@hcengineering/core'
+  import type { Data, Ref, Markup } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount } from '@hcengineering/core'
   import { getResource, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import { Label, Modal, ModernEditbox, languageStore, showPopup, Component } from '@hcengineering/ui'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Employee, getCurrentEmployee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
   import { SelectUsersPopup, permissionsStore } from '@hcengineering/contact-resources'
   import view from '@hcengineering/view'
 

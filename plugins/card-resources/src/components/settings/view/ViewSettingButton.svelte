@@ -16,10 +16,11 @@
   import { createEventDispatcher } from 'svelte'
 
   import { ButtonIcon, closeTooltip, showPopup } from '@hcengineering/ui'
-  import view, { Viewlet } from '@hcengineering/view'
+  import type { Viewlet } from '@hcengineering/view'
+  import view from '@hcengineering/view'
 
-  import { Data } from '@hcengineering/core'
-  import { AttributeConfig, Config } from '@hcengineering/view-resources'
+  import type { Data } from '@hcengineering/core'
+  import type { AttributeConfig, Config } from '@hcengineering/view-resources'
   import ViewOptionsButton from './ViewOptionsButton.svelte'
   import ViewletSetting from './ViewSetting.svelte'
 

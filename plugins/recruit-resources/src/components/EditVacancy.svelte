@@ -15,12 +15,13 @@
 -->
 <script lang="ts">
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import { Data, Doc, type MarkupBlobRef, Mixin, Ref } from '@hcengineering/core'
+  import type { Data, Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { MarkupBlobRef } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { Vacancy } from '@hcengineering/recruit'
+  import type { Vacancy } from '@hcengineering/recruit'
   import survey from '@hcengineering/survey'
   import tracker from '@hcengineering/tracker'
   import { Button, Component, EditBox, IconMixin, IconMoreH, Label } from '@hcengineering/ui'

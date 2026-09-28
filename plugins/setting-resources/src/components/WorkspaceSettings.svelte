@@ -15,10 +15,11 @@
 <script lang="ts">
   import { getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { createQuery, isDisabled } from '@hcengineering/presentation'
-  import setting, { SettingsCategory } from '@hcengineering/setting'
+  import type { SettingsCategory } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
+  import type { Location } from '@hcengineering/ui'
   import {
     Component,
-    Location,
     NavItem,
     getCurrentResolvedLocation,
     navigate,

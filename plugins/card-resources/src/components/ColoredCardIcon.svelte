@@ -13,7 +13,8 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag } from '@hcengineering/card'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
   import { Component, getPlatformColorDef, themeStore, tooltip } from '@hcengineering/ui'
 

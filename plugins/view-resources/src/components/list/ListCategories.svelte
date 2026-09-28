@@ -14,23 +14,24 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
+  import type {
     CategoryType,
     Class,
     Doc,
     DocumentQuery,
     FindOptions,
-    generateId,
-    groupByArray,
     Lookup,
     RateLimiter,
     Ref,
     Space
   } from '@hcengineering/core'
-  import { getResource, IntlString } from '@hcengineering/platform'
+  import { generateId, groupByArray } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import ui, { AnyComponent, AnySvelteComponent, Button, Label, Spinner } from '@hcengineering/ui'
-  import {
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import ui, { Button, Label, Spinner } from '@hcengineering/ui'
+  import type {
     AttributeModel,
     BuildModelKey,
     CategoryOption,
@@ -38,8 +39,10 @@
     ViewOptionModel,
     ViewOptions
   } from '@hcengineering/view'
-  import { createEventDispatcher, onDestroy, SvelteComponentTyped } from 'svelte'
-  import { SelectionFocusProvider, focusStore } from '../../selection'
+  import type { SvelteComponentTyped } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
+  import type { SelectionFocusProvider } from '../../selection'
+  import { focusStore } from '../../selection'
   import {
     buildModel,
     concatCategories,

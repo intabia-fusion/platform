@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
+  import type { Event } from '@hcengineering/calendar'
   // import { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

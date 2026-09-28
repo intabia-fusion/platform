@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import view from '@hcengineering/view'
-  import { Button, ButtonSize, ButtonKind, LabelAndProps, showPopup } from '@hcengineering/ui'
+  import type { ButtonSize, ButtonKind, LabelAndProps } from '@hcengineering/ui'
+  import { Button, showPopup } from '@hcengineering/ui'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import type { Component } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'

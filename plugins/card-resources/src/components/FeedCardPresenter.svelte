@@ -12,8 +12,8 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { WithLookup } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@hcengineering/ui'
   import { DocNavLink, showMenu } from '@hcengineering/view-resources'

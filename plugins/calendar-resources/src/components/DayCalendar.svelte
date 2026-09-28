@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event, ReccuringInstance } from '@hcengineering/calendar'
-  import { DocumentUpdate, Ref, Timestamp } from '@hcengineering/core'
+  import type { Event, ReccuringInstance } from '@hcengineering/calendar'
+  import type { DocumentUpdate, Ref, Timestamp } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
+  import type { CalendarItem } from '@hcengineering/ui'
   import ui, {
     ActionIcon,
-    CalendarItem,
     IconDownOutline,
     IconUpOutline,
     Label,

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tag } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Tag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, Step } from '@hcengineering/process'
+  import type { MethodParams, Step } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
 

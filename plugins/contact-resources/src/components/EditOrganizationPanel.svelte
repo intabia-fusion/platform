@@ -1,12 +1,14 @@
 <script lang="ts">
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
-  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, type KeyedAttribute } from '@hcengineering/presentation'
   import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
-  import view, { AttributeCategory } from '@hcengineering/view'
+  import type { AttributeCategory } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     ClassSettingButton,
     DocAttributeBar,
@@ -17,7 +19,7 @@
     showMenu
   } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { Organization } from '@hcengineering/contact'
+  import type { Organization } from '@hcengineering/contact'
 
   import contact from '../plugin'
   import EditOrganization from './EditOrganization.svelte'
@@ -48,7 +50,7 @@
 
   $: descriptionKey = client.getHierarchy().getAttribute(contact.class.Organization, 'description')
 
-  $: getDocAttrsInfo(mixins, ignoreKeys, contact.class.Organization).then((res) => {
+  $: void getDocAttrsInfo(mixins, ignoreKeys, contact.class.Organization).then((res) => {
     editors = res.editors
   })
 

@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { Product } from '@hcengineering/products'
+  import type { Product } from '@hcengineering/products'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'

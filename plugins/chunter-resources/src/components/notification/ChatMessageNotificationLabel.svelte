@@ -14,14 +14,15 @@
 -->
 <script lang="ts">
   import { Component, Icon, Label, tooltip } from '@hcengineering/ui'
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
+  import type { DocNotifyContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { classIcon } from '@hcengineering/view-resources'
-  import { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
+  import type { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
   import contact from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ActivityMessageLite } from '@hcengineering/activity'
+  import type { ActivityMessageLite } from '@hcengineering/activity'
   import view from '@hcengineering/view'
 
   import chunter from '../../plugin'

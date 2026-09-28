@@ -1,21 +1,17 @@
 <script lang="ts">
-  import calendar, {
-    AccessLevel,
-    BusySlot,
-    Calendar,
-    Event,
-    generateEventId,
-    getAllEvents,
-    getBusyIntervals
-  } from '@hcengineering/calendar'
+  import type { BusySlot, Calendar, Event } from '@hcengineering/calendar'
+  import calendar, { AccessLevel, generateEventId, getAllEvents, getBusyIntervals } from '@hcengineering/calendar'
   import { DayCalendar, calendarByIdStore, hidePrivateEvents } from '@hcengineering/calendar-resources'
-  import contact, { Employee, Person, getCurrentEmployee, getName } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee, getName } from '@hcengineering/contact'
   import { UserBoxList, employeeByIdStore } from '@hcengineering/contact-resources'
-  import { IdMap, PersonId, Ref, SortingOrder, Timestamp, getCurrentAccount } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { IdMap, PersonId, Ref, Timestamp } from '@hcengineering/core'
+  import { SortingOrder, getCurrentAccount } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
+  import type { AnyComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
     ButtonBase,
     ButtonIcon,
     IconChevronLeft,
@@ -31,8 +27,8 @@
     languageStore,
     getCurrentLocale
   } from '@hcengineering/ui'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
-  import { PlannerCalendarMode } from '..'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { PlannerCalendarMode } from '..'
   import time from '../plugin'
   import PlannerViewSwitch from './PlannerViewSwitch.svelte'
   import { eventWindowQueries, getWorkSlotSpace } from '../utils'

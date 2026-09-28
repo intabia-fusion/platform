@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import core from '@hcengineering/core'
-  import { Request } from '@hcengineering/hr'
+  import type { Request } from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
   import { createFocusManager, FocusHandler } from '@hcengineering/ui'

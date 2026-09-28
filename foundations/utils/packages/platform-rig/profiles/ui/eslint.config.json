@@ -46,14 +46,19 @@
         }],
         "@typescript-eslint/array-type": "off",
         "@typescript-eslint/promise-function-async": "off",
-        "@typescript-eslint/consistent-type-imports": "off",
+        // svelte-preprocess runs with verbatimModuleSyntax: a type imported as a value stays a
+        // runtime import, and `import { type X }` becomes a bare `import 'x'`.
+        "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "separate-type-imports", "disallowTypeAnnotations": false }],
+        "@typescript-eslint/no-import-type-side-effects": "error",
         "import/first": "warn",
-        "import/no-duplicates": "warn",
+        // Its fixer (eslint-plugin-import 2.32) merges `import type` and value imports of one module
+        // into invalid syntax or moves values under `type`, silently dropping them at runtime.
+        "import/no-duplicates": "off",
         "import/no-mutable-exports": "off",
-        "import/no-unresolved": "warn",
+        // The node resolver ignores package `exports` (`svelte/store`); tsc and svelte-check resolve imports.
+        "import/no-unresolved": "off",
         "no-multiple-empty-lines": "warn",
         "no-undef-init": "off",
-        "no-use-before-define": "warn",
          // This need to be enabled eventually
         "@typescript-eslint/explicit-function-return-type": "warn",
         "@typescript-eslint/strict-boolean-expressions":"warn",

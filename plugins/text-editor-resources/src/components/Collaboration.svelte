@@ -15,14 +15,15 @@
 //
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { encodeDocumentId } from '@hcengineering/collaborator-client'
-  import { getAttribute, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { getAttribute, getClient } from '@hcengineering/presentation'
   import { CollaborationIds } from '@hcengineering/text-editor'
   import { onDestroy, setContext } from 'svelte'
 
   import { createTiptapCollaborationData } from '../provider/utils'
-  import { Provider } from '../provider/types'
+  import type { Provider } from '../provider/types'
 
   export let object: Doc
   export let attribute: KeyedAttribute

@@ -13,18 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, {
+  import type {
     ActivityMessage,
     ActivityMessageViewType,
     DocUpdateMessage,
     DocUpdateMessageViewlet
   } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { AttachedDoc, Class, Collection, Doc, Ref, Space } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Action, Component, ShowMore } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { Action } from '@hcengineering/ui'
+  import { Component, ShowMore } from '@hcengineering/ui'
+  import type { AttributeModel } from '@hcengineering/view'
   import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
 
   import ActivityMessageTemplate from '../activity-message/ActivityMessageTemplate.svelte'
@@ -34,7 +36,7 @@
 
   import { getAttributeModel, getCollectionAttribute } from '../../activityMessagesUtils'
   import { getIsTextType } from '../../utils'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
 
   export let value: DocUpdateMessage
   export let doc: Doc | undefined = undefined

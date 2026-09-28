@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { Ref, Status } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
 
   import { statusStore } from '../../status'
   import StatusPresenter from './StatusPresenter.svelte'

@@ -2,7 +2,8 @@
   import { Doc, Ref } from '@hcengineering/core'
   import { Asset, getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, closePopup, Menu, showPopup } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { closePopup, Menu, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import contact from '../plugin'
 

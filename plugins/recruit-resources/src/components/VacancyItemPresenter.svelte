@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Vacancy } from '@hcengineering/recruit'
   import { ActionIcon, Icon, IconEdit } from '@hcengineering/ui'
@@ -25,7 +25,7 @@
   export let action: ((item: Ref<Vacancy>) => void) | undefined = undefined
 
   function editVacancy (): void {
-    openDoc(getClient().getHierarchy(), value)
+    void openDoc(getClient().getHierarchy(), value)
   }
 </script>
 

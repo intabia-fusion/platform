@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { Card } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import card from '../plugin'
   import CardPresenter from './CardPresenter.svelte'
 

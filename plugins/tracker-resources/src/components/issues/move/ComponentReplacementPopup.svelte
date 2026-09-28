@@ -15,9 +15,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
   import tracker from '../../../plugin'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Icon, IconCheck, Label, Scroller } from '@hcengineering/ui'
   import ComponentPresenter from '../../components/ComponentPresenter.svelte'
 

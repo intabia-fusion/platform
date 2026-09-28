@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { BlobMetadata, SortingOrder, type Blob, type Ref } from '@hcengineering/core'
+  import type { BlobMetadata } from '@hcengineering/core'
+  import { SortingOrder, type Blob, type Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import {
     Button,

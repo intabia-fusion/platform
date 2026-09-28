@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
 
   import { getClient } from '@hcengineering/presentation'
-  import { Milestone } from '@hcengineering/tracker'
-  import { DatePresenter, ButtonSize } from '@hcengineering/ui'
+  import type { Milestone } from '@hcengineering/tracker'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { DatePresenter } from '@hcengineering/ui'
 
   export let value: Milestone
   export let field = 'targetDate'

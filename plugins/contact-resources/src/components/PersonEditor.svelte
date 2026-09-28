@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Ref, RefTo } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Person } from '@hcengineering/contact'
+  import type { Ref, RefTo } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import contact from '../plugin'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import UserBox from './UserBox.svelte'
 
   export let value: Ref<Person> | undefined

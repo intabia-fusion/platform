@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { DocumentQuery } from '@hcengineering/core'
+  import type { DocumentQuery } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { Button, Breadcrumb, Scroller, SearchInput, showPopup, IconAdd, Header } from '@hcengineering/ui'
   import type { Category } from '@hcengineering/inventory'
   import inventory from '../plugin'

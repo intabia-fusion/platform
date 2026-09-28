@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, getName, Person } from '@hcengineering/contact'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import { getName } from '@hcengineering/contact'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
+  import type { IconSize, LabelAndProps } from '@hcengineering/ui'
   import {
     getPlatformAvatarColorDef,
     getPlatformAvatarColorForTextDef,
-    IconSize,
     Label,
-    LabelAndProps,
     themeStore,
     tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import Avatar from './Avatar.svelte'
   import PersonElement from './PersonElement.svelte'
 

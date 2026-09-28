@@ -14,7 +14,7 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import love, { type MeetingMinutes } from '@hcengineering/love'
   import { Icon } from '@hcengineering/ui'
 

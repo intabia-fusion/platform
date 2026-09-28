@@ -14,12 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, SortingOrder, StatusCategory, WithLookup, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, StatusCategory, WithLookup } from '@hcengineering/core'
+  import core, { SortingOrder, toIdMap } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
-  import { Issue, Project } from '@hcengineering/tracker'
-  import { Button, ButtonKind, ButtonSize, ProgressCircle, SelectPopup, closeTooltip } from '@hcengineering/ui'
+  import type { Issue, Project } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, ProgressCircle, SelectPopup, closeTooltip } from '@hcengineering/ui'
   import { openDoc, openDocFromRef, statusStore } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import { listIssueStatusOrder } from '../../../utils'

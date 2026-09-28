@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { type Asset, type IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import {
     type AnySvelteComponent,
     Breadcrumb,

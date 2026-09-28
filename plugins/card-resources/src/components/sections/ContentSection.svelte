@@ -14,12 +14,12 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Heading } from '@hcengineering/text-editor'
+  import type { Card } from '@hcengineering/card'
+  import type { Heading } from '@hcengineering/text-editor'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import Content from '../Content.svelte'
-  import { CardSectionAction } from '../../types'
+  import type { CardSectionAction } from '../../types'
   import { permissionsStore } from '@hcengineering/contact-resources'
   import { canChangeDoc } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'

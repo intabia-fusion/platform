@@ -37,7 +37,7 @@
   }
 
   function change (field: string, value: any) {
-    client.updateDoc(object._class, object.space, object._id, { [field]: value })
+    void client.updateDoc(object._class, object.space, object._id, { [field]: value })
   }
 
   onMount(() => {

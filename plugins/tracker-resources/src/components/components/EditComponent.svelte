@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
   import { getClient, getDocRules } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
   import { EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import tracker from '../../plugin'

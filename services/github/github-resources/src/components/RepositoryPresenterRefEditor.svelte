@@ -6,21 +6,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    IconChevronDown,
-    LabelAndProps,
-    SelectPopup,
-    SelectPopupValueType,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
+  import { Button, IconChevronDown, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { HyperlinkEditor } from '@hcengineering/view-resources'
-  import { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+  import type { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

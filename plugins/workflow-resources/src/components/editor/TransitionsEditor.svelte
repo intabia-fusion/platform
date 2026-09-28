@@ -12,9 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, Status } from '@hcengineering/core'
+  import type { Doc, Ref, Status } from '@hcengineering/core'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { StatusPresenter } from '@hcengineering/tracker-resources'
   import {
     ButtonIcon,
@@ -30,7 +30,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
-  import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import type { Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'

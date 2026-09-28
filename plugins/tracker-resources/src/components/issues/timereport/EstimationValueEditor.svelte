@@ -18,7 +18,8 @@
   import type { ButtonSize } from '@hcengineering/ui'
   import { Label, showPopup, eventToHTMLElement, Button } from '@hcengineering/ui'
   import TimePresenter from './TimePresenter.svelte'
-  import { Issue, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { reduceChildInfoTree } from '@hcengineering/tracker'
   import EditEstimationPopup from './EditEstimationPopup.svelte'
 
   export let placeholder: IntlString

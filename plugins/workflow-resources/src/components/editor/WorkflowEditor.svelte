@@ -13,8 +13,10 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import core, { notEmpty, Ref, Status, WithLookup } from '@hcengineering/core'
-  import { Asset, Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
+  import type { Ref, Status, WithLookup } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import {
     copyTextToClipboard,
     createQuery,
@@ -23,8 +25,10 @@
     MessageBox
   } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
+  import type { TabItem } from '@hcengineering/ui'
   import {
     ButtonIcon,
     ButtonMenu,
@@ -39,8 +43,7 @@
     Modal,
     Scroller,
     showPopup,
-    Switcher,
-    TabItem
+    Switcher
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { exportWorkflow, removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'

@@ -14,15 +14,16 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component, Tabs } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component, Tabs } from '@hcengineering/ui'
 
   const client = getClient()
 
   let tabs: { component: AnyComponent, label: IntlString, props: any }[] | undefined
 
-  client
+  void client
     .findAll(contact.class.ContactsTab, {})
     .then(
       (ts) =>

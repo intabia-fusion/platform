@@ -1,6 +1,8 @@
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { DocumentQuery, SortingOrder } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { DocumentQuery } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Scroller } from '@hcengineering/ui'
   import EmployeePresenter from './EmployeePresenter.svelte'
@@ -26,7 +28,7 @@
     )
   }
 
-  $: updateEmployees(resultQuery)
+  $: void updateEmployees(resultQuery)
 </script>
 
 <Scroller padding={'var(--spacing-2)'}>

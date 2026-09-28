@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { DocumentSpace, DocumentSpaceType, Project } from '@hcengineering/controlled-documents'
+  import type { DocumentSpace, DocumentSpaceType, Project } from '@hcengineering/controlled-documents'
   import documents from '../../plugin'
   import ProjectsView from './ProjectsView.svelte'
 

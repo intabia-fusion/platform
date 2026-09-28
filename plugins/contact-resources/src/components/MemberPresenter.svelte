@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Member } from '@hcengineering/contact'
+  import type { Member } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
   import { DocNavLink } from '@hcengineering/view-resources'
   import { ContactPresenter } from '..'

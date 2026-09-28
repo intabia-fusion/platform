@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import { getClient, createQuery } from '@hcengineering/presentation'
-  import { Button, ButtonSize, Component, Icon, IconSize, showPopup } from '@hcengineering/ui'
+  import type { ButtonSize, IconSize } from '@hcengineering/ui'
+  import { Button, Component, Icon, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   import card from '../plugin'
   import { getCardIconInfo } from '../utils'

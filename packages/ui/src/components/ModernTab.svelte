@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
-  import { AnySvelteComponent, ButtonIcon, Icon, IconClose, IconSize, Label, tooltip } from '../index'
+  import type { AnySvelteComponent, IconSize } from '../index'
+  import { ButtonIcon, Icon, IconClose, Label, tooltip } from '../index'
 
   export let label: string | undefined = undefined
   export let labelIntl: IntlString | undefined = undefined

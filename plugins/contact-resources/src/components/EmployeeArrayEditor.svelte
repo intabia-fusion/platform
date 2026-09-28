@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, Space } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import type { AccountUuid, AnyAttribute, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import UserBoxList from './UserBoxList.svelte'
   import { employeeRefByAccountUuidStore } from '..'
   import { getClient } from '@hcengineering/presentation'
@@ -34,7 +35,7 @@
     }, 500)
   }
 
-  $: buildQuery(attribute, space)
+  $: void buildQuery(attribute, space)
 
   async function buildQuery (attribute: AnyAttribute | undefined, space: Ref<Space> | undefined): Promise<void> {
     const baseQuery = {

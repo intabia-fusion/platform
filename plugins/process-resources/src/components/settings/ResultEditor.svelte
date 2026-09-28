@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Type } from '@hcengineering/core'
+  import type { Type } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Process, UserResult } from '@hcengineering/process'
+  import type { Process, UserResult } from '@hcengineering/process'
   import { Button, EditBox, IconClose, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { generateContextId } from '../../utils'

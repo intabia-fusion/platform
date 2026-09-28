@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { LoginInfo, RegionInfo } from '@hcengineering/login'
+  import type { LoginInfo, RegionInfo } from '@hcengineering/login'
   import { createWorkspace, getAccountDisplayName, getRegionInfo, setLoginInfo } from '@hcengineering/login-resources'
   import { Status, Severity, OK, getEmbeddedLabel } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'

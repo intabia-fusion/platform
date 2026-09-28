@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Contact, Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     EditWithIcon,
     FocusHandler,
     Icon,
@@ -33,7 +34,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { AssigneeCategory } from '../assignee'
+  import type { AssigneeCategory } from '../assignee'
   import contact from '../plugin'
   import { addRecentlyUsedAssignee, getRecentlyUsedAssignees } from '../recentAssignees'
   import UserInfo from './UserInfo.svelte'
@@ -82,7 +83,7 @@
 
   $: {
     dataLoading = true
-    updateCategories(objects, categories).then(() => {
+    void updateCategories(objects, categories).then(() => {
       dataLoading = false
     })
   }
@@ -168,7 +169,7 @@
     if (key.code === 'Enter') {
       key.preventDefault()
       key.stopPropagation()
-      handleSelection(key, selection)
+      void handleSelection(key, selection)
     }
   }
   const manager = createFocusManager()
@@ -229,7 +230,7 @@
             class="menu-item withList no-focus w-full"
             class:selected={obj._id === selected}
             on:click={() => {
-              handleSelection(undefined, item)
+              void handleSelection(undefined, item)
             }}
           >
             <div class="flex-grow clear-mins">

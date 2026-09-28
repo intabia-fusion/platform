@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { LoginInfo } from '@hcengineering/login'
+  import type { LoginInfo } from '@hcengineering/login'
   import { changeUsername } from '@hcengineering/login-resources'
   import { OK, Severity, Status, unknownError } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'

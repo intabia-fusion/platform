@@ -1,6 +1,7 @@
 <script lang="ts">
-  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
-  import { Ref } from '@hcengineering/core'
+  import type { DocumentCategory } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
+  import type { Ref } from '@hcengineering/core'
 
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
@@ -16,7 +17,7 @@
   const dispatch = createEventDispatcher()
 
   $: if (value) {
-    client.findOne(documents.class.DocumentCategory, { _id: value }).then((result) => {
+    void client.findOne(documents.class.DocumentCategory, { _id: value }).then((result) => {
       category = result
     })
   }

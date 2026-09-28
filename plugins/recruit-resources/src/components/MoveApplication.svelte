@@ -15,8 +15,9 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { ExpandRightDouble } from '@hcengineering/contact-resources'
-  import { FindOptions, Status as TaskStatus } from '@hcengineering/core'
-  import { OK, Severity, Status } from '@hcengineering/platform'
+  import type { FindOptions, Status as TaskStatus } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/platform'
+  import { OK, Severity } from '@hcengineering/platform'
   import presentation, { Card, SpaceSelect, createQuery, getClient } from '@hcengineering/presentation'
   import type { Applicant, Vacancy } from '@hcengineering/recruit'
   import { getStates } from '@hcengineering/task'

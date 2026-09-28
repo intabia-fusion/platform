@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore, selectedTypeStore } from '../../'

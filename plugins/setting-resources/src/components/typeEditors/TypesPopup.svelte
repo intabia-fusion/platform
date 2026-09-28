@@ -16,7 +16,7 @@
   import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
-  import { DropdownIntlItem } from '@hcengineering/ui/src/types'
+  import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
 

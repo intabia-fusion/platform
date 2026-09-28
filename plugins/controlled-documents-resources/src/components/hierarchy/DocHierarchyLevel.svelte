@@ -19,8 +19,8 @@
     ProjectDocumentTree,
     getDocumentName
   } from '@hcengineering/controlled-documents'
-  import { type Doc, type Ref } from '@hcengineering/core'
-  import { type Action } from '@hcengineering/ui'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Action } from '@hcengineering/ui'
   import { TreeItem } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { floorFractionDigits, Label, tooltip } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
   import tracker from '../../plugin'

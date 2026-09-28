@@ -13,12 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { BusySlot, getBusyIntervals } from '@hcengineering/calendar'
-  import contact, { Person } from '@hcengineering/contact'
+  import type { BusySlot } from '@hcengineering/calendar'
+  import calendar, { getBusyIntervals } from '@hcengineering/calendar'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { employeeRefByAccountUuidStore, PersonPresenter } from '@hcengineering/contact-resources'
-  import { Ref, Timestamp } from '@hcengineering/core'
+  import type { Ref, Timestamp } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import task, { Project } from '@hcengineering/task'
+  import type { Project } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { getMonthName, Scroller } from '@hcengineering/ui'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
 

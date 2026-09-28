@@ -14,14 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Ref, Space, getCurrentAccount } from '@hcengineering/core'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { AnyComponent, AnySvelteComponent, ButtonSize } from '@hcengineering/ui'
-  import { ObjectCreate } from '../types'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
+  import type { AnyComponent, AnySvelteComponent, ButtonSize } from '@hcengineering/ui'
+  import type { ObjectCreate } from '../types'
   import { createQuery } from '../utils'
   import DocPopup from './DocPopup.svelte'
   import SpaceInfo from './SpaceInfo.svelte'
-  import { ComponentType } from 'svelte'
+  import type { ComponentType } from 'svelte'
 
   export let _class: Ref<Class<Space>>
   export let selected: Ref<Space> | undefined
@@ -65,7 +67,7 @@
 
   let is: AnySvelteComponent | undefined = undefined
 
-  $: getComponent(component)
+  $: void getComponent(component)
 
   async function getComponent (component: AnySvelteComponent | AnyComponent | undefined): Promise<void> {
     if (typeof component === 'string') {

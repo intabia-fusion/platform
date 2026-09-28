@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, ClassPermission, Doc } from '@hcengineering/core'
+  import type { Class, ClassPermission, Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
 

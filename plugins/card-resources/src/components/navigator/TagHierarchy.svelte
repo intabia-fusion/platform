@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { MasterTag } from '@hcengineering/card'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { IconWithEmoji, getClient } from '@hcengineering/presentation'
-  import { Action, ButtonIcon, NavItem, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { ButtonIcon, NavItem, getCurrentLocation, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import card from '../../plugin'
 

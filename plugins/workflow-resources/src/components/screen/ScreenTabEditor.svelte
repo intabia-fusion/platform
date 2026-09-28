@@ -13,12 +13,12 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { AnyAttribute, Doc, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Doc, Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient, MessageBox } from '@hcengineering/presentation'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     ButtonIcon,
-    DropdownIntlItem,
     EditBox,
     Icon,
     IconDelete,
@@ -31,10 +31,11 @@
     tooltip
   } from '@hcengineering/ui'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
-  import { addScreenField, removeScreenField, removeScreenTab, ScreenField, ScreenTab } from '@hcengineering/workflow'
+  import type { ScreenField, ScreenTab } from '@hcengineering/workflow'
+  import { addScreenField, removeScreenField, removeScreenTab } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import { DisplayAttribute, DisplayAttributeGroup } from '../../utils'
+  import type { DisplayAttribute, DisplayAttributeGroup } from '../../utils'
 
   export let tab: ScreenTab
   export let readonly = false

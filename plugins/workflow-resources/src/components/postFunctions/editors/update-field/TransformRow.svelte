@@ -18,7 +18,7 @@
   import { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../../../plugin'
-  import { FieldRow } from './types'
+  import type { FieldRow } from './types'
   import TransformPill from './TransformPill.svelte'
   import { hasTransformFunctions, isFieldValueEmpty } from './utils'
 

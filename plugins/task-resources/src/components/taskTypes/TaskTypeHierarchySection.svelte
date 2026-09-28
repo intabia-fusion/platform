@@ -12,9 +12,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { TaskType, getConnectedTaskTypes } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
+  import { getConnectedTaskTypes } from '@hcengineering/task'
   import {
     Button,
     ButtonIcon,

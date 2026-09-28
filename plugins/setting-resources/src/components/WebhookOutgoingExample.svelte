@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Class, type Doc, type Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { copyTextToClipboard } from '@hcengineering/presentation'
   import { webhookEventSamples } from '@hcengineering/setting'
   import {

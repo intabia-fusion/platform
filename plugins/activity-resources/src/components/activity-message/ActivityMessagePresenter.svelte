@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessageViewType, ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessageViewType, ActivityMessage } from '@hcengineering/activity'
   import view from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
-  import { Action, Component } from '@hcengineering/ui'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Action } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
+  import type { Doc } from '@hcengineering/core'
+  import { Class, Ref } from '@hcengineering/core'
 
   export let value: ActivityMessage
   export let doc: Doc | undefined = undefined

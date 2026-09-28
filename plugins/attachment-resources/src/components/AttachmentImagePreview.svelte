@@ -21,7 +21,7 @@
 
   import BrokenImage from './icons/BrokenImage.svelte'
   import { calculateAttachmentDimensions } from '../utils'
-  import { AttachmentImageSize } from '../types'
+  import type { AttachmentImageSize } from '../types'
 
   export let value: WithLookup<Attachment> | BlobType
   export let size: AttachmentImageSize = 'auto'

@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
   import documents, { DocumentState, type DocumentAttachmentState } from '@hcengineering/controlled-documents'
   import { type Blob, type Ref, generateId } from '@hcengineering/core'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { createQuery, getClient, getContentType } from '@hcengineering/presentation'
-  import textEditorPlugin, { Editor, Heading, type TextEditorHandler } from '@hcengineering/text-editor'
+  import type { Editor, Heading } from '@hcengineering/text-editor'
+  import textEditorPlugin, { type TextEditorHandler } from '@hcengineering/text-editor'
   import {
     AttachIcon,
     CollaboratorEditor,
@@ -263,7 +265,7 @@
 
   function handleTable (element: HTMLElement, editorHandler: TextEditorHandler, event?: MouseEvent): void {
     const position = event !== undefined ? getEventPositionElement(event) : getPopupPositionElement(element)
-    addTableHandler(editorHandler.insertTable, position)
+    void addTableHandler(editorHandler.insertTable, position)
   }
 
   $: refActions = !$isEditable

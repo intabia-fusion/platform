@@ -15,9 +15,10 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  import { Channel, Contact } from '@hcengineering/contact'
-  import { Ref, SortingOrder } from '@hcengineering/core'
-  import { Message, SharedMessage } from '@hcengineering/gmail'
+  import type { Channel, Contact } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { Message, SharedMessage } from '@hcengineering/gmail'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import plugin, { Button, Icon, IconShare, Label, Scroller } from '@hcengineering/ui'
@@ -62,7 +63,7 @@
       { attachedTo: channelId },
       (res) => {
         plainMessages = res
-        inboxClient.readDoc(channelId)
+        void inboxClient.readDoc(channelId)
       },
       { sort: { sendOn: SortingOrder.Descending } }
     )

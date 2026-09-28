@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonSize, humanReadableFileSize } from '@hcengineering/ui'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Button, humanReadableFileSize } from '@hcengineering/ui'
 
   export let value: number | undefined
   export let kind: 'no-border' | 'link' | 'list' = 'no-border'

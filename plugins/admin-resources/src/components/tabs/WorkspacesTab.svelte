@@ -13,7 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type RegionInfo, WorkspacesSortKey } from '@hcengineering/account-client'
+  import type { WorkspacesSortKey } from '@hcengineering/account-client'
+  import type { RegionInfo } from '@hcengineering/account-client'
+  import type { WorkspaceUserOperation } from '@hcengineering/core'
   import {
     groupByArray,
     isActiveMode,
@@ -21,8 +23,7 @@
     isDeletingMode,
     reduceCalls,
     systemAccountUuid,
-    type WorkspaceMode,
-    WorkspaceUserOperation
+    type WorkspaceMode
   } from '@hcengineering/core'
   import { getEmbeddedLabel, getMetadata, type IntlString, translate } from '@hcengineering/platform'
   import presentation, {

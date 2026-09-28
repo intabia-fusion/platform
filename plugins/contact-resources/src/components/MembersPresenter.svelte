@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Button, eventToHTMLElement, showPopup, themeStore } from '@hcengineering/ui'

@@ -16,7 +16,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { deviceOptionsStore as deviceInfo, resizeObserver, testing, checkAdaptiveMatching } from '..'
-  import { CompAndProps, fitPopupElement, pin } from '../popups'
+  import type { CompAndProps } from '../popups'
+  import { fitPopupElement, pin } from '../popups'
   import type { AnySvelteComponent, DeviceOptions, PopupAlignment, PopupOptions, PopupPositionElement } from '../types'
 
   export let is: AnySvelteComponent

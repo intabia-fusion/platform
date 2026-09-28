@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, platformNow, platformNowDiff, Ref, toIdMap } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { platformNow, platformNowDiff, toIdMap } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
-  import tags, { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
+  import type { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import { Button, CheckBox, EditBox, Expandable, Lazy, ListView, Loading } from '@hcengineering/ui'
   import { FILTER_DEBOUNCE_MS } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

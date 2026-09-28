@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { parseContext, Process, Trigger } from '@hcengineering/process'
+  import type { Process, Trigger } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
 
   export let value: Ref<Trigger>

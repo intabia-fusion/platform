@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
   import {
     Button,
     ButtonWithDropdown,
@@ -23,13 +25,13 @@
     ExpandCollapse,
     IconAdd,
     IconDropdown,
-    SelectPopupValueType,
     closeTooltip,
     resizeObserver,
     showPopup
   } from '@hcengineering/ui'
   import { createEventDispatcher, afterUpdate } from 'svelte'
-  import view, { ViewOptions, Viewlet, ViewletPreference, BuildModelKey } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view, { BuildModelKey } from '@hcengineering/view'
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'

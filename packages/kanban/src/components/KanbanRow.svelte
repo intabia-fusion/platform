@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
+  import type {
     CategoryType,
     Class,
     Doc,
@@ -22,12 +22,12 @@
     IdMap,
     RateLimiter,
     Ref,
-    Space,
-    toIdMap
+    Space
   } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { CardDragEvent, DocWithRank, Item } from '../types'
+  import type { CardDragEvent, DocWithRank, Item } from '../types'
   import { createQuery } from '@hcengineering/presentation'
 
   export let stateObjects: Item[]

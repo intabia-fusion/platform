@@ -12,11 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { ModernButton } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { UserMeetingInvite } from '@hcengineering/love'
+  import type { UserMeetingInvite } from '@hcengineering/love'
   import love from '../../../plugin'
 
   export let person: Person

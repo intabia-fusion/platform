@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createQuery, getClient, HTMLViewer } from '@hcengineering/presentation'
-  import { TelegramMessage } from '@hcengineering/telegram'
-  import { Ref } from '@hcengineering/core'
+  import type { TelegramMessage } from '@hcengineering/telegram'
+  import type { Ref } from '@hcengineering/core'
   import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
 
   import telegram from '../../plugin'
@@ -27,7 +27,7 @@
   const query = createQuery()
   const client = getClient()
 
-  $: value === undefined && _id && loadObject(_id)
+  $: void (value === undefined && _id && loadObject(_id))
 
   async function loadObject (_id: Ref<TelegramMessage>): Promise<void> {
     const isRemoved = await checkIsObjectRemoved(client, _id, telegram.class.Message)

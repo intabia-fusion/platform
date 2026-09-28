@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
+  import type {
     AnyAttribute,
     AssociationQuery,
     Class,
@@ -23,12 +23,10 @@
     FindOptions,
     Lookup,
     Ref,
-    SortingOrder,
     TxOperations,
-    TypedSpace,
-    getObjectValue,
-    mergeQueries
+    TypedSpace
   } from '@hcengineering/core'
+  import core, { SortingOrder, getObjectValue, mergeQueries } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
   import ui, {
@@ -42,17 +40,25 @@
     mouseAttractor,
     resizeObserver
   } from '@hcengineering/ui'
-  import { AttributeModel, BuildModelKey, BuildModelOptions, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type {
+    AttributeModel,
+    BuildModelKey,
+    BuildModelOptions,
+    ViewOptionModel,
+    ViewOptions
+  } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onMount } from 'svelte'
   import { showMenu } from '../actions'
   import view from '../plugin'
-  import { LoadingProps, buildConfigAssociation, buildConfigLookup, buildModel, restrictionStore } from '../utils'
+  import type { LoadingProps } from '../utils'
+  import { buildConfigAssociation, buildConfigLookup, buildModel, restrictionStore } from '../utils'
   import IconUpDown from './icons/UpDown.svelte'
   import { getResultOptions, getResultQuery } from '../viewOptions'
   import { canEditSpace } from '../visibilityTester'
-  import contact, { PermissionsStore } from '@hcengineering/contact'
-  import { Readable } from 'svelte/store'
+  import type { PermissionsStore } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Readable } from 'svelte/store'
   import { getResource } from '@hcengineering/platform'
   import { canChangeAttribute } from '../permissions'
 
@@ -300,7 +306,7 @@
   }
 
   function onChange (value: any, doc: Doc, key: string, attribute: AnyAttribute): void {
-    updateAttribute(client, doc, _class, { key, attr: attribute }, value)
+    void updateAttribute(client, doc, _class, { key, attr: attribute }, value)
   }
 
   function getOnChange (doc: Doc, attribute: AttributeModel) {

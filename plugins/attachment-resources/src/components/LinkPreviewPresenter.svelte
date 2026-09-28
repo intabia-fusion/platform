@@ -13,14 +13,10 @@
 // limitations under the License.
 // -->
 <script lang="ts">
-  import {
-    getJsonOrEmpty,
-    getClient,
-    type LinkPreviewDetails,
-    LinkPreviewAttachmentMetadata
-  } from '@hcengineering/presentation'
-  import { type Attachment } from '@hcengineering/attachment'
-  import { type WithLookup } from '@hcengineering/core'
+  import type { LinkPreviewAttachmentMetadata } from '@hcengineering/presentation'
+  import { getJsonOrEmpty, getClient, type LinkPreviewDetails } from '@hcengineering/presentation'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { WithLookup } from '@hcengineering/core'
   import { onMount } from 'svelte'
 
   import TrashIcon from './icons/Trash.svelte'

@@ -17,7 +17,8 @@
 
 <script lang="ts">
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
-  import core, { Class, Doc, Ref, WithLookup, getCurrentAccount } from '@hcengineering/core'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
   import notification from '@hcengineering/notification'
   import { Panel } from '@hcengineering/panel'

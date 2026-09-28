@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { MeetingMinutes } from '@hcengineering/love'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { MeetingMinutes } from '@hcengineering/love'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Icon, TimeSince, tooltip } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'

@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonKind, ButtonSize, DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
-  import { DiffViewMode } from '@hcengineering/diffview'
+  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl } from '@hcengineering/ui'
+  import type { DiffViewMode } from '@hcengineering/diffview'
 
   import diffview from '../plugin'
 

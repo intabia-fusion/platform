@@ -7,7 +7,7 @@
   import { type Ref, SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Button, Loading, ProgressCircle, showPopup } from '@hcengineering/ui'
-  import { type TrainingAttempt, type TrainingRequest } from '@hcengineering/training'
+  import type { TrainingAttempt, TrainingRequest } from '@hcengineering/training'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
   import { type CompletionMap, CompletionMapValueState, getCompletionMap } from '../utils'

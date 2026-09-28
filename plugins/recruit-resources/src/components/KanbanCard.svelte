@@ -16,15 +16,16 @@
   import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
   import contact, { getName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
-  import recruit, { Applicant, Candidate } from '@hcengineering/recruit'
+  import type { Applicant, Candidate } from '@hcengineering/recruit'
+  import recruit from '@hcengineering/recruit'
   import task from '@hcengineering/task'
   import { AssigneePresenter, StateRefPresenter } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
   import { Component, DueDatePresenter } from '@hcengineering/ui'
-  import { BuildModelKey } from '@hcengineering/view'
+  import type { BuildModelKey } from '@hcengineering/view'
   import { DocNavLink, ObjectPresenter, enabledConfig, statusStore } from '@hcengineering/view-resources'
   import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
 
@@ -105,7 +106,7 @@
           shrink={1}
           value={object.status}
           onChange={(status) => {
-            getClient().update(object, { status })
+            void getClient().update(object, { status })
           }}
         />
       {/if}

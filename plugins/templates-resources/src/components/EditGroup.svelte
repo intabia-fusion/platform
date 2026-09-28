@@ -18,7 +18,7 @@
   import contact from '@hcengineering/contact-resources/src/plugin'
   import core from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
-  import { TemplateCategory } from '@hcengineering/templates'
+  import type { TemplateCategory } from '@hcengineering/templates'
   import { EditBox, Grid, Label } from '@hcengineering/ui'
   import { BooleanPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -55,7 +55,7 @@
       <EditBox
         bind:value={object.name}
         on:blur={() => {
-          if (rawName !== object.name) changeName(object.name)
+          if (rawName !== object.name) void changeName(object.name)
         }}
       />
     </div>

@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Data, Ref, Timestamp } from '@hcengineering/core'
-  import { Department, PublicHoliday, timeToTzDate } from '@hcengineering/hr'
+  import type { Data, Ref, Timestamp } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Department, PublicHoliday } from '@hcengineering/hr'
+  import { timeToTzDate } from '@hcengineering/hr'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { Button, DateRangePresenter, EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -54,10 +56,10 @@
       await client.createDoc(hr.class.PublicHoliday, core.space.Workspace, holiday)
     }
   }
-  findHoliday()
+  void findHoliday()
 
   function deleteHoliday () {
-    existingHoliday && client.remove(existingHoliday)
+    void (existingHoliday && client.remove(existingHoliday))
     dispatch('close')
   }
 </script>
@@ -67,7 +69,7 @@
   on:close
   okLabel={existingHoliday ? presentation.string.Save : presentation.string.Ok}
   okAction={() => {
-    saveHoliday()
+    void saveHoliday()
   }}
   canSave={true}
   on:changeContent

@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
   import { EmployeeBox } from '@hcengineering/contact-resources'
-  import core, { Ref } from '@hcengineering/core'
-  import { Department, HrEvents } from '@hcengineering/hr'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Department } from '@hcengineering/hr'
+  import { HrEvents } from '@hcengineering/hr'
   import { Card, getClient } from '@hcengineering/presentation'
   import { Button, EditBox, FocusHandler, createFocusManager } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

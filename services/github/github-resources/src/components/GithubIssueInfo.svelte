@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Icon, Label } from '@hcengineering/ui'
-  import { GithubIntegrationRepository } from '@hcengineering/github'
+  import type { GithubIntegrationRepository } from '@hcengineering/github'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

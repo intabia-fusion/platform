@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { DateRangeMode, TypeDate as DateType } from '@hcengineering/core'
+  import type { TypeDate as DateType } from '@hcengineering/core'
+  import core, { DateRangeMode } from '@hcengineering/core'
   import { TypeDate } from '@hcengineering/model'
-  import { IntlString } from '@hcengineering/platform'
-  import { DropdownLabelsIntl, Label, DropdownIntlItem } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import { DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
 
   export let type: DateType | undefined
   export let editable: boolean = true

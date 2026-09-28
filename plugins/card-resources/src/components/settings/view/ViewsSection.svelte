@@ -15,8 +15,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
 
-  import { MasterTag } from '@hcengineering/card'
-  import { WithLookup } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'

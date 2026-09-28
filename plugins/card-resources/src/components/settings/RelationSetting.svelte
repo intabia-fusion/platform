@@ -4,7 +4,8 @@
   import contact from '@hcengineering/contact'
   import card from '../../plugin'
   import { Analytics } from '@hcengineering/analytics'
-  import { CardEvents, MasterTag } from '@hcengineering/card'
+  import type { MasterTag } from '@hcengineering/card'
+  import { CardEvents } from '@hcengineering/card'
 
   const client = getClient()
   const hierarchy = client.getHierarchy()

@@ -25,7 +25,7 @@
   import task from '@hcengineering/task'
   import { AssigneePresenter, StateRefPresenter } from '@hcengineering/task-resources'
   import { ActionIcon, Component, DueDatePresenter, IconMoreH } from '@hcengineering/ui'
-  import { BuildModelKey } from '@hcengineering/view'
+  import type { BuildModelKey } from '@hcengineering/view'
   import { enabledConfig, openDoc, showMenu, statusStore } from '@hcengineering/view-resources'
   import tracker from '@hcengineering/tracker'
 
@@ -40,7 +40,7 @@
   const assigneeAttribute = client.getHierarchy().getAttribute(lead.class.Lead, 'assignee')
 
   function showLead () {
-    openDoc(client.getHierarchy(), object)
+    void openDoc(client.getHierarchy(), object)
   }
 
   $: status = $statusStore.byId.get(object.status)
@@ -80,7 +80,7 @@
         shrink={1}
         value={object.status}
         onChange={(status) => {
-          client.update(object, { status })
+          void client.update(object, { status })
         }}
       />
     {/if}

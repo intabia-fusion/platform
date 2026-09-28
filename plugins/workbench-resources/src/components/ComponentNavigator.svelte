@@ -15,9 +15,8 @@
 
 <script lang="ts">
   import { onDestroy } from 'svelte'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
-    AnySvelteComponent,
     Button,
     Breadcrumb,
     Component,
@@ -35,8 +34,9 @@
     twoPanelsSeparators,
     resizeObserver
   } from '@hcengineering/ui'
-  import { Doc, DocumentQuery, Ref, Space, mergeQueries } from '@hcengineering/core'
-  import { IntlString, Asset } from '@hcengineering/platform'
+  import type { Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
+  import { mergeQueries } from '@hcengineering/core'
+  import type { IntlString, Asset } from '@hcengineering/platform'
 
   export let space: Ref<Space> | undefined = undefined
   export let navigationComponent: AnyComponent

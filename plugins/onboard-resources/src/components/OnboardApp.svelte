@@ -17,8 +17,8 @@
   import { getAccount } from '@hcengineering/login-resources'
   import { getMetadata, setMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
-    Location,
     Popup,
     Scroller,
     deviceOptionsStore as deviceInfo,
@@ -44,7 +44,8 @@
   import loginBackWebp from '../../img/login_back.webp'
   import loginBack2xWebp from '../../img/login_back_2x.webp'
 
-  import { Pages, pages } from '..'
+  import type { Pages } from '..'
+  import { pages } from '..'
 
   export let page: Pages = 'onboard'
 

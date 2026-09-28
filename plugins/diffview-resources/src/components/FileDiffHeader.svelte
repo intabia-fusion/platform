@@ -16,7 +16,8 @@
   import { createEventDispatcher } from 'svelte'
   import { copyTextToClipboard } from '@hcengineering/presentation'
   import { Button, Chevron, IconCheck, IconCopy } from '@hcengineering/ui'
-  import diffview, { DiffFile } from '@hcengineering/diffview'
+  import type { DiffFile } from '@hcengineering/diffview'
+  import diffview from '@hcengineering/diffview'
 
   import { formatFileName, isDevNullName } from '../utils'
 

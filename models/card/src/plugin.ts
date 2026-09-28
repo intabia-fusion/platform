@@ -23,6 +23,7 @@ import { type TagCategory } from '@hcengineering/tags'
 import { type Location, type ResolvedLocation } from '@hcengineering/ui/src/types'
 import { type LocationData } from '@hcengineering/workbench'
 import { type NotificationGroup } from '@hcengineering/notification'
+import {} from '@hcengineering/presentation'
 
 export default mergeIds(cardId, card, {
   app: {

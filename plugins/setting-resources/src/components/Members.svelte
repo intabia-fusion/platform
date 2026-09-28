@@ -13,19 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, formatName } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import contact, { formatName } from '@hcengineering/contact'
   import { EmployeePresenter } from '@hcengineering/contact-resources'
-  import { Account, AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Account } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import {
-    Breadcrumb,
-    DropdownIntlItem,
-    DropdownLabelsIntl,
-    Header,
-    Scroller,
-    SearchInput,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { Breadcrumb, DropdownLabelsIntl, Header, Scroller, SearchInput, showPopup } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   import setting from '../plugin'

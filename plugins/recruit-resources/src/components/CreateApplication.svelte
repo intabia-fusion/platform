@@ -18,8 +18,7 @@
   import type { Contact, Employee, Person } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
   import { EmployeeBox, ExpandRightDouble, UserBox } from '@hcengineering/contact-resources'
-  import core, {
-    AccountRole,
+  import type {
     Class,
     Client,
     Doc,
@@ -28,13 +27,11 @@
     PersonId,
     Ref,
     Space,
-    Status as TaskStatus,
-    fillDefaults,
-    generateId,
-    getCurrentAccount,
-    hasAccountRole
+    Status as TaskStatus
   } from '@hcengineering/core'
-  import { OK, Resource, Severity, Status, getResource } from '@hcengineering/platform'
+  import core, { AccountRole, fillDefaults, generateId, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Resource, Status } from '@hcengineering/platform'
+  import { OK, Severity, getResource } from '@hcengineering/platform'
   import presentation, {
     Card,
     InlineAttributeBar,
@@ -43,7 +40,8 @@
     getClient
   } from '@hcengineering/presentation'
   import { recruitId, type Applicant, type Candidate, type Vacancy, RecruitEvents } from '@hcengineering/recruit'
-  import { TaskType, getStates } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
+  import { getStates } from '@hcengineering/task'
   import { TaskKindSelector, selectedTypeStore, typeStore } from '@hcengineering/task-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import ui, {
@@ -207,7 +205,7 @@
     }
   }
 
-  $: validate(doc, _space, doc._class, _candidate)
+  $: void validate(doc, _space, doc._class, _candidate)
 
   let states: Array<{ id: number | string, color: number, label: string }> = []
   let selectedState: TaskStatus | undefined

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Status } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { StatePresenter } from '@hcengineering/task-resources'
   import { Label, tooltip } from '@hcengineering/ui'
-  import { WorkflowTransition } from '@hcengineering/workflow'
+  import type { WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../plugin'
 

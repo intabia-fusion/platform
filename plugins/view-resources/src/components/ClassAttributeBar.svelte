@@ -14,16 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Mixin, Rank, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core, { Mixin, Rank } from '@hcengineering/core'
   import { toRank } from '@hcengineering/rank'
-  import { IntlString } from '@hcengineering/platform'
-  import presentation, {
-    AttributesBar,
-    KeyedAttribute,
-    createQuery,
-    getAttribute,
-    getClient
-  } from '@hcengineering/presentation'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import presentation, { AttributesBar, createQuery, getAttribute, getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import { Button, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import { getFiltredKeys, isCollectionAttr, restrictionStore } from '../utils'

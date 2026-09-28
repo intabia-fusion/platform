@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import presentation, { Card, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { Process, ProcessFunction } from '@hcengineering/process'
+  import type { Process, ProcessFunction } from '@hcengineering/process'
   import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getCriteriaEditor } from '../../utils'

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import aiBot, { type AIFeature, type AILevelInfo } from '@hcengineering/ai-bot'
-  import { type IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label } from '@hcengineering/ui'
 
   export let levels: AILevelInfo[] = []

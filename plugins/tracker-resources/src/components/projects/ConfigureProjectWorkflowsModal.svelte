@@ -14,21 +14,17 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import presentation, { createQuery, IconWithEmoji } from '@hcengineering/presentation'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import ui, {
-    DropdownTextItem,
-    Icon,
-    Label,
-    languageStore,
-    Modal,
-    ModernDropdownLabels,
-    Scroller
-  } from '@hcengineering/ui'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import ui, { Icon, Label, languageStore, Modal, ModernDropdownLabels, Scroller } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import workflow, { Workflow } from '@hcengineering/workflow'
+  import type { Workflow } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
 
   export let taskTypes: TaskType[]
   export let projectType: Ref<ProjectType>

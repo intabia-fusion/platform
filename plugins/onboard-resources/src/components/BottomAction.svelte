@@ -17,7 +17,7 @@
   import { Label } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/presentation'
 
-  import { BottomAction } from '../index'
+  import type { BottomAction } from '../index'
   import { getHref } from '../utils'
 
   export let action: BottomAction

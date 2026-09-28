@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact, Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
-  import { Floor as FloorType, Office, Room, isOffice } from '@hcengineering/love'
+  import type { Contact, Person } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
+  import { isOffice } from '@hcengineering/love'
   import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import { activeFloor, ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'

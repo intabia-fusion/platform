@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getAttribute, getAttributeEditor, getClient } from '@hcengineering/presentation'
   import MergeComparer from './MergeComparer.svelte'
 

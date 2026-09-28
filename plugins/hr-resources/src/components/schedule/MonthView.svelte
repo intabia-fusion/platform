@@ -13,9 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { AccountRole, getCurrentAccount, Ref } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { tzDateCompare, type Department, type Request, type RequestType, type Staff } from '@hcengineering/hr'
+  import type { LabelAndProps } from '@hcengineering/ui'
   import {
     areDatesEqual,
     daysInMonth,
@@ -25,7 +28,6 @@
     getWeekDayName,
     isWeekend,
     Label,
-    LabelAndProps,
     resizeObserver,
     Scroller,
     showPopup,

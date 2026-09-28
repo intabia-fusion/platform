@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import { Attachments } from '@hcengineering/attachment-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import { getClient } from '@hcengineering/presentation'

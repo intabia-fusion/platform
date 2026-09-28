@@ -17,7 +17,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import { AttachedData, Class, generateId, Mixin, Ref, SortingOrder } from '@hcengineering/core'
+  import type { AttachedData, Class, Mixin, Ref } from '@hcengineering/core'
+  import { generateId, SortingOrder } from '@hcengineering/core'
   import { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { createFocusManager, EditBox, FocusHandler } from '@hcengineering/ui'
   import { ObjectBox } from '@hcengineering/view-resources'

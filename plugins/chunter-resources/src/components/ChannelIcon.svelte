@@ -13,20 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    Button,
-    ButtonSize,
-    eventToHTMLElement,
-    Icon,
-    type IconComponent,
-    IconSize,
-    showPopup
-  } from '@hcengineering/ui'
-  import chunter, { Channel } from '@hcengineering/chunter'
+  import type { ButtonSize, IconSize } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, Icon, type IconComponent, showPopup } from '@hcengineering/ui'
+  import type { Channel } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import { IconWithEmoji } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
 
   import { toggleChannelIcon } from '../utils'
 

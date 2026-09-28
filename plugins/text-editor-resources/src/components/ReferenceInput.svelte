@@ -14,29 +14,29 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Blob, Class, Doc, Markup, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { Blob, Class, Doc, Markup, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { EmptyMarkup, isEmptyMarkup, mergeKitOptions } from '@hcengineering/text'
-  import textEditor, { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import type { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
+  import type { AnySvelteComponent, ButtonKind } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Button,
-    ButtonKind,
     checkAdaptiveMatching,
     deviceOptionsStore as deviceInfo,
     handler,
     IconClose,
     registerFocus
   } from '@hcengineering/ui'
-  import { FocusPosition } from '@tiptap/core'
-  import { EditorView } from '@tiptap/pm/view'
+  import type { FocusPosition } from '@tiptap/core'
+  import type { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher } from 'svelte'
 
   import view from '@hcengineering/view'
   import TextEditor from './TextEditor.svelte'
   import { defaultRefActions, getModelRefActions } from './editor/actions'
   import Send from './icons/Send.svelte'
-  import { EditorKitOptions } from '../kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
 
   export let content: Markup = EmptyMarkup
   export let showHeader = false

@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { fromTzDate, Request, tzDateEqual } from '@hcengineering/hr'
+  import type { Request } from '@hcengineering/hr'
+  import { fromTzDate, tzDateEqual } from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
   import { DateRangePresenter, Label } from '@hcengineering/ui'
 

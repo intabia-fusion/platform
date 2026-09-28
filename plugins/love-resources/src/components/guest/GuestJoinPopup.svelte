@@ -20,7 +20,8 @@
 
   import { onMount, onDestroy } from 'svelte'
   import { get } from 'svelte/store'
-  import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import love from '../../plugin'
   import { getLiveKitEndpoint, liveKitClient, lk } from '../../utils'
   import { lkSessionConnected } from '../../liveKitClient'

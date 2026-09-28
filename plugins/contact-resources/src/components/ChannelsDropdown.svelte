@@ -16,22 +16,14 @@
 <script lang="ts">
   import type { Channel, ChannelProvider } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-  import { AttachedData, Doc, Ref, toIdMap } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
+  import type { AttachedData, Doc, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import {
-    Action,
-    AnyComponent,
-    Button,
-    ButtonKind,
-    ButtonSize,
-    Menu,
-    closeTooltip,
-    eventToHTMLElement,
-    getFocusManager,
-    showPopup
-  } from '@hcengineering/ui'
-  import view, { Action as ViewAction } from '@hcengineering/view'
+  import type { Action, AnyComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, Menu, closeTooltip, eventToHTMLElement, getFocusManager, showPopup } from '@hcengineering/ui'
+  import type { Action as ViewAction } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { invokeAction } from '@hcengineering/view-resources'
   import { createEventDispatcher, tick } from 'svelte'
   import { channelProviders } from '../utils'

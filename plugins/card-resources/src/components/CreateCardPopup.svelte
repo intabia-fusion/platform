@@ -12,9 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import card, { CardSpace, MasterTag } from '@hcengineering/card'
+  import type { CardSpace, MasterTag } from '@hcengineering/card'
+  import card from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
-  import { Ref, Markup } from '@hcengineering/core'
+  import type { Ref, Markup } from '@hcengineering/core'
   import { EmptyMarkup } from '@hcengineering/text'
 
   import CreateCardPopupFull from './CreateCardPopupFull.svelte'

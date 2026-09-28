@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, ArrOf, Class, ClassifierKind, Doc, Ref, RefTo, Space, Type } from '@hcengineering/core'
+  import type { AnyAttribute, ArrOf, Class, Doc, Ref, RefTo, Space, Type } from '@hcengineering/core'
+  import core, { ClassifierKind } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label, Scroller, Submenu, closePopup, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
-  import { ClassFilters, Filter, KeyFilter, KeyFilterPreset, ViewOptions } from '@hcengineering/view'
+  import type { ClassFilters, Filter, KeyFilter, KeyFilterPreset, ViewOptions } from '@hcengineering/view'
   import { getResource } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import { FilterQuery, buildFilterKey } from '../../filter'

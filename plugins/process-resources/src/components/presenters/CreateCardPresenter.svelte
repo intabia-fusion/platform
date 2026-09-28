@@ -13,10 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card, MasterTag } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import card from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { MethodParams, parseContext, Process, Step } from '@hcengineering/process'
+  import type { MethodParams, Process, Step } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import plugin from '../../plugin'

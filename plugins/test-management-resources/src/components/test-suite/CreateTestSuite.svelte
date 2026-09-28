@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Data, Ref } from '@hcengineering/core'
+  import type { Data, Ref } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { Card, SpaceSelector, getClient } from '@hcengineering/presentation'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { TestSuite, TestProject } from '@hcengineering/test-management'
+  import type { TestSuite, TestProject } from '@hcengineering/test-management'
   import { EditBox } from '@hcengineering/ui'
   import { ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { Icon, IconSize, Label } from '@hcengineering/ui'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { flip } from 'svelte/animate'
 

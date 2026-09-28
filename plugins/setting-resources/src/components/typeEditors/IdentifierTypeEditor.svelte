@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Attribute, CustomSequence, IndexKind, Ref, Type, TypeIdentifier as TypeId } from '@hcengineering/core'
+  import type { Attribute, CustomSequence, Ref, TypeIdentifier as TypeId } from '@hcengineering/core'
+  import core, { IndexKind, Type } from '@hcengineering/core'
   import { TypeIdentifier } from '@hcengineering/model'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { EditBox, Label, Toggle, Button, ButtonIcon } from '@hcengineering/ui'

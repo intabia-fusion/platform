@@ -70,7 +70,7 @@
       label: setting.string.Delete,
       action: () => {
         if (opened !== undefined) {
-          remove(values[opened])
+          void remove(values[opened])
           opened = undefined
         }
       }
@@ -84,7 +84,7 @@
         if (result) {
           switch (result) {
             case 'delete':
-              remove(values[n])
+              void remove(values[n])
               break
           }
         }

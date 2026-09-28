@@ -16,8 +16,10 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Data, generateId, Ref } from '@hcengineering/core'
-  import { Document, DocumentEvents, Teamspace } from '@hcengineering/document'
+  import type { Data, Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
+  import type { Document, Teamspace } from '@hcengineering/document'
+  import { DocumentEvents } from '@hcengineering/document'
   import { IconWithEmoji, Card, getClient, SpaceSelector } from '@hcengineering/presentation'
   import {
     Button,

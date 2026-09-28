@@ -13,13 +13,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { type Class, type Doc, type Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, ModernEditbox } from '@hcengineering/ui'
   import type { WorkflowFieldValue } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
-  import { ContextOption, FieldRow } from './types'
+  import type { ContextOption, FieldRow } from './types'
   import { ensureFieldValue, isCollectionAttribute } from './utils'
   import Value from './Value.svelte'
 

@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import { notEmpty, PersonId, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize, IconSize } from '@hcengineering/ui'
+  import type { Employee } from '@hcengineering/contact'
+  import type { PersonId, Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize, IconSize } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import contact from '../plugin'
   import { employeeByPersonIdStore, primarySocialIdByEmployeeRefStore } from '../utils'

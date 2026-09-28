@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { AttachedDoc, Ref, WithLookup } from '@hcengineering/core'
-  import { GithubIntegration, GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+  import type { AttachedDoc, WithLookup } from '@hcengineering/core'
+  import { Ref } from '@hcengineering/core'
+  import type { GithubIntegration, GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
   import { getMetadata } from '@hcengineering/platform'
   import presentation, { NavLink, getClient, isAdminUser, MessageBox } from '@hcengineering/presentation'
-  import tracker, { Project } from '@hcengineering/tracker'
+  import type { Project } from '@hcengineering/tracker'
+  import tracker from '@hcengineering/tracker'
+  import type { Action } from '@hcengineering/ui'
   import ui, {
-    Action,
     Button,
     Expandable,
     Icon,

@@ -15,9 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Data, generateId } from '@hcengineering/core'
+  import type { Data } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { Survey } from '@hcengineering/survey'
+  import type { Survey } from '@hcengineering/survey'
   import { createFocusManager, EditBox, FocusHandler } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import survey from '../plugin'

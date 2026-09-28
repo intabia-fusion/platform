@@ -12,11 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { MeetingMinutes } from '@hcengineering/love'
-  import { Asset, IntlString, translateCB } from '@hcengineering/platform'
+  import type { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { MeetingMinutes } from '@hcengineering/love'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, SpaceHeader, ViewletContentView, ViewletSettingButton } from '@hcengineering/view-resources'
   import love from '../plugin'
 

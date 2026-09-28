@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Ref, type Space } from '@hcengineering/core'
-  import { type Drive, type Folder } from '@hcengineering/drive'
+  import type { Ref, Space } from '@hcengineering/core'
+  import type { Drive, Folder } from '@hcengineering/drive'
   import { uploadFilesToDrive } from '../utils'
 
   export let space: Ref<Drive>

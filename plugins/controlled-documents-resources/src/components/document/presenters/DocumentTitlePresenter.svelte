@@ -1,6 +1,7 @@
 <script lang="ts">
-  import documents, { Document } from '@hcengineering/controlled-documents'
-  import { Ref } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
+  import type { Ref } from '@hcengineering/core'
 
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
@@ -12,7 +13,7 @@
   const client = getClient()
 
   $: if (value) {
-    client.findOne(documents.class.Document, { _id: value }).then((result) => {
+    void client.findOne(documents.class.Document, { _id: value }).then((result) => {
       document = result
     })
   }

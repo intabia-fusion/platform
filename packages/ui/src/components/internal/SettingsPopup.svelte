@@ -15,7 +15,7 @@
 <script lang="ts">
   import platform, { type IntlString, getMetadata } from '@hcengineering/platform'
   import { getContext } from 'svelte'
-  import { type Readable } from 'svelte/store'
+  import type { Readable } from 'svelte/store'
 
   import FontSize from './icons/FontSize.svelte'
   import Language from './icons/Language.svelte'

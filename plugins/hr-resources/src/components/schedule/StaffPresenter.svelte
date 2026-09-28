@@ -15,7 +15,8 @@
 <script lang="ts">
   import { getName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import hr, { Department, Staff } from '@hcengineering/hr'
+  import type { Department, Staff } from '@hcengineering/hr'
+  import hr from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
   import { DocNavLink } from '@hcengineering/view-resources'
 

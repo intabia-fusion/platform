@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
+  import type { Event } from '@hcengineering/calendar'
   import { getResource } from '@hcengineering/platform'
   import { DateTimeRangePresenter, showPanel, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'

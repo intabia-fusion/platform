@@ -19,9 +19,8 @@
   import IconChevronLeft from '../icons/ChevronLeft.svelte'
   import IconChevronRight from '../icons/ChevronRight.svelte'
   import { deviceOptionsStore as deviceInfo, languageStore } from '../..'
+  import type { ICell, TCellStyle } from './internal/DateUtils'
   import {
-    ICell,
-    TCellStyle,
     areDatesEqual,
     day,
     daysInMonth,

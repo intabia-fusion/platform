@@ -15,18 +15,19 @@
 
 <script lang="ts">
   import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import {
+  import type {
     Context,
     ContextId,
     Process,
     SelectedExecutionContext,
     UpdateCriteriaComponent
   } from '@hcengineering/process'
-  import { AnyComponent, Component } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext, getCriteriaEditor, getMockAttribute } from '../../utils'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
 
   export let process: Process
   export let value: string | undefined

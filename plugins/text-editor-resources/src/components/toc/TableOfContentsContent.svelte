@@ -18,7 +18,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { FocusHandler, Label, createFocusManager, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import textEditor, { Heading } from '@hcengineering/text-editor'
+  import type { Heading } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
 
   export let items: Heading[] = []
   export let selected: Heading | undefined = undefined

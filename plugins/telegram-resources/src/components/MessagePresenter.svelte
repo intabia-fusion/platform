@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { createQuery, HTMLViewer } from '@hcengineering/presentation'
-  import { TelegramMessage } from '@hcengineering/telegram'
-  import { Ref } from '@hcengineering/core'
+  import type { TelegramMessage } from '@hcengineering/telegram'
+  import type { Ref } from '@hcengineering/core'
 
   import telegram from '../plugin'
 

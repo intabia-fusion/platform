@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Ref, Blob } from '@hcengineering/core'
+  import type { Ref, Blob } from '@hcengineering/core'
 
   import { getBlobRef } from '@hcengineering/presentation'
 

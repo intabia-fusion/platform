@@ -13,17 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset } from '@hcengineering/platform'
-  import { TagElement, TagReference } from '@hcengineering/tags'
-  import {
-    ActionIcon,
-    AnySvelteComponent,
-    Icon,
-    getPlatformColor,
-    getPlatformColorDef,
-    themeStore,
-    tooltip
-  } from '@hcengineering/ui'
+  import type { Asset } from '@hcengineering/platform'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { ActionIcon, Icon, getPlatformColor, getPlatformColorDef, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import { getTagStyle, tagLevel } from '../utils'

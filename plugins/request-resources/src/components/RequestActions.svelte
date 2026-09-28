@@ -14,13 +14,16 @@
 -->
 <script lang="ts">
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage } from '@hcengineering/chunter'
+  import type { ChatMessage } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import { AttachedData, getCurrentAccount, Markup } from '@hcengineering/core'
+  import type { AttachedData, Markup } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Request, RequestStatus } from '@hcengineering/request'
+  import type { Request } from '@hcengineering/request'
+  import { RequestStatus } from '@hcengineering/request'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { type RefAction } from '@hcengineering/text-editor'
+  import type { RefAction } from '@hcengineering/text-editor'
   import { Button } from '@hcengineering/ui'
 
   import request from '../plugin'
@@ -79,7 +82,7 @@
 
     await client.createMixin(_id, chunter.class.ChatMessage, value.space, request.mixin.RequestDecisionComment, {})
 
-    refInput.createAttachments()
+    void refInput.createAttachments()
     loading = false
   }
 

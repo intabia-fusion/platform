@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, ArrOf, Doc, EnumOf, RefTo, Type } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { AnyAttribute, ArrOf, Doc, EnumOf, RefTo, Type } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Icon, IconMoreV2, IconOpenedArrow, Label, tooltip } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, IconMoreV2, IconOpenedArrow, Label, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import setting from '../plugin'
 

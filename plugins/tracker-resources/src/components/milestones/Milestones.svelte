@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { Project } from '@hcengineering/tracker'
+  import type { Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { Project } from '@hcengineering/tracker'
   import tracker from '../../plugin'
-  import { MilestoneViewMode } from '../../utils'
+  import type { MilestoneViewMode } from '../../utils'
   import MilestoneBrowser from './MilestoneBrowser.svelte'
 
   export let currentSpace: Ref<Project>

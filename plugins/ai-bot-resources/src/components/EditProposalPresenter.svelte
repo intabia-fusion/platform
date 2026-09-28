@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AIEditProposalMessage } from '@hcengineering/ai-bot'
-  import { type Doc, type DocumentUpdate } from '@hcengineering/core'
+  import type { AIEditProposalMessage } from '@hcengineering/ai-bot'
+  import type { Doc, DocumentUpdate } from '@hcengineering/core'
   import { getClient, MessageViewer } from '@hcengineering/presentation'
   import { isEmptyMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
   import { Button, Label, ShowMore, showPanel } from '@hcengineering/ui'
@@ -23,7 +23,7 @@
   import { onMount } from 'svelte'
 
   import { ActivityMessageTemplate } from '@hcengineering/activity-resources'
-  import { type Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'

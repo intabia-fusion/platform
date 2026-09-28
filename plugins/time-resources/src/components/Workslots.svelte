@@ -26,7 +26,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { EventTimeEditor } from '@hcengineering/calendar-resources'
-  import { WorkSlot } from '@hcengineering/time'
+  import type { WorkSlot } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
   import { splitEventsDuration } from '../utils'
@@ -40,10 +40,10 @@
   let duration: string
   let plannedDuration: string
   $: split = splitEventsDuration(slots)
-  $: formatDuration(split.spent, $themeStore.language).then((res) => {
+  $: void formatDuration(split.spent, $themeStore.language).then((res) => {
     duration = res
   })
-  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+  $: void formatDuration(split.planned, $themeStore.language).then((res) => {
     plannedDuration = res
   })
 

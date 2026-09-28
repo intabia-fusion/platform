@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui'
   import { formatFileVersion } from '../utils'
 
   export let value: number | undefined

@@ -18,7 +18,8 @@
   import { MessageViewer, getClient } from '@hcengineering/presentation'
   import { EditBox, Grid } from '@hcengineering/ui'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import documents, { DocumentCategory } from '@hcengineering/controlled-documents'
+  import type { DocumentCategory } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
 
   import document from '../plugin'
 

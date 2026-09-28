@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
+  import type {
     AnyAttribute,
     Association,
     AssociationQuery,
@@ -24,10 +24,12 @@
     TxOperations,
     Type
   } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, IntlString, translate } from '@hcengineering/platform'
+  import core from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { createQuery, getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
   import { DropdownLabelsIntl, Label, Loading, resizeObserver, ToggleWithLabel } from '@hcengineering/ui'
-  import { BuildModelKey, DescendantAttribute, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { BuildModelKey, DescendantAttribute, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -47,7 +49,7 @@
 
   let viewlets: Viewlet[] = []
 
-  $: client
+  $: void client
     .findAll(view.class.Viewlet, {
       attachTo: {
         $in: client
@@ -396,7 +398,7 @@
       return key === resultName
     })
     if (exists) {
-      addAssociations(result, targetClass, preference, [...parents, [association._id, direction === 'a' ? 1 : -1]])
+      void addAssociations(result, targetClass, preference, [...parents, [association._id, direction === 'a' ? 1 : -1]])
       await addAssociationAttributes(result, targetClass, resultName, fullLabel)
     }
   }

@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc, type DocumentQuery, type Ref, type WithLookup } from '@hcengineering/core'
+  import type { Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
   import { permissionsStore } from '@hcengineering/contact-resources'
   import drive, { type Drive, type Folder } from '@hcengineering/drive'
   import { Scroller, SearchInput, Panel, Button, IconMoreH } from '@hcengineering/ui'
-  import view, { Viewlet, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,

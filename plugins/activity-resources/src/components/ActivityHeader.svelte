@@ -16,8 +16,8 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { ActivityMessagesFilter } from '@hcengineering/activity'
-  import { Ref } from '@hcengineering/core'
+  import type { ActivityMessagesFilter } from '@hcengineering/activity'
+  import type { Ref } from '@hcengineering/core'
 
   import ActivityFilterPopup from './ActivityFilterPopup.svelte'
 

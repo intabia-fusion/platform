@@ -12,31 +12,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { copyTextToClipboard, getClient, getCurrentWorkspaceUuid, IconDownload } from '@hcengineering/presentation'
-  import {
-    TaskType,
-    TaskTypeDependencyItem,
-    exportTaskTypeConfig,
-    getConnectedTaskTypesWithDependencies
-  } from '@hcengineering/task'
-  import ui, {
-    ButtonBase,
-    DropdownIntlItem,
-    IconCopy,
-    IconInfo,
-    Label,
-    Modal,
-    ModernDropdown,
-    tooltip
-  } from '@hcengineering/ui'
+  import type { TaskType, TaskTypeDependencyItem } from '@hcengineering/task'
+  import { exportTaskTypeConfig, getConnectedTaskTypesWithDependencies } from '@hcengineering/task'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { ButtonBase, IconCopy, IconInfo, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Severity, Status, getEmbeddedLabel, setPlatformStatus } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import TaskTypeSelectList from './TaskTypeSelectList.svelte'
-  import { type TaskTypeRelation, type TaskTypeSelectItem } from './types'
+  import type { TaskTypeRelation, TaskTypeSelectItem } from './types'
 
   export let taskType: TaskType
   export let taskTypes: TaskType[] = []

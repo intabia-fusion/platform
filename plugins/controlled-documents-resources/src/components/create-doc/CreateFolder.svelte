@@ -15,14 +15,15 @@
 //
 -->
 <script lang="ts">
+  import type { DocumentMeta } from '@hcengineering/controlled-documents'
   import documents, {
     createNewFolder,
-    DocumentMeta,
     type DocumentSpace,
     type Project,
     type ProjectDocument
   } from '@hcengineering/controlled-documents'
-  import core, { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import { EditBox, FocusHandler, createFocusManager } from '@hcengineering/ui'
   import view from '@hcengineering/view'

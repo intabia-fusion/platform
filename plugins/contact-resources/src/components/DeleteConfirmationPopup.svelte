@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import { AccountRole, Doc, getCurrentAccount, Ref, uniqueNotEmpty } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, uniqueNotEmpty } from '@hcengineering/core'
   import { Card } from '@hcengineering/presentation'
   import ui, { Button, Label } from '@hcengineering/ui'
   import { ObjectMention } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   import { getPersonRefsByPersonIdsCb, PersonRefPresenter } from '..'
 

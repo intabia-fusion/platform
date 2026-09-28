@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
-  import { Widget } from '@hcengineering/workbench'
+  import type { Action } from '@hcengineering/ui'
+  import { Menu, ModernTab, showPopup } from '@hcengineering/ui'
+  import type { Widget } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
-  import { ChatWidgetTab } from '@hcengineering/chunter'
+  import type { ChatWidgetTab } from '@hcengineering/chunter'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
 
   export let tab: ChatWidgetTab

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Event } from '@hcengineering/calendar'
+  import type { Event } from '@hcengineering/calendar'
   import { DateRangeMode } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { DAY, DateRangePresenter, HOUR, MINUTE, themeStore } from '@hcengineering/ui'

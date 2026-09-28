@@ -1,7 +1,9 @@
 <script lang="ts">
   import { getName } from '@hcengineering/contact'
-  import core, { Space } from '@hcengineering/core'
-  import lead, { Customer, Lead } from '@hcengineering/lead'
+  import type { Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Customer, Lead } from '@hcengineering/lead'
+  import lead from '@hcengineering/lead'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
 

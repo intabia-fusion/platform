@@ -18,21 +18,15 @@
 
   import presentation, { Card, getClient, getCurrentWorkspaceUuid, SpaceSelector } from '@hcengineering/presentation'
   import { DropdownLabels, Icon, Label, Loading } from '@hcengineering/ui'
-  import { type Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@hcengineering/account-client'
   import { isWorkspaceIntegration, getIntegrationConfig } from '@hcengineering/integration-client'
   import card from '@hcengineering/card'
   import contact from '@hcengineering/contact'
 
   import { getIntegrationClient, getAccountClient } from '../utils'
   import hulyMail from '../plugin'
-  import core, {
-    buildSocialIdString,
-    getCurrentAccount,
-    Ref,
-    SocialIdType,
-    Space,
-    type PersonId
-  } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core, { buildSocialIdString, getCurrentAccount, SocialIdType, type PersonId } from '@hcengineering/core'
   import HulyMail from './icons/HulyMail.svelte'
   import { Analytics } from '@hcengineering/analytics'
 

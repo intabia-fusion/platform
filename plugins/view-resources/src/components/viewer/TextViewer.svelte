@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Blob, type Ref } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
   import { getFileUrl } from '@hcengineering/presentation'
   import ui, { Button, Loading, Scroller } from '@hcengineering/ui'
 

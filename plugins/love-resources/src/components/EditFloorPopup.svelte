@@ -3,8 +3,9 @@
   import { EditBox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import core, { Ref } from '@hcengineering/core'
-  import { Floor } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Floor } from '@hcengineering/love'
 
   export let id: Ref<Floor> | undefined = undefined
 
@@ -14,7 +15,7 @@
 
   let name: string = ''
   $: if (id !== undefined) {
-    client.findOne(love.class.Floor, { _id: id }).then((res) => {
+    void client.findOne(love.class.Floor, { _id: id }).then((res) => {
       name = res?.name ?? ''
     })
   }
@@ -31,8 +32,8 @@
 <Card
   label={love.string.Floor}
   okAction={() => {
-    if (id === undefined) createFloor()
-    else updateFloor()
+    if (id === undefined) void createFloor()
+    else void updateFloor()
   }}
   okLabel={id === undefined ? love.string.AddAFloor : love.string.RenameAFloor}
   canSave={name.trim().length > 0}

@@ -15,9 +15,10 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { DropdownIntlItem, DropdownLabelsIntl, DropdownLabelsPopupIntl, showPopup } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, DropdownLabelsPopupIntl, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { Room, RoomLanguage } from '@hcengineering/love'
+  import type { Room, RoomLanguage } from '@hcengineering/love'
 
   import { languagesDisplayData } from '../types'
   import LanguageIcon from './LanguageIcon.svelte'

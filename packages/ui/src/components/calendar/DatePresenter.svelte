@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import type { IntlString, Asset } from '@hcengineering/platform'
-  import { createEventDispatcher, ComponentType, afterUpdate } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { createEventDispatcher, afterUpdate } from 'svelte'
 
   import { DateRangeMode } from '@hcengineering/core'
   import ui from '../../plugin'
   import { showPopup } from '../../popups'
-  import { ButtonKind, ButtonSize, AnySvelteComponent } from '../../types'
+  import type { ButtonKind, ButtonSize, AnySvelteComponent } from '../../types'
   import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
   import DatePopup from './DatePopup.svelte'

@@ -22,13 +22,15 @@
 </script>
 
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import chunter from '@hcengineering/chunter'
   import { getResource } from '@hcengineering/platform'
   import { getClient, hasResource } from '@hcengineering/presentation'
-  import { IconSize, LabelAndProps, tooltip } from '@hcengineering/ui'
+  import type { IconSize, LabelAndProps } from '@hcengineering/ui'
+  import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import Avatar from './Avatar.svelte'
 

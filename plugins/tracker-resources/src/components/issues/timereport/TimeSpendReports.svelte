@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, SortingOrder } from '@hcengineering/core'
+  import type { DocumentQuery } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport, splitReportedTime } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { splitReportedTime } from '@hcengineering/tracker'
   import { Expandable, Label, MiniToggle, Spinner, floorFractionDigits } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TimePresenter from './TimePresenter.svelte'

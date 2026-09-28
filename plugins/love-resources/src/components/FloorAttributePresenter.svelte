@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { ObjectMention } from '@hcengineering/view-resources'
-  import { Floor } from '@hcengineering/love'
-  import { Ref } from '@hcengineering/core'
+  import type { Floor } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
 
   import { ensureOfficeDetailsLoaded, floors } from '../stores'
 

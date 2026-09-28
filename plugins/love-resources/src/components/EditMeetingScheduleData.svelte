@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Schedule } from '@hcengineering/calendar'
+  import type { Schedule } from '@hcengineering/calendar'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'
   import { getClient } from '@hcengineering/presentation'
-  import { Ref } from '@hcengineering/core'
-  import { Room } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
 
   export let value: Schedule
 

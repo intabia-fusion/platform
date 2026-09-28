@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-  import { Class, Ref } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import { ActionContext, createQuery } from '@hcengineering/presentation'
   import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'

@@ -13,15 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, getCurrentAccount, reduceCalls, Ref, SortingOrder, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, LiveQuery } from '@hcengineering/presentation'
-  import { Chat, DirectMessage } from '@hcengineering/chunter'
-  import { Employee } from '@hcengineering/contact'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import core, { getCurrentAccount, reduceCalls, SortingOrder } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { LiveQuery } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import type { Chat, DirectMessage } from '@hcengineering/chunter'
+  import type { Employee } from '@hcengineering/contact'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import chunter from '../../../plugin'
-  import { ChatNavGroupModel } from '../types'
+  import type { ChatNavGroupModel } from '../types'
   import ChatNavSection from './ChatNavSection.svelte'
   import {
     createFakeDirectFromEmployee,

@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Milestone } from '@hcengineering/tracker'
+  import type { Milestone } from '@hcengineering/tracker'
   import { getMonthName, Icon } from '@hcengineering/ui'
   import tracker from '../../plugin'
   export let value: Milestone | undefined

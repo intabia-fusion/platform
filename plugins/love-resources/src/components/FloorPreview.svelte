@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { AccountRole, Ref, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import platform, { getMetadata } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import {
     AccordionItem,
@@ -31,7 +33,8 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
-  import love, { Floor, isOffice, Office, ParticipantInfo, Room } from '@hcengineering/love'
+  import type { Floor, ParticipantInfo, Room } from '@hcengineering/love'
+  import love, { isOffice, Office } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
   import { infos } from '../stores'

@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, TxCUD } from '@hcengineering/core'
+  import type { Doc, TxCUD } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { ScrollBox, tooltip } from '@hcengineering/ui'
   import { toIntl } from '..'

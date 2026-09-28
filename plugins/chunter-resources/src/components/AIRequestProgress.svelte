@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import aiBot, { type AIRequest } from '@hcengineering/ai-bot'
-  import { type Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import ui, { Button } from '@hcengineering/ui'
 

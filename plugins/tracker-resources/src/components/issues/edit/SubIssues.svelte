@@ -13,14 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Issue, trackerId } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { trackerId } from '@hcengineering/tracker'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
   import {
     Button,
     IconAdd,
     IconScaleFull,
     Label,
     SelectPopup,
-    SelectPopupValueType,
     closeTooltip,
     getCurrentResolvedLocation,
     navigate,

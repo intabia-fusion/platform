@@ -13,11 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData, DocumentQuery, Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { RuleApplyResult, getClient, getDocRules } from '@hcengineering/presentation'
-  import { Component, Issue, IssueTemplate, Project, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonKind, ButtonShape, ButtonSize, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import type { AttachedData, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { RuleApplyResult } from '@hcengineering/presentation'
+  import { getClient, getDocRules } from '@hcengineering/presentation'
+  import type { Component, Issue, IssueTemplate, Project } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonShape, ButtonSize } from '@hcengineering/ui'
+  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { createEventDispatcher, afterUpdate } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
 

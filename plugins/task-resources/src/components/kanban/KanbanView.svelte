@@ -15,25 +15,29 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
+  import type {
     CategoryType,
     Class,
     Doc,
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
-    generateId,
     Lookup,
-    mergeQueries,
     Ref
   } from '@hcengineering/core'
-  import { DocWithRank, Item, Kanban as KanbanUI } from '@hcengineering/kanban'
+  import core, { generateId, mergeQueries } from '@hcengineering/core'
+  import type { DocWithRank, Item } from '@hcengineering/kanban'
+  import { Kanban as KanbanUI } from '@hcengineering/kanban'
   import { getResource } from '@hcengineering/platform'
   import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import taskCore, { getStates, Project, Task, TaskOrdering } from '@hcengineering/task'
-  import { ColorDefinition, defaultBackground, Label, themeStore } from '@hcengineering/ui'
-  import view, { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type { Project, Task } from '@hcengineering/task'
+  import taskCore, { getStates, TaskOrdering } from '@hcengineering/task'
+  import type { ColorDefinition } from '@hcengineering/ui'
+  import { defaultBackground, Label, themeStore } from '@hcengineering/ui'
+  import type { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
   import {
     focusStore,
     getCategoryQueryNoLookup,
@@ -45,7 +49,6 @@
     groupBy,
     ListSelectionProvider,
     noCategory,
-    SelectDirection,
     setGroupByValues,
     showMenu,
     statusStore
@@ -326,7 +329,7 @@
           {space}
           on:done={(e) => {
             // eslint-disable-next-line no-undef
-            onDone(getDoneUpdate(e))
+            void onDone(getDoneUpdate(e))
           }}
         />
       {/if}

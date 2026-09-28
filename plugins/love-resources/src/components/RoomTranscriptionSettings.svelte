@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { Label, ModernToggle } from '@hcengineering/ui'
-  import love, { Room } from '@hcengineering/love'
+  import type { Room } from '@hcengineering/love'
+  import love from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   // import RoomLanguageSelector from './RoomLanguageSelector.svelte'
 

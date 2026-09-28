@@ -15,8 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import core, { Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Doc, Mixin, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'

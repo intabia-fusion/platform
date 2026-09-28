@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Icon, Label, Loading, Scroller } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { TableBrowser, ViewletsSettingButton } from '@hcengineering/view-resources'
 
   import testManagement from '../../plugin'

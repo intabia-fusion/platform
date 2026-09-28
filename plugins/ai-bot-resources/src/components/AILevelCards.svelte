@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AILevelInfo } from '@hcengineering/ai-bot'
+  import type { AILevelInfo } from '@hcengineering/ai-bot'
   import { ModernButton } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 

@@ -3,7 +3,7 @@
 -->
 
 <script lang="ts">
-  import { type Training } from '@hcengineering/training'
+  import type { Training } from '@hcengineering/training'
   import { DocNavLink } from '@hcengineering/view-resources'
 
   export let value: Training

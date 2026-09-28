@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Ref, WithLookup } from '@hcengineering/core'
-  import { Floor, Room } from '@hcengineering/love'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Floor, Room } from '@hcengineering/love'
   import { Component, DropdownLabels, Header, IconEdit, ModernButton } from '@hcengineering/ui'
-  import { Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 

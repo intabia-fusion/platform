@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { Icon } from '@hcengineering/ui'
-  import { GithubIntegrationRepository } from '@hcengineering/github'
+  import type { GithubIntegrationRepository } from '@hcengineering/github'
   import github from '../../plugin'
 
   export let value: GithubIntegrationRepository

@@ -14,13 +14,9 @@
 -->
 
 <script lang="ts">
-  import {
-    DocumentBundle,
-    ProjectDocumentTree,
-    type HierarchyDocument,
-    type Project
-  } from '@hcengineering/controlled-documents'
-  import { type Ref } from '@hcengineering/core'
+  import type { DocumentBundle } from '@hcengineering/controlled-documents'
+  import { ProjectDocumentTree, type HierarchyDocument, type Project } from '@hcengineering/controlled-documents'
+  import type { Ref } from '@hcengineering/core'
 
   import { createDocumentHierarchyQuery } from '../../../../utils'
   import DocumentFlatTreeElement from './DocumentFlatTreeElement.svelte'

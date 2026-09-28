@@ -15,7 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { Question, QuestionKind } from '@hcengineering/survey'
+  import type { Question } from '@hcengineering/survey'
+  import { QuestionKind } from '@hcengineering/survey'
   import {
     ButtonIcon,
     EditBox,

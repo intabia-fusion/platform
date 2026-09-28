@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
-  import activity, { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import type { AttributeModel } from '@hcengineering/view'
+  import type { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
 
   import ChangeAttributesTemplate from './ChangeAttributesTemplate.svelte'
 

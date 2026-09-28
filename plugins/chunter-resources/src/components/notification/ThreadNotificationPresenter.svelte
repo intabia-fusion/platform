@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreviewType } from '@hcengineering/activity'
-  import { MessageNotification } from '@hcengineering/notification'
-  import { ThreadMessage } from '@hcengineering/chunter'
+  import type { ActivityMessagePreviewType } from '@hcengineering/activity'
+  import type { MessageNotification } from '@hcengineering/notification'
+  import type { ThreadMessage } from '@hcengineering/chunter'
 
   import ThreadMessagePreview from '../threads/ThreadMessagePreview.svelte'
 

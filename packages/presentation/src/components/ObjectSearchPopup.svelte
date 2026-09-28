@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, RelatedDocument, DocumentQuery } from '@hcengineering/core'
+  import type { Ref, RelatedDocument, DocumentQuery } from '@hcengineering/core'
 
-  import { getResource, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import ui, {
     createFocusManager,
     deviceOptionsStore,
@@ -31,7 +32,7 @@
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation from '../plugin'
-  import { ObjectSearchCategory, ObjectSearchResult } from '../types'
+  import type { ObjectSearchCategory, ObjectSearchResult } from '../types'
   import { getClient } from '../utils'
   import { hasResource, reduceCalls } from '..'
 

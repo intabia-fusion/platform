@@ -15,9 +15,10 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import recruit, { Applicant } from '@hcengineering/recruit'
+  import type { Applicant } from '@hcengineering/recruit'
+  import recruit from '@hcengineering/recruit'
   import { Icon, tooltip } from '@hcengineering/ui'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
   export let value: Applicant

@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Label, Scroller } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
-  import { DocumentSpace, Project } from '@hcengineering/controlled-documents'
+  import type { DocumentSpace, Project } from '@hcengineering/controlled-documents'
   import { createEventDispatcher } from 'svelte'
 
   import documents from '../../plugin'

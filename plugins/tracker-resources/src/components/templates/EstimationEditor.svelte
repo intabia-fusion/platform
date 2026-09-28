@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Data } from '@hcengineering/core'
+  import type { Data } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { IssueDraft, IssueTemplate, IssueTemplateChild, TrackerEvents } from '@hcengineering/tracker'
-  import { Button, ButtonKind, ButtonSize, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import type { IssueDraft, IssueTemplate, IssueTemplateChild } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { getObjectId } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
@@ -44,7 +46,7 @@
 
     showPopup(EditEstimationPopup, { value: value.estimation }, eventToHTMLElement(event), (res) => {
       if (typeof res === 'number') {
-        changeEstimation(res)
+        void changeEstimation(res)
       }
     })
   }

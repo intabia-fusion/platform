@@ -13,21 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    AnyAttribute,
-    Class,
-    Data,
-    Doc,
-    generateId,
-    IndexKind,
-    PropertyType,
-    Ref,
-    Type
-  } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { AnyAttribute, Class, Data, Doc, IndexKind, PropertyType, Ref, Type } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
+  import type { AnyComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
     ButtonIcon,
     Component,
     DropdownLabelsIntl,
@@ -39,7 +31,7 @@
     showPopup,
     Toggle
   } from '@hcengineering/ui'
-  import { DropdownIntlItem } from '@hcengineering/ui/src/types'
+  import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
   import setting from '../plugin'

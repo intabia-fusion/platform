@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { Button, type ButtonKind, type ButtonSize } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'

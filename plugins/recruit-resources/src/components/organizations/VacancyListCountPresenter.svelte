@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Organization } from '@hcengineering/contact'
-  import { Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { Vacancy, VacancyList } from '@hcengineering/recruit'
-  import { AnySvelteComponent, Icon, tooltip } from '@hcengineering/ui'
+  import type { Organization } from '@hcengineering/contact'
+  import type { Doc, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { Vacancy, VacancyList } from '@hcengineering/recruit'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, tooltip } from '@hcengineering/ui'
 
   export let value: VacancyList
   export let values:

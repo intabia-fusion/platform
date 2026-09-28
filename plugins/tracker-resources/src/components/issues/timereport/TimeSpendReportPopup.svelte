@@ -14,19 +14,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { Class, Ref, Space, getCurrentAccount } from '@hcengineering/core'
-  import { type IntlString } from '@hcengineering/platform'
+  import type { Employee } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
+  import type { Class, Ref, Space } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { UserBox } from '@hcengineering/contact-resources'
-  import {
-    Issue,
-    type Project,
-    TimeReportDayType,
-    TimeSpendReport,
-    TrackerEvents,
-    formatDuration
-  } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { type Project, TimeReportDayType, TrackerEvents, formatDuration } from '@hcengineering/tracker'
   import {
     Button,
     DatePresenter,

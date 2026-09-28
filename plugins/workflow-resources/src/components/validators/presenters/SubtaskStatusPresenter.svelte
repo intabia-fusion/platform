@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Ref, Status } from '@hcengineering/core'
-  import task, { TaskType } from '@hcengineering/task'
-  import { WorkflowValidatorConfig } from '@hcengineering/workflow'
+  import type { Ref, Status } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
+  import task from '@hcengineering/task'
+  import type { WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
   import { Icon, languageStore } from '@hcengineering/ui'
   import { StatePresenter, taskTypeStore } from '@hcengineering/task-resources'

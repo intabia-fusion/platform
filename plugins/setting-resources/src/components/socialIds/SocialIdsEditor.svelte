@@ -16,7 +16,8 @@
   import contact from '@hcengineering/contact'
   import { getCurrentAccount, loginSocialTypes, notEmpty, SocialIdType } from '@hcengineering/core'
   import { getClient, hasResource } from '@hcengineering/presentation'
-  import { Action, Button, createFocusManager, FocusHandler, Label, Menu, Scroller, showPopup } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { Button, createFocusManager, FocusHandler, Label, Menu, Scroller, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   import type { PersonRating } from '@hcengineering/rating'

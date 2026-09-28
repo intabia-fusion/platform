@@ -16,11 +16,10 @@
 <script lang="ts">
   import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
   import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
+  import type { AccountUuid, Configuration } from '@hcengineering/core'
   import core, {
     type Account,
     AccountRole,
-    AccountUuid,
-    Configuration,
     getCurrentAccount,
     isActiveMode,
     pickPrimarySocialId,
@@ -30,7 +29,7 @@
   import login, { loginId } from '@hcengineering/login'
   import { translateCB } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
-  import { WorkspaceSetting } from '@hcengineering/setting'
+  import type { WorkspaceSetting } from '@hcengineering/setting'
 
   import { requestOperationOtpCode } from '../utils'
   import {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { DocSyncInfo } from '@hcengineering/github'
+  import type { DocSyncInfo } from '@hcengineering/github'
 
   export let issue: DocSyncInfo
   function allowEdit (): void {

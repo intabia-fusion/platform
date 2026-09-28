@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import type { TestRun } from '@hcengineering/test-management'
   import { Scroller } from '@hcengineering/ui'
   import { DocAttributeBar } from '@hcengineering/view-resources'

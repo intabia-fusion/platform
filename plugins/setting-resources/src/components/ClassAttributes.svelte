@@ -14,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, ClassifierKind, Doc, Ref, Space } from '@hcengineering/core'
+  import type { AnyAttribute, Class, Doc, Ref, Space } from '@hcengineering/core'
+  import core, { ClassifierKind } from '@hcengineering/core'
   import { toRank } from '@hcengineering/rank'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
     ActionIcon,
-    AnySvelteComponent,
     ButtonIcon,
     IconAdd,
     IconDelete,

@@ -14,7 +14,7 @@
   import { UserBox } from '@hcengineering/contact-resources'
   import { SortingOrder } from '@hcengineering/core'
   import presentation, { createQuery } from '@hcengineering/presentation'
-  import { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
   import {
     ActionIcon,
     CheckBox,
@@ -31,7 +31,7 @@
 
   import tracker from '../../../plugin'
   import TimePresenter from './TimePresenter.svelte'
-  import { DraftTimeReportService } from './service'
+  import type { DraftTimeReportService } from './service'
 
   export let issue: Issue
   export let service: DraftTimeReportService

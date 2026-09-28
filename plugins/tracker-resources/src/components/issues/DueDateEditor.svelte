@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { Issue } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
   import { DueDatePresenter } from '@hcengineering/ui'
 
   export let value: WithLookup<Issue>

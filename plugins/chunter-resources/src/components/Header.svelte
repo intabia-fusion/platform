@@ -13,25 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getResource, IntlString } from '@hcengineering/platform'
-  import {
-    AnySvelteComponent,
-    Breadcrumbs,
-    Button,
-    Icon,
-    Label,
-    SearchInput,
-    Header,
-    HeaderAdaptive,
-    IconSettings,
-    IconToDetails
-  } from '@hcengineering/ui'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
+  import type { AnySvelteComponent, HeaderAdaptive } from '@hcengineering/ui'
+  import { Breadcrumbs, Button, Icon, Label, SearchInput, Header, IconSettings, IconToDetails } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { ActivityMessagesFilter } from '@hcengineering/activity'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { ActivityMessagesFilter } from '@hcengineering/activity'
   import workbench from '@hcengineering/workbench'
   import { PresenceAvatars } from '@hcengineering/presence-resources'
 

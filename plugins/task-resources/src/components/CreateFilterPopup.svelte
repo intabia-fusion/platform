@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import { closeTooltip, Label, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../plugin'

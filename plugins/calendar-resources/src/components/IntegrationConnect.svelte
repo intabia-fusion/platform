@@ -52,7 +52,7 @@
 
   let label = ''
 
-  $: translate(calendar.string.GooglePrivacy, {}, $themeStore.language).then((res) => {
+  $: void translate(calendar.string.GooglePrivacy, {}, $themeStore.language).then((res) => {
     label = res
   })
 </script>

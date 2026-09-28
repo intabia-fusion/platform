@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { Schedule } from '@hcengineering/calendar'
+  import type { Schedule } from '@hcengineering/calendar'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import presentation, {
     copyTextToClipboard,
@@ -24,7 +24,8 @@
     getCurrentWorkspaceUrl,
     MessageBox
   } from '@hcengineering/presentation'
-  import { Action, ButtonIcon, IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { ButtonIcon, IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TreeElement } from '@hcengineering/view-resources'
   import ScheduleEditor from './ScheduleEditor.svelte'

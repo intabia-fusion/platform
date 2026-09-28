@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
   import { Card, findAttributeEditor, getClient } from '@hcengineering/presentation'
   import { Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

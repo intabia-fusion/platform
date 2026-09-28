@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Doc, WithLookup } from '@hcengineering/core'
+  import type { Doc, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { TagReference } from '@hcengineering/tags'
   import tags from '@hcengineering/tags'
@@ -127,8 +127,8 @@
       allWidth = element.clientWidth
     }}
     on:click|stopPropagation={(evt) => {
-      if (isEditable) tagsHandler(evt)
-      else action(evt)
+      if (isEditable) void tagsHandler(evt)
+      else void action(evt)
     }}
   >
     {#each items as value, i}

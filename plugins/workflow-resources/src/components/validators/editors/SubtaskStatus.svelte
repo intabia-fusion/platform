@@ -14,20 +14,15 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { Ref, Status } from '@hcengineering/core'
-  import task, { getAllowedChildTaskTypes, TaskType } from '@hcengineering/task'
+  import type { Ref, Status } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { TaskType } from '@hcengineering/task'
+  import task, { getAllowedChildTaskTypes } from '@hcengineering/task'
   import { translate } from '@hcengineering/platform'
-  import ui, {
-    DropdownTextItem,
-    Icon,
-    IconInfo,
-    IconOpenedArrow,
-    Label,
-    languageStore,
-    ModernDropdownLabels
-  } from '@hcengineering/ui'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import ui, { Icon, IconInfo, IconOpenedArrow, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { StatePresenter, taskTypeStore } from '@hcengineering/task-resources'
-  import { SubtaskStatusesProps, SubtaskStatusesValidatorConfig } from '@hcengineering/workflow'
+  import type { SubtaskStatusesProps, SubtaskStatusesValidatorConfig } from '@hcengineering/workflow'
   import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
 

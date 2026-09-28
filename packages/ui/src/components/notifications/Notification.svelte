@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
 
-  import { Notification } from './Notification'
+  import type { Notification } from './Notification'
   import Component from '../Component.svelte'
   import store from './store'
 

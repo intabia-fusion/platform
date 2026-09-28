@@ -18,24 +18,18 @@
   import { createEventDispatcher } from 'svelte'
   import login from '@hcengineering/login'
   import { getClient as getAccountClient } from '@hcengineering/account-client'
-  import {
-    ERROR,
-    IntlString,
-    OK,
-    PlatformError,
-    Severity,
-    Status,
-    getMetadata,
-    translate
-  } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { ERROR, OK, PlatformError, Severity, Status, getMetadata, translate } from '@hcengineering/platform'
   import { EditBox, StylishEdit, ModernDialog } from '@hcengineering/ui'
   import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import contact, { SocialIdentityRef } from '@hcengineering/contact'
+  import type { SocialIdentityRef } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
 
   import documents from '../plugin'
   import StatusControl from './requests/StatusControl.svelte'
-  import { LoginInfo, loginIntlFieldNames } from '../utils'
+  import type { LoginInfo } from '../utils'
+  import { loginIntlFieldNames } from '../utils'
 
   export let confirmationTitle: IntlString = documents.string.ConfirmApproval
   export let rejectionTitle: IntlString = documents.string.ConfirmRejection

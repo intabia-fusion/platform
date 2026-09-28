@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import { type Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
 
   import contact from '../../plugin'

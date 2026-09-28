@@ -13,14 +13,15 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji, MessageBox, reduceCalls } from '@hcengineering/presentation'
-  import { Task } from '@hcengineering/task'
+  import type { Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import ui, {
     ButtonIcon,
-    DropdownIntlItem,
     EditBox,
     IconDelete,
     languageStore,
@@ -33,8 +34,7 @@
     tooltip
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import {
-    addScreenTab,
+  import type {
     Screen,
     ScreenField,
     ScreenProps,
@@ -42,11 +42,13 @@
     Workflow,
     WorkflowTransition
   } from '@hcengineering/workflow'
+  import { addScreenTab } from '@hcengineering/workflow'
   import tracker from '@hcengineering/tracker'
 
   import { navigateToScreen } from '../../location'
   import plugin from '../../plugin'
-  import { DisplayAttribute, DisplayAttributeGroup, getDisplayAttributes } from '../../utils'
+  import type { DisplayAttribute, DisplayAttributeGroup } from '../../utils'
+  import { getDisplayAttributes } from '../../utils'
   import ScreenTabEditor from './ScreenTabEditor.svelte'
   import ScreenUsedWorkflows from './ScreenUsedWorkflows.svelte'
 

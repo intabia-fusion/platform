@@ -14,14 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, State, Step, Transition } from '@hcengineering/process'
+  import type { Process, State, Step, Transition } from '@hcengineering/process'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     Button,
     ButtonIcon,
-    DropdownIntlItem,
     DropdownLabelsPopupIntl,
     getCurrentLocation,
     getEventPositionElement,

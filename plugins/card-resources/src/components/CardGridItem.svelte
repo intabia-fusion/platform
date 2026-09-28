@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Card } from '@hcengineering/card'
-  import { type WithLookup } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient, Image, remToPx } from '@hcengineering/presentation'
   import { Button, IconMoreH } from '@hcengineering/ui'
   import view from '@hcengineering/view'

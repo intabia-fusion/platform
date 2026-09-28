@@ -12,13 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref, Status } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Ref, Status } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     ButtonMenu,
-    DropdownIntlItem,
     Icon,
     IconAdd,
     IconClose,
@@ -28,13 +28,8 @@
     NavGroup,
     showPopup
   } from '@hcengineering/ui'
-  import {
-    removeRuleConfig,
-    Workflow,
-    WorkflowRule,
-    WorkflowRuleConfig,
-    WorkflowTransition
-  } from '@hcengineering/workflow'
+  import type { Workflow, WorkflowRule, WorkflowRuleConfig, WorkflowTransition } from '@hcengineering/workflow'
+  import { removeRuleConfig } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import AddRulesPopup from './AddRulesPopup.svelte'

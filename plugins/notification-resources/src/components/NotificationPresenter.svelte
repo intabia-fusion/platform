@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { getPlatformColor, themeStore } from '@hcengineering/ui'
 
   import { NotificationClientImpl } from '../client'

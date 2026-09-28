@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { TypeSelector } from '@hcengineering/card-resources'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

@@ -15,11 +15,13 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { Blob, Doc, makeDocCollabId, Ref } from '@hcengineering/core'
+  import type { Blob, Doc, Ref } from '@hcengineering/core'
+  import { makeDocCollabId } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { getAttribute, getClient, getMarkup, KeyedAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { getAttribute, getClient, getMarkup } from '@hcengineering/presentation'
   import { CollaborativeAttributeSectionBox, StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { getCollaborationUser } from '../utils'
 
   export let object: Doc

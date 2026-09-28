@@ -14,12 +14,11 @@
 -->
 <script lang="ts">
   import { type Asset, type IntlString, getMetadata } from '@hcengineering/platform'
+  import type { AnySvelteComponent, Location } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     Breadcrumb,
     Component,
     Header,
-    Location,
     NavItem,
     Scroller,
     Separator,

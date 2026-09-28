@@ -14,21 +14,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Doc, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { Scroller, Label, ButtonIcon, IconEdit, showPopup, Menu, SearchInput } from '@hcengineering/ui'
-  import { SpecialNavModel } from '@hcengineering/workbench'
+  import type { SpecialNavModel } from '@hcengineering/workbench'
   import { NavLink } from '@hcengineering/view-resources'
   import { TreeSeparator } from '@hcengineering/workbench-resources'
-  import { Chat } from '@hcengineering/chunter'
+  import type { Chat } from '@hcengineering/chunter'
   import { createQuery } from '@hcengineering/presentation'
-  import contact, { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
 
   import view from '@hcengineering/view'
 
   import chunter from '../../../plugin'
   import ChatNavGroup from './ChatNavGroup.svelte'
   import { chatNavGroupModels, chatSpecials } from '../utils'
-  import { ChatNavGroupModel } from '../types'
+  import type { ChatNavGroupModel } from '../types'
   import { openBotDirect } from '../../../utils'
   import ChatSpecialElement from './ChatSpecialElement.svelte'
 

@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, SortingOrder } from '@hcengineering/core'
-  import hr, { Request } from '@hcengineering/hr'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { Request } from '@hcengineering/hr'
+  import hr from '@hcengineering/hr'
   import { Table } from '@hcengineering/view-resources'
 
   export let requests: Ref<Request>[]

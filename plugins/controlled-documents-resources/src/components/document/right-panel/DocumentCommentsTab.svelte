@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import chunter from '@hcengineering/chunter'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Button, Label, showPopup } from '@hcengineering/ui'
   import documents, { type DocumentComment } from '@hcengineering/controlled-documents'
   import { onDestroy } from 'svelte'

@@ -16,14 +16,16 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import document, { Document } from '@hcengineering/document'
+  import type { Document } from '@hcengineering/document'
+  import document from '@hcengineering/document'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { type TextEditorCommandHandler } from '@hcengineering/text-editor'
-  import { CollaboratorEditor, ImageUploadOptions } from '@hcengineering/text-editor-resources'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { TextEditorCommandHandler } from '@hcengineering/text-editor'
+  import type { ImageUploadOptions } from '@hcengineering/text-editor-resources'
+  import { CollaboratorEditor } from '@hcengineering/text-editor-resources'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { getCollaborationUser } from '@hcengineering/view-resources'
-  import { FocusPosition } from '@tiptap/core'
+  import type { FocusPosition } from '@tiptap/core'
   import { createEventDispatcher } from 'svelte'
 
   export let object: Document

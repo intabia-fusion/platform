@@ -14,17 +14,19 @@
 -->
 
 <script lang="ts">
-  import { Card, FavoriteCard, MasterTag } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
+  import type { Card, FavoriteCard, MasterTag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { IconMoreV, NavItem, Action, ButtonIcon } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconMoreV, NavItem, ButtonIcon } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import preference from '@hcengineering/preference'
 
   import cardPlugin from '../../plugin'
-  import { CardsNavigatorConfig } from '../../types'
+  import type { CardsNavigatorConfig } from '../../types'
   import { getCardIconInfo } from '../../utils'
   import { CardIcon } from '../../index'
 

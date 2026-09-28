@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
-  import { Issue } from '@hcengineering/tracker'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'
   import SubIssueList from '../edit/SubIssueList.svelte'

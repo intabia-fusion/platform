@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
-  import { ParticipantInfo } from '@hcengineering/love'
+  import type { ParticipantInfo } from '@hcengineering/love'
   import { Scroller } from '@hcengineering/ui'
   import { formatName } from '@hcengineering/contact'
 

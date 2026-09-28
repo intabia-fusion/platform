@@ -16,7 +16,8 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import plugin from '../plugin'
-  import { Execution, ExecutionStatus } from '@hcengineering/process'
+  import type { Execution } from '@hcengineering/process'
+  import { ExecutionStatus } from '@hcengineering/process'
   import TransitionPresenter from './settings/TransitionPresenter.svelte'
   import TriggerPresenter from './settings/TriggerPresenter.svelte'
   import { Label } from '@hcengineering/ui'

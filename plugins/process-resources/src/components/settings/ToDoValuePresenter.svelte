@@ -14,14 +14,8 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import {
-    Process,
-    ProcessToDo,
-    SelectedContext,
-    SelectedExecutionContext,
-    Step,
-    parseContext
-  } from '@hcengineering/process'
+  import type { Process, ProcessToDo, SelectedContext, SelectedExecutionContext, Step } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import ExecutionContextPresenter from '../attributeEditors/ExecutionContextPresenter.svelte'

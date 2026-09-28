@@ -20,7 +20,7 @@
   import view from '@hcengineering/view'
   import { onMount } from 'svelte'
   import setting from '../plugin'
-  import { BackupInfo, BackupSnapshot } from '../types'
+  import type { BackupInfo, BackupSnapshot } from '../types'
 
   let loading = true
 

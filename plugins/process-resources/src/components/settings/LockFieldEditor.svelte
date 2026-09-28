@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { Card, MasterTag, Tag } from '@hcengineering/card'
-  import core, { AnyAttribute, Class, Ref } from '@hcengineering/core'
-  import { Process, Step } from '@hcengineering/process'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import cardPlugin, { Tag } from '@hcengineering/card'
+  import type { AnyAttribute, Class, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Process, Step } from '@hcengineering/process'
   import { Button, eventToHTMLElement, IconClose, Label, SelectPopup, showPopup, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TagSelector from './TagSelector.svelte'

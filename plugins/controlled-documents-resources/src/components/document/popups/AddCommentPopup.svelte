@@ -2,7 +2,8 @@
   import { createEventDispatcher } from 'svelte'
 
   import chunter, { type ChatMessage } from '@hcengineering/chunter'
-  import { Ref, generateId } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { ReferenceInput } from '@hcengineering/text-editor-resources'
   import { popupstore as popups } from '@hcengineering/ui'
 

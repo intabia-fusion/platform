@@ -15,9 +15,10 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
+  import { getAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'
 
   export let key: KeyedAttribute | string
@@ -46,7 +47,7 @@
       ;(doc as any)[attributeKey] = value
       dispatch('update', { key, value })
     } else {
-      updateAttribute(client, doc, _class, { key: attributeKey, attr: attribute }, value)
+      void updateAttribute(client, doc, _class, { key: attributeKey, attr: attribute }, value)
     }
   }
 </script>

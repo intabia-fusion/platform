@@ -14,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, TabBase, tooltip } from '..'
+  import type { TabBase } from '..'
+  import { Icon, tooltip } from '..'
   import Label from './Label.svelte'
 
   export let model: TabBase[]

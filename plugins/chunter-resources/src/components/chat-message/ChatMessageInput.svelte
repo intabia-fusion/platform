@@ -14,26 +14,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
-  import chunter, { ChatMessage, ChunterEvents, ThreadMessage } from '@hcengineering/chunter'
-  import core, {
-    Class,
-    Doc,
-    generateId,
-    getCurrentAccount,
-    Ref,
-    type CommitResult,
-    Markup,
-    WithLookup,
-    DocumentUpdate,
-    Space
-  } from '@hcengineering/core'
+  import type { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
+  import chunter, { ChunterEvents } from '@hcengineering/chunter'
+  import type { Class, Doc, Ref, Markup, WithLookup, DocumentUpdate, Space } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, type CommitResult } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { RefAction } from '@hcengineering/text-editor'
-  import { Attachment } from '@hcengineering/attachment'
+  import type { RefAction } from '@hcengineering/text-editor'
+  import type { Attachment } from '@hcengineering/attachment'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { getObjectId } from '@hcengineering/view-resources'
   import { ThrottledCaller } from '@hcengineering/ui'
@@ -373,7 +365,9 @@
     objectClass={_class}
     space={getChannelSpace(object._class, object._id, object.space)}
     on:audio={onAudioAttachment}
-    on:send={() => inputRef?.submit()}
+    on:send={() => {
+      inputRef?.submit()
+    }}
     on:close={() => (recording = false)}
   />
 {/if}

@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { ButtonMenu, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconWithEmoji } from '@hcengineering/presentation'

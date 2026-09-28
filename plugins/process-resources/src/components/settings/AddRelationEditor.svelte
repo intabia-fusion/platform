@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Association, Ref, Relation } from '@hcengineering/core'
+  import type { AnyAttribute, Association, Ref, Relation } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
+  import type { Process, Step } from '@hcengineering/process'
   import { Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getContext, getMockAttribute } from '../../utils'

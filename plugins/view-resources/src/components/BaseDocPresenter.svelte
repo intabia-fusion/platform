@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize, languageStore } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { languageStore } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import ObjectIcon from './ObjectIcon.svelte'
 
   import { getDocLinkTitle } from '../utils'

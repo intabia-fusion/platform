@@ -13,13 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getResource, translateCB } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { highlightRuns } from '@hcengineering/text'
-  import { AnyComponent, Icon, LabelAndProps, themeStore, tooltip } from '@hcengineering/ui'
+  import type { AnyComponent, LabelAndProps } from '@hcengineering/ui'
+  import { Icon, themeStore, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
 
   import { getReferenceLabel } from '@hcengineering/text-editor-resources/src/components/extension/reference'
   import { classIcon } from '../utils'

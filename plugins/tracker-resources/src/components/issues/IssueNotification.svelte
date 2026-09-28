@@ -1,8 +1,9 @@
 <script lang="ts">
   import { getMetadata } from '@hcengineering/platform'
   import presentation, { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
-  import { Issue, IssueStatus } from '@hcengineering/tracker'
-  import { Button, Notification, navigate, parseLocation, NotificationToast } from '@hcengineering/ui'
+  import type { Issue, IssueStatus } from '@hcengineering/tracker'
+  import type { Notification } from '@hcengineering/ui'
+  import { Button, navigate, parseLocation, NotificationToast } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   import { statusStore } from '@hcengineering/view-resources'

@@ -94,7 +94,7 @@
   $: split = splitEventsDuration(events)
 
   let plannedLabel: string = ''
-  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+  $: void formatDuration(split.planned, $themeStore.language).then((res) => {
     plannedLabel = res
   })
 </script>

@@ -4,7 +4,8 @@
 
 <script lang="ts">
   import type { Training, TrainingRequest } from '@hcengineering/training'
-  import { AttributeBarEditor, Card, createQuery, KeyedAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, Card, createQuery } from '@hcengineering/presentation'
   import training from '../plugin'
   import { canChangeTrainingRequestOwner, changeTrainingRequestOwner } from '../utils'
   import PanelTitle from './PanelTitle.svelte'

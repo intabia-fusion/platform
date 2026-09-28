@@ -17,8 +17,8 @@
 
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import { ActionContext, createQuery, getClient } from '@hcengineering/presentation'
-  import { type Class, type Ref } from '@hcengineering/core'
-  import { TestCase } from '@hcengineering/test-management'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { TestCase } from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
   import { EditBox, Breadcrumb } from '@hcengineering/ui'
   import { DocAttributeBar } from '@hcengineering/view-resources'

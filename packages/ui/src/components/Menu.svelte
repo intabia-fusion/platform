@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
-  import { generateId, Ref, Doc } from '@hcengineering/core'
+  import type { Ref, Doc } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import ui from '../plugin'
   import { closePopup, showPopup } from '../popups'
-  import { Action } from '../types'
+  import type { Action } from '../types'
   import Icon from './Icon.svelte'
   import Label from './Label.svelte'
   import MouseSpeedTracker from './MouseSpeedTracker.svelte'
@@ -151,7 +152,7 @@
               }}
               on:click|preventDefault|stopPropagation={(evt) => {
                 if (!action.inline) dispatch('close')
-                action.action(ctx, evt)
+                void action.action(ctx, evt)
               }}
             >
               {#if action.icon}<div class="icon mr-2">
@@ -196,7 +197,7 @@
             }}
             on:click={(evt) => {
               if (!action.inline) dispatch('close')
-              action.action(ctx, evt)
+              void action.action(ctx, evt)
             }}
             on:contextmenu={(evt) => {
               if (action.component) {

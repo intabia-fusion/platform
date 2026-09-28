@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { AccountAggregatedInfo, AccountActivityStats } from '@hcengineering/account-client'
-  import { type SocialIdType } from '@hcengineering/core'
+  import type { SocialIdType } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
   import { Button, Dialog, IconCopy, IconDetails, IconStop, Label, Loading, showPopup } from '@hcengineering/ui'

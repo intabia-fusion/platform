@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { type AnyComponent, Label } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let object: Doc
   export let title: string = ''

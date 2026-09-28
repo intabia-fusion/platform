@@ -18,22 +18,22 @@
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import { ActionContext, createMarkup, createQuery, getClient } from '@hcengineering/presentation'
-  import core, { Data, Ref, getCurrentAccount, generateId, makeCollabId, WithLookup } from '@hcengineering/core'
-  import testManagement, {
+  import type { Data, Ref, WithLookup } from '@hcengineering/core'
+  import core, { getCurrentAccount, generateId, makeCollabId } from '@hcengineering/core'
+  import type {
     TestProject,
     TestRun,
     TestCase,
     TestResult,
-    TestRunStatus,
-    TestManagementEvents,
     TestPlan,
     TestPlanItem
   } from '@hcengineering/test-management'
+  import testManagement, { TestRunStatus, TestManagementEvents } from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
   import { EditBox, ModernButton, Label, navigate } from '@hcengineering/ui'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import { IntlString } from '@hcengineering/platform'
-  import { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
 
   import { selectedTestCases, selectedTestPlan, resetStore } from './store/testRunStore'
   import NewTestRunAside from './NewTestRunAside.svelte'

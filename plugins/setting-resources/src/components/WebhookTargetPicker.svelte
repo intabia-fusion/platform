@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Class, type Doc, type DocumentQuery, type Ref } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { ObjectPopup, type ObjectSearchCategory } from '@hcengineering/presentation'
   import settingsRes from '../plugin'
 

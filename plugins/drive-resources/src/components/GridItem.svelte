@@ -15,7 +15,7 @@
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
   import core, { type WithLookup } from '@hcengineering/core'
-  import { type Resource } from '@hcengineering/drive'
+  import type { Resource } from '@hcengineering/drive'
   import { getClient } from '@hcengineering/presentation'
   import { Button, IconMoreH } from '@hcengineering/ui'
   import view from '@hcengineering/view'

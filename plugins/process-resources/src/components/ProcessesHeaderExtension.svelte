@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { ApproveRequest, EventButton, Execution, ExecutionStatus, ProcessToDo } from '@hcengineering/process'
+  import type { ApproveRequest, EventButton, Execution, ProcessToDo } from '@hcengineering/process'
+  import { ExecutionStatus } from '@hcengineering/process'
   import { Button } from '@hcengineering/ui'
   import process from '../plugin'
   import ApproveRequestButtons from './ApproveRequestButtons.svelte'

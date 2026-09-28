@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Mixin, DocumentQuery, Ref } from '@hcengineering/core'
-  import { type DocumentTemplate } from '@hcengineering/controlled-documents'
+  import type { Mixin, DocumentQuery, Ref } from '@hcengineering/core'
+  import type { DocumentTemplate } from '@hcengineering/controlled-documents'
   import { ActionContext } from '@hcengineering/presentation'
   import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 

@@ -16,13 +16,15 @@
   import { createEventDispatcher } from 'svelte'
   import { ButtonIcon, Icon, IconAdd, IconDelete, Label } from '@hcengineering/ui'
   import setting from '@hcengineering/setting'
-  import { Class, Doc, Ref, generateId } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import DescriptorBox from './DescriptorBox.svelte'
   import card from '../../../plugin'
-  import { MasterTag, Tag } from '@hcengineering/card'
-  import view, { MasterDetailConfig, ViewletDescriptor } from '@hcengineering/view'
+  import type { MasterTag, Tag } from '@hcengineering/card'
+  import type { MasterDetailConfig, ViewletDescriptor } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import RelatedTagSelect from './RelatedTagSelect.svelte'
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
 
   export let tag: MasterTag | Tag
 

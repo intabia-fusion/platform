@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { tooltip } from '@hcengineering/ui'
 
   import { getPersonByPersonRefStore } from '../..'

@@ -1,6 +1,6 @@
 <script lang="ts">
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import { DevicesPreference } from '@hcengineering/love'
+  import type { DevicesPreference } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
   import love from '../plugin'
@@ -91,7 +91,7 @@
         <Toggle
           on={!($myPreferences?.micEnabled ?? true)}
           on:change={(e) => {
-            saveMicPreference($myPreferences, e.detail)
+            void saveMicPreference($myPreferences, e.detail)
           }}
         />
       </div>
@@ -100,7 +100,7 @@
         <Toggle
           on={!($myPreferences?.camEnabled ?? true)}
           on:change={(e) => {
-            saveCamPreference($myPreferences, e.detail)
+            void saveCamPreference($myPreferences, e.detail)
           }}
         />
       </div>
@@ -109,7 +109,7 @@
         <Toggle
           on={$myPreferences?.noiseCancellation ?? true}
           on:change={(e) => {
-            saveNoiseCancellationPreference($myPreferences, e.detail)
+            void saveNoiseCancellationPreference($myPreferences, e.detail)
           }}
         />
       </div>
@@ -118,7 +118,7 @@
         <Toggle
           on={$myPreferences?.speakingWhileMutedAlert ?? true}
           on:change={(e) => {
-            saveSpeakingWhileMutedPreference($myPreferences, e.detail)
+            void saveSpeakingWhileMutedPreference($myPreferences, e.detail)
           }}
         />
       </div>

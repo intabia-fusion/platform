@@ -14,17 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { IconWithEmoji } from '@hcengineering/presentation'
-  import {
-    ColorDefinition,
-    Icon,
-    IconSize,
-    getColorNumberByText,
-    getPlatformColorDef,
-    resolvePaletteColor,
-    themeStore
-  } from '@hcengineering/ui'
+  import type { ColorDefinition, IconSize } from '@hcengineering/ui'
+  import { Icon, getColorNumberByText, getPlatformColorDef, resolvePaletteColor, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher, onMount } from 'svelte'
 

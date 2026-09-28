@@ -15,9 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { type File, type Folder, type Resource } from '@hcengineering/drive'
+  import type { File, Folder, Resource } from '@hcengineering/drive'
   import { getClient } from '@hcengineering/presentation'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import drive from '../plugin'
 

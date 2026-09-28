@@ -23,7 +23,8 @@
     ProjectDocumentTree,
     getDocumentName
   } from '@hcengineering/controlled-documents'
-  import { type Doc, type Ref, type Space, WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import {
@@ -35,7 +36,7 @@
     navigate,
     themeStore
   } from '@hcengineering/ui'
-  import { ActionGroup } from '@hcengineering/view'
+  import type { ActionGroup } from '@hcengineering/view'
   import { TreeItem, TreeNode, getActions as getContributedActions } from '@hcengineering/view-resources'
 
   import { getDocumentIdFromFragment, getProjectDocumentLink } from '../../navigation'

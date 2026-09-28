@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, SortingOrder, Status, StatusCategory, WithLookup, toIdMap } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, StatusCategory, WithLookup } from '@hcengineering/core'
+  import core, { SortingOrder, toIdMap } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { Issue, IssueStatus } from '@hcengineering/tracker'
+  import type { Issue } from '@hcengineering/tracker'
+  import { IssueStatus } from '@hcengineering/tracker'
   import {
     Icon,
     IconDetails,
@@ -57,14 +59,14 @@
     const subIssue = subIssues?.find((p) => p._id === target)
     if (subIssue !== undefined) {
       closeTooltip()
-      openIssue(subIssue)
+      void openIssue(subIssue)
     }
   }
 
   function openParentIssue () {
     if (parentIssue) {
       closeTooltip()
-      openIssue(parentIssue)
+      void openIssue(parentIssue)
     }
   }
 
@@ -104,7 +106,7 @@
 
   let categories: IdMap<StatusCategory> = new Map()
 
-  getClient()
+  void getClient()
     .findAll(core.class.StatusCategory, {})
     .then((res) => {
       categories = toIdMap(res)

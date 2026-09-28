@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee, Person } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
   import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@hcengineering/ui'
   import { employeeByIdStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
-  import { notEmpty, Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
 
   import card from '../plugin'

@@ -2,11 +2,15 @@
   import calendar from '@hcengineering/calendar'
   import { ScheduleNavSection } from '@hcengineering/calendar-resources'
   import { getCurrentEmployee } from '@hcengineering/contact'
-  import { Ref, getCurrentAccount } from '@hcengineering/core'
-  import { Asset, getMetadata, getResource, IntlString } from '@hcengineering/platform'
+  import type { Ref } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { getMetadata, getResource } from '@hcengineering/platform'
   import { createQuery, isDisabled } from '@hcengineering/presentation'
   import { NavFooter } from '@hcengineering/workbench-resources'
-  import tagsPlugin, { TagElement as TagElementType } from '@hcengineering/tags'
+  import type { TagElement as TagElementType } from '@hcengineering/tags'
+  import tagsPlugin from '@hcengineering/tags'
+  import type { Action } from '@hcengineering/ui'
   import ui, {
     Label,
     Separator,
@@ -21,10 +25,9 @@
     showPopup,
     Menu,
     IconMoreV,
-    IconLink,
-    Action
+    IconLink
   } from '@hcengineering/ui'
-  import { ToDosMode } from '..'
+  import type { ToDosMode } from '..'
   import time from '../plugin'
 
   export let mode: ToDosMode

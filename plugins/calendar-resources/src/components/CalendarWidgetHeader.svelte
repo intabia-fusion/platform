@@ -14,9 +14,9 @@
 -->
 <script lang="ts">
   import { Breadcrumbs, Header } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
-  import { CalendarMode } from '../index'
+  import type { CalendarMode } from '../index'
   import CalendarNavigation from './CalendarNavigation.svelte'
 
   export let currentDate: Date

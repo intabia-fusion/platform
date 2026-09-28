@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Execution } from '@hcengineering/process'
+  import type { Execution } from '@hcengineering/process'
   import ErrorPresenter from './ErrorPresenter.svelte'
   import { continueExecution } from '../utils'
   import { showPopup } from '@hcengineering/ui'

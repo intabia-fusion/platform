@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import contact, { Employee } from '@hcengineering/contact'
-  import { AccountUuid, Ref, notEmpty, getCurrentAccount } from '@hcengineering/core'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import { notEmpty, getCurrentAccount } from '@hcengineering/core'
   import { employeeByIdStore, SelectUsersPopup } from '@hcengineering/contact-resources'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Modal, showPopup } from '@hcengineering/ui'

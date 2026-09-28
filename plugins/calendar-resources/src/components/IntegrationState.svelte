@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Calendar } from '@hcengineering/calendar'
+  import type { Calendar } from '@hcengineering/calendar'
   import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Integration } from '@hcengineering/account-client'

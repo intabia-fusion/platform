@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, IdMap, Ref, toIdMap } from '@hcengineering/core'
+  import type { Class, Doc, IdMap, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { TagElement, TagReference } from '@hcengineering/tags'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
   import tags from '../plugin'
   import TagItem from './TagItem.svelte'
   import { selectedTagElements } from '../utils'

@@ -13,28 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccessLevel, Calendar, Event, generateEventId, getAllEvents } from '@hcengineering/calendar'
+  import type { Calendar, Event } from '@hcengineering/calendar'
+  import { AccessLevel, generateEventId, getAllEvents } from '@hcengineering/calendar'
   import { getCurrentEmployee, getCurrentEmployeeSpace } from '@hcengineering/contact'
-  import {
-    Class,
-    Doc,
-    DocumentQuery,
-    FindOptions,
-    Ref,
-    SortingOrder,
-    Timestamp,
-    getCurrentAccount
-  } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, Timestamp } from '@hcengineering/core'
+  import { SortingOrder, getCurrentAccount } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnyComponent,
     MonthCalendar,
     YearCalendar,
     areDatesEqual,
     getWeekStart,
     showPopup,
-    AnySvelteComponent,
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
 

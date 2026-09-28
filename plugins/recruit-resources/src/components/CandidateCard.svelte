@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
-  import contact, { Channel, getName, Person } from '@hcengineering/contact'
+  import type { Channel, Person } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
   import { ChannelsEditor, Avatar } from '@hcengineering/contact-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Component, Label } from '@hcengineering/ui'

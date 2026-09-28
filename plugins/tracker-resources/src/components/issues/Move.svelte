@@ -14,15 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Card, SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
-  import { Component, Issue, Milestone, Project } from '@hcengineering/tracker'
+  import type { Component, Issue, Milestone, Project } from '@hcengineering/tracker'
   import ui, { Button, IconForward, Label, Spinner, Toggle, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { componentStore } from '../../component'
   import tracker from '../../plugin'
-  import { ComponentToUpdate, IssueToUpdate, collectIssues, moveIssueToSpace } from '../../utils'
+  import type { ComponentToUpdate, IssueToUpdate } from '../../utils'
+  import { collectIssues, moveIssueToSpace } from '../../utils'
   import ProjectPresenter from '../projects/ProjectPresenter.svelte'
   import IssuePresenter from './IssuePresenter.svelte'
   import PriorityEditor from './PriorityEditor.svelte'
@@ -116,7 +117,7 @@
   let toMove: Issue[] = []
   let loading = true
   $: {
-    collectIssues(client, docs).then((res) => {
+    void collectIssues(client, docs).then((res) => {
       toMove = res
       loading = false
     })

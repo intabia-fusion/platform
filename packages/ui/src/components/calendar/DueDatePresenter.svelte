@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
   import DueDatePopup from './DueDatePopup.svelte'
   import { tooltip } from '../../tooltips'
   import ui from '../../plugin'
   import DatePresenter from './DatePresenter.svelte'
   import { getDaysDifference, getDueDateIconModifier, getFormattedDate } from './internal/DateUtils'
-  import { ButtonKind, ButtonSize } from '../../types'
+  import type { ButtonKind, ButtonSize } from '../../types'
 
   export let value: number | null = null
   export let shouldRender: boolean = true

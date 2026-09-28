@@ -14,16 +14,21 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import attachmentP, { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
+  import attachmentP from '@hcengineering/attachment'
   import { AttachmentPresenter } from '@hcengineering/attachment-resources'
-  import contact, { Channel, Contact, getName } from '@hcengineering/contact'
-  import core, { Data, Markup, generateId } from '@hcengineering/core'
-  import { NewMessage, SharedMessage, GmailEvents } from '@hcengineering/gmail'
+  import type { Channel, Contact } from '@hcengineering/contact'
+  import contact, { getName } from '@hcengineering/contact'
+  import type { Data, Markup } from '@hcengineering/core'
+  import core, { generateId } from '@hcengineering/core'
+  import type { NewMessage, SharedMessage } from '@hcengineering/gmail'
+  import { GmailEvents } from '@hcengineering/gmail'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Integration } from '@hcengineering/setting'
-  import templates, { TemplateDataProvider } from '@hcengineering/templates'
+  import type { Integration } from '@hcengineering/setting'
+  import type { TemplateDataProvider } from '@hcengineering/templates'
+  import templates from '@hcengineering/templates'
   import { EmptyMarkup, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
   import { markupToHtml } from '@hcengineering/text-html'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
@@ -97,7 +102,7 @@
     if (list === null || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
     inputFile.value = ''
     progress = false
@@ -111,7 +116,7 @@
     if (list === undefined || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
     progress = false
   }
@@ -136,7 +141,7 @@
         }
       )
     } catch (err: any) {
-      setPlatformStatus(unknownError(err))
+      void setPlatformStatus(unknownError(err))
     }
   }
 
@@ -227,7 +232,7 @@
           showPreview
           removable
           on:remove={(result) => {
-            if (result !== undefined) removeAttachment(attachment)
+            if (result !== undefined) void removeAttachment(attachment)
           }}
         />
       {/each}

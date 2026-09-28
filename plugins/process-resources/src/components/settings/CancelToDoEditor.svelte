@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Process, ProcessToDo, Step } from '@hcengineering/process'
+  import type { Ref } from '@hcengineering/core'
+  import type { Process, ProcessToDo, Step } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

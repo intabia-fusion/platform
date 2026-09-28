@@ -14,26 +14,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
+  import type { AttachedData, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task, { getTaskTypeStates } from '@hcengineering/task'
   import time from '@hcengineering/time'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    IconSize,
-    SelectPopup,
-    TooltipAlignment,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Issue, IssueDraft, IssueStatus, Project } from '@hcengineering/tracker'
+  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize, IconSize, TooltipAlignment } from '@hcengineering/ui'
+  import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
-  import workflow, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import type { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
   import { getResource, isInfoError, isOkError } from '@hcengineering/platform'
 
   import tracker from '../../plugin'

@@ -22,7 +22,8 @@
     locationToUrl,
     navigate
   } from '@hcengineering/ui'
-  import workflow, { Workflow } from '@hcengineering/workflow'
+  import type { Workflow } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
 
   export let workflows: Workflow[] = []
 

@@ -17,12 +17,13 @@
 
 <script lang="ts">
   import type { AwarenessState, AwarenessStateMap } from '@hcengineering/text-editor'
-  import { AnySvelteComponent, Button, DelayedCaller } from '@hcengineering/ui'
-  import { Editor } from '@tiptap/core'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Button, DelayedCaller } from '@hcengineering/ui'
+  import type { Editor } from '@tiptap/core'
   import { onMount } from 'svelte'
   import { createRelativePositionFromJSON } from 'yjs'
   import { relativePositionToAbsolutePosition, ySyncPluginKey } from 'y-prosemirror'
-  import { Provider } from '../provider/types'
+  import type { Provider } from '../provider/types'
 
   export let provider: Provider
   export let editor: Editor

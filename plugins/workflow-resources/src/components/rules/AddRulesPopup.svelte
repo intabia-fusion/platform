@@ -12,12 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createEventDispatcher, SvelteComponent } from 'svelte'
-  import { Class, Ref, Status } from '@hcengineering/core'
+  import type { SvelteComponent } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
+  import type { Class, Ref, Status } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import ui, { ButtonBase, Label, Modal } from '@hcengineering/ui'
-  import { Workflow, WorkflowRule, WorkflowTransition } from '@hcengineering/workflow'
+  import type { Workflow, WorkflowRule, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { rulesDisplay } from '../../types'

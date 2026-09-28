@@ -14,10 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref, getObjectValue } from '@hcengineering/core'
-  import inventory, { Category } from '@hcengineering/inventory'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import { getObjectValue } from '@hcengineering/core'
+  import type { Category } from '@hcengineering/inventory'
+  import inventory from '@hcengineering/inventory'
   import { IconMoreV } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { AttributeModel } from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import HierarchyElement from './HierarchyElement.svelte'
   import Collapse from './icons/Collapse.svelte'

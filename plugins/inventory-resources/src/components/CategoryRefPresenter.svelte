@@ -14,8 +14,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import inventory, { Category } from '@hcengineering/inventory'
+  import type { Ref } from '@hcengineering/core'
+  import type { Category } from '@hcengineering/inventory'
+  import inventory from '@hcengineering/inventory'
   import { createQuery } from '@hcengineering/presentation'
   import CategoryPresenter from './CategoryPresenter.svelte'
 

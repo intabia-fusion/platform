@@ -15,7 +15,8 @@
 //
 -->
 <script lang="ts">
-  import core, { Data, Ref } from '@hcengineering/core'
+  import type { Data, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { type Drive, type Folder, createFolder, DriveEvents } from '@hcengineering/drive'
   import { Card, SpaceSelector, getClient } from '@hcengineering/presentation'
   import { EditBox, FocusHandler, createFocusManager } from '@hcengineering/ui'

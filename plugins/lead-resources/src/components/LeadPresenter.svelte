@@ -19,7 +19,7 @@
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import lead from '@hcengineering/lead'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   export let value: Lead
   export let inline: boolean = false

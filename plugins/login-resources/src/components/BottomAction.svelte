@@ -18,7 +18,8 @@
   import NavLink from './NavLink.svelte'
 
   import { getHref } from '../utils'
-  import { BottomAction, goTo } from '../index'
+  import type { BottomAction } from '../index'
+  import { goTo } from '../index'
 
   export let action: BottomAction
 </script>

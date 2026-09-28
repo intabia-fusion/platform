@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { getMetadata } from '@hcengineering/platform'
-  import { MarkupMark, MarkupMarkType } from '@hcengineering/text'
+  import type { MarkupMark } from '@hcengineering/text'
+  import { MarkupMarkType } from '@hcengineering/text'
   import uiPlugin, { navigate, parseLocation } from '@hcengineering/ui'
 
   import presentation from '../../plugin'

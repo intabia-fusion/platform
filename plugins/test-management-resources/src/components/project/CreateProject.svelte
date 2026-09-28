@@ -16,22 +16,21 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import { Asset } from '@hcengineering/platform'
-  import core, {
+  import type { Asset } from '@hcengineering/platform'
+  import type {
     Data,
     DocumentUpdate,
     RolesAssignment,
     Ref,
     Role,
     SpaceType,
-    generateId,
-    getCurrentAccount,
     WithLookup,
-    notEmpty,
     AccountUuid
   } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
   import view from '@hcengineering/view'
-  import testManagement, { TestProject } from '@hcengineering/test-management'
+  import type { TestProject } from '@hcengineering/test-management'
+  import testManagement from '@hcengineering/test-management'
   import presentation, { Card, IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
   import {
     Button,

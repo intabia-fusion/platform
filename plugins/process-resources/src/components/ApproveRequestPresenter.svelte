@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ApproveRequest } from '@hcengineering/process'
+  import type { ApproveRequest } from '@hcengineering/process'
   import { getUserTimezone, tooltip } from '@hcengineering/ui'
   import { BooleanPresenter } from '@hcengineering/view-resources'
 

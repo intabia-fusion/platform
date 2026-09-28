@@ -13,7 +13,8 @@
 -->
 <script lang="ts">
   import { ButtonIcon, CheckBox, Component, IconMoreV, Label, showPopup, Spinner } from '@hcengineering/ui'
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
+  import type { DocNotifyContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import { Menu } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

@@ -16,7 +16,7 @@
 <script lang="ts">
   import type { SharedTelegramMessage } from '@hcengineering/telegram'
   import Message from './Message.svelte'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import DateView from './Date.svelte'
 
   export let messages: SharedTelegramMessage[] = []

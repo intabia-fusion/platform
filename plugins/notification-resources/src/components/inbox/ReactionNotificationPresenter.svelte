@@ -13,11 +13,11 @@
 -->
 <script lang="ts">
   import { ActivityMessagePreview, BasePreview } from '@hcengineering/activity-resources'
-  import { ReactionNotification } from '@hcengineering/notification'
+  import type { ReactionNotification } from '@hcengineering/notification'
   import { EmojiPresenter } from '@hcengineering/emoji-resources'
 
   import notification from '../../plugin'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
 
   export let value: ReactionNotification
   export let objectId: Ref<Doc>

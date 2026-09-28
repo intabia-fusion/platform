@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
-  import { getResource, IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, ObjectSearchPopup, ObjectSearchResult } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
-  import { Action, closePopup, Menu, showPopup } from '@hcengineering/ui'
+  import type { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
+  import type { ObjectSearchResult } from '@hcengineering/presentation'
+  import { createQuery, getClient, ObjectSearchPopup } from '@hcengineering/presentation'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { Action } from '@hcengineering/ui'
+  import { closePopup, Menu, showPopup } from '@hcengineering/ui'
   import activity from '@hcengineering/activity'
 
   import { updateIssueRelation } from '../issues'

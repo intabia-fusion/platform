@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { Document } from '@hcengineering/document'
+  import type { Document } from '@hcengineering/document'
   import { Card, getClient } from '@hcengineering/presentation'
   import { EditBox } from '@hcengineering/ui'
   import document from '../plugin'

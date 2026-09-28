@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import core, { type Doc, reduceCalls, Ref, Space } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core, { type Doc, reduceCalls } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { onMount } from 'svelte'
   import { getClient } from '@hcengineering/presentation'

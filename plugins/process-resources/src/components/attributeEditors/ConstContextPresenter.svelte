@@ -16,7 +16,8 @@
   import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Process, SelectedConst } from '@hcengineering/process'
-  import { AnyComponent, Component } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
   import { findAttributePresenter } from '@hcengineering/view-resources'
   import { readonly } from 'svelte/store'
 

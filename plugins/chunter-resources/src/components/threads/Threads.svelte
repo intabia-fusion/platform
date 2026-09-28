@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
-  import core, { getCurrentAccount, Ref, SortingOrder, Tx, TxCreateDoc } from '@hcengineering/core'
+  import type { Ref, Tx, TxCreateDoc } from '@hcengineering/core'
+  import core, { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { addTxListener, createQuery, getClient, removeTxListener } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
   import { Lazy, Loading, Scroller } from '@hcengineering/ui'

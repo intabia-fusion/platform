@@ -12,12 +12,14 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import core, { Data } from '@hcengineering/core'
+  import type { Data } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import view from '@hcengineering/view'
-  import { getCurrentEmployee, Translation } from '@hcengineering/contact'
+  import type { Translation } from '@hcengineering/contact'
+  import { getCurrentEmployee } from '@hcengineering/contact'
 
   import contact from '../plugin'
   import LanguageEditor from './LanguageEditor.svelte'

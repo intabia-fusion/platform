@@ -14,9 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
 
-  import { getAttribute, getClient, KeyedAttribute, updateAttribute } from '@hcengineering/presentation'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { getAttribute, getClient, updateAttribute } from '@hcengineering/presentation'
   import { FullDescriptionBox } from '@hcengineering/text-editor-resources'
 
   // TODO Rename this component to MarkupEditor
@@ -32,7 +33,7 @@
     content={description}
     on:save={(res) => {
       if (res.detail != null) {
-        updateAttribute(getClient(), object, object._class, key, res.detail)
+        void updateAttribute(getClient(), object, object._class, key, res.detail)
       }
     }}
   />

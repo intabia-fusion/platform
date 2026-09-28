@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { Step } from '@hcengineering/process'
+  import type { Doc } from '@hcengineering/core'
+  import type { Step } from '@hcengineering/process'
 
   export let value: Step<Doc>[]
 </script>

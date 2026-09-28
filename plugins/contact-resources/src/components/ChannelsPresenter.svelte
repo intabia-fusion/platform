@@ -18,7 +18,7 @@
   import { getResource } from '@hcengineering/platform'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { showPopup } from '@hcengineering/ui'
-  import { ViewAction } from '@hcengineering/view'
+  import type { ViewAction } from '@hcengineering/view'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
 
   export let value: Channel[] | Channel | null
@@ -37,7 +37,7 @@
       const action = await getResource(ev.detail.action as ViewAction)
       const channel = value.find((it) => it.value === ev.detail.value)
       if (action != null && channel != null) {
-        action(channel, ev)
+        void action(channel, ev)
       }
     }
   }

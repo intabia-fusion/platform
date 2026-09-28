@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import { type DocumentVersion } from '@hcengineering/collaborator-client'
+  import type { DocumentVersion } from '@hcengineering/collaborator-client'
   import { areEqualJson, type MarkupNode } from '@hcengineering/text'
   import { MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import { translate } from '@hcengineering/platform'

@@ -12,11 +12,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute, Ref } from '@hcengineering/core'
-  import { Asset, translate } from '@hcengineering/platform'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
-  import { AnySvelteComponent, Icon, languageStore } from '@hcengineering/ui'
+  import type { TaskType } from '@hcengineering/task'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, languageStore } from '@hcengineering/ui'
 
   import { getAllClassAttributes, getAttributeIcon } from '../../utils'
 

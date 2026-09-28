@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import contact, { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import type { Class, Doc, DocumentQuery, IdMap, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@hcengineering/ui'

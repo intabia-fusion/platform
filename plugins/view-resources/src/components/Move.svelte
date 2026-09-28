@@ -17,9 +17,12 @@
   import { SpaceSelect, getClient, Card } from '@hcengineering/presentation'
   import { Label, Status as StatusControl, themeStore } from '@hcengineering/ui'
 
-  import core, { Class, Client, Doc, Ref, SortingOrder, Space } from '@hcengineering/core'
-  import { OK, Resource, Severity, Status, getResource, translate } from '@hcengineering/platform'
-  import task, { Project, Task, makeRank } from '@hcengineering/task'
+  import type { Class, Client, Doc, Ref, Space } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
+  import type { Resource, Status } from '@hcengineering/platform'
+  import { OK, Severity, getResource, translate } from '@hcengineering/platform'
+  import type { Project, Task } from '@hcengineering/task'
+  import task, { makeRank } from '@hcengineering/task'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { moveToSpace } from '../utils'
@@ -40,11 +43,11 @@
   $: {
     const doc = docs[0]
     if (space === undefined) space = doc.space
-    translate(hierarchy.getClass(doc._class).label, {}, $themeStore.language).then(
+    void translate(hierarchy.getClass(doc._class).label, {}, $themeStore.language).then(
       (res) => (label = res.toLocaleLowerCase())
     )
   }
-  $: _class && translate(_class, {}, $themeStore.language).then((res) => (classLabel = res.toLocaleLowerCase()))
+  $: void (_class && translate(_class, {}, $themeStore.language).then((res) => (classLabel = res.toLocaleLowerCase())))
 
   async function move (doc: Doc): Promise<void> {
     const op = client.apply(undefined, 'move-to-space')
@@ -97,7 +100,7 @@
 
   $: {
     docs.forEach((doc) => {
-      validate(doc, doc._class)
+      void validate(doc, doc._class)
     })
   }
 

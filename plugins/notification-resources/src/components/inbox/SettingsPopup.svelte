@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { createFocusManager, FocusHandler, Label, ListView, ModernToggle, resizeObserver } from '@hcengineering/ui'
-  import { SettingItem } from '../../types'
+  import type { SettingItem } from '../../types'
 
   export let items: SettingItem[] = []
 

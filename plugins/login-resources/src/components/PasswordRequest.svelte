@@ -20,7 +20,7 @@
   import login from '../plugin'
   import { goTo, requestPassword } from '../utils'
   import Form from './Form.svelte'
-  import { BottomAction } from '..'
+  import type { BottomAction } from '..'
   import { signUpAction } from '../actions'
 
   export let signUpDisabled = false

@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ChunterSpace } from '@hcengineering/chunter'
+  import type { ChunterSpace } from '@hcengineering/chunter'
   import type { Class, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { SpaceMembers } from '@hcengineering/contact-resources'

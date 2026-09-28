@@ -14,12 +14,15 @@
 -->
 <script lang="ts">
   import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
-  import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import { Person } from '@hcengineering/contact'
+  import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, createQuery, getClient } from '@hcengineering/presentation'
+  import type { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
   import task from '@hcengineering/task'
-  import { Issue, TimeSpendReport, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
+  import { reduceChildInfoTree } from '@hcengineering/tracker'
   import { Component, Label, floorFractionDigits } from '@hcengineering/ui'
   import { getDocMixins, getFiltredKeys, isCollectionAttr, ObjectBox } from '@hcengineering/view-resources'
 

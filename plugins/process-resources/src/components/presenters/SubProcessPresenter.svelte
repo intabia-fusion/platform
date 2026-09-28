@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
+  import type { Process, Step } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import process from '../../plugin'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
 
   export let step: Step<Process>
 

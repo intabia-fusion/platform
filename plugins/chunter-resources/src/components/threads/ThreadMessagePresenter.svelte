@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ThreadMessage } from '@hcengineering/chunter'
-  import { Action, Label, languageStore } from '@hcengineering/ui'
+  import type { ThreadMessage } from '@hcengineering/chunter'
+  import type { Action } from '@hcengineering/ui'
+  import { Label, languageStore } from '@hcengineering/ui'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import activity from '@hcengineering/activity'
-  import { AttachmentImageSize } from '@hcengineering/attachment-resources'
+  import type { AttachmentImageSize } from '@hcengineering/attachment-resources'
 
   import chunter from '../../plugin'
   import ChatMessagePresenter from '../chat-message/ChatMessagePresenter.svelte'

@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import core, { Class, Doc, Ref, SearchResultDoc, SortingOrder, type VersionableDoc } from '@hcengineering/core'
+  import type { Class, Doc, Ref, SearchResultDoc } from '@hcengineering/core'
+  import core, { SortingOrder, type VersionableDoc } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
   import presentation, {
     getClient,

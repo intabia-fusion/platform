@@ -13,11 +13,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
   import ui, { IconOpenedArrow, Label, ModernButton, ModernDropdownLabels } from '@hcengineering/ui'
-  import { Screen, ScreenProps, ScreenRequestConfig } from '@hcengineering/workflow'
+  import type { Screen, ScreenProps, ScreenRequestConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
   import { navigateToScreen } from '../../../location'

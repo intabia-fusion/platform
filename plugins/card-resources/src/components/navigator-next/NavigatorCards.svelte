@@ -14,8 +14,9 @@
 -->
 
 <script lang="ts">
-  import cardPlugin, { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
-  import { Ref, WithLookup } from '@hcengineering/core'
+  import type { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
+  import type { Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { NavGroup } from '@hcengineering/ui'

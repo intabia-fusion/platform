@@ -15,14 +15,15 @@
 //
 -->
 <script lang="ts">
-  import core, { Doc, Mixin, Ref } from '@hcengineering/core'
+  import type { Doc, Mixin, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import card from '../plugin'
   import { duplicateCard } from '../utils'
-  import { Card as CardType } from '@hcengineering/card'
+  import type { Card as CardType } from '@hcengineering/card'
 
   export let value: CardType
 

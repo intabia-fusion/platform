@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type DocumentTemplate } from '@hcengineering/controlled-documents'
+  import type { DocumentTemplate } from '@hcengineering/controlled-documents'
 
   import { Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'

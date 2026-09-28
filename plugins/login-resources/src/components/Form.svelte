@@ -23,7 +23,8 @@
   import StatusControl from './StatusControl.svelte'
 
   import { onMount } from 'svelte'
-  import { BottomAction, loginTheme } from '..'
+  import type { BottomAction } from '..'
+  import { loginTheme } from '..'
   import { makeSequential } from '../mutex'
   import type { Field } from '../types'
   import login from '../plugin'

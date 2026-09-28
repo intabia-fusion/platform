@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Process, Transition } from '@hcengineering/process'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Process, Transition } from '@hcengineering/process'
   import { Button, getCurrentLocation, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'

@@ -14,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import type { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
   import UserBox from './UserBox.svelte'
   import IconPerson from './icons/Person.svelte'
 

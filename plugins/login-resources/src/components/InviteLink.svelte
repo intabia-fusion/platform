@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, getCurrentAccount, hasAccountRole, Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { Button, EditBox, Grid, Label, Loading, MiniToggle, showPopup, ticker } from '@hcengineering/ui'
@@ -207,7 +208,7 @@
         size={'medium'}
         kind={'primary'}
         on:click={() => {
-          ;((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, emailMask, limit, role)
+          void (((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, emailMask, limit, role))
         }}
       />
     </div>

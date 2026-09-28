@@ -15,7 +15,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import platform, { getMetadata } from '@hcengineering/platform'
   import { Popup, Scroller, deviceOptionsStore as deviceInfo, Button } from '@hcengineering/ui'
   import workbench from '@hcengineering/workbench'
   import { onMount } from 'svelte'

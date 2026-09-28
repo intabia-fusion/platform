@@ -16,13 +16,15 @@
   import { onMount, onDestroy } from 'svelte'
 
   import type { Integration } from '@hcengineering/account-client'
-  import { IntegrationEventData, onIntegrationEvent } from '@hcengineering/integration-client'
-  import { type GmailSyncState } from '@hcengineering/gmail'
+  import type { IntegrationEventData } from '@hcengineering/integration-client'
+  import { onIntegrationEvent } from '@hcengineering/integration-client'
+  import type { GmailSyncState } from '@hcengineering/gmail'
   import { BaseIntegrationState, IntegrationStateRow } from '@hcengineering/setting-resources'
 
   import gmail from '../plugin'
   import { getState } from '../api'
-  import platform, { IntlString, OK, ERROR, Status, Severity } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import platform, { OK, ERROR, Status, Severity } from '@hcengineering/platform'
   import { Analytics } from '@hcengineering/analytics'
 
   export let integration: Integration

@@ -3,17 +3,18 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { GithubPullRequestReviewState, GithubReview } from '@hcengineering/github'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { GithubReview } from '@hcengineering/github'
+  import { GithubPullRequestReviewState } from '@hcengineering/github'
 
   import { ActivityMessageHeader, ActivityMessageTemplate } from '@hcengineering/activity-resources'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { MessageViewer } from '@hcengineering/presentation'
   import { isEmptyMarkup } from '@hcengineering/text'
   import { PaletteColorIndexes, getPlatformColor, themeStore } from '@hcengineering/ui'
   import github from '../../plugin'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
 
   export let value: WithLookup<GithubReview>
   export let showNotify: boolean = false

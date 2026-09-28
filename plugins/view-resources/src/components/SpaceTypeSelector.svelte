@@ -16,7 +16,8 @@
   import { createEventDispatcher } from 'svelte'
   import core, { type Ref, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { type DropdownTextItem, ButtonKind, ButtonSize, DropdownLabels } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { type DropdownTextItem, DropdownLabels } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   export let descriptors: Ref<SpaceTypeDescriptor>[]

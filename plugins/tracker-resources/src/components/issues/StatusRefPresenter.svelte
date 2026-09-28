@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref, Status } from '@hcengineering/core'
-  import { Project } from '@hcengineering/tracker'
+  import type { Ref, Status } from '@hcengineering/core'
+  import type { Project } from '@hcengineering/tracker'
   import { statusStore } from '@hcengineering/view-resources'
   import StatusPresenter from './StatusPresenter.svelte'
   import { selectedTaskTypeStore } from '@hcengineering/task-resources'

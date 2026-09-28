@@ -14,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { createQuery, getClient, uploadFile } from '@hcengineering/presentation'
   import { ActionIcon, IconAdd, Label, Loading } from '@hcengineering/ui'
 
-  import core, { Doc, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Doc, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
 
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { AttachmentPresenter } from '..'

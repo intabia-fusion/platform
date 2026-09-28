@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import type { AttachedDoc, Class, Collection, Doc, Ref } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
-  import { TagElement, TagReference } from '@hcengineering/tags'
+  import type { IntlString } from '@hcengineering/platform'
+  import { translateCB } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
   import { Button, showPopup, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

@@ -13,15 +13,17 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Class, Ref, SortingOrder } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { Class, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
-  import { Screen } from '@hcengineering/workflow'
+  import type { Screen } from '@hcengineering/workflow'
 
   import { navigateToScreen } from '../location'
   import plugin from '../plugin'

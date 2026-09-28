@@ -15,10 +15,10 @@
 //
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Poll } from '@hcengineering/survey'
+  import type { Poll } from '@hcengineering/survey'
   import { Button, DebouncedCaller, IconMoreH, ThrottledCaller } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocNavLink, ParentsNavigator, showMenu } from '@hcengineering/view-resources'

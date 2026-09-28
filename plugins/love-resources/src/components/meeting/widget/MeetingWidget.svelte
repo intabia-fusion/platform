@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { closeWidget, minimizeSidebar, WidgetState } from '@hcengineering/workbench-resources'
-  import { Room } from '@hcengineering/love'
+  import type { WidgetState } from '@hcengineering/workbench-resources'
+  import { closeWidget, minimizeSidebar } from '@hcengineering/workbench-resources'
+  import type { Room } from '@hcengineering/love'
   import { Loading } from '@hcengineering/ui'
 
   import love from '../../../plugin'

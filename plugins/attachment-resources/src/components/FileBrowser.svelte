@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import contact, { getCurrentEmployee, Person } from '@hcengineering/contact'
-  import core, { Class, Ref, Space } from '@hcengineering/core'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { Person } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
+  import type { Class, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Label, Loading, navigate, TabList, getLocation } from '@hcengineering/ui'
   import view from '@hcengineering/view'
@@ -52,7 +54,7 @@
   let selectedFileTypeId = 'typeAny'
   let isListDisplayMode = true
 
-  $: fetch(search, selectedSort, selectedFileTypeId, selectedDateId, selectedParticipants, selectedSpaces)
+  $: void fetch(search, selectedSort, selectedFileTypeId, selectedDateId, selectedParticipants, selectedSpaces)
 
   async function fetch (
     searchQuery_: string,

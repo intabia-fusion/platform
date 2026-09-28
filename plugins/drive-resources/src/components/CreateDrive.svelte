@@ -16,19 +16,10 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
-    Data,
-    RolesAssignment,
-    Ref,
-    Role,
-    SpaceType,
-    generateId,
-    getCurrentAccount,
-    WithLookup,
-    notEmpty,
-    AccountUuid
-  } from '@hcengineering/core'
-  import { Drive, DriveEvents } from '@hcengineering/drive'
+  import type { Data, RolesAssignment, Ref, Role, SpaceType, WithLookup, AccountUuid } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
+  import type { Drive } from '@hcengineering/drive'
+  import { DriveEvents } from '@hcengineering/drive'
   import presentation, { Card, getClient, reduceCalls } from '@hcengineering/presentation'
   import { EditBox, Label, Toggle } from '@hcengineering/ui'
   import { SpaceTypeSelector } from '@hcengineering/view-resources'

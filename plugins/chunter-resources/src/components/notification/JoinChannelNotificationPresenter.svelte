@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
+  import type { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
-  import { MessageNotification } from '@hcengineering/notification'
+  import type { MessageNotification } from '@hcengineering/notification'
 
   import chunter from '../../plugin'
 

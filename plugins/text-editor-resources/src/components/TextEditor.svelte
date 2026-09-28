@@ -15,17 +15,20 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { type Blob, Markup, type Ref } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Markup } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { EmptyMarkup, getMarkup, markupToJSON } from '@hcengineering/text'
   import textEditor from '@hcengineering/text-editor'
   import { themeStore } from '@hcengineering/ui'
-  import { Content, Editor, FocusPosition, mergeAttributes } from '@tiptap/core'
-  import { ParseOptions } from '@tiptap/pm/model'
-  import { EditorView } from '@tiptap/pm/view'
+  import type { Content, FocusPosition } from '@tiptap/core'
+  import { Editor, mergeAttributes } from '@tiptap/core'
+  import type { ParseOptions } from '@tiptap/pm/model'
+  import type { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
-  import { EditorKitOptions, getEditorKit } from '../../src/kits/editor-kit'
+  import type { EditorKitOptions } from '../kits/editor-kit'
+  import { getEditorKit } from '../kits/editor-kit'
   import { deleteAttachment } from '../command/deleteAttachment'
   import { defaultEditorAttributes } from './editor/editorProps'
 

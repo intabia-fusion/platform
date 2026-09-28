@@ -15,8 +15,10 @@
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
   import { AvatarType, type AvatarInfo } from '@hcengineering/contact'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { AnySvelteComponent, IconSize, showPopup } from '@hcengineering/ui'
+  import type { Asset } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
+  import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import type { Data, Blob as PlatformBlob, Ref, WithLookup } from '@hcengineering/core'

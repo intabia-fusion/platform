@@ -28,7 +28,8 @@
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
-  import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
+  import type { KeyedAttribute } from '../attributes'
+  import { getAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'
 
   export let key: KeyedAttribute | string

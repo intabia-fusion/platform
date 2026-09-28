@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Tag } from '@hcengineering/card'
-  import { AnyAttribute, Ref } from '@hcengineering/core'
-  import { Process, ProcessFunction } from '@hcengineering/process'
+  import type { MasterTag, Tag } from '@hcengineering/card'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
+  import type { Process, ProcessFunction } from '@hcengineering/process'
   import ArrayElementEditor from './ArrayElementEditor.svelte'
 
   export let func: ProcessFunction

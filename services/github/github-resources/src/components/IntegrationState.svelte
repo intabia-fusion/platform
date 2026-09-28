@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachedDoc, WithLookup } from '@hcengineering/core'
-  import { GithubIntegration, GithubIntegrationRepository } from '@hcengineering/github'
+  import type { AttachedDoc, WithLookup } from '@hcengineering/core'
+  import type { GithubIntegration, GithubIntegrationRepository } from '@hcengineering/github'
   import { getClient } from '@hcengineering/presentation'
   import type { Integration } from '@hcengineering/account-client'
   import { BaseIntegrationState } from '@hcengineering/setting-resources'
-  import { OK, ERROR, Status } from '@hcengineering/platform'
+  import type { Status } from '@hcengineering/platform'
+  import { OK, ERROR } from '@hcengineering/platform'
 
   import github from '../plugin'
   import RepositoryPresenterRef from './RepositoryPresenterRef.svelte'
@@ -32,7 +33,7 @@
   const asRepos = (docs: AttachedDoc[]) => docs as GithubIntegrationRepository[]
 
   const client = getClient()
-  $: loadIntegration(integration)
+  $: void loadIntegration(integration)
 
   async function loadIntegration (integration: Integration): Promise<void> {
     try {

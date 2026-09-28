@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { MasterTag } from '@hcengineering/card'
-  import core, { Class, ClassifierKind, Doc, Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core, { ClassifierKind } from '@hcengineering/core'
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'

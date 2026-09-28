@@ -19,7 +19,8 @@
   import type { Integration } from '@hcengineering/account-client'
   import setting from '@hcengineering/setting'
 
-  import { IntlString, Status, ERROR } from '@hcengineering/platform'
+  import type { IntlString, Status } from '@hcengineering/platform'
+  import { ERROR } from '@hcengineering/platform'
 
   export let integration: Integration
   export let value: string | undefined

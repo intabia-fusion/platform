@@ -5,20 +5,21 @@
   import attachmentPlugin, { type Attachment } from '@hcengineering/attachment'
   import { AttachmentPresenter } from '@hcengineering/attachment-resources'
   import { CollaborationIds } from '@hcengineering/text-editor'
+  import type { Provider } from '@hcengineering/text-editor-resources'
   import {
     CollaborationDiffViewer,
-    Provider,
     StringDiffViewer,
     createTiptapCollaborationData
   } from '@hcengineering/text-editor-resources'
-  import { Dropdown, Label, ListItem, Loading, Scroller, themeStore } from '@hcengineering/ui'
-  import documents, {
+  import type { ListItem } from '@hcengineering/ui'
+  import { Dropdown, Label, Loading, Scroller, themeStore } from '@hcengineering/ui'
+  import type {
     ControlledDocument,
     ControlledDocumentSnapshot,
     ControlledDocumentState,
-    Document,
-    DocumentState
+    Document
   } from '@hcengineering/controlled-documents'
+  import documents, { DocumentState } from '@hcengineering/controlled-documents'
   import plugin from '../../plugin'
   import {
     $controlledDocument as controlledDocument,
@@ -46,7 +47,7 @@
 
   let translatedStates: Readonly<Record<DocumentState | ControlledDocumentState, string>> | null = null
   function getTranslatedLabels (lang: string) {
-    Promise.all([getTranslatedDocumentStates(lang), getTranslatedControlledDocStates(lang)]).then(
+    void Promise.all([getTranslatedDocumentStates(lang), getTranslatedControlledDocStates(lang)]).then(
       ([states, controlledStates]) => {
         translatedStates = {
           ...states,
@@ -87,7 +88,7 @@
   }))
   $: if ($compareTo) {
     if (comparedProvider) {
-      comparedProvider.destroy()
+      void comparedProvider.destroy()
     }
     loading = true
 

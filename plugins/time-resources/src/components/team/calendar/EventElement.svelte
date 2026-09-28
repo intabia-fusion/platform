@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { CalendarEventPresenter, Event } from '@hcengineering/calendar'
+  import type { CalendarEventPresenter, Event } from '@hcengineering/calendar'
+  import calendar from '@hcengineering/calendar'
   import { EventPresenter, calendarByIdStore, isVisible } from '@hcengineering/calendar-resources'
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
-  import view, { ObjectEditor } from '@hcengineering/view'
+  import type { ObjectEditor } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
 
   export let event: Event

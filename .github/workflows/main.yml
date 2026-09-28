@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -81,7 +81,7 @@ jobs:
           npm pack
 
       - name: Upload @intabia-fusion/api bundle artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: intabia-fusion-api-bundle
           path: dev/api/bundle/intabia-fusion-api-*.tgz
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage
           path: |
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload API test results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: api-tests
           path: |
@@ -152,7 +152,7 @@ jobs:
           filter: tree:0
           submodules: recursive
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -175,7 +175,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -210,7 +210,7 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -266,7 +266,7 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -322,7 +322,7 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -379,7 +379,7 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -437,9 +437,9 @@ jobs:
       - name: Free space
         uses: ./.github/actions/free-disk-space
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Configure docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@v5
         with:
           daemon-config: |
             {
@@ -447,7 +447,7 @@ jobs:
                 "containerd-snapshotter": true
               }
             }
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -517,7 +517,7 @@ jobs:
           submodules: recursive
       - name: Free space
         uses: ./.github/actions/free-disk-space
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
@@ -588,43 +588,43 @@ jobs:
       #     source-dir: desktop-package/${{ env.PublishTempFolder}}
       #     destination-dir: ./
       - name: Upload MacOS
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-MacOS-x64
           path: ./desktop-package/deploy/Platform-macos-*-x64.dmg
       - name: Upload MacOS Zip
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-MacOS-zip
           path: ./desktop-package/deploy/Platform-macos*.zip
       - name: Upload MacOS arm64
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-MacOS-arm64
           path: ./desktop-package/deploy/Platform-macos-*-arm64.dmg
       - name: Upload Windows
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-Windows
           path: ./desktop-package/deploy/Platform-windows-*.exe
       - name: Upload Windows zip
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-Windows-zip
           path: ./desktop-package/deploy/Platform-windows-*.zip
       - name: Upload Linux
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-Linux-arm64
           path: ./desktop-package/deploy/Platform-linux-*-arm64.zip
       - name: Upload Linux
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-Linux-x64
           path: ./desktop-package/deploy/Platform-linux-*-x64.zip
 
       - name: Upload Linux App image
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Platform-Linux-AppImage
           path: ./desktop-package/deploy/Platform-linux-*.AppImage
@@ -641,12 +641,12 @@ jobs:
           pnpm run bundle:server
 
       - name: Upload server bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: server-bundle
           path: ./desktop-package/bundle
       - name: Upload manifests (yml + blockmap)
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: desktop-manifests
           path: |
@@ -670,9 +670,9 @@ jobs:
           filter: tree:0
           submodules: recursive
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Configure docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@v5
         with:
           daemon-config: |
             {
@@ -682,52 +682,52 @@ jobs:
             }
 
       - name: Download Platform-MacOS-x64
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-MacOS-x64
           path: ./desktop-package/deploy
       - name: Download Platform-MacOS-arm64
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-MacOS-arm64
           path: ./desktop-package/deploy
       - name: Download Platform-MacOS-zip
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-MacOS-zip
           path: ./desktop-package/deploy
       - name: Download Platform-Windows
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-Windows
           path: ./desktop-package/deploy
       - name: Download Platform-Windows-zip
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-Windows-zip
           path: ./desktop-package/deploy
       # - name: Download Platform-Linux-arm64
-      #   uses: actions/download-artifact@v5
+      #   uses: actions/download-artifact@v7
       #   with:
       #     name: Platform-Linux-arm64
       #     path: ./desktop-package/deploy
       - name: Download Platform-Linux-x64
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-Linux-x64
           path: ./desktop-package/deploy
       - name: Download Platform-Linux-AppImage
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Platform-Linux-AppImage
           path: ./desktop-package/deploy
       - name: Download server-bundle
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: server-bundle
           path: ./desktop-package/bundle
       - name: Download desktop-manifests
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: desktop-manifests
           path: ./desktop-package/deploy
@@ -735,10 +735,10 @@ jobs:
       - name: List downloaded artifacts
         run: ls -R ./desktop-package/deploy || true
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: intabiafusion
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}

@@ -17,7 +17,7 @@
   import { type Doc, type PersonId, getCurrentAccount } from '@hcengineering/core'
   import { getName } from '@hcengineering/contact'
   import { getPersonsByPersonIds } from '@hcengineering/contact-resources'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
   import { type TypingInfo, typing } from '@hcengineering/presence-resources'

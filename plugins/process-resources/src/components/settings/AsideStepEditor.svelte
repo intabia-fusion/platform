@@ -14,9 +14,10 @@
 -->
 
 <script lang="ts">
-  import { Doc, Ref } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { Method, Process, Transition, type Step } from '@hcengineering/process'
+  import type { Method, Process, Transition } from '@hcengineering/process'
+  import type { Step } from '@hcengineering/process'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import { ButtonIcon, IconDelete, Label, Modal } from '@hcengineering/ui'
   import plugin from '../../plugin'

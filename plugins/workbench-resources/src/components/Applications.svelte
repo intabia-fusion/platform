@@ -22,7 +22,7 @@
   import workbench from '@hcengineering/workbench'
   import { getMetadata, getResource } from '@hcengineering/platform'
   import { NotificationClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
-  import { NotificationAppearancePreference } from '@hcengineering/notification'
+  import type { NotificationAppearancePreference } from '@hcengineering/notification'
 
   import { getDefaultHiddenApps } from '../utils'
   import AppItem from './AppItem.svelte'

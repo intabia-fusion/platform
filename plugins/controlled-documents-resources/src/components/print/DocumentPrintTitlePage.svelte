@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
   import documents, { DocumentState } from '@hcengineering/controlled-documents'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
 
   import { $controlledDocument as controlledDocument } from '../../stores/editors/document'

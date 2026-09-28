@@ -15,8 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/document'
   import document from '../plugin'
   import DocumentIcon from './DocumentIcon.svelte'
 

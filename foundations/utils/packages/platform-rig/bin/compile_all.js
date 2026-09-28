@@ -2,6 +2,7 @@
 
 const { resolve, join } = require('path')
 const { existsSync } = require('fs')
+const { spawnSync } = require('child_process')
 const { performance } = require('perf_hooks')
 
 const { BuildTaskQueue, TaskType } = require('./libs/task-queue')
@@ -140,7 +141,7 @@ Options:
   --validate           Accepted for compatibility: type checking is part of the build
   --test               Run tests for packages with "_phase:test"
   --lint               Run ESLint check (no fix) after the build; for packages with "_phase:format"
-  --format             Run the format phase only, for packages with "_phase:format"
+  --format             Build, then run the format phase for packages with "_phase:format"
   --force, -f          Disable all caching (forces full rebuild, revalidation)
   --bundle             Run bundle phase for packages with "_phase:bundle"
   --docker-build       Run docker-build phase (implies --bundle)
@@ -159,8 +160,8 @@ Description:
   When --lint is specified, also runs ESLint check (no fix) for
   packages that have "_phase:format" defined.
 
-  When --format is specified, runs only the format phase for packages with "_phase:format".
-  No transpile or validate phases are executed (standalone formatter command).
+  When --format is specified, builds the selected packages first (cached), then runs the
+  format phase for packages with "_phase:format".
 
   When --bundle is specified, runs the bundle phase for packages with "_phase:bundle".
 
@@ -607,36 +608,18 @@ async function compileAll(rootDir, options = {}) {
     return { success: true, listOnly: true }
   }
 
-  // Format-only mode: skip transpile/validate/bundle entirely
-  if (doFormat) {
-    const formatTargets = packagesToFormat
-    console.log(`\n=== Phase: Formatting ${formatTargets.length} packages ===`)
-    const formatResults = await runFormatPhase(graph, formatTargets, validationWorkers, { force, packageHashes })
-    console.log(`Formatted: ${formatResults.successCount}/${formatResults.total} packages in ${Math.round(formatResults.time)}ms`)
-    if (formatResults.cacheHits > 0) console.log(`  (${formatResults.cacheHits} from cache)`)
-
-    cpuTracker.stop()
-    const cpuStats = cpuTracker.getStats()
-    const totalTime = performance.now() - startTime
-    console.log(`\n=== Summary ===`)
-    console.log(`Total time: ${Math.round(totalTime)}ms`)
-    console.log(`CPU usage: avg ${cpuStats.avg}%, peak ${cpuStats.peak}%`)
-
-    if (formatResults.errors.length > 0) {
-      console.error('\nFormat errors:')
-      for (const err of formatResults.errors) {
-        const errMsg = err.error?.message || err.error || 'Unknown error'
-        console.error(`  ${error(err.package)}: ${errMsg.split('\n')[0]}`)
-      }
-      return { success: false, errors: formatResults.errors.length }
+  // Fail before the build rather than after it: the docker phase comes last.
+  if (packagesToDockerBuild.length > 0) {
+    const docker = spawnSync('docker', ['info'], { stdio: 'ignore' })
+    if (docker.status !== 0) {
+      console.error(error(`\nDocker is not available (${docker.error?.message ?? '`docker info` failed'}), start Docker and retry`))
+      return { success: false, errors: 1 }
     }
-
-    return { success: true, time: totalTime, cpuStats }
   }
 
-  // When --force is used with a "leaf" phase (--test, --lint, --svelte-check),
+  // When --force is used with a "leaf" phase (--test, --lint, --svelte-check, --format),
   // only force that specific phase — prerequisite phases (transpile, validate) use cache.
-  const hasLeafPhase = doTest || doLint || doSvelteCheck
+  const hasLeafPhase = doTest || doLint || doSvelteCheck || doFormat
   const forcePrerequisites = force && !hasLeafPhase
 
   // Collect all errors across phases for final summary
@@ -677,6 +660,33 @@ async function compileAll(rootDir, options = {}) {
     if (node?.project?.fullPath) {
       packageHashes.set(pkg, calculatePackageHash(node.project.fullPath))
     }
+  }
+
+  // eslint --fix resolves types through dependencies' .d.ts, so format runs after the build.
+  if (doFormat) {
+    const formatTargets = packagesToFormat
+    console.log(`\n=== Phase: Formatting ${formatTargets.length} packages ===`)
+    const formatResults = await runFormatPhase(graph, formatTargets, validationWorkers, { force, packageHashes })
+    console.log(`Formatted: ${formatResults.successCount}/${formatResults.total} packages in ${Math.round(formatResults.time)}ms`)
+    if (formatResults.cacheHits > 0) console.log(`  (${formatResults.cacheHits} from cache)`)
+
+    cpuTracker.stop()
+    const cpuStats = cpuTracker.getStats()
+    const totalTime = performance.now() - startTime
+    console.log(`\n=== Summary ===`)
+    console.log(`Total time: ${Math.round(totalTime)}ms`)
+    console.log(`CPU usage: avg ${cpuStats.avg}%, peak ${cpuStats.peak}%`)
+
+    if (formatResults.errors.length > 0) {
+      console.error('\nFormat errors:')
+      for (const err of formatResults.errors) {
+        const errMsg = err.error?.message || err.error || 'Unknown error'
+        console.error(`  ${error(err.package)}: ${errMsg.split('\n')[0]}`)
+      }
+      return { success: false, errors: formatResults.errors.length }
+    }
+
+    return { success: true, time: totalTime, cpuStats }
   }
 
   if (doLint) {

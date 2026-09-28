@@ -12,22 +12,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import tracker from '@hcengineering/tracker'
-  import { ProjectType } from '@hcengineering/task'
+  import type { ProjectType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import ui, {
-    DropdownIntlItem,
-    Label,
-    languageStore,
-    Modal,
-    ModernDropdown,
-    ModernEditbox,
-    TextArea
-  } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { Label, languageStore, Modal, ModernDropdown, ModernEditbox, TextArea } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { addScreenTab } from '@hcengineering/workflow'
 

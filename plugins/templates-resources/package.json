@@ -2,6 +2,7 @@
   "name": "@hcengineering/templates-resources",
   "version": "0.7.0",
   "main": "src/index.ts",
+  "types": "types/index.d.ts",
   "author": "Anticrm Platform Contributors",
   "license": "EPL-2.0",
   "scripts": {

@@ -16,7 +16,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
   import Spinner from './Spinner.svelte'
-  import { ButtonSize } from '../types'
+  import type { ButtonSize } from '../types'
 
   export let shrink: boolean = false
   export let label: string = ''

@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
+  import type { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { getClient } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { MessageNotification } from '@hcengineering/notification'
+  import type { MessageNotification } from '@hcengineering/notification'
 
   import request from '../plugin'
 

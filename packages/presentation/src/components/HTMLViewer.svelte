@@ -15,7 +15,8 @@
 <script lang="ts">
   import { htmlToJSON } from '@hcengineering/text'
   import Node from './markup/Node.svelte'
-  import { loadParseEmojisFunction, ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import type { ParsedTextWithEmojis } from '@hcengineering/emoji'
+  import { loadParseEmojisFunction } from '@hcengineering/emoji'
   import { onMount } from 'svelte'
 
   export let value: string

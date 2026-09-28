@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@hcengineering/account-client'
   import presentation, {
     copyTextToClipboard,
     getCurrentWorkspaceUrl,
@@ -11,7 +11,8 @@
   import { slide } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { getMetadata } from '@hcengineering/platform'
-  import { getCurrentAccount, pickPrimarySocialId, SocialId, SocialIdType } from '@hcengineering/core'
+  import type { SocialId } from '@hcengineering/core'
+  import { getCurrentAccount, pickPrimarySocialId, SocialIdType } from '@hcengineering/core'
   import { getAccountClient } from '../utils'
   import { Analytics } from '@hcengineering/analytics'
 

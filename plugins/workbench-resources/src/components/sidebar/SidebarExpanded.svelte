@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Widget, WidgetPreference, WidgetTab } from '@hcengineering/workbench'
-  import { Ref } from '@hcengineering/core'
+  import type { Widget, WidgetPreference, WidgetTab } from '@hcengineering/workbench'
+  import type { Ref } from '@hcengineering/core'
   import {
     Component,
     resizeObserver,
@@ -24,7 +24,8 @@
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
 
-  import { closeWidgetTab, sidebarStore, SidebarVariant, WidgetState, openWidgetTab, closeWidget } from '../../sidebar'
+  import type { WidgetState } from '../../sidebar'
+  import { closeWidgetTab, sidebarStore, SidebarVariant, openWidgetTab, closeWidget } from '../../sidebar'
   import WidgetsBar from './widgets/WidgetsBar.svelte'
   import SidebarTabs from './SidebarTabs.svelte'
 

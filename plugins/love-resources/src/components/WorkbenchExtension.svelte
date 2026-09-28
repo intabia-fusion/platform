@@ -1,14 +1,13 @@
 <script lang="ts">
   import { isSafari, pushRootBarComponent } from '@hcengineering/ui'
-  import {
+  import type {
     Participant,
     RemoteParticipant,
     RemoteTrack,
     RemoteTrackPublication,
-    RoomEvent,
-    Track,
     TrackPublication
   } from 'livekit-client'
+  import { RoomEvent, Track } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
   import { reconnectToCurrentMeeting, reconnectingToMeeting, cancelReconnect } from '../meetings'

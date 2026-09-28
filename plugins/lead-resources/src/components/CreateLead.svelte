@@ -14,22 +14,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Contact } from '@hcengineering/contact'
+  import type { Contact } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { UserBox } from '@hcengineering/contact-resources'
-  import core, {
-    AccountRole,
-    AttachedData,
-    AttachedDoc,
-    generateId,
-    getCurrentAccount,
-    hasAccountRole,
-    Ref,
-    Status as TaskStatus
-  } from '@hcengineering/core'
-  import { Customer, Funnel, Lead, LeadEvents } from '@hcengineering/lead'
-  import { OK, Status } from '@hcengineering/platform'
+  import type { AttachedData, AttachedDoc, Ref, Status as TaskStatus } from '@hcengineering/core'
+  import core, { AccountRole, generateId, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { Customer, Funnel, Lead } from '@hcengineering/lead'
+  import { LeadEvents } from '@hcengineering/lead'
+  import type { Status } from '@hcengineering/platform'
+  import { OK } from '@hcengineering/platform'
   import { Card, createQuery, getClient, InlineAttributeBar, SpaceSelector } from '@hcengineering/presentation'
-  import task, { getStates, TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
+  import task, { getStates } from '@hcengineering/task'
   import { TaskKindSelector, typeStore } from '@hcengineering/task-resources'
   import { Button, createFocusManager, EditBox, FocusHandler, Label, Status as StatusControl } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'

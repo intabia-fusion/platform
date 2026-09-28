@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import type { TestRun } from '@hcengineering/test-management'
   import { Label, ProgressCircle, Loading } from '@hcengineering/ui'
 
@@ -26,7 +26,7 @@
 
   let isLoading = true
 
-  getTestRunStats(_id).then((newStats) => {
+  void getTestRunStats(_id).then((newStats) => {
     stats = newStats
     isLoading = false
   })

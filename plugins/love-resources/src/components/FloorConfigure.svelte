@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Contact } from '@hcengineering/contact'
-  import { DocumentUpdate, Ref } from '@hcengineering/core'
-  import { Floor, GRID_WIDTH, Room, getFreeSpace } from '@hcengineering/love'
+  import type { Contact } from '@hcengineering/contact'
+  import type { DocumentUpdate, Ref } from '@hcengineering/core'
+  import type { Floor, Room } from '@hcengineering/love'
+  import { GRID_WIDTH, getFreeSpace } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import {
     ButtonIcon,
@@ -31,7 +32,8 @@
   import lovePlg from '../plugin'
   import { ensureOfficeDetailsLoaded, floors, lockedRoom, selectedFloor } from '../stores'
 
-  import { FloorSize, RGBAColor, ResizeInitParams, RoomSide, shadowError, shadowNormal } from '../types'
+  import type { FloorSize, RGBAColor, ResizeInitParams, RoomSide } from '../types'
+  import { shadowError, shadowNormal } from '../types'
   import { calculateFloorSize } from '../utils'
   import AddRoomPopup from './AddRoomPopup.svelte'
   import FloorGrid from './FloorGrid.svelte'
@@ -275,7 +277,7 @@
   }
 
   function docMouseUp (e: MouseEvent): void {
-    if (locked) updateRoom(locked.room._id)
+    if (locked) void updateRoom(locked.room._id)
     if (dragged !== undefined) {
       divScroll.removeEventListener('mousemove', dragMouseMove)
       dragged = undefined

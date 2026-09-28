@@ -15,13 +15,14 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { Button, ButtonIcon, closeTooltip, IconOptions, showPopup } from '@hcengineering/ui'
-  import { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { focusStore } from '../selection'
   import { setViewOptions } from '../viewOptions'
   import ViewOptionsEditor from './ViewOptions.svelte'
-  import core, { Class, Doc, Hierarchy, Ref, SortingOrder, Type } from '@hcengineering/core'
+  import type { Class, Doc, Hierarchy, Ref, Type } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet | undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' | 'ghost' = 'secondary'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
+  import type { Card } from '@hcengineering/card'
   import { AnyAttribute } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, Process, Step } from '@hcengineering/process'
+  import type { MethodParams, Process, Step } from '@hcengineering/process'
   import { Icon, IconError, Label, tooltip } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import UpdateAttributePresenter from './UpdateAttributePresenter.svelte'

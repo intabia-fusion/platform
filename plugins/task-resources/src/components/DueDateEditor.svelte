@@ -1,8 +1,10 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { DueDatePresenter, ButtonSize, ButtonKind } from '@hcengineering/ui'
-  import { WithLookup } from '@hcengineering/core'
-  import task, { Task } from '@hcengineering/task'
+  import type { ButtonSize, ButtonKind } from '@hcengineering/ui'
+  import { DueDatePresenter } from '@hcengineering/ui'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Task } from '@hcengineering/task'
+  import task from '@hcengineering/task'
   import { statusStore } from '@hcengineering/view-resources'
 
   export let object: WithLookup<Task>

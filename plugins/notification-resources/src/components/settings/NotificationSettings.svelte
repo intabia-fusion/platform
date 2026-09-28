@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref, reduceCalls } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { reduceCalls } from '@hcengineering/core'
   import type {
     NotificationType,
     NotificationGroup,
@@ -23,13 +24,13 @@
   } from '@hcengineering/notification'
   import { getResource } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
+  import type { Location } from '@hcengineering/ui'
   import {
     Breadcrumb,
     defineSeparators,
     getCurrentResolvedLocation,
     Header,
     Loading,
-    Location,
     navigate,
     NavItem,
     resolvedLocationStore,

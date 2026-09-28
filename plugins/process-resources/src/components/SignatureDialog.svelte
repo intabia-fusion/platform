@@ -16,19 +16,12 @@
 -->
 <script lang="ts">
   import { getClient as getAccountClient } from '@hcengineering/account-client'
-  import contact, { SocialIdentityRef } from '@hcengineering/contact'
+  import type { SocialIdentityRef } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { getCurrentAccount, SocialIdType } from '@hcengineering/core'
   import login from '@hcengineering/login'
-  import {
-    ERROR,
-    getMetadata,
-    IntlString,
-    OK,
-    PlatformError,
-    Severity,
-    Status,
-    translate
-  } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { ERROR, getMetadata, OK, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { EditBox, ModernDialog, StylishEdit, Status as StatusControl } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

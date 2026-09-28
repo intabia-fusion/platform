@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { PersonId } from '@hcengineering/core'
+  import type { PersonId } from '@hcengineering/core'
   import contact from '@hcengineering/contact'
-  import { IntlString } from '@hcengineering/platform'
-  import { ButtonKind, ButtonSize, Component } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
 
   export let label: IntlString
   export let value: PersonId[]

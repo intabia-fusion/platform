@@ -12,11 +12,13 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
-  import { Widget, WidgetTab } from '@hcengineering/workbench'
+  import type { Action } from '@hcengineering/ui'
+  import { Menu, ModernTab, showPopup } from '@hcengineering/ui'
+  import type { Widget, WidgetTab } from '@hcengineering/workbench'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { Card, MasterTag } from '@hcengineering/card'
-  import { Ref, SortingOrder } from '@hcengineering/core'
+  import type { Card, MasterTag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import { closeWidgetTab } from '@hcengineering/workbench-resources'
   import view from '@hcengineering/view'
 

@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-  import { ComponentProps } from 'svelte'
+  import type { ComponentProps } from 'svelte'
   import { Button } from '@hcengineering/ui'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { Action, ViewContextType } from '@hcengineering/view'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import type { Action, ViewContextType } from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
   import { filterAvailableActions, invokeAction } from '../actions'
   import view from '../plugin'

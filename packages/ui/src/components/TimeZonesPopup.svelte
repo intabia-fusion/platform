@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import type { TimeZone } from '..'
   import ui, {
     deviceOptionsStore,
     IconSearch,
@@ -23,7 +24,6 @@
     resizeObserver,
     EditWithIcon,
     IconClose,
-    TimeZone,
     IconChevronDown,
     ActionIcon,
     IconUndo

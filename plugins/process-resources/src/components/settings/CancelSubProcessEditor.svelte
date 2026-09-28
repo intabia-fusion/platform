@@ -15,10 +15,11 @@
 
 <script lang="ts">
   import card from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process, Step } from '@hcengineering/process'
-  import { DropdownLabels, DropdownTextItem, Label } from '@hcengineering/ui'
+  import type { Process, Step } from '@hcengineering/process'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { DropdownLabels, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
 

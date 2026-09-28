@@ -13,17 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, {
-    ArrOf,
-    Class,
-    Doc,
-    EnumOf,
-    FindResult,
-    getObjectValue,
-    Ref,
-    SortingOrder,
-    Space
-  } from '@hcengineering/core'
+  import type { ArrOf, Class, Doc, EnumOf, FindResult, Ref, Space } from '@hcengineering/core'
+  import core, { getObjectValue, SortingOrder } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
     deviceOptionsStore,
@@ -35,7 +26,7 @@
     Loading,
     resizeObserver
   } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { FILTER_DEBOUNCE_MS } from '../../filter'
   import view from '../../plugin'
@@ -168,7 +159,7 @@
 
   const dispatch = createEventDispatcher()
 
-  $: getValues(search)
+  $: void getValues(search)
 </script>
 
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>

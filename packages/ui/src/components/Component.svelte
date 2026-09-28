@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getResourceP } from '@hcengineering/platform'
   import { deepEqual } from 'fast-equals'
-  import { SvelteComponent } from 'svelte'
+  import type { SvelteComponent } from 'svelte'
   import type { AnyComponent, AnySvelteComponent } from '../types'
   import ErrorPresenter from './ErrorPresenter.svelte'
   import Loading from './Loading.svelte'

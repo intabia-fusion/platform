@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
   import { Label, resizeObserver, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { SelectedContext, NestedContext } from '@hcengineering/process'
+  import type { SelectedContext, NestedContext } from '@hcengineering/process'
   import { getValueReduceFunc } from '../../utils'
 
   export let context: NestedContext

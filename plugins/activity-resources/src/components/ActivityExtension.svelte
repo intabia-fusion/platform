@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityExtension, ActivityExtensionKind } from '@hcengineering/activity'
+  import type { ActivityExtension, ActivityExtensionKind } from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
 
   export let kind: ActivityExtensionKind

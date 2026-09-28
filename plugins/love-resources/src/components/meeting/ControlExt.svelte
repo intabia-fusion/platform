@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, toIdMap } from '@hcengineering/core'
-  import { isOffice, ParticipantInfo, Room, MeetingMinutes } from '@hcengineering/love'
+  import type { IdMap, Ref } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
+  import type { ParticipantInfo, Room, MeetingMinutes } from '@hcengineering/love'
+  import { isOffice } from '@hcengineering/love'
   import { getMetadata, translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip, themeStore } from '@hcengineering/ui'

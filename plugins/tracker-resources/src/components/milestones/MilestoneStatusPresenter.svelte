@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Milestone, MilestoneStatus } from '@hcengineering/tracker'
+  import type { Milestone, MilestoneStatus } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import MilestoneStatusEditor from './MilestoneStatusEditor.svelte'
 

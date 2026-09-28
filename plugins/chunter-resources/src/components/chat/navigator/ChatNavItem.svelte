@@ -13,20 +13,23 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotificationSetting, UnreadContext } from '@hcengineering/notification'
+  import type { DocNotificationSetting, UnreadContext } from '@hcengineering/notification'
+  import notification from '@hcengineering/notification'
   import { translate } from '@hcengineering/platform'
   import { copyTextToClipboard, getClient } from '@hcengineering/presentation'
-  import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
   import { getLink, getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
   import { NotificationClientImpl, MutePopup } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
-  import { Doc, getCurrentAccount, Space } from '@hcengineering/core'
-  import { Channel, Chat } from '@hcengineering/chunter'
+  import type { Doc, Space } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { Channel, Chat } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
 
   import NavItem from './NavItem.svelte'
-  import { ChatNavItemModel } from '../types'
+  import type { ChatNavItemModel } from '../types'
   import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
   import { leaveChannel, toggleChannelIcon } from '../../../utils'

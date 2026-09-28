@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { ProcessContextView } from '../../types'
+  import type { ProcessContextView } from '../../types'
 
   export let context: ProcessContextView
 

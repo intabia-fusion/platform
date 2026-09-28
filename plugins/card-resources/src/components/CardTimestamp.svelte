@@ -15,7 +15,8 @@
 
 <script lang="ts">
   import { tooltip } from '@hcengineering/ui'
-  import { getDisplayTime, Timestamp } from '@hcengineering/core'
+  import type { Timestamp } from '@hcengineering/core'
+  import { getDisplayTime } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
   export let date: Timestamp

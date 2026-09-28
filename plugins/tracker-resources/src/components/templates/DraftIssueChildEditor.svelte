@@ -14,19 +14,16 @@
 -->
 <script lang="ts">
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import core, { Doc, generateId, type PersonId, Ref } from '@hcengineering/core'
-  import presentation, { DraftController, getClient, KeyedAttribute } from '@hcengineering/presentation'
-  import tags, { TagElement, TagReference } from '@hcengineering/tags'
-  import { TaskType } from '@hcengineering/task'
+  import type { Doc, Ref } from '@hcengineering/core'
+  import core, { generateId, type PersonId } from '@hcengineering/core'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import presentation, { DraftController, getClient } from '@hcengineering/presentation'
+  import type { TagElement, TagReference } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
+  import type { TaskType } from '@hcengineering/task'
   import { TaskKindSelector } from '@hcengineering/task-resources'
-  import {
-    Component as ComponentType,
-    Issue,
-    IssueDraft,
-    IssuePriority,
-    Milestone,
-    Project
-  } from '@hcengineering/tracker'
+  import type { Component as ComponentType, Issue, IssueDraft, Milestone, Project } from '@hcengineering/tracker'
+  import { IssuePriority } from '@hcengineering/tracker'
   import { Button, Component, EditBox } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import tracker from '../../plugin'

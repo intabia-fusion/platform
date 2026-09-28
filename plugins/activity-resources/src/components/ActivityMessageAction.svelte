@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AnySvelteComponent, ButtonIcon, IconSize } from '@hcengineering/ui'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import { ComponentType } from 'svelte'
+  import type { IconSize } from '@hcengineering/ui'
+  import { type AnySvelteComponent, ButtonIcon } from '@hcengineering/ui'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { ComponentType } from 'svelte'
 
   export let label: IntlString
   export let icon: Asset | AnySvelteComponent | ComponentType

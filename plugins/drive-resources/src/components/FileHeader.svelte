@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Doc } from '@hcengineering/core'
-  import { type File } from '@hcengineering/drive'
+  import type { Doc } from '@hcengineering/core'
+  import type { File } from '@hcengineering/drive'
   import { DocsNavigator } from '@hcengineering/view-resources'
 
   import FilePresenter from './FilePresenter.svelte'

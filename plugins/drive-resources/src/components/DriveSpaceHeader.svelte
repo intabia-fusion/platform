@@ -13,12 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AccountRole, Ref, getCurrentAccount } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
-  import { type Drive } from '@hcengineering/drive'
+  import type { Drive } from '@hcengineering/drive'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { HeaderButton, HeaderButtonAction } from '@hcengineering/ui'
+  import type { HeaderButtonAction } from '@hcengineering/ui'
+  import { HeaderButton } from '@hcengineering/ui'
   import { getUploadHandlers } from '@hcengineering/uploader'
   import drive from '../plugin'
   import { getFolderIdFromFragment } from '../navigation'

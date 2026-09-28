@@ -16,9 +16,10 @@
 <script lang="ts">
   import type { AttachedData, Class, Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize, closeTooltip, showPopup } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { closeTooltip, showPopup } from '@hcengineering/ui'
 
-  import { Channel, ChannelProvider } from '@hcengineering/contact'
+  import type { Channel, ChannelProvider } from '@hcengineering/contact'
   import { restrictionStore } from '@hcengineering/view-resources'
   import contact from '../plugin'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
@@ -94,10 +95,10 @@
   {shape}
   {focusIndex}
   on:remove={(e) => {
-    remove(e.detail)
+    void remove(e.detail)
   }}
   on:save={(e) => {
-    saveHandler(e.detail)
+    void saveHandler(e.detail)
   }}
   on:open={_open}
 />

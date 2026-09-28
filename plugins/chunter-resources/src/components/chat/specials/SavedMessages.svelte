@@ -13,14 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment, { Attachment, SavedAttachments } from '@hcengineering/attachment'
+  import type { Attachment, SavedAttachments } from '@hcengineering/attachment'
+  import attachment from '@hcengineering/attachment'
   import { AttachmentPreview, savedAttachmentsStore } from '@hcengineering/attachment-resources'
   import { getName as getContactName } from '@hcengineering/contact'
   import { getPersonByPersonId } from '@hcengineering/contact-resources'
-  import core, { getDisplayTime, Ref, SortingOrder, WithLookup } from '@hcengineering/core'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+  import core, { getDisplayTime, SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Label, Scroller, Lazy } from '@hcengineering/ui'
-  import activity, { ActivityMessage, SavedMessage } from '@hcengineering/activity'
+  import type { ActivityMessage, SavedMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
 
   import chunter from '../../../plugin'

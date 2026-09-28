@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, ClassifierKind, Data, Doc, Mixin } from '@hcengineering/core'
+  import type { Class, Data, Doc, Mixin } from '@hcengineering/core'
+  import core, { ClassifierKind } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
   import { EditBox, Icon, Label } from '@hcengineering/ui'

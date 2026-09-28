@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     ButtonIcon,
-    DropdownIntlItem,
     Icon,
     IconDelete,
     IconMoreV,
@@ -24,7 +24,7 @@
     showPopup
   } from '@hcengineering/ui'
   import setting from '@hcengineering/setting'
-  import { MailboxInfo } from '@hcengineering/account-client'
+  import type { MailboxInfo } from '@hcengineering/account-client'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import { getAccountClient } from '../utils'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'

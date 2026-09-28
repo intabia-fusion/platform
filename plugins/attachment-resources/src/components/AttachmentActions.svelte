@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import type { BlobType, WithLookup } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import presentation, { canPreviewFile, getFileUrl, previewTypes, MessageBox } from '@hcengineering/presentation'
-  import { IconMoreH, Menu, Action as UIAction, showPopup, tooltip } from '@hcengineering/ui'
+  import type { Action as UIAction } from '@hcengineering/ui'
+  import { IconMoreH, Menu, showPopup, tooltip } from '@hcengineering/ui'
   import view, { Action } from '@hcengineering/view'
   import workbench from '@hcengineering/workbench'
 

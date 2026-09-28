@@ -1,12 +1,14 @@
 <script lang="ts">
-  import contact, { Employee, Person } from '@hcengineering/contact'
+  import type { Employee, Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { type Class, type Doc, type Ref, type Space, SortingOrder } from '@hcengineering/core'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import time, { ToDo, ToDoPriority } from '@hcengineering/time'
+  import type { ToDo } from '@hcengineering/time'
+  import time, { ToDoPriority } from '@hcengineering/time'
   import { CheckBox, getEventPositionElement, showPopup, Component } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
-  import { NodeViewProps } from '../../node-view'
+  import type { NodeViewProps } from '../../node-view'
   import NodeViewWrapper from '../../node-view/NodeViewWrapper.svelte'
   import NodeViewContent from '../../node-view/NodeViewContent.svelte'
 

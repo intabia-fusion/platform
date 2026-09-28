@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, Label, ProgressCircle, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
-  import { Request, RequestStatus } from '@hcengineering/request'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Request } from '@hcengineering/request'
+  import { RequestStatus } from '@hcengineering/request'
+  import type { IntlString } from '@hcengineering/platform'
   import { RequestStatusPresenter, RequestDetailPopup } from '@hcengineering/request-resources'
 
   export let value: Request

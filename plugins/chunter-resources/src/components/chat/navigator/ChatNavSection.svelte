@@ -16,16 +16,16 @@
   import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
   import { statusByUserStore } from '@hcengineering/contact-resources'
-  import core, { Class, Doc, notEmpty, reduceCalls, Ref, WithLookup } from '@hcengineering/core'
-  import { getResource, IntlString, translate } from '@hcengineering/platform'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import core, { notEmpty, reduceCalls } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource, translate } from '@hcengineering/platform'
   import { getClient, isSpace } from '@hcengineering/presentation'
+  import type { Action, AnySvelteComponent, IconSize } from '@hcengineering/ui'
   import ui, {
-    Action,
-    AnySvelteComponent,
     Icon,
     IconAdd,
     IconMoreH,
-    IconSize,
     languageStore,
     Menu,
     ModernButton,
@@ -35,14 +35,14 @@
   import view from '@hcengineering/view'
   import { getDocIdentifier } from '@hcengineering/view-resources'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
-  import { Chat } from '@hcengineering/chunter'
+  import type { Chat } from '@hcengineering/chunter'
   import { getUnreadMessageCount } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
   import { getChannelName, getObjectIcon } from '../../../utils'
   import { getChatNavItemKey } from '../utils'
-  import { ChatNavItemModel, SortFnOptions } from '../types'
+  import type { ChatNavItemModel, SortFnOptions } from '../types'
   import ChatNavItem from './ChatNavItem.svelte'
 
   export let id: string

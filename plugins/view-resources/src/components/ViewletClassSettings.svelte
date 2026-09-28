@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { Button, ToggleWithLabel } from '@hcengineering/ui'
-  import { Viewlet } from '@hcengineering/view'
+  import type { Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
-  import { AttributeConfig, Config, isAttribute } from '../viewOptions'
+  import type { AttributeConfig, Config } from '../viewOptions'
+  import { isAttribute } from '../viewOptions'
 
   export let viewlet: Viewlet
   export let items: Array<Config | AttributeConfig> = []

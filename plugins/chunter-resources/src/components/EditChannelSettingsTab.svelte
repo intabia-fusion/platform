@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Channel } from '@hcengineering/chunter'
+  import type { Channel } from '@hcengineering/chunter'
   import { Button } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { ArchiveChannel } from '../index'
@@ -16,7 +16,7 @@
     justify={'left'}
     size={'x-large'}
     on:click={(evt) => {
-      ArchiveChannel(channel, evt, { afterArchive: () => dispatch('close') })
+      void ArchiveChannel(channel, evt, { afterArchive: () => dispatch('close') })
     }}
   />
 {/if}

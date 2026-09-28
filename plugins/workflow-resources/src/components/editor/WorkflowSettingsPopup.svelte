@@ -13,12 +13,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Ref, Status } from '@hcengineering/core'
-  import { type IntlString } from '@hcengineering/platform'
+  import type { Ref, Status } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
-  import ui, { DropdownIntlItem, Label, Modal, ModernDropdown } from '@hcengineering/ui'
-  import { Workflow } from '@hcengineering/workflow'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { Label, Modal, ModernDropdown } from '@hcengineering/ui'
+  import type { Workflow } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
 

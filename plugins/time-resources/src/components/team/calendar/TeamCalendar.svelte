@@ -13,25 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar, { BusySlot, Event, getAllEvents } from '@hcengineering/calendar'
+  import type { BusySlot, Event } from '@hcengineering/calendar'
+  import calendar, { getAllEvents } from '@hcengineering/calendar'
   import { calendarByIdStore } from '@hcengineering/calendar-resources'
-  import contact, { getCurrentEmployee, Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { employeeRefByAccountUuidStore, getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
-  import core, {
-    Doc,
-    IdMap,
-    PersonId,
-    Ref,
-    Timestamp,
-    TxCreateDoc,
-    TxCUD,
-    TxUpdateDoc,
-    unique
-  } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { Doc, IdMap, PersonId, Ref, Timestamp, TxCreateDoc, TxCUD, TxUpdateDoc } from '@hcengineering/core'
+  import core, { unique } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Project } from '@hcengineering/task'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { Project } from '@hcengineering/task'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { Icon, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import time from '../../../plugin'

@@ -14,10 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery } from '@hcengineering/core'
+  import type { Doc, DocumentQuery } from '@hcengineering/core'
   import { ActionContext } from '@hcengineering/presentation'
   import { Button, Label, Loading, SearchEdit, showPopup } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import {
     FilterBar,
     FilterButton,

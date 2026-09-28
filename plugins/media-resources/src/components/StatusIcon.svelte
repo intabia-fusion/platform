@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { Asset } from '@hcengineering/platform'
-  import { AnySvelteComponent, Icon, IconSize } from '@hcengineering/ui'
-  import { ComponentType } from 'svelte'
+  import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
+  import type { ComponentType } from 'svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
   export let size: IconSize

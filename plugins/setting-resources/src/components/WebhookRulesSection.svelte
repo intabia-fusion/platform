@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type ApiKeyInfo } from '@hcengineering/account-client'
+  import type { ApiKeyInfo } from '@hcengineering/account-client'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
   import { type Doc, SortingOrder } from '@hcengineering/core'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'

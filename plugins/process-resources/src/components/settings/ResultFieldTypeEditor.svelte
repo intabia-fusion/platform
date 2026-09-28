@@ -14,10 +14,11 @@
 -->
 
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import core, { AnyAttribute, Class, Ref, Type } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { AnyAttribute, Class, Ref, Type } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
   import { DropdownLabelsIntl, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'

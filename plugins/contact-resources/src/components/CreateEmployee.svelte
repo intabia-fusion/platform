@@ -14,24 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    AvatarType,
-    Channel,
-    combineName,
-    ContactEvents,
-    Employee,
-    Person,
-    SocialIdentityRef
-  } from '@hcengineering/contact'
-  import {
-    AccountRole,
-    AttachedData,
-    buildSocialIdString,
-    Data,
-    generateId,
-    Ref,
-    SocialIdType
-  } from '@hcengineering/core'
+  import type { Channel, Employee, Person, SocialIdentityRef } from '@hcengineering/contact'
+  import { AvatarType, combineName, ContactEvents } from '@hcengineering/contact'
+  import type { AttachedData, Data, Ref } from '@hcengineering/core'
+  import { AccountRole, buildSocialIdString, generateId, SocialIdType } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import platform, { getResource, PlatformError } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'

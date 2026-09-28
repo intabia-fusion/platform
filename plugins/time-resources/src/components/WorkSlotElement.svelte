@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { ToDo, WorkSlot } from '@hcengineering/time'
+  import type { ToDo, WorkSlot } from '@hcengineering/time'
   import ToDoPresenter from './ToDoPresenter.svelte'
   import calendar from '@hcengineering/calendar'
 

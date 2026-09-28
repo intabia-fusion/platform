@@ -14,15 +14,18 @@
 -->
 <script lang="ts">
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
-  import { getCurrentAccount, Markup } from '@hcengineering/core'
+  import type { Markup } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { MessageViewer } from '@hcengineering/presentation'
-  import { Action, IconEdit, IconDelete, ShowMore } from '@hcengineering/ui'
+  import type { Action } from '@hcengineering/ui'
+  import { IconEdit, IconDelete, ShowMore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import activity, { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
+  import type { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import { ActivityMessageTemplate } from '@hcengineering/activity-resources'
   import { EmptyMarkup } from '@hcengineering/text'
   import { ReferenceInput } from '@hcengineering/text-editor-resources'
-  import { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
 
   export let value: any
   export let showNotify: boolean = false

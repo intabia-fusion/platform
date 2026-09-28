@@ -28,7 +28,7 @@
   export let value: Item
 
   const copyLink = (): void => {
-    copyTextToClipboard(value.value)
+    void copyTextToClipboard(value.value)
     closeTooltip()
   }
 </script>

@@ -3,12 +3,13 @@
   import { getClient } from '@hcengineering/presentation'
   import { Grid, Label, Toggle } from '@hcengineering/ui'
 
-  import desktopPreferences, { PreferenceKey } from '@hcengineering/desktop-preferences'
+  import type { PreferenceKey } from '@hcengineering/desktop-preferences'
+  import desktopPreferences from '@hcengineering/desktop-preferences'
 
   import { activePreferences } from '../utils'
 
   $: if (!$activePreferences.showNotifications && $activePreferences.playSound) {
-    doUpdate('playSound', false)
+    void doUpdate('playSound', false)
   }
 
   async function doUpdate (propName: PreferenceKey, value: any): Promise<void> {
@@ -26,7 +27,7 @@
   const client = getClient()
   function updater (propName: PreferenceKey) {
     return (e: CustomEvent) => {
-      doUpdate(propName, e.detail)
+      void doUpdate(propName, e.detail)
     }
   }
 </script>

@@ -16,8 +16,10 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { type Class, type Ref, WithLookup } from '@hcengineering/core'
-  import { TestCase, TestResult } from '@hcengineering/test-management'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
+  import type { TestResult } from '@hcengineering/test-management'
+  import { TestCase } from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
 
   import TestResultAside from './TestResultAside.svelte'

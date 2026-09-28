@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { AttachmentGroup } from '@hcengineering/attachment-resources'
   import { formatName } from '@hcengineering/contact'
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import { HTMLViewer } from '@hcengineering/presentation'
   import type { SharedTelegramMessage } from '@hcengineering/telegram'
   import { CheckBox, getPlatformColorForText, themeStore } from '@hcengineering/ui'

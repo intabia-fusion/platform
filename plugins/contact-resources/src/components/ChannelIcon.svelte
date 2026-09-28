@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, ChannelProvider } from '@hcengineering/contact'
-  import { Icon, IconSize } from '@hcengineering/ui'
+  import type { Channel, ChannelProvider } from '@hcengineering/contact'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import { classIcon } from '@hcengineering/view-resources'
 
@@ -27,10 +28,12 @@
 
   let provider: ChannelProvider | undefined = undefined
 
-  $: value &&
+  $: void (
+    value &&
     client.findOne(contact.class.ChannelProvider, { _id: value.provider }).then((res) => {
       provider = res
     })
+  )
 
   $: icon = provider?.icon ?? classIcon(client, contact.class.Channel)
 </script>

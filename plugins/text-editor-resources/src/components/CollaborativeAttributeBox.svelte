@@ -13,14 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
-  import { KeyedAttribute } from '@hcengineering/presentation'
-  import textEditor, { CollaborationUser, RefAction } from '@hcengineering/text-editor'
-  import { AnySvelteComponent, registerFocus } from '@hcengineering/ui'
+  import type { Doc } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
+  import type { CollaborationUser, RefAction } from '@hcengineering/text-editor'
+  import textEditor from '@hcengineering/text-editor'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { registerFocus } from '@hcengineering/ui'
 
   import CollaborativeTextEditor from './CollaborativeTextEditor.svelte'
-  import { type FileAttachFunction } from './extension/types'
+  import type { FileAttachFunction } from './extension/types'
 
   export let object: Doc
   export let key: KeyedAttribute

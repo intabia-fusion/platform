@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy, afterUpdate } from 'svelte'
+  import type { HeaderAdaptive } from '..'
   import {
     IconMaximize,
     IconMinimize,
@@ -21,7 +22,6 @@
     ButtonIcon,
     deviceOptionsStore as deviceInfo,
     resizeObserver,
-    HeaderAdaptive,
     popupstore
   } from '..'
 

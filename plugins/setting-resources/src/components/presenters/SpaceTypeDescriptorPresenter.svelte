@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { SpaceTypeDescriptor } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
 
   export let value: SpaceTypeDescriptor

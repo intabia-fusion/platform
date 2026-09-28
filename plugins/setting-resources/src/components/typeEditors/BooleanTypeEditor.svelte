@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Type } from '@hcengineering/core'
+  import type { AnyAttribute, Type } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { TypeBoolean } from '@hcengineering/model'
   import { Label, Toggle } from '@hcengineering/ui'
   import { BooleanEditor } from '@hcengineering/view-resources'

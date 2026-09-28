@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Label } from '@hcengineering/ui'
-  import { SelectedNested, Context } from '@hcengineering/process'
+  import type { SelectedNested, Context } from '@hcengineering/process'
 
   export let contextValue: SelectedNested
   export let context: Context

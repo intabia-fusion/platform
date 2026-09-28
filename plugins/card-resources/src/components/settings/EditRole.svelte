@@ -14,16 +14,16 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import core, {
+  import type {
     AnyAttribute,
     AttributePermission,
     Class,
     ClassPermission,
     Doc,
-    notEmpty,
     Permission,
     Ref
   } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
   import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import {
     ButtonIcon,
@@ -40,12 +40,12 @@
   } from '@hcengineering/ui'
   import { ObjectBoxPopup } from '@hcengineering/view-resources'
 
-  import { MasterTag, Role } from '@hcengineering/card'
+  import type { MasterTag, Role } from '@hcengineering/card'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import settingRes from '@hcengineering/setting-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
   import cardPlugin from '../../plugin'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let _id: Ref<Role>
   export let readonly: boolean = false

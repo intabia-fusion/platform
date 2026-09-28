@@ -14,24 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Doc, Ref, Space, AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { IntlString, getResource } from '@hcengineering/platform'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import core, { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getResource } from '@hcengineering/platform'
   import preference from '@hcengineering/preference'
   import { getClient } from '@hcengineering/presentation'
-  import {
-    Action,
-    AnyComponent,
-    IconAdd,
-    IconSearch,
-    getCurrentResolvedLocation,
-    navigate,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { Action, AnyComponent } from '@hcengineering/ui'
+  import { IconAdd, IconSearch, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { TreeNode } from '@hcengineering/view-resources'
-  import { SpacesNavModel } from '@hcengineering/workbench'
+  import type { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
-  import { type UnreadContext } from '@hcengineering/notification'
+  import type { UnreadContext } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'
@@ -102,7 +97,7 @@
   let visibleIf: ((space: Space) => Promise<boolean>) | undefined
 
   $: if (model.visibleIf) {
-    getResource(model.visibleIf).then((r) => {
+    void getResource(model.visibleIf).then((r) => {
       visibleIf = r
     })
   }
@@ -120,7 +115,7 @@
   }
 
   $: if (visibleIf) {
-    updateSpaces(spaces, visibleIf)
+    void updateSpaces(spaces, visibleIf)
   } else {
     filteredSpaces = spaces
   }

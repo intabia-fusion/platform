@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/login'
+  import type { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/login'
   import { getLoginInfoFromQuery, navigateToWorkspace } from '@hcengineering/login-resources'
   import { Loading } from '@hcengineering/ui'
   import { logIn } from '@hcengineering/workbench'

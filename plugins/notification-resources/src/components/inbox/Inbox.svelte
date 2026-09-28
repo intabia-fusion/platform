@@ -14,19 +14,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
   import chunter from '@hcengineering/chunter'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { ContextNotification, DocNotifyContext, notificationId } from '@hcengineering/notification'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
+  import { notificationId } from '@hcengineering/notification'
   import { ActionContext, getClient } from '@hcengineering/presentation'
+  import type { AnyComponent, Location } from '@hcengineering/ui'
   import {
-    AnyComponent,
     closePanel,
     Component,
     defineSeparators,
     deviceOptionsStore as deviceInfo,
     getCurrentLocation,
-    Location,
     location as locationStore,
     restoreLocation,
     Separator,
@@ -37,7 +38,7 @@
   import { getResource } from '@hcengineering/platform'
 
   import notification from '../../plugin'
-  import { InboxFilter } from '../../types'
+  import type { InboxFilter } from '../../types'
   import { resetInboxContext, resolveLocation, selectInboxContext } from '../../utils'
   import { onDestroy, onMount } from 'svelte'
   import InboxHeader from './InboxHeader.svelte'

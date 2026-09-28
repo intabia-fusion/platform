@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { Component } from '@hcengineering/ui'
-  import { AttributeModel } from '@hcengineering/view'
+  import type { AttributeModel } from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
-  import { DocAttributeUpdates, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
-  import { Doc, Ref, Space } from '@hcengineering/core'
+  import type { DocAttributeUpdates, DocUpdateMessage, DocUpdateMessageViewlet } from '@hcengineering/activity'
+  import type { Doc, Ref, Space } from '@hcengineering/core'
 
   import activity from '../../plugin'
 

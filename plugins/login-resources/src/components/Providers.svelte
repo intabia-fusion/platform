@@ -1,8 +1,9 @@
 <script lang="ts">
   import { concatLink } from '@hcengineering/core'
   import platform, { getMetadata } from '@hcengineering/platform'
-  import { type ProviderInfo } from '@hcengineering/account-client'
-  import { AnySvelteComponent, Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
+  import type { ProviderInfo } from '@hcengineering/account-client'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
 
   import FormButton from './internal/FormButton.svelte'
   import { Analytics } from '@hcengineering/analytics'

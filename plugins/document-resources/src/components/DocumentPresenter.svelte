@@ -15,11 +15,11 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import { Document } from '@hcengineering/document'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Document } from '@hcengineering/document'
   import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import document from '../plugin'
   import DocumentIcon from './DocumentIcon.svelte'

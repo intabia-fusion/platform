@@ -14,18 +14,16 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getMetadata, getResource } from '@hcengineering/platform'
   import presentation, { ActionContext, decodeTokenPayload, getClient } from '@hcengineering/presentation'
+  import type { AnyComponent, Location, PopupAlignment, ResolvedLocation } from '@hcengineering/ui'
   import {
-    AnyComponent,
     Component,
     Label,
-    Location,
     PanelInstance,
     Popup,
-    PopupAlignment,
-    ResolvedLocation,
     TooltipInstance,
     areLocationsEqual,
     closePanel,
@@ -37,7 +35,8 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { ListSelectionProvider, parseLinkId, restrictionStore, updateFocus } from '@hcengineering/view-resources'
-  import workbench, { Application, NavigatorModel, SpecialNavModel, ViewConfiguration } from '@hcengineering/workbench'
+  import type { Application, NavigatorModel, SpecialNavModel, ViewConfiguration } from '@hcengineering/workbench'
+  import workbench from '@hcengineering/workbench'
   import { SpaceView, buildNavModel } from '@hcengineering/workbench-resources'
   import { workbenchGuestSeparators } from '..'
   import guest from '../plugin'

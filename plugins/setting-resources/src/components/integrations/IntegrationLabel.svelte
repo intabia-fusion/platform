@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type Integration } from '@hcengineering/account-client'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Integration } from '@hcengineering/account-client'
+  import type { IntlString } from '@hcengineering/platform'
   import setting from '@hcengineering/setting'
   import { Label } from '@hcengineering/ui'
   import { isDisabled } from '@hcengineering/integration-client'

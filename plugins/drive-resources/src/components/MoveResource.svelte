@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import type { Drive, Folder, Resource } from '@hcengineering/drive'
   import presentation, { Card, SpaceSelector } from '@hcengineering/presentation'
   import view from '@hcengineering/view'

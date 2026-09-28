@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { TimeReportDayType } from '@hcengineering/tracker'
-  import { DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
-  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import { DropdownLabelsIntl } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TimeReportDayIcon from './TimeReportDayIcon.svelte'
 

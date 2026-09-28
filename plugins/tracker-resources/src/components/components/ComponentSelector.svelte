@@ -13,12 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, Ref, SortingOrder } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { DocumentQuery, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/tracker'
-  import type { ButtonKind, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, ButtonShape, eventToHTMLElement, showPopup, PopupResult } from '@hcengineering/ui'
+  import type { Component } from '@hcengineering/tracker'
+  import type {
+    ButtonKind,
+    ButtonSize,
+    LabelAndProps,
+    SelectPopupValueType,
+    ButtonShape,
+    PopupResult
+  } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import tracker from '../../plugin'
   import ComponentPresenter from './ComponentPresenter.svelte'
   import ComponentSelectorPopup from './ComponentSelectorPopup.svelte'

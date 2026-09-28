@@ -18,7 +18,7 @@
 
   import presentation, { Card, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import { Label, Loading } from '@hcengineering/ui'
-  import { type Integration } from '@hcengineering/account-client'
+  import type { Integration } from '@hcengineering/account-client'
   import { isWorkspaceIntegration } from '@hcengineering/integration-client'
   import { Analytics } from '@hcengineering/analytics'
 

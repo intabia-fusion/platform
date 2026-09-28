@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Employee } from '@hcengineering/contact'
-  import core, { AccountUuid, AnyAttribute, DocumentQuery, notEmpty, Ref, RefTo, Space } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Employee } from '@hcengineering/contact'
+  import type { AccountUuid, AnyAttribute, DocumentQuery, Ref, RefTo, Space } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { employeeRefByAccountUuidStore } from '..'
   import contact from '../plugin'
   import EmployeeBox from './EmployeeBox.svelte'
@@ -43,7 +44,7 @@
 
   const client = getClient()
 
-  $: buildQuery(attribute, space)
+  $: void buildQuery(attribute, space)
 
   async function buildQuery (attribute: AnyAttribute | undefined, space: Ref<Space> | undefined): Promise<void> {
     const baseQuery = {

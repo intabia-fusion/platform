@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { MasterTag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import type { Location } from '@hcengineering/ui'
   import {
     Icon,
     IconOpenedArrow,
     Label,
-    Location,
     getCurrentResolvedLocation,
     navigate,
     resolvedLocationStore

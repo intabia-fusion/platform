@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import tags, { TagReference, TagElement } from '@hcengineering/tags'
+  import type { TagReference, TagElement } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagItem from './TagItem.svelte'
   import { createQuery } from '@hcengineering/presentation'
-  import { IdMap, toIdMap } from '@hcengineering/core'
+  import type { IdMap } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
 
   export let value: TagReference[] | TagReference
   export let kind: 'tag' | 'list' | 'link' = 'tag'

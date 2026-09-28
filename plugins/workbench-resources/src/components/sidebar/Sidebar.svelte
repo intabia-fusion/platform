@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { panelstore } from '@hcengineering/ui'
-  import { Widget, WidgetPreference } from '@hcengineering/workbench'
+  import type { Widget, WidgetPreference } from '@hcengineering/workbench'
 
   import workbench from '../../plugin'
   import { sidebarStore, SidebarVariant } from '../../sidebar'

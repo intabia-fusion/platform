@@ -33,7 +33,7 @@
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import settingsRes from '../plugin'
-  import { type WebhookRuleTemplate } from '../webhookRuleTemplates'
+  import type { WebhookRuleTemplate } from '../webhookRuleTemplates'
   import { targetKind } from '../webhookTargetKind'
   import WebhookTargetPicker from './WebhookTargetPicker.svelte'
 

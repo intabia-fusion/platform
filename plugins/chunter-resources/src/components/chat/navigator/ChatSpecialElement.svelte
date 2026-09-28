@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { SpecialNavModel } from '@hcengineering/workbench'
+  import type { SpecialNavModel } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
-  import { SavedAttachments } from '@hcengineering/attachment'
-  import { SavedMessage } from '@hcengineering/activity'
+  import type { SavedAttachments } from '@hcengineering/attachment'
+  import type { SavedMessage } from '@hcengineering/activity'
   import { savedMessagesStore } from '@hcengineering/activity-resources'
   import { savedAttachmentsStore } from '@hcengineering/attachment-resources'
 

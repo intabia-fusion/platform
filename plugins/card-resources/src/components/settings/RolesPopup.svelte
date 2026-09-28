@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MasterTag, Role, Tag } from '@hcengineering/card'
-  import core, { Ref } from '@hcengineering/core'
+  import type { MasterTag, Role, Tag } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { ObjectPopup } from '@hcengineering/presentation'
   import card from '../../plugin'
 

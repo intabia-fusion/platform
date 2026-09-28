@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Asset, getResource, translate } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
+  import { getResource, translate } from '@hcengineering/platform'
   import { ComponentExtensions, getClient, reduceCalls } from '@hcengineering/presentation'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
-    AnySvelteComponent,
     closePanel,
     getCurrentLocation,
     Icon,
@@ -27,7 +28,7 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
-  import { WorkbenchTab } from '@hcengineering/workbench'
+  import type { WorkbenchTab } from '@hcengineering/workbench'
 
   import workbench from '../plugin'
   import { closeTab, getTabDataByLocation, getTabLocation, selectTab, tabIdStore, tabsStore } from '../workbench'

@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
-  import { Room } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
   import { Button, CheckBox, Label } from '@hcengineering/ui'
-  import { Writable } from 'svelte/store'
+  import type { Writable } from 'svelte/store'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'
   import { myOffice, rooms } from '../stores'

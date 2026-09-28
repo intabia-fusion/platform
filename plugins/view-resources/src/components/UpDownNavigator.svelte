@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, IconDownOutline, IconUpOutline, navigate } from '@hcengineering/ui'
   import { tick } from 'svelte'

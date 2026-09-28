@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card, Tag } from '@hcengineering/card'
+  import type { Card, Tag } from '@hcengineering/card'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'

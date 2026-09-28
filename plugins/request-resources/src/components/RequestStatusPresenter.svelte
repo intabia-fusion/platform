@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { BooleanIcon, Label } from '@hcengineering/ui'
   import request from '../plugin'
   import { RequestStatus } from '@hcengineering/request'

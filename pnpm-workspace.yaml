@@ -647,8 +647,8 @@ catalog:
   electron-squirrel-startup: ~1.0.0
   electron-updater: ^6.8.9
   email-addresses: ^5.0.0
-  esbuild: ^0.25.10
-  esbuild-loader: ^4.3.0
+  esbuild: ^0.28.2
+  esbuild-loader: ^4.5.0
   eslint: ^8.54.0
   eslint-config-standard: ^17.1.0
   eslint-plugin-import: ^2.26.0

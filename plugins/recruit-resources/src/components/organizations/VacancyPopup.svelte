@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
-  import recruit, { Vacancy } from '@hcengineering/recruit'
+  import type { Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import type { Vacancy } from '@hcengineering/recruit'
+  import recruit from '@hcengineering/recruit'
   import { Table } from '@hcengineering/view-resources'
 
   export let value: Ref<Vacancy>[]

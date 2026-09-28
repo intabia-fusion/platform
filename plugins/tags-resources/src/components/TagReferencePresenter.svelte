@@ -13,19 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
   import type { TagReference, TagElement } from '@hcengineering/tags'
   import tags from '../plugin'
-  import {
-    Chip,
-    getPlatformColorDef,
-    Icon,
-    IconClose,
-    LabelAndProps,
-    resizeObserver,
-    themeStore,
-    tooltip
-  } from '@hcengineering/ui'
+  import type { LabelAndProps } from '@hcengineering/ui'
+  import { Chip, getPlatformColorDef, Icon, IconClose, resizeObserver, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TagItem from './TagItem.svelte'
 

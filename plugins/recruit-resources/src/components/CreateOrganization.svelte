@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Organization } from '@hcengineering/contact'
+  import type { Organization } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { CreateOrganization } from '@hcengineering/contact-resources'
-  import { Ref, TxOperations } from '@hcengineering/core'
+  import type { Ref, TxOperations } from '@hcengineering/core'
   import { Analytics } from '@hcengineering/analytics'
   import { RecruitEvents } from '@hcengineering/recruit'
 

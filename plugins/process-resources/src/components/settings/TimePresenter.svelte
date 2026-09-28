@@ -16,7 +16,8 @@
 <script lang="ts">
   import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { parseContext, Process } from '@hcengineering/process'
+  import type { Process } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Component } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getContext } from '../../utils'

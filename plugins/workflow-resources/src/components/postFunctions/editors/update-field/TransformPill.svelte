@@ -16,7 +16,8 @@
   import { Button, IconClose, Label, languageStore, tooltip } from '@hcengineering/ui'
   import type { WorkflowTransformCall, WorkflowValueFunction } from '@hcengineering/workflow'
   import { getClient } from '@hcengineering/presentation'
-  import { getEmbeddedLabel, getResource, IntlString, translate } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getResource, translate } from '@hcengineering/platform'
 
   import plugin from '../../../../plugin'
 

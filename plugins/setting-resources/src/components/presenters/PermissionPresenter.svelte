@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Permission } from '@hcengineering/core'
+  import type { Permission } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
 
   export let value: Permission

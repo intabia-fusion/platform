@@ -12,8 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityNotificationViewlet, ContextNotification } from '@hcengineering/notification'
-  import { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { ActivityNotificationViewlet, ContextNotification } from '@hcengineering/notification'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
 
   import MessageNotificationPresenter from './MessageNotificationPresenter.svelte'
   import MentionNotificationPresenter from './MentionNotificationPresenter.svelte'

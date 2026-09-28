@@ -15,7 +15,8 @@
     themeStore
   } from '@hcengineering/ui'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Class, type Doc, Ref, SortingOrder } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
+  import { type Doc, SortingOrder } from '@hcengineering/core'
   import { createQuestion, getQuestionClasses, initQuestion } from '../utils'
   import QuestionsItemEditor from './QuestionsItemEditor.svelte'
 

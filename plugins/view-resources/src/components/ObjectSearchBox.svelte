@@ -14,26 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, DocumentQuery, FindOptions, Hierarchy, Ref } from '@hcengineering/core'
-  import { Asset, IntlString } from '@hcengineering/platform'
-  import presentation, {
-    getClient,
-    ObjectCreate,
-    ObjectSearchCategory,
-    ObjectSearchPopup,
-    ObjectSearchResult
-  } from '@hcengineering/presentation'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
+  import { Hierarchy } from '@hcengineering/core'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { ObjectCreate, ObjectSearchCategory, ObjectSearchResult } from '@hcengineering/presentation'
+  import presentation, { getClient, ObjectSearchPopup } from '@hcengineering/presentation'
+  import type { AnySvelteComponent, ButtonKind, ButtonSize, LabelAndProps } from '@hcengineering/ui'
   import {
     ActionIcon,
-    AnySvelteComponent,
     Button,
-    ButtonKind,
-    ButtonSize,
     getEventPositionElement,
     getFocusManager,
     Icon,
     Label,
-    LabelAndProps,
     showPanel,
     showPopup
   } from '@hcengineering/ui'
@@ -77,7 +70,7 @@
     selected = value ? await client.findOne(_class, { _id: value }) : undefined
   }
 
-  $: updateSelected(value)
+  $: void updateSelected(value)
 
   const mgr = getFocusManager()
 

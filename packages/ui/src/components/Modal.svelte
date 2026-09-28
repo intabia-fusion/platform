@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import Header from './Header.svelte'
   import Label from './Label.svelte'
   import ButtonBase from './ButtonBase.svelte'
   import Scroller from './Scroller.svelte'
-  import ui, { ButtonBaseKind, LabelAndProps } from '..'
+  import type { ButtonBaseKind, LabelAndProps } from '..'
+  import ui from '..'
 
   export let type: 'type-aside' | 'type-popup' | 'type-component'
   export let width: 'large' | 'medium' | 'small' | 'x-small' | 'menu' | undefined = undefined

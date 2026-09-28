@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Milestone } from '@hcengineering/tracker'
-  import { ButtonSize, Icon } from '@hcengineering/ui'
+  import type { Milestone } from '@hcengineering/tracker'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
   import { milestoneStatusAssets } from '../../utils'
   import tracker from '../../plugin'
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import type { Issue } from '@hcengineering/tracker'
   import { FixedColumn, statusStore } from '@hcengineering/view-resources'
   import IssueStatusIcon from './IssueStatusIcon.svelte'

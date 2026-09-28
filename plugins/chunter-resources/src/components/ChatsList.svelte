@@ -12,12 +12,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Employee } from '@hcengineering/contact'
-  import { Class, Doc, getCurrentAccount, notEmpty, Ref, SortingOrder, WithLookup } from '@hcengineering/core'
-  import { createQuery, LiveQuery } from '@hcengineering/presentation'
+  import type { Employee } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import { getCurrentAccount, notEmpty, SortingOrder } from '@hcengineering/core'
+  import type { LiveQuery } from '@hcengineering/presentation'
+  import { createQuery } from '@hcengineering/presentation'
   import { CheckBox, createFocusManager, FocusHandler, Icon, languageStore, ListView } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { Chat, DirectMessage } from '@hcengineering/chunter'
+  import type { Chat, DirectMessage } from '@hcengineering/chunter'
 
   import chunter from '../plugin'
   import { getActivityDocClasses, getDirectByAccountMap } from './chat/utils'

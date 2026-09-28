@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { DocumentUpdate, Ref } from '@hcengineering/core'
-  import { IntlString, getEmbeddedLabel } from '@hcengineering/platform'
+  import type { DocumentUpdate, Ref } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import tracker, { Project, ProjectTargetPreference } from '@hcengineering/tracker'
+  import type { Project, ProjectTargetPreference } from '@hcengineering/tracker'
+  import tracker from '@hcengineering/tracker'
   import {
     Button,
     ButtonWithDropdown,
@@ -14,8 +16,8 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
-  import { GithubIntegrationRepository } from '@hcengineering/github'
-  import { Writable } from 'svelte/store'
+  import type { GithubIntegrationRepository } from '@hcengineering/github'
+  import type { Writable } from 'svelte/store'
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 

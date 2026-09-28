@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Reaction } from '@hcengineering/activity'
-  import { Ref, Space } from '@hcengineering/core'
+  import type { Reaction } from '@hcengineering/activity'
+  import type { Ref, Space } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
 
   import activity from '../../plugin'

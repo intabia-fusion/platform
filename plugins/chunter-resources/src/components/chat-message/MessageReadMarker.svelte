@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Timestamp, getCurrentAccount, AccountUuid } from '@hcengineering/core'
-  import { ReadState, ReadPosition } from '@hcengineering/notification'
+  import type { Timestamp, AccountUuid } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
+  import type { ReadState, ReadPosition } from '@hcengineering/notification'
   import { employeeByAccountStore } from '@hcengineering/contact-resources'
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
 
   import DoubleCheck from '../icons/DoubleCheck.svelte'
   import Check from '../icons/Check.svelte'

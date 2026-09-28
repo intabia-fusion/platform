@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type ApiKeyInfo, type CreatedApiKey } from '@hcengineering/account-client'
+  import type { ApiKeyInfo, CreatedApiKey } from '@hcengineering/account-client'
   import core, { AccountRole, type Ref, type Space, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, createQuery } from '@hcengineering/presentation'
   import setting, { type WebhookEndpoint, type WebhookStat } from '@hcengineering/setting'

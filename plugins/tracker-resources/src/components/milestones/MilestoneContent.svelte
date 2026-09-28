@@ -1,8 +1,10 @@
 <script lang="ts">
-  import core, { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { Milestone } from '@hcengineering/tracker'
+  import type { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { Milestone } from '@hcengineering/tracker'
   import { Component, Loading } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import tracker from '../../plugin'
   import NewMilestone from './NewMilestone.svelte'
   import { createQuery } from '@hcengineering/presentation'

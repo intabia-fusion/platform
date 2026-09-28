@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Space } from '@hcengineering/core'
+  import type { Space } from '@hcengineering/core'
   import { Card } from '@hcengineering/presentation'
   import ui from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { LabelAndProps } from '../types'
+  import type { LabelAndProps } from '../types'
   import { tooltip } from '../tooltips'
 
   export let id: string | undefined = undefined

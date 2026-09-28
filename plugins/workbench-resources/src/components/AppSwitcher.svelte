@@ -104,8 +104,8 @@
             class="ap-menuItem withIcon flex-row-center flex-grow"
             class:hover={btns[i] === activeElement}
             on:click={() => {
-              if (hiddenAppsIds.includes(app._id)) showApplication(app)
-              else hideApplication(app)
+              if (hiddenAppsIds.includes(app._id)) void showApplication(app)
+              else void hideApplication(app)
             }}
             on:mousemove={() => {
               focusTarget(btns[i])

@@ -12,9 +12,10 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import { type PersonId } from '@hcengineering/core'
+  import type { PersonId } from '@hcengineering/core'
   import { EmojiPresenter } from '@hcengineering/emoji-resources'
-  import { Icon, IconComponent, IconSize, tooltip } from '@hcengineering/ui'
+  import type { IconComponent, IconSize } from '@hcengineering/ui'
+  import { Icon, tooltip } from '@hcengineering/ui'
 
   import ReactionsTooltip from './ReactionsTooltip.svelte'
 

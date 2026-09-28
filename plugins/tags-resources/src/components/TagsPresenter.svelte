@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Icon, tooltip } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Icon, tooltip } from '@hcengineering/ui'
   import { getCollectionCounter } from '@hcengineering/view-resources'
   import tagsId from '../plugin'
   import TagsPresentationPopup from './TagsPresentationPopup.svelte'

@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
-  import { ObjectCreate, ObjectPopup } from '@hcengineering/presentation'
-  import { Milestone, MilestoneStatus } from '@hcengineering/tracker'
+  import type { ObjectCreate } from '@hcengineering/presentation'
+  import { ObjectPopup } from '@hcengineering/presentation'
+  import type { Milestone, MilestoneStatus } from '@hcengineering/tracker'
   import { Icon, Label } from '@hcengineering/ui'
   import { milestoneStatusAssets } from '../../utils'
   import MilestoneTitlePresenter from './MilestoneTitlePresenter.svelte'

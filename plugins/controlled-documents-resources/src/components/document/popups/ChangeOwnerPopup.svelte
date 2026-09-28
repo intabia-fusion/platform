@@ -14,10 +14,12 @@
 -->
 
 <script lang="ts">
-  import documents, { Document } from '@hcengineering/controlled-documents'
-  import { Employee } from '@hcengineering/contact'
+  import type { Document } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
+  import type { Employee } from '@hcengineering/contact'
   import { EmployeeBox, EmployeePresenter, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, { Ref, Space, notEmpty } from '@hcengineering/core'
+  import type { Ref, Space } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { Button, Icon, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'

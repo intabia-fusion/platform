@@ -1,5 +1,6 @@
 <script lang="ts">
-  import platform, { OK, PlatformEvent, Severity, Status, addEventListener, getMetadata } from '@hcengineering/platform'
+  import type { Status } from '@hcengineering/platform'
+  import platform, { OK, PlatformEvent, Severity, addEventListener, getMetadata } from '@hcengineering/platform'
   import { onDestroy, onMount } from 'svelte'
   import type { AnyComponent, WidthType } from '../../types'
   import { deviceSizes, deviceWidths } from '../../types'

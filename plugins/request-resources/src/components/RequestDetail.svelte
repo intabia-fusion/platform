@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { Person } from '@hcengineering/contact'
+  import type { Person } from '@hcengineering/contact'
+  import contact from '@hcengineering/contact'
   import { getPersonRefsByPersonIdsCb, PersonRefPresenter } from '@hcengineering/contact-resources'
-  import { Ref } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import { createQuery, MessageViewer } from '@hcengineering/presentation'
-  import { Request, RequestDecisionComment } from '@hcengineering/request'
+  import type { Request, RequestDecisionComment } from '@hcengineering/request'
   import { BooleanIcon, Label, ShowMore } from '@hcengineering/ui'
   import request from '../plugin'
 

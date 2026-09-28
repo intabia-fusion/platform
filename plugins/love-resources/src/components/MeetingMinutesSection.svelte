@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { MeetingMinutes } from '@hcengineering/love'
+  import type { MeetingMinutes } from '@hcengineering/love'
   import { Label, Section, Scroller } from '@hcengineering/ui'
   import {
     FilterBar,
@@ -25,7 +25,7 @@
     ViewletSettingButton,
     ViewletsSettingButton
   } from '@hcengineering/view-resources'
-  import { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   import love from '../plugin'
 

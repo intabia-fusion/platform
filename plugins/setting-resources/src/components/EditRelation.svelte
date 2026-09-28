@@ -13,10 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Association } from '@hcengineering/core'
-  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
+  import type { Association } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import { Button, DropdownIntlItem, EditBox, IconDelete, Label, Modal, showPopup, Toggle } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { Button, EditBox, IconDelete, Label, Modal, showPopup, Toggle } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'

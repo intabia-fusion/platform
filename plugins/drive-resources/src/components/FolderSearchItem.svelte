@@ -14,8 +14,9 @@
 //
 -->
 <script lang="ts">
-  import { WithLookup } from '@hcengineering/core'
-  import drive, { Folder } from '@hcengineering/drive'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { Folder } from '@hcengineering/drive'
+  import drive from '@hcengineering/drive'
   import { Icon } from '@hcengineering/ui'
 
   export let value: WithLookup<Folder>

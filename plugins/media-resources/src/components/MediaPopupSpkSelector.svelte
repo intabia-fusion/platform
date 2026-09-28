@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MediaInfo, updateSelectedSpeakerId } from '@hcengineering/media'
+  import type { MediaInfo } from '@hcengineering/media'
+  import { updateSelectedSpeakerId } from '@hcengineering/media'
 
   import media from '../plugin'
   import { micAccess, sessions } from '../stores'

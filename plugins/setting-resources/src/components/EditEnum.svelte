@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Enum } from '@hcengineering/core'
+  import type { Enum } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import {
     IconAdd,
@@ -35,7 +36,7 @@
   import EnumValuesList from './EnumValuesList.svelte'
   import IconBulletList from './icons/BulletList.svelte'
   import Report from './icons/Report.svelte'
-  import { IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
 
   export let value: Enum | undefined
   export let name: string = value?.name ?? ''
@@ -115,7 +116,7 @@
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
       if (file !== null) {
-        processFile(file)
+        void processFile(file)
       }
     }
     inputFile.value = ''
@@ -128,7 +129,7 @@
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
       if (file !== null) {
-        processFile(file)
+        void processFile(file)
       }
     }
   }
@@ -138,7 +139,7 @@
       if (item.kind === 'file') {
         const blob = item.getAsFile()
         if (blob !== null) {
-          processFile(blob)
+          void processFile(blob)
         }
       }
     }
@@ -163,7 +164,7 @@
       icon: Report,
       label: setting.string.ImportEnumCopy,
       action: () => {
-        handleClipboard()
+        void handleClipboard()
       }
     }
   ]

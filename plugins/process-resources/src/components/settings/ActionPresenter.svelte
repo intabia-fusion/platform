@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, Process, Step } from '@hcengineering/process'
+  import type { MethodParams, Process, Step } from '@hcengineering/process'
   import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
   import plugin from '../../plugin'
 

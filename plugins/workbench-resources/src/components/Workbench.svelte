@@ -17,31 +17,31 @@
   import { Analytics } from '@hcengineering/analytics'
   import contact from '@hcengineering/contact'
   import { myEmployeeStore } from '@hcengineering/contact-resources'
-  import core, {
-    AccountRole,
-    Class,
-    Doc,
-    getCurrentAccount,
-    hasAccountRole,
-    Ref,
-    SortingOrder,
-    Space
-  } from '@hcengineering/core'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import core, { AccountRole, getCurrentAccount, hasAccountRole, SortingOrder } from '@hcengineering/core'
   import login, { loginId } from '@hcengineering/login'
   import notification, { notificationId } from '@hcengineering/notification'
   import { AppNotificator, NotificationClientImpl } from '@hcengineering/notification-resources'
-  import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
+  import { broadcastEvent, getMetadata, getResource, translate } from '@hcengineering/platform'
   import { ActionContext, ComponentExtensions, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import support from '@hcengineering/support'
-  import {
+  import type {
     AnyComponent,
+    CompAndProps,
+    Location,
+    PopupAlignment,
+    PopupPosAlignment,
+    PopupResult,
+    ResolvedLocation
+  } from '@hcengineering/ui'
+  import {
     areLocationsEqual,
     Button,
     closePanel,
     closePopup,
     closeTooltip,
-    CompAndProps,
     Component,
     defineSeparators,
     deviceOptionsStore as deviceInfo,
@@ -52,7 +52,6 @@
     isSameSegments,
     Label,
     languageStore,
-    Location,
     location,
     locationStorageKeyId,
     locationToUrl,
@@ -60,13 +59,9 @@
     navigate,
     PanelInstance,
     Popup,
-    PopupAlignment,
-    PopupPosAlignment,
-    PopupResult,
     popupstore,
     pushRootBarComponent,
     resizeObserver,
-    ResolvedLocation,
     resolvedLocationStore,
     Separator,
     setResolvedLocation,

@@ -1,8 +1,10 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Issue } from '@hcengineering/tracker'
-  import { ButtonSize, Icon, Label } from '@hcengineering/ui'
-  import { GithubPullRequest, GithubPullRequestState } from '@hcengineering/github'
+  import type { Issue } from '@hcengineering/tracker'
+  import type { ButtonSize } from '@hcengineering/ui'
+  import { Icon, Label } from '@hcengineering/ui'
+  import type { GithubPullRequest } from '@hcengineering/github'
+  import { GithubPullRequestState } from '@hcengineering/github'
   import github from '../plugin'
   import PullRequestReviewDecisionValuePresenter from './presenters/PullRequestReviewDecisionValuePresenter.svelte'
 

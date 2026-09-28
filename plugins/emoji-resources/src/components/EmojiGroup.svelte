@@ -16,10 +16,10 @@
 <script lang="ts">
   import plugin, { Label, Lazy } from '@hcengineering/ui'
   import EmojiGroupPalette from './EmojiGroupPalette.svelte'
-  import { EmojiWithGroup } from '@hcengineering/emoji'
-  import { EmojiCategory } from '../types'
+  import type { EmojiWithGroup } from '@hcengineering/emoji'
+  import type { EmojiCategory } from '../types'
   import { resultEmojis } from '../store'
-  import { Ref, Blob } from '@hcengineering/core'
+  import type { Ref, Blob } from '@hcengineering/core'
 
   export let group: EmojiCategory
   export let lazy: boolean = true

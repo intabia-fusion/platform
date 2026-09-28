@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconSize } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
   import workflow from '@hcengineering/workflow'
 
   export let size: IconSize = 'small'

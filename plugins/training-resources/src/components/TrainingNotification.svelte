@@ -18,7 +18,8 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
-  import { Button, navigate, Notification, NotificationToast } from '@hcengineering/ui'
+  import type { Notification } from '@hcengineering/ui'
+  import { Button, navigate, NotificationToast } from '@hcengineering/ui'
   import type { Training } from '@hcengineering/training'
   import { trainingRoute } from '../routing/routes/trainingRoute'
   import PanelTitle from './PanelTitle.svelte'

@@ -13,19 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import core, { Doc, FindOptions, SortingOrder } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Doc, FindOptions } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ApproveRequest } from '@hcengineering/process'
+  import type { ApproveRequest } from '@hcengineering/process'
   import { Label, registerFocus, resizeObserver, Section } from '@hcengineering/ui'
-  import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
-  import {
-    List,
-    ListSelectionProvider,
-    noCategory,
-    SelectDirection,
-    ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { SelectDirection } from '@hcengineering/view-resources'
+  import { List, ListSelectionProvider, noCategory, ViewletsSettingButton } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import process from '../plugin'
 

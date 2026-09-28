@@ -13,11 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import cardPlugin, { Tag as MasterTag } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Tag as MasterTag } from '@hcengineering/card'
+  import cardPlugin from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Process } from '@hcengineering/process'
-  import { Button, eventToHTMLElement, Label, SelectPopup, SelectPopupValueType, showPopup } from '@hcengineering/ui'
+  import type { Process } from '@hcengineering/process'
+  import type { SelectPopupValueType } from '@hcengineering/ui'
+  import { Button, eventToHTMLElement, Label, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let process: Process

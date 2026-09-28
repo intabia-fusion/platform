@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { Icon, Component, IconSize } from '@hcengineering/ui'
+  import type { DocNotifyContext } from '@hcengineering/notification'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon, Component } from '@hcengineering/ui'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { classIcon } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'

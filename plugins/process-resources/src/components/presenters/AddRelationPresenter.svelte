@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Association, Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Association, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { MethodParams, parseContext, Process, Step } from '@hcengineering/process'
+  import type { MethodParams, Process, Step } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Label } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import { getContext } from '../../utils'

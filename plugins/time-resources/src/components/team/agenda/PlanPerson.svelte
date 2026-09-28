@@ -4,7 +4,7 @@
   import { PersonPresenter } from '@hcengineering/contact-resources'
   import { DateRangeMode } from '@hcengineering/core'
   import { Chevron, DatePresenter, Icon, IconArrowRight, Label } from '@hcengineering/ui'
-  import { EventPersonMapping } from '../../../types'
+  import type { EventPersonMapping } from '../../../types'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import { isVisibleMe } from '../utils'
   import EventItem from './EventItem.svelte'

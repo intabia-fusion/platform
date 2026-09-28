@@ -13,15 +13,18 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, { AnyAttribute, notEmpty, Ref } from '@hcengineering/core'
+  import type { AnyAttribute, Ref } from '@hcengineering/core'
+  import core, { notEmpty } from '@hcengineering/core'
   import { reduceCalls } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
-  import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
-  import { ClearFieldValueProps, Field, ClearFieldValuePostFnConfig } from '@hcengineering/workflow'
+  import type { TaskType } from '@hcengineering/task'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import ui, { Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
+  import type { ClearFieldValueProps, Field, ClearFieldValuePostFnConfig } from '@hcengineering/workflow'
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../../plugin'
-  import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
+  import type { DisplayAttribute } from '../../../utils'
+  import { getDisplayAttributes } from '../../../utils'
 
   export let taskType: TaskType
   export let config: ClearFieldValuePostFnConfig | undefined = undefined

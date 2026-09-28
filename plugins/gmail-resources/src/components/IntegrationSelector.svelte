@@ -15,8 +15,8 @@
 <script lang="ts">
   import { AccountBox } from '@hcengineering/contact-resources'
   import { notEmpty, type PersonId } from '@hcengineering/core'
-  import { Integration } from '@hcengineering/setting'
-  import { ButtonKind, ButtonSize } from '@hcengineering/ui'
+  import type { Integration } from '@hcengineering/setting'
+  import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
 
   export let integrations: Integration[]
   export let selected: Integration | undefined

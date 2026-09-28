@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FocusManager } from '../focus'
+  import type { FocusManager } from '../focus'
 
   export let manager: FocusManager
   export let isEnabled: boolean = true

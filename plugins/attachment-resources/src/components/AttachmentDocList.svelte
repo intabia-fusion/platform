@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Attachment } from '@hcengineering/attachment'
-  import { type Doc, type Ref, type WithLookup } from '@hcengineering/core'
+  import type { Attachment } from '@hcengineering/attachment'
+  import type { Doc, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
 
   import attachment from '../plugin'
-  import { AttachmentImageSize } from '../types'
+  import type { AttachmentImageSize } from '../types'
   import AttachmentGroup from './AttachmentGroup.svelte'
   import { loadSavedAttachments, savedAttachmentsStore } from '../stores'
 

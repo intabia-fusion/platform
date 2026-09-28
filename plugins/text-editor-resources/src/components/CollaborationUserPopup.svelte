@@ -17,7 +17,7 @@
 <script lang="ts">
   import { Component } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { CollaborationUser } from '@hcengineering/text-editor'
+  import type { CollaborationUser } from '@hcengineering/text-editor'
 
   export let user: CollaborationUser
 </script>

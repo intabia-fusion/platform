@@ -1,10 +1,11 @@
 <script lang="ts">
-  import tags, { TagElement } from '@hcengineering/tags'
+  import type { TagElement } from '@hcengineering/tags'
+  import tags from '@hcengineering/tags'
   import { Button, Component, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import recruit from '../plugin'
   import { buildFilterKey, setFilters } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import OptimizeSkills from './OptimizeSkills.svelte'
   import { selectedTagElements } from '@hcengineering/tags-resources'

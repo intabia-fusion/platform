@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize } from '../../types'
+  import type { IconSize } from '../../types'
 
   export let size: IconSize
   export let fill: string = 'currentColor'

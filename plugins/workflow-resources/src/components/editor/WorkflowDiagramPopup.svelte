@@ -13,22 +13,17 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, notEmpty, Ref, Status } from '@hcengineering/core'
+  import type { Doc, Ref, Status } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { TaskType } from '@hcengineering/task'
+  import type { TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
-  import {
-    ButtonIcon,
-    DropdownTextItem,
-    IconClose,
-    IconMaximize,
-    IconMinimize,
-    Modal,
-    ModernDropdownLabels
-  } from '@hcengineering/ui'
+  import type { DropdownTextItem } from '@hcengineering/ui'
+  import { ButtonIcon, IconClose, IconMaximize, IconMinimize, Modal, ModernDropdownLabels } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import tracker, { type Project } from '@hcengineering/tracker'
-  import workflowPlugin, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import type { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import workflowPlugin from '@hcengineering/workflow'
   import view from '@hcengineering/view'
 
   import WorkflowDiagram from './WorkflowDiagram.svelte'

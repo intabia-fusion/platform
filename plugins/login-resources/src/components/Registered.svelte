@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { OK, Status } from '@hcengineering/platform'
-  import { LoginInfo } from '@hcengineering/login'
-  import { WorkspaceInfoWithStatus } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/platform'
+  import { OK } from '@hcengineering/platform'
+  import type { LoginInfo } from '@hcengineering/login'
+  import type { WorkspaceInfoWithStatus } from '@hcengineering/core'
 
   import login from '../plugin'
-  import { BottomAction } from '..'
+  import type { BottomAction } from '..'
   import { getAccount, getAccountDisplayName, getWorkspaces, goTo } from '../utils'
   import Form from './Form.svelte'
   import Label from './internal/Label.svelte'

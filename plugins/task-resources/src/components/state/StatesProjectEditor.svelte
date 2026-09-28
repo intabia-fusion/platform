@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { IdMap, Ref, Status, StatusCategory, toIdMap } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
+  import core, { toIdMap } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import { settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
   import { IconMoreV2, IconOpenedArrow, Label } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'

@@ -14,9 +14,11 @@
 -->
 <script lang="ts">
   import { Html, Loading, themeStore } from '@hcengineering/ui'
-  import { DiffFile, DiffLine, DiffLineType, DiffViewMode } from '@hcengineering/diffview'
+  import type { DiffFile, DiffLine, DiffViewMode } from '@hcengineering/diffview'
+  import { DiffLineType } from '@hcengineering/diffview'
 
-  import { DiffLineRenderResult, RenderOptions, renderHunk } from '../render'
+  import type { DiffLineRenderResult, RenderOptions } from '../render'
+  import { renderHunk } from '../render'
 
   export let file: DiffFile
   export let mode: DiffViewMode

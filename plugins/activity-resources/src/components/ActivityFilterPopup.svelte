@@ -15,8 +15,8 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
   import { CheckBox, Label, MiniToggle, resizeObserver } from '@hcengineering/ui'
-  import { ActivityMessagesFilter } from '@hcengineering/activity'
-  import { Ref } from '@hcengineering/core'
+  import type { ActivityMessagesFilter } from '@hcengineering/activity'
+  import type { Ref } from '@hcengineering/core'
 
   import activity from '../plugin'
   import { activityDirectionStore } from '../stores'

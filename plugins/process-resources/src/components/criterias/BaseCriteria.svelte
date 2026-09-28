@@ -14,11 +14,12 @@
 -->
 
 <script lang="ts">
-  import { AnyAttribute } from '@hcengineering/core'
-  import { Context, Process } from '@hcengineering/process'
+  import type { AnyAttribute } from '@hcengineering/core'
+  import type { Context, Process } from '@hcengineering/process'
   import { Component } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import { buildResult, Mode, ModeId, Modes, parseValue } from '../../query'
+  import type { Mode, ModeId } from '../../query'
+  import { buildResult, Modes, parseValue } from '../../query'
   import BaseCriteriaEditor from './BaseCriteriaEditor.svelte'
   import ModeSelector from './ModeSelector.svelte'
 

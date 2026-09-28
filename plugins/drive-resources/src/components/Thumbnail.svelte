@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import drive, { type Resource } from '@hcengineering/drive'
   import { Image, getClient, remToPx } from '@hcengineering/presentation'
   import { Icon } from '@hcengineering/ui'

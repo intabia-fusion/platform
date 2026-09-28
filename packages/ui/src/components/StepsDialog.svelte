@@ -14,19 +14,11 @@
 -->
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { createEventDispatcher, SvelteComponent } from 'svelte'
+  import type { SvelteComponent } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
   import ui from '../plugin'
-  import {
-    AnySvelteComponent,
-    DialogStep,
-    Panel,
-    Icon,
-    deviceOptionsStore as deviceInfo,
-    Scroller,
-    Label,
-    Button,
-    Component
-  } from '..'
+  import type { AnySvelteComponent, DialogStep } from '..'
+  import { Panel, Icon, deviceOptionsStore as deviceInfo, Scroller, Label, Button, Component } from '..'
 
   export let steps: readonly DialogStep[]
   export let stepIndex = 0

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { AnyComponent, Component } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Component } from '@hcengineering/ui'
   import view from '../plugin'
 
   export let link: HTMLLinkElement

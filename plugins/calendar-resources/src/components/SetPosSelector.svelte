@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import calendar from '../plugin'
-  import { SetPosRules } from '../types'
+  import type { SetPosRules } from '../types'
 
   export let setPos: SetPosRules
   export let disabled: boolean

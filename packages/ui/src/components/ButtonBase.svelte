@@ -14,10 +14,18 @@
 -->
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { AnySvelteComponent, ButtonBaseKind, ButtonBaseSize, ButtonBaseType, IconSize, LabelAndProps } from '../types'
+  import type {
+    AnySvelteComponent,
+    ButtonBaseKind,
+    ButtonBaseSize,
+    ButtonBaseType,
+    IconSize,
+    LabelAndProps
+  } from '../types'
   import { tooltip as tp } from '../tooltips'
   import { registerFocus } from '../focus'
-  import { ComponentType, onMount } from 'svelte'
+  import type { ComponentType } from 'svelte'
+  import { onMount } from 'svelte'
   import Spinner from './Spinner.svelte'
   import Icon from './Icon.svelte'
   import Label from './Label.svelte'

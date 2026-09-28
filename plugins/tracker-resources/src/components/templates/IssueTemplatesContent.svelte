@@ -1,9 +1,11 @@
 <script lang="ts">
-  import core, { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { IssueTemplate } from '@hcengineering/tracker'
+  import type { IssueTemplate } from '@hcengineering/tracker'
   import { Component } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import tracker from '../../plugin'
   import CreateIssueTemplate from './CreateIssueTemplate.svelte'
 

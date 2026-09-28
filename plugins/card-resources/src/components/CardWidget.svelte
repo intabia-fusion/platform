@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { closeWidget } from '@hcengineering/workbench-resources'
-  import { Widget, WidgetTab } from '@hcengineering/workbench'
+  import type { Widget, WidgetTab } from '@hcengineering/workbench'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { Button, EditBox, Header, IconClose, IconMoreH } from '@hcengineering/ui'
 
   import card from '../plugin'

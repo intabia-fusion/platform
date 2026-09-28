@@ -13,19 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import activity, { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@hcengineering/activity'
-  import { Person } from '@hcengineering/contact'
+  import type { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@hcengineering/activity'
+  import activity from '@hcengineering/activity'
+  import type { Person } from '@hcengineering/contact'
   import { Avatar, SystemAvatar } from '@hcengineering/contact-resources'
-  import core, { Ref, type SocialId } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
+  import core, { type SocialId } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
-  import { Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { Action, Icon, Label } from '@hcengineering/ui'
-  import { Action as ViewAction } from '@hcengineering/view'
+  import type { Action } from '@hcengineering/ui'
+  import { Icon, Label } from '@hcengineering/ui'
+  import type { Action as ViewAction } from '@hcengineering/view'
   import { getActions, restrictionStore, showMenu } from '@hcengineering/view-resources'
 
   import { messageInFocus, savedMessagesStore } from '../../activity'
-  import { MessageInlineAction } from '../../types'
+  import type { MessageInlineAction } from '../../types'
   import ActivityMessageActions from '../ActivityMessageActions.svelte'
   import MessageTimestamp from '../MessageTimestamp.svelte'
   import ReactionsPresenter from '../reactions/ReactionsPresenter.svelte'
@@ -78,10 +81,12 @@
     isSaved = saved.some((savedMessage) => savedMessage.attachedTo === message._id)
   })
 
-  $: withActions &&
+  $: void (
+    withActions &&
     getActions(client, message, activity.class.ActivityMessage).then((res) => {
       menuActions = res
     })
+  )
 
   function scrollToMessage (): void {
     if (element != null && shouldScroll) {

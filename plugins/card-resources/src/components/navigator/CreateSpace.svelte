@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, { AccountUuid, Data, Ref, RolesAssignment, getCurrentAccount, notEmpty } from '@hcengineering/core'
+  import type { AccountUuid, Data, Ref, RolesAssignment } from '@hcengineering/core'
+  import core, { getCurrentAccount, notEmpty } from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { EditBox, Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import { CardSpace, MasterTag, Role } from '@hcengineering/card'
+  import type { CardSpace, MasterTag, Role } from '@hcengineering/card'
   import card from '../../plugin'
   import TypesSelector from './TypesSelector.svelte'
   import view from '@hcengineering/view'

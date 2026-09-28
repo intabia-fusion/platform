@@ -5,11 +5,13 @@
 
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import { Doc, type Blob, type Ref } from '@hcengineering/core'
+  import type { Doc } from '@hcengineering/core'
+  import type { Blob, Ref } from '@hcengineering/core'
   import presentation, { PDFViewer, createQuery, getClient } from '@hcengineering/presentation'
-  import guest, { PublicLink, createPublicLink } from '@hcengineering/guest'
+  import type { PublicLink } from '@hcengineering/guest'
+  import guest, { createPublicLink } from '@hcengineering/guest'
   import view from '@hcengineering/view'
-  import { Location } from '@hcengineering/ui'
+  import type { Location } from '@hcengineering/ui'
   import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
   import { printToPDF } from '@hcengineering/print'
   import { signPDF } from '@hcengineering/sign'

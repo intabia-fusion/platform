@@ -18,8 +18,9 @@
   import activity from '@hcengineering/activity'
   import { AttachmentStyleBoxCollabEditor } from '@hcengineering/attachment-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { Doc, Mixin, WithLookup } from '@hcengineering/core'
-  import testManagement, { TestResult } from '@hcengineering/test-management'
+  import type { Doc, Mixin, WithLookup } from '@hcengineering/core'
+  import type { TestResult } from '@hcengineering/test-management'
+  import testManagement from '@hcengineering/test-management'
   import { DocAttributeBar, getDocMixins } from '@hcengineering/view-resources'
 
   import { Component, Label } from '@hcengineering/ui'

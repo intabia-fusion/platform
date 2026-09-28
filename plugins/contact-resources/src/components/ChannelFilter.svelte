@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ChannelProvider } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
+  import type { ChannelProvider } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
   import { IconCheck, Icon, Label, resizeObserver } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import { FILTER_DEBOUNCE_MS, FilterQuery, sortFilterValues } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { channelProviders } from '../utils'

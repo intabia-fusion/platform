@@ -15,8 +15,8 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { UserBox } from '@hcengineering/contact-resources'
-  import { Ref, Space, WithLookup } from '@hcengineering/core'
-  import { Issue, Project, TimeReportDayType, TimeSpendReport } from '@hcengineering/tracker'
+  import type { Ref, Space, WithLookup } from '@hcengineering/core'
+  import type { Issue, Project, TimeReportDayType, TimeSpendReport } from '@hcengineering/tracker'
   import {
     DatePresenter,
     ListView,

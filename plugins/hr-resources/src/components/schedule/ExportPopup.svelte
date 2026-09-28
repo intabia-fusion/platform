@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { Card } from '@hcengineering/presentation'
-  import { DropdownIntlItem, DropdownLabelsIntl, Label } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import hr from '../../plugin'
 

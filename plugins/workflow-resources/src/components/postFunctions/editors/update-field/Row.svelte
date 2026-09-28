@@ -15,20 +15,13 @@
   import { createEventDispatcher } from 'svelte'
   import core, { type Class, type Doc, type Ref } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import ui, {
-    Button,
-    DropdownIntlItem,
-    DropdownTextItem,
-    IconClose,
-    Label,
-    ModernDropdown,
-    ModernDropdownLabels
-  } from '@hcengineering/ui'
+  import type { DropdownIntlItem, DropdownTextItem } from '@hcengineering/ui'
+  import ui, { Button, IconClose, Label, ModernDropdown, ModernDropdownLabels } from '@hcengineering/ui'
   import type { CollectionOperation, WorkflowFieldValue, WorkflowTransformCall } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
   import TransformRow from './TransformRow.svelte'
-  import { ContextOption, FieldRow } from './types'
+  import type { ContextOption, FieldRow } from './types'
   import ValueEditor from './ValueEditor.svelte'
   import { isCollectionAttribute } from './utils'
 

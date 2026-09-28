@@ -14,7 +14,7 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { Screen, ScreenRequestConfig } from '@hcengineering/workflow'
+  import type { Screen, ScreenRequestConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
 

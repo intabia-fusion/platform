@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Drawing } from '@hcengineering/attachment'
+  import type { Drawing } from '@hcengineering/attachment'
   import { DateRangeMode } from '@hcengineering/core'
   import { DatePresenter, IconScribble } from '@hcengineering/ui'
   import { PersonIdPresenter } from '@hcengineering/view-resources'

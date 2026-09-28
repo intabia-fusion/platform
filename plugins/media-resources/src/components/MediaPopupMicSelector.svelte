@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { MediaInfo, updateSelectedMicId } from '@hcengineering/media'
+  import type { MediaInfo } from '@hcengineering/media'
+  import { updateSelectedMicId } from '@hcengineering/media'
   import { Label } from '@hcengineering/ui'
 
   import media from '../plugin'

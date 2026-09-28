@@ -14,10 +14,13 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import core, { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getAttributeEditor, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
-  import { ApproveRequest, parseContext, Process, Step } from '@hcengineering/process'
-  import { AnySvelteComponent, Label, Toggle } from '@hcengineering/ui'
+  import type { ApproveRequest, Process, Step } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Label, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
   import { getContext, getMockAttribute } from '../../utils'

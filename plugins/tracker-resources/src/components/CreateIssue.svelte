@@ -16,14 +16,12 @@
 <script lang="ts">
   import activity from '@hcengineering/activity'
   import { Analytics } from '@hcengineering/analytics'
-  import { Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { Employee } from '@hcengineering/contact'
+  import type { Employee } from '@hcengineering/contact'
+  import type { Class, Doc, DocData, Ref } from '@hcengineering/core'
   import core, {
     AccountRole,
-    Class,
-    Doc,
-    DocData,
     fillDefaults,
     generateId,
     getCurrentAccount,
@@ -31,12 +29,13 @@
     makeDocCollabId,
     type Markup,
     type PersonId,
-    Ref,
     SortingOrder,
     toIdMap
   } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
-  import preference, { SpacePreference } from '@hcengineering/preference'
+  import type { SpacePreference } from '@hcengineering/preference'
+  import preference from '@hcengineering/preference'
+  import type { KeyedAttribute } from '@hcengineering/presentation'
   import {
     Card,
     ComponentExtensions,
@@ -47,28 +46,27 @@
     DraftController,
     getClient,
     getMarkup,
-    KeyedAttribute,
     MessageBox,
     MultipleDraftController,
     SpaceSelector
   } from '@hcengineering/presentation'
-  import tags, { type TagElement, TagReference } from '@hcengineering/tags'
-  import { TaskType } from '@hcengineering/task'
+  import type { TagReference } from '@hcengineering/tags'
+  import tags, { type TagElement } from '@hcengineering/tags'
+  import type { TaskType } from '@hcengineering/task'
   import { TaskKindSelector, taskTypeStore } from '@hcengineering/task-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import {
+  import type {
     Component as ComponentType,
     Issue,
     IssueDraft,
     IssueParentInfo,
-    IssuePriority,
     IssueStatus,
     IssueTemplate,
     Milestone,
     Project,
-    ProjectTargetPreference,
-    TrackerEvents
+    ProjectTargetPreference
   } from '@hcengineering/tracker'
+  import { IssuePriority, TrackerEvents } from '@hcengineering/tracker'
   import {
     addNotification,
     Button,
@@ -1184,7 +1182,7 @@
           showPreview
           removable
           on:remove={(result) => {
-            if (result.detail !== undefined) descriptionBox?.removeAttachmentById(result.detail._id)
+            if (result.detail !== undefined) void descriptionBox?.removeAttachmentById(result.detail._id)
           }}
         />
       {/each}
@@ -1211,7 +1209,7 @@
   <svelte:fragment slot="after-buttons" let:handleOkClick let:okProcessing let:canSave let:okLabel>
     <ButtonWithDropdown
       loading={okProcessing}
-      disabled={canSave !== true}
+      disabled={!canSave}
       label={okLabel}
       kind={'primary'}
       size={'large'}

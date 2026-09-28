@@ -14,24 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IdMap, Ref, Status, WithLookup } from '@hcengineering/core'
+  import type { IdMap, Ref, Status, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ProjectType, TaskType } from '@hcengineering/task'
+  import type { ProjectType, TaskType } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
-  import { IssueStatus } from '@hcengineering/tracker'
-  import {
-    Button,
-    ButtonKind,
-    ButtonSize,
-    IconSize,
-    SelectPopup,
-    SelectPopupValueType,
-    TooltipAlignment,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import type { IssueStatus } from '@hcengineering/tracker'
+  import type { ButtonKind, ButtonSize, IconSize, SelectPopupValueType, TooltipAlignment } from '@hcengineering/ui'
+  import { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
-  import workflow, { Workflow } from '@hcengineering/workflow'
+  import type { Workflow } from '@hcengineering/workflow'
+  import workflow from '@hcengineering/workflow'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import IssueStatusIcon from './IssueStatusIcon.svelte'

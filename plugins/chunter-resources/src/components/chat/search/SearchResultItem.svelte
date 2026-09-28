@@ -19,7 +19,7 @@
   import { MessageTimestamp } from '@hcengineering/activity-resources'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
-  import { type Asset } from '@hcengineering/platform'
+  import type { Asset } from '@hcengineering/platform'
 
   import type { SearchResultRow } from '../../../search/types'
   import HighlightedText from './HighlightedText.svelte'

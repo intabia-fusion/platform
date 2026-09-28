@@ -14,9 +14,11 @@
 -->
 
 <script lang="ts">
-  import core, { AnyAttribute } from '@hcengineering/core'
+  import type { AnyAttribute } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { createContext, parseContext, Process, SelectedContext } from '@hcengineering/process'
+  import type { Process, SelectedContext } from '@hcengineering/process'
+  import { createContext, parseContext } from '@hcengineering/process'
   import { Button, Component, eventToHTMLElement, IconAdd, IconClose, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'

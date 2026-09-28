@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Card } from '@hcengineering/card'
-  import { Ref } from '@hcengineering/core'
+  import type { Card } from '@hcengineering/card'
+  import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { ApproveRequest } from '@hcengineering/process'
+  import type { ApproveRequest } from '@hcengineering/process'
   import { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import SignatureDialog from './SignatureDialog.svelte'
   import process from '../plugin'

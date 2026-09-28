@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { DropdownIntlItem, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
+  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
   import documents, { type DocumentComment } from '@hcengineering/controlled-documents'
   import {
     $documentCommentsFilter as documentCommentsFilter,

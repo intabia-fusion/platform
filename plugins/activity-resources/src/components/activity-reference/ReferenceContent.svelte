@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { MessageViewer } from '@hcengineering/presentation'
-  import { ActivityReference } from '@hcengineering/activity'
+  import type { ActivityReference } from '@hcengineering/activity'
 
   export let value: ActivityReference | undefined = undefined
 </script>

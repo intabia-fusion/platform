@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DirectMessage } from '@hcengineering/chunter'
+  import type { DirectMessage } from '@hcengineering/chunter'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { CombineAvatars, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import { type Ref, notEmpty } from '@hcengineering/core'
@@ -38,7 +38,7 @@
 
   async function onSpaceEdit (): Promise<void> {
     if (dm === undefined) return
-    openDoc(client.getHierarchy(), dm)
+    void openDoc(client.getHierarchy(), dm)
   }
 </script>
 

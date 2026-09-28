@@ -13,12 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Channel, chunterId } from '@hcengineering/chunter'
+  import type { Channel } from '@hcengineering/chunter'
+  import { chunterId } from '@hcengineering/chunter'
   import { getClient } from '@hcengineering/presentation'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ObjectPresenterType } from '@hcengineering/view'
+  import type { ObjectPresenterType } from '@hcengineering/view'
 
   import { encodeChatURI } from '../navigation'
 

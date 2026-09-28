@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { closeTooltip, resizeObserver } from '@hcengineering/ui'
-  import { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../../plugin'
   import TimestampPresenter from '../TimestampPresenter.svelte'

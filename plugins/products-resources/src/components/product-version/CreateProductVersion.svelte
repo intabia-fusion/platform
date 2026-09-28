@@ -19,14 +19,16 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
+  import type { Document } from '@hcengineering/controlled-documents'
   import documents, {
-    Document,
     DocumentState,
     copyProjectDocuments,
     deleteProjectDrafts
   } from '@hcengineering/controlled-documents'
-  import { Product, ProductVersion, ProductVersionState } from '@hcengineering/products'
-  import { Data, Ref, SortingOrder, generateId } from '@hcengineering/core'
+  import type { Product, ProductVersion } from '@hcengineering/products'
+  import { ProductVersionState } from '@hcengineering/products'
+  import type { Data, Ref } from '@hcengineering/core'
+  import { SortingOrder, generateId } from '@hcengineering/core'
   import { Card, MessageBox, SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import { DropdownLabelsIntl, EditBox, FocusHandler, createFocusManager, showPopup } from '@hcengineering/ui'

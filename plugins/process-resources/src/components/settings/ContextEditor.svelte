@@ -16,7 +16,7 @@
 <script lang="ts">
   import core from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { ContextId, Process, ProcessContext } from '@hcengineering/process'
+  import type { ContextId, Process, ProcessContext } from '@hcengineering/process'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import { EditBox, getCurrentLocation, Grid, Modal, navigate } from '@hcengineering/ui'
   import plugin from '../../plugin'

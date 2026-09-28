@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
-  import { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage } from '@hcengineering/activity'
 
   export let message: ActivityMessage
   export let readonly = false

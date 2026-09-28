@@ -14,7 +14,8 @@
 <script lang="ts">
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { RecordingState } from '@hcengineering/love'
-  import { ButtonBaseSize, ModernButton } from '@hcengineering/ui'
+  import type { ButtonBaseSize } from '@hcengineering/ui'
+  import { ModernButton } from '@hcengineering/ui'
   import { isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'

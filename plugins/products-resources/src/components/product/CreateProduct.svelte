@@ -19,24 +19,13 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
-  import { type DocumentSpaceType } from '@hcengineering/controlled-documents'
+  import type { DocumentSpaceType } from '@hcengineering/controlled-documents'
   import { type Product, ProductVersionState } from '@hcengineering/products'
-  import { type Attachment } from '@hcengineering/attachment'
+  import type { Attachment } from '@hcengineering/attachment'
   import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
-    AccountUuid,
-    Data,
-    Ref,
-    Role,
-    RolesAssignment,
-    SortingOrder,
-    SpaceType,
-    WithLookup,
-    generateId,
-    getCurrentAccount,
-    notEmpty
-  } from '@hcengineering/core'
+  import type { AccountUuid, Data, Ref, Role, RolesAssignment, SpaceType, WithLookup } from '@hcengineering/core'
+  import core, { SortingOrder, generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Card, MessageBox, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import {
@@ -366,7 +355,7 @@
           removable
           on:remove={(result) => {
             if (result.detail !== undefined) {
-              descriptionBox.removeAttachmentById(result.detail._id)
+              void descriptionBox.removeAttachmentById(result.detail._id)
             }
           }}
         />

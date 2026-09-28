@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconSize } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
 
   export let size: IconSize
   // export let fill: string = 'var(--theme-caption-color)'

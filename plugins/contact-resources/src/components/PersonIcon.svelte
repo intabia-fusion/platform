@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { IconSize } from '@hcengineering/ui'
-  import { IdMap, Ref } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import type { IconSize } from '@hcengineering/ui'
+  import type { IdMap, Ref } from '@hcengineering/core'
 
   import { getPersonByPersonRefStore } from '../index'
 

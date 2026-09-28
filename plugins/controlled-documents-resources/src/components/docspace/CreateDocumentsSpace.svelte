@@ -16,24 +16,23 @@
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import core, {
+  import type {
     Data,
     DocumentUpdate,
     RolesAssignment,
     Ref,
     Role,
-    generateId,
-    getCurrentAccount,
     WithLookup,
     Class,
-    notEmpty,
     AccountUuid
   } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
   import presentation, { Card, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import { EditBox, Label, Toggle } from '@hcengineering/ui'
   import { SpaceTypeSelector } from '@hcengineering/view-resources'
-  import documents, { DocumentSpace, DocumentSpaceType } from '@hcengineering/controlled-documents'
+  import type { DocumentSpace, DocumentSpaceType } from '@hcengineering/controlled-documents'
+  import documents from '@hcengineering/controlled-documents'
 
   import documentsRes from '../../plugin'
   import view from '@hcengineering/view'

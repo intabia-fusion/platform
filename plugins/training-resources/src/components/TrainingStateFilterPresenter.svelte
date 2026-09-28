@@ -15,7 +15,8 @@
 //
 -->
 <script lang="ts">
-  import { TrainingState, trainingStateOrder } from '@hcengineering/training'
+  import type { TrainingState } from '@hcengineering/training'
+  import { trainingStateOrder } from '@hcengineering/training'
   import TrainingStatePresenter from './TrainingStatePresenter.svelte'
 
   export let value: Map<number, Map<TrainingState, TrainingState[]>>

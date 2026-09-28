@@ -157,7 +157,7 @@ runs:
 
     - name: Upload profiling results
       if: inputs.enable-profiling == 'true'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: profiling-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/profiles
@@ -173,7 +173,7 @@ runs:
 
     - name: Upload UI test results
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: playwright-results-${{ inputs.artifact-name-suffix }}
         path: |
@@ -183,7 +183,7 @@ runs:
 
     - name: Upload telemetry
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: telemetry-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/sanity/runs/ci
@@ -191,7 +191,7 @@ runs:
 
     - name: Upload Logs
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: docker-logs-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/sanity/logs

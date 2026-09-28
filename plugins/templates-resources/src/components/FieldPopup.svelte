@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, FindOptions, IdMap, toIdMap } from '@hcengineering/core'
+  import type { DocumentQuery, FindOptions, IdMap } from '@hcengineering/core'
+  import { toIdMap } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import presentation, { createQuery, ObjectPopup } from '@hcengineering/presentation'
-  import { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
+  import type { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
   import { Label } from '@hcengineering/ui'
   import templates from '../plugin'
 

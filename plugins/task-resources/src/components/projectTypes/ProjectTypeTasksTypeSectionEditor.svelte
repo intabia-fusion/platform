@@ -29,7 +29,8 @@
   } from '@hcengineering/ui'
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { ProjectType, ProjectTypeDescriptor, TaskType, type TaskTypeExportConfig } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import type { TaskTypeExportConfig } from '@hcengineering/task'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
 
   import IconLayers from '../icons/Layers.svelte'

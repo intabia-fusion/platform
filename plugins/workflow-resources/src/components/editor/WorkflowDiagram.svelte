@@ -13,7 +13,8 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import core, { Status, StatusCategory } from '@hcengineering/core'
+  import type { Status, StatusCategory } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import {
@@ -30,7 +31,7 @@
     themeStore,
     resolvePaletteColor
   } from '@hcengineering/ui'
-  import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import type { Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import WorkflowDiagramPopup from './WorkflowDiagramPopup.svelte'

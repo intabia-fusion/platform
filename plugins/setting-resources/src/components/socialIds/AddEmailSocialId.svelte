@@ -14,11 +14,14 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import contact, { getCurrentEmployee, SocialIdentityProvider, SocialIdentityRef } from '@hcengineering/contact'
+  import type { SocialIdentityProvider, SocialIdentityRef } from '@hcengineering/contact'
+  import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { EditBox, Label, Button, CodeForm, TimeLeft, Status as StatusControl } from '@hcengineering/ui'
-  import { OtpInfo } from '@hcengineering/account-client'
-  import { buildSocialIdString, getCurrentAccount, setCurrentAccount, SocialId, Timestamp } from '@hcengineering/core'
-  import { OK, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
+  import type { OtpInfo } from '@hcengineering/account-client'
+  import type { SocialId, Timestamp } from '@hcengineering/core'
+  import { buildSocialIdString, getCurrentAccount, setCurrentAccount } from '@hcengineering/core'
+  import type { Status } from '@hcengineering/platform'
+  import { OK, PlatformError, Severity, unknownError } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
 
   import AddSocialId from './AddSocialId.svelte'

@@ -15,7 +15,8 @@
 <script lang="ts">
   import { createQuery, getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
   import { WorkspaceLogo } from '@hcengineering/ui'
-  import setting, { WorkspaceSetting } from '@hcengineering/setting'
+  import type { WorkspaceSetting } from '@hcengineering/setting'
+  import setting from '@hcengineering/setting'
 
   import { workspacesStore } from '../utils'
   import { crossWorkspaceNotificationStore } from '../workbench'

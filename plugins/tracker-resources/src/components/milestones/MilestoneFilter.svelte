@@ -13,9 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, FindResult, Ref, SortingOrder } from '@hcengineering/core'
+  import type { DocumentQuery, FindResult, Ref } from '@hcengineering/core'
+  import { SortingOrder } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { Project, Milestone, MilestoneStatus } from '@hcengineering/tracker'
+  import type { Project, Milestone } from '@hcengineering/tracker'
+  import { MilestoneStatus } from '@hcengineering/tracker'
   import ui, {
     IconCheck,
     Icon,
@@ -27,7 +29,8 @@
     IconSearch
   } from '@hcengineering/ui'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
-  import view, { Filter } from '@hcengineering/view'
+  import type { Filter } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
@@ -115,7 +118,7 @@
     return res
   }
 
-  $: getValues(search)
+  $: void getValues(search)
 </script>
 
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>

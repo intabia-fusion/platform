@@ -13,15 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentQuery, WithLookup } from '@hcengineering/core'
+  import type { DocumentQuery, WithLookup } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { isCreateAllowed } from '@hcengineering/presentation'
-  import { Component } from '@hcengineering/tracker'
+  import type { Component } from '@hcengineering/tracker'
   import { Button, IconAdd, Breadcrumbs, SearchInput, showPopup, Header } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
-  import { ComponentsFilterMode, activeProjects, componentsTitleMap } from '../../utils'
+  import type { ComponentsFilterMode } from '../../utils'
+  import { activeProjects, componentsTitleMap } from '../../utils'
   import ComponentsContent from './ComponentsContent.svelte'
   import NewComponent from './NewComponent.svelte'
 

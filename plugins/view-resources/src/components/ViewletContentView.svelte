@@ -1,9 +1,12 @@
 <script lang="ts">
-  import core, { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import core from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { AnySvelteComponent, Component, Loading } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { Component, Loading } from '@hcengineering/ui'
+  import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view from '@hcengineering/view'
 
   import { injectCustomAttributes } from '../utils'
   import { injectDescendantAttributes } from '../descendantAttributes'

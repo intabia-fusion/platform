@@ -15,7 +15,8 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
-  import core, { AccountUuid, reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
+  import type { AccountUuid } from '@hcengineering/core'
+  import core, { reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import {
     ButtonIcon,
@@ -89,10 +90,10 @@
     }
     const ops = client.apply(undefined, 'change-members')
     for (const pushMem of push) {
-      ops.update(type, { $push: { members: pushMem } })
+      void ops.update(type, { $push: { members: pushMem } })
     }
     for (const pullMem of pull) {
-      ops.update(type, { $pull: { members: pullMem } })
+      void ops.update(type, { $pull: { members: pullMem } })
     }
     await ops.commit()
   })
@@ -129,7 +130,7 @@
           value={type?.name ?? ''}
           {disabled}
           on:blur={(evt) => {
-            attributeUpdated('name', evt.detail)
+            void attributeUpdated('name', evt.detail)
           }}
         />
       </div>
@@ -157,7 +158,7 @@
       {disabled}
       bind:value={shortDescription}
       on:change={() => {
-        attributeUpdated('shortDescription', shortDescription)
+        void attributeUpdated('shortDescription', shortDescription)
       }}
     />
     <div class="flex-between">
@@ -172,7 +173,7 @@
         <Toggle
           on={type?.autoJoin ?? false}
           on:change={(evt) => {
-            attributeUpdated('autoJoin', evt.detail)
+            void attributeUpdated('autoJoin', evt.detail)
           }}
           {disabled}
         />

@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
-  import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Widget } from '@hcengineering/workbench'
-  import { ActivityMessage } from '@hcengineering/activity'
-  import { ChatWidgetTab } from '@hcengineering/chunter'
+  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import type { Widget } from '@hcengineering/workbench'
+  import type { ActivityMessage } from '@hcengineering/activity'
+  import type { ChatWidgetTab } from '@hcengineering/chunter'
   import { Presence } from '@hcengineering/presence-resources'
   import { updateTabData } from '@hcengineering/workbench-resources'
 

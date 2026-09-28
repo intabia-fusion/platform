@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Class, Ref } from '@hcengineering/core'
+  import type { Class, Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ChunterSpace } from '@hcengineering/chunter'
+  import type { ChunterSpace } from '@hcengineering/chunter'
 
   import ChannelView from './ChannelView.svelte'
 

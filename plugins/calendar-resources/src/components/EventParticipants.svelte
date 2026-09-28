@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Person } from '@hcengineering/contact'
-  import { Ref } from '@hcengineering/core'
+  import type { Person } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
   import { Button, Icon, Label, IconMoreV, Scroller } from '@hcengineering/ui'
   import calendar from '../plugin'
   import AddParticipant from './AddParticipant.svelte'

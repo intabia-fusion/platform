@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AvatarType, Channel, combineName, ContactEvents, findPerson, Person } from '@hcengineering/contact'
-  import { AttachedData, Data, generateId } from '@hcengineering/core'
+  import type { Channel, Person } from '@hcengineering/contact'
+  import { AvatarType, combineName, ContactEvents, findPerson } from '@hcengineering/contact'
+  import type { AttachedData, Data } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -69,7 +71,7 @@
   let channels: AttachedData<Channel>[] = []
 
   let matches: Person[] = []
-  $: findPerson(client, combineName(firstName, lastName), channels).then((p) => {
+  $: void findPerson(client, combineName(firstName, lastName), channels).then((p) => {
     matches = p
   })
 
