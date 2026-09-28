@@ -55,7 +55,7 @@
 
   const copyChannel = (): void => {
     if (label === plugin.string.CopyToClipboard) {
-      copyTextToClipboard(value).then(() => (label = view.string.Copied))
+      void copyTextToClipboard(value).then(() => (label = view.string.Copied))
       setTimeout(() => {
         label = plugin.string.CopyToClipboard
       }, 3000)

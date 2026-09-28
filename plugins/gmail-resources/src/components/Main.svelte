@@ -56,7 +56,7 @@
   let integrations: Integration[] = []
   let selectedIntegration: Integration | undefined = undefined
 
-  channel && inboxClient.forceReadDoc(channel)
+  void (channel && inboxClient.forceReadDoc(channel))
 
   const dispatch = createEventDispatcher()
 
@@ -89,7 +89,7 @@
 
   let templateProvider: TemplateDataProvider | undefined
 
-  getResource(templates.function.GetTemplateDataProvider).then((p) => {
+  void getResource(templates.function.GetTemplateDataProvider).then((p) => {
     templateProvider = p()
   })
 
@@ -122,10 +122,12 @@
     }
   )
 
-  $: gmailMessage &&
+  $: void (
+    gmailMessage &&
     channel &&
     object &&
     convertMessage(object, channel, gmailMessage).then((p) => (currentMessage = p))
+  )
 </script>
 
 {#if channel && object}

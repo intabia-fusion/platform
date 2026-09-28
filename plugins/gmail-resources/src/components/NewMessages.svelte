@@ -135,7 +135,7 @@
     if (list === null || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
     inputFile.value = ''
   }
@@ -145,7 +145,7 @@
     if (list === undefined || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
   }
 
@@ -169,7 +169,7 @@
         }
       )
     } catch (err: any) {
-      setPlatformStatus(unknownError(err))
+      void setPlatformStatus(unknownError(err))
     }
   }
 
@@ -213,7 +213,7 @@
   let integrations: Integration[] = []
   let selectedIntegration: Integration | undefined = undefined
 
-  getResource(templates.function.GetTemplateDataProvider).then((p) => {
+  void getResource(templates.function.GetTemplateDataProvider).then((p) => {
     templateProvider = p()
   })
 
@@ -344,7 +344,7 @@
                 showPreview
                 removable
                 on:remove={(result) => {
-                  if (result !== undefined) removeAttachment(attachment)
+                  if (result !== undefined) void removeAttachment(attachment)
                 }}
               />
             </div>

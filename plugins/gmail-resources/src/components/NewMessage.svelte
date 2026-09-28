@@ -102,7 +102,7 @@
     if (list === null || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
     inputFile.value = ''
     progress = false
@@ -116,7 +116,7 @@
     if (list === undefined || list.length === 0) return
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
-      if (file !== null) createAttachment(file)
+      if (file !== null) void createAttachment(file)
     }
     progress = false
   }
@@ -141,7 +141,7 @@
         }
       )
     } catch (err: any) {
-      setPlatformStatus(unknownError(err))
+      void setPlatformStatus(unknownError(err))
     }
   }
 
@@ -232,7 +232,7 @@
           showPreview
           removable
           on:remove={(result) => {
-            if (result !== undefined) removeAttachment(attachment)
+            if (result !== undefined) void removeAttachment(attachment)
           }}
         />
       {/each}

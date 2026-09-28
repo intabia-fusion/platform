@@ -34,7 +34,7 @@
   })
   const copyLink = (): void => {
     if (value !== undefined) {
-      copyTextToClipboard(value)
+      void copyTextToClipboard(value)
     }
   }
 </script>

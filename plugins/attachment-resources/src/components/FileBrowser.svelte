@@ -54,7 +54,7 @@
   let selectedFileTypeId = 'typeAny'
   let isListDisplayMode = true
 
-  $: fetch(search, selectedSort, selectedFileTypeId, selectedDateId, selectedParticipants, selectedSpaces)
+  $: void fetch(search, selectedSort, selectedFileTypeId, selectedDateId, selectedParticipants, selectedSpaces)
 
   async function fetch (
     searchQuery_: string,

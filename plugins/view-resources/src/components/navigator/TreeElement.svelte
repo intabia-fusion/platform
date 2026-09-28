@@ -62,7 +62,7 @@
   let popupMenuActions: Action[] = []
 
   $: if (actions !== undefined) {
-    actions().then((result) => {
+    void actions().then((result) => {
       inlineActions = result.filter((action) => action.inline === true)
       popupMenuActions = result.filter((action) => action.inline !== true)
     })
@@ -78,7 +78,7 @@
   }
 
   async function onInlineClick (ev: MouseEvent, action: Action): Promise<void> {
-    action.action([], ev)
+    void action.action([], ev)
   }
 </script>
 

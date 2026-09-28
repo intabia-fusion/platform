@@ -67,7 +67,7 @@
 
   function copy (): void {
     if (link?.url === undefined || link.url === '') return
-    copyTextToClipboard(link.url)
+    void copyTextToClipboard(link.url)
     copied = true
     copiedTime = Date.now()
   }

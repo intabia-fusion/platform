@@ -44,7 +44,7 @@
 
   function nameChange () {
     serverName = name
-    client.updateDoc(object._class, object.space, object._id, { name })
+    void client.updateDoc(object._class, object.space, object._id, { name })
   }
 
   let integrations: Set<Ref<IntegrationType>> = new Set<Ref<IntegrationType>>()

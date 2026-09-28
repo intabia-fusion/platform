@@ -38,7 +38,7 @@
 
   async function onSpaceEdit (): Promise<void> {
     if (dm === undefined) return
-    openDoc(client.getHierarchy(), dm)
+    void openDoc(client.getHierarchy(), dm)
   }
 </script>
 

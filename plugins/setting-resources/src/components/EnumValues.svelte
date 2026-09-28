@@ -61,7 +61,7 @@
   }
   const handleKeydown = (evt: KeyboardEvent) => {
     if (evt.key === 'Enter') {
-      add()
+      void add()
     }
     if (evt.key === 'Escape') {
       newItem = false
@@ -73,7 +73,7 @@
 
   async function handleClipboard (): Promise<void> {
     const text = await navigator.clipboard.readText()
-    processText(text)
+    void processText(text)
   }
 
   async function processText (text: string): Promise<void> {
@@ -90,7 +90,7 @@
   let inputFile: HTMLInputElement
   async function processFile (file: File): Promise<void> {
     const text = await file.text()
-    processText(text)
+    void processText(text)
   }
 
   function fileSelected () {
@@ -99,7 +99,7 @@
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
       if (file !== null) {
-        processFile(file)
+        void processFile(file)
       }
     }
     inputFile.value = ''
@@ -148,7 +148,7 @@
       icon: Report,
       label: setting.string.ImportEnumCopy,
       action: () => {
-        handleClipboard()
+        void handleClipboard()
       }
     }
   ]
@@ -240,7 +240,7 @@
               label={setting.string.EnterOptionTitle}
               on:keydown={handleKeydown}
               on:blur={() => {
-                add()
+                void add()
                 newItem = false
               }}
               bind:value={newValue}

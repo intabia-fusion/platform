@@ -26,7 +26,7 @@
 
   let isLoading = true
 
-  getTestRunStats(_id).then((newStats) => {
+  void getTestRunStats(_id).then((newStats) => {
     stats = newStats
     isLoading = false
   })

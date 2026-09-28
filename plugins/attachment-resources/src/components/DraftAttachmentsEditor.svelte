@@ -225,7 +225,7 @@
           on:keydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              openPreview(item)
+              void openPreview(item)
             }
           }}
         >

@@ -47,7 +47,7 @@
       ;(doc as any)[attributeKey] = value
       dispatch('update', { key, value })
     } else {
-      updateAttribute(client, doc, _class, { key: attributeKey, attr: attribute }, value)
+      void updateAttribute(client, doc, _class, { key: attributeKey, attr: attribute }, value)
     }
   }
 </script>

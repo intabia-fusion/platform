@@ -117,7 +117,7 @@
   let toMove: Issue[] = []
   let loading = true
   $: {
-    collectIssues(client, docs).then((res) => {
+    void collectIssues(client, docs).then((res) => {
       toMove = res
       loading = false
     })

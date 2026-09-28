@@ -74,7 +74,7 @@
     on:keydown={(e) => {
       if (e.key === 'Enter') {
         disabled = true
-        save().finally(() => (disabled = false))
+        void save().finally(() => (disabled = false))
         e.preventDefault()
         e.stopPropagation()
       }

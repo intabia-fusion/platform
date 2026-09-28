@@ -81,10 +81,12 @@
     isSaved = saved.some((savedMessage) => savedMessage.attachedTo === message._id)
   })
 
-  $: withActions &&
+  $: void (
+    withActions &&
     getActions(client, message, activity.class.ActivityMessage).then((res) => {
       menuActions = res
     })
+  )
 
   function scrollToMessage (): void {
     if (element != null && shouldScroll) {

@@ -13,7 +13,7 @@
   const client = getClient()
 
   $: if (value) {
-    client.findOne(documents.class.Document, { _id: value }).then((result) => {
+    void client.findOne(documents.class.Document, { _id: value }).then((result) => {
       document = result
     })
   }

@@ -152,7 +152,7 @@
               }}
               on:click|preventDefault|stopPropagation={(evt) => {
                 if (!action.inline) dispatch('close')
-                action.action(ctx, evt)
+                void action.action(ctx, evt)
               }}
             >
               {#if action.icon}<div class="icon mr-2">
@@ -197,7 +197,7 @@
             }}
             on:click={(evt) => {
               if (!action.inline) dispatch('close')
-              action.action(ctx, evt)
+              void action.action(ctx, evt)
             }}
             on:contextmenu={(evt) => {
               if (action.component) {

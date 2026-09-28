@@ -28,7 +28,7 @@
 
   $: issue = value.$lookup?.attachedTo
   $: if (!issue && value.attachedToClass) {
-    client.findOne(value.attachedToClass, { _id: value.attachedTo }).then((r) => {
+    void client.findOne(value.attachedToClass, { _id: value.attachedTo }).then((r) => {
       issue = r as Issue
     })
   }

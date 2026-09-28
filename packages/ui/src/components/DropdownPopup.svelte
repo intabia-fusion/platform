@@ -73,7 +73,7 @@
     if (key.code === 'Enter') {
       key.preventDefault()
       key.stopPropagation()
-      handleSelection(key, selection)
+      void handleSelection(key, selection)
     }
   }
 </script>
@@ -107,7 +107,7 @@
             class="flex-between menu-item withList w-full"
             disabled={item.isSelectable === false}
             on:click={(evt) => {
-              handleSelection(evt, idx)
+              void handleSelection(evt, idx)
             }}
           >
             {#if item.component}

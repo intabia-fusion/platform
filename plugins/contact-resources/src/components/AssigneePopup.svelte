@@ -83,7 +83,7 @@
 
   $: {
     dataLoading = true
-    updateCategories(objects, categories).then(() => {
+    void updateCategories(objects, categories).then(() => {
       dataLoading = false
     })
   }
@@ -169,7 +169,7 @@
     if (key.code === 'Enter') {
       key.preventDefault()
       key.stopPropagation()
-      handleSelection(key, selection)
+      void handleSelection(key, selection)
     }
   }
   const manager = createFocusManager()
@@ -230,7 +230,7 @@
             class="menu-item withList no-focus w-full"
             class:selected={obj._id === selected}
             on:click={() => {
-              handleSelection(undefined, item)
+              void handleSelection(undefined, item)
             }}
           >
             <div class="flex-grow clear-mins">

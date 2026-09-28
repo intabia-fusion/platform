@@ -43,11 +43,11 @@
 
   $: if (employeeValue || defaultClass) {
     if (employeeValue) {
-      getObjectPresenter(client, employeeValue._class, { key: '' }).then((p) => {
+      void getObjectPresenter(client, employeeValue._class, { key: '' }).then((p) => {
         presenter = p
       })
     } else if (defaultClass) {
-      getObjectPresenter(client, defaultClass, { key: '' }).then((p) => {
+      void getObjectPresenter(client, defaultClass, { key: '' }).then((p) => {
         presenter = p
       })
     }

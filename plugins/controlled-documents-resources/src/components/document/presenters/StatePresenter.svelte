@@ -32,7 +32,7 @@
     controlledDocStates = await getTranslatedControlledDocStates(lang)
   }
 
-  $: getTranslatedLabels($themeStore.language)
+  $: void getTranslatedLabels($themeStore.language)
 
   let text: string = ''
   let type: DocumentStateTagType

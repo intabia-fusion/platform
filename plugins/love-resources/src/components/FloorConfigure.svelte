@@ -277,7 +277,7 @@
   }
 
   function docMouseUp (e: MouseEvent): void {
-    if (locked) updateRoom(locked.room._id)
+    if (locked) void updateRoom(locked.room._id)
     if (dragged !== undefined) {
       divScroll.removeEventListener('mousemove', dragMouseMove)
       dragged = undefined

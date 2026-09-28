@@ -53,7 +53,7 @@
     value = ref !== undefined ? await client.findOne(core.class.Enum, { _id: ref }) : undefined
   }
 
-  $: updateSelected(ref)
+  $: void updateSelected(ref)
 
   async function edit () {
     if (value === undefined) return

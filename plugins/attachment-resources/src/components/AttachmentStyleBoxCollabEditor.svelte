@@ -138,7 +138,7 @@
   export function handleTable (element: HTMLElement, editorHandler: TextEditorHandler, event?: MouseEvent): void {
     const position = event !== undefined ? getEventPositionElement(event) : getPopupPositionElement(element)
 
-    addTableHandler(editorHandler.insertTable, position)
+    void addTableHandler(editorHandler.insertTable, position)
   }
 
   export function handleAttach (): void {

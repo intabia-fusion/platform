@@ -289,7 +289,7 @@
     return map
   }
   let staffDepartmentMap = new Map()
-  $: getDepartmentsForEmployee(departmentStaff).then((res) => {
+  $: void getDepartmentsForEmployee(departmentStaff).then((res) => {
     staffDepartmentMap = res
   })
 </script>

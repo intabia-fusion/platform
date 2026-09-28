@@ -58,7 +58,7 @@
 
   let catsSorted = false
 
-  client.findAll(tags.class.TagCategory, { targetClass: _class }).then((res) => {
+  void client.findAll(tags.class.TagCategory, { targetClass: _class }).then((res) => {
     categories = res
   })
 
@@ -138,7 +138,7 @@
   $: schema = filter.key.attribute.schema ?? '0'
 
   const dispatch = createEventDispatcher()
-  getValues(search)
+  void getValues(search)
 
   $: tagLevelIcon = schema === '3' ? undefined : tagLevel[((level % 3) + 1) as 1 | 2 | 3]
   $: tagLevelLabel = [tags.string.Initial, tags.string.Meaningfull, tags.string.Expert][Math.floor(level / 3)]

@@ -127,8 +127,8 @@
       allWidth = element.clientWidth
     }}
     on:click|stopPropagation={(evt) => {
-      if (isEditable) tagsHandler(evt)
-      else action(evt)
+      if (isEditable) void tagsHandler(evt)
+      else void action(evt)
     }}
   >
     {#each items as value, i}

@@ -4,7 +4,7 @@
   export let value: number
 
   let duration: string
-  $: formatDuration(value, $themeStore.language).then((res) => {
+  $: void formatDuration(value, $themeStore.language).then((res) => {
     duration = res
   })
 </script>

@@ -56,7 +56,7 @@
       ev.target as HTMLElement,
       (result) => {
         if (result != null) {
-          client.addCollection(contact.class.Member, space, objectId, _class, 'members', {
+          void client.addCollection(contact.class.Member, space, objectId, _class, 'members', {
             contact: result._id
           })
         }

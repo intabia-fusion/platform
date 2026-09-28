@@ -27,7 +27,7 @@
   const query = createQuery()
   const client = getClient()
 
-  $: value === undefined && _id && loadObject(_id)
+  $: void (value === undefined && _id && loadObject(_id))
 
   async function loadObject (_id: Ref<TelegramMessage>): Promise<void> {
     const isRemoved = await checkIsObjectRemoved(client, _id, telegram.class.Message)

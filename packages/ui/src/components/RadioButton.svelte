@@ -43,7 +43,7 @@
   class:kind-negative={kind === 'negative'}
   tabindex="-1"
   on:click={() => {
-    if (!disabled && group !== value) action()
+    if (!disabled && group !== value) void action()
   }}
 >
   <input
@@ -53,7 +53,7 @@
     {value}
     {disabled}
     on:click={() => {
-      if (!disabled && group !== value) action()
+      if (!disabled && group !== value) void action()
     }}
   />
   <div class="marker" />

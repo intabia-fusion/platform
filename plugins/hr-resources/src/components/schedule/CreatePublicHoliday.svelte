@@ -56,10 +56,10 @@
       await client.createDoc(hr.class.PublicHoliday, core.space.Workspace, holiday)
     }
   }
-  findHoliday()
+  void findHoliday()
 
   function deleteHoliday () {
-    existingHoliday && client.remove(existingHoliday)
+    void (existingHoliday && client.remove(existingHoliday))
     dispatch('close')
   }
 </script>
@@ -69,7 +69,7 @@
   on:close
   okLabel={existingHoliday ? presentation.string.Save : presentation.string.Ok}
   okAction={() => {
-    saveHoliday()
+    void saveHoliday()
   }}
   canSave={true}
   on:changeContent

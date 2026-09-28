@@ -104,7 +104,7 @@
 
     actions.sort((a, b) => a.category.localeCompare(b.category))
   }
-  getActions()
+  void getActions()
 
   interface HelpCard {
     icon: Asset | AnySvelteComponent

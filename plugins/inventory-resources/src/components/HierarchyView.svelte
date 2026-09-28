@@ -44,7 +44,7 @@
       { sort: { name: SortingOrder.Ascending }, ...options, limit: 200 }
     )
   }
-  $: update(_class, query, options)
+  $: void update(_class, query, options)
 
   function updateDescendants (): void {
     descendants.clear()

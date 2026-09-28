@@ -25,7 +25,7 @@
   export let action: ((item: Ref<Vacancy>) => void) | undefined = undefined
 
   function editVacancy (): void {
-    openDoc(getClient().getHierarchy(), value)
+    void openDoc(getClient().getHierarchy(), value)
   }
 </script>
 

@@ -63,11 +63,13 @@
 
   let headerObject: Doc | undefined = undefined
 
-  $: headerObjectId &&
+  $: void (
+    headerObjectId &&
     headerObjectClass &&
     getObjectById(headerObjectClass, headerObjectId).then((doc) => {
       headerObject = doc
     })
+  )
 
   export function onActionsOpened (): void {
     isActionsOpened = true

@@ -38,7 +38,7 @@
 
   $: if (answerData === null && submit !== null) {
     const order = questionData.options.map((_, index) => index + 1) as [OrderingPosition, ...OrderingPosition[]]
-    submit({ order })
+    void submit({ order })
   }
 
   let indices = questionData.options.map((_, index) => index) as [number, ...number[]]
@@ -71,7 +71,7 @@
         aInitialIndex > bInitialIndex ? 1 : aInitialIndex < bInitialIndex ? -1 : 0
       )
       .map(([_, index]) => index + 1) as [OrderingPosition, ...OrderingPosition[]]
-    submit({ order })
+    void submit({ order })
   }
 </script>
 

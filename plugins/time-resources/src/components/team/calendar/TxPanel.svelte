@@ -48,7 +48,7 @@
     objects = Array.from(objs.values())
   }
 
-  $: group(tx)
+  $: void group(tx)
 </script>
 
 <div use:resizeObserver={() => dispatch('changeContent')} class="p-1" style:overflow={'auto'}>

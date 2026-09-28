@@ -72,7 +72,7 @@
     areItemsloading = false
   }
 
-  $: !$$slots.object && updatePresenter(_class)
+  $: void (!$$slots.object && updatePresenter(_class))
   $: itemsQuery.query(_class, query, updateItems, {
     ...(isSortable ? { sort: { rank: SORTING_ORDER } } : {}),
     ...(queryOptions ?? {}),

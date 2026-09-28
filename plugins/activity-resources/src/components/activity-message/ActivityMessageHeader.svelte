@@ -34,10 +34,12 @@
 
   let linkData: LinkData | undefined = undefined
 
-  $: !hideLink &&
+  $: void (
+    !hideLink &&
     getLinkData(message, object, parentObject, person, $languageStore).then((data) => {
       linkData = data
     })
+  )
 </script>
 
 <span class="text-sm lower">

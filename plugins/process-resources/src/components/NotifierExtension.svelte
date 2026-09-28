@@ -34,7 +34,7 @@
       })
       init = true
     } else {
-      notifyAll(res)
+      void notifyAll(res)
     }
   })
 

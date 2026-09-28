@@ -102,7 +102,7 @@
     }
   }
 
-  $: if (model) update(model, spaces, preferences)
+  $: if (model) void update(model, spaces, preferences)
 
   async function updateSpecials (
     specials: SpecialNavModel[],

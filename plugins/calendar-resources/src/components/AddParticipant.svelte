@@ -121,7 +121,7 @@
     }
   )
 
-  $: findCompletions(value, integrations, excluded)
+  $: void findCompletions(value, integrations, excluded)
 
   async function findCompletions (
     val: string | undefined,

@@ -29,7 +29,7 @@
   let resultQuery: DocumentQuery<IssueTemplate> = { ...searchQuery }
 
   $: if (!label && title) {
-    translate(title, {}, $themeStore.language).then((res) => {
+    void translate(title, {}, $themeStore.language).then((res) => {
       label = res
     })
   }

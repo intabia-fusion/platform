@@ -133,7 +133,7 @@
     <SelectPopup
       value={valuesToShow}
       on:close={(evt) => {
-        changeValue(evt.detail)
+        void changeValue(evt.detail)
       }}
       placeholder={placeholder ?? view.string.Filter}
       searchable
@@ -152,7 +152,7 @@
       allowDeselect={true}
       selected={current}
       on:close={(evt) => {
-        changeValue(evt.detail === null ? null : evt.detail?._id)
+        void changeValue(evt.detail === null ? null : evt.detail?._id)
       }}
       placeholder={placeholder ?? view.string.Filter}
       {width}

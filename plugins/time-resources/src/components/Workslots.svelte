@@ -40,10 +40,10 @@
   let duration: string
   let plannedDuration: string
   $: split = splitEventsDuration(slots)
-  $: formatDuration(split.spent, $themeStore.language).then((res) => {
+  $: void formatDuration(split.spent, $themeStore.language).then((res) => {
     duration = res
   })
-  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+  $: void formatDuration(split.planned, $themeStore.language).then((res) => {
     plannedDuration = res
   })
 

@@ -79,7 +79,7 @@
     label={hasError ? gmail.string.Resend : gmail.string.Reply}
     on:click={() => {
       if (hasError) {
-        resendMessage()
+        void resendMessage()
         dispatch('close')
       } else newMessage = true
     }}

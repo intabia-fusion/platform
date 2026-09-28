@@ -90,10 +90,12 @@
       channel = res[0]
     })
 
-  $: message &&
+  $: void (
+    message &&
     getChannelName(message.attachedTo, message.attachedToClass, channel, $languageStore).then((res) => {
       channelName = res
     })
+  )
 
   let breadcrumbs: BreadcrumbItem[] = []
   $: breadcrumbs = showHeader ? getBreadcrumbsItems(channel, channelName) : []

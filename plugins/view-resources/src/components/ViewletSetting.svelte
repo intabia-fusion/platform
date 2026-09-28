@@ -49,7 +49,7 @@
 
   let viewlets: Viewlet[] = []
 
-  $: client
+  $: void client
     .findAll(view.class.Viewlet, {
       attachTo: {
         $in: client
@@ -398,7 +398,7 @@
       return key === resultName
     })
     if (exists) {
-      addAssociations(result, targetClass, preference, [...parents, [association._id, direction === 'a' ? 1 : -1]])
+      void addAssociations(result, targetClass, preference, [...parents, [association._id, direction === 'a' ? 1 : -1]])
       await addAssociationAttributes(result, targetClass, resultName, fullLabel)
     }
   }

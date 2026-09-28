@@ -41,11 +41,11 @@
 
   $: if (value || defaultClass) {
     if (value) {
-      getObjectPresenter(client, value._class, { key: '' }).then((p) => {
+      void getObjectPresenter(client, value._class, { key: '' }).then((p) => {
         presenter = p
       })
     } else if (defaultClass) {
-      getObjectPresenter(client, defaultClass, { key: '' }).then((p) => {
+      void getObjectPresenter(client, defaultClass, { key: '' }).then((p) => {
         presenter = p
       })
     }

@@ -149,7 +149,7 @@
     return s
   }
 
-  $: objectId && updateAttachments(objectId)
+  $: void (objectId && updateAttachments(objectId))
 
   async function updateAttachments (objectId: Ref<Doc>): Promise<void> {
     draftAttachments = $draftsStore[draftKey]

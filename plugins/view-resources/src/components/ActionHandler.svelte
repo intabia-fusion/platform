@@ -215,7 +215,7 @@
       const t = lastKey
       if (t !== undefined && a.keyBinding.some((it) => matchKeySequence(evt, it, t))) {
         evt.preventDefault()
-        activateAction(a)
+        void activateAction(a)
         return
       }
       if (!postpone && a.keyBinding.some((p) => findKeySequence(p, evt))) {
@@ -228,7 +228,7 @@
     }
 
     if (delayedAction !== undefined) {
-      delayedAction()
+      void delayedAction()
       delayedAction = undefined
     }
 
@@ -236,12 +236,12 @@
     if (t !== undefined) {
       if (!postpone) {
         evt.preventDefault()
-        activateAction(t)
+        void activateAction(t)
         return
       }
 
       delayedAction = async () => {
-        activateAction(t)
+        void activateAction(t)
       }
     }
 

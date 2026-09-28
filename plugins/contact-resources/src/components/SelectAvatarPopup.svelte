@@ -75,7 +75,7 @@
   async function updateHasGravatar (email?: string) {
     hasGravatar = !!email && (await checkHasGravatar(buildGravatarId(email)))
   }
-  $: updateHasGravatar(email)
+  $: void updateHasGravatar(email)
 
   const dispatch = createEventDispatcher()
 

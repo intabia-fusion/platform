@@ -28,7 +28,7 @@
     )
   }
 
-  $: updateEmployees(resultQuery)
+  $: void updateEmployees(resultQuery)
 </script>
 
 <Scroller padding={'var(--spacing-2)'}>

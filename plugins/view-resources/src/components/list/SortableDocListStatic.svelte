@@ -60,7 +60,7 @@
     }
   }
 
-  $: !$$slots.object && updatePresenter(_class)
+  $: void (!$$slots.object && updatePresenter(_class))
 
   $: isSortable = hierarchy.getAllAttributes(_class).has('rank')
 

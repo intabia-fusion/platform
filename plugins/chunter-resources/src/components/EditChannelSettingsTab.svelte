@@ -16,7 +16,7 @@
     justify={'left'}
     size={'x-large'}
     on:click={(evt) => {
-      ArchiveChannel(channel, evt, { afterArchive: () => dispatch('close') })
+      void ArchiveChannel(channel, evt, { afterArchive: () => dispatch('close') })
     }}
   />
 {/if}

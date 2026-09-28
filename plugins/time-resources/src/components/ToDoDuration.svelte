@@ -9,10 +9,10 @@
   let spent: string = ''
   let planned: string = ''
   $: split = splitEventsDuration(events)
-  $: formatDuration(split.spent, $themeStore.language).then((res) => {
+  $: void formatDuration(split.spent, $themeStore.language).then((res) => {
     spent = res
   })
-  $: formatDuration(split.planned, $themeStore.language).then((res) => {
+  $: void formatDuration(split.planned, $themeStore.language).then((res) => {
     planned = res
   })
 </script>

@@ -70,7 +70,7 @@
   }
 
   function edit (e: MouseEvent): void {
-    openDoc(client.getHierarchy(), value)
+    void openDoc(client.getHierarchy(), value)
   }
 
   export let dragPerson: WithLookup<Staff> | undefined
@@ -106,7 +106,7 @@
     }}
     on:drop|preventDefault={(itm) => {
       closeTooltip()
-      addMember(client, dragPerson, value).then(() => {
+      void addMember(client, dragPerson, value).then(() => {
         dragPerson = undefined
         dragOver = undefined
       })

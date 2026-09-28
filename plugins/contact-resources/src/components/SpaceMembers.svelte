@@ -126,7 +126,7 @@
             icon={IconClose}
             size={'small'}
             action={() => {
-              removeMember(person._id)
+              void removeMember(person._id)
             }}
           />
         {/if}

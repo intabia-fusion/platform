@@ -57,7 +57,7 @@
         icon={love.icon.Invite}
         action={() => {
           closePopup()
-          sendInvites([person])
+          void sendInvites([person])
         }}
       />
     </div>

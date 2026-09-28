@@ -54,7 +54,7 @@
         : undefined
   }
 
-  $: updateSelected(object)
+  $: void updateSelected(object)
 
   onMount(() => {
     Analytics.handleEvent(RecruitEvents.ReviewViewed, { id: object._id })
@@ -69,7 +69,7 @@
         kind={'large-style'}
         focusable
         on:blur={() => {
-          if (rawTitle !== object.title) client.update(object, { title: rawTitle })
+          if (rawTitle !== object.title) void client.update(object, { title: rawTitle })
         }}
       />
       <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -77,7 +77,7 @@
         class="clear-mins flex-row-center"
         on:click={() => {
           if (candidate !== undefined) {
-            openDoc(client.getHierarchy(), candidate)
+            void openDoc(client.getHierarchy(), candidate)
           }
         }}
       >
@@ -100,7 +100,7 @@
       label={recruit.string.Description}
       content={object.description}
       on:save={(res) => {
-        client.update(object, { description: res.detail })
+        void client.update(object, { description: res.detail })
       }}
     />
     <EditBox

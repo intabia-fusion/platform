@@ -88,14 +88,14 @@
   const shadowColor = tweened(shadowNormal, { duration: 300, easing: cubicOut })
 
   export function setShadow (x: number, y: number, r: number, s?: number) {
-    shadow.set({ x, y, r, s: s ?? 0 })
+    void shadow.set({ x, y, r, s: s ?? 0 })
   }
   export function setShadowColor (r: number, g: number, b: number, a: number) {
-    shadowColor.set({ r, g, b, a })
+    void shadowColor.set({ r, g, b, a })
   }
   export function clearShadow () {
-    shadow.set({ x: 0, y: 0, r: 1, s: 0 })
-    shadowColor.set({ ...shadowNormal, a: 0 })
+    void shadow.set({ x: 0, y: 0, r: 1, s: 0 })
+    void shadowColor.set({ ...shadowNormal, a: 0 })
   }
   export function getRect (): DOMRect {
     return container ? container.getBoundingClientRect() : new DOMRect()
@@ -145,13 +145,13 @@
     } else if (roomSide.top || roomSide.bottom) cursor = 'ns-resize'
     else cursor = 'all-scroll'
 
-    shadow.set({
+    void shadow.set({
       x: roomSide.left ? -SHADOW_OFFSET : roomSide.right ? SHADOW_OFFSET : 0,
       y: roomSide.top ? -SHADOW_OFFSET : roomSide.bottom ? SHADOW_OFFSET : 0,
       r: roomSide.top || roomSide.bottom || roomSide.left || roomSide.right ? SHADOW_BLUR : 0,
       s: SHADOW_SPREAD
     })
-    shadowColor.set(shadowNormal)
+    void shadowColor.set(shadowNormal)
   }
 
   $: showButtons = room.type === RoomType.Video || removable

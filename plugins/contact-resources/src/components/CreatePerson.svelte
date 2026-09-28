@@ -71,7 +71,7 @@
   let channels: AttachedData<Channel>[] = []
 
   let matches: Person[] = []
-  $: findPerson(client, combineName(firstName, lastName), channels).then((p) => {
+  $: void findPerson(client, combineName(firstName, lastName), channels).then((p) => {
     matches = p
   })
 

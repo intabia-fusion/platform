@@ -48,7 +48,7 @@
   function onNameChange (ev: Event) {
     const value = (ev.target as HTMLInputElement).value
     if (value.trim().length > 0) {
-      client.updateDoc(_class, space.space, space._id, { name: value })
+      void client.updateDoc(_class, space.space, space._id, { name: value })
     } else {
       // Just refresh value
       query.query(

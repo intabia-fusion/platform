@@ -184,7 +184,7 @@
             size={'small'}
             action={() => {
               if (selected) {
-                openDoc(client.getHierarchy(), selected)
+                void openDoc(client.getHierarchy(), selected)
               }
             }}
           />

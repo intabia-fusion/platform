@@ -41,7 +41,7 @@
       return
     }
 
-    client.update(value, { abstract }, true)
+    void client.update(value, { abstract }, true)
   }
 </script>
 

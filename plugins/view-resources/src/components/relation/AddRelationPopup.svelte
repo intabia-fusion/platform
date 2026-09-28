@@ -91,7 +91,7 @@
         association: selected.association
       }
       const op = client.apply(obj._id).notMatch(core.class.Relation, data)
-      op.createDoc(core.class.Relation, core.space.Workspace, data)
+      void op.createDoc(core.class.Relation, core.space.Workspace, data)
       await op.commit()
     }
     dispatch('close')

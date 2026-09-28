@@ -63,7 +63,7 @@
       { attachedTo: channelId },
       (res) => {
         plainMessages = res
-        inboxClient.readDoc(channelId)
+        void inboxClient.readDoc(channelId)
       },
       { sort: { sendOn: SortingOrder.Descending } }
     )

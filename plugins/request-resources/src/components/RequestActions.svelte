@@ -82,7 +82,7 @@
 
     await client.createMixin(_id, chunter.class.ChatMessage, value.space, request.mixin.RequestDecisionComment, {})
 
-    refInput.createAttachments()
+    void refInput.createAttachments()
     loading = false
   }
 

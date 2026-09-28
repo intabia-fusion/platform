@@ -1182,7 +1182,7 @@
           showPreview
           removable
           on:remove={(result) => {
-            if (result.detail !== undefined) descriptionBox?.removeAttachmentById(result.detail._id)
+            if (result.detail !== undefined) void descriptionBox?.removeAttachmentById(result.detail._id)
           }}
         />
       {/each}

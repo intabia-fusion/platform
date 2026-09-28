@@ -172,10 +172,10 @@
       on:close={(evt) => {
         const result = evt.detail
         if (result === null) {
-          handleAssigneeChanged(null)
+          void handleAssigneeChanged(null)
         } else if (result !== undefined && result._id !== value) {
           value = result._id
-          handleAssigneeChanged(result._id)
+          void handleAssigneeChanged(result._id)
         }
       }}
     />

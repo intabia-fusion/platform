@@ -57,7 +57,7 @@
   let durationLabel: string = ''
   const updateDurationLabel = (dur: number | boolean): void => {
     if (typeof dur === 'number') {
-      formatDuration(dur, $themeStore.language).then((res) => {
+      void formatDuration(dur, $themeStore.language).then((res) => {
         durationLabel = res
       })
     } else durationLabel = ''

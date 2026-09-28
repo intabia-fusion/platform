@@ -33,7 +33,7 @@
     content={description}
     on:save={(res) => {
       if (res.detail != null) {
-        updateAttribute(getClient(), object, object._class, key, res.detail)
+        void updateAttribute(getClient(), object, object._class, key, res.detail)
       }
     }}
   />

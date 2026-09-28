@@ -54,7 +54,7 @@
   const client = getClient()
 
   function onChange (value: any, doc: Doc, key: string, attribute: AnyAttribute) {
-    updateAttribute(client, doc, doc._class, { key, attr: attribute }, value)
+    void updateAttribute(client, doc, doc._class, { key, attr: attribute }, value)
   }
 
   function getOnChange (docObject: Doc, attribute: AttributeModel) {

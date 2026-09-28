@@ -80,10 +80,12 @@
   $: targetPanel = hierarchy.classHierarchyMixin(value.attachedToClass, view.mixin.ObjectPanel)
   $: srcDocPanel = hierarchy.classHierarchyMixin(value.srcDocClass, view.mixin.ObjectPanel)
 
-  $: targetDoc !== undefined &&
+  $: void (
+    targetDoc !== undefined &&
     getDocLinkTitle(client, targetDoc._id, targetDoc._class, targetDoc, $languageStore).then((res) => {
       targetTitle = res
     })
+  )
 </script>
 
 <ActivityMessageTemplate

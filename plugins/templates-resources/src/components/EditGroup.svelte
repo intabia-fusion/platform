@@ -55,7 +55,7 @@
       <EditBox
         bind:value={object.name}
         on:blur={() => {
-          if (rawName !== object.name) changeName(object.name)
+          if (rawName !== object.name) void changeName(object.name)
         }}
       />
     </div>

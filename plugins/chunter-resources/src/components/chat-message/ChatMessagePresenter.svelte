@@ -112,10 +112,12 @@
     originalText = value?.message
   }
 
-  $: value !== undefined &&
+  $: void (
+    value !== undefined &&
     getParentMessage(value.attachedToClass, value.attachedTo, value.space).then((res) => {
       parentMessage = res
     })
+  )
 
   $: if (doc !== undefined && value?.attachedTo === doc._id) {
     object = doc

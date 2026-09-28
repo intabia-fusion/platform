@@ -355,7 +355,7 @@
           removable
           on:remove={(result) => {
             if (result.detail !== undefined) {
-              descriptionBox.removeAttachmentById(result.detail._id)
+              void descriptionBox.removeAttachmentById(result.detail._id)
             }
           }}
         />

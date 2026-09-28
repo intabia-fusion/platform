@@ -28,7 +28,7 @@
   let selectedMilestone: Milestone | undefined
   let noMilestoneLabel: string
 
-  $: translate(tracker.string.NoMilestone, {}, $themeStore.language).then((label) => (noMilestoneLabel = label))
+  $: void translate(tracker.string.NoMilestone, {}, $themeStore.language).then((label) => (noMilestoneLabel = label))
   $: selectedMilestoneLabel = selectedMilestone?.label ?? noMilestoneLabel
 </script>
 

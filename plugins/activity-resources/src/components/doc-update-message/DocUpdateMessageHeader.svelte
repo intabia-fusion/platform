@@ -38,10 +38,12 @@
 
   let linkData: LinkData | undefined = undefined
 
-  $: !hideLink &&
+  $: void (
+    !hideLink &&
     getLinkData(message, object, parentObject, person, $languageStore).then((data) => {
       linkData = data
     })
+  )
 
   function getTitle (attributeModel: AttributeModel): IntlString | undefined {
     const isTextType = getIsTextType(attributeModel)

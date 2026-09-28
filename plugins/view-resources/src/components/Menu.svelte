@@ -64,7 +64,7 @@
           overrides.get(a._id)?.(object, evt)
           return
         }
-        invokeAction(object, evt, a)
+        void invokeAction(object, evt, a)
       },
       component: a.actionPopup,
       props: { ...a.actionProps, value: object }

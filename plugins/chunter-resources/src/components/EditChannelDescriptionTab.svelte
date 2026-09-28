@@ -36,7 +36,7 @@
       return
     }
     const newTopic = (ev.target as HTMLInputElement).value
-    client.update(channel, { topic: newTopic })
+    void client.update(channel, { topic: newTopic })
   }
 
   function onDescriptionChange (ev: Event) {
@@ -44,7 +44,7 @@
       return
     }
     const newDescription = (ev.target as HTMLInputElement).value
-    client.update(channel, { description: newDescription })
+    void client.update(channel, { description: newDescription })
   }
 
   async function leaveChannel (): Promise<void> {
@@ -76,7 +76,7 @@
         justify={'left'}
         size={'x-large'}
         on:click={() => {
-          leaveChannel()
+          void leaveChannel()
         }}
       />
     {/if}

@@ -31,7 +31,7 @@
   export let inline: boolean = false
   let company: Organization | undefined
 
-  $: getOrganization(vacancy, vacancy?.company)
+  $: void getOrganization(vacancy, vacancy?.company)
   const client = getClient()
 
   async function getOrganization (

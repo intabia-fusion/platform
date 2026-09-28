@@ -60,7 +60,7 @@
 
   let modes: FilterMode[] = []
 
-  client.findAll(view.class.FilterMode, { _id: { $in: filter.modes } }).then((res) => {
+  void client.findAll(view.class.FilterMode, { _id: { $in: filter.modes } }).then((res) => {
     modes = res
   })
 

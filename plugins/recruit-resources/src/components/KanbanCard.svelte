@@ -106,7 +106,7 @@
           shrink={1}
           value={object.status}
           onChange={(status) => {
-            getClient().update(object, { status })
+            void getClient().update(object, { status })
           }}
         />
       {/if}

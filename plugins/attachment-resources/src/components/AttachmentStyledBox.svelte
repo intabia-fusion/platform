@@ -103,7 +103,7 @@
   const newAttachments: Set<Ref<Attachment>> = new Set<Ref<Attachment>>()
   const removedAttachments: Set<Attachment> = new Set<Attachment>()
 
-  $: draftKey && updateAttachments(objectId, $draftsStore[draftKey])
+  $: void (draftKey && updateAttachments(objectId, $draftsStore[draftKey]))
 
   async function updateAttachments (
     objectId: Ref<Doc> | undefined,
@@ -188,15 +188,15 @@
       newAttachments.add(_id)
       attachments = attachments
       saved = false
-      saveDraft()
+      void saveDraft()
       dispatch('attach', { action: 'saved', value: attachments.size })
       dispatch('attached', _id)
 
       if (useDirectAttachDelete) {
-        saveNewAttachment(_id)
+        void saveNewAttachment(_id)
       }
     } catch (err: any) {
-      setPlatformStatus(unknownError(err))
+      void setPlatformStatus(unknownError(err))
     }
   }
 
@@ -241,7 +241,7 @@
     attachments.delete(attachment._id)
     attachments = attachments
     refInput.removeAttachment(attachment.file)
-    saveDraft()
+    void saveDraft()
     dispatch('detached', attachment._id)
 
     progressItems = progressItems.filter((it) => it !== attachment._id)
@@ -283,7 +283,7 @@
       newAttachments.forEach((p) => {
         const attachment = attachments.get(p)
         if (attachment !== undefined) {
-          deleteFile(attachment.file)
+          void deleteFile(attachment.file)
         }
       })
     }
@@ -406,7 +406,7 @@
   on:dragover|preventDefault={() => {}}
   on:dragleave={() => {}}
   on:drop|preventDefault|stopPropagation={(ev) => {
-    fileDrop(ev)
+    void fileDrop(ev)
   }}
 >
   <StyledTextBox

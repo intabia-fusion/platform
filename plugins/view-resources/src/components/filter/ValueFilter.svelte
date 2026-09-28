@@ -164,7 +164,7 @@
 
   const dispatch = createEventDispatcher()
 
-  $: getValues(search)
+  $: void getValues(search)
 </script>
 
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>

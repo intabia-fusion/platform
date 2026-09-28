@@ -60,8 +60,8 @@
   }
 
   let valueComponent: AnyComponent | undefined
-  $: if (filter) getLabel()
-  $: getValueComponent(currentFilter)
+  $: if (filter) void getLabel()
+  $: void getValueComponent(currentFilter)
 
   async function getValueComponent (filter: Filter): Promise<void> {
     const presenterClass = getAttributePresenterClass(hierarchy, filter.key.attribute.type)

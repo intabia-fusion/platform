@@ -119,7 +119,7 @@
           })
         }
       }
-      saveAttachments(childId)
+      void saveAttachments(childId)
     }
   }
   async function saveAttachments (issue: Ref<Issue>) {
@@ -129,7 +129,7 @@
         await saveAttachment(draftAttachments[key as Ref<Attachment>], issue)
       }
     }
-    removeDraft(issue)
+    void removeDraft(issue)
   }
   async function saveAttachment (doc: Attachment, issue: Ref<Issue>): Promise<void> {
     await client.addCollection(
@@ -149,7 +149,7 @@
   onDestroy(() => {
     if (!saved) {
       subIssues.forEach((st) => {
-        removeDraft(st._id, true)
+        void removeDraft(st._id, true)
       })
     }
   })

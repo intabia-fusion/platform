@@ -38,7 +38,7 @@
   const currentEmployee = getCurrentEmployee()
   const client = getClient()
 
-  $: loadSettings(integration)
+  $: void loadSettings(integration)
 
   async function loadSettings (integration: AccountIntegration): Promise<void> {
     const type = await client.findOne(setting.class.IntegrationType, {

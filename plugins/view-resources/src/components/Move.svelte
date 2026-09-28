@@ -43,11 +43,11 @@
   $: {
     const doc = docs[0]
     if (space === undefined) space = doc.space
-    translate(hierarchy.getClass(doc._class).label, {}, $themeStore.language).then(
+    void translate(hierarchy.getClass(doc._class).label, {}, $themeStore.language).then(
       (res) => (label = res.toLocaleLowerCase())
     )
   }
-  $: _class && translate(_class, {}, $themeStore.language).then((res) => (classLabel = res.toLocaleLowerCase()))
+  $: void (_class && translate(_class, {}, $themeStore.language).then((res) => (classLabel = res.toLocaleLowerCase())))
 
   async function move (doc: Doc): Promise<void> {
     const op = client.apply(undefined, 'move-to-space')
@@ -100,7 +100,7 @@
 
   $: {
     docs.forEach((doc) => {
-      validate(doc, doc._class)
+      void validate(doc, doc._class)
     })
   }
 

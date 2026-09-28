@@ -329,7 +329,7 @@
           {space}
           on:done={(e) => {
             // eslint-disable-next-line no-undef
-            onDone(getDoneUpdate(e))
+            void onDone(getDoneUpdate(e))
           }}
         />
       {/if}

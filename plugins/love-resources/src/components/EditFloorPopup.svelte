@@ -15,7 +15,7 @@
 
   let name: string = ''
   $: if (id !== undefined) {
-    client.findOne(love.class.Floor, { _id: id }).then((res) => {
+    void client.findOne(love.class.Floor, { _id: id }).then((res) => {
       name = res?.name ?? ''
     })
   }
@@ -32,8 +32,8 @@
 <Card
   label={love.string.Floor}
   okAction={() => {
-    if (id === undefined) createFloor()
-    else updateFloor()
+    if (id === undefined) void createFloor()
+    else void updateFloor()
   }}
   okLabel={id === undefined ? love.string.AddAFloor : love.string.RenameAFloor}
   canSave={name.trim().length > 0}

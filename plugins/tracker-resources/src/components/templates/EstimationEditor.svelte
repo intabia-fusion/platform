@@ -46,7 +46,7 @@
 
     showPopup(EditEstimationPopup, { value: value.estimation }, eventToHTMLElement(event), (res) => {
       if (typeof res === 'number') {
-        changeEstimation(res)
+        void changeEstimation(res)
       }
     })
   }

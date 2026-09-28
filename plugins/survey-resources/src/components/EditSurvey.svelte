@@ -171,7 +171,8 @@
               deleteQuestion(index)
             }}
             on:change={(e) => {
-              isNewQuestion ? handleNewQuestionChange(e.detail) : handleQuestionChange(index, e.detail)
+              if (isNewQuestion) handleNewQuestionChange(e.detail)
+              else void handleQuestionChange(index, e.detail)
             }}
             {readonly}
             on:dragStart={() => {

@@ -33,7 +33,7 @@
   const asRepos = (docs: AttachedDoc[]) => docs as GithubIntegrationRepository[]
 
   const client = getClient()
-  $: loadIntegration(integration)
+  $: void loadIntegration(integration)
 
   async function loadIntegration (integration: Integration): Promise<void> {
     try {

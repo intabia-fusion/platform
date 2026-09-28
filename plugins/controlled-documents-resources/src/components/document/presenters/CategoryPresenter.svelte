@@ -17,7 +17,7 @@
   const dispatch = createEventDispatcher()
 
   $: if (value) {
-    client.findOne(documents.class.DocumentCategory, { _id: value }).then((result) => {
+    void client.findOne(documents.class.DocumentCategory, { _id: value }).then((result) => {
       category = result
     })
   }

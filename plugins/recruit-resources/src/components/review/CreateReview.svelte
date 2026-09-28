@@ -158,7 +158,7 @@
     }
   }
 
-  $: validate(doc, doc._class)
+  $: void validate(doc, doc._class)
   const updateStart = (result: any): void => {
     if (result.detail !== undefined) {
       dueDate = result.detail

@@ -74,7 +74,7 @@
     if (key.code === 'Enter') {
       key.preventDefault()
       key.stopPropagation()
-      handleSelection(key, selection)
+      void handleSelection(key, selection)
     }
   }
 

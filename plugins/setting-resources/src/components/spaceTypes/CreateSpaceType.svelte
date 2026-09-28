@@ -72,7 +72,7 @@
       : undefined
 
   let extraComponent: AnySvelteComponent | undefined
-  $: loadExtraComponent(typeCreator)
+  $: void loadExtraComponent(typeCreator)
 
   async function loadExtraComponent (tc: SpaceTypeCreator | undefined): Promise<void> {
     if (tc === undefined) {

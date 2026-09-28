@@ -75,7 +75,7 @@
       : concatLink(frontUrl, locationToUrl(loc))
   }
 
-  $: if (object !== undefined) getHref(object)
+  $: if (object !== undefined) void getHref(object)
 
   function onBrokenLinkClick (event: MouseEvent): void {
     showPopup(MessageBox, {

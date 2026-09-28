@@ -59,14 +59,14 @@
     const subIssue = subIssues?.find((p) => p._id === target)
     if (subIssue !== undefined) {
       closeTooltip()
-      openIssue(subIssue)
+      void openIssue(subIssue)
     }
   }
 
   function openParentIssue () {
     if (parentIssue) {
       closeTooltip()
-      openIssue(parentIssue)
+      void openIssue(parentIssue)
     }
   }
 
@@ -106,7 +106,7 @@
 
   let categories: IdMap<StatusCategory> = new Map()
 
-  getClient()
+  void getClient()
     .findAll(core.class.StatusCategory, {})
     .then((res) => {
       categories = toIdMap(res)

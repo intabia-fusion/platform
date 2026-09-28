@@ -48,7 +48,7 @@
 
   async function invite (): Promise<void> {
     if (employee !== undefined) {
-      sendInvites([employee._id])
+      void sendInvites([employee._id])
     } else {
       openSelectUsersPopup()
     }
@@ -68,7 +68,7 @@
       'top',
       (result?: Ref<Employee>[]) => {
         if (result != null) {
-          sendInvites(result)
+          void sendInvites(result)
         }
         dispatch('close')
       }

@@ -97,7 +97,7 @@
   let visibleIf: ((space: Space) => Promise<boolean>) | undefined
 
   $: if (model.visibleIf) {
-    getResource(model.visibleIf).then((r) => {
+    void getResource(model.visibleIf).then((r) => {
       visibleIf = r
     })
   }
@@ -115,7 +115,7 @@
   }
 
   $: if (visibleIf) {
-    updateSpaces(spaces, visibleIf)
+    void updateSpaces(spaces, visibleIf)
   } else {
     filteredSpaces = spaces
   }

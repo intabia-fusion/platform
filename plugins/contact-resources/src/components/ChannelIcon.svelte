@@ -28,10 +28,12 @@
 
   let provider: ChannelProvider | undefined = undefined
 
-  $: value &&
+  $: void (
+    value &&
     client.findOne(contact.class.ChannelProvider, { _id: value.provider }).then((res) => {
       provider = res
     })
+  )
 
   $: icon = provider?.icon ?? classIcon(client, contact.class.Channel)
 </script>

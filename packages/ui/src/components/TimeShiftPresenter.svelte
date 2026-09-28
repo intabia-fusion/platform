@@ -53,7 +53,7 @@
     }
   }
 
-  $: formatTime(value)
+  $: void formatTime(value)
 </script>
 
 <span style="white-space: nowrap;">{time}</span>

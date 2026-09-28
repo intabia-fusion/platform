@@ -205,7 +205,7 @@
     }
   }
 
-  $: validate(doc, _space, doc._class, _candidate)
+  $: void validate(doc, _space, doc._class, _candidate)
 
   let states: Array<{ id: number | string, color: number, label: string }> = []
   let selectedState: TaskStatus | undefined

@@ -116,7 +116,7 @@
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
       if (file !== null) {
-        processFile(file)
+        void processFile(file)
       }
     }
     inputFile.value = ''
@@ -129,7 +129,7 @@
     for (let index = 0; index < list.length; index++) {
       const file = list.item(index)
       if (file !== null) {
-        processFile(file)
+        void processFile(file)
       }
     }
   }
@@ -139,7 +139,7 @@
       if (item.kind === 'file') {
         const blob = item.getAsFile()
         if (blob !== null) {
-          processFile(blob)
+          void processFile(blob)
         }
       }
     }
@@ -164,7 +164,7 @@
       icon: Report,
       label: setting.string.ImportEnumCopy,
       action: () => {
-        handleClipboard()
+        void handleClipboard()
       }
     }
   ]

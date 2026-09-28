@@ -475,7 +475,7 @@
 
       await recognize(file)
     } catch (err: any) {
-      setPlatformStatus(unknownError(err))
+      void setPlatformStatus(unknownError(err))
     } finally {
       loading = false
     }
@@ -485,14 +485,14 @@
     dragover = false
     const droppedFile = event.dataTransfer?.files[0]
     if (droppedFile !== undefined) {
-      createAttachment(droppedFile)
+      void createAttachment(droppedFile)
     }
   }
 
   function fileSelected () {
     const file = inputFile.files?.[0]
     if (file !== undefined) {
-      createAttachment(file)
+      void createAttachment(file)
     }
     manager.setFocusPos(102)
   }

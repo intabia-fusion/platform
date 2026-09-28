@@ -50,7 +50,7 @@
 
   $: descriptionKey = client.getHierarchy().getAttribute(contact.class.Organization, 'description')
 
-  $: getDocAttrsInfo(mixins, ignoreKeys, contact.class.Organization).then((res) => {
+  $: void getDocAttrsInfo(mixins, ignoreKeys, contact.class.Organization).then((res) => {
     editors = res.editors
   })
 

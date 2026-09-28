@@ -67,7 +67,7 @@
     attributeModel = model
   })
 
-  $: viewlet?.component && loadObject(value.objectId, value.objectClass, doc)
+  $: void (viewlet?.component && loadObject(value.objectId, value.objectClass, doc))
 
   async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
     if (doc?._id === _id) {

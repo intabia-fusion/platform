@@ -70,7 +70,7 @@
     selected = value ? await client.findOne(_class, { _id: value }) : undefined
   }
 
-  $: updateSelected(value)
+  $: void updateSelected(value)
 
   const mgr = getFocusManager()
 

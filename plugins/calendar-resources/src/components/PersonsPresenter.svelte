@@ -29,7 +29,7 @@
   $: persons = Array.isArray(value) ? value : [value]
 
   async function onClick (p: Person) {
-    openDoc(getClient().getHierarchy(), p)
+    void openDoc(getClient().getHierarchy(), p)
   }
   const client = getClient()
 </script>

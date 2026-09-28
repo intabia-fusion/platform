@@ -72,7 +72,7 @@
   $: parentId = getParentId(element)
   $: parentClass = getParentClass(element)
   $: showParents = withParent(element)
-  $: getParents(parentId, parentClass, showParents).then((res) => {
+  $: void getParents(parentId, parentClass, showParents).then((res) => {
     parents = res
   })
 </script>

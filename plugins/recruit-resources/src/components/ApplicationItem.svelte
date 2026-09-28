@@ -28,7 +28,7 @@
 
   let person: Person | undefined
 
-  $: client.findOne(contact.class.Person, { _id: value.attachedTo }).then((p) => {
+  $: void client.findOne(contact.class.Person, { _id: value.attachedTo }).then((p) => {
     person = p
   })
 </script>

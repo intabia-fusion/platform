@@ -61,7 +61,7 @@
     }
   )
 
-  $: handleSelectedMilestoneIdUpdated(value, rawMilestones)
+  $: void handleSelectedMilestoneIdUpdated(value, rawMilestones)
 
   $: translateCB(tracker.string.Milestone, {}, $themeStore.language, (result) => (defaultMilestoneLabel = result))
   const milestoneIcon = tracker.icon.Milestone

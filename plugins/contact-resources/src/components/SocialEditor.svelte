@@ -37,7 +37,7 @@
   }
 
   const client = getClient()
-  client.findAll(contact.class.ChannelProvider, {}).then((result) => {
+  void client.findAll(contact.class.ChannelProvider, {}).then((result) => {
     providers = result
     for (const provider of providers) {
       const i = findValue(provider._id)

@@ -207,7 +207,7 @@
   let search: string = ''
 
   const dispatch = createEventDispatcher()
-  $: if (targetClass !== undefined) getValues(search)
+  $: if (targetClass !== undefined) void getValues(search)
 </script>
 
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>

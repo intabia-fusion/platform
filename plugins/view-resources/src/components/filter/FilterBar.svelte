@@ -87,7 +87,7 @@
       if (mode === undefined) continue
       const result = await getResource(mode.result)
       const newValue = await result(filter, () => {
-        makeQuery(query, filters)
+        void makeQuery(query, filters)
       })
 
       let filterKey = filter.key.key
@@ -142,7 +142,7 @@
     dispatch('change', newQuery)
   })
 
-  $: makeQuery(query, $filterStore)
+  $: void makeQuery(query, $filterStore)
 
   let visible: boolean = false
   $: if (_class) {
@@ -177,7 +177,7 @@
           {space}
           {filter}
           on:change={() => {
-            makeQuery(query, $filterStore)
+            void makeQuery(query, $filterStore)
             updateFilter(filter)
           }}
           on:remove={() => {

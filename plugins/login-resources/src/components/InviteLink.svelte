@@ -208,7 +208,7 @@
         size={'medium'}
         kind={'primary'}
         on:click={() => {
-          ;((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, emailMask, limit, role)
+          void (((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, emailMask, limit, role))
         }}
       />
     </div>

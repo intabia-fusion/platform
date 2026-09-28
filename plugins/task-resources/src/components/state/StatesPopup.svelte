@@ -33,7 +33,7 @@
     : []
   const dispatch = createEventDispatcher()
 
-  $: getType(space, $typeStore)
+  $: void getType(space, $typeStore)
 
   const client = getClient()
 

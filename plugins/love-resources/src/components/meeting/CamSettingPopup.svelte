@@ -26,7 +26,7 @@
         showTooltip={{ label: love.string.BlurTooltip }}
         on={blurRadius >= 0.5}
         on:change={(e) => {
-          updateBlurRadius(e.detail ? 0.5 : 0)
+          void updateBlurRadius(e.detail ? 0.5 : 0)
         }}
       />
       {#if blurRadius >= 0.5}
@@ -39,7 +39,7 @@
           value={blurRadius}
           on:change={(e) => {
             const value = Math.round(e.detail * 2) / 2
-            updateBlurRadius(value)
+            void updateBlurRadius(value)
           }}
         />
       {/if}

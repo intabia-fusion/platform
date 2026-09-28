@@ -47,7 +47,7 @@
 
   let translatedStates: Readonly<Record<DocumentState | ControlledDocumentState, string>> | null = null
   function getTranslatedLabels (lang: string) {
-    Promise.all([getTranslatedDocumentStates(lang), getTranslatedControlledDocStates(lang)]).then(
+    void Promise.all([getTranslatedDocumentStates(lang), getTranslatedControlledDocStates(lang)]).then(
       ([states, controlledStates]) => {
         translatedStates = {
           ...states,
@@ -88,7 +88,7 @@
   }))
   $: if ($compareTo) {
     if (comparedProvider) {
-      comparedProvider.destroy()
+      void comparedProvider.destroy()
     }
     loading = true
 

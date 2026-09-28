@@ -63,7 +63,7 @@
 
           const object = await client.findOne(document.class.Document, { _id: id })
           if (object !== undefined) {
-            openDoc(client.getHierarchy(), object)
+            void openDoc(client.getHierarchy(), object)
           }
         }
       }

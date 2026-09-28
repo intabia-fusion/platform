@@ -75,7 +75,7 @@
     if (ev.key === 'Enter') {
       const item = items[selected]
       if (item) {
-        dispatchItem(item)
+        void dispatchItem(item)
         return true
       } else {
         return false
@@ -121,7 +121,7 @@
             class="item"
             class:selected={initIndex + i === selected}
             on:click={() => {
-              dispatchItem(item)
+              void dispatchItem(item)
             }}
             on:focus={() => {
               selected = initIndex + i

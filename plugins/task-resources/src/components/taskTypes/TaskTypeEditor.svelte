@@ -262,7 +262,7 @@
                   size="medium"
                   hasMenu
                   on:click={() => {
-                    showIssuesOfTaskType()
+                    void showIssuesOfTaskType()
                   }}
                 />
                 <ButtonIcon

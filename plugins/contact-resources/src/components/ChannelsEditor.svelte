@@ -95,10 +95,10 @@
   {shape}
   {focusIndex}
   on:remove={(e) => {
-    remove(e.detail)
+    void remove(e.detail)
   }}
   on:save={(e) => {
-    saveHandler(e.detail)
+    void saveHandler(e.detail)
   }}
   on:open={_open}
 />

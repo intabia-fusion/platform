@@ -23,7 +23,7 @@
 
   let tabs: { component: AnyComponent, label: IntlString, props: any }[] | undefined
 
-  client
+  void client
     .findAll(contact.class.ContactsTab, {})
     .then(
       (ts) =>

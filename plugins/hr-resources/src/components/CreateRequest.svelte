@@ -55,7 +55,7 @@
   let types: RequestType[] = []
   let type: RequestType | undefined = undefined
   let typeLabel = ''
-  $: type && translate(type.label, {}, $themeStore.language).then((p) => (typeLabel = p))
+  $: void (type && translate(type.label, {}, $themeStore.language).then((p) => (typeLabel = p)))
 
   typesQuery.query(hr.class.RequestType, {}, (res) => {
     types = res

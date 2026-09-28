@@ -36,7 +36,7 @@
   const hierarchy = client.getHierarchy()
 
   function change () {
-    client.updateCollection(
+    void client.updateCollection(
       object._class,
       object.space,
       object._id,

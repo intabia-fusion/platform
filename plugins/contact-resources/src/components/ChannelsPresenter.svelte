@@ -37,7 +37,7 @@
       const action = await getResource(ev.detail.action as ViewAction)
       const channel = value.find((it) => it.value === ev.detail.value)
       if (action != null && channel != null) {
-        action(channel, ev)
+        void action(channel, ev)
       }
     }
   }

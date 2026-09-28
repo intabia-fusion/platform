@@ -56,7 +56,7 @@
       if (location.query?.filterViewId) {
         const targetView = result.find((view) => view._id === location.query?.filterViewId)
         if (targetView) {
-          load(targetView)
+          void load(targetView)
         }
       }
     })
@@ -128,7 +128,7 @@
             query,
             fragment: filteredView.location.fragment ?? undefined
           })
-          copyTextToClipboard(baseUrl + targetUrl)
+          void copyTextToClipboard(baseUrl + targetUrl)
         }
       }
     ]

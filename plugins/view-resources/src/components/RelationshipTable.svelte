@@ -249,7 +249,7 @@
   }
 
   function onChange (value: any, doc: Doc, key: string, attribute: AnyAttribute): void {
-    updateAttribute(client, doc, _class, { key, attr: attribute }, value)
+    void updateAttribute(client, doc, _class, { key, attr: attribute }, value)
   }
 
   function getOnChange (doc: Doc, attribute: AttributeModel) {
