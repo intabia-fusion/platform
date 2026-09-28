@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonPage } from '../common-page'
+import { retry } from '../../retry'
 
 export class TrackerNavigationMenuPage extends CommonPage {
   page: Page
@@ -87,22 +88,28 @@ export class TrackerNavigationMenuPage extends CommonPage {
   }
 
   async makeActionWithProject (projectName: string, action: string): Promise<void> {
-    await this.buttonProjectsParent().filter({ hasText: projectName }).hover()
-    await this.buttonProjectsParent()
-      .filter({ hasText: projectName })
-      .locator('xpath=../..')
-      .locator('div[class*="tools"] button')
-      .click()
+    const row = this.buttonProjectsParent().filter({ hasText: projectName })
+    const toolsButton = row.locator('xpath=../..').locator('div[class*="tools"] button')
+    // The tools button lives only while the row is hovered, and a rename re-renders the row mid-hover;
+    // park the pointer first - a second hover on the same spot fires no mousemove.
+    await retry(async () => {
+      await this.page.mouse.move(0, 0)
+      await row.hover()
+      await expect(toolsButton).toBeVisible({ timeout: 2000 })
+      await toolsButton.click({ timeout: 2000 })
+    })
     await this.selectFromDropdown(this.page, action)
   }
 
   async makeActionWithStarredProject (projectName: string, action: string): Promise<void> {
-    await this.starredProjectsInMenu().filter({ hasText: projectName }).hover()
-    await this.starredProjectsInMenu()
-      .filter({ hasText: projectName })
-      .locator('xpath=../..')
-      .locator('div[class*="tools"] button')
-      .click()
+    const row = this.starredProjectsInMenu().filter({ hasText: projectName })
+    const toolsButton = row.locator('xpath=../..').locator('div[class*="tools"] button')
+    await retry(async () => {
+      await this.page.mouse.move(0, 0)
+      await row.hover()
+      await expect(toolsButton).toBeVisible({ timeout: 2000 })
+      await toolsButton.click({ timeout: 2000 })
+    })
     await this.selectFromDropdown(this.page, action)
   }
 

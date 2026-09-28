@@ -73,15 +73,19 @@ test.describe('Drive video transcoding tests', () => {
   })
 
   test('Uploaded video is transcoded and plays back over HLS', async ({ page }) => {
+    // The workspace is shared, so the other test's artifacts are already in it: count from here,
+    // or the wait is satisfied by them and returns before this video is transcoded at all.
+    const before = await getStorageStats(workspace)
+
     await test.step('upload the video', async () => {
       await uploadFile(page, VIDEO, 'Upload files')
       await filesPage.checkFileExists(VIDEO)
     })
 
     await test.step('stream transcodes it into HLS artifacts', async () => {
-      const stats = await waitForDerivedBlobs(workspace, MIN_DERIVED_BLOBS)
-      expect(stats.derivedCount).toBeGreaterThanOrEqual(MIN_DERIVED_BLOBS)
-      expect(stats.derivedSize).toBeGreaterThan(0)
+      const stats = await waitForDerivedBlobs(workspace, before.derivedCount + MIN_DERIVED_BLOBS)
+      expect(stats.derivedCount - before.derivedCount).toBeGreaterThanOrEqual(MIN_DERIVED_BLOBS)
+      expect(stats.derivedSize).toBeGreaterThan(before.derivedSize)
     })
 
     await test.step('the player advances through the stream', async () => {
@@ -101,7 +105,7 @@ test.describe('Drive video transcoding tests', () => {
     await test.step('upload and wait for transcoding', async () => {
       await uploadFile(page, VIDEO, 'Upload files')
       await filesPage.checkFileExists(VIDEO)
-      await waitForDerivedBlobs(workspace, MIN_DERIVED_BLOBS)
+      await waitForDerivedBlobs(workspace, before.derivedCount + MIN_DERIVED_BLOBS)
     })
 
     const after = await getStorageStats(workspace)

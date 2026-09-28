@@ -116,3 +116,7 @@ elif command -v livekit-server >/dev/null 2>&1; then
 else
     echo "WARNING: livekit-server not installed; skipping LiveKit startup"
 fi
+
+# Prod index set on top of the migrations, so the stand plans queries like prod. Keep indexes.yaml in
+# step with migrations: sync only adds, so an index a migration drops comes back if still listed.
+./tool-pg.sh sync-indexes indexes.yaml --apply

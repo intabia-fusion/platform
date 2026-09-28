@@ -29,7 +29,6 @@ run_suite() {
     local label="$1" failed=0
     local stamps=()
     ./prepare-pg.sh
-    ./tool-pg.sh sync-indexes indexes.yaml --apply
     for ((i = 1; i <= ITERATIONS; i++)); do
         if [ "$i" -gt 1 ]; then
             echo "=== restore before run $i/$ITERATIONS ($label)"

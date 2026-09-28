@@ -1,5 +1,6 @@
-import { type Locator, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonPage } from './common-page'
+import { retry } from '../retry'
 
 export class LeftSideMenuPage extends CommonPage {
   readonly page: Page
@@ -34,11 +35,16 @@ export class LeftSideMenuPage extends CommonPage {
     await this.getInviteLinkButton().click()
   }
 
-  // Clicking the icon of the app that is already open toggles the navigator shut, and every
-  // later lookup in it then waits out its timeout on a panel that is not there.
+  // The open app has no icon in the list, and it can open on its own between check and click -
+  // so wait for the url to change, never for the button.
   private async openApp (button: Locator, alias: string): Promise<void> {
-    if (new URL(this.page.url()).pathname.split('/')[3] === alias) return
-    await button.click()
+    const opened = (): boolean => new URL(this.page.url()).pathname.split('/')[3] === alias
+    if (opened()) return
+    await retry(async () => {
+      if (opened()) return
+      await button.click({ timeout: 5000 })
+      await expect.poll(opened, { timeout: 5000 }).toBe(true)
+    })
   }
 
   async clickChunter (): Promise<void> {

@@ -157,6 +157,12 @@ export class CommonPage {
         await exact.first().click()
         return
       }
+      // None of the rows is the one asked for: picking the first silently assigns a stranger and
+      // the test fails somewhere else.
+      const rows = await this.selectPopupListItemFirst().allInnerTexts()
+      if (rows.length > 1) {
+        throw new Error(`"${name}" is not in the list filtered by "${filterText}": ${JSON.stringify(rows)}`)
+      }
     }
     await this.selectPopupListItemFirst().first().click()
   }
@@ -344,9 +350,11 @@ export class CommonPage {
 
   async selectFilter (filter: string, filterSecondLevel?: string): Promise<void> {
     await this.buttonFilter().click()
-    // The popup re-renders while its options load, so the row can be unstable or detach mid-click.
+    // The item list loads async inside an open popup; re-clicking the trigger then hits the popup's own
+    // overlay and closes it. Reopen only when no popup is open at all.
+    const anyPopup = this.page.locator('div.selectPopup')
     await expect(async () => {
-      if ((await this.selectPopupMenu(filter).count()) === 0) await this.buttonFilter().click()
+      if ((await anyPopup.count()) === 0) await this.buttonFilter().click()
       await this.selectPopupMenu(filter).click({ timeout: 5000 })
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
 

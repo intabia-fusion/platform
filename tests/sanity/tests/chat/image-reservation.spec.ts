@@ -16,6 +16,7 @@
 import { expect, test } from '../fixtures'
 import path from 'path'
 
+import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { generateTestData, loginByToken } from '../utils'
 
@@ -23,6 +24,7 @@ test.describe('Chat image container space reservation tests', () => {
   // Ensure deterministic DPR = 1
   test.use({ deviceScaleFactor: 1 })
   let chunterPage: ChunterPage
+  let channelPage: ChannelPage
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
@@ -32,6 +34,7 @@ test.describe('Chat image container space reservation tests', () => {
     data = { ...shared.data, channelName: `${generateTestData().channelName}${testInfo.testId}${testInfo.retry}` }
 
     chunterPage = new ChunterPage(page)
+    channelPage = new ChannelPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
     await loginByToken(page, shared.token, shared.ws, 'chunter')
@@ -93,7 +96,10 @@ test.describe('Chat image container space reservation tests', () => {
         .locator('input[type="file"]')
         .first()
         .setInputFiles(path.join(__dirname, `../files/${fileName}`))
-      await page.waitForTimeout(1000)
+
+      // Enter is silently dropped while the upload is in flight (`canSubmit` in ReferenceInput.svelte),
+      // so wait for the gate the Send button obeys instead of a fixed delay.
+      await expect(channelPage.buttonSendMessage()).toBeEnabled({ timeout: 15000 })
 
       // Send the message with attachment
       await page.keyboard.press('Enter')

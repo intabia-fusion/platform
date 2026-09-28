@@ -6,6 +6,9 @@ import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { generateTestData, generateUser, loginByToken } from '../utils'
+import { retry } from '../retry'
+
+type Channel = Awaited<ReturnType<ChatMember['findChannel']>>
 
 interface SecondUser {
   // The first user over REST.
@@ -23,6 +26,9 @@ async function expectIncomingMessage (page: Page, text: string): Promise<void> {
   await expect(page.locator('.activityMessage', { hasText: text }).first()).toBeVisible()
 }
 
+// The second member per workspace, not per test: a seat per test recycled the workspace every few tests.
+const others = new Map<string, { member: ChatMember, user: SignUpData }>()
+
 /**
  * Two-user chat behaviour: live delivery into an open view, threads, reactions, edits and the
  * per-channel notification modes. Each test owns its channel and tags every string with an id.
@@ -37,10 +43,13 @@ test.describe('Chat notification tests', () => {
   let uniq: string
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
-    shared = await sharedWorkspace(1)
+    // The second member takes a seat like an invited one, once per workspace.
+    shared = await sharedWorkspace(0)
+    if (!others.has(shared.ws.workspace)) {
+      shared = await sharedWorkspace(1)
+    }
     uniq = `${testInfo.testId}${testInfo.retry}`
     data = { ...shared.data, channelName: `${generateTestData().channelName}${uniq}` }
-    newUser2 = generateUser()
 
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
@@ -54,17 +63,28 @@ test.describe('Chat notification tests', () => {
    * and a member whose first login has to create its own employee can be refused the write.
    */
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
-    await channelPage.checkIfChannelDefaultExist(true, channelName)
     const owner = await connectOwner(shared.ws, `${data.lastName} ${data.firstName}`)
-    const member = await joinWorkspace(shared.ws, newUser2)
-    await owner.addMember(await owner.findChannel(channelName), member.account)
+    // Over REST: the owner's own nav waits for a trigger-made Chat doc, which nothing here tests.
+    let channel!: Channel
+    await retry(async () => {
+      channel = await owner.findChannel(channelName)
+    })
+
+    let entry = others.get(shared.ws.workspace)
+    if (entry === undefined) {
+      const user = generateUser()
+      entry = { member: await joinWorkspace(shared.ws, user), user }
+      others.set(shared.ws.workspace, entry)
+    }
+    newUser2 = entry.user
+    const member = entry.member
+    await owner.addMember(channel, member.account)
 
     const second = await openMemberPage(browser, member, 'chunter')
     const page2 = second.page
 
     const leftSideMenu2 = new LeftSideMenuPage(page2)
     const channelPage2 = new ChannelPage(page2)
-    await channelPage2.checkIfChannelDefaultExist(true, channelName)
 
     return {
       owner,
@@ -74,6 +94,8 @@ test.describe('Chat notification tests', () => {
       leftSideMenu2,
       dispose: async () => {
         await second.context.close()
+        // The member is reused: a stale membership would show this (maybe renamed) channel again.
+        await owner.removeMember(channel, member.account)
       }
     }
   }
@@ -559,6 +581,9 @@ test.describe('Chat notification tests', () => {
       const mine = `Mine ${uniq}`
       const theirs = `Theirs ${uniq}`
       await channelPage.sendMessage(mine)
+      // createdOn is stamped client-side at tx creation, so two sends 50ms apart from two
+      // different clients have no other guaranteed order: wait for the ack before the next send.
+      await channelPage.checkMessageExist(mine, true, mine)
       await invited.channelPage2.sendMessage(theirs)
       await expectIncomingMessage(page, theirs)
 

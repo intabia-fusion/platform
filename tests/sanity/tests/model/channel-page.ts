@@ -12,7 +12,9 @@ export class ChannelPage extends CommonPage {
   }
 
   readonly inputMessage = (): Locator => this.page.locator('div[class~="text-editor-view"]')
-  readonly buttonSendMessage = (): Locator => this.page.locator('g#Send')
+  // The ancestor button, not the icon: `disabled={!canSubmit}` sits on it (ReferenceInput.svelte),
+  // so only this locator supports toBeEnabled() and honours Playwright's own disabled check on click.
+  readonly buttonSendMessage = (): Locator => this.page.locator('button:has(g#Send)')
   readonly textMessage = (messageText: string, strict = false): Locator =>
     strict
       ? this.page.locator('.hulyComponent .activityMessage div[data-delivered]', { hasText: messageText })
