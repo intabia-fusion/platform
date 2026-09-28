@@ -28,16 +28,18 @@ import config from './config'
 export enum PushKind {
   Web = 'web',
   Apns = 'apns',
-  Fcm = 'fcm'
+  Fcm = 'fcm',
+  RuStore = 'rustore'
 }
 
 export type PushTarget =
   | { kind: PushKind.Web }
   | { kind: PushKind.Apns, token: string }
   | { kind: PushKind.Fcm, token: string }
+  | { kind: PushKind.RuStore, token: string }
 
 export function pushTarget (endpoint: string): PushTarget {
-  for (const kind of [PushKind.Apns, PushKind.Fcm]) {
+  for (const kind of [PushKind.Apns, PushKind.Fcm, PushKind.RuStore]) {
     const scheme = `${kind}://`
     if (endpoint.startsWith(scheme)) return { kind, token: endpoint.slice(scheme.length) }
   }
@@ -57,6 +59,11 @@ export function apnsConfigured (): boolean {
 
 export function fcmConfigured (): boolean {
   return config.FcmServiceAccount !== undefined
+}
+
+export function rustoreConfigured (): boolean {
+  // The chart passes every secret key, so an unset one arrives as "" - not configured either.
+  return (config.RustoreProjectId ?? '') !== '' && (config.RustoreServiceToken ?? '') !== ''
 }
 
 const base64url = (value: string | Buffer): string =>
@@ -247,6 +254,47 @@ export async function sendFcm (token: string, data: PushData): Promise<Delivery>
       : Delivery.Error
   } catch (err) {
     console.error('FCM send failed', err)
+    return Delivery.Error
+  }
+}
+
+// RuStore's send API mirrors FCM's shape (same message/notification/data/android
+// envelope) but authorizes with a static service token instead of a minted one.
+export async function sendRustore (token: string, data: PushData): Promise<Delivery> {
+  try {
+    const response = await fetch(
+      `https://vkpns.rustore.ru/v1/projects/${config.RustoreProjectId as string}/messages:send`,
+      {
+        method: 'POST',
+        // The queue consumer waits for every push: a hung request must not stall it.
+        signal: AbortSignal.timeout(sendTimeoutMs),
+        headers: {
+          Authorization: `Bearer ${config.RustoreServiceToken as string}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: {
+            token,
+            notification: { title: data.title, body: data.body },
+            data: {
+              ...(data.url !== undefined ? { url: data.url } : {}),
+              ...(data.domain !== undefined ? { domain: data.domain } : {}),
+              ...(data.tag !== undefined ? { tag: data.tag } : {})
+            },
+            android: { ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+          }
+        })
+      }
+    )
+    if (response.ok) return Delivery.Ok
+    const body = await response.text()
+    // 404/UNREGISTERED/NOT_FOUND is RuStore's dead-token answer - the app was
+    // uninstalled or the token rotated.
+    return response.status === 404 || body.includes('UNREGISTERED') || body.includes('NOT_FOUND')
+      ? Delivery.Gone
+      : Delivery.Error
+  } catch (err) {
+    console.error('RuStore send failed', err)
     return Delivery.Error
   }
 }

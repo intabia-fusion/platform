@@ -19,6 +19,7 @@ describe('pushTarget', () => {
   it('reads a device token out of its scheme', () => {
     expect(pushTarget('apns://abc123')).toEqual({ kind: PushKind.Apns, token: 'abc123' })
     expect(pushTarget('fcm://xyz789')).toEqual({ kind: PushKind.Fcm, token: 'xyz789' })
+    expect(pushTarget('rustore://def456')).toEqual({ kind: PushKind.RuStore, token: 'def456' })
   })
 
   it('leaves every other endpoint on web push', () => {
