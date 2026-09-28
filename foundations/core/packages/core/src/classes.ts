@@ -656,8 +656,16 @@ export interface PersonInfo extends BasePerson {
 // TODO: move to contact
 export interface UserStatus extends Doc {
   online: boolean
+  away?: boolean
   user: AccountUuid
 }
+
+/**
+ * Where a connection comes from; every client declares it in the hello. Presence counts a person as
+ * "at the computer" through web, desktop and cli sessions; a mobile session never keeps them there.
+ * @public
+ */
+export type ClientKind = 'web' | 'desktop' | 'mobile' | 'cli'
 
 /**
  * @public

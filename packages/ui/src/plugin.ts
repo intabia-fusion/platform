@@ -176,7 +176,10 @@ export const uis = plugin(uiId, {
     Routes: '' as Metadata<Map<string, AnyComponent>>,
     Languages: '' as Metadata<string[]>,
     PlatformTitle: '' as Metadata<string>,
-    SearchPopup: '' as Metadata<AnyComponent>
+    SearchPopup: '' as Metadata<AnyComponent>,
+    // Presence: no input for this long makes the person "away"; a hidden window does the same after this long.
+    IdleAfterMs: '' as Metadata<number>,
+    HiddenAfterMs: '' as Metadata<number>
   }
 })
 

@@ -19,6 +19,7 @@ import {
   type AccountUuid,
   type Branding,
   type Class,
+  type ClientKind,
   type Doc,
   type DocumentQuery,
   type Domain,
@@ -201,7 +202,7 @@ export interface PipelineContext {
   contextVars: Record<string, any>
 
   broadcastEvent?: (ctx: MeasureContext, tx: Tx[]) => Promise<void>
-  userStatusMap?: Map<Ref<UserStatus>, { online: boolean, user: AccountUuid }>
+  userStatusMap?: Map<Ref<UserStatus>, { online: boolean, away: boolean, user: AccountUuid }>
 }
 /**
  * @public
@@ -267,7 +268,7 @@ export interface TriggerControl {
   lowLevel: LowLevelStorage
   modelDb: ModelDb
   removedMap: Map<Ref<Doc>, Doc>
-  userStatusMap: Map<Ref<UserStatus>, { online: boolean, user: AccountUuid }>
+  userStatusMap: Map<Ref<UserStatus>, { online: boolean, away: boolean, user: AccountUuid }>
   domainRequest: (ctx: MeasureContext, domain: OperationDomain, params: DomainParams) => Promise<DomainResult>
 
   queue?: PlatformQueue
@@ -626,6 +627,8 @@ export interface Session {
 
   lastRequest: number
   lastPing: number
+  away: boolean
+  clientKind: ClientKind | undefined
 
   isUpgradeClient: () => boolean
 

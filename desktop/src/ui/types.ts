@@ -194,6 +194,7 @@ export interface IPCMainExposed {
   closeWindow: () => void
   onWindowStateChange: (callback: (event: IpcRendererEvent, newState: string) => void) => void
   onWindowFocusLoss: (callback: () => void) => void
+  onSystemIdle: (callback: (idle: boolean) => void) => void
 
   isOsUsingDarkTheme: () => Promise<boolean>
   executeMenuBarAction: (action: MenuBarAction) => void

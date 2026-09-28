@@ -66,16 +66,17 @@ export class UserStatusMiddleware extends BaseMiddleware implements Middleware {
     if (tx._class === core.class.TxCreateDoc && tx.objectClass === core.class.UserStatus) {
       const status = TxProcessor.createDoc2Doc(tx as TxCreateDoc<UserStatus>)
       const map = this.context.userStatusMap ?? new Map()
-      map.set(status._id, { online: status.online, user: status.user })
+      map.set(status._id, { online: status.online, away: status.away ?? false, user: status.user })
       this.context.userStatusMap = map
     } else if (tx._class === core.class.TxUpdateDoc && tx.objectClass === core.class.UserStatus) {
       const uTx = tx as TxUpdateDoc<UserStatus>
-      if ('online' in uTx.operations) {
-        const current = this.context.userStatusMap?.get(uTx.objectId)
-        const online = uTx.operations.online
-        if (current !== undefined && online !== undefined) {
-          this.context.userStatusMap?.set(uTx.objectId, { online, user: current.user })
-        }
+      const current = this.context.userStatusMap?.get(uTx.objectId)
+      if (current !== undefined && ('online' in uTx.operations || 'away' in uTx.operations)) {
+        this.context.userStatusMap?.set(uTx.objectId, {
+          online: uTx.operations.online ?? current.online,
+          away: uTx.operations.away ?? current.away,
+          user: current.user
+        })
       }
     } else if (tx._class === core.class.TxRemoveDoc && tx.objectClass === core.class.UserStatus) {
       this.context.userStatusMap?.delete(tx.objectId as Ref<UserStatus>)

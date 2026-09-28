@@ -81,7 +81,7 @@ import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
 import { workflowId } from '@hcengineering/workflow'
-import { fetchMetadataLocalStorage } from '@hcengineering/ui'
+import { fetchMetadataLocalStorage, isUserAway } from '@hcengineering/ui'
 
 async function loadAssets(): Promise<void> {
 
@@ -800,6 +800,9 @@ export async function configurePlatform() {
 
   // Disable for now, since it causes performance issues on linux/docker/kubernetes boxes for now.
   setMetadata(client.metadata.UseProtocolCompression, true)
+  // Every ping carries whether the person has left; the transactor keeps `UserStatus.away` from it.
+  setMetadata(client.metadata.PresenceProvider, () => ({ away: isUserAway() }))
+  setMetadata(client.metadata.ClientKind, 'web')
 
   setMetadata(uiPlugin.metadata.PlatformTitle, title)
   setMetadata(workbench.metadata.PlatformTitle, title)

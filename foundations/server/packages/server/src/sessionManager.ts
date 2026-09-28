@@ -23,6 +23,7 @@ import { Analytics } from '@hcengineering/analytics'
 import core, {
   AccountRole,
   type AccountUuid,
+  type UserStatus,
   type Branding,
   type BrandingMap,
   cutObjectArray,
@@ -125,13 +126,20 @@ export interface Timeouts {
   reconnectTimeout: number // Default 3 seconds
 }
 
+type PendingStatuses = Map<AccountUuid, { session: Session, online: boolean, away: boolean }>
+
+// Whether a session keeps its person "at the computer": a mobile session never does.
+function sessionAway (session: Session): boolean {
+  return session.clientKind === 'mobile' || session.away
+}
+
 export class TSessionManager implements SessionManager {
   readonly transactorId: string
   // Presence batching: accumulate per-workspace online/offline changes and flush once per
   // second as a single pipeline tx -> one broadcast fan-out (M sends instead of M^2 in a
   // reconnect storm). Last write wins within the window, so connect/disconnect flapping
   // collapses. See docs/stress-test-plan.md.
-  private readonly pendingStatus = new Map<WorkspaceUuid, Map<AccountUuid, { session: Session, online: boolean }>>()
+  private readonly pendingStatus = new Map<WorkspaceUuid, PendingStatuses>()
   private readonly statusFlushTimers = new Map<WorkspaceUuid, any>()
   private readonly statusFlushing = new Set<WorkspaceUuid>()
   private readonly statusFlushDelay = parseInt(process.env.STATUS_FLUSH_MS ?? '1000')
@@ -1193,8 +1201,21 @@ export class TSessionManager implements SessionManager {
       pending = new Map()
       this.pendingStatus.set(workspaceId, pending)
     }
-    pending.set(user, { session, online })
+    pending.set(user, { session, online, away: online && this.isUserAway(workspaceId, user, session) })
     this.queueStatusFlush(workspaceId)
+  }
+
+  // A person is away from a workspace only when every one of their sessions there says so. A
+  // mobile session never says "here": a phone in hand is not a computer to read the message on,
+  // and the push meant for that phone must not wait for the phone's own connection.
+  private isUserAway (workspaceId: WorkspaceUuid, user: AccountUuid, session: Session): boolean {
+    if (!sessionAway(session)) return false
+    const workspace = this.workspaces.get(workspaceId)
+    if (workspace === undefined) return true
+    for (const other of workspace.sessions.values()) {
+      if (other.session !== session && !sessionAway(other.session) && other.session.getUser() === user) return false
+    }
+    return true
   }
 
   private queueStatusFlush (workspaceId: WorkspaceUuid): void {
@@ -1242,15 +1263,20 @@ export class TSessionManager implements SessionManager {
           const existing = await pipeline.findAll(ctx, core.class.UserStatus, { user: { $in: users } })
           const byUser = new Map(existing.map((s) => [s.user, s]))
           const txes: Tx[] = []
-          for (const [user, { session, online }] of entries) {
+          for (const [user, { session, online, away }] of entries) {
             const txFactory = new TxFactory(session.getRawAccount().primarySocialId, true)
             const cur = byUser.get(user)
             if (cur === undefined) {
               if (online) {
-                txes.push(txFactory.createTxCreateDoc(core.class.UserStatus, core.space.Space, { online, user }))
+                txes.push(txFactory.createTxCreateDoc(core.class.UserStatus, core.space.Space, { online, away, user }))
               }
-            } else if (cur.online !== online) {
-              txes.push(txFactory.createTxUpdateDoc(cur._class, cur.space, cur._id, { online }))
+            } else {
+              const ops: Partial<Pick<UserStatus, 'online' | 'away'>> = {}
+              if (cur.online !== online) ops.online = online
+              if ((cur.away ?? false) !== away) ops.away = away
+              if (Object.keys(ops).length > 0) {
+                txes.push(txFactory.createTxUpdateDoc(cur._class, cur.space, cur._id, ops))
+              }
             }
           }
           if (txes.length === 0) return
@@ -1682,6 +1708,15 @@ export class TSessionManager implements SessionManager {
 
         if (request.method === 'ping') {
           service.lastRequest = Date.now()
+          const presence = request.params[0] as { away?: unknown } | undefined
+          const away = typeof presence?.away === 'boolean' ? presence.away : false
+          if (away !== service.away) {
+            service.away = away
+            const user = service.getUser()
+            if (user !== guestAccount && user !== systemAccountUuid) {
+              this.queueStatus(workspace.wsId.uuid, service, true)
+            }
+          }
           ws.sendPong()
           return
         }
@@ -1828,6 +1863,7 @@ export class TSessionManager implements SessionManager {
       const hello = request as HelloRequest
       service.binaryMode = hello.binary ?? false
       service.useCompression = this.enableCompression ? (hello.compression ?? false) : false
+      service.clientKind = hello.client
 
       if (LOGGING_ENABLED) {
         ctx.info('hello happen', {
@@ -1837,6 +1873,7 @@ export class TSessionManager implements SessionManager {
           user: service.getSocialIds().find((it) => it.type !== SocialIdType.HULY)?.value,
           binary: service.binaryMode,
           compression: service.useCompression,
+          client: service.clientKind,
           timeToHello: Date.now() - service.createTime,
           workspaceUsers: workspace.sessions.size,
           totalUsers: this.sessions.size

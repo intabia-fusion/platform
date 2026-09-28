@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Client, ClientConnectEvent, MeasureContext, TxPersistenceStore } from '@hcengineering/core'
+import type { Client, ClientConnectEvent, ClientKind, MeasureContext, TxPersistenceStore } from '@hcengineering/core'
 import { type Metadata, type Plugin, plugin, type Resource, type StatusCode } from '@hcengineering/platform'
 
 /**
@@ -82,6 +82,12 @@ export type FilterMode = 'none' | 'client' | 'ui'
 export const pingConst = 'ping'
 export const pongConst = 'pong!'
 
+/** What the client tells the transactor with each ping; see `Session.away` on the server. */
+export interface PresenceReport {
+  away: boolean
+}
+export type PresenceProvider = () => PresenceReport
+
 export default plugin(clientId, {
   metadata: {
     ClientSocketFactory: '' as Metadata<ClientSocketFactory>,
@@ -91,7 +97,9 @@ export default plugin(clientId, {
     UseBinaryProtocol: '' as Metadata<boolean>,
     UseProtocolCompression: '' as Metadata<boolean>,
     ConnectionTimeout: '' as Metadata<number>,
-    OverridePersistenceStore: '' as Metadata<TxPersistenceStore>
+    OverridePersistenceStore: '' as Metadata<TxPersistenceStore>,
+    PresenceProvider: '' as Metadata<PresenceProvider>,
+    ClientKind: '' as Metadata<ClientKind>
   },
   function: {
     GetClient: '' as Resource<ClientFactory>

@@ -25,6 +25,7 @@
   import RootBarExtension from './RootBarExtension.svelte'
   import Settings from './Settings.svelte'
   import { isAppFocusedStore } from '../../stores'
+  import { startActivityTracking } from '../../presence'
 
   let application: AnyComponent | undefined
 
@@ -59,9 +60,12 @@
     ;(document.activeElement as HTMLElement)?.blur?.()
   }
 
+  let stopActivityTracking: () => void = () => {}
+
   onMount(() => {
     isWindowFocused = document.hasFocus()
     updateAppFocused()
+    stopActivityTracking = startActivityTracking()
     document.addEventListener('visibilitychange', visibilityChangeHandler)
     window.addEventListener('wheel', handleWindowFocus)
     window.addEventListener('focus', handleWindowFocus)
@@ -70,6 +74,7 @@
   })
 
   onDestroy(() => {
+    stopActivityTracking()
     document.removeEventListener('visibilitychange', visibilityChangeHandler)
     window.removeEventListener('wheel', handleWindowFocus)
     window.removeEventListener('focus', handleWindowFocus)

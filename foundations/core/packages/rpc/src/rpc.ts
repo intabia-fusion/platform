@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Account } from '@hcengineering/core'
+import type { Account, ClientKind } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { Packr } from 'msgpackr'
 
@@ -41,6 +41,7 @@ export interface Request<P extends any[]> {
 export interface HelloRequest extends Request<any[]> {
   binary?: boolean
   compression?: boolean
+  client?: ClientKind
 }
 /**
  * @public
