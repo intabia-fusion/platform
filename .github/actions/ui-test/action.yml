@@ -85,8 +85,6 @@ runs:
         echo $! > /tmp/telemetry-sampler.pid
         node $T/stats.js sample --out runs/ci/stats.ndjson --interval 1000 &
         echo $! > /tmp/telemetry-stats.pid
-      env:
-        STATS_CONTAINER: ${{ inputs.container-prefix }}stats-1
 
     - name: Run UI tests
       shell: bash
@@ -110,8 +108,6 @@ runs:
         node $T/collect-run.js --dir runs/ci --report playwright-report.json \
           --steps step-report.ndjson --docker runs/ci/docker.ndjson || true
         node $T/render-report.js --dir runs/ci || true
-      env:
-        STATS_CONTAINER: ${{ inputs.container-prefix }}stats-1
 
     # Written by the json reporter and step-reporter.ts; only tests/sanity configures both, the
     # other suites skip the blocks below.

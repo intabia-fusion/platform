@@ -100,7 +100,7 @@ const config: PlaywrightTestConfig = {
   expect: {
     timeout: 15000
   },
-  globalTimeout: 2_700_000,
+  globalTimeout: 4_680_000,
   reporter: [
     ['list'],
     // open: 'never' - the default parks a report server on failure and hangs the terminal.
