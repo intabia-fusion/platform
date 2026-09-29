@@ -87,9 +87,6 @@ jobs:
           path: dev/api/bundle/intabia-fusion-api-*.tgz
           if-no-files-found: error
 
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
-
       # Server images from the bundles above (no web UI), the ws-tests stand with api-tests and
       # backup-tests, then unit + integration under istanbul with the stand's V8 coverage folded in.
       - name: Testing...
