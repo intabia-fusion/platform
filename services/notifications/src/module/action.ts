@@ -42,7 +42,7 @@ import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
-import { cancelHeldPushes, pushDismissMessage, dismissScopeOf } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
 import { pushNotification } from './notification'
 import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
 
@@ -175,12 +175,11 @@ export async function handleReadNotificationAction (
 
   // An explicit list reads up to its newest message; a chunk it clears ends at `to` <= maxTs.
   const readPosition = Math.max(maxTs, ...unreadMessagesToRead.map((it) => it.createdOn))
-  const cancelled = cancelHeldPushes(client, result, context, readPosition, [
-    ...unreadMessagesToRead.map((it) => it.id),
-    ...readIds
-  ])
+  const readMessageIds = unreadMessagesToRead.map((it) => it.id)
+  const readAbout = [...readIds, ...mentionIdsOf(context, readMessageIds)]
+  const cancelled = cancelHeldPushes(client, result, context, readPosition, [...readMessageIds, ...readAbout])
   const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition, cancelled)
-  read.tags.push(...readIds.filter((id) => !cancelled.has(id)))
+  read.tags.push(...readAbout.filter((id) => !cancelled.has(id)))
   await pushDismissMessage(cache, result, context, read)
 }
 

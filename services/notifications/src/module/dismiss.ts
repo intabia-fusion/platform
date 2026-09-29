@@ -52,6 +52,13 @@ export function dismissScopeOf (
   return { tags, readUpTo: tags.length > 0 || notified ? readPosition : 0 }
 }
 
+/** The mention cards about these messages: a mention in a message is a notification of its own. */
+export function mentionIdsOf (context: DocNotifyContext, messageIds: string[]): string[] {
+  return (context.latestNotifications ?? [])
+    .filter((it) => it.type === 'mention' && it.messageId != null && messageIds.includes(it.messageId))
+    .map((it) => it.id)
+}
+
 /** Drops the pushes and letters still waiting for what was read; returns the ids of the pushes dropped. */
 export function cancelHeldPushes (
   client: Client,

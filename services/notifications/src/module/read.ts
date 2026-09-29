@@ -26,7 +26,7 @@ import {
 
 import { Client, Result } from '../types'
 import Cache from '../cache'
-import { cancelHeldPushes, pushDismissMessage, dismissScopeOf } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
 
 const skipKeys = [
   '_id',
@@ -136,17 +136,10 @@ async function readContext (
     ...unreadMessagesToRead.map((it) => it.createdOn),
     ...unreadChunksToRead.map((it) => it.to)
   )
-  const cancelled = cancelHeldPushes(
-    client,
-    result,
-    context,
-    readUpTo,
-    unreadMessagesToRead.map((it) => it.id)
-  )
-  await pushDismissMessage(
-    cache,
-    result,
-    context,
-    dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readUpTo, cancelled)
-  )
+  const messageIds = unreadMessagesToRead.map((it) => it.id)
+  const mentionIds = mentionIdsOf(context, messageIds)
+  const cancelled = cancelHeldPushes(client, result, context, readUpTo, [...messageIds, ...mentionIds])
+  const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readUpTo, cancelled)
+  read.tags.push(...mentionIds.filter((id) => !cancelled.has(id)))
+  await pushDismissMessage(cache, result, context, read)
 }

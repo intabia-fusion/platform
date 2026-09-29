@@ -346,6 +346,8 @@ describe('handleReadState', () => {
         { from: 10, to: 90, count: 3, notifiedCount: 2 },
         { id: 'msg-3', createdOn: 200, notified: true }
       ],
+      // A mention in msg-1 has a card and a push of its own: read with the message, dismissed by its id.
+      latestNotifications: [{ id: 'mention-1', type: 'mention', messageId: 'msg-1', createdOn: 100 }],
       unreadCount: 3
     } as unknown as DocNotifyContext
     const native = { _id: 'sub-apns', endpoint: 'apns://token', user: 'user-1' }
@@ -362,8 +364,10 @@ describe('handleReadState', () => {
       // The letters of the messages read (notified or not) are dropped; a chunk names no id.
       expect(result.timeMachine).toEqual([
         { type: 'cancel', id: 'letter:user-1:msg-1:%' },
-        { type: 'cancel', id: 'letter:user-1:msg-2:%' }
+        { type: 'cancel', id: 'letter:user-1:msg-2:%' },
+        { type: 'cancel', id: 'letter:user-1:mention-1:%' }
       ])
+      expect(mockClient.pendingPush.cancel).toHaveBeenCalledWith('user-1', 'mention-1')
       expect(mockCache.getPushSubscriptions).toHaveBeenCalledWith('user-1')
       expect(result.queueMessages).toHaveLength(1)
       expect(result.queueMessages[0]).toEqual({
@@ -374,7 +378,7 @@ describe('handleReadState', () => {
         objectClass: 'DocClass',
         objectSpace: 'space-doc',
         pushSubscriptions: [native],
-        tags: ['msg-1'],
+        tags: ['msg-1', 'mention-1'],
         readUpTo: 120
       })
     })
