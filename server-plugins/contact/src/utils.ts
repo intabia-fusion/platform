@@ -116,6 +116,65 @@ export async function getPerson (control: TriggerControl, personId: PersonId): P
   return (await control.findAll(control.ctx, contact.class.Person, { _id: socialId.attachedTo }))[0]
 }
 
+/**
+ * Persons of many social ids in at most two queries, instead of getPerson per id. An id without a
+ * person (unknown social id, System) is missing from the result.
+ */
+export async function getPersonsBySocialIds (
+  control: TriggerControl,
+  personIds: PersonId[]
+): Promise<Map<PersonId, Ref<Person>>> {
+  const result = new Map<PersonId, Ref<Person>>()
+  const ids = [...new Set(personIds)].filter((it) => it !== core.account.System)
+  if (ids.length === 0) return result
+
+  const { contextData } = control.ctx
+  const accountByPersonId = new Map<PersonId, AccountUuid>()
+  const bySocialIdentity: PersonId[] = []
+  for (const id of ids) {
+    const account: AccountUuid | undefined = contextData.account.socialIds.includes(id)
+      ? contextData.account.uuid
+      : contextData.socialStringsToUsers.get(id)?.accountUuid
+    if (account !== undefined) {
+      accountByPersonId.set(id, account)
+    } else {
+      bySocialIdentity.push(id)
+    }
+  }
+
+  if (accountByPersonId.size > 0) {
+    const persons = await control.findAll(
+      control.ctx,
+      contact.class.Person,
+      { personUuid: { $in: [...new Set(accountByPersonId.values())] } },
+      { projection: { _id: 1, personUuid: 1 } }
+    )
+    const personByAccount = new Map(persons.map((it) => [it.personUuid, it._id]))
+    for (const [id, account] of accountByPersonId) {
+      const person = personByAccount.get(account)
+      if (person !== undefined) {
+        result.set(id, person)
+      } else {
+        bySocialIdentity.push(id)
+      }
+    }
+  }
+
+  if (bySocialIdentity.length > 0) {
+    const identities = await control.findAll(
+      control.ctx,
+      contact.class.SocialIdentity,
+      { _id: { $in: bySocialIdentity as SocialIdentityRef[] } },
+      { projection: { _id: 1, attachedTo: 1 } }
+    )
+    for (const identity of identities) {
+      result.set(identity._id as unknown as PersonId, identity.attachedTo)
+    }
+  }
+
+  return result
+}
+
 export async function getEmployee (
   control: Pick<TriggerControl, 'findAll' | 'ctx'>,
   personId: PersonId

@@ -44,6 +44,7 @@
   export let readonly = false
   export let padding: string | null = null
   export let timeFormat: 'time' | 'full' = 'time'
+  export let showChannel: boolean = false
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -82,6 +83,7 @@
       readonly,
       padding,
       timeFormat,
+      showChannel,
       onClick,
       onReply
     }}

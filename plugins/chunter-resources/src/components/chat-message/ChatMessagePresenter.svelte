@@ -39,6 +39,7 @@
   import ChatMessageInput from './ChatMessageInput.svelte'
   import DoubleCheck from '../icons/DoubleCheck.svelte'
   import MessageReadMarker from './MessageReadMarker.svelte'
+  import MessageChannelLabel from './MessageChannelLabel.svelte'
   import MessageReadPopup from './MessageReadPopup.svelte'
   import ForwardedMessagePresenter from '../ForwardedMessagePresenter.svelte'
   import { replyToMessage } from '../../utils'
@@ -64,6 +65,7 @@
   export let type: ActivityMessageViewType = 'default'
   export let padding: string | null = null
   export let timeFormat: 'time' | 'full' = 'time'
+  export let showChannel: boolean = false
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -320,6 +322,11 @@
     {onReply}
     on:dblclick={handleDbClick}
   >
+    <svelte:fragment slot="header">
+      {#if showChannel}
+        <MessageChannelLabel message={value} />
+      {/if}
+    </svelte:fragment>
     <svelte:fragment slot="afterTime">
       {#if !pending && isOwn && readState}
         <div class="read-marker" class:center={type !== 'short'}>

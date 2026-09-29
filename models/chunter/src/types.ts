@@ -44,7 +44,6 @@ import {
   type Domain,
   IndexKind,
   type Ref,
-  type Space,
   type Timestamp
 } from '@hcengineering/core'
 import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@hcengineering/contact'
@@ -62,15 +61,6 @@ export const DOMAIN_CHUNTER_DOC = 'chunter-doc' as Domain
 export class TChunterSpace extends TSpace implements ChunterSpace {
   @Prop(PropCollection(activity.class.ActivityMessage), chunter.string.Messages)
   messages?: number
-
-  @Hidden()
-  __migratedToCard?: {
-    card: Ref<Doc>
-    space: Ref<Space>
-  }
-
-  @Hidden()
-  __migratedUntil?: Timestamp
 }
 
 @Model(chunter.class.Channel, chunter.class.ChunterSpace)

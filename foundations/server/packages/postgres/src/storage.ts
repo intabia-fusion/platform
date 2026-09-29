@@ -714,12 +714,14 @@ abstract class PostgresAdapterBase implements DbAdapter {
       else if (join.path !== '') simpleJoins.push(join)
     }
 
+    // By the domain: domainSchemas has no class keys, and the default schema leaves numeric columns strings.
+    const schema = getSchema(domain)
     for (const row of rows) {
-      const doc = toWithLookup<T>(parseDoc(row, getSchema(row._class)))
+      const doc = toWithLookup<T>(parseDoc(row, schema))
 
       const lookup = doc.$lookup as Record<string, any>
 
-      this.parseLookupColumns(row, simpleJoins, reverseJoins, lookup, domain)
+      this.parseLookupColumns(row, simpleJoins, reverseJoins, lookup)
 
       for (const modelJoin of modelJoins) {
         const res = this.getLookupValue(modelJoin.path, lookup)
@@ -797,9 +799,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
       const key = `${assocId}_${!isReverse ? 'b' : 'a'}`
 
       const nextParentMap = new Map<string, WithLookup<Doc>>()
+      const schema = getSchema(tagetDomain)
       for (const row of rows) {
         const parentId = row.parent_id
-        const parsed = nextParentMap.get(row._id) ?? parseDoc(row, getSchema(row._class))
+        const parsed = nextParentMap.get(row._id) ?? parseDoc(row, schema)
 
         const parent = parentMap.get(parentId)
         if (parent === undefined) continue
@@ -823,10 +826,8 @@ abstract class PostgresAdapterBase implements DbAdapter {
     row: any,
     simpleJoins: JoinProps[],
     reverseJoins: JoinProps[],
-    lookup: Record<string, any>,
-    domain: string
+    lookup: Record<string, any>
   ): void {
-    const schema = getSchema(domain)
     let joinIndex: number | undefined
     let skip = false
 
@@ -835,6 +836,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
         const join = reverseJoins.find((j) => j.toAlias.toLowerCase() === column)
         if (join === undefined || row[column] == null) continue
 
+        const schema = getSchema(join.table)
         const parsed = row[column].map((p: any) => parseDoc(p, schema))
 
         const res = this.getLookupValue(join.path, lookup, false)
@@ -874,7 +876,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
         if (key === 'data') {
           obj[p] = { ...obj[p], ...row[column] }
-        } else if (key === 'createdOn' || key === 'modifiedOn') {
+        } else if (isNumericColumn(getSchema(join.table)[key]?.type)) {
           const val = parseInt(row[column])
           obj[p][key] = Number.isNaN(val) ? null : val
         } else if (key === '%hash%') {
@@ -2329,6 +2331,10 @@ function numericJsonKey (tkey: string, flavor: DBFlavor | undefined): string {
  * reverse lookup. A jsonb path is read as a number (see numericJsonKey), so a stray string sorts
  * as null instead of failing the query. Any other column is cast.
  */
+function isNumericColumn (type: DataType | undefined): boolean {
+  return type === 'bigint' || type === 'integer'
+}
+
 function numericOrderKey (sqlKey: string, columnType: DataType | undefined, flavor: DBFlavor | undefined): string {
   if (columnType === 'bigint' || columnType === 'integer') return sqlKey
   if (sqlKey.includes('->') || sqlKey.includes('#>>')) return numericJsonKey(sqlKey, flavor)

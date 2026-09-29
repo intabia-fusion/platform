@@ -141,6 +141,8 @@
     "OpenChatInSidebar": "サイドバーでチャットを開く",
     "ResolveThread": "解決",
     "NoThreadsYet": "まだスレッドはありません。",
+    "ThreadsSortByLastReply": "最新の返信順",
+    "ThreadsSortByCreated": "作成日順",
     "SummarizeMessages": "内容を要約",
     "DeleteMessageDescription": "このメッセージを削除してもよろしいですか？この操作は元に戻せません。",
     "Star": "スターを付ける",

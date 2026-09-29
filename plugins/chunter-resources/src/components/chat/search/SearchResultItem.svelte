@@ -122,7 +122,6 @@
     font-size: 0.75rem;
     color: var(--theme-darker-color);
     white-space: nowrap;
-    margin-left: auto;
     flex-shrink: 0;
   }
 

@@ -18,7 +18,7 @@
   import { Label, languageStore } from '@hcengineering/ui'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
-  import activity from '@hcengineering/activity'
+  import activity, { type ActivityMessageViewType } from '@hcengineering/activity'
   import type { AttachmentImageSize } from '@hcengineering/attachment-resources'
 
   import chunter from '../../plugin'
@@ -41,6 +41,9 @@
   export let videoPreload = false
   export let readonly = false
   export let padding: string | null = null
+  export let timeFormat: 'time' | 'full' = 'time'
+  export let type: ActivityMessageViewType = 'default'
+  export let showChannel: boolean = false
   export let onClick: (() => void) | undefined = undefined
 
   const client = getClient()
@@ -75,6 +78,9 @@
     {attachmentImageSize}
     {videoPreload}
     {padding}
+    {timeFormat}
+    {type}
+    {showChannel}
     {onClick}
     {readonly}
   />

@@ -27,6 +27,7 @@
   hoverStyles="filledHover"
   withShowMore={false}
   attachmentImageSize="x-large"
+  timeFormat="full"
   skipLabel
   {readonly}
   {onReply}

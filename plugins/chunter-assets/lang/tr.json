@@ -141,6 +141,8 @@
     "OpenChatInSidebar": "Sohbeti kenar çubuğunda aç",
     "ResolveThread": "Çöz",
     "NoThreadsYet": "Henüz başlık yok.",
+    "ThreadsSortByLastReply": "Son yanıta göre",
+    "ThreadsSortByCreated": "Oluşturma tarihine göre",
     "SummarizeMessages": "Tartışmayı özetle",
     "DeleteMessageDescription": "Bu mesajı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "Star": "Yıldızla",

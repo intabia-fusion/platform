@@ -41,6 +41,7 @@ const reactionClass = 'activity:class:Reaction' as Ref<Class<Doc>>
 const personClass = 'contact:class:Person' as Ref<Class<Doc>>
 const docNotifyContextClass = 'notification:class:DocNotifyContext' as Ref<Class<Doc>>
 const readStateClass = 'notification:class:ReadState' as Ref<Class<Doc>>
+const savedMessageClass = 'activity:class:SavedMessage' as Ref<Class<Doc>>
 const readActionClass = 'notification:class:ReadNotificationAction' as Ref<Class<Doc>>
 const docNotificationSettingClass = 'notification:class:DocNotificationSetting' as Ref<Class<Doc>>
 const workspaceSpace = 'core:space:Workspace' as Ref<Space>
@@ -138,6 +139,43 @@ export class ChatMember {
       id
     )
     return id
+  }
+
+  async removeReply (channel: ChannelDoc, message: Ref<Doc>, reply: Ref<Doc>): Promise<void> {
+    await this.client.removeCollection(
+      threadMessageClass,
+      channel._id as Ref<Space>,
+      reply as Ref<AttachedDoc>,
+      message,
+      chatMessageClass,
+      'replies'
+    )
+  }
+
+  async editReply (channel: ChannelDoc, message: Ref<Doc>, reply: Ref<Doc>, text: string): Promise<void> {
+    await this.client.updateCollection(
+      threadMessageClass,
+      channel._id as Ref<Space>,
+      reply as Ref<AttachedDoc>,
+      message,
+      chatMessageClass,
+      'replies',
+      { message: paragraph([{ type: 'text', text }]), editedOn: Date.now() } as any
+    )
+  }
+
+  /** A chat or thread message as the server has it: `lastReply`, `replies`, `createdOn`. */
+  async getMessage (message: Ref<Doc>): Promise<Doc & Record<string, any>> {
+    const found =
+      (await this.client.findOne(chatMessageClass, { _id: message } as any)) ??
+      (await this.client.findOne(threadMessageClass, { _id: message } as any))
+    if (found === undefined) throw new Error(`Message ${message} not found`)
+    return found as Doc & Record<string, any>
+  }
+
+  /** "Save for later", as the message action does it. */
+  async saveMessage (message: Ref<Doc>): Promise<void> {
+    await this.client.createDoc(savedMessageClass, workspaceSpace, { attachedTo: message } as any)
   }
 
   async react (channel: ChannelDoc, message: Ref<Doc>, emoji: string): Promise<Ref<Doc>> {

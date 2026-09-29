@@ -21,7 +21,7 @@
   import core, { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { addTxListener, createQuery, getClient, removeTxListener } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
-  import { Lazy, Loading, Scroller } from '@hcengineering/ui'
+  import { IconOptions, Label, Lazy, Loading, ModernDropdown, Scroller, type DropdownIntlItem } from '@hcengineering/ui'
 
   import { openMessageFromSpecial } from '../../navigation'
   import chunter from '../../plugin'
@@ -33,12 +33,44 @@
   const h = client.getHierarchy()
 
   let threads: ActivityMessage[] = []
+  let loadedCount = 0
   let isLoading = true
 
   let divScroll: HTMLElement | undefined | null = undefined
 
   let limit = 100
   let hasNextPage = true
+
+  // The last reply by default: a thread goes up when someone answers in it. Kept per browser.
+  type ThreadsSort = 'lastReply' | 'createdOn'
+  const sortStorageKey = 'chunter.threads.sort'
+  const sortItems: DropdownIntlItem[] = [
+    { id: 'lastReply', label: chunter.string.ThreadsSortByLastReply },
+    { id: 'createdOn', label: chunter.string.ThreadsSortByCreated }
+  ]
+
+  function readSort (): ThreadsSort {
+    try {
+      return localStorage.getItem(sortStorageKey) === 'createdOn' ? 'createdOn' : 'lastReply'
+    } catch {
+      return 'lastReply'
+    }
+  }
+
+  let sort: ThreadsSort = readSort()
+
+  $: sortLabel = (sortItems.find((it) => it.id === sort) ?? sortItems[0]).label
+
+  function selectSort (value: ThreadsSort): void {
+    if (value === sort) return
+    try {
+      localStorage.setItem(sortStorageKey, value)
+    } catch {}
+    sort = value
+    limit = 100
+    liftedIds = []
+    divScroll?.scrollTo({ top: 0 })
+  }
 
   const messageClasses = h.getDescendants(activity.class.ActivityMessage)
   const me = getCurrentAccount().uuid
@@ -47,9 +79,9 @@
   const query = createQuery()
   let pageIds: Ref<ActivityMessage>[] | undefined
 
-  $: loadPage(limit)
+  $: loadPage(limit, sort)
 
-  function loadPage (limit: number): void {
+  function loadPage (limit: number, sort: ThreadsSort): void {
     pageQuery.query(
       core.class.Collaborator,
       {
@@ -64,7 +96,7 @@
       },
       {
         lookup: { attachedTo: activity.class.ActivityMessage },
-        sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending },
+        sort: { [`$lookup.attachedTo.${sort}`]: SortingOrder.Descending },
         limit: limit + 1
       }
     )
@@ -81,7 +113,22 @@
     if (pageIds?.includes(parent) === true || liftedIds.includes(parent)) return
     const mine = await client.findOne(core.class.Collaborator, { collaborator: me, attachedTo: parent })
     if (mine === undefined || liftedIds.includes(parent)) return
+    // By the last reply the answered thread is the newest one. By creation it may be older than the
+    // whole page: it comes with the page that reaches it.
+    if (sort === 'createdOn' && hasNextPage && !(await isWithinLoaded(parent))) return
+    if (liftedIds.includes(parent)) return
     liftedIds = [...liftedIds, parent]
+  }
+
+  async function isWithinLoaded (parent: Ref<ActivityMessage>): Promise<boolean> {
+    const oldest = threads[threads.length - 1]?.createdOn
+    if (oldest === undefined) return true
+    const message = await client.findOne(
+      activity.class.ActivityMessage,
+      { _id: parent },
+      { projection: { createdOn: 1 } }
+    )
+    return message?.createdOn !== undefined && message.createdOn >= oldest
   }
 
   function handleTx (txes: Tx[]): void {
@@ -103,13 +150,14 @@
   // the page must not re-issue the query below.
   $: threadIds = pageIds === undefined ? undefined : [...new Set([...pageIds, ...liftedIds])].sort()
 
-  $: loadThreads(threadIds)
+  $: loadThreads(threadIds, sort)
 
-  function loadThreads (pageIds: Ref<ActivityMessage>[] | undefined): void {
+  function loadThreads (pageIds: Ref<ActivityMessage>[] | undefined, sort: ThreadsSort): void {
     if (pageIds === undefined) return
     if (pageIds.length === 0) {
       query.unsubscribe()
       threads = []
+      loadedCount = 0
       isLoading = false
       return
     }
@@ -118,7 +166,8 @@
       activity.class.ActivityMessage,
       { _id: { $in: pageIds } },
       (res) => {
-        threads = res
+        loadedCount = res.length
+        threads = res.filter((it) => (it.replies ?? 0) > 0)
         isLoading = false
       },
       {
@@ -128,13 +177,13 @@
             reactions: activity.class.Reaction
           }
         },
-        sort: { modifiedOn: SortingOrder.Descending }
+        sort: { [sort]: SortingOrder.Descending }
       }
     )
   }
 
   function handleScroll (): void {
-    if (divScroll != null && hasNextPage && threads.length >= limit) {
+    if (divScroll != null && hasNextPage && loadedCount >= limit) {
       const isAtBottom = divScroll.scrollTop + divScroll.clientHeight >= divScroll.scrollHeight - 400
       if (isAtBottom) {
         limit += 100
@@ -143,7 +192,26 @@
   }
 </script>
 
-<Header icon={chunter.icon.Thread} intlLabel={chunter.string.Threads} titleKind={'breadcrumbs'} withSearch={false} />
+<Header icon={chunter.icon.Thread} intlLabel={chunter.string.Threads} titleKind={'breadcrumbs'} withSearch={false}>
+  <svelte:fragment slot="actions">
+    <ModernDropdown
+      items={sortItems}
+      selected={sort}
+      icon={IconOptions}
+      iconSize="small"
+      kind={'secondary'}
+      size={'small'}
+      showDropdownIcon
+      on:selected={(e) => {
+        selectSort(e.detail === 'createdOn' ? 'createdOn' : 'lastReply')
+      }}
+    >
+      <svelte:fragment slot="content">
+        <Label label={sortLabel} />
+      </svelte:fragment>
+    </ModernDropdown>
+  </svelte:fragment>
+</Header>
 
 <Scroller bind:divScroll padding="0.75rem 0.5rem" noStretch={threads.length > 0} onScroll={handleScroll}>
   {#if isLoading}
@@ -151,19 +219,21 @@
   {:else if threads.length === 0}
     <BlankView icon={chunter.icon.Thread} header={chunter.string.NoThreadsYet} />
   {:else}
-    {#each threads as thread}
+    {#each threads as thread (thread._id)}
       <div class="container">
         <Lazy>
           <ActivityMessagePresenter
             value={thread}
             onClick={() => openMessageFromSpecial(thread)}
             withShowMore={false}
+            timeFormat="full"
+            showChannel
           />
         </Lazy>
       </div>
     {/each}
     {#if hasNextPage}
-      <LoadingHistory isLoading={threads.length < limit} />
+      <LoadingHistory isLoading={loadedCount < limit} />
     {/if}
   {/if}
 </Scroller>

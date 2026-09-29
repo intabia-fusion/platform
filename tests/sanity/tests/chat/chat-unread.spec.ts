@@ -640,6 +640,72 @@ test.describe('Chat unread state tests', () => {
     }).toPass()
   })
 
+  test('Removing the latest reply moves its thread back', async ({ page }) => {
+    const chat = await createChat()
+    const first = `First parent ${uniq}`
+    const second = `Second parent ${uniq}`
+    const firstId = await chat.me.sendMessage(chat.channel, first)
+    const secondId = await chat.me.sendMessage(chat.channel, second)
+    await chat.other.reply(chat.channel, firstId, `Reply one ${uniq}`)
+    await chat.other.reply(chat.channel, secondId, `Reply two ${uniq}`)
+    const lateId = await chat.other.reply(chat.channel, firstId, `Reply three ${uniq}`)
+
+    await unread.navItem('Threads').click()
+
+    const threads = page.locator('.activityMessage')
+    const isAbove = async (upper: string, lower: string): Promise<void> => {
+      await expect(async () => {
+        const a = await threads.filter({ hasText: upper }).boundingBox()
+        const b = await threads.filter({ hasText: lower }).boundingBox()
+        expect(a !== null && b !== null && a.y < b.y).toBeTruthy()
+      }).toPass()
+    }
+    await isAbove(first, second)
+
+    // The first thread's last reply is its "Reply one" again, older than the second's.
+    await chat.other.removeReply(chat.channel, firstId, lateId)
+    await isAbove(second, first)
+  })
+
+  test('Threads sorted by creation date keep their place on a new reply', async ({ page }) => {
+    const chat = await createChat()
+    const first = `First parent ${uniq}`
+    const second = `Second parent ${uniq}`
+    const firstId = await chat.me.sendMessage(chat.channel, first)
+    const secondId = await chat.me.sendMessage(chat.channel, second)
+    await chat.other.reply(chat.channel, secondId, `Reply two ${uniq}`)
+    await chat.other.reply(chat.channel, firstId, `Reply one ${uniq}`)
+
+    await unread.navItem('Threads').click()
+    const threads = page.locator('.activityMessage')
+    const firstIsAbove = async (): Promise<boolean> => {
+      const a = await threads.filter({ hasText: first }).boundingBox()
+      const b = await threads.filter({ hasText: second }).boundingBox()
+      if (a === null || b === null) throw new Error('A thread is not on the list')
+      return a.y < b.y
+    }
+
+    // By the last reply the first parent leads: it was answered last.
+    await expect(async () => {
+      expect(await firstIsAbove()).toBeTruthy()
+    }).toPass()
+
+    await unread.selectThreadsSort('By creation date')
+    await expect(async () => {
+      expect(await firstIsAbove()).toBeFalsy()
+    }).toPass()
+
+    // A reply does not move a thread when the list goes by creation date.
+    await chat.other.reply(chat.channel, firstId, `Reply three ${uniq}`)
+    await expect(threads.filter({ hasText: first }).getByText(/2 replies/)).toBeVisible()
+    expect(await firstIsAbove()).toBeFalsy()
+
+    await unread.selectThreadsSort('By last reply')
+    await expect(async () => {
+      expect(await firstIsAbove()).toBeTruthy()
+    }).toPass()
+  })
+
   test("Threads leaves out other people's threads and messages without replies", async ({ page }) => {
     const chat = await createChat()
     const mine = `My parent ${uniq}`
