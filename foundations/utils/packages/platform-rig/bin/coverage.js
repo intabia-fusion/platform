@@ -226,6 +226,36 @@ async function runVitest () {
   return reports
 }
 
+// test-containers keeps one container per process, so otherwise every jest worker boots its own
+// postgres, elastic and redpanda. An address already in the env (a running stand) is kept.
+async function runIntegration () {
+  const pkg = listWorkspaceProjects(root).find((p) => p.name === '@hcengineering/test-containers')
+  let stop = async () => {}
+  if (pkg !== undefined) {
+    try {
+      const tc = require(pkg.fullPath)
+      const [db, elastic, queue, minio] = await Promise.all([
+        tc.postgresUrl(), tc.elasticUrl(), tc.kafkaBrokers(), tc.minioConfig()
+      ])
+      Object.assign(process.env, {
+        DB_URL: db,
+        ELASTIC_URL: elastic,
+        QUEUE_CONFIG: queue,
+        MINIO_ENDPOINT: minio.endPoint,
+        MINIO_PORT: String(minio.port)
+      })
+      stop = tc.stopContainers
+    } catch (err) {
+      console.error(`  shared test containers failed, each jest starts its own: ${err.message}`)
+    }
+  }
+  try {
+    return await runJest('integration')
+  } finally {
+    await stop()
+  }
+}
+
 async function main () {
   const reports = []
   console.log('Running unit tests with coverage...')
@@ -234,7 +264,7 @@ async function main () {
   const rest = []
   if (groups.includes('integration')) {
     console.log('Running integration tests with coverage...')
-    rest.push(runJest('integration'))
+    rest.push(runIntegration())
   }
   console.log('Running vitest packages with coverage...')
   rest.push(runVitest())

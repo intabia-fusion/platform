@@ -51,7 +51,7 @@ Hello - единственное место, где формат ещё не с�
 
 `transcribe-prefetch.spec.ts` (без Kafka) проверяет на живых сокетах, что воркеру реально приезжает `capacity` **разных** файлов одновременно, и что при `capacity=1` его батчер физически не может собрать группу больше одного чанка.
 
-`kafka-clisr-e2e.itest.ts` гоняет весь путь stt-worker на живой redpanda: Kafka -> batch consumer -> `ServerProvider` -> clisr -> воркер -> обратно. Запускается только по `AI_BOT_QUEUE_E2E=1` (`QUEUE_CONFIG`, дефолт `localhost`), каждый прогон берёт свой топик и свою группу, топики стенда не трогает.
+`kafka-clisr-e2e.itest.ts` гоняет весь путь stt-worker на живой redpanda (`kafkaBrokers()` из `@hcengineering/test-containers`, в integration-группе CI): Kafka -> batch consumer -> `ServerProvider` -> clisr -> воркер -> обратно, и проверяет, что при `batchSize=1` или `capacity=1` в работе одна задача. Прогон по сетке batch size x capacity с таблицей ниже - `kafka-clisr-e2e.bench.ts`, в CI не идёт. Сценарий общий, `kafka-clisr-scenario.ts`; каждый прогон берёт свой топик и свою группу.
 
 200 задач, работа 1 мс, локальная redpanda:
 

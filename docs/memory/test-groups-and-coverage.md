@@ -47,8 +47,14 @@ So one global pattern written as if it were inside a package is the only form th
 `@vitest/coverage-v8` on `packages/ui`: 87.6% statements. Istanbul on the same run: 7.9%.
 v8 counts a module's top-level code, and importing `src/index.ts` pulls in every component,
 so 280 svelte files come back "covered" while only their import statements ever ran.
-`vitest.config.mts` uses `provider: 'istanbul'` for that reason - it costs ~9s more transform
-time and is the only honest number.
+`vitest.config.mts` used `provider: 'istanbul'` for that reason.
+
+Since vitest 3.2 (2026-09-29, `vitest` ^3.2.4) `packages/ui` is back on v8 with
+`experimentalAstAwareRemapping: true`: none of the 103 files istanbul reports at 0% comes back
+covered, per-file lines differ by a median 0 and p90 7.5 points (v8 is the stricter one), and the
+run is 12.8s against 45.6s locally, 74s against 166s CPU. Newer vitest (4, 5) needs vite 6+, and
+`@sveltejs/vite-plugin-svelte` for svelte 4 stops at 3.x with vite 5 - so 3.2 is the ceiling until
+svelte 5.
 
 ## Packages whose tests never run in the phase
 
@@ -189,7 +195,27 @@ What that cost, each found by a failing run:
 Still skipped, and not worth a container: `s3.itest.ts` (wants a real S3; its rootBucket is even
 hardcoded to a personal bucket) and the three `pod-ai-bot` LLM suites (want a local model server).
 `kafka-clisr-e2e.itest.ts` lost its `AI_BOT_QUEUE_E2E` gate - the gate existed because it needed
-the stand's redpanda, and it now starts its own.
+the stand's redpanda, and it now starts its own. Its batch size x capacity sweep moved to
+`kafka-clisr-e2e.bench.ts` (2026-09-29): benchmarks never run in CI, the itest keeps the
+correctness checks on small runs.
+
+## Shared containers for the integration group (2026-09-29)
+
+`coverage.js` `runIntegration` starts postgres, elastic, redpanda and minio once through
+`@hcengineering/test-containers` and passes `DB_URL`, `ELASTIC_URL`, `QUEUE_CONFIG`,
+`MINIO_ENDPOINT`/`MINIO_PORT` to every integration jest. Before, `once()` cached a container per
+process, so each jest worker booted its own set, elastic's JVM included. Addresses already in the
+env are kept. With `QUEUE_CONFIG` set `overlaps()` is false, so `testIsolated` integration runs no
+longer overlap each other locally; on a 4-core runner they never did (`slots` = 1).
+
+A shared server exposed one collision: both `pods/fulltext` itests ran `pod-db-migrator` into the
+same `postgres` database and failed on `pg_namespace_nspname_index`. `startServices` in
+`pods/fulltext/src/__tests__/utils.ts` now creates a `fulltext_<uuid>` database per process. Other
+itests already isolate: postgres/account/telegram tests `CREATE DATABASE` per test or file, kafka
+tests use `genId`/`randomUUID` topics, `search.itest.ts` has its own index `search_string_test`.
+
+Timing-only suites renamed to `*.bench.ts` the same day: `measurements/performance`,
+`middleware/spaceSecurity.perf`, `pod-ai-bot/summarize-perf`.
 
 ## `pnpm coverage --server` (2026-09-24)
 
