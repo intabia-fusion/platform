@@ -47,6 +47,7 @@ import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
+  getDBClient,
   setDBExtraOptions
 } from '@hcengineering/postgres'
 import serverClientPlugin from '@hcengineering/server-client'
@@ -113,7 +114,21 @@ export const elasticIndexName = 'testing'
 // Containers are started here rather than read from the environment, so a run needs no stand.
 // Call it before anything builds a pipeline or a queue - the addresses are empty until then.
 export async function startServices (): Promise<void> {
-  ;[dbUrl, fullTextDbURL, kafkaBroker] = await Promise.all([postgresUrl(), elasticUrl(), kafkaBrokers()])
+  let serverUrl: string
+  ;[serverUrl, fullTextDbURL, kafkaBroker] = await Promise.all([postgresUrl(), elasticUrl(), kafkaBrokers()])
+  // The postgres server can be shared with other test processes; two migrators in one database
+  // collide on CREATE SCHEMA, so each process gets a database of its own.
+  const dbName = `fulltext_${randomUUID().replace(/-/g, '')}`
+  const admin = getDBClient(serverUrl)
+  try {
+    const client = await admin.getClient()
+    await client`CREATE DATABASE ${client(dbName)}`
+  } finally {
+    admin.close()
+  }
+  const url = new URL(serverUrl)
+  url.pathname = '/' + dbName
+  dbUrl = url.toString()
   // The pipeline goes through the platform's postgres adapter, which waits for a schema version a
   // fresh database does not have. The migrator is a CLI pod, so it runs as one; it is idempotent.
   await promisify(execFile)(process.execPath, [require.resolve('@hcengineering/pod-db-migrator')], {

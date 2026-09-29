@@ -752,6 +752,8 @@ export class ClisrServer {
     })
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     ws.on('close', (code: number, reason: Buffer) => {
+      // A ping timeout already queued this session (and may have expired it); do not bring it back.
+      if (this.sessions.get(sid) !== session) return
       this.sessions.delete(sid)
       // Reset lastPing so reconnect window starts from now.
       session.lastPing = Date.now()

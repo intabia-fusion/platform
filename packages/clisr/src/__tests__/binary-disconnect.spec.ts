@@ -370,9 +370,10 @@ describe('binary request disconnect/recovery', () => {
       const sess = Array.from((server as any).sessions.values())[0] as any
       sess.lastPing = Date.now() - (server.pingTimeout + 100)
       await (server as any).handleTick()
+      // A dead worker does not come back. Left open, this one reconnects at once and, if the
+      // healthy client is slower to connect, takes the retried request and never answers it.
+      await client.close()
       expect((server as any).sessions.size).toBe(0)
-      // By id, not size: the client reconnects and its fresh session may itself
-      // time out under load, adding an unrelated entry to the queue.
       expect((server as any).reconnectQueue.has(sess.sessionId)).toBe(true)
 
       // Watch the inner per-session request reject. We tap into requests map BEFORE second
@@ -420,6 +421,35 @@ describe('binary request disconnect/recovery', () => {
       try {
         await client.close()
       } catch (_e) {}
+      await server.close()
+    }
+  })
+
+  it('late socket close after a ping timeout does not bring the expired session back', async () => {
+    const { server, port, ctx } = await startServer()
+    const events: string[] = []
+    server.eventHandlers.push(async (_sid, event) => {
+      events.push(event)
+    })
+    const client = await makeClient(ctx, port, async (data) => data, 'dead')
+    await waitFor(() => (server as any).sessions.size === 1)
+
+    try {
+      const sess = Array.from((server as any).sessions.values())[0] as any
+      sess.lastPing = Date.now() - (server.pingTimeout + 100)
+      await (server as any).handleTick()
+      await client.close()
+      const queued = (server as any).reconnectQueue.get(sess.sessionId)
+      queued.lastPing = Date.now() - (server.reconnectTimeout + 100)
+      await (server as any).handleTick()
+      expect(events.filter((e) => e === 'disconnect')).toHaveLength(1)
+
+      // The ws 'close' of the timed-out socket lands after both ticks. Requeued, the session would
+      // expire again on the background tick within reconnectTimeout and report a second disconnect.
+      await new Promise((resolve) => setTimeout(resolve, server.reconnectTimeout * 3))
+      expect((server as any).reconnectQueue.has(sess.sessionId)).toBe(false)
+      expect(events.filter((e) => e === 'disconnect')).toHaveLength(1)
+    } finally {
       await server.close()
     }
   })

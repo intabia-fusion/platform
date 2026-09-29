@@ -25,11 +25,13 @@ logs="${project_dir}/api-tests/logs"
 mkdir -p "$logs"
 
 # Reports and coverage must survive a failing test run.
+# --silent: the in-process clients' console output was ~6000 of the step's ~8800 lines; failures
+# are printed from the JSON reports at the end.
 status=0
 cd "${project_dir}/api-tests/api"
-API_STAND=keep pnpm run api-test --verbose --json --outputFile="$logs/api-tests.json" || status=$?
+API_STAND=keep pnpm run api-test --silent --json --outputFile="$logs/api-tests.json" || status=$?
 cd "${project_dir}/api-tests/backup"
-API_STAND=stop pnpm run backup-test --verbose --json --outputFile="$logs/backup-tests.json" || status=$?
+API_STAND=stop pnpm run backup-test --silent --json --outputFile="$logs/backup-tests.json" || status=$?
 
 cd "${project_dir}"
 # No profiles when the stand never came up; the jest groups still run and report without it.
