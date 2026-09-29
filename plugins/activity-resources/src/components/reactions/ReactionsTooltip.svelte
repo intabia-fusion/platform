@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PersonId } from '@hcengineering/core'
+  import { notEmpty } from '@hcengineering/core'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { getPersonRefByPersonIdStore } from '@hcengineering/contact-resources'
   import { EmojiPresenter, getEmojiByUnicode } from '@hcengineering/emoji-resources'
@@ -10,7 +11,7 @@
   export let emoji: string
 
   $: personRefByPersonIdStore = getPersonRefByPersonIdStore(socialIds)
-  $: persons = socialIds.map((si) => $personRefByPersonIdStore.get(si))
+  $: persons = [...new Set(socialIds.map((si) => $personRefByPersonIdStore.get(si)).filter(notEmpty))]
 
   let shortCode: string = ''
   $: extendedEmoji = getEmojiByUnicode(emoji)
