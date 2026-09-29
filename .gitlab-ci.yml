@@ -225,6 +225,8 @@ docker-build:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         export DOCKER_EXTRA='--platform=linux/amd64,linux/arm64'
+        # .br on top of the default .gz, only for release images, as on GitHub.
+        export DO_COMPRESS=true
       fi
   script:
     - ./ci_docker_build.sh
@@ -235,7 +237,8 @@ docker-build:
   needs:
     - bundle
     - docker-build
-  timeout: 90m
+  # Playwright's globalTimeout is 78m (tests/sanity/tests/playwright.config.ts), plus the stand prepare.
+  timeout: 100m
   variables:
     # Stands pull the exact images docker-build published for this commit.
     DOCKER_TAG: "${CI_COMMIT_SHA}"

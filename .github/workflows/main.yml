@@ -431,8 +431,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
-      - name: Free space
-        uses: ./.github/actions/free-disk-space
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
       - name: Configure docker
@@ -456,16 +454,18 @@ jobs:
         run: pnpm model-version
 
       - name: Docker build (with rate limit retry)
+        # --esbuild-emit: images need only JS (esbuild writes lib/ either way); types were already
+        # checked by the build job, and tsc here cost ~160s of declarations nobody reads.
         run: |
           set -o pipefail
           docker system prune -a -f
-          if pnpm docker:build -v  2>&1 | tee /tmp/docker-build.log; then
+          if pnpm docker:build -v --esbuild-emit 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
             if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
-              pnpm docker:build -v
+              pnpm docker:build -v --esbuild-emit
             else
               echo "Docker build failed (not a rate limit issue)"
               cat /tmp/docker-build.log

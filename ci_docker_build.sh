@@ -10,5 +10,6 @@ echo "project_dir: $project_dir"
 export DOCKER_SKIP_RELEASE_TAG=1
 
 pnpm install --frozen-lockfile
-pnpm docker:build
+# Images need only JS; types are checked by the bundle job.
+pnpm docker:build --esbuild-emit
 pnpm docker:push
