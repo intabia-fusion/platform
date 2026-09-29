@@ -65,6 +65,7 @@ export interface SearchResultRow {
   highlights: string[]
   markup: Markup
   person?: Person
+  attachedPerson?: Person
   raw: SearchResultDoc
 }
 

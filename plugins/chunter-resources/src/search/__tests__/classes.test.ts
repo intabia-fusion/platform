@@ -137,4 +137,14 @@ describe('getActivityDocClasses', () => {
 
     expect(getActivityDocClasses()).toEqual([CHANNEL])
   })
+
+  it('hides contacts and contact records', () => {
+    const contactClass = 'contact:class:Contact' as Ref<Class<Doc>>
+    const contactRecord = 'contact:class:Channel' as Ref<Class<Doc>>
+    hierarchy.getMixinClasses.mockReturnValue([contactClass, PERSON, contactRecord, CHANNEL])
+    hierarchy.getClass.mockImplementation((c: Ref<Class<Doc>>) => ({ _id: c }))
+    hierarchy.hasMixin.mockReturnValue(true)
+
+    expect(getActivityDocClasses()).toEqual([PERSON, CHANNEL])
+  })
 })

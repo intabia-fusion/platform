@@ -58,6 +58,7 @@ import {
   startTranscription,
   stopTranscription,
   getMeetingMinutesTitle,
+  getRoomTitle,
   queryMeetingMinutes,
   getUserMeetingInviteTitle,
   toggleRoomPrivacy
@@ -152,6 +153,7 @@ export default async (): Promise<Resources> => ({
     CanCloseRoom: canCloseRoom,
     CanOpenRoom: canOpenRoom,
     MeetingMinutesTitleProvider: getMeetingMinutesTitle,
+    RoomTitleProvider: getRoomTitle,
     UserMeetingInviteTitleProvider: getUserMeetingInviteTitle
   },
   actionImpl: {

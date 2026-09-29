@@ -38,7 +38,7 @@
     type DropdownTextItem
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { translate, translateCB } from '@hcengineering/platform'
+  import { translate, translateCB, type IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../plugin'
@@ -69,54 +69,70 @@
     return { id: _class, label: await translate(clazz.label, {}, lang), icon: clazz.icon }
   }
 
-  async function buildClassItems (lang: string): Promise<DropdownTextItem[]> {
+  interface ClassGroups {
+    all: DropdownTextItem
+    suggested: DropdownTextItem[]
+    other: DropdownTextItem[]
+  }
+
+  async function buildClassGroups (lang: string): Promise<ClassGroups> {
     const { primary, rest } = splitPrimaryClasses(getActivityDocClasses())
 
-    const primaryItems = await Promise.all(primary.map(async (c) => await toItem(c, lang)))
-    const restItems = await Promise.all(rest.map(async (c) => await toItem(c, lang)))
-    restItems.sort((a, b) => a.label.localeCompare(b.label))
+    const suggested = await Promise.all(primary.map(async (c) => await toItem(c, lang)))
+    const other = await Promise.all(rest.map(async (c) => await toItem(c, lang)))
+    other.sort((a, b) => a.label.localeCompare(b.label))
 
     const threadsItem: DropdownTextItem = {
       id: THREADS,
       label: await translate(chunter.string.SearchFilterThreads, {}, lang),
       icon: chunter.icon.Thread
     }
+    const afterDirect = suggested.findIndex((i) => i.id === chunterPlugin.class.DirectMessage)
+    suggested.splice(afterDirect === -1 ? suggested.length : afterDirect + 1, 0, threadsItem)
 
-    if (primaryItems[0] !== undefined) {
-      primaryItems[0].separatorLabel = chunter.string.SearchFilterSuggestedClasses
-    } else {
-      threadsItem.separatorLabel = chunter.string.SearchFilterSuggestedClasses
+    const all: DropdownTextItem = {
+      id: ALL_CLASSES,
+      label: await translate(chunter.string.SearchFilterAllClasses, {}, lang),
+      icon: view.icon.Configure,
+      exclusive: true
     }
 
-    const afterDirect = primaryItems.findIndex((i) => i.id === chunterPlugin.class.DirectMessage)
-    const insertAt = afterDirect === -1 ? primaryItems.length : afterDirect + 1
-    primaryItems.splice(insertAt, 0, threadsItem)
-
-    const items: DropdownTextItem[] = [
-      {
-        id: ALL_CLASSES,
-        label: await translate(chunter.string.SearchFilterAllClasses, {}, lang),
-        icon: view.icon.Configure,
-        exclusive: true
-      },
-      ...primaryItems
-    ]
-
-    if (restItems.length > 0) {
-      restItems[0].separatorLabel = chunter.string.SearchFilterOtherClasses
-      items.push(...restItems)
-    }
-
-    return items
+    return { all, suggested, other }
   }
 
-  let classItems: DropdownTextItem[] = []
-  $: void buildClassItems($themeStore.language).then((items) => {
-    classItems = items
+  function withSection (items: DropdownTextItem[], label: IntlString): DropdownTextItem[] {
+    return items.map((item, i) => ({ ...item, separatorLabel: i === 0 ? label : undefined }))
+  }
+
+  // Picked types move up into their own section, as in the object picker; the open popup follows along.
+  function composeClassItems (groups: ClassGroups | undefined, picked: string[]): DropdownTextItem[] {
+    if (groups === undefined) return []
+
+    const isPicked = (item: DropdownTextItem): boolean => picked.includes(`${item.id}`)
+    const selected = [...groups.suggested, ...groups.other].filter(isPicked)
+
+    return [
+      groups.all,
+      ...withSection(selected, chunter.string.SearchFilterSelected),
+      ...withSection(
+        groups.suggested.filter((i) => !isPicked(i)),
+        chunter.string.SearchFilterSuggestedClasses
+      ),
+      ...withSection(
+        groups.other.filter((i) => !isPicked(i)),
+        chunter.string.SearchFilterOtherClasses
+      )
+    ]
+  }
+
+  let classGroups: ClassGroups | undefined
+  $: void buildClassGroups($themeStore.language).then((groups) => {
+    classGroups = groups
   })
 
   $: pickedClasses = (filters.attachedToClasses ?? []) as Array<string>
   $: selectedClasses = pickedClasses.length > 0 ? pickedClasses : [ALL_CLASSES]
+  $: classItems = composeClassItems(classGroups, pickedClasses)
   $: selectedClassItems = classItems.filter((item) => selectedClasses.includes(`${item.id}`))
 
   function handleClassesSelected (selected: unknown): void {
@@ -124,9 +140,13 @@
     const ids = raw.filter((id) => id !== ALL_CLASSES)
     const objectClasses = ids.length > 0 ? (ids as Array<Ref<Class<Doc>>>) : undefined
 
-    const kept = keepMatchingObjects(filters.attachedTo, objectClasses)
+    const kept = keepMatchingObjects(filters.attachedTo, placeClasses(objectClasses))
 
     update({ attachedToClasses: objectClasses, attachedTo: kept })
+  }
+
+  function placeClasses (classes: Array<Ref<Class<Doc>>> | undefined): Array<Ref<Class<Doc>>> | undefined {
+    return classes?.includes(THREADS) === true ? undefined : classes
   }
 
   function keepMatchingObjects (
@@ -193,7 +213,7 @@
   function openObjects (): void {
     showPopup(
       SearchObjectPopup,
-      { selected: objects, classes: expandClasses(filters.attachedToClasses ?? []) },
+      { selected: objects, classes: placeClasses(filters.attachedToClasses) },
       objectsButton,
       () => {},
       (picked: PickedObject[] | undefined) => {
@@ -206,7 +226,18 @@
 
   let optionsButton: HTMLElement | undefined
 
-  $: objectsIcon = objects.length === 1 ? (objects[0].icon ?? chunter.icon.Hashtag) : chunter.icon.Hashtag
+  $: objectPersons =
+    objects.length > 1 && objects.every((o) => client.getHierarchy().isDerived(o._class, contact.class.Person))
+      ? objects.map((o) => o._id as Ref<Person>)
+      : undefined
+
+  // A loaded object draws its own icon (an avatar for people) inside the button content.
+  $: objectsIcon =
+    objectPersons !== undefined || objects[0]?.doc !== undefined
+      ? undefined
+      : objects.length === 1
+        ? (objects[0].icon ?? chunter.icon.Hashtag)
+        : chunter.icon.Hashtag
 
   $: activeOptions = [filters.hasAttachment === true, filters.includeTranscription === true].filter(Boolean).length
 
@@ -357,7 +388,14 @@
           on:click={openObjects}
         >
           {#if objects.length > 0}
-            <FilterButtonContent title={objects[0].title} count={objects.length} />
+            {#if objectPersons !== undefined}
+              <span class="authors">
+                <CombineAvatars _class={contact.class.Person} items={objectPersons} size={'tiny'} hideLimit />
+                <FilterButtonContent title={objects[0].title} count={objects.length} />
+              </span>
+            {:else}
+              <FilterButtonContent title={objects[0].title} doc={objects[0].doc} count={objects.length} />
+            {/if}
           {/if}
         </ModernButton>
       </div>

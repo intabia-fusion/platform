@@ -13,17 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { Doc } from '@hcengineering/core'
   import { Icon, Label, type IconComponent } from '@hcengineering/ui'
 
   import chunter from '../../../plugin'
+  import SearchObjectIcon from './SearchObjectIcon.svelte'
 
   export let title: string
   export let icon: IconComponent | undefined = undefined
+  export let doc: Doc | undefined = undefined
   export let count: number = 1
 </script>
 
 <span class="content flex-row-center flex-gap-1 overflow-label">
-  {#if icon !== undefined}
+  {#if doc !== undefined}
+    <SearchObjectIcon {doc} avatarSize={'tiny'} />
+  {:else if icon !== undefined}
     <Icon {icon} size={'small'} />
   {/if}
   <span class="title overflow-label">{title}</span>

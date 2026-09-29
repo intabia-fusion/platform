@@ -56,6 +56,7 @@ export default mergeIds(loveId, love, {
     CanCloseRoom: '' as Resource<ViewActionAvailabilityFunction>,
     CanOpenRoom: '' as Resource<ViewActionAvailabilityFunction>,
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
+    RoomTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
   },
   string: {

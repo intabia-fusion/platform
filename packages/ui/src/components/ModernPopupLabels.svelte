@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, tick } from 'svelte'
 
   import { deviceOptionsStore, resizeObserver } from '..'
   import plugin from '../plugin'
@@ -42,6 +42,35 @@
 
   let search: string = ''
   let btns: HTMLButtonElement[] = []
+  let divScroll: HTMLElement | undefined | null
+  let lastClicked: DropdownTextItem['id'] | undefined
+
+  $: keepScrollAnchor(items)
+
+  function keepScrollAnchor (_items: DropdownTextItem[]): void {
+    if (divScroll == null) return
+    const scroller = divScroll
+    const rowTop = (el: Element): number => el.getBoundingClientRect().top - scroller.getBoundingClientRect().top
+
+    const anchor = Array.from(scroller.querySelectorAll<HTMLElement>('[data-item-id]')).find(
+      (el) => rowTop(el) >= 0 && el.dataset.itemId !== `${lastClicked}`
+    )
+    if (anchor === undefined) return
+    const id = anchor.dataset.itemId
+    const before = rowTop(anchor)
+
+    // A focused row that moves drags the scroll along with it, so release it for the move.
+    const focused = scroller.contains(document.activeElement) ? (document.activeElement as HTMLElement) : undefined
+    focused?.blur()
+
+    void tick().then(() => {
+      const moved = Array.from(scroller.querySelectorAll<HTMLElement>('[data-item-id]')).find(
+        (el) => el.dataset.itemId === id
+      )
+      if (moved !== undefined) scroller.scrollTop += rowTop(moved) - before
+      if (focused?.isConnected === true) focused.focus({ preventScroll: true })
+    })
+  }
 
   $: filteredItems = (items ?? []).filter((x) => {
     const trimmed = search.trim()
@@ -61,6 +90,7 @@
   }
 
   function handleItemClick (item: DropdownTextItem): void {
+    lastClicked = item.id
     if (multiselect && Array.isArray(selected)) {
       if (item.exclusive === true) {
         const index = selected.indexOf(item.id)
@@ -115,7 +145,7 @@
     </div>
   {/if}
 
-  <Scroller padding="var(--spacing-0_5)" gap="flex-gap-0-5">
+  <Scroller bind:divScroll padding="var(--spacing-0_5)" gap="flex-gap-0-5">
     {#each filteredItems as item, i (item.id)}
       {#if item.separatorBefore === true || item.separatorLabel !== undefined}
         {#if item.separatorLabel !== undefined}
@@ -127,6 +157,7 @@
       <!-- svelte-ignore a11y-mouse-events-have-key-events -->
       <button
         bind:this={btns[i]}
+        data-item-id={item.id}
         class="hulyPopup-row"
         class:selected={isSelected(selected, item)}
         on:mouseover={(ev) => {

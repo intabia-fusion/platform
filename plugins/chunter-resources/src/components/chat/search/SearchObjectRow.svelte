@@ -13,27 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
-  import chunterPlugin from '@hcengineering/chunter'
-  import { getClient } from '@hcengineering/presentation'
-  import { Icon, IconCheck, type IconSize } from '@hcengineering/ui'
-  import { ObjectIcon } from '@hcengineering/view-resources'
+  import { Icon, IconCheck } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
+  import { isAvatarObject } from '../../../search/classes'
   import type { PickedObject } from '../../../search/types'
+  import SearchObjectIcon from './SearchObjectIcon.svelte'
 
   export let item: PickedObject
   export let selected: boolean = false
 
   const dispatch = createEventDispatcher()
-  const hierarchy = getClient().getHierarchy()
 
-  let iconSize: IconSize
-  $: iconSize =
-    hierarchy.isDerived(item._class, chunterPlugin.class.DirectMessage) ||
-    hierarchy.isDerived(item._class, contact.class.Person)
-      ? 'tiny'
-      : 'small'
+  $: isAvatar = isAvatarObject(item._class, item.doc)
+
+  $: identifier = item.identifier !== undefined && item.identifier !== item.title ? item.identifier : ''
 </script>
 
 <button
@@ -43,16 +37,16 @@
     dispatch('toggle', item)
   }}
 >
-  <div class="hulyPopup-row__icon">
+  <div class="hulyPopup-row__icon" class:avatar={isAvatar}>
     {#if item.doc !== undefined}
-      <ObjectIcon value={item.doc} size={iconSize} />
+      <SearchObjectIcon doc={item.doc} avatarSize={'smaller'} />
     {:else if item.icon !== undefined}
       <Icon icon={item.icon} size={'small'} />
     {/if}
   </div>
   <span class="hulyPopup-row__label overflow-label">
-    {#if item.identifier !== undefined && item.identifier !== ''}
-      <span class="identifier">{item.identifier}</span>
+    {#if identifier !== ''}
+      <span class="identifier">{identifier}</span>
     {/if}
     {item.title}
   </span>
@@ -62,6 +56,12 @@
 </button>
 
 <style lang="scss">
+  // The row sizes its icon slot for a small icon, which an avatar would overflow onto the label.
+  .hulyPopup-row__icon.avatar {
+    width: auto;
+    height: auto;
+  }
+
   .identifier {
     color: var(--theme-darker-color);
     margin-right: 0.375rem;

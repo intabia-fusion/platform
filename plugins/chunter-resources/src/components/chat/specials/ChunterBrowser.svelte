@@ -14,7 +14,7 @@
 <script lang="ts">
   import attachment from '@hcengineering/attachment'
   import { FileBrowser } from '@hcengineering/attachment-resources'
-  import { getCurrentLocation, navigate, Scroller, Switcher } from '@hcengineering/ui'
+  import { getCurrentLocation, navigate, popupstore, Scroller, Switcher } from '@hcengineering/ui'
   import type { SearchSortOrder } from '@hcengineering/core'
 
   import { SearchType } from '../../../utils'
@@ -50,7 +50,10 @@
 
   let lastWritten: string = ''
 
-  $: if (ready) rememberSearch(query, filters, sort)
+  // Navigating closes every popup, so a URL write would shut a multiselect filter after each click.
+  // The write waits until the popups close; the filters themselves apply right away.
+  $: popupOpen = $popupstore.some((p) => p.dock !== true)
+  $: if (ready && !popupOpen) rememberSearch(query, filters, sort)
 
   function rememberSearch (query: string, filters: ChatSearchFilters, sort: SearchSortOrder): void {
     const params: Record<string, string> = { ...filtersToQuery(filters, sort) }
