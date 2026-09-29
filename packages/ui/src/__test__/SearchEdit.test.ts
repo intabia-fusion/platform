@@ -101,7 +101,7 @@ describe('SearchEdit', () => {
   })
 
   // EditWithIcon's clear button dispatches its own 'change' immediately, but SearchEdit's on:change
-  // handler only calls restartTimer() - so the outer 'change' event is still debounced, not immediate.
+  // only calls restartTimer() - the outer 'change' stays debounced, not immediate.
   it('clears the value via the close button, but still debounces the outer change event', async () => {
     const { component, host, input } = mount({ value: 'abc' })
     const onChange = vi.fn()

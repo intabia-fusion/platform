@@ -27,7 +27,6 @@
 
   export let attachedTo: Ref<Doc>
   export let attachedToClass: Ref<Class<Doc>>
-  // export let event: Event | undefined = undefined
   export let title: string = ''
   let _title = title
 

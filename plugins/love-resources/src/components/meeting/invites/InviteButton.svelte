@@ -64,7 +64,6 @@
   }
 
   .time {
-    /* background: rgba(0, 0, 0, 0.5); */
     color: var(--accent-color-base);
   }
 

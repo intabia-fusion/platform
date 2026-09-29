@@ -41,9 +41,8 @@ async function connectToOwnOffice (page: Page): Promise<void> {
 // that made `refresh-reconnect` flaky on a reused window (90s timeout, then green on retry).
 export function registerHostRefreshTests (): void {
   test.describe('meeting minutes - office owner refresh', () => {
-    // The shared windows hold a live session for the same accounts this test signs in as, and two
-    // sessions per user break presence and departure checks. Drop them; the next shared test pays
-    // one boot to get its window back.
+    // Shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence/departure checks. Drop them; next test pays one reboot.
     test.beforeAll(async () => {
       await closeLoveWindows()
     })

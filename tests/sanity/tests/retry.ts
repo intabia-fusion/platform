@@ -19,10 +19,8 @@
 import { expect } from '@playwright/test'
 
 /**
- * Backoff for retried checks. The UI usually settles within a few hundred ms, so the first retries
- * are cheap; a check written with `intervals: [2000]` pays the full 2s even when the state arrived
- * 50ms in.
- * @public
+ * Backoff for retried checks: the UI usually settles in a few hundred ms, so early retries are
+ * cheap; `intervals: [2000]` alone pays the full 2s even at 50ms in. @public
  */
 export const retryIntervals = [50, 100, 200, 400, 800, 1600, 3000]
 
@@ -36,11 +34,8 @@ export async function retry (check: () => Promise<void> | void, timeout = 30000)
 }
 
 /**
- * Waits until `read` returns the same value `stableFor` in a row, and returns it.
- *
- * This is the answer to "nothing more must happen": a fixed sleep has to be as long as the slowest
- * case, while polling leaves as soon as the value stops moving.
- * @public
+ * Waits until `read` returns the same value `stableFor` in a row, and returns it: a fixed
+ * sleep must be as long as the slowest case, polling stops once the value settles. @public
  */
 export async function waitStable<T> (
   read: () => Promise<T>,

@@ -329,9 +329,8 @@ describe('Client-Resources Integration Tests', () => {
       members: []
     })
 
-    // When we tx directly, it goes through the connection which simulates the server
-    // The transaction is processed locally first, then notify is called when
-    // transaction comes back from "server" (our mock connection)
+    // tx goes through the connection simulating the server: processed locally first, notify
+    // fires once the tx comes back from the mock "server" connection.
     await client.tx(tx)
 
     // The mock connection immediately notifies handlers when we call tx

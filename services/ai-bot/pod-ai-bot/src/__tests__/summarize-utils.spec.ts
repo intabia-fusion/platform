@@ -142,9 +142,8 @@ describe('single-speaker meeting (hallucinated participants)', () => {
 })
 
 /**
- * The same defect after the aibot rework, seen on stage 2026-09: the model no longer invents
- * opinions, but still adds a placeholder heading ("@Участники") to fill the multi-participant shape
- * the prompt suggests. It resolves to nobody, so it must not reach the document.
+ * Stage 2026-09 regression: model stopped inventing opinions but still adds a placeholder
+ * '@Участники' heading that resolves to nobody and must not reach the document.
  */
 describe('single-speaker meeting (empty placeholder heading)', () => {
   const messages = [
@@ -192,9 +191,8 @@ describe('replacePersonRefs keeps legitimate content', () => {
 })
 
 /**
- * Multi-participant meeting with two namesakes, mirroring the seeded stand meeting. Two different
- * people share the display name "Петров,Иван", and the transcript mentions Сергей and Марина, who
- * were discussed but never attended.
+ * Mirrors the seeded stand meeting: two people share the display name "Петров,Иван", and
+ * Сергей and Марина are discussed but never attend.
  */
 describe('multi-participant meeting with namesakes', () => {
   const messages = [
@@ -230,9 +228,8 @@ describe('multi-participant meeting with namesakes', () => {
     expect(out).toContain('_id=ivan2')
   })
 
-  // Сергей and Марина were talked about, never present: they resolve to nobody, so they must not
-  // render as participant mentions. Their bullets are left in place - dropping real content is the
-  // worse failure, and the text may still be about something that was said.
+  // Сергей and Марина were only mentioned, never present: they resolve to nobody, so their headings
+  // drop but bullets stay - dropping real content is worse than an unlinked mention.
   it('demotes headings for people who were only mentioned', () => {
     const summary = [
       '**@Ostapenko,Elena**',
@@ -253,9 +250,8 @@ describe('multi-participant meeting with namesakes', () => {
 })
 
 /**
- * The model is told to keep names as they appear, but it rewrites them anyway: "Ostapenko,Elena"
- * comes back as "Elena Ostapenko". An earlier post-filter matched headings literally and deleted
- * every rewritten one, losing real participants and their bullets.
+ * Model is told to keep names as-is but rewrites them ("Ostapenko,Elena" -> "Elena
+ * Ostapenko"). A literal-match filter deleted every rewritten heading and its bullets.
  */
 describe('participant headings the model rewrote', () => {
   const map = buildPersonNameMap([msg('elena', 'Ostapenko,Elena', 'a')])
@@ -281,8 +277,8 @@ describe('participant headings the model rewrote', () => {
 })
 
 /**
- * Namesakes are told apart by a `(n)` tag. When the model drops it the heading is ambiguous and must
- * not be attributed by guesswork - the previous scheme gave both sections to the first namesake.
+ * Namesakes are told apart by a `(n)` tag. When the model drops it, an ambiguous heading must not
+ * be guessed - the old scheme gave both sections to the first namesake.
  */
 describe('namesake tags', () => {
   const namesakes = [msg('ivan1', 'Петров,Иван', 'a'), msg('ivan2', 'Петров,Иван', 'b')]
@@ -446,8 +442,8 @@ describe('mergePersonSections', () => {
 })
 
 /**
- * The `(n)` tag leaked into prose ("У Ивана Петрова (1) две задачи"), where nothing explains the
- * number. It also says who is meant, so a name the model got wrong is restored, not just unmarked.
+ * The `(n)` tag leaked into prose ("У Ивана Петрова (1) две задачи") unexplained. It marks who
+ * is meant, so a wrong name is restored, not just unmarked.
  */
 describe('stripTagsInProse', () => {
   const map = buildPersonNameMap([msg('i1', 'Петров Иван', 'a'), msg('i2', 'Петров Иван', 'b')])

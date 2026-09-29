@@ -35,7 +35,7 @@ function serviceToken (): string {
   return generateToken(systemAccountUuid, undefined, { service: 'sanity' }, 'secret')
 }
 
-/** Uploads a file through the same form-data endpoint the platform uses, under the given blob name. */
+/** Uses the platform's real form-data upload endpoint - not a test-only shortcut. */
 export async function uploadBlob (
   workspace: WorkspaceUuid,
   name: string,
@@ -74,8 +74,8 @@ export async function getStorageStatsByType (workspace: WorkspaceUuid): Promise<
 }
 
 /**
- * Transcoding is asynchronous: the platform publishes to `stream.transcode.request` and the stream
- * pod uploads playlists and segments back one by one. Poll until the derived blobs settle.
+ * Transcoding is async: platform publishes to `stream.transcode.request`, stream pod uploads
+ * playlists/segments back one by one. Poll until the derived blobs settle.
  */
 export async function waitForDerivedBlobs (
   workspace: WorkspaceUuid,

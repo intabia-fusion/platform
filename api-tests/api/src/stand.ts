@@ -78,7 +78,8 @@ export async function stopStand (): Promise<void> {
   // A pod writes its coverage profile as it exits, so it gets time to exit on its own.
   await state.env.down({ timeout: 60000, removeVolumes: true })
 
-  // On Linux the pods write their profiles as root; the host user has to read and later delete them.
+  // On Linux the pods write their profiles as root; the host user has to read and later delete
+  // them.
   if (existsSync(join(standDir, 'coverage'))) {
     spawnSync(
       'docker',

@@ -14,10 +14,8 @@
 // limitations under the License.
 //
 
-// Tests for retry pacing behaviour added to ClisrServer.binaryRequest /
-// requestWithFilter: when a downstream client keeps failing, retries must use
-// exponential backoff (start 100ms, x1.5, cap 5s) instead of a fixed 100ms
-// tight loop. This prevents idle CPU burn when a worker fails repeatedly.
+// Retry pacing in ClisrServer.binaryRequest/requestWithFilter: failing downstream clients get
+// exponential backoff (100ms, x1.5, cap 5s) instead of a fixed 100ms loop - avoids idle CPU burn.
 
 import { ClisrServer } from '../server'
 import { ClisrClient } from '../client'
@@ -153,9 +151,8 @@ describe('binaryRequest retry backoff', () => {
     // when we close the server while the request is still pending.
     reqP.catch(() => {})
 
-    // Sample ~2 seconds: with old 100ms tight loop we'd see ~20 attempts.
-    // With backoff (100, 150, 225, 337, 506, 759, 1138, 1707, ...) we should
-    // see significantly fewer in 2s — and successive gaps must grow.
+    // Sample ~2s: the old 100ms tight loop gave ~20 attempts. Backoff
+    // (100,150,225,337,506,759,1138,1707,...) should give far fewer, with growing gaps.
     await new Promise((resolve) => setTimeout(resolve, 2200))
 
     try {

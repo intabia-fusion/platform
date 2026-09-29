@@ -151,7 +151,8 @@ describe('buildTbankReceipt', () => {
   })
 
   test('empty-string email is treated as absent -> falls back to phone', () => {
-    // getAccountContact returns socialId.value, which can be '' rather than null; '' must not be used.
+    // getAccountContact returns socialId.value, which can be '' rather than null - must not
+    // use it.
     const r = buildTbankReceipt({ email: '', phone: '+79001234567' }, 'osn', 'none', 'X', 1000)
     expect(r?.Phone).toBe('+79001234567')
     expect(r?.Email).toBeUndefined()

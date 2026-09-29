@@ -14,16 +14,8 @@
 // limitations under the License.
 //
 
-// Compares two published versions of a dependency on repo-shaped workloads before upgrading.
-// Scenario per package: common/scripts/bench/<package>.js, exporting (module) => [{ name, run }]
-// or an async (module) => { cases, teardown } for servers/sockets. A case may set
-// { async: true, concurrency: N } to be measured with N operations in flight.
-//
-// Usage:
-//   node common/scripts/outdated-bench.js fast-equals              # current (upgrade_plan.tsv) vs latest
-//   node common/scripts/outdated-bench.js uuid 8.3.2 11.1.1
-//   node common/scripts/outdated-bench.js --all                    # every package that has a scenario
-// Env: ROUNDS (7), ROUND_MS (250)
+// Compares two published versions of a dependency on repo-shaped workloads. Env: ROUNDS (7),
+// ROUND_MS (250).
 
 const fs = require('fs')
 const path = require('path')

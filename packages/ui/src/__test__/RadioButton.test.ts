@@ -128,9 +128,8 @@ describe('RadioButton', () => {
     expect(input.id).toBeTruthy()
   })
 
-  // RadioButton has no on:change forward - only on:click on both the input and the wrapping div,
-  // so a direct click on the input runs the action guard twice (input listener, then bubbled to the div).
-  // Pinned behaviour, not a desired one - the double action() call looks like a latent bug.
+  // RadioButton has no on:change forward, only on:click on input and the wrapping div - a direct
+  // click runs the action guard twice (input, then bubbled). Looks like a latent bug, pinned.
   it('calls action twice when the click lands directly on the input (bubbles to the wrapper too)', () => {
     const action = vi.fn()
     const { input } = mount({ group: 'a', value: 'b', action })

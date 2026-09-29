@@ -18,8 +18,8 @@ import { expect, test } from '@playwright/test'
 import { closeMeetingContexts, loveWindow, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 /**
- * Reverse call: the caller is in no meeting yet and invites from the recipient's office cell.
- * Per docs/knock.md the caller's client creates the MeetingMinutes on `accepted`, not the trigger.
+ * Reverse call: the caller has no meeting yet, invites from the recipient's office cell. Per
+ * docs/knock.md, the caller's client creates MeetingMinutes on `accepted`, not the trigger.
  */
 export function registerClientCreateTests (): void {
   test.describe('meeting minutes - client-side create on accept', () => {

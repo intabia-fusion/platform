@@ -14,9 +14,8 @@
 //
 
 /**
- * Reference traces for calibrating the judge: two runs that clearly did the job and two that
- * clearly did not. A judge that cannot tell them apart is measuring noise, and its verdicts on
- * real runs mean nothing - so it is checked before it is trusted.
+ * Reference traces to calibrate the judge: two runs that clearly succeeded, two that failed. A
+ * judge that cannot tell them apart measures noise - checked before it is trusted.
  */
 
 import type { Trace } from './runner'

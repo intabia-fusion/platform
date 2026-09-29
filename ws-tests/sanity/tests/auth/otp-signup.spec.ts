@@ -29,8 +29,8 @@ import {
   SignUpPage
 } from '@hcengineering/tests-sanity'
 
-// This stand runs with USE_OTP on, so the forms below are the real ones users see. The mail queue has
-// no consumer here, so the code is read straight from account_db - see API/AccountDb.
+// This stand runs with USE_OTP on, so the forms below are the real ones users see. The mail
+// queue has no consumer here, so the code is read straight from account_db (API/AccountDb).
 test.describe('otp signup', () => {
   const firstName = 'Test'
   const lastName = 'Person'

@@ -14,10 +14,8 @@
 //
 
 /**
- * Runs a scenario against a live model through the real harness: real tool definitions, real
- * system prompt from prompts.yaml, real tool loop, real provider. Only the workspace is faked.
- *
- * A scenario is judged by the state of the world after the last turn, not by what the model said.
+ * Runs the scenario through the real harness (tool defs, prompt, tool loop, provider) against
+ * a live model, workspace faked. Judged by end state, not what model said.
  */
 
 import fs from 'fs'
@@ -63,7 +61,9 @@ export interface ScenarioExpect {
     count?: number
     titlesMatch?: string
     subtasksOfRoot?: number
-    /** Body of the root task after the run: an issue is edited through its description, not a new task. */
+    /**
+     * Body of the root task after the run: an issue is edited via its description, not a new task.
+     */
     rootDescription?: { contains?: string[], notContains?: string[] }
   }
   /** The whole world untouched: for scenarios where the right move is to just answer. */
@@ -99,7 +99,9 @@ export interface Scenario {
   lang?: string
   /** Lowered thresholds so compaction can be exercised without a hundred long turns. */
   compaction?: { budgetTokens?: number, reserveTokens?: number, keepRecentTokens?: number }
-  /** Pins the context budget: an overflow scenario is meaningless when a wider model fits everything. */
+  /**
+   * Pins the context budget - an overflow scenario is meaningless once a wider model fits it all.
+   */
   contextBudgetTokens?: number
   world?: {
     /** `repeat` multiplies the body: the only way to write a document that overflows a window. */

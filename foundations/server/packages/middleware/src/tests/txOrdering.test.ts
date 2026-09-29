@@ -13,13 +13,6 @@
 // limitations under the License.
 //
 
-/**
- * Test for TxOrderingMiddleware
- *
- * This test verifies that the middleware ensures transactions for the same document
- * are processed sequentially by waiting in the tx() method.
- */
-
 import core, {
   type Class,
   type Doc,

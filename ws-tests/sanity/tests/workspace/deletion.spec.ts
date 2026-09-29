@@ -3,9 +3,8 @@ import { expect, test, type Page } from '@playwright/test'
 import { AdminPage } from '../model/admin.page'
 
 /**
- * Deletion is deferred: both routes - the admin panel and the person themselves - only stamp a
- * deadline. The checks are about the mark being set, taken off, and about the person still being
- * able to sign in while it stands. The admin has one way past the deferral: "Delete now".
+ * Deletion is deferred: admin panel and self-delete both only stamp a deadline. Checks cover
+ * the mark, its removal, and sign-in while it stands; "Delete now" is the admin's bypass.
  */
 test.describe('Workspace and account deletion', () => {
   test('admin schedules a workspace and the account behind it', async ({ page, request }) => {

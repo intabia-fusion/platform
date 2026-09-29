@@ -26,7 +26,7 @@ async function expectIncomingMessage (page: Page, text: string): Promise<void> {
   await expect(page.locator('.activityMessage', { hasText: text }).first()).toBeVisible()
 }
 
-// The second member per workspace, not per test: a seat per test recycled the workspace every few tests.
+// Per workspace, not per test: a seat per test would recycle the workspace every few tests.
 const others = new Map<string, { member: ChatMember, user: SignUpData }>()
 
 /**
@@ -58,9 +58,8 @@ test.describe('Chat notification tests', () => {
   })
 
   /**
-   * The second user joins the workspace and the channel over the API, and only then gets a browser:
-   * the invite link, the join page and the "Add members" popup are not what these tests are about,
-   * and a member whose first login has to create its own employee can be refused the write.
+   * Second user joins workspace+channel via API first, browser comes after - skips the invite link,
+   * join page and Add-members popup; first-login employee writes can be refused otherwise.
    */
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
     const owner = await connectOwner(shared.ws, `${data.lastName} ${data.firstName}`)

@@ -119,9 +119,8 @@ describe('distribute', () => {
   })
 
   it('splits the growth between the auto panels further out', () => {
-    // With a sized panel right after the separator the growth skips it and is shared by the auto
-    // panels beyond. `stretch` zeroes `needAdd` on the first of them, so the later `crop` calls are
-    // skipped - pinned because that reads like a bug at the call site.
+    // A sized panel after the separator: growth skips it, shared by auto panels beyond.
+    // `stretch` zeroes `needAdd` on the first of them, so later `crop` calls skip - pinned.
     const fixed: SeparatedItem = { minSize: 10, size: 20, maxSize: 40 }
     const b = buildLayout(
       [panel(320), sep(), panel(320), sep(), panel(400), sep(), panel(400)],
@@ -230,7 +229,7 @@ describe('invariants across layout combinations', () => {
 })
 
 describe('performance', () => {
-  // ponytail: a coarse guard against an accidental O(n^2); `pnpm bench` has the real numbers.
+  // Coarse guard against an accidental O(n^2); `pnpm bench` has the real numbers.
   it('stays linear enough for a wide layout', () => {
     const separators: SeparatedItem[] = []
     const children: LayoutChild[] = []

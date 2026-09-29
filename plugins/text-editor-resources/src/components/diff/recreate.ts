@@ -178,9 +178,7 @@ export class StepTransform {
       const afterStepJSON = clone(this.currentDoc) // working document receiving patches
       const pathParts = op.path.split('/')
 
-      // collect operations until we receive a valid document:
-      // apply ops-patches until a valid prosemirror document is retrieved,
-      // then try to create a transformation step or retry with next operation
+      // Collect ops until we get a valid ProseMirror document, then build a step.
       while (toDoc == null) {
         applyPatch(afterStepJSON, [op])
 
@@ -246,8 +244,8 @@ export class StepTransform {
   }
 
   recreateChangeMarkSteps (): void {
-    // Now the documents should be the same, except their marks, so everything should map 1:1.
-    // Second step: Iterate through the toDoc and make sure all marks are the same in tr.doc
+    // Documents are identical except for marks, so nodes map 1:1 by position. Only mark
+    // alignment is needed.
     this.toDoc.descendants((tNode, tPos) => {
       if (!tNode.isInline) {
         return true

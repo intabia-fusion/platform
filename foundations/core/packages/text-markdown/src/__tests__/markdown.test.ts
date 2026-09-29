@@ -1199,10 +1199,6 @@ describe('markdownToMarkup -> markupToMarkdown', () => {
       name: 'Sub',
       markdown: '<sub>View in Huly <a href="http://localhost:8080/guest/github?token=token">TSK-50</a></sub>'
     }
-    // {
-    //   name: 'Malformed',
-    //   markdown: '<foo>try to parse me</bar></buzz>'
-    // }
   ]
 
   tests.forEach(({ name, markdown, alternate }) => {

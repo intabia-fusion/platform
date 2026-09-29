@@ -60,7 +60,8 @@ describe('ToggleButton', () => {
     expect(mount({ value: true, selected: false }).button.classList.contains('selected')).toBe(false)
   })
 
-  // pinned behaviour, not a desired one - the 'disabled' class tracks the boolean `value` prop, not an actual disabled/interactive state
+  // Pinned behavior, not desired: the 'disabled' class tracks the boolean `value` prop, not real
+  // disabled state.
   it('carries the disabled class when value is false', () => {
     expect(mount({ value: false }).button.classList.contains('disabled')).toBe(true)
     expect(mount({ value: true }).button.classList.contains('disabled')).toBe(false)

@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 /**
- * Layer boundary check.
- *
- * `foundations/{utils,core,server}` used to be separate Rush workspaces, so a package could not
- * physically depend on a layer that was not installed next to it. One pnpm workspace links
- * everything, so the boundary is enforced here instead.
+ * Enforces layer boundaries now that pnpm links all packages into one workspace. Previously
+ * separate Rush workspaces prevented cross-layer deps physically.
  */
 
 const fs = require('fs')

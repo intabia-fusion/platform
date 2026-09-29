@@ -128,7 +128,6 @@ export class ResultArray {
     for (const [, v] of this.clones.entries()) {
       v.set(doc._id, this.hierarchy.clone(doc))
     }
-    // this.changes.add(doc._id)
     return stored
   }
 

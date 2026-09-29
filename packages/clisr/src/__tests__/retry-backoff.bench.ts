@@ -144,9 +144,8 @@ describe('retry backoff benchmark', () => {
       `cpuUserMs: ${(cpu1.user / 1000).toFixed(1)}, cpuSysMs: ${(cpu1.system / 1000).toFixed(1)}, cpu%: ${cpuPct.toFixed(2)}`
     )
 
-    // Sanity: each pending request must hit a cap of ~12 retries in 12 seconds
-    // when backoff reaches its 5s ceiling. Allow generous slack; main goal is
-    // catching regressions (e.g. tight loop reintroduced → hundreds of retries/req).
+    // Sanity: pending requests cap ~12 retries/12s at the 5s backoff ceiling, with slack - catches
+    // regressions like a reintroduced tight loop (hundreds of retries/req).
     expect(retriesPerSecPerReq).toBeLessThan(3)
     // And retries must actually happen — we are not asserting only "low" without proof.
     expect(callCount).toBeGreaterThan(pendingCount)

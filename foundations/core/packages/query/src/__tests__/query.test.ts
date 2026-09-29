@@ -107,11 +107,6 @@ describe('query', () => {
       })
     })
 
-    // TODO: fixme!
-    // await factory.createDoc(core.class.Account, core.space.Model, {
-    //   email: 'user1@site.com',
-    //   role: AccountRole.User
-    // })
     await factory.createDoc<Channel>(core.class.Space, core.space.Model, {
       private: true,
       name: '#0',
@@ -885,29 +880,6 @@ describe('query', () => {
 
   // it('update with over limit', async () => {
   //   const { liveQuery, factory } = await getClient()
-
-  //   const spaces = await liveQuery.findAll(core.class.Space, {})
-  //   let attempt = 0
-  //   const pp = new Promise((resolve) => {
-  //     liveQuery.query<Space>(
-  //       core.class.Space,
-  //       {},
-  //       (result) => {
-  //         expect(result[0].name).toEqual(`Sp${++attempt}`)
-  //         if (attempt === spaces.length + 1) resolve(null)
-  //       },
-  //       { sort: { name: SortingOrder.Ascending }, limit: 1 }
-  //     )
-  //   })
-
-  //   for (let index = 0; index < spaces.length; index++) {
-  //     const space = spaces[index]
-  //     await factory.updateDoc(space._class, space.space, space._id, {
-  //       name: `Sp${index + spaces.length + 1}`
-  //     })
-  //   }
-  //   await pp
-  // })
 
   it('update-array-value', async () => {
     const { liveQuery, factory } = await getClient()

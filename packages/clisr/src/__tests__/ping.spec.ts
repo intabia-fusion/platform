@@ -32,9 +32,7 @@ function createWrapper() {
   return wrapper
 }
 
-/**
- * Helper: convert an ASCII string into an ArrayBuffer with exact length (no TextEncoder dependency).
- */
+/** Converts an ASCII string to an ArrayBuffer of exact length, without a TextEncoder dependency. */
 function stringToArrayBuffer(s: string): ArrayBuffer {
   const u = new Uint8Array(s.length)
   for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i)

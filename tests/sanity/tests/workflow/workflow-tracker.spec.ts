@@ -99,9 +99,8 @@ test.describe('Workflow in tracker', () => {
   })
 
   test('keeps the mapping when the project is reopened for editing', async () => {
-    // The project appears in the navigator before its workflow mixin lands, and CreateProject reads
-    // the mapping once at mount - a dialog opened in that window never shows the label, no matter
-    // how long it is waited on. Reopen it instead.
+    // The project appears in the navigator before its workflow mixin lands; CreateProject
+    // reads the mapping once at mount, so waiting never helps a too-early dialog - reopen it.
     await expect(async () => {
       await page.keyboard.press('Escape')
       await navigation.makeActionWithProject(projectName, 'Edit project')

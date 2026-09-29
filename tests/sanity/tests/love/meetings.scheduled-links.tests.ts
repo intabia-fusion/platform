@@ -50,7 +50,8 @@ async function getMeetingsRestClient (): Promise<RestClient> {
   return createRestClient(token.endpoint, token.workspaceId, token.token)
 }
 
-// Same doc shape as love-resources createMeeting() from Calendar; built via REST (Calendar UI has no test selectors).
+// Same doc shape as love-resources createMeeting() from Calendar; built via REST (Calendar UI
+// has no test selectors).
 async function createScheduledMeeting (
   client: RestClient,
   roomName: string,

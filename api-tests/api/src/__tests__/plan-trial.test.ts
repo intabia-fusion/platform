@@ -29,9 +29,8 @@ import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 /** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
 const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
 
-// Uses api-tests-unpaid (created without a plan). Drives the account subscription store directly
-// via a payment-service token to assert the provider-agnostic trial invariant: activating a paid
-// Business tier supersedes an active trial, and a Trialing tier is visible/plan-granting on read.
+// Uses api-tests-unpaid (no plan); drives the subscription store via a payment-service token:
+// paid Business supersedes an active trial, Trialing is visible/plan-granting on read.
 describe('plan-trial', () => {
   const wsName = 'api-tests-unpaid'
   let config: ServerConfig
@@ -80,7 +79,8 @@ describe('plan-trial', () => {
     )
   }
 
-  // Clear before AND after: a prior failed run can leave an active tier that pollutes the first read.
+  // Clear before AND after: a prior failed run can leave an active tier that pollutes the
+  // first read.
   beforeEach(clearSubscriptions)
   afterEach(clearSubscriptions)
 
@@ -126,7 +126,8 @@ describe('plan-trial', () => {
     const all = await account.getSubscriptions(workspaceUuid, false)
     const trial = all.find((s) => s.type === SubscriptionType.Tier && s.provider === 'trial')
     expect(trial).toBeDefined()
-    // No sweep/timer: expiry is enforced on read via grantsPlan, so limit resolution falls back to free.
+    // No sweep/timer: expiry is enforced on read via grantsPlan, so limit resolution falls
+    // back to free.
     expect(grantsPlan(trial)).toBe(false)
   }, 30000)
 

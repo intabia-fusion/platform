@@ -39,8 +39,8 @@ function bars (host: HTMLElement): HTMLElement[] {
   return Array.from(host.querySelectorAll('.bar'))
 }
 
-// jsdom normalizes a style attribute into its CSSOM form (hex -> rgb(), calc() arithmetic folded),
-// so compare against what jsdom itself produces for the expected hex rather than the raw hex string.
+// jsdom normalizes a style attribute into CSSOM form (hex -> rgb(), calc() folded) - compare
+// against what jsdom itself produces, not the raw hex string.
 function color (i: number): string {
   const probe = document.createElement('div')
   probe.style.backgroundColor = getPlatformColor(i, get(themeStore).dark)

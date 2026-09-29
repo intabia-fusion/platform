@@ -13,11 +13,8 @@
 // limitations under the License.
 //
 
-// Importing '../workspace' pulls in @hcengineering/server-pipeline and @hcengineering/middleware
-// (heavy, real deps), and '../config' throws at import time if env vars are missing. Mocking
-// config here (as the other test files already do for the lighter '../config' dependency) is
-// enough to make the import safe; server-pipeline/middleware resolve fine as real workspace
-// packages under ts-jest.
+// '../config' throws at import time without env vars, so it's mocked (like other test files);
+// server-pipeline/middleware resolve fine as real deps under ts-jest.
 import Workspace, { isTransientError } from '../workspace'
 import { emptyResult } from '../utils/utils'
 import type { Result } from '../types'
@@ -55,9 +52,8 @@ describe('isTransientError', () => {
   })
 })
 
-// `applyResult` is private, but `Workspace` is exported (as the default export) and its
-// constructor is only private at the type level -- Object.create(Workspace.prototype) builds a
-// bare instance at runtime, and we hand-fill just the fields applyResult reads.
+// Workspace's constructor is private only at the type level.
+// Object.create(Workspace.prototype) builds a bare instance we hand-fill for applyResult.
 describe('Workspace.applyResult (private, exercised via a bare instance)', () => {
   function makeInstance (overrides: { tx?: jest.Mock, send?: jest.Mock }): any {
     const instance: any = Object.create((Workspace as any).prototype)

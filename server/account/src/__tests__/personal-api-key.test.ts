@@ -72,7 +72,7 @@ describe('personal API keys', () => {
       getWorkspaceRole: jest.fn().mockImplementation(async (account: AccountUuid) => roleByAccount[account] ?? null),
       getWorkspaceMembers: jest.fn().mockResolvedValue([{ person: owner, role: AccountRole.Owner }]),
       socialId: {
-        // A confirmed social id for "getSocialIds"/"getAccountEmail" - shape does not matter for these tests.
+        // A confirmed social id for getSocialIds/getAccountEmail - shape doesn't matter here.
         find: jest
           .fn()
           .mockImplementation(async (query: any) => [

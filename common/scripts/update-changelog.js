@@ -15,31 +15,8 @@
 
 'use strict'
 
-// update-changelog.js
-//
-// Usage:
-//   node update-changelog.js             # Dry run (prints summary and proposed changelog additions)
-//   node update-changelog.js --apply     # Apply changes to changelog.md (writes file)
-//   node update-changelog.js --origin upstream
-//   node update-changelog.js --from 0.7.318
-//
-// Description (English comments):
-// - Reads ./changelog.md and finds the latest released version recorded there.
-// - Inspects remote tags on the given remote (default 'origin') and considers only tags named like `vX.Y.Z`.
-// - For each tag strictly greater than the last version in changelog, gathers commits between the previous tag and the tag.
-// - Filters out merge commits and strips 'Signed-off-by:' footers.
-// - Picks only 'substantial' commits (heuristic: conventional commit types (feat/fix/perf/security/revert) or commits mentioning issue numbers or strong action verbs).
-// - Groups commits by category (FEATURES, BUG FIXES, PERFORMANCE, SECURITY, REVERTS, MISCELLANEOUS) and prepares a formatted changelog section.
-// - By default runs in dry-run mode (prints what would be inserted). Use `--apply` to write `changelog.md`.
-//
-// Notes:
-// - This tool inspects tags in remote (uses `git ls-remote --tags <remote>`).
-// - It will perform `git fetch --tags <remote>` to ensure tags are available locally for `git log`.
-// - It avoids duplicating versions already present in changelog.md (skips tags already recorded).
-//
-// Exit codes:
-// 0 - OK (nothing to do or dry-run completed)
-// 1 - Error (prints message)
+// Generates changelog section from vX.Y.Z tags newer than last version. Dry-run default;
+// --apply writes changelog.md.
 
 const fs = require('fs')
 const path = require('path')
@@ -151,9 +128,7 @@ function readChangelog (filePath) {
 }
 
 function findLastVersionInChangelog (changelogText) {
-  // Find first header that is a version (skipping [unreleased])
-  // Look for the first occurrence of "## [<semver>] - yyyy-mm-dd"
-  // We search top to bottom and return the first semver header found that is not '[unreleased]'.
+  // Return the first semver header (top to bottom), skipping [unreleased]
   const lines = changelogText.split(/\r?\n/)
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(/^## \[(?!unreleased\b)(\d+\.\d+\.\d+)\]/i)
@@ -166,9 +141,7 @@ function findLastVersionInChangelog (changelogText) {
 }
 
 function tagsFromLsRemoteOutput (lsOutput) {
-  // Parse output lines like:
-  // 9fceb02...    refs/tags/v0.7.319
-  // <hash>    refs/tags/v0.7.319^{}
+  // Parse git ls-remote output: <hash> refs/tags/vX.Y.Z and <hash> refs/tags/vX.Y.Z^{}
   const lines = lsOutput.split(/\r?\n/).filter(Boolean)
   const tags = new Set()
   for (const line of lines) {
@@ -231,9 +204,7 @@ function getTagDate (tag) {
 }
 
 function getCommitsBetween (fromTag, toTag) {
-  // returns array of {hash, subject, body}
-  // Use --no-merges to filter merge commits
-  // Use ASCII separators to parse safely
+  // Use --no-merges to filter merge commits. Use ASCII separators to parse safely.
   const format = '%h%x1f%s%x1f%b%x1e'
   let cmd = `git log --no-merges --pretty=format:"${format}" ${fromTag}..${toTag}`
   let out = ''
@@ -276,7 +247,7 @@ function buildVersionBlock (version, date, prevTag, tag, commits) {
     const info = groups.get(cat)
     // dedupe short subjects while preserving order
     const uniq = Array.from(new Set(info.items))
-    // Limit number of items in summary line (remain in all-commits list)
+    // Summary line item limit (remains in full list).
     const summaryItems = uniq.slice(0, 6)
     const summary = summaryItems.join(' · ')
     lines.push(`* ${info.emoji} ${cat}: · ${summary}`)
@@ -365,7 +336,7 @@ function main () {
 
   // Use only tags that look like vX.Y.Z
   remoteTags = remoteTags.filter(t => /^v?\d+\.\d+\.\d+$/.test(t))
-  // Normalize to v-prefixed tags for processing (we will use exact remote tag names fetched)
+  // Normalize to v-prefixed tags for processing (we use exact remote tag names fetched)
   remoteTags = remoteTags.map(t => t.startsWith('v') ? t : `v${t}`)
 
   // Sort semver ascending
@@ -432,8 +403,8 @@ function main () {
     }
   }
 
-  // We'll iterate over filteredTags ascending and compute prevTag..tag ranges,
-  // where prevTag is either previous tag in sequence or anchor for the first one.
+  // Fallback chain for prevTag: anchor → nearest tag below first filtered tag → empty (full
+  // log, noisy).
   const processedBlocks = []
   let prevTag = anchorExists && remoteTags.includes(anchorTag) ? anchorTag : null
   // If prevTag is null and there is a tag smaller than the first tagToProcess, try to find it
@@ -491,7 +462,7 @@ function main () {
   // Find insertion point: the first '## [' header that is not 'unreleased' (we have headerLineIndex)
   const lines = changelogText.split(/\r?\n/)
   const insertLine = lastVersionInfo.headerLineIndex
-  // We will build new text: head (0..insertLine-1) + NEW_BLOCKS (in descending order newest first) + rest (insertLine..end)
+  // New text: head (0..insertLine-1) + NEW_BLOCKS (newest first) + rest (insertLine..end).
   const head = lines.slice(0, insertLine).join('\n')
   const tail = lines.slice(insertLine).join('\n')
 

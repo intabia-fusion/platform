@@ -5,12 +5,8 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-// Subscriber worker for the broadcast benchmark.
-// Each worker connects with its own websocket, registers a LiveQuery on
-// chunter.class.Channel, and reports first-seen ids back to the parent.
-// When `slow` is true the callback busy-spins for `slowDelayMs` so the
-// server-side ws.bufferedAmount keeps growing while messages queue up -
-// that's how we trigger the slow-client drop path.
+// Subscriber worker for the broadcast benchmark: websocket + LiveQuery, reports first-seen ids.
+// slow=true busy-spins to grow ws.bufferedAmount, triggering the slow-client drop path.
 
 import { connect } from '@hcengineering/api-client'
 import chunter from '@hcengineering/chunter'

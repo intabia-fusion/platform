@@ -47,9 +47,8 @@ export function registerKnockOfficeTests (): void {
     test('knocker auto-joins owner office after knock is accepted', async ({ browser }) => {
       test.setTimeout(60000)
 
-      // Owner — uses storageSecond. The personal office is named after this
-      // person, so we filter the floor grid by their last name to find it.
-      // Knocker — a different account. Storage third has a separate person.
+      // Owner uses storageSecond; the office is named after them, so filter the floor grid by
+      // last name. Knocker is a different account (storage third) with its own person.
       const { ctx: ownerCtx, page: owner } = await loveWindow(browser, 'second')
       const { ctx: knockerCtx, page: knocker } = await loveWindow(browser, 'third')
 

@@ -149,9 +149,8 @@ test.describe('Message search', () => {
     await expect(searchPage.panel()).toBeHidden()
   })
 
-  // The owner of the workspace sees every private channel in the list, but not what is said in
-  // one they are not a member of. The search has to agree with that: a hit from such a channel
-  // must neither show up nor be counted, or the count promises rows the list never gets.
+  // Owner sees every private channel in the list, but not what's said in ones they're not
+  // in. Search must agree: no hit from such a channel may show or count against the total.
   test(
     'Keeps the owner out of a private channel they are not in, count included',
     { tag: '@invite' },

@@ -697,10 +697,7 @@ class ElasticAdapter implements FullTextAdapter {
         filter: [
           {
             bool: {
-              should: [
-                { terms: this.getTerms(_classes, '_class') }
-                // { terms: this.getTerms(_classes, 'attachedToClass') }
-              ]
+              should: [{ terms: this.getTerms(_classes, '_class') }]
             }
           }
         ]

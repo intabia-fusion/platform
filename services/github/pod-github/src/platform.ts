@@ -265,8 +265,7 @@ export class PlatformWorker {
     const oldInstallation = this.integrations.filter((it) => it.installationId.includes(installationId))
     if (oldInstallation.length > 0) {
       ctx.info('update integrations', { workspace, installationId, accountId })
-      // What to do with installation in different workspace?
-      // Let's remove it and sync to new one.
+      // Installation in a different workspace: remove it and sync to the new one.
       const oldWorkspaces = oldInstallation.filter((it) => it.workspace !== workspace)
       if (oldWorkspaces.length > 0) {
         const oldWorkspace = oldWorkspaces[0].workspace
@@ -490,7 +489,7 @@ export class PlatformWorker {
         if (existingUser == null) {
           await this.userManager.insertUser(dta)
         } else {
-          dta.accounts = { ...existingUser.accounts, [payload.workspace]: payload.accountId } // Put primary socialId for now.
+          dta.accounts = { ...existingUser.accounts, [payload.workspace]: payload.accountId } // Primary socialId
           await this.userManager.updateUser(dta)
         }
 
@@ -1093,7 +1092,7 @@ export class PlatformWorker {
               })
               this.clients.set(workspace, worker)
             } else {
-              // No if no integration, we will try connect one more time in a time period
+              // No integration; will retry
               workerCtx.info(
                 '************************* Failed Register worker, timeout or integrations removed *************************',
                 {

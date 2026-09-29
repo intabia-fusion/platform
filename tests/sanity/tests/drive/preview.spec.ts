@@ -20,10 +20,8 @@ import { uploadBlob } from '../API/Datalake'
 import { expect, test } from '../fixtures'
 import { PlatformURI } from '../utils'
 
-// These go through the external tools baked into preview-base, so a base image bump that breaks
-// one of them shows up here instead of as a blank thumbnail in the UI:
-//   video -> ffmpeg frame grab
-//   docx  -> libreoffice to pdf -> poppler pdftoppm to png
+// These exercise external tools baked into preview-base (ffmpeg, libreoffice+poppler) - a
+// base-image bump that breaks one shows up here, not as a blank UI thumbnail.
 const cases = [
   { file: 'fake-video.mp4', contentType: 'video/mp4', tool: 'ffmpeg' },
   {

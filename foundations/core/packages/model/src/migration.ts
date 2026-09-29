@@ -141,7 +141,7 @@ export type MigrateMode = 'create' | 'upgrade'
  * @public
  */
 export interface MigrateOperation {
-  // Perform low level migration prior to the model update
+  // Perform low level migration before updating the model
   preMigrate?: (client: MigrationClient, logger: ModelLogger, mode: MigrateMode) => Promise<void>
   // Perform low level migration
   migrate: (client: MigrationClient, mode: MigrateMode) => Promise<void>

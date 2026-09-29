@@ -66,7 +66,7 @@ export class CalendarPage extends CommonPage {
     await this.inputPopupDateSave().click()
   }
 
-  // Calendar widget shown in the right sidebar (opened via SidebarPage.clickSidebarPageButton('calendar')).
+  // Calendar widget in the right sidebar (SidebarPage.clickSidebarPageButton('calendar')).
   // Renders the same DayCalendar grid as the Planner schedule, in single-day mode.
   calendarWidget = (): Locator => this.page.locator('#sidebar .calendar-container')
 
@@ -146,10 +146,8 @@ export class CalendarPage extends CommonPage {
   participantsPopupItem = (name: string): Locator =>
     this.page.locator('div.antiPopup.thinStyle div.ap-menuItem', { hasText: name })
 
-  // The search box matches the person's first/last name separately (findCompletions), but
-  // ParticipantsPopup always displays "LastName FirstName" - filterText and fullName differ.
-  // Matching on the last name only: the popup renders "Last First" while presenters
-  // elsewhere render "First Last", and the surname alone is unique enough for tests.
+  // Search matches first/last separately (findCompletions), but the popup always shows "Last
+  // First" (unlike elsewhere's "First Last") - matching on the surname alone is enough.
   async addEventParticipant (lastName: string): Promise<void> {
     await this.inputEventParticipants().click()
     await this.inputEventParticipants().fill(lastName)
@@ -160,7 +158,7 @@ export class CalendarPage extends CommonPage {
     await this.cardCloseButton().click()
   }
 
-  // EventTimeExtraButton dispatches 'repeat', opening ReccurancePopup.svelte (div.repeatPopup-container).
+  // EventTimeExtraButton dispatches 'repeat' to open ReccurancePopup.svelte.
   buttonRepeat = (): Locator => this.createEventPopup().getByText('Repeat', { exact: true })
   private readonly recurrencePopup = (): Locator => this.page.locator('div.repeatPopup-container')
   // The period dropdown defaults to Week (ReccurancePopup.svelte periodType).
@@ -177,9 +175,8 @@ export class CalendarPage extends CommonPage {
       .locator('xpath=ancestor::div[contains(@class, "antiRadio")]/following-sibling::div[1]')
       .locator('input[type="number"]')
 
-  // Default period is Weekly with no end date - select Daily and bound it to a few occurrences
-  // so the series shows up on the next day too, without booking every day forever on a stand
-  // that is reused between runs.
+  // Default is Weekly, no end date - select Daily, bound to a few occurrences so the series
+  // shows up next day too, without booking forever on a stand reused between runs.
   async setRecurringDaily (occurrences: number = 3): Promise<void> {
     await this.buttonRepeat().click()
     await expect(this.recurrencePopup()).toBeVisible()

@@ -314,8 +314,8 @@ async function clearModel (ref: ModelRef, args: Args, purpose: string): Promise<
 }
 
 /**
- * The judge is chosen first: it is the measuring instrument, and what it can do decides how the run
- * is judged at all. Picking none is a valid answer - then only the deterministic asserts count.
+ * The judge is chosen first - it is the measuring instrument and decides how the run is
+ * judged. Picking none is valid - then only the deterministic asserts count.
  */
 async function chooseJudge (served: ModelRef[], args: Args): Promise<ModelRef | undefined> {
   if (args.noJudge) return undefined

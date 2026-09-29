@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// `Refs` answers findOne/findAll straight from the documents live queries already hold, and a new
-// subscription starts from it instead of the server. Everything it hands out must therefore be a
-// clone, must be gone once nothing holds the document, and must never outlive a delete.
+// `Refs` answers findOne/findAll from documents live queries hold; subscriptions start from
+// it, not the server - so it must hand out clones, gone once unheld, never outliving a delete.
 
 import core, {
   createClient,

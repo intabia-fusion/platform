@@ -78,7 +78,8 @@ describe('getTransactorTarget', () => {
 
     const used = Array.from(clients.entries()).filter(([, c]) => c.ensurePerson.mock.calls.length > 0)
     expect(used).toHaveLength(1)
-    // A key narrowed to operations may only write through /api/v1/ops, so this write goes as the service.
+    // A key narrowed to operations only writes through /api/v1/ops, so this goes as the
+    // service.
     expect(decodeToken(used[0][0]).extra?.service).toBe('webhook')
     expect(decodeToken(used[0][0]).extra?.apikey).toBeUndefined()
   })

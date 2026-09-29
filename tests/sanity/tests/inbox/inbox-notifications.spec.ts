@@ -20,8 +20,8 @@ interface SecondUserUi {
 }
 
 /**
- * The other side of the conversation. It talks over REST: what these tests look at is the inbox of
- * the first user. The few that need the second user's own screen open a browser for it with `ui()`.
+ * The other side, over REST - these tests look at the first user's inbox. A few that need the
+ * second user's own screen open one with `ui()`.
  */
 interface SecondUser {
   // The first user over REST.
@@ -36,7 +36,8 @@ interface SecondUser {
 
 test.describe.configure({ mode: 'parallel' })
 
-// The second member per workspace, not per test: a seat per test recycled the workspace every few tests.
+// Per workspace, not per test: a seat per test would recycle the workspace every few
+// tests.
 const others = new Map<string, { member: ChatMember, user: SignUpData }>()
 
 /**
@@ -70,9 +71,8 @@ test.describe('Inbox notification tests', () => {
   })
 
   /**
-   * Brings a second user into the workspace and the channel over the API: the invite link, the join
-   * page and the "Add members" popup are not what these tests are about, and a member whose first
-   * login has to create its own employee can be refused the write.
+   * Brings a second user into the workspace+channel via API - skips the invite link, join
+   * page and Add-members popup; first-login employee writes can be refused otherwise.
    */
   async function inviteSecondUser (browser: Browser, page: Page, channelName: string): Promise<SecondUser> {
     await channelPage.checkIfChannelDefaultExist(true, channelName)

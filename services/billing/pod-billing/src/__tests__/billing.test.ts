@@ -48,7 +48,8 @@ jest.mock('../config', () => ({
   __esModule: true,
   default: { AccountsUrl: 'http://account', WindowMonthLimit: 1000, ProviderPrices: {} }
 }))
-// handleGetLargestSpaces uses this getClient (unrelated to account-client's); not exercised by these tests.
+// handleGetLargestSpaces uses this getClient (unrelated to account-client), not exercised
+// here.
 jest.mock('../client', () => ({ getClient: jest.fn() }))
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -168,7 +169,8 @@ describe('handleGetWorkspaceTokenWindows', () => {
     await handleGetWorkspaceTokenWindows(ctx, db, [], makeReq(), res)
 
     const body = res.json.mock.calls[0][0]
-    // `used` is the whole period spend; the pack is only charged when the period ends, so it stands still.
+    // `used` is the whole period spend - the pack is charged only at period end, so it stands
+    // still.
     expect(body.month.used).toBe(200)
     expect(body.balance).toBe(50)
     expect(body.available).toBe(850) // 1000 grant + 50 pack - 200 spent

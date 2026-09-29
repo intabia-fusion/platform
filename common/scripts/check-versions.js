@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * This script validates that all @hcengineering packages use the same versions
- * across all dependencies (including devDependencies).
- * 
- * Also checks transitive dependencies in the lockfile.
- * and only validates @hcengineering packages.
- * 
- * The script will fail with exit code 1 if any version mismatches are found.
+ * Validates all @hcengineering packages use the same version across dependencies and lockfile.
+ * Exits 1 on mismatch.
  */
 
 const fs = require('fs')
@@ -67,7 +62,8 @@ function parseLockfile() {
       continue
     }
     
-    // Parse @hcengineering package entries like '  @hcengineering/platform@0.7.3:' or '@hcengineering/analytics@0.7.4:'
+    // Parse @hcengineering package entries like ' @hcengineering/platform@0.7.3:' or
+    // '@hcengineering/analytics@0.7.4:'
     if (inPackagesSection && line.match(new RegExp(`^  '?(${SCOPE}/[^@']+)@([^':()]+)(?:\\([^)]*\\))*'?:`))) {
       const packageMatch = line.match(new RegExp(`^  '?(${SCOPE}/[^@']+)@([^':()]+)(?:\\([^)]*\\))*'?:`))
       if (packageMatch) {
@@ -371,9 +367,6 @@ function displayLockfileMismatches(mismatches) {
   }
 }
 
-/**
- * Main function
- */
 function main() {
   console.log('🚀 Checking @hcengineering dependency versions...\n')
   

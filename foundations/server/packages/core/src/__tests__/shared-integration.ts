@@ -14,23 +14,8 @@
 //
 
 /**
- * Shared integration test suite for database adapters (MongoDB and PostgreSQL)
- * These tests verify that both adapters work correctly against real database instances
- *
- * Usage in your adapter test file:
- * ```typescript
- * import { runSharedIntegrationTests } from '@hcengineering/server-core/src/__tests__/shared-integration.test'
- *
- * describe('My Adapter Tests', () => {
- *   // ... setup code ...
- *
- *   runSharedIntegrationTests('PostgreSQL', () => ({
- *     client,
- *     operations,
- *     taskPlugin
- *   }))
- * })
- * ```
+ * Shared integration test suite for DB adapters (MongoDB and PostgreSQL); call
+ * runSharedIntegrationTests from an adapter's own test file to run it against a real instance.
  */
 
 import core, { type Client, type Ref, SortingOrder, type Space, type TxOperations } from '@hcengineering/core'

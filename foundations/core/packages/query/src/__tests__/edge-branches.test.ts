@@ -138,9 +138,8 @@ describe('matchQuery: a document outside the result becomes matching', () => {
   })
 
   it('rejects a mixin query when the updated document still lacks the mixin', async () => {
-    // getDocFromCache fetches by q._class, so a mixin query whose doc never got the mixin comes
-    // back realDoc == null (the client can't find it under the mixin class) - same guard as the
-    // "ghost object" case above, reached here through a real, existing document instead.
+    // getDocFromCache fetches by q._class, so a mixin query whose doc never got the mixin
+    // returns realDoc==null - same guard as the 'ghost object' case, reached via a real doc.
     const { liveQuery, factory } = await getClient()
     const id = await createProject(factory, 'no-mixin')
     const q = await subscribe<any>(liveQuery, test.mixin.TestProjectMixin, { prjName: 'mixin-target' })
@@ -439,9 +438,8 @@ describe('Refs.updateDocuments: clean on a class key the cache never populated',
     const qMap = (liveQuery as any).queries.get(test.class.TestProject) as Map<any, any>
     const internalQuery = Array.from(qMap.values()).find((it: any) => it.query.prjName === 'never-matches-anything')
 
-    // Seed a doc straight into the ResultArray, bypassing handleDocAdd/callback - the refs cache
-    // was therefore never populated for this doc's class key, so the cleanup below hits the
-    // early-continue guard for an unknown key instead of an existing one.
+    // Seeds a doc into ResultArray, bypassing handleDocAdd/callback, so refs cache was never
+    // populated for its class - cleanup hits the early-continue guard for an unknown key.
     const fakeDoc = {
       _id: generateId(),
       _class: test.class.TestProject,

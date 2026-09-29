@@ -58,9 +58,8 @@ describe('TxProcessor.buildDoc2Doc', () => {
 
   it('[remove] alone -> null (remove always wins; deletion is NOT lost across batches)', () => {
     const remove = deleteDoc(taskClass, space, 'task1' as Ref<Task>)
-    // Important: buildDoc2Doc checks remove FIRST, so even if the create was in
-    // a previous batch and only the remove tx arrives now, the result is null,
-    // and loadDocsFromTx puts it into toRemove correctly.
+    // buildDoc2Doc checks remove FIRST: even if create was a previous batch and only remove
+    // arrives now, result is null and loadDocsFromTx correctly puts it in toRemove.
     expect(TxProcessor.buildDoc2Doc([remove])).toBeNull()
   })
 

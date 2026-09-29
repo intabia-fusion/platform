@@ -18,9 +18,8 @@ const config: PlaywrightTestConfig = {
     {
       name: 'QMS',
       use: {
-        // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner, on top of
-        // #profile-button - every click on it then waits the toast out. setTestOptions() does the
-        // same, but only for the tests that call it.
+        // A toast lives 10s (packages/ui/src/utils.ts), bottom-left, over #profile-button -
+        // clicks wait it out. setTestOptions() does that too, only for tests that call it.
         storageState: {
           cookies: [],
           origins: [

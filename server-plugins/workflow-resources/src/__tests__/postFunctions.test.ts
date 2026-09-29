@@ -1274,7 +1274,8 @@ describe('Workflow Post-Functions', () => {
       ]
     })
 
-    // Expect 1 TxUpdateDoc for title, 1 TxUpdateDoc for tags, 1 TxCreateDoc (collection CUD) for collaborators
+    // Expect 1 TxUpdateDoc for title, 1 for tags, 1 TxCreateDoc (collection CUD) for
+    // collaborators.
     expect(res.length).toBe(3)
 
     const titleTx = res.find((tx: any) => tx._class === 'core:class:TxUpdateDoc' && tx.operations?.title != null) as any

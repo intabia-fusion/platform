@@ -165,9 +165,8 @@ async function forceFinishAllMeetings (): Promise<number> {
 }
 
 /**
- * Waits until no meeting is Active or Pending: a leftover one carries its owners and members into
- * the next test and breaks owner-only and locked-room checks. Returns whether anything had to be
- * finished - a client watching such a meeting navigates to its MeetingMinutes shortly after.
+ * Waits until no meeting is Active/Pending - a leftover carries owners/members into the next
+ * test, breaking owner-only and locked-room checks. Returns whether it had to finish one.
  */
 export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<boolean> {
   const client = await getMeetingsRestClient()
@@ -210,9 +209,10 @@ export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promi
   }).toPass({ intervals: retryIntervals, timeout: timeoutMs })
 }
 
-/** Closes pages and contexts in `finally`. A half-closed LiveKit session causes DTLS
- *  handshake timeouts on the next connect. Windows from `loveWindow` are shared by the whole
- *  suite: those are rolled back instead of closed. */
+/**
+ * Closes in `finally`: a half-closed LiveKit session causes DTLS handshake timeouts on the
+ * next connect. `loveWindow` windows are suite-shared, so those get rolled back, not closed.
+ */
 export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext, pages: Page[] }>): Promise<void> {
   const sharedCtx = new Set<BrowserContext>()
   const sharedPage = new Set<Page>()
@@ -238,9 +238,8 @@ export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext
 export const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
 
 /**
- * ai-bot auto-joins every meeting of a room with `startWithTranscription` and creates its own
- * ParticipantInfo - a third avatar on the floor grid and a second audio egress nobody asked for.
- * The suite never asserts on transcription that came from the room setting, so switch it off once.
+ * ai-bot auto-joins rooms with `startWithTranscription`, adding a third avatar and a second
+ * audio egress nobody asked for. The suite never asserts on it, so switch it off once.
  */
 export async function disableRoomAutoTranscription (): Promise<void> {
   const sys = await getSystemRestClient()
@@ -325,10 +324,8 @@ async function dismissPopups (page: Page): Promise<void> {
 }
 
 /**
- * Leaves whatever meeting the window is in. Closing the context used to do this implicitly; a
- * live LiveKit session left behind is force-finished by the server instead, and the client then
- * navigates to the MeetingMinutes page in the middle of the next test.
- * Returns whether there was one - only such a window can be navigated away later.
+ * Leaves whatever meeting the window is in - closing the context used to do this implicitly;
+ * now leftovers get server-finished and navigate away mid-test. Returns whether there was one.
  */
 async function leaveMeeting (page: Page): Promise<boolean> {
   if (page.isClosed()) return false
@@ -354,9 +351,8 @@ function onOffice (page: Page): boolean {
 }
 
 /**
- * Puts the window back on the floor and keeps it there. Finishing a meeting makes its client
- * navigate to the MeetingMinutes page, and that navigation lands after the server call returns -
- * restoring the floor once is not enough, the next test then clicks a room that is not on screen.
+ * Puts the window back on the floor and keeps it there: finishing a meeting navigates its
+ * client to minutes after the server call returns, so restoring once isn't enough.
  */
 async function settleOnOffice (page: Page, mayNavigate: boolean): Promise<void> {
   if (page.isClosed()) return
@@ -381,9 +377,8 @@ export async function resetLoveWindows (): Promise<void> {
   for (const { page } of loveWindows.values()) {
     left.set(page, await leaveMeeting(page))
   }
-  // The client keeps a `love.activeMeeting` anchor in sessionStorage and reconnects to it on the
-  // next store tick - and `connectToMeeting` navigates to the meeting's minutes page on the way, so
-  // a window carrying a stale anchor leaves the floor in the middle of the following test.
+  // The client keeps a `love.activeMeeting` sessionStorage anchor and reconnects to it next
+  // store tick, navigating to minutes on the way - a stale anchor leaves the floor mid-test.
   for (const { page } of loveWindows.values()) {
     await page
       .evaluate(() => {
@@ -394,9 +389,8 @@ export async function resetLoveWindows (): Promise<void> {
   // After the windows have left, so nothing is dropped mid-test, and before the settle loop below,
   // which is what absorbs the navigation a killed session triggers.
   const closed = await closeLiveKitRooms()
-  // A test that left through the UI still leaves the meeting doc behind, and finishing it here is
-  // what makes its client navigate away - so the late navigation follows the server change, not
-  // the UI leave, and every window has to be watched when the cleanup changed anything.
+  // A UI-left test still leaves the meeting doc behind; finishing it here is what makes its
+  // client navigate away - so every window must be watched once cleanup changes anything.
   const finished = await waitForActiveMeetingsToFinish()
   for (const { page } of loveWindows.values()) {
     await settleOnOffice(page, finished || closed || (left.get(page) ?? false))
@@ -417,9 +411,8 @@ export async function waitConnected (page: Page, timeout = 60000): Promise<void>
 }
 
 /**
- * Connect on the floor's room panel. The MeetingMinutes page renders a `meeting-connect` of its own,
- * and for a finished meeting that one connects to nothing - an unscoped locator picks whichever is
- * in the DOM and the test then waits out its timeout on a dead button.
+ * Connect on the floor's room panel, scoped: MeetingMinutes has its own `meeting-connect` too,
+ * dead for a finished meeting - an unscoped locator can grab it and hang the timeout.
  */
 export function roomPanelConnect (page: Page): Locator {
   return page.locator('[data-id="room-panel"] [data-id="meeting-connect"]').getByRole('button').first()
@@ -463,9 +456,8 @@ export async function clickOfficeOf (page: Page, lastName: string): Promise<Loca
 }
 
 /**
- * Retried as a whole: the MeetingMinutes page of a meeting that just finished elsewhere carries its
- * own Connect button, so a navigation landing between the room click and the click on Connect ends
- * up pressing a button that can never connect - and the wait below then burns its whole timeout.
+ * Retried as a whole: a meeting that just finished elsewhere leaves its own dead Connect
+ * button on the minutes page - landing there between clicks presses it and burns the timeout.
  */
 export async function joinRoom (page: Page, name: string, timeout = 45000): Promise<void> {
   await retry(async () => {
@@ -506,20 +498,17 @@ export async function firstAvailableRoom (page: Page, exclude: string[] = []): P
       .then(() => true)
       .catch(() => false)
     if (!rendered) continue
-    // Occupied means locked: someone else's meeting renders Knock where Connect would be, and the
-    // caller then waits out its whole budget on a button that never appears. A participant row the
-    // previous test failed to drain is enough - always the first candidate, always the same room.
+    // Occupied means locked: someone else's meeting renders Knock, not Connect, so the caller
+    // waits out the whole timeout. One undrained row from a prior test is enough - same room.
     if ((await occupiedCells(page, name)) === 0) return name
     present.push(name)
   }
   return present[0] ?? null
 }
 
-/** The live MeetingMinutes of a room, once the server has created it. */
 /**
- * `since` is the moment the caller started joining: the previous test's meeting in the same room
- * can still read as Active for a few hundred ms after it was finished, and a test that picks it up
- * then drives a dead meeting - its recordings never appear and the wait burns its whole timeout.
+ * `since` = join-start moment; a same-room meeting can still read Active briefly after
+ * finishing - picking it up burns the timeout on a dead meeting with no recordings.
  */
 export async function waitRoomMeeting (roomName: string, timeoutMs = 30000, since = 0): Promise<MeetingMinutes> {
   const sys = await getSystemRestClient()
@@ -546,10 +535,8 @@ export async function joinFirstAvailableRoom (page: Page, timeout = 45000): Prom
 }
 
 /**
- * A meeting finishing anywhere navigates its watchers to the MeetingMinutes page, and that
- * navigation can land after the floor was restored. Both pages carry a Connect button, so a window
- * left on the minutes page fails much later, on a connect that can never succeed - every entry into
- * the floor starts by making sure we are actually on it.
+ * Finishing a meeting navigates watchers to its minutes page, which can land after the floor
+ * was restored. Both pages have Connect, so entry always confirms we're on the floor.
  */
 async function backToFloorIfLost (page: Page): Promise<void> {
   await dismissPopups(page)
@@ -580,9 +567,8 @@ export async function clickRoomByName (page: Page, name: string): Promise<void> 
     if (!gone) await openLove(page)
   }
   await backToFloorIfLost(page)
-  // Two waits, not one: the card can be slow to render (wait for it), or rendered and covered by a
-  // panel (fail fast and let the caller retry from the floor). One combined timeout cannot tell
-  // those apart and spends the same 15s on both.
+  // Two waits, not one: a slow card needs waiting, one covered by a panel needs failing fast
+  // so the caller retries from the floor - one 15s timeout can't tell the two apart.
   const card = page.locator(`[data-id="room-${name}"]`).first()
   await card.waitFor({ state: 'visible', timeout: 20000 })
   await card.click({ timeout: 10000 })

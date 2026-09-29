@@ -32,8 +32,8 @@ import {
 } from '../apiKeys'
 import { type AccountDB } from '../types'
 
-// Only selectWorkspace is faked, to capture the interim token loginWithApiKey hands it - everything
-// else (createAccount, publishMembersChanged, generateToken/decodeToken) runs for real.
+// Only selectWorkspace is faked, to capture loginWithApiKey's interim token; everything else
+// runs for real (createAccount, publishMembersChanged, generateToken/decodeToken).
 jest.mock('../utils', () => ({
   ...jest.requireActual('../utils'),
   selectWorkspace: jest.fn().mockResolvedValue({ token: 'final-token' })

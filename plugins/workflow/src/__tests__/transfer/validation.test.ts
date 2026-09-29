@@ -435,7 +435,8 @@ describe('Findings of the second pass', () => {
         expect.objectContaining({ kind: 'status', params: { name: 'Other' } })
       ])
     )
-    // A plain string label on the type would be translated on every render; the mock class has no label
+    // A plain string label on the type would be translated every render; the mock class has
+    // none.
     expect(config.attributes?.[1].type).toEqual({ _class: 'core:class:TypeString' })
     expect(config.mixins).toEqual([
       { id: 'mixin-1', label: getEmbeddedLabel('Jira fields'), icon: undefined, color: 'x', attributes: [] }

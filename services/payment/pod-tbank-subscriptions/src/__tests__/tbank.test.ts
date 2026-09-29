@@ -21,9 +21,8 @@ import TbankPayments, {
   describeFetchError
 } from '../tbank'
 
-// Every test drives the client through a stubbed global.fetch — no real network, no real terminal.
-// This is the only layer that exercises the actual request serialization / signature / response
-// parsing of the clean-room client (the pod's own tests stub the client out entirely).
+// Every test drives the client through a stubbed fetch - the only layer testing real request
+// serialization/signature/parsing; the pod's own tests stub the client entirely.
 
 const realFetch = global.fetch
 
@@ -57,8 +56,8 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-// Recompute the reference token independently of the implementation (mirrors the T-Bank algorithm),
-// so a subtle regression in generateToken is caught rather than validated against itself.
+// Recomputes the reference token independently (mirrors the T-Bank algorithm), so a regression
+// in generateToken is caught, not validated against itself.
 function referenceToken (fields: Record<string, any>, password: string): string {
   const root: Record<string, string> = { Password: password }
   for (const [k, v] of Object.entries(fields)) {
@@ -140,7 +139,8 @@ describe('post() envelope', () => {
 
     const body = sentBody(fetchMock)
     expect(body.TerminalKey).toBe('term')
-    // Token computed over the full body (TerminalKey included), verified against an independent recompute.
+    // Token is computed over the full body (TerminalKey included), verified against a
+    // recompute.
     const { Token, ...rest } = body
     expect(Token).toBe(referenceToken(rest, 'pass123'))
   })
@@ -176,7 +176,8 @@ describe('endpoint routing (7 methods)', () => {
     })
   }
 
-  // verifyNotificationSignature is the 7th surface (webhook side): round-trips the same token algorithm.
+  // verifyNotificationSignature: 7th surface (webhook side), round-trips the same token
+  // algorithm.
   test('verifyNotificationSignature accepts a self-signed notification and rejects a tampered one', () => {
     const t = client()
     const notification = { TerminalKey: 'term', OrderId: 'ord-1', Status: 'CONFIRMED', PaymentId: 42, Success: true }

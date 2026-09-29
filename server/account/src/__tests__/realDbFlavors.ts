@@ -107,8 +107,8 @@ export async function clearTables (dbRef: PostgresClientReference, dbUuid: strin
 }
 
 /**
- * Run migrations, retrying only transient connection failures. A DDL the flavor rejects fails fast
- * with its own error instead of spinning until the jest hook times out.
+ * Run migrations, retry only transient connection failures - a rejected DDL fails fast instead
+ * of spinning until the jest hook times out.
  */
 export async function migrateRealDb (account: PostgresAccountDB, dbUri: string, attempts = 5): Promise<void> {
   for (let i = 1; ; i++) {

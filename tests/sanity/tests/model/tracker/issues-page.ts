@@ -203,9 +203,8 @@ export class IssuesPage extends CommonTrackerPage {
   async reportTime (time: number): Promise<void> {
     const expected = await toTime(time)
     let submitted = false
-    // The dialog can close without persisting the report (the OK click lands over a form that
-    // never saved), leaving the issue at 0h. Verify the value landed and redo the report if not.
-    // Only skip once we have submitted here - the editor can still show the previous issue's total.
+    // The dialog can close without persisting (OK lands over an unsaved form), leaving 0h - verify
+    // and redo if not. Skip only once submitted; the editor can still show the previous total.
     await expect(async () => {
       if (submitted && (await this.reportedTimeEditor().innerText()).includes(expected)) return
 
@@ -727,9 +726,8 @@ export class IssuesPage extends CommonTrackerPage {
     })
   }
 
-  // The attachment list is a hover tooltip on a DocNavLink. Clicking the link runs NavLink's
-  // closeTooltip(), so a click races the very popup these helpers read - and under load the
-  // tooltip can also close on its own between the hover and the assertion. Re-hover each attempt.
+  // The attachment list is a hover tooltip on a DocNavLink; clicking it runs closeTooltip(), racing
+  // the popup these helpers read - under load it can close on its own too. Re-hover each attempt.
   async checkAddAttachmentPopupContainsFile (issueName: string, filePath: string): Promise<void> {
     await expect(async () => {
       await this.hoverAttachmentButton(issueName)

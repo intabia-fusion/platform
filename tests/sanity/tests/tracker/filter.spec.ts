@@ -12,7 +12,8 @@ test.use({
 })
 
 test.describe('Tracker filters tests', () => {
-  // Opening every filtered issue makes the test scale with leftover data; a handful proves the filter.
+  // Opening every filtered issue makes the test scale with leftover data; a handful proves the
+  // filter.
   const issuesToCheck = 5
 
   let issuesPage: IssuesPage

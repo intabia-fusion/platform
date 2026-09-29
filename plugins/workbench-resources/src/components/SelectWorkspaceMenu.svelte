@@ -44,7 +44,6 @@
 
   import { workspacesStore } from '../utils'
   import { crossWorkspaceNotificationStore } from '../workbench'
-  // import Drag from './icons/Drag.svelte'
 
   onMount(() => {
     void getResource(login.function.GetWorkspaces).then(async (f) => {

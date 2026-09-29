@@ -119,7 +119,7 @@ export class WorkflowPage {
   }
 
   // The aside can still close after openAside's 200ms re-check, with the name already typed (run
-  // 20260915-143459): Create then waited 30s for a button that was gone. Start the form over instead.
+  // 20260915-143459): Create waited 30s for a button that was gone. Start the form over instead.
   private async createInAside (open: Locator, name: string, row: Locator, pick: () => Promise<void>): Promise<void> {
     for (let attempt = 1; ; attempt++) {
       await this.openAside(open)

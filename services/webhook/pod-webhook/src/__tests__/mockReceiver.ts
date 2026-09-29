@@ -31,9 +31,8 @@ export interface QueuedResponse {
 
 const DEFAULT_RESPONSE: QueuedResponse = { status: 200, body: '{}' }
 
-// Stand-in for an external system receiving outgoing webhooks (delivery itself doesn't exist yet -
-// see docs/memory/webhook_ingest_pod.md). Plain `http`, not express: no body parsing gets in the way
-// of checking raw bytes.
+// Stand-in for an external system receiving webhooks (delivery doesn't exist yet, see
+// docs/memory/webhook_ingest_pod.md). Plain `http`, not express, for raw bytes.
 export interface MockReceiver {
   url: string
   requests: CapturedRequest[]
@@ -78,7 +77,8 @@ export async function startMockReceiver (): Promise<MockReceiver> {
       responses.push(...items)
     },
     close: async () => {
-      // server.close() alone waits for keep-alive sockets to go idle - destroy them so jest doesn't hang.
+      // server.close() alone waits for keep-alive sockets to idle - destroy them so jest
+      // doesn't hang.
       for (const socket of sockets) socket.destroy()
       await new Promise<void>((resolve) =>
         server.close(() => {

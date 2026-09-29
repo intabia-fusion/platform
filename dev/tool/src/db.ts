@@ -489,11 +489,8 @@ export async function migrateMergedAccounts (
       try {
         const socialKeys = personAccounts.social_keys
 
-        // Every social id in the old account might either be already in the new account or not in the accounts at all
-        // So we want to
-        // 1. Take the first social id with the existing account
-        // 2. Merge all other accounts into the first one
-        // 3. Create social ids for the first account which haven't had their own accounts
+        // Social ids of the old account may or may not have their own accounts. Merge them into the
+        // first one that does, and create accounts for the rest.
         const toAdd = new Set<SocialKey>()
         const toMergePersons = new Set<PersonUuid>()
         const toMergeAccounts = new Set<AccountUuid>()
@@ -859,7 +856,6 @@ async function migrateWorkspace (
     }
     if (existingByUrl != null) {
       console.log('Conflicting workspace url', url)
-      // generate new url
       url = `${url}-${generateId('-')}`
       console.log('Generating new url', url)
     }

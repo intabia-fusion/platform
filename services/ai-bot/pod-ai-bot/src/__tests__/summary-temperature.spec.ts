@@ -14,9 +14,8 @@
 //
 
 /**
- * Summaries extract facts, so the sampling spread is noise: the same transcript produced three
- * different texts across runs while the provider default was in effect. The value is configurable
- * so it can be tuned without rebuilding the image.
+ * Summaries extract facts, so sampling spread is noise: the same transcript gave three different
+ * texts at the provider default. Configurable so it can be tuned without a rebuild.
  */
 describe('SummaryTemperature', () => {
   const base = {

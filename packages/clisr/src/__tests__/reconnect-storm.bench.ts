@@ -146,9 +146,8 @@ async function waitForSessions (server: ClisrServer, expected: number, timeoutMs
   return false
 }
 
-// Wait until session count drops below `before`. The "drop" is what makes
-// "time-to-stable" meaningful — otherwise the recovery timer measures the
-// gap between firing the storm and the server merely noticing it.
+// Wait until session count drops below `before` - that drop is what makes time-to-stable
+// meaningful, else the recovery timer just measures the gap until the server notices the storm.
 async function waitForDrop (server: ClisrServer, before: number, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {

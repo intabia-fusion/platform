@@ -139,9 +139,8 @@ export class DocumentsPage extends CommonPage {
   }
 
   async clickAddDocumentIntoDocument (documentTitle: string): Promise<void> {
-    // The button only exists while the row is hovered, and the navigator keeps re-rendering as
-    // documents arrive - the row moves under the sticky teamspace header and the hover is lost.
-    // Hovering once outside the retry leaves the click waiting out the whole test timeout.
+    // The button only shows on hover; the navigator re-renders as documents arrive, shifting the
+    // row under the sticky header and losing hover - retry, don't hover just once.
     await expect(async () => {
       await this.buttonDocumentWrapper(documentTitle).hover()
       await this.buttonAddDocumentToDocument(documentTitle).click({ timeout: 3000 })

@@ -150,9 +150,8 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await expect(async () => {
         await this.buttonStatus().click()
         await this.selectFromDropdown(this.page, status)
-        // Wait for the value to stop changing, not for one matching read: the stored status arrives
-        // over the fresh one a moment later, and the check at the end of the test sees that one.
-        // Case-insensitive on purpose: callers pass labels like "ToDo" while the UI renders "Todo".
+        // Wait for the value to stabilize: the stored status overwrites the fresh one, so the final
+        // check sees a stale value. Compare lowercase - callers pass "ToDo" vs UI's "Todo".
         const settled = await waitStable(
           async () => ((await this.buttonStatus().textContent()) ?? '').trim().toLowerCase(),
           { stableFor: 1000, interval: 200, timeout: 8000 }
@@ -325,9 +324,8 @@ export class IssuesDetailsPage extends CommonTrackerPage {
     // hits a strict-mode violation or links the wrong issue, and the relation check fails later.
     const item = this.popupListItems(issueTitle)
     await expect(item).toHaveCount(1, { timeout: 15000 })
-    // The popup closing is the receipt for the click: a click that lands while the list is still
-    // re-rendering leaves it open, and the relation this was supposed to create never appears -
-    // which only shows up much later, as a missing row on the issue.
+    // The popup closing is the receipt for the click: one landing mid re-render leaves it open and
+    // the relation never gets created - showing up later only as a missing row on the issue.
     await retry(async () => {
       if ((await this.page.locator('div.popup').count()) === 0) return
       await item.click()
@@ -337,9 +335,8 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async moreActionOnIssueWithSecondLevel (actionFirst: string, actionSecond: string): Promise<void> {
     await this.buttonMoreActions().click()
-    // The submenu is gated by MouseSpeedTracker (see openSubmenu): a fast hover then click leaves
-    // the parent marked active with nothing under it, and the second-level click then waits out
-    // the whole test timeout.
+    // The submenu is gated by MouseSpeedTracker (openSubmenu): a fast hover then click leaves the
+    // parent marked active with nothing under it, so the second-level click waits out the timeout.
     await retry(async () => {
       if (await this.popupSpanLabel(actionSecond).isVisible()) return
       await this.antiPopupSubMenueBtn(actionFirst).hover()

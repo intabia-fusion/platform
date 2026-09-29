@@ -92,9 +92,8 @@ describe('Month', () => {
     expect(detail.getDate()).toBe(5)
   })
 
-  // Suspected source bug: the click handler updates `selectedDate` but never reassigns `days`
-  // (only changeMonth does), and `days` is what the template's `selected` class reads from - so
-  // the highlight never actually moves to the clicked day. Pinned as current behaviour.
+  // Suspected bug: click handler updates selectedDate but never reassigns days (changeMonth does) -
+  // days drives the template's selected class, so the highlight never moves, pinned.
   it('does not move the visual selection on click, despite updating internal state', async () => {
     const { host, component } = mount(null)
     await tick()

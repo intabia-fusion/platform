@@ -189,17 +189,14 @@ import {
   purgeAccount
 } from './deletion'
 
-// Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
-// to the database layer when searching/inserting as they may contain SQL injection
-// !!! NEVER PASS "params" DIRECTLY in any DB functions !!!
+// Destructure params to avoid passing extra fields to the DB layer (SQL injection risk). Never
+// pass "params" directly to any DB function.
 
 const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
 const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
 
-/* =================================== */
 /* ============OPERATIONS============= */
-/* =================================== */
 
 /**
  * Given an email and password, logs the user in and returns the account information and token.
@@ -539,8 +536,8 @@ export async function validateOtp (
       }
 
       if (targetAccount == null) {
-        // only person exists means there's no verified social id associated with it -> merge it to the current account
-        // doMergePersons will fail if there's a verified social id
+        // Only person exists means there's no verified social id — merge it into the current
+        // account.
 
         await doMergePersons(db, callerAccountUuid, emailSocialId.personUuid)
 
@@ -1821,9 +1818,7 @@ export async function deleteWorkspace (
   }
 }
 
-/* =================================== */
 /* ==========READ OPERATIONS========== */
-/* =================================== */
 
 export async function getRegionInfo (
   ctx: MeasureContext,
@@ -2643,13 +2638,8 @@ async function addEmailSocialId (
   const normalizedEmail = normalizeValue(email)
   const existing = await db.socialId.findOne({ type: SocialIdType.EMAIL, value: normalizedEmail })
 
-  // This schema should be applied to all types in general, they should only differ by the verification process.
-  // If none exists, create a new one and proceed to verification
-  // If exists only for person without account - will be able to merge person to the account, proceed to verification
-  // If exists for this account but not verified - proceed to verification right away
-  // If exists for this account and verified - throw an error (already exists)
-  // If exists for another account and not verified - will move only this id to the current account, proceed to verification
-  // If exists for another account and verified - throw an error for now, support merge accounts later, maybe through a different procedure
+  // Social id resolution: none exists - create and verify; unverified - verify; verified for this
+  // account - error; verified for another account - error (account merge to be supported later).
   let targetSocialId: SocialId
   if (existing != null) {
     if (existing.verifiedOn != null) {
@@ -3386,9 +3376,7 @@ export async function getWorkspaceUsersWithPermission (
   return await db.getWorkspaceUsersWithPermission(workspace, permission)
 }
 
-/* =================================== */
 /* ============ A P I  K E Y S ======= */
-/* =================================== */
 
 // Same scheme as workspaceLimitPerUser/Account.maxWorkspaces, but per-workspace: env default, Workspace.maxApiKeys overrides.
 const apiKeyLimitPerWorkspace = parseEnvInt(process.env.API_KEY_LIMIT_PER_WORKSPACE, 5)

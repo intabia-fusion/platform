@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// $inc-only txes (collection counters) must not trigger server round trips for live
-// queries that do not reference the incremented field, and an equal-timestamp $inc (derived
-// counter txes share the parent tx timestamp) must be applied locally instead of re-fetched.
+// $inc-only txes (counters) must not trigger round trips for unrelated queries; an
+// equal-timestamp $inc (sharing the parent's timestamp) applies locally, not re-fetched.
 
 import core, {
   createClient,
@@ -338,9 +337,8 @@ describe('$inc match handling — doc inside the result (handleDocUpdate)', () =
   })
 })
 
-// An equal-timestamp non-$inc update sends every subscriber through getCurrentDoc, which reads
-// the doc from the per-batch docCache. All subscribers must end up with their own copy: a shared
-// object would take one $inc per subscriber, which is how a collection counter drifts upwards.
+// Equal-timestamp non-$inc sends every subscriber through getCurrentDoc (per-batch docCache);
+// each needs its own copy, or one $inc per subscriber drifts the counter.
 describe('$inc on a doc shared by several queries', () => {
   async function shared (
     count: number,
@@ -531,9 +529,8 @@ describe('duplicate delivery of one $inc tx', () => {
   })
 
   it('ignores a re-delivered $inc tx that was first applied by timestamp', async () => {
-    // The real shape of a comment counter: the issue is created well before the comment, so the
-    // first delivery takes the `modifiedOn <` branch - after which the doc sits at tx.modifiedOn
-    // and the repeat looks like an equal-timestamp $inc.
+    // Real shape of a comment counter: issue predates comment, so delivery takes `modifiedOn
+    // <`; doc sits at tx.modifiedOn, repeat looks like equal-timestamp $inc.
     const { liveQuery, storage, txFactory } = await getCountingClient()
     const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'dup-later' })
 

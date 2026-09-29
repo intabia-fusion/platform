@@ -66,10 +66,8 @@ function createSessionData (account: Account): SessionData {
 }
 
 /**
- * Generate test dataset: SPACE_COUNT spaces with USER_COUNT users.
- * Each space gets ~MEMBERS_PER_SPACE_AVG random members.
- * 80% of spaces are private, 20% public.
- * 5% of spaces are archived.
+ * Generates SPACE_COUNT spaces / USER_COUNT users, ~MEMBERS_PER_SPACE_AVG members/space; 80%
+ * private / 20% public, 5% archived.
  */
 function generateSpaces (): Space[] {
   const users: string[] = []

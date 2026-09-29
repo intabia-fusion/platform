@@ -15,9 +15,8 @@
 //
 
 /**
- * Integration tests for PostgreSQL adapter against real CockroachDB
- * These tests require a running CockroachDB instance (via docker-compose)
- * Run: cd tests && ./prepare-tests.sh
+ * Integration tests for the PostgreSQL adapter against real CockroachDB (docker-compose). Run: cd
+ * tests && ./prepare-tests.sh
  */
 
 jest.mock('../version', () => ({
@@ -98,9 +97,8 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
       throw err
     }
 
-    // Initialize the test database with schema and data
-    // Note: createPostgresAdapter and createPostgresTxAdapter will create
-    // their own connections to the UUID database (not using adminClientRef)
+    // createPostgresAdapter/createPostgresTxAdapter open their own connections to the UUID database
+    // - they don't reuse adminClientRef.
     await initDb()
   })
 
@@ -617,7 +615,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     let nestedCommentId: Ref<TaskComment>
 
     beforeEach(async () => {
-      // Create parent task
       parentTaskId = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
         name: 'Parent Task',
         description: 'Has nested structure',
@@ -968,13 +965,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     it('should match documents with missing fields when using $ne', async () => {
       const tasks = await client.findAll<Task>(taskPlugin.class.Task, { rate: { $ne: 100 } })
 
-      // Should match:
-      // - Task with rate 50 (different value)
-      // - Task with rate null (null != 100)
-      // - Task without rate field (missing field should match)
-      // Should NOT match:
-      // - Task with rate 100
-
       expect(tasks).toHaveLength(3)
 
       const taskIds = tasks.map((t) => t._id)
@@ -1013,12 +1003,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
       // Query for tasks where status is not Open
       const tasks = await client.findAll<Task>(taskPlugin.class.Task, { status: { $ne: TaskStatus.Open } })
 
-      // Should match:
-      // - Task with status Close (different value)
-      // - Task without status field (missing field should match)
-      // Should NOT match:
-      // - Task with status Open
-
       expect(tasks.length).toBeGreaterThanOrEqual(2)
 
       const taskIds = tasks.map((t) => t._id)
@@ -1051,12 +1035,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
       const tasks = await client.findAll<Task>(taskPlugin.class.Task, {
         reproduce: { $ne: TaskReproduce.Always }
       })
-
-      // Should match:
-      // - Task with reproduce Rare (different value)
-      // - Task without reproduce field (missing field should match)
-      // Should NOT match:
-      // - Task with reproduce Always
 
       expect(tasks.length).toBeGreaterThanOrEqual(2)
 
@@ -1712,7 +1690,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     })
   })
 
-  // Run shared integration tests
   runSharedIntegrationTests('PostgreSQL', () => ({
     client,
     operations,

@@ -41,7 +41,7 @@ const mockMessageClasses = ['chunter:class:ChatMessage', 'activity:class:DocUpda
 // eslint-disable-next-line import/first
 import { unreadThreadsCountStore } from '../stores'
 
-// Through a subscription: `get` of the shared svelte mock answers a readable with its initial value.
+// Via subscription: `get` on the shared svelte mock returns a readable's initial value.
 function current<T> (store: Readable<T>): T {
   let value: T | undefined
   store.subscribe((it) => {

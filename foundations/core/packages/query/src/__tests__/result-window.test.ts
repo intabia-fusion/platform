@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// A limited, sorted query shows a window over a larger set. Every tx has to keep that window the
-// right size, in the right order, and refill it from the server when a row leaves - the failure
-// mode is a list that silently loses or duplicates rows.
+// A limited, sorted query is a window over a larger set; every tx must keep size/order right and
+// refill from the server when a row leaves - else rows are silently lost or duplicated.
 
 import core, {
   createClient,
@@ -221,9 +220,8 @@ describe('limited and sorted results', () => {
   })
 
   it('leaves total stale when a document outside the window is removed', async () => {
-    // Known limitation: TxRemoveDoc carries no attributes, so a document the result never held
-    // cannot be tested against the query - `handleDocRemove` only adjusts total for rows it has.
-    // The count corrects itself on the next refresh. This test pins the behaviour, not an ideal.
+    // TxRemoveDoc has no attributes, so a doc the result never held can't be query-tested -
+    // handleDocRemove just adjusts total. Refresh self-corrects it; not ideal, but pinned.
     const { liveQuery, factory } = await getClient()
     const ids: Array<Ref<TestProject>> = []
     for (const n of ['o-a', 'o-b', 'o-c']) {

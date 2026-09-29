@@ -90,8 +90,8 @@ export class TrackerNavigationMenuPage extends CommonPage {
   async makeActionWithProject (projectName: string, action: string): Promise<void> {
     const row = this.buttonProjectsParent().filter({ hasText: projectName })
     const toolsButton = row.locator('xpath=../..').locator('div[class*="tools"] button')
-    // The tools button lives only while the row is hovered, and a rename re-renders the row mid-hover;
-    // park the pointer first - a second hover on the same spot fires no mousemove.
+    // The tools button lives only while the row is hovered, and a rename re-renders the row
+    // mid-hover; park the pointer first - a second hover on the same spot fires no mousemove.
     await retry(async () => {
       await this.page.mouse.move(0, 0)
       await row.hover()

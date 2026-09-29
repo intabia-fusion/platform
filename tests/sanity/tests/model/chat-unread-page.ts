@@ -4,8 +4,8 @@ import { CommonPage } from './common-page'
 const badgeTimeout = 30000
 
 /**
- * What tells the user there is something unread in the chat: application markers on the left rail,
- * counters in the chat navigator, the "New" separator and the jump-to-latest button of a channel.
+ * What tells the user something is unread: application markers on the left rail, counters in
+ * the chat navigator, the "New" separator, and a channel's jump-to-latest button.
  */
 export class ChatUnreadPage extends CommonPage {
   constructor (readonly page: Page) {

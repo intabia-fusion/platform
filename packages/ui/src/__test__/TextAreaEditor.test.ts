@@ -88,8 +88,8 @@ describe('TextAreaEditor', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
-  // Suspected source bug: TextArea forwards a bare native keydown event (no CustomEvent wrapper),
-  // but onKeydown reads `e.detail.key` instead of `e.key` - so Enter never actually submits. Pinned.
+  // Suspected source bug: TextArea forwards a bare native keydown event (no CustomEvent
+  // wrapper); onKeydown reads `e.detail.key`, not `e.key` - Enter never submits. Pinned.
   it('does not submit on Enter keydown - detail.key is never set on the forwarded native event', () => {
     const { component, textarea } = mount({ value: 'hello' })
     const onSubmit = vi.fn()

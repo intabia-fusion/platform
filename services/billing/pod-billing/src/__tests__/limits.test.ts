@@ -102,7 +102,7 @@ function tierLimits (limits: Record<string, number>): void {
   getSubscriptionsMock.mockResolvedValue([{ type: 'tier', status: 'active', limits }])
 }
 
-// Unpaid tier (bad status, no active limits) carrying a free fallback — billing must enforce free.
+// Unpaid tier (bad status, no active limits) with a free fallback - billing must enforce free.
 function unpaidWithFree (freeLimits: Record<string, number>): void {
   getSubscriptionsMock.mockResolvedValue([{ type: 'tier', status: 'past_due', freeLimits }])
 }
@@ -179,7 +179,8 @@ describe('LimitsEngine', () => {
   })
 
   it('unpaid tier enforces the free fallback limit', async () => {
-    // No active paid tier, but a free fallback caps tokens at 1000 -> crossing it still flips exhausted.
+    // No paid tier, but a free fallback caps tokens at 1000 -> crossing it still flips
+    // exhausted.
     unpaidWithFree({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
@@ -406,7 +407,8 @@ describe('LimitsEngine', () => {
 })
 
 describe('window step notify (5% fill)', () => {
-  // windowMonthLimit 100 -> 5% step = 5 tokens; getAiTokensStats is stubbed to a fixed "current usage".
+  // windowMonthLimit 100 -> 5% step = 5 tokens; getAiTokensStats stubbed to fixed "current
+  // usage".
   function tierWithWindow (tokenLimit: number, windowMonthLimit: number): void {
     getSubscriptionsMock.mockResolvedValue([
       { type: 'tier', status: 'active', limits: { tokenLimit, windowMonthLimit } }

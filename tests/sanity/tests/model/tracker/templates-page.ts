@@ -65,7 +65,6 @@ export class TemplatePage extends CommonTrackerPage {
         await this.addNewTagPopup(this.page, data.labels, 'Tag from templateNewIssue')
       }
       await this.checkFromDropdown(this.page, data.labels)
-      // await this.inputIssueTitle.click({ force: true })
       await this.buttonPopupCreateNewTemplatePriority().click({ force: true })
     }
     if (data.estimation != null) {
@@ -84,8 +83,8 @@ export class TemplatePage extends CommonTrackerPage {
     await this.buttonSaveTemplate().click()
   }
 
-  // Templates group by assignee and the group stays collapsed, so the row is not in the DOM at all -
-  // and it can join the group after the expand, which is why the wait is retried around it.
+  // Templates group by assignee and the group stays collapsed, so the row is not in the DOM at all
+  // - and it can join the group after the expand, which is why the wait is retried around it.
   async openTemplate (templateName: string): Promise<void> {
     const row = this.directTemplateLocator(templateName)
     await retry(async () => {

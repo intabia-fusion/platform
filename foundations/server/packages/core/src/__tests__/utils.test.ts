@@ -82,10 +82,8 @@ describe('OneSecondCountersImpl', () => {
       const result = await counters.withCounter('op', 1, operation)
       expect(result).toBe('result')
       expect(operation).toHaveBeenCalled()
-      // Counter should be decremented to 0 after successful operation
-      // Implementation counts operations for at least 1 second.
-      // platformNow used by the implementation may not be affected by Jest timers here,
-      // so age the internal timeouts directly and run check().
+      // Counts operations for at least 1s; platformNow may not respond to Jest timers here, so age
+      // the internal timeouts directly before check().
       ageTimeouts(2000)
       counters.check()
       const entries = Array.from(counters.entries())
@@ -733,9 +731,8 @@ describe('estimateDocSize', () => {
     it('should be order independent for object keys', () => {
       const obj1 = { a: 1, b: 2, c: 3 }
       const obj2 = { c: 3, a: 1, b: 2 }
-      // Note: The current implementation iterates over keys via 'for..in'
-      // which may have order-dependent behavior, but for estimation purposes
-      // the total size should be the same
+      // for..in iteration may be order-dependent, but for size estimation the total should come out
+      // the same regardless of key order.
       expect(estimateDocSize(obj1)).toBe(estimateDocSize(obj2))
     })
   })

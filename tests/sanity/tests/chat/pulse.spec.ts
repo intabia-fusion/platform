@@ -82,7 +82,8 @@ test.describe('Pulse — typing indicator and document presence', () => {
     // First user should now see second user avatar via DocumentPresence
     await expect(presenceFirst.locator('.hulyCombineAvatar, .avatar-button')).toHaveCount(1, { timeout: 10000 })
 
-    // When second user leaves the channel (switches to another), TTL expires and avatar should disappear
+    // Presence disappears only once its TTL expires, not immediately - hence the 20s
+    // timeout.
     await channelPageSecond.clickChooseChannel('random')
     await expect(presenceFirst.locator('.hulyCombineAvatar, .avatar-button')).toHaveCount(0, { timeout: 20000 })
   })

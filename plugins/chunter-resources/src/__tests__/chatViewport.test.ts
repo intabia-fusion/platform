@@ -422,7 +422,8 @@ describe('ChatViewport', () => {
     })
 
     it('1.8 should take the first unread from the loaded page when the read position is on it', async () => {
-      // 51 messages: older ones exist, but the position (955) is newer than the oldest on the page (951).
+      // 51 messages: older ones exist, but position 955 is newer than the oldest on the page
+      // (951).
       const tailRes = Array.from({ length: 51 }, (_, i) => ({
         _id: `tail-${i}`,
         createdOn: 1000 - i,
@@ -959,8 +960,8 @@ describe('ChatViewport', () => {
       const viewport = new ChatViewport(undefined, chatId, undefined)
       await flushTasks()
 
-      // Now query backward from 1000.
-      // Database returns boundary-msg (already loaded) and a concurrent message at 1000, and older messages.
+      // Query backward from 1000: DB returns boundary-msg (already loaded), a concurrent
+      // message at 1000, and older messages.
       const backwardPage = [
         { _id: 'boundary-msg', createdOn: 1000 },
         { _id: 'concurrent-msg', createdOn: 1000 },
@@ -1666,7 +1667,8 @@ describe('ChatViewport', () => {
       const vp1 = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, false)
       vp1.release()
 
-      // Create chat-11 to trigger eviction (evicting chat-2 because chat-1 was accessed recently), then release
+      // Create chat-11 to trigger eviction (evicts chat-2; chat-1 was accessed recently), then
+      // release
       const vp11 = ChatViewport.getOrCreate(undefined, 'chat-11' as Ref<Doc>, undefined, 50, false)
       vp11.release()
 
@@ -1723,7 +1725,8 @@ describe('ChatViewport', () => {
         // Fast forward by 16 minutes (TTL exceeded)
         mockTime += 16 * 60 * 1000
 
-        // It should NOT be evicted because it is active (refCount = 1), then release the second getOrCreate call's ref count
+        // Not evicted: active (refCount = 1). Then release the second getOrCreate call's ref
+        // count.
         const vpSame = ChatViewport.getOrCreate(undefined, 'chat-active' as Ref<Doc>, undefined, 50, false)
         vpSame.release()
         expect(vpSame).toBe(vp)

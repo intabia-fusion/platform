@@ -30,9 +30,8 @@ export interface VerifyOptions {
   checkHashes?: boolean
 }
 
-// Matches what the tag build actually produces (--linux --x64, --windows --x64,
-// --macos --x64 --arm64). Add '-linux-arm64' here the day that target is built,
-// otherwise every build fails on a manifest nobody generates.
+// Matches tag build output. Add '-linux-arm64' only when that target is built, or every build
+// fails on a missing manifest.
 const DEFAULT_SUFFIXES = ['', '-mac', '-linux']
 
 /** Streamed so a 240MB artifact never lands in memory in one piece. */

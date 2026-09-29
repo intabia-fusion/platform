@@ -102,8 +102,8 @@ function memoryStorage (
   return { storage, content }
 }
 
-// getDomainHash always differs from the empty domainHashes on a fresh index, which alone makes
-// processDomain write the index for DOMAIN_MODEL_TX/DOMAIN_TX - no document needs to flow through.
+// getDomainHash always differs from the empty domainHashes on a fresh index, so processDomain
+// writes the DOMAIN_MODEL_TX/DOMAIN_TX index with no document flowing through.
 function fakePipeline (): Pipeline {
   return {
     context: {

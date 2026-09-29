@@ -26,7 +26,8 @@ import { createApiKey, revokeApiKey } from '../operations'
 import { getApiKeyAccounts, verifyApiKey } from '../serviceOperations'
 import { type AccountDB } from '../types'
 
-// An in-memory social_id row, close enough to the real one for pickPrimarySocialId-relevant fields.
+// An in-memory social_id row, close enough to the real one for pickPrimarySocialId-relevant
+// fields.
 interface SocialIdRow {
   _id: string
   type: string
@@ -93,7 +94,8 @@ describe('webhook key identity (FUSIO-1151)', () => {
       integration: { insertOne: jest.fn() },
       unassignWorkspace: jest.fn(),
       integrationSecret: {
-        // Copies, like a real row read: a caller must not observe a concurrent update through its own row.
+        // Copies, like a real row read: a caller must not observe a concurrent update through
+        // its own row.
         find: jest.fn().mockImplementation(async () => integrationSecretRows.map((r) => ({ ...r }))),
         insertOne: jest.fn().mockImplementation(async (row: { socialId: string, secret: string }) => {
           integrationSecretRows.push(row)
@@ -128,8 +130,8 @@ describe('webhook key identity (FUSIO-1151)', () => {
     const { db } = makeDb()
     const created = await createApiKey(mockCtx, db, null, ownerToken, { name: 'ci', ops: ['chat:post'] })
 
-    // verifyApiKey reads the secret row, then the social id, then writes lastUsed back. Revoking from
-    // inside that social-id read puts a concurrent revoke exactly in the window between read and write.
+    // verifyApiKey reads the secret row, then the social id, then writes lastUsed back -
+    // revoking inside that social-id read lands in the window between read and write.
     const socialIdFindOne = db.socialId.findOne as jest.Mock
     const original = socialIdFindOne.getMockImplementation() as (q: any) => Promise<any>
     socialIdFindOne.mockImplementationOnce(async (query: any) => {

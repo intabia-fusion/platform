@@ -53,9 +53,8 @@ describe('MiniToggle', () => {
     expect(input.checked).toBe(true)
   })
 
-  // The input forwards the native 'change' event as-is (detail undefined); the label span below
-  // dispatches its own 'change' with detail = the new boolean. Two different event shapes for the
-  // same component event name - pinned behaviour, not a desired one.
+  // Input forwards native 'change' as-is (detail undefined); label span dispatches its own 'change'
+  // with detail = new boolean - two shapes, one event name, pinned not desired.
   it('forwards the native change event from the checkbox with no detail', async () => {
     const { component, input } = mount({ on: false })
     const onChange = vi.fn()

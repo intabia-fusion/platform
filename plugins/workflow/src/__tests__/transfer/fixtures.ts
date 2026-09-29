@@ -142,7 +142,8 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
     )
   } as unknown as Hierarchy
 
-  // Model docs the import validates against: rules by their id prefix, status categories and attributes
+  // Model docs the import validates against: rules by id prefix, status categories,
+  // attributes.
   const modelDocClassByPrefix: Array<[string, Ref<Class<Doc>>]> = [
     ['workflow:validator:', workflow.class.WorkflowValidator],
     ['workflow:postFunction:', workflow.class.WorkflowPostFunction],

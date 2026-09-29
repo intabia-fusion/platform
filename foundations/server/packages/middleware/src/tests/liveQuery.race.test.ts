@@ -14,20 +14,8 @@
 //
 
 /**
- * Test to verify the race condition hypothesis in LiveQuery
- *
- * Hypothesis: when two change transactions {$inc: {messages: 1}} or {$inc: {transcription: 1}}
- * arrive with times t1=101 and t2=102, but tx1 takes longer to process and arrives to the client later,
- * then when processing tx1, the condition `updatedDoc.modifiedOn < tx.modifiedOn` is not met
- * and an unnecessary getCurrentDoc request is made to the server.
- *
- * Scenario:
- * 1. tx1 (t=101) is sent first but takes longer to process
- * 2. tx2 (t=102) is sent second but arrives to the client first
- * 3. Client processes tx2, updates document with modifiedOn=102
- * 4. Client receives tx1 with modifiedOn=101
- * 5. Condition updatedDoc.modifiedOn (102) < tx.modifiedOn (101) = false
- * 6. getCurrentDoc is triggered, leading to an unnecessary request
+ * Two out-of-order $inc txs, t=101 sent first but processed after t=102: the client handles t=101
+ * with modifiedOn(102) < tx.modifiedOn(101) false, triggering an unneeded getCurrentDoc.
  */
 
 import core, {
@@ -283,12 +271,8 @@ describe('LiveQuery Race Condition Tests', () => {
       await middleware.applyTxToLocalDoc(transactions[idx])
     }
 
-    // Should have several additional getCurrentDoc requests
-    // tx[2] (103) - ok, first
-    // tx[4] (105) - ok, 105 > 103
-    // tx[0] (101) - RACE! 101 < 105 -> getCurrentDoc
-    // tx[3] (104) - RACE! 104 < 105 -> getCurrentDoc
-    // tx[1] (102) - RACE! 102 < 105 -> getCurrentDoc
+    // Expect several extra getCurrentDoc calls: tx[2],[4] arrive already ordered; tx[0],[3],[1]
+    // arrive after a higher modifiedOn was seen, so each races.
     expect(findAllCounter.count).toBeGreaterThan(0)
     console.log('Number of additional getCurrentDoc requests:', findAllCounter.count)
     console.log('Request details:', findAllCounter.queries)
@@ -556,17 +540,3 @@ describe('LiveQuery with TxOrderingMiddleware - Solution', () => {
     expect((liveQueryMiddleware as any).documents.get(testDoc._id).messages).toBe(4)
   })
 })
-
-/**
- * Results of executing this test will confirm or refute the hypothesis.
- *
- * Expected result:
- * - The test "should detect race condition with out-of-order transactions" should show
- *   that when transactions are received in incorrect order, an additional getCurrentDoc call occurs
- *
- * If the hypothesis is confirmed, this proves the existence of the problem and the need for a solution.
- *
- * Solution:
- * - New tests with TxOrderingMiddleware demonstrate that the middleware successfully prevents
- *   race conditions by ensuring correct ordering of transaction broadcasts.
- */

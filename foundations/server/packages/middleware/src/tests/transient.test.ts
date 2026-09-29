@@ -206,8 +206,8 @@ describe('TransientMiddleware.checkTTL', () => {
   })
 
   it('resolves dbProvider lazily when adapterManager is not yet initialized at construction time', async () => {
-    // Reproduces production wiring: DBAdapterMiddleware is created AFTER TransientMiddleware
-    // in the pipeline, so context.adapterManager is undefined when TransientMiddleware is constructed.
+    // Reproduces production wiring: DBAdapterMiddleware is created after TransientMiddleware, so
+    // context.adapterManager is undefined when TransientMiddleware is constructed.
     const ctx = new MeasureMetricsContext('test', {})
     const hierarchy = new Hierarchy()
     const modelDb = new ModelDb(hierarchy)

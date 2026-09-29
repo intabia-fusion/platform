@@ -242,13 +242,6 @@ export class TalentsPage extends CommonRecruitingPage {
     await expect(this.page).toHaveURL(PlatformURI)
   }
 
-  // async createNewTalent(firstName: string, lastName: string): Promise<void> {
-  //     await this.newTalentButton().click();
-  //     await this.firstNameInput().fill(firstName);
-  //     await this.lastNameInput().click();
-  //     await this.lastNameInput().fill(lastName);
-  // }
-
   async inputNewTallent (firstName: string, lastName: string): Promise<void> {
     await this.newTalentButton().click()
     await this.firstNameInput().fill(firstName)

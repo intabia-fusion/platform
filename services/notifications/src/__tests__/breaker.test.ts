@@ -66,7 +66,8 @@ describe('WorkspaceBreaker', () => {
 
     clock.t += 300_000
     expect(breaker.shouldSkip(ws)).toBe(false)
-    // The probe is in flight: a second tx of the workspace is not skipped either, it queues behind it.
+    // Probe in flight: a second tx of the workspace is not skipped either, it just queues
+    // behind it.
     expect(breaker.shouldSkip(ws)).toBe(false)
 
     expect(breaker.succeeded(ws, 'tx-2')).toBe(2)

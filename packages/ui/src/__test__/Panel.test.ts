@@ -94,8 +94,8 @@ describe('Panel', () => {
     expect(toggle.classList.contains('selected')).toBe(true)
   })
 
-  // floatAside:true is required here: on every mount Panel re-derives panelWidth from the (always-0 in
-  // jsdom) element width and, when not floating, that immediately collapses asideShown to false.
+  // floatAside:true is required: Panel re-derives panelWidth every mount from the (always-0 in
+  // jsdom) element width, and non-floating collapses asideShown to false immediately.
   it('setAside(false) hides the aside and getAside reflects it, without a customAside', () => {
     const { component } = mount({ floatAside: true })
     expect(component.getAside()).toBe(true)
@@ -122,8 +122,8 @@ describe('Panel', () => {
     expect(component.getAside()).toBe('second')
   })
 
-  // jsdom reports 0 for every clientWidth, and Panel re-derives panelWidth from the mounted element on
-  // every update - so panelWidth always settles to 0 regardless of what a caller passes in as a prop.
+  // jsdom reports 0 for every clientWidth, and Panel re-derives panelWidth from the mounted element
+  // every update - it always settles to 0 regardless of the prop passed in.
   it('dispatches resize with panelWidth pinned to 0 (jsdom has no layout) and the given innerWidth', async () => {
     const { component } = mount({ panelWidth: 800, innerWidth: 10 })
     const onResize = vi.fn()

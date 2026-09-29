@@ -117,8 +117,8 @@ describe('POST /api/v1/webhook/action', () => {
     expect((await res.json()).error).toBe('service_unavailable')
   })
 
-  // The account service answered (Forbidden/BadRequest/expired token) - a permanent misconfiguration,
-  // not a transport blip, so it must not collapse into "retry later" 503 (finding 1).
+  // Account service answered (Forbidden/BadRequest/expired token): a permanent misconfig, not
+  // a transport blip - must not collapse into "retry later" 503 (finding 1).
   test('a PlatformError from verifyApiKey does NOT yield 503 on the ingest route', async () => {
     sender = await startWebhookSender(baseCheck)
     sender.verifyApiKey.mockRejectedValueOnce(
@@ -226,7 +226,8 @@ describe('POST /api/v1/webhook/action', () => {
   })
 
   test('exceeding the rate limit returns 429 with rate-limit headers', async () => {
-    // rateLimitMax=2: the sliding window already flags the 2nd request in its own window as the limit hit.
+    // rateLimitMax=2: the sliding window flags the 2nd request in its own window as the limit
+    // hit.
     sender = await startWebhookSender(baseCheck, { rateLimitMax: 2, rateLimitWindowMs: 60000 })
     const first = await sender.action(KEY, { action: 'issue:create', space: 'FUSIO' })
     expect(first.status).toBe(202)

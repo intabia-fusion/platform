@@ -65,9 +65,8 @@ async function getGatedClient (): Promise<{
       calls++
       if (armed?.(_class) === true) {
         armed = null
-        // Snapshot now, before any tx sent while gated can touch the store: otherwise a write
-        // made during the gated window would reach the eventual result via this same findAll
-        // once released, masking whether the tx-driven update path applied it at all.
+        // Snapshot before any gated tx touches the store - a write during the gated window
+        // would reach the result via this same findAll once released, masking the tx path.
         const snapshot = await rawFindAll(_class, query, options)
         if (!released) {
           deferred = makeDeferred()
@@ -103,9 +102,8 @@ const settle = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 50))
 }
 
-// pushCallback's own guard fires from a setTimeout(0) macrotask; all-microtask work (including a
-// findAll that isn't gated) drains before any macrotask runs, so without this tick a second
-// subscribe's callback would always observe an already-resolved q.result.
+// pushCallback's guard fires from a setTimeout(0) macrotask; microtask work (incl. ungated
+// findAll) drains first, so without this tick a subscribe sees an already-resolved q.result.
 const tick = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 3))
 }
@@ -416,7 +414,8 @@ describe('LiveQuery - option and LRU branches', () => {
     const liveQuery = new LiveQuery(storage)
     const factory = new TxOperations(storage, core.account.System)
     const id = await createProject(factory, 'lru-survivor')
-    // Park it in the queue (unsubscribed queries live there too), then hold it warm with findOne calls.
+    // Park it in the queue (unsubscribed queries live there too), then hold it warm with
+    // findOne calls.
     const unsubscribe = liveQuery.query<TestProject>(test.class.TestProject, { _id: id }, () => {})
     await new Promise((resolve) => setTimeout(resolve, 10))
     unsubscribe()
@@ -432,9 +431,8 @@ describe('LiveQuery - option and LRU branches', () => {
       return await rawFindAll(_class, query, options)
     }
 
-    // CACHE_SIZE is 125: each distinct findOne creates its own dump query straight into the
-    // queue via createQuery, tripping the `this.queue.size > CACHE_SIZE` check inside creation
-    // itself (as opposed to the unsubscribe-triggered check refs-cache.test.ts already covers).
+    // CACHE_SIZE is 125: each findOne creates its own dump query via createQuery, tripping
+    // `this.queue.size > CACHE_SIZE` at creation - unlike the check refs-cache.test.ts covers.
     for (let i = 0; i < 140; i++) {
       await liveQuery.findOne(test.class.TestProject, { prjName: `lru-filler-${i}` })
     }
@@ -470,9 +468,8 @@ describe('LiveQuery - option and LRU branches', () => {
       )
     })
     void p1
-    // A $push on `members` is an operator update whose key ('members') is a sorted field - this
-    // is the `opKey in sort` branch, distinct from a plain (non-operator) field update.
-    // AccountUuid is a branded string; a fresh id just needs any unique value cast to it.
+    // $push on `members` (sorted field) hits the `opKey in sort` branch, distinct from a plain
+    // field update. AccountUuid is branded - a fresh id needs any unique value cast to it.
     await factory.updateDoc(test.class.TestProject, core.space.Model, p2, {
       $push: { members: `member-${generateId()}` as AccountUuid }
     })

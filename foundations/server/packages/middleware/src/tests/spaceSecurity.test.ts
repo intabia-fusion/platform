@@ -571,9 +571,8 @@ describe('SpaceSecurityMiddleware', () => {
     })
 
     it('should emit SecurityChange WITHOUT a target callback when private flips public->private', async () => {
-      // Receivers that need the refresh (non-members in other sessions) are
-      // not in this request's socialStringsToUsers, so the SecurityChange tx
-      // must be broadcast globally — i.e. without a per-tx target resolver.
+      // Receivers needing the refresh (non-members, other sessions) aren't in this request's
+      // socialStringsToUsers, so SecurityChange must broadcast globally, not via a per-tx resolver.
       const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false, owners: ['user1'] })])
 
       const account = createAccount('user1')
@@ -764,9 +763,8 @@ describe('SpaceSecurityMiddleware', () => {
     })
 
     it('should NOT include workspace Owner in private space broadcast targets for objects if they are not a member', async () => {
-      // Owner is not in space.members but can see every private space, however they
-      // should not receive live updates for non-space objects within private spaces
-      // unless they are members.
+      // Owner isn't in space.members but can see every private space - it still shouldn't get live
+      // updates for non-space objects in private spaces unless it's a member.
       const mw = await createMiddleware([createSpace('space1', ['user1', 'user2'], { private: true })])
       const account = createAccount('user1')
       const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
@@ -1904,10 +1902,8 @@ describe('SpaceSecurityMiddleware', () => {
       await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
     })
 
-    // Intentional: public space creation is not gated by owners. Anyone can
-    // create a public space and hand ownership to another account; the space
-    // is visible to everyone regardless, so there is no privacy to protect.
-    // Private-space spoofing is covered by the next test.
+    // Intentional: public space creation isn't gated by owners - anyone can create one and hand off
+    // ownership, but it's visible to everyone anyway. Private-space spoofing is next.
     it('should allow create of public space with foreign owners', async () => {
       const mw = await createMiddleware([])
 
@@ -2147,10 +2143,8 @@ describe('SpaceSecurityMiddleware', () => {
     })
   })
 
-  // Regression: middleware no longer performs client-side space filtering in
-  // findAll. It relies on the downstream DB adapter to honor security based on
-  // `ctx.contextData.account`. These tests lock in the passthrough contract so
-  // that any reintroduction of middleware-side filtering is intentional.
+  // Regression: middleware no longer filters spaces client-side in findAll, relying on the DB
+  // adapter for security via ctx.contextData.account. Tests lock in that contract.
   describe('findAll - adapter passthrough contract', () => {
     it('should forward query to next middleware unchanged for regular users', async () => {
       const mw = await createMiddleware([
@@ -2181,9 +2175,8 @@ describe('SpaceSecurityMiddleware', () => {
       await mw.findAll(ctx, 'test:class:Doc' as any, {}, opts)
 
       const call = (nextMiddleware.findAll as jest.Mock).mock.calls.at(-1)
-      // Adapter is responsible for security - middleware must not inject
-      // allowedSpaces because downstream code has no guarantee it came from
-      // the security layer vs. from the caller.
+      // Adapter owns security; middleware must not inject allowedSpaces - downstream code can't
+      // tell if it came from the security layer or the caller.
       expect(call?.[3]?.allowedSpaces).toBeUndefined()
     })
 
@@ -2202,9 +2195,8 @@ describe('SpaceSecurityMiddleware', () => {
       ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult(nextFindAllResult))
 
       const result = await mw.findAll(ctx, 'test:class:Doc' as any, {})
-      // Middleware is no longer a defense-in-depth layer here; it passes
-      // whatever the adapter returned. If this assertion ever changes, audit
-      // every DbAdapter to confirm it applies space security.
+      // Middleware is no longer defense-in-depth here - it passes through whatever the adapter
+      // returned. If this assertion changes, audit every DbAdapter for space security.
       expect(result).toHaveLength(2)
     })
   })

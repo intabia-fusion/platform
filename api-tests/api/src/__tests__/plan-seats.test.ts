@@ -36,10 +36,8 @@ import { ensureEmployee } from '@hcengineering/contact'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
 import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 
-// Workspace api-tests-seats boots with business (10 seats) so user1(OWNER)/user2/user3 all onboard.
-// The test then sets usersLimit=2: seats go by role priority (Owner first), then account uuid — the
-// owner plus one user are seated, the other user is downgraded to read-only. Asserts seat enforcement
-// (now sourced from account ws_members) reacts to a runtime plan change.
+// Workspace boots business (10 seats), 3 users onboard. usersLimit=2 seats by role priority then
+// uuid; one user goes read-only, asserting ws_members-sourced enforcement on a plan change.
 describe('plan-seats', () => {
   const testCtx = new MeasureMetricsContext('test', {})
   const wsName = 'api-tests-seats'
@@ -204,9 +202,8 @@ describe('plan-seats', () => {
     }
   }, 60000)
 
-  // Join-time hard cap now lives in the account service (a join is not a transactor tx). The old
-  // Employee-mixin block was removed in the seat-source-of-truth refactor: a member occupies a seat
-  // only once in account ws_members, so joining past the limit is what account rejects.
+  // Join-time hard cap now lives in account service, not the old Employee-mixin block (removed
+  // in the seat-source-of-truth refactor); ws_members holds one seat per member.
   const joinerAccountUuid = async (): Promise<AccountUuid> => {
     const cli = getAccountClient(config.ACCOUNTS_URL)
     const info = await cli.login('user4', '1234')

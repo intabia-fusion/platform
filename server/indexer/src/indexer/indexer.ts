@@ -244,7 +244,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
       'reindex domain',
       { domain },
       async (ctx) => {
-        // Iterate over all domain documents and add appropriate entries
+        // Rebuild fulltext index by fetching all domain docs and pushing them through the
+        // queue
         const allDocs = this.storage.rawFind(ctx, domain)
         try {
           let lastPrint = platformNow()

@@ -6,20 +6,8 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-// End-to-end api-test for the love invite flow against the live ws-tests
-// stand. Reproduces the same call path the sanity meetings.client-create
-// test uses (caller -> recipient accepts -> caller-client creates a meeting
-// in caller's office), but at the API layer — no browser, no LiveKit. The
-// goal is to validate that:
-//   * `OnUserMeetingInvite` creates an invite-response in the recipient's
-//     PersonSpace, observable via WebSocket liveQuery,
-//   * accept flips status and the trigger syncs invite-request,
-//   * a `removeDoc` of the invite-request results in a TxRemoveDoc broadcast
-//     that BOTH subscribed WS clients observe.
-//
-// The third point is the live-bug we hit in the browser: REST cleanup
-// happened on the server but the WS client never saw the remove, so the
-// outgoing-invite trigger stayed on screen until refresh.
+// E2E test for the love invite flow on ws-tests (API only): create/accept/remove sync across
+// both WS clients via OnUserMeetingInvite - catches the REST-vs-WS remove race.
 
 import {
   connect,
@@ -80,11 +68,8 @@ describe('love invite flow (api-tests)', () => {
       config
     )
 
-    // In Jest (testEnvironment: 'node'), global WebSocket is not available
-    // (jest swaps the runtime such that Node 22+ native WebSocket is hidden),
-    // so the default client-resources factory throws `WebSocket is not
-    // defined`. Pass NodeWebSocketFactory explicitly — same approach used by
-    // any non-browser consumer of @hcengineering/api-client.
+    // Jest's node env hides WebSocket on Node 22+, so the default factory throws `WebSocket is
+    // not defined`; use NodeWebSocketFactory like any non-browser consumer.
     user1Client = await connect(PLATFORM_URL, {
       email: 'user1',
       password: '1234',
@@ -105,11 +90,8 @@ describe('love invite flow (api-tests)', () => {
       generateToken(systemAccountUuid, user1Token.workspaceId, undefined, 'secret')
     )
 
-    // The api-client `connect()` opens a WebSocket but does NOT call
-    // ensureEmployee — that's a workbench-resources responsibility on the
-    // browser side. Without it the workspace has no Person/Employee/
-    // PersonSpace for the test users and every lookup returns 0. Run it
-    // explicitly here for both accounts, the same way rest.test does.
+    // connect() opens a WebSocket but skips ensureEmployee (a browser/workbench-resources
+    // job); without it there's no Person/Employee/PersonSpace, so lookups return 0.
     const ensureFor = async (tok: WorkspaceToken): Promise<void> => {
       const accClient = getAccountClient(config.ACCOUNTS_URL, tok.token)
       const person = await accClient.getPerson()
@@ -132,9 +114,8 @@ describe('love invite flow (api-tests)', () => {
     await ensureFor(user1Token)
     await ensureFor(user2Token)
 
-    // Resolve Person + PersonSpace via the system-token REST client so
-    // SpaceSecurityMiddleware doesn't filter out user2's PersonSpace
-    // (which is private and only lists user2 in its members).
+    // Resolve Person + PersonSpace via the system-token REST client so SpaceSecurityMiddleware
+    // doesn't filter out user2's private PersonSpace.
     const u1s = await systemRest.findAll(contact.class.Person, {
       personUuid: user1Token.info.account as any
     })
@@ -146,10 +127,8 @@ describe('love invite flow (api-tests)', () => {
     user1Person = u1s[0]
     user2Person = u2s[0]
 
-    // PersonSpace is created asynchronously by the `OnEmployeeCreate`
-    // trigger — `ensureEmployee` returns before the trigger has flushed
-    // its derived txes, so we poll briefly. Without this we race the
-    // trigger and see 0 spaces for the just-mixed-in account.
+    // PersonSpace is created async by the OnEmployeeCreate trigger; ensureEmployee returns before
+    // it flushes derived txes, so we poll briefly to avoid racing it.
     const waitForSpace = async (personId: Ref<Person>): Promise<PersonSpace> => {
       const deadline = Date.now() + 10000
       while (Date.now() < deadline) {
@@ -162,10 +141,8 @@ describe('love invite flow (api-tests)', () => {
     user1Space = await waitForSpace(user1Person._id)
     user2Space = await waitForSpace(user2Person._id)
 
-    // Provision a minimal Office for user1 so the caller-client meeting
-    // create has somewhere to host the meeting. We use the system-token
-    // REST client because Office is created in `love.ids.MainFloor` which
-    // is a workspace-level space; lookups go via `{ person: user1.id }`.
+    // Provisions a minimal Office for user1 via the system-token REST client, since Office
+    // lives in the workspace-level love.ids.MainFloor space ({ person: user1.id }).
     const existingOffice = await systemRest.findOne(love.class.Office, { person: user1Person._id })
     if (existingOffice !== undefined) {
       user1OfficeId = existingOffice._id
@@ -204,9 +181,8 @@ describe('love invite flow (api-tests)', () => {
   })
 
   /**
-   * Helper: subscribe a PlatformClient's liveQuery to invites in a given
-   * personal space and return a stop fn + history of observed docs (latest
-   * snapshot only — we don't need tx-level granularity for these tests).
+   * Subscribe a PlatformClient's liveQuery to invites in a space, return a stop fn + observed-docs
+   * history (latest snapshot only, no tx-level granularity needed here).
    */
   function watchInvites (
     client: PlatformClient,
@@ -254,9 +230,8 @@ describe('love invite flow (api-tests)', () => {
       }
       await user1Rest.createDoc(love.class.UserMeetingInvite, user1Space._id, requestData, inviteRequestId)
 
-      // 3) Server trigger `OnUserMeetingInvite` must create a matching
-      //    invite-response in user2's PersonSpace. Recipient WS client
-      //    observes it via liveQuery.
+      // 3) OnUserMeetingInvite trigger must create a matching invite-response in user2's
+      // PersonSpace; recipient WS client observes it via liveQuery.
       const response = await waitFor(
         'invite-response delivered to recipient',
         () => recipientWatch.snapshots[recipientWatch.snapshots.length - 1],
@@ -268,9 +243,8 @@ describe('love invite flow (api-tests)', () => {
       ) as UserMeetingInvite
       expect(inviteResponse).toBeDefined()
 
-      // 4) recipient accepts (flips status). Need recipient's REST token
-      //    so the update is authored under the right account — otherwise
-      //    SpaceSecurityMiddleware blocks the write in user1's PersonSpace.
+      // 4) recipient accepts (flips status) using recipient's REST token, so the write is authored
+      // under the right account - else SpaceSecurityMiddleware blocks it in user1's PersonSpace.
       const user2Rest = createRestClient(user2Token.endpoint, user2Token.workspaceId, user2Token.token)
       const acceptUpd: DocumentUpdate<UserMeetingInvite> = { status: 'accepted' }
       await user2Rest.updateDoc(love.class.UserMeetingInvite, inviteResponse.space, inviteResponse._id, acceptUpd)

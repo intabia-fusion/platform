@@ -67,8 +67,8 @@ export async function shutdown (): Promise<void> {
 }
 
 /**
- * Host-side defaults for the ws-tests stand. Regions and services share one postgres, each in its own
- * database (ws-tests/postgres-init): workspace data is in region_main, account in postgres.
+ * Host-side defaults for ws-tests: regions/services share one postgres, each its own database
+ * (ws-tests/postgres-init) - workspace data in region_main, account in postgres.
  */
 const DEFAULTS = {
   DB_URL: 'postgresql://postgres:postgres@localhost:5533/region_main',

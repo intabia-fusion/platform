@@ -72,9 +72,8 @@ async function dragUntilField (
         lastError = err instanceof Error ? err.message : String(err)
         console.error('drag failed:', err)
       }
-      // The drop shows up optimistically; wait for the tx before paying for another drag, which
-      // would otherwise start from the card's new position and cost seconds of scrolling. A drag
-      // that threw usually sent nothing, so it waits out only the short end of the ladder.
+      // The drop shows optimistically; wait for the tx before redragging, else it starts from
+      // the new spot and costs scroll time. A failed drag sent nothing - wait the short end.
       for (const wait of threw ? retryIntervals.slice(0, 3) : retryIntervals) {
         if ((await status()) === target) return target
         await new Promise((resolve) => setTimeout(resolve, wait))
@@ -106,8 +105,8 @@ async function dragUntilStatus (
   )
 }
 
-// Wide on purpose: with the statuses other specs add the board needs ~2000px, and at 1440 a drag
-// has to scroll the board while the pointer is down - the source card unmounts and the drop is lost.
+// Wide on purpose: with the statuses other specs add, the board needs ~2000px; at 1440 a drag
+// scrolls the board while the pointer is down - the source card unmounts and the drop is lost.
 test.use({ storageState: PlatformSetting, viewport: { width: 2200, height: 1000 } })
 
 test.describe('Kanban board', () => {
@@ -172,9 +171,8 @@ test.describe('Kanban board', () => {
     const inProgress = ctx.statuses.get('In Progress') as string
     await board.expectCardInColumn(cardId, backlog)
 
-    // Retry the drag if the drop event was lost (HTML5 drag in headless can be flaky
-    // under parallel load). Verify by polling the backend, not just the DOM, since
-    // panelDragOver shows the card in the target column optimistically.
+    // Retry if the drop event was lost (HTML5 drag in headless can be flaky under load). Poll
+    // the backend, not the DOM - panelDragOver shows the card in the column optimistically.
     await dragUntilStatus(client, cardId, inProgress, async () => {
       await board.dragCardToColumn(cardId, inProgress)
     })
@@ -479,10 +477,8 @@ test.describe('Kanban board', () => {
       await board.expectCardInSwimLaneCell(c2, noPriorityLaneId, backlog)
       await board.expectCardInSwimLaneCell(c3, noPriorityLaneId, backlog)
 
-      // Drop c3 onto c2 — manual rank update. Retry under flaky CDP drag.
-      // Verify c3's rank ended up strictly less than c2's rank (i.e. c3 sits
-      // before c2 in ascending order, the visual cue under the cursor).
-      // Backend rank is the source of truth; DOM ordering depends on Show more.
+      // Drop c3 onto c2 for a manual rank update, retrying under flaky CDP drag. Backend rank
+      // is the source of truth - check r3 < r2, not DOM order (which depends on Show more).
       await expect
         .poll(
           async () => {
@@ -511,9 +507,8 @@ test.describe('Kanban board', () => {
     })
 
     test('Show more counter does not flicker for unrelated cells while dragging', async ({ page }) => {
-      // Create > 3 cards in one Urgent/Backlog cell so Show more is visible.
-      // Using Urgent (4) keeps the test isolated from accumulated NoPriority
-      // issues across previous runs.
+      // Create > 3 cards in one Urgent/Backlog cell so Show more is visible. Urgent (4) keeps
+      // the test isolated from accumulated NoPriority issues across previous runs.
       const ids: Array<Ref<Issue>> = []
       for (let i = 0; i < 5; i++) {
         ids.push(
@@ -609,9 +604,8 @@ test.describe('Kanban board', () => {
       await expect(page.locator('[data-id="kanban-swimlane"]').first()).toBeVisible()
       const ids = await board.swimLanes()
       expect(ids.length).toBeGreaterThan(0)
-      // Priority lanes are preseeded and always rendered; the unassigned one exists only while
-      // some issue of this shared project has no priority, so a parallel test can drop it
-      // between reading its id and using it.
+      // Priority lanes are preseeded, always rendered; the unassigned lane exists only while
+      // some issue in this shared project lacks priority - a parallel test can drop it first.
       const laneId = ids.find((id) => id !== '__swim_unassigned__')
       expect(laneId).toBeDefined()
       if (laneId === undefined) return
@@ -688,11 +682,8 @@ test.describe('Kanban board', () => {
     })
 
     test('drop into unavailable category does not change status', async ({ page }) => {
-      // getAvailableCategories returns only states valid for the issue's project.
-      // For the Default project's task type, all states are valid — to simulate
-      // an unavailable target we drag-and-drop through to the same status (no-op
-      // path) and verify nothing changes. Realistically this checks the guard
-      // path: dropping back into the same column must not bump modifiedOn.
+      // getAvailableCategories returns only valid states for the project; Default's task type
+      // allows all, so simulate one via a same-status drop (no-op): no modifiedOn bump.
       const cardId = await createIssue(client, ctx, {
         title: `${titlePrefix}same-col`,
         status: 'Backlog',
@@ -727,9 +718,8 @@ test.describe('Kanban board', () => {
     })
 
     test('toggle None -> Priority -> None -> Priority shows cards each time', async ({ page }) => {
-      // Regression: groupByDocs memo (hashed by ids+lengths) used to skip a refresh
-      // when projection added the swim-lane field — cards rendered as if the swim
-      // field were undefined and every lane appeared empty after the second switch.
+      // Regression: groupByDocs memo (hashed by ids+lengths) skipped a refresh when projection
+      // added the swim-lane field, so every lane appeared empty after the second switch.
       const cardId = await createIssue(client, ctx, {
         title: `${titlePrefix}toggle-priority`,
         status: 'Backlog',
@@ -762,9 +752,8 @@ test.describe('Kanban board', () => {
     })
 
     test('component swim lane merges same-label components from different projects', async ({ page }) => {
-      // Regression for FUSIO-378: components with identical label living in
-      // different projects used to render as separate lanes. They should be
-      // grouped into one lane keyed by the (case-folded) label.
+      // Regression for FUSIO-378: same-label components in different projects used to render
+      // as separate lanes - they should group into one, keyed by the case-folded label.
       const secondProject = await findProjectByName(client, 'Second Project')
       test.skip(secondProject === undefined, 'Second Project not seeded — skipping')
       if (secondProject === undefined) return
@@ -808,9 +797,8 @@ test.describe('Kanban board', () => {
   })
 
   test('drag preview follows cursor in non-manual ordering', async ({ page }) => {
-    // Regression: cardDragOver had a `dontUpdateRank` guard that prevented the
-    // visual preview from following the cursor when ordering was not Manual.
-    // Users could not see which column they were targeting.
+    // Regression: cardDragOver's `dontUpdateRank` guard stopped the preview from following the
+    // cursor outside Manual ordering, so users couldn't see which column they targeted.
     const c1 = await createIssue(client, ctx, { title: `${titlePrefix}preview-1`, status: 'Backlog' })
     const c2 = await createIssue(client, ctx, { title: `${titlePrefix}preview-2`, status: 'Todo' })
 

@@ -159,9 +159,8 @@ func newUploader(t *testing.T, fs storage.Storage, dir string, opts uploader.Opt
 	return uploader.New(ctx, fs, opts)
 }
 
-// TestUploader_HappyPath_PreExistingFiles verifies that files already present
-// in the directory when Start() is invoked are picked up by scanFiles and
-// uploaded exactly once.
+// TestUploader_HappyPath_PreExistingFiles: files present before Start() runs are picked up by
+// scanFiles and uploaded exactly once.
 func TestUploader_HappyPath_PreExistingFiles(t *testing.T) {
 	if runtime.GOOS != osLinux {
 		t.Skip("uploader relies on inotify; only Linux runs the full workflow")
@@ -214,13 +213,8 @@ func TestUploader_RetriesTransientErrors(t *testing.T) {
 		"file must be retried until success")
 }
 
-// TestUploader_GivesUpAfterRetryCount verifies that each pass through the
-// worker pipeline stops hammering storage after RetryCount attempts.
-//
-// Note: Stop() performs a final scan of the directory; any file that never
-// made it to sentFiles will be re-enqueued and retried another RetryCount
-// times. The assertion therefore accepts the total to be a multiple of
-// RetryCount, not exactly RetryCount.
+// TestUploader_GivesUpAfterRetryCount: stops after RetryCount attempts per pass. Stop()'s scan
+// re-enqueues leftovers for more RetryCount rounds, so the total can be a multiple, not exact.
 func TestUploader_GivesUpAfterRetryCount(t *testing.T) {
 	if runtime.GOOS != osLinux {
 		t.Skip("uploader relies on inotify")
@@ -286,9 +280,8 @@ func TestUploader_NewPanicsOnNilStorage(t *testing.T) {
 	})
 }
 
-// TestUploader_RetriesSetParent verifies that a transient SetParent failure does not orphan the
-// blob: without the retry the very first error is only logged and the parent is never set, which
-// leaves the artifact invisible to the datalake cascade delete while still counting towards usage.
+// TestUploader_RetriesSetParent: unretried SetParent failure orphans the blob - parent unset,
+// invisible to cascade delete, still counted as usage.
 func TestUploader_RetriesSetParent(t *testing.T) {
 	if runtime.GOOS != osLinux {
 		t.Skip("uploader relies on inotify")
@@ -350,8 +343,8 @@ func TestUploader_GivesUpSettingParent(t *testing.T) {
 		"uploader must not retry SetParent indefinitely")
 }
 
-// TestUploader_NoSourceSkipsSetParent verifies the recording path that has no source blob does not
-// issue a parent PATCH at all.
+// TestUploader_NoSourceSkipsSetParent: the recording path with no source blob issues no parent
+// PATCH.
 func TestUploader_NoSourceSkipsSetParent(t *testing.T) {
 	if runtime.GOOS != osLinux {
 		t.Skip("uploader relies on inotify")

@@ -14,9 +14,8 @@
 //
 
 /**
- * Smoke test against a real Postgres/CockroachDB - catches SQL syntax mistakes the mocked
- * db.test.ts suite cannot (it fakes query execution). Opt-in via WORKER_TEST_DB_URL; skipped
- * entirely (not failed) when unset, so a plain `npx jest` run needs no database up.
+ * Smoke test against real Postgres/CockroachDB, catching SQL syntax errors the mocked
+ * db.test.ts can't. Opt-in via WORKER_TEST_DB_URL; skipped, not failed, when unset.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -38,7 +37,8 @@ maybeDescribe('TimeMachineDB (real database)', () => {
   })
 
   afterAll(async () => {
-    // ILIKE '%' matches everything - reuses the same prefix-wildcard cancel API services/process relies on.
+    // ILIKE '%' matches everything: same prefix-wildcard cancel API services/process relies
+    // on.
     await db.removeEvents(ws, '%')
     await db.close()
   })

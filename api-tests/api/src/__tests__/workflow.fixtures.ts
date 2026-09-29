@@ -47,7 +47,10 @@ let sharedToken: WorkspaceToken | undefined
 let sharedClient: TxOperations | undefined
 let sharedConfig: ServerConfig | undefined
 
-/** One connection per jest worker: opening a transactor socket per test is the slowest part of the run. */
+/**
+ * One connection per jest worker - opening a transactor socket per test is the slowest part of
+ * the run.
+ */
 export async function connect (): Promise<TxOperations> {
   if (sharedClient !== undefined) return sharedClient
   sharedConfig = await loadServerConfig(PlatformUrl)
@@ -288,7 +291,10 @@ export async function getIssue (ctx: ProjectContext, issueId: Ref<Issue>): Promi
   return await ctx.client.findOne(tracker.class.Issue, { _id: issueId })
 }
 
-/** Resolves once `check` returns true, or throws - post-functions land asynchronously via triggers. */
+/**
+ * Resolves once `check` returns true, or throws - post-functions land asynchronously via
+ * triggers.
+ */
 export async function eventually<T> (check: () => Promise<T | undefined>, timeoutMs = 10000): Promise<T> {
   const started = Date.now()
   let last: T | undefined

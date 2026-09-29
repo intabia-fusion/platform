@@ -397,7 +397,6 @@ describe.skip('mongo operations', () => {
     ).toEqual(thirdTask)
   })
 
-  // Run shared integration tests
   runSharedIntegrationTests('MongoDB', () => ({
     client,
     operations,

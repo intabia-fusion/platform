@@ -646,7 +646,8 @@ describe('backrpc', () => {
     const response2 = await requestPromise
     expect(response2).toBe('response-request2')
 
-    // Verify the request was received at least twice (once before timeout, resent after re-registration)
+    // Verify the request was received at least twice: once before timeout, once resent after
+    // re-registration.
     const delayedRequests = requestsReceived.filter((r) => r.method === 'delayed')
     expect(delayedRequests.length).toBeGreaterThanOrEqual(1)
 

@@ -20,7 +20,8 @@ import { parseRoomName } from '@hcengineering/love'
 
 describe('Edge Cases - Room name parsing', () => {
   describe('Room name edge cases', () => {
-    // Room name format: `${WorkspaceUuid}_${Ref<MeetingMinutes>}`; only the first-underscore split is valid.
+    // Room name: `${WorkspaceUuid}_${Ref<MeetingMinutes>}`, only the first underscore splits
+    // it.
     it('should parse a UUID workspace and 24-char meetingId', () => {
       const result = parseRoomName('550e8400-e29b-41d4-a716-446655440000_65f4a2c9b1e8d3f7a9c2b4e6')
       expect(result).toEqual({

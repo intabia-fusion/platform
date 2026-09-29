@@ -66,7 +66,8 @@ describe('NumberInput', () => {
     expect(input.value).toBe('20')
   })
 
-  // afterUpdate also runs computeSize, which dispatches 'input' again on every re-render - pinned, not just on:input.
+  // afterUpdate also runs computeSize, dispatching 'input' again on every re-render - pinned, not
+  // just on:input.
   it('dispatches input while typing', async () => {
     const { component, input } = mount({ value: 1 })
     const onInput = vi.fn()
@@ -76,7 +77,8 @@ describe('NumberInput', () => {
     expect(onInput).toHaveBeenCalledTimes(2)
   })
 
-  // setValue runs on every value change (not just native change/blur), so 'change' fires per keystroke - pinned.
+  // setValue runs on every value change (not just native change/blur), so 'change' fires per
+  // keystroke - pinned.
   it('dispatches change on every value update, not only on native change', async () => {
     const { component, input } = mount({ value: 1 })
     const onChange = vi.fn()
@@ -98,7 +100,8 @@ describe('NumberInput', () => {
     expect(input.value).toBe('1')
   })
 
-  // setValue returns early without clamping or dispatching change when the range is inverted - pinned behaviour.
+  // setValue returns early, no clamp or change dispatch, when the range is inverted - pinned
+  // behaviour.
   it('leaves the value alone when maxValue is below minValue', async () => {
     const { input } = mount({ value: 5, minValue: 10, maxValue: 1 })
     await type(input, '42')

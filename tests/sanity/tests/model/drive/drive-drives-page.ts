@@ -69,7 +69,7 @@ export class DrivesPage extends CommonPage {
   }
 
   // The context menu can close without applying (a right click landing during a table re-render),
-  // leaving the drive in its old state. Check the resulting status and redo only if it did not move.
+  // leaving the drive unchanged - check the resulting status and redo only if it did not move.
   async archiveDrive (drive: Drive): Promise<void> {
     const archived = this.cellArchiveStatusYes(drive.name)
     await expect(async () => {

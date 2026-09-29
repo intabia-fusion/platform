@@ -17,8 +17,8 @@ async function openBilling (page: Page, ws: string): Promise<void> {
   await expect(page.locator('[data-id="planCard-business"]')).toBeVisible({ timeout: 20000 })
 }
 
-// After a subscribe/change/package action the UI navigates to the mock checkout page. Pay there,
-// which fires the CONFIRMED webhook, then go back to billing so the caller can assert the new state.
+// After a subscribe/change/package action, the UI goes to the mock checkout page. Pay there to
+// fire the CONFIRMED webhook, then return to billing so the caller can assert new state.
 async function payMockCheckout (page: Page, ws: string): Promise<void> {
   await expect(page).toHaveURL(/\/_tbank_subscriptions\/mock-checkout\//, { timeout: 20000 })
   await page.getByRole('button', { name: 'Оплатить' }).click()
@@ -26,7 +26,7 @@ async function payMockCheckout (page: Page, ws: string): Promise<void> {
   await openBilling(page, ws)
 }
 
-// A plan switch between two existing plans opens a MessageBox confirm; a first subscribe does not.
+// A switch between two existing plans opens a MessageBox confirm; a first subscribe doesn't.
 async function confirmIfDialog (page: Page): Promise<void> {
   const ok = page.locator('.msgbox-container .footer button').filter({ hasText: 'Ok' })
   try {
@@ -64,8 +64,8 @@ async function submitCheckoutDialog (
   await expect(dialog).toBeHidden({ timeout: 15000 })
 }
 
-// Buy the Business per-seat plan for `seats` seats: the plan card opens the checkout dialog (seats,
-// period and consent live there now), then pay on the mock checkout.
+// Buy the Business per-seat plan for `seats` seats: the plan card opens the checkout dialog
+// (seats, period, consent live there now), then pay on the mock checkout.
 async function subscribeBusiness (
   page: Page,
   ws: string,
@@ -112,9 +112,8 @@ async function changeSeats (page: Page, ws: string, seats: number, expect_: 'cha
   }
 }
 
-// Connect / switch to a package by key. A switch from an existing package opens the change dialog
-// with a proration preview (`expect_`: charge for a bigger package, date shift for a smaller one);
-// the first connect (no active package) opens the plain checkout dialog instead.
+// Connect/switch to a package: switching opens the change dialog with a proration preview
+// (`expect_`: charge for bigger, date shift for smaller); first connect opens plain checkout.
 async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?: 'charge' | 'extend'): Promise<void> {
   await page.locator(`[data-id="packageConnect-${pkgKey}"]`).click()
   const dialog = page.locator('[data-id="packageChangeDialog"]')
@@ -142,9 +141,8 @@ async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?:
   } else {
     await payMockCheckout(page, ws)
   }
-  // Once connected, the card's button turns into Disconnect, so the connect id is gone. The mock bank
-  // fires the confirmation webhook fire-and-forget, so activation can land after this page load -
-  // reload until the card flips instead of betting on a single render.
+  // Once connected the button becomes Disconnect, so the connect id is gone; the mock bank
+  // fires its webhook fire-and-forget - reload until the card flips instead of one render.
   await expect(async () => {
     await openBilling(page, ws)
     await expect(page.locator(`[data-id="packageDisconnect-${pkgKey}"]`)).toBeVisible({ timeout: 3000 })
@@ -257,7 +255,7 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     await openBilling(page, wsUrl)
     await subscribeBusiness(page, wsUrl, 2)
 
-    // Cancel at period end: the plan stays visible with a "cancel scheduled" state and an uncancel button.
+    // Cancel at period end: plan stays with a "cancel scheduled" state and an uncancel button.
     await page.locator('[data-id="cancelSubscription"]').click()
     await confirmIfDialog(page)
     await expect(page.locator('[data-id="uncancelSubscription"]')).toBeVisible({ timeout: 15000 })

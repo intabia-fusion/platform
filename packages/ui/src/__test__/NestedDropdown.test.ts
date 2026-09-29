@@ -95,7 +95,8 @@ describe('NestedDropdown', () => {
     const popup = get(popupstore)[0] as CompAndProps
     popup.onClose?.(CHILD_A2)
     await tick()
-    // Label's translateCB resolves via a Promise chain on a cache miss, so a settle beyond one tick is needed.
+    // Label's translateCB resolves via a Promise chain on a cache miss - needs a settle beyond one
+    // tick.
     await new Promise((resolve) => setTimeout(resolve, 0))
     await tick()
 

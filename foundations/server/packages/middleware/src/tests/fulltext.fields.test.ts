@@ -144,7 +144,8 @@ describe('FullTextMiddleware fields', () => {
   })
 
   it('takes the dropped documents off the total and marks it approximate', async () => {
-    // The index counted the stale hit; the caller would otherwise show a count the list never reaches.
+    // The index counted the stale hit; the caller would otherwise show a count the list never
+    // reaches.
     indexResult = { docs: [resultDoc('a'), resultDoc('b')], total: 7, totalExact: true }
     findAll.mockImplementation(async () =>
       toFindResult([{ _id: 'b', _class: MESSAGE_CLASS, message: 'markup-b' }] as any)

@@ -35,9 +35,8 @@ jest.setTimeout(90000)
 
 // Rows the tests themselves write.
 const DIRTY_TABLES = ['subscription']
-// Fixtures seeded once in beforeAll — cleared at startup, since the database outlives the run.
-// Children before parents: social_id/account_events/user_profile all reference person, and the
-// database is shared with the other real-db suites, so leftovers of theirs must go too.
+// Fixtures seed once in beforeAll, cleared at startup - db outlives the run. Children before
+// parents (social_id/account_events/user_profile -> person); shared with other real-db suites.
 const FIXTURE_TABLES = [
   'workspace_members',
   'workspace_status',
@@ -64,8 +63,8 @@ describe.each(realDbFlavors)('subscription-real [$flavor]', ({ flavor: dbFlavor,
   let wsUuid: WorkspaceUuid
   const accountUuid = generateUuid() as AccountUuid
 
-  // One reused database per flavor: migrations run once (and are skipped on later runs), and nothing
-  // is ever dropped — a DROP DATABASE on cockroach queues a 300s GC job per call.
+  // One reused database per flavor: migrations run once (skipped later), nothing is dropped -
+  // DROP DATABASE on cockroach queues a 300s GC job per call.
   beforeAll(async () => {
     const db = await openRealDb('subdb', { flavor: dbFlavor, adminUri, dbUri })
     dbUuid = db.dbUuid

@@ -3,9 +3,8 @@ import { createAccountAndWorkspace, generateId, generateTestData } from '../util
 import { ContractPage } from '../model/contacts/contract-page'
 import { UserProfilePage } from '../model/profile/user-profile-page'
 
-// Settings sidebar navigator is only rendered while the Settings app is active
-// (see plugins/setting-resources/src/components/WorkspaceSettings.svelte, NavGroup id
-// is `navGroup-${categoryName}` and the workspace settings categoryName is 'setting').
+// Settings sidebar navigator renders only while the Settings app is active
+// (WorkspaceSettings.svelte); NavGroup id is `navGroup-${categoryName}`, here 'setting'.
 const settingsNavGroup = (page: Page): ReturnType<Page['locator']> => page.locator('#navGroup-setting')
 
 test.describe('workbench navigation after class settings tests', () => {

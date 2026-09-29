@@ -6,10 +6,8 @@
   obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 */
 
-// Scenario A invite into an EXISTING private meeting: the owner-caller's
-// invite-request must grow the meeting members with the recipient up-front,
-// otherwise the recipient never sees the private meeting space and the join
-// times out with "MeetingMinutes not found after all retries".
+// Invite into an existing private meeting: the owner's invite-request must add the recipient
+// to members up-front, or the join times out (MeetingMinutes never found).
 
 import core, {
   type AccountUuid,

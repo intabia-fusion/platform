@@ -151,9 +151,8 @@ async function stopProfile (page: Page, name: string): Promise<void> {
 }
 
 /**
- * Records a CPU profile, renderer metrics and a per-endpoint network summary of the page for
- * every test in the current file. Call once at the top level of a describe block.
- * Does nothing unless BROWSER_PROFILE is set.
+ * Records a CPU profile, renderer metrics and a per-endpoint network summary for every test. Call
+ * once at the top of a describe block; no-op unless BROWSER_PROFILE is set.
  */
 export function profileBrowser (): void {
   if (!enabled) return

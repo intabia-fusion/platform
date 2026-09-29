@@ -79,8 +79,8 @@ describe('DropdownLabelsIntl', () => {
     const onSelected = vi.fn()
     component.$on('selected', onSelected)
     await tick()
-    // dispatch happens synchronously inside the reactive statement during instantiation, before $on is attached,
-    // so re-trigger via an items update to observe it.
+    // dispatch fires synchronously inside the reactive statement during instantiation, before $on
+    // attaches - re-trigger via an items update to observe it.
     component.$set({ items: [...ITEMS], selected: undefined })
     await tick()
     expect(onSelected).toHaveBeenLastCalledWith(expect.objectContaining({ detail: 'a' }))
@@ -147,7 +147,8 @@ describe('DropdownLabelsIntl', () => {
     expect(button.classList.contains('large')).toBe(true)
   })
 
-  // Same as DropdownLabels: no explicit disabled guard in openPopup, only the native disabled attribute.
+  // Same as DropdownLabels: no explicit disabled guard in openPopup, only the native disabled
+  // attribute.
   it('sets the disabled attribute on the trigger, though the click handler has no disabled guard', async () => {
     const { button } = mount({ items: ITEMS, selected: 'a', disabled: true })
     expect(button.disabled).toBe(true)

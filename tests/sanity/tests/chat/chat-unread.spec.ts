@@ -27,9 +27,8 @@ test.describe.configure({ mode: 'parallel' })
 const others = new Map<string, ChatMember>()
 
 /**
- * Unread state of the chat as the user sees it: application markers, navigator counters, the "New"
- * separator and where a channel opens. The other user talks over REST, so a test can afford dozens
- * of messages and no second browser.
+ * Unread: app markers, navigator counters, the "New" separator, where a channel opens. Other user
+ * is REST-only, so tests can send dozens of messages without a second browser.
  */
 test.describe('Chat unread state tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
@@ -94,9 +93,8 @@ test.describe('Chat unread state tests', () => {
   }
 
   /**
-   * The application markers are off. They are global, and the bot greeting of a fresh workspace
-   * arrives whenever the bot gets to it: everything outside the channels under test is read over
-   * REST first, so only the UI can have cleared what the test is about.
+   * App markers are skipped - they're global, and the bot greeting can land at any time. REST reads
+   * everything outside the tested channels first, leaving only the test's own state.
    */
   async function checkMarkersOff (
     chat: Chat,

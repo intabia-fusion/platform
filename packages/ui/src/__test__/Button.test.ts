@@ -111,7 +111,7 @@ describe('Button', () => {
     expect(withIcon.button.classList.contains('only-icon')).toBe(false)
   })
 
-  // adaptiveShrink hides the label below the given breakpoint, which also makes the button icon-only.
+  // adaptiveShrink hides the label below the breakpoint, making the button icon-only.
   it('shrinks to the icon once the device is at or below adaptiveShrink', async () => {
     deviceOptionsStore.update((d) => ({ ...d, size: 'sm' }))
     const { button } = mount({ icon: ICON, label: 'ui:string:Ok' as IntlString, adaptiveShrink: 'sm' })

@@ -76,7 +76,7 @@ export async function OnProjectChanges (txes: Tx[], control: TriggerControl): Pr
       if (control.hierarchy.isDerived(cud.objectClass, time.class.ToDo)) {
         if (cud.attachedToClass !== undefined && cud.attachedTo !== undefined) {
           if (control.hierarchy.isDerived(cud.attachedToClass, github.class.GithubPullRequest)) {
-            // Ok we got todo change for pull request, let's mark it for sync.
+            // Todo changed on a pull request — mark it for sync.
             result.push(
               control.txFactory.createTxUpdateDoc<DocSyncInfo>(
                 github.class.DocSyncInfo,

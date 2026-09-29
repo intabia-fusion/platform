@@ -74,7 +74,7 @@ async function createRelation (
   return await factory.createDoc(core.class.Relation, core.space.Model, { docA, docB, association })
 }
 
-// Subscribe and resolve once the first callback fires; `last()` keeps returning the latest result.
+// Subscribe and resolve on the first callback; `last()` keeps returning the latest result.
 async function subscribe<T extends Doc> (
   liveQuery: LiveQuery,
   _class: Ref<Class<T>>,
@@ -182,8 +182,8 @@ describe('LiveQuery associations', () => {
     const { liveQuery, factory } = await getClient()
     const projectId = await createProject(factory, 'nested-src')
     const holderId = await createHolder(factory, [])
-    // The first-level relation must exist before subscribing, so the holder is already present in
-    // $associations when the nested Relation event arrives and fillRelationDoc has to recurse into it.
+    // First-level relation must exist before subscribing, so the holder is already in
+    // $associations when the nested Relation event arrives and fillRelationDoc recurses.
     await createRelation(factory, projectId, holderId, test.association.ProjectHolder)
 
     const q = await subscribe<TestProject>(

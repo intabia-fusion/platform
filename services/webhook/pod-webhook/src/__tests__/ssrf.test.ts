@@ -33,7 +33,7 @@ const baseOpts = {
   allowInsecureHttp: false
 }
 
-// -- isBlockedAddress: every range from the plan, exhaustively, no network involved. --------------
+// isBlockedAddress: every range from the plan, exhaustively, no network involved.
 describe('isBlockedAddress', () => {
   test.each([
     ['127.0.0.1', 4, true, 'loopback (127/8)'],
@@ -76,7 +76,7 @@ describe('isBlockedAddress', () => {
   })
 })
 
-// -- safeFetch address policy: fully mocked dns, no real connection ever attempted. ----------------
+// safeFetch address policy: fully mocked dns, no real connection ever attempted.
 function mockLookupSequence (...results: Array<{ address: string, family: number } | Error>): void {
   const lookup = dns.lookup as unknown as jest.Mock
   lookup.mockReset()
@@ -107,7 +107,7 @@ describe('safeFetch address policy', () => {
     mockLookupSequence({ address: '10.0.0.5', family: 4 })
 
     await expect(safeFetch('https://internal.example/hook', baseOpts)).rejects.toThrow(SsrfError)
-    // Only the preflight lookup ran - the request never got far enough to call `lookup` a second time.
+    // Only the preflight lookup ran - the request never got far enough to call `lookup` again.
     expect(dns.lookup).toHaveBeenCalledTimes(1)
   })
 
@@ -195,8 +195,8 @@ describe('safeFetch address policy', () => {
   })
 })
 
-// -- safeFetch transport mechanics: real local server, address policy stubbed out (already covered
-// exhaustively above) so these tests isolate HTTP behaviour instead of DNS/policy plumbing. ---------
+// safeFetch transport mechanics: real local server, address policy stubbed out (covered above)
+// - isolates HTTP behaviour from DNS/policy plumbing.
 describe('safeFetch transport', () => {
   let receiver: MockReceiver
 

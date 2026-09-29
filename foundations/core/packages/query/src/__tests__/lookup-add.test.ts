@@ -81,9 +81,8 @@ function last (mock: jest.Mock): any[] {
   return mock.mock.calls[mock.mock.calls.length - 1][0]
 }
 
-// __updateLookup only runs when tx.modifiedOn is strictly greater than the doc's stored
-// modifiedOn; back-to-back writes can otherwise land in the same millisecond and take the
-// refresh-from-server path instead, which does not resolve an array-of-refs lookup key.
+// __updateLookup only runs when tx.modifiedOn exceeds the doc's stored value; same-millisecond
+// writes take the refresh-from-server path, which can't resolve an array-of-refs lookup key.
 const tick = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 2))
 }

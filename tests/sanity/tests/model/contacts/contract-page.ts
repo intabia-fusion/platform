@@ -251,9 +251,8 @@ export class ContractPage {
 
   async checkStateApplication (role: string): Promise<void> {
     await expect(this.stateApplication(role)).toBeVisible()
-    // The description only lives in a hover tooltip. A hover that lands while the row still
-    // re-renders opens nothing, and a single untimed check then waits out its 15s on a tooltip
-    // no one is going to show - hover again instead.
+    // Description shows only in a hover tooltip; hovering during a row re-render opens nothing, and
+    // one untimed check then burns 15s on a tooltip that never shows - hover again.
     await retry(async () => {
       await this.commentApplication().hover()
       await expect(this.commentDescription()).toBeVisible({ timeout: 3000 })

@@ -126,10 +126,8 @@ describe('Shifts', () => {
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ detail: new Date(zeroed + 5 * MINUTE) }))
   })
 
-  // Source bug: shiftValues is a plain top-level `const` array populated inside a `$:` block via
-  // `.push(...)`. Svelte never sees an assignment to `shiftValues`, so the {#each} in the markup is
-  // never told to re-render when minutes/hours/days/mode change after the initial mount - the shift
-  // list is effectively frozen at first render. Pinned as current behaviour, not a desired one.
+  // Bug: shiftValues is a top-level const array filled via .push() in a $: block - Svelte never
+  // sees the assignment, so {#each} never re-renders after mount. Frozen at first render, pinned.
   it('pinned bug: changing days/mode after mount does not update the rendered list', async () => {
     const { host, component } = mount({
       currentDate: new Date(),

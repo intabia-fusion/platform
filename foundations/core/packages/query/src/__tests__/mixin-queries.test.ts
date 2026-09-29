@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// A mixin is stored on the base document, so `TxMixin` has to reach queries subscribed to the base
-// class, to the mixin itself, and to neither - and a document must enter or leave a mixin query as
-// the mixin is added or its fields stop matching.
+// A mixin sits on the base doc, so TxMixin must reach queries on the base class, the mixin,
+// and neither - a doc enters/leaves as the mixin is added or fields stop matching.
 
 import core, {
   createClient,

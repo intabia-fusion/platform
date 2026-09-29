@@ -44,8 +44,8 @@ describe('wrapPipeline broadcast drain', () => {
   })
 })
 
-// Without a caller's SessionData, every in-process write runs as an admin system account - which is
-// what every middleware scoping writes (space security, api key grants, seat limits) keys off.
+// Without a caller's SessionData, every in-process write runs as an admin system account - what
+// every scoping middleware (space security, api key grants, seat limits) keys off.
 describe('wrapPipeline session identity', () => {
   function makePipeline (): any {
     return {
@@ -116,8 +116,8 @@ describe('wrapPipeline async requests', () => {
   })
 })
 
-// LookupMiddleware strips scalar query fields from results; the ws/rest clients revert that, and so
-// must the in-process one - otherwise findOne(X, { _id }) hands back a doc with no _id.
+// LookupMiddleware strips scalar query fields from results; ws/rest clients revert that, and so
+// must the in-process one - else findOne(X, { _id }) hands back a doc with no _id.
 describe('wrapPipeline reverts stripped query fields', () => {
   function pipelineReturning (docs: any[]): any {
     return {

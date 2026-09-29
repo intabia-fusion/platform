@@ -34,7 +34,8 @@ jest.mock('@hcengineering/contact-resources', () => ({
   getPersonsByPersonRefs: jest.fn(async () => new Map())
 }))
 
-// `mock`-prefixed name so jest's hoist-scope check allows referencing it inside jest.mock factory below.
+// `mock`-prefixed name: jest's hoist-scope check allows referencing it inside jest.mock
+// factory below.
 const mockQueryInstances: Array<{ query: jest.Mock, unsubscribe: jest.Mock }> = []
 
 jest.mock('@hcengineering/presentation', () => ({

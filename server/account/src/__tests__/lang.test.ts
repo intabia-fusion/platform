@@ -24,7 +24,8 @@ function strings (file: string): Record<string, string> {
   return JSON.parse(readFileSync(join(langDir, file), 'utf8')).string
 }
 
-// A key missing from a locale falls back to English without any error, so nothing else catches it.
+// A key missing from a locale falls back to English without any error, so nothing else catches
+// it.
 describe('account letters', () => {
   const ids = Object.keys(accountPlugin.string).sort()
 

@@ -25,7 +25,7 @@ import love, {
 import { createMockContext, createMockMeeting, createMockParticipant, TEST_IDS } from './test-helpers'
 import { WorkspaceClient } from '../workspaceClient'
 
-// Lightweight in-memory fake of the platform client surface that `WorkspaceClient.finishMeeting` touches.
+// In-memory fake of the platform client surface `WorkspaceClient.finishMeeting` touches.
 function createFakeClient (seed: {
   meeting: MeetingMinutes
   otherMeetings?: MeetingMinutes[]
@@ -238,8 +238,8 @@ describe('WorkspaceClient.finishMeeting → invite cleanup', () => {
     expect(removed).toContain(knockRequest._id)
   })
 
-  // Sanity knock-office flake: room_finished finished the owner's first office meeting, the owner
-  // reconnected into a new one, and polling's late second finish of the first dropped the new knocks.
+  // Sanity knock-office flake: room_finished ended the owner's first office meeting; owner
+  // reconnected to a new one, polling's late second finish dropped new knocks.
   it('keeps knocks into the room once the next meeting there is live (defect: a late second finish wiped them)', async () => {
     const meeting = createMockMeeting({ roomId: roomRef, status: MeetingStatus.Finished, meetingEnd: 1000 })
     const next = createMockMeeting({

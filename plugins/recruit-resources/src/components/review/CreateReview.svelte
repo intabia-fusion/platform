@@ -35,7 +35,6 @@
   import IconCompany from '../icons/Company.svelte'
   import { Analytics } from '@hcengineering/analytics'
 
-  // export let space: Ref<Project>
   export let candidate: Ref<Person>
   export let date: Date | undefined = undefined
   export let preserveCandidate = false

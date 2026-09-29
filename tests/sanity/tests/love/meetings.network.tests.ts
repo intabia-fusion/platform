@@ -75,17 +75,14 @@ async function setOffline (ctx: BrowserContext, page: Page, offline: boolean): P
   })
 }
 
-// Own contexts, not the shared windows: `routeLiveKitThroughProxy` rewrites LIVEKIT_WS in
-// config.json and CDP puts the context offline. Both outlive the test on a reused window and
-// would pin every later test to a proxy that is already closed.
+// Own contexts, not shared: `routeLiveKitThroughProxy` rewrites LIVEKIT_WS and puts the
+// context offline via CDP - both outlive a reused window, pinning later tests to a dead proxy.
 export function registerNetworkTests (): void {
-  // @network: the outage simulations are 58s of the love lane - a quarter of it - and they probe
-  // LiveKit reconnects, not the product's own code. `pnpm run uitest` skips them; `pnpm run uitest-network`
-  // is the way to run them.
+  // @network: outage sims run 58s of the love lane (a quarter), probing LiveKit reconnects,
+  // not product code. `pnpm run uitest` skips them; use `pnpm run uitest-network` instead.
   test.describe('meeting minutes - degraded link to LiveKit @network', () => {
-    // The shared windows hold a live session for the same accounts this test signs in as, and two
-    // sessions per user break presence and departure checks. Drop them; the next shared test pays
-    // one boot to get its window back.
+    // Shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence/departure checks. Drop them; next test pays one reboot.
     test.beforeAll(async () => {
       await closeLoveWindows()
     })

@@ -13,8 +13,8 @@
 //
 
 /**
- * A set of tests against a real PostgreSQL database.
- * CockroachDB used to be covered here as a second flavor; it is dropped for now, see docs/memory/cockroach-dropped.md.
+ * Tests against a real PostgreSQL database. CockroachDB used to be a second flavor here;
+ * dropped for now, see docs/memory/cockroach-dropped.md.
  */
 
 import { randomUUID } from 'node:crypto'

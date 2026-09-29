@@ -73,8 +73,8 @@ describe.each(realDbFlavors)('real-account [$flavor]', ({ flavor, adminUri, dbUr
     }
   }
 
-  // One reused database per flavor: migrations run once (and are skipped on later runs), and nothing
-  // is ever dropped — a DROP DATABASE on cockroach queues a 300s GC job per call.
+  // One reused database per flavor: migrations run once (skipped later), nothing is dropped -
+  // DROP DATABASE on cockroach queues a 300s GC job per call.
   beforeAll(async () => {
     const db = await openRealDb('accountdb', { flavor, adminUri, dbUri })
     dbUuid = db.dbUuid
@@ -86,8 +86,8 @@ describe.each(realDbFlavors)('real-account [$flavor]', ({ flavor, adminUri, dbUr
     await prepareAccounts(accountDb)
   })
 
-  // Workspaces carry a unique url, so they must not survive into the next test. Persons and accounts
-  // stay: prepareAccounts already re-creates them only when missing.
+  // Workspaces carry a unique url, so they can't survive into the next test. Persons/accounts
+  // stay - prepareAccounts re-creates them only when missing.
   beforeEach(async () => {
     await clearTables(dbClient, dbUuid, WORKSPACE_TABLES)
   })

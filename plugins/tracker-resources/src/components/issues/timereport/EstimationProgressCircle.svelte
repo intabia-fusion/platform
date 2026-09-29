@@ -51,8 +51,6 @@
   }
 
   function getCircleColor (val: number, maxVal: number): string {
-    // if (maxVal === 0) return 'rgb(144, 238, 144)'
-
     const percentage = (val / maxVal) * 100
 
     if (percentage > 100) {

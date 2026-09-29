@@ -368,10 +368,8 @@ describe('postgres operations', () => {
   })
 
   it('nested lookup on model docs does not mutate ModelDb instances', async () => {
-    // Reproduces the bug where parseLookup mutates shared ModelDb objects when
-    // resolving nested lookups (e.g. status -> category). After such a query the
-    // model doc would carry $lookup permanently and subsequent findAll on that
-    // class would emit $lookup with no lookupMap, crashing REST clients.
+    // Reproduces the bug: parseLookup mutates shared ModelDb objects on nested lookups, so the
+    // model doc keeps $lookup for good, and later findAll crashes REST clients (no lookupMap).
     await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
       name: 'task-with-stat-a',
       description: '',
