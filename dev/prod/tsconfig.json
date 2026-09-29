@@ -13,6 +13,7 @@
     "declarationDir": "./types",
     "verbatimModuleSyntax": true,
     "allowSyntheticDefaultImports": true,
+    "types": ["node"],
     "lib": [
       "es2023",
       "dom",

@@ -243,7 +243,7 @@
               <slot name="header" />
             {/if}
 
-            <span class="text-sm lower timestamp">
+            <span class="text-sm timestamp">
               <MessageTimestamp date={message.createdOn ?? message.modifiedOn} format={timeFormat} />
             </span>
             {#if message.editedOn}

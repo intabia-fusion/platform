@@ -38,6 +38,7 @@ import core, {
   getClassCollaborators,
   AccountUuid,
   RateLimiter,
+  SortingOrder,
   WorkspaceUuid
 } from '@hcengineering/core'
 import notification, { DocNotifyContext, isUnreadMessageChunk, ReadState } from '@hcengineering/notification'
@@ -45,6 +46,7 @@ import {
   getAccountBySocialId,
   getAddCollaboratorsTxes,
   getPerson,
+  getPersonsBySocialIds,
   getPersonSpaces
 } from '@hcengineering/server-contact'
 import { TriggerControl } from '@hcengineering/server-core'
@@ -140,37 +142,64 @@ async function OnThreadMessageCreated (
   return [lastReplyTx, repliedPersonTx]
 }
 
-async function OnThreadMessageDeleted (tx: Tx, control: TriggerControl): Promise<Tx[]> {
-  // TODO: FIXME
-  return []
-  // const removeTx = tx as TxRemoveDoc<ThreadMessage>
+/**
+ * A removed reply takes back what OnThreadMessageCreated gave the parent: `lastReply` falls back to
+ * the newest remaining reply and `repliedPersons` keeps the authors of the remaining replies, in the
+ * order of their first reply, as `$push` built it. Without replies both fields go away.
+ */
+export async function OnThreadMessageDeleted (
+  ctx: MeasureContext,
+  tx: TxRemoveDoc<ThreadMessage>,
+  control: TriggerControl
+): Promise<Tx[]> {
+  const removed = control.removedMap.get(tx.objectId) as ThreadMessage | undefined
+  const parentId = (tx.attachedTo ?? removed?.attachedTo) as Ref<ActivityMessage> | undefined
+  if (parentId === undefined) return []
 
-  // const message = control.removedMap.get(removeTx.objectId) as ThreadMessage
+  // The parent itself may go in the same batch (its replies are removed with it).
+  const parent = (await control.findAll(ctx, activity.class.ActivityMessage, { _id: parentId }, { limit: 1 }))[0]
+  if (parent === undefined) return []
 
-  // if (message === undefined) {
-  //   return []
-  // }
+  const replies = await control.findAll(
+    ctx,
+    chunter.class.ThreadMessage,
+    { attachedTo: parentId, _id: { $ne: tx.objectId } },
+    {
+      sort: { createdOn: SortingOrder.Ascending },
+      projection: { _id: 1, createdBy: 1, createdOn: 1, modifiedBy: 1, modifiedOn: 1 }
+    }
+  )
 
-  // const messages = await control.findAll(control.ctx, chunter.class.ThreadMessage, {
-  //   attachedTo: message.attachedTo
-  // })
+  if (replies.length === 0) {
+    if (parent.lastReply === undefined && (parent.repliedPersons ?? []).length === 0) return []
+    return [
+      control.txFactory.createTxUpdateDoc<ActivityMessage>(parent._class, parent.space, parent._id, {
+        $unset: { lastReply: true, repliedPersons: true }
+      })
+    ]
+  }
 
-  // const repliedPersons = await getPersons(control, messages.map((m) => m.createdBy).filter((pid) => pid !== undefined))
+  const last = replies[replies.length - 1]
+  const lastReply = last.createdOn ?? last.modifiedOn
 
-  // const updateTx = control.txFactory.createTxUpdateDoc<ActivityMessage>(
-  //   message.attachedToClass,
-  //   message.space,
-  //   message.attachedTo,
-  //   {
-  //     repliedPersons: repliedPersons.map((p) => p._id),
-  //     lastReply:
-  //       messages.length > 0
-  //         ? Math.max(...messages.map(({ createdOn, modifiedOn }) => createdOn ?? modifiedOn))
-  //         : undefined
-  //   }
-  // )
+  const authors = replies.map((it) => it.createdBy ?? it.modifiedBy)
+  const persons = await getPersonsBySocialIds(control, authors)
+  const repliedPersons: Ref<Person>[] = []
+  for (const author of authors) {
+    const person = persons.get(author)
+    if (person !== undefined && !repliedPersons.includes(person)) repliedPersons.push(person)
+  }
 
-  // return [updateTx]
+  const current = parent.repliedPersons ?? []
+  const samePersons = current.length === repliedPersons.length && current.every((it, idx) => it === repliedPersons[idx])
+  if (parent.lastReply === lastReply && samePersons) return []
+
+  return [
+    control.txFactory.createTxUpdateDoc<ActivityMessage>(parent._class, parent.space, parent._id, {
+      lastReply,
+      repliedPersons
+    })
+  ]
 }
 
 async function OnChatMessageCreated (
@@ -223,7 +252,11 @@ async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Pro
       tx._class === core.class.TxRemoveDoc &&
       control.hierarchy.isDerived(tx.objectClass, chunter.class.ThreadMessage)
     ) {
-      res.push(...(await control.ctx.with('OnThreadMessageDeleted', {}, (ctx) => OnThreadMessageDeleted(tx, control))))
+      res.push(
+        ...(await control.ctx.with('OnThreadMessageDeleted', {}, (ctx) =>
+          OnThreadMessageDeleted(ctx, tx as TxRemoveDoc<ThreadMessage>, control)
+        ))
+      )
     }
     if (
       tx._class === core.class.TxCreateDoc &&

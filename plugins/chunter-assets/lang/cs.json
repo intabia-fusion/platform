@@ -140,6 +140,8 @@
     "ViewingArchivedChannel": "Prohlížíte archivovaný kanál",
     "OpenChatInSidebar": "Otevřít chat v postranním panelu",
     "NoThreadsYet": "Zatím nejsou žádné vlákna.",
+    "ThreadsSortByLastReply": "Podle poslední odpovědi",
+    "ThreadsSortByCreated": "Podle data vytvoření",
     "SummarizeMessages": "Shrnout diskuzi",
     "DeleteMessageDescription": "Opravdu chcete tuto zprávu smazat? Tuto akci nelze vrátit zpět.",
     "Star": "Přidat do oblíbených",

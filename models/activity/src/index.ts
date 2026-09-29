@@ -112,8 +112,8 @@ export class TActivityMessage extends TAttachedDoc implements ActivityMessage {
   @Prop(ArrOf(TypeRef(contact.class.Person)), contact.string.Person)
   repliedPersons?: Ref<Person>[]
 
+  // A column of the Postgres activity table, indexed there for the Threads list (customIndexes).
   @Prop(TypeTimestamp(), activity.string.LastReply)
-  // @Index(IndexKind.Indexed)
   lastReply?: Timestamp
 
   @Prop(Collection(activity.class.Reaction), activity.string.Reactions)

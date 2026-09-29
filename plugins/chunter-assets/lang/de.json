@@ -141,6 +141,8 @@
     "OpenChatInSidebar": "Chat in Seitenleiste öffnen",
     "ResolveThread": "Thread abschließen",
     "NoThreadsYet": "Es gibt noch keine Threads.",
+    "ThreadsSortByLastReply": "Nach letzter Antwort",
+    "ThreadsSortByCreated": "Nach Erstellungsdatum",
     "SummarizeMessages": "Diskussion zusammenfassen",
     "DeleteMessageDescription": "Sind Sie sicher, dass Sie diese Nachricht löschen möchten? Dies kann nicht rückgängig gemacht werden.",
     "Star": "Markieren",

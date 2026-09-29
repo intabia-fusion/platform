@@ -134,6 +134,8 @@ export default mergeIds(chunterId, chunter, {
     LatestMessages: '' as IntlString,
     ResolveThread: '' as IntlString,
     NoThreadsYet: '' as IntlString,
+    ThreadsSortByLastReply: '' as IntlString,
+    ThreadsSortByCreated: '' as IntlString,
     DeleteMessageDescription: '' as IntlString,
     ChannelsAndDMs: '' as IntlString,
     CreateDirect: '' as IntlString,

@@ -140,6 +140,17 @@ export class ChatMember {
     return id
   }
 
+  async removeReply (channel: ChannelDoc, message: Ref<Doc>, reply: Ref<Doc>): Promise<void> {
+    await this.client.removeCollection(
+      threadMessageClass,
+      channel._id as Ref<Space>,
+      reply as Ref<AttachedDoc>,
+      message,
+      chatMessageClass,
+      'replies'
+    )
+  }
+
   async react (channel: ChannelDoc, message: Ref<Doc>, emoji: string): Promise<Ref<Doc>> {
     const id = generateId<AttachedDoc>()
     await this.client.addCollection(

@@ -800,6 +800,7 @@
               hoverStyles="filledHover"
               attachmentImageSize="x-large"
               type={canGroup ? 'short' : 'default'}
+              timeFormat={isThread ? 'full' : 'time'}
               isHighlighted={isSelected}
               shouldScroll={false}
               {readonly}

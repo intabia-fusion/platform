@@ -29,6 +29,16 @@ export class ChatUnreadPage extends CommonPage {
   readonly latestMessagesButton = (): Locator => this.page.getByRole('button', { name: 'Latest messages' })
   readonly message = (text: string): Locator => this.page.locator('.hulyComponent .activityMessage', { hasText: text })
 
+  /** The sort of the Threads list: a dropdown in its header, remembered per browser. */
+  async selectThreadsSort (label: 'By last reply' | 'By creation date'): Promise<void> {
+    await this.page
+      .locator('.hulyHeader-container')
+      .getByRole('button', { name: /^By (last reply|creation date)$/ })
+      .click()
+    await this.page.locator('.hulyPopup-container .hulyPopup-row', { hasText: label }).click()
+    await expect(this.page.locator('.hulyHeader-container').getByRole('button', { name: label })).toBeVisible()
+  }
+
   async checkChatAppMarker (visible: boolean): Promise<void> {
     await expect(this.chatAppMarker()).toHaveCount(visible ? 1 : 0, { timeout: badgeTimeout })
   }
