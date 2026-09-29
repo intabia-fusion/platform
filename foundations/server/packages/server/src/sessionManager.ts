@@ -128,9 +128,12 @@ export interface Timeouts {
 
 type PendingStatuses = Map<AccountUuid, { session: Session, online: boolean, away: boolean }>
 
-// Whether a session keeps its person "at the computer": a mobile session never does.
+// Whether a session keeps its person "at the computer": a phone never does, and neither does a
+// terminal (TUI, CLI, MCP): it reports no idleness, and a terminal left open must not delay pushes.
+const NEVER_PRESENT: ReadonlyArray<Session['clientKind']> = ['mobile', 'cli']
+
 function sessionAway (session: Session): boolean {
-  return session.clientKind === 'mobile' || session.away
+  return NEVER_PRESENT.includes(session.clientKind) || session.away
 }
 
 export class TSessionManager implements SessionManager {
@@ -1342,6 +1345,14 @@ export class TSessionManager implements SessionManager {
                   const isAiBot = sessionRef.session.token.extra?.service === 'aibot'
                   if (user !== guestAccount && user !== systemAccountUuid && !isAiBot) {
                     this.queueStatus(workspaceUuid, sessionRef.session, false)
+                  }
+                } else if (another !== -1 && !workspace.maintenance) {
+                  // A session of the person remains (a phone, a terminal): the closed one may have
+                  // been the only one that kept them "here", so their presence is recomputed.
+                  const remaining = Array.from(workspace.sessions.values())[another].session
+                  const isAiBot = remaining.token.extra?.service === 'aibot'
+                  if (user !== guestAccount && user !== systemAccountUuid && !isAiBot) {
+                    this.queueStatus(workspaceUuid, remaining, true)
                   }
                 }
               }

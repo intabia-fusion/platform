@@ -25,6 +25,9 @@ export function emptyResult (): Result {
     updateReadStateTx: [],
 
     queueMessages: [],
+    timeMachine: [],
+    heldPushes: [],
+    notified: new Set(),
 
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
@@ -51,14 +54,17 @@ export function isEmptyResult (result: Result): boolean {
     result.createAppPushNotificationTx.length === 0 &&
     result.updateReadStateTx.length === 0 &&
     result.queueMessages.length === 0 &&
+    result.timeMachine.length === 0 &&
+    result.heldPushes.length === 0 &&
     result.createUserMentionInfoTx.length === 0 &&
     result.updateUserMentionInfoTx.length === 0 &&
     result.removeUserMentionInfoTx.length === 0
   )
 }
 
+// Everyone a notification was recorded for so far, delivered or held (see Result.notified).
 export function getNotifiedUsers (result: Result): AccountUuid[] {
-  return result.queueMessages.map((it) => it.account)
+  return Array.from(new Set([...result.notified, ...result.queueMessages.map((it) => it.account)]))
 }
 
 export function getEmptyTxCache (): TxCache {

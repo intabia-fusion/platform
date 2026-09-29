@@ -23,6 +23,8 @@ import {
   DocNotifyContext,
   NotificationIntl,
   NotificationMessage,
+  QueueDismissMessage,
+  QueueNotificationMessage,
   UnreadMessage,
   UnreadMessageChunk,
   UnreadMessageId
@@ -64,6 +66,20 @@ export function isUnreadMessageChunk (unread: UnreadMessage | undefined): unread
 export function getNotificationMessageId (inboxNotification: ContextNotification): Ref<ActivityMessage> | undefined {
   if (inboxNotification.type === 'common') return undefined
   return inboxNotification.messageId
+}
+
+export const NATIVE_PUSH_SCHEMES = {
+  apns: 'apns://',
+  fcm: 'fcm://',
+  rustore: 'rustore://'
+} as const
+
+export function isNativePushEndpoint (endpoint: string): boolean {
+  return Object.values(NATIVE_PUSH_SCHEMES).some((scheme) => endpoint.startsWith(scheme))
+}
+
+export function isQueueDismissMessage (message: QueueNotificationMessage): message is QueueDismissMessage {
+  return message.kind === 'dismiss'
 }
 
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80

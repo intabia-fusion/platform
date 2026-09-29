@@ -15,13 +15,15 @@
 //
 
 import { notEmpty } from '@hcengineering/core'
-import core, { systemAccountUuid, type Ref } from '@hcengineering/core'
+import core, { type MeasureContext, systemAccountUuid, type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import notification, {
   PushSubscription,
   type PushData,
+  type PushDismissData,
   QueueNotificationMessage,
   PUSH_NOTIFICATION_TITLE_SIZE,
   PUSH_NOTIFICATION_BODY_SIZE,
+  isQueueDismissMessage,
   truncate
 } from '@hcengineering/notification'
 import { getPlatformQueue } from '@hcengineering/kafka'
@@ -42,8 +44,11 @@ import {
   pushTarget,
   rustoreConfigured,
   sendApns,
+  sendApnsDismiss,
   sendFcm,
+  sendFcmDismiss,
   sendRustore,
+  sendRustoreDismiss,
   sendTimeoutMs
 } from './mobile'
 import { getCtx } from './utils'
@@ -108,6 +113,63 @@ export async function sendPushToSubscription (
   return results.filter(notEmpty)
 }
 
+/**
+ * A dismiss goes to the native apps only. A web push has to show something, so there is
+ * nothing to send a browser; the tab drops the in-app record itself.
+ */
+export async function sendDismissToSubscription (
+  subscriptions: PushSubscription[],
+  data: PushDismissData
+): Promise<Ref<PushSubscription>[]> {
+  const promises = subscriptions.map(async (subscription) => {
+    const target = pushTarget(subscription.endpoint)
+    if (target.kind === PushKind.Apns) {
+      if (apnsConfigured() && (await sendApnsDismiss(target.token, data)) === Delivery.Gone) {
+        return subscription._id
+      }
+      return null
+    }
+    if (target.kind === PushKind.Fcm) {
+      if (fcmConfigured() && (await sendFcmDismiss(target.token, data)) === Delivery.Gone) {
+        return subscription._id
+      }
+      return null
+    }
+    if (target.kind === PushKind.RuStore) {
+      if (rustoreConfigured() && (await sendRustoreDismiss(target.token, data)) === Delivery.Gone) {
+        return subscription._id
+      }
+      return null
+    }
+    return null
+  })
+  const results = await Promise.all(promises)
+  return results.filter(notEmpty)
+}
+
+async function removeDeadSubscriptions (
+  ctx: MeasureContext,
+  workspace: WorkspaceUuid,
+  failedSubscriptionIds: Ref<PushSubscription>[]
+): Promise<void> {
+  try {
+    const token = generateToken(systemAccountUuid, workspace, { service: config.ServiceId })
+    const endpoint = await getTransactorEndpoint(token)
+    const restClient = createRestClient(endpoint, workspace, token)
+
+    for (const subId of failedSubscriptionIds) {
+      try {
+        await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
+        ctx.info(`Successfully removed invalid push subscription ${subId} from workspace ${workspace}`)
+      } catch (removeErr: any) {
+        ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
+      }
+    }
+  } catch (clientErr: any) {
+    ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
+  }
+}
+
 export const main = async (): Promise<void> => {
   if (config.PushPublicKey !== undefined && config.PushPrivateKey !== undefined) {
     try {
@@ -135,36 +197,29 @@ export const main = async (): Promise<void> => {
         await withRetry(
           async () => {
             const value = queueMessage.value
-            const shouldPush = (value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0
-            if (shouldPush) {
-              const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
+            let failedSubscriptionIds: Ref<PushSubscription>[] = []
+            if (isQueueDismissMessage(value)) {
+              failedSubscriptionIds = await sendDismissToSubscription(value.pushSubscriptions, {
+                objectId: value.objectId,
+                objectClass: value.objectClass,
+                tags: value.tags,
+                readUpTo: value.readUpTo
+              })
+            } else if ((value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0) {
+              failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
                 tag: value.id,
                 title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
                 body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
                 domain: value.domain,
-                url: value.url
+                url: value.url,
+                objectId: value.objectId,
+                objectClass: value.objectClass,
+                createdOn: value.createdOn
               })
+            }
 
-              if (failedSubscriptionIds.length > 0) {
-                try {
-                  const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
-                  const endpoint = await getTransactorEndpoint(token)
-                  const restClient = createRestClient(endpoint, queueMessage.workspace, token)
-
-                  for (const subId of failedSubscriptionIds) {
-                    try {
-                      await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
-                      ctx.info(
-                        `Successfully removed invalid push subscription ${subId} from workspace ${queueMessage.workspace}`
-                      )
-                    } catch (removeErr: any) {
-                      ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
-                    }
-                  }
-                } catch (clientErr: any) {
-                  ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
-                }
-              }
+            if (failedSubscriptionIds.length > 0) {
+              await removeDeadSubscriptions(ctx, queueMessage.workspace, failedSubscriptionIds)
             }
           },
           {

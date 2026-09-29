@@ -624,6 +624,10 @@ class WorkspaceCache {
     return acc
   }
 
+  public getCachedUserStatus (id: Ref<UserStatus>): UserStatus | undefined {
+    return this.userStatusesMap.get(id)
+  }
+
   /**
    * Returns list of user status records.
    */

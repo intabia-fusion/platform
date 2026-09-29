@@ -14,7 +14,11 @@
 //
 
 import { AccountUuid, Doc, Ref, Space, Class } from '@hcengineering/core'
-import notificationPlugin, { DocNotifyContext, UnreadMessage } from '@hcengineering/notification'
+import notificationPlugin, {
+  DocNotifyContext,
+  type QueueNotifyMessage,
+  UnreadMessage
+} from '@hcengineering/notification'
 import { ActivityMessage } from '@hcengineering/activity'
 
 import { Result, TxCache } from '../../types'
@@ -24,7 +28,8 @@ import { emptyResult, getEmptyTxCache } from '../../utils/result'
 jest.mock('../../config', () => ({
   __esModule: true,
   default: {
-    LatestNotificationsSliceSize: 5
+    LatestNotificationsSliceSize: 5,
+    HoldLetters: true
   },
   LatestNotificationsSliceSize: 5
 }))
@@ -147,6 +152,7 @@ describe('pushNotification', () => {
           attributes: payload
         }))
       },
+      model: { findAllSync: jest.fn().mockReturnValue([]) },
       branding: {
         title: 'Platform Brand'
       }
@@ -524,7 +530,8 @@ describe('pushNotification', () => {
             _id: 'inbox-type-1',
             templates
           } as any
-        ]
+        ],
+        'email-provider': [{ _id: 'inbox-type-1' } as any]
       }
 
       mockData.intl.intlParamsNotLocalized = {
@@ -540,7 +547,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(result.queueMessages[0].template).toEqual({
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toEqual({
         text: 'translated text body',
         html: 'translated html body',
         subject: 'translated subject'
@@ -560,7 +567,7 @@ describe('pushNotification', () => {
       const result2 = emptyResult()
       await pushNotification(mockClient, txCache, result2, undefined, mockData)
       expect(mockTranslate).not.toHaveBeenCalled()
-      expect(result2.queueMessages[0].template).toEqual({
+      expect((result2.queueMessages[0] as QueueNotifyMessage).template).toEqual({
         text: 'translated text body',
         html: 'translated html body',
         subject: 'translated subject'
@@ -580,7 +587,8 @@ describe('pushNotification', () => {
             _id: 'inbox-type-1',
             templates
           } as any
-        ]
+        ],
+        'email-provider': [{ _id: 'inbox-type-1' } as any]
       }
 
       mockTranslate.mockRejectedValue(new Error('translation error'))
@@ -591,7 +599,7 @@ describe('pushNotification', () => {
         'Failed to generate template',
         expect.objectContaining({ notificationId: 'notify-1' })
       )
-      expect(result.queueMessages[0].template).toBeUndefined()
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toBeUndefined()
     })
   })
 
@@ -652,7 +660,8 @@ describe('pushNotification', () => {
 
     it('never skips when the context is new (context undefined)', async () => {
       mockData.notifyProviders = {
-        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        'test-provider': [{ _id: 'type-1' }]
       }
       mockClient.ctx.info = jest.fn()
 
@@ -665,7 +674,7 @@ describe('pushNotification', () => {
   })
 
   describe('alreadyRead checks (no unread payload)', () => {
-    it('does not increment unreadCount but creates queue messages and updates latestNotifications', async () => {
+    it('does not increment unreadCount and updates latestNotifications; an inbox-only notification is not queued', async () => {
       mockData.notifyProviders = {
         [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
       }
@@ -690,8 +699,289 @@ describe('pushNotification', () => {
       expect(op.$inc).toBeUndefined() // No unreadCount increment!
       expect(op.unreadMessages).toBeUndefined() // No unread messages updated!
 
-      // It should queue push/email messages
+      // Nobody consumes an inbox-only message: push and mail pods filter by their own provider.
+      expect(result.queueMessages).toHaveLength(0)
+    })
+
+    it('keeps the inbox card but drops push, sound, mail and the app push when alreadyRead is set', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.SoundNotificationProvider]: [{ _id: 'type-1' }],
+        'email-provider': [{ _id: 'type-1' }]
+      }
+      mockData.pushSubscriptions = [{ _id: 'sub-1', endpoint: 'apns://token' }]
+      mockData.alreadyRead = true
+
+      const context: DocNotifyContext = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        user: 'user-1',
+        unreadMessages: [],
+        unreadCount: 0,
+        lastNotify: 50,
+        latestNotifications: []
+      } as any
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(result.updateContextTx).toHaveLength(1)
+      const op = result.updateContextTx[0].operations as any
+      expect(op.$push.latestNotifications).toBeDefined()
+      expect(op.$inc).toBeUndefined()
+      expect(result.queueMessages).toHaveLength(0)
+      expect(result.createAppPushNotificationTx).toHaveLength(0)
+    })
+
+    it('queues every provider and creates the app push when the message is not read yet', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+        'email-provider': [{ _id: 'type-1' }]
+      }
+      mockData.unreadMessage = { id: 'notify-1', createdOn: 100, notified: true }
+      mockData.alreadyRead = false
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
       expect(result.queueMessages).toHaveLength(1)
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers).sort()).toEqual(
+        [
+          notificationPlugin.providers.InboxNotificationProvider,
+          notificationPlugin.providers.PushNotificationProvider,
+          'email-provider'
+        ].sort()
+      )
+      expect(result.createAppPushNotificationTx).toHaveLength(1)
+    })
+  })
+
+  describe('holding the native push while the receiver is at the computer', () => {
+    const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x' }
+    const native = { _id: 'sub-apns', endpoint: 'apns://token' }
+    const providers = {
+      [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+      [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+      [notificationPlugin.providers.SoundNotificationProvider]: [{ _id: 'type-1' }],
+      'email-provider': [{ _id: 'type-1' }]
+    }
+
+    beforeEach(() => {
+      mockClient.pendingPush = { hold: jest.fn() }
+      mockData.notifyProviders = providers
+      mockData.pushSubscriptions = [web, native]
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 100, notified: true }
+      mockData.receiver = { ...mockData.receiver, online: true, away: false }
+    })
+
+    it('sends the browser push and the letter at once and holds the phone push', async () => {
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(1)
+      expect(result.queueMessages[0]).toMatchObject({ id: 'notify-1', pushSubscriptions: [web] })
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers)).toHaveLength(4)
+
+      expect(result.heldPushes).toHaveLength(1)
+      const held = result.heldPushes[0]
+      expect(held).toMatchObject({
+        account: 'user-1',
+        notificationId: 'notify-1',
+        objectId: 'doc-1',
+        createdOn: 100,
+        readBy: 'position',
+        provider: notificationPlugin.providers.PushNotificationProvider
+      })
+      expect(held.message.pushSubscriptions).toEqual([native])
+      expect(Object.keys(held.message.providers).sort()).toEqual(
+        [
+          notificationPlugin.providers.PushNotificationProvider,
+          notificationPlugin.providers.SoundNotificationProvider
+        ].sort()
+      )
+      expect(held.message.template).toBeUndefined()
+    })
+
+    it.each([
+      [
+        'a reaction',
+        { unreadMessage: undefined, unreadReaction: { id: 'notify-1', attachedTo: 'msg-1' } },
+        'reactions'
+      ],
+      ['a mention outside a message', { unreadMessage: undefined, unreadMention: { id: 'notify-1' } }, 'mentions'],
+      ['a common notification', { unreadMessage: undefined, unreadCommon: { id: 'notify-1' } }, 'commons']
+    ])('holds the phone push about %s, to be checked against the unread list', async (_name, overrides, readBy) => {
+      mockData = { ...mockData, ...overrides }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.heldPushes).toHaveLength(1)
+      expect(result.heldPushes[0]).toMatchObject({ notificationId: 'notify-1', readBy })
+    })
+
+    it('queues nothing immediately when only the phone would be notified', async () => {
+      mockData.pushSubscriptions = [native]
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }],
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(0)
+      expect(result.heldPushes).toHaveLength(1)
+    })
+
+    it.each([
+      ['the receiver is away', { receiver: { online: true, away: true } }],
+      ['the receiver is offline', { receiver: { online: false, away: false } }],
+      ['the notification is not unread, so nothing could read it later', { unreadMessage: undefined }],
+      ['there is no native subscription', { pushSubscriptions: [web] }]
+    ])('sends everything at once when %s', async (_name, overrides: any) => {
+      mockData = { ...mockData, ...overrides, receiver: { ...mockData.receiver, ...(overrides.receiver ?? {}) } }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.heldPushes).toHaveLength(0)
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual(mockData.pushSubscriptions)
+    })
+  })
+
+  describe("scheduling the letter in the time machine for the receiver's window", () => {
+    const email = 'email-provider'
+    const native = { _id: 'sub-apns', endpoint: 'apns://token' }
+    const web = { _id: 'sub-web', endpoint: 'https://push.example.com/x' }
+    // The inbox type carries templates, so getTemplate renders the letter (translate is mocked as identity-ish).
+    const inboxType = { _id: 'type-1', templates: { text: 'text-key', html: 'html-key', subject: 'subject-key' } }
+    const providers = {
+      [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+      [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'type-1' }],
+      [email]: [{ _id: 'type-1' }]
+    }
+    const template = { subject: 'translated:subject-key', text: 'translated:text-key', html: 'translated:html-key' }
+    const settingBy = (createdBy: string, holdMs?: number): any => ({
+      attachedTo: email,
+      enabled: true,
+      createdBy,
+      holdMs
+    })
+    const settings = (list: any[]): any => ({
+      settingsByProvider: new Map([[email, list]]),
+      typesByProvider: new Map()
+    })
+
+    beforeEach(() => {
+      jest.useFakeTimers({ now: 1_000_000 })
+      mockClient.pendingPush = { hold: jest.fn() }
+      mockClient.model.findAllSync.mockReturnValue([{ _id: email, holdMs: 3_600_000 }])
+      mockData.notifyProviders = providers
+      mockData.pushSubscriptions = [web]
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 100, notified: true }
+      mockData.receiver = { ...mockData.receiver, online: false, away: false, socialIds: ['social-1'] }
+      mockData.settings = settings([])
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('schedules no letter for a notification without a template: nothing waits, the email provider goes at once', async () => {
+      mockData.notifyProviders = {
+        ...providers,
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(0)
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toBeUndefined()
+      expect(Object.keys((result.queueMessages[0] as QueueNotifyMessage).providers)).toContain(email)
+    })
+
+    it('schedules the letter for the provider default when the person has no setting; the push goes at once', async () => {
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.heldPushes).toHaveLength(0)
+      expect(result.timeMachine).toHaveLength(1)
+      const [schedule] = result.timeMachine
+      expect(schedule).toMatchObject({
+        type: 'schedule',
+        id: `letter:user-1:notify-1:${email}`,
+        targetDate: 1_000_000 + 3_600_000,
+        topic: 'held-notifications'
+      })
+      const held = schedule.data as any
+      expect(held).toMatchObject({ notificationId: 'notify-1', provider: email, readBy: 'position', objectId: 'doc-1' })
+      expect(held.message).toMatchObject({ pushSubscriptions: [], providers: { [email]: ['type-1'] }, template })
+
+      expect(result.queueMessages).toHaveLength(1)
+      const immediate = result.queueMessages[0] as QueueNotifyMessage
+      expect(immediate.template).toBeUndefined()
+      expect(Object.keys(immediate.providers).sort()).toEqual(
+        [
+          notificationPlugin.providers.InboxNotificationProvider,
+          notificationPlugin.providers.PushNotificationProvider
+        ].sort()
+      )
+      expect(immediate.pushSubscriptions).toEqual([web])
+    })
+
+    it("uses the person's own window, matched by their social id", async () => {
+      mockData.settings = settings([settingBy('someone-else', 1), settingBy('social-1', 15 * 60 * 1000)])
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine[0]).toMatchObject({ targetDate: 1_000_000 + 15 * 60 * 1000 })
+    })
+
+    it('sends the letter at once when the person set the window to zero', async () => {
+      mockData.settings = settings([settingBy('social-1', 0)])
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(0)
+      expect((result.queueMessages[0] as QueueNotifyMessage).template).toEqual(template)
+    })
+
+    it('queues nothing at once when the letter was the only delivery', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+        [email]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.timeMachine).toHaveLength(1)
+      expect(result.queueMessages).toHaveLength(0)
+    })
+
+    it('marks the receiver notified even when everything waits and nothing is queued', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [inboxType],
+        [email]: [{ _id: 'type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages).toHaveLength(0)
+      expect(Array.from(result.notified)).toEqual(['user-1'])
+    })
+
+    it('holds the phone push in memory and schedules the letter while the person is at the computer', async () => {
+      mockData.pushSubscriptions = [web, native]
+      mockData.receiver = { ...mockData.receiver, online: true, away: false }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.heldPushes).toHaveLength(1)
+      expect(result.heldPushes[0]).toMatchObject({
+        provider: notificationPlugin.providers.PushNotificationProvider
+      })
+      expect(result.timeMachine).toHaveLength(1)
+      expect(result.queueMessages).toHaveLength(1)
+      expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual([web])
     })
   })
 })

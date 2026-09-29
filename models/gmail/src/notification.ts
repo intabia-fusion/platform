@@ -65,7 +65,10 @@ export function defineNotifications (builder: Builder): void {
       defaultEnabled: true,
       canDisable: true,
       depends: notification.providers.InboxNotificationProvider,
-      order: 300
+      order: 300,
+      // A letter goes only for what is still unread an hour later; the person can change the hour.
+      holdMs: 60 * 60 * 1000,
+      presenter: notification.component.ProviderEmailPreferences
     },
     gmail.providers.EmailNotificationProvider
   )

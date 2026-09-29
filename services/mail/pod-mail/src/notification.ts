@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { MeasureContext, WorkspaceUuid, systemAccountUuid, SocialIdType } from '@hcengineering/core'
+import { MeasureContext, WorkspaceUuid, systemAccountUuid, pickVerifiedEmail } from '@hcengineering/core'
 import { getAccountClient } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import gmail from '@hcengineering/gmail'
@@ -37,7 +37,8 @@ export function createUserNotificationsHandler (
   ) => {
     try {
       const msg = message.value
-      if (msg.template == null) return
+      // A dismiss carries no letter; the template check is what keeps other kinds out too.
+      if (msg.kind === 'dismiss' || msg.template == null) return
       const shouldEmail = (msg.providers[gmail.providers.EmailNotificationProvider]?.length ?? 0) > 0
       if (!shouldEmail) return
 
@@ -48,20 +49,11 @@ export function createUserNotificationsHandler (
         return
       }
 
-      const emails = personInfo.socialIds.filter(
-        (id) =>
-          (id.type === SocialIdType.EMAIL || id.type === SocialIdType.GOOGLE) &&
-          id.verifiedOn !== undefined &&
-          id.verifiedOn > 0 &&
-          id.isDeleted !== true
-      )
-
-      if (emails.length === 0) {
+      const emailAddress = pickVerifiedEmail(personInfo.socialIds)
+      if (emailAddress === undefined) {
         ctx.warn(`No verified email found for account: ${msg.account}`)
         return
       }
-
-      const emailAddress = emails[0].value
 
       const emailMessage = createEmailMessage({
         html: wrapWithHtmlCard(msg.template.html, config.appName),

@@ -26,6 +26,7 @@ import {
   MeasureContext,
   ModelDb,
   Ref,
+  Timestamp,
   TxCreateDoc,
   TxFactory,
   TxRemoveDoc,
@@ -43,6 +44,7 @@ import {
   NotificationType,
   type NotificationTypeSetting,
   QueueNotificationMessage,
+  QueueNotifyMessage,
   ReadState
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
@@ -50,6 +52,8 @@ import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 import { UserMentionInfo } from '@hcengineering/activity'
 import { IntlString } from '@hcengineering/platform'
+import type { QueueTopic } from '@hcengineering/server-core'
+import type { HeldPush, PendingPushHolder } from './pendingPush'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]
@@ -62,6 +66,14 @@ export type EmployeeInfo = Pick<Employee, '_id' | 'personUuid' | 'role' | 'activ
 export type SocialIdentityInfo = Pick<SocialIdentity, '_id' | 'attachedTo'>
 
 export type NotifyProviders = Record<Ref<NotificationProvider>, NotificationType[]>
+
+export interface TimeMachineMessage<T = unknown> {
+  type: 'schedule' | 'cancel'
+  id: string
+  targetDate?: Timestamp
+  topic?: QueueTopic
+  data?: T
+}
 
 export interface Client {
   ctx: MeasureContext
@@ -82,6 +94,9 @@ export interface Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
+
+  // Native pushes waiting for their receiver to read or leave; absent in tests that do not care.
+  pendingPush?: PendingPushHolder
 }
 
 export interface MentionResult {
@@ -106,6 +121,10 @@ export interface Result {
   removeUserMentionInfoTx: TxRemoveDoc<UserMentionInfo>[]
 
   queueMessages: QueueNotificationMessage[]
+  timeMachine: TimeMachineMessage[]
+  heldPushes: HeldPush[]
+
+  notified: Set<AccountUuid>
 }
 
 export interface TxCache {
@@ -114,7 +133,7 @@ export interface TxCache {
   labelByDoc: Map<Ref<Doc>, IntlString>
   identifierByDoc: Map<Ref<Doc>, string>
   iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
-  templates: Map<string, QueueNotificationMessage['template']>
+  templates: Map<string, QueueNotifyMessage['template']>
 }
 
 export type ObjectDisplayData = Pick<

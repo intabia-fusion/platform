@@ -16,9 +16,18 @@
 import { writable } from 'svelte/store'
 import { getClient } from '@hcengineering/presentation'
 import { getMetadata } from '@hcengineering/platform'
-import notification from '@hcengineering/notification'
+import notification, {
+  NOTIFICATION_CLICK,
+  VIEWING_QUERY,
+  VIEWING_REPLY,
+  type NotificationClickMessage,
+  type ViewingQueryMessage,
+  type ViewingReplyMessage
+} from '@hcengineering/notification'
 import { getCurrentLocation, navigate, parseLocation } from '@hcengineering/ui'
-import core, { getCurrentAccount } from '@hcengineering/core'
+import core, { type Doc, getCurrentAccount, type Ref } from '@hcengineering/core'
+
+import { getViewedObjectIds } from './utils'
 
 export const pushAllowed = writable<boolean>(false)
 
@@ -157,18 +166,39 @@ function arrayBufferToBase64 (buffer: ArrayBuffer | null): string {
   }
 }
 
+let workerListenerAdded = false
+
 function addWorkerListener (): void {
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data !== undefined && event.data.type === 'notification-click') {
-      const { url, _id } = event.data
-      if (url !== undefined) {
-        navigate(parseLocation(new URL(url)))
-      }
-      if (_id !== undefined) {
-        void cleanTag(_id)
+  if (workerListenerAdded) return
+  workerListenerAdded = true
+  navigator.serviceWorker.addEventListener(
+    'message',
+    (event: MessageEvent<NotificationClickMessage | ViewingQueryMessage | undefined>) => {
+      const message = event.data
+      if (message === undefined) return
+      if (message.type === NOTIFICATION_CLICK) {
+        const { url, _id } = message
+        if (url !== undefined) {
+          navigate(parseLocation(new URL(url)))
+        }
+        if (_id !== undefined) {
+          void cleanTag(_id)
+        }
+      } else if (message.type === VIEWING_QUERY) {
+        // The worker decides whether to show a push about a document this tab may already show;
+        // the sidebar is not in the URL, so it has to ask. The reply goes back over the port it sent.
+        const port = event.ports[0]
+        if (port === undefined) return
+        const reply = (objectIds: Array<Ref<Doc>>): void => {
+          const answer: ViewingReplyMessage = { type: VIEWING_REPLY, objectIds }
+          port.postMessage(answer)
+        }
+        void getViewedObjectIds().then(reply, () => {
+          reply([])
+        })
       }
     }
-  })
+  )
 }
 
 async function cleanTag (tag: string): Promise<void> {

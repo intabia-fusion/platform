@@ -49,6 +49,7 @@ import {
 
 export type * from './types'
 export * from './utils'
+export * from './pushDecision'
 export * from './collapse'
 
 export const DOMAIN_DOC_NOTIFY = 'notification-dnc' as Domain
@@ -114,6 +115,9 @@ const notification = plugin(notificationId, {
     DocNotifyContextPresenter: '' as AnyComponent,
     GeneralPreferencesGroup: '' as AnyComponent,
     WebpushesPreferencesPresenter: '' as AnyComponent,
+    ProviderHoldPreferences: '' as AnyComponent,
+    ProviderEmailPreferences: '' as AnyComponent,
+    EmailPreferencesPopup: '' as AnyComponent,
     MutePopup: '' as AnyComponent,
     NotificationAppearancePreferencesPresenter: '' as AnyComponent
   },
@@ -172,6 +176,13 @@ const notification = plugin(notificationId, {
     YouAddedAsCollaborator: '' as IntlString,
     YouRemovedFromCollaborators: '' as IntlString,
     Webpushes: '' as IntlString,
+    HoldLabel: '' as IntlString,
+    HoldMinutes: '' as IntlString,
+    HoldHours: '' as IntlString,
+    LettersGoTo: '' as IntlString,
+    NoVerifiedEmail: '' as IntlString,
+    Configure: '' as IntlString,
+    EmailHoldHint: '' as IntlString,
     UnknownDevice: '' as IntlString,
     RemoveWebpush: '' as IntlString,
     WebpushRemoveConfirm: '' as IntlString,

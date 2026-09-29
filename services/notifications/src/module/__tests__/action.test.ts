@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, readOnlyGuestAccountUuid, Ref, TxCUD, Space } from '@hcengineering/core'
+import core, { AccountUuid, readOnlyGuestAccountUuid, Ref, TxCUD, TxCreateDoc, Space } from '@hcengineering/core'
 import { CreateNotificationAction, DocNotifyContext, ReadNotificationAction } from '@hcengineering/notification'
 import activity from '@hcengineering/activity'
 
@@ -52,10 +52,12 @@ describe('handleReadNotificationAction', () => {
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
+    pendingPush: { cancelByObject: jest.Mock, cancel: jest.Mock }
   }
   let mockCache: {
     getContext: jest.Mock
     getAccountBySocialId: jest.Mock
+    getPushSubscriptions: jest.Mock
   }
   let result: Result
 
@@ -63,6 +65,7 @@ describe('handleReadNotificationAction', () => {
     mockClient = {
       ctx: { warn: jest.fn() },
       findAll: jest.fn(),
+      pendingPush: { cancelByObject: jest.fn(), cancel: jest.fn() },
       txFactory: {
         createTxUpdateDoc: jest.fn().mockImplementation((cls: string, space: string, id: string, payload: unknown) => ({
           _class: core.class.TxUpdateDoc,
@@ -74,7 +77,8 @@ describe('handleReadNotificationAction', () => {
 
     mockCache = {
       getContext: jest.fn(),
-      getAccountBySocialId: jest.fn()
+      getAccountBySocialId: jest.fn(),
+      getPushSubscriptions: jest.fn().mockResolvedValue([])
     }
 
     result = emptyResult()
@@ -252,6 +256,141 @@ describe('handleReadNotificationAction', () => {
       }
     })
   })
+
+  it('queues a dismiss for the native apps up to the newest message read', async () => {
+    const tx = {
+      _class: core.class.TxCreateDoc,
+      objectId: 'action-dismiss',
+      modifiedBy: 'social-1',
+      attributes: {
+        attachedTo: 'doc-1',
+        account: 'user-1',
+        messageIds: ['msg-1', 'msg-2']
+      }
+    } as unknown as TxCreateDoc<ReadNotificationAction>
+
+    const context = {
+      _id: 'ctx-1',
+      _class: 'DocNotifyContext',
+      space: 'space-1' as Ref<Space>,
+      user: 'user-1' as AccountUuid,
+      objectId: 'doc-1',
+      objectClass: 'DocClass',
+      objectSpace: 'space-doc',
+      unreadMessages: [
+        { id: 'msg-1', createdOn: 100, notified: true },
+        { id: 'msg-2', createdOn: 150 },
+        { id: 'msg-3', createdOn: 200, notified: true }
+      ],
+      unreadCount: 2
+    } as unknown as DocNotifyContext
+
+    mockCache.getContext.mockResolvedValue(context)
+    mockCache.getPushSubscriptions.mockResolvedValue([
+      { _id: 'sub-web', endpoint: 'https://push.example.com/x' },
+      { _id: 'sub-fcm', endpoint: 'fcm://token' }
+    ])
+
+    await handleReadNotificationAction(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
+
+    expect(mockClient.pendingPush.cancelByObject).toHaveBeenCalledWith('user-1', 'doc-1', 150)
+    expect(result.queueMessages).toEqual([
+      {
+        kind: 'dismiss',
+        id: 'dismiss:ctx-1:150',
+        account: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'space-doc',
+        pushSubscriptions: [{ _id: 'sub-fcm', endpoint: 'fcm://token' }],
+        tags: ['msg-1'],
+        readUpTo: 150
+      }
+    ])
+  })
+})
+
+describe('handleReadNotificationAction: reactions, mentions and commons read', () => {
+  const tx = {
+    _class: core.class.TxCreateDoc,
+    objectId: 'action-lists',
+    modifiedBy: 'social-1',
+    attributes: {
+      attachedTo: 'doc-1',
+      account: 'user-1',
+      reactionIds: ['reaction-1', 'reaction-gone'],
+      commonIds: ['common-1'],
+      mentionIds: ['mention-1']
+    }
+  } as unknown as TxCreateDoc<ReadNotificationAction>
+
+  const context = {
+    _id: 'ctx-1',
+    _class: 'DocNotifyContext',
+    space: 'space-1' as Ref<Space>,
+    user: 'user-1' as AccountUuid,
+    objectId: 'doc-1',
+    objectClass: 'DocClass',
+    objectSpace: 'space-doc',
+    unreadReactions: [{ id: 'reaction-1', attachedTo: 'msg-1' }],
+    unreadCommons: [{ id: 'common-1' }],
+    unreadMentions: [{ id: 'mention-1' }],
+    unreadCount: 3
+  } as unknown as DocNotifyContext
+
+  let mockClient: any
+  let mockCache: any
+  let result: Result
+
+  beforeEach(() => {
+    mockClient = {
+      ctx: { warn: jest.fn() },
+      findAll: jest.fn(),
+      pendingPush: { cancelByObject: jest.fn(), cancel: jest.fn() },
+      txFactory: { createTxUpdateDoc: jest.fn().mockReturnValue({}) }
+    }
+    mockCache = {
+      getContext: jest.fn().mockResolvedValue(context),
+      getAccountBySocialId: jest.fn().mockResolvedValue('user-1'),
+      getPushSubscriptions: jest.fn().mockResolvedValue([{ _id: 'sub-apns', endpoint: 'apns://token' }])
+    }
+    result = emptyResult()
+  })
+
+  it('cancels the held pushes of what was read and dismisses them by tag, with no read position', async () => {
+    await handleReadNotificationAction(mockClient as Client, mockCache as Cache, result, tx)
+
+    // Only what the context still held unread: an id the context does not know is not a push.
+    expect(mockClient.pendingPush.cancel.mock.calls).toEqual([
+      ['user-1', 'reaction-1'],
+      ['user-1', 'common-1'],
+      ['user-1', 'mention-1']
+    ])
+    expect(mockClient.pendingPush.cancelByObject).not.toHaveBeenCalled()
+    expect(result.timeMachine).toEqual([
+      { type: 'cancel', id: 'letter:user-1:reaction-1:%' },
+      { type: 'cancel', id: 'letter:user-1:common-1:%' },
+      { type: 'cancel', id: 'letter:user-1:mention-1:%' }
+    ])
+    expect(result.queueMessages).toEqual([
+      expect.objectContaining({
+        kind: 'dismiss',
+        id: 'dismiss:ctx-1:reaction-1',
+        objectId: 'doc-1',
+        tags: ['reaction-1', 'common-1', 'mention-1'],
+        readUpTo: 0
+      })
+    ])
+  })
+
+  it('dismisses nothing when the phone has no subscription', async () => {
+    mockCache.getPushSubscriptions.mockResolvedValue([{ _id: 'sub-web', endpoint: 'https://push.example.com/x' }])
+
+    await handleReadNotificationAction(mockClient as Client, mockCache as Cache, result, tx)
+
+    expect(mockClient.pendingPush.cancel).toHaveBeenCalledTimes(3)
+    expect(result.queueMessages).toEqual([])
+  })
 })
 
 describe('handleCreateNotificationAction', () => {
@@ -327,6 +466,22 @@ describe('handleCreateNotificationAction', () => {
 
     expect(pushNotification).toHaveBeenCalledTimes(1)
     expect((pushNotification as jest.Mock).mock.calls[0][4].unreadCommon).toBeDefined()
+  })
+
+  it('hands the receiver settings on, so the letter waits the window the person chose', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver('user-1', 'USER')])
+    const settings = { settingsByProvider: new Map(), typesByProvider: new Map() }
+    mockCache.getSettings.mockResolvedValue(settings)
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      makeTx()
+    )
+
+    expect((pushNotification as jest.Mock).mock.calls[0][4].settings).toBe(settings)
   })
 
   it('still delivers to the shared read-only guest account, but not as unread', async () => {

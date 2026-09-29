@@ -26,6 +26,7 @@ import {
 
 import { Client, Result } from '../types'
 import Cache from '../cache'
+import { cancelHeldPushes, pushDismissMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
 
 const skipKeys = [
   '_id',
@@ -74,11 +75,17 @@ export async function handleReadState (
 
     const context = contexts.find((it) => it.user === account)
     if (context == null) continue
-    await readContext(client, result, context, ts)
+    await readContext(client, cache, result, context, ts)
   }
 }
 
-async function readContext (client: Client, result: Result, context: DocNotifyContext, ts: Timestamp): Promise<void> {
+async function readContext (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  context: DocNotifyContext,
+  ts: Timestamp
+): Promise<void> {
   const unreadMessagesToRead: UnreadMessageId[] = []
   const unreadChunksToRead: UnreadMessageChunk[] = []
 
@@ -121,4 +128,18 @@ async function readContext (client: Client, result: Result, context: DocNotifyCo
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
     )
   }
+
+  // The newest moment the read really covers, not the position itself: the position is the
+  // client's clock, and a fast one must not read what has not arrived yet.
+  const readUpTo = Math.max(
+    0,
+    ...unreadMessagesToRead.map((it) => it.createdOn),
+    ...unreadChunksToRead.map((it) => it.to)
+  )
+  const messageIds = unreadMessagesToRead.map((it) => it.id)
+  const mentionIds = mentionIdsOf(context, messageIds)
+  const cancelled = cancelHeldPushes(client, result, context, readUpTo, [...messageIds, ...mentionIds])
+  const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readUpTo, cancelled)
+  read.tags.push(...mentionIds.filter((id) => !cancelled.has(id)))
+  await pushDismissMessage(cache, result, context, read)
 }

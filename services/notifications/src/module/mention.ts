@@ -58,6 +58,7 @@ import {
   getAttachments
 } from '../utils/utils'
 import { pushNotification } from './notification'
+import { cancelLetters } from '../heldLetter'
 
 export async function handleMention (
   client: Client,
@@ -115,6 +116,7 @@ export async function handleMention (
       notifyProviders: mention.notifyProviders,
       objectDisplayData,
       pushSubscriptions,
+      settings: await cache.getSettings(),
       markup: mention.markup
     })
   }
@@ -406,6 +408,9 @@ async function removeMentions (
 
     if (ids.length > 0) {
       op.$pull = { latestNotifications: { id: { $in: ids } } }
+      // A push or a letter still waiting for the mention is not needed.
+      for (const id of ids) client.pendingPush?.cancel(account, id)
+      cancelLetters(result, account, ids)
     }
 
     const unreadIds = (context.unreadMentions ?? []).filter((it) => ids.includes(it.id)).map((it) => it.id)

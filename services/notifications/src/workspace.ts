@@ -30,6 +30,8 @@ import core, {
   Tx,
   TxCUD,
   TxFactory,
+  TxUpdateDoc,
+  UserStatus,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
@@ -40,7 +42,11 @@ import notification, {
   QueueNotificationMessage,
   ReadState,
   ReadNotificationAction,
-  CreateNotificationAction
+  CreateNotificationAction,
+  DocNotifyContext,
+  UnreadReaction,
+  UnreadMention,
+  CommonNotification
 } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
@@ -65,13 +71,14 @@ import {
 
 import config from './config'
 import WorkspaceCache from './cache'
-import { Client, Result, TxCache } from './types'
+import { Client, Result, TimeMachineMessage, TxCache } from './types'
 import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils/utils'
 import { setUnreadMessagesCounts } from './utils/context'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
 import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
+import { HeldPush, PendingPushHolder } from './pendingPush'
 
 const transientHttpStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
 // Attempts of one tx batch on a transient transactor error before the source tx goes back to the queue.
@@ -97,6 +104,60 @@ const publishBackoff = DelayStrategyFactory.exponentialBackoff({
 
 // Network failures and transactor-side outages are worth a retry; a rejected batch (bad request,
 // policy reject, forbidden) is not.
+const READ_CHECK_CHUNK = 200
+
+// Which held pushes were read meanwhile, one answer per push in order. From the DB, not the
+// cache: a read the cache knows of already cancelled its hold. One query per chunk of documents.
+export async function areHeldPushesRead (ctx: MeasureContext, pipeline: Pipeline, held: HeldPush[]): Promise<boolean[]> {
+  const byPosition = held.filter((it) => it.readBy === 'position')
+  const byList = held.filter((it) => it.readBy !== 'position')
+
+  const states = new Map<Ref<Doc>, ReadState>()
+  for (const ids of chunks(unique(byPosition.map((it) => it.objectId)))) {
+    for (const state of await pipeline.findAll<ReadState>(ctx, notification.class.ReadState, {
+      attachedTo: { $in: ids }
+    })) {
+      states.set(state.attachedTo, state)
+    }
+  }
+
+  const contexts = new Map<string, DocNotifyContext>()
+  for (const ids of chunks(unique(byList.map((it) => it.objectId)))) {
+    for (const context of await pipeline.findAll<DocNotifyContext>(ctx, notification.class.DocNotifyContext, {
+      objectId: { $in: ids },
+      user: { $in: unique(byList.map((it) => it.account)) }
+    })) {
+      contexts.set(`${context.user}:${context.objectId}`, context)
+    }
+  }
+
+  return held.map((it) => {
+    if (it.readBy === 'position') {
+      const position = states.get(it.objectId)?.[it.account]
+      return position != null && position.timestamp >= it.createdOn
+    }
+    const context = contexts.get(`${it.account}:${it.objectId}`)
+    if (context === undefined) return true
+    const unread: ReadonlyArray<UnreadReaction | UnreadMention | CommonNotification> =
+      it.readBy === 'reactions'
+        ? (context.unreadReactions ?? [])
+        : it.readBy === 'mentions'
+          ? (context.unreadMentions ?? [])
+          : (context.unreadCommons ?? [])
+    return !unread.some((entry) => entry.id === it.notificationId)
+  })
+}
+
+function unique<T> (values: T[]): T[] {
+  return Array.from(new Set(values))
+}
+
+function chunks<T> (values: T[]): T[][] {
+  const result: T[][] = []
+  for (let i = 0; i < values.length; i += READ_CHECK_CHUNK) result.push(values.slice(i, i + READ_CHECK_CHUNK))
+  return result
+}
+
 export function isTransientError (e: unknown): boolean {
   if (retryNetworkErrors(e)) return true
   const httpStatus = (e as any)?.httpStatus
@@ -106,11 +167,12 @@ export function isTransientError (e: unknown): boolean {
 class Workspace {
   public readonly cache: WorkspaceCache
 
-  private inProgressPromise: Promise<void> | undefined
+  private readonly inProgress = new Set<Promise<void>>()
   private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System, true)
   readonly client: Client
+  readonly pendingPush: PendingPushHolder
 
   private constructor (
     private readonly ctx: MeasureContext,
@@ -123,20 +185,57 @@ class Workspace {
     private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[],
     private readonly producer: PlatformQueueProducer<QueueNotificationMessage>,
+    private readonly timeMachine: PlatformQueueProducer<TimeMachineMessage>,
     getAiBotAccount: () => Promise<AccountUuid | undefined>
   ) {
+    this.pendingPush = new PendingPushHolder({
+      holdMs: config.PushHoldMs,
+      publish: async (message) => {
+        await this.publish([message])
+      },
+      areRead: async (held) => await areHeldPushesRead(this.ctx, this.pipeline, held),
+      onError: (err, held) => {
+        this.ctx.error('Failed to release a held push, it is lost', {
+          error: err instanceof Error ? err.message : String(err),
+          notificationId: held.notificationId,
+          account: held.account
+        })
+      },
+      onCheckFailed: (err, held, attempt) => {
+        this.ctx.warn('Failed to check whether a held push was read, retrying', {
+          error: err instanceof Error ? err.message : String(err),
+          notificationId: held.notificationId,
+          account: held.account,
+          attempt
+        })
+      }
+    })
     this.client = this.getClient()
     this.cache = new WorkspaceCache(this.ctx, this.client, getAiBotAccount)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
+    await this.track(this.processTx(tx))
+  }
+
+  // A letter the time machine fired: out unless read meanwhile (heldLetter.ts).
+  async releaseHeld (held: HeldPush): Promise<void> {
+    await this.track(
+      (async () => {
+        const [read] = await areHeldPushesRead(this.ctx, this.pipeline, [held])
+        if (read) return
+        await this.publish([held.message])
+      })()
+    )
+  }
+
+  private async track (run: Promise<void>): Promise<void> {
     this.lastUpdate = Date.now()
-    const run = this.processTx(tx)
-    this.inProgressPromise = run
+    this.inProgress.add(run)
     try {
       await run
     } finally {
-      if (this.inProgressPromise === run) this.inProgressPromise = undefined
+      this.inProgress.delete(run)
     }
   }
 
@@ -151,6 +250,10 @@ class Workspace {
       this.model.addTxes(this.ctx, [tx], true)
     }
 
+    // The status before this tx: a removal takes it out of the cache, and only this copy names the account.
+    const isUserStatus = this.hierarchy.isDerived(tx.objectClass, core.class.UserStatus)
+    const statusBefore = isUserStatus ? this.cache.getCachedUserStatus(tx.objectId as Ref<UserStatus>) : undefined
+
     try {
       this.cache.tx(tx)
     } catch (e: any) {
@@ -159,6 +262,10 @@ class Workspace {
       this.cache.reset()
     }
 
+    if (isUserStatus) {
+      await this.releaseHeldPushes(tx, statusBefore)
+      return
+    }
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.AppPushNotification)) return
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) return
@@ -200,6 +307,8 @@ class Workspace {
   private keepInboxProviderOnly (res: Result): void {
     res.queueMessages = []
     res.createAppPushNotificationTx = []
+    res.heldPushes = []
+    res.timeMachine = res.timeMachine.filter((it) => it.type !== 'schedule')
   }
 
   private async applyResult (result: Result): Promise<void> {
@@ -237,13 +346,12 @@ class Workspace {
       }
     }
 
+    // The inbox entries are in; now the native pushes about them wait.
+    for (const held of result.heldPushes) this.pendingPush.hold(held)
+
     if (result.queueMessages.length > 0) {
       try {
-        await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, result.queueMessages), {
-          maxRetries: publishAttempts,
-          isRetryable: () => true,
-          delayStrategy: publishBackoff
-        })
+        await this.publish(result.queueMessages)
       } catch (e: any) {
         // Known limitation, see docs/features/notifications.md: the inbox entries exist, the
         // push and email of this batch do not. The line is the alert hook.
@@ -255,6 +363,43 @@ class Workspace {
         })
       }
     }
+    if (result.timeMachine.length > 0) {
+      try {
+        await withRetry(() => this.timeMachine.send(this.ctx, this.ws.uuid, result.timeMachine), {
+          maxRetries: publishAttempts,
+          isRetryable: () => true,
+          delayStrategy: publishBackoff
+        })
+      } catch (e: unknown) {
+        // A lost cancel is harmless: the check when the letter fires drops it if read.
+        this.ctx.error('Failed to send held letters to the time machine, they are lost', {
+          error: e instanceof Error ? e.message : String(e),
+          count: result.timeMachine.length,
+          ids: result.timeMachine.map((it) => it.id)
+        })
+      }
+    }
+  }
+
+  private async publish (messages: QueueNotificationMessage[]): Promise<void> {
+    await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, messages), {
+      maxRetries: publishAttempts,
+      isRetryable: () => true,
+      delayStrategy: publishBackoff
+    })
+  }
+
+  // The receiver left (away, offline): what waited for them goes out. A status the cache never
+  // saw names no account; the cap releases those pushes instead.
+  private async releaseHeldPushes (tx: TxCUD<Doc>, status: UserStatus | undefined): Promise<void> {
+    if (this.pendingPush.size === 0) return
+    if (status === undefined) return
+    const gone =
+      tx._class === core.class.TxRemoveDoc ||
+      (tx._class === core.class.TxUpdateDoc &&
+        ((tx as TxUpdateDoc<UserStatus>).operations.away === true ||
+          (tx as TxUpdateDoc<UserStatus>).operations.online === false))
+    if (gone) await this.pendingPush.flushByAccount(status.user)
   }
 
   // The batch is applied by now: a failure here is a cache problem, not a rejected batch.
@@ -278,6 +423,7 @@ class Workspace {
       hierarchy: this.hierarchy,
       model: this.model,
       branding: this.branding,
+      pendingPush: this.pendingPush,
       findAll: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -296,7 +442,7 @@ class Workspace {
   }
 
   public isInProgress (): boolean {
-    return this.inProgressPromise !== undefined
+    return this.inProgress.size > 0
   }
 
   public getLastTxDate (): Timestamp | undefined {
@@ -314,6 +460,7 @@ class Workspace {
     branding: Branding | undefined,
     txTypes: TxNotificationType[],
     producer: PlatformQueueProducer<QueueNotificationMessage>,
+    timeMachine: PlatformQueueProducer<TimeMachineMessage>,
     getAiBotAccount: () => Promise<AccountUuid | undefined> = async () => undefined
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
@@ -364,13 +511,16 @@ class Workspace {
       branding,
       txTypes,
       producer,
+      timeMachine,
       getAiBotAccount
     )
   }
 
   async close (): Promise<void> {
     // A restore event can drop the workspace mid-tx; the pipeline has to outlive that tx.
-    await this.inProgressPromise?.catch(() => undefined)
+    await Promise.allSettled(Array.from(this.inProgress))
+    // Before the pipeline closes: the read check runs through it.
+    await this.pendingPush.flushAll()
     try {
       await this.pipeline.close()
     } catch (e) {

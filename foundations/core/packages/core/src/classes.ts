@@ -662,7 +662,8 @@ export interface UserStatus extends Doc {
 
 /**
  * Where a connection comes from; every client declares it in the hello. Presence counts a person as
- * "at the computer" through web, desktop and cli sessions; a mobile session never keeps them there.
+ * "at the computer" through web and desktop sessions only: a phone never keeps them there, and
+ * neither does a terminal (cli), which reports no idleness and may be left open for days.
  * @public
  */
 export type ClientKind = 'web' | 'desktop' | 'mobile' | 'cli'

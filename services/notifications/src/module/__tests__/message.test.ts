@@ -46,6 +46,9 @@ function createEmptyResult (): Result {
     createAppPushNotificationTx: [],
     updateReadStateTx: [],
     queueMessages: [],
+    timeMachine: [],
+    heldPushes: [],
+    notified: new Set(),
     createUserMentionInfoTx: [],
     updateUserMentionInfoTx: [],
     removeUserMentionInfoTx: []
@@ -516,10 +519,34 @@ describe('message module', () => {
           undefined,
           expect.objectContaining({
             unreadMessage: undefined,
+            alreadyRead: true,
             receiver,
             objectId: 'doc-1',
             objectClass: 'DocClass',
             notifyProviders: expect.any(Object)
+          })
+        )
+      })
+
+      it('passes alreadyRead: false when the message is newer than the read position', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getDocReadState.mockResolvedValue({
+          [receiver.account]: { timestamp: 50 }
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).toHaveBeenCalledWith(
+          mockClient,
+          txCache,
+          result,
+          undefined,
+          expect.objectContaining({
+            unreadMessage: expect.objectContaining({ id: 'msg-1', notified: true }),
+            alreadyRead: false
           })
         )
       })
@@ -607,6 +634,7 @@ describe('message module', () => {
         _id: 'ctx-1',
         _class: 'DocNotifyContext',
         space: 'space-1',
+        user: 'user-1',
         unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }],
         unreadReactions: [{ attachedTo: 'msg-1' }],
         unreadMentions: [{ messageId: 'msg-1' }],
@@ -617,9 +645,14 @@ describe('message module', () => {
       mockGetNotificationsByMessage.mockReturnValue([{ id: 'msg-1' }])
       mockHasUnreadMentionByMessage.mockReturnValue(true)
       mockGetLastNotify.mockReturnValue(40) // lastNotify changed
+      const pendingPush = { cancel: jest.fn() }
+      ;(mockClient as any).pendingPush = pendingPush
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
+      // The push held for the receiver to read this message first is dropped with it, the letter too.
+      expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'msg-1')
+      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:msg-1:%' }])
       expect(result.updateContextTx).toHaveLength(1)
       expect(result.updateContextTx[0].operations).toEqual({
         $pull: {

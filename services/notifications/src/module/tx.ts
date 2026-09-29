@@ -170,7 +170,8 @@ export async function handleTxNotification (
         intl,
         notifyProviders,
         objectDisplayData,
-        pushSubscriptions
+        pushSubscriptions,
+        settings
       })
     }
   }

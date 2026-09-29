@@ -34,7 +34,12 @@ const mockCreated: FakeWorkspace[] = []
 class FakeWorkspace {
   closed = false
   readonly handled: string[] = []
+  readonly released: string[] = []
   constructor (readonly classes: Set<string>) {}
+
+  async releaseHeld (held: { notificationId: string }): Promise<void> {
+    this.released.push(held.notificationId)
+  }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
     // The real Workspace skips a tx whose class its model lacks (findDomain returns undefined).
@@ -113,6 +118,55 @@ function createTx (objectClass: Ref<Class<Doc>>): TxCUD<Doc> {
     attributes: {}
   } as unknown as TxCUD<Doc>
 }
+
+describe('Worker.heldNotification', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+
+  it('loads the workspace and hands it the fired letter', async () => {
+    mockModel = new Set([Issue])
+    mockGate = Promise.resolve()
+    mockCreated.length = 0
+    const worker = new Worker(ctx, createModel(), queue)
+    await worker.heldNotification(ctx, ws, { notificationId: 'n-1' } as any)
+    expect(mockCreated).toHaveLength(1)
+    expect(mockCreated[0].released).toEqual(['n-1'])
+    await worker.close()
+  })
+})
+
+describe('Worker.close', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+
+  // A held push is published from Workspace.close(); the producer must outlive the workspaces.
+  it('closes every open workspace before the producers', async () => {
+    mockModel = new Set([Issue])
+    mockGate = Promise.resolve()
+    mockCreated.length = 0
+    const order: string[] = []
+    const orderedQueue: any = {
+      getProducer: () => ({
+        send: async () => {},
+        close: async () => {
+          order.push('producer')
+        }
+      })
+    }
+    const worker = new Worker(ctx, createModel(), orderedQueue)
+    await worker.tx(ctx, ws, createTx(Issue))
+    expect(mockCreated).toHaveLength(1)
+    const original = mockCreated[0].close.bind(mockCreated[0])
+    mockCreated[0].close = async () => {
+      order.push('workspace')
+      await original()
+    }
+
+    await worker.close()
+
+    expect(mockCreated[0].closed).toBe(true)
+    expect(order[0]).toBe('workspace')
+    expect(order.slice(1).every((it) => it === 'producer')).toBe(true)
+  })
+})
 
 describe('Worker after workspace restore', () => {
   const ctx = new MeasureMetricsContext('test', {})

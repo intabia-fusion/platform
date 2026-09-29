@@ -17,6 +17,7 @@ import notificationPlugin, {
   ContextNotification,
   DocNotifyContext,
   NotificationProvider,
+  NotificationProviderSetting,
   NotificationType,
   UnreadMessage,
   UnreadReaction,
@@ -27,8 +28,9 @@ import notificationPlugin, {
   getNotificationMessageId,
   translateNotification,
   NotificationTemplate,
-  QueueNotificationMessage,
-  appendAndCollapseUnreadMessages
+  QueueNotifyMessage,
+  appendAndCollapseUnreadMessages,
+  isNativePushEndpoint
 } from '@hcengineering/notification'
 import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
@@ -37,10 +39,12 @@ import { translate, IntlString } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import { markupToHtml } from '@hcengineering/text-html'
 
-import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
+import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from '../types'
 import config from '../config'
 import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
 import { isNotificationRecorded } from '../utils/context'
+import { type HeldPush, type HeldReadBy } from '../pendingPush'
+import { scheduleLetter } from '../heldLetter'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -61,6 +65,10 @@ interface CreateNotificationData {
   receiver: Receiver
   pushSubscriptions: PushSubscription[]
 
+  alreadyRead?: boolean
+
+  settings?: NotificationSettings
+
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
   markup?: Markup
@@ -71,8 +79,10 @@ export async function pushNotification (
   txCache: TxCache,
   result: Result,
   context: DocNotifyContext | undefined,
-  data: CreateNotificationData
+  _data: CreateNotificationData
 ): Promise<void> {
+  const data: CreateNotificationData =
+    _data.alreadyRead === true ? { ..._data, notifyProviders: inboxProvidersOnly(_data.notifyProviders) } : _data
   const {
     notification,
     unreadMessage,
@@ -112,22 +122,85 @@ export async function pushNotification (
   const contextId = context?._id ?? generateId<DocNotifyContext>()
   const url = getNotificationUrl(client, contextId, notification, objectId, objectClass)
 
-  result.queueMessages.push({
-    id: notification.id,
-    title,
-    body,
-    url,
-    domain,
-    pushSubscriptions,
-    language: receiver.language,
-    account: receiver.account,
-    providers,
-    objectId,
-    objectClass,
-    objectSpace,
-    createdOn: data.notification.createdOn,
-    template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
-  })
+  if (hasDeliveryProvider(notifyProviders)) {
+    const message: QueueNotifyMessage = {
+      id: notification.id,
+      title,
+      body,
+      url,
+      domain,
+      pushSubscriptions,
+      language: receiver.language,
+      account: receiver.account,
+      providers,
+      objectId,
+      objectClass,
+      objectSpace,
+      createdOn: data.notification.createdOn,
+      template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
+    }
+    const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
+    const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
+    // Only an unread notification can be read later, so only such a one waits.
+    const readBy = heldReadBy(data)
+    const heldPart = (provider: Ref<NotificationProvider>, part: Partial<QueueNotifyMessage>): HeldPush | undefined =>
+      readBy === undefined
+        ? undefined
+        : {
+            account: receiver.account,
+            notificationId: notification.id,
+            objectId,
+            createdOn: data.notification.createdOn,
+            readBy,
+            provider,
+            message: { ...message, ...part }
+          }
+    // While the receiver is at the computer, the push to their phone waits (client.pendingPush,
+    // in memory) for them to read the notification there first; the browser gets its push at once.
+    const holdsPush =
+      client.pendingPush !== undefined &&
+      readBy !== undefined &&
+      receiver.online &&
+      !receiver.away &&
+      native.length > 0 &&
+      (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0
+    if (holdsPush) {
+      const push = heldPart(notificationPlugin.providers.PushNotificationProvider, {
+        pushSubscriptions: native,
+        providers: pushProvidersOnly(providers),
+        template: undefined
+      })
+      if (push !== undefined) result.heldPushes.push(push)
+    }
+    // A letter waits its own, longer while wherever the person is (it is for what they did not
+    // see), in the time machine rather than in memory.
+    // No template, no letter: pod-mail would drop it, so nothing is scheduled for it either.
+    const letters = readBy !== undefined && message.template != null ? letterHolds(client, data) : []
+    for (const letter of letters) {
+      const held = heldPart(letter.provider, {
+        pushSubscriptions: [],
+        providers: onlyProviders(providers, [letter.provider])
+      })
+      if (held !== undefined) scheduleLetter(result, held, letter.holdMs)
+    }
+
+    const heldProviders = [...(holdsPush ? pushProviders() : []), ...letters.map((it) => it.provider)]
+    const immediate: QueueNotifyMessage = {
+      ...message,
+      pushSubscriptions: holdsPush ? web : pushSubscriptions,
+      providers:
+        letters.length > 0
+          ? withoutProviders(
+              providers,
+              letters.map((it) => it.provider)
+            )
+          : providers,
+      template: letters.length > 0 ? undefined : message.template
+    }
+    if ((holdsPush && web.length > 0) || hasDeliveryProvider(withoutNotifyProviders(notifyProviders, heldProviders))) {
+      result.queueMessages.push(immediate)
+    }
+  }
   if (context != null) {
     const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
 
@@ -202,6 +275,93 @@ export async function pushNotification (
   }
 
   createAppPushNotification(client, result, data, contextId)
+  result.notified.add(receiver.account)
+}
+
+// A message is read by the chat's read position; the rest by the
+// explicit lists of a ReadNotificationAction. A notification recorded as read has nothing to wait for.
+function heldReadBy (data: CreateNotificationData): HeldReadBy | undefined {
+  if (data.unreadMessage != null) return 'position'
+  if (data.unreadReaction != null) return 'reactions'
+  if (data.unreadMention != null) return 'mentions'
+  if (data.unreadCommon != null) return 'commons'
+  return undefined
+}
+
+// The receiver's own setting for the provider, found like the provider toggles are: by author social id.
+function receiverSetting (
+  data: CreateNotificationData,
+  provider: Ref<NotificationProvider>
+): NotificationProviderSetting | undefined {
+  return data.settings?.settingsByProvider
+    .get(provider)
+    ?.find((it) => it.createdBy !== undefined && data.receiver.socialIds.includes(it.createdBy))
+}
+
+interface LetterHold {
+  provider: Ref<NotificationProvider>
+  holdMs: number
+}
+
+// Providers with a hold window of their own (`NotificationProvider.holdMs`, the letter) that
+// deliver this notification: the receiver's setting wins over the provider's default, zero
+// means at once.
+function letterHolds (client: Client, data: CreateNotificationData): LetterHold[] {
+  const holds: LetterHold[] = []
+  if (!config.HoldLetters) return holds
+  for (const provider of client.model.findAllSync(notificationPlugin.class.NotificationProvider, {})) {
+    if (provider.holdMs === undefined) continue
+    if ((data.notifyProviders[provider._id]?.length ?? 0) === 0) continue
+    const holdMs = receiverSetting(data, provider._id)?.holdMs ?? provider.holdMs
+    if (holdMs > 0) holds.push({ provider: provider._id, holdMs })
+  }
+  return holds
+}
+
+function inboxProvidersOnly (providers: NotifyProviders): NotifyProviders {
+  const inbox = providers[notificationPlugin.providers.InboxNotificationProvider]
+  return inbox != null ? { [notificationPlugin.providers.InboxNotificationProvider]: inbox } : {}
+}
+
+type ProviderRef = Ref<NotificationProvider>
+
+// Push and its dependent Sound: the providers a held (native) push carries on its own. Read on
+// call, not at import: the module tests mock the plugin lazily.
+function pushProviders (): ProviderRef[] {
+  return [notificationPlugin.providers.PushNotificationProvider, notificationPlugin.providers.SoundNotificationProvider]
+}
+
+// The entries of a provider map, keyed as the refs they are (Object.entries widens keys to string).
+function providerEntries<T> (providers: Record<ProviderRef, T>): Array<[ProviderRef, T]> {
+  return Object.entries(providers) as Array<[ProviderRef, T]>
+}
+
+function withoutNotifyProviders (providers: NotifyProviders, excluded: ProviderRef[]): NotifyProviders {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => !excluded.includes(provider)))
+}
+
+function pushProvidersOnly (providers: QueueNotifyMessage['providers']): QueueNotifyMessage['providers'] {
+  return onlyProviders(providers, pushProviders())
+}
+
+function onlyProviders (
+  providers: QueueNotifyMessage['providers'],
+  kept: ProviderRef[]
+): QueueNotifyMessage['providers'] {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => kept.includes(provider)))
+}
+
+function withoutProviders (
+  providers: QueueNotifyMessage['providers'],
+  excluded: ProviderRef[]
+): QueueNotifyMessage['providers'] {
+  return Object.fromEntries(providerEntries(providers).filter(([provider]) => !excluded.includes(provider)))
+}
+
+function hasDeliveryProvider (providers: NotifyProviders): boolean {
+  return Object.entries(providers).some(
+    ([provider, types]) => provider !== notificationPlugin.providers.InboxNotificationProvider && types.length > 0
+  )
 }
 
 function createAppPushNotification (
@@ -252,7 +412,7 @@ async function getTemplate (
   receiver: Receiver,
   inboxUrl: string,
   markup?: Markup
-): Promise<QueueNotificationMessage['template']> {
+): Promise<QueueNotifyMessage['template']> {
   const types = (providers[notificationPlugin.providers.InboxNotificationProvider] ?? []).filter(
     (it) => it.templates != null
   )
@@ -304,7 +464,7 @@ async function translateTemplate (
   receiver: Receiver,
   inboxUrl: string,
   markup: Markup | undefined
-): Promise<QueueNotificationMessage['template']> {
+): Promise<QueueNotifyMessage['template']> {
   const templates: NotificationTemplate = type?.templates ?? {
     text: notificationPlugin.emailTemplate.GeneratedNotificationText,
     html: notificationPlugin.emailTemplate.GeneratedNotificationHtml,

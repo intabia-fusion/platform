@@ -1,12 +1,12 @@
 # Notification Service
 
-A background worker that delivers push notifications: web push to browsers, APNs to iOS and FCM to Android.
+A background worker that delivers push notifications: web push to browsers, APNs to iOS, FCM and RuStore to Android.
 
 ## Overview
 
 The service consumes `QueueNotificationMessage` payloads from the platform queue
 (`QueueTopic.UserNotifications`) and delivers them to every push subscription carried by the
-message. Web Push is signed with VAPID keys; native subscriptions go to APNs or FCM instead.
+message. Web Push is signed with VAPID keys; native subscriptions go to APNs, FCM or RuStore instead.
 Subscriptions the transport reports as dead are removed from the workspace through the
 transactor, so no cleanup is required from the caller.
 
@@ -15,7 +15,7 @@ There is no HTTP API - the service does not listen on a port.
 ## Features
 
 - **Web Push Notifications**: Send push notifications to web browsers
-- **Native Push**: APNs and FCM delivery for the mobile apps, chosen per subscription
+- **Native Push**: APNs, FCM and RuStore delivery for the mobile apps, chosen per subscription
 - **VAPID Support**: Secure authentication using VAPID keys
 - **Queue Consumer**: Kafka-backed consumer with retries and poison-message acknowledgement
 - **Subscription Cleanup**: Expired and invalid subscriptions are deleted via the transactor
@@ -49,6 +49,8 @@ The service is configured via environment variables:
 | `APNS_TOPIC` | No | - | App bundle id, e.g. `intabia.platform.mobile` |
 | `APNS_PRODUCTION` | No | `true` | `false` sends to the APNs sandbox |
 | `FCM_SERVICE_ACCOUNT` | No | - | Firebase service-account JSON, verbatim |
+| `RUSTORE_PROJECT_ID` | No | - | RuStore push project id |
+| `RUSTORE_SERVICE_TOKEN` | No | - | RuStore service token (Console, Push notifications, Projects) |
 
 Each transport is optional: a subscription whose transport is unconfigured is skipped
 rather than failed, so a deployment that only serves browsers needs no new variables.
@@ -64,6 +66,7 @@ field under a scheme of its own:
 |----------|-----------|
 | `apns://<device-token>` | APNs |
 | `fcm://<registration-token>` | FCM |
+| `rustore://<push-token>` | RuStore |
 | anything else | Web Push |
 
 Neither the notification model nor the trigger that collects subscriptions knows about the
@@ -71,8 +74,10 @@ split: they still pass one list, and the service still resolves the subscription
 turned out to be dead and deletes them.
 
 APNs sends an alert push rather than a silent one - waking a sleeping phone is the point,
-and `content-available` alone is throttled by iOS. FCM carries a `notification` block, so
-Android draws the banner itself while the process is asleep.
+and `content-available` alone is throttled by iOS. FCM and RuStore carry a `notification` block, so
+Android draws the banner itself while the process is asleep. RuStore's send API mirrors FCM's
+message shape (`notification`, string-only `data`, `android.ttl`, `android.notification.tag`),
+so both transports get the same keys; only the authorization differs.
 
 ### APNs and FCM credentials
 
@@ -116,12 +121,14 @@ docker run -d \
 The consumer listens to `QueueTopic.UserNotifications` for `QueueNotificationMessage` payloads.
 
 When a message is received:
-1. It is skipped unless the message lists `PushNotificationProvider` among its providers.
+1. A `kind: "dismiss"` message goes to `sendDismissToSubscription` (see "Dismiss"); anything
+   else is skipped unless it lists `PushNotificationProvider` among its providers.
 2. Title and body are truncated to `PUSH_NOTIFICATION_TITLE_SIZE` / `PUSH_NOTIFICATION_BODY_SIZE`.
 3. Every subscription in `pushSubscriptions` is delivered through the transport its endpoint
-   selects: APNs, FCM or `web-push`.
+   selects: APNs, FCM, RuStore or `web-push`.
 4. A transport that reports the token as gone (HTTP 410, `Unregistered`, `BadDeviceToken`,
-   `DeviceTokenNotForTopic`, FCM `UNREGISTERED`/`INVALID_ARGUMENT`, or a `WebPushError` body
+   `DeviceTokenNotForTopic`, FCM `UNREGISTERED`/`INVALID_ARGUMENT`, RuStore 404/`UNREGISTERED`/`NOT_FOUND`,
+   or a `WebPushError` body
    containing `expired`, `Unregistered`, `No such subscription`, `VapidPkHashMismatch`)
    marks that subscription for deletion. Other errors are treated as transient and the
    subscription is kept.
@@ -143,6 +150,47 @@ The `PushData` delivered to clients:
 | `domain` | string | No | Workspace domain the notification belongs to |
 | `url` | string | No | URL to open when notification is clicked |
 | `icon` | string | No | URL to notification icon |
+| `objectId` | string | No | Id of the document the notification is about (the chat); the web service worker skips the notification when a focused tab shows it, a native app drops it when a dismiss with `readUpTo >= createdOn` got there first |
+| `objectClass` | string | No | Class of that document |
+| `createdOn` | number | No | Timestamp (ms) of the message the notification is about |
+
+How the alert reaches each transport:
+
+| Key | Web Push | APNs | FCM, RuStore |
+|-----|----------|------|-----|
+| `title`, `body` | JSON body | `aps.alert` | `notification` |
+| `tag` | JSON body | `aps.thread-id`, `apns-collapse-id` header (so the tag is the delivered notification's identifier), custom `tag` | `data.tag`, `android.notification.tag` |
+| `url`, `domain`, `objectId`, `objectClass`, `createdOn` | JSON body | custom keys beside `aps` | `data` (strings) |
+
+APNs headers: `apns-push-type: alert`, `apns-priority: 10`, `apns-expiration: now + TTL`. FCM: `android.priority: HIGH`, `android.ttl: TTL`. RuStore: `android.ttl: TTL` (its API has no priority field).
+
+### Dismiss
+
+When the person reads the document on another device, the notifications service publishes a
+`QueueNotificationMessage` with `kind: "dismiss"` (see `QueueDismissMessage` in
+`@hcengineering/notification`), and this service tells the native apps to take the pushes down.
+Web Push gets nothing: a push that shows no notification makes Chrome show its own
+"site updated in the background" notice, and the tab drops its in-app record on its own.
+
+| Key | APNs | FCM, RuStore | Meaning |
+|-----|------|-----|---------|
+| headers | `apns-push-type: background`, `apns-priority: 5`, `aps: {"content-available": 1}` | data-only message (FCM: `android.priority: HIGH`) | nothing to show, no sound |
+| `kind` | custom `"dismiss"` | `data.kind` | message type |
+| `objectId`, `objectClass` | custom | `data` | the document (chat) |
+| `tags` | custom, array of strings | `data.tags`, JSON-encoded array | notification ids to remove: message ids, and the ids of reactions, mentions and other notifications read in the inbox |
+| `readUpTo` | custom, number | `data.readUpTo`, string | remove every notification about `objectId` with `createdOn <= readUpTo` as well; `0` means only the tags (a read of reactions, mentions or commons, no message read) |
+
+What the app does: remove the delivered notifications named by `tags`, then any other about
+`objectId` with `createdOn <= readUpTo`; remember `readUpTo` per `objectId` and do not show
+an alert that arrives later with `createdOn <= readUpTo` (no transport orders pushes);
+refresh the badge. A dismiss for a document without a pending alert is a no-op.
+
+iOS delivers a background push when it sees fit: usually within seconds, later under Low
+Power Mode, never to an app the person force-quit, and Apple budgets them (a few per hour is
+the guidance), so a dismiss can lag or be dropped when reads are frequent. Such a notification
+stays until the app takes it down itself. The notifications service sends a dismiss only for
+pushes that left the service (a push still held and cancelled by the read gets none), and splits
+a long tag list into several messages of 50 tags to stay under the 4 KB payload.
 
 ## Testing
 
@@ -160,7 +208,8 @@ rushx test
 - Check service logs for "Failed to initialize RestClient or fetch transactor endpoint" or "Failed to remove expired subscription" error messages.
 
 ### Nothing is delivered to mobile devices
-- APNs needs all of `APNS_KEY_ID`, `APNS_TEAM_ID` and `APNS_KEY`; FCM needs `FCM_SERVICE_ACCOUNT`.
+- APNs needs all of `APNS_KEY_ID`, `APNS_TEAM_ID` and `APNS_KEY`; FCM needs `FCM_SERVICE_ACCOUNT`;
+  RuStore needs `RUSTORE_PROJECT_ID` and `RUSTORE_SERVICE_TOKEN`.
   When they are missing the matching subscriptions are silently skipped, not failed.
 - On a development build the device is registered against the APNs sandbox - set `APNS_PRODUCTION=false`.
 

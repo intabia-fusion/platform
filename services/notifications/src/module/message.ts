@@ -15,6 +15,7 @@
 
 import core, {
   AccountUuid,
+  BlobType,
   TxCreateDoc,
   TxCUD,
   TxRemoveDoc,
@@ -65,6 +66,7 @@ import {
   isSender
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
+import { cancelLetters } from '../heldLetter'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import config from '../config'
@@ -182,7 +184,8 @@ async function handleCreateMessage (
         txCache,
         type,
         notifyResult,
-        attachments
+        attachments,
+        alreadyRead
       )
     } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
@@ -221,6 +224,10 @@ async function handleRemoveMessage (
   for (const context of contexts) {
     let operations: DocumentUpdate<DocNotifyContext> = {}
     const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
+    // A push or a letter still waiting for this message, or for a mention in it, has nothing left to say.
+    const gone = Array.from(new Set([tx.objectId, ...idsToRemove]))
+    for (const id of gone) client.pendingPush?.cancel(context.user, id)
+    cancelLetters(result, context.user, gone)
 
     if (idsToRemove.length > 0) {
       operations = {
@@ -494,7 +501,8 @@ async function handleUpdateDUM (
         txCache,
         type,
         notifyResult,
-        []
+        [],
+        alreadyRead
       )
     } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
@@ -630,11 +638,13 @@ async function pushNotification (
   txCache: TxCache,
   type: NotificationType,
   notifyResult: NotifyProviders,
-  attachments: any[]
+  attachments: BlobType[],
+  alreadyRead: boolean
 ): Promise<void> {
   const content = await getMessageIntl(client, txCache, type, doc, message, sender, receiver.language)
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+  const settings = await cache.getSettings()
   await _pushNotification(client, txCache, result, context, {
     unreadMessage:
       unreadMessage == null
@@ -662,6 +672,8 @@ async function pushNotification (
     intl: content,
     notifyProviders: notifyResult,
     pushSubscriptions,
+    alreadyRead,
+    settings,
     markup: (message as Partial<ChatMessage>).message
   })
 }

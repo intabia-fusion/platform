@@ -15,7 +15,7 @@
 
 import { Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
-import { getNotifiedMessagesTotal, getUnreadMessageCount } from '../utils'
+import { getNotifiedMessagesTotal, getUnreadMessageCount, isNativePushEndpoint } from '../utils'
 import { DocNotifyContext, UnreadMessage } from '../types'
 
 type UnreadCounted = Partial<Pick<DocNotifyContext, 'unreadMessages' | 'unreadMessagesCount'>>
@@ -74,5 +74,19 @@ describe('getNotifiedMessagesTotal', () => {
 
     expect(getNotifiedMessagesTotal(unreadMessages)).toBe(4)
     expect(getNotifiedMessagesTotal([])).toBe(0)
+  })
+})
+
+describe('isNativePushEndpoint', () => {
+  it('recognises the device token schemes of the native apps', () => {
+    expect(isNativePushEndpoint('apns://abc123')).toBe(true)
+    expect(isNativePushEndpoint('fcm://xyz789')).toBe(true)
+    expect(isNativePushEndpoint('rustore://def456')).toBe(true)
+  })
+
+  it('treats every other endpoint as a browser subscription', () => {
+    expect(isNativePushEndpoint('https://web.push.apple.com/xyz')).toBe(false)
+    expect(isNativePushEndpoint('https://fcm.googleapis.com/fcm/send/abc')).toBe(false)
+    expect(isNativePushEndpoint('')).toBe(false)
   })
 })

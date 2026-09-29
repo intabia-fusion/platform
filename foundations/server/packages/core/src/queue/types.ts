@@ -41,6 +41,9 @@ export enum QueueTopic {
 
   UserNotifications = 'user-notifications',
 
+  // A letter the notifications service held and the time machine fired at its due time.
+  HeldNotifications = 'held-notifications',
+
   // Single billing topic: usage deltas + LiveKit session/egress/participant records (discriminated union).
   BillingUsage = 'billing-usage',
 
