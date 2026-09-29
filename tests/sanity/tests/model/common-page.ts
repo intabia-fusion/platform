@@ -380,6 +380,12 @@ export class CommonPage {
     }
   }
 
+  /** A string attribute filter (custom fields included): its input is placeholdered with the label. */
+  async applyStringFilter (label: string, value: string): Promise<void> {
+    await this.selectFilter(label)
+    await this.applyTextFilter(this.page.locator(`div.selectPopup input[placeholder="${label}"]`), value)
+  }
+
   /**
    * Typing and Apply retry as one: the popup re-renders as rows arrive, detaching whichever is
    * targeted. Retrying only the fill left Apply burning 30s; gone popup means Apply landed.

@@ -18,7 +18,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { Label, Scroller, Submenu, closePopup, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
   import type { ClassFilters, Filter, KeyFilter, KeyFilterPreset, ViewOptions } from '@hcengineering/view'
-  import { getResource } from '@hcengineering/platform'
+  import { getResource, type IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import { FilterQuery, buildFilterKey } from '../../filter'
   import view from '../../plugin'
@@ -75,7 +75,19 @@
     return name
   }
 
-  function buildFilterForAttr (_class: Ref<Class<Doc>>, attribute: AnyAttribute, result: KeyFilter[]): void {
+  interface Section {
+    order: number
+    label: IntlString
+  }
+  const customSection: Section = { order: 1, label: view.string.CustomAttributes }
+  let sections = new Map<KeyFilter, Section>()
+
+  function buildFilterForAttr (
+    _class: Ref<Class<Doc>>,
+    attribute: AnyAttribute,
+    result: KeyFilter[],
+    section: Section = customSection
+  ): void {
     if (attribute.label === undefined || attribute.hidden) {
       return
     }
@@ -86,6 +98,9 @@
     const filter = buildFilterKey(hierarchy, _class, value, attribute)
     if (filter !== undefined) {
       result.push(filter)
+      if (attribute.isCustom === true) {
+        sections.set(filter, section)
+      }
     }
   }
 
@@ -111,15 +126,10 @@
     } else {
       res = await getOwnTypes(_class)
     }
-    res.sort((a, b) => {
-      if (a.group === b.group) return 0
-      if (a.group === 'top') return -1
-      if (a.group === 'bottom') return 1
-      if (b.group === 'top') return 1
-      if (b.group === 'bottom') return -1
-      return 0
-    })
-    return res
+    // Sections first, then 'top' / no group / 'bottom' inside a section
+    const rank = (p: KeyFilter): number =>
+      (sections.get(p)?.order ?? 0) * 3 + (p.group === 'top' ? 0 : p.group === 'bottom' ? 2 : 1)
+    return res.sort((a, b) => rank(a) - rank(b))
   }
 
   async function getNestedTypes (type: KeyFilter): Promise<KeyFilter[]> {
@@ -128,6 +138,7 @@
   }
 
   async function getOwnTypes (_class: Ref<Class<Doc>>): Promise<KeyFilter[]> {
+    sections = new Map()
     const mixin = hierarchy.classHierarchyMixin(_class, view.mixin.ClassFilters)
     if (mixin === undefined) return []
     _class = hierarchy.getBaseClass(_class)
@@ -145,14 +156,17 @@
     buildFilterFor(_class, allAttributes, result, mixin)
 
     const desc = hierarchy.getDescendants(_class)
-    for (const d of desc) {
+    for (const [i, d] of desc.entries()) {
       const cl = hierarchy.findClass(d)
-      if (cl?.kind !== ClassifierKind.MIXIN) continue
+      const isSubclass = cl?.kind === ClassifierKind.CLASS
+      if (cl?.kind !== ClassifierKind.MIXIN && !isSubclass) continue
+      const section = isSubclass ? { order: 2 + i, label: cl.label } : customSection
       const extra = hierarchy.getOwnAttributes(d)
       for (const [k, v] of extra) {
+        if (isSubclass && v.isCustom !== true) continue
         if (!allAttributes.has(k)) {
           allAttributes.set(k, v)
-          buildFilterForAttr(d, v, result)
+          buildFilterForAttr(d, v, result, section)
         }
       }
     }
@@ -272,7 +286,7 @@
 
   function nextDiffCat (types: KeyFilter[], i: number): boolean {
     if (types[i + 1] === undefined) return false
-    return types[i].group !== types[i + 1].group
+    return types[i].group !== types[i + 1].group || sections.get(types[i]) !== sections.get(types[i + 1])
   }
 </script>
 
@@ -301,6 +315,10 @@
     {/if}
     {#await getTypes(_class, nestedFrom) then types}
       {#each types as type, i}
+        {@const section = sections.get(type)}
+        {#if section !== undefined && section !== sections.get(types[i - 1])}
+          <div class="menu-group__header"><Label label={section.label} /></div>
+        {/if}
         {#if filter === undefined && hasNested(type) && nestedFrom === undefined}
           <Submenu
             bind:element={elements[i]}

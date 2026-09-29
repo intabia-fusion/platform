@@ -19,7 +19,7 @@ import {
   loadServerConfig,
   type WorkspaceToken
 } from '@hcengineering/api-client'
-import core, { generateId, type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type AnyAttribute, type Class, generateId, type Ref, type TxOperations } from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
 import task, { type TaskType } from '@hcengineering/task'
 import tracker, {
@@ -50,6 +50,9 @@ export interface CreateIssueOptions {
   dueDate?: number | null
   space?: Ref<Project>
   component?: Ref<TrackerComponent> | null
+  // The task type target class, as CreateIssue does; its custom fields are set via `attributes`
+  _class?: Ref<Class<Issue>>
+  attributes?: Record<string, unknown>
 }
 
 export async function connectTracker (
@@ -135,7 +138,7 @@ export async function createIssue (
   }
 
   await client.addCollection(
-    tracker.class.Issue,
+    opts._class ?? tracker.class.Issue,
     space,
     opts.parent ?? tracker.ids.NoParent,
     tracker.class.Issue,
@@ -161,7 +164,8 @@ export async function createIssue (
       relations: [],
       childInfo: [],
       kind: ctx.taskType,
-      identifier
+      identifier,
+      ...opts.attributes
     },
     _id
   )
@@ -224,4 +228,25 @@ export async function readComponentDescription (label: string): Promise<string |
   } finally {
     await client.close()
   }
+}
+
+/** A custom string field, as the class settings create one; `name` is the stored key. */
+export async function createCustomStringAttribute (
+  client: TxOperations,
+  attributeOf: Ref<Class<Issue>>,
+  label: string
+): Promise<{ _id: Ref<AnyAttribute>, name: string }> {
+  const name = `custom${generateId()}`
+  const _id = await client.createDoc(core.class.Attribute, core.space.Model, {
+    attributeOf,
+    name,
+    label: `embedded:embedded:${label}` as AnyAttribute['label'],
+    type: { _class: core.class.TypeString, label: core.string.String, icon: core.icon.TypeString },
+    isCustom: true
+  })
+  return { _id, name }
+}
+
+export async function removeAttribute (client: TxOperations, _id: Ref<AnyAttribute>): Promise<void> {
+  await client.removeDoc(core.class.Attribute, core.space.Model, _id)
 }
