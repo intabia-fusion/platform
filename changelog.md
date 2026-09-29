@@ -2,6 +2,12 @@
 
 Changelog.
 
+## [0.8.49] - 2026-09-29
+
+* 🚀 FEATURES: · FUSIO-1429: Support rustore ([#483](https://github.com/hcengineering/platform/issues/483)) · away + client kind ([#484](https://github.com/hcengineering/platform/issues/484))
+* 🐛 BUG FIXES: · Show translated error instead of json is not valid · Fix clisr ping test + test optimizations ([#488](https://github.com/hcengineering/platform/issues/488)) · Fix more flacky tests ([#476](https://github.com/hcengineering/platform/issues/476))
+* 🧩 OTHER: · Fix testing performance ([#485](https://github.com/hcengineering/platform/issues/485)) · Improve build sep27 ([#478](https://github.com/hcengineering/platform/issues/478)) · Hum1nizer: shrink comments ([#486](https://github.com/hcengineering/platform/issues/486))
+
 ## [0.8.48] - 2026-09-28
 
 * 🚀 FEATURES: · fusio-203: Rework notifications ([#225](https://github.com/hcengineering/platform/issues/225))
