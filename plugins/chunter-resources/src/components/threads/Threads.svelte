@@ -33,6 +33,7 @@
   const h = client.getHierarchy()
 
   let threads: ActivityMessage[] = []
+  let loadedCount = 0
   let isLoading = true
 
   let divScroll: HTMLElement | undefined | null = undefined
@@ -156,6 +157,7 @@
     if (pageIds.length === 0) {
       query.unsubscribe()
       threads = []
+      loadedCount = 0
       isLoading = false
       return
     }
@@ -164,7 +166,8 @@
       activity.class.ActivityMessage,
       { _id: { $in: pageIds } },
       (res) => {
-        threads = res
+        loadedCount = res.length
+        threads = res.filter((it) => (it.replies ?? 0) > 0)
         isLoading = false
       },
       {
@@ -180,7 +183,7 @@
   }
 
   function handleScroll (): void {
-    if (divScroll != null && hasNextPage && threads.length >= limit) {
+    if (divScroll != null && hasNextPage && loadedCount >= limit) {
       const isAtBottom = divScroll.scrollTop + divScroll.clientHeight >= divScroll.scrollHeight - 400
       if (isAtBottom) {
         limit += 100
@@ -216,7 +219,7 @@
   {:else if threads.length === 0}
     <BlankView icon={chunter.icon.Thread} header={chunter.string.NoThreadsYet} />
   {:else}
-    {#each threads as thread}
+    {#each threads as thread (thread._id)}
       <div class="container">
         <Lazy>
           <ActivityMessagePresenter
@@ -224,12 +227,13 @@
             onClick={() => openMessageFromSpecial(thread)}
             withShowMore={false}
             timeFormat="full"
+            showChannel
           />
         </Lazy>
       </div>
     {/each}
     {#if hasNextPage}
-      <LoadingHistory isLoading={threads.length < limit} />
+      <LoadingHistory isLoading={loadedCount < limit} />
     {/if}
   {/if}
 </Scroller>

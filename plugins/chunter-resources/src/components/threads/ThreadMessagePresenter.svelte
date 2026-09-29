@@ -43,6 +43,7 @@
   export let padding: string | null = null
   export let timeFormat: 'time' | 'full' = 'time'
   export let type: ActivityMessageViewType = 'default'
+  export let showChannel: boolean = false
   export let onClick: (() => void) | undefined = undefined
 
   const client = getClient()
@@ -79,6 +80,7 @@
     {padding}
     {timeFormat}
     {type}
+    {showChannel}
     {onClick}
     {readonly}
   />

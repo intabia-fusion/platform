@@ -94,6 +94,8 @@
           <Lazy>
             <ActivityMessagePresenter
               value={message.$lookup?.attachedTo}
+              timeFormat="full"
+              showChannel
               onClick={() => {
                 handleMessageClicked(message.$lookup?.attachedTo)
               }}
