@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "Açıklama",
     "ShortDescription": "Kısa açıklama",
     "StartDate": "Başlangıç tarihi",
+    "EndDate": "Bitiş tarihi",
     "DueDate": "Bitiş tarihi",
     "TaskState": "Durum",
     "TaskStateTitle": "Başlık",

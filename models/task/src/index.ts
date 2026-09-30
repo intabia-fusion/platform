@@ -77,7 +77,8 @@ import {
   type Task,
   type TaskType,
   type TaskTypeClass,
-  type TaskTypeDescriptor
+  type TaskTypeDescriptor,
+  type TimeManaged
 } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
@@ -169,6 +170,15 @@ export class TTaskTypeDescriptor extends TDoc implements TaskTypeDescriptor {
 export class TTaskTypeClass extends TClass implements TaskTypeClass {
   taskType!: Ref<TaskType>
   projectType!: Ref<ProjectType>
+}
+
+@Mixin(task.mixin.TimeManaged, task.class.Task)
+export class TTimeManaged extends TTask implements TimeManaged {
+  @Prop(TypeDate(), task.string.StartDate)
+  startDate?: Timestamp
+
+  @Prop(TypeDate(), task.string.EndDate)
+  endDate?: Timestamp
 }
 
 @Mixin(task.mixin.ProjectTypeClass, core.class.Class)
@@ -274,7 +284,8 @@ export function createModel (builder: Builder): void {
     TProjectTypeDescriptor,
     TTaskTypeDescriptor,
     TTaskTypeClass,
-    TProjectTypeClass
+    TProjectTypeClass,
+    TTimeManaged
   )
 
   builder.createDoc(

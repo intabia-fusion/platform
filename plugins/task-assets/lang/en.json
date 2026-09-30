@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "Description",
     "ShortDescription": "Short description",
     "StartDate": "Start date",
+    "EndDate": "End date",
     "DueDate": "Due date",
     "TaskState": "State",
     "TaskStateTitle": "Title",

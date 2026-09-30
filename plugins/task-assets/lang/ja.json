@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "説明",
     "ShortDescription": "短い説明",
     "StartDate": "開始日",
+    "EndDate": "終了日",
     "DueDate": "期日",
     "TaskState": "状態",
     "TaskStateTitle": "タイトル",

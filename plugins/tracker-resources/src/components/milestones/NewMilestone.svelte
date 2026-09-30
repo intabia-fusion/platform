@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,6 +36,7 @@
     status: MilestoneStatus.Planned,
     comments: 0,
     attachments: 0,
+    startDate: Date.now(),
     targetDate: Date.now() + 14 * 24 * 60 * 60 * 1000
   }
 
@@ -46,7 +48,7 @@
 <Card
   label={tracker.string.NewMilestone}
   okAction={onSave}
-  canSave={object.label !== ''}
+  canSave={object.label !== '' && (object.startDate ?? 0) <= object.targetDate}
   okLabel={tracker.string.CreateMilestone}
   gap={'gapV-4'}
   on:close={() => dispatch('close')}
@@ -83,6 +85,14 @@
   </div>
   <svelte:fragment slot="pool">
     <MilestoneStatusEditor bind:value={object.status} {object} kind="regular" />
+    <DatePresenter
+      bind:value={object.startDate}
+      editable
+      label={tracker.string.StartDate}
+      detail={ui.string.SelectDate}
+      kind={'regular'}
+      size={'large'}
+    />
     <DatePresenter
       bind:value={object.targetDate}
       editable

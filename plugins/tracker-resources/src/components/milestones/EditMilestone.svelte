@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,9 +15,11 @@
 -->
 <script lang="ts">
   import { AttachmentStyleBoxEditor } from '@hcengineering/attachment-resources'
-  import { getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Milestone } from '@hcengineering/tracker'
-  import { EditBox, Label } from '@hcengineering/ui'
+  import { Component, EditBox, Label, Switcher } from '@hcengineering/ui'
+  import view, { type ViewOptions, type Viewlet } from '@hcengineering/view'
+  import { TimelineRangeDropdown, ViewletSettingButton } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import tracker from '../../plugin'
   import QueryIssuesList from '../issues/edit/QueryIssuesList.svelte'
@@ -41,6 +44,20 @@
   onMount(() => dispatch('open', { ignoreKeys: ['label', 'description', 'attachments'] }))
   $: descriptionKey = client.getHierarchy().getAttribute(tracker.class.Component, 'description')
   let descriptionBox: AttachmentStyleBoxEditor
+
+  let mode: 'list' | 'timeline' = localStorage.getItem('milestone.issuesMode') === 'timeline' ? 'timeline' : 'list'
+  $: localStorage.setItem('milestone.issuesMode', mode)
+
+  let scale = Number(localStorage.getItem('milestone.timelineScale') ?? 1)
+  $: localStorage.setItem('milestone.timelineScale', String(scale))
+
+  let viewOptions: ViewOptions | undefined
+
+  let timelineViewlet: Viewlet | undefined
+  const viewletQuery = createQuery()
+  $: viewletQuery.query(view.class.Viewlet, { _id: tracker.viewlet.MilestoneIssuesTimeline }, (res) => {
+    timelineViewlet = res[0]
+  })
 </script>
 
 <EditBox
@@ -77,9 +94,61 @@
     hasSubIssues={true}
     viewletId={tracker.viewlet.MilestoneIssuesList}
     createParams={{ milestone: object._id }}
+    showList={mode === 'list'}
   >
     <svelte:fragment slot="header">
-      <Label label={tracker.string.Issues} />
+      <div class="flex-row-center flex-gap-2">
+        <Label label={tracker.string.Issues} />
+        <Switcher
+          name={'milestone-issues-mode'}
+          kind={'subtle'}
+          selected={mode}
+          items={[
+            { id: 'list', icon: view.icon.List, tooltip: view.string.List },
+            { id: 'timeline', icon: view.icon.Timeline, tooltip: view.string.Timeline }
+          ]}
+          on:select={(e) => {
+            mode = e.detail.id
+          }}
+        />
+        {#if mode === 'timeline'}
+          <TimelineRangeDropdown
+            value={scale}
+            on:change={(e) => {
+              scale = e.detail
+            }}
+          />
+          {#if timelineViewlet !== undefined}
+            <ViewletSettingButton kind={'tertiary'} viewlet={timelineViewlet} bind:viewOptions />
+          {/if}
+        {/if}
+      </div>
     </svelte:fragment>
   </QueryIssuesList>
+  {#if mode === 'timeline' && timelineViewlet !== undefined}
+    <div class="timeline">
+      <Component
+        is={view.component.TimelineView}
+        props={{
+          _class: tracker.class.Issue,
+          query: { milestone: object._id },
+          viewlet: timelineViewlet,
+          scaleMonths: scale,
+          viewOptions,
+          range: { startDate: object.startDate ?? object.targetDate, targetDate: object.targetDate }
+        }}
+      />
+    </div>
+  {/if}
 </div>
+
+<style lang="scss">
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    height: 30rem;
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+</style>

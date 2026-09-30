@@ -170,3 +170,15 @@ per workspace and reuse the REST member (`others` map, as in chat-unread), `$pul
 - A `test.skip()` that depends on stand state changes the passed count without failing anything: run 20260917-123206 came out 415 instead of 417 because two `meetings.start` tests hit `test.skip(name === null, 'No regular room available')` - every room was busy at that moment.
 - A retry attempt can die with `End of central directory record signature not found` - the trace zip of the previous attempt was still being written. Playwright's own artefact race, not the test.
 - Wall time drifts up across a series (346 → 402s over 10 runs) because workspace data accumulates, not because of any one fix.
+
+## Milestone timeline spec (FUSIO-1448)
+
+`tests/sanity/tests/tracker/milestone-timeline.spec.ts` seeds milestones and issues through `TrackerApi` (`createMilestone`, `setIssueDates`, `readIssueDates`) and drives only the timeline through the UI. Plans sit in the previous month (Monday 3rd-9th): the timeline opens at that month's first day, so bars stay in the viewport whatever today is and drags need no scrolling. Bars are found by `.component-item[data-key=<doc id>]`, their row by `.listGrid` that contains the bar. `NewMilestone` now has two `button.datetime-button` in the pool (start first, target second): `MilestonesPage.buttonNewMilestoneTargetDate` took the only one before and would hit a strict-mode violation. "Grouping" view options are stored per user: tests that switch to Assignee reset it to "No grouping" in `finally`. Not verified against a stand yet: the sidebar preview contents after clicking an issue identifier, and the context-menu entries "Status"/"Assignee" (matched case-insensitively by `popupSpanLabel`).
+
+## Milestone timeline spec (milestone-timeline.spec.ts)
+
+- **Date popup stores noon UTC, not local midnight.** `DatePopup` without time runs `convertToDay` (12:00 UTC of the picked local day), so an exact `start.getTime()` assert is off by hours. Compare `toDateString()`. Not a product bug.
+- **A cleanup in `finally` hides the real failure.** `setGrouping('No grouping')` in `finally` timed out on the popup left open by the failing step and replaced the original error. `setGrouping` now closes popups first and ends with Escape plus "no `modal-overlay`" instead of `closePopup()` (card close button). The Grouping row of the timeline popup is `.antiCard-menu__item` with text (a dropdown option), not `.grouping`.
+- **`DropdownLabels` popup rows are `.selectPopup button.menu-item`**, not `span[class*=label]` (`popupSpanLabel`); see `MilestoneTimelinePage.setRange`.
+- **Two textboxes in the panel once a sidebar issue is open**: match the milestone input by `placeholder="Milestone name"`.
+- **Row drag under a parallel worker.** Placeholder rows appear on drag start and the layout shifts; the drop was sometimes lost. `dragBar` re-aims until `.listGrid.dropTarget` exists, releases the button in `finally`, and the spec repeats the whole gesture in `toPass`. 6 of 6 runs of the group (with `milestone.spec.ts` in the other worker) green; `--repeat-each` on this file gives false failures (shared per-user view options).

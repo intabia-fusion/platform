@@ -27,6 +27,7 @@
     selectionStore,
     setViewOptions,
     SpaceHeader,
+    TimelineMonthSelector,
     ViewletContentView,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
@@ -212,6 +213,9 @@
     />
   </svelte:fragment>
   <svelte:fragment slot="extra">
+    {#if viewlet?.descriptor === view.viewlet.Timeline}
+      <TimelineMonthSelector />
+    {/if}
     {#if $selectionStore.docs.length > 0}
       {@const issues = filterIssues($selectionStore.docs)}
       {#if issues.length > 0}

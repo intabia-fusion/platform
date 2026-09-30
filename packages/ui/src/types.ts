@@ -433,11 +433,22 @@ export interface TimelineItem {
   props?: Record<string, any>
   label?: string
 
+  // Vertical lane inside a multi-lane row
+  lane?: number
+  // Stable id (e.g. doc _id): keeps per-bar state when items are re-sorted
+  key?: string
   startDate: Timestamp
   targetDate: Timestamp | undefined
 }
 export interface TimelineRow {
   items: TimelineItem[] | undefined
+  compact?: boolean
+  // Row height in lanes; overlapping items are expected to have different `lane`
+  lanes?: number
+  // Items of other rows can be dropped here by dragging a bar vertically
+  droppable?: boolean
+  // Stable id; lets a drag follow its row when rows are inserted mid-drag
+  key?: string
 }
 export interface TimelinePoint {
   date: Date

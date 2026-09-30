@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "Popis",
     "ShortDescription": "Krátký popis",
     "StartDate": "Datum zahájení",
+    "EndDate": "Datum dokončení",
     "DueDate": "Datum splnění",
     "TaskState": "Stav",
     "TaskStateTitle": "Název",

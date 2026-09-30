@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "描述",
     "ShortDescription": "简短描述",
     "StartDate": "开始日期",
+    "EndDate": "结束日期",
     "DueDate": "截止日期",
     "TaskState": "状态",
     "TaskStateTitle": "标题",

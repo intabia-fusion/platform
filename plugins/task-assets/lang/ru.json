@@ -4,6 +4,7 @@
     "DescriptionPlaceholder": "Описание",
     "ShortDescription": "Короткое описание",
     "StartDate": "Начало",
+    "EndDate": "Окончание",
     "DueDate": "Срок",
     "TaskState": "Статус",
     "TaskStateTitle": "Заголовок",

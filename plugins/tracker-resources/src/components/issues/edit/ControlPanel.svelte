@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,10 +21,10 @@
   import { AttributeBarEditor, createQuery, getClient } from '@hcengineering/presentation'
   import type { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
-  import task from '@hcengineering/task'
+  import task, { type TimeManaged } from '@hcengineering/task'
   import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
   import { reduceChildInfoTree } from '@hcengineering/tracker'
-  import { Component, Label, floorFractionDigits } from '@hcengineering/ui'
+  import { Component, Label, floorFractionDigits, tooltip } from '@hcengineering/ui'
   import { getDocMixins, getFiltredKeys, isCollectionAttr, ObjectBox } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
@@ -37,6 +38,7 @@
   import EstimationValueEditor from '../timereport/EstimationValueEditor.svelte'
   import ReportedTimeEditor from '../timereport/ReportedTimeEditor.svelte'
   import TimePresenter from '../timereport/TimePresenter.svelte'
+  import { getWorkHoursBetween, isDueNotBeforeStart } from '../../../milestoneUtils'
 
   export let issue: Issue
   export let showAllMixins: boolean = false
@@ -118,6 +120,14 @@
   $: estimationTotal = floorFractionDigits((issue.estimation ?? 0) + (treeInfo?.totalEstimation ?? 0), 3)
   $: reportedTotal = floorFractionDigits((issue.reportedTime ?? 0) + (treeInfo?.totalReportedTime ?? 0), 3)
   $: remainingTotal = floorFractionDigits(estimationTotal - reportedTotal, 3)
+
+  // Shown next to the estimation, never written into it.
+  const timeManaged = task.mixin.TimeManaged as Ref<Mixin<Issue & TimeManaged>>
+  $: startDate = hierarchy.hasMixin(issue, timeManaged) ? hierarchy.as(issue, timeManaged).startDate : undefined
+  $: datesEstimation =
+    startDate != null && issue.dueDate != null && isDueNotBeforeStart(startDate, issue.dueDate)
+      ? getWorkHoursBetween(startDate, issue.dueDate)
+      : undefined
 
   function updateEstimation (val: number | undefined): void {
     if (val === undefined) return
@@ -222,6 +232,15 @@
         kind={'link'}
         {readonly}
       />
+      {#if datesEstimation !== undefined}
+        <span
+          class="content-dark-color ml-2"
+          data-id="issue-dates-estimate"
+          use:tooltip={{ label: tracker.string.PlannedTime }}
+        >
+          (<TimePresenter value={datesEstimation} />)
+        </span>
+      {/if}
     </div>
 
     <span class="labelOnPanel"><Label label={tracker.string.EstimationSubtask} /></span>
@@ -270,6 +289,15 @@
         kind={'link'}
         {readonly}
       />
+      {#if datesEstimation !== undefined}
+        <span
+          class="content-dark-color ml-2"
+          data-id="issue-dates-estimate"
+          use:tooltip={{ label: tracker.string.PlannedTime }}
+        >
+          (<TimePresenter value={datesEstimation} />)
+        </span>
+      {/if}
     </div>
 
     <span class="labelOnPanel"><Label label={tracker.string.ReportedTime} /></span>
