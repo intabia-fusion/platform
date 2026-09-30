@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,33 +16,48 @@
 <script lang="ts">
   import { fly } from 'svelte/transition'
   import type { Timestamp } from '@hcengineering/core'
-  import type { TimelinePoint, TimelineRow, TimelineState } from '../types'
+  import type { TimelineItem, TimelinePoint, TimelineRow, TimelineState, TTimelineRow } from '../types'
   import ui, {
-    CheckBox,
     Icon,
     Scroller,
     Button,
     resizeObserver,
-    MILLISECONDS_IN_DAY,
     MILLISECONDS_IN_WEEK,
     IconArrowLeft,
     IconArrowRight,
-    IconAdd
+    IconAdd,
+    isWeekend
   } from '..'
-  import { createEventDispatcher, onMount } from 'svelte'
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import {
+    clampDragDays,
+    clampLane,
+    getBounds as boundsOf,
+    getDateByOffset as dateByOffset,
+    getDays,
+    getNextWeek as nextWeekDate,
+    getOffsetByDate as offsetByDate,
+    getWeekends,
+    keepPending,
+    PENDING_TIMEOUT_MS
+  } from '../timelineMath'
 
-  export let selectedRows: number[] = []
   export let selectedRow: number | undefined = undefined
+  // Highlighted date span, e.g. the bounds of the milestone the rows belong to.
+  export let range: { startDate: Timestamp, targetDate: Timestamp } | undefined = undefined
   export let lines: TimelineRow[] | undefined = undefined
   export let currentTime: Timestamp = new Date().setHours(0, 0, 0, 0)
+  export let editable: boolean = false
 
   const dispatch = createEventDispatcher()
   const NOT_ENDED = MILLISECONDS_IN_WEEK * 4
+  // Wide enough to cover any scroll distance on either side of the range.
+  const OUT_OF_RANGE_WIDTH = 100000
   let currentDate: Date = new Date(currentTime)
   $: currentDate = new Date(currentTime)
 
-  export const onObjectChecked = (row: number, value: boolean) => {
-    dispatch('check', { row, value })
+  export const scrollToDate = (date: Timestamp): void => {
+    time.offsetView = -getOffsetByDate(date) + dayWidth * 5
   }
   export const selectRow = (row: number) => {
     selectedRow = row
@@ -51,7 +67,12 @@
   }
 
   let panelWidth: number = 320
-  const dayWidth: number = 5
+  // Pixels per day; weekends get shaded once a day is wide enough to see them.
+  export let dayWidth: number = 5
+  // Narrow grids: short month names, no week numbers, so labels do not overlap.
+  $: monthFormat = (dayWidth * 30 < 110 ? 'short' : 'long') as 'short' | 'long'
+  $: showWeeks = dayWidth * 7 >= 35
+  $: showDays = dayWidth >= 16
   let container: HTMLElement
   let viewbox: HTMLElement
   let scroller: Scroller
@@ -79,24 +100,16 @@
     }
   }
 
-  const getDateByOffset = (x: number): { date: Date, delta: number } => {
-    const deltaDays = Math.floor(x / dayWidth)
-    const calcDay = new Date(currentTime + deltaDays * MILLISECONDS_IN_DAY)
-    return { date: calcDay, delta: deltaDays }
-  }
-  const getOffsetByDate = (date: Timestamp | Date): number => {
-    const tempDay = new Date(date).setHours(0, 0, 0, 0)
-    const deltaDays = Math.floor((tempDay - currentTime) / MILLISECONDS_IN_DAY)
-    return deltaDays * dayWidth
-  }
+  const getDateByOffset = (x: number): { date: Date, delta: number } => dateByOffset(currentTime, dayWidth, x)
+  const getOffsetByDate = (date: Timestamp | Date): number => offsetByDate(currentTime, dayWidth, date)
   const getNextMonth = (date: Date): TimelinePoint => {
     const fDate = new Date(date.getFullYear(), date.getMonth() + 1, 1, 0, 0)
     const offDate = getOffsetByDate(fDate)
-    const lDate = Intl.DateTimeFormat(locale, { month: 'long' }).format(fDate)
+    const lDate = Intl.DateTimeFormat(locale, { month: monthFormat }).format(fDate)
     return { date: fDate, x: offDate, label: lDate }
   }
   const getNextWeek = (date: Date, reverse?: boolean): TimelinePoint => {
-    const fDate = new Date(date.getTime() + MILLISECONDS_IN_WEEK * (reverse ? -1 : 1))
+    const fDate = nextWeekDate(date, reverse)
     const offDate = getOffsetByDate(fDate)
     const lDate = fDate.getDate().toString()
     return { date: fDate, x: offDate, label: lDate }
@@ -106,7 +119,7 @@
     const oldRange: TimelinePoint = time.renderedRange.left
     const newDate: Date = new Date(oldRange.date.getFullYear(), oldRange.date.getMonth() - 1, 1, 0, 0)
     const newRange: number = getOffsetByDate(newDate)
-    const newLabel: string = Intl.DateTimeFormat(locale, { month: 'long' }).format(newDate)
+    const newLabel: string = Intl.DateTimeFormat(locale, { month: monthFormat }).format(newDate)
     const newPoint: TimelinePoint = {
       x: newRange,
       date: newDate,
@@ -123,7 +136,7 @@
     const oldRange: TimelinePoint = time.renderedRange.right
     const newDate: Date = new Date(oldRange.date.getFullYear(), oldRange.date.getMonth() + 1, 1, 0, 0)
     const newRange: number = getOffsetByDate(newDate)
-    const newLabel: string = Intl.DateTimeFormat(locale, { month: 'long' }).format(newDate)
+    const newLabel: string = Intl.DateTimeFormat(locale, { month: monthFormat }).format(newDate)
     const newPoint: TimelinePoint = {
       x: newRange,
       date: newDate,
@@ -170,20 +183,29 @@
   }
   const clickEvent = (e: MouseEvent) => {}
 
-  onMount(() => {
-    container.addEventListener('wheel', wheelEvent)
-    container.addEventListener('mousemove', mouseMoveEvent)
-    container.addEventListener('mouseout', mouseOutEvent)
-    container.addEventListener('click', clickEvent)
+  // Dotted lines where each weekend starts and ends; only on wide grids.
+  const getWeekendEdges = (from: Date, to: Date): number[] =>
+    getDays(from, to).flatMap((d) => {
+      if (d.getDay() === 6) return [getOffsetByDate(d)]
+      if (d.getDay() === 0) return [getOffsetByDate(d) + dayWidth]
+      return []
+    })
+  // Primitives, so cursor moves (which touch `time`) do not recompute the day lists
+  $: rangeFrom = time.renderedRange.left.date.getTime()
+  $: rangeTo = time.renderedRange.right.date.getTime()
+  $: weekendEdges = dayWidth >= 16 ? getWeekendEdges(new Date(rangeFrom), new Date(rangeTo)) : []
+  $: rangeDays = showDays ? getDays(new Date(rangeFrom), new Date(rangeTo)) : []
 
-    time.timelineBox = container.getBoundingClientRect()
-    time.viewBox = viewbox.getBoundingClientRect()
-    time.offsetView = Math.floor(time.viewBox.width / 2)
-    time.todayMarker.x = 0
-    time.todayMarker.date = currentDate
-    time.todayMarker.label = Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(currentDate)
+  // Weekend days of a bar, relative to its padding box (inside the 1px border); only on wide grids.
+  const weekendCuts = (start: Timestamp, target: Timestamp): number[] => {
+    if (dayWidth < 16) return []
+    const left = getOffsetByDate(start) + 1
+    return getWeekends(new Date(start), new Date(target)).map((d) => getOffsetByDate(d) - left)
+  }
 
+  const buildRows = (): number[] => {
     let mass: number[] = [currentTime]
+    const rows: TTimelineRow[] = []
     lines?.forEach((line) => {
       if (line.items !== undefined) {
         let tr: number[] = []
@@ -197,20 +219,159 @@
           tr.sort((a, b) => a - b)
           const minD: Date = new Date(tr[0])
           const maxD: Date = new Date(tr[tr.length - 1])
-          const r = {
-            min: {
-              date: minD,
-              x: getOffsetByDate(minD)
-            },
-            max: {
-              date: maxD,
-              x: getOffsetByDate(maxD)
-            }
-          }
-          time.rows ? time.rows.push(r) : (time.rows = [r])
-        } else time.rows ? time.rows.push(null) : (time.rows = [null])
-      } else time.rows ? time.rows.push(null) : (time.rows = [null])
+          rows.push({
+            min: { date: minD, x: getOffsetByDate(minD) },
+            max: { date: maxD, x: getOffsetByDate(maxD) }
+          })
+        } else rows.push(null)
+      } else rows.push(null)
     })
+    time.rows = rows.length > 0 ? rows : undefined
+    return mass
+  }
+
+  let mounted = false
+  $: if (mounted && lines !== undefined) buildRows()
+
+  interface DragState {
+    row: number
+    index: number
+    mode: 'move' | 'start' | 'end'
+    x0: number
+    days: number
+    key?: string
+    // Droppable row under the pointer during a move
+    overRow?: number
+  }
+  let drag: DragState | undefined
+  $: if (drag?.key !== undefined && lines !== undefined) {
+    const at = lines.findIndex((it) => it.key === drag?.key)
+    if (at !== -1 && at !== drag.row) drag.row = at
+  }
+
+  // Dropped bounds shown until the item update arrives, so the bar does not jump back meanwhile
+  interface PendingBounds {
+    itemKey?: string
+    rowKey?: string
+    row: number
+    index: number
+    start: Timestamp
+    target?: Timestamp
+    at: number
+  }
+  let pending: Record<string, PendingBounds> = {}
+  const pendingId = (row: number, index: number): string => {
+    const itemKey = lines?.[row]?.items?.[index]?.key
+    return itemKey !== undefined ? `item:${itemKey}` : `${lines?.[row]?.key ?? `row${row}`}:${index}`
+  }
+  const findPendingItem = (rows: TimelineRow[] | undefined, p: PendingBounds): TimelineItem | undefined => {
+    if (p.itemKey !== undefined) {
+      for (const line of rows ?? []) {
+        const found = line.items?.find((it) => it.key === p.itemKey)
+        if (found !== undefined) return found
+      }
+      return undefined
+    }
+    const line = p.rowKey !== undefined ? rows?.find((it) => it.key === p.rowKey) : rows?.[p.row]
+    return line?.items?.[p.index]
+  }
+  const prunePending = (rows: TimelineRow[] | undefined): void => {
+    pending = Object.fromEntries(
+      Object.entries(pending).filter(([, p]) => {
+        const item = findPendingItem(rows, p)
+        return item?.startDate !== undefined && keepPending(item, p, Date.now() - p.at)
+      })
+    )
+  }
+  $: prunePending(lines)
+
+  const getBounds = (
+    item: TimelineItem,
+    d: DragState | undefined,
+    p?: PendingBounds
+  ): { start: Timestamp, target?: Timestamp } =>
+    p !== undefined ? boundsOf(p.start, p.target, d) : boundsOf(item.startDate, item.targetDate, d)
+  const dragMove = (e: MouseEvent) => {
+    if (drag === undefined) return
+    const item = lines?.[drag.row]?.items?.[drag.index]
+    const raw = Math.round((e.clientX - drag.x0) / dayWidth)
+    const days = item !== undefined ? clampDragDays(drag.mode, raw, item.startDate, item.targetDate) : raw
+    if (days !== drag.days) drag.days = days
+    if (drag.mode === 'move') {
+      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-row]')
+      const row = over != null ? Number(over.getAttribute('data-row')) : undefined
+      // Only a bar of a droppable row can move to another one
+      const movable = lines?.[drag.row]?.droppable === true
+      const overRow =
+        movable && row !== undefined && row !== drag.row && lines?.[row]?.droppable === true ? row : undefined
+      if (overRow !== drag.overRow) drag.overRow = overRow
+    }
+  }
+  const dragEnd = () => {
+    document.removeEventListener('mousemove', dragMove)
+    document.removeEventListener('mouseup', dragEnd)
+    const d = drag
+    drag = undefined
+    const item = d !== undefined ? lines?.[d.row]?.items?.[d.index] : undefined
+    if (d !== undefined && item !== undefined && (d.days !== 0 || d.overRow !== undefined)) {
+      const { start, target } = getBounds(item, d, pending[pendingId(d.row, d.index)])
+      if (d.overRow === undefined) {
+        pending[pendingId(d.row, d.index)] = {
+          itemKey: item.key,
+          rowKey: lines?.[d.row]?.key,
+          row: d.row,
+          index: d.index,
+          start,
+          target,
+          at: Date.now()
+        }
+        setTimeout(() => {
+          prunePending(lines)
+        }, PENDING_TIMEOUT_MS + 50)
+      }
+      dispatch('item-change', {
+        row: d.row,
+        index: d.index,
+        startDate: start,
+        targetDate: target,
+        targetRow: d.overRow
+      })
+    }
+    if (d?.mode === 'move') dispatch('drag-end')
+  }
+  const dragStart = (e: MouseEvent, row: number, index: number, mode: DragState['mode']) => {
+    // macOS reports ctrl+click as button 0 and then opens the context menu
+    if (!editable || e.button !== 0 || e.ctrlKey) return
+    e.preventDefault()
+    e.stopPropagation()
+    drag = { row, index, mode, x0: e.clientX, days: 0, key: lines?.[row]?.key }
+    if (mode === 'move') dispatch('drag-start', { row, index })
+    document.addEventListener('mousemove', dragMove)
+    document.addEventListener('mouseup', dragEnd)
+  }
+
+  onDestroy(() => {
+    if (drag?.mode === 'move') dispatch('drag-end')
+    document.removeEventListener('mousemove', dragMove)
+    document.removeEventListener('mouseup', dragEnd)
+    document.removeEventListener('mousemove', splitterMove)
+    document.removeEventListener('mouseup', splitterEnd)
+  })
+
+  onMount(() => {
+    container.addEventListener('wheel', wheelEvent)
+    container.addEventListener('mousemove', mouseMoveEvent)
+    container.addEventListener('mouseout', mouseOutEvent)
+    container.addEventListener('click', clickEvent)
+
+    time.timelineBox = container.getBoundingClientRect()
+    time.viewBox = viewbox.getBoundingClientRect()
+    time.offsetView = Math.floor(time.viewBox.width / 2)
+    time.todayMarker.x = 0
+    time.todayMarker.date = currentDate
+    time.todayMarker.label = Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(currentDate)
+
+    const mass = buildRows()
     mass.sort((a, b) => a - b)
 
     let leftRange: number = getOffsetByDate(mass[0]) - time.viewBox.width * 1.5
@@ -219,7 +380,7 @@
     time.renderedRange.left = {
       x: leftRange,
       date: leftDate,
-      label: Intl.DateTimeFormat(locale, { month: 'long' }).format(leftDate)
+      label: Intl.DateTimeFormat(locale, { month: monthFormat }).format(leftDate)
     }
     let rightRange: number = getOffsetByDate(mass[mass.length - 1]) + time.viewBox.width * 1.5
     const tr: Date = new Date(getDateByOffset(rightRange).date)
@@ -228,7 +389,7 @@
     time.renderedRange.right = {
       x: rightRange,
       date: rightDate,
-      label: Intl.DateTimeFormat(locale, { month: 'long' }).format(rightDate)
+      label: Intl.DateTimeFormat(locale, { month: monthFormat }).format(rightDate)
     }
 
     time.months = [time.renderedRange.left]
@@ -251,6 +412,7 @@
       time.days = [...time.days, nextWeek]
       i++
     } while (getNextWeek(time.days[i].date).x <= time.renderedRange.right.x)
+    mounted = true
   })
 
   let moving: boolean = false
@@ -304,7 +466,13 @@
             </div>
           {/each}
         {/if}
-        {#if time.days}
+        {#if showDays}
+          {#each rangeDays as day}
+            <div class="day" class:weekend={isWeekend(day)} style:left={`${getOffsetByDate(day) + dayWidth / 2}px`}>
+              {day.getDate()}
+            </div>
+          {/each}
+        {:else if time.days && showWeeks}
           {#each time.days as day}
             <div class="day" style:left={`${day.x}px`}>{day.label}</div>
           {/each}
@@ -329,12 +497,17 @@
   {#if lines}
     <Scroller bind:this={scroller}>
       {#each lines as line, row}
-        {@const rangeRow = time.rows ? time.rows[row] : null}
+        {@const rangeRow = time.rows?.[row] ?? null}
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
           class="listGrid"
-          class:mListGridChecked={selectedRows.find((x) => x === row) !== undefined}
+          class:compact={line.compact}
+          style:height={line.lanes !== undefined
+            ? `${line.lanes * (line.compact === true ? 2.25 : 3.25)}rem`
+            : undefined}
           class:mListGridSelected={selectedRow === row}
+          class:dropTarget={drag?.overRow === row}
+          data-row={row}
           on:focus={() => {}}
           on:mousemove={(ev) => {
             if (row !== selectedRow) {
@@ -344,31 +517,62 @@
           }}
         >
           <div class="headerWrapper" style:width={`${panelWidth}px`}>
-            <div class="gridElement">
-              <div class="eListGridCheckBox">
-                <CheckBox
-                  checked={selectedRows.filter((i) => i === row).length > 0}
-                  on:value={(event) => {
-                    onObjectChecked(row, event.detail)
-                  }}
-                />
-              </div>
-            </div>
             <slot {row} />
           </div>
           <div class="contentWrapper" class:nullRow={rangeRow === null && !moving}>
             <div class="timeline-wrapped_content" style:transform={`translateX(${time.offsetView}px)`}>
               {#if line.items}
-                {#each line.items as item}
+                {#each line.items as item, index}
                   {#if item.startDate}
-                    {@const target = item.targetDate ?? item.startDate + NOT_ENDED}
+                    {@const b = getBounds(
+                      item,
+                      drag?.row === row && drag.index === index ? drag : undefined,
+                      pending[pendingId(row, index)]
+                    )}
+                    {@const target = b.target != null ? Math.max(b.target, b.start) : b.start + NOT_ENDED}
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
                       class="component-item"
-                      class:noTarget={item.targetDate === null}
-                      style:left={`${getOffsetByDate(item.startDate)}px`}
-                      style:right={`${getOffsetByDate(target) + dayWidth - 1}px`}
-                      style:width={`${getOffsetByDate(target) - getOffsetByDate(item.startDate) + dayWidth - 1}px`}
+                      data-key={item.key}
+                      class:editable
+                      class:dragging={drag?.row === row && drag.index === index}
+                      class:laned={item.lane !== undefined}
+                      style:top={item.lane !== undefined
+                        ? `${clampLane(item.lane, line.lanes) * (line.compact === true ? 2.25 : 3.25) + (line.compact === true ? 0.375 : 0.875)}rem`
+                        : undefined}
+                      style:left={`${getOffsetByDate(b.start)}px`}
+                      style:width={`${getOffsetByDate(target) - getOffsetByDate(b.start) + dayWidth - 1}px`}
+                      on:mousedown={(e) => {
+                        dragStart(e, row, index, 'move')
+                      }}
+                      on:dblclick={() => {
+                        dispatch('item-open', { row, index })
+                      }}
+                      on:contextmenu={(event) => {
+                        dispatch('item-contextmenu', { row, index, event })
+                      }}
                     >
+                      {#each weekendCuts(b.start, target) as x}
+                        <div class="weekend-cut" style:left={`${x}px`} style:width={`${dayWidth}px`} />
+                      {/each}
+                      {#if editable}
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                        <div
+                          class="resize-handle left"
+                          on:mousedown={(e) => {
+                            dragStart(e, row, index, 'start')
+                          }}
+                        />
+                        {#if item.targetDate !== undefined}
+                          <!-- svelte-ignore a11y-no-static-element-interactions -->
+                          <div
+                            class="resize-handle right"
+                            on:mousedown={(e) => {
+                              dragStart(e, row, index, 'end')
+                            }}
+                          />
+                        {/if}
+                      {/if}
                       <div class="component-presenter gap-2">
                         {#if item.icon}<Icon
                             icon={item.icon}
@@ -408,7 +612,16 @@
               {/if}
             {/if}
             {#if rangeRow === null && selectedRow === row && time.cursorMarker && !moving}
-              <button class="timeline-action__button add" style:left={`${time.offsetView + time.cursorMarker.x}px`}>
+              <button
+                class="timeline-action__button add"
+                class:editable
+                style:left={`${time.offsetView + time.cursorMarker.x}px`}
+                on:click={() => {
+                  if (editable && time.cursorMarker) {
+                    dispatch('row-add', { row, date: new Date(time.cursorMarker.date).setHours(0, 0, 0, 0) })
+                  }
+                }}
+              >
                 <IconAdd size={'small'} />
               </button>
             {/if}
@@ -418,6 +631,20 @@
     </Scroller>
     <div class="timeline-foreground__viewbox" style:left={`${panelWidth}px`}>
       <div class="timeline-wrapped_content" style:transform={`translateX(${time.offsetView}px)`}>
+        {#if range !== undefined}
+          {@const from = getOffsetByDate(range.startDate)}
+          {@const to = getOffsetByDate(range.targetDate) + dayWidth}
+          <!-- Everything outside the range is tinted, the range itself stays clean. -->
+          <div
+            class="outOfRange before"
+            style:left={`${from - OUT_OF_RANGE_WIDTH}px`}
+            style:width={`${OUT_OF_RANGE_WIDTH}px`}
+          />
+          <div class="outOfRange after" style:left={`${to}px`} style:width={`${OUT_OF_RANGE_WIDTH}px`} />
+        {/if}
+        {#each weekendEdges as x}
+          <div class="weekendMarker" style:left={`${x}px`} />
+        {/each}
         <div class="todayMarker" style:left={`${time.todayMarker.x}px`} />
       </div>
     </div>
@@ -495,6 +722,10 @@
         font-size: 1rem;
         color: var(--content-color);
         transform: translateX(-50%);
+
+        &.weekend {
+          color: var(--dark-color);
+        }
       }
       .cursor {
         position: absolute;
@@ -527,8 +758,33 @@
   .monthMarker {
     border-left: 1px dashed var(--highlight-select);
   }
+  .weekendMarker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    pointer-events: none;
+    border-left: 1px dotted var(--dark-color);
+    opacity: 0.5;
+  }
+
   .todayMarker {
     border-left: 1px solid var(--primary-bg-color);
+  }
+  .outOfRange {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    pointer-events: none;
+    background-color: color-mix(in srgb, var(--primary-bg-color) 6%, transparent);
+
+    &.before {
+      border-right: 1px dashed color-mix(in srgb, var(--primary-bg-color) 40%, transparent);
+    }
+    &.after {
+      border-left: 1px dashed color-mix(in srgb, var(--primary-bg-color) 40%, transparent);
+    }
   }
 
   .timeline-background__headers,
@@ -601,6 +857,7 @@
   .headerWrapper {
     display: flex;
     align-items: center;
+    box-sizing: border-box;
     height: 100%;
     min-width: 0;
     padding-left: 0.75rem;
@@ -645,24 +902,60 @@
     box-shadow: var(--button-shadow);
   }
   .component-item {
-    top: 0.25rem;
-    bottom: 0.25rem;
+    top: 0.875rem;
+    bottom: 0.875rem;
+    padding: 0 0.5rem;
+    overflow: hidden;
+    font-size: 0.75rem;
     background-color: var(--button-bg-color);
     border: 1px solid var(--button-border-color);
-    border-radius: 0.75rem;
+    border-radius: 0.375rem;
 
     &:hover {
       background-color: var(--button-bg-hover);
       border-color: var(--button-border-hover);
     }
-    &.noTarget {
-      mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 1) 2rem);
-      border-right-color: transparent;
+    &.laned {
+      bottom: auto;
+      height: 1.5rem;
+    }
+    &.editable {
+      cursor: grab;
+    }
+    &.dragging {
+      cursor: grabbing;
+      z-index: 2;
+    }
+    // Pales weekend days; presenters keep their text above it with z-index 2.
+    .weekend-cut {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-color: var(--theme-bg-color);
+      opacity: 0.55;
+    }
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0.5rem;
+      cursor: col-resize;
+
+      &.left {
+        left: 0;
+      }
+      &.right {
+        right: 0;
+      }
     }
 
     .component-presenter {
       display: flex;
       align-items: center;
+      min-width: 0;
+      white-space: nowrap;
     }
   }
   .timeline-action__button {
@@ -693,29 +986,48 @@
     &.add {
       transform: translateX(-50%);
       pointer-events: none;
+
+      &.editable {
+        pointer-events: auto;
+      }
     }
   }
 
   .listGrid {
     display: flex;
+    // The global .listGrid adds side padding, which would shift bars off the header and background grid.
+    padding: 0;
     justify-content: stretch;
     align-items: center;
     flex-shrink: 0;
     width: 100%;
     height: 3.25rem;
     min-height: 0;
-    color: var(--caption-color);
-    z-index: 2;
 
-    &.mListGridChecked {
-      .headerWrapper {
-        background-color: var(--highlight-select);
-      }
+    &:nth-child(even) {
+      .headerWrapper,
       .contentWrapper {
         background-color: var(--trans-content-05);
       }
-      .eListGridCheckBox {
-        opacity: 1;
+    }
+
+    &.compact {
+      height: 2.25rem;
+
+      .component-item {
+        top: 0.375rem;
+        bottom: 0.375rem;
+      }
+    }
+    color: var(--caption-color);
+    z-index: 2;
+
+    &.dropTarget {
+      .headerWrapper,
+      .contentWrapper {
+        background-color: var(--highlight-select-hover);
+        outline: 1px dashed var(--primary-button-default);
+        outline-offset: -1px;
       }
     }
 
@@ -726,28 +1038,6 @@
       .contentWrapper {
         background-color: var(--trans-content-10);
       }
-    }
-
-    .eListGridCheckBox {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-    }
-
-    &:hover .eListGridCheckBox {
-      opacity: 1;
-    }
-  }
-
-  .gridElement {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    margin-left: 0.5rem;
-
-    &:first-child {
-      margin-left: 0;
     }
   }
 </style>

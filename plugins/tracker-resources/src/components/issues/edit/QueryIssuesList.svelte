@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -46,6 +47,7 @@
   export let createLabel = tracker.string.AddIssue
   export let hasSubIssues = false
   export let showCreateButton: boolean = true
+  export let showList: boolean = true
   export let dropdownItems: SelectPopupValueType[] | undefined = undefined
   export let additionalConfig: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
 
@@ -218,11 +220,13 @@
     {#if hasSubIssues}
       <slot name="buttons" />
       <div class="w-1 flex-no-shrink" />
-      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'ghost'} noGap bind:viewlet />
+      {#if showList}
+        <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'ghost'} noGap bind:viewlet />
+      {/if}
     {/if}
   </div>
 </div>
-{#if hasSubIssues && viewOptions && viewlet}
+{#if showList && hasSubIssues && viewOptions && viewlet}
   {#if !isCollapsed}
     <ExpandCollapse isExpanded={!isCollapsed}>
       <div

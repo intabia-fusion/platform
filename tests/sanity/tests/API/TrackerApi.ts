@@ -20,14 +20,25 @@ import {
   loadServerConfig,
   type WorkspaceToken
 } from '@hcengineering/api-client'
-import core, { type AnyAttribute, type Class, generateId, type Ref, type TxOperations } from '@hcengineering/core'
+import contact, { type Person } from '@hcengineering/contact'
+import core, {
+  type AnyAttribute,
+  type Class,
+  generateId,
+  type Mixin,
+  type Ref,
+  type Timestamp,
+  type TxOperations
+} from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
-import task, { type TaskType } from '@hcengineering/task'
+import task, { type TaskType, type TimeManaged } from '@hcengineering/task'
 import tracker, {
   IssuePriority,
+  MilestoneStatus,
   type Component as TrackerComponent,
   type Issue,
   type IssueStatus,
+  type Milestone,
   type Project
 } from '@hcengineering/tracker'
 import { PlatformURI, PlatformUser, PlatformWs } from '../utils'
@@ -290,4 +301,62 @@ export async function createCustomStringAttribute (
 
 export async function removeAttribute (client: TxOperations, _id: Ref<AnyAttribute>): Promise<void> {
   await client.removeDoc(core.class.Attribute, core.space.Model, _id)
+}
+
+export async function createMilestone (
+  client: TxOperations,
+  space: Ref<Project>,
+  opts: { label: string, startDate?: Timestamp, targetDate: Timestamp }
+): Promise<Ref<Milestone>> {
+  return await client.createDoc(tracker.class.Milestone, space, {
+    label: opts.label,
+    description: '',
+    status: MilestoneStatus.Planned,
+    comments: 0,
+    attachments: 0,
+    startDate: opts.startDate,
+    targetDate: opts.targetDate
+  })
+}
+
+const timeManaged = task.mixin.TimeManaged as unknown as Ref<Mixin<Issue & TimeManaged>>
+
+/** Puts the issue on timelines: writes the TimeManaged mixin dates the server trigger would otherwise set. */
+export async function setIssueDates (
+  client: TxOperations,
+  issueId: Ref<Issue>,
+  dates: { startDate?: Timestamp }
+): Promise<void> {
+  const issue = await client.findOne(tracker.class.Issue, { _id: issueId })
+  if (issue === undefined) throw new Error(`Issue ${issueId} not found`)
+  await client.createMixin(issue._id, issue._class, issue.space, timeManaged, dates)
+}
+
+export interface IssueDates {
+  startDate?: Timestamp
+  dueDate: Timestamp | null | undefined
+}
+
+/** Server-side dates of an issue, for polling after a UI action or a drag. */
+export async function readIssueDates (client: TxOperations, issueId: Ref<Issue>): Promise<IssueDates | undefined> {
+  const issue = await client.findOne(tracker.class.Issue, { _id: issueId })
+  if (issue === undefined) return undefined
+  const hierarchy = client.getHierarchy()
+  const mixin = hierarchy.hasMixin(issue, timeManaged) ? hierarchy.as(issue, timeManaged) : undefined
+  return { startDate: mixin?.startDate ?? undefined, dueDate: issue.dueDate }
+}
+
+/** A seeded person by last name ('Appleseed' is the test user, 'Chen' the second member). */
+export async function findPersonByLastName (client: TxOperations, lastName: string): Promise<Ref<Person>> {
+  const person = await client.findOne(contact.class.Person, { name: { $like: `${lastName}%` } })
+  if (person === undefined) throw new Error(`Person ${lastName} not found`)
+  return person._id
+}
+
+export async function deleteMilestonesByLabelPrefix (client: TxOperations, prefix: string): Promise<number> {
+  const milestones = await client.findAll(tracker.class.Milestone, { label: { $like: `${prefix}%` } })
+  for (const milestone of milestones) {
+    await client.remove(milestone)
+  }
+  return milestones.length
 }

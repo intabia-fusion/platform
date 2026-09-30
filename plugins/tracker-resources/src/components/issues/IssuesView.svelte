@@ -29,6 +29,7 @@
     selectionStore,
     setViewOptions,
     SpaceHeader,
+    TimelineMonthSelector,
     ViewletContentView,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
@@ -41,6 +42,7 @@
   import CreateIssue from '../CreateIssue.svelte'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
+  import MilestoneTimelineAdd from '../milestones/MilestoneTimelineAdd.svelte'
 
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Issue> = {}
@@ -224,6 +226,10 @@
     />
   </svelte:fragment>
   <svelte:fragment slot="extra">
+    {#if viewlet?.descriptor === view.viewlet.Timeline}
+      <TimelineMonthSelector />
+      <MilestoneTimelineAdd {space} />
+    {/if}
     {#if $selectionStore.docs.length > 0}
       {@const issues = filterIssues($selectionStore.docs)}
       {#if issues.length > 0}

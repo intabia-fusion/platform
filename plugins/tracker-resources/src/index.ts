@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -84,6 +85,12 @@ import ParentIssueSelector from './components/issues/ParentIssueSelector.svelte'
 import LabelsView from './components/LabelsView.svelte'
 import EditMilestone from './components/milestones/EditMilestone.svelte'
 import MilestoneDatePresenter from './components/milestones/MilestoneDatePresenter.svelte'
+import MilestoneIssueStats from './components/milestones/MilestoneIssueStats.svelte'
+import MilestoneTimelineBar from './components/milestones/MilestoneTimelineBar.svelte'
+import MilestoneTimelineAdd from './components/milestones/MilestoneTimelineAdd.svelte'
+import IssueTimelineBar from './components/issues/timeline/IssueTimelineBar.svelte'
+import IssueTimelineLabel from './components/issues/timeline/IssueTimelineLabel.svelte'
+import IssueScheduleButton from './components/issues/timeline/IssueScheduleButton.svelte'
 import MyIssues from './components/myissues/MyIssues.svelte'
 import NewIssueHeader from './components/NewIssueHeader.svelte'
 import NopeComponent from './components/NopeComponent.svelte'
@@ -523,6 +530,12 @@ export default async (): Promise<Resources> => ({
     DeleteComponentPresenter,
     TimeSpendReportPopup,
     MilestoneDatePresenter,
+    MilestoneIssueStats,
+    MilestoneTimelineBar,
+    MilestoneTimelineAdd,
+    IssueTimelineBar,
+    IssueTimelineLabel,
+    IssueScheduleButton,
     NotificationIssuePresenter,
     MilestoneFilter,
     PriorityFilterValuePresenter,

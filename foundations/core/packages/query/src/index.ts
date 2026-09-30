@@ -744,8 +744,13 @@ export class LiveQuery implements WithTx, Client {
           await this.sort(q, tx)
           const udoc = q.result.findDoc(tx.objectId)
           await this.updatedDocCallback(q, q.result, udoc)
-        } else if (queries[0] === tx.mixin) {
-          // Mixin potentially added to object we doesn't have in out results
+        } else if (
+          queries[0] === tx.mixin ||
+          (Object.keys(q.query).some((key) => key.startsWith(`${tx.mixin}.`)) &&
+            hierarchy.isDerived(tx.objectClass, queries[0]))
+        ) {
+          // Mixin potentially added to object we doesn't have in out results,
+          // or the query filters by mixin attributes the object now matches
           const doc = await this.client.findOne(q._class, { ...q.query, _id: tx.objectId }, q.options)
           if (doc !== undefined) {
             if (this.match(q, doc, q.options?.lookup !== undefined)) {

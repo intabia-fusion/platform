@@ -14,10 +14,45 @@
 // limitations under the License.
 //
 
-import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxRemoveDoc, TxUpdateDoc } from '@hcengineering/core'
+import core, {
+  Class,
+  Doc,
+  Ref,
+  Space,
+  Status,
+  Timestamp,
+  Tx,
+  TxCUD,
+  TxCreateDoc,
+  TxProcessor,
+  TxRemoveDoc,
+  TxUpdateDoc
+} from '@hcengineering/core'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
 import task, { Task, TaskType } from '@hcengineering/task'
+import { timeManagedUpdate } from './timeManaged'
+
+// Fills TimeManaged dates from the status category; `created` skips the lookup on create.
+async function fillTimeManaged (
+  control: TriggerControl,
+  target: { _id: Ref<Task>, _class: Ref<Class<Task>>, space: Ref<Space> },
+  status: Status | undefined,
+  date: Timestamp,
+  created?: Task
+): Promise<Tx[]> {
+  const category = status?.category
+  // Categories that never set a date skip the task lookup
+  if (Object.keys(timeManagedUpdate(undefined, category, date)).length === 0) return []
+  const doc = created ?? (await control.findAll(control.ctx, task.class.Task, { _id: target._id }, { limit: 1 }))[0]
+  if (doc === undefined) return []
+  const current = control.hierarchy.hasMixin(doc, task.mixin.TimeManaged)
+    ? control.hierarchy.as(doc, task.mixin.TimeManaged)
+    : undefined
+  const update = timeManagedUpdate(current, category, date)
+  if (Object.keys(update).length === 0) return []
+  return [control.txFactory.createTxMixin(target._id, target._class, target.space, task.mixin.TimeManaged, update)]
+}
 
 /**
  * @public
@@ -32,10 +67,13 @@ export async function OnStateUpdate (txes: TxCUD<Doc>[], control: TriggerControl
       if (status?.category === task.statusCategory.Lost || status?.category === task.statusCategory.Won) {
         result.push(control.txFactory.createTxUpdateDoc(doc._class, doc.space, doc._id, { isDone: true }))
       }
+      result.push(...(await fillTimeManaged(control, doc, status, actualTx.modifiedOn, doc)))
     } else if (actualTx._class === core.class.TxUpdateDoc) {
       const updateTx = actualTx as TxUpdateDoc<Task>
       if (updateTx.operations.status !== undefined) {
         const status = control.modelDb.findAllSync(core.class.Status, { _id: updateTx.operations.status })[0]
+        const target = { _id: updateTx.objectId, _class: updateTx.objectClass, space: updateTx.objectSpace }
+        result.push(...(await fillTimeManaged(control, target, status, updateTx.modifiedOn)))
         if (status?.category === task.statusCategory.Lost || status?.category === task.statusCategory.Won) {
           result.push(
             control.txFactory.createTxUpdateDoc(updateTx.objectClass, updateTx.objectSpace, updateTx.objectId, {

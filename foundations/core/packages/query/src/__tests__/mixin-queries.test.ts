@@ -175,6 +175,21 @@ describe('mixin queries', () => {
     expect(other.last()).toHaveLength(0)
   })
 
+  it('brings a document into a base-class query filtering by a mixin attribute', async () => {
+    const { liveQuery, factory } = await getClient()
+    const id = await createProject(factory, 'mx-filter')
+    const key = `${test.mixin.TestProjectMixin}.someField`
+    const q = await subscribe<TestProject>(liveQuery, test.class.TestProject, { prjName: 'mx-filter', [key]: 'set' })
+    expect(q.last()).toHaveLength(0)
+
+    await factory.createMixin(id, test.class.TestProject, core.space.Model, test.mixin.TestProjectMixin, {
+      someField: 'set'
+    })
+    await settle()
+
+    expect(q.last().map((it) => it._id)).toEqual([id])
+  })
+
   it('asks the server for a mixin findOne, even with the base document cached', async () => {
     // The cache is keyed by the stored class, so a base-class query never answers a mixin one -
     // otherwise a document without the mixin could come back as if it had it.

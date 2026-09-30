@@ -468,6 +468,61 @@ export interface Aggregation extends Class<Doc> {
 }
 
 /**
+ * `Viewlet.props` of the Timeline descriptor.
+ * @public
+ */
+export interface TimelineViewletProps {
+  startField: string | TimelineField
+  endField: string | TimelineField
+  // Rendered inside the bar with `value` = the doc.
+  presenter?: AnyComponent
+  // Rendered in the left panel with `value` = the doc; ObjectPresenter by default.
+  labelPresenter?: AnyComponent
+  // Rendered next to the label of a row without dates, with `value` = the doc.
+  unscheduledAction?: AnyComponent
+  // Hide rows that have neither date.
+  onlyScheduled?: boolean
+  // Only rows touching the months picked in TimelineMonthSelector; queried on the server.
+  windowed?: boolean
+  // Ref attribute to group rows by; headers appear only when there is more than one group.
+  groupBy?: string
+  // Rows are ordered by this lexorank field and can be dragged to reorder.
+  rankField?: string
+  children?: TimelineChildren
+}
+
+/**
+ * A date attribute, optionally stored in a mixin.
+ * @public
+ */
+export interface TimelineField {
+  key: string
+  mixin?: Ref<Mixin<Doc>>
+  // Read when this field is empty; a bar is written back to the field its value came from.
+  fallback?: string | TimelineField
+  // Start field only: attribute in hours; an empty start is the end minus that many 8-hour work days.
+  estimation?: string
+}
+
+/**
+ * Rows under each doc: `_class` docs pointing to it by `parentField` and having a start date.
+ * @public
+ */
+export interface TimelineChildren {
+  _class: Ref<Class<Doc>>
+  parentField: string
+  startField: string | TimelineField
+  endField: string | TimelineField
+  presenter?: AnyComponent
+  labelPresenter?: AnyComponent
+  // List-view style row in the left panel; takes over labelPresenter when set.
+  config?: Array<BuildModelKey | string>
+  rankField?: string
+  // Rendered in the parent row's left panel with `parent` = the parent doc.
+  addComponent?: AnyComponent
+}
+
+/**
  * @public
  */
 export interface Viewlet extends Doc {

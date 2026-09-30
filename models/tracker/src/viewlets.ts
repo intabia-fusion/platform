@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -21,7 +22,12 @@ import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
 import view, { showColorsViewOption } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
-import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@hcengineering/view'
+import {
+  type DropdownViewOption,
+  type ViewOptionModel,
+  type BuildModelKey,
+  type ViewOptionsModel
+} from '@hcengineering/view'
 import tracker from './plugin'
 
 export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
@@ -246,6 +252,39 @@ export function issueConfig (
     }
   ]
 }
+
+// Rows inside a milestone: the issues themselves or one row per value of this Ref attribute.
+const timelineRowsOption: DropdownViewOption = {
+  key: 'timelineRows',
+  type: 'dropdown',
+  defaultValue: 'parent',
+  values: [
+    { id: 'parent', label: view.string.NoGrouping },
+    { id: 'assignee', label: tracker.string.Assignee },
+    { id: 'component', label: tracker.string.Component }
+  ],
+  label: view.string.Grouping
+}
+
+// Without a start date the bar ends at dueDate and lasts the estimation.
+const timelineStart = { key: 'startDate', mixin: task.mixin.TimeManaged, estimation: 'estimation' }
+const timelineEnd = 'dueDate'
+
+const issueTimelineConfig: BuildModelKey[] = [
+  {
+    key: '',
+    label: tracker.string.Priority,
+    presenter: tracker.component.PriorityEditor,
+    props: { type: 'priority', kind: 'list', size: 'small' }
+  },
+  {
+    key: '',
+    label: tracker.string.Status,
+    presenter: tracker.component.StatusEditor,
+    props: { kind: 'list', size: 'small', justify: 'center' }
+  },
+  { key: '', label: tracker.string.Title, presenter: tracker.component.IssueTimelineLabel }
+]
 
 export function defineViewlets (builder: Builder): void {
   builder.createDoc(
@@ -777,7 +816,7 @@ export function defineViewlets (builder: Builder): void {
       viewOptions: milestoneOptions,
       configOptions: {
         strict: true,
-        hiddenKeys: ['targetDate', 'label', 'description']
+        hiddenKeys: ['startDate', 'targetDate', 'label', 'description']
       },
       config: [
         {
@@ -788,12 +827,160 @@ export function defineViewlets (builder: Builder): void {
         { key: '', displayProps: { grow: true } },
         {
           key: '',
+          label: tracker.string.Issues,
+          presenter: tracker.component.MilestoneIssueStats,
+          displayProps: { key: 'issueStats' }
+        },
+        {
+          key: '',
+          label: tracker.string.StartDate,
+          presenter: tracker.component.MilestoneDatePresenter,
+          props: { field: 'startDate' },
+          displayProps: { key: 'startDate' }
+        },
+        {
+          key: '',
           label: tracker.string.TargetDate,
           presenter: tracker.component.MilestoneDatePresenter,
-          props: { field: 'targetDate' }
+          props: { field: 'targetDate' },
+          displayProps: { key: 'targetDate' }
         }
       ]
     },
     tracker.viewlet.MilestoneList
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Milestone,
+      descriptor: view.viewlet.Table,
+      viewOptions: {
+        groupBy: [],
+        orderBy: milestoneOptions.orderBy,
+        other: []
+      },
+      configOptions: {
+        hiddenKeys: ['label', 'description', 'startDate', 'targetDate'],
+        sortable: true
+      },
+      config: [
+        { key: '', presenter: tracker.component.MilestonePresenter, label: tracker.string.Title },
+        {
+          key: 'status',
+          props: { kind: 'link', size: 'small', justify: 'left' }
+        },
+        {
+          key: '',
+          label: tracker.string.Issues,
+          presenter: tracker.component.MilestoneIssueStats
+        },
+        {
+          key: '',
+          label: tracker.string.StartDate,
+          presenter: tracker.component.MilestoneDatePresenter,
+          props: { field: 'startDate', kind: 'link' }
+        },
+        {
+          key: '',
+          label: tracker.string.TargetDate,
+          presenter: tracker.component.MilestoneDatePresenter,
+          props: { field: 'targetDate', kind: 'link' }
+        },
+        {
+          key: 'modifiedOn',
+          presenter: tracker.component.ModificationDatePresenter
+        }
+      ]
+    },
+    tracker.viewlet.MilestoneTable
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Milestone,
+      descriptor: view.viewlet.Timeline,
+      viewOptions: {
+        groupBy: [],
+        orderBy: [],
+        other: [timelineRowsOption, showColorsViewOption]
+      },
+      config: [],
+      props: {
+        startField: 'startDate',
+        endField: 'targetDate',
+        windowed: true,
+        presenter: tracker.component.MilestoneTimelineBar,
+        children: {
+          _class: tracker.class.Issue,
+          parentField: 'milestone',
+          startField: timelineStart,
+          endField: timelineEnd,
+          presenter: tracker.component.IssueTimelineBar,
+          config: issueTimelineConfig,
+          rankField: 'rank',
+          addComponent: tracker.component.MilestoneTimelineAdd
+        }
+      }
+    },
+    tracker.viewlet.MilestoneTimeline
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Issue,
+      descriptor: view.viewlet.Timeline,
+      variant: 'milestone-timeline',
+      viewOptions: {
+        groupBy: [],
+        orderBy: [],
+        other: [timelineRowsOption, showColorsViewOption]
+      },
+      config: issueTimelineConfig,
+      props: {
+        startField: timelineStart,
+        endField: timelineEnd,
+        presenter: tracker.component.IssueTimelineBar,
+        rankField: 'rank',
+        unscheduledAction: tracker.component.IssueScheduleButton
+      }
+    },
+    tracker.viewlet.MilestoneIssuesTimeline
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Issue,
+      descriptor: view.viewlet.Timeline,
+      viewOptions: {
+        groupBy: [],
+        orderBy: [],
+        other: [
+          {
+            ...timelineRowsOption,
+            values: [...timelineRowsOption.values, { id: 'milestone', label: tracker.string.Milestone }]
+          },
+          showColorsViewOption
+        ]
+      },
+      config: issueTimelineConfig,
+      props: {
+        startField: timelineStart,
+        endField: timelineEnd,
+        presenter: tracker.component.IssueTimelineBar,
+        rankField: 'rank',
+        onlyScheduled: true,
+        windowed: true,
+        groupBy: 'space'
+      }
+    },
+    tracker.viewlet.IssueTimeline
   )
 }
