@@ -47,6 +47,7 @@ describe('pushTarget', () => {
 
 const objectId = 'doc-1' as Ref<Doc>
 const objectClass = 'chunter:class:Channel' as Ref<Class<Doc>>
+const group = 'channel-1' as Ref<Doc>
 
 describe('alert payloads', () => {
   const data = {
@@ -60,9 +61,9 @@ describe('alert payloads', () => {
     createdOn: 1000
   }
 
-  it('APNs: an alert with the tag as thread and the reconciliation keys beside aps', () => {
+  it('APNs: an alert threaded by its chat and the reconciliation keys beside aps', () => {
     expect(apnsAlertPayload(data)).toEqual({
-      aps: { alert: { title: 'Title', body: 'Body' }, sound: 'default', 'thread-id': 'msg-1', 'mutable-content': 1 },
+      aps: { alert: { title: 'Title', body: 'Body' }, sound: 'default', 'thread-id': 'doc-1', 'mutable-content': 1 },
       url: 'https://app/x',
       domain: 'https://app',
       tag: 'msg-1',
@@ -70,6 +71,16 @@ describe('alert payloads', () => {
       objectClass: 'chunter:class:Channel',
       createdOn: 1000
     })
+  })
+
+  it('APNs: a thread reply stacks with its channel', () => {
+    const aps = apnsAlertPayload({ ...data, group }).aps as Record<string, unknown>
+    expect(aps['thread-id']).toBe('channel-1')
+  })
+
+  it('APNs: falls back to the tag as thread when the push names no object', () => {
+    const aps = apnsAlertPayload({ ...data, objectId: undefined }).aps as Record<string, unknown>
+    expect(aps['thread-id']).toBe('msg-1')
   })
 
   it('FCM: a notification block plus string-only data', () => {
@@ -92,19 +103,22 @@ describe('alert payloads', () => {
     expect(fcmAlertMessage('tok', { title: 'T', body: 'B' })).toMatchObject({ data: {} })
   })
 
-  it('RuStore: the FCM shape with the same reconciliation keys in data', () => {
-    expect(rustoreAlertMessage('tok', data)).toEqual({
+  it('RuStore: data only, so the app stacks the conversation itself', () => {
+    expect(rustoreAlertMessage('tok', { ...data, group, groupTitle: 'develop' })).toEqual({
       token: 'tok',
-      notification: { title: 'Title', body: 'Body' },
       data: {
+        title: 'Title',
+        body: 'Body',
         url: 'https://app/x',
         domain: 'https://app',
         tag: 'msg-1',
+        group: 'channel-1',
+        groupTitle: 'develop',
         objectId: 'doc-1',
         objectClass: 'chunter:class:Channel',
         createdOn: '1000'
       },
-      android: { ttl: '86400s', notification: { tag: 'msg-1' } }
+      android: { ttl: '86400s' }
     })
   })
 })

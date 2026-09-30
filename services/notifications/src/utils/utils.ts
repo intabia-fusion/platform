@@ -39,6 +39,7 @@ export {
 } from './context'
 export {
   getDocTitle,
+  getPushGroup,
   getDocIdentifier,
   getDocUrl,
   getDocLabel,

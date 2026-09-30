@@ -114,7 +114,7 @@ export function apnsAlertPayload (data: PushData): Record<string, unknown> {
     aps: {
       alert: { title: data.title, body: data.body },
       sound: 'default',
-      'thread-id': data.tag,
+      'thread-id': data.group ?? data.objectId ?? data.tag,
       'mutable-content': 1
     },
     url: data.url,
@@ -334,19 +334,24 @@ async function fcmRequest (message: Record<string, unknown>): Promise<Delivery> 
 // RuStore's send API mirrors FCM's shape (same message/notification/data/android
 // envelope, data values strings only) but authorizes with a static service token
 // instead of a minted one.
+// Data only: with a `notification` block the SDK shows the push itself, one per message, and
+// the app cannot stack a conversation into one notification.
 export function rustoreAlertMessage (token: string, data: PushData): Record<string, unknown> {
   return {
     token,
-    notification: { title: data.title, body: data.body },
     data: fcmData({
+      title: data.title,
+      body: data.body,
       url: data.url,
       domain: data.domain,
       tag: data.tag,
+      group: data.group ?? data.objectId,
+      groupTitle: data.groupTitle,
       objectId: data.objectId,
       objectClass: data.objectClass,
       createdOn: data.createdOn
     }),
-    android: { ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+    android: { ttl: `${config.TTL}s` }
   }
 }
 

@@ -103,7 +103,9 @@ const mockGetMentionNotification = jest.fn()
 const mockHasMessageNotification = jest.fn()
 const mockGetAttachments = jest.fn()
 
+const mockGetPushGroup = jest.fn()
 jest.mock('../../utils/utils', () => ({
+  getPushGroup: async (...args: any[]) => await mockGetPushGroup(...args),
   getBaseDisplayParams: (...args: any[]) => mockGetBaseDisplayParams(...args),
   getObjectDisplayData: (...args: any[]) => mockGetObjectDisplayData(...args),
   getMode: (...args: any[]) => mockGetMode(...args),

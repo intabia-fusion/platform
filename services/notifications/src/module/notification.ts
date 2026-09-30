@@ -50,6 +50,8 @@ interface CreateNotificationData {
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   objectSpace: Ref<Space>
+  group?: Ref<Doc>
+  groupTitle?: string
 
   objectDisplayData: ObjectDisplayData
 
@@ -129,6 +131,8 @@ export async function pushNotification (
       body,
       url,
       domain,
+      group: data.group ?? objectId,
+      groupTitle: data.groupTitle,
       pushSubscriptions,
       language: receiver.language,
       account: receiver.account,

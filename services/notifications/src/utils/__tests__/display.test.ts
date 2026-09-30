@@ -20,7 +20,8 @@ import {
   getDocLabel,
   getDocIcon,
   getObjectDisplayData,
-  getBaseDisplayParams
+  getBaseDisplayParams,
+  getPushGroup
 } from '../display'
 import { getEmptyTxCache } from '../result'
 import {
@@ -36,6 +37,9 @@ import { getSenderName, Sender } from '@hcengineering/server-notification'
 import { Client, TxCache } from '../../types'
 import { Doc, AccountUuid } from '@hcengineering/core'
 import { NotificationType } from '@hcengineering/notification'
+import { ActivityMessage } from '@hcengineering/activity'
+import chunter from '@hcengineering/chunter'
+import Cache from '../../cache'
 
 jest.mock('@hcengineering/server-activity', () => ({
   getDocIcon: jest.fn(),
@@ -68,6 +72,51 @@ describe('display utils', () => {
     } as unknown as Client
     txCache = getEmptyTxCache()
     jest.clearAllMocks()
+  })
+
+  describe('getPushGroup', () => {
+    const channel = { _id: 'channel-1', _class: 'chunter:class:Channel' } as unknown as Doc
+    const getDoc = jest.fn()
+    const cache = { getDoc } as unknown as Cache
+    const reply = {
+      _id: 'reply-1',
+      _class: chunter.class.ThreadMessage,
+      objectId: 'channel-1',
+      objectClass: 'chunter:class:Channel'
+    } as unknown as ActivityMessage
+
+    it('leaves a message outside a thread with its context', async () => {
+      const plain = { _id: 'msg-1', _class: chunter.class.ChatMessage } as unknown as ActivityMessage
+      expect(await getPushGroup(mockClient, cache, txCache, plain, 'user-1' as AccountUuid, 'en')).toBeUndefined()
+      expect(await getPushGroup(mockClient, cache, txCache, undefined, 'user-1' as AccountUuid, 'en')).toBeUndefined()
+    })
+
+    it("stacks a thread reply with its channel under the channel's title for the receiver", async () => {
+      ;(mockClient.hierarchy.isDerived as jest.Mock).mockImplementation(
+        (_: unknown, base: unknown) => base === chunter.class.ThreadMessage
+      )
+      getDoc.mockResolvedValue(channel)
+      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: true })
+      ;(_getDocTitle as jest.Mock).mockResolvedValue('develop')
+
+      expect(await getPushGroup(mockClient, cache, txCache, reply, 'user-1' as AccountUuid, 'en')).toEqual({
+        group: 'channel-1',
+        groupTitle: 'develop'
+      })
+      expect(getDoc).toHaveBeenCalledWith('channel-1', 'chunter:class:Channel')
+    })
+
+    it('keeps the channel as the group when the channel itself is gone', async () => {
+      ;(mockClient.hierarchy.isDerived as jest.Mock).mockImplementation(
+        (_: unknown, base: unknown) => base === chunter.class.ThreadMessage
+      )
+      getDoc.mockResolvedValue(undefined)
+
+      expect(await getPushGroup(mockClient, cache, txCache, reply, 'user-1' as AccountUuid, 'en')).toEqual({
+        group: 'channel-1',
+        groupTitle: undefined
+      })
+    })
   })
 
   describe('getDocTitle', () => {

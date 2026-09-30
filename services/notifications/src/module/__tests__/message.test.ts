@@ -112,6 +112,7 @@ const mockHasMentionNotificationByMessage = jest.fn()
 const mockHasUnreadMentionByMessage = jest.fn()
 const mockGetAttachments = jest.fn()
 const mockGetCreateContextTx = jest.fn()
+const mockGetPushGroup = jest.fn()
 
 jest.mock('../../utils/utils', () => {
   return {
@@ -131,6 +132,7 @@ jest.mock('../../utils/utils', () => {
     hasUnreadMentionByMessage: (...args: any[]) => mockHasUnreadMentionByMessage(...args),
     getAttachments: (...args: any[]) => mockGetAttachments(...args),
     getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
+    getPushGroup: async (...args: any[]) => await mockGetPushGroup(...args),
     isSender: (receiver: Receiver, sender: Sender) => {
       if (sender.account != null && receiver.account === sender.account) return true
       return receiver.socialIds.includes(sender.socialId)
@@ -478,6 +480,28 @@ describe('message module', () => {
             objectClass: 'DocClass',
             notifyProviders: expect.any(Object)
           })
+        )
+      })
+
+      it('stacks the push with the conversation getPushGroup names', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+        mockGetPushGroup.mockResolvedValueOnce({ group: 'channel-1', groupTitle: 'develop' })
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockGetPushGroup).toHaveBeenCalledWith(
+          mockClient,
+          mockCache,
+          txCache,
+          expect.objectContaining({ _id: 'msg-1' }),
+          'user-1',
+          'en'
+        )
+        expect(mockPushNotification.mock.calls[0][4]).toEqual(
+          expect.objectContaining({ group: 'channel-1', groupTitle: 'develop' })
         )
       })
 

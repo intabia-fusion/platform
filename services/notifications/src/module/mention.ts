@@ -55,7 +55,8 @@ import {
   getMentionNotification,
   getLastNotify,
   hasMessageNotification,
-  getAttachments
+  getAttachments,
+  getPushGroup
 } from '../utils/utils'
 import { pushNotification } from './notification'
 import { cancelLetters } from '../heldLetter'
@@ -111,6 +112,7 @@ export async function handleMention (
       objectId: doc._id,
       objectClass: doc._class,
       objectSpace: doc.space,
+      ...(await getPushGroup(client, cache, txCache, message, mention.receiver.account, mention.receiver.language)),
       notification: mentionNotification,
       intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver.language),
       notifyProviders: mention.notifyProviders,
