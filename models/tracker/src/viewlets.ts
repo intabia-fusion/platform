@@ -400,7 +400,7 @@ export function defineViewlets (builder: Builder): void {
           'modifiedBy'
         ]
       },
-      config: issueConfig('sub', true, false, true)
+      config: issueConfig('sub', true, false, true, true)
     },
     tracker.viewlet.MilestoneIssuesList
   )
@@ -442,7 +442,7 @@ export function defineViewlets (builder: Builder): void {
           'modifiedBy'
         ]
       },
-      config: issueConfig('sub', true, true, false)
+      config: issueConfig('sub', true, true, false, true)
     },
     tracker.viewlet.ComponentIssuesList
   )
