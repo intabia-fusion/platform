@@ -643,6 +643,13 @@ export async function getMeetingMinutesTitle (
   return meeting?.name ?? ''
 }
 
+export async function getRoomTitle (client: TxOperations, ref: Ref<Room>, doc?: Room): Promise<string> {
+  const room = doc ?? (await client.findOne(love.class.Room, { _id: ref }))
+  if (room === undefined) return ''
+
+  return await getRoomName(room)
+}
+
 export async function getUserMeetingInviteTitle (
   client: TxOperations,
   ref: Ref<UserMeetingInvite>,

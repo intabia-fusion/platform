@@ -63,7 +63,11 @@
       {/if}
       {#if showChannel && row.channel !== ''}
         <span class="reference flex-row-center flex-gap-1">
-          {#if icon !== undefined}
+          {#if row.attachedPerson !== undefined}
+            <div class="icon">
+              <Avatar person={row.attachedPerson} name={row.attachedPerson.name} size={'inline'} />
+            </div>
+          {:else if icon !== undefined}
             <div class="icon"><Icon {icon} size={'x-small'} /></div>
           {/if}
           <span class="label overflow-label font-medium-12 text-left secondary-textColor">

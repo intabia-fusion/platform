@@ -627,6 +627,10 @@ export function createModel (builder: Builder): void {
     titleProvider: love.function.MeetingMinutesTitleProvider
   })
 
+  builder.mixin(love.class.Room, core.class.Class, view.mixin.ObjectTitle, {
+    titleProvider: love.function.RoomTitleProvider
+  })
+
   builder.mixin(love.class.UserMeetingInvite, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: love.function.UserMeetingInviteTitleProvider
   })

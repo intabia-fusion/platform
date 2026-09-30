@@ -1709,13 +1709,22 @@ export async function getDocTitle (
 
   const titleProvider = hierarchy.classHierarchyMixin(objectClass, view.mixin.ObjectTitle)
 
-  if (titleProvider === undefined) {
-    return
+  if (titleProvider !== undefined) {
+    const resource = await getResource(titleProvider.titleProvider)
+    const title = await resource(client, objectId, object)
+    if (title !== '') return title
   }
 
-  const resource = await getResource(titleProvider.titleProvider)
+  if (!hierarchy.hasClass(objectClass)) return
+  const titleKey = hierarchy
+    .getAncestors(objectClass)
+    .map((c) => hierarchy.findClass(c)?.titleKey)
+    .find((key) => key !== undefined)
+  if (titleKey == null) return
 
-  return await resource(client, objectId, object)
+  const doc = object ?? (await client.findOne(objectClass, { _id: objectId }, { projection: { [titleKey]: 1 } as any }))
+  const value = (doc as any)?.[titleKey]
+  if (typeof value === 'string' && value.trim() !== '') return value
 }
 
 export async function getDocIdentifier (

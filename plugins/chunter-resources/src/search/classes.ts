@@ -17,11 +17,18 @@ import activity from '@hcengineering/activity'
 import { type Class, type Doc, type Ref } from '@hcengineering/core'
 import { getClient } from '@hcengineering/presentation'
 import chunter from '@hcengineering/chunter'
+import contact from '@hcengineering/contact'
+import love, { type Office } from '@hcengineering/love'
+
+const HIDDEN_CLASSES = new Set<Ref<Class<Doc>>>(['contact:class:Contact', 'contact:class:Channel'] as Array<
+  Ref<Class<Doc>>
+>)
 
 export function getActivityDocClasses (): Array<Ref<Class<Doc>>> {
   const hierarchy = getClient().getHierarchy()
 
   return hierarchy.getMixinClasses(activity.mixin.ActivityDoc).filter((_class) => {
+    if (HIDDEN_CLASSES.has(_class)) return false
     try {
       const clazz = hierarchy.getClass(_class)
       return hierarchy.hasMixin(clazz, activity.mixin.ActivityDoc)
@@ -66,4 +73,12 @@ export function expandClasses (classes: Array<Ref<Class<Doc>>>): Array<Ref<Class
   }
 
   return Array.from(result)
+}
+
+export function isAvatarObject (objectClass: Ref<Class<Doc>>, doc?: Doc): boolean {
+  const hierarchy = getClient().getHierarchy()
+  const _class = doc?._class ?? objectClass
+  if (!hierarchy.hasClass(_class)) return false
+  if (hierarchy.isDerived(_class, love.class.Office)) return (doc as Office | undefined)?.person != null
+  return hierarchy.isDerived(_class, chunter.class.DirectMessage) || hierarchy.isDerived(_class, contact.class.Person)
 }

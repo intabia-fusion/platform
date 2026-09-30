@@ -18,7 +18,7 @@
 
   import { getFocusManager } from '../focus'
   import ui from '../plugin'
-  import { showPopup } from '../popups'
+  import { showPopup, type PopupResult } from '../popups'
   import type {
     ButtonBaseKind,
     ButtonBaseSize,
@@ -68,6 +68,9 @@
 
   let container: HTMLElement
   let opened: boolean = false
+  let popup: PopupResult | undefined
+
+  $: popup?.update({ items, selected })
 
   $: selectedItem = multiselect
     ? (items ?? []).filter((p) => (Array.isArray(selected) ? selected?.includes(p.id) : p.id === selected))
@@ -83,7 +86,7 @@
   function handleClick (): void {
     if (!opened) {
       opened = true
-      showPopup(
+      popup = showPopup(
         ModernPopupLabels,
         { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch, categoryKind },
         container,
@@ -98,6 +101,7 @@
             }
           }
           opened = false
+          popup = undefined
           mgr?.setFocusPos(focusIndex)
         },
         (result) => {
