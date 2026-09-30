@@ -120,6 +120,15 @@ export function createServer (controller: AIControl, ctx: MeasureContext, app?: 
       // Same queue as the automatic post-meeting summary: the job is long and about to grow into
       // several steps, so the button fires it off and the result lands in the document.
       controller.checkTokensLimit(token.workspace)
+      // The worker reads under system, so only a caller who sees the target may ask for it.
+      const wsClient = await controller.getWorkspaceClient(token.workspace)
+      if (wsClient === undefined) {
+        throw new ApiError(503)
+      }
+      const target = await wsClient.clientFor(token.account).findOne(request.targetClass, { _id: request.target })
+      if (target === undefined) {
+        throw new ApiError(404)
+      }
       const queued = await controller.queueSummary(token.workspace, {
         target: request.target,
         targetClass: request.targetClass,

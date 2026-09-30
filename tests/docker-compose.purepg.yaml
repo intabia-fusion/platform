@@ -30,6 +30,9 @@ services:
   collaborator0:
     environment:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+  aibot:
+    environment:
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   datalake:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/datalake:${DOCKER_TAG:-latest}"
     pull_policy: ${DOCKER_PULL_POLICY:-never}

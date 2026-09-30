@@ -52,3 +52,24 @@ llm:
           capabilities:
             tools: true
             maxContextTokens: 32768
+
+# ASR: routed to clisr workers. Off unless the stand is started with `./prepare-pg.sh --asr` or
+# `--asr-local`, whose overlay (docker-compose.asr.yaml) sets ASR_ENABLED and adds the worker.
+asr:
+  defaultLevel: default
+
+  models:
+    default:
+      order: 0
+      label: Базовый
+      description: Локальное распознавание (oaitt)
+      tokenMultiplier: 1
+      displayMultiplier: 0
+
+  providers:
+    - id: clisr
+      provider: server
+      enabled: ${ASR_ENABLED:-false}
+      serves:
+        default:
+          model: default
