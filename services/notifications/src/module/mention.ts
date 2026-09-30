@@ -112,7 +112,7 @@ export async function handleMention (
       objectId: doc._id,
       objectClass: doc._class,
       objectSpace: doc.space,
-      ...(await getPushGroup(client, cache, txCache, message, mention.receiver.account, mention.receiver.language)),
+      group: getPushGroup(client, message),
       notification: mentionNotification,
       intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver.language),
       notifyProviders: mention.notifyProviders,

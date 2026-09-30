@@ -125,7 +125,7 @@ async function handleCreateReaction (
     objectId: doc._id,
     objectClass: doc._class,
     objectSpace: doc.space,
-    ...(await getPushGroup(client, cache, txCache, message, receiver.account, receiver.language)),
+    group: getPushGroup(client, message),
     objectDisplayData,
     notification: {
       id: reaction._id,

@@ -105,7 +105,7 @@ const mockGetAttachments = jest.fn()
 
 const mockGetPushGroup = jest.fn()
 jest.mock('../../utils/utils', () => ({
-  getPushGroup: async (...args: any[]) => await mockGetPushGroup(...args),
+  getPushGroup: (...args: any[]) => mockGetPushGroup(...args),
   getBaseDisplayParams: (...args: any[]) => mockGetBaseDisplayParams(...args),
   getObjectDisplayData: (...args: any[]) => mockGetObjectDisplayData(...args),
   getMode: (...args: any[]) => mockGetMode(...args),

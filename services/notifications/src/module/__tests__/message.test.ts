@@ -132,7 +132,7 @@ jest.mock('../../utils/utils', () => {
     hasUnreadMentionByMessage: (...args: any[]) => mockHasUnreadMentionByMessage(...args),
     getAttachments: (...args: any[]) => mockGetAttachments(...args),
     getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
-    getPushGroup: async (...args: any[]) => await mockGetPushGroup(...args),
+    getPushGroup: (...args: any[]) => mockGetPushGroup(...args),
     isSender: (receiver: Receiver, sender: Sender) => {
       if (sender.account != null && receiver.account === sender.account) return true
       return receiver.socialIds.includes(sender.socialId)
@@ -488,21 +488,12 @@ describe('message module', () => {
           [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
         })
         mockCache.getPushSubscriptions.mockResolvedValue([])
-        mockGetPushGroup.mockResolvedValueOnce({ group: 'channel-1', groupTitle: 'develop' })
+        mockGetPushGroup.mockReturnValueOnce('channel-1')
 
         await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-        expect(mockGetPushGroup).toHaveBeenCalledWith(
-          mockClient,
-          mockCache,
-          txCache,
-          expect.objectContaining({ _id: 'msg-1' }),
-          'user-1',
-          'en'
-        )
-        expect(mockPushNotification.mock.calls[0][4]).toEqual(
-          expect.objectContaining({ group: 'channel-1', groupTitle: 'develop' })
-        )
+        expect(mockGetPushGroup).toHaveBeenCalledWith(mockClient, expect.objectContaining({ _id: 'msg-1' }))
+        expect(mockPushNotification.mock.calls[0][4]).toEqual(expect.objectContaining({ group: 'channel-1' }))
       })
 
       it('adds unread message if provider type does not exist', async () => {

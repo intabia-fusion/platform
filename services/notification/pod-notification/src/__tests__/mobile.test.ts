@@ -103,22 +103,19 @@ describe('alert payloads', () => {
     expect(fcmAlertMessage('tok', { title: 'T', body: 'B' })).toMatchObject({ data: {} })
   })
 
-  it('RuStore: data only, so the app stacks the conversation itself', () => {
-    expect(rustoreAlertMessage('tok', { ...data, group, groupTitle: 'develop' })).toEqual({
+  it('RuStore: the FCM shape with the same reconciliation keys in data', () => {
+    expect(rustoreAlertMessage('tok', data)).toEqual({
       token: 'tok',
+      notification: { title: 'Title', body: 'Body' },
       data: {
-        title: 'Title',
-        body: 'Body',
         url: 'https://app/x',
         domain: 'https://app',
         tag: 'msg-1',
-        group: 'channel-1',
-        groupTitle: 'develop',
         objectId: 'doc-1',
         objectClass: 'chunter:class:Channel',
         createdOn: '1000'
       },
-      android: { ttl: '86400s' }
+      android: { ttl: '86400s', notification: { tag: 'msg-1' } }
     })
   })
 })

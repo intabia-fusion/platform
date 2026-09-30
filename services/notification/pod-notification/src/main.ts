@@ -213,7 +213,6 @@ export const main = async (): Promise<void> => {
                 domain: value.domain,
                 url: value.url,
                 group: value.group,
-                groupTitle: value.groupTitle,
                 objectId: value.objectId,
                 objectClass: value.objectClass,
                 createdOn: value.createdOn

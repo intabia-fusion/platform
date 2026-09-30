@@ -210,22 +210,7 @@ export async function getBaseDisplayParams (
   }
 }
 
-export interface PushGroup {
-  group: Ref<Doc>
-  groupTitle?: string
-}
-
-export async function getPushGroup (
-  client: Client,
-  cache: Cache,
-  txCache: TxCache,
-  message: ActivityMessage | undefined,
-  account: AccountUuid,
-  lang: string
-): Promise<PushGroup | undefined> {
+export function getPushGroup (client: Client, message: ActivityMessage | undefined): Ref<Doc> | undefined {
   if (message === undefined || !client.hierarchy.isDerived(message._class, chunter.class.ThreadMessage)) return
-  const { objectId, objectClass } = message as ThreadMessage
-  const channel = await cache.getDoc(objectId, objectClass)
-  const groupTitle = channel !== undefined ? await getDocTitle(client, txCache, channel, account, lang) : undefined
-  return { group: objectId, groupTitle }
+  return (message as ThreadMessage).objectId
 }
