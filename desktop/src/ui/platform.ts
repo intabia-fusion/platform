@@ -423,6 +423,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(contactPlugin.metadata.LastNameFirst, myBranding.lastNameFirst === 'true')
   setMetadata(love.metadata.ServiceEndpoint, config.LOVE_ENDPOINT)
   setMetadata(love.metadata.WebSocketURL, config.LIVEKIT_WS)
+  setMetadata(love.metadata.ScreenShareSimulcast, config.LOVE_SCREEN_SHARE_SIMULCAST === 'true')
   setMetadata(print.metadata.PrintURL, config.PRINT_URL)
   setMetadata(sign.metadata.SignURL, config.SIGN_URL)
   setMetadata(uiPlugin.metadata.DefaultApplication, login.component.LoginApp)

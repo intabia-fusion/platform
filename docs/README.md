@@ -32,6 +32,7 @@
 | Документ | О чём |
 | --- | --- |
 | [love.md](love.md) | Виртуальный офис и встречи: модель, протоколы, дефекты, тесты с LiveKit |
+| [meeting-recording-quality.md](meeting-recording-quality.md) | Качество записи встреч: что сделано и зачем, цена решений, сравнение с Zoom и Meet |
 | [llm.md](llm.md) | Юля ИИ: устройство и сценарии |
 | [ai-harness.md](ai-harness.md) | Юля ИИ: алгоритм ответа, инструменты, промпты |
 | [aibot-deployment.md](aibot-deployment.md) | Юля ИИ: роли `MODE`, env, масштабирование |

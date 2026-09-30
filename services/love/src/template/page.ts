@@ -40,8 +40,10 @@ import {
 
 const START_TIMEOUT_MS = 5000
 const NO_VIDEO_START_MS = 500
-const CONNECT_ATTEMPTS = 3
-const CONNECT_RETRY_MS = 1000
+// No attempt starts after 45 s (in practice the last one is at ~30 s), well before love replaces
+// the egress with the built-in layout at 60 s.
+const CONNECT_GIVE_UP_MS = 45_000
+const CONNECT_MAX_DELAY_MS = 15_000
 
 const params = new URLSearchParams(window.location.search)
 const url = params.get('url')
@@ -297,14 +299,15 @@ async function main (): Promise<void> {
       console.log('END_RECORDING')
     })
   window.addEventListener('resize', scheduleRender)
-  for (let attempt = 1; ; attempt++) {
+  const firstAttempt = Date.now()
+  for (let delay = 1000; ; delay = Math.min(delay * 2, CONNECT_MAX_DELAY_MS)) {
     try {
       await room.connect(url, token)
       break
     } catch (err) {
-      if (attempt >= CONNECT_ATTEMPTS) throw err
+      if (Date.now() - firstAttempt + delay > CONNECT_GIVE_UP_MS) throw err
       console.warn('recording template: connect failed, retrying', err)
-      await new Promise((resolve) => setTimeout(resolve, CONNECT_RETRY_MS))
+      await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
   const connectedAt = Date.now()

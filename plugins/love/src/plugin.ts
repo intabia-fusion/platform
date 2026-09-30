@@ -177,7 +177,9 @@ const love = plugin(loveId, {
   },
   metadata: {
     WebSocketURL: '' as ServiceEndpoint<string>,
-    ServiceEndpoint: '' as ServiceEndpoint<string>
+    ServiceEndpoint: '' as ServiceEndpoint<string>,
+    /** Publish a shared screen with simulcast (front env `LOVE_SCREEN_SHARE_SIMULCAST=true`); off by default. */
+    ScreenShareSimulcast: '' as ServiceEndpoint<boolean>
   },
   space: {
     Drive: '' as Ref<Drive>

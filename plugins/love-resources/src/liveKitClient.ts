@@ -16,7 +16,7 @@ import {
   type TrackPublication,
   type Participant
 } from 'livekit-client'
-import { translate } from '@hcengineering/platform'
+import { getMetadata, translate } from '@hcengineering/platform'
 import {
   getMediaDevices,
   getSelectedCamId,
@@ -94,11 +94,15 @@ const screenShareCaptureOptions: ScreenShareCaptureOptions = {
   contentHint: 'detail',
   resolution: ScreenSharePresets.original.resolution
 }
-// VP8, not the room's VP9: for SVC codecs livekit-client forces `contentHint = 'motion'`. No simulcast:
-// the recorder silently fell back to the half-resolution layer whenever the full one was paused.
-const screenSharePublishOptions: TrackPublishOptions = {
-  videoCodec: 'vp8',
-  simulcast: false
+// VP8, not the room's VP9: for SVC codecs livekit-client forces `contentHint = 'motion'`. Simulcast is
+// off by default: the recorder silently fell back to the half-resolution layer whenever the full one was
+// paused. Viewers on a weak link then get a paused share instead; front env LOVE_SCREEN_SHARE_SIMULCAST
+// turns it back on.
+function screenSharePublishOptions (): TrackPublishOptions {
+  return {
+    videoCodec: 'vp8',
+    simulcast: getMetadata(love.metadata.ScreenShareSimulcast) === true
+  }
 }
 
 export class LiveKitClient {
@@ -672,7 +676,7 @@ export class LiveKitClient {
       await this.liveKitRoom.localParticipant.setScreenShareEnabled(
         value,
         { audio: withAudio, ...screenShareCaptureOptions },
-        screenSharePublishOptions
+        screenSharePublishOptions()
       )
     } catch (e) {
       console.log(e)
