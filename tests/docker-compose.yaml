@@ -611,6 +611,9 @@ services:
       - LIVEKIT_WEBHOOK_API_KEY=whtestkey
       - LIVEKIT_WEBHOOK_API_SECRET=whtestsecret_for_sanity_tests_min32chars
       - LIVEKIT_PROJECT=test-project
+      - RECORDING_PRESET=720p
+      # Recording template served by love (PORT above); egress-test reaches it over the compose network.
+      - RECORDING_TEMPLATE_URL=http://love:8087/egress-template/
       - BILLING_URL=http://billing:4043
       - BILLING_POLL_INTERVAL=15
       - AGENTS=transcribe-test

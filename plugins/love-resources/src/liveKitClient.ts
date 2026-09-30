@@ -5,6 +5,9 @@ import {
   Room as LKRoom,
   RoomEvent,
   type VideoCaptureOptions,
+  type ScreenShareCaptureOptions,
+  ScreenSharePresets,
+  type TrackPublishOptions,
   type RemoteTrack,
   type RemoteTrackPublication,
   Track,
@@ -85,6 +88,19 @@ const defaultCaptureOptions: VideoCaptureOptions = {
   }
 }
 
+// `detail` keeps text sharp. Capture is uncapped: the default 1920x1080 made Chrome downscale a HiDPI
+// screen before encoding. See docs/memory/love_recording_quality.md.
+const screenShareCaptureOptions: ScreenShareCaptureOptions = {
+  contentHint: 'detail',
+  resolution: ScreenSharePresets.original.resolution
+}
+// VP8, not the room's VP9: for SVC codecs livekit-client forces `contentHint = 'motion'`. No simulcast:
+// the recorder silently fell back to the half-resolution layer whenever the full one was paused.
+const screenSharePublishOptions: TrackPublishOptions = {
+  videoCodec: 'vp8',
+  simulcast: false
+}
+
 export class LiveKitClient {
   public readonly liveKitRoom: LKRoom
 
@@ -101,7 +117,8 @@ export class LiveKitClient {
         videoCodec: 'vp9',
         screenShareEncoding: {
           maxBitrate: 15_000_000,
-          maxFramerate: 24,
+          // Static text costs nothing at any fps; 15 fps doubles the bits per frame while scrolling.
+          maxFramerate: 15,
           priority: 'high'
         }
       },
@@ -652,7 +669,11 @@ export class LiveKitClient {
 
   async setScreenShareEnabled (value: boolean, withAudio: boolean = false): Promise<void> {
     try {
-      await this.liveKitRoom.localParticipant.setScreenShareEnabled(value, { audio: withAudio })
+      await this.liveKitRoom.localParticipant.setScreenShareEnabled(
+        value,
+        { audio: withAudio, ...screenShareCaptureOptions },
+        screenSharePublishOptions
+      )
     } catch (e) {
       console.log(e)
     }

@@ -17,6 +17,7 @@ import { type WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { RecordingState } from '@hcengineering/love'
 import { RecordingProcessor } from '../recordings'
 import { WorkspaceClient } from '../workspaceClient'
+import config from '../config'
 import { createMockContext, createMockMeeting, TEST_IDS } from './test-helpers'
 
 jest.mock('../workspaceClient')
@@ -32,7 +33,13 @@ jest.mock('../storage', () => ({
 }))
 jest.mock('../config', () => ({
   __esModule: true,
-  default: { RecordingPreset: 'H264_720P_30', UseEgressWebHook: false, WebHookUrl: '', ApiKey: 'key' }
+  default: {
+    RecordingPreset: 'H264_720P_30',
+    RecordingTemplateUrl: '',
+    UseEgressWebHook: false,
+    WebHookUrl: '',
+    ApiKey: 'key'
+  }
 }))
 
 const roomName = 'ws_meeting'
@@ -117,6 +124,28 @@ describe('RecordingProcessor.startRecording', () => {
     wsClient = createMockWsClient()
     ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
     processor = createProcessor()
+  })
+
+  describe('recording template', () => {
+    afterEach(() => {
+      config.RecordingTemplateUrl = ''
+    })
+
+    it('keeps the built-in layout when no template is configured', async () => {
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+      const opts = egressClient.startRoomCompositeEgress.mock.calls[0][2]
+      expect(opts.customBaseUrl).toBeUndefined()
+      expect(opts.layout).toBe('grid')
+    })
+
+    it('points egress at the template with explicit frame dimensions', async () => {
+      config.RecordingTemplateUrl = 'http://love:8096/egress-template/'
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+      const opts = egressClient.startRoomCompositeEgress.mock.calls[0][2]
+      expect(opts.customBaseUrl).toBe('http://love:8096/egress-template/')
+      // Egress sizes the template's window from these; without them it opens at 720p.
+      expect(opts.encodingOptions).toMatchObject({ width: 1920, height: 1080 })
+    })
   })
 
   it('reserves before the egress call and attaches the egress id afterwards', async () => {

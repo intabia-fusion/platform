@@ -421,7 +421,10 @@ export class RecordingProcessor {
       roomName,
       { file: output },
       {
+        // Used only without a template.
         layout: 'grid',
+        // Egress sizes the template's window from the preset, so presets need explicit dimensions.
+        customBaseUrl: config.RecordingTemplateUrl !== '' ? config.RecordingTemplateUrl : undefined,
         encodingOptions: preset,
         webhooks:
           config.UseEgressWebHook && config.WebHookUrl !== ''
