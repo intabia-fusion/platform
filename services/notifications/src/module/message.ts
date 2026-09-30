@@ -63,6 +63,7 @@ import {
   hasMentionNotificationByMessage,
   getAttachments,
   getCreateContextTx,
+  getPushGroup,
   isSender
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
@@ -657,6 +658,7 @@ async function pushNotification (
     objectId: doc._id,
     objectClass: doc._class,
     objectSpace: doc.space,
+    group: getPushGroup(client, message),
     objectDisplayData,
     notification: {
       id: message._id,

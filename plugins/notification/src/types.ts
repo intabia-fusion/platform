@@ -58,6 +58,7 @@ export interface PushData {
   objectId?: Ref<Doc>
   objectClass?: Ref<Class<Doc>>
   createdOn?: Timestamp
+  group?: Ref<Doc>
 }
 
 /**
@@ -358,6 +359,8 @@ export interface QueueNotifyMessage extends QueueMessageBase {
 
   domain: string
   url: string
+
+  group?: Ref<Doc>
 
   template?: { subject: string, text: string, html: string }
 

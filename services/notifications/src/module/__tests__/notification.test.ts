@@ -240,6 +240,7 @@ describe('pushNotification', () => {
       body: 'Translated Body',
       url: 'http://localhost/notify/url',
       domain: 'localhost',
+      group: 'doc-1',
       pushSubscriptions: [],
       language: 'en',
       account: 'user-1',

@@ -35,6 +35,7 @@ import {
   getBaseDisplayParams,
   getLastNotify,
   getObjectDisplayData,
+  getPushGroup,
   hasReactionNotification,
   hasUnreadReaction,
   toNotificationMessage
@@ -124,6 +125,7 @@ async function handleCreateReaction (
     objectId: doc._id,
     objectClass: doc._class,
     objectSpace: doc.space,
+    group: getPushGroup(client, message),
     objectDisplayData,
     notification: {
       id: reaction._id,

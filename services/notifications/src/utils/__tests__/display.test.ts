@@ -20,7 +20,8 @@ import {
   getDocLabel,
   getDocIcon,
   getObjectDisplayData,
-  getBaseDisplayParams
+  getBaseDisplayParams,
+  getPushGroup
 } from '../display'
 import { getEmptyTxCache } from '../result'
 import {
@@ -36,6 +37,8 @@ import { getSenderName, Sender } from '@hcengineering/server-notification'
 import { Client, TxCache } from '../../types'
 import { Doc, AccountUuid } from '@hcengineering/core'
 import { NotificationType } from '@hcengineering/notification'
+import { ActivityMessage } from '@hcengineering/activity'
+import chunter from '@hcengineering/chunter'
 
 jest.mock('@hcengineering/server-activity', () => ({
   getDocIcon: jest.fn(),
@@ -68,6 +71,22 @@ describe('display utils', () => {
     } as unknown as Client
     txCache = getEmptyTxCache()
     jest.clearAllMocks()
+  })
+
+  describe('getPushGroup', () => {
+    it('leaves a message outside a thread with its context', () => {
+      const plain = { _id: 'msg-1', _class: chunter.class.ChatMessage } as unknown as ActivityMessage
+      expect(getPushGroup(mockClient, plain)).toBeUndefined()
+      expect(getPushGroup(mockClient, undefined)).toBeUndefined()
+    })
+
+    it('stacks a thread reply with its channel', () => {
+      ;(mockClient.hierarchy.isDerived as jest.Mock).mockImplementation(
+        (_: unknown, base: unknown) => base === chunter.class.ThreadMessage
+      )
+      const reply = { _id: 'reply-1', _class: chunter.class.ThreadMessage, objectId: 'channel-1' }
+      expect(getPushGroup(mockClient, reply as unknown as ActivityMessage)).toBe('channel-1')
+    })
   })
 
   describe('getDocTitle', () => {

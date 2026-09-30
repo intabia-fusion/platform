@@ -212,6 +212,7 @@ export const main = async (): Promise<void> => {
                 body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
                 domain: value.domain,
                 url: value.url,
+                group: value.group,
                 objectId: value.objectId,
                 objectClass: value.objectClass,
                 createdOn: value.createdOn

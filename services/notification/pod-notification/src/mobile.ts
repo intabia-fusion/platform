@@ -114,7 +114,7 @@ export function apnsAlertPayload (data: PushData): Record<string, unknown> {
     aps: {
       alert: { title: data.title, body: data.body },
       sound: 'default',
-      'thread-id': data.tag,
+      'thread-id': data.group ?? data.objectId ?? data.tag,
       'mutable-content': 1
     },
     url: data.url,

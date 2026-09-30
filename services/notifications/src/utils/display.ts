@@ -29,6 +29,7 @@ import {
   PresenterControl
 } from '@hcengineering/server-activity'
 import activity, { ActivityMessage } from '@hcengineering/activity'
+import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 
 import { Client, ObjectDisplayData, TxCache } from '../types'
 import Cache from '../cache'
@@ -207,4 +208,9 @@ export async function getBaseDisplayParams (
     intlParams: { ...intlParams, senderName },
     intlParamsNotLocalized
   }
+}
+
+export function getPushGroup (client: Client, message: ActivityMessage | undefined): Ref<Doc> | undefined {
+  if (message === undefined || !client.hierarchy.isDerived(message._class, chunter.class.ThreadMessage)) return
+  return (message as ThreadMessage).objectId
 }
