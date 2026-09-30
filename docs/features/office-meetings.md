@@ -68,6 +68,12 @@
 - **`finishMeeting` идемпотентен.** Повторный finish (webhook `room_finished` + polling) не перезаписывает `meetingEnd` и не сметает knock-инвайты следующей встречи в той же комнате (сравнение `endedAt`). - `services/love/src/workspaceClient.ts` (`cleanupInvitesForMeeting`).
 - **Авто-старт записи по `QueueMeetingEvent.started` обёрнут в try/catch**, ошибка не вызывает повторную доставку сообщения очереди. - `services/love/src/main.ts`.
 
+### Качество записи и демонстрации экрана
+- **Пресет записи.** `RECORDING_PRESET` (`720p` / `1080p` / `1080p15fps`), по умолчанию `1080p`: в композите шаренный экран занимает только основную область кадра, при 720p текст интерфейса на 100% масштабе браузера нечитаем. Sanity-стенд держит `720p` (`tests/docker-compose.yaml`). - `getRecordingPreset`, `DefaultRecordingPreset`, `services/love/src/preset.ts`; `services/love/src/config.ts`.
+- **Захват и кодек демонстрации экрана.** Захват без ограничения разрешения (`ScreenSharePresets.original`), 15 fps, VP8 с `contentHint: 'detail'` отдельно от камерного VP9, по умолчанию без simulcast (включается `LOVE_SCREEN_SHARE_SIMULCAST=true` у front -> `love.metadata.ScreenShareSimulcast`): для SVC-кодеков livekit-client подменяет hint на `motion`, дефолтный `ideal 1920x1080` заставляет Chrome box-фильтром ужимать Retina-экран до кодека, а половинный слой simulcast egress получает всякий раз, когда публикатор ставит верхний на паузу. - `screenShareCaptureOptions`, `screenSharePublishOptions`, `plugins/love-resources/src/liveKitClient.ts`.
+- **Свой шаблон записи.** При заданном `RECORDING_TEMPLATE_URL` egress открывает страницу, которую раздаёт сам love на `/egress-template/`: без демонстрации - сетка камер, с демонстрацией - экран на полную высоту кадра, камеры в полосе справа (16:10) или одна плитка активного говорящего в углу (16:9). Камеры запрашиваются в слое по высоте плитки, скрытые видео SFU не отправляет. Если шаблон не сработал, запись идёт встроенной раскладкой: love проверяет страницу перед стартом, перезапускает запись по `egress_ended` с ошибкой шаблона и, если через 60 с egress так и не начал писать, заменяет его (`startWithBuiltInLayout`, `recoverStuckStart`, `templateStartFailed`; в логах `Recording template fallback`). Пустой URL - встроенная раскладка `grid`; адрес без `/` в конце дополняется (`normalizeTemplateUrl`). Страница собирается esbuild'ом под браузер в `bundle/template` (скрипт `bundle:template`) и копируется в образ. - `computeLayout`, `services/love/src/template/layout.ts`; страница `services/love/src/template/page.ts`, `services/love/template/index.html`; маршрут в `services/love/src/main.ts`; `customBaseUrl` в `RecordingProcessor.startRecord`, `services/love/src/recordings.ts`.
+- **Плеер начинает с оригинала.** Запись открывается в `orig`, а не в 720p: hls.js иначе сеет стартовую оценку полосы битрейтом первого варианта с потолком 5 Mbps. - `HLS_START_BANDWIDTH`, `packages/hls/src/components/HlsVideo.svelte`.
+
 ### Lazy-load офисных данных (#464)
 - **Разделение стартовых и по-требованию запросов.** `officeLoaded` (комнаты, `ParticipantInfo`, все встречи) грузится сразу при подключении клиента; этажи (`Floor`), `DevicesPreference`, `PendingRecording` и кэш person-ов офисов грузятся только при заходе на страницу офиса/настроек устройств/митинга через `ensureOfficeDetailsLoaded()`. - `plugins/love-resources/src/stores.ts`; вызовы из `Floor.svelte`, `Hall.svelte`, `LoveWidget.svelte`, `Settings.svelte`, `RecordingButton.svelte`, `CamSettingPopup.svelte`, `MicSettingPopup.svelte`, `speakingWhileMuted.ts`, `meetings.ts`.
 - **Аналогично для участников воркспейса.** `ensureWorkspaceMembersLoaded()` - ленивая загрузка списка аккаунтов для инвайт-попапа. - `plugins/love-resources/src/stores.ts`, `InviteEmployeeButton.svelte`.
@@ -90,6 +96,8 @@
   + при необходимости `decodeMeetingToken`, `services/love/src/utils.ts`. Не забыть headers через `LoveClient.buildHeaders()` для трейсинга, если эндпоинт дергает клиент.
 - Поменять текст/логику invite или knock -> `plugins/love-resources/src/invites.ts` (клиент) + `server-plugins/love-resources/src/index.ts` (триггер `OnUserMeetingInvite`).
 - Изменить поведение записи/квоты записи -> `services/love/src/recordings.ts` (`RecordingProcessor`), `services/love/src/workspaceClient.ts` (`createPendingRecording`, транзакционная резервация).
+- Изменить разрешение/битрейт записи или кодек демонстрации экрана -> `services/love/src/preset.ts`, `plugins/love-resources/src/liveKitClient.ts` (`setScreenShareEnabled`).
+- Изменить раскладку записи (где экран, где камеры) -> `services/love/src/template/layout.ts` (`computeLayout`, покрыт `templateLayout.test.ts`), отрисовка и сигнал старта egress - `services/love/src/template/page.ts`.
 - Изменить STT-провайдер или его настройки -> `services/ai-bot/pod-ai-bot/src/transcription/` (`createTranscriptionProvider`, `providers/{deepgram,openai,server}.ts`).
 - Изменить realtime VAD/STT в комнате -> `services/ai-bot/love-agent/src/stream/` (`stt.ts`, `audio-analysis.ts`).
 - Изменить дефолтные комнаты/этаж при создании воркспейса -> `createDefaultRooms()`, `plugins/love/src/utils.ts` + `models/love/src/migration.ts` (`createRooms`).
@@ -116,6 +124,7 @@
 
 ## Связанные документы
 
+- [`../meeting-recording-quality.md`](../meeting-recording-quality.md) - качество записи: что сделано и зачем, цена решений, сравнение с Zoom и Meet.
 - [`../love.md`](../love.md) - основной документ: модель данных, security, протоколы подключения/присутствия/invite-knock/гостей/записи, исправленные дефекты, тесты, QA-сценарии.
 - [`../memory/love-service-replication.md`](../memory/love-service-replication.md) - почему `services/love` не может полагаться на process-local состояние.
 - [`../memory/presence-fanout.md`](../memory/presence-fanout.md) - рассылка presence на каждый workspace.

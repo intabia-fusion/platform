@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,8 @@
 import {
   getClient as getAccountClientRaw,
   isWorkspaceLoginInfo,
-  type AccountClient
+  type AccountClient,
+  type WorkspaceLoginInfo
 } from '@hcengineering/account-client'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import {
@@ -28,6 +30,7 @@ import {
   systemAccountUuid,
   type Tx,
   type TxCUD,
+  type WorkspaceIds,
   WorkspaceUuid
 } from '@hcengineering/core'
 import { type Person } from '@hcengineering/contact'
@@ -110,6 +113,10 @@ const ACTIVE_WORKSPACES_SYNC_MS = 5 * 60 * 1000
 // Prefix match covers every love class and mixin (loveId === 'love'), including future ones.
 function isLoveTx (tx: Tx): boolean {
   return (tx as TxCUD<Doc>).objectClass?.startsWith(`${loveId}:`) ?? false
+}
+
+function workspaceIds (info: WorkspaceLoginInfo): WorkspaceIds {
+  return { uuid: info.workspace, dataId: info.workspaceDataId, url: info.workspaceUrl }
 }
 
 function getAccountClient (token?: string): AccountClient {
@@ -200,15 +207,6 @@ export const main = async (): Promise<void> => {
   // Disk/payment-exhausted workspaces (LimitsChanged consumer) — gate for starting recordings.
   const limitsState = new LimitsState(ctx, queue)
 
-  const webhookProcessor = new WebhookProcessor(
-    ctx,
-    roomClient,
-    eventProducer,
-    egressClient,
-    storageConfig,
-    s3storageConfig
-  )
-
   const recordingProcessor = new RecordingProcessor(
     ctx.newChild('recordings', {}),
     roomClient,
@@ -217,6 +215,17 @@ export const main = async (): Promise<void> => {
     storageConfig,
     s3storageConfig,
     limitsState
+  )
+
+  const webhookProcessor = new WebhookProcessor(
+    ctx,
+    roomClient,
+    eventProducer,
+    egressClient,
+    storageConfig,
+    s3storageConfig,
+    async (room, workspace, meetingId) =>
+      await recordingProcessor.startWithBuiltInLayout(room, workspace, meetingId, 'page-load-failed')
   )
 
   const guestManager = new GuestManager(ctx, roomClient)
@@ -297,7 +306,7 @@ export const main = async (): Promise<void> => {
               getRoomName(msg.workspace, queueMsg.meetingId),
               msg.workspace,
               queueMsg.meetingId,
-              wsLoginInfo,
+              workspaceIds(wsLoginInfo),
               mm.name
             )
           }
@@ -312,6 +321,10 @@ export const main = async (): Promise<void> => {
       }
     }
   })
+
+  // Recording template for egress. Public: the recorder has no session, and the page joins only the
+  // room its egress token names.
+  app.use('/egress-template', express.static(config.RecordingTemplateDir, { index: 'index.html', maxAge: '1h' }))
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/webhook', async (req, res) => {
@@ -565,7 +578,7 @@ export const main = async (): Promise<void> => {
         roomName,
         workspaceId,
         meetingId,
-        wsLoginInfo,
+        workspaceIds(wsLoginInfo),
         // The client sends `title`; `name` stays for older callers and the sanity tests.
         req.body.title ?? req.body.name ?? 'recording'
       )

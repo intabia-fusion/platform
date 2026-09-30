@@ -14,9 +14,12 @@
 //
 
 import { type WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { type WorkspaceIds } from '@hcengineering/core'
 import { RecordingState } from '@hcengineering/love'
-import { RecordingProcessor } from '../recordings'
+import { EgressStatus } from 'livekit-server-sdk'
+import { RecordingProcessor, templateStartFailed } from '../recordings'
 import { WorkspaceClient } from '../workspaceClient'
+import config from '../config'
 import { createMockContext, createMockMeeting, TEST_IDS } from './test-helpers'
 
 jest.mock('../workspaceClient')
@@ -32,7 +35,13 @@ jest.mock('../storage', () => ({
 }))
 jest.mock('../config', () => ({
   __esModule: true,
-  default: { RecordingPreset: 'H264_720P_30', UseEgressWebHook: false, WebHookUrl: '', ApiKey: 'key' }
+  default: {
+    RecordingPreset: 'H264_720P_30',
+    RecordingTemplateUrl: '',
+    UseEgressWebHook: false,
+    WebHookUrl: '',
+    ApiKey: 'key'
+  }
 }))
 
 const roomName = 'ws_meeting'
@@ -42,6 +51,7 @@ const wsLoginInfo = {
   workspaceDataId: TEST_IDS.workspace,
   workspaceUrl: 'ws'
 } as unknown as WorkspaceLoginInfo
+const wsIds = { uuid: TEST_IDS.workspace, url: 'ws' } as unknown as WorkspaceIds
 
 /** Rows written by `createPendingRecording` come back from `findPendingRecordingsByMeeting`. */
 function createMockWsClient (): Record<string, any> {
@@ -73,14 +83,18 @@ function createMockWsClient (): Record<string, any> {
       if (idx >= 0) pending.splice(idx, 1)
     }),
     updateMeetingRecordingState: jest.fn().mockResolvedValue(undefined),
-    cancelPendingRecording: jest.fn().mockResolvedValue(undefined),
+    cancelPendingRecording: jest.fn(async (row: any) => {
+      const found = pending.find((it) => it._id === row._id)
+      if (found !== undefined) found.status = 'cancelled'
+    }),
+    findPendingRecordingByEgressId: jest.fn(async (egressId: string) => pending.find((it) => it.egressId === egressId)),
     __pending: pending
   }
 }
 
 describe('RecordingProcessor.startRecording', () => {
   let roomClient: { listRooms: jest.Mock }
-  let egressClient: { startRoomCompositeEgress: jest.Mock, stopEgress: jest.Mock }
+  let egressClient: { startRoomCompositeEgress: jest.Mock, stopEgress: jest.Mock, listEgress: jest.Mock }
   let eventProducer: { send: jest.Mock }
   let wsClient: Record<string, any>
   let processor: RecordingProcessor
@@ -109,9 +123,11 @@ describe('RecordingProcessor.startRecording', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     roomClient = { listRooms: jest.fn().mockResolvedValue([{ name: roomName }]) }
+    let egresses = 0
     egressClient = {
-      startRoomCompositeEgress: jest.fn().mockResolvedValue({ egressId: 'EG_1' }),
-      stopEgress: jest.fn().mockResolvedValue(undefined)
+      startRoomCompositeEgress: jest.fn(async () => ({ egressId: `EG_${++egresses}` })),
+      stopEgress: jest.fn().mockResolvedValue(undefined),
+      listEgress: jest.fn().mockResolvedValue([{ status: EgressStatus.EGRESS_ACTIVE }])
     }
     eventProducer = { send: jest.fn().mockResolvedValue(undefined) }
     wsClient = createMockWsClient()
@@ -119,8 +135,146 @@ describe('RecordingProcessor.startRecording', () => {
     processor = createProcessor()
   })
 
+  describe('recording template', () => {
+    const templateUrl = 'http://love:8096/egress-template/'
+    let fetchMock: jest.SpyInstance
+
+    beforeEach(() => {
+      fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true } as unknown as Response)
+    })
+
+    afterEach(() => {
+      config.RecordingTemplateUrl = ''
+      fetchMock.mockRestore()
+      jest.useRealTimers()
+    })
+
+    const egressOpts = (call = 0): Record<string, any> => egressClient.startRoomCompositeEgress.mock.calls[call][2]
+
+    it('keeps the built-in layout when no template is configured', async () => {
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+      const opts = egressClient.startRoomCompositeEgress.mock.calls[0][2]
+      expect(opts.customBaseUrl).toBeUndefined()
+      expect(opts.layout).toBe('grid')
+    })
+
+    it('points egress at the template with explicit frame dimensions', async () => {
+      config.RecordingTemplateUrl = templateUrl
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+      const opts = egressOpts()
+      expect(opts.customBaseUrl).toBe(templateUrl)
+      // Egress sizes the template's window from these; without them it opens at 720p.
+      expect(opts.encodingOptions).toMatchObject({ width: 1920, height: 1080 })
+    })
+
+    it.each([
+      ['does not answer', () => Promise.reject(new Error('ECONNREFUSED'))],
+      ['answers with an error', () => Promise.resolve({ ok: false } as unknown as Response)]
+    ])('records with the built-in layout when the template %s', async (_name, answer) => {
+      config.RecordingTemplateUrl = templateUrl
+      fetchMock.mockImplementation(answer)
+
+      const result = await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+
+      expect(result).toEqual({ started: true })
+      expect(egressOpts().customBaseUrl).toBeUndefined()
+    })
+
+    it('checks on a template start after the stuck-start window', async () => {
+      jest.useFakeTimers()
+      config.RecordingTemplateUrl = templateUrl
+      const recover = jest.spyOn(processor, 'recoverStuckStart').mockResolvedValue(undefined)
+
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+      jest.advanceTimersByTime(RecordingProcessor.STUCK_START_MS - 1)
+      expect(recover).not.toHaveBeenCalled()
+      jest.advanceTimersByTime(1)
+
+      expect(recover).toHaveBeenCalledWith(roomName, TEST_IDS.workspace, meeting._id, 'EG_1')
+    })
+
+    it('does not watch a built-in layout start', async () => {
+      jest.useFakeTimers()
+      const recover = jest.spyOn(processor, 'recoverStuckStart').mockResolvedValue(undefined)
+
+      await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+      jest.advanceTimersByTime(RecordingProcessor.STUCK_START_MS * 2)
+
+      expect(recover).not.toHaveBeenCalled()
+    })
+
+    describe('a template that never sent its start signal', () => {
+      beforeEach(async () => {
+        config.RecordingTemplateUrl = templateUrl
+        await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+        egressClient.startRoomCompositeEgress.mockClear()
+      })
+
+      it('is replaced by a recording on the built-in layout', async () => {
+        egressClient.listEgress.mockResolvedValue([{ status: EgressStatus.EGRESS_STARTING }])
+
+        await processor.recoverStuckStart(roomName, TEST_IDS.workspace, meeting._id, 'EG_1')
+
+        expect(egressClient.stopEgress).toHaveBeenCalledWith('EG_1')
+        expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
+        expect(egressOpts().customBaseUrl).toBeUndefined()
+        const rows = wsClient.__pending
+        expect(rows.find((r: any) => r.egressId === 'EG_1').status).toBe('cancelled')
+        expect(rows.find((r: any) => r.egressId === 'EG_2').status).toBe('active')
+      })
+
+      it('is left alone once it started writing', async () => {
+        egressClient.listEgress.mockResolvedValue([{ status: EgressStatus.EGRESS_ACTIVE }])
+
+        await processor.recoverStuckStart(roomName, TEST_IDS.workspace, meeting._id, 'EG_1')
+
+        expect(egressClient.stopEgress).not.toHaveBeenCalled()
+        expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
+      })
+
+      it('is not restarted after a user stopped it', async () => {
+        egressClient.listEgress.mockResolvedValue([{ status: EgressStatus.EGRESS_STARTING }])
+        wsClient.__pending.find((r: any) => r.egressId === 'EG_1').status = 'cancelled'
+
+        await processor.recoverStuckStart(roomName, TEST_IDS.workspace, meeting._id, 'EG_1')
+
+        expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('templateStartFailed', () => {
+    const template = { case: 'roomComposite', value: { customBaseUrl: 'https://host/_love/egress-template/' } }
+    const info = (over: Record<string, unknown> = {}): any => ({
+      status: EgressStatus.EGRESS_FAILED,
+      request: template,
+      fileResults: [],
+      ...over
+    })
+
+    it('is a template egress that failed without a file while nobody stopped it', () => {
+      expect(templateStartFailed(info(), 'active')).toBe(true)
+      expect(templateStartFailed(info({ status: EgressStatus.EGRESS_ABORTED }), 'active')).toBe(true)
+      // Queue JSON may carry the enum by name.
+      expect(templateStartFailed(info({ status: 'EGRESS_FAILED' }), 'active')).toBe(true)
+    })
+
+    it.each([
+      ['a stopped recording', info(), 'cancelled'],
+      [
+        'a built-in layout egress',
+        info({ request: { case: 'roomComposite', value: { customBaseUrl: '' } } }),
+        'active'
+      ],
+      ['an egress with a file', info({ fileResults: [{ size: 10 }] }), 'active'],
+      ['a completed egress', info({ status: EgressStatus.EGRESS_COMPLETE }), 'active']
+    ])('is not %s', (_name, egress, rowStatus) => {
+      expect(templateStartFailed(egress, rowStatus as any)).toBe(false)
+    })
+  })
+
   it('reserves before the egress call and attaches the egress id afterwards', async () => {
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
 
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
     expect(wsClient.createPendingRecording).toHaveBeenCalledTimes(1)
@@ -201,7 +355,7 @@ describe('RecordingProcessor.startRecording', () => {
         })
     )
 
-    const started = processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    const started = processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
     while (egressClient.startRoomCompositeEgress.mock.calls.length === 0) {
       await new Promise((resolve) => setImmediate(resolve))
     }
@@ -217,11 +371,11 @@ describe('RecordingProcessor.startRecording', () => {
   it('releases the reservation so the next recording can start once the egress failed', async () => {
     egressClient.startRoomCompositeEgress.mockRejectedValueOnce(new Error('livekit down'))
     await expect(
-      processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+      processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
     ).rejects.toThrow('livekit down')
     expect(wsClient.removePendingRecordingById).toHaveBeenCalledWith('rec-1')
 
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(2)
     expect(wsClient.__pending).toHaveLength(1)
   })
@@ -231,7 +385,7 @@ describe('RecordingProcessor.startRecording', () => {
       { format: 'video', status: 'active', egressId: 'EG_0', startedAt: Date.now() }
     ])
 
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
 
     expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
     expect(wsClient.createPendingRecording).not.toHaveBeenCalled()
@@ -240,7 +394,7 @@ describe('RecordingProcessor.startRecording', () => {
   it('does nothing when the LiveKit room is gone', async () => {
     roomClient.listRooms.mockResolvedValue([])
 
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
 
     expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
   })
@@ -256,7 +410,7 @@ describe('RecordingProcessor.startRecording', () => {
       roomName,
       TEST_IDS.workspace,
       meeting._id,
-      wsLoginInfo,
+      wsIds,
       'All hands'
     )
 
@@ -270,7 +424,7 @@ describe('RecordingProcessor.startRecording', () => {
       { format: 'video', status: 'active', egressId: 'EG_0', startedAt: Date.now() }
     ])
 
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
 
     // Without this the client keeps reading `None`, renders a red button and routes every press
     // back into /startRecord -> 409 forever.
@@ -288,8 +442,8 @@ describe('RecordingProcessor.startRecording', () => {
     egressClient.startRoomCompositeEgress.mockImplementation(async () => await gate)
 
     const both = Promise.all([
-      verdict(processor).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands'),
-      verdict(processor).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+      verdict(processor).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands'),
+      verdict(processor).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
     ])
     await new Promise((resolve) => setImmediate(resolve))
     release({ egressId: 'EG_1' })
@@ -330,7 +484,7 @@ describe('RecordingProcessor.startRecording', () => {
       { format: 'video', status: 'active', egressId: undefined, startedAt: Date.now() - 60 * 60 * 1000 }
     ])
 
-    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
 
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
     expect(wsClient.createPendingRecording).toHaveBeenCalledTimes(1)

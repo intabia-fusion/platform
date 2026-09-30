@@ -37,6 +37,7 @@ startFront(metricsContext, {
   GITHUB_URL: process.env.GITHUB_URL ?? '',
   LIVEKIT_WS: process.env.LIVEKIT_WS ?? '',
   LOVE_ENDPOINT: process.env.LOVE_ENDPOINT ?? '',
+  LOVE_SCREEN_SHARE_SIMULCAST: process.env.LOVE_SCREEN_SHARE_SIMULCAST,
   SIGN_URL: process.env.SIGN_URL ?? '',
   PRINT_URL: process.env.PRINT_URL ?? '',
   PRESENCE_URL: process.env.PRESENCE_URL ?? '',

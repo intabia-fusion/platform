@@ -324,9 +324,12 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 
 ## 9. Запись и транскрипция
 
+Почему запись устроена именно так - [meeting-recording-quality.md](meeting-recording-quality.md).
+
 - `TranscriptionState`: `NotStarted` / `Transcribing` / `Finished`. `RecordingState`: `NotStarted` / `Recording` / `Finished`.
 - `PendingRecording` (домен `DOMAIN_LOVE_PENDING`, коллекция на `MeetingMinutes`): `egressId`, `format` (`video`/`audio`), `startedAt`, `roomName`, `name`, `size`, `status` (`active`/`cancelled`/`completed`).
 - `/startRecord` создаёт `PendingRecording` **до** вызова egress и дописывает `egressId` после - строка служит защитой от второго запуска, общей для всех реплик сервиса. Если egress упал, резервация снимается; если за время старта запись успели отменить, `setPendingRecordingEgressId` вернёт `cancelled` и egress глушится сразу. Webhook `egress_started` только логирует; `egress_updated` обновляет размер; `egress_ended` сохраняет файл в storage, вешает на митинг и удаляет `PendingRecording`.
+- Видео - room composite egress. Раскладка: при заданном `RECORDING_TEMPLATE_URL` - свой шаблон, который love раздаёт на `/egress-template/` (`services/love/src/template`: экран на полную высоту кадра, камеры в полосе справа или плиткой в углу), иначе встроенная `grid` (шаблон egress сам переключает её на speaker при демонстрации). При сбое шаблона запись переключается на встроенную раскладку - см. «Откат при сбое шаблона записи» ниже. Пресет из `RECORDING_PRESET` (`services/love/src/preset.ts`: `720p`, `1080p`, `1080p15fps`, по умолчанию `1080p` = H.264 High 12 Mbps; на sanity-стенде `720p` из-за 4 vCPU). Демонстрация экрана захватывается без ограничения разрешения, 15 fps, VP8 с `contentHint: 'detail'` и по умолчанию без simulcast; simulcast включается переменной `LOVE_SCREEN_SHARE_SIMULCAST=true` у front, без изменения кода (`plugins/love-resources/src/liveKitClient.ts`, `setScreenShareEnabled`; разбор и замеры - `memory/love_recording_quality.md`).
 - Polling каждый цикл сверяет `listEgress({ active: true })` с `PendingRecording` и глушит egress, за которым не стоит ни одной строки: старт мог свалиться по таймауту уже после того, как LiveKit его принял. Проверить руками:
 
   ```js
@@ -336,6 +339,20 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 - `/transcription` сам пишет `transcriptionState` на `MeetingMinutes` (`Transcribing` / `Finished`). Кнопки записи и транскрипции читают состояние из документов, а не из room metadata: флаг в metadata идёт через очередь и протухает, когда та деградирует.
 - Если у митинга `startWithRecording`, запись стартует по событию очереди `QueueMeetingEvent.started`.
 - Presenters: `MeetingMinutesRecordingStatePresenter`, `MeetingMinutesTranscriptionStatePresenter`, `PendingRecordingPresenter`.
+
+### Откат при сбое шаблона записи
+
+Egress ждёт сигнал `START_RECORDING` от страницы шаблона бесконечно. Страница, которая открылась, но не подключилась к комнате, выглядела бы как идущая запись до конца встречи, а файла бы не было. Поэтому любой сбой шаблона переводит запись на встроенную раскладку LiveKit, которая лежит внутри egress и от love не зависит. Каждое переключение пишет в лог `Recording template fallback` с причиной (`template-unreachable`, `page-load-failed`, `start-signal-timeout`).
+
+| Мера | Как работает | Где в коде | Покрытие |
+| --- | --- | --- | --- |
+| Проверка шаблона перед стартом | Love за 2 с запрашивает страницу по `RECORDING_TEMPLATE_URL`. Нет ответа или ошибка - запись сразу стартует со встроенной раскладкой | `RecordingProcessor.templateReachable`, `startRecord`, `services/love/src/recordings.ts` | `recordings.test.ts`: страница не отвечает и отвечает ошибкой |
+| Откат при ошибке загрузки страницы | Egress закончился с ошибкой, без файла, строка записи `active` (никто не останавливал), в запросе был `customBaseUrl` - love удаляет строку и сразу запускает запись со встроенной раскладкой | `templateStartFailed`, `recordings.ts`; ветка в `egressEnded`, `services/love/src/webhook.ts` | `webhook.test.ts`: перезапуск и случаи без перезапуска; `recordings.test.ts`: `templateStartFailed` |
+| Сторож на 60 с | Через 60 с после старта через шаблон процесс, начавший запись, проверяет egress. Если он всё ещё `EGRESS_STARTING`, строка переводится в `cancelled`, egress останавливается, запись стартует со встроенной раскладкой. Таймер, а не polling: в прод-чарте `POLLING_ENABLED` не задан | `watchTemplateStart`, `recoverStuckStart`, `startWithBuiltInLayout`, `recordings.ts` | `recordings.test.ts`: замена застрявшей записи; не трогает уже пишущую и остановленную пользователем |
+| Повторы подключения на странице | Паузы 1, 2, 4, 8, 15 с, новых попыток после 45 с нет | `main`, `services/love/src/template/page.ts` | Вживую против недоступного LiveKit: 6 попыток, последняя на 30-й секунде, сигнал старта не подан |
+| Флаг записи при замене | `egress_ended` заменённого egress не сбрасывает `recordingState`, если у встречи есть другая `active` видеозапись | `anotherVideoRecordingRuns`, `webhook.ts` | `webhook.test.ts` |
+
+Встроенная раскладка повторно не откатывается: её egress не проходит проверку `templateStartFailed` (нет `customBaseUrl`), поэтому перезапуски не зацикливаются. Если не работает и она, запись не получится, как и до шаблона.
 
 ---
 

@@ -504,6 +504,8 @@ services:
       - LIVEKIT_WEBHOOK_API_KEY=whkey
       - LIVEKIT_WEBHOOK_API_SECRET=whsecret
       - LIVEKIT_PROJECT=dev-project
+      # Recording template served by love itself; egress reaches it over the compose network.
+      - RECORDING_TEMPLATE_URL=http://love:8096/egress-template/
       - BILLING_URL=http://billing:4041
       - BILLING_POLL_INTERVAL=15
       - AGENTS=transcribe-dev

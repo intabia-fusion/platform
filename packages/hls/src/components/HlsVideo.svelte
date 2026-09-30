@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,6 +21,8 @@
   import HLS from 'hls.js'
   import { onDestroy, onMount } from 'svelte'
   import Plyr from 'plyr'
+
+  const HLS_START_BANDWIDTH = 20_000_000
 
   export let src: string
   export let hlsSrc: string
@@ -97,7 +100,10 @@
       loader,
       manifestLoadPolicy: loadPolicy,
       playlistLoadPolicy: loadPolicy,
-      autoStartLoad: preload
+      autoStartLoad: preload,
+      // Start from the original: hls.js caps its initial estimate at 5 Mbps, below the 8 Mbps the stream
+      // service declares for 1080p, so playback opened in 720p. ABR still steps down on a slow link.
+      abrEwmaDefaultEstimate: HLS_START_BANDWIDTH
     })
     hls.loadSource(hlsSrc)
     hls.attachMedia(video)

@@ -1,6 +1,7 @@
 import { MeasureContext, Ref, WorkspaceIds, type WorkspaceUuid } from '@hcengineering/core'
 import love, {
   MeetingMinutes,
+  type PendingRecording,
   queueEvents,
   QueueMeetingMessage,
   RecordingState,
@@ -22,6 +23,7 @@ import { saveFile } from './storage'
 import { WorkspaceClient } from './workspaceClient'
 import platform, { PlatformError } from '@hcengineering/platform'
 import { getRoomName, parseParticipantMetadata, updateMetadata } from './utils'
+import { templateStartFailed } from './recordings'
 
 export class WebhookProcessor {
   constructor (
@@ -30,7 +32,13 @@ export class WebhookProcessor {
     readonly eventProducer: PlatformQueueProducer<QueueMeetingMessage>,
     readonly egressClient: EgressClient,
     readonly storageConfig: StorageConfig | undefined,
-    readonly s3storageConfig: StorageConfig | undefined
+    readonly s3storageConfig: StorageConfig | undefined,
+    /** Restarts a recording whose template failed; `true` when one runs again. */
+    readonly onTemplateStartFailed?: (
+      roomName: string,
+      workspace: WorkspaceUuid,
+      meetingId: Ref<MeetingMinutes>
+    ) => Promise<boolean>
   ) {}
 
   async processEvent (event: WebhookEvent, roomName: ParsedRoomName): Promise<void> {
@@ -344,10 +352,29 @@ export class WebhookProcessor {
 
       // Find and remove PendingRecording first (do this regardless of file save result)
       const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
-      if (pendingRecording !== undefined) {
+      if (
+        pendingRecording?.format === 'video' &&
+        this.onTemplateStartFailed !== undefined &&
+        templateStartFailed(event.egressInfo, pendingRecording.status)
+      ) {
+        // Removed first: the restart needs the reservation slot.
+        await wsClient.removePendingRecording(pendingRecording)
+        const room =
+          event.egressInfo.roomName !== ''
+            ? event.egressInfo.roomName
+            : getRoomName(roomName.workspace, roomName.meetingId)
+        this.ctx.warn('Recording template failed to start', { egressId, error: event.egressInfo.error })
+        if (!(await this.onTemplateStartFailed(room, roomName.workspace, roomName.meetingId))) {
+          await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
+        }
+      } else if (pendingRecording !== undefined) {
         // `recordingState` tracks the video recording only: the audio (transcription) egress ends
         // on its own schedule and used to clear the flag while the video egress kept writing.
-        if (pendingRecording.format === 'video') {
+        // A replaced egress ends after its replacement started, and must not clear the flag either.
+        if (
+          pendingRecording.format === 'video' &&
+          !(await this.anotherVideoRecordingRuns(wsClient, pendingRecording))
+        ) {
           await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
         }
         await wsClient.removePendingRecording(pendingRecording)
@@ -407,6 +434,11 @@ export class WebhookProcessor {
     } catch {
       // Ensure we don't fail the webhook if billing fails
     }
+  }
+
+  private async anotherVideoRecordingRuns (wsClient: WorkspaceClient, ended: PendingRecording): Promise<boolean> {
+    const rows = await wsClient.findPendingRecordingsByMeeting(ended.attachedTo as Ref<MeetingMinutes>)
+    return rows.some((r) => r._id !== ended._id && r.format === 'video' && r.status === 'active')
   }
 
   private async egressStarted (event: WebhookEvent, roomName: ParsedRoomName): Promise<void> {

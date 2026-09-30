@@ -174,6 +174,7 @@ export interface Config {
   GITHUB_CLIENTID?: string
   GITHUB_URL: string
   LOVE_ENDPOINT?: string
+  LOVE_SCREEN_SHARE_SIMULCAST?: string
   LIVEKIT_WS?: string
   SIGN_URL?: string
   PRINT_URL?: string
@@ -588,6 +589,7 @@ export async function configurePlatform() {
   setMetadata(contactPlugin.metadata.LastNameFirst, myBranding.lastNameFirst === 'true')
   setMetadata(love.metadata.ServiceEndpoint, config.LOVE_ENDPOINT)
   setMetadata(love.metadata.WebSocketURL, config.LIVEKIT_WS)
+  setMetadata(love.metadata.ScreenShareSimulcast, config.LOVE_SCREEN_SHARE_SIMULCAST === 'true')
   setMetadata(print.metadata.PrintURL, config.PRINT_URL)
   setMetadata(sign.metadata.SignURL, config.SIGN_URL)
   setMetadata(presence.metadata.PresenceUrl, config.PRESENCE_URL ?? '')

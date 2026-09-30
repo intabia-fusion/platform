@@ -105,6 +105,9 @@ async function main() {
         case 'out':
           config.outfile = value
           break
+        case 'platform':
+          config.platform = value
+          break
         case 'minify':
           config.minify = value !== 'false'
           break

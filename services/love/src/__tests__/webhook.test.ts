@@ -24,7 +24,7 @@ import {
   Room
 } from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
-import { WebhookEvent } from 'livekit-server-sdk'
+import { EgressStatus, WebhookEvent } from 'livekit-server-sdk'
 
 // Mock dependencies
 jest.mock('../workspaceClient')
@@ -79,6 +79,7 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
       getPersonIdByPersonRef: jest.fn(),
       findOfficeOwner: jest.fn(),
       findPendingRecordingByEgressId: jest.fn(),
+      findPendingRecordingsByMeeting: jest.fn().mockResolvedValue([]),
       removePendingRecording: jest.fn(),
       updateMeetingRecordingState: jest.fn()
     } as unknown as jest.Mocked<WorkspaceClient>
@@ -159,6 +160,92 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
       await processor.processEvent(endedEvent(), createMockRoomName())
 
       expect(ws().updateMeetingRecordingState).toHaveBeenCalledWith(expect.anything(), RecordingState.Finished)
+    })
+
+    it('keeps the recording flag when a replaced egress ends after its replacement started', async () => {
+      mockWsClient.findMeetingById.mockResolvedValue(createMockMeeting() as MeetingMinutes)
+      ws().findPendingRecordingByEgressId.mockResolvedValue({ _id: 'rec-old', format: 'video', status: 'cancelled' })
+      ws().findPendingRecordingsByMeeting.mockResolvedValue([
+        { _id: 'rec-old', format: 'video', status: 'cancelled' },
+        { _id: 'rec-new', format: 'video', status: 'active', egressId: 'EG_2' }
+      ])
+
+      await processor.processEvent(endedEvent(), createMockRoomName())
+
+      expect(ws().updateMeetingRecordingState).not.toHaveBeenCalled()
+      expect(ws().removePendingRecording).toHaveBeenCalled()
+    })
+
+    describe('template failed to start', () => {
+      const templateRequest = { case: 'roomComposite', value: { customBaseUrl: 'https://host/_love/egress-template/' } }
+      let restart: jest.Mock
+
+      function failedEvent (over: Record<string, unknown> = {}): WebhookEvent {
+        return {
+          event: 'egress_ended',
+          egressInfo: {
+            egressId: 'EG_1',
+            roomName: 'workspace-1_meeting-1',
+            status: EgressStatus.EGRESS_FAILED,
+            error: 'page load error',
+            request: templateRequest,
+            fileResults: [],
+            ...over
+          }
+        } as unknown as WebhookEvent
+      }
+
+      beforeEach(() => {
+        restart = jest.fn().mockResolvedValue(true)
+        processor = new WebhookProcessor(
+          mockCtx,
+          mockRoomClient,
+          mockEventProducer,
+          mockEgressClient,
+          undefined,
+          undefined,
+          restart
+        )
+        mockWsClient.findMeetingById.mockResolvedValue(createMockMeeting() as MeetingMinutes)
+        ws().findPendingRecordingByEgressId.mockResolvedValue({ _id: 'rec-1', format: 'video', status: 'active' })
+      })
+
+      it('restarts the recording with the built-in layout', async () => {
+        await processor.processEvent(failedEvent(), createMockRoomName())
+
+        expect(restart).toHaveBeenCalledWith('workspace-1_meeting-1', 'workspace-1', 'meeting-1')
+        // The slot is freed before the restart reserves it again.
+        expect(ws().removePendingRecording.mock.invocationCallOrder[0]).toBeLessThan(
+          restart.mock.invocationCallOrder[0]
+        )
+        expect(ws().updateMeetingRecordingState).not.toHaveBeenCalled()
+      })
+
+      it('clears the recording flag when the restart did not start anything', async () => {
+        restart.mockResolvedValue(false)
+
+        await processor.processEvent(failedEvent(), createMockRoomName())
+
+        expect(ws().updateMeetingRecordingState).toHaveBeenCalledWith(expect.anything(), RecordingState.Finished)
+      })
+
+      it.each([
+        ['a recording the user stopped', { status: 'cancelled' }, {}],
+        ['a built-in layout recording', {}, { request: { case: 'roomComposite', value: { customBaseUrl: '' } } }],
+        ['a recording that produced a file', {}, { fileResults: [{ filename: 'f.mp4', size: 1000 }] }],
+        ['a recording that completed', {}, { status: EgressStatus.EGRESS_COMPLETE }]
+      ])('does not restart %s', async (_name, row, info) => {
+        ws().findPendingRecordingByEgressId.mockResolvedValue({
+          _id: 'rec-1',
+          format: 'video',
+          status: 'active',
+          ...row
+        })
+
+        await processor.processEvent(failedEvent(info), createMockRoomName())
+
+        expect(restart).not.toHaveBeenCalled()
+      })
     })
   })
 

@@ -96,7 +96,7 @@
   - `plugins/attachment-resources/src/utils.ts`.
 - **Link preview в тексте.** `fetchLinkPreviewDetails`/`canDisplayLinkPreview` тянут OpenGraph-данные с пода `link-preview`, рендерятся `LinkPreviewCard.svelte`/`LinkPreviewImage.svelte` и т.д.
   - `packages/presentation/src/link-preview.ts`, используется в `AttachmentRefInput.svelte`.
-- **Видео-превью через HLS.** `AttachmentVideoPreview.svelte` берёт HLS-метаданные blob'а и рендерит плеер из `packages/hls`.
+- **Видео-превью через HLS.** `AttachmentVideoPreview.svelte` берёт HLS-метаданные blob'а и рендерит плеер из `packages/hls`. Плеер стартует с оригинала (`HLS_START_BANDWIDTH` в `HlsVideo.svelte`), иначе hls.js берёт первый сегмент из 720p.
 
 ### Uploader
 

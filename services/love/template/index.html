@@ -1,0 +1,102 @@
+<!doctype html>
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Meeting recording</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
+        /* Fonts of the livekit/egress image; nothing is fetched. */
+        font-family: 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif;
+      }
+      #stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+      .screen,
+      .tile {
+        position: absolute;
+        overflow: hidden;
+      }
+      .screen video {
+        width: 100%;
+        height: 100%;
+        /* Until the video's size is known. */
+        object-fit: contain;
+        background: #000;
+      }
+      .tile {
+        border-radius: 0.6em;
+        background: #1f2329;
+        box-sizing: border-box;
+        border: 2px solid transparent;
+      }
+      .tile.speaking {
+        border-color: #3ecf8e;
+      }
+      .tile video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .tile .avatar {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 3.2em;
+        height: 3.2em;
+        border-radius: 50%;
+        background: #3c4149;
+        color: #e6e8eb;
+        font-size: 1.4em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tile .name {
+        position: absolute;
+        left: 0.5em;
+        bottom: 0.4em;
+        max-width: calc(100% - 1em);
+        padding: 0.15em 0.5em;
+        border-radius: 0.4em;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 0.9em;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tile.compact .avatar {
+        font-size: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script src="page.js"></script>
+  </body>
+</html>

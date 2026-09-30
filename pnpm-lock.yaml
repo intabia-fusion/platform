@@ -41692,6 +41692,9 @@ importers:
       jest:
         specifier: 'catalog:'
         version: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2(@swc/helpers@0.5.19))(@types/node@24.13.3)(typescript@6.0.3))
+      livekit-client:
+        specifier: 'catalog:'
+        version: 2.22.0
       prettier:
         specifier: 'catalog:'
         version: 3.6.2

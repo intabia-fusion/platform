@@ -5,6 +5,9 @@ import {
   Room as LKRoom,
   RoomEvent,
   type VideoCaptureOptions,
+  type ScreenShareCaptureOptions,
+  ScreenSharePresets,
+  type TrackPublishOptions,
   type RemoteTrack,
   type RemoteTrackPublication,
   Track,
@@ -13,7 +16,7 @@ import {
   type TrackPublication,
   type Participant
 } from 'livekit-client'
-import { translate } from '@hcengineering/platform'
+import { getMetadata, translate } from '@hcengineering/platform'
 import {
   getMediaDevices,
   getSelectedCamId,
@@ -85,6 +88,23 @@ const defaultCaptureOptions: VideoCaptureOptions = {
   }
 }
 
+// `detail` keeps text sharp. Capture is uncapped: the default 1920x1080 made Chrome downscale a HiDPI
+// screen before encoding. See docs/memory/love_recording_quality.md.
+const screenShareCaptureOptions: ScreenShareCaptureOptions = {
+  contentHint: 'detail',
+  resolution: ScreenSharePresets.original.resolution
+}
+// VP8, not the room's VP9: for SVC codecs livekit-client forces `contentHint = 'motion'`. Simulcast is
+// off by default: the recorder silently fell back to the half-resolution layer whenever the full one was
+// paused. Viewers on a weak link then get a paused share instead; front env LOVE_SCREEN_SHARE_SIMULCAST
+// turns it back on.
+function screenSharePublishOptions (): TrackPublishOptions {
+  return {
+    videoCodec: 'vp8',
+    simulcast: getMetadata(love.metadata.ScreenShareSimulcast) === true
+  }
+}
+
 export class LiveKitClient {
   public readonly liveKitRoom: LKRoom
 
@@ -101,7 +121,8 @@ export class LiveKitClient {
         videoCodec: 'vp9',
         screenShareEncoding: {
           maxBitrate: 15_000_000,
-          maxFramerate: 24,
+          // Static text costs nothing at any fps; 15 fps doubles the bits per frame while scrolling.
+          maxFramerate: 15,
           priority: 'high'
         }
       },
@@ -652,7 +673,11 @@ export class LiveKitClient {
 
   async setScreenShareEnabled (value: boolean, withAudio: boolean = false): Promise<void> {
     try {
-      await this.liveKitRoom.localParticipant.setScreenShareEnabled(value, { audio: withAudio })
+      await this.liveKitRoom.localParticipant.setScreenShareEnabled(
+        value,
+        { audio: withAudio, ...screenShareCaptureOptions },
+        screenSharePublishOptions()
+      )
     } catch (e) {
       console.log(e)
     }
