@@ -261,7 +261,11 @@ describe('RecordingProcessor.startRecording', () => {
 
     it.each([
       ['a stopped recording', info(), 'cancelled'],
-      ['a built-in layout egress', info({ request: { case: 'roomComposite', value: { customBaseUrl: '' } } }), 'active'],
+      [
+        'a built-in layout egress',
+        info({ request: { case: 'roomComposite', value: { customBaseUrl: '' } } }),
+        'active'
+      ],
       ['an egress with a file', info({ fileResults: [{ size: 10 }] }), 'active'],
       ['a completed egress', info({ status: EgressStatus.EGRESS_COMPLETE }), 'active']
     ])('is not %s', (_name, egress, rowStatus) => {

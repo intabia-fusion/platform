@@ -177,8 +177,8 @@ function collect (): { participants: ParticipantState[], screens: ScreenState[] 
         id: share.trackSid,
         participantId: p.identity,
         publishedAt: screenSeenAt.get(share.trackSid) ?? now,
-        width: shown !== undefined && shown.videoWidth > 0 ? shown.videoWidth : share.dimensions?.width ?? 0,
-        height: shown !== undefined && shown.videoHeight > 0 ? shown.videoHeight : share.dimensions?.height ?? 0
+        width: shown !== undefined && shown.videoWidth > 0 ? shown.videoWidth : (share.dimensions?.width ?? 0),
+        height: shown !== undefined && shown.videoHeight > 0 ? shown.videoHeight : (share.dimensions?.height ?? 0)
       })
     }
   }

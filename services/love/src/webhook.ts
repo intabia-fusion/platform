@@ -359,7 +359,10 @@ export class WebhookProcessor {
       ) {
         // Removed first: the restart needs the reservation slot.
         await wsClient.removePendingRecording(pendingRecording)
-        const room = event.egressInfo.roomName !== '' ? event.egressInfo.roomName : getRoomName(roomName.workspace, roomName.meetingId)
+        const room =
+          event.egressInfo.roomName !== ''
+            ? event.egressInfo.roomName
+            : getRoomName(roomName.workspace, roomName.meetingId)
         this.ctx.warn('Recording template failed to start', { egressId, error: event.egressInfo.error })
         if (!(await this.onTemplateStartFailed(room, roomName.workspace, roomName.meetingId))) {
           await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
@@ -368,7 +371,10 @@ export class WebhookProcessor {
         // `recordingState` tracks the video recording only: the audio (transcription) egress ends
         // on its own schedule and used to clear the flag while the video egress kept writing.
         // A replaced egress ends after its replacement started, and must not clear the flag either.
-        if (pendingRecording.format === 'video' && !(await this.anotherVideoRecordingRuns(wsClient, pendingRecording))) {
+        if (
+          pendingRecording.format === 'video' &&
+          !(await this.anotherVideoRecordingRuns(wsClient, pendingRecording))
+        ) {
           await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
         }
         await wsClient.removePendingRecording(pendingRecording)

@@ -78,7 +78,11 @@ function gapOf (frameH: number): number {
 export function pickScreen (screens: ScreenState[]): ScreenState | undefined {
   let best: ScreenState | undefined
   for (const s of screens) {
-    if (best === undefined || s.publishedAt > best.publishedAt || (s.publishedAt === best.publishedAt && s.id > best.id)) {
+    if (
+      best === undefined ||
+      s.publishedAt > best.publishedAt ||
+      (s.publishedAt === best.publishedAt && s.id > best.id)
+    ) {
       best = s
     }
   }
@@ -111,7 +115,12 @@ function byJoin (a: ParticipantState, b: ParticipantState): number {
 }
 
 /** Columns x rows that give the largest 16:9 tiles for `n` tiles in the given area. */
-export function gridShape (n: number, areaW: number, areaH: number, gap: number): { cols: number, rows: number, tileW: number, tileH: number } {
+export function gridShape (
+  n: number,
+  areaW: number,
+  areaH: number,
+  gap: number
+): { cols: number, rows: number, tileW: number, tileH: number } {
   let best = { cols: 1, rows: 1, tileW: 0, tileH: 0 }
   for (let cols = 1; cols <= Math.max(1, n); cols++) {
     const rows = Math.ceil(n / cols)
@@ -138,7 +147,10 @@ function gridLayout (participants: ParticipantState[], frameW: number, frameH: n
     const rowW = inRow * tileW + (inRow - 1) * gap
     const left = gap + (areaW - rowW) / 2
     const col = i - row * cols
-    return { participantId: p.id, rect: roundRect({ x: left + col * (tileW + gap), y: top + row * (tileH + gap), w: tileW, h: tileH }) }
+    return {
+      participantId: p.id,
+      rect: roundRect({ x: left + col * (tileW + gap), y: top + row * (tileH + gap), w: tileW, h: tileH })
+    }
   })
   return { mode: 'grid', tiles }
 }
@@ -156,7 +168,12 @@ export function fitInto (srcW: number, srcH: number, areaW: number, areaH: numbe
   return { w: srcW * scale, h: srcH * scale }
 }
 
-function screenLayout (screen: ScreenState, participants: ParticipantState[], frameW: number, frameH: number): TemplateLayout {
+function screenLayout (
+  screen: ScreenState,
+  participants: ParticipantState[],
+  frameW: number,
+  frameH: number
+): TemplateLayout {
   const gap = gapOf(frameH)
   // Never shrink the screen for the cameras: that would resample every glyph.
   const full = fitInto(screen.width, screen.height, frameW, frameH)
@@ -215,12 +232,18 @@ export function videoQualityFor (tileHeight: number): 0 | 1 | 2 {
 export function displayName (raw: string): string {
   const sep = raw.indexOf(',')
   if (sep < 0) return raw.trim()
-  return [raw.slice(0, sep), raw.slice(sep + 1)].map((p) => p.trim()).filter((p) => p.length > 0).join(' ')
+  return [raw.slice(0, sep), raw.slice(sep + 1)]
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+    .join(' ')
 }
 
 /** Up to two initials for a camera-off tile. */
 export function initials (name: string): string {
-  const parts = name.trim().split(/\s+/).filter((p) => p.length > 0)
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter((p) => p.length > 0)
   return parts
     .slice(0, 2)
     .map((p) => Array.from(p)[0].toUpperCase())

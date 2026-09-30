@@ -215,7 +215,9 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
 
         expect(restart).toHaveBeenCalledWith('workspace-1_meeting-1', 'workspace-1', 'meeting-1')
         // The slot is freed before the restart reserves it again.
-        expect(ws().removePendingRecording.mock.invocationCallOrder[0]).toBeLessThan(restart.mock.invocationCallOrder[0])
+        expect(ws().removePendingRecording.mock.invocationCallOrder[0]).toBeLessThan(
+          restart.mock.invocationCallOrder[0]
+        )
         expect(ws().updateMeetingRecordingState).not.toHaveBeenCalled()
       })
 
@@ -233,7 +235,12 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
         ['a recording that produced a file', {}, { fileResults: [{ filename: 'f.mp4', size: 1000 }] }],
         ['a recording that completed', {}, { status: EgressStatus.EGRESS_COMPLETE }]
       ])('does not restart %s', async (_name, row, info) => {
-        ws().findPendingRecordingByEgressId.mockResolvedValue({ _id: 'rec-1', format: 'video', status: 'active', ...row })
+        ws().findPendingRecordingByEgressId.mockResolvedValue({
+          _id: 'rec-1',
+          format: 'video',
+          status: 'active',
+          ...row
+        })
 
         await processor.processEvent(failedEvent(info), createMockRoomName())
 
