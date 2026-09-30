@@ -524,16 +524,18 @@ export class AIControl {
     wsClient: WorkspaceClient,
     meetingId: Ref<MeetingMinutes>
   ): Promise<MeetingMinutes | undefined> {
+    // Under system: the bot is not a member of a private meeting.
+    const client = wsClient.systemAccessClient()
     let previous = -1
     for (let attempt = 0; attempt < TRANSCRIPT_SETTLE_ATTEMPTS; attempt++) {
-      const meeting = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+      const meeting = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
       if (meeting === undefined) return undefined
       const count = meeting.transcription ?? 0
       if (count === previous) return meeting
       previous = count
       await new Promise((resolve) => setTimeout(resolve, TRANSCRIPT_SETTLE_DELAY))
     }
-    return await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+    return await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
   }
 
   async summarizeMessages (
@@ -551,7 +553,10 @@ export class AIControl {
       return
     }
 
-    const client = wsClient.client
+    // Under system: the bot is not a member of a private meeting. The bot stays the author of
+    // the change; the caller's access is checked when the request is accepted.
+    const client = wsClient.systemAccessClient()
+    const asBot = wsClient.primarySocialId._id
 
     const target = await client.findOne(req.targetClass, { _id: req.target })
     if (target === undefined) {
@@ -662,7 +667,7 @@ export class AIControl {
       } catch (err: any) {
         try {
           const blobRef = await wsClient.collaborator.createMarkup(collabDoc, summaryMarkup)
-          await client.update(meeting, { summary: blobRef })
+          await client.update(meeting, { summary: blobRef }, false, undefined, asBot)
         } catch (createErr: any) {
           this.ctx.error('Failed to write meeting summary', {
             updateErr: err?.message,
@@ -791,7 +796,9 @@ export class AIControl {
       return
     }
 
-    const meetingMinutes = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
+    const meetingMinutes = await wsClient
+      .systemAccessClient()
+      .findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
     if (meetingMinutes?.roomId === undefined || meetingMinutes?.roomId === null) {
       this.ctx.error('MeetingMinutes not found or missing attached room for love transcript', { meetingMinutesId })
       return

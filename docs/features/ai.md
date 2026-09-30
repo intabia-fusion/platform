@@ -85,7 +85,7 @@
 ### AI-боты (серверные механизмы)
 - **Роутинг упомянутых/direct сообщений.** - `OnMessageSend`, `server-plugins/ai-bot-resources/src/index.ts`.
 - **Голосовые из чата в STT-очередь.** - `OnAudioTranscribe`, `server-plugins/ai-bot-resources/src/index.ts`.
-- **Ручная сводка сообщения/встречи.** - `summarizeMessages`, `controller.ts`; POST `/summarize`, `services/ai-bot/pod-ai-bot/src/server/server.ts`.
+- **Ручная сводка сообщения/встречи.** Воркер читает и пишет встречу системным клиентом (`systemAccessClient`, автор - бот через `modifiedBy`), поэтому работает и в закрытых встречах; POST `/summarize` принимает запрос, только если вызывающий видит цель (`clientFor(token.account)`). - `summarizeMessages`, `controller.ts`; POST `/summarize`, `services/ai-bot/pod-ai-bot/src/server/server.ts`.
 - **Перевод с сохранением структуры.** - `translate`, `controller.ts`; POST `/translate`, `services/ai-bot/pod-ai-bot/src/server/server.ts`.
 - **Компакция контекста.** Старые реплики сворачиваются в сводку вместо обрезки. - `planCompaction`/`renderForSummary`, `workspace/compaction.ts`.
 - **Окно контекста ветки + промпт объекта.** С outline при переполнении. - `buildThreadContext`, `workspace/threadContext.ts`; `buildDocPromptText`, `workspace/docPrompt.ts`.

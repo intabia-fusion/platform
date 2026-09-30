@@ -105,7 +105,7 @@ export async function tryAssignToWorkspace (workspace: WorkspaceUuid, ctx: Measu
 
     await withRetry(
       async () => {
-        await accountClient.assignWorkspace(aiBotAccountEmail, workspace, AccountRole.Owner)
+        await accountClient.assignWorkspace(aiBotAccountEmail, workspace, AccountRole.User)
       },
       (_, attempt) => attempt >= ASSIGN_WORKSPACE_ATTEMPTS,
       ASSIGN_WORKSPACE_DELAY

@@ -101,6 +101,17 @@ Tests switch the workspace to `middle` through the ai-bot API (`POST /levels/wor
 owner or system token). Replies are not deterministic, so they assert behaviour (an answer
 arrives, a fact is carried across turns), not exact text.
 
+### Real transcription (ASR)
+
+The default stand has no ASR: the `asr:` provider in `config-aibot.yaml` is off and nothing is transcribed. Two opt-in modes add a clisr STT worker (`aibot_client_asr`, `docker-compose.asr.yaml`) and turn the provider on:
+
+```bash
+./prepare-pg.sh --asr        # oaitt container (intabiafusion/oaitt-onnx, GigaAM ONNX on CPU), docker-compose.oaitt.yaml
+./prepare-pg.sh --asr-local  # a transcriber already running on the host at :9007 (override: ASR_LOCAL_URL)
+```
+
+The worker calls the OpenAI-compatible `/v1/audio/transcriptions`; its registry is `config-aibot-asr.yaml`.
+
 ## Test authoring.
 
 Please update all navigation with using PlatformURI for CI and dev environment compatible testing.

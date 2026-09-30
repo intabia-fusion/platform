@@ -1,0 +1,49 @@
+# Real transcription for the sanity stand: love-agent streams meeting audio to aibot, which
+# routes ASR to a clisr STT worker.
+# `./prepare-pg.sh --asr-local` points it at a transcriber on the host (:9007);
+# `./prepare-pg.sh --asr` adds docker-compose.oaitt.yaml and points it at the oaitt container.
+services:
+  aibot:
+    environment:
+      - ASR_ENABLED=true
+
+  aibot_client_asr:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      aibot:
+        condition: service_started
+    volumes:
+      - ./config-aibot-asr.yaml:/var/cfg/config.yaml
+    environment:
+      - API_TOKEN=api-secret
+      - MODE=client
+      - SERVER_URL=ws://aibot:4010
+      - CONFIG_PATH=/var/cfg/config.yaml
+      - LLM_PROVIDER=none
+      - ASR_URL=${ASR_LOCAL_URL:-http://host.docker.internal:9007}
+      - STATS_URL=http://stats:4901
+    restart: unless-stopped
+
+  # Streams meeting audio from LiveKit to aibot; love dispatches it to every room by AGENTS.
+  love-agent:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/love-agent:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      love:
+        condition: service_started
+      aibot:
+        condition: service_started
+    environment:
+      - SERVER_SECRET=secret
+      - AGENT_NAME=transcribe-test
+      - PLATFORM_URL=http://aibot:4010
+      - LIVEKIT_URL=ws://host.docker.internal:7890
+      - LIVEKIT_API_KEY=testkey
+      - LIVEKIT_API_SECRET=testsecret_for_sanity_tests_min32chars
+      - STT_PROVIDER=stream
+    restart: unless-stopped

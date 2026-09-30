@@ -773,7 +773,7 @@ export class WorkspaceClient {
   }
 
   /** Client reading as `personUuid`; the bot's own when there is nobody to act for. */
-  private clientFor (personUuid: PersonUuid | undefined): RestClient {
+  clientFor (personUuid: PersonUuid | undefined): RestClient {
     if (personUuid === undefined || personUuid === this.personUuid) return this.client
 
     let client = this.userClients.get(personUuid)

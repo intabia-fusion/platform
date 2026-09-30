@@ -1,0 +1,21 @@
+# Sanity clisr STT worker (docker-compose.asr.yaml): serves the `default` ASR level from an
+# OpenAI-compatible /v1/audio/transcriptions at ASR_URL - the oaitt container or the host.
+
+asr:
+  defaultLevel: default
+
+  models:
+    default:
+      order: 0
+      label: Базовый
+      tokenMultiplier: 1
+      displayMultiplier: 0
+
+  providers:
+    - id: openai
+      provider: openai
+      serves:
+        default:
+          model: whisper-1
+          url: ${ASR_URL}
+          apiKey: key

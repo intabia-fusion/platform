@@ -67,3 +67,9 @@
 - [`../features/ai.md`](../features/ai.md)
 - [`ai_bot_proactive.md`](ai_bot_proactive.md)
 - [`ai_harness_progress_cancel.md`](ai_harness_progress_cancel.md)
+
+## Закрытые встречи и авторство (FUSIO-788)
+
+- Бот не участник закрытой `MeetingMinutes` (это Space), его клиент получает `findOne` = `undefined`. Доступ - `systemAccessClient()`, автор - `modifiedBy = primarySocialId._id`.
+- `wsClient.collaborator` должен оставаться с токеном бота: collaborator пишет системным клиентом, но автора берёт из токена (`getTxOperations`, `server/collaborator/src/platform.ts`). С системным токеном активность итогов показывается от "Система".
+- Роль Owner боту не выдавать: `assignWorkspace` только повышает роль, понизить обратно нечем, а Owner видит все закрытые пространства воркспейса.

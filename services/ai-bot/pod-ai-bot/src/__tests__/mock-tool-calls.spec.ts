@@ -204,4 +204,16 @@ describe('mock provider scripted tool calls', () => {
     expect(completion).toContain('- `propose_task`: без параметров')
     expect(completion).not.toContain('## echo')
   })
+
+  it('echoes the transcript as the summary when echo is on, a fixed reply otherwise', async () => {
+    const messages = [
+      { personRef: 'p1', personName: 'John', time: 1, text: 'We ship on Friday' },
+      { personRef: 'p2', personName: 'Kainin', time: 2, text: 'I write the changelog' }
+    ]
+
+    expect(await makeProvider().summarizeMessages(ctx, workspace, messages)).toBe(
+      '## summary (2)\n- **John**: We ship on Friday\n- **Kainin**: I write the changelog'
+    )
+    expect(await makeProvider(false).summarizeMessages(ctx, workspace, messages)).toBe('pong')
+  })
 })

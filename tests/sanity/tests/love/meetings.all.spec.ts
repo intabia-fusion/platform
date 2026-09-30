@@ -34,6 +34,7 @@ import { registerClientCreateTests } from './meetings.client-create.tests'
 import { registerMeetingsTests } from './meetings.tests'
 import { registerMigrationTests } from './meetings.migration.tests'
 import { registerPrivacyTests } from './meetings.privacy.tests'
+import { registerPrivateSummaryTests } from './meetings.private-summary.tests'
 import { registerRecordingTests } from './meetings.recording.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
 import { registerScheduledConnectTests } from './meetings.scheduled-connect.tests'
@@ -78,6 +79,7 @@ test.describe('love (meetings) — suite', () => {
   registerHostRefreshTests()
   registerScheduledConnectTests()
   registerFinishedTokenTests()
+  registerPrivateSummaryTests()
   registerTransactorRestartTests()
   registerRecordingTests()
   registerMultiTabTests()

@@ -179,9 +179,11 @@ class MockProvider implements LLMProvider {
   async summarizeMessages (
     _ctx: MeasureContext,
     _workspace: WorkspaceUuid,
-    _messages: PersonMessage[]
+    messages: PersonMessage[]
   ): Promise<string | undefined> {
-    return this.reply
+    if (!this.echo) return this.reply
+    const lines = messages.map((m) => `- **${m.personName}**: ${m.text}`)
+    return `## summary (${lines.length})\n${lines.length > 0 ? lines.join('\n') : '-'}`
   }
 
   async createChatCompletionWithTools (
