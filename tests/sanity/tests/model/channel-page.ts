@@ -392,7 +392,13 @@ export class ChannelPage extends CommonPage {
   async checkIfChannelTableExist (channel: string, publicChannel: boolean): Promise<void> {
     if (publicChannel) {
       await expect(this.channelTable()).toBeVisible()
-      await expect(this.channelTable()).toContainText(channel)
+      // Cells render lazily as rows scroll into view (`Table.svelte` rowLimit), sorted by modifiedOn: other
+      // workers' channels push this one below the rendered rows, so scroll until it renders.
+      await expect(async () => {
+        if ((await this.channelTable().textContent())?.includes(channel) === true) return
+        await this.channelTable().locator('tbody tr').last().scrollIntoViewIfNeeded()
+        throw new Error(`channel ${channel} is not rendered in the table`)
+      }).toPass({ intervals: retryIntervals, timeout: 15000 })
     } else {
       await expect(this.channelTable()).not.toContainText(channel)
     }

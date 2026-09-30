@@ -229,10 +229,8 @@ test.describe('Tracker issue tests', () => {
       projectName: 'Default'
     }
     await prepareNewIssueWithOpenStep(page, deleteIssue)
-    await issuesPage.navigateToIssues()
-    await issuesPage.clickModelSelectorAll()
-    await issuesPage.searchIssueByName(deleteIssue.title)
-    await issuesPage.openIssueByName(deleteIssue.title)
+    // prepareNewIssueWithOpenStep already opens the issue - re-navigating via navigateToIssues()
+    // ('text="Issues"') can land on another project's sidebar node and never find this row.
     await issuesDetailsPage.waitDetailsOpened(deleteIssue.title)
     await issuesDetailsPage.moreActionOnIssue('Delete')
     await issuesDetailsPage.pressYesForPopup(page)

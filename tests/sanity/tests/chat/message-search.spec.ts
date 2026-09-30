@@ -197,8 +197,9 @@ test.describe('Message search', () => {
       using invited = await getSecondPageByApi(browser, workspace.ws, newUser, 'chunter')
       await expect(invited.page).toHaveURL(/workbench/)
 
+      // createDirectChat opens the DM itself; its navigator entry waits for a trigger-created Chat doc.
       await chunterPage.createDirectChat(newUser)
-      await channelPage.clickChooseChannel(`${newUser.lastName} ${newUser.firstName}`)
+      await channelPage.waitOpenedChannel(`${newUser.lastName} ${newUser.firstName}`)
       await channelPage.sendMessage(message)
 
       await searchPage.openChannelSearch()

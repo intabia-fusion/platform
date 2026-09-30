@@ -527,6 +527,10 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
     if (invite.senderSessionId !== undefined && invite.senderSessionId !== sid) continue
     if (invite.status === 'accepted') {
       handlingInvites.add(invite._id)
+      // `createMeeting` can refuse without throwing (e.g. `room-occupied` from a not-yet-
+      // cleared participant row); discarding the invite on a refusal loses the only signal
+      // that tells this tab to create the meeting, and the recipient waits forever.
+      let consumed = true
       try {
         if (invite.meeting === undefined && invite.room === undefined) {
           // A2: caller-client creates the meeting in their own office. `createMeeting`
@@ -543,6 +547,8 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
               if (recipientAccount !== undefined && !created.members.includes(recipientAccount)) {
                 await client.update(created, { $push: { members: recipientAccount } })
               }
+            } else {
+              consumed = false
             }
           }
         } else if (invite.meeting !== undefined) {
@@ -552,7 +558,9 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
             await joinOrCreateMeetingByInvite(invite.meeting)
           }
         }
-        await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+        if (consumed) {
+          await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+        }
       } catch (err) {
         console.warn('Failed to auto-join via accepted invite', err)
       } finally {

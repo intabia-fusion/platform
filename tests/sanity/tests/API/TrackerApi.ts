@@ -220,6 +220,16 @@ export async function readStoredCommentCount (issueTitle: string): Promise<numbe
   }
 }
 
+/** Whether a move reached the server - the open panel can keep the old identifier. */
+export async function readIssueIdentifier (issueTitle: string): Promise<string | undefined> {
+  const { client } = await connectTracker()
+  try {
+    return (await client.findOne(tracker.class.Issue, { title: issueTitle }))?.identifier
+  } finally {
+    await client.close()
+  }
+}
+
 /** Whether a component edit reached the server - the panel can render an unsaved value. */
 export async function readComponentDescription (label: string): Promise<string | undefined> {
   const { client } = await connectTracker()

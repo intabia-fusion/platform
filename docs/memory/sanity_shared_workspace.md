@@ -19,6 +19,8 @@ Free-план дает свежему workspace `usersLimit: 5` (`tests/plan-con
 
 `inbox/inbox-notifications.spec.ts` конвертирован так же. Переиспользуемый участник даёт один и тот же DM с владельцем во всех тестах, поэтому `dispose()` читает всё непрочитанное владельца (`readEverything`).
 
+- **REST needs `shared.ws.token`**, not `shared.token` (that one is for `loginByToken`): the REST client answers `Forbidden`.
+
 ## Не конвертировано
 
 `chat/ai-bot-scenarios.spec.ts` проверяет workspace ровно с одним tracker-проектом (карточка предложения задачи прячет селектор проекта, когда он один), а один из тестов файла создает второй проект - с shared workspace это предположение не держится, поэтому файл по-прежнему создает workspace на тест.

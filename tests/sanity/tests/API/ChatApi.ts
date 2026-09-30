@@ -35,6 +35,7 @@ import { LocalUrl, loginByToken } from '../utils'
 
 // Ids as strings: the suite does not depend on the chunter/activity/contact packages.
 const chatMessageClass = 'chunter:class:ChatMessage' as Ref<Class<Doc>>
+const chatClass = 'chunter:class:Chat' as Ref<Class<Doc>>
 const threadMessageClass = 'chunter:class:ThreadMessage' as Ref<Class<Doc>>
 const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
 const reactionClass = 'activity:class:Reaction' as Ref<Class<Doc>>
@@ -300,6 +301,20 @@ export class ChatMember {
       const found = await this.client.searchFulltext({ query: name, classes: [personClass] }, { limit: 1 })
       return found.docs.length > 0
     })
+  }
+
+  /**
+   * `chunter:class:Chat` comes from the async `OnCollaboratorAdded` trigger, which lags past a UI timeout.
+   * Matched by the doc's id: an application's Chat carries its task-type class, not `recruit:class:Applicant`.
+   */
+  async waitForLinkedChat (ofClass: string): Promise<void> {
+    // Only for a fresh workspace, where the class has exactly one doc.
+    const doc = await this.client.findOne(ofClass as Ref<Class<Doc>>, {})
+    if (doc === undefined) throw new Error(`no ${ofClass} to wait a chat for`)
+    await poll(
+      async () =>
+        (await this.client.findOne(chatClass, { account: this.account, attachedTo: doc._id } as any)) !== undefined
+    )
   }
 
   /** The per-document notification mode of this member: what "Edit notifications" sets in the UI. */
