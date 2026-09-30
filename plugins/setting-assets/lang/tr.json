@@ -247,6 +247,7 @@
     "PasswordAgingRule": "Parola yaşlandırma kuralı",
     "PasswordAgingRuleDescription": "Kullanıcıların parolalarını değiştirmeleri gerekecek gün sayısı",
     "OfficeSettings": "Ofis ayarları",
+    "SidebarMenuSettings": "Yan menü ayarları",
     "OfficeDefaultSettings": "Toplantı odaları için varsayılan ayarlar",
     "DefaultStartWithTranscription": "Yeni ofis odalarında transkripsiyonu etkinleştir",
     "DefaultStartWithRecording": "Yeni ofis odalarında kaydı etkinleştir",

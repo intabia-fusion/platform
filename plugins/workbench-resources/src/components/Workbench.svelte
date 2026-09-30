@@ -863,18 +863,6 @@
         class:vertical-mobile={$deviceInfo.navigator.direction === 'vertical'}
         class:mini={appsMini}
       >
-        <AppItem
-          icon={IconSettings}
-          label={setting.string.Customize}
-          size={appsMini ? 'small' : 'large'}
-          on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
-        />
-        <AppItem
-          icon={support.icon.Support}
-          label={support.string.ContactUs}
-          size={appsMini ? 'small' : 'large'}
-          on:click={helpAndSupport}
-        />
         <!-- {#await supportClient then client}
           {#if client}
             <AppItem

@@ -73,6 +73,7 @@ import AddSocialId from './components/socialIds/AddSocialId.svelte'
 import AddEmailSocialId from './components/socialIds/AddEmailSocialId.svelte'
 import Mailboxes from './components/Mailboxes.svelte'
 import OfficeSettings from './components/OfficeSettings.svelte'
+import SidebarMenuSettings from './components/SidebarMenuSettings.svelte'
 import BaseIntegrationState from './components/integrations/BaseIntegrationState.svelte'
 import IntegrationStateRow from './components/integrations/IntegrationStateRow.svelte'
 import EmployeeRefEditor from './components/typeEditors/EmployeeRefEditor.svelte'
@@ -163,6 +164,7 @@ export default async (): Promise<Resources> => ({
     EditRelation,
     Mailboxes,
     OfficeSettings,
+    SidebarMenuSettings,
     AddSocialId,
     AddEmailSocialId,
     EmployeeRefEditor

@@ -248,6 +248,7 @@
     "PasswordAgingRule": "Password aging rule",
     "PasswordAgingRuleDescription": "Number of days after which users will be required to change their password.",
     "OfficeSettings": "Office settings",
+    "SidebarMenuSettings": "Sidebar Menu Settings",
     "OfficeDefaultSettings": "Default settings for meeting rooms",
     "DefaultStartWithTranscription": "Enable transcription in new office rooms",
     "DefaultStartWithRecording": "Enable recording in new office rooms",

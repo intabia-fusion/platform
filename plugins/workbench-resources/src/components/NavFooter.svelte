@@ -13,14 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import setting from '@hcengineering/setting'
-  import { Icon, Label, showPopup } from '@hcengineering/ui'
-  import workbench from '../plugin'
-  import HelpAndSupport from './HelpAndSupport.svelte'
-
   export let split: boolean = false
-
-  let selected: boolean = false
 </script>
 
 <div class="antiNav-footer-line" />
@@ -28,23 +21,4 @@
 <div class="antiNav-footer">
   <slot />
   {#if split}<div class="antiNav-space" />{/if}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div
-    class="antiNav-element"
-    class:selected
-    on:click={() => {
-      selected = true
-      showPopup(HelpAndSupport, {}, 'help-center', () => {
-        selected = false
-      })
-    }}
-  >
-    <div class="an-element__icon">
-      <Icon icon={setting.icon.Support} size={'small'} />
-    </div>
-    <span class="an-element__label">
-      <Label label={workbench.string.HelpAndSupport} />
-    </span>
-  </div>
 </div>

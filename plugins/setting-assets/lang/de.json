@@ -247,6 +247,7 @@
     "PasswordAgingRule": "Passwort-Alterungsregel",
     "PasswordAgingRuleDescription": "Anzahl der Tage, nach denen Benutzer ihr Passwort ändern müssen.",
     "OfficeSettings": "Büroeinstellungen",
+    "SidebarMenuSettings": "Seitenmenü-Einstellungen",
     "OfficeDefaultSettings": "Standardeinstellungen für Besprechungsräume",
     "DefaultStartWithTranscription": "Transkription in neuen Büroräumen aktivieren",
     "DefaultStartWithRecording": "Aufnahme in neuen Büroräumen aktivieren",

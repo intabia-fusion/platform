@@ -242,6 +242,7 @@
     "PasswordAgingRule": "Pravidlo stárnutí hesla",
     "PasswordAgingRuleDescription": "Počet dní, po kterých budou uživatelé muset změnit své heslo.",
     "OfficeSettings": "Nastavení kanceláře",
+    "SidebarMenuSettings": "Nastavení bočního menu",
     "OfficeDefaultSettings": "Výchozí nastavení pro jednací místnosti",
     "DefaultStartWithTranscription": "Povolit přepis v nových kancelářích",
     "DefaultStartWithRecording": "Povolit záznam v nových kancelářích",
