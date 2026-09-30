@@ -40,17 +40,20 @@ import core, {
   type TxCUD,
   type TxRemoveDoc,
   type AnyAttribute,
+  type Mixin,
   type RefTo
 } from '@hcengineering/core'
 import { translateCB, type IntlString } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
+import { computeSchedule, pickDueDate } from './milestoneUtils'
 import { createQuery, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
 import task, {
   getOrderedTaskTypes,
   makeRank,
   sortTaskTypesByName,
   statusOrderComparator,
-  type ProjectType
+  type ProjectType,
+  type TimeManaged
 } from '@hcengineering/task'
 import {
   selectedTaskTypeStore,
@@ -1128,4 +1131,17 @@ async function preloadLabelTitles (issues: Issue[], client: any): Promise<Map<Re
     result.set(issueId, list.join(', '))
   }
   return result
+}
+
+/**
+ * Puts the issue on the timeline: starts with the milestone (today without one),
+ * lasts as many work days as the estimation covers.
+ */
+export async function scheduleIssue (issue: Issue, milestone?: Milestone): Promise<void> {
+  const client = getClient()
+  const { start, end } = computeSchedule(milestone?.startDate, Date.now(), issue.estimation)
+  const dueDate = pickDueDate(issue.dueDate, start, end)
+  await client.update(issue, milestone !== undefined ? { milestone: milestone._id, dueDate } : { dueDate })
+  const mixin = task.mixin.TimeManaged as Ref<Mixin<Issue & TimeManaged>>
+  await client.updateMixin(issue._id, issue._class, issue.space, mixin, { startDate: start })
 }

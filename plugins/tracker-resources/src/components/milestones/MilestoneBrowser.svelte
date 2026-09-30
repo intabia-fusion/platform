@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,14 @@
   import type { TabItem } from '@hcengineering/ui'
   import { Button, IconAdd, SearchInput, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
-  import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view'
+  import {
+    FilterBar,
+    FilterButton,
+    TimelineMonthSelector,
+    ViewletSelector,
+    ViewletSettingButton
+  } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import type { MilestoneViewMode } from '../../utils'
   import { getIncludedMilestoneStatuses, milestoneTitleMap } from '../../utils'
@@ -117,6 +125,9 @@
     <Button icon={IconAdd} label={tracker.string.Milestone} kind={'primary'} on:click={showCreateDialog} />
   </svelte:fragment>
   <svelte:fragment slot="extra">
+    {#if viewlet?.descriptor === view.viewlet.Timeline}
+      <TimelineMonthSelector />
+    {/if}
     <Switcher
       name={'milestone-mode'}
       items={modeList}
