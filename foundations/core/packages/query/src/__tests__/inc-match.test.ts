@@ -688,4 +688,27 @@ describe('$inc after an out-of-order tx refetched the doc', () => {
     expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(2)
     expect(q.last()[0]?.rate).toBe(2)
   })
+
+  it('still applies an equal-timestamp $inc committed after the refetch', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 1, name: 'late-inc' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { _id: id } as any)
+    const t0 = q.last()[0].modifiedOn
+    const update = (ops: any, ts: number): Tx =>
+      txFactory.createTxUpdateDoc<CounterSpace>(core.class.Space, core.space.Model, id, ops, false, ts)
+    const stale = update({ description: 'stale' }, t0 + 10)
+    const parent = update({ description: 'parent' }, t0 + 20)
+    const derived = update({ $inc: { rate: 1 } }, t0 + 20)
+    await writeSilently(storage, [stale, parent])
+
+    await liveQuery.tx(parent)
+    await liveQuery.tx(stale) // refetch: the copy is at t0 + 20 but has no $inc yet
+    await settle()
+    await writeSilently(storage, [derived])
+    await liveQuery.tx(derived)
+    await settle()
+
+    expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(2)
+    expect(q.last()[0].rate).toBe(2)
+  })
 })
