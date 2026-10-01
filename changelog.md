@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.51] - 2026-10-02
+
+* 🚀 FEATURES: · FUSIO-1369 - Уведомления о недоступности камеры ([#458](https://github.com/hcengineering/platform/issues/458)) · FUSIO-1401 - Реорганизация пунктов меню
+* 🐛 BUG FIXES: · FUSIO-1462: Format dates in locale order, tolerate an invalid date ([#501](https://github.com/hcengineering/platform/issues/501)) · FUSIO-1458: Forbid users to edit other employees' person and channels ([#503](https://github.com/hcengineering/platform/issues/503)) · FUSIO-1463: Keep the login error when the theme updates ([#502](https://github.com/hcengineering/platform/issues/502)) · FUSIO-1461: Do not fail on a non-JSON checkRecordAvailable answer ([#500](https://github.com/hcengineering/platform/issues/500)) · FUSIO-1460: Fix card creation after opening a card ([#499](https://github.com/hcengineering/platform/issues/499)) · FUSIO-1459: Fix rekoni temp files clean up ([#498](https://github.com/hcengineering/platform/issues/498)) · FUSIO-1466: Fix $inc one more time ([#505](https://github.com/hcengineering/platform/issues/505)) · Fix more flacky tests ([#494](https://github.com/hcengineering/platform/issues/494)) · Fix duplicated emails: time machine resent events it could not delete ([#497](https://github.com/hcengineering/platform/issues/497))
+
 ## [0.8.50] - 2026-10-01
 
 * 🚀 FEATURES: · fusio-1414 & fusio-216: holding and dismissing push notifications, holding emails ([#487](https://github.com/hcengineering/platform/issues/487)) · fusio-534 & fusio-955: sort threads by last reply date and ui updates ([#490](https://github.com/hcengineering/platform/issues/490)) · fusio-209: screen share recording improvements ([#493](https://github.com/hcengineering/platform/issues/493)) · Group pushes by channel ([#495](https://github.com/hcengineering/platform/issues/495))
