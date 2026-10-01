@@ -97,7 +97,11 @@
     void validate($themeStore.language)
   }
 
-  $: if ($themeStore.language != null && $themeStore.language !== '') {
+  // A theme update with the same language would reset the status and wipe an action error
+  // such as wrong credentials, so re-validate only on a language change.
+  let validatedLanguage: string | undefined
+  $: if ($themeStore.language != null && $themeStore.language !== '' && $themeStore.language !== validatedLanguage) {
+    validatedLanguage = $themeStore.language
     void validate($themeStore.language)
   }
 
