@@ -403,6 +403,45 @@ describe('NotificationMiddleware', () => {
       )
     })
 
+    it('creates the thread ReadState in the session data of the request, so it is broadcast', async () => {
+      middleware = (await NotificationMiddleware.create(
+        mockMeasureContext,
+        mockPipelineContext,
+        mockNext
+      )) as NotificationMiddleware
+
+      let derivedData: SessionData | undefined
+      let derivedFlag: boolean | undefined
+      ;(mockPipelineContext.derived?.tx as jest.Mock).mockImplementation(async (ctx: MeasureContext<SessionData>) => {
+        derivedData = ctx.contextData
+        derivedFlag = ctx.contextData.isTriggerCtx
+        return {}
+      })
+
+      const tx: TxCreateDoc<ThreadMessage> = {
+        _id: 'tx-1' as Ref<TxCreateDoc<ThreadMessage>>,
+        _class: core.class.TxCreateDoc,
+        objectClass: chunter.class.ThreadMessage,
+        objectId: 'msg-1' as Ref<ThreadMessage>,
+        objectSpace: 'objectSpace-1' as Ref<Space>,
+        space: 'space-1' as Ref<Space>,
+        modifiedBy: 'user-1' as PersonId,
+        modifiedOn: 1,
+        attributes: {
+          attachedTo: 'doc-1',
+          attachedToClass: 'SomeDocClass',
+          space: 'space-1'
+        } as any
+      }
+
+      await middleware.tx(mockMeasureContext, [tx])
+
+      // A copy of the session data would collect the broadcast txes on its own and drop them.
+      expect(derivedData).toBe(mockMeasureContext.contextData)
+      expect(derivedFlag).toBe(true)
+      expect(mockMeasureContext.contextData.isTriggerCtx).toBe(false)
+    })
+
     it('does not create ReadState when ThreadMessage is created and ReadState already exists', async () => {
       middleware = (await NotificationMiddleware.create(
         mockMeasureContext,
