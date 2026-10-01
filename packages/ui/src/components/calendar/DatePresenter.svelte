@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -26,7 +27,7 @@
   import DatePopup from './DatePopup.svelte'
   import DPCalendar from './icons/DPCalendar.svelte'
   import DPCalendarOver from './icons/DPCalendarOver.svelte'
-  import { getMonthName } from './internal/DateUtils'
+  import { formatDate } from './internal/DateUtils'
   import { registerFocus } from '../../focus'
 
   export let value: number | null | undefined
@@ -128,11 +129,7 @@
   {#if value !== null && value !== undefined}
     {#if shouldShowLabel}
       {#if mode !== DateRangeMode.TIMEONLY}
-        {new Date(value).getDate()}
-        {getMonthName(new Date(value), 'short')}
-        {#if new Date(value).getFullYear() !== today.getFullYear()}
-          {new Date(value).getFullYear()}
-        {/if}
+        {formatDate(new Date(value), new Date(value).getFullYear() !== today.getFullYear())}
       {/if}
       {#if withTime}
         {#if mode !== DateRangeMode.TIMEONLY}

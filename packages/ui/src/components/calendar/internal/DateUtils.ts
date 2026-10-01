@@ -1,4 +1,5 @@
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -168,6 +169,21 @@ export function getFormattedDate (value: number | null, options?: Intl.DateTimeF
   return value === null
     ? ''
     : new Date(value).toLocaleString(getCurrentLocale(), options ?? { month: 'short', day: 'numeric' })
+}
+
+export function formatDate (date: Date, showYear: boolean): string {
+  // Intl.DateTimeFormat.format throws RangeError on an invalid date, breaking the component tree
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return ''
+  }
+  const options: Intl.DateTimeFormatOptions = showYear
+    ? { year: 'numeric', month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric' }
+  try {
+    return new Intl.DateTimeFormat(getCurrentLocale(), options).format(date)
+  } catch {
+    return date.toLocaleDateString('default', options)
+  }
 }
 
 export const getTimeZoneName = (

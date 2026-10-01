@@ -19,7 +19,7 @@ import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'svelte'
 import DateRangePresenter from '../components/calendar/DateRangePresenter.svelte'
-import { getMonthName } from '../components/calendar/internal/DateUtils'
+import { formatDate } from '../components/calendar/internal/DateUtils'
 import { modalStore } from '../modals'
 import { popupstore } from '../popups'
 
@@ -64,19 +64,22 @@ describe('DateRangePresenter', () => {
   it('inline: omits the year when it matches the current year, shows it otherwise', () => {
     const sameYear = new Date(2026, 5, 20, 9, 5, 0).getTime()
     const otherYear = new Date(2027, 5, 20, 9, 5, 0).getTime()
-    const month = getMonthName(new Date(sameYear), 'short')
-
     const same = mount({ inline: true, value: sameYear })
-    expect(norm(same.host.textContent)).toBe(`20 ${month}`)
+    expect(norm(same.host.textContent)).toBe(norm(formatDate(new Date(sameYear), false)))
 
     const other = mount({ inline: true, value: otherYear })
     expect(norm(other.host.textContent)).toContain('2027')
   })
 
+  it('formatDate returns an empty string for an invalid date instead of throwing', () => {
+    expect(formatDate(new Date(NaN), true)).toBe('')
+  })
+
   it('inline: mode DATETIME appends zero-padded hours and minutes', () => {
     const value = new Date(2026, 5, 20, 9, 5, 0).getTime()
     const { host } = mount({ inline: true, mode: DateRangeMode.DATETIME, value })
-    expect(norm(host.textContent)).toMatch(/^20\s+\S+\s+09\s*:\s*05$/)
+    const date = norm(formatDate(new Date(value), false))
+    expect(norm(host.textContent)).toMatch(new RegExp(`^${date}\\s+09\\s*:\\s*05$`))
   })
 
   it('inline: hides the icon when shouldShowAvatar is false', () => {
