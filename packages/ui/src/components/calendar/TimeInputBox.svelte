@@ -37,6 +37,9 @@
   })
   let selected: TEdits | null = null
   let startTyping: boolean = false
+  // A field with one digit typed ("1" of "11") that could still take a second one - committed
+  // on the next digit, or here on blur/Enter so a single keystroke is never silently dropped.
+  let pendingField: TEdits | null = null
 
   const dispatch = createEventDispatcher()
 
@@ -98,6 +101,15 @@
     return result
   }
 
+  const commitEdit = (ed: TEdits): void => {
+    if (isNull()) return
+    const index = getIndex(ed)
+    fixEdits()
+    currentDate = setValue(edits[index].value, currentDate, ed, timeZone)
+    dateToEdits(currentDate, timeZone)
+    dispatch('update', currentDate)
+  }
+
   const keyDown = (ev: KeyboardEvent, ed: TEdits): void => {
     if (selected === ed && !disabled) {
       const index = getIndex(ed)
@@ -115,17 +127,25 @@
         } else {
           edits[index].value = edits[index].value * 10 + num
         }
-        if (!isNull() && !startTyping) {
-          fixEdits()
-          currentDate = setValue(edits[index].value, currentDate, ed, timeZone)
-          dateToEdits(currentDate, timeZone)
-        }
         edits = edits
-        dispatch('update', currentDate)
+
+        // A second digit could still follow (e.g. "1" of "11") - wait for it instead of
+        // committing "01" and letting a listener (EventTimeEditor) read it as a final value.
+        const complete = shouldNext || edits[index].value * 10 > getMaxValue(currentDate, ed)
+        if (complete) {
+          pendingField = null
+          commitEdit(ed)
+        } else {
+          pendingField = ed
+        }
 
         if (selected === 'hour' && (shouldNext || edits[0].value > 2)) selected = 'min'
       }
       if (ev.code === 'Enter') {
+        if (pendingField === ed) {
+          pendingField = null
+          commitEdit(ed)
+        }
         dispatch('close', currentDate)
       }
       if (ev.code === 'Backspace') {
@@ -136,6 +156,7 @@
         if (edits[index].value !== -1) {
           const val = ev.code === 'ArrowUp' ? edits[index].value + 1 : edits[index].value - 1
           if (currentDate) {
+            pendingField = null
             currentDate = setValue(val, currentDate, ed, timeZone)
             dateToEdits(currentDate, timeZone)
             dispatch('update', currentDate)
@@ -156,6 +177,13 @@
   export const focused = (ed: TEdits): void => {
     selected = ed
     startTyping = true
+  }
+  const blurred = (ed: TEdits): void => {
+    if (pendingField === ed) {
+      pendingField = null
+      commitEdit(ed)
+    }
+    selected = null
   }
   const fixEdits = (): void => {
     const h: number = edits[0].value === -1 ? 0 : edits[0].value
@@ -185,7 +213,9 @@
     on:focus={() => {
       focused(edits[0].id)
     }}
-    on:blur={() => (selected = null)}
+    on:blur={() => {
+      blurred(edits[0].id)
+    }}
   >
     {#if edits[0].value > -1}
       {edits[0].value.toString().padStart(2, '0')}
@@ -204,7 +234,9 @@
     on:focus={() => {
       focused(edits[1].id)
     }}
-    on:blur={() => (selected = null)}
+    on:blur={() => {
+      blurred(edits[1].id)
+    }}
   >
     {#if edits[1].value > -1}
       {edits[1].value.toString().padStart(2, '0')}

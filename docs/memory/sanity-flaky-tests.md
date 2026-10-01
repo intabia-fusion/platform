@@ -95,8 +95,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   retry. "Reconnect left the cached tail query stale" is ruled out: `refreshConnect` refreshes queries with callbacks.
 - **Calendar specs book both accounts' hours**; leftovers filled the day (`no free hour left`, a participant
   "busy" at a freed hour). Each spec now removes its events in `finally` (`CalendarApi.deleteEventsByTitle`).
-- **`team-planner` "Occupancy": end 10:30 instead of 11:00.** Suspect `EventTimeEditor.svelte:42` `dueChange()`
-  clamps a per-digit intermediate end before start back to the default length. Unconfirmed.
+- **`setTimeSlot` reads `dateStart: '1'` as the 1st of next month**: a "today" slot built from `getDate()` broke
+  every 1st (start next month, end clamped to start+30m). Use `'today'`.
 - **`todos` "Closing an issue...": status stays `todo` 20s after a clean click on Done.** Suspect
   `StatusEditor.svelte` calling `changeStatus()` inside reactive `getSelectedStatus()`. Unconfirmed.
 - **`settings` create-template: "Edit template" never shows.** Template `t1` in persistent `sanity-ws`; unresolved.

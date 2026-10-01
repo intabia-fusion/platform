@@ -185,6 +185,53 @@ describe('TimeInputBox', () => {
     expect(onSave).toHaveBeenCalledTimes(1)
   })
 
+  // Regression: a listener bound to "update" (EventTimeEditor) used to see "01" as the final
+  // hour after the very first keystroke of "11", and - if that made the end time precede the
+  // start - rolled the value back before the second digit ever arrived.
+  it('does not dispatch update after a first hour digit that a second digit could extend', async () => {
+    const { component, hour } = mount({ currentDate: new Date(2026, 0, 15, 9, 7) })
+    const onUpdate = vi.fn()
+    component.$on('update', onUpdate)
+    component.focused('hour')
+
+    digitKey(hour, 1)
+    expect(onUpdate).not.toHaveBeenCalled()
+
+    digitKey(hour, 1)
+    await tick()
+    expect(hour.textContent?.trim()).toBe('11')
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(onUpdate.mock.calls[0][0].detail.getHours()).toBe(11)
+  })
+
+  it('still commits a single digit immediately once no second digit could extend it (e.g. "9")', async () => {
+    const { component, hour } = mount({ currentDate: new Date(2026, 0, 15, 9, 7) })
+    const onUpdate = vi.fn()
+    component.$on('update', onUpdate)
+    component.focused('hour')
+
+    digitKey(hour, 9)
+    await tick()
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(onUpdate.mock.calls[0][0].detail.getHours()).toBe(9)
+  })
+
+  it('commits a pending single digit on blur instead of dropping it', async () => {
+    const { component, hour } = mount({ currentDate: new Date(2026, 0, 15, 9, 7) })
+    const onUpdate = vi.fn()
+    component.$on('update', onUpdate)
+    component.focused('hour')
+
+    digitKey(hour, 2)
+    await tick()
+    expect(onUpdate).not.toHaveBeenCalled()
+
+    hour.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
+    await tick()
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(onUpdate.mock.calls[0][0].detail.getHours()).toBe(2)
+  })
+
   it('isNull(date) re-derives the fields from a newly given date', async () => {
     const { component, hour, min } = mount({ currentDate: new Date(2026, 0, 15, 9, 7) })
     expect(component.isNull()).toBe(false)

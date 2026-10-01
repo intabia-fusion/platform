@@ -94,7 +94,8 @@ test.describe('Team Planner tests', () => {
       title: busyTitle,
       slots: [
         {
-          dateStart: `${today.getDate()}`,
+          // Not today.getDate(): setTimeSlot reads '1' as the 1st of next month.
+          dateStart: 'today',
           timeStart: '1000',
           dateEnd: {
             day: today.getDate().toString(),
