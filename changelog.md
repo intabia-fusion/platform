@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.50] - 2026-10-01
+
+* 🚀 FEATURES: · fusio-1414 & fusio-216: holding and dismissing push notifications, holding emails ([#487](https://github.com/hcengineering/platform/issues/487)) · fusio-534 & fusio-955: sort threads by last reply date and ui updates ([#490](https://github.com/hcengineering/platform/issues/490)) · fusio-209: screen share recording improvements ([#493](https://github.com/hcengineering/platform/issues/493)) · Group pushes by channel ([#495](https://github.com/hcengineering/platform/issues/495))
+* 🐛 BUG FIXES: · FUSIO-788 - Итоги закрытой встречи ([#489](https://github.com/hcengineering/platform/issues/489)) · fix filter by custom attributes ([#491](https://github.com/hcengineering/platform/issues/491)) · fix search by messages ([#492](https://github.com/hcengineering/platform/issues/492))
+
 ## [0.8.49] - 2026-09-29
 
 * 🚀 FEATURES: · FUSIO-1429: Support rustore ([#483](https://github.com/hcengineering/platform/issues/483)) · away + client kind ([#484](https://github.com/hcengineering/platform/issues/484))
