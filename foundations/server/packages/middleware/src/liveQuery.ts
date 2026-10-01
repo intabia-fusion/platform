@@ -92,7 +92,10 @@ export class LiveQueryMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async tx (ctx: MeasureContext, tx: Tx[]): Promise<TxMiddlewareResult> {
+    // Store first: a query registered before the write would load a snapshot without it, and a tx
+    // already applied to the cache never comes back. Re-applying to a post-write load is deduplicated.
+    const result = await this.provideTx(ctx, tx)
     await this.liveQuery.tx(...tx)
-    return await this.provideTx(ctx, tx)
+    return result
   }
 }

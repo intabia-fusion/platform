@@ -79,6 +79,7 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | The account service gives a colliding workspace its own url (`<name>-<id>`) | `server/account/src/utils.ts` | A url built from the requested name lands in someone else's workspace, i.e. on the login form |
 | Chat search is one-shot (`searchFulltext`, no live query) | `chunter-resources/src/search/store.ts:114` | A message indexed after the query ran never appears until it is re-issued |
 | Parallel `create-workspace` on a fresh db race on `CREATE TABLE IF NOT EXISTS` (23505 `pg_type`) | `postgres/src/utils.ts` `createTables` | Loser stays `is_disabled`, `configure` hangs; now reruns the create. prepare did not flag the failed create |
+| Server `LiveQueryMiddleware.tx` updates the cache before `DomainTx` writes; a `queryFind` registered in between loads a pre-commit snapshot and misses the doc for good | `middleware/src/liveQuery.ts:95` | Stale `getPersonSpaces`: owner got no `Chat` in 1/50 fresh workspaces. Fixed: store first, then the cache (`__tests__/liveQuery.test.ts`) |
 | Channel nav entry waits for a `Chat` doc from async `OnCollaboratorAdded` | `ChatNavGroup.svelte` | Lags past UI timeouts. Pushing the open object by id was reverted: it kept an unsubscribed open channel in the nav |
 | (same, recruit vacancy/applicant chats) | `ChatApi.waitForLinkedChat` | Tests poll the server `Chat` doc before checking the nav |
 
