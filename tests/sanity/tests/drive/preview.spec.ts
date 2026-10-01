@@ -56,8 +56,12 @@ test.describe('Preview service thumbnails', () => {
 
       await uploadBlob(ws.workspace, name, data, c.contentType)
 
-      const response = await fetch(`${previewUrl}/image/width=${WIDTH}/${ws.workspace}/${name}`, {
-        headers: { Accept: 'image/png' }
+      const url = `${previewUrl}/image/width=${WIDTH}/${ws.workspace}/${name}`
+      const anonymous = await fetch(url, { headers: { Accept: 'image/png' } })
+      expect(anonymous.status, 'a thumbnail without a workspace token').toBe(401)
+
+      const response = await fetch(url, {
+        headers: { Accept: 'image/png', Authorization: `Bearer ${ws.token}` }
       })
       const body = Buffer.from(await response.arrayBuffer())
 
