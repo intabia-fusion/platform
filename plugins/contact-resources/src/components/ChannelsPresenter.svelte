@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,7 +18,7 @@
   import type { Channel, Person } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { showPopup } from '@hcengineering/ui'
   import type { ViewAction } from '@hcengineering/view'
@@ -35,9 +36,13 @@
 
   let attachedPerson: Person | undefined = undefined
   const personQuery = createQuery()
+  const hierarchy = getClient().getHierarchy()
 
   $: channel = Array.isArray(value) ? value[0] : value
-  $: if (channel?.attachedToClass === contact.class.Person) {
+  // Employee and other Person mixins count as Person, as in the server check
+  $: isPersonParent =
+    channel !== undefined && channel !== null && hierarchy.isDerived(channel.attachedToClass, contact.class.Person)
+  $: if (isPersonParent && channel != null) {
     personQuery.query(contact.class.Person, { _id: channel.attachedTo as Ref<Person> }, (res) => {
       attachedPerson = res[0]
     })
@@ -46,10 +51,9 @@
     attachedPerson = undefined
   }
 
-  $: effectiveEditable =
-    channel?.attachedToClass === contact.class.Person
-      ? editable === true && attachedPerson !== undefined && canEditPersonContactDetails(attachedPerson)
-      : editable
+  $: effectiveEditable = isPersonParent
+    ? editable === true && attachedPerson !== undefined && canEditPersonContactDetails(attachedPerson)
+    : editable
 
   async function _open (ev: CustomEvent): Promise<void> {
     if (ev.detail.presenter !== undefined && Array.isArray(value)) {

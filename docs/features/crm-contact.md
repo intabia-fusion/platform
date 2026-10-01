@@ -65,6 +65,7 @@
 - **Автоперевод сообщений.** Настройка per-employee: включение, целевой язык, список исключённых языков. - `TTranslation`, `models/contact/src/index.ts`; UI-стор `plugins/contact-resources/src/translation.ts`.
 - **Автосинхронизация таймзоны браузера.** При смене таймзоны устройства обновляет `Employee.timezone`; пишет только если сменилась таймзона именно этого устройства (иначе несколько сессий в разных зонах бесконечно перетирали друг друга, FUSIO-1344). - `syncMyEmployeeTimezone`, `plugins/contact-resources/src/timezone.ts`.
 - **Скрытие отдельных каналов по региону.** Флагом `hide-ru-banned-channels` из UI-списка провайдеров убираются LinkedIn/Twitter/Facebook/Viber/Whatsapp. - `BANNED_CHANNEL_PROVIDERS`, `plugins/contact-resources/src/utils.ts`.
+- **Правка чужих сотрудников.** User ниже Maintainer не может менять Person другого сотрудника, вешать миксин Employee на чужую персону и создавать/менять/переносить Channel, чей родитель - чужой сотрудник (родитель берётся из сохранённого канала, не из tx). Свой Person, не-сотрудники, Maintainer и Owner без ограничений; UI показывает такие поля только для чтения по тому же правилу. - `processUserTx`, `isForbiddenUserContactTx`, `foundations/server/packages/middleware/src/guestPermissions.ts`; `canEditPersonContactDetails`, `plugins/contact-resources/src/utils.ts`.
 - **Seat-лимиты при создании Employee.** Форма создания сотрудника проверяет `planLimits.usersLimit` из billing и блокирует создание при исчерпании мест. - `plugins/contact-resources/src/components/CreateEmployee.svelte`.
 
 ### Lead
@@ -105,7 +106,7 @@
 
 ## Тесты
 
-- Unit: `plugins/contact/src/__tests__/cache.test.ts`, `plugins/contact/src/__tests__/ensureEmployee.test.ts`, `plugins/contact-resources/src/__tests__/timezone.test.ts`.
+- Unit: `foundations/server/packages/middleware/src/tests/guestPermissions.test.ts`, `plugins/contact/src/__tests__/cache.test.ts`, `plugins/contact/src/__tests__/ensureEmployee.test.ts`, `plugins/contact-resources/src/__tests__/timezone.test.ts`.
 - api-tests (регрессия Postgres-сортировки по `$lookup.channels.lastMessage`): `api-tests/api/src/__tests__/contact-channels-sort.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/contacts.spec.ts`, `tests/sanity/tests/contact.duplicate.spec.ts`; page-объекты - `tests/sanity/tests/model/contacts/*`, `tests/sanity/tests/model/leads/leads-page.ts`.
 
