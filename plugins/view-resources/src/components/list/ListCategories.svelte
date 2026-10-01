@@ -134,7 +134,7 @@
       // indicate loading while we compute categories (used by Show More UI)
       isLoadingCategories = true
       try {
-        categories = await getCategories(client, _class, space, docs, groupByKey)
+        let result = await getCategories(client, _class, space, docs, groupByKey)
         if (level === 0) {
           for (const viewOption of viewOptionsModel ?? []) {
             if (viewOption.actionTarget !== 'category') continue
@@ -143,12 +143,13 @@
               const f = await getResource(categoryFunc.action)
               const res = hierarchy.clone(await f(_class, query, space, groupByKey, update, queryId))
               if (res !== undefined) {
-                categories = concatCategories(res, categories)
-                return
+                result = concatCategories(res, result)
+                break
               }
             }
           }
         }
+        categories = result
       } finally {
         categoriesComputed = true
         isLoadingCategories = false
