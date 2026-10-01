@@ -49,7 +49,7 @@ export function createFakeClient (): { client: any, rows: DelayedEventRecord[] }
       }
       return []
     }
-    if (text.includes('SELECT')) {
+    if (text.includes('SELECT') && !text.includes('DELETE FROM')) {
       const [now, limit] = values
       return rows
         .filter((r) => r.target_date <= now)
@@ -58,17 +58,21 @@ export function createFakeClient (): { client: any, rows: DelayedEventRecord[] }
         .map((r) => ({ ...r, target_date: String(r.target_date) })) // mimic int8 coming back as a string
     }
     if (text.includes('DELETE FROM')) {
-      const [id, workspace] = values
-      const idx = rows.findIndex((r) => r.id === id && r.workspace === workspace)
-      if (idx >= 0) rows.splice(idx, 1)
+      const [ids, workspaces] = values as [string[], string[]]
+      ids.forEach((id, i) => {
+        const idx = rows.findIndex((r) => r.id === id && r.workspace === workspaces[i])
+        if (idx >= 0) rows.splice(idx, 1)
+      })
       return []
     }
     throw new Error(`fake client: unexpected query: ${text}`)
   }
 
   const client: any = run
-  client.begin = async (cb: (sql: any) => Promise<void>): Promise<void> => {
-    await cb(client)
+  client.array = (items: unknown[]): unknown[] => items
+  // The delete after a send is one statement: a transaction cannot be retried by the client.
+  client.begin = async (): Promise<void> => {
+    throw new Error('fake client: no transactions expected')
   }
   return { client, rows }
 }
@@ -199,6 +203,17 @@ describe('TimeMachineDB', () => {
       await db.deleteEvents([{ id: 'e1', workspace: ws1, target_date: 1000, topic: 't', data: {} }])
 
       expect(rows.map((r) => r.id)).toEqual(['e2'])
+    })
+
+    it('removes several events of different workspaces in one go, matching id and workspace as a pair', async () => {
+      await db.upsertEvent({ id: 'e1', workspace: ws1, target_date: 1000, topic: 't', data: {} })
+      await db.upsertEvent({ id: 'e1', workspace: ws2, target_date: 1000, topic: 't', data: {} })
+      await db.upsertEvent({ id: 'e2', workspace: ws2, target_date: 1000, topic: 't', data: {} })
+      await db.deleteEvents([
+        { id: 'e1', workspace: ws1, target_date: 1000, topic: 't', data: {} },
+        { id: 'e2', workspace: ws2, target_date: 1000, topic: 't', data: {} }
+      ])
+      expect(rows.map((r) => `${r.id}@${r.workspace}`)).toEqual(['e1@ws-2'])
     })
 
     it('is a no-op on an empty list', async () => {

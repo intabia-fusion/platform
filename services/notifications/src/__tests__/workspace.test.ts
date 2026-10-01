@@ -248,6 +248,7 @@ describe('Workspace.releaseHeld', () => {
   function instanceWith (states: unknown[]): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
+    instance.released = new Map()
     instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
     instance.ws = { uuid: 'ws-1' }
     instance.pipeline = { findAll: jest.fn().mockResolvedValue(states) }
@@ -260,6 +261,45 @@ describe('Workspace.releaseHeld', () => {
     await instance.releaseHeld(held)
     expect(instance.producer.send).toHaveBeenCalledWith(instance.ctx, 'ws-1', [{ id: 'n-1' }])
     expect(instance.isInProgress()).toBe(false)
+  })
+
+  it('sends a letter the time machine fired twice only once', async () => {
+    const instance = instanceWith([])
+    await instance.releaseHeld(held)
+    await instance.releaseHeld(held)
+    expect(instance.producer.send).toHaveBeenCalledTimes(1)
+    expect(instance.ctx.warn).toHaveBeenCalledWith('held letter fired again, dropped', { notificationId: 'n-1' })
+  })
+
+  it('sends the letter again when the first publish failed', async () => {
+    const instance = instanceWith([])
+    instance.publish = jest.fn().mockRejectedValueOnce(new Error('broker down')).mockResolvedValue(undefined)
+    await expect(instance.releaseHeld(held)).rejects.toThrow('broker down')
+    await instance.releaseHeld(held)
+    expect(instance.publish).toHaveBeenCalledTimes(2)
+  })
+
+  it('forgets a letter after ten minutes, keeping the fresher ones', async () => {
+    const instance = instanceWith([])
+    const now = jest.spyOn(Date, 'now')
+    try {
+      now.mockReturnValue(1_000)
+      await instance.releaseHeld(held)
+      now.mockReturnValue(1_000 + 9 * 60 * 1000)
+      await instance.releaseHeld({ ...held, notificationId: 'n-2', message: { id: 'n-2' } })
+      now.mockReturnValue(1_000 + 10 * 60 * 1000 + 1)
+      await instance.releaseHeld({ ...held, notificationId: 'n-3', message: { id: 'n-3' } })
+      expect(Array.from(instance.released.keys())).toEqual(['letter:acc-1:n-2:email', 'letter:acc-1:n-3:email'])
+    } finally {
+      now.mockRestore()
+    }
+  })
+
+  it('another provider of the same notification is its own letter', async () => {
+    const instance = instanceWith([])
+    await instance.releaseHeld(held)
+    await instance.releaseHeld({ ...held, provider: 'telegram' })
+    expect(instance.producer.send).toHaveBeenCalledTimes(2)
   })
 
   it('drops the letter when the person read the notification meanwhile', async () => {

@@ -133,6 +133,36 @@ describe('pollOnce', () => {
     )
   })
 
+  it('retries a failed delete instead of leaving sent events to be sent again', async () => {
+    const e1 = event({ id: 'e1' })
+    const db: any = {
+      getExpiredEvents: jest.fn().mockResolvedValue([e1]),
+      deleteEvents: jest.fn().mockRejectedValueOnce(new Error('prepared statement does not exist'))
+    }
+    db.deleteEvents.mockResolvedValue(undefined)
+    const ctx = newCtx()
+    await pollOnce(ctx, db, {} as any)
+    expect(sendTimeEvent).toHaveBeenCalledTimes(1)
+    expect(db.deleteEvents).toHaveBeenCalledTimes(2)
+    expect(db.deleteEvents).toHaveBeenLastCalledWith([e1])
+    expect(ctx.error).not.toHaveBeenCalled()
+  })
+
+  it('names the events that will go out twice when the delete keeps failing', async () => {
+    const e1 = event({ id: 'e1' })
+    const db: any = {
+      getExpiredEvents: jest.fn().mockResolvedValue([e1]),
+      deleteEvents: jest.fn().mockRejectedValue(new Error('db down'))
+    }
+    const ctx = newCtx()
+    await pollOnce(ctx, db, {} as any)
+    expect(db.deleteEvents).toHaveBeenCalledTimes(3)
+    expect(ctx.error).toHaveBeenCalledWith(
+      'Time Machine: sent events are not deleted, they will be sent again',
+      expect.objectContaining({ ids: ['e1'] })
+    )
+  })
+
   it('does not call deleteEvents at all when every send in the batch fails', async () => {
     sendTimeEvent.mockRejectedValue(new Error('broker unavailable'))
     const db: any = { getExpiredEvents: jest.fn().mockResolvedValue([event()]), deleteEvents: jest.fn() }

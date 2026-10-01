@@ -28,8 +28,11 @@ const LETTER = 'letter'
 // checks the two agree).
 export const HELD_NOTIFICATIONS_TOPIC = 'held-notifications' as QueueTopic.HeldNotifications
 
+/** letter:<account>:<notification>:<provider> */
+export type HeldLetterId = `${typeof LETTER}:${string}:${string}:${string}`
+
 /** The time machine key; a second schedule of it moves the due date. */
-export function heldLetterId (held: Pick<HeldPush, 'account' | 'notificationId' | 'provider'>): string {
+export function heldLetterId (held: Pick<HeldPush, 'account' | 'notificationId' | 'provider'>): HeldLetterId {
   return `${LETTER}:${held.account}:${held.notificationId}:${held.provider}`
 }
 
