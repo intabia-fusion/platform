@@ -62,6 +62,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **A lazy `<img>` in a small popup never loads** until scrolled into view (`checkCommentWithImageExist`).
 - **`generateId(n)` with a small `n` is not unique across workers**: 16^n suffixes and a counter restarting per
   worker - talent names collided in `sanity-ws` (6/50). Use `generateId()`.
+- **Click a row's link, not the cell**: `tr > :has-text(name)` clicks the cell centre, which misses a short name once
+  longer names widen the column (`createCandidateWithSkills` broke 3/3 after talent ids got longer).
 
 ## Product-side causes
 

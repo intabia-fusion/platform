@@ -319,7 +319,11 @@ export class TalentsPage extends CommonRecruitingPage {
     await this.closeSkillsPopup()
     await this.createCandidateButton().click()
     await this.page.waitForSelector('form.antiCard', { state: 'detached' })
-    await this.page.click(`tr > :has-text("${lastName} ${firstName}")`)
+    // Click the name link, not the cell: the cell centre misses it once longer names widen the column.
+    await this.page
+      .locator('tr')
+      .getByRole('link', { name: `${lastName} ${firstName}` })
+      .click()
     for (const skill of skills) {
       await expect(this.page.locator(`text=${skill}`).first()).toBeVisible()
     }
