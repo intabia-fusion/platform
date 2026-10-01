@@ -16,7 +16,7 @@ import {
   type TrackPublication,
   type Participant
 } from 'livekit-client'
-import { getMetadata, translate } from '@hcengineering/platform'
+import { type IntlString, getMetadata, translate } from '@hcengineering/platform'
 import {
   getMediaDevices,
   getSelectedCamId,
@@ -28,12 +28,14 @@ import { LoveEvents } from '@hcengineering/love'
 import { useMedia } from '@hcengineering/media-resources'
 import { get, writable } from 'svelte/store'
 import { Analytics } from '@hcengineering/analytics'
-import { addNotification, NotificationSeverity } from '@hcengineering/ui'
+import { addNotification, NotificationSeverity, showPopup } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import LastParticipantNotification from './components/meeting/LastParticipantNotification.svelte'
 import love from './plugin'
 import { $myPreferences } from './stores'
 import { leaveMeeting } from './meetings'
+import CameraInUsePopup from './components/meeting/CameraInUsePopup.svelte'
+import media from '@hcengineering/media'
 
 export enum ScreenSharingState {
   Inactive,
@@ -112,6 +114,7 @@ export class LiveKitClient {
   private currentSessionSupportsVideo: boolean = false
   private lastParticipantNotificationTimeout: number = -1
   private lastParticipantDisconnectTimeout: number = -1
+  private cameraInUsePopup: (() => void) | undefined = undefined
 
   constructor () {
     const lkRoom = new LKRoom({
@@ -202,6 +205,11 @@ export class LiveKitClient {
       })
 
       this.currentMediaSession?.on('camera', (enabled) => {
+        if (!enabled && this.cameraInUsePopup !== undefined) {
+          this.clearCameraInUse()
+          return
+        }
+
         void this.setCameraEnabled(enabled)
       })
       this.currentMediaSession?.on('microphone', (enabled) => {
@@ -242,6 +250,7 @@ export class LiveKitClient {
 
   async disconnect (): Promise<void> {
     console.log('[LiveKitClient.disconnect] Disconnecting...', { state: this.liveKitRoom.state })
+    this.clearCameraInUse()
     screenSharingState.set(ScreenSharingState.Inactive)
     clearTimeout(this.lastParticipantNotificationTimeout)
     const me = this.liveKitRoom.localParticipant
@@ -617,20 +626,68 @@ export class LiveKitClient {
 
     try {
       await this.liveKitRoom.localParticipant.setCameraEnabled(value)
+      if (value) this.clearCameraInUse()
     } catch (e) {
-      // If enabling failed, try to select an available camera and enable again.
       if (value) {
-        try {
-          const mediaDevices = await getMediaDevices(false, true)
-          if (mediaDevices.activeCamera !== undefined) {
-            await this.setActiveCamera(mediaDevices.activeCamera.deviceId)
-            await this.liveKitRoom.localParticipant.setCameraEnabled(true)
-          }
-        } catch (retryErr) {
-          console.warn('[LiveKitClient.setCameraEnabled] camera unavailable, stays off', retryErr)
-        }
+        await this.handleCameraError(e)
       }
     }
+  }
+
+  private showCameraInUseNotification (err: unknown): void {
+    const name = (err as DOMException)?.name ?? ''
+    const msg = ((err as Error)?.message ?? '').toLowerCase()
+
+    let message: IntlString = media.string.DefaultCameraError
+    if (name === 'NotReadableError' || name === 'AbortError' || msg.includes('in use')) {
+      message = media.string.CameraInUseMessage
+    } else if (name === 'NotAllowedError' || name === 'SecurityError' || msg.includes('permission')) {
+      message = media.string.CameraNotAllowed
+    }
+
+    if (this.cameraInUsePopup !== undefined) return
+
+    const result = showPopup(
+      CameraInUsePopup,
+      {
+        message,
+        onRetry: () => {
+          this.clearCameraInUse()
+          void this.setCameraEnabled(true)
+        }
+      },
+      'centered',
+      () => {
+        this.currentMediaSession?.setCamera({ enabled: false })
+        this.clearCameraInUse()
+      }
+    )
+
+    this.cameraInUsePopup = result.close
+  }
+
+  private clearCameraInUse (): void {
+    this.cameraInUsePopup?.()
+    this.cameraInUsePopup = undefined
+  }
+
+  private async handleCameraError (error: unknown): Promise<void> {
+    let retryError: unknown | undefined
+
+    try {
+      const mediaDevices = await getMediaDevices(false, true)
+      if (mediaDevices.activeCamera !== undefined) {
+        await this.setActiveCamera(mediaDevices.activeCamera.deviceId)
+        await this.liveKitRoom.localParticipant.setCameraEnabled(true)
+        this.clearCameraInUse()
+        return
+      }
+    } catch (retryErr) {
+      console.warn('[LiveKitClient.handleCameraError] camera unavailable, stays off', retryErr)
+      retryError = retryErr
+    }
+
+    this.showCameraInUseNotification(retryError ?? error)
   }
 
   async applyNoiseCancellation (value: boolean): Promise<void> {

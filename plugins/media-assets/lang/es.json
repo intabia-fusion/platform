@@ -14,6 +14,10 @@
     "NoMic": "Sin micrófono",
     "NoSpeaker": "Sin altavoz",
     "On": "Encendido",
-    "Off": "Apagado"
+    "Off": "Apagado",
+    "CameraInUseMessage": "La cámara está siendo utilizada por otra aplicación. Ciérrela e inténtelo de nuevo.",
+    "CameraInUseRetry": "Intentar de nuevo",
+    "CameraNotAllowed": "El acceso a la cámara está denegado para este sitio. Revisa la configuración de tu navegador.",
+    "DefaultCameraError": "Error al conectar la cámara."
   }
 }

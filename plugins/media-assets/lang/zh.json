@@ -14,6 +14,10 @@
     "NoMic": "没有麦克风",
     "NoSpeaker": "没有扬声器",
     "On": "开",
-    "Off": "关"
+    "Off": "关",
+    "CameraInUseMessage": "摄像头正被其他应用程序占用。请关闭该应用程序后重试。",
+    "CameraInUseRetry": "重试",
+    "CameraNotAllowed": "此网站被拒绝访问摄像头，请检查您的浏览器设置。",
+    "DefaultCameraError": "连接摄像头时出错。"
   }
 }
