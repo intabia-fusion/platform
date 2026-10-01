@@ -175,13 +175,20 @@ export class NotificationMiddleware extends BaseMiddleware {
           attachedToClass,
           collection: 'readStates'
         })
-        const systemCtx = Object.create(ctx)
-        systemCtx.contextData = Object.create(ctx.contextData)
-        systemCtx.contextData.isTriggerCtx = true
+        // The flag goes on the session data itself, as in TriggersMiddleware: a copy made with
+        // Object.create gets its own lazily created `broadcast`, and the new state never reaches clients.
+        const prevFlag = ctx.contextData.isTriggerCtx
+        ctx.contextData.isTriggerCtx = true
         try {
-          await this.context.derived?.tx(systemCtx, [ttx])
+          await this.context.derived?.tx(ctx, [ttx])
         } catch (err: any) {
           ctx.warn('Thread read state was not created, it most likely exists already', { attachedTo, err })
+        } finally {
+          if (prevFlag === undefined) {
+            delete ctx.contextData.isTriggerCtx
+          } else {
+            ctx.contextData.isTriggerCtx = prevFlag
+          }
         }
       }
     } else if (tx._class === core.class.TxUpdateDoc && tx.objectClass === notification.class.ReadState) {

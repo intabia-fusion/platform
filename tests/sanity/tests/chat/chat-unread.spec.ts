@@ -611,6 +611,29 @@ test.describe('Chat unread state tests', () => {
     await checkMarkersOff(chat, ['chat'])
   })
 
+  test('A thread opened before its first reply reads the replies after mine', async () => {
+    const chat = await createChat()
+    const parent = `Parent ${uniq}`
+    const mine = await chat.me.sendMessage(chat.channel, parent)
+    await openChannel()
+    await channelPage.checkMessageExist(parent, true, parent)
+
+    // The thread has no read state when it opens: the server makes one with the first reply, and
+    // the browser learns of it only from the broadcast.
+    await channelPage.replyMessage(parent)
+    await channelPage.sendReply(`My reply ${uniq}`)
+    const live = `Live reply ${uniq}`
+    await chat.other.reply(chat.channel, mine, live)
+    await channelPage.checkIfMessageExistInSidebar(true, live)
+
+    // The counter of an open thread is hidden either way: what counts is the position it wrote.
+    const thread = { _id: mine } as unknown as typeof chat.channel
+    await expect.poll(async () => await chat.me.hasReadChannel(thread), { timeout: 15000 }).toBe(true)
+    await channelPage.closeReplyButton().click()
+    await unread.checkNavCounterStaysAway('Threads')
+    await checkMarkersOff(chat, ['chat'])
+  })
+
   // ---- The Threads list ----
 
   test('Threads lists the threads I take part in, the latest on top', async ({ page }) => {
