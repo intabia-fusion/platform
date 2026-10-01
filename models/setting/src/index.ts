@@ -473,6 +473,20 @@ export function createModel (builder: Builder): void {
     },
     setting.ids.OfficeSettings
   )
+  builder.createDoc(
+    setting.class.SettingsCategory,
+    core.space.Model,
+    {
+      name: 'sidebarMenu',
+      label: setting.string.SidebarMenuSettings,
+      icon: setting.icon.Setting,
+      component: setting.component.SidebarMenuSettings,
+      group: 'settings-account',
+      role: AccountRole.User,
+      order: 1650
+    },
+    setting.ids.SidebarMenuSettings
+  )
   // Currently remove Support item from settings
   // builder.createDoc(
   //   setting.class.SettingsCategory,

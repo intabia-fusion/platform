@@ -413,6 +413,7 @@ export default plugin(settingId, {
     ApiKeys: '' as Ref<Doc>,
     Export: '' as Ref<Doc>,
     OfficeSettings: '' as Ref<Doc>,
+    SidebarMenuSettings: '' as Ref<Doc>,
     DisablePermissionsConfiguration: '' as Ref<Configuration>,
     Mailboxes: '' as Ref<Doc>
   },
@@ -463,7 +464,8 @@ export default plugin(settingId, {
     EditRelation: '' as AnyComponent,
     Mailboxes: '' as AnyComponent,
     AddEmailSocialId: '' as AnyComponent,
-    OfficeSettings: '' as AnyComponent
+    OfficeSettings: '' as AnyComponent,
+    SidebarMenuSettings: '' as AnyComponent
   },
   string: {
     ConfirmOperation: '' as IntlString,
@@ -531,6 +533,7 @@ export default plugin(settingId, {
     SeatLimitReached: '' as IntlString,
     SeatLimitReachedDescription: '' as IntlString,
     OfficeSettings: '' as IntlString,
+    SidebarMenuSettings: '' as IntlString,
     OfficeDefaultSettings: '' as IntlString,
     DefaultStartWithTranscription: '' as IntlString,
     DefaultStartWithRecording: '' as IntlString,

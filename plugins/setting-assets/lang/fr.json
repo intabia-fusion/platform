@@ -247,6 +247,7 @@
     "PasswordAgingRule": "Règle de vieillissement du mot de passe",
     "PasswordAgingRuleDescription": "Nombre de jours après lesquels les utilisateurs devront changer leur mot de passe.",
     "OfficeSettings": "Paramètres du bureau",
+    "SidebarMenuSettings": "Paramètres du menu latéral",
     "OfficeDefaultSettings": "Paramètres par défaut pour les salles de réunion",
     "DefaultStartWithTranscription": "Activer la transcription dans les nouveaux bureaux",
     "DefaultStartWithRecording": "Activer l'enregistrement dans les nouveaux bureaux",

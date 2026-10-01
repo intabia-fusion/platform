@@ -235,6 +235,7 @@
     "PasswordAgingRule": "Regla de envejecimiento de contraseñas",
     "PasswordAgingRuleDescription": "Número de días después de los cuales se requerirá a los usuarios que cambien su contraseña.",
     "OfficeSettings": "Configuración de oficina",
+    "SidebarMenuSettings": "Configuración del menú lateral",
     "OfficeDefaultSettings": "Configuración predeterminada para salas de reuniones",
     "DefaultStartWithTranscription": "Habilitar transcripción en nuevas oficinas",
     "DefaultStartWithRecording": "Habilitar grabación en nuevas oficinas",

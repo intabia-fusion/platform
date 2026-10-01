@@ -248,6 +248,7 @@
     "PasswordAgingRule": "Правило устаревания пароля",
     "PasswordAgingRuleDescription": "Количество дней, после которых пользователи должны будут изменить свой пароль.",
     "OfficeSettings": "Настройки офиса",
+    "SidebarMenuSettings": "Настройки бокового меню",
     "OfficeDefaultSettings": "Настройки по умолчанию для переговорных",
     "DefaultStartWithTranscription": "Включить транскрибацию в новых комнатах",
     "DefaultStartWithRecording": "Включить запись в новых комнатах",
