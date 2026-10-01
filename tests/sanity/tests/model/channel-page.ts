@@ -170,9 +170,9 @@ export class ChannelPage extends CommonPage {
     await this.channelName(channel).click()
   }
 
-  async changeChannelName (channel: string): Promise<void> {
+  async changeChannelName (channel: string, newName: string): Promise<void> {
     await this.channelNameOnDetail(channel).click()
-    await this.page.keyboard.type('New Channel Name')
+    await this.page.keyboard.type(newName)
     await this.changeChannelNameConfirm().click()
   }
 

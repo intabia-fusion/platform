@@ -484,13 +484,14 @@ test.describe('Chat notification tests', () => {
       await invited.channelPage2.sendMessage(message)
       await channelPage.checkMessageExist(message, true, message)
 
-      // changeChannelName types a fixed name of its own, so that is what to expect afterwards.
+      // Shared workspace keeps renamed channels from earlier tests, so the new name must be unique.
+      const newName = `New Channel Name ${uniq}`
       await channelPage.clickOnOpenChannelDetails()
-      await channelPage.changeChannelName(data.channelName)
+      await channelPage.changeChannelName(data.channelName, newName)
       await channelPage.clickOnOpenChannelDetails()
 
       await channelPage.checkMessageExist(message, true, message)
-      await invited.channelPage2.checkIfChannelDefaultExist(true, 'New Channel Name')
+      await invited.channelPage2.checkIfChannelDefaultExist(true, newName)
     } finally {
       await invited.dispose()
     }

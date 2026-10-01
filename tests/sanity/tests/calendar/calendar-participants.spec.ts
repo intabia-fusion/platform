@@ -13,9 +13,10 @@
 // limitations under the License.
 //
 import { expect, test, type Page } from '../fixtures'
-import { generateId, getSecondPage, PlatformSetting, PlatformURI } from '../utils'
+import { generateId, getSecondPage, PlatformSetting, PlatformURI, PlatformUserSecond } from '../utils'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
+import { deleteEventsByTitle } from '../API/CalendarApi'
 
 test.use({
   storageState: PlatformSetting
@@ -41,11 +42,16 @@ test.describe('Calendar participants isolation', () => {
     using _page2 = await getSecondPage(browser)
     const page2 = _page2.page
 
-    await calendarPage.createEventInWidget(title, 3)
-    await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
+    try {
+      await calendarPage.createEventInWidget(title, 3)
+      await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
 
-    const calendarPage2 = await openCalendarWidget(page2)
-    await expect(calendarPage2.eventInCalendarWidget(title)).not.toBeVisible({ timeout: 5000 })
+      const calendarPage2 = await openCalendarWidget(page2)
+      await expect(calendarPage2.eventInCalendarWidget(title)).not.toBeVisible({ timeout: 5000 })
+    } finally {
+      // Leftover events fill up every hour of the day across a series with no stand reset.
+      await deleteEventsByTitle(title)
+    }
   })
 
   test('Participant sees a copy of the event and the busy slot shows up when re-selected', async ({
@@ -58,33 +64,41 @@ test.describe('Calendar participants isolation', () => {
     using _page2 = await getSecondPage(browser)
     const page2 = _page2.page
     let calendarPage2: CalendarPage
+    const busyTitle = `Colleague busy ${generateId()}`
 
-    await test.step('Create an event with the second account as participant', async () => {
-      await calendarPage.clickFreeCellInWidget(5)
-      await calendarPage.inputEventTitle().fill(title)
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await calendarPage.buttonCreateEventSubmit().click()
-    })
+    try {
+      await test.step('Create an event with the second account as participant', async () => {
+        await calendarPage.clickFreeCellInWidget(5)
+        await calendarPage.inputEventTitle().fill(title)
+        await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
+        await calendarPage.buttonCreateEventSubmit().click()
+      })
 
-    await test.step('Own calendar shows the event', async () => {
-      await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
-    })
+      await test.step('Own calendar shows the event', async () => {
+        await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
+      })
 
-    await test.step('Second account sees a copy of the event in its own calendar', async () => {
-      calendarPage2 = await openCalendarWidget(page2)
-      await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('Second account sees a copy of the event in its own calendar', async () => {
+        calendarPage2 = await openCalendarWidget(page2)
+        await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
+      })
 
-    await test.step('A participant booked at that hour is marked busy', async () => {
-      // Busy mark needs the colleague busy at that exact hour, so book it in their own calendar.
-      // That leaves my grid cell free to click - clicking my own event would open it for editing.
-      const busyTime = await calendarPage2.createEventInWidget(`Colleague busy ${generateId()}`, 8)
+      await test.step('A participant booked at that hour is marked busy', async () => {
+        // Busy mark needs the colleague busy at that exact hour, so book it in their own calendar.
+        // That leaves my grid cell free to click - clicking my own event would open it for editing.
+        const busyTime = await calendarPage2.createEventInWidget(busyTitle, 8)
 
-      await calendarPage.emptyCellAtTime(busyTime).scrollIntoViewIfNeeded()
-      await calendarPage.emptyCellAtTime(busyTime).click()
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeVisible({ timeout: 15000 })
-      await calendarPage.closeEventPopup()
-    })
+        await calendarPage.emptyCellAtTime(busyTime).scrollIntoViewIfNeeded()
+        await calendarPage.emptyCellAtTime(busyTime).click()
+        await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
+        await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeVisible({ timeout: 15000 })
+        await calendarPage.closeEventPopup()
+      })
+    } finally {
+      // The first title is owned by the first account, the busy slot by the second - leftovers on
+      // either fill up the shared hours across a series with no stand reset.
+      await deleteEventsByTitle(title)
+      await deleteEventsByTitle(busyTitle, PlatformUserSecond)
+    }
   })
 })

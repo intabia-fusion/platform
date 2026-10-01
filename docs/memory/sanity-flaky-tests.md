@@ -57,6 +57,9 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   uploads drain: wait for `hls.thumbnail` (`waitForHlsThumbnail`), not for a derived-blob count.
 - **`toContainText` on a viewlet Table misses rows below the rendered window.** Cells render lazily
   (`Table.svelte` `rowLimit`), sorted by `modifiedOn`; other workers' channels push a fresh one down. Scroll first.
+- **A fixed name in a shared workspace matches last run's copy** (`changeChannelName` "New Channel Name").
+- **`readEverything` by `Date.now()` marked a message sent right after as read**; it reads up to the last message's `createdOn`.
+- **A lazy `<img>` in a small popup never loads** until scrolled into view (`checkCommentWithImageExist`).
 
 ## Product-side causes
 
@@ -80,6 +83,7 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | Chat search is one-shot (`searchFulltext`, no live query) | `chunter-resources/src/search/store.ts:114` | A message indexed after the query ran never appears until it is re-issued |
 | Parallel `create-workspace` on a fresh db race on `CREATE TABLE IF NOT EXISTS` (23505 `pg_type`) | `postgres/src/utils.ts` `createTables` | Loser stays `is_disabled`, `configure` hangs; now reruns the create. prepare did not flag the failed create |
 | Server `LiveQueryMiddleware.tx` updates the cache before `DomainTx` writes; a `queryFind` registered in between loads a pre-commit snapshot and misses the doc for good | `middleware/src/liveQuery.ts:95` | Stale `getPersonSpaces`: owner got no `Chat` in 1/50 fresh workspaces. Fixed: store first, then the cache (`__tests__/liveQuery.test.ts`) |
+| `Move.svelte` fills `issueToUpdate` (a Map) via `.set()` with no reassignment | `tracker-resources` Move | Svelte misses it: keep-attributes toggle stays disabled if issues resolve after the target pick |
 | Channel nav entry waits for a `Chat` doc from async `OnCollaboratorAdded` | `ChatNavGroup.svelte` | Lags past UI timeouts. Pushing the open object by id was reverted: it kept an unsubscribed open channel in the nav |
 | (same, recruit vacancy/applicant chats) | `ChatApi.waitForLinkedChat` | Tests poll the server `Chat` doc before checking the nav |
 
@@ -89,9 +93,13 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   renders nothing for a non-owner until `$myEmployeeStore` resolves; `getSecondPageByInvite` now reports url + body.
 - **`chat-unread` "Reading a channel from inbox" (1/5):** message absent 15s after opening from inbox, 9ms on
   retry. "Reconnect left the cached tail query stale" is ruled out: `refreshConnect` refreshes queries with callbacks.
-- **Calendar specs share the second account's hours and clean up nothing.** Never run them with
-  `--repeat-each`: the day fills up and every one fails with `no free hour left in the calendar
-  widget` until `./prepare-pg.sh`. A per-worker scan offset was tried and reverted.
+- **Calendar specs book both accounts' hours**; leftovers filled the day (`no free hour left`, a participant
+  "busy" at a freed hour). Each spec now removes its events in `finally` (`CalendarApi.deleteEventsByTitle`).
+- **`team-planner` "Occupancy": end 10:30 instead of 11:00.** Suspect `EventTimeEditor.svelte:42` `dueChange()`
+  clamps a per-digit intermediate end before start back to the default length. Unconfirmed.
+- **`todos` "Closing an issue...": status stays `todo` 20s after a clean click on Done.** Suspect
+  `StatusEditor.svelte` calling `changeStatus()` inside reactive `getSelectedStatus()`. Unconfirmed.
+- **`settings` create-template: "Edit template" never shows.** Template `t1` in persistent `sanity-ws`; unresolved.
 
 - **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup",
   ~3/10). Measured: `counter "3", expected "2", popup lists 2, stored 2` - only the browser copy

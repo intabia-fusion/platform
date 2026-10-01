@@ -94,16 +94,19 @@ export class ChatUnreadPage extends CommonPage {
   async checkNewSeparatorBetween (lastRead: string | undefined, firstUnread: string): Promise<void> {
     await expect(this.newSeparator()).toBeVisible()
     await expect(this.message(firstUnread)).toBeVisible()
-    const separator = await this.newSeparator().boundingBox()
-    const unread = await this.message(firstUnread).boundingBox()
-    expect(separator).not.toBeNull()
-    expect(unread).not.toBeNull()
-    expect((separator?.y ?? 0) < (unread?.y ?? 0)).toBeTruthy()
-    if (lastRead !== undefined) {
-      const read = await this.message(lastRead).boundingBox()
-      expect(read).not.toBeNull()
-      expect((read?.y ?? 0) < (separator?.y ?? 0)).toBeTruthy()
-    }
+    // Right after opening the panel still scrolls to the unread position: read the boxes together.
+    await expect(async () => {
+      const separator = await this.newSeparator().boundingBox()
+      const unread = await this.message(firstUnread).boundingBox()
+      expect(separator).not.toBeNull()
+      expect(unread).not.toBeNull()
+      expect((separator?.y ?? 0) < (unread?.y ?? 0)).toBeTruthy()
+      if (lastRead !== undefined) {
+        const read = await this.message(lastRead).boundingBox()
+        expect(read).not.toBeNull()
+        expect((read?.y ?? 0) < (separator?.y ?? 0)).toBeTruthy()
+      }
+    }).toPass()
   }
 
   async checkInViewport (text: string): Promise<void> {

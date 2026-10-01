@@ -293,8 +293,11 @@ test.describe('Channel tests', () => {
     await chunterPage.createChannel(data.channelName, false)
     await channelPage.checkIfChannelDefaultExist(true, data.channelName)
     await channelPage.clickOnOpenChannelDetails()
-    await channelPage.changeChannelName(data.channelName)
-    await channelPage.checkIfNameIsChanged('New Channel Name')
+    // Shared workspace keeps renamed channels from earlier tests/retries, so a fixed name here
+    // would match more than one nav item - keep it unique per test (channelName already carries that suffix).
+    const newName = `New Channel Name ${data.channelName}`
+    await channelPage.changeChannelName(data.channelName, newName)
+    await channelPage.checkIfNameIsChanged(newName)
   })
 
   test('Check if user can switch to private or public', async ({ browser, page }) => {

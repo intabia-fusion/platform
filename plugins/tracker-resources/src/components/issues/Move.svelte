@@ -171,6 +171,8 @@
       }
       issueToUpdate.set(issue._id, upd)
     }
+    // Svelte 4 does not see a Map mutated via .set(): reassign to retrigger isManageAttributesAvailable.
+    issueToUpdate = issueToUpdate
   }
 
   function setReplacementAttributres (currentSpace: Project) {
@@ -210,6 +212,8 @@
       }
       issueToUpdate.set(issue._id, upd)
     }
+    // Same as setOriginalAttributes: force reactivity after mutating the Map in place.
+    issueToUpdate = issueToUpdate
   }
 
   $: spaceQuery = originProject ? { type: originProject.type, archived: false } : { archived: false }

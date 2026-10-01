@@ -269,8 +269,16 @@ export class ChatMember {
       }
       const state = await this.client.findOne(readStateClass, { attachedTo: context.objectId } as any)
       if (state === undefined) continue
+      // Date.now() can tie or run ahead of the createdOn of a message sent right after (same ms, or
+      // another clock), marking it read: read up to the last existing message's own createdOn.
+      const last = await this.client.findOne(
+        'activity:class:ActivityMessage' as Ref<Class<Doc>>,
+        { attachedTo: context.objectId } as any,
+        { sort: { createdOn: -1 } } as any
+      )
+      const timestamp = (last as any)?.createdOn ?? Date.now()
       await this.client.updateDoc(state._class, state.space, state._id, {
-        [this.account]: { messageId: generateId(), timestamp: Date.now() }
+        [this.account]: { messageId: generateId(), timestamp }
       } as any)
     }
     return unread.length

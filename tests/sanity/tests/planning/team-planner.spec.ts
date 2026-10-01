@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '../fixtures'
-import { generateId, getSecondPage, PlatformSetting, PlatformURI } from '../utils'
+import { generateId, getSecondPage, PlatformSetting, PlatformURI, PlatformUserSecond } from '../utils'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { TeamPage } from '../model/team-page'
 import { PlanningPage } from '../model/planning/planning-page'
@@ -8,6 +8,7 @@ import { NewToDo } from '../model/planning/types'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
+import { deleteEventsByTitle } from '../API/CalendarApi'
 
 test.use({
   storageState: PlatformSetting
@@ -336,34 +337,39 @@ test.describe('Team Planner tests', () => {
     using _page2 = await getSecondPage(browser)
     const page2 = _page2.page
 
-    await test.step('Second user creates a daily recurring meeting in their own calendar', async () => {
-      const calendarPage2 = await openCalendarWidget(page2)
-      await calendarPage2.clickFreeCellInWidget()
-      await calendarPage2.inputEventTitle().fill(title)
-      await calendarPage2.setRecurringDaily()
-      await calendarPage2.buttonCreateEventSubmit().click()
-      await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible()
-    })
+    try {
+      await test.step('Second user creates a daily recurring meeting in their own calendar', async () => {
+        const calendarPage2 = await openCalendarWidget(page2)
+        await calendarPage2.clickFreeCellInWidget()
+        await calendarPage2.inputEventTitle().fill(title)
+        await calendarPage2.setRecurringDaily()
+        await calendarPage2.buttonCreateEventSubmit().click()
+        await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible()
+      })
 
-    const leftSideMenuPage = new LeftSideMenuPage(page)
-    const teamPage = new TeamPage(page)
-    await leftSideMenuPage.clickPlanner()
-    await teamPage.checkTeamPageIsOpened()
+      const leftSideMenuPage = new LeftSideMenuPage(page)
+      const teamPage = new TeamPage(page)
+      await leftSideMenuPage.clickPlanner()
+      await teamPage.checkTeamPageIsOpened()
 
-    await test.step('Schedule mode overlays the colleague as busy', async () => {
-      await teamPage.selectExtraPerson(SECOND_USER)
-      await expect(teamPage.backgroundElement(SECOND_USER).first()).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('Schedule mode overlays the colleague as busy', async () => {
+        await teamPage.selectExtraPerson(SECOND_USER)
+        await expect(teamPage.backgroundElement(SECOND_USER).first()).toBeVisible({ timeout: 15000 })
+      })
 
-    await test.step('Calendar mode shows a Busy entry for the colleague', async () => {
-      await teamPage.openTeamCalendar()
-      const rowIndex = await teamPage.findPersonRowIndex(SECOND_USER)
-      await expect(teamPage.busyEntryTodayForRow(rowIndex).first()).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('Calendar mode shows a Busy entry for the colleague', async () => {
+        await teamPage.openTeamCalendar()
+        const rowIndex = await teamPage.findPersonRowIndex(SECOND_USER)
+        await expect(teamPage.busyEntryTodayForRow(rowIndex).first()).toBeVisible({ timeout: 15000 })
+      })
 
-    await test.step('Team mode occupancy shows a Busy block for the colleague', async () => {
-      await teamPage.openTeamOccupancy()
-      await expect(teamPage.busyBlock('Today')).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('Team mode occupancy shows a Busy block for the colleague', async () => {
+        await teamPage.openTeamOccupancy()
+        await expect(teamPage.busyBlock('Today')).toBeVisible({ timeout: 15000 })
+      })
+    } finally {
+      // Owned by the second account - leftover series occupy that hour on every later run.
+      await deleteEventsByTitle(title, PlatformUserSecond)
+    }
   })
 })
