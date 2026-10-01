@@ -170,6 +170,21 @@ export function getFormattedDate (value: number | null, options?: Intl.DateTimeF
     : new Date(value).toLocaleString(getCurrentLocale(), options ?? { month: 'short', day: 'numeric' })
 }
 
+export function formatDate (date: Date, showYear: boolean): string {
+  // Intl.DateTimeFormat.format throws RangeError on an invalid date, breaking the component tree
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return ''
+  }
+  const options: Intl.DateTimeFormatOptions = showYear
+    ? { year: 'numeric', month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric' }
+  try {
+    return new Intl.DateTimeFormat(getCurrentLocale(), options).format(date)
+  } catch (err: any) {
+    return date.toLocaleDateString('default', options)
+  }
+}
+
 export const getTimeZoneName = (
   val: string = Intl.DateTimeFormat().resolvedOptions().timeZoneName ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 ): string => {

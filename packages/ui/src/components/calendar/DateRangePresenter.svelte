@@ -24,7 +24,7 @@
   import DatePopup from './DatePopup.svelte'
   import DPCalendar from './icons/DPCalendar.svelte'
   import DPCalendarOver from './icons/DPCalendarOver.svelte'
-  import { daysInMonth, getMonthName } from './internal/DateUtils'
+  import { daysInMonth, formatDate } from './internal/DateUtils'
 
   export let value: number | string | Date | null | undefined = null
   export let mode: DateRangeMode = DateRangeMode.DATE
@@ -331,11 +331,7 @@
     {/if}
     {#if value !== undefined && value !== null && value.toString() !== ''}
       {#if withDate}
-        {new Date(value).getDate()}
-        {getMonthName(new Date(value), 'short')}
-        {#if new Date(value).getFullYear() !== today.getFullYear()}
-          {new Date(value).getFullYear()}
-        {/if}
+        {formatDate(new Date(value), new Date(value).getFullYear() !== today.getFullYear())}
       {/if}
       {#if withTime}
         {#if withDate}
@@ -506,11 +502,7 @@
       {/if}
       {#if value !== undefined && value !== null && value.toString() !== ''}
         {#if withDate}
-          {new Date(value).getDate()}
-          {getMonthName(new Date(value), 'short')}
-          {#if new Date(value).getFullYear() !== today.getFullYear()}
-            {new Date(value).getFullYear()}
-          {/if}
+          {formatDate(new Date(value), new Date(value).getFullYear() !== today.getFullYear())}
         {/if}
         {#if withTime}
           {#if withDate}
