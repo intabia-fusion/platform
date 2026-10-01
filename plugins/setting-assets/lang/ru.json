@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Элементы ({count})",
     "WebhookRulePreviewTooMany": "Обрабатываются только первые {max} элементов",
     "WebhookRuleConditionPassed": "выполнено",
-    "WebhookRuleConditionFailed": "не выполнено"
+    "WebhookRuleConditionFailed": "не выполнено",
+    "Onboarding": "Ознакомление с платформой",
+    "ShowOnboardingHints": "Показывать подсказки на пустых экранах",
+    "ShowOnboardingHintsDescription": "Пустые экраны объясняют, что здесь должно быть, и предлагают ссылки для создания первого элемента.",
+    "OnboardingProgress": "{done} из {total}",
+    "OnboardingOpenPanel": "Открыть панель",
+    "OnboardingStartOver": "Начать заново"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Интеграция с {doc} была отключена",

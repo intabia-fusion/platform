@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,22 +15,26 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref, Space, WithLookup } from '@hcengineering/core'
-  import core from '@hcengineering/core'
+  import core, { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import type { AnyComponent } from '@hcengineering/ui'
-  import { Component, resolvedLocationStore } from '@hcengineering/ui'
-  import type { ViewOptions, Viewlet } from '@hcengineering/view'
+  import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
+  import type { AnyComponent, EmptyStateAction } from '@hcengineering/ui'
+  import { Component, EmptyState, resolvedLocationStore, showPopup } from '@hcengineering/ui'
+  import type { EmptyStateInfo, ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
     activeViewlet,
     getViewOptions,
     makeViewletKey,
+    onboardingHints,
+    openDoc,
     updateActiveViewlet,
     viewOptionStore
   } from '@hcengineering/view-resources'
-  import type { ViewConfiguration } from '@hcengineering/workbench'
+  import type { NavigatorModel, ViewConfiguration } from '@hcengineering/workbench'
+  import workbench from '../plugin'
   import { onDestroy } from 'svelte'
+  import { doNavigate, getSpaceName } from '../utils'
   import SpaceContent from './SpaceContent.svelte'
   import SpaceHeader from './SpaceHeader.svelte'
 
@@ -37,6 +42,80 @@
   export let currentView: ViewConfiguration | undefined
   export let createItemDialog: AnyComponent | undefined = undefined
   export let createItemLabel: IntlString | undefined = undefined
+  export let navigatorModel: NavigatorModel | undefined = undefined
+
+  let recentSpaces: Space[] = []
+  const recentSpacesQuery = createQuery()
+  $: firstSpaceModel = navigatorModel?.spaces[0]
+  $: emptyStateInfo =
+    firstSpaceModel !== undefined
+      ? getClient().getHierarchy().classHierarchyMixin(firstSpaceModel.spaceClass, view.mixin.EmptyStateInfo)
+      : undefined
+  $: spaceClasses = navigatorModel?.spaces.map((s) => s.spaceClass) ?? []
+  $: if (currentSpace === undefined && currentView === undefined && spaceClasses.length > 0) {
+    recentSpacesQuery.query(
+      core.class.Space,
+      { _class: { $in: spaceClasses }, members: getCurrentAccount().uuid, archived: false },
+      (res) => {
+        recentSpaces = res
+      },
+      { sort: { modifiedOn: SortingOrder.Descending }, limit: 3 }
+    )
+  } else {
+    recentSpacesQuery.unsubscribe()
+    recentSpaces = []
+  }
+
+  // getClient(): runs before the `client` const below in source order (no hoisting).
+  let recentSpaceNames = new Map<Ref<Space>, string>()
+  $: void Promise.all(recentSpaces.map(async (s) => [s._id, await getSpaceName(getClient(), s)] as const)).then(
+    (entries) => {
+      recentSpaceNames = new Map(entries)
+    }
+  )
+
+  // Some space classes (e.g. Drive) have no workbench SpaceView and open through the object
+  // panel instead - navigating them like a regular space would leave the content area blank.
+  async function openSpace (s: Space): Promise<void> {
+    const hierarchy = getClient().getHierarchy()
+    const hasSpaceView = hierarchy.classHierarchyMixin(s._class, workbench.mixin.SpaceView) !== undefined
+    const hasObjectPanel = hierarchy.classHierarchyMixin(s._class, view.mixin.ObjectPanel) !== undefined
+    if (!hasSpaceView && hasObjectPanel) {
+      await openDoc(hierarchy, s)
+    } else {
+      await doNavigate(s, undefined, { mode: 'space', space: s._id })
+    }
+  }
+
+  function getEmptyChoices (recentSpaces: Space[], names: Map<Ref<Space>, string>): EmptyStateAction[] {
+    return recentSpaces
+      .filter((s) => names.has(s._id))
+      .map((s) => ({
+        title: names.get(s._id) as string,
+        onClick: () => {
+          void openSpace(s)
+        }
+      }))
+  }
+
+  function getEmptyActions (
+    hints: boolean,
+    firstSpaceModel: NavigatorModel['spaces'][number] | undefined,
+    info: EmptyStateInfo | undefined
+  ): EmptyStateAction[] {
+    const createComponent = firstSpaceModel?.createComponent
+    if (!hints || createComponent === undefined) return []
+    return [
+      {
+        label: info?.createLabel ?? view.string.EmptyStateCreateLabel,
+        onClick: () => {
+          showPopup(createComponent, {}, 'top')
+        }
+      }
+    ]
+  }
+  $: emptyChoices = getEmptyChoices(recentSpaces, recentSpaceNames)
+  $: emptyActions = getEmptyActions($onboardingHints, firstSpaceModel, emptyStateInfo)
 
   let search: string = ''
   let viewlet: WithLookup<Viewlet> | undefined = undefined
@@ -127,4 +206,12 @@
   {#if viewOptions}
     <SpaceContent space={space._id} {_class} {createItemDialog} {viewOptions} {createItemLabel} bind:search {viewlet} />
   {/if}
+{:else}
+  <EmptyState
+    title={workbench.string.SelectToOpen}
+    description={emptyStateInfo?.description}
+    icon={firstSpaceModel?.icon}
+    choices={emptyChoices}
+    actions={emptyActions}
+  />
 {/if}

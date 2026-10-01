@@ -160,6 +160,13 @@ import {
   canLeaveSpace,
   isClipboardAvailable
 } from './visibilityTester'
+export {
+  markOnboardingProgress,
+  onboardingHints,
+  onboardingPreference,
+  setOnboardingHints,
+  updateOnboardingPreference
+} from './onboarding'
 export { getActions, getContextActions, invokeAction, showMenu, actionGroupOrder } from './actions'
 export { default as ActionButton } from './components/ActionButton.svelte'
 export { default as ActionHandler } from './components/ActionHandler.svelte'

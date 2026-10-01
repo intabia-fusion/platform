@@ -40,6 +40,13 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Aucun disque pour le moment",
+    "EmptyStateDriveDescription": "Un disque est une arborescence de dossiers partagée pour les fichiers que votre équipe téléverse et organise ensemble.",
+    "EmptyStateDriveCreateLabel": "Créer un disque",
+    "EmptyStateFilesTitle": "Aucun fichier pour le moment",
+    "EmptyStateFilesDescription": "Téléversez des fichiers avec le bouton Téléverser des Fichiers ou glissez-les ici.",
+    "OnboardingCreateDrive": "Créez un disque",
+    "OnboardingUploadFile": "Téléversez un fichier"
   }
 }

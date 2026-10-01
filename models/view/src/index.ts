@@ -2,6 +2,7 @@
 // Copyright © 2020 Anticrm Platform Contributors.
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -99,6 +100,7 @@ import {
   type ReferenceVersion,
   type ReferenceVersionsProvider,
   type SortFunc,
+  type EmptyStateInfo,
   type SpaceHeader,
   type SpaceName,
   type SpacePresenter,
@@ -254,6 +256,13 @@ export class TSpaceHeader extends TClass implements SpaceHeader {
 @Mixin(view.mixin.SpaceName, core.class.Class)
 export class TSpaceName extends TClass implements SpaceName {
   getName!: Resource<(client: Client, space: Space) => Promise<string>>
+}
+
+@Mixin(view.mixin.EmptyStateInfo, core.class.Class)
+export class TEmptyStateInfo extends TClass implements EmptyStateInfo {
+  title!: IntlString
+  description!: IntlString
+  createLabel?: IntlString
 }
 
 @Mixin(view.mixin.ObjectValidator, core.class.Class)
@@ -544,6 +553,7 @@ export function createModel (builder: Builder): void {
     TObjectPanelFooter,
     TSpaceHeader,
     TSpaceName,
+    TEmptyStateInfo,
     TSpacePresenter,
     TIgnoreActions,
     TPreviewPresenter,

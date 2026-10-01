@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Переговорная {number}",
     "VoiceRoomNum": "Голосовая комната {number}",
     "JoinRequestTitle": "Запрос на вступление",
-    "JoinRequestBody": "{name} хочет присоединиться к встрече"
+    "JoinRequestBody": "{name} хочет присоединиться к встрече",
+    "OnboardingCalls": "Звонки",
+    "OnboardingCallsDescription": "Кликните по комнате коллеги в офисе, чтобы позвонить, или откройте общую комнату для командного звонка."
   }
 }

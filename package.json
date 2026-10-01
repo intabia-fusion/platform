@@ -32,6 +32,7 @@
     "check-versions": "node ./common/scripts/check-versions.js",
     "check-catalog": "node ./common/scripts/check-catalog.js",
     "check-layers": "node ./common/scripts/check-layers.js",
+    "i18n": "node ./common/scripts/i18n.js",
     "model-version": "node ./common/scripts/show_version.js",
     "show-model": "pnpm --filter @hcengineering/model-all run show-model",
     "docker:staging": "pnpm -r --filter='!./foundations/net/**' --filter='!./foundations/hulylake' run docker:staging",

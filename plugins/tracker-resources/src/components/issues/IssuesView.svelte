@@ -233,6 +233,7 @@
     _class={tracker.class.Issue}
     {viewlet}
     query={resultQuery}
+    totalQuery={query}
     {space}
     {viewOptions}
     createItemDialog={CreateIssue}

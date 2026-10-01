@@ -317,6 +317,20 @@ export function createModel (builder: Builder): void {
     setting.ids.Mailboxes
   )
   builder.createDoc(
+    setting.class.SettingsCategory,
+    core.space.Model,
+    {
+      name: 'onboarding',
+      label: setting.string.Onboarding,
+      icon: view.icon.TodoList,
+      component: setting.component.OnboardingSettings,
+      group: 'settings-account',
+      role: AccountRole.Guest,
+      order: 1550
+    },
+    setting.ids.Onboarding
+  )
+  builder.createDoc(
     setting.class.WorkspaceSettingCategory,
     core.space.Model,
     {

@@ -15,13 +15,14 @@
 
 import { type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type MessageNotificationType } from '@hcengineering/notification'
-import { type Resource, mergeIds } from '@hcengineering/platform'
+import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import { type ActionCategory, type ViewAction } from '@hcengineering/view'
 import { loveId } from '@hcengineering/love'
 import love from '@hcengineering/love-resources/src/plugin'
 import { type ObjectSearchCategory, type ObjectSearchFactory } from '@hcengineering/model-presentation'
 import { type SocialIdentityProvider } from '@hcengineering/contact'
+import { type OnboardingCard } from '@hcengineering/workbench'
 
 export default mergeIds(loveId, love, {
   component: {
@@ -47,7 +48,12 @@ export default mergeIds(loveId, love, {
   },
   ids: {
     Settings: '' as Ref<Doc>,
-    MeetingMinutesChatNotification: '' as Ref<MessageNotificationType>
+    MeetingMinutesChatNotification: '' as Ref<MessageNotificationType>,
+    OnboardingCallsCard: '' as Ref<OnboardingCard>
+  },
+  string: {
+    OnboardingCalls: '' as IntlString,
+    OnboardingCallsDescription: '' as IntlString
   },
   class: {
     // Placeholder class to keep the legacy DOMAIN_MEETING_MINUTES table alive,

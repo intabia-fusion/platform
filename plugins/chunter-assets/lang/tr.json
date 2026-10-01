@@ -5,7 +5,6 @@
     "Channels": "Kanallar",
     "DirectMessages": "Direkt mesajlar",
     "CreateChannel": "Yeni Kanal",
-    "NewDirectMessage": "Yeni Direkt Mesaj",
     "ChannelName": "İsim",
     "ChannelNamePlaceholder": "Kanal",
     "ChannelDescription": "Açıklama",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Include meeting transcripts",
     "SearchFilterSelected": "Selected",
     "SearchFilterObject": "Where",
-    "SearchFilterObjectMore": "Start typing to find more"
+    "SearchFilterObjectMore": "Start typing to find more",
+    "SelectChannel": "Bir kanal seçin",
+    "OnboardingChats": "Sohbetler",
+    "OnboardingChatsDescription": "Kanallar konular ve ekipler, direkt sohbetler birebir konuşmalar içindir: birini başlatın ve ilk mesajınızı gönderin.",
+    "OnboardingAskJulia": "Yapay Zeka Julia'ya Sor",
+    "OnboardingAskJuliaDescription": "Julia, direkt sohbette bulunan bir yapay zekâ asistanıdır: ona bir soru sorun veya bir konuşmayı özetlemesini isteyin."
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} size bir mesaj gönderdi: \n\n{message}",

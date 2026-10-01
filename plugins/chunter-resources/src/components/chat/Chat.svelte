@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,25 +14,29 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref, Class } from '@hcengineering/core'
+  import type { Doc, Ref, Class, Space } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { Location } from '@hcengineering/ui'
+  import type { EmptyStateAction, Location } from '@hcengineering/ui'
   import {
     Component,
     defineSeparators,
+    EmptyState,
     getCurrentLocation,
     location,
     navigate,
     Separator,
     restoreLocation,
+    showPopup,
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
   import type { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
   import { onMount, onDestroy } from 'svelte'
-  import type { Chat } from '@hcengineering/chunter'
+  import type { Chat, DirectMessage } from '@hcengineering/chunter'
   import { chunterId } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
-  import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
+  import { onboardingHints, parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
   import type { ActivityMessage } from '@hcengineering/activity'
   import { loadSavedAttachments } from '@hcengineering/attachment-resources'
 
@@ -40,6 +45,7 @@
   import { chatSpecials, createRealDirectFromFake, isFakeDirect } from './utils'
   import type { SelectChannelEvent } from './types'
   import { decodeChatURI, openChannel, openThreadInSidebar } from '../../navigation'
+  import { getDmName } from '../../utils'
   import chunter from '../../plugin'
 
   const objectQuery = createQuery()
@@ -51,6 +57,89 @@
   }
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
+
+  // Top-3 active chats for the "select a channel" empty state - mirrors chatNavGroupModels' query.
+  const me = getCurrentAccount()
+  const unreadByDoc = NotificationClientImpl.getClient().unreadByDoc
+  const activeChatQuery = {
+    account: me.uuid,
+    hidden: false,
+    '$lookup.attachedTo.archived': false,
+    '$lookup.attachedTo._id': { $exists: true }
+  }
+
+  let channelChats: Doc[] = []
+  let directChats: Doc[] = []
+
+  createQuery().query(
+    chunter.class.Chat,
+    { ...activeChatQuery, attachedToClass: chunter.class.Channel },
+    (res) => {
+      channelChats = res.map((it) => it.$lookup?.attachedTo).filter((it): it is Doc => it !== undefined)
+    },
+    { lookup: { attachedTo: chunter.class.Channel }, limit: 10 }
+  )
+
+  createQuery().query(
+    chunter.class.Chat,
+    { ...activeChatQuery, attachedToClass: chunter.class.DirectMessage },
+    (res) => {
+      directChats = res.map((it) => it.$lookup?.attachedTo).filter((it): it is Doc => it !== undefined)
+    },
+    { lookup: { attachedTo: chunter.class.DirectMessage }, limit: 10 }
+  )
+
+  $: topChats = [...channelChats, ...directChats]
+    .sort((a, b) => {
+      const unreadA = ($unreadByDoc.get(a._id)?.unreadMessagesCount ?? 0) > 0
+      const unreadB = ($unreadByDoc.get(b._id)?.unreadMessagesCount ?? 0) > 0
+      if (unreadA !== unreadB) return unreadA ? -1 : 1
+      return b.modifiedOn - a.modifiedOn
+    })
+    .slice(0, 3)
+
+  async function openTopChat (doc: Doc): Promise<void> {
+    const id = await getObjectLinkId(linkProviders, doc._id, doc._class, doc)
+    openChannel(id, doc._class, undefined, true)
+  }
+
+  async function getChatTitle (doc: Doc): Promise<string> {
+    return client.getHierarchy().isDerived(doc._class, chunter.class.DirectMessage)
+      ? await getDmName(client, doc as DirectMessage)
+      : (doc as Space).name
+  }
+
+  // Resolved once topChats settles (mount + rare updates), so the actions line never renders a
+  // blank link while a name is still loading.
+  let topChatTitles = new Map<Ref<Doc>, string>()
+  $: void Promise.all(topChats.map(async (doc) => [doc._id, await getChatTitle(doc)] as const)).then((entries) => {
+    topChatTitles = new Map(entries)
+  })
+
+  function getEmptyChoices (topChats: Doc[], titles: Map<Ref<Doc>, string>): EmptyStateAction[] {
+    return topChats
+      .filter((doc) => titles.has(doc._id))
+      .map((doc) => ({
+        title: titles.get(doc._id) as string,
+        onClick: () => {
+          void openTopChat(doc)
+        }
+      }))
+  }
+
+  function getEmptyActions (hints: boolean): EmptyStateAction[] {
+    if (!hints) return []
+    return [
+      {
+        label: chunter.string.CreateChannel,
+        onClick: () => {
+          showPopup(chunter.component.CreateChannel, {}, 'top')
+        }
+      }
+    ]
+  }
+  $: emptyChoices = getEmptyChoices(topChats, topChatTitles)
+  $: emptyActions = getEmptyActions($onboardingHints)
 
   let selectedData: { id: string, _class: Ref<Class<Doc>> } | undefined = undefined
 
@@ -231,6 +320,13 @@
       />
     {:else if object}
       <ChannelView {object} />
+    {:else if currentSpecial === undefined && selectedData === undefined}
+      <EmptyState
+        icon={chunter.icon.Chunter}
+        title={chunter.string.SelectChannel}
+        choices={emptyChoices}
+        actions={emptyActions}
+      />
     {/if}
   </div>
 </div>

@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Getting to know the platform",
+    "ShowOnboardingHints": "Show hints and tips in empty screens",
+    "ShowOnboardingHintsDescription": "Empty screens explain what's there and offer links to create the first item.",
+    "OnboardingProgress": "{done} of {total}",
+    "OnboardingOpenPanel": "Open panel",
+    "OnboardingStartOver": "Start over"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

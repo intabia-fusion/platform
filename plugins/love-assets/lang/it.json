@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Sala riunioni {number}",
     "VoiceRoomNum": "Stanza vocale {number}",
     "JoinRequestTitle": "Richiesta di partecipazione",
-    "JoinRequestBody": "{name} vuole partecipare alla riunione"
+    "JoinRequestBody": "{name} vuole partecipare alla riunione",
+    "OnboardingCalls": "Chiamate",
+    "OnboardingCallsDescription": "Fai clic sulla stanza di un collega nell'ufficio per chiamarlo, oppure apri una stanza condivisa per una chiamata di team."
   }
 }

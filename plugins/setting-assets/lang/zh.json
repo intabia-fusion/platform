@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "了解平台",
+    "ShowOnboardingHints": "在空白屏幕中显示提示和技巧",
+    "ShowOnboardingHintsDescription": "空白屏幕会说明这里应该有什么，并提供用于创建第一个项目的链接。",
+    "OnboardingProgress": "{done}/{total}",
+    "OnboardingOpenPanel": "打开面板",
+    "OnboardingStartOver": "重新开始"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

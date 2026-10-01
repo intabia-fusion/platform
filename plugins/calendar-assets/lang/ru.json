@@ -125,6 +125,9 @@
     "SynchronizedCalendars": "Синхронизированные календари",
     "Account": "Аккаунт",
     "NoCalendars": "Календари для синхронизации не выбраны",
-    "PersonalCalendar": "Личный календарь"
+    "PersonalCalendar": "Личный календарь",
+    "OnboardingMeetings": "Встречи и события",
+    "OnboardingMeetingsDescription": "Кликните по свободному времени в календаре, чтобы назначить событие с участниками и переговорной.",
+    "OnboardingCreateEventHint": "Кликните по свободному времени в календаре, чтобы создать событие"
   }
 }

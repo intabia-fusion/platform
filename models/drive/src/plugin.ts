@@ -14,6 +14,7 @@
 //
 
 import type { Client, Doc, Ref } from '@hcengineering/core'
+import type { OnboardingCard } from '@hcengineering/model-workbench'
 import {} from '@hcengineering/core'
 import { driveId } from '@hcengineering/drive'
 import drive from '@hcengineering/drive-resources/src/plugin'
@@ -115,6 +116,12 @@ export default mergeIds(driveId, drive, {
     Files: '' as IntlString,
     Folders: '' as IntlString,
     Version: '' as IntlString,
-    Restore: '' as IntlString
+    Restore: '' as IntlString,
+    OnboardingCreateDrive: '' as IntlString,
+    OnboardingUploadFile: '' as IntlString
+  },
+  ids: {
+    OnboardingDriveCard: '' as Ref<OnboardingCard>,
+    OnboardingFilesCard: '' as Ref<OnboardingCard>
   }
 })

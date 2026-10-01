@@ -169,6 +169,8 @@
     "MeetingRoomNum": "会議室 {number}",
     "VoiceRoomNum": "ボイスルーム {number}",
     "JoinRequestTitle": "参加リクエスト",
-    "JoinRequestBody": "{name} がミーティングへの参加を希望しています"
+    "JoinRequestBody": "{name} がミーティングへの参加を希望しています",
+    "OnboardingCalls": "通話",
+    "OnboardingCallsDescription": "オフィスで同僚の部屋をクリックして通話するか、共有ルームを開いてチーム通話を始めましょう。"
   }
 }

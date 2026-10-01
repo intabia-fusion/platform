@@ -28,6 +28,25 @@
     "Restore": "Restaurar",
     "Root": "/",
     "ForbidCreateDrivePermission": "Proibir criação de unidade",
-    "ForbidCreateDrivePermissionDescription": "Proíbe os utilizadores de criar novas unidades"
+    "ForbidCreateDrivePermissionDescription": "Proíbe os utilizadores de criar novas unidades",
+    "EmptyStateDriveTitle": "Ainda não há unidades",
+    "EmptyStateDriveDescription": "Uma unidade é uma árvore de pastas compartilhada para arquivos que a equipe envia e organiza junto.",
+    "EmptyStateDriveCreateLabel": "Criar unidade",
+    "CreateFilePermission": "Criar arquivo",
+    "CreateFilePermissionDescription": "Concede aos usuários a capacidade de criar arquivos",
+    "UpdateFilePermission": "Atualizar arquivo",
+    "UpdateFilePermissionDescription": "Concede aos usuários a capacidade de atualizar arquivos",
+    "RemoveFilePermission": "Remover arquivo",
+    "RemoveFilePermissionDescription": "Concede aos usuários a capacidade de remover arquivos",
+    "CreateFolderPermission": "Criar pasta",
+    "CreateFolderPermissionDescription": "Concede aos usuários a capacidade de criar pastas",
+    "UpdateFolderPermission": "Atualizar pasta",
+    "UpdateFolderPermissionDescription": "Concede aos usuários a capacidade de atualizar pastas",
+    "RemoveFolderPermission": "Remover pasta",
+    "RemoveFolderPermissionDescription": "Concede aos usuários a capacidade de remover pastas",
+    "EmptyStateFilesTitle": "Ainda não há arquivos aqui",
+    "EmptyStateFilesDescription": "Envie arquivos com o botão Carregar Arquivos ou arraste-os para cá.",
+    "OnboardingCreateDrive": "Crie uma unidade",
+    "OnboardingUploadFile": "Envie um arquivo"
   }
 }

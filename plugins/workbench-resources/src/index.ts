@@ -25,7 +25,9 @@ import Workbench from './components/Workbench.svelte'
 import ServerManager from './components/ServerManager.svelte'
 import WorkbenchTabs from './components/WorkbenchTabs.svelte'
 import Themes from './components/Themes.svelte'
+import OnboardingWidget from './components/OnboardingWidget.svelte'
 import { canCloseTab, closeCurrentTab, closeTab, OpenInNewTab, pinTab, unpinTab } from './workbench'
+import { openOnboarding } from './onboarding'
 import { closeWidget, closeWidgetTab, createWidgetTab, getSidebarObject } from './sidebar'
 
 async function hasArchiveSpaces (spaces: Space[]): Promise<boolean> {
@@ -45,6 +47,7 @@ export { default as SavedView } from './components/SavedView.svelte'
 export { SpecialView }
 
 export * from './utils'
+export { countOnboarding, getOnboardingGroups, type OnboardingGroup } from './onboarding'
 export * from './sidebar'
 export * from './workbench'
 export default async (): Promise<Resources> => ({
@@ -57,7 +60,8 @@ export default async (): Promise<Resources> => ({
     Workbench,
     ServerManager,
     WorkbenchTabs,
-    Themes
+    Themes,
+    OnboardingWidget
   },
   function: {
     HasArchiveSpaces: hasArchiveSpaces,
@@ -69,7 +73,8 @@ export default async (): Promise<Resources> => ({
     GetSidebarObject: getSidebarObject,
     LogIn: logIn,
     LogOut: logOut,
-    OpenInNewTab
+    OpenInNewTab,
+    OpenOnboarding: openOnboarding
   },
   actionImpl: {
     Navigate: doNavigate,

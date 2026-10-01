@@ -42,6 +42,7 @@
   import view from '@hcengineering/view'
   import workbench from '../plugin'
   import { logOut } from '../utils'
+  import { openOnboarding } from '../onboarding'
   import HelpAndSupport from './HelpAndSupport.svelte'
 
   import { Analytics } from '@hcengineering/analytics'
@@ -145,6 +146,16 @@
         group: 'end'
       })
     }
+
+    actions.push({
+      icon: view.icon.TodoList,
+      label: workbench.string.Onboarding,
+      action: async () => {
+        closePopup()
+        await openOnboarding()
+      },
+      group: 'end'
+    })
 
     if (hasAccountRole(account, AccountRole.User)) {
       actions.push({

@@ -59,7 +59,15 @@
     "Icon": "Symbol",
     "Color": "Farbe",
     "ForbidCreateTeamspacePermission": "Arbeitsbereichserstellung verbieten",
-    "ForbidCreateTeamspacePermissionDescription": "Verbietet Benutzern das Erstellen neuer Arbeitsbereiche"
+    "ForbidCreateTeamspacePermissionDescription": "Verbietet Benutzern das Erstellen neuer Arbeitsbereiche",
+    "EmptyStateTeamspaceTitle": "Noch keine Arbeitsbereiche",
+    "EmptyStateTeamspaceDescription": "Arbeitsbereiche gruppieren Dokumente nach Team oder Thema und legen fest, wer sie lesen und bearbeiten darf.",
+    "EmptyStateTeamspaceCreateLabel": "Arbeitsbereich erstellen",
+    "EmptyStateDocumentTitle": "Noch keine Dokumente",
+    "EmptyStateDocumentDescription": "Dokumente sind gemeinsame Seiten für Spezifikationen, Notizen und Wikis innerhalb eines Arbeitsbereichs.",
+    "EmptyStateDocumentCreateLabel": "Dokument erstellen",
+    "OnboardingCreateTeamspace": "Erstellen Sie einen Arbeitsbereich",
+    "OnboardingWriteDocument": "Schreiben Sie ein Dokument"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

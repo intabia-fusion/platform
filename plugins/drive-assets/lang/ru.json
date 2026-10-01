@@ -40,6 +40,13 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Пока нет дисков",
+    "EmptyStateDriveDescription": "Диск - общее дерево папок для файлов, которые команда загружает и упорядочивает вместе.",
+    "EmptyStateDriveCreateLabel": "Создать диск",
+    "EmptyStateFilesTitle": "Здесь пока нет файлов",
+    "EmptyStateFilesDescription": "Загрузите файлы кнопкой «Загрузить Файлы» или перетащите их сюда.",
+    "OnboardingCreateDrive": "Создайте диск",
+    "OnboardingUploadFile": "Загрузите файл"
   }
 }

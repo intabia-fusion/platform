@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Zasedací místnost {number}",
     "VoiceRoomNum": "Hlasová místnost {number}",
     "JoinRequestTitle": "Žádost o připojení",
-    "JoinRequestBody": "{name} se chce připojit k setkání"
+    "JoinRequestBody": "{name} se chce připojit k setkání",
+    "OnboardingCalls": "Hovory",
+    "OnboardingCallsDescription": "Kliknutím na místnost kolegy v kanceláři mu zavoláte, nebo otevřete sdílenou místnost pro týmový hovor."
   }
 }

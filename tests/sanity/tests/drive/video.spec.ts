@@ -76,7 +76,7 @@ test.describe('Drive video transcoding tests', () => {
     const before = await getStorageStats(workspace)
 
     await test.step('upload the video', async () => {
-      await uploadFile(page, VIDEO, 'Upload files')
+      await uploadFile(page, VIDEO, /^Upload Files$/)
       await filesPage.checkFileExists(VIDEO)
     })
 
@@ -101,7 +101,7 @@ test.describe('Drive video transcoding tests', () => {
     const before = await getStorageStats(workspace)
 
     await test.step('upload and wait for transcoding', async () => {
-      await uploadFile(page, VIDEO, 'Upload files')
+      await uploadFile(page, VIDEO, /^Upload Files$/)
       await filesPage.checkFileExists(VIDEO)
       await waitForDerivedBlobs(workspace, before.derivedCount + MIN_DERIVED_BLOBS)
     })

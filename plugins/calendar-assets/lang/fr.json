@@ -124,6 +124,10 @@
     "WeekendDay": "Jour de congé",
     "SynchronizedCalendars": "Calendriers synchronisés",
     "Account": "Compte",
-    "NoCalendars": "Aucun calendrier sélectionné pour la synchronisation"
+    "NoCalendars": "Aucun calendrier sélectionné pour la synchronisation",
+    "OnboardingMeetings": "Réunions et événements",
+    "OnboardingMeetingsDescription": "Cliquez sur un créneau libre du calendrier pour planifier un événement avec des participants et une salle.",
+    "PersonalCalendar": "Calendrier personnel",
+    "OnboardingCreateEventHint": "Cliquez sur un créneau libre du calendrier pour créer un événement"
   }
 }

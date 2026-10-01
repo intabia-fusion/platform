@@ -5,7 +5,6 @@
     "Channels": "チャンネル",
     "DirectMessages": "ダイレクトメッセージ",
     "CreateChannel": "新しいチャンネル",
-    "NewDirectMessage": "新しいダイレクトメッセージ",
     "ChannelName": "名前",
     "ChannelNamePlaceholder": "チャンネル",
     "ChannelDescription": "説明",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Include meeting transcripts",
     "SearchFilterSelected": "Selected",
     "SearchFilterObject": "Where",
-    "SearchFilterObjectMore": "Start typing to find more"
+    "SearchFilterObjectMore": "Start typing to find more",
+    "SelectChannel": "チャンネルを選択してください",
+    "OnboardingChats": "チャット",
+    "OnboardingChatsDescription": "チャンネルはトピックやチーム向け、ダイレクトチャットは1対1の会話向けです。どちらかを作成して最初のメッセージを送りましょう。",
+    "OnboardingAskJulia": "AIジュリアに聞く",
+    "OnboardingAskJuliaDescription": "JuliaはダイレクトチャットにいるAIアシスタントです。質問したり、会話の要約を頼んだりできます。"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}からメッセージが届きました: \n\n{message}",

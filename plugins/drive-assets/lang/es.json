@@ -40,6 +40,13 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Aún no hay unidades",
+    "EmptyStateDriveDescription": "Una unidad es un árbol de carpetas compartido para los archivos que tu equipo sube y organiza en conjunto.",
+    "EmptyStateDriveCreateLabel": "Crear unidad",
+    "EmptyStateFilesTitle": "Aún no hay archivos aquí",
+    "EmptyStateFilesDescription": "Sube archivos con el botón Subir Archivos o arrástralos aquí.",
+    "OnboardingCreateDrive": "Crea una unidad",
+    "OnboardingUploadFile": "Sube un archivo"
   }
 }

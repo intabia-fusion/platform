@@ -40,6 +40,13 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Nessun drive ancora",
+    "EmptyStateDriveDescription": "Un drive è un albero di cartelle condiviso per i file che il tuo team carica e organizza insieme.",
+    "EmptyStateDriveCreateLabel": "Crea drive",
+    "EmptyStateFilesTitle": "Ancora nessun file qui",
+    "EmptyStateFilesDescription": "Carica i file con il pulsante Carica file o trascinali qui.",
+    "OnboardingCreateDrive": "Crea un drive",
+    "OnboardingUploadFile": "Carica un file"
   }
 }

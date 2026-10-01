@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,6 +18,7 @@ import activity from '@hcengineering/activity'
 import calendarPlugin, { type Visibility } from '@hcengineering/calendar'
 import contactPlugin, { type Employee, type Person } from '@hcengineering/contact'
 import {
+  AccountRole,
   DOMAIN_MODEL,
   DateRangeMode,
   IndexKind,
@@ -44,7 +46,7 @@ import {
   TypeMarkup,
   TypeRank
 } from '@hcengineering/model'
-import { TEvent } from '@hcengineering/model-calendar'
+import calendar, { TEvent } from '@hcengineering/model-calendar'
 import core, { defineCollaborators, TAttachedDoc, TClass, TDoc, TType } from '@hcengineering/model-core'
 import document from '@hcengineering/model-document'
 import tracker from '@hcengineering/model-tracker'
@@ -209,6 +211,32 @@ export function createModel (builder: Builder): void {
       order: 300
     },
     time.app.Me
+  )
+
+  // Calendar has no app of its own here: meetings and events live in the Planner app.
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: time.app.Me,
+      label: calendar.string.OnboardingMeetings,
+      description: calendar.string.OnboardingMeetingsDescription,
+      order: 60,
+      accessLevel: AccountRole.User,
+      doneWhen: { _class: calendar.class.Event },
+      // Planner has no "new event" button: an event is created by clicking a free slot in the grid.
+      actions: [
+        {
+          label: calendar.string.CreateEvent,
+          target: {
+            application: timeId,
+            selector: '[data-id="calendar-grid"]',
+            hint: calendar.string.OnboardingCreateEventHint
+          }
+        }
+      ]
+    },
+    calendar.ids.OnboardingMeetingsCard
   )
 
   // Opened from a Team calendar cell: shows that person's day in the sidebar.

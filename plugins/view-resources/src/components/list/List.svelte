@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,17 +18,22 @@
   import core, { getObjectValue, RateLimiter, mergeQueries } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { AnyComponent, AnySvelteComponent, EmptyStateAction } from '@hcengineering/ui'
+  import { EmptyState, showPopup } from '@hcengineering/ui'
+  import type { BuildModelKey, EmptyStateInfo, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import { filterStore, setFilters } from '../../filter'
+  import { onboardingHints } from '../../onboarding'
   import type { SelectionFocusProvider } from '../../selection'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
   import { getResultOptions, getResultQuery } from '../../viewOptions'
+  import view from '../../plugin'
   import ListCategories from './ListCategories.svelte'
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Doc> = {}
+  export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let options: FindOptions<Doc> | undefined = undefined
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
   export let config: Array<string | BuildModelKey>
@@ -56,6 +62,7 @@
   let docs: Doc[] = []
   let fastDocs: Doc[] = []
   let slowDocs: Doc[] = []
+  let docsReceived = false
 
   $: orderBy = viewOptions.orderBy
 
@@ -104,6 +111,7 @@
     (res) => {
       fastDocs = res
       fastQueryIds = new Set(res.map((it) => it._id))
+      docsReceived = true
     },
     { ...categoryQueryOptions, limit: 1000 }
   )
@@ -122,6 +130,71 @@
   }
 
   $: docs = [...fastDocs, ...slowDocs.filter((it) => !fastQueryIds.has(it._id))]
+
+  // "Show empty groups" and other category options render groups without docs, so the list is not empty.
+  $: showsEmptyCategories = (viewOptionsConfig ?? []).some(
+    (it) => it.actionTarget === 'category' && Boolean(viewOptions[it.key] ?? it.defaultValue)
+  )
+  $: isEmpty = docsReceived && docs.length === 0 && !showsEmptyCategories
+
+  // Only counted once the list is actually empty, so a non-empty list never pays for it.
+  let gtotal = 0
+  const gtotalQ = createQuery()
+  $: if (isEmpty && totalQuery !== undefined) {
+    gtotalQ.query(
+      _class,
+      totalQuery,
+      (res) => {
+        gtotal = res.total === -1 ? 0 : res.total
+      },
+      { limit: 1, total: true }
+    )
+  } else {
+    gtotalQ.unsubscribe()
+    gtotal = 0
+  }
+
+  function createFirstItem (): void {
+    if (createItemDialog === undefined) return
+    showPopup(createItemDialog, { space, ...createItemDialogProps }, 'top')
+  }
+
+  $: emptyStateInfo = hierarchy.classHierarchyMixin(_class, view.mixin.EmptyStateInfo)
+  $: emptyIcon = hierarchy.findClass(_class)?.icon
+  // With search or filters on, an empty result can't prove there is no data at all.
+  $: narrowed = query.$search != null || $filterStore.length > 0
+
+  function getEmptyActions (
+    narrowed: boolean,
+    filtered: boolean,
+    hints: boolean,
+    createItemDialog: AnyComponent | AnySvelteComponent | undefined,
+    info: EmptyStateInfo | undefined
+  ): EmptyStateAction[] {
+    if (narrowed) {
+      return filtered
+        ? [
+            {
+              label: view.string.ClearFilters,
+              onClick: () => {
+                setFilters([])
+              }
+            }
+          ]
+        : []
+    }
+    if (hints && createItemDialog !== undefined) {
+      return [{ label: info?.createLabel ?? view.string.EmptyStateCreateLabel, onClick: createFirstItem }]
+    }
+    return []
+  }
+  $: emptyActions = getEmptyActions(
+    narrowed,
+    $filterStore.length > 0,
+    $onboardingHints,
+    createItemDialog,
+    emptyStateInfo
+  )
 
   // Build lookups for category references to avoid individual presenter queries
   let categoryRefsMap = new Map<string, Map<Ref<Doc>, Doc>>()
@@ -251,55 +324,74 @@
   let listCategories: ListCategories
 </script>
 
-<div class="list-container" bind:this={listDiv}>
-  <ListCategories
-    bind:this={listCategories}
-    newObjectProps={() => (space != null ? { space } : {})}
-    {docs}
-    {categoryRefsMap}
-    {_class}
-    {space}
-    {selection}
-    query={resultQuery}
-    {lookup}
-    {baseMenuClass}
-    {config}
-    {configurations}
-    {viewOptions}
-    {viewOptionsConfig}
-    {selectedObjectIds}
-    {limiter}
-    {listProvider}
-    level={0}
-    groupPersistKey={''}
-    {createItemDialog}
-    {createItemDialogProps}
-    {createItemLabel}
-    {createItemEvent}
-    {singleCategoryLimit}
-    on:check
-    on:uncheckAll={uncheckAll}
-    on:row-focus
-    {flatHeaders}
-    {disableHeader}
-    {props}
-    {listDiv}
-    {compactMode}
-    bind:dragItem
-    on:select={(evt) => {
-      select(0, evt.detail)
-    }}
-    on:select-next={(evt) => {
-      select(2, evt.detail)
-    }}
-    on:select-prev={(evt) => {
-      select(-2, evt.detail)
-    }}
-    on:collapsed
-    {resultQuery}
-    {resultOptions}
-    {readonly}
-  />
+<div class="list-container" class:filling={isEmpty} bind:this={listDiv}>
+  {#if isEmpty}
+    {#if narrowed}
+      <EmptyState
+        icon={emptyIcon}
+        title={view.string.NothingFound}
+        description={gtotal > 0 ? view.string.NothingFoundHidden : view.string.ChangeSearchQuery}
+        descriptionParams={{ count: gtotal }}
+        actions={emptyActions}
+      />
+    {:else}
+      <EmptyState
+        icon={emptyIcon}
+        title={emptyStateInfo?.title ?? view.string.EmptyStateDescription}
+        description={emptyStateInfo?.description}
+        actions={emptyActions}
+      />
+    {/if}
+  {:else}
+    <ListCategories
+      bind:this={listCategories}
+      newObjectProps={() => (space != null ? { space } : {})}
+      {docs}
+      {categoryRefsMap}
+      {_class}
+      {space}
+      {selection}
+      query={resultQuery}
+      {lookup}
+      {baseMenuClass}
+      {config}
+      {configurations}
+      {viewOptions}
+      {viewOptionsConfig}
+      {selectedObjectIds}
+      {limiter}
+      {listProvider}
+      level={0}
+      groupPersistKey={''}
+      {createItemDialog}
+      {createItemDialogProps}
+      {createItemLabel}
+      {createItemEvent}
+      {singleCategoryLimit}
+      on:check
+      on:uncheckAll={uncheckAll}
+      on:row-focus
+      {flatHeaders}
+      {disableHeader}
+      {props}
+      {listDiv}
+      {compactMode}
+      bind:dragItem
+      on:select={(evt) => {
+        select(0, evt.detail)
+      }}
+      on:select-next={(evt) => {
+        select(2, evt.detail)
+      }}
+      on:select-prev={(evt) => {
+        select(-2, evt.detail)
+      }}
+      on:collapsed
+      {resultQuery}
+      {resultOptions}
+      {readonly}
+    />
+  {/if}
 </div>
 
 <style lang="scss">
@@ -311,5 +403,12 @@
     height: max-content;
     min-width: auto;
     min-height: 0;
+
+    // Empty state: stretch to fill the Scroller's box instead of shrinking to content height,
+    // so EmptyState centers in the whole viewlet area rather than sitting under the header.
+    &.filling {
+      flex: 1;
+      height: 100%;
+    }
   }
 </style>

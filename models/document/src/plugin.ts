@@ -14,6 +14,7 @@
 //
 
 import type { Doc, Ref } from '@hcengineering/core'
+import type { OnboardingCard } from '@hcengineering/model-workbench'
 import {} from '@hcengineering/core'
 import { documentId } from '@hcengineering/document'
 import document from '@hcengineering/document-resources/src/plugin'
@@ -65,6 +66,12 @@ export default mergeIds(documentId, document, {
     ConfigDescription: '' as IntlString,
     ParentDocument: '' as IntlString,
     ChildDocument: '' as IntlString,
-    LockedBy: '' as IntlString
+    LockedBy: '' as IntlString,
+    OnboardingCreateTeamspace: '' as IntlString,
+    OnboardingWriteDocument: '' as IntlString
+  },
+  ids: {
+    OnboardingTeamspaceCard: '' as Ref<OnboardingCard>,
+    OnboardingDocumentsCard: '' as Ref<OnboardingCard>
   }
 })

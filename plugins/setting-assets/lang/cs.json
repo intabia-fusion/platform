@@ -376,7 +376,18 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Seznámení s platformou",
+    "ShowOnboardingHints": "Zobrazovat nápovědy a tipy na prázdných obrazovkách",
+    "ShowOnboardingHintsDescription": "Prázdné obrazovky vysvětlují, co by zde mělo být, a nabízejí odkazy pro vytvoření první položky.",
+    "OnboardingProgress": "{done} z {total}",
+    "OnboardingOpenPanel": "Otevřít panel",
+    "OnboardingStartOver": "Začít znovu",
+    "Mixins": "Mixiny",
+    "BaseClasses": "Základní třídy",
+    "MixinColon": "Mixin:",
+    "Login": "Přihlášení",
+    "Primary": "Primární"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

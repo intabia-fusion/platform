@@ -40,6 +40,16 @@
     "ConfigureWidgets": "配置小部件",
     "Tab": "选项卡",
     "WorkspaceIsArchived": "工作区因未使用而归档，请与我们联系以恢复...",
-    "WorkspaceIsMigrating": "工作区正在更新。请稍候..."
+    "WorkspaceIsMigrating": "工作区正在更新。请稍候...",
+    "SelectToOpen": "选择要打开的内容",
+    "Onboarding": "了解平台",
+    "OnboardingProgress": "{done}/{total}",
+    "OnboardingInviteTeam": "邀请你的团队",
+    "OnboardingInviteTeamDescription": "发送邀请链接，队友即可加入工作区。",
+    "OnboardingOpenApp": "打开",
+    "OnboardingShowMe": "显示",
+    "OnboardingOpenMenuHint": "打开此菜单并选择“{item}”",
+    "OnboardingIntro": "应用在左侧栏，像这样的小组件在右侧，搜索只需点击一下。",
+    "OnboardingTargetUnavailable": "此按钮在这里对你不可用，或在当前视图中被隐藏。"
   }
 }

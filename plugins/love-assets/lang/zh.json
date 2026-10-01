@@ -169,6 +169,8 @@
     "MeetingRoomNum": "会议室 {number}",
     "VoiceRoomNum": "语音房间 {number}",
     "JoinRequestTitle": "加入请求",
-    "JoinRequestBody": "{name} 想加入会议"
+    "JoinRequestBody": "{name} 想加入会议",
+    "OnboardingCalls": "通话",
+    "OnboardingCallsDescription": "点击办公室里同事的房间即可呼叫，或打开共享房间发起团队通话。"
   }
 }

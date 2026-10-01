@@ -169,6 +169,8 @@
     "MeetingRoomNum": "Besprechungsraum {number}",
     "VoiceRoomNum": "Audioraum {number}",
     "JoinRequestTitle": "Beitrittsanfrage",
-    "JoinRequestBody": "{name} möchte dem Meeting beitreten"
+    "JoinRequestBody": "{name} möchte dem Meeting beitreten",
+    "OnboardingCalls": "Anrufe",
+    "OnboardingCallsDescription": "Klicken Sie im Büro auf den Raum eines Kollegen, um ihn anzurufen, oder öffnen Sie einen gemeinsamen Raum für einen Teamanruf."
   }
 }

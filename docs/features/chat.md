@@ -89,6 +89,7 @@
 - **Секции и сортировка.** `chatNavGroupModels`, `sortDirects`, `sortActivityChannels`, `deferred` для activity. - plugins/chunter-resources/src/components/chat/utils.ts; navigator/{ChatNavigator,ChatNavGroup,ChatNavSection,ChatNavItem}.svelte.
 - **Бейджи.** Число `unreadMessagesCount`, цвет по `notifiedMessagesCount`, маркер приложения `ShowNotifyMarkerFn` + `showChatBadge`, счётчик Threads `unreadThreadsCountStore`. - navigator/ChatNavItem.svelte; plugins/chunter-resources/src/index.ts; stores.ts.
 - **Скрытые и закреплённые чаты.** `Chat.hidden/pinned`, auto-unhide (`ChunterMiddleware`), auto-hide (`syncChat`).
+- **Пустое состояние "выберите канал".** `EmptyState` в `Chat.svelte` показывает до 3 самых активных чатов пользователя (`Channel`/`DirectMessage` через `chunter.class.Chat` с `account`+`hidden: false`, непрочитанные по `unreadByDoc` первыми, затем `modifiedOn desc`) кнопками через `ObjectPresenter`, клик - `openChannel`; кнопка "Создать канал" видна только при `onboardingHints` (`@hcengineering/view-resources`).
 
 ### Производительность
 

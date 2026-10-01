@@ -5,7 +5,6 @@
     "Channels": "Каналы",
     "DirectMessages": "Личные сообщения",
     "CreateChannel": "Создать канал",
-    "NewDirectMessage": "Создать личное сообщение",
     "ChannelName": "Название",
     "ChannelNamePlaceholder": "Канал",
     "ChannelDescription": "Описание",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Искать в транскрипциях встреч",
     "SearchFilterSelected": "Выбрано",
     "SearchFilterObject": "Где",
-    "SearchFilterObjectMore": "Начните вводить, чтобы найти ещё"
+    "SearchFilterObjectMore": "Начните вводить, чтобы найти ещё",
+    "SelectChannel": "Выберите канал слева",
+    "OnboardingChats": "Чаты",
+    "OnboardingChatsDescription": "Каналы нужны для тем и команд, личные чаты - для разговора один на один: создайте любой и отправьте первое сообщение.",
+    "OnboardingAskJulia": "Спросите ИИ Юлю",
+    "OnboardingAskJuliaDescription": "Юля - ИИ-ассистент в личном чате: задайте ей вопрос или попросите резюмировать переписку."
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} отправил(а) вам сообщение: \n\n{message}",

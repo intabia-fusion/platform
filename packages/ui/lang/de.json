@@ -119,6 +119,8 @@
     "Received": "Empfangen",
     "TrafficValue": "{count} Nachr., {kb} KB",
     "Latency": "Latenz",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "NavigatorHidden": "Das linke Menü ist ausgeblendet",
+    "ShowMenu": "Menü anzeigen"
   }
 }

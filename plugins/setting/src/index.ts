@@ -414,7 +414,8 @@ export default plugin(settingId, {
     Export: '' as Ref<Doc>,
     OfficeSettings: '' as Ref<Doc>,
     DisablePermissionsConfiguration: '' as Ref<Configuration>,
-    Mailboxes: '' as Ref<Doc>
+    Mailboxes: '' as Ref<Doc>,
+    Onboarding: '' as Ref<Doc>
   },
   mixin: {
     Editable: '' as Ref<Mixin<Editable>>,
@@ -463,7 +464,8 @@ export default plugin(settingId, {
     EditRelation: '' as AnyComponent,
     Mailboxes: '' as AnyComponent,
     AddEmailSocialId: '' as AnyComponent,
-    OfficeSettings: '' as AnyComponent
+    OfficeSettings: '' as AnyComponent,
+    OnboardingSettings: '' as AnyComponent
   },
   string: {
     ConfirmOperation: '' as IntlString,
@@ -562,7 +564,13 @@ export default plugin(settingId, {
     Disconnected: '' as IntlString,
     Available: '' as IntlString,
     NotConnectedIntegration: '' as IntlString,
-    IntegrationIsUnstable: '' as IntlString
+    IntegrationIsUnstable: '' as IntlString,
+    Onboarding: '' as IntlString,
+    ShowOnboardingHints: '' as IntlString,
+    ShowOnboardingHintsDescription: '' as IntlString,
+    OnboardingProgress: '' as IntlString,
+    OnboardingOpenPanel: '' as IntlString,
+    OnboardingStartOver: '' as IntlString
   },
   emailTemplate: {
     IntegrationDisabledNotificationText: '' as IntlString,

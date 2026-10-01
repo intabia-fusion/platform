@@ -42,31 +42,32 @@
     "RestoreVersionConfirm": "Replace the current content with this version?",
     "CurrentVersion": "Current version",
     "Untitled": "Untitled",
-
     "Description": "Description",
-
     "CopyDocumentUrl": "Copy document URL to clipboard",
     "DocumentUrlCopied": "Copied!",
-
     "ViewMode": "View",
     "EditMode": "Edit",
     "SuggestMode": "Suggest",
-
     "CompareTo": "Compare to...",
     "Star": "Star",
     "Unstar": "Unstar",
-
     "Lock": "Lock",
     "Unlock": "Unlock",
     "Locked": "Locked",
-
     "ConfigLabel": "Documents",
     "ConfigDescription": "Extension for collaborative document editing",
-
     "Icon": "Icon",
     "Color": "Color",
     "ForbidCreateTeamspacePermission": "Forbid create teamspace",
-    "ForbidCreateTeamspacePermissionDescription": "Forbid users creating new teamspaces"
+    "ForbidCreateTeamspacePermissionDescription": "Forbid users creating new teamspaces",
+    "EmptyStateTeamspaceTitle": "No teamspaces yet",
+    "EmptyStateTeamspaceDescription": "Teamspaces group documents by team or topic and control who can read and edit them.",
+    "EmptyStateTeamspaceCreateLabel": "Create teamspace",
+    "EmptyStateDocumentTitle": "No documents yet",
+    "EmptyStateDocumentDescription": "Documents are collaborative pages for specs, notes and wikis inside a teamspace.",
+    "EmptyStateDocumentCreateLabel": "Create document",
+    "OnboardingCreateTeamspace": "Create a teamspace",
+    "OnboardingWriteDocument": "Write a document"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

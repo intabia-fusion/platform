@@ -5,7 +5,6 @@
     "Channels": "频道",
     "DirectMessages": "直连消息",
     "CreateChannel": "新建频道",
-    "NewDirectMessage": "新建直连消息",
     "ChannelName": "名称",
     "ChannelNamePlaceholder": "频道",
     "ChannelDescription": "描述",
@@ -189,7 +188,12 @@
     "SearchFilterIncludeTranscription": "Include meeting transcripts",
     "SearchFilterSelected": "Selected",
     "SearchFilterObject": "Where",
-    "SearchFilterObjectMore": "Start typing to find more"
+    "SearchFilterObjectMore": "Start typing to find more",
+    "SelectChannel": "选择一个频道",
+    "OnboardingChats": "聊天",
+    "OnboardingChatsDescription": "频道用于话题和团队，直连聊天用于一对一交流：创建其中一个并发送你的第一条消息。",
+    "OnboardingAskJulia": "问问AI Julia",
+    "OnboardingAskJuliaDescription": "Julia 是直连聊天中的 AI 助手：向她提问，或让她总结一段对话。"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",

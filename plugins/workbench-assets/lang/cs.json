@@ -40,6 +40,16 @@
     "ConfigureWidgets": "Nastavit widgety",
     "Tab": "Karta",
     "WorkspaceIsArchived": "Pracovní prostor je archivován kvůli nečinnosti. Kontaktujte nás prosím pro obnovení...",
-    "WorkspaceIsMigrating": "Pracovní prostor je aktualizován. Prosím čekejte..."
+    "WorkspaceIsMigrating": "Pracovní prostor je aktualizován. Prosím čekejte...",
+    "SelectToOpen": "Vyberte, co otevřít",
+    "Onboarding": "Seznámení s platformou",
+    "OnboardingProgress": "{done} z {total}",
+    "OnboardingInviteTeam": "Pozvěte svůj tým",
+    "OnboardingInviteTeamDescription": "Pošlete odkaz s pozvánkou a kolegové se připojí k pracovnímu prostoru.",
+    "OnboardingOpenApp": "Otevřít",
+    "OnboardingShowMe": "Ukázat",
+    "OnboardingOpenMenuHint": "Otevřete tuto nabídku a vyberte „{item}“",
+    "OnboardingIntro": "Aplikace jsou v liště vlevo, widgety jako tento vpravo a vyhledávání je na jedno kliknutí.",
+    "OnboardingTargetUnavailable": "Toto tlačítko pro vás zde není dostupné nebo je v aktuálním zobrazení skryté."
   }
 }

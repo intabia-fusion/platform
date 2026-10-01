@@ -169,6 +169,7 @@ export { default as NavGroup } from './components/NavGroup.svelte'
 export { default as Modal } from './components/Modal.svelte'
 export { default as AccordionItem } from './components/AccordionItem.svelte'
 export { default as NotificationToast } from './components/NotificationToast.svelte'
+export { default as Spotlight } from './components/Spotlight.svelte'
 export { default as Hotkey } from './components/Hotkey.svelte'
 export { default as HotkeyGroup } from './components/HotkeyGroup.svelte'
 export { default as ModernWizardDialog } from './components/wizard/ModernWizardDialog.svelte'
@@ -295,6 +296,7 @@ export { default as CodeForm } from './components/CodeForm.svelte'
 export { default as CodeInput } from './components/CodeInput.svelte'
 export { default as TimeLeft } from './components/TimeLeft.svelte'
 export { default as SectionEmpty } from './components/SectionEmpty.svelte'
+export { default as EmptyState } from './components/EmptyState.svelte'
 export { default as EmbeddedHTML } from './components/EmbeddedHTML.svelte'
 export { default as EmbeddedPDF } from './components/EmbeddedPDF.svelte'
 export { default as NestedMenu } from './components/NestedMenu.svelte'
@@ -323,6 +325,7 @@ export * from './components/calendar/internal/DateUtils'
 export * from './colors'
 export * from './focus'
 export * from './resize'
+export * from './spotlight'
 export * from './lazy'
 export * from './stores'
 export * from './presence'
@@ -371,5 +374,22 @@ export const deviceOptionsStore = writable<DeviceOptions>({
   twoRows: false,
   firstDayOfWeek: 1
 })
+
+/**
+ * @public
+ * Sets navigator visibility and persists it the same way Workbench does, so EmptyState's
+ * "show menu" hint and the sidebar toggle stay in sync.
+ */
+export function setNavigatorVisible (visible: boolean): void {
+  deviceOptionsStore.update((info) => {
+    info.navigator.visible = visible
+    return info
+  })
+  try {
+    localStorage.setItem('hiddenNavigator', String(!visible))
+  } catch (err) {
+    // Storage may be unavailable (private mode, disabled cookies) - visibility still applies.
+  }
+}
 
 export default uis

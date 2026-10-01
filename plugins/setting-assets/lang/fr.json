@@ -381,7 +381,13 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Onboarding": "Découverte de la plateforme",
+    "ShowOnboardingHints": "Afficher les astuces sur les écrans vides",
+    "ShowOnboardingHintsDescription": "Les écrans vides expliquent ce qui devrait s'y trouver et proposent des liens pour créer le premier élément.",
+    "OnboardingProgress": "{done} sur {total}",
+    "OnboardingOpenPanel": "Ouvrir le panneau",
+    "OnboardingStartOver": "Recommencer"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

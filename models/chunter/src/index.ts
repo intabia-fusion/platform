@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -21,8 +22,8 @@ import core from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAttributeApplier } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import { WidgetType } from '@hcengineering/workbench'
-import { AccountRole, type Class, type IndexingConfiguration } from '@hcengineering/core'
+import { WidgetType, type Application } from '@hcengineering/workbench'
+import { AccountRole, type Class, type IndexingConfiguration, type Ref } from '@hcengineering/core'
 
 import { defineActions } from './actions'
 import { defineNotifications } from './notifications'
@@ -367,6 +368,49 @@ export function createModel (builder: Builder): void {
     extension: activity.extension.ActivityEmployeePresenter,
     component: chunter.component.EmployeePresenter
   })
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: chunter.app.Chunter as Ref<Application>,
+      label: chunter.string.OnboardingChats,
+      description: chunter.string.OnboardingChatsDescription,
+      order: 20,
+      accessLevel: AccountRole.User,
+      doneWhen: { _class: chunter.class.ChatMessage },
+      actions: [
+        {
+          label: chunter.string.NewChannel,
+          target: { application: chunterId, selector: '[data-id="chat-new-button"]', menu: true }
+        },
+        {
+          label: chunter.string.NewDirectChat,
+          target: { application: chunterId, selector: '[data-id="chat-new-button"]', menu: true }
+        }
+      ]
+    },
+    chunter.ids.OnboardingChatsCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: chunter.app.Chunter as Ref<Application>,
+      label: chunter.string.OnboardingAskJulia,
+      description: chunter.string.OnboardingAskJuliaDescription,
+      order: 25,
+      accessLevel: AccountRole.User,
+      actions: [
+        {
+          label: chunter.string.TalkToYulia,
+          target: { selector: '[data-id="ai-chat-button"]' }
+        }
+      ]
+    },
+    chunter.ids.OnboardingAskJuliaCard
+  )
 
   defineActions(builder)
   defineNotifications(builder)

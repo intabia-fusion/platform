@@ -25,6 +25,7 @@ import {
   type ChatMessage,
   chunterId,
   type ChunterSpace,
+  createAndGetDirect,
   createDirect,
   type DirectMessage,
   type ThreadMessage
@@ -456,6 +457,17 @@ export async function openDirectForPerson (person: Person, forceSidebar = false)
   } else {
     await openChannelInSidebar(dm, chunter.class.DirectMessage)
   }
+}
+
+// Same as the AIChatButton click: opens the DM with the assistant in the right sidebar.
+export async function openAIChat (): Promise<void> {
+  const enabled = (getMetadata(aiBot.metadata.EndpointURL) ?? '') !== ''
+  if (!enabled) return
+  const botAccount = await getBotAccount()
+  if (botAccount === undefined) return
+  const direct = await createAndGetDirect(getClient(), [getCurrentAccount().uuid, botAccount])
+  if (direct === undefined) return
+  await openChannelInSidebar(direct._id, chunter.class.DirectMessage, direct)
 }
 
 export async function openBotDirect (): Promise<void> {

@@ -40,6 +40,13 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Zatím žádné disky",
+    "EmptyStateDriveDescription": "Disk je sdílený strom složek pro soubory, které tým společně nahrává a organizuje.",
+    "EmptyStateDriveCreateLabel": "Vytvořit disk",
+    "EmptyStateFilesTitle": "Zatím zde nejsou žádné soubory",
+    "EmptyStateFilesDescription": "Nahrajte soubory tlačítkem Nahrát Soubory nebo je sem přetáhněte.",
+    "OnboardingCreateDrive": "Vytvořte disk",
+    "OnboardingUploadFile": "Nahrajte soubor"
   }
 }
