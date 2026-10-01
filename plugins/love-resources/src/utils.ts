@@ -67,6 +67,7 @@ import love from './plugin'
 import { $myPreferences, currentMeetingMinutes } from './stores'
 import { getLiveKitClient } from './liveKitClient'
 import { getLoveClient } from './loveClient'
+import { readRecordAvailable } from './recordAvailable'
 
 export const liveKitClient = getLiveKitClient()
 export const lk: LKRoom = liveKitClient.liveKitRoom
@@ -344,8 +345,7 @@ async function checkRecordAvailable (): Promise<void> {
       }, 500)
     } else if (endpoint !== '') {
       const res = await fetch(concatLink(endpoint, '/checkRecordAvailable'))
-      const result = await res.json()
-      isRecordingAvailable.set(result)
+      isRecordingAvailable.set(await readRecordAvailable(res))
     } else {
       console.info('office recording is not configured')
     }
