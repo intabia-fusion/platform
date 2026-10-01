@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test, type Locator, type Page } from '../fixtures'
+import { expect, test, type BrowserContext, type Locator, type Page } from '../fixtures'
 import { SettingsPage } from '../model/settings-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewProjectPage } from '../model/tracker/new-project-page'
@@ -27,6 +27,7 @@ const baseStatuses = ['Backlog', 'Todo', 'In Progress', 'Done', 'Canceled']
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Statuses of a project type in tracker', () => {
+  let context: BrowserContext
   let page: Page
   let settings: SettingsPage
   let navigation: TrackerNavigationMenuPage
@@ -69,7 +70,9 @@ test.describe('Statuses of a project type in tracker', () => {
   }
 
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage()
+    // An explicit context: a test opens settings in a second tab of it
+    context = await browser.newContext()
+    page = await context.newPage()
     await createAccountAndWorkspace(page, page.request, generateTestData())
     await setTestOptions(page)
     await page.reload()
@@ -84,7 +87,7 @@ test.describe('Statuses of a project type in tracker', () => {
   })
 
   test.afterAll(async () => {
-    await page.close()
+    await context.close()
   })
 
   test('a new project type opens with its own Classic Issue task type and base statuses', async () => {
@@ -137,6 +140,41 @@ test.describe('Statuses of a project type in tracker', () => {
     await setShowEmptyGroups(true)
     await expect(listHeader(extraStatus)).toBeVisible()
     await expect(listHeader('Backlog')).toBeVisible()
+  })
+
+  test('a status added, renamed or deleted in settings changes an open project list', async () => {
+    // The list of the extended project stays open with empty groups shown
+    const lateStatus = `Late-${generateId(4)}`
+    const renamedStatus = `Renamed-${generateId(4)}`
+    const headerNames = async (): Promise<string[]> =>
+      (await page.locator('.categoryHeader').allInnerTexts()).map((it) => it.split('\n')[0].trim())
+    const settingsTab = await context.newPage()
+    try {
+      await settingsTab.goto(page.url())
+      const tabSettings = new SettingsPage(settingsTab)
+      await tabSettings.openProfileMenu()
+      await tabSettings.openSettings()
+      await tabSettings.selectSpaceType(extendedType, 'Tracker')
+      // With two task types the groups come from all task types of the project type
+      await tabSettings.addTaskType(`Second-${generateId(4)}`)
+      await tabSettings.openTaskType('Classic Issue')
+
+      await tabSettings.addState(lateStatus)
+      await expect(listHeader(lateStatus)).toBeVisible()
+      const position = (await headerNames()).findIndex((it) => it.startsWith(lateStatus))
+
+      // A renamed status keeps its place and shows the new name without a reload
+      await tabSettings.changeState(lateStatus, renamedStatus)
+      await expect(listHeader(renamedStatus)).toBeVisible()
+      await expect(listHeader(lateStatus)).toHaveCount(0)
+      await expect.poll(async () => (await headerNames()).findIndex((it) => it.startsWith(renamedStatus))).toBe(position)
+
+      await tabSettings.deleteState(renamedStatus)
+      await expect(listHeader(renamedStatus)).toHaveCount(0)
+      await expect(listHeader(extraStatus)).toBeVisible()
+    } finally {
+      await settingsTab.close()
+    }
   })
 
   test('the board shows columns only for statuses of the project type', async () => {

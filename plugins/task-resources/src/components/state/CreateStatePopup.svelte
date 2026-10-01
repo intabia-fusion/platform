@@ -281,23 +281,7 @@
           await renameStatuses(_type, _taskType, estatus._id, newStatus._id)
 
           closePopup()
-
-          $settingsStore = {
-            id: newStatus._id,
-            component: task.component.CreateStatePopup,
-            props: {
-              status: newStatus,
-              taskType: _taskType,
-              _class,
-              category,
-              type: _type,
-              ofAttribute,
-              icon,
-              color,
-              icons,
-              readonly
-            }
-          }
+          clearSettingsStore()
         }
       },
       undefined

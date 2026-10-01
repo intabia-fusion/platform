@@ -188,6 +188,7 @@ export async function getAllStates (
       return []
     }
     if (type !== undefined) {
+      watchTaskTypes(queryId, { _id: taskTypeId }, onUpdate)
       const statusMap = get(statusStore).byId
       const statuses = (taskType.statuses.map((p) => statusMap.get(p)) as Status[]) ?? []
       if (filterDone) {
@@ -226,8 +227,12 @@ export async function getAllStates (
       return await promise
     }
   } else if (type !== undefined) {
+    watchTaskTypes(queryId, { parent: type._id }, onUpdate)
+    // From the task types, not from type.statuses: a renamed status replaces the old one in its task type first,
+    // and the watch above follows the task types
     const statusMap = get(statusStore).byId
-    const statuses = (type.statuses.map((p) => statusMap.get(p._id)) as Status[]) ?? []
+    const statusIds = joinedTaskTypes.flatMap((it) => it.statuses).filter((it, idx, arr) => arr.indexOf(it) === idx)
+    const statuses = statusIds.map((p) => statusMap.get(p)).filter((p): p is Status => p !== undefined)
     if (filterDone) {
       return statuses
         .filter((p) => p?.category !== task.statusCategory.Lost && p?.category !== task.statusCategory.Won)
@@ -236,6 +241,7 @@ export async function getAllStates (
       return statuses.map((p) => p?._id)
     }
   }
+  watchTaskTypes(queryId, { parent: { $in: joinedProjectsTypes } }, onUpdate)
   const includedStatuses = new Set(joinedTaskTypes.flatMap((taskType) => taskType.statuses))
   const $statusStore = get(statusStore)
   const allStates = [...includedStatuses].map((p) => $statusStore.byId.get(p))
@@ -247,6 +253,45 @@ export async function getAllStates (
   } else {
     return states.map((p) => p?._id)
   }
+}
+
+// The groups are computed from task type statuses once, so a change of those task types (a status added, renamed
+// or removed) asks the view to compute them again. The first answer only reports the current state.
+function watchTaskTypes (queryId: Ref<Doc>, query: DocumentQuery<TaskType>, onUpdate: () => void): void {
+  let initial = true
+  CategoryQuery.getLiveQuery(queryId).query(task.class.TaskType, query, (res) => {
+    if (initial) {
+      initial = false
+      return
+    }
+    whenStoresHave(res, onUpdate)
+  })
+}
+
+// getAllStates reads the stores, which get the same change through their own queries, maybe later. Computing
+// before they catch up shows the previous statuses.
+function whenStoresHave (taskTypes: TaskType[], fn: () => void): void {
+  const isFresh = (): boolean => {
+    const $taskTypes = get(taskTypeStore)
+    const statuses = get(statusStore).byId
+    return taskTypes.every(
+      (it) => $taskTypes.get(it._id)?.modifiedOn === it.modifiedOn && it.statuses.every((s) => statuses.has(s))
+    )
+  }
+  if (isFresh()) {
+    fn()
+    return
+  }
+  let done = false
+  const check = (): void => {
+    if (done || !isFresh()) return
+    done = true
+    unsubscribeTaskTypes()
+    unsubscribeStatuses()
+    fn()
+  }
+  const unsubscribeTaskTypes = taskTypeStore.subscribe(check)
+  const unsubscribeStatuses = statusStore.subscribe(check)
 }
 
 async function getProjectType (space: Ref<Space> | undefined): Promise<Ref<ProjectType> | undefined> {

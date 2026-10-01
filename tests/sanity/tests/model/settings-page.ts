@@ -50,6 +50,9 @@ export class SettingsPage extends CommonPage {
       .locator('div.hulyTableAttr-content button.hulyTableAttr-content__row')
       .filter({ has: this.page.getByText(value, { exact: true }) })
 
+  deleteStateButton = (): Locator =>
+    this.page.locator('div.hulyModal-container.type-aside .hulyHeader-buttonsGroup.actions button').first()
+
   addStateButton = (): Locator =>
     this.page.locator('div.hulyTableAttr-header', { hasText: 'Process states' }).locator('button')
 
@@ -147,6 +150,16 @@ export class SettingsPage extends CommonPage {
     await this.asideFooterButton('Create').click()
     await expect(this.statusNameInput()).toBeHidden()
     await expect(this.stateButton(name)).toBeVisible()
+  }
+
+  // Deletes an unused state of the opened task type
+  async deleteState (name: string): Promise<void> {
+    await this.stateButton(name).click()
+    await this.deleteStateButton().click()
+    await this.viewStringDeleteObjectButtonPrimary().click()
+    // The state panel closes once the state is deleted
+    await expect(this.statusNameInput()).toBeHidden()
+    await expect(this.stateButton(name)).toHaveCount(0)
   }
 
   async changeState (name: string, newName: string, color?: string): Promise<void> {
