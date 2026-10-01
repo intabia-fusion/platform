@@ -652,6 +652,8 @@ export class LiveQuery implements WithTx, Client {
       // Clone: docCache hands the same object to every query in the batch, and later $inc txes
       // are applied per query - a shared object would be incremented once per subscriber.
       q.result.updateDoc(current)
+      // The server copy may already hold an $inc still in flight; an equal-ts one must not reapply.
+      q.result.setLoadedModifiedOn(_id, current.modifiedOn)
       this.refs.updateDocuments(q, [current])
     } else {
       if (q.options?.limit === q.result.length) {
@@ -1055,6 +1057,7 @@ export class LiveQuery implements WithTx, Client {
           q.result = await q.result
         }
         const doc = res[0]
+        q.result.setLoadedModifiedOn(doc._id, doc.modifiedOn) // as in getCurrentDoc
         const pos = q.result.findDoc(doc._id)
         if (pos !== undefined) {
           this.refs.updateDocuments(q, [q.result.updateDoc(doc)])

@@ -565,10 +565,8 @@ describe('duplicate delivery of one $inc tx', () => {
   })
 })
 
-// `loadedModifiedOn` is recorded only by the ResultArray constructor, so a doc that getCurrentDoc
-// re-reads from the server mid-flight keeps no record of having been loaded at that timestamp.
-// That looks like a hole - an equal-timestamp $inc on top of a value that already contains it -
-// but the doc's own modifiedOn closes it. Pinned here so a change to either guard is noticed.
+// A doc re-read by getCurrentDoc is marked as loaded at its server timestamp, so an
+// equal-timestamp $inc on top of a value that already contains it is re-fetched, not applied.
 describe('$inc after the doc was refreshed from the server mid-flight', () => {
   it('keeps the client counter equal to the server one', async () => {
     const { liveQuery, factory, storage, txFactory } = await getCountingClient()
@@ -618,5 +616,99 @@ describe('$inc after the doc was refreshed from the server mid-flight', () => {
 
     const server = await factory.findOne<CounterSpace>(core.class.Space, { _id: id })
     expect(q.last()[0].rate).toBe(server?.rate)
+  })
+})
+
+// The server broadcasts txes of one doc out of commit order. An older tx sends the query to the
+// server, the copy it gets back already holds the next $inc, and that $inc must not apply again.
+describe('$inc after an out-of-order tx refetched the doc', () => {
+  async function writeSilently (storage: Client, txes: Tx[]): Promise<void> {
+    const notify = storage.notify
+    storage.notify = () => {}
+    for (const tx of txes) await storage.tx(tx)
+    storage.notify = notify
+  }
+
+  it('does not apply an $inc the refetched doc already holds (getCurrentDoc)', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 1, name: 'out-of-order' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { _id: id } as any)
+    const t0 = q.last()[0].modifiedOn
+    const inc = (field: string, ts: number): Tx =>
+      txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { $inc: { [field]: 1 } } as any,
+        false,
+        ts
+      )
+    const stale = inc('hits', t0 + 10)
+    const mid = inc('misses', t0 + 20)
+    const rate = inc('rate', t0 + 30)
+    await writeSilently(storage, [stale, mid, rate])
+
+    await liveQuery.tx(mid)
+    await liveQuery.tx(stale)
+    await liveQuery.tx(rate)
+    await settle()
+
+    expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(2)
+    expect(q.last()[0].rate).toBe(2)
+  })
+
+  it('does not apply an $inc the doc already held when it entered the result (matchQuery)', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 1, name: 'outside' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { name: 'inside' })
+    expect(q.last().length).toBe(0)
+    const t0 = (await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.modifiedOn ?? 0
+    const rename = txFactory.createTxUpdateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      id,
+      { name: 'inside' },
+      false,
+      t0 + 10
+    )
+    const rate = txFactory.createTxUpdateDoc<CounterSpace>(
+      core.class.Space,
+      core.space.Model,
+      id,
+      { $inc: { rate: 1 } } as any,
+      false,
+      t0 + 20
+    )
+    await writeSilently(storage, [rename, rate])
+
+    await liveQuery.tx(rename)
+    await liveQuery.tx(rate)
+    await settle()
+
+    expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(2)
+    expect(q.last()[0]?.rate).toBe(2)
+  })
+
+  it('still applies an equal-timestamp $inc committed after the refetch', async () => {
+    const { liveQuery, factory, storage, txFactory } = await getCountingClient()
+    const id = (await createSpace(factory, false, { rate: 1, name: 'late-inc' })) as Ref<CounterSpace>
+    const q = await subscribe<CounterSpace>(liveQuery, core.class.Space, { _id: id } as any)
+    const t0 = q.last()[0].modifiedOn
+    const update = (ops: any, ts: number): Tx =>
+      txFactory.createTxUpdateDoc<CounterSpace>(core.class.Space, core.space.Model, id, ops, false, ts)
+    const stale = update({ description: 'stale' }, t0 + 10)
+    const parent = update({ description: 'parent' }, t0 + 20)
+    const derived = update({ $inc: { rate: 1 } }, t0 + 20)
+    await writeSilently(storage, [stale, parent])
+
+    await liveQuery.tx(parent)
+    await liveQuery.tx(stale) // refetch: the copy is at t0 + 20 but has no $inc yet
+    await settle()
+    await writeSilently(storage, [derived])
+    await liveQuery.tx(derived)
+    await settle()
+
+    expect((await storage.findOne<CounterSpace>(core.class.Space, { _id: id }))?.rate).toBe(2)
+    expect(q.last()[0].rate).toBe(2)
   })
 })

@@ -54,6 +54,10 @@ export class ResultArray {
     return this.loadedModifiedOn.get(_id) === modifiedOn
   }
 
+  setLoadedModifiedOn (_id: Ref<Doc>, modifiedOn: Timestamp): void {
+    this.loadedModifiedOn.set(_id, modifiedOn)
+  }
+
   clearLoadedModifiedOn (_id: Ref<Doc>): void {
     this.loadedModifiedOn.delete(_id)
   }
