@@ -1,15 +1,16 @@
 import * as zmq from 'zeromq'
 
+// Fixed ports race: close() releases the port asynchronously, so the next bind may hit EADDRINUSE.
 describe('zmq-tests', () => {
   it('check reconnect', async () => {
     // Simulate a reconnect event
 
     const router = new zmq.Router()
 
-    await router.bind('tcp://0.0.0.0:7654')
+    await router.bind('tcp://127.0.0.1:0')
 
     const request = new zmq.Request()
-    request.connect('tcp://localhost:7654')
+    request.connect(router.lastEndpoint as string)
 
     await request.send('Hello')
 
@@ -47,13 +48,13 @@ describe('zmq-tests', () => {
 
     const router = new zmq.Router()
 
-    await router.bind('tcp://0.0.0.0:7654')
+    await router.bind('tcp://127.0.0.1:0')
 
     const request = new zmq.Request()
-    request.connect('tcp://localhost:7654')
+    request.connect(router.lastEndpoint as string)
 
     const request2 = new zmq.Request()
-    request2.connect('tcp://localhost:7654')
+    request2.connect(router.lastEndpoint as string)
 
     await request.send('Hello1')
     await request2.send('Hello2')
@@ -82,18 +83,18 @@ describe('zmq-tests', () => {
   it('check multiple requests from same client', async () => {
     // Create router socket (server)
     const router = new zmq.Pull()
-    await router.bind('tcp://0.0.0.0:7654')
+    await router.bind('tcp://127.0.0.1:0')
 
     // XPublisher reports the subscription; a plain one may send before it lands and drop it all.
     const routerPub = new zmq.XPublisher()
-    await routerPub.bind('tcp://0.0.0.0:7655')
+    await routerPub.bind('tcp://127.0.0.1:0')
 
     // Create request socket (client)
     const client = new zmq.Push()
-    client.connect('tcp://localhost:7654')
+    client.connect(router.lastEndpoint as string)
 
     const clientSub = new zmq.Subscriber()
-    clientSub.connect('tcp://localhost:7655')
+    clientSub.connect(routerPub.lastEndpoint as string)
     clientSub.subscribe('client1')
 
     await client.send('Hello1')
