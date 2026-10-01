@@ -35,6 +35,7 @@ import { LocalUrl, loginByToken } from '../utils'
 
 // Ids as strings: the suite does not depend on the chunter/activity/contact packages.
 const chatMessageClass = 'chunter:class:ChatMessage' as Ref<Class<Doc>>
+const chatClass = 'chunter:class:Chat' as Ref<Class<Doc>>
 const threadMessageClass = 'chunter:class:ThreadMessage' as Ref<Class<Doc>>
 const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
 const reactionClass = 'activity:class:Reaction' as Ref<Class<Doc>>
@@ -268,8 +269,16 @@ export class ChatMember {
       }
       const state = await this.client.findOne(readStateClass, { attachedTo: context.objectId } as any)
       if (state === undefined) continue
+      // Date.now() can tie or run ahead of the createdOn of a message sent right after (same ms, or
+      // another clock), marking it read: read up to the last existing message's own createdOn.
+      const last = await this.client.findOne(
+        'activity:class:ActivityMessage' as Ref<Class<Doc>>,
+        { attachedTo: context.objectId } as any,
+        { sort: { createdOn: -1 } } as any
+      )
+      const timestamp = (last as any)?.createdOn ?? Date.now()
       await this.client.updateDoc(state._class, state.space, state._id, {
-        [this.account]: { messageId: generateId(), timestamp: Date.now() }
+        [this.account]: { messageId: generateId(), timestamp }
       } as any)
     }
     return unread.length
@@ -300,6 +309,20 @@ export class ChatMember {
       const found = await this.client.searchFulltext({ query: name, classes: [personClass] }, { limit: 1 })
       return found.docs.length > 0
     })
+  }
+
+  /**
+   * `chunter:class:Chat` comes from the async `OnCollaboratorAdded` trigger, which lags past a UI timeout.
+   * Matched by the doc's id: an application's Chat carries its task-type class, not `recruit:class:Applicant`.
+   */
+  async waitForLinkedChat (ofClass: string): Promise<void> {
+    // Only for a fresh workspace, where the class has exactly one doc.
+    const doc = await this.client.findOne(ofClass as Ref<Class<Doc>>, {})
+    if (doc === undefined) throw new Error(`no ${ofClass} to wait a chat for`)
+    await poll(
+      async () =>
+        (await this.client.findOne(chatClass, { account: this.account, attachedTo: doc._id } as any)) !== undefined
+    )
   }
 
   /** The per-document notification mode of this member: what "Edit notifications" sets in the UI. */

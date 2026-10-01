@@ -116,6 +116,25 @@ describe('checkAndJoinIfRecipientJoined - sender multi-tab guard', () => {
     expect(mockJoin).toHaveBeenCalledWith('meeting-1')
   })
 
+  it('keeps an A2 invite when createMeeting refuses instead of discarding it', async () => {
+    const { checkAndJoinIfRecipientJoined } = require('../invites')
+    const presentation = require('@hcengineering/presentation')
+    const removeDoc = jest.fn(async () => undefined)
+    presentation.getClient.mockReturnValue({
+      removeDoc,
+      findOne: jest.fn(async () => ({ _id: 'office-me' })),
+      update: jest.fn(async () => undefined)
+    })
+    mockCreateMeeting.mockResolvedValueOnce({ refused: 'room-occupied' } as unknown as {
+      meeting: { _id: string, members: never[] }
+    })
+    const inv = acceptedInvite('tab-sender')
+    delete (inv as any).meeting
+    await checkAndJoinIfRecipientJoined([inv])
+    expect(mockCreateMeeting).toHaveBeenCalled()
+    expect(removeDoc).not.toHaveBeenCalled()
+  })
+
   it('treats an empty SessionId as unknown so the accept guard cannot false-match', async () => {
     sessionId = ''
     const { responseToInviteRequest } = require('../invites')

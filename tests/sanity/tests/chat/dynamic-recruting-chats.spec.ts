@@ -7,6 +7,7 @@ import { VacanciesPage } from '../model/recruiting/vacancies-page'
 import { TalentsPage } from '../model/recruiting/talents-page'
 import { TalentName } from '../model/recruiting/types'
 import { UserProfilePage } from '../model/profile/user-profile-page'
+import { ChatMember, connectOwner } from '../API/ChatApi'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -16,6 +17,7 @@ test.describe('Dynamic reqruting chats', () => {
   let vacanciesPage: VacanciesPage
   let talentsPage: TalentsPage
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
+  let owner: ChatMember
 
   test.beforeEach(async ({ page, request }) => {
     data = generateTestData()
@@ -27,7 +29,8 @@ test.describe('Dynamic reqruting chats', () => {
 
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    const { ws } = await createAccountAndWorkspace(page, request, data)
+    owner = await connectOwner(ws, data.userName)
     const userProfilePage = new UserProfilePage(page)
     await userProfilePage.openProfileMenu()
     await userProfilePage.clickSettings()
@@ -45,6 +48,9 @@ test.describe('Dynamic reqruting chats', () => {
     })
 
     await test.step('User has linked vacancy chat', async () => {
+      // Deterministic signal for the async OnCollaboratorAdded trigger, instead of widening the
+      // nav locator's timeout while it catches up.
+      await owner.waitForLinkedChat('recruit:class:Vacancy')
       await leftSideMenuPage.clickChunter()
       await channelPage.checkLinkedChannelIsExist(newVacancyTitle, LinkedChannelTypes.Vacancy)
     })
@@ -68,6 +74,7 @@ test.describe('Dynamic reqruting chats', () => {
     })
 
     await test.step('User has linked application chat', async () => {
+      await owner.waitForLinkedChat('recruit:class:Applicant')
       await leftSideMenuPage.clickChunter()
       await channelPage.checkLinkedChannelIsExist(
         `${talentName.lastName} ${talentName.firstName}`,

@@ -108,6 +108,9 @@ async function changeSeats (page: Page, ws: string, seats: number, expect_: 'cha
   if (expect_ === 'charge') {
     await payMockCheckout(page, ws)
   } else {
+    // The dialog closes before its unawaited update request lands (isUpdating keeps the button disabled);
+    // a page.goto meanwhile aborts the fetch and the downgrade never reaches the server.
+    await expect(page.locator('[data-id="changeSeats"]')).toBeEnabled()
     await openBilling(page, ws)
   }
 }
@@ -137,6 +140,8 @@ async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?:
   // A first connect or an upgrade charges -> tbank checkout. A downgrade is covered by the unused
   // credit and applied server-side in place, with no bank page.
   if (expect_ === 'extend') {
+    // Same unawaited write as changeSeats: the swapped-in package's button stays disabled until it lands.
+    await expect(page.locator(`[data-id="packageDisconnect-${pkgKey}"]`)).toBeEnabled()
     await openBilling(page, ws)
   } else {
     await payMockCheckout(page, ws)

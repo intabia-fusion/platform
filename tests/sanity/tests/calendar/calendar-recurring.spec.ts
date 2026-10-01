@@ -13,9 +13,10 @@
 // limitations under the License.
 //
 import { expect, test, type Page } from '../fixtures'
-import { generateId, getSecondPage, PlatformSetting, PlatformURI } from '../utils'
+import { generateId, getSecondPage, PlatformSetting, PlatformURI, PlatformUserSecond } from '../utils'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
+import { deleteEventsByTitle } from '../API/CalendarApi'
 
 test.use({
   storageState: PlatformSetting
@@ -42,27 +43,32 @@ test.describe('Calendar recurring events', () => {
     const page2 = _page2.page
     let calendarPage2: CalendarPage
 
-    await test.step('Create a daily recurring event with the second account as participant', async () => {
-      await calendarPage.clickFreeCellInWidget()
-      await calendarPage.inputEventTitle().fill(title)
-      await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
-      await calendarPage.setRecurringDaily()
-      await calendarPage.buttonCreateEventSubmit().click()
-    })
+    try {
+      await test.step('Create a daily recurring event with the second account as participant', async () => {
+        await calendarPage.clickFreeCellInWidget()
+        await calendarPage.inputEventTitle().fill(title)
+        await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
+        await calendarPage.setRecurringDaily()
+        await calendarPage.buttonCreateEventSubmit().click()
+      })
 
-    await test.step('Own calendar shows the event today', async () => {
-      await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
-    })
+      await test.step('Own calendar shows the event today', async () => {
+        await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
+      })
 
-    await test.step('Second account sees a copy of the event in its own calendar today', async () => {
-      calendarPage2 = await openCalendarWidget(page2)
-      await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('Second account sees a copy of the event in its own calendar today', async () => {
+        calendarPage2 = await openCalendarWidget(page2)
+        await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
+      })
 
-    await test.step('The series expands - the participant also sees it on the next day', async () => {
-      await calendarPage2.navigateWidgetForward()
-      await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
-    })
+      await test.step('The series expands - the participant also sees it on the next day', async () => {
+        await calendarPage2.navigateWidgetForward()
+        await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible({ timeout: 15000 })
+      })
+    } finally {
+      // Owned by the first account - leftover series occupy the same hours on every later run.
+      await deleteEventsByTitle(title)
+    }
   })
 
   test('Cancelling one occurrence of a series frees that time for the other participants', async ({
@@ -76,36 +82,42 @@ test.describe('Calendar recurring events', () => {
     const calendarPage2 = await openCalendarWidget(page2)
     let hour: string = ''
 
-    await test.step('Second account starts a daily series tomorrow', async () => {
-      // The series starts on the day the check happens: an hour free there for the second
-      // account is free of everything but this series, so "no longer busy" means exactly that.
-      await calendarPage2.navigateWidgetForward()
-      hour = await calendarPage2.clickFreeCellInWidget()
-      await calendarPage2.inputEventTitle().fill(title)
-      await calendarPage2.setRecurringDaily()
-      await calendarPage2.buttonCreateEventSubmit().click()
-      await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible()
-    })
+    try {
+      await test.step('Second account starts a daily series tomorrow', async () => {
+        // The series starts on the day the check happens: an hour free there for the second
+        // account is free of everything but this series, so "no longer busy" means exactly that.
+        await calendarPage2.navigateWidgetForward()
+        hour = await calendarPage2.clickFreeCellInWidget()
+        await calendarPage2.inputEventTitle().fill(title)
+        await calendarPage2.setRecurringDaily()
+        await calendarPage2.buttonCreateEventSubmit().click()
+        await expect(calendarPage2.eventInCalendarWidget(title)).toBeVisible()
+      })
 
-    // The series is read through its BusySlot here: the first account is not a participant,
-    // so it never sees the Event itself - only the busy mark in the participants list.
-    const calendarPage = await openCalendarWidget(page)
-    await calendarPage.navigateWidgetForward()
-
-    await test.step('Tomorrow the series marks the second account busy', async () => {
-      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
-    })
-
-    await test.step('Second account cancels tomorrow occurrence only', async () => {
-      await calendarPage2.deleteOccurrenceInWidget(title)
-    })
-
-    await test.step('The cancelled hour is free again, the rest of the series is not touched', async () => {
-      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, false)
-
-      // The next day still carries the second occurrence.
+      // The series is read through its BusySlot here: the first account is not a participant,
+      // so it never sees the Event itself - only the busy mark in the participants list.
+      const calendarPage = await openCalendarWidget(page)
       await calendarPage.navigateWidgetForward()
-      await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
-    })
+
+      await test.step('Tomorrow the series marks the second account busy', async () => {
+        await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
+      })
+
+      await test.step('Second account cancels tomorrow occurrence only', async () => {
+        await calendarPage2.deleteOccurrenceInWidget(title)
+      })
+
+      await test.step('The cancelled hour is free again, the rest of the series is not touched', async () => {
+        await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, false)
+
+        // The next day still carries the second occurrence.
+        await calendarPage.navigateWidgetForward()
+        await calendarPage.checkParticipantBusy(hour, SECOND_USER_LAST_NAME, true)
+      })
+    } finally {
+      // Owned by the second account - leftover series occupy that hour on every later run
+      // (docs/memory/sanity-flaky-tests.md "Calendar specs share the second account's hours").
+      await deleteEventsByTitle(title, PlatformUserSecond)
+    }
   })
 })

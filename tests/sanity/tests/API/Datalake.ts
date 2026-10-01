@@ -73,6 +73,21 @@ export async function getStorageStatsByType (workspace: WorkspaceUuid): Promise<
   return await get<WorkspaceStorageStatsByType[]>(`stats/${workspace}/by-type`)
 }
 
+interface BlobMeta {
+  hls?: { source?: string, thumbnail?: string }
+}
+
+/** The stream pod patches `hls` only after all uploads drain; the player reads it once on mount. */
+export async function waitForHlsThumbnail (workspace: WorkspaceUuid, blobId: string, timeoutMs = 120000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const meta = await get<BlobMeta>(`meta/${workspace}/${blobId}`)
+    if (meta.hls?.thumbnail !== undefined && meta.hls.thumbnail !== '') return
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+  throw new Error(`timed out waiting for hls thumbnail metadata on blob ${blobId}`)
+}
+
 /**
  * Transcoding is async: platform publishes to `stream.transcode.request`, stream pod uploads
  * playlists/segments back one by one. Poll until the derived blobs settle.

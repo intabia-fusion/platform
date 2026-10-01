@@ -16,6 +16,7 @@ import { expect, test } from '../fixtures'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
+import { deleteEventsByTitle } from '../API/CalendarApi'
 
 test.use({
   storageState: PlatformSetting
@@ -34,8 +35,13 @@ test.describe('Calendar tests', () => {
     await sidebarPage.checkIfPlanerSidebarTabIsOpen(true)
 
     const calendarPage = new CalendarPage(page)
-    await calendarPage.createEventInWidget(title)
+    try {
+      await calendarPage.createEventInWidget(title)
 
-    await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
+      await expect(calendarPage.eventInCalendarWidget(title)).toBeVisible()
+    } finally {
+      // Leftover events fill up every hour of the day across a series with no stand reset.
+      await deleteEventsByTitle(title)
+    }
   })
 })

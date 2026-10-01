@@ -72,11 +72,14 @@ export function registerScenariosTests (): void {
 
         // user3 opens the same room - should see Busy badge instead of meeting details
         await clickRoomByName(page3, room as string)
-        await expect(page3.locator('[data-id="busy-badge"]').first()).toBeVisible({ timeout: 15000 })
+        // Scoped to the room under test: busyPersons is workspace-wide (stores.ts), so an
+        // unscoped locator also counts a busy occupant of an unrelated room on the same floor.
+        const busyBadge = page3.locator(`[data-id="room-${room as string}"] [data-id="busy-badge"]`)
+        await expect(busyBadge.first()).toBeVisible({ timeout: 15000 })
 
         // Toggle back to public - busy badge should go away on user3 side
         await toggle.click()
-        await expect(page3.locator('[data-id="busy-badge"]')).toHaveCount(0, { timeout: 15000 })
+        await expect(busyBadge).toHaveCount(0, { timeout: 15000 })
       } finally {
         await closeMeetingContexts([
           { ctx: ctx2, pages: [page2] },

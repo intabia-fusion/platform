@@ -368,6 +368,7 @@
   ): Promise<void> {
     if (paymentClient == null) return
     try {
+      isPackageBusy = true
       const result = await paymentClient.updateSubscriptionPlan(
         subscriptionId,
         pkgKey,
@@ -394,6 +395,8 @@
         console.error('Error replacing package:', error)
         await showErrorNotification()
       }
+    } finally {
+      isPackageBusy = false
     }
   }
 
@@ -1537,6 +1540,7 @@
                                 disabled={loading ||
                                   isCheckoutPolling ||
                                   isUpdating ||
+                                  isPackageBusy ||
                                   (!isConnected && !isEligible) ||
                                   (!isConnected && otherPackageCheckoutActive)}
                                 showTooltip={!isConnected && otherPackageCheckoutActive

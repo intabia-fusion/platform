@@ -10,7 +10,21 @@ export class IssueCommentPopup extends IssuesPage {
   buttonSendComment = (): Locator =>
     this.page.locator('div[class*="commentPopup"] div.buttons-panel > button[type="button"]')
 
+  // The row-anchored popup closes when the counter re-renders the row after send: reopen before checks.
+  private lastIssueName = ''
+
+  async checkCommentExist (comment: string): Promise<void> {
+    await this.openCommentPopupForIssueByName(this.lastIssueName)
+    await super.checkCommentExist(comment)
+  }
+
+  async checkCommentWithImageExist (commentHeader: string, fileName: string): Promise<void> {
+    await this.openCommentPopupForIssueByName(this.lastIssueName)
+    await super.checkCommentWithImageExist(commentHeader, fileName)
+  }
+
   async addCommentInPopup (issueName: string, commentText: string, attachmentFileName?: string): Promise<void> {
+    this.lastIssueName = issueName
     const popup = this.page.locator('div[class*="commentPopup"]')
     // The popup is anchored to the issue row; any live update re-renders the row and takes the
     // popup with it, so a mid-upload wait stares at nothing till the timeout. Reopen and refill.

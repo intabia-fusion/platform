@@ -166,7 +166,19 @@ export async function getSecondPageByInvite (
   // The click only starts the login: return before the workbench is up and the first side-menu
   // lookup waits out its timeout on a menu that is not there.
   await expect(newPage).toHaveURL(/workbench/)
-  await expect(newPage.locator('#profile-button')).toBeVisible()
+  try {
+    await expect(newPage.locator('#profile-button')).toBeVisible()
+  } catch (e) {
+    // Suspect: Workbench.svelte renders nothing for a non-owner until $myEmployeeStore resolves.
+    // An empty body here confirms it, any other text points elsewhere.
+    const bodyText = await newPage
+      .locator('body')
+      .innerText()
+      .catch(() => '<unreadable>')
+    throw new Error(`#profile-button missing at ${newPage.url()}; body: ${JSON.stringify(bodyText.slice(0, 300))}`, {
+      cause: e
+    })
+  }
 
   return {
     page: newPage,

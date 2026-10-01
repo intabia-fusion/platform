@@ -86,4 +86,22 @@ describe('createTables', () => {
     expect(main.tableQueries).toBe(1)
     expect(main.created).toEqual([DOMAIN_SPACE])
   })
+
+  it('reruns the creation when a concurrent creator won the race on pg_type', async () => {
+    const main = fakeDb([])
+    const unsafe = main.client.unsafe.bind(main.client)
+    let raced = false
+    ;(main.client as any).unsafe = async (sql: string): Promise<any[]> => {
+      if (!raced && sql.includes('CREATE TABLE')) {
+        raced = true
+        throw Object.assign(new Error('duplicate key value violates unique constraint "pg_type_typname_nsp_index"'), {
+          code: '23505'
+        })
+      }
+      return await unsafe(sql)
+    }
+
+    await createTables(ctx, main.client, 'postgres://main-4', [DOMAIN_TX])
+    expect(main.created).toEqual([DOMAIN_TX])
+  })
 })

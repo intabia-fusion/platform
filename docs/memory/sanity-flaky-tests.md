@@ -27,6 +27,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   an unchanged value, Enter opens a row when the list is not empty).
 - **The open app has no icon in the list.** It can open between the url check and the click, so
   `openApp` waits for the url to change, never for the button.
+- **`join()` waits for `/workbench/` itself.** Callers (teamspace, workspace/create) click an app button
+  next with no retry; returning on the "Log In" click let that click wait out 30s on a missing button.
 - **An unverified popup click fails somewhere else.** A swallowed assignee click left the old value
   and broke the *other* user's test - every popup write in `editIssue` re-reads what it set.
 - **Ask the server, do not widen the window.** A settled field proves nothing when the stored value
@@ -43,6 +45,25 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   looks "missing"; re-clicking the trigger hits the popup's own overlay and closes it (`selectFilter`).
 - **Check every seed write's status.** An unchecked failed seed surfaces later as a wrong number
   (`billing` avgMeetingDuration: "23 vs 0"); suspect `RetryDB` with no backoff under load, unproven.
+- **A `page.goto` right after a popup close can abort its unawaited write.** Seat change: wait for
+  `changeSeats` to re-enable (`isUpdating`); package swap - `packageDisconnect-<key>` (`isPackageBusy`).
+- **`navigateToIssues()` (`text="Issues"`) opens whichever project node is expanded**, not the global list:
+  never use it to get back to a row; `linkSidebarAll()` does.
+- **A closed popup is no proof Apply landed.** A timed-out Apply click closed the filter popup with nothing
+  filtered; `selectFilter` verifies the Title/Name section and redoes the whole pick.
+- **Love `busy-badge` is one per busy `ParticipantInfo` on the whole floor** - scope it to `[data-id="room-<name>"]`.
+  Stuck at 1 after that means user3 never got the re-opened meeting (product).
+- **The player reads `hls` meta once on open** (`VideoViewer.svelte`), and the stream pod writes it after all
+  uploads drain: wait for `hls.thumbnail` (`waitForHlsThumbnail`), not for a derived-blob count.
+- **`toContainText` on a viewlet Table misses rows below the rendered window.** Cells render lazily
+  (`Table.svelte` `rowLimit`), sorted by `modifiedOn`; other workers' channels push a fresh one down. Scroll first.
+- **A fixed name in a shared workspace matches last run's copy** (`changeChannelName` "New Channel Name").
+- **`readEverything` by `Date.now()` marked a message sent right after as read**; it reads up to the last message's `createdOn`.
+- **A lazy `<img>` in a small popup never loads** until scrolled into view (`checkCommentWithImageExist`).
+- **`generateId(n)` with a small `n` is not unique across workers**: 16^n suffixes and a counter restarting per
+  worker - talent names collided in `sanity-ws` (6/50). Use `generateId()`.
+- **Click a row's link, not the cell**: `tr > :has-text(name)` clicks the cell centre, which misses a short name once
+  longer names widen the column (`createCandidateWithSkills` broke 3/3 after talent ids got longer).
 
 ## Product-side causes
 
@@ -64,13 +85,31 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `getAILevels()` turns a failed request into an empty list, runs once in `onMount` | `ai-bot-resources/src/requests.ts` | Cards never appear however long the wait; only a reload helps |
 | The account service gives a colliding workspace its own url (`<name>-<id>`) | `server/account/src/utils.ts` | A url built from the requested name lands in someone else's workspace, i.e. on the login form |
 | Chat search is one-shot (`searchFulltext`, no live query) | `chunter-resources/src/search/store.ts:114` | A message indexed after the query ran never appears until it is re-issued |
-| Channel nav entry waits for a trigger-created `Chat` tracking doc | `ChatNavGroup.svelte` | The creator's own nav can lag its just-created channel past a UI timeout |
+| Parallel `create-workspace` on a fresh db race on `CREATE TABLE IF NOT EXISTS` (23505 `pg_type`) | `postgres/src/utils.ts` `createTables` | Loser stays `is_disabled`, `configure` hangs; now reruns the create. prepare did not flag the failed create |
+| Server `LiveQueryMiddleware.tx` updates the cache before `DomainTx` writes; a `queryFind` registered in between loads a pre-commit snapshot and misses the doc for good | `middleware/src/liveQuery.ts:95` | Stale `getPersonSpaces`: owner got no `Chat` in 1/50 fresh workspaces. Fixed: store first, then the cache (`__tests__/liveQuery.test.ts`) |
+| `Move.svelte` fills `issueToUpdate` (a Map) via `.set()` with no reassignment | `tracker-resources` Move | Svelte misses it: keep-attributes toggle stays disabled if issues resolve after the target pick |
+| Channel nav entry waits for a `Chat` doc from async `OnCollaboratorAdded` | `ChatNavGroup.svelte` | Lags past UI timeouts. Pushing the open object by id was reverted: it kept an unsubscribed open channel in the nav |
+| (same, recruit vacancy/applicant chats) | `ChatApi.waitForLinkedChat` | Tests poll the server `Chat` doc before checking the nav |
 
 ## Open
 
-- **Calendar specs share the second account's hours and clean up nothing.** Never run them with
-  `--repeat-each`: the day fills up and every one fails with `no free hour left in the calendar
-  widget` until `./prepare-pg.sh`. A per-worker scan offset was tried and reverted.
+- **`chat-unread` "A reply lifts a thread..." timed out at 60s with no step logged**: ~203 unlogged REST calls
+  (101 messages + 101 replies) plus the worker's first `joinWorkspace` poll; the retry took 17s with a warm `others`.
+- **`team-planner` "Colleague project todo...": "Default" absent from the Space filter for 30s** (`selectFilter`).
+  Not the `dateStart` bug (`tomorrow`); what builds that value list is unknown.
+- **`issues` "Comment stored after reload": reload raced the send** - wait for `readStoredCommentCount` first.
+  "Add comment by popup": the row-anchored popup closes when the counter re-renders - reopen before checks.
+- **`pulse` second user: `/workbench/` url, no `#profile-button` for 15s (1/5).** Suspect `Workbench.svelte:780-795`
+  renders nothing for a non-owner until `$myEmployeeStore` resolves; `getSecondPageByInvite` now reports url + body.
+- **`chat-unread` "Reading a channel from inbox" (1/5):** message absent 15s after opening from inbox, 9ms on
+  retry. "Reconnect left the cached tail query stale" is ruled out: `refreshConnect` refreshes queries with callbacks.
+- **Calendar specs book both accounts' hours**; leftovers filled the day (`no free hour left`, a participant
+  "busy" at a freed hour). Each spec now removes its events in `finally` (`CalendarApi.deleteEventsByTitle`).
+- **`setTimeSlot` reads `dateStart: '1'` as the 1st of next month**: a "today" slot built from `getDate()` broke
+  every 1st (start next month, end clamped to start+30m). Use `'today'`.
+- **`todos` "Closing an issue...": status stays `todo` 20s after a clean click on Done.** Suspect
+  `StatusEditor.svelte` calling `changeStatus()` inside reactive `getSelectedStatus()`. Unconfirmed.
+- **`settings` create-template: "Edit template" never shows.** Template `t1` in persistent `sanity-ws`; unresolved.
 
 - **Comment counter reads one higher than the database** (`issues.spec` "Add comment by popup",
   ~3/10). Measured: `counter "3", expected "2", popup lists 2, stored 2` - only the browser copy
@@ -85,6 +124,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`ai-bot-scenarios` "assistant button ... proposes a task"** (1/10 on 2026-09-21): "Create issue" stayed `disabled` for the whole 30s. `canSave` in `CreateIssue.svelte` needs a title, a status, a task type *and* `currentProject`, which comes from a query filtered by `members: getCurrentAccount().uuid` - an empty result leaves it `undefined` for good, and `TaskKindSelector` (hence `kind`) does not even render without it. Which of the four was missing is unknown; `clickButtonCreateIssue` now reports the title and whether the task type selector is in the DOM, so the next occurrence says it.
 - **`subissues.spec.ts` "Sub-issues move with parent issue"**: moving an issue closes the panel; reopening from the list renders the identifier as a breadcrumb instead of `div.title.not-active`
   - 4 failures in 20 versus 1 flake in a full run, so the retry was reverted. Needs a locator matching both renderings.
+  Second shape (1/5, unresolved): the open panel kept the old `TSK-` id for 15s; the failure now reports
+  the stored identifier to split "move never landed" from "panel missed the update".
 - **`kanban` "drop into same cell does not update document"**: `after.modifiedOn` came back 109ms *lower* than `before.modifiedOn`, which an update after `before` cannot produce. One transactor, host/container clock skew 0-15ms - neither explains it.
 - **A lost webhook loses the "Joined meeting" activity for good**: only the webhook path writes it (`webhook.ts addActivityToMeeting`), the polling fallback creates the participant but no activity.
 

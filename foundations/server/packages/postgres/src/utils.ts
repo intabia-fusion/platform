@@ -111,13 +111,22 @@ export async function createTables (
   }
 
   if (domainsToCreate.length > 0) {
-    await retryTxn(client, async (client) => {
-      for (const domain of domainsToCreate) {
-        await ctx.with('create-table', {}, () => createTable(client, domain))
-        tables.add(domain)
-        loadedDomains.add(url + domain)
+    // IF NOT EXISTS does not stop two creators racing on a fresh db (23505 on pg_type, 42P07):
+    // the loser's rerun finds the winner's tables committed.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await retryTxn(client, async (client) => {
+          for (const domain of domainsToCreate) {
+            await ctx.with('create-table', {}, () => createTable(client, domain))
+            tables.add(domain)
+            loadedDomains.add(url + domain)
+          }
+        })
+        break
+      } catch (err: any) {
+        if (attempt >= 2 || (err?.code !== '23505' && err?.code !== '42P07')) throw err
       }
-    })
+    }
   }
 }
 

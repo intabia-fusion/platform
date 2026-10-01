@@ -13,9 +13,10 @@
 // limitations under the License.
 //
 import { faker } from '@faker-js/faker'
-import { type WorkspaceUuid } from '@hcengineering/core'
+import { SortingOrder, type Class, type Doc, type Ref, type WorkspaceUuid } from '@hcengineering/core'
+import { createRestClient, type RestClient } from '@hcengineering/api-client'
 
-import { getStorageStats, getStorageStatsByType, waitForDerivedBlobs } from '../API/Datalake'
+import { getStorageStats, getStorageStatsByType, waitForDerivedBlobs, waitForHlsThumbnail } from '../API/Datalake'
 import { expect, test, type Page } from '../fixtures'
 import { DriveCreateEditPopup } from '../model/drive/drive-create-edit-popup'
 import { DriveFilesPage } from '../model/drive/drive-files-page'
@@ -29,6 +30,17 @@ const VIDEO = 'fake-video.mp4'
 // 6 artifacts here: master playlist, playlist+segment per rendition (orig+480p), thumbnail.
 // Asserting on 4 avoids brittle exact-count checks while proving more than a plain copy.
 const MIN_DERIVED_BLOBS = 4
+
+// Only the two fields needed to reach the source blob - not worth a @hcengineering/drive dependency.
+interface DriveFile extends Doc {
+  title: string
+  file: Ref<DriveFileVersion>
+}
+interface DriveFileVersion extends Doc {
+  file: string
+}
+const driveFileClass = 'drive:class:File' as Ref<Class<DriveFile>>
+const driveFileVersionClass = 'drive:class:FileVersion' as Ref<Class<DriveFileVersion>>
 
 /** Plays the video element and reports whether it actually advanced. */
 async function playAndMeasure (page: Page): Promise<{ played: boolean, poster: string }> {
@@ -52,10 +64,12 @@ test.describe('Drive video transcoding tests', () => {
   let filesPage: DriveFilesPage
   let driveName: string
   let workspace: WorkspaceUuid
+  let rest: RestClient
 
   test.beforeEach(async ({ page, sharedWorkspace }) => {
     const shared = await sharedWorkspace()
     workspace = shared.ws.workspace
+    rest = createRestClient(shared.ws.endpoint, workspace, shared.ws.token ?? '')
 
     popupDrive = new DriveCreateEditPopup(page)
     leftMenu = new DriveLeftMenu(page)
@@ -84,6 +98,18 @@ test.describe('Drive video transcoding tests', () => {
       const stats = await waitForDerivedBlobs(workspace, before.derivedCount + MIN_DERIVED_BLOBS)
       expect(stats.derivedCount - before.derivedCount).toBeGreaterThanOrEqual(MIN_DERIVED_BLOBS)
       expect(stats.derivedSize).toBeGreaterThan(before.derivedSize)
+
+      // derivedCount proves only some renditions landed; opened before `hls` meta is set, the player
+      // falls back to plain video with no poster and never re-reads it.
+      const [file] = await rest.findAll(
+        driveFileClass,
+        { title: VIDEO },
+        { sort: { createdOn: SortingOrder.Descending }, limit: 1 }
+      )
+      if (file === undefined) throw new Error('uploaded file not found yet')
+      const fileVersion = await rest.findOne(driveFileVersionClass, { _id: file.file })
+      if (fileVersion === undefined) throw new Error('uploaded file has no version yet')
+      await waitForHlsThumbnail(workspace, fileVersion.file)
     })
 
     await test.step('the player advances through the stream', async () => {

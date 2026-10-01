@@ -343,41 +343,49 @@ export class CommonPage {
   }
 
   async selectFilter (filter: string, filterSecondLevel?: string): Promise<void> {
-    await this.buttonFilter().click()
-    // The item list loads async inside an open popup; re-clicking the trigger hits its own
-    // overlay and closes it. Reopen only when no popup is open at all.
-    const anyPopup = this.page.locator('div.selectPopup')
+    // A closed popup is no proof Apply landed: a timed-out Apply click closed it with nothing filtered.
+    // Text filters verify the section and redo the whole pick; other kinds are not verified.
     await expect(async () => {
-      if ((await anyPopup.count()) === 0) await this.buttonFilter().click()
-      await this.selectPopupMenu(filter).click({ timeout: 5000 })
-    }).toPass({ intervals: retryIntervals, timeout: 30000 })
+      await this.buttonFilter().click()
+      // The item list loads async inside an open popup; re-clicking the trigger hits its own
+      // overlay and closes it. Reopen only when no popup is open at all.
+      const anyPopup = this.page.locator('div.selectPopup')
+      await expect(async () => {
+        if ((await anyPopup.count()) === 0) await this.buttonFilter().click()
+        await this.selectPopupMenu(filter).click({ timeout: 5000 })
+      }).toPass({ intervals: retryIntervals, timeout: 30000 })
 
-    if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
-      switch (filter) {
-        case 'Title':
-          await this.applyTextFilter(this.inputFilterTitle(), filterSecondLevel)
-          // Wait for the list to update after applying filter
-          await this.page.waitForTimeout(500)
-          break
-        case 'Name':
-          await this.applyTextFilter(this.inputFilterName(), filterSecondLevel)
-          break
-        case 'Labels':
-          await this.selectFromDropdown(this.page, filterSecondLevel)
-          break
-        case 'Skills':
-          await this.inputSearch().fill(filterSecondLevel)
-          await this.selectFromDropdown(this.page, filterSecondLevel)
-          await this.page.keyboard.press('Escape')
-          break
-        default:
-          // The option list re-renders as it loads, so the row detaches mid-click; an untimed click
-          // then spends the whole 30s on an element that is gone.
-          await retry(async () => {
-            await this.selectPopupMenu(filterSecondLevel).click({ timeout: 5000 })
-          })
+      if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
+        switch (filter) {
+          case 'Title':
+            await this.applyTextFilter(this.inputFilterTitle(), filterSecondLevel)
+            // Wait for the list to update after applying filter
+            await this.page.waitForTimeout(500)
+            break
+          case 'Name':
+            await this.applyTextFilter(this.inputFilterName(), filterSecondLevel)
+            break
+          case 'Labels':
+            await this.selectFromDropdown(this.page, filterSecondLevel)
+            break
+          case 'Skills':
+            await this.inputSearch().fill(filterSecondLevel)
+            await this.selectFromDropdown(this.page, filterSecondLevel)
+            await this.page.keyboard.press('Escape')
+            break
+          default:
+            // The option list re-renders as it loads, so the row detaches mid-click; an untimed click
+            // then spends the whole 30s on an element that is gone.
+            await retry(async () => {
+              await this.selectPopupMenu(filterSecondLevel).click({ timeout: 5000 })
+            })
+        }
+        if (filter === 'Title' || filter === 'Name') {
+          // Default timeout, so a slow render is not taken for a miss and applied twice.
+          await expect(this.filterButton(1)).toHaveText(filter)
+        }
       }
-    }
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   /** A string attribute filter (custom fields included): its input is placeholdered with the label. */

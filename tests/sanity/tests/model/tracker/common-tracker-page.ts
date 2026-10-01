@@ -196,6 +196,8 @@ export class CommonTrackerPage extends CalendarPage {
 
   async checkCommentWithImageExist (commentHeader: string, fileName: string): Promise<void> {
     await this.checkActivityExist(commentHeader)
+    // loading="lazy" never loads an image the small popup does not scroll into view.
+    await this.commentImg().scrollIntoViewIfNeeded()
     // `getAttribute` has no timeout of its own, so a missing image used to read as a bare 30s
     // "waiting for locator" with nothing naming the attachment.
     await expect(this.commentImg(), `no image in the comment, expected ${fileName}`).toBeVisible({ timeout: 15000 })

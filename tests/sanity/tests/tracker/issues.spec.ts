@@ -7,6 +7,8 @@ import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-m
 import { prepareNewIssueWithOpenStep } from './common-steps'
 import { IssueCommentPopup } from '../model/tracker/issue-comment-popup'
 import { TEST_ESTIMATIONS } from './tracker.utils'
+import { readStoredCommentCount } from '../API/TrackerApi'
+import { retry } from '../retry'
 
 test.use({
   storageState: PlatformSetting
@@ -194,6 +196,11 @@ test.describe('Tracker issue tests', () => {
     await issuesDetailsPage.addComment(commentText)
     await issuesDetailsPage.checkCommentExist(commentText)
 
+    // The shown comment is the optimistic render: a reload before the send lands wipes it.
+    await retry(async () => {
+      expect(await readStoredCommentCount(commentIssue.title)).toBeGreaterThanOrEqual(1)
+    })
+
     await page.reload()
     await issuesDetailsPage.waitDetailsOpened(commentIssue.title)
     await issuesDetailsPage.checkCommentExist(commentText)
@@ -229,10 +236,8 @@ test.describe('Tracker issue tests', () => {
       projectName: 'Default'
     }
     await prepareNewIssueWithOpenStep(page, deleteIssue)
-    await issuesPage.navigateToIssues()
-    await issuesPage.clickModelSelectorAll()
-    await issuesPage.searchIssueByName(deleteIssue.title)
-    await issuesPage.openIssueByName(deleteIssue.title)
+    // prepareNewIssueWithOpenStep already opens the issue - re-navigating via navigateToIssues()
+    // ('text="Issues"') can land on another project's sidebar node and never find this row.
     await issuesDetailsPage.waitDetailsOpened(deleteIssue.title)
     await issuesDetailsPage.moreActionOnIssue('Delete')
     await issuesDetailsPage.pressYesForPopup(page)
