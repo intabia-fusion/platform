@@ -294,7 +294,7 @@
   }
 
   .transition-flow {
-    color: var(--theme-secondary-color, rgba(0, 0, 0, 0.6));
+    color: var(--theme-dark-color);
     white-space: nowrap;
   }
 
@@ -322,7 +322,7 @@
     grid-template-columns: 1fr 1fr;
     align-items: center;
     gap: 1.5rem;
-    color: var(--theme-secondary-color, #666);
+    color: var(--theme-dark-color);
     border-bottom: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
     padding: 0 0 0.5rem 0;
     margin-bottom: 0.25rem;
@@ -340,7 +340,7 @@
   .status-badge {
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
-    background-color: var(--theme-card-background, rgba(0, 0, 0, 0.05));
+    background-color: var(--theme-button-hovered);
     border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
   }
 </style>

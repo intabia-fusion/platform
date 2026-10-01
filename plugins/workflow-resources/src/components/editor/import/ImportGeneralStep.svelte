@@ -83,6 +83,6 @@
   }
 
   .field-label {
-    color: var(--theme-secondary-color, #666);
+    color: var(--theme-dark-color);
   }
 </style>

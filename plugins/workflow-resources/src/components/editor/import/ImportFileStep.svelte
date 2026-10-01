@@ -215,7 +215,7 @@
               {selectedFileName}
             {/if}
           </span>
-          <span class="font-regular-12 text-secondary">{workflowName}</span>
+          <span class="font-regular-12 secondary">{workflowName}</span>
         </div>
       </div>
       <button type="button" class="change-file-btn font-medium-12" on:click={resetFileSelection}>
@@ -253,7 +253,7 @@
     min-height: 22rem;
     border-radius: var(--border-radius-1, 0.5rem);
     border: 1px solid var(--theme-divider-color);
-    background: var(--theme-card-bg);
+    background: var(--theme-popup-color);
     padding: 0.75rem 0.875rem;
     box-sizing: border-box;
   }
@@ -315,7 +315,7 @@
   .file-link-btn {
     background: none;
     border: none;
-    color: var(--theme-secondary-color);
+    color: var(--theme-dark-color);
     cursor: pointer;
     padding: 0.25rem 0.5rem;
     border-radius: var(--border-radius-1, 0.375rem);
@@ -335,7 +335,7 @@
     width: 100%;
     padding: var(--spacing-3);
     border-radius: var(--border-radius-md, 0.375rem);
-    background-color: var(--theme-card-background, rgba(0, 0, 0, 0.02));
+    background-color: var(--theme-comp-header-color);
     border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
     box-sizing: border-box;
   }
@@ -357,7 +357,7 @@
   .change-file-btn {
     border: none;
     background: transparent;
-    color: var(--primary-button-background, #6452db);
+    color: var(--primary-color-purple-02);
     cursor: pointer;
     padding: 0.25rem 0.5rem;
 

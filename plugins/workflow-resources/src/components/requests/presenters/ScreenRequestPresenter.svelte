@@ -31,13 +31,13 @@
   }
 </script>
 
-<div class="screen-request-presenter font-regular-13 text-secondary w-full min-w-0 overflow-hidden truncate">
+<div class="screen-request-presenter secondary-textColor w-full min-w-0 overflow-hidden truncate">
   {#if screen}
     <span class="truncate block">
       <Label label={plugin.string.ScreenRequestPresenter} params={{ name: screen.name }} />
     </span>
   {:else}
-    <span class="text-secondary">
+    <span>
       <Label label={plugin.string.ScreenNotSelected} />
     </span>
   {/if}
