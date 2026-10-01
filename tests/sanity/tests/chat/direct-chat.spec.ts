@@ -1,11 +1,10 @@
-import { expect, test } from '../fixtures'
+import { expect, test, type SharedWorkspace } from '../fixtures'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
-import type { WorkspaceLoginInfo } from '@hcengineering/account'
 import { getSecondPageByApi } from '../API/ChatApi'
-import { createAccountAndWorkspace, generateTestData, generateUser } from '../utils'
+import { generateUser, loginByToken } from '../utils'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -13,21 +12,18 @@ test.describe('Check direct messages channels', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let newUser2: SignUpData
-  let owner: { ws: WorkspaceLoginInfo, token: string }
-  let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
+  let owner: SharedWorkspace
 
-  test.beforeEach(async ({ page, request }) => {
-    data = generateTestData()
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
+    owner = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
     newUser2 = generateUser()
 
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
-    // Straight into the workspace from the account token: the login form plus the workspace
-    // picker are three page loads and cost about a second per test.
-    owner = await createAccountAndWorkspace(page, request, data, 'chunter')
+    await loginByToken(page, owner.token, owner.ws, 'chunter')
   })
 
-  test('User can create/close/reacreate direct chat with employee', async ({ page, browser }) => {
+  test('User can create/close/reacreate direct chat with employee', { tag: '@invite' }, async ({ page, browser }) => {
     using _page2 = await getSecondPageByApi(browser, owner.ws, newUser2, 'chunter')
     const page2 = _page2.page
     const channelPageSecond = new ChannelPage(page2)
@@ -42,7 +38,7 @@ test.describe('Check direct messages channels', () => {
       await channelPage.clickChooseChannel(`${newUser2.lastName} ${newUser2.firstName}`)
       await channelPage.sendMessage('Test direct question')
 
-      await channelPageSecond.clickChooseChannel(`${data.lastName} ${data.firstName}`)
+      await channelPageSecond.clickChooseChannel(`${owner.data.lastName} ${owner.data.firstName}`)
       await channelPageSecond.checkMessageExist('Test direct question', true, 'Test direct question')
       await channelPageSecond.sendMessage('Test direct answer')
 

@@ -70,8 +70,9 @@ LOCAL_URL=http://localhost:8083/_account/ DEV_URL= npx playwright test \
   аргументы Playwright пробрасываются).
 - love-тесты лежат в `*.tests.ts` и в проекте `Love`: путь к файлу даёт `No tests found`, выбирать
   через `--project=Love -g "<часть названия>"`.
-- `--repeat-each` на `kanban.spec.ts` даёт ложные падения: view options хранятся на пользователя, а
-  storage state общий, и параллельные копии дерутся за раскладку доски.
+- `--repeat-each` на `kanban.spec.ts` даёт ложные падения: не view options (они в localStorage,
+  контекст на тест). Не воспроизведено; по коду: все копии работают в
+  `DefaultProject`, и тесты, смотрящие на колонки и счётчики доски, видят issues копий из соседних воркеров.
 
 ## 3. Чинить корень, а не симптом
 

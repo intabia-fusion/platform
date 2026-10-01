@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { expect, test, type SharedWorkspace } from '../fixtures'
+import { closeSharedPage, enterWorkspace, expect, sharedPageTest as test, type SharedWorkspace } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { MessageSearchPage } from '../model/message-search-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { getSecondPageByApi } from '../API/ChatApi'
-import { createAccount, generateUser, getInviteLink, getSecondPageByInvite, loginByToken } from '../utils'
+import { createAccount, generateUser, getInviteLink, getSecondPageByInvite } from '../utils'
 import { SignUpData } from '../model/common-types'
 
 test.describe.configure({ mode: 'parallel' })
@@ -34,7 +34,9 @@ test.describe('Message search', () => {
   let newUser: SignUpData
   let workspace: SharedWorkspace
 
-  test.beforeEach(async ({ page, request, sharedWorkspace }, testInfo) => {
+  test.afterAll(closeSharedPage)
+
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     workspace = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
     uniq = `${testInfo.testId}${testInfo.retry}`
     newUser = generateUser()
@@ -43,7 +45,7 @@ test.describe('Message search', () => {
     channelPage = new ChannelPage(page)
     searchPage = new MessageSearchPage(page)
 
-    await loginByToken(page, workspace.token, workspace.ws, 'chunter')
+    await enterWorkspace(page, workspace, 'chunter')
   })
 
   test('Finds a message from the Browser page', async () => {

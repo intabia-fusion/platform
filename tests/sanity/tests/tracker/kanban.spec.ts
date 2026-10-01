@@ -283,16 +283,8 @@ test.describe('Kanban board', () => {
   })
 
   test.describe('Swim lanes', () => {
-    test.afterEach(async ({ page }) => {
-      try {
-        await openTrackerBoard(page, ctx.project._id)
-        const board = new KanbanBoardPage(page)
-        await board.setSwimLane('None')
-      } catch {
-        // best effort
-      }
-    })
-
+    // No reset between tests: view options live in the page's localStorage, and every test gets a fresh
+    // context from the shared storage state, so a swim lane set here cannot reach the next test.
     test('appear when grouping by Priority', async ({ page }) => {
       await createIssue(client, ctx, { title: `${titlePrefix}sw-pri-1`, status: 'Backlog' })
       await createIssue(client, ctx, { title: `${titlePrefix}sw-pri-2`, status: 'Todo' })

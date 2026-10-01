@@ -52,6 +52,7 @@ import notification, {
   DocNotifyContext
 } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
+import { sharedSystemModel } from '@hcengineering/middleware'
 import { PersonSpace } from '@hcengineering/contact'
 
 import Workspace from './workspace'
@@ -119,6 +120,11 @@ export class Worker {
       notification.class.CreateNotificationAction,
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
+
+    // Shared with every workspace: frozen, a stray direct write throws instead of corrupting neighbours.
+    if (sharedSystemModel) {
+      this.sysModel.freeze()
+    }
 
     this.clearInterval = setInterval(
       () => {
@@ -335,7 +341,6 @@ export class Worker {
 
         const client = createRestClient(endpoint, ws, token)
 
-        const { model, hierarchy } = await client.getModel(true)
         const branding: Branding | undefined =
           wsInfo.branding !== undefined && wsInfo.branding !== ''
             ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
@@ -343,8 +348,8 @@ export class Worker {
         const workspace = await Workspace.create(
           ctx.newChild(ws, {}),
           wsInfo,
-          hierarchy,
-          model,
+          sharedSystemModel ? this.sysHierarchy : undefined,
+          sharedSystemModel ? this.sysModel : undefined,
           this.modelTxes,
           this.storage,
           client,

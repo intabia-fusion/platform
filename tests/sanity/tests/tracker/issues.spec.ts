@@ -4,7 +4,7 @@ import { IssuesPage } from '../model/tracker/issues-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { Issue, NewIssue } from '../model/tracker/types'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
-import { prepareNewIssueWithOpenStep } from './common-steps'
+import { prepareNewIssueWithOpenByApiStep, prepareNewIssueWithOpenStep } from './common-steps'
 import { IssueCommentPopup } from '../model/tracker/issue-comment-popup'
 import { TEST_ESTIMATIONS } from './tracker.utils'
 import { readStoredCommentCount } from '../API/TrackerApi'
@@ -65,7 +65,7 @@ test.describe('Tracker issue tests', () => {
       milestone: 'Milestone',
       duedate: 'today'
     }
-    await prepareNewIssueWithOpenStep(page, newIssue)
+    await prepareNewIssueWithOpenByApiStep(page, newIssue)
 
     await issuesDetailsPage.editIssue(editIssue)
 
@@ -170,7 +170,7 @@ test.describe('Tracker issue tests', () => {
       description: 'Issue to move to another project',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, moveIssue)
+    await prepareNewIssueWithOpenByApiStep(page, moveIssue)
     await issuesDetailsPage.moreActionOnIssue('Move to project')
     await issuesDetailsPage.fillMoveIssuesModal(secondProjectName, true)
     await trackerNavigationMenuPage.openIssuesForProject(secondProjectName)
@@ -189,7 +189,7 @@ test.describe('Tracker issue tests', () => {
       description: 'Issue for comment stored after reload the page',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, commentIssue)
+    await prepareNewIssueWithOpenByApiStep(page, commentIssue)
 
     const issuesDetailsPage = new IssuesDetailsPage(page)
     await issuesDetailsPage.waitDetailsOpened(commentIssue.title)
@@ -235,8 +235,8 @@ test.describe('Tracker issue tests', () => {
       description: 'Description Issue for deletion',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, deleteIssue)
-    // prepareNewIssueWithOpenStep already opens the issue - re-navigating via navigateToIssues()
+    await prepareNewIssueWithOpenByApiStep(page, deleteIssue)
+    // prepareNewIssueWithOpenByApiStep already opens the issue - re-navigating via navigateToIssues()
     // ('text="Issues"') can land on another project's sidebar node and never find this row.
     await issuesDetailsPage.waitDetailsOpened(deleteIssue.title)
     await issuesDetailsPage.moreActionOnIssue('Delete')
@@ -252,7 +252,7 @@ test.describe('Tracker issue tests', () => {
       description: 'Check the changed description activity description',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, changedDescriptionIssue)
+    await prepareNewIssueWithOpenByApiStep(page, changedDescriptionIssue)
     await issuesDetailsPage.waitDetailsOpened(changedDescriptionIssue.title)
     await issuesDetailsPage.checkIssue(changedDescriptionIssue)
     await issuesDetailsPage.addToDescription(additionalDescription)
@@ -266,7 +266,7 @@ test.describe('Tracker issue tests', () => {
       description: 'Add comment with image attachment',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, commentImageIssue)
+    await prepareNewIssueWithOpenByApiStep(page, commentImageIssue)
     await issuesDetailsPage.waitDetailsOpened(commentImageIssue.title)
     await issuesDetailsPage.addCommentWithImage('Added comment with atttachment', 'cat3.jpeg')
     await issuesDetailsPage.checkCommentWithImageExist('', 'cat3.jpeg')
@@ -281,7 +281,7 @@ test.describe('Tracker issue tests', () => {
       description: 'Issue for add comment by popup',
       projectName: 'Default'
     }
-    await prepareNewIssueWithOpenStep(page, commentIssue)
+    await prepareNewIssueWithOpenByApiStep(page, commentIssue)
     await issuesDetailsPage.waitDetailsOpened(commentIssue.title)
     await issuesDetailsPage.addComment(commentInside)
     await issuesDetailsPage.checkCommentExist(commentInside)

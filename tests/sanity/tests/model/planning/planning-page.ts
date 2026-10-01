@@ -419,7 +419,9 @@ export class PlanningPage extends CalendarPage {
         await endDigits.last().focus()
         await endDigits.last().pressSequentially(slot.timeEnd.substring(2), { delay: 100 })
       }
-      await expect(endShown.first()).toHaveText(wanted, { timeout: 3000 })
+      // A save shows within ~300ms; the start edit's stale echo (end flips to 12:00 at ~330ms) can
+      // swallow it, and that attempt only passes on retry - fail it fast.
+      await expect(endShown.first()).toHaveText(wanted, { timeout: 1000 })
       // `EditToDo` assigns the stored value back into the open editor, so a write that never
       // round-tripped is shown first and reverted a beat later - re-read once it stops moving.
       const settled = await waitStable(async () => ((await endShown.first().textContent()) ?? '').trim(), {

@@ -1,9 +1,8 @@
-import { test, type Page, expect } from '../fixtures'
+import { closeSharedPage, enterWorkspace, sharedPageTest as test, type Page, expect } from '../fixtures'
 import {
   generateId,
   getTimeForPlanner,
   generateUser,
-  loginByToken,
   createAccount,
   getInviteLink,
   getSecondPageByInvite
@@ -33,6 +32,8 @@ test.describe('Content in the Documents tests', () => {
   let documentsSecondPage: DocumentsPage
   let documentContentSecondPage: DocumentContentPage
 
+  test.afterAll(closeSharedPage)
+
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     documentsPage = new DocumentsPage(page)
     documentContentPage = new DocumentContentPage(page)
@@ -48,7 +49,7 @@ test.describe('Content in the Documents tests', () => {
 
     // One workspace per worker; the tests that invite a guest spend a seat of the free plan.
     const shared = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
-    await loginByToken(page, shared.token, shared.ws, 'document')
+    await enterWorkspace(page, shared, 'document')
 
     await documentsPage.checkTeamspaceNotExist(testTeamspace.title)
     await documentsPage.createNewTeamspace(testTeamspace)

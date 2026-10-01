@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { expect, test } from '../fixtures'
-import type { WorkspaceLoginInfo } from '@hcengineering/account'
+import { closeSharedPage, enterWorkspace, expect, sharedPageTest as test, type SharedWorkspace } from '../fixtures'
 import { getSecondPageByApi } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'
@@ -11,19 +10,34 @@ import { MenuItems, NotificationsPage } from '../model/profile/notifications-pag
 import { UserProfilePage } from '../model/profile/user-profile-page'
 import { TeamPage } from '../model/team-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
+import { NewIssue } from '../model/tracker/types'
 import { createNewIssueData, prepareNewIssueWithOpenStep } from '../tracker/common-steps'
-import { attachScreenshot, createAccountAndWorkspace, generateId, generateTestData, getTimeForPlanner } from '../utils'
+import { attachScreenshot, generateId, getTimeForPlanner } from '../utils'
 
 test.describe('Inbox tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let issuesDetailsPage: IssuesDetailsPage
   let inboxPage: InboxPage
-  let owner: { ws: WorkspaceLoginInfo, token: string }
+  let owner: SharedWorkspace
   let newUser2: SignUpData
-  let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
+  let data: SharedWorkspace['data']
 
-  test.beforeEach(async ({ page, request }) => {
-    data = generateTestData()
+  // The workspace is shared by the worker's tests: a title and a label of a test's own, or the
+  // inbox/list lookups would also match the neighbours' issues.
+  const newIssueData = (firstName: string, lastName: string, replace?: object): NewIssue =>
+    createNewIssueData(firstName, lastName, {
+      title: `${faker.lorem.words(3)} ${generateId(5)}`,
+      labels: `${faker.lorem.word()}${generateId(4)}`,
+      ...replace
+    })
+
+  test.afterAll(closeSharedPage)
+
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
+    // Every test with a second user takes a seat: a fresh member keeps his inbox and notification
+    // settings (test "turn off notification") away from the next test.
+    owner = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
+    data = owner.data
     newUser2 = {
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
@@ -33,13 +47,11 @@ test.describe('Inbox tests', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     issuesDetailsPage = new IssuesDetailsPage(page)
     inboxPage = new InboxPage(page)
-    // Straight into the workspace from the account token: the login form plus the workspace
-    // picker are three page loads and cost about a second per test.
-    owner = await createAccountAndWorkspace(page, request, data, 'tracker')
+    await enterWorkspace(page, owner, 'tracker')
   })
 
   test('User is able to create a task, assign a himself and see it inside the inbox', async ({ page }) => {
-    const newIssue = createNewIssueData(data.firstName, data.lastName)
+    const newIssue = newIssueData(data.firstName, data.lastName)
     await prepareNewIssueWithOpenStep(page, newIssue, false)
     await issuesDetailsPage.checkIssue(newIssue)
     await leftSideMenuPage.clickNotification()
@@ -47,7 +59,7 @@ test.describe('Inbox tests', () => {
   })
 
   test('User is able to create a task, assign a himself and open it from inbox', async ({ page }) => {
-    const newIssue = createNewIssueData(data.firstName, data.lastName)
+    const newIssue = newIssueData(data.firstName, data.lastName)
     await prepareNewIssueWithOpenStep(page, newIssue, false)
     await issuesDetailsPage.checkIssue(newIssue)
 
@@ -62,7 +74,7 @@ test.describe('Inbox tests', () => {
   })
 
   test.skip('User is able to create a task, assign a himself and close it from inbox', async ({ page }) => {
-    const newIssue = createNewIssueData(data.firstName, data.lastName)
+    const newIssue = newIssueData(data.firstName, data.lastName)
 
     await prepareNewIssueWithOpenStep(page, newIssue, false)
     await issuesDetailsPage.checkIssue(newIssue)
@@ -80,144 +92,164 @@ test.describe('Inbox tests', () => {
     // ADD ASSERT ONCE THE ISSUE IS FIXED
   })
 
-  test('User is able to assign someone else and he should see the inbox task', async ({ page, browser }) => {
-    const second = await getSecondPageByApi(browser, owner.ws, newUser2)
-    const page2 = second.page
-    try {
-      const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
-      const inboxPageSecond = new InboxPage(page2)
+  test(
+    'User is able to assign someone else and he should see the inbox task',
+    { tag: '@invite' },
+    async ({ page, browser }) => {
+      const second = await getSecondPageByApi(browser, owner.ws, newUser2)
+      const page2 = second.page
+      try {
+        const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
+        const inboxPageSecond = new InboxPage(page2)
 
-      const newIssue = createNewIssueData(newUser2.firstName, newUser2.lastName)
-      await prepareNewIssueWithOpenStep(page, newIssue, false)
-      await issuesDetailsPage.checkIssue(newIssue)
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
-    } finally {
-      await second.context.close()
-    }
-  })
-
-  test('User is able to assign someone else and he should be able to open the task', async ({ page, browser }) => {
-    const second = await getSecondPageByApi(browser, owner.ws, newUser2)
-    const page2 = second.page
-    try {
-      const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
-      const issuesDetailsPageSecond = new IssuesDetailsPage(page2)
-      const inboxPageSecond = new InboxPage(page2)
-
-      const newIssue = createNewIssueData(newUser2.firstName, newUser2.lastName)
-      await prepareNewIssueWithOpenStep(page, newIssue, false)
-      await issuesDetailsPage.checkIssue(newIssue)
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
-      await inboxPageSecond.clickOnToDo(newIssue.title)
-      await inboxPage.page.waitForTimeout(100)
-      if (!(await inboxPageSecond.checkLeftSidePanelOpen())) {
-        await inboxPageSecond.clickLeftSidePanelOpen()
+        const newIssue = newIssueData(newUser2.firstName, newUser2.lastName)
+        await prepareNewIssueWithOpenStep(page, newIssue, false)
+        await issuesDetailsPage.checkIssue(newIssue)
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
+      } finally {
+        await second.context.close()
       }
-      await issuesDetailsPageSecond.checkIssue(newIssue)
-    } finally {
-      await second.context.close()
     }
-  })
-  test.skip('User is able to create a task, assign a other user and close it from inbox', async ({ page, browser }) => {
-    const second = await getSecondPageByApi(browser, owner.ws, newUser2)
-    const page2 = second.page
-    try {
-      const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
-      const issuesDetailsPageSecond = new IssuesDetailsPage(page2)
-      const inboxPageSecond = new InboxPage(page2)
+  )
 
-      const newIssue = createNewIssueData(newUser2.firstName, newUser2.lastName)
-      await prepareNewIssueWithOpenStep(page, newIssue, false)
-      await issuesDetailsPage.checkIssue(newIssue)
-      await leftSideMenuPageSecond.clickTracker()
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
-      await inboxPageSecond.clickOnToDo(newIssue.title)
-      await inboxPage.page.waitForTimeout(100)
-      if (!(await inboxPageSecond.checkLeftSidePanelOpen())) {
-        await inboxPageSecond.clickLeftSidePanelOpen()
+  test(
+    'User is able to assign someone else and he should be able to open the task',
+    { tag: '@invite' },
+    async ({ page, browser }) => {
+      const second = await getSecondPageByApi(browser, owner.ws, newUser2)
+      const page2 = second.page
+      try {
+        const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
+        const issuesDetailsPageSecond = new IssuesDetailsPage(page2)
+        const inboxPageSecond = new InboxPage(page2)
+
+        const newIssue = newIssueData(newUser2.firstName, newUser2.lastName)
+        await prepareNewIssueWithOpenStep(page, newIssue, false)
+        await issuesDetailsPage.checkIssue(newIssue)
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
+        await inboxPageSecond.clickOnToDo(newIssue.title)
+        await inboxPage.page.waitForTimeout(100)
+        if (!(await inboxPageSecond.checkLeftSidePanelOpen())) {
+          await inboxPageSecond.clickLeftSidePanelOpen()
+        }
+        await issuesDetailsPageSecond.checkIssue(newIssue)
+      } finally {
+        await second.context.close()
       }
-      await issuesDetailsPageSecond.checkIssue(newIssue)
-      await inboxPage.clickCloseLeftSidePanel()
-    } finally {
-      // ADD ASSERT ONCE THE ISSUE IS FIXED
-      await second.context.close()
     }
-  })
+  )
+  test.skip(
+    'User is able to create a task, assign a other user and close it from inbox',
+    { tag: '@invite' },
+    async ({ page, browser }) => {
+      const second = await getSecondPageByApi(browser, owner.ws, newUser2)
+      const page2 = second.page
+      try {
+        const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
+        const issuesDetailsPageSecond = new IssuesDetailsPage(page2)
+        const inboxPageSecond = new InboxPage(page2)
 
-  test('User is able to send message to other user and he should see it in inbox', async ({ page, browser }) => {
-    const channelPage = new ChannelPage(page)
-    await leftSideMenuPage.clickNotification()
-    await inboxPage.clearAll()
-    const second = await getSecondPageByApi(browser, owner.ws, newUser2)
-    const page2 = second.page
-    try {
-      const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
-      const inboxPageSecond = new InboxPage(page2)
-      await page.waitForTimeout(1000)
-      const inboxPage2 = new InboxPage(page2)
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPage2.clearAll()
+        const newIssue = newIssueData(newUser2.firstName, newUser2.lastName)
+        await prepareNewIssueWithOpenStep(page, newIssue, false)
+        await issuesDetailsPage.checkIssue(newIssue)
+        await leftSideMenuPageSecond.clickTracker()
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.checkIfTaskIsPresentInInbox(newIssue.title)
+        await inboxPageSecond.clickOnToDo(newIssue.title)
+        await inboxPage.page.waitForTimeout(100)
+        if (!(await inboxPageSecond.checkLeftSidePanelOpen())) {
+          await inboxPageSecond.clickLeftSidePanelOpen()
+        }
+        await issuesDetailsPageSecond.checkIssue(newIssue)
+        await inboxPage.clickCloseLeftSidePanel()
+      } finally {
+        // ADD ASSERT ONCE THE ISSUE IS FIXED
+        await second.context.close()
+      }
+    }
+  )
 
-      const message = `Test message ${generateId(5)}`
-      await leftSideMenuPage.clickChunter()
-      await channelPage.clickChannel('general')
-      await channelPage.sendMessage(message)
-
-      await channelPage.checkMessageExist(message, true, message)
+  test(
+    'User is able to send message to other user and he should see it in inbox',
+    { tag: '@invite' },
+    async ({ page, browser }) => {
+      const channelPage = new ChannelPage(page)
       await leftSideMenuPage.clickNotification()
+      await inboxPage.clearAll()
+      const second = await getSecondPageByApi(browser, owner.ws, newUser2)
+      const page2 = second.page
+      try {
+        const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
+        const inboxPageSecond = new InboxPage(page2)
+        await page.waitForTimeout(1000)
+        const inboxPage2 = new InboxPage(page2)
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPage2.clearAll()
 
-      // "general" is shared with every other worker, so asserting that the channel is absent from
-      // the sender's inbox fails whenever somebody else posts there. Assert on this message.
-      await inboxPage.checkIfInboxChatExists(message, false)
-      await inboxPageSecond.checkIfInboxChatExists('Channel general', true)
-      await inboxPageSecond.clickOnInboxChat('Channel general')
-      await inboxPageSecond.checkIfTextInChatIsPresent(message)
-    } finally {
-      await second.context.close()
+        const message = `Test message ${generateId(5)}`
+        await leftSideMenuPage.clickChunter()
+        await channelPage.clickChannel('general')
+        await channelPage.sendMessage(message)
+
+        await channelPage.checkMessageExist(message, true, message)
+        await leftSideMenuPage.clickNotification()
+
+        // "general" is shared with every other worker, so asserting that the channel is absent from
+        // the sender's inbox fails whenever somebody else posts there. Assert on this message.
+        await inboxPage.checkIfInboxChatExists(message, false)
+        await inboxPageSecond.checkIfInboxChatExists('Channel general', true)
+        await inboxPageSecond.clickOnInboxChat('Channel general')
+        await inboxPageSecond.checkIfTextInChatIsPresent(message)
+      } finally {
+        await second.context.close()
+      }
     }
-  })
+  )
 
-  test('User is able to turn off notification and he should not receive messages to inbox', async ({
-    page,
-    browser
-  }) => {
-    const channelPage = new ChannelPage(page)
-    await leftSideMenuPage.clickNotification()
-    await inboxPage.clearAll()
-    const second = await getSecondPageByApi(browser, owner.ws, newUser2)
-    const page2 = second.page
-    try {
-      const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
-      const inboxPageSecond = new InboxPage(page2)
-      const notificationPageSecond = new NotificationsPage(page2)
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.clearAll()
-      const userProfilePageSecond = new UserProfilePage(page2)
-      await userProfilePageSecond.openProfileMenu()
-      await userProfilePageSecond.clickSettings()
-      await userProfilePageSecond.clickOnNotificationsButton()
-      await notificationPageSecond.clickMenuItem(MenuItems.CHAT)
-      await notificationPageSecond.toggleChatMessage()
-      await leftSideMenuPage.clickChunter()
-      await channelPage.clickChannel('general')
-      // Server's general/random join lands async, after this call returns; its notifications
-      // would look like it if cleared too early - wait for the join system message instead.
-      await expect(channelPage.textMessage(`${newUser2.lastName} ${newUser2.firstName}`)).toBeVisible()
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.clearAll()
-      await channelPage.sendMessage('Test message')
-      await channelPage.checkMessageExist('Test message', true, 'Test message')
-      await leftSideMenuPageSecond.clickNotification()
-      await inboxPageSecond.checkIfInboxChatExists('Channel general', false)
-    } finally {
-      await second.context.close()
+  test(
+    'User is able to turn off notification and he should not receive messages to inbox',
+    {
+      tag: '@invite'
+    },
+    async ({ page, browser }) => {
+      const channelPage = new ChannelPage(page)
+      await leftSideMenuPage.clickNotification()
+      await inboxPage.clearAll()
+      const second = await getSecondPageByApi(browser, owner.ws, newUser2)
+      const page2 = second.page
+      try {
+        const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
+        const inboxPageSecond = new InboxPage(page2)
+        const notificationPageSecond = new NotificationsPage(page2)
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.clearAll()
+        const userProfilePageSecond = new UserProfilePage(page2)
+        await userProfilePageSecond.openProfileMenu()
+        await userProfilePageSecond.clickSettings()
+        await userProfilePageSecond.clickOnNotificationsButton()
+        await notificationPageSecond.clickMenuItem(MenuItems.CHAT)
+        await notificationPageSecond.toggleChatMessage()
+        await leftSideMenuPage.clickChunter()
+        await channelPage.clickChannel('general')
+        // Server's general/random join lands async, after this call returns; its notifications
+        // would look like it if cleared too early - wait for the join system message instead.
+        await expect(channelPage.textMessage(`${newUser2.lastName} ${newUser2.firstName}`)).toBeVisible()
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.clearAll()
+        const message = `Test message ${generateId(5)}`
+        await channelPage.sendMessage(message)
+        await channelPage.checkMessageExist(message, true, message)
+        await leftSideMenuPageSecond.clickNotification()
+        await inboxPageSecond.checkIfInboxChatExists('Channel general', false)
+      } finally {
+        await second.context.close()
+      }
     }
-  })
+  )
 
-  test('User is able to change filter in inbox', async ({ page, browser }) => {
+  test('User is able to change filter in inbox', { tag: '@invite' }, async ({ page, browser }) => {
     const channelPage = new ChannelPage(page)
     await leftSideMenuPage.clickNotification()
     await inboxPage.clearAll()
@@ -235,14 +267,15 @@ test.describe('Inbox tests', () => {
 
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChannel('general')
-      await channelPage.sendMessage('Test message')
+      const message = `Test message ${generateId(5)}`
+      await channelPage.sendMessage(message)
 
       await leftSideMenuPage2.clickNotification()
       await inboxPage2.clickOnInboxFilter('Channels')
 
       await leftSideMenuPage.clickTracker()
 
-      const newIssue = createNewIssueData(newUser2.firstName, newUser2.lastName)
+      const newIssue = newIssueData(newUser2.firstName, newUser2.lastName)
       await prepareNewIssueWithOpenStep(page, newIssue, false)
       await issuesDetailsPage.checkIssue(newIssue)
 
@@ -252,7 +285,7 @@ test.describe('Inbox tests', () => {
 
       await inboxPage2.clickOnInboxFilter('Channels')
       await inboxPage2.checkIfInboxChatExists(newIssue.title, false)
-      await inboxPage2.checkIfInboxChatExists('Test message', true)
+      await inboxPage2.checkIfInboxChatExists(message, true)
       await inboxPage2.clickOnInboxFilter('Issues')
       await inboxPage2.checkIfIssueIsPresentInInbox(newIssue.title)
       await inboxPage2.checkIfInboxChatExists('Channel general', false)
@@ -261,13 +294,13 @@ test.describe('Inbox tests', () => {
     }
   })
 
-  test.skip('Checking the ability to receive a task and schedule it', async ({ page, browser }) => {
+  test.skip('Checking the ability to receive a task and schedule it', { tag: '@invite' }, async ({ page, browser }) => {
     await leftSideMenuPage.clickNotification()
     await inboxPage.clearAll()
     const second = await getSecondPageByApi(browser, owner.ws, newUser2)
     const page2 = second.page
     try {
-      const newIssue = createNewIssueData(data.firstName, data.lastName, {
+      const newIssue = newIssueData(data.firstName, data.lastName, {
         status: 'Todo',
         assignee: `${newUser2.lastName} ${newUser2.firstName}`,
         estimation: '0'

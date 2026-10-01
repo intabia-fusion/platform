@@ -36,6 +36,7 @@ import activity from '@hcengineering/activity'
 import notification from '@hcengineering/notification'
 import platform from '@hcengineering/platform'
 import pulse from '@hcengineering/pulse'
+import { sharedSystemModel } from '@hcengineering/middleware'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo } from './utils'
@@ -58,6 +59,10 @@ export class Worker {
   ) {
     // addTxes feeds sysHierarchy itself, a separate pass would just deserialize everything twice.
     this.sysModel.addTxes(ctx, modelTxes, true)
+    if (sharedSystemModel) {
+      // Shared with every workspace: frozen, a stray direct write throws instead of corrupting neighbours.
+      this.sysModel.freeze()
+    }
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
 
@@ -144,8 +149,6 @@ export class Worker {
 
       const client = createRestClient(endpoint, ws, token)
 
-      const { model, hierarchy } = await client.getModel(true)
-
       const branding: Branding | undefined =
         wsInfo.branding !== undefined && wsInfo.branding !== ''
           ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
@@ -154,8 +157,8 @@ export class Worker {
       const workspace = await Workspace.create(
         ctx.newChild(ws, {}),
         wsInfo,
-        hierarchy,
-        model,
+        sharedSystemModel ? this.sysHierarchy : undefined,
+        sharedSystemModel ? this.sysModel : undefined,
         this.modelTxes,
         this.storage,
         client,

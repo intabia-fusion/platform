@@ -469,8 +469,8 @@ class Workspace {
   static async create (
     ctx: MeasureContext,
     ws: WorkspaceInfoWithStatus,
-    hierarchy: Hierarchy,
-    modelDb: ModelDb,
+    sharedHierarchy: Hierarchy | undefined,
+    sharedModel: ModelDb | undefined,
     sysModel: Tx[],
     storage: StorageAdapter,
     rest: RestClient,
@@ -491,9 +491,13 @@ class Workspace {
       DomainFindMiddleware.create,
       DomainTxMiddleware.create,
       DBAdapterInitMiddleware.create,
-      ModelMiddleware.create(sysModel),
+      // The system part already sits in the shared model, only this workspace's txes are applied here.
+      ModelMiddleware.create(sysModel, undefined, sharedModel !== undefined, false),
       DBAdapterMiddleware.create(dbConf)
     ]
+
+    const hierarchy = new Hierarchy(sharedHierarchy)
+    const modelDb = new ModelDb(hierarchy, sharedModel)
 
     const context: PipelineContext = {
       workspace: {

@@ -6,6 +6,9 @@ import { LoginPage } from '../model/login-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { existsSync } from 'fs'
 
+// The three tests write separate storage files: run them on separate workers.
+setup.describe.configure({ mode: 'parallel' })
+
 const authFile = path.join(__dirname, '../../.auth/storage.json')
 const authFileSecond = path.join(__dirname, '../../.auth/storageSecond.json')
 const authFileThird = path.join(__dirname, '../../.auth/storageThird.json')

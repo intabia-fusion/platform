@@ -1,3 +1,4 @@
+import { test } from '@playwright/test'
 import { getClient as getClientRaw, type AccountClient } from '@hcengineering/account-client'
 import { AccountRole, type WorkspaceUuid } from '@hcengineering/core'
 import { LocalUrl, PlatformAdmin } from '../utils'
@@ -13,22 +14,26 @@ export const DEV_OTP = '000000'
  * `mfaAt`, and machine tokens are refused outright, so this logs in as the human admin.
  */
 async function getAdmin (): Promise<AccountClient> {
-  if (adminClient != null) return adminClient
-  const unauth = getClientRaw(LocalUrl)
-  const loginInfo = await unauth.login(PlatformAdmin, '1234')
-  if (loginInfo?.token == null) throw new Error('Failed to login as admin')
-  const session = await getClientRaw(LocalUrl, loginInfo.token).verifyAdminSession(DEV_OTP)
-  adminClient = getClientRaw(LocalUrl, session.token)
-  return adminClient
+  return await test.step('Billing.getAdmin', async () => {
+    if (adminClient != null) return adminClient
+    const unauth = getClientRaw(LocalUrl)
+    const loginInfo = await unauth.login(PlatformAdmin, '1234')
+    if (loginInfo?.token == null) throw new Error('Failed to login as admin')
+    const session = await getClientRaw(LocalUrl, loginInfo.token).verifyAdminSession(DEV_OTP)
+    adminClient = getClientRaw(LocalUrl, session.token)
+    return adminClient
+  })
 }
 
 /** Resolve workspace uuid by its url-name (e.g. 'limits-unpaid-ws') via admin listing. */
 export async function resolveWorkspaceUuid (urlName: string): Promise<WorkspaceUuid> {
-  const client = await getAdmin()
-  const all = await client.listWorkspaces()
-  const ws = all.find((w) => w.url === urlName)
-  if (ws == null) throw new Error(`Workspace not found by url: ${urlName}`)
-  return ws.uuid
+  return await test.step('Billing.resolveWorkspaceUuid', async () => {
+    const client = await getAdmin()
+    const all = await client.listWorkspaces()
+    const ws = all.find((w) => w.url === urlName)
+    if (ws == null) throw new Error(`Workspace not found by url: ${urlName}`)
+    return ws.uuid
+  })
 }
 
 export interface PlanLimitsInput {
@@ -43,8 +48,10 @@ export interface PlanLimitsInput {
 
 /** Assign an existing account to a workspace with the given role (requires a service token). */
 export async function assignMember (email: string, workspaceUuid: WorkspaceUuid, role: AccountRole): Promise<void> {
-  const client = await getServiceAccountClient('tool')
-  await client.assignWorkspace(email, workspaceUuid, role)
+  await test.step('Billing.assignMember', async () => {
+    const client = await getServiceAccountClient('tool')
+    await client.assignWorkspace(email, workspaceUuid, role)
+  })
 }
 
 interface SubscriptionLimits {
@@ -72,13 +79,15 @@ function buildLimits (input: PlanLimitsInput = {}): SubscriptionLimits {
  * then set plan explicitly so it wins the race.
  */
 export async function waitForTier (workspaceUuid: WorkspaceUuid, timeoutMs = 15000): Promise<void> {
-  const client = await getAdmin()
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    const subs = await client.getSubscriptions(workspaceUuid, false)
-    if (subs.some((s) => s.type === 'tier')) return
-    await new Promise((resolve) => setTimeout(resolve, 300))
-  }
+  await test.step('Billing.waitForTier', async () => {
+    const client = await getAdmin()
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const subs = await client.getSubscriptions(workspaceUuid, false)
+      if (subs.some((s) => s.type === 'tier')) return
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+  })
 }
 
 /** Read the current tier subscription (active or trialing) for assertions. */
@@ -93,17 +102,19 @@ export async function getTierSubscription (workspaceUuid: WorkspaceUuid): Promis
   }
   | undefined
 > {
-  const client = await getAdmin()
-  const subs = await client.getSubscriptions(workspaceUuid, false)
-  const tier = subs.find((s) => s.type === 'tier' && (s.status === 'active' || s.status === 'trialing'))
-  if (tier == null) return undefined
-  return {
-    plan: tier.plan,
-    status: tier.status,
-    usersLimit: tier.limits?.usersLimit,
-    trialEnd: tier.trialEnd,
-    providerData: tier.providerData as { recurrent?: boolean, rebillId?: string, period?: string } | undefined
-  }
+  return await test.step('Billing.getTierSubscription', async () => {
+    const client = await getAdmin()
+    const subs = await client.getSubscriptions(workspaceUuid, false)
+    const tier = subs.find((s) => s.type === 'tier' && (s.status === 'active' || s.status === 'trialing'))
+    if (tier == null) return undefined
+    return {
+      plan: tier.plan,
+      status: tier.status,
+      usersLimit: tier.limits?.usersLimit,
+      trialEnd: tier.trialEnd,
+      providerData: tier.providerData as { recurrent?: boolean, rebillId?: string, period?: string } | undefined
+    }
+  })
 }
 
 /** Set a workspace plan by uuid (used for freshly created, per-test workspaces). */
@@ -112,44 +123,50 @@ export async function setWorkspacePlanByUuid (
   plan: string,
   input: PlanLimitsInput = {}
 ): Promise<void> {
-  // Let the async auto-provisioned tier land first, then supersede it (adminCreateSubscription
-  // cancels every prior tier), so a late trial/free never coexists with the explicit plan.
-  await waitForTier(workspaceUuid)
-  const client = await getAdmin()
-  await client.adminCreateSubscription({
-    otpCode: DEV_OTP,
-    workspaceUuid,
-    plan,
-    type: 'tier',
-    status: input.status ?? 'active',
-    trialEnd: input.trialEnd,
-    limits: buildLimits(input)
+  await test.step('Billing.setWorkspacePlanByUuid', async () => {
+    // Let the async auto-provisioned tier land first, then supersede it (adminCreateSubscription
+    // cancels every prior tier), so a late trial/free never coexists with the explicit plan.
+    await waitForTier(workspaceUuid)
+    const client = await getAdmin()
+    await client.adminCreateSubscription({
+      otpCode: DEV_OTP,
+      workspaceUuid,
+      plan,
+      type: 'tier',
+      status: input.status ?? 'active',
+      trialEnd: input.trialEnd,
+      limits: buildLimits(input)
+    })
   })
 }
 
 /** Attach a disk add-on package (type=package) that adds storageGB on top of the tier limit. */
 export async function addStoragePackage (workspaceUuid: WorkspaceUuid, plan: string, storageGB: number): Promise<void> {
-  const client = await getAdmin()
-  await client.adminCreateSubscription({
-    otpCode: DEV_OTP,
-    workspaceUuid,
-    plan,
-    type: 'package',
-    status: 'active',
-    limits: buildLimits({ storageGB })
+  await test.step('Billing.addStoragePackage', async () => {
+    const client = await getAdmin()
+    await client.adminCreateSubscription({
+      otpCode: DEV_OTP,
+      workspaceUuid,
+      plan,
+      type: 'package',
+      status: 'active',
+      limits: buildLimits({ storageGB })
+    })
   })
 }
 
 /** Drive the same admin path the AdminUI uses to (re)create a manual tier subscription. */
 export async function setWorkspacePlan (urlName: string, plan: string, input: PlanLimitsInput = {}): Promise<void> {
-  const client = await getAdmin()
-  const workspaceUuid = await resolveWorkspaceUuid(urlName)
-  await client.adminCreateSubscription({
-    otpCode: DEV_OTP,
-    workspaceUuid,
-    plan,
-    type: 'tier',
-    status: input.status ?? 'active',
-    limits: buildLimits(input)
+  await test.step('Billing.setWorkspacePlan', async () => {
+    const client = await getAdmin()
+    const workspaceUuid = await resolveWorkspaceUuid(urlName)
+    await client.adminCreateSubscription({
+      otpCode: DEV_OTP,
+      workspaceUuid,
+      plan,
+      type: 'tier',
+      status: input.status ?? 'active',
+      limits: buildLimits(input)
+    })
   })
 }

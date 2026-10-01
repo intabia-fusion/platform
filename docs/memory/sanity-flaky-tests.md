@@ -193,8 +193,26 @@ Where the time went on a clean 5-worker run (1054s of step time over ~250s wall)
 - **4 workers on `ubuntu-latest` buy exactly nothing.** Work went 3159s → 5899s and every action's p50 doubled while wall stayed at 1744s vs 1813s - 4 vCPU with the whole 34-container stand is saturated at 2 workers. `workers` left unset (cores/2).
 - Browser cache is per BrowserContext (fresh context 6 `bundle*` hits, new page in it 0). `step-reporter.ts` is not a cost (18836 rows / 4MB).
 
+**Issue as a fixture goes through the API** (`createIssueWithDescription`, `prepareNewIssueByApiStep` / `prepareNewIssueWithOpenByApiStep`): ~0.1s write + ~0.3s until the search shows the row, against ~1s for the form on an idle stand (more under load). The description must be uploaded first (`RestClient.uploadMarkup`, collaborator endpoint from `workspaceToken.info`) - `description: null` renders empty. Keep the form where the test reads what it sets (labels, estimate, assignee) or uses a custom task type (`labels.spec` third test).
+
 **`sharedWorkspace(n)` with n>0 per test recycles the workspace every few tests** (~5.5s each): take a seat once
 per workspace and reuse the REST member (`others` map, as in chat-unread), `$pull` it from the channel on dispose.
+
+**Test duration minus depth-0 steps (~220s of ~2150s per run) was REST and polling that no step covered.** Runs 175120/175900: 228s/218s, of it chat-unread 66/58, chat-notifications 31/25, threads-list 26/31, inbox-notifications 16/18, billing-ui 14/15, chat 11/12, plan-limits-extra 8/12, plan-trial 7/8, `meetings.scheduled-links` 14.6 (one deliberate 14s `setTimeout` for a poll cycle). `ChatApi` methods, `Billing` helpers and `ApiEndpoint.createWorkspaceWithLogin/waitWorkspaceReady` are now `test.step`s (`ChatApi.*`, `Billing.*`, `ApiEndpoint.*`) and the gap is ~0 in every file; `ChatApi.send` shows twice (nested under `sendMessage`/`reply`), and steps of a `Promise.all` overlap, so their sum exceeds the test time. Quiet stand, chat-unread + threads-list: `sendMessage` 405 calls 28.5s (avg 70-85ms, floor 30ms), threads `reply` 6.4s, `joinWorkspace` 7.7s over 9 (0.86s, 1.3s of it `ensureEmployee`), `addMember` 3.9s, `readEverything` 3.3s (93ms). No waste per call: `RestClient` is one `fetch` per call, `getModel` is never called, `connect` is one `getAccount` (~18ms). The cost is server latency times call count, and only fewer or concurrent calls cut it - sequential `sendMany` must stay sequential (arrival order is the assertion), parallel parents in `threads-list.createThreads` gave no measurable gain (server serialises the writes) and was dropped. Billing/trial specs: the gap is `waitWorkspaceReady` (~130 polls of 35ms POST + 100ms sleep = 13-17s on a loaded stand) - workspace build time, not removable from the test. Only trimmed: the `createEmployee` retry pause 1000 -> 200ms, same 4s budget (`createEmployee` 18.4s -> 15.0s over 14 joins). Measurements on a shared stand are unusable at load average >10 (`sendMessage` avg 70ms -> 400-800ms, wall 37s -> 60-150s, notification-marker waits of 1-3s then fail): check `sysctl -n vm.loadavg` and other `playwright test` processes before comparing wall. The `ChatMember` method wrapper (`ChatApi.sendMessage`, `reply`, ...) was removed afterwards: `work` in `collect-run.js` sums depth-0 steps without merging overlaps, and the `Promise.all` of ~100 `sendMessage`/`reply` calls in chat-unread made each call a separate depth-0 step, +500s of phantom work. Only `connect`, `joinWorkspace` (with substeps) and `openMemberPage` stay as steps.
+
+## Fixed pauses (`waitForTimeout`) - what was replaced, what stays
+
+Replaced:
+- `SpotlightPopup.fillSearchInput` 500ms after every fill (16 calls, 8s per run): a positive count retries itself in `toPass`, so only `checkSearchResult(..., 0)` keeps a 500ms settle (absence passes before the query is answered), and only when a query is typed. The extra 500ms in the retype catch is gone - `toPass` intervals already wait longer.
+- `selectFilter('Title')` 500ms: waits for the first row's title to contain the filter text.
+
+Kept, with the reason (a condition would be a guess):
+- `editIssue` estimation 500ms (7s per run): the optimistic value reverts ~70ms later when an earlier update is in flight - no DOM signal; a REST read costs three round trips (config, login, token) per call.
+- `selectProfileByName` 1000ms: dropping it failed `update-profile` 3/8 under `--repeat-each 8` (baseline 8/8). `addOrEditPhone` reads `.search` with `count()` right after the page opens and takes "channels not rendered yet" for "no phone".
+- `addRandomLines` 100ms: tiptap typography turns a digit-x-digit run (`1x5`) into the multiplication sign (U+00D7), so waiting for the typed text fails on random lines.
+- Absence checks that are the point of the test: context-menu submenu must not reopen (500ms), kanban "drop into same cell" (2000ms), thread order "nothing moves it back" (1500ms).
+- Kanban drag/`revealCard` 50-300ms: poll intervals inside loops that already test their own condition; under 1s per run in total.
+- `openSubmenu` 3x100ms: MouseSpeedTracker needs slow mouse movement by definition.
 
 ## Tooling traps
 
@@ -206,8 +224,15 @@ per workspace and reuse the REST member (`others` map, as in chat-unread), `$pul
 - love files are `*.tests.ts`; a path argument gives `No tests found`, select with `-g`.
 - `@llm` and `@network` are excluded from normal runs (`--grep-invert`), so they never appear in a series - and `@llm` needs a model server on host port 8000 or the bot fails in ~7s.
 - `workflow-settings.spec.ts` is a serial describe - one flake re-runs the whole block, so every test in the file gets a `-retry1` folder while only one is reported flaky.
-- `--repeat-each` on `kanban.spec.ts` gives false failures: `setSwimLane` stores view options per user and the storage state is shared.
+- `--repeat-each` on `kanban.spec.ts` gives false failures. Not view options: they go to localStorage (`plugins/view-resources/src/viewOptions.ts:59`) and every test gets its own context from `.auth/storage.json`. Cause not reproduced; from code: all copies work in the same `DefaultProject`, so tests that look at board columns and counters see issues of neighbour copies in other workers (`titlePrefix` differs per worker process, so it is not a shared prefix).
 - `love/*` timings swing by tens of seconds run to run (LiveKit on a Mac host); compare per-file deltas, not totals.
 - A `test.skip()` that depends on stand state changes the passed count without failing anything: run 20260917-123206 came out 415 instead of 417 because two `meetings.start` tests hit `test.skip(name === null, 'No regular room available')` - every room was busy at that moment.
 - A retry attempt can die with `End of central directory record signature not found` - the trace zip of the previous attempt was still being written. Playwright's own artefact race, not the test.
 - Wall time drifts up across a series (346 → 402s over 10 runs) because workspace data accumulates, not because of any one fix.
+
+## Dead time found in run 20261005-104540
+
+- `PlanningPage.setTimeSlot`, not `typeTime`: the five 3s `toHaveText` steps are the end-time check (`endShown`) after saving the end in the date popup. `typeTime` never failed. After the start time is typed, the end display flips to 12:00 at ~330ms and back at ~400-650ms (stale echo of the start edit; no DOM signal for it), and an end saved in that window is lost until the retry. A stability wait would cost >=1s on all 17 calls per run vs 5 failures, so the first check now times out at 1000ms (a good save shows in <300ms): ~2s saved per hit.
+- `getInviteLink` waited 5s for `appHeader`, which a fresh workspace never renders (`workspace/create.spec.ts` x2, 5005ms each); it now waits for `#profile-button`, which the toPass below clicks anyway. Join-link tests 4.0s/4.3s after.
+- `auth.setup.ts`: three tests ran on one worker (~1.2s each); `describe.configure({ mode: 'parallel' })`, setup 3 passed in 2.9s on 3 workers.
+- Re-running plan.spec many times (and `--repeat-each`) piles up `Plan work for several days-*` todos, and `Add several slots for the same day` then goes missing from the "All" list (todo is in the DB; fails the same on the original code). Needs a stand restore.

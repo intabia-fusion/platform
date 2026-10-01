@@ -28,6 +28,7 @@ import core, {
   TxFactory
 } from '@hcengineering/core'
 import type { IntlString } from '@hcengineering/platform'
+import crypto from 'node:crypto'
 import { ModelMiddleware } from '../model'
 import { createHarness, genCoreModel, makeNextMiddleware, type BenchHarness } from './bench/harness'
 
@@ -339,6 +340,51 @@ describe('ModelMiddleware model cache', () => {
 
     const model = (await middleware.loadModel(harness.ctx, 0)) as Tx[]
     expect(model.some((it) => (it as any).objectClass === itemClass)).toBe(false)
+  })
+
+  it('should hash the same with a cached system prefix as chaining every tx', async () => {
+    const systemTx = genCoreModel().concat([classTx(itemClass), classTx('core:class:Account' as Ref<Class<Doc>>)])
+    const legacy = (txes: Tx[]): string =>
+      txes.reduce((last, it) => crypto.createHash('sha1').update(last).update(JSON.stringify(it)).digest('hex'), '')
+    // Second iteration runs with the prefix cache already warm.
+    for (const userTx of [makeUserTx(3), makeUserTx(0), makeUserTx(5)]) {
+      const harness = createHarness()
+      const adapter = (harness.pipelineContext.adapterManager as any).getAdapter(DOMAIN_TX, true)
+      adapter.getModel = async (): Promise<Tx[]> => JSON.parse(JSON.stringify(userTx))
+      const m = (await ModelMiddleware.doCreate(
+        harness.ctx,
+        harness.pipelineContext,
+        makeNextMiddleware(harness),
+        systemTx
+      )) as ModelMiddleware
+      created.push(m)
+      expect(m.lastHash).toBe(legacy(systemTx.concat(userTx)))
+    }
+    expect(() => systemTx.push(classTx(itemClass))).toThrow()
+  })
+
+  it('should skip hashing but still apply the model when computeHash is false', async () => {
+    const harness = createHarness()
+    const userTx = makeUserTx(3)
+    const adapter = (harness.pipelineContext.adapterManager as any).getAdapter(DOMAIN_TX, true)
+    adapter.getModel = async (): Promise<Tx[]> => JSON.parse(JSON.stringify(userTx))
+    const m = (await ModelMiddleware.doCreate(
+      harness.ctx,
+      harness.pipelineContext,
+      makeNextMiddleware(harness),
+      genCoreModel().concat([classTx(itemClass), classTx('core:class:Account' as Ref<Class<Doc>>)]),
+      undefined,
+      false,
+      false
+    )) as ModelMiddleware
+    created.push(m)
+    await m.tx(harness.ctx, [
+      factory.createTxCreateDoc(itemClass, core.space.Model, { name: 'x' }, 'test:doc:late' as Ref<Doc>)
+    ])
+
+    expect(m.lastHash).toBe('')
+    expect(harness.pipelineContext.lastHash ?? '').toBe('')
+    expect(harness.pipelineContext.modelDb.findAllSync(itemClass, {}).length).toBe(4)
   })
 
   it('should bound the buffer of txs held while the cache is evicted', async () => {

@@ -27,3 +27,7 @@ Run configs round-robin (A/B/A/B), not one config's runs back to back. In blocks
 
 - [../features/drive-media.md](../features/drive-media.md)
 - [video-transcoding-storage](video-transcoding-storage.md) - video/media-pod counterpart, no overlap with this note (image thumbnails vs video).
+
+## Avatar ai-bot ran soffice on a PNG
+
+Symptom: 50 soffice launches per sanity run (2.6 CPU-s each, 132 of 133 preview CPU-s). Root cause: compose files had `AVATAR_CONTENT_TYPE=.png` (extension, not mime). ai-bot passes it as the `File` type in datalake client form-data (`foundations/server/packages/datalake/src/client.ts` `uploadWithFormData`); the datalake pod reads `file.mimetype` from express-fileupload/busboy, which falls back to `text/plain` when the part Content-Type is not `type/subtype` (busboy `multipart.js`). `DocProvider.supports` accepts any `text/*`, so the PNG went LibreOffice -> poppler -> sharp. Fix: compose/launch.json use `image/png`; ai-bot `config.ts` `avatarContentType` falls back to `image/png` for values without '/'. Other clients uploading binary under a bad type still hit text/plain -> DocProvider (not fixed; would need magic-byte sniffing in preview).

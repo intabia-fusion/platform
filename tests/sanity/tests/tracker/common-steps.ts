@@ -1,4 +1,5 @@
-import { Page, test } from '@playwright/test'
+import { expect, Page, test } from '@playwright/test'
+import { createIssueWithDescription } from '../API/TrackerApi'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewIssue } from '../model/tracker/types'
 import { faker } from '@faker-js/faker'
@@ -27,6 +28,34 @@ export async function prepareNewIssueWithOpenStep (
     if (search) {
       await issuesPage.searchIssueByName(issue.title)
     }
+    await issuesPage.openIssueByName(issue.title)
+    return await issuesPage.getIssueId(issue.title)
+  })
+}
+
+// For a test that needs the issue only as a fixture: it is written through the API (Backlog, description
+// only), so the form and the fields it sets are not exercised. Waits until the list shows the row.
+async function createIssueByApiAndFind (issuesPage: IssuesPage, issue: NewIssue): Promise<void> {
+  await createIssueWithDescription(issue.title, issue.description, issue.projectName)
+  await issuesPage.searchIssueByName(issue.title)
+  await expect(issuesPage.issueIdLocator(issue.title).first()).toBeVisible({ timeout: 15000 })
+}
+
+export async function prepareNewIssueByApiStep (page: Page, issue: NewIssue): Promise<string> {
+  return await test.step('Prepare Issue (API)', async () => {
+    const issuesPage = new IssuesPage(page)
+    await issuesPage.clickModelSelectorAll()
+    await createIssueByApiAndFind(issuesPage, issue)
+    return await issuesPage.getIssueId(issue.title)
+  })
+}
+
+export async function prepareNewIssueWithOpenByApiStep (page: Page, issue: NewIssue): Promise<string> {
+  return await test.step('Prepare Issue (API)', async () => {
+    const issuesPage = new IssuesPage(page)
+    await issuesPage.linkSidebarAll().click()
+    await issuesPage.clickModelSelectorAll()
+    await createIssueByApiAndFind(issuesPage, issue)
     await issuesPage.openIssueByName(issue.title)
     return await issuesPage.getIssueId(issue.title)
   })

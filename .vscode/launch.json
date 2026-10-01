@@ -781,7 +781,7 @@
         "MODE": "queue",
         "PASSWORD": "password",
         "AVATAR_PATH": "./assets/avatar.png",
-        "AVATAR_CONTENT_TYPE": ".png",
+        "AVATAR_CONTENT_TYPE": "image/png",
         "STORAGE_CONFIG": "datalake|http://localhost:4030",
         "CHUNK_STORAGE_CONFIG": "minio|localhost?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks",
         "LOVE_ENDPOINT": "http://localhost:8096",
