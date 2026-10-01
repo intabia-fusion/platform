@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -97,7 +98,11 @@
     void validate($themeStore.language)
   }
 
-  $: if ($themeStore.language != null && $themeStore.language !== '') {
+  // A theme update with the same language would reset the status and wipe an action error
+  // such as wrong credentials, so re-validate only on a language change.
+  let validatedLanguage: string | undefined
+  $: if ($themeStore.language != null && $themeStore.language !== '' && $themeStore.language !== validatedLanguage) {
+    validatedLanguage = $themeStore.language
     void validate($themeStore.language)
   }
 
