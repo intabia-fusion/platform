@@ -18,7 +18,7 @@
   import { getClient, createQuery, isDisabled } from '@hcengineering/presentation'
   import settingPlg from '../plugin'
   import type { SettingsCategory } from '@hcengineering/setting'
-  import setting, { SettingsEvents } from '@hcengineering/setting'
+  import setting, { settingId, SettingsEvents } from '@hcengineering/setting'
   import {
     Component,
     Label,
@@ -93,10 +93,27 @@
   function findCategory (name: string): SettingsCategory | undefined {
     return categories.find((x) => x.name === name)
   }
+  // Without a selected category the content panel is empty, so open the first one. A narrow screen shows the
+  // category list instead.
+  $: if (categoryId === undefined && categories.length > 0 && !$deviceInfo.navigator.float) {
+    openFirstCategory()
+  }
+
+  function openFirstCategory (): void {
+    const loc = getCurrentResolvedLocation()
+    const first = categories.find((it) => it.component !== undefined)
+    if (loc.path[2] !== settingId || first === undefined) return
+    loc.path[3] = first.name
+    loc.path.length = 4
+    navigate(loc, true)
+  }
+
   function selectCategory (id: string): void {
     clearSettingsStore()
     const loc = getCurrentResolvedLocation()
     if (loc.path[3] === id) {
+      // Deselecting would only reopen the first category
+      if (!$deviceInfo.navigator.float) return
       loc.path.length = 3
     } else {
       loc.path[3] = id

@@ -62,7 +62,6 @@ test.describe('Workflow in tracker', () => {
     await settings.openSettings()
     await settings.createSpaceType(typeName, 'Tracker')
     await settings.selectSpaceType(typeName, 'Tracker')
-    await settings.addTaskType('Issue')
 
     await workflows.createWorkflow(workflowName)
     await workflows.openWorkflow(workflowName)
@@ -87,7 +86,7 @@ test.describe('Workflow in tracker', () => {
   })
 
   test('binds a workflow to the task type', async () => {
-    await projectWorkflows.setWorkflow('Issue', workflowName)
+    await projectWorkflows.setWorkflow('Classic Issue', workflowName)
     await expect(projectWorkflows.configuredLabel()).toBeVisible()
   })
 

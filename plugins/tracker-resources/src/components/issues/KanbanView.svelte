@@ -48,7 +48,7 @@
   } from '@hcengineering/task-resources'
   import type { Component as TrackerComponent, Issue, Project } from '@hcengineering/tracker'
   import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
-  import type { ColorDefinition } from '@hcengineering/ui'
+  import type { BlankViewProps, ColorDefinition } from '@hcengineering/ui'
   import {
     Button,
     Component,
@@ -57,6 +57,7 @@
     getPlatformColorDef,
     IconAdd,
     Label,
+    BlankView,
     Loading,
     showPopup,
     themeStore
@@ -112,6 +113,7 @@
   export let viewlet: Viewlet
   export let config: (string | BuildModelKey)[]
   export let options: FindOptions<DocWithRank> | undefined = undefined
+  export let emptyState: BlankViewProps | undefined = undefined
 
   $: groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
   $: orderBy = viewOptions.orderBy
@@ -309,9 +311,11 @@
     (res) => {
       fastDocs = res
       fastQueryIds = new Set(res.map((it) => it._id))
+      docsLoaded = true
     },
     { ...categoryQueryOptions, limit: 1000 }
   )
+  let docsLoaded = false
   $: docsQuerySlow.query(
     _class,
     queryNoLookup,
@@ -691,6 +695,10 @@
 
 {#if loadCategories}
   <Loading />
+{:else if emptyState !== undefined && docsLoaded && categories.length === 0}
+  <div class="flex-col-center flex-grow">
+    <BlankView {...emptyState} />
+  </div>
 {:else}
   <ActionContext
     context={{

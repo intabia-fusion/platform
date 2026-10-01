@@ -94,6 +94,7 @@
   export let listProvider: SelectionFocusProvider
   export let singleCategoryLimit: number | undefined = undefined
   export let readonly: boolean = false
+  export let empty: boolean = false
 
   $: groupByKey = viewOptions.groupBy[level] ?? noCategory
   let categories: CategoryType[] = []
@@ -105,10 +106,12 @@
   const maxInitialCategories = 20
   let showAllCategories = false
   let isLoadingCategories = false
+  let categoriesComputed = false
   let isLoadingMoreTop = false
 
   $: displayedCategories = level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
 
+  $: empty = level === 0 && categoriesComputed && categories.length === 0
   $: hasMoreCategories = level === 0 && categories.length > maxInitialCategories
 
   const client = getClient()
@@ -147,6 +150,7 @@
           }
         }
       } finally {
+        categoriesComputed = true
         isLoadingCategories = false
         // Clear top-level Show More loading flag when update completes (success or error)
         isLoadingMoreTop = false

@@ -13,17 +13,19 @@
 -->
 <script lang="ts">
   import type { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
+  import { isOwnerOrMaintainer } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import type { Issue, Project } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
-  import { ButtonMenu, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
+  import { BlankView, ButtonMenu, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
     FilterBar,
+    filterStore,
     selectionStore,
     setViewOptions,
     SpaceHeader,
@@ -31,7 +33,7 @@
     ViewletSettingButton
   } from '@hcengineering/view-resources'
   import task, { type Project as TaskProject } from '@hcengineering/task'
-  import { TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
+  import { ProjectTypeSettingsLink, TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
   import type { ProjectWorkflow } from '@hcengineering/workflow'
   import workflow from '@hcengineering/workflow'
 
@@ -77,6 +79,10 @@
     ? Array.from($taskTypeStore.values()).filter((t) => t.parent === currentProject.type)
     : []
   $: hasTaskTypes = currentTaskTypes.length > 0
+  $: noTaskTypes = currentProject !== undefined && $taskTypeStore.size > 0 && !hasTaskTypes
+
+  // Same check as the project type editor in settings
+  const canConfigureTypes = isOwnerOrMaintainer()
 
   const WORKFLOW_ITEM_ID = 'workflow'
   const TASK_TYPES_ITEM_ID = 'task-types'
@@ -145,6 +151,11 @@
       void exportIssuesToCSV(resultQuery)
     }
   }
+
+  $: isFiltered = search !== '' || $filterStore.length > 0
+  $: emptyState = isFiltered
+    ? { icon: tracker.icon.Issues, header: tracker.string.NoIssuesFound, label: tracker.string.NoIssuesFoundText }
+    : { icon: tracker.icon.Issues, header: tracker.string.NoIssuesYet, label: tracker.string.NoIssuesYetText }
 
   // Prevent groupBy and swimLaneBy from being the same field.
   $: if (viewlet != null && viewOptions != null) {
@@ -228,7 +239,25 @@
   on:change={(e) => (resultQuery = e.detail)}
 />
 <slot name="afterHeader" />
-{#if viewlet !== undefined && viewOptions !== undefined}
+{#if noTaskTypes && currentProject !== undefined}
+  <div class="flex-col-center flex-grow">
+    {#if canConfigureTypes}
+      <BlankView
+        icon={tracker.icon.Issues}
+        header={tracker.string.NoProjectTaskTypes}
+        label={tracker.string.NoProjectTaskTypesText}
+      >
+        <ProjectTypeSettingsLink projectType={currentProject.type} />
+      </BlankView>
+    {:else}
+      <BlankView
+        icon={tracker.icon.Issues}
+        header={tracker.string.NoProjectTaskTypes}
+        label={tracker.string.NoProjectTaskTypesAskOwner}
+      />
+    {/if}
+  </div>
+{:else if viewlet !== undefined && viewOptions !== undefined}
   <ViewletContentView
     _class={tracker.class.Issue}
     {viewlet}
@@ -239,5 +268,6 @@
     createItemLabel={tracker.string.AddIssueTooltip}
     createItemEvent={TrackerEvents.IssuePlusButtonClicked}
     createItemDialogProps={{ shouldSaveDraft: true }}
+    {emptyState}
   />
 {/if}

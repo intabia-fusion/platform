@@ -390,7 +390,8 @@ export type GetAllValuesFunc = Resource<
     query: DocumentQuery<Doc> | undefined,
     onUpdate: () => void,
     queryId: Ref<Doc>,
-    attr: AnyAttribute
+    attr: AnyAttribute,
+    space?: Ref<Space>
   ) => Promise<any[] | undefined>
 >
 

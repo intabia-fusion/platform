@@ -248,6 +248,7 @@ export class TProjectTypeDescriptor extends TSpaceTypeDescriptor implements Proj
   editor?: AnyComponent
   allowedClassic?: boolean
   allowedTaskTypeDescriptors?: Ref<TaskTypeDescriptor>[] // if undefined we allow all possible
+  defaultTaskType?: { descriptor: Ref<TaskTypeDescriptor>, name: string }
   declare baseClass: Ref<Class<Project>>
 }
 

@@ -47,12 +47,8 @@ test.describe('Workflow settings', () => {
     await page.close()
   })
 
-  test('the add-workflow button is disabled until a task type exists', async () => {
-    await expect(workflows.addWorkflowButton()).toBeDisabled()
-  })
-
-  test('a task type enables the add-workflow button', async () => {
-    await settings.addTaskType('Issue')
+  test('a new tracker type comes with a task type, so a workflow can be added', async () => {
+    await settings.checkTaskType('Classic Issue')
     await expect(workflows.addWorkflowButton()).toBeEnabled()
   })
 
@@ -62,7 +58,7 @@ test.describe('Workflow settings', () => {
   })
 
   test('shows the task type on the workflow row', async () => {
-    await expect(workflows.workflowRow(workflowName)).toContainText('Issue')
+    await expect(workflows.workflowRow(workflowName)).toContainText('Classic Issue')
   })
 
   test('opens the workflow editor', async () => {
@@ -158,13 +154,13 @@ test.describe('Workflow settings', () => {
 
   test('lists one class option per task type plus the shared one', async () => {
     const options = await workflows.screenClassOptions()
-    expect(options).toEqual(['Any task type', 'Issue'])
+    expect(options).toEqual(['Any task type', 'Classic Issue'])
   })
 
   test('creates a screen', async () => {
     const screenName = `Screen-${generateId(4)}`
-    await workflows.createScreen(screenName, 'Issue')
-    await expect(workflows.screenRow(screenName)).toContainText('Issue')
+    await workflows.createScreen(screenName, 'Classic Issue')
+    await expect(workflows.screenRow(screenName)).toContainText('Classic Issue')
   })
 
   test('creates a second workflow for the same task type', async () => {

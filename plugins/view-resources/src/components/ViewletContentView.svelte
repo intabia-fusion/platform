@@ -3,7 +3,7 @@
   import core from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent, BlankViewProps } from '@hcengineering/ui'
   import { Component, Loading } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -22,6 +22,7 @@
   export let createItemLabel: IntlString | undefined = undefined
   export let createItemEvent: string | undefined = undefined
   export let createItemDialogProps = { shouldSaveDraft: true }
+  export let emptyState: BlankViewProps | undefined = undefined
 
   const hierarchy = getClient().getHierarchy()
 
@@ -117,7 +118,8 @@
         viewOptions,
         viewOptionsConfig: viewlet.viewOptions?.other,
         space,
-        query
+        query,
+        ...(emptyState !== undefined ? { emptyState } : {})
       }}
     />
   {/if}

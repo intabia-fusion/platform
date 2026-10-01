@@ -19,7 +19,7 @@
   import core, { generateId } from '@hcengineering/core'
   import { Card, getClient, hasResource } from '@hcengineering/presentation'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { EditBox } from '@hcengineering/ui'
+  import { EditBox, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import type { Resource } from '@hcengineering/platform'
   import { getResource } from '@hcengineering/platform'
   import { ObjectBox } from '@hcengineering/view-resources'
@@ -27,6 +27,7 @@
   import setting, { createSpaceType } from '@hcengineering/setting'
 
   import settingRes from '../../plugin'
+  import { clearSettingsStore } from '../../store'
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -34,15 +35,16 @@
 
   let name: string = ''
   let descriptor: SpaceTypeDescriptor | undefined = undefined
-  let handleTypeCreated: (() => Promise<void>) | undefined
+  let handleTypeCreated: (() => Promise<Ref<SpaceType> | undefined>) | undefined
 
   async function createType (): Promise<void> {
     if (descriptor === undefined) {
       return
     }
 
+    let typeId: Ref<SpaceType> | undefined
     if (handleTypeCreated !== undefined) {
-      await handleTypeCreated()
+      typeId = await handleTypeCreated()
     } else {
       const data: Omit<Data<SpaceType>, 'targetClass'> = {
         name,
@@ -50,10 +52,20 @@
         roles: 0
       }
 
-      await createSpaceType(client, data, generateId())
+      typeId = await createSpaceType(client, data, generateId())
     }
 
     dispatch('close')
+    if (typeId !== undefined) openType(typeId)
+  }
+
+  function openType (typeId: Ref<SpaceType>): void {
+    clearSettingsStore()
+    const loc = getCurrentResolvedLocation()
+    loc.path[3] = 'spaceTypes'
+    loc.path[4] = typeId
+    loc.path.length = 5
+    navigate(loc)
   }
 
   const descriptors = client

@@ -21,7 +21,7 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import core, { getDisplayTime, SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, Scroller, Lazy } from '@hcengineering/ui'
+  import { BlankView, Label, Scroller, Lazy } from '@hcengineering/ui'
   import type { ActivityMessage, SavedMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import { ActivityMessagePresenter } from '@hcengineering/activity-resources'
@@ -29,7 +29,6 @@
   import chunter from '../../../plugin'
   import Header from '../../Header.svelte'
   import { openMessageFromSpecial } from '../../../navigation'
-  import BlankView from '../../BlankView.svelte'
 
   const client = getClient()
   const savedMessagesQuery = createQuery()

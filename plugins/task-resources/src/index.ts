@@ -23,11 +23,12 @@ import {
   type DocumentQuery,
   type IdMap,
   type Ref,
+  type Space,
   type Status,
   type TxOperations
 } from '@hcengineering/core'
 import { type IntlString, type Resources } from '@hcengineering/platform'
-import { createQuery, onClient } from '@hcengineering/presentation'
+import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import task, {
   getOrderedTaskTypes,
   makeRank,
@@ -74,6 +75,7 @@ import CreateProjectType from './components/projectTypes/CreateProjectType.svelt
 import ProjectTypeAutomationsSectionEditor from './components/projectTypes/ProjectTypeAutomationsSectionEditor.svelte'
 import ProjectTypeGeneralSectionEditor from './components/projectTypes/ProjectTypeGeneralSectionEditor.svelte'
 import ProjectTypeSelector from './components/projectTypes/ProjectTypeSelector.svelte'
+import ProjectTypeSettingsLink from './components/projectTypes/ProjectTypeSettingsLink.svelte'
 import ProjectTypeTasksTypeSectionEditor from './components/projectTypes/ProjectTypeTasksTypeSectionEditor.svelte'
 import TaskTypeEditor from './components/taskTypes/TaskTypeEditor.svelte'
 import TaskTypeDiagramPopup from './components/taskTypes/TaskTypeDiagramPopup.svelte'
@@ -81,7 +83,15 @@ import TaskTypeDiagramPopup from './components/taskTypes/TaskTypeDiagramPopup.sv
 export { default as AssigneePresenter } from './components/AssigneePresenter.svelte'
 export { default as TypeSelector } from './components/TypeSelector.svelte'
 export * from './utils'
-export { StatePresenter, StateRefPresenter, TaskKindSelector, TaskTypeIcon, TypeStatesPopup, TaskTypeDiagramPopup }
+export {
+  StatePresenter,
+  StateRefPresenter,
+  TaskKindSelector,
+  TaskTypeIcon,
+  TypeStatesPopup,
+  TaskTypeDiagramPopup,
+  ProjectTypeSettingsLink
+}
 
 async function editStatuses (object: Project, ev: Event): Promise<void> {
   const loc = getCurrentLocation()
@@ -156,14 +166,20 @@ export async function getAllStates (
   onUpdate: () => void,
   queryId: Ref<Doc>,
   attr: Attribute<Status>,
+  space?: Ref<Space>,
   filterDone: boolean = true
 ): Promise<any[]> {
   const joinedProjectsTypes = get(typesOfJoinedProjectsStore) ?? []
-  const typeId = get(selectedTypeStore) ?? (joinedProjectsTypes.length === 1 ? joinedProjectsTypes[0] : undefined)
+  const typeId =
+    get(selectedTypeStore) ??
+    (await getProjectType(space)) ??
+    (joinedProjectsTypes.length === 1 ? joinedProjectsTypes[0] : undefined)
   const type = typeId !== undefined ? get(typeStore).get(typeId) : undefined
   const $taskType = get(taskTypeStore)
+  // With a known project type only its own task types count: a single task type of another joined project
+  // must not supply the statuses of this one.
   const joinedTaskTypes = Array.from($taskType.values()).filter((taskType) =>
-    joinedProjectsTypes.includes(taskType.parent)
+    typeId !== undefined ? taskType.parent === typeId : joinedProjectsTypes.includes(taskType.parent)
   )
   const taskTypeId = get(selectedTaskTypeStore) ?? (joinedTaskTypes.length === 1 ? joinedTaskTypes[0]?._id : undefined)
   if (taskTypeId !== undefined) {
@@ -231,6 +247,15 @@ export async function getAllStates (
   } else {
     return states.map((p) => p?._id)
   }
+}
+
+async function getProjectType (space: Ref<Space> | undefined): Promise<Ref<ProjectType> | undefined> {
+  if (space === undefined) return undefined
+  const projectId = space as Ref<Project>
+  // activeProjects has no archived projects, the server has every project the user can open
+  const project =
+    get(activeProjects).get(projectId) ?? (await getClient().findOne(task.class.Project, { _id: projectId }))
+  return project?.type
 }
 
 async function statusSort (
