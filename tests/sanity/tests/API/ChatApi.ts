@@ -29,7 +29,7 @@ import {
   type Ref,
   type Space
 } from '@hcengineering/core'
-import { type Browser, type BrowserContext, type Page } from '@playwright/test'
+import { test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { type SignUpData } from '../model/common-types'
 import { LocalUrl, loginByToken } from '../utils'
 
@@ -345,6 +345,10 @@ export class ChatMember {
 }
 
 async function connect (ws: WorkspaceLoginInfo, name: string, user?: SignUpData): Promise<ChatMember> {
+  return await test.step('ChatApi.connect', async () => await connectRest(ws, name, user))
+}
+
+async function connectRest (ws: WorkspaceLoginInfo, name: string, user?: SignUpData): Promise<ChatMember> {
   if (ws.token === undefined) throw new Error('No workspace token')
   const client = createRestClient(ws.endpoint, ws.workspace, ws.token)
   const account = await client.getAccount()
@@ -364,18 +368,35 @@ export async function connectOwner (ws: WorkspaceLoginInfo, name: string): Promi
 
 /** Signs a new user up straight into the workspace, without the invite link and the join page. */
 export async function joinWorkspace (owner: WorkspaceLoginInfo, user: SignUpData): Promise<ChatMember> {
+  return await test.step('ChatApi.joinWorkspace', async () => await joinWorkspaceRest(owner, user))
+}
+
+async function joinWorkspaceRest (owner: WorkspaceLoginInfo, user: SignUpData): Promise<ChatMember> {
   // `exp` is how long the invite lives, not when it ends.
-  const inviteId = await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, '', 1, AccountRole.User)
+  const inviteId = await test.step(
+    'ChatApi.createInvite',
+    async () => await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, '', 1, AccountRole.User)
+  )
   const accounts = getAccountClient(LocalUrl)
   // Some specs create the account up front, for the join page to log in with.
-  const joined = await accounts
-    .signUpJoin(user.email, user.password, user.firstName, user.lastName, inviteId, owner.workspaceUrl)
-    .catch(async () => await accounts.join(user.email, user.password, inviteId, owner.workspaceUrl))
+  const joined = await test.step(
+    'ChatApi.signUpJoin',
+    async () =>
+      await accounts
+        .signUpJoin(user.email, user.password, user.firstName, user.lastName, inviteId, owner.workspaceUrl)
+        .catch(async () => await accounts.join(user.email, user.password, inviteId, owner.workspaceUrl))
+  )
   const member = await connect(joined, `${user.lastName} ${user.firstName}`, user)
-  await createEmployee(member, joined)
+  await test.step('ChatApi.createEmployee', async () => {
+    await createEmployee(member, joined)
+  })
   // The employee joins the contacts space a moment after it is created, and a client that loads
   // before that keeps an empty list of people: no direct chat, nobody to mention.
-  await poll(async () => (await member.client.findOne(personClass, { personUuid: owner.account } as any)) !== undefined)
+  await test.step('ChatApi.awaitOwnerPerson', async () => {
+    await poll(
+      async () => (await member.client.findOne(personClass, { personUuid: owner.account } as any)) !== undefined
+    )
+  })
   return member
 }
 
@@ -392,6 +413,14 @@ async function poll (condition: () => Promise<boolean>, timeoutMs = 30000): Prom
  * A first write racing a just-joined member with no seat yet is refused - fatal error page.
  */
 export async function openMemberPage (
+  browser: Browser,
+  member: ChatMember,
+  app?: string
+): Promise<{ page: Page, context: BrowserContext }> {
+  return await test.step('ChatApi.openMemberPage', async () => await openMember(browser, member, app))
+}
+
+async function openMember (
   browser: Browser,
   member: ChatMember,
   app?: string
@@ -421,13 +450,14 @@ async function createEmployee (member: ChatMember, ws: WorkspaceLoginInfo): Prom
   const socialIds = await accountClient.getSocialIds()
   // The transactor learns about a new member a moment after the account service does, and until
   // then the first write of the member is Forbidden.
+  // Same 4s budget as 4 x 1s, but a member that becomes writable after 200ms no longer waits a second.
   for (let attempt = 1; ; attempt++) {
     try {
       await ensureEmployee(noMetrics, account, member.client, socialIds, async () => await accountClient.getPerson())
       return
     } catch (err) {
-      if (attempt === 5) throw err
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (attempt === 21) throw err
+      await new Promise((resolve) => setTimeout(resolve, 200))
     }
   }
 }

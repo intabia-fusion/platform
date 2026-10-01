@@ -1,11 +1,11 @@
-import { expect, test, type SharedWorkspace } from '../fixtures'
+import { closeSharedPage, enterWorkspace, expect, sharedPageTest as test, type SharedWorkspace } from '../fixtures'
 import { getSecondPageByApi } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { SidebarPage } from '../model/sidebar-page'
-import { generateTestData, generateUser, loginByToken } from '../utils'
+import { generateTestData, generateUser } from '../utils'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -19,6 +19,8 @@ test.describe('Channel tests', () => {
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let message: string
   let secondMessage: string
+
+  test.afterAll(closeSharedPage)
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     // The workspace is shared with the other tests of this worker, so general and random keep their
@@ -38,7 +40,7 @@ test.describe('Channel tests', () => {
     sidebarPage = new SidebarPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace picker
     // are three page loads and cost about a second per test.
-    await loginByToken(page, shared.token, shared.ws, 'chunter')
+    await enterWorkspace(page, shared, 'chunter')
   })
 
   test('Create new private channel and check if the messages stays on it', async ({ browser, page }) => {

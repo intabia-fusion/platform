@@ -1,13 +1,13 @@
 import { type Browser, type Page } from '@playwright/test'
 import { type Doc, type Ref } from '@hcengineering/core'
-import { expect, test, type SharedWorkspace } from '../fixtures'
+import { closeSharedPage, enterWorkspace, expect, sharedPageTest as test, type SharedWorkspace } from '../fixtures'
 import { type ChatMember, connectOwner, joinWorkspace, openMemberPage } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { InboxPage } from '../model/inbox.ts/inbox-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { generateTestData, generateUser, loginByToken } from '../utils'
+import { generateTestData, generateUser } from '../utils'
 
 type Channel = Awaited<ReturnType<ChatMember['findChannel']>>
 
@@ -54,6 +54,8 @@ test.describe('Inbox notification tests', () => {
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let uniq: string
 
+  test.afterAll(closeSharedPage)
+
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     // The second member takes a seat like an invited one, once per workspace.
     shared = await sharedWorkspace(0)
@@ -67,7 +69,7 @@ test.describe('Inbox notification tests', () => {
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
     inboxPage = new InboxPage(page)
-    await loginByToken(page, shared.token, shared.ws, 'chunter')
+    await enterWorkspace(page, shared, 'chunter')
   })
 
   /**

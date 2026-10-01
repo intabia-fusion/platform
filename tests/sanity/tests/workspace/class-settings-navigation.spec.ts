@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '../fixtures'
-import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'
+import { generateId, loginByToken } from '../utils'
 import { ContractPage } from '../model/contacts/contract-page'
 import { UserProfilePage } from '../model/profile/user-profile-page'
 
@@ -10,15 +10,12 @@ const settingsNavGroup = (page: Page): ReturnType<Page['locator']> => page.locat
 test.describe('workbench navigation after class settings tests', () => {
   let userProfilePage: UserProfilePage
   let contractPage: ContractPage
-  let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
-  test.beforeEach(async ({ page, request }) => {
-    data = generateTestData()
+  test.beforeEach(async ({ page, sharedWorkspace }) => {
     userProfilePage = new UserProfilePage(page)
     contractPage = new ContractPage(page)
-    // Straight into the workspace from the account token: the login form plus the workspace
-    // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    const shared = await sharedWorkspace()
+    await loginByToken(page, shared.token, shared.ws)
   })
 
   test('back from class settings restores the app navigator', async ({ page }) => {

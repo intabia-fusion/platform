@@ -1,15 +1,14 @@
-import { test } from '../fixtures'
+import { test, type SharedWorkspace } from '../fixtures'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'
 import {
   createAccount,
-  createAccountAndWorkspace,
   generateId,
-  generateTestData,
   generateUser,
   getInviteLink,
-  getSecondPageByInvite
+  getSecondPageByInvite,
+  loginByToken
 } from '../utils'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { NewIssue } from '../model/tracker/types'
@@ -22,18 +21,17 @@ test.describe('Dynamic issues chats', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage
   let newUser2: SignUpData
-  let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
+  let data: SharedWorkspace['data']
 
-  test.beforeEach(async ({ page, request }) => {
-    data = generateTestData()
+  test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
+    const shared = await sharedWorkspace(testInfo.tags.includes('@invite') ? 1 : 0)
+    data = shared.data
     newUser2 = generateUser()
 
     leftSideMenuPage = new LeftSideMenuPage(page)
     channelPage = new ChannelPage(page)
 
-    // Straight into the workspace from the account token: the login form plus the workspace
-    // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data, 'tracker')
+    await loginByToken(page, shared.token, shared.ws, 'tracker')
   })
 
   test('User can create issue for himself and see linked chat', async ({ page, browser, request }) => {
@@ -55,7 +53,7 @@ test.describe('Dynamic issues chats', () => {
     })
   })
 
-  test('User can see chat for assigned issue from other user', async ({ page, browser, request }) => {
+  test('User can see chat for assigned issue from other user', { tag: '@invite' }, async ({ page, browser, request }) => {
     const linkText = await getInviteLink(page)
     await createAccount(request, newUser2)
     using _page2 = await getSecondPageByInvite(browser, linkText, newUser2)

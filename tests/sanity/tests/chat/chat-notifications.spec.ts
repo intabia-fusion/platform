@@ -1,11 +1,11 @@
 import { type Browser, type Page, expect } from '@playwright/test'
-import { test, type SharedWorkspace } from '../fixtures'
+import { closeSharedPage, enterWorkspace, sharedPageTest as test, type SharedWorkspace } from '../fixtures'
 import { type ChatMember, connectOwner, joinWorkspace, openMemberPage } from '../API/ChatApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { generateTestData, generateUser, loginByToken } from '../utils'
+import { generateTestData, generateUser } from '../utils'
 import { retry } from '../retry'
 
 type Channel = Awaited<ReturnType<ChatMember['findChannel']>>
@@ -42,6 +42,8 @@ test.describe('Chat notification tests', () => {
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
   let uniq: string
 
+  test.afterAll(closeSharedPage)
+
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     // The second member takes a seat like an invited one, once per workspace.
     shared = await sharedWorkspace(0)
@@ -54,7 +56,7 @@ test.describe('Chat notification tests', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
-    await loginByToken(page, shared.token, shared.ws, 'chunter')
+    await enterWorkspace(page, shared, 'chunter')
   })
 
   /**

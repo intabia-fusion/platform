@@ -4,7 +4,7 @@ import { IssuesPage } from '../model/tracker/issues-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewIssue } from '../model/tracker/types'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
-import { prepareNewIssueStep } from './common-steps'
+import { prepareNewIssueByApiStep } from './common-steps'
 
 test.use({
   storageState: PlatformSetting
@@ -31,8 +31,8 @@ test.describe('Relations', () => {
       description: 'Second. Mark as blocked by'
     }
 
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    const firstIssueId = await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    const firstIssueId = await prepareNewIssueByApiStep(page, firstIssue)
 
     await issuesPage.openIssueByName(firstIssue.title)
 
@@ -69,8 +69,8 @@ test.describe('Relations', () => {
       description: 'Second. Mark as blocked by'
     }
 
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    const firstIssueId = await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    const firstIssueId = await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
     await test.step('Mark as blocking... and check issue description', async () => {
       await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
@@ -108,8 +108,8 @@ test.describe('Relations', () => {
       description: 'Second. Reference another issue'
     }
 
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    const firstIssueId = await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    const firstIssueId = await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
     await test.step('Reference another issue... and check issue description', async () => {
       await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
@@ -144,8 +144,8 @@ test.describe('Relations', () => {
       title: `Second. Remove relation be editing issue details-${generateId()}`,
       description: 'Second. Remove relation be editing issue details'
     }
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
     await test.step('Reference another issue... and check issue description', async () => {
       await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
@@ -181,8 +181,8 @@ test.describe('Relations', () => {
       title: `Second. Remove related-${generateId()}`,
       description: 'Second. Remove related'
     }
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
 
     await test.step('Add related and remove it', async () => {
@@ -218,8 +218,8 @@ test.describe('Relations', () => {
       title: `Second. Remove blocking-${generateId()}`,
       description: 'Second. Remove blocking'
     }
-    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
-    await prepareNewIssueStep(page, firstIssue)
+    const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
+    await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
 
     await test.step('Mark as blocking and remove it', async () => {

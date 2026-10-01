@@ -1,5 +1,5 @@
 import type { WorkspaceInfoWithStatus, WorkspaceLoginInfo } from '@hcengineering/account'
-import { APIRequestContext } from '@playwright/test'
+import { APIRequestContext, test } from '@playwright/test'
 import { DevUrl, LocalUrl, PlatformURI, PlatformWorkspaceRegion } from '../utils'
 import { retry } from '../retry'
 
@@ -58,8 +58,10 @@ export class ApiEndpoint {
     username: string,
     password: string
   ): Promise<WorkspaceLoginInfo> {
-    const token = await this.loginAndGetToken(username, password)
-    return await this.createWorkspaceInternal(workspaceName, token)
+    return await test.step('ApiEndpoint.createWorkspace', async () => {
+      const token = await this.loginAndGetToken(username, password)
+      return await this.createWorkspaceInternal(workspaceName, token)
+    })
   }
 
   private async createWorkspaceInternal (workspaceName: string, token: string): Promise<WorkspaceLoginInfo> {
@@ -81,7 +83,15 @@ export class ApiEndpoint {
     return wsResult
   }
 
+  // Named so the report shows the wait for the account service to finish building a workspace
+  // (the polling sleeps are not steps and otherwise land in the gap of the test).
   async waitWorkspaceReady (token: string, workspaceUrl: string): Promise<void> {
+    await test.step('ApiEndpoint.waitWorkspaceReady', async () => {
+      await this.pollWorkspaceReady(token, workspaceUrl)
+    })
+  }
+
+  private async pollWorkspaceReady (token: string, workspaceUrl: string): Promise<void> {
     // We need to wait for workspace to be created before we continue.
     const headers = this.getDefaultHeaders(token)
     // Retried like the poll below: the call is a read, and a single bad answer used to fail the
