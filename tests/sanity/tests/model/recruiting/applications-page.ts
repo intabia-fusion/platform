@@ -42,9 +42,11 @@ export class ApplicationsPage extends CommonRecruitingPage {
   }
 
   async createNewApplicationWithNewTalent (data: NewApplication): Promise<TalentName> {
+    // generateId(2) is 256 per-process suffixes plus a counter restarting at 0 in every worker:
+    // talents in sanity-ws collided by name (2 rows for one locator, 6/50).
     const talentName: TalentName = {
-      firstName: `TestFirst-${generateId(2)}`,
-      lastName: `TestLast-${generateId(2)}`
+      firstName: `TestFirst-${generateId()}`,
+      lastName: `TestLast-${generateId()}`
     }
 
     // TODO: rectify vacancy types in test workspace

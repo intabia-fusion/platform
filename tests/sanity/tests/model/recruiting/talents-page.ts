@@ -188,8 +188,8 @@ export class TalentsPage extends CommonRecruitingPage {
 
   async createNewTalent (): Promise<TalentName> {
     const talentName: TalentName = {
-      firstName: `TestFirst-${generateId(4)}`,
-      lastName: `TestLast-${generateId(4)}`
+      firstName: `TestFirst-${generateId()}`,
+      lastName: `TestLast-${generateId()}`
     }
     await this.createNewTalentWithName(talentName.firstName, talentName.lastName)
     return talentName

@@ -60,6 +60,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **A fixed name in a shared workspace matches last run's copy** (`changeChannelName` "New Channel Name").
 - **`readEverything` by `Date.now()` marked a message sent right after as read**; it reads up to the last message's `createdOn`.
 - **A lazy `<img>` in a small popup never loads** until scrolled into view (`checkCommentWithImageExist`).
+- **`generateId(n)` with a small `n` is not unique across workers**: 16^n suffixes and a counter restarting per
+  worker - talent names collided in `sanity-ws` (6/50). Use `generateId()`.
 
 ## Product-side causes
 
@@ -89,6 +91,12 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 
 ## Open
 
+- **`chat-unread` "A reply lifts a thread..." timed out at 60s with no step logged**: ~203 unlogged REST calls
+  (101 messages + 101 replies) plus the worker's first `joinWorkspace` poll; the retry took 17s with a warm `others`.
+- **`team-planner` "Colleague project todo...": "Default" absent from the Space filter for 30s** (`selectFilter`).
+  Not the `dateStart` bug (`tomorrow`); what builds that value list is unknown.
+- **`issues` "Comment stored after reload": reload raced the send** - wait for `readStoredCommentCount` first.
+  "Add comment by popup": the row-anchored popup closes when the counter re-renders - reopen before checks.
 - **`pulse` second user: `/workbench/` url, no `#profile-button` for 15s (1/5).** Suspect `Workbench.svelte:780-795`
   renders nothing for a non-owner until `$myEmployeeStore` resolves; `getSecondPageByInvite` now reports url + body.
 - **`chat-unread` "Reading a channel from inbox" (1/5):** message absent 15s after opening from inbox, 9ms on
