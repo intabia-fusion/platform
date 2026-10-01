@@ -123,7 +123,7 @@ export async function getPreviewMetadata (workspace: string, name: string): Prom
 
 function getImagePreviewUrl (workspace: string, name: string, width: number, height: number, dpr: number): string {
   const previewUrl = getMetadata(presentation.metadata.PreviewUrl) ?? ''
-  const url = `/image/fit=cover,width=${width},height=${height},dpr=${dpr}/${workspace}/${name}`
+  const url = `/${workspace}/image/fit=cover,width=${width},height=${height},dpr=${dpr}/${name}`
   return concatLink(previewUrl, url)
 }
 

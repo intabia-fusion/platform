@@ -29,14 +29,15 @@ import { pipeline } from 'stream/promises'
 
 import { createCache } from './cache'
 import { type Config } from './config'
-import { type RequestWithAuth, errorHandler, keepAlive } from './middleware'
+import { type RequestWithAuth, errorHandler, keepAlive, withWorkspaceToken } from './middleware'
 import { createPreviewService, ThumbnailParams } from './service'
 import { TemporaryDir } from './tempdir'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 const KEEP_ALIVE_MAX = 1000
 
-const cacheControl = 'public, max-age=31536000, immutable'
+// private: responses are per-workspace, a shared cache must not hand them to other users
+const cacheControl = 'private, max-age=31536000, immutable'
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
 type AsyncRequestHandler = (ctx: MeasureContext, req: RequestWithAuth, res: Response) => Promise<void>
@@ -174,6 +175,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.get(
     '/metadata/:workspace/:name',
+    withWorkspaceToken,
     wrapRequest(ctx, 'getMetadata', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name
@@ -184,7 +186,10 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   )
 
   app.get(
-    '/image/:transform/:workspace/:name',
+    // Native clients send a Bearer token to the first path; <img> on the web has only a cookie,
+    // scoped to <preview>/<workspace>, so the web uses the second
+    ['/image/:transform/:workspace/:name', '/:workspace/image/:transform/:name'],
+    withWorkspaceToken,
     wrapRequest(ctx, 'getThumbnail', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name

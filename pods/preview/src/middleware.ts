@@ -66,6 +66,31 @@ export const withAuthorization = (req: RequestWithAuth, res: Response, next: Nex
   }
 }
 
+// Read-only blob routes: guest and readonly tokens pass, but only for the workspace from the URL.
+export const withWorkspaceToken = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
+  try {
+    const { workspace, name } = req.params
+    if (workspace === undefined || workspace === '' || name === undefined || name === '') {
+      throw new HttpError(400, 'Missing workspace or blob name')
+    }
+
+    const token = extractToken(req.headers)
+    if (token == null) {
+      throw new HttpError(401, 'Unauthorized')
+    }
+    const hasAccess =
+      (token.workspace as string) === workspace || token.account === systemAccountUuid || token.extra?.admin === 'true'
+    if (!hasAccess) {
+      throw new HttpError(401, 'Unauthorized')
+    }
+    req.token = token
+
+    next()
+  } catch (err: any) {
+    next(err)
+  }
+}
+
 export interface ErrorHandlerOptions {
   ctx: MeasureContext
 }

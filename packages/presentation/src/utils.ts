@@ -23,6 +23,7 @@ import core, {
   type AttachedDoc,
   type Class,
   type Client,
+  concatLink,
   type Collection,
   type Data,
   type Doc,
@@ -1098,6 +1099,13 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
 
     const normalized = path.startsWith('/') ? path : `/${path}`
     document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
+  }
+
+  // <img> to the preview service carries no Authorization header, only this cookie
+  const previewUrl = getMetadata(plugin.metadata.PreviewUrl) ?? ''
+  if (previewUrl !== '') {
+    const previewPath = new URL(concatLink(previewUrl, `/${workspaceUuid}`), window.location.origin).pathname
+    document.cookie = `${cookieName}=${cookieValue}; path=${previewPath}`
   }
 }
 
