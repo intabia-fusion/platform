@@ -79,6 +79,7 @@ import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
 import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
 import { HeldPush, PendingPushHolder } from './pendingPush'
+import { heldLetterId, type HeldLetterId } from './heldLetter'
 
 const transientHttpStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
 // Attempts of one tx batch on a transient transactor error before the source tx goes back to the queue.
@@ -95,6 +96,8 @@ const applyBackoff = DelayStrategyFactory.exponentialBackoff({
 // and email of that batch are lost. The producer is therefore retried for about a minute before
 // giving up, longer than a broker leader change or a short outage takes.
 const publishAttempts = 8
+// How long a letter that went out is remembered, to drop the time machine firing it again.
+const releasedMemoryMs = 10 * 60 * 1000
 const publishBackoff = DelayStrategyFactory.exponentialBackoff({
   initialDelayMs: 1000,
   maxDelayMs: 10000,
@@ -168,6 +171,8 @@ class Workspace {
   public readonly cache: WorkspaceCache
 
   private readonly inProgress = new Set<Promise<void>>()
+  // When each letter went out: the time machine delivers at least once, a repeat is dropped.
+  private readonly released = new Map<HeldLetterId, Timestamp>()
   private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System, true)
@@ -222,9 +227,21 @@ class Workspace {
   async releaseHeld (held: HeldPush): Promise<void> {
     await this.track(
       (async () => {
+        const key = heldLetterId(held)
+        const now = Date.now()
+        // Oldest first (a Map keeps insertion order), so the sweep stops at the first fresh one.
+        for (const [id, at] of this.released) {
+          if (now - at <= releasedMemoryMs) break
+          this.released.delete(id)
+        }
+        if (this.released.has(key)) {
+          this.ctx.warn('held letter fired again, dropped', { notificationId: held.notificationId })
+          return
+        }
         const [read] = await areHeldPushesRead(this.ctx, this.pipeline, [held])
         if (read) return
         await this.publish([held.message])
+        this.released.set(key, now)
       })()
     )
   }

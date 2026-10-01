@@ -37,7 +37,9 @@ export class TimeMachineDB {
     const client = postgres(dbUrl, {
       connection: {
         application_name: 'time-machine'
-      }
+      },
+      // Like the rest of the platform: behind a pooler a prepared statement vanishes between queries.
+      prepare: false
     })
 
     const sql = `
@@ -98,16 +100,16 @@ export class TimeMachineDB {
     }))
   }
 
+  // One statement, not a transaction: the client retries a lone statement on its own, and a
+  // delete that fails leaves events that are already sent to be sent again.
   async deleteEvents (events: DelayedEventRecord[]): Promise<void> {
     if (events.length === 0) return
-    await this.client.begin(async (sql: postgres.TransactionSql) => {
-      for (const event of events) {
-        await sql`
-          DELETE FROM time_machine.delayed_events 
-          WHERE id = ${event.id} AND workspace = ${event.workspace}
-        `
-      }
-    })
+    const ids = this.client.array(events.map((it) => it.id))
+    const workspaces = this.client.array(events.map((it) => it.workspace))
+    await this.client`
+      DELETE FROM time_machine.delayed_events
+      WHERE (id, workspace) IN (SELECT * FROM unnest(${ids}::text[], ${workspaces}::uuid[]))
+    `
   }
 
   async close (): Promise<void> {

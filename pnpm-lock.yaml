@@ -43814,6 +43814,9 @@ importers:
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../foundations/server/packages/kafka
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -67023,6 +67026,40 @@ snapshots:
       svgo: 2.8.0
       uglify-js: 3.19.3
 
+  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.5.0
+      terser: 5.51.2
+      webpack: 5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      '@swc/core': 1.16.2(@swc/helpers@0.5.19)
+      clean-css: 5.3.3
+      csso: 4.2.0
+      esbuild: 0.28.2
+      html-minifier-terser: 6.1.0
+      sharp: 0.34.5
+      svgo: 2.8.0
+      uglify-js: 3.19.3
+
+  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.5.0
+      terser: 5.51.2
+      webpack: 5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      '@swc/core': 1.16.2(@swc/helpers@0.5.19)
+      clean-css: 5.3.3
+      csso: 4.2.0
+      esbuild: 0.28.2
+      html-minifier-terser: 6.1.0
+      sharp: 0.35.3(@types/node@24.13.3)
+      svgo: 2.8.0
+      uglify-js: 3.19.3
+
   minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2)(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(postcss@8.5.6)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -70521,6 +70558,84 @@ snapshots:
       graceful-fs: 4.2.11
       mime-db: 1.54.0
       minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(postcss@8.5.6)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
+      schema-utils: 4.5.0
+      tapable: 2.3.0
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    optionalDependencies:
+      webpack-cli: 7.2.3(js-yaml@5.4.1)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(webpack-dev-server@6.0.0)(webpack@5.111.1)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@napi-rs/image'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - imagemin
+      - lightningcss
+      - postcss
+      - sharp
+      - svgo
+      - uglify-js
+
+  webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      browserslist: 4.28.9
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.25.1
+      es-module-lexer: 2.3.2
+      events: 3.3.0
+      graceful-fs: 4.2.11
+      mime-db: 1.54.0
+      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
+      schema-utils: 4.5.0
+      tapable: 2.3.0
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    optionalDependencies:
+      webpack-cli: 7.2.3(js-yaml@5.4.1)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(webpack-dev-server@6.0.0)(webpack@5.111.1)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@napi-rs/image'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - imagemin
+      - lightningcss
+      - postcss
+      - sharp
+      - svgo
+      - uglify-js
+
+  webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      browserslist: 4.28.9
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.25.1
+      es-module-lexer: 2.3.2
+      events: 3.3.0
+      graceful-fs: 4.2.11
+      mime-db: 1.54.0
+      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
       schema-utils: 4.5.0
       tapable: 2.3.0
       watchpack: 2.5.2

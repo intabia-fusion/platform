@@ -15,6 +15,7 @@
 
 import { MeasureMetricsContext, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
+import { DelayStrategyFactory, withRetry } from '@hcengineering/retry'
 import { QueueTopic, type PlatformQueue } from '@hcengineering/server-core'
 import { TimeMachineMessage } from '@hcengineering/server-process'
 import { TimeMachineDB, type DelayedEventRecord } from './db'
@@ -57,10 +58,37 @@ export async function pollOnce (ctx: MeasureContext, db: TimeMachineDB, queue: P
       }
     }
     if (sent.length > 0) {
-      await db.deleteEvents(sent)
+      await deleteSent(ctx, db, sent)
     }
   } catch (err) {
     ctx.error('Error in Time Machine polling loop:', { err })
+  }
+}
+
+const deleteAttempts = 3
+const deleteBackoff = DelayStrategyFactory.exponentialBackoff({
+  initialDelayMs: 200,
+  maxDelayMs: 2000,
+  backoffFactor: 2,
+  jitter: 0.2
+})
+
+// Events that stay after they are sent go out again on the next poll, so the delete is retried
+// here first; the last failure names what the receivers will get twice.
+async function deleteSent (ctx: MeasureContext, db: TimeMachineDB, sent: DelayedEventRecord[]): Promise<void> {
+  try {
+    await withRetry(
+      async () => {
+        await db.deleteEvents(sent)
+      },
+      { maxRetries: deleteAttempts, isRetryable: () => true, delayStrategy: deleteBackoff, logger: ctx },
+      'Time Machine: delete sent events'
+    )
+  } catch (err) {
+    ctx.error('Time Machine: sent events are not deleted, they will be sent again', {
+      err,
+      ids: sent.map((it) => it.id)
+    })
   }
 }
 
