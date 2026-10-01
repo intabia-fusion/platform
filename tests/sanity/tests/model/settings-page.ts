@@ -145,6 +145,7 @@ export class SettingsPage extends CommonPage {
     await this.addStateButton().click()
     await this.statusNameInput().fill(name)
     await this.asideFooterButton('Create').click()
+    await expect(this.statusNameInput()).toBeHidden()
     await expect(this.stateButton(name)).toBeVisible()
   }
 

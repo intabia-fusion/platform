@@ -205,6 +205,7 @@
 
     canDelete = sameCategory.length > 1
     selectableStates = sameCategory.filter((it) => it._id !== status?._id)
+    clearSettingsStore()
   }
 
   let selected: number = icon === iconWithEmoji ? 1 : 0
