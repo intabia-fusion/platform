@@ -608,7 +608,8 @@ export async function createCard (
   return _id
 }
 
-export function isBaseTypeWithSubtypes (hierarchy: Hierarchy, type: Ref<MasterTag>): boolean {
+export function isBaseTypeWithSubtypes (hierarchy: Hierarchy, type: Ref<MasterTag> | undefined): boolean {
+  if (type == null || !hierarchy.hasClass(type)) return false
   const clazz = hierarchy.getClass(type) as MasterTag | undefined
   if (clazz?.baseType !== true) return false
 
