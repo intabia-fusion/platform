@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,9 +16,9 @@
 -->
 <script lang="ts">
   import type { Channel, Person } from '@hcengineering/contact'
-  import { combineName, getCurrentEmployee, getFirstName, getLastName } from '@hcengineering/contact'
+  import { combineName, getFirstName, getLastName } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
-  import { AccountRole, getCurrentAccount, hasAccountRole, type AccountUuid } from '@hcengineering/core'
+  import { getCurrentAccount, type AccountUuid } from '@hcengineering/core'
   import { AttributeEditor, createQuery, getClient, hasResource } from '@hcengineering/presentation'
   import type { PersonRating } from '@hcengineering/rating'
   import ratingPlugin from '@hcengineering/rating'
@@ -30,24 +31,16 @@
   import ChannelsDropdown from './ChannelsDropdown.svelte'
   import ChannelsEditor from './ChannelsEditor.svelte'
   import EditableAvatar from './EditableAvatar.svelte'
+  import { canEditPersonContactDetails } from '../utils'
 
   export let object: Person
   export let readonly: boolean = false
   export let channels: Channel[] | undefined = undefined
 
   const client = getClient()
-  const h = client.getHierarchy()
 
   const account = getCurrentAccount()
-  const me = getCurrentEmployee()
-  $: owner = me === object._id
-
-  function isEditable (owner: boolean, object: Person): boolean {
-    if (owner) return true
-    if (!h.hasMixin(object, contact.mixin.Employee)) return true
-    return hasAccountRole(account, AccountRole.Maintainer)
-  }
-  $: editable = !readonly && isEditable(owner, object)
+  $: editable = !readonly && canEditPersonContactDetails(object)
 
   let avatarEditor: EditableAvatar
 

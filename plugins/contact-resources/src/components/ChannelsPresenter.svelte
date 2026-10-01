@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,11 +15,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Channel } from '@hcengineering/contact'
+  import type { Channel, Person } from '@hcengineering/contact'
+  import type { Ref } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { showPopup } from '@hcengineering/ui'
   import type { ViewAction } from '@hcengineering/view'
+  import contact from '../plugin'
+  import { canEditPersonContactDetails } from '../utils'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
 
   export let value: Channel[] | Channel | null
@@ -28,6 +33,27 @@
   export let size: ButtonSize = 'small'
   export let length: 'tiny' | 'short' | 'full' = 'short'
   export let shape: 'circle' | undefined = 'circle'
+
+  let attachedPerson: Person | undefined = undefined
+  const personQuery = createQuery()
+  const hierarchy = getClient().getHierarchy()
+
+  $: channel = Array.isArray(value) ? value[0] : value
+  // Employee and other Person mixins count as Person, as in the server check
+  $: isPersonParent =
+    channel !== undefined && channel !== null && hierarchy.isDerived(channel.attachedToClass, contact.class.Person)
+  $: if (isPersonParent && channel != null) {
+    personQuery.query(contact.class.Person, { _id: channel.attachedTo as Ref<Person> }, (res) => {
+      attachedPerson = res[0]
+    })
+  } else {
+    personQuery.unsubscribe()
+    attachedPerson = undefined
+  }
+
+  $: effectiveEditable = isPersonParent
+    ? editable === true && attachedPerson !== undefined && canEditPersonContactDetails(attachedPerson)
+    : editable
 
   async function _open (ev: CustomEvent): Promise<void> {
     if (ev.detail.presenter !== undefined && Array.isArray(value)) {
@@ -44,5 +70,5 @@
 </script>
 
 {#if value}
-  <ChannelsDropdown bind:value {length} {kind} {size} {shape} {editable} on:open={_open} />
+  <ChannelsDropdown bind:value {length} {kind} {size} {shape} editable={effectiveEditable} on:open={_open} />
 {/if}
