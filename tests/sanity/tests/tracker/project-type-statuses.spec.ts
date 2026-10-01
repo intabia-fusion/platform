@@ -167,7 +167,9 @@ test.describe('Statuses of a project type in tracker', () => {
       await tabSettings.changeState(lateStatus, renamedStatus)
       await expect(listHeader(renamedStatus)).toBeVisible()
       await expect(listHeader(lateStatus)).toHaveCount(0)
-      await expect.poll(async () => (await headerNames()).findIndex((it) => it.startsWith(renamedStatus))).toBe(position)
+      await expect
+        .poll(async () => (await headerNames()).findIndex((it) => it.startsWith(renamedStatus)))
+        .toBe(position)
 
       await tabSettings.deleteState(renamedStatus)
       await expect(listHeader(renamedStatus)).toHaveCount(0)
