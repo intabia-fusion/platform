@@ -35,7 +35,7 @@
 | `MeetingSchedule extends Schedule` | Миксин на booking-page календаря | `plugins/love/src/types.ts` |
 | `DevicesPreference extends Preference` | Настройки устройств (микрофон, noise cancellation, blur, камера) | `plugins/love/src/types.ts` |
 | `MeetingStatus` (enum) | `Active`/`Finished`/`Pending`/`Scheduled` | `plugins/love/src/types.ts` |
-| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary`, `traceId`, счётчики | `plugins/love/src/types.ts` |
+| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary`, `traceId`, счётчики, **`startedAt`** (фактическое начало, заполняется при переходе `Pending/Scheduled → Active`) | `plugins/love/src/types.ts` |
 | `PendingRecording extends AttachedDoc` | Запись через LiveKit Egress, `egressId`/`format`/`status` | `plugins/love/src/types.ts` |
 | `UserMeetingInvite extends Doc` | Invite/knock, домен `DOMAIN_TRANSIENT` + `TransientTTL(30s)` | `plugins/love/src/types.ts` |
 
@@ -87,6 +87,10 @@
 ### Recorder и Media (независимые от митинга)
 - **Экранный рекордер воркспейса.** Записывает экран через `MediaRecorder`, чанкует и заливает в Drive; не связан с LiveKit Egress встречи. - `class Recorder`, `plugins/recorder-resources/src/recorder.ts`; `models/recorder/src/plugin.ts` (merge `WorkbenchExtension`).
 - **Выбор микрофона/камеры.** `toggleCamState`/`toggleMicState`, `WorkbenchExtension` для попапа устройств. - `plugins/media-resources/src/utils.ts`.
+
+### Отображение начала встречи
+- **`startedAt` vs `meetingScheduledDate`.** `startedAt` — фактическое время старта (ставится при `activateMeeting`). У старых `Scheduled`-записей, созданных до введения поля, `startedAt` отсутствует.
+- **`ClassFilters.hideIfEmpty`.** Для полей, которые могут быть пустыми у части документов (включая `startedAt`), в определениях классов используется миксин/хелпер `ClassFilters.hideIfEmpty`, чтобы фильтр не показывал заведомо неприменимые варианты.
 
 ## Куда смотреть, если нужно...
 

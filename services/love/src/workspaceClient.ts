@@ -223,7 +223,13 @@ export class WorkspaceClient {
       return
     }
 
-    await this.client.update(meeting, { status: MeetingStatus.Active })
+    const upd: DocumentUpdate<MeetingMinutes> = { status: MeetingStatus.Active }
+
+    if (meeting.startedAt == null) {
+      upd.startedAt = Date.now()
+    }
+
+    await this.client.update(meeting, upd)
     this.ctx.info('Activated meeting', { meeting: meeting._id })
   }
 

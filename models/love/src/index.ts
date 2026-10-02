@@ -291,10 +291,21 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
   @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
   messages?: number
 
-  @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart, { editor: view.component.DateTimePresenter })
+  @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart, { editor: love.component.MeetingStartPresenter })
   @ReadOnly()
   @Index(IndexKind.IndexedDsc)
   declare createdOn: Timestamp
+
+  @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingScheduledDate, {
+    editor: love.component.MeetingScheduledDatePresenter
+  })
+  @ReadOnly()
+  meetingScheduledDate?: Timestamp
+
+  @Prop(TypeTimestamp(), getEmbeddedLabel('Started at'))
+  @ReadOnly()
+  @Hidden()
+  startedAt?: Timestamp
 
   @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingEnd, { editor: view.component.DateTimePresenter })
   @ReadOnly()
@@ -653,7 +664,8 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ClassFilters, {
     filters: ['status', 'owners', 'members', 'roomId', 'private', 'createdOn', 'meetingEnd'],
-    ignoreKeys: ['description', 'summary', 'transcription', 'messages', 'attachments', 'recordings']
+    ignoreKeys: ['description', 'summary', 'transcription', 'messages', 'attachments', 'recordings'],
+    hideIfEmpty: ['meetingScheduledDate']
   })
 
   builder.mixin(love.class.Room, core.class.Class, view.mixin.ClassFilters, {
@@ -693,7 +705,12 @@ export function createModel (builder: Builder): void {
         },
         { key: 'members', props: { noJoin: true } },
         { key: 'private', displayProps: { key: 'private', suffix: true } },
-        'createdOn',
+        {
+          key: '',
+          presenter: love.component.MeetingStartPresenter,
+          label: love.string.MeetingStart,
+          sortingKey: 'createdOn'
+        },
         'meetingEnd'
       ],
       configOptions: {
@@ -736,7 +753,12 @@ export function createModel (builder: Builder): void {
           presenter: love.component.MeetingMinutesTranscriptionPresenter,
           displayProps: { key: 'transcription', suffix: true }
         },
-        'createdOn',
+        {
+          key: '',
+          presenter: love.component.MeetingStartPresenter,
+          label: love.string.MeetingStart,
+          sortingKey: 'createdOn'
+        },
         'meetingEnd'
       ],
       configOptions: {
@@ -1069,7 +1091,7 @@ export function createModel (builder: Builder): void {
 
   createAttributePresenter(
     builder,
-    view.component.DateTimePresenter,
+    love.component.MeetingStartPresenter,
     love.class.MeetingMinutes,
     'createdOn',
     'attribute'

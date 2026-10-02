@@ -23,6 +23,7 @@
   import setting, { settingId } from '@hcengineering/setting'
   import { Button, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import { getFiltredKeys, isCollectionAttr, restrictionStore } from '../utils'
+  import view from '@hcengineering/view'
 
   export let object: Doc | Record<string, any>
   export let _class: Ref<Class<Doc>>
@@ -42,6 +43,7 @@
   const hierarchy = client.getHierarchy()
 
   let keys: KeyedAttribute[] = []
+  let visibleKeys: KeyedAttribute[] = []
 
   function updateKeys (_class: Ref<Class<Doc>>, ignoreKeys: string[], to: Ref<Class<Doc>> | undefined): void {
     const filtredKeys = getFiltredKeys(hierarchy, _class, ignoreKeys, to)
@@ -65,6 +67,10 @@
   }
 
   $: updateKeys(_class, ignoreKeys, to)
+
+  $: hideIfEmptyKeys =
+    (hierarchy.classHierarchyMixin(_class, view.mixin.ClassFilters)?.hideIfEmpty as string[] | undefined) ?? []
+  $: visibleKeys = keys.filter((k) => !hideIfEmptyKeys.includes(k.key) || getAttribute(client, object, k) != null)
 
   const query = createQuery()
   $: query.query(core.class.Attribute, { attributeOf: _class }, () => {
@@ -148,9 +154,9 @@
     </div>
   </div>
 {/if}
-{#if keys.length}
+{#if visibleKeys.length}
   <div class="collapsed-container" class:collapsed>
-    <AttributesBar {_class} {object} {keys} {readonly} {draft} on:update />
+    <AttributesBar {_class} {object} keys={visibleKeys} {readonly} {draft} on:update />
   </div>
 {/if}
 

@@ -101,6 +101,7 @@
     "MeetingStart": "Meeting start",
     "MeetingEnd": "Meeting end",
     "EndMeeting": "End meeting",
+    "MeetingScheduledDate": "Scheduled meeting date",
     "Status": "Status",
     "Active": "Active",
     "Finished": "Finished",

@@ -36,6 +36,8 @@ export default mergeIds(loveId, love, {
     FloorView: '' as AnyComponent,
     MeetingMinutesDocEditor: '' as AnyComponent,
     MeetingMinutesStatusPresenter: '' as AnyComponent,
+    MeetingStartPresenter: '' as AnyComponent,
+    MeetingScheduledDatePresenter: '' as AnyComponent,
     MeetingMinutesTranscriptionStatePresenter: '' as AnyComponent,
     MeetingMinutesRecordingStatePresenter: '' as AnyComponent,
     MeetingSummaryEditor: '' as AnyComponent,

@@ -198,6 +198,7 @@ export { default as NavLink } from './components/navigator/NavLink.svelte'
 export { default as StatusPresenter } from './components/status/StatusPresenter.svelte'
 export { default as StatusRefPresenter } from './components/status/StatusRefPresenter.svelte'
 export { default as AudioPlayer } from './components/viewer/AudioPlayer.svelte'
+export { default as DatePresenter } from './components/DatePresenter.svelte'
 export { canArchiveSpace, canDeleteObject, canDeleteSpace, canEditSpace, canLeaveSpace } from './visibilityTester'
 
 export * from './filter'

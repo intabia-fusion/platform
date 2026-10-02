@@ -21,7 +21,13 @@ import core, {
   type MeasureContext,
   type Ref
 } from '@hcengineering/core'
-import love, { type MeetingMinutes, type ParticipantInfo, type PendingRecording, type Room } from '@hcengineering/love'
+import love, {
+  MeetingStatus,
+  type MeetingMinutes,
+  type ParticipantInfo,
+  type PendingRecording,
+  type Room
+} from '@hcengineering/love'
 import { createMockContext, createMockMeeting, createMockRoom, TEST_IDS } from './test-helpers'
 import { RecordingProcessor } from '../recordings'
 import { WorkspaceClient } from '../workspaceClient'
@@ -225,5 +231,68 @@ describe('WorkspaceClient.upsertParticipantFromLiveKit → room-place allocation
     expect(createDocCalls).toHaveLength(2)
     const [a, b] = createDocCalls.map((c) => ({ x: c.data.x, y: c.data.y }))
     expect(a).not.toEqual(b)
+  })
+})
+
+describe('WorkspaceClient.activateMeeting', () => {
+  function setupMocks (meeting: MeetingMinutes): {
+    findOneMock: jest.Mock
+    updateMock: jest.Mock
+    wc: WorkspaceClient
+  } {
+    const findOneMock = jest.fn().mockResolvedValue(meeting)
+    const updateMock = jest.fn().mockResolvedValue(undefined)
+    const client = {
+      findOne: findOneMock,
+      update: updateMock
+    }
+    const wc = makeWorkspaceClient(createMockContext(), client)
+    return { findOneMock, updateMock, wc }
+  }
+
+  it('sets startedAt when meeting has no startedAt', async () => {
+    const meetingId = 'meeting-1' as Ref<MeetingMinutes>
+    const meeting = {
+      _id: meetingId,
+      status: MeetingStatus.Scheduled
+    } as unknown as MeetingMinutes
+
+    const { findOneMock, updateMock, wc } = setupMocks(meeting)
+
+    await wc.activateMeeting(meetingId)
+
+    expect(findOneMock).toHaveBeenCalledWith(love.class.MeetingMinutes, { _id: meetingId })
+    expect(updateMock).toHaveBeenCalledWith(
+      meeting,
+      expect.objectContaining({
+        status: MeetingStatus.Active,
+        startedAt: expect.any(Number)
+      })
+    )
+  })
+
+  it('does not overwrite startedAt if it already exists', async () => {
+    const meetingId = 'meeting-2' as Ref<MeetingMinutes>
+    const existingStartedAt = 1600000000000
+    const meeting = {
+      _id: meetingId,
+      status: MeetingStatus.Scheduled,
+      startedAt: existingStartedAt
+    } as unknown as MeetingMinutes
+
+    const { findOneMock, updateMock, wc } = setupMocks(meeting)
+
+    await wc.activateMeeting(meetingId)
+
+    expect(findOneMock).toHaveBeenCalledWith(love.class.MeetingMinutes, { _id: meetingId })
+    expect(updateMock).toHaveBeenCalledWith(
+      meeting,
+      expect.objectContaining({
+        status: MeetingStatus.Active
+      })
+    )
+
+    const updatePayload = updateMock.mock.calls[0][1]
+    expect(updatePayload.startedAt).toBeUndefined()
   })
 })

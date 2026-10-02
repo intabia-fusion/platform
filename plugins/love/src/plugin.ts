@@ -80,6 +80,7 @@ const love = plugin(loveId, {
     Join: '' as IntlString,
     Reject: '' as IntlString,
     MeetingStart: '' as IntlString,
+    MeetingScheduledDate: '' as IntlString,
     MeetingEnd: '' as IntlString,
     Status: '' as IntlString,
     Active: '' as IntlString,
