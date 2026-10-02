@@ -21,11 +21,19 @@
   import core, { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { addTxListener, createQuery, getClient, removeTxListener } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
-  import { IconOptions, Label, Lazy, Loading, ModernDropdown, Scroller, type DropdownIntlItem } from '@hcengineering/ui'
+  import {
+    BlankView,
+    IconOptions,
+    Label,
+    Lazy,
+    Loading,
+    ModernDropdown,
+    Scroller,
+    type DropdownIntlItem
+  } from '@hcengineering/ui'
 
   import { openMessageFromSpecial } from '../../navigation'
   import chunter from '../../plugin'
-  import BlankView from '../BlankView.svelte'
   import Header from '../Header.svelte'
   import LoadingHistory from '../LoadingHistory.svelte'
 

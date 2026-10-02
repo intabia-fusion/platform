@@ -574,8 +574,9 @@ export default async (): Promise<Resources> => ({
       query: DocumentQuery<Doc<Space>> | undefined,
       onUpdate: () => void,
       queryId: Ref<Doc<Space>>,
-      attr: Attribute<Status>
-    ) => await getAllStates(query, onUpdate, queryId, attr, false),
+      attr: Attribute<Status>,
+      space?: Ref<Space>
+    ) => await getAllStates(query, onUpdate, queryId, attr, space, false),
     GetVisibleFilters: getVisibleFilters,
     IssueChatTitleProvider: getIssueChatTitle,
     IsProjectJoined: async (project: Project) => project.members.includes(getCurrentAccount().uuid),

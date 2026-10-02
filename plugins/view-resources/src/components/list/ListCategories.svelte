@@ -94,6 +94,7 @@
   export let listProvider: SelectionFocusProvider
   export let singleCategoryLimit: number | undefined = undefined
   export let readonly: boolean = false
+  export let empty: boolean = false
 
   $: groupByKey = viewOptions.groupBy[level] ?? noCategory
   let categories: CategoryType[] = []
@@ -105,10 +106,12 @@
   const maxInitialCategories = 20
   let showAllCategories = false
   let isLoadingCategories = false
+  let categoriesComputed = false
   let isLoadingMoreTop = false
 
   $: displayedCategories = level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
 
+  $: empty = level === 0 && categoriesComputed && categories.length === 0
   $: hasMoreCategories = level === 0 && categories.length > maxInitialCategories
 
   const client = getClient()
@@ -131,7 +134,7 @@
       // indicate loading while we compute categories (used by Show More UI)
       isLoadingCategories = true
       try {
-        categories = await getCategories(client, _class, space, docs, groupByKey)
+        let result = await getCategories(client, _class, space, docs, groupByKey)
         if (level === 0) {
           for (const viewOption of viewOptionsModel ?? []) {
             if (viewOption.actionTarget !== 'category') continue
@@ -140,13 +143,15 @@
               const f = await getResource(categoryFunc.action)
               const res = hierarchy.clone(await f(_class, query, space, groupByKey, update, queryId))
               if (res !== undefined) {
-                categories = concatCategories(res, categories)
-                return
+                result = concatCategories(res, result)
+                break
               }
             }
           }
         }
+        categories = result
       } finally {
+        categoriesComputed = true
         isLoadingCategories = false
         // Clear top-level Show More loading flag when update completes (success or error)
         isLoadingMoreTop = false

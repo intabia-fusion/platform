@@ -16,8 +16,8 @@
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { ActionContext } from '@hcengineering/presentation'
-  import type { AnyComponent } from '@hcengineering/ui'
-  import { Scroller, resizeObserver } from '@hcengineering/ui'
+  import type { AnyComponent, BlankViewProps } from '@hcengineering/ui'
+  import { BlankView, Scroller, resizeObserver } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { onMount } from 'svelte'
   import type { SelectDirection } from '../..'
@@ -42,6 +42,9 @@
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
   export let props: Record<string, any> = {}
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
+  export let emptyState: BlankViewProps | undefined = undefined
+
+  let empty = false
 
   let list: List
   let scroll: Scroller
@@ -70,8 +73,13 @@
   use:resizeObserver={(evt) => {
     listWidth = evt.clientWidth
   }}
-  class="w-full h-full py-4 clear-mins"
+  class="w-full h-full py-4 clear-mins relative"
 >
+  {#if emptyState !== undefined && empty}
+    <div class="list-empty">
+      <BlankView {...emptyState} />
+    </div>
+  {/if}
   <Scroller
     bind:this={scroll}
     bind:divScroll
@@ -82,6 +90,7 @@
   >
     <List
       bind:this={list}
+      bind:empty
       {_class}
       {space}
       {query}
@@ -117,3 +126,13 @@
     />
   </Scroller>
 </div>
+
+<style lang="scss">
+  .list-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+</style>

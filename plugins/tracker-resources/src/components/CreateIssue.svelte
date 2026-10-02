@@ -955,6 +955,7 @@
         baseClass={tracker.class.Issue}
         size={'small'}
         showAlways={true}
+        on:navigate={() => dispatch('close')}
         width="10rem"
       />
       {#if relatedTo}

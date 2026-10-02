@@ -205,6 +205,7 @@
 
     canDelete = sameCategory.length > 1
     selectableStates = sameCategory.filter((it) => it._id !== status?._id)
+    clearSettingsStore()
   }
 
   let selected: number = icon === iconWithEmoji ? 1 : 0
@@ -280,23 +281,7 @@
           await renameStatuses(_type, _taskType, estatus._id, newStatus._id)
 
           closePopup()
-
-          $settingsStore = {
-            id: newStatus._id,
-            component: task.component.CreateStatePopup,
-            props: {
-              status: newStatus,
-              taskType: _taskType,
-              _class,
-              category,
-              type: _type,
-              ofAttribute,
-              icon,
-              color,
-              icons,
-              readonly
-            }
-          }
+          clearSettingsStore()
         }
       },
       undefined

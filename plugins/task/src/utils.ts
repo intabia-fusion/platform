@@ -20,6 +20,7 @@ import core, {
   ClassifierKind,
   Data,
   Doc,
+  generateId,
   Hierarchy,
   IdMap,
   notEmpty,
@@ -30,9 +31,9 @@ import core, {
   type StatusCategory,
   TxOperations
 } from '@hcengineering/core'
-import { getEmbeddedLabel, PlatformError, unknownStatus } from '@hcengineering/platform'
+import { getEmbeddedLabel, getResource, PlatformError, unknownStatus } from '@hcengineering/platform'
 import { makeRank } from '@hcengineering/rank'
-import task, { Project, ProjectStatus, ProjectType, Task, TaskType } from '.'
+import task, { Project, ProjectStatus, ProjectType, Task, TaskType, TaskTypeDescriptor } from '.'
 
 export { genRanks, makeRank } from '@hcengineering/rank'
 export * from './transfer'
@@ -362,6 +363,93 @@ export async function createProjectType (
   })
 
   return tmpl
+}
+
+/**
+ * Adds a new task type of the descriptor with its default statuses, as the "+" in project type settings does.
+ * @public
+ */
+export async function createDefaultTaskType (
+  client: TxOperations,
+  projectType: ProjectType,
+  descriptorId: Ref<TaskTypeDescriptor>,
+  name: string
+): Promise<Ref<TaskType> | undefined> {
+  const descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: descriptorId })[0]
+  if (descriptor === undefined) return undefined
+
+  const h = client.getHierarchy()
+  const ofClass = descriptor.baseClass
+  const statusAttr = findStatusAttr(h, ofClass)
+  const statusClass = (statusAttr.type as RefTo<Status>).to
+
+  const statusCategories =
+    descriptor.statusCategoriesFunc !== undefined
+      ? (await getResource(descriptor.statusCategoriesFunc))(projectType)
+      : [task.statusCategory.UnStarted, task.statusCategory.Active, task.statusCategory.Won, task.statusCategory.Lost]
+  let statuses =
+    descriptor.defaultStatusesFunc !== undefined ? (await getResource(descriptor.defaultStatusesFunc))(projectType) : []
+  if (statuses.length === 0) {
+    const categories = await client.findAll(core.class.StatusCategory, { _id: { $in: statusCategories } })
+    statuses = []
+    for (const category of statusCategories) {
+      const std = categories.find((it) => it._id === category)
+      if (std === undefined) continue
+      statuses.push(
+        await createState(client, statusClass, { name: std.defaultStatusName, ofAttribute: statusAttr._id, category })
+      )
+    }
+  }
+
+  const taskTypeId = generateId<TaskType>()
+  const ofClassClass = h.getClass(ofClass)
+  // Class for custom fields of the new task type
+  const targetClass = await client.createDoc(core.class.Class, core.space.Model, {
+    extends: ofClass,
+    kind: ClassifierKind.CLASS,
+    label: getEmbeddedLabel(name),
+    icon: ofClassClass.icon,
+    color: ofClassClass.color,
+    shortLabel: ofClassClass.shortLabel,
+    sortingKey: ofClassClass.sortingKey,
+    filteringKey: ofClassClass.filteringKey,
+    titleKey: ofClassClass.titleKey
+  })
+  await client.createMixin(targetClass, core.class.Class, core.space.Model, task.mixin.TaskTypeClass, {
+    taskType: taskTypeId,
+    projectType: projectType._id
+  })
+
+  await client.createDoc(
+    task.class.TaskType,
+    core.space.Model,
+    {
+      name,
+      descriptor: descriptorId,
+      parent: projectType._id,
+      ofClass,
+      targetClass,
+      statuses,
+      statusClass,
+      statusCategories,
+      icon: descriptor.icon,
+      isRootTaskType: true,
+      allowAnyParent: true,
+      allowedAsChildOf: []
+    },
+    taskTypeId
+  )
+
+  await client.update(projectType, {
+    tasks: [...projectType.tasks, taskTypeId],
+    statuses: [
+      ...projectType.statuses,
+      ...statuses
+        .filter((s) => !projectType.statuses.some((it) => it._id === s))
+        .map((s) => ({ _id: s, taskType: taskTypeId }))
+    ]
+  })
+  return taskTypeId
 }
 
 /**

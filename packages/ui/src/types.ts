@@ -17,6 +17,12 @@ import type { AccountRole, Blob, Permission, Ref, Timestamp, TypedSpace } from '
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { type ComponentType } from 'svelte'
 
+export interface BlankViewProps {
+  icon: Asset
+  header: IntlString
+  label?: IntlString
+}
+
 /**
  * Describe a browser URI location parsed to path, query and fragment.
  */

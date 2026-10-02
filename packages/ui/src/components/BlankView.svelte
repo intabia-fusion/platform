@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, Label } from '@hcengineering/ui'
   import type { Asset, IntlString } from '@hcengineering/platform'
+  import Icon from './Icon.svelte'
+  import Label from './Label.svelte'
 
   export let icon: Asset
   export let header: IntlString
@@ -30,6 +31,11 @@
     <span class="an-element__label">
       <Label {label} />
     </span>
+  {/if}
+  {#if $$slots.default}
+    <div class="actions">
+      <slot />
+    </div>
   {/if}
 </div>
 
@@ -48,5 +54,11 @@
   .header {
     font-weight: 600;
     margin: 1rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
   }
 </style>

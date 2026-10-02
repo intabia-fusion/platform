@@ -81,7 +81,6 @@ test.describe('Tracker labels tests', () => {
       await settingsPage.openSettings()
       await settingsPage.createSpaceType(projectTypeName, 'Tracker')
       await settingsPage.selectSpaceType(projectTypeName, 'Tracker')
-      await settingsPage.addTaskType('Issue')
     })
 
     await test.step('Create a project of that type', async () => {

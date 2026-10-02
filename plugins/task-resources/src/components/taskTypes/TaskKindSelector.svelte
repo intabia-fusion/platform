@@ -14,17 +14,18 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { toIdMap } from '@hcengineering/core'
+  import { isOwnerOrMaintainer, toIdMap } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { DropdownLabelsIntl, Label, type DropdownIntlItem, Button, showPopup } from '@hcengineering/ui'
+  import { DropdownLabelsIntl, type DropdownIntlItem, Button, showPopup } from '@hcengineering/ui'
   import plugin from '../../plugin'
   import { createEventDispatcher } from 'svelte'
   import { taskTypeStore } from '../..'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import ProjectTypeSettingsLink from '../projectTypes/ProjectTypeSettingsLink.svelte'
 
   export let value: Ref<TaskType> | undefined
   export let projectType: Ref<ProjectType> | undefined
@@ -71,6 +72,7 @@
 
   $: parentTypeName = parentType !== undefined ? ($taskTypeStore.get(parentType)?.name ?? '') : ''
   $: noChildTypes = parentType !== undefined && items.length === 0
+  $: noTypes = parentType === undefined && items.length === 0 && $taskTypeStore.size > 0
 
   const dispatch = createEventDispatcher()
 
@@ -81,8 +83,9 @@
 
 {#if projectType !== undefined && noChildTypes}
   <Button
-    kind={'secondary'}
+    {kind}
     {size}
+    label={plugin.string.NoSubtaskTypesShort}
     on:click={() => {
       showPopup(MessageBox, {
         label: plugin.string.NoSubtaskTypesShort,
@@ -90,9 +93,31 @@
         params: { type: parentTypeName }
       })
     }}
-  >
-    <Label slot="content" label={plugin.string.NoSubtaskTypesShort} />
-  </Button>
+  />
+{:else if projectType !== undefined && noTypes}
+  <Button
+    {kind}
+    {size}
+    label={plugin.string.NoTaskTypesShort}
+    on:click={() => {
+      const canConfigure = isOwnerOrMaintainer()
+      const box = showPopup(MessageBox, {
+        label: plugin.string.NoTaskTypesShort,
+        message: canConfigure ? plugin.string.NoTaskTypesHint : plugin.string.NoTaskTypesAskOwner,
+        component: canConfigure ? ProjectTypeSettingsLink : undefined,
+        componentProps: {
+          projectType,
+          flush: true,
+          onOpen: () => {
+            box.close()
+            // The dialog with this selector would cover the settings
+            dispatch('navigate')
+          }
+        },
+        canSubmit: false
+      })
+    }}
+  />
 {:else if projectType !== undefined && (items.length > 1 || showAlways)}
   <DropdownLabelsIntl
     {focusIndex}

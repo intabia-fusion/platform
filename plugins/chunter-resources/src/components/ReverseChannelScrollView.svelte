@@ -27,7 +27,7 @@
   import type { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
-  import { ModernButton, Scroller, Loading, isAppFocusedStore } from '@hcengineering/ui'
+  import { BlankView, ModernButton, Scroller, Loading, isAppFocusedStore } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
   import type { ChatMessage } from '@hcengineering/chunter'
 
@@ -40,7 +40,6 @@
     readMessages,
     readViewportMessages
   } from '../scroll'
-  import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
   import HistoryLoading from './LoadingHistory.svelte'
