@@ -132,6 +132,30 @@ export class LoveClient {
     }
   }
 
+  async kickParticipant (meetingId: Ref<MeetingMinutes>, targetAccount: string): Promise<void> {
+    try {
+      const endpoint = this.getLoveEndpoint()
+      const token = getPlatformToken()
+
+      const res = await fetch(concatLink(endpoint, '/kickParticipant'), {
+        method: 'POST',
+        headers: await this.buildHeaders(this.getTraceId(meetingId), token),
+        body: JSON.stringify({
+          meetingId,
+          targetAccount
+        }),
+        signal: AbortSignal.timeout(LOVE_HOUSEKEEPING_TIMEOUT_MS)
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        console.warn(`[LoveClient] Failed to kick participant: ${res.status} ${text}`)
+      }
+    } catch (err: any) {
+      console.warn('[LoveClient] Error calling kickParticipant', err)
+    }
+  }
+
   async requestFinishMeeting (meetingId: Ref<MeetingMinutes>): Promise<void> {
     try {
       await fetch(concatLink(this.getLoveEndpoint(), '/finishMeeting'), {
