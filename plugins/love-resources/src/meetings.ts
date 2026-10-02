@@ -163,7 +163,7 @@ function leaveFromMeetingIfRemoved (mm: MeetingMinutes | undefined): void {
 
   const me = getCurrentAccount().uuid
   const members = mm.members ?? []
-  const wasRemoved = (lastMembers === undefined || lastMembers.includes(me)) && !members.includes(me)
+  const wasRemoved = lastMembers?.includes(me) === true && !members.includes(me)
 
   lastMembers = members
 
