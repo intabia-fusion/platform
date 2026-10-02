@@ -125,7 +125,7 @@ async function resolveAuthorName (
         { limit: 1, skipSpace: true, skipClass: true }
       )
     )[0]
-    if (person !== null) {
+    if (person != null) {
       name = formatName(person.name).trim()
     }
   }
