@@ -786,6 +786,22 @@ export class IssuesPage extends CommonTrackerPage {
     await expect(this.canceledHeaderKanban()).toBeVisible()
   }
 
+  async verifyCategoryHeadersHidden (): Promise<void> {
+    await expect(this.inProgressHeader()).toHaveCount(0)
+    await expect(this.backlogHeader()).toHaveCount(0)
+    await expect(this.todoHeader()).toHaveCount(0)
+    await expect(this.doneHeader()).toHaveCount(0)
+    await expect(this.canceledHeader()).toHaveCount(0)
+  }
+
+  async verifyCategoryHeadersHiddenKanban (): Promise<void> {
+    await expect(this.inProgressHeaderKanban()).toHaveCount(0)
+    await expect(this.backlogHeaderKanban()).toHaveCount(0)
+    await expect(this.todoHeaderKanban()).toHaveCount(0)
+    await expect(this.doneHeaderKanban()).toHaveCount(0)
+    await expect(this.canceledHeaderKanban()).toHaveCount(0)
+  }
+
   async openAllCategories (): Promise<void> {
     for await (const category of iterateLocator(this.buttonCollapsedCategories())) {
       await category.click()
