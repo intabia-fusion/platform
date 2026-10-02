@@ -2,6 +2,10 @@
 
 Changelog.
 
+## [0.8.52] - 2026-10-02
+
+* 🐛 BUG FIXES: · FUSIO-1454, FUSIO-1452, FUSIO-1453: Fix project status groups and empty tracker views ([#507](https://github.com/hcengineering/platform/issues/507)) · FUSIO-1449: Fix the use of non-existent styles ([#508](https://github.com/hcengineering/platform/issues/508)) · FUSIO-1455: Fix thread reading ([#506](https://github.com/hcengineering/platform/issues/506))
+
 ## [0.8.51] - 2026-10-02
 
 * 🚀 FEATURES: · FUSIO-1369 - Уведомления о недоступности камеры ([#458](https://github.com/hcengineering/platform/issues/458)) · FUSIO-1401 - Реорганизация пунктов меню

@@ -1,6 +1,6 @@
 ---
 name: release-changelog
-description: Обновляет changelog.md новыми версиями из тегов origin и готовит русскую сводку по релизам с комментариями что сделано. Использовать когда просят "обнови changelog", "сводка по релизу", "release notes", "что вошло в версию vX.Y.Z".
+description: Обновляет changelog.md новыми версиями из тегов origin и готовит русскую сводку по релизам с комментариями что сделано, создаёт документ Rel-vX.Y.Z в Fusion (Releases) и проставляет задачам fix-version и статус Review completed. Использовать когда просят "обнови changelog", "сводка по релизу", "release notes", "что вошло в версию vX.Y.Z".
 ---
 
 # Release changelog + сводка
@@ -86,6 +86,42 @@ PY
 - НИКОГДА не вкладывать `code` внутрь **bold**: ProseMirror-редакторы (smartPaste)
   падают на такой вставке - `RangeError: Invalid collection of marks for node text: bold,code`.
   Заголовок пункта - только жирный текст, backticks выносить в описание после тире.
+
+## 5. Документ в Fusion (Releases)
+
+Сразу после сводки, без отдельной просьбы: документ на версию в teamspace `Releases`
+воркспейса `platform` (space id `6a7bf9848bca1535a82d43f4`), заголовок `Rel-vX.Y.Z`.
+Версия только для staging - заголовок `Rel-vX.Y.Z - staging only`.
+
+Номер PR: в заголовке коммита `(#N)`, а если его нет - в merge-коммите
+`git log --merges --pretty='%h %s' <prev-tag>..<tag>` (`Merge pull request #N from .../fusio-1449`).
+
+Id задач для упоминаний - из папки синхронизации (`fusion sync`, затем
+`issues/FUSIO/FUSIO-N.mdx`, поля `id` и `title`) или `read_issue`.
+
+Формат пункта (как в Rel-v0.8.51), по одному на PR:
+
+```
+* <Mention id="<issue _id>" label="FUSIO-N <title задачи>" class="tracker:class:IssueTaskType"/> Короткий заголовок ([#N](https://github.com/intabia-fusion/platform/pull/N)) - что сделано.
+```
+
+- Несколько задач в одном PR - несколько `<Mention/>` подряд; PR без задачи - без упоминания.
+- Ссылка на PR ведёт в `github.com/intabia-fusion/platform/pull/N`, а не в
+  `hcengineering/platform/issues` из `changelog.md`.
+- Кавычки внутри `label` экранировать как `&quot;`.
+- Текст - тот же, что в русской сводке, но без markdown-выделения: имена файлов и символов идут обычным текстом.
+- Создать через `create_doc` (`space`, `title`, `content`), затем проверить в `.mdx`
+  после `fusion sync`, что `<Mention id=...>` и `[#N](...)` на месте. `read_doc`
+  показывает упоминания как `@FUSIO-N`, а ссылки не показывает.
+- Отдать пользователю URL документа.
+
+## 6. Задачи релиза: fix-version и статус
+
+Каждой задаче FUSIO из версии:
+
+- custom-поле `fix-version` (атрибут `custom6966021cbd3b282aaaf359f4` у
+  `tracker:class:IssueTaskType`, строка) = версия без `v`, например `0.8.52`;
+- статус `Review completed`, если он другой (`update_issue_status`).
 
 ## Границы
 
