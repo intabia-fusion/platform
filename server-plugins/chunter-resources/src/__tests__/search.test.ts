@@ -57,7 +57,10 @@ const hierarchy = {
 } as unknown as Hierarchy
 
 /** Counts the lookups so a lost memo shows up as a number, not as a slowdown nobody sees. */
-function createStorage (): { storage: WithFind, calls: () => number } {
+function createStorage (persons = [{ _id: PERSON_ALICE, name: 'Smith,Alice' }]): {
+  storage: WithFind
+  calls: () => number
+} {
   let calls = 0
   const storage = {
     findAll: async (_ctx: MeasureContext, _class: Ref<Class<Doc>>, _query: any) => {
@@ -66,7 +69,7 @@ function createStorage (): { storage: WithFind, calls: () => number } {
         return toFindResult([{ _id: ALICE, attachedTo: PERSON_ALICE }] as any)
       }
       if (_class === contactPlugin.class.Person) {
-        return toFindResult([{ _id: PERSON_ALICE, name: 'Smith,Alice' }] as any)
+        return toFindResult(persons as any)
       }
       return toFindResult([] as any)
     }
@@ -121,6 +124,15 @@ describe('ChatMessageSearchTitleProvider', () => {
     const { storage } = createStorage()
 
     expect(await titleFor(ctx, storage, message('m1', ALICE))).toBe('Alice Smith — General')
+  })
+
+  it('falls back to the channel when the identity points at a missing person', async () => {
+    // Reindex walks old messages whose author Person may be gone while the SocialIdentity stays.
+    const ctx = new MeasureMetricsContext('test', {})
+    ctx.contextData = { contextCache: new Map() }
+    const { storage } = createStorage([])
+
+    expect(await titleFor(ctx, storage, message('m1', ALICE))).toBe('General')
   })
 
   it('returns just the channel in short mode', async () => {
