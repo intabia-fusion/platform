@@ -27,7 +27,7 @@
       <IconError size="small" />
       <div class="flex-col">
         <span class="font-medium-14"><Label label={plugin.string.ImportWarningsTitle} /></span>
-        <span class="font-regular-12 mt-0-5 text-secondary">
+        <span class="font-regular-12 secondary mt-0-5">
           <Label label={plugin.string.ImportWarningsDescription} />
         </span>
       </div>

@@ -26,6 +26,7 @@
   } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
+  import ImportActionSwitch from './ImportActionSwitch.svelte'
   import { getAttributeUsageLocations, resolveAttributeItemIcon } from './utils'
 
   export let projectType: ProjectType | null = null
@@ -112,29 +113,16 @@
                 </div>
               </div>
 
-              <!-- Action Segmented Switch: Create vs Skip -->
-              <div class="attr-action-segmented flex-row-center">
-                <button
-                  type="button"
-                  class="action-btn"
-                  class:selected={!isSkipped}
-                  on:click={() => {
-                    setAttributeAction(item.fieldKey, 'create', item.label)
-                  }}
-                >
-                  <Label label={plugin.string.ActionCreate} />
-                </button>
-                <button
-                  type="button"
-                  class="action-btn"
-                  class:selected={isSkipped}
-                  on:click={() => {
-                    setAttributeAction(item.fieldKey, 'skip', item.label)
-                  }}
-                >
-                  <Label label={plugin.string.ActionSkip} />
-                </button>
-              </div>
+              <ImportActionSwitch
+                items={[
+                  { id: 'create', label: plugin.string.ActionCreate },
+                  { id: 'skip', label: plugin.string.ActionSkip }
+                ]}
+                selected={isSkipped ? 'skip' : 'create'}
+                on:select={(e) => {
+                  setAttributeAction(item.fieldKey, e.detail, item.label)
+                }}
+              />
             </div>
 
             <!-- Usage details -->
@@ -142,7 +130,7 @@
               <div class="attribute-usages-area flex-col flex-gap-1 font-regular-12">
                 {#if screenUsages.length > 0}
                   <div class="usage-row flex-row-center flex-gap-1-5 flex-wrap">
-                    <span class="text-secondary"><Label label={plugin.string.UsedInScreens} /></span>
+                    <span class="secondary-textColor"><Label label={plugin.string.UsedInScreens} /></span>
                     {#each screenUsages as sc}
                       <span class="usage-badge screen-badge">{sc.screenName}</span>
                     {/each}
@@ -150,7 +138,7 @@
                 {/if}
                 {#if ruleUsages.length > 0}
                   <div class="usage-row flex-row-center flex-gap-1-5 flex-wrap">
-                    <span class="text-secondary"><Label label={plugin.string.UsedInRules} /></span>
+                    <span class="secondary-textColor"><Label label={plugin.string.UsedInRules} /></span>
                     {#each ruleUsages as r}
                       <span class="usage-badge rule-badge">
                         {r.transitionName}
@@ -174,7 +162,7 @@
         <IconError size="small" />
         <div class="flex-col">
           <span class="font-medium-14"><Label label={plugin.string.UnresolvableAttributesWarning} /></span>
-          <span class="font-regular-12 mt-0-5 text-secondary">
+          <span class="font-regular-12 secondary mt-0-5">
             <Label label={plugin.string.UnresolvableAttributesDescription} />
           </span>
         </div>
@@ -211,7 +199,7 @@
 
             {#if usages.length > 0}
               <div class="affected-impact-area flex-col flex-gap-1 font-regular-12">
-                <span class="text-secondary font-medium-12">
+                <span class="font-medium-12 secondary">
                   <Label label={plugin.string.AffectedScreensAndRules} />
                 </span>
                 <ul class="affected-items-list font-regular-12">
@@ -270,7 +258,7 @@
     padding: 1rem 1.25rem;
     border-radius: 0.75rem;
     border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
-    background-color: var(--theme-card-bg, #ffffff);
+    background-color: var(--theme-popup-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     display: flex;
     flex-direction: column;
@@ -282,7 +270,7 @@
     &.skipped {
       opacity: 0.75;
       border-color: rgba(227, 98, 9, 0.3);
-      background-color: var(--theme-card-background, rgba(0, 0, 0, 0.01));
+      background-color: var(--theme-comp-header-color);
     }
   }
 
@@ -290,7 +278,7 @@
     width: 2rem;
     height: 2rem;
     border-radius: 0.375rem;
-    background-color: var(--theme-button-hover-bg, rgba(0, 0, 0, 0.04));
+    background-color: var(--theme-button-hovered);
     color: var(--theme-content-color, #1a1a1a);
     flex-shrink: 0;
   }
@@ -301,45 +289,10 @@
     font-size: 0.875rem;
   }
 
-  .attr-action-segmented {
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--theme-button-hover-bg, rgba(0, 0, 0, 0.05));
-    border-radius: 0.5rem;
-    padding: 3px;
-    gap: 2px;
-    border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.06));
-    flex-shrink: 0;
-
-    .action-btn {
-      border: none;
-      background: transparent;
-      padding: 0.25rem 0.625rem;
-      border-radius: 0.375rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--theme-secondary-color, #666);
-      cursor: pointer;
-      transition: all 0.15s ease;
-
-      &:hover:not(.selected) {
-        color: var(--theme-content-color, #1a1a1a);
-        background-color: rgba(0, 0, 0, 0.04);
-      }
-
-      &.selected {
-        background-color: var(--theme-card-bg, #ffffff);
-        color: var(--primary-color-purple-02, #6452db);
-        font-weight: 600;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      }
-    }
-  }
-
   .attribute-usages-area {
     padding: 0.375rem 0.5rem;
     border-radius: 0.25rem;
-    background-color: var(--theme-button-hover-bg, rgba(0, 0, 0, 0.02));
+    background-color: var(--theme-button-hovered);
   }
 
   .usage-row {
@@ -359,7 +312,7 @@
     }
 
     &.rule-badge {
-      background-color: var(--theme-button-hover-bg, rgba(0, 0, 0, 0.04));
+      background-color: var(--theme-button-hovered);
       border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
       color: var(--theme-content-color, #333);
     }
@@ -379,7 +332,7 @@
   .unresolvable-card {
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
-    background-color: var(--theme-card-background, rgba(0, 0, 0, 0.02));
+    background-color: var(--theme-comp-header-color);
     border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
   }
 

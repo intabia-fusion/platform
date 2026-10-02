@@ -261,14 +261,14 @@
   {#if !readonly}
     <button
       type="button"
-      class="add-field-btn font-normal-14 text-secondary"
+      class="add-field-btn"
       disabled={availableAttributes.length === 0}
       use:tooltip={availableAttributes.length === 0 ? { label: plugin.string.NoAvailableFields } : undefined}
       on:click={() => {
         openAddFieldPopup(labelEl)
       }}
     >
-      <span bind:this={labelEl} class="font-normal-14 text-secondary flex-center">
+      <span bind:this={labelEl} class="font-regular-14 secondary flex-center">
         <Label label={plugin.string.AddField} />
       </span>
     </button>
