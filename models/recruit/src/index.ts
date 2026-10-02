@@ -613,7 +613,7 @@ export function createModel (builder: Builder): void {
         {
           key: 'shouldShowAll',
           type: 'toggle',
-          defaultValue: false,
+          defaultValue: true,
           actionTarget: 'category',
           action: view.function.ShowEmptyGroups,
           label: view.string.ShowEmptyGroups
