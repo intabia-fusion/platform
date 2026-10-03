@@ -25,6 +25,7 @@ import notification, {
 import { addEventListener, translate } from '@hcengineering/platform'
 import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
 import { location, languageStore } from '@hcengineering/ui'
+import { type WorkspacesNotification } from '@hcengineering/pulse'
 import workbench, { workbenchId } from '@hcengineering/workbench'
 import { defaultNotificationPreference, DesktopNotificationPreferenceData } from '@hcengineering/desktop-preferences'
 import { crossWorkspaceNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
@@ -45,63 +46,82 @@ export function configureNotifications (): void {
   let unreadCount = 0
   let hasCrossWorkspaceNotifications = false
 
-  addEventListener(workbench.event.NotifyConnection, async () => {
-    const electronAPI = ipcMainExposed()
-    const notificationClient = NotificationClientImpl.getClient()
+  async function refreshBadge (): Promise<void> {
+    await updateBadge(ipcMainExposed(), preferences, unreadCount, hasCrossWorkspaceNotifications)
+  }
 
-    crossWorkspaceNotificationStore.subscribe((state) => {
-      if (state != null) {
-        const currentWorkspace = getCurrentWorkspaceUuid()
-        const workspaces = get(workspacesStore)
-        hasCrossWorkspaceNotifications = workspaces.some((it) => it.uuid !== currentWorkspace && state?.[it.uuid])
+  function onUnreadCount (count: number): void {
+    if (unreadCount === count) return
+    unreadCount = count
+    void refreshBadge().then(() => {
+      if (preferences.bounceAppIcon) {
+        ipcMainExposed().dockBounce()
       }
-      void updateBadge(electronAPI, preferences, unreadCount, hasCrossWorkspaceNotifications)
     })
+  }
 
-    async function handlePush (appPush: AppPushNotification): Promise<void> {
-      void removeAppPush(appPush)
-      if (preferences.showNotifications) {
-        const { title, body } = await translateNotification(
-          {
-            titleIntl: appPush.titleIntl,
-            bodyIntl: appPush.bodyIntl,
-            intlParams: appPush.intlParams,
-            intlParamsNotLocalized: appPush.intlParamsNotLocalized
-          },
-          get(languageStore)
-        )
-        electronAPI.sendNotification({
-          silent: !preferences.playSound && appPush.soundAlert,
-          application: notificationId,
-          title: truncate(title, PUSH_NOTIFICATION_TITLE_SIZE),
-          body: truncate(body, PUSH_NOTIFICATION_BODY_SIZE),
-          onClickLocation: appPush.onClickLocation
-        })
-      }
+  function onCrossWorkspaceState (state: WorkspacesNotification | undefined): void {
+    if (state != null) {
+      const currentWorkspace = getCurrentWorkspaceUuid()
+      hasCrossWorkspaceNotifications = get(workspacesStore).some((it) => it.uuid !== currentWorkspace && state[it.uuid])
     }
+    void refreshBadge()
+  }
 
-    notificationClient.totalUnreadCount.subscribe((count) => {
-      if (unreadCount === count) return
-      unreadCount = count
-      void updateBadge(electronAPI, preferences, unreadCount, hasCrossWorkspaceNotifications).then(() => {
-        if (preferences.bounceAppIcon) {
-          electronAPI.dockBounce()
-        }
-      })
-    })
+  function onPreferences (newPreferences: DesktopNotificationPreferenceData): void {
+    preferences = newPreferences
+    desktopPushEnabled.set(newPreferences.showNotifications)
+    void refreshBadge()
+  }
 
-    appPushStore.subscribe((appPushs) => {
-      if (appPushs == null) return
-      for (const appPush of appPushs) {
-        void handlePush(appPush)
-      }
-    })
+  async function showPush (appPush: AppPushNotification): Promise<void> {
+    void removeAppPush(appPush)
+    if (!preferences.showNotifications) return
 
-    activePreferences.subscribe((newPreferences) => {
-      preferences = newPreferences
-      desktopPushEnabled.set(newPreferences.showNotifications)
-      void updateBadge(electronAPI, preferences, unreadCount, hasCrossWorkspaceNotifications)
+    const { title, body } = await translateNotification(
+      {
+        titleIntl: appPush.titleIntl,
+        bodyIntl: appPush.bodyIntl,
+        intlParams: appPush.intlParams,
+        intlParamsNotLocalized: appPush.intlParamsNotLocalized
+      },
+      get(languageStore)
+    )
+    ipcMainExposed().sendNotification({
+      silent: !preferences.playSound && appPush.soundAlert,
+      application: notificationId,
+      title: truncate(title, PUSH_NOTIFICATION_TITLE_SIZE),
+      body: truncate(body, PUSH_NOTIFICATION_BODY_SIZE),
+      onClickLocation: appPush.onClickLocation
     })
+  }
+
+  function onAppPushes (appPushes: AppPushNotification[] | null | undefined): void {
+    for (const appPush of appPushes ?? []) {
+      void showPush(appPush)
+    }
+  }
+
+  let storesSubscribed = false
+  function subscribeStores (): void {
+    if (storesSubscribed) return
+    storesSubscribed = true
+    crossWorkspaceNotificationStore.subscribe(onCrossWorkspaceState)
+    appPushStore.subscribe(onAppPushes)
+    activePreferences.subscribe(onPreferences)
+  }
+
+  // Workbench creates a new notification client per connection, so the unread counter is resubscribed
+  let unsubscribeUnreadCount: (() => void) | undefined
+  function subscribeUnreadCount (): void {
+    unsubscribeUnreadCount?.()
+    unsubscribeUnreadCount = NotificationClientImpl.getClient().totalUnreadCount.subscribe(onUnreadCount)
+  }
+
+  // Fires on every connect: workspace switch, reconnect
+  addEventListener(workbench.event.NotifyConnection, async () => {
+    subscribeUnreadCount()
+    subscribeStores()
   })
 
   addEventListener(workbench.event.NotifyTitle, async (_, title: string) => {
