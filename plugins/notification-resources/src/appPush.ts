@@ -17,14 +17,22 @@ import notification, { type AppPushNotification } from '@hcengineering/notificat
 import { type Account, AccountRole, getCurrentAccount } from '@hcengineering/core'
 import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { deviceOptionsStore, desktopPlatform } from '@hcengineering/ui'
-import { get, writable } from 'svelte/store'
+import { get, type Readable, writable } from 'svelte/store'
 
 import { checkPermission, subscribePush, pushAllowed as webPushAllowed } from './webpush'
 
-export const appPushStore = writable<AppPushNotification[]>([])
+const newPushes = writable<AppPushNotification[]>([])
+const shownIds = new Set<string>()
+const handledIds = new Set<string>()
+
+export const appPushStore: Readable<AppPushNotification[]> = {
+  subscribe: (run, invalidate) =>
+    newPushes.subscribe((items) => {
+      run(items.filter((item) => !handledIds.has(item._id)))
+    }, invalidate)
+}
 export const desktopPushEnabled = writable<boolean>(false)
 
-const shownIds = new Set<string>()
 const query = createQuery(true)
 
 webPushAllowed.subscribe((allowed) => {
@@ -73,14 +81,16 @@ async function check (webPushAllowed: boolean, me?: Account): Promise<void> {
       for (const id of shownIds) {
         if (!currentIds.has(id)) {
           shownIds.delete(id)
+          handledIds.delete(id)
         }
       }
-      appPushStore.set(newItems)
+      newPushes.set(newItems)
     }
   )
 }
 
 export async function removeAppPush (value: AppPushNotification): Promise<void> {
+  handledIds.add(value._id)
   const me = getCurrentAccount()
   if (me.role !== AccountRole.ReadOnlyGuest) {
     try {
