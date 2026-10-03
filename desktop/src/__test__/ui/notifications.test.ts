@@ -49,7 +49,7 @@ jest.mock('@hcengineering/workbench', () => ({
 }))
 jest.mock('../../ui/typesUtils', () => ({ ipcMainExposed: () => g.__mockElectronAPI }))
 jest.mock('@hcengineering/notification-resources', () => ({
-  NotificationClientImpl: { getClient: () => ({ totalUnreadCount: { subscribe: jest.fn() } }) },
+  NotificationClientImpl: { getClient: () => ({ totalUnreadCount: { subscribe: jest.fn(() => jest.fn()) } }) },
   appPushStore: g.__mockAppPushStore,
   removeAppPush: jest.fn(),
   desktopPushEnabled: { set: jest.fn() }
@@ -81,14 +81,17 @@ import { removeAppPush } from '@hcengineering/notification-resources'
 import { configureNotifications } from '../../ui/notifications'
 
 describe('configureNotifications', () => {
+  // Once for the suite: the mocked stores are shared, so every call would add its own subscribers
+  beforeAll(() => {
+    configureNotifications()
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
     g.__mockAppPushStore.set([])
   })
 
   it('handles app pushes and sends notifications with correct parameters', async () => {
-    configureNotifications()
-
     const notifyConnectionCallback = eventListeners.NotifyConnection
     expect(notifyConnectionCallback).toBeDefined()
     await notifyConnectionCallback()
@@ -134,8 +137,30 @@ describe('configureNotifications', () => {
     expect(removeAppPush).toHaveBeenCalledWith(mockPushes[1])
   })
 
+  it('shows a push once after several connections', async () => {
+    const notifyConnectionCallback = eventListeners.NotifyConnection
+    // Workspace switch and reconnect fire NotifyConnection again
+    await notifyConnectionCallback()
+    await notifyConnectionCallback()
+    await notifyConnectionCallback()
+    jest.clearAllMocks()
+
+    const mockPush = {
+      _id: 'push-4',
+      titleIntl: 'Title 4',
+      bodyIntl: 'Body 4',
+      soundAlert: true,
+      onClickLocation: 'location-4'
+    }
+
+    g.__mockAppPushStore.set([mockPush])
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(g.__mockElectronAPI.sendNotification).toHaveBeenCalledTimes(1)
+    expect(removeAppPush).toHaveBeenCalledTimes(1)
+  })
+
   it('does not send notification if preferences showNotifications is false', async () => {
-    configureNotifications()
     const notifyConnectionCallback = eventListeners.NotifyConnection
     await notifyConnectionCallback()
 
