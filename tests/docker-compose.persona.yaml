@@ -1,0 +1,168 @@
+# Persona UX stand: the sanity stack reshaped to match the production chart
+# (fusion-deployment/charts/fusion + prod values): Russian branding, themes, DISABLED_FEATURES,
+# sign-up by e-mail code. Publishes only nginx on 8084 and mailpit on 8025, so it runs beside the
+# sanity stand; every browser-facing URL therefore points at localhost:8084.
+# Started by scripts/persona-stand.sh, which sets PERSONA_CHART, the *_IMAGE tags taken from the
+# chart's values.yaml and generates .persona/nginx-landing.conf from its landing routes.
+services:
+  nginx:
+    ports: !override
+      - 8084:8083
+    depends_on:
+      - landing
+      - documentation
+      - legal
+    volumes:
+      - ./.persona/nginx-landing.conf:/etc/nginx/extra/landing.conf:ro
+  postgres:
+    ports: !reset []
+  pgbouncer:
+    ports: !reset []
+  redpanda:
+    ports: !reset []
+  elastic:
+    ports: !reset []
+  datalake:
+    ports: !reset []
+  analytics:
+    ports: !reset []
+  redis-test:
+    ports: !reset []
+
+  front0:
+    volumes:
+      - ./branding-persona.json:/app/dist/branding-test.json
+    environment:
+      - ACCOUNTS_URL=http://localhost:8084/_account
+      - REKONI_URL=http://localhost:8084/_rekoni
+      - BRANDING_URL=http://localhost:8084/branding-test.json
+      - STATS_API=http://localhost:8084/_stats
+      - STREAM_URL=http://localhost:8084/_stream/recording
+      - FILES_URL=http://localhost:8084/_datalake/blob/:workspace/:blobId/:filename
+      - UPLOAD_URL=http://localhost:8084/_datalake/upload/form-data/:workspace
+      - DATALAKE_URL=http://localhost:8084/_datalake
+      - PRINT_URL=http://localhost:8084/_print
+      - BILLING_URL=http://localhost:8084/_billing
+      - PAYMENT_URL=http://localhost:8084/_payment
+      - WEBHOOK_SERVICE_URL=http://localhost:8084/_webhook
+      - AI_URL=http://localhost:8084/_ai
+      - PREVIEW_URL=http://localhost:8084/_preview
+      - LINK_PREVIEW_URL=http://localhost:8084/_link-preview
+      - LOVE_ENDPOINT=http://localhost:8084/_love
+      - ANALYTICS_COLLECTOR_URL=http://localhost:8084/_analytics
+      - USE_OTP=true
+      - LANGUAGES=en,ru,es,pt,zh,fr,it
+      - PASSWORD_STRICTNESS=normal
+      - LOGIN_THEME=intabia
+      - ACCENT_THEME=accent-intabia
+      - DISABLED_FEATURES=mail,auto-translate,github,integrations,documents,inventory,survey,lead,products,recruit,training,process,gmail,mailboxes,export,contact.persons,contact.companies,tracker.issueImport,card,testManagement,telegram,hr,contact:ids:OrganizationNotificationGroup,setting:ids:SettingNotificationGroup,hide-ru-banned-channels
+  account:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+      - ./region-config-persona.yaml:/var/cfg/region-config.yaml
+  workspace:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+      - ./region-config-persona.yaml:/var/cfg/region-config.yaml
+  transactor0:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+    environment:
+      - FRONT_URL=http://localhost:8084
+  activity:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  notifications:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+    environment:
+      - FRONT_URL=http://localhost:8084
+  stream:
+    environment:
+      - STREAM_BASE_URL=http://localhost:8084/_stream
+
+  aibot:
+    environment:
+      - FIRST_NAME=Юля
+
+  payment:
+    environment:
+      - FRONT_URL=http://localhost:8084
+    volumes:
+      - ${PERSONA_CHART}/files/plan-config.yaml:/var/cfg/plan-config.yaml:ro
+  tbank-subscriptions:
+    environment:
+      - FRONT_URL=http://localhost:8084
+      - PLAN_CONFIG=/var/cfg/plan-config.yaml
+    volumes:
+      - ${PERSONA_CHART}/files/plan-config.yaml:/var/cfg/plan-config.yaml:ro
+
+  # Enabled on prod, absent from the sanity stack.
+  rating:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/rating:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    depends_on:
+      redpanda:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      account:
+        condition: service_started
+    environment:
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION=
+      - SERVER_SECRET=secret
+      - STATS_URL=http://stats:4901
+      - DB_URL=${DB_PURE_PG_URL}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - ACCOUNTS_URL=http://account:3003
+    restart: unless-stopped
+  # Queue mode as on prod: account puts sign-up codes and invites on the `mail` topic.
+  mail:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    depends_on:
+      redpanda:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    environment:
+      - MODE=queue
+      - PORT=8097
+      - SOURCE=noreply@intabia-platform.ru
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - REGION=
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - SMTP_USERNAME=platform
+      - SMTP_PASSWORD=platform
+      - SMTP_TLS_MODE=ignore
+      - SMTP_ALLOW_SELF_SIGNED=true
+      - ACCOUNTS_URL=http://account:3003
+      - SECRET=secret
+      - APP_NAME=Intabia Platform
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - 8025:8025
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    restart: unless-stopped
+
+  landing:
+    image: ${LANDING_IMAGE}
+    environment:
+      - PORT=80
+    restart: unless-stopped
+  documentation:
+    image: ${DOCS_IMAGE}
+    environment:
+      - PORT=80
+    restart: unless-stopped
+  legal:
+    image: ${LEGAL_IMAGE}
+    environment:
+      - PORT=80
+    restart: unless-stopped

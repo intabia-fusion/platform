@@ -143,6 +143,8 @@ pnpm run uitest
 
 `prepare-cockroach.sh` is the CockroachDB variant of the same stand. After changing application code, rebuild (`pnpm docker:build`) and re-run `./prepare-pg.sh` - Playwright tests exercise the built bundle, not the source tree.
 
+`scripts/persona-stand.sh` brings up a stand for persona UX runs (skill `persona-test` in foundation-tasks) beside the sanity one: compose project `persona`, overlay `tests/docker-compose.persona.yaml`, which publishes only nginx on 8084 and mailpit on 8025 (sign-up codes go through the `mail` service in queue mode, as on prod). Russian branding (`tests/branding-persona.json`), prod themes, `DISABLED_FEATURES` and `rating`, no seeded accounts. From the prod chart (`CHART=`, default `../fusion-deployment/charts/fusion`) it takes the landing, docs and legal images, `files/plan-config.yaml` and the landing routes, which go into `tests/.persona/nginx-landing.conf` through the `include /etc/nginx/extra/*.conf` hook in `tests/nginx.conf`. LiveKit on the host is shared with the sanity stand.
+
 Flags (`-g "<title>"`, `--workers=1` for love/meetings), tracing, flake diagnosis (`analyze_failures.js`) and the whole-run profiling harness (`do-test.sh`) are in the "Sanity tests (Playwright)" section of [`AGENTS.md`](../AGENTS.md).
 
 ## Integration tests

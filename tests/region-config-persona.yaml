@@ -1,0 +1,12 @@
+# Region configuration for the persona stand (docker-compose.persona.yaml)
+# Single transactor + collaborator behind nginx on host port 8084
+
+regions:
+  '':
+    name: America
+    transactors:
+      - external: ws://localhost:8084/_tr0
+        internal: ws://transactor0:3334
+    collaborators:
+      - external: ws://localhost:8084/_cl0
+        internal: ws://collaborator0:3079

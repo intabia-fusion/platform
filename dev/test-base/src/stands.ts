@@ -106,6 +106,22 @@ const sanity: StandConfig = {
   ]
 }
 
+// Persona UX runs: prod-like services and branding, no seed - every persona signs up on its own.
+const persona: StandConfig = {
+  ...sanity,
+  project: 'persona',
+  composeFiles: [...PURE_PG_COMPOSE, 'docker-compose.persona.yaml'],
+  // Only nginx is published (on 8084, beside the sanity stand), so nothing else can be waited on.
+  accountsUrl: 'http://localhost:8084/_account',
+  elasticPort: undefined,
+  waitPorts: [['localhost', 8084]],
+  // Inherited sanity/.auth would be wiped from under a sanity run on the same checkout.
+  cleanup: [],
+  accounts: [],
+  workspaces: [],
+  post: undefined
+}
+
 const ws: StandConfig = {
   project: 'sanity',
   dir: 'ws-tests',
@@ -360,6 +376,7 @@ const api: StandConfig = {
  */
 export const stands: Record<string, StandConfig> = {
   sanity,
+  persona,
   ws,
   api,
   'ws-cockroach': wsCockroach,
