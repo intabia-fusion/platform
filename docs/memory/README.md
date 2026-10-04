@@ -10,6 +10,7 @@
 
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
+- [push_voip_calls.md](push_voip_calls.md) - Push входящего звонка: VoIP
 
 ## Встречи - [office-meetings.md](../features/office-meetings.md)
 

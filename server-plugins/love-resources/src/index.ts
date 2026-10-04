@@ -43,11 +43,15 @@ import love, {
   UserMeetingInvite
 } from '@hcengineering/love'
 import { getMetadata } from '@hcengineering/platform'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
+import serverCore, { QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
 import { getAccountBySocialId } from '@hcengineering/server-contact'
-import notification from '@hcengineering/notification'
+import notification, {
+  CALL_RING_MS,
+  isNativePushEndpoint,
+  type QueueCallCancelMessage
+} from '@hcengineering/notification'
 
 import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
@@ -369,7 +373,7 @@ async function createInviteResponseTx (
     meeting?: Ref<MeetingMinutes>
     room?: Ref<Room>
   }
-): Promise<Tx | undefined> {
+): Promise<TxCreateDoc<UserMeetingInvite> | undefined> {
   const existing = await control.findAll(
     control.ctx,
     love.class.UserMeetingInvite,
@@ -405,6 +409,7 @@ async function createInviteNotificationTxs (
   recipientSpace: PersonSpace,
   sender: Person | undefined,
   source: UserMeetingInvite,
+  response: TxCreateDoc<UserMeetingInvite>,
   modifiedOn: number
 ): Promise<Tx[]> {
   const result: Tx[] = []
@@ -458,6 +463,14 @@ async function createInviteNotificationTxs (
           titleIntl: titleLabel,
           bodyIntl: messageLabel,
           intlParams: { name: senderName }
+        },
+        call: {
+          inviteId: response.objectId,
+          meetingId: response.attributes.meeting,
+          roomId: response.attributes.room,
+          callerName: senderName,
+          callerPerson: source.from,
+          expiresAt: modifiedOn + CALL_RING_MS
         }
       },
       undefined,
@@ -484,6 +497,8 @@ async function createInviteNotificationTxs (
  */
 export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
+  // Responses gone by cancel, accept or decline: their call stops ringing on the phones.
+  const ended: UserMeetingInvite[] = []
 
   for (const tx of txes) {
     if (tx._class === core.class.TxCreateDoc) {
@@ -522,7 +537,15 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           if (responseTx === undefined) continue
           result.push(responseTx)
           result.push(
-            ...(await createInviteNotificationTxs(control, ownerPerson._id, ownerSpace, sender, invite, tx.modifiedOn))
+            ...(await createInviteNotificationTxs(
+              control,
+              ownerPerson._id,
+              ownerSpace,
+              sender,
+              invite,
+              responseTx,
+              tx.modifiedOn
+            ))
           )
         }
         continue
@@ -579,7 +602,15 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       if (responseTx === undefined) continue
       result.push(responseTx)
       result.push(
-        ...(await createInviteNotificationTxs(control, invite.to, recipientSpace, sender, invite, tx.modifiedOn))
+        ...(await createInviteNotificationTxs(
+          control,
+          invite.to,
+          recipientSpace,
+          sender,
+          invite,
+          responseTx,
+          tx.modifiedOn
+        ))
       )
       continue
     }
@@ -595,6 +626,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         for (const r of responses) {
           result.push(control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, r.space, r._id))
         }
+        ended.push(...responses)
       }
       continue
     }
@@ -657,6 +689,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         for (const s of siblings) {
           result.push(control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, s.space, s._id))
         }
+        ended.push(...siblings)
         if (request !== undefined) {
           const upd: DocumentUpdate<UserMeetingInvite> = { status: 'accepted', meeting: meeting._id }
           if (newSid !== undefined) upd.acceptedSessionId = newSid
@@ -669,6 +702,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         result.push(
           control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
         )
+        ended.push(sourceDoc)
         // If no responses remain, sync request.status = declined for the knocker.
         if (request !== undefined) {
           const remaining = (await findResponsesForRequest(control, sourceDoc)).filter((r) => r._id !== sourceDoc._id)
@@ -693,6 +727,7 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
     result.push(
       control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
     )
+    ended.push(sourceDoc)
     const requestA = await findRequestForResponse(control, sourceDoc)
     if (requestA !== undefined) {
       const upd: DocumentUpdate<UserMeetingInvite> = { status: newStatus }
@@ -701,7 +736,48 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
     }
   }
 
+  await queueCallCancels(control, ended)
   return result
+}
+
+/**
+ * Straight to the push queue, not through services/notifications: nothing there knows the call.
+ * So a cancel can overtake its own call push; the app checks the invite once awake.
+ * A response that dies by TTL sends nothing, the push's `expiresAt` stops the ringing then.
+ */
+async function queueCallCancels (control: TriggerControl, responses: UserMeetingInvite[]): Promise<void> {
+  if (control.queue === undefined || responses.length === 0) return
+  try {
+    const persons = await control.findAll(control.ctx, contact.class.Person, {
+      _id: { $in: responses.map((it) => it.to) }
+    })
+    const accounts = new Map(persons.map((it) => [it._id, it.personUuid as AccountUuid | undefined]))
+    const subscriptions = (
+      await control.findAll(control.ctx, notification.class.PushSubscription, {
+        user: { $in: [...accounts.values()].filter((it) => it !== undefined) }
+      })
+    ).filter((it) => isNativePushEndpoint(it.endpoint))
+    const messages: QueueCallCancelMessage[] = []
+    for (const response of responses) {
+      const account = accounts.get(response.to)
+      const pushSubscriptions = subscriptions.filter((it) => it.user === account)
+      if (account === undefined || pushSubscriptions.length === 0) continue
+      messages.push({
+        kind: 'call-cancel',
+        id: `call-cancel:${response._id}`,
+        account,
+        objectId: response._id,
+        objectClass: response._class,
+        objectSpace: response.space,
+        pushSubscriptions
+      })
+    }
+    if (messages.length === 0) return
+    const producer = control.queue.getProducer<QueueCallCancelMessage>(control.ctx, QueueTopic.UserNotifications)
+    await producer.send(control.ctx, control.workspace.uuid, messages)
+  } catch (err) {
+    control.ctx.error('Could not queue call cancel', { err })
+  }
 }
 
 /**

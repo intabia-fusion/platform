@@ -46,7 +46,7 @@ The service is configured via environment variables:
 | `APNS_KEY_ID` | No | - | Key ID of the APNs `.p8` key |
 | `APNS_TEAM_ID` | No | - | Apple developer team ID |
 | `APNS_KEY` | No | - | The `.p8` private key; `\n` stands for newlines |
-| `APNS_TOPIC` | No | - | App bundle id, e.g. `intabia.platform.mobile` |
+| `APNS_TOPIC` | No | - | App bundle id, e.g. `intabia.platform.mobile`; VoIP pushes go to `<APNS_TOPIC>.voip` |
 | `APNS_PRODUCTION` | No | `true` | `false` sends to the APNs sandbox |
 | `FCM_SERVICE_ACCOUNT` | No | - | Firebase service-account JSON, verbatim |
 | `RUSTORE_PROJECT_ID` | No | - | RuStore push project id |
@@ -65,6 +65,7 @@ field under a scheme of its own:
 | Endpoint | Transport |
 |----------|-----------|
 | `apns://<device-token>` | APNs |
+| `apns-voip://<pushkit-token>` | APNs VoIP (PushKit), incoming calls only |
 | `fcm://<registration-token>` | FCM |
 | `rustore://<push-token>` | RuStore |
 | anything else | Web Push |
@@ -191,6 +192,53 @@ the guidance), so a dismiss can lag or be dropped when reads are frequent. Such 
 stays until the app takes it down itself. The notifications service sends a dismiss only for
 pushes that left the service (a push still held and cancelled by the read gets none), and splits
 a long tag list into several messages of 50 tags to stay under the 4 KB payload.
+
+### Incoming call
+
+A meeting invite or a knock (`love.ids.InviteNotification`) arrives as a `QueueNotifyMessage` with
+`call` set (`PushCallData` in `@hcengineering/notification`, filled by the love trigger). The browser
+gets its usual Web Push; the native apps get a call instead of a banner, and it is never held while
+the person is active in the web.
+
+| Subscription | What it gets |
+|---|---|
+| `apns-voip://` | VoIP push: `apns-push-type: voip`, `apns-priority: 10`, `apns-topic: <APNS_TOPIC>.voip`, `apns-expiration: expiresAt` (seconds); body is the call keys below, no `aps` |
+| `apns://` | nothing once a call reached one of the person's `apns-voip://` subscriptions; the usual alert when there is none or every VoIP delivery failed (error or dead token) |
+| `fcm://` | data-only message, `android.priority: HIGH`, `android.ttl` = seconds left until `expiresAt` |
+| `rustore://` | the FCM call message without `android.priority` |
+
+A call already past `expiresAt` when the service gets it rings nothing: it goes out as an ordinary
+alert, and the VoIP token gets nothing.
+
+| Key | APNs VoIP | FCM, RuStore `data` | Meaning |
+|---|---|---|---|
+| `kind` | `"call"` | `"call"` | message type |
+| `inviteId` | string | string | the `invite-response` (`love:class:UserMeetingInvite`) the receiver accepts or declines |
+| `meetingId` | string, optional | string, optional | `MeetingMinutes` of the call, when it exists already |
+| `roomId` | string, optional | string, optional | the room knocked at (a knock only) |
+| `callerName` | string | string | display name of the caller |
+| `callerPerson` | string | string | `Person` id of the caller |
+| `expiresAt` | number, ms | string, ms | do not ring after it; the trigger sets `createdOn + CALL_RING_MS` (45 s) |
+| `url`, `domain`, `tag`, `objectId`, `objectClass`, `createdOn` | as in an alert | as in an alert (strings) | `domain` is the workspace, `tag` the inbox notification id |
+
+Absent optional keys are left out. Chat and every other push never reach an `apns-voip://`
+subscription, and neither does a dismiss: iOS terminates an app that does not report each VoIP
+push to CallKit, and after repeated failures stops delivering VoIP pushes to it.
+
+When the invite ends - the caller cancels, or the receiver accepts or declines on any device (an
+accepted knock ends every owner's invite) - the love trigger publishes a
+`QueueNotificationMessage` with `kind: "call-cancel"` and `objectId` = the invite id
+(`QueueCallCancelMessage`). It goes to the native subscriptions except VoIP:
+
+| | APNs (`apns://`) | FCM, RuStore |
+|---|---|---|
+| headers | `apns-push-type: background`, `apns-priority: 5`, `aps: {"content-available": 1}`, expires in 45 s | data-only, `android.ttl: 45s` (FCM: `android.priority: HIGH`) |
+| keys | `kind: "call-cancel"`, `inviteId` | `data.kind`, `data.inviteId` |
+
+The cancel is published by the trigger, not by the notifications service, so it can overtake its
+own call push; an invite that dies by TTL (the caller's client stopped its 15 s heartbeat) sends
+no cancel at all. The app must therefore check the invite over the socket once awake, end a call
+past `expiresAt` by itself, and ignore a cancel for the call it has just answered.
 
 ## Testing
 

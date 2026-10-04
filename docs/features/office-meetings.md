@@ -84,6 +84,10 @@
 ### Уведомление о knock (FUSIO-637)
 - **Отдельные заголовок/текст для knock vs invite.** Knock в приватную комнату шлёт `JoinRequestTitle`/`JoinRequestBody` ("{name} wants to join the meeting"), invite - `MeetingRequest`/`IsKnocking`. - `server-plugins/love-resources/src/index.ts` (`createInviteNotificationTxs`), `plugins/love/src/plugin.ts`.
 
+### Входящий звонок на телефон (FUSIO-1478, серверная часть)
+- **Invite и knock звонят на телефон.** Уведомление `InviteNotification` несёт `call` (`inviteId` = invite-response, звонящий, `expiresAt` = +45 с); pod-notification шлёт VoIP push на `apns-voip://` и data-only на FCM/RuStore, без удержания на время активности в вебе. Конец звонка (cancel, accept, decline) триггер публикует как `call-cancel`. Контракт - [notifications.md](notifications.md), п.5, и README pod-notification. - `server-plugins/love-resources/src/index.ts` (`createInviteNotificationTxs`, `queueCallCancels`).
+- **TTL invite не менялся.** `TransientTTL` 30 с, а invite живёт, пока звонящий шлёт heartbeat раз в 15 с (`renewOutgoingInvites`, `plugins/love-resources/src/invites.ts`), так что телефону после холодного старта хватает времени. Мобильный клиент в роли звонящего обязан слать тот же heartbeat.
+
 ### Recorder и Media (независимые от митинга)
 - **Экранный рекордер воркспейса.** Записывает экран через `MediaRecorder`, чанкует и заливает в Drive; не связан с LiveKit Egress встречи. - `class Recorder`, `plugins/recorder-resources/src/recorder.ts`; `models/recorder/src/plugin.ts` (merge `WorkbenchExtension`).
 - **Выбор микрофона/камеры.** `toggleCamState`/`toggleMicState`, `WorkbenchExtension` для попапа устройств. - `plugins/media-resources/src/utils.ts`.

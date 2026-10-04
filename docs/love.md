@@ -286,6 +286,8 @@
 - `TxUpdateDoc invite-request` - heartbeat-proxy, no-op update по каждому response;
 - `TxUpdateDoc invite-response { accepted | declined }` - см. сценарии выше.
 
+Каждый снесённый триггером response (cancel, accept, decline) уходит на телефоны получателя как `call-cancel` (`queueCallCancels`), а нотификация несёт `call` для push входящего звонка - [features/notifications.md](features/notifications.md), п.5.
+
 Триггер **не** создаёт `MeetingMinutes` и **не** пушит members при обычном invite - это делает клиент-caller.
 
 ### 7.7 Клиентская сторона

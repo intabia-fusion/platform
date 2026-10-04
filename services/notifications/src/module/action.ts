@@ -265,7 +265,8 @@ export async function handleCreateNotificationAction (
     settings,
     notifyProviders,
     intl,
-    unreadCommon: isSharedGuest ? undefined : commonNotification
+    unreadCommon: isSharedGuest ? undefined : commonNotification,
+    call: action.call
   })
 }
 

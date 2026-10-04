@@ -515,4 +515,21 @@ describe('handleCreateNotificationAction', () => {
 
     expect((pushNotification as jest.Mock).mock.calls[0][4].unreadCommon).toBeDefined()
   })
+
+  it('hands the call of an invite on to the push', async () => {
+    mockCache.getReceivers.mockResolvedValue([makeReceiver('user-1', 'USER')])
+    const call = { inviteId: 'invite-1', callerName: 'Ann', callerPerson: 'person-ann', expiresAt: 145_000 }
+    const tx = makeTx() as TxCreateDoc<CreateNotificationAction>
+    tx.attributes.call = call as any
+
+    await handleCreateNotificationAction(
+      mockClient as unknown as Client,
+      mockCache as unknown as Cache,
+      {} as unknown as TxCache,
+      result,
+      tx
+    )
+
+    expect((pushNotification as jest.Mock).mock.calls[0][4].call).toEqual(call)
+  })
 })
