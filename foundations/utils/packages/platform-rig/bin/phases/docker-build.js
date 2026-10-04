@@ -1,7 +1,8 @@
 /**
  * Docker build phase with unified caching
  */
-const { spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
+const crypto = require('crypto')
 const { performance } = require('perf_hooks')
 const { join } = require('path')
 const fs = require('fs')
@@ -127,6 +128,23 @@ async function checkDockerImage(imageName, packageHash, imageCache) {
   })
 }
 
+/**
+ * Short hash of the bundle/ files the image is built from (source maps skipped: large and never run).
+ * It goes into the PACKAGE_HASH label, so an image built from a broken or half-written bundle stops
+ * matching once the bundle on disk is fixed. Sources alone hash the same in both cases.
+ */
+function hashBundleDir(cwd) {
+  const dir = join(cwd, 'bundle')
+  if (!fs.existsSync(dir)) return ''
+  const hash = crypto.createHash('md5')
+  for (const name of fs.readdirSync(dir).sort()) {
+    const file = join(dir, name)
+    if (name.endsWith('.map') || !fs.statSync(file).isFile()) continue
+    hash.update(name).update(fs.readFileSync(file))
+  }
+  return hash.digest('hex').slice(0, 12)
+}
+
 async function runDockerBuildPhase(graph, packageNames, concurrency, options = {}) {
   const { force = false, packageHash, imageCache } = options
 
@@ -151,9 +169,24 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
     // Get docker image name from package.json
     const imageName = getDockerImageName(cwd)
 
+    // A cached bundle phase does not prove the file is still intact: refuse to ship one that does not parse.
+    const bundleFile = join(cwd, 'bundle', 'bundle.js')
+    if (fs.existsSync(bundleFile)) {
+      const check = spawnSync(process.execPath, ['--check', bundleFile], { stdio: 'pipe' })
+      if (check.status !== 0) {
+        const size = fs.statSync(bundleFile).size
+        return {
+          success: false,
+          error: new Error(`bundle/bundle.js is not parseable (${size} bytes): ${String(check.stderr).trim()}`)
+        }
+      }
+    }
+    const bundleHash = hashBundleDir(cwd)
+    const imageHash = packageHash && bundleHash ? `${packageHash}-${bundleHash}` : packageHash
+
     // Check cache: image must exist with matching hash and phase must be cached
-    if (!force && packageHash && imageName) {
-      const imageCheck = await checkDockerImage(imageName, packageHash, imageCache)
+    if (!force && imageHash && imageName) {
+      const imageCheck = await checkDockerImage(imageName, imageHash, imageCache)
       if (imageCheck.exists && imageCheck.hashMatch && isPhaseCached(cwd, packageHash, 'docker-build')) {
         return { success: true, fromCache: true }
       }
@@ -176,7 +209,7 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
         cwd,
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: true,
-        env: { ...process.env, PACKAGE_HASH: packageHash || '' }
+        env: { ...process.env, PACKAGE_HASH: imageHash || '' }
       })
 
       let stdout = ''
@@ -249,7 +282,16 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
           progressInterval = null
         }
 
-        if (code === 0) {
+        // Another build rewrote bundle/ while docker was copying it: the image may hold a half-written file.
+        // A missing bundle/ is DOCKER_BUILD_CLEANUP (docker_build.sh removes it after a successful build).
+        const bundleAfter = hashBundleDir(cwd)
+        if (code === 0 && bundleAfter !== '' && bundleAfter !== bundleHash) {
+          resolve({
+            success: false,
+            error: new Error('bundle/ changed during docker build (another build running?), image may be broken: re-run'),
+            time
+          })
+        } else if (code === 0) {
           if (packageHash) {
             markPhaseCompleted(cwd, packageHash, 'docker-build', null, [])
           }
@@ -299,4 +341,4 @@ async function runDockerBuildPhase(graph, packageNames, concurrency, options = {
   return results
 }
 
-module.exports = { runDockerBuildPhase, preloadDockerImages, getDockerImageName }
+module.exports = { runDockerBuildPhase, preloadDockerImages, getDockerImageName, hashBundleDir }
