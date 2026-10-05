@@ -359,8 +359,11 @@ export class CommonPage {
         switch (filter) {
           case 'Title':
             await this.applyTextFilter(this.inputFilterTitle(), filterSecondLevel)
-            // Wait for the list to update after applying filter
-            await this.page.waitForTimeout(500)
+            // The unfiltered list is visible until the filter lands: wait for a row that carries the text.
+            await expect(this.page.locator('div.listGrid span.presenter-label > a').first()).toContainText(
+              filterSecondLevel,
+              { ignoreCase: true, timeout: 10000 }
+            )
             break
           case 'Name':
             await this.applyTextFilter(this.inputFilterName(), filterSecondLevel)

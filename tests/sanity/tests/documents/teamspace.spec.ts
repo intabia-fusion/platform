@@ -1,16 +1,14 @@
 import { test } from '../fixtures'
-import { TestData } from '../chat/types'
 import { SignUpData } from '../model/common-types'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { NewTeamspace } from '../model/documents/types'
 import { SignInJoinPage } from '../model/signin-page'
 import {
   createAccount,
-  createAccountAndWorkspace,
   generateId,
-  generateTestData,
   generateUser,
   getInviteLink,
+  loginByToken,
   PlatformSetting,
   PlatformURI,
   setTestOptions
@@ -75,9 +73,9 @@ test.describe('Teamspace tests', () => {
     await documentsPage.checkTeamspace(updateEditTeamspace)
   })
 
-  test('Auto-join teamspace', async ({ page, request, browser }) => {
-    const testData: TestData = generateTestData()
-    await createAccountAndWorkspace(page, request, testData, 'document')
+  test('Auto-join teamspace', async ({ page, request, browser, sharedWorkspace }) => {
+    const shared = await sharedWorkspace(1)
+    await loginByToken(page, shared.token, shared.ws, 'document')
     const newUser2: SignUpData = generateUser()
     await createAccount(request, newUser2)
 
@@ -105,9 +103,9 @@ test.describe('Teamspace tests', () => {
     }
   })
 
-  test('Join teamspace', async ({ page, request, browser }) => {
-    const testData: TestData = generateTestData()
-    await createAccountAndWorkspace(page, request, testData, 'document')
+  test('Join teamspace', async ({ page, request, browser, sharedWorkspace }) => {
+    const shared = await sharedWorkspace(1)
+    await loginByToken(page, shared.token, shared.ws, 'document')
     const newUser2: SignUpData = generateUser()
     await createAccount(request, newUser2)
 

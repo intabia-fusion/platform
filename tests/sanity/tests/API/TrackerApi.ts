@@ -14,6 +14,7 @@
 //
 
 import {
+  createRestClient,
   createRestTxOperations,
   getWorkspaceToken,
   loadServerConfig,
@@ -40,6 +41,8 @@ export interface ProjectContext {
 }
 
 export interface CreateIssueOptions {
+  // For a caller that needs the id before the issue exists, e.g. to upload its description
+  _id?: Ref<Issue>
   title: string
   status: StatusName | Ref<IssueStatus>
   priority?: IssuePriority
@@ -101,7 +104,7 @@ export async function createIssue (
   ctx: ProjectContext,
   opts: CreateIssueOptions
 ): Promise<Ref<Issue>> {
-  const _id: Ref<Issue> = generateId()
+  const _id: Ref<Issue> = opts._id ?? generateId()
   const status: Ref<IssueStatus> | undefined =
     typeof opts.status === 'string' && ctx.statuses.has(opts.status as StatusName)
       ? ctx.statuses.get(opts.status as StatusName)
@@ -171,6 +174,34 @@ export async function createIssue (
   )
 
   return _id
+}
+
+/** An issue a test only needs as a fixture: Backlog, with the description the form would have stored. */
+export async function createIssueWithDescription (
+  title: string,
+  description: string,
+  projectName?: string
+): Promise<{ id: Ref<Issue>, identifier: string }> {
+  const { client, workspaceToken } = await connectTracker()
+  try {
+    const project = projectName === undefined ? undefined : await findProjectByName(client, projectName)
+    if (projectName !== undefined && project === undefined) throw new Error(`Project "${projectName}" not found`)
+    const ctx = await getProjectContext(client, project?._id)
+    const id: Ref<Issue> = generateId()
+    const rest = createRestClient(
+      workspaceToken.endpoint,
+      workspaceToken.workspaceId,
+      workspaceToken.token,
+      workspaceToken.info.collaboratorEndpoint
+    )
+    const markup = await rest.uploadMarkup(tracker.class.Issue, id, 'description', description, 'markdown')
+    await createIssue(client, ctx, { _id: id, title, status: 'Backlog', attributes: { description: markup } })
+    const created = await client.findOne(tracker.class.Issue, { _id: id })
+    if (created === undefined) throw new Error(`Issue "${title}" was not stored`)
+    return { id, identifier: created.identifier }
+  } finally {
+    await client.close()
+  }
 }
 
 export async function createComponent (

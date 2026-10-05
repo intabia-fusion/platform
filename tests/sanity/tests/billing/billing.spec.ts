@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures'
 import { generateToken } from '@hcengineering/server-token'
 import { systemAccountUuid } from '@hcengineering/core'
 import { ApiEndpoint } from '../API/Api'
-import { generateTestData, loginByToken } from '../utils'
+import { generateTestData } from '../utils'
 
 const BILLING_URL = process.env.BILLING_URL ?? 'http://localhost:8083/_billing'
 
@@ -28,7 +28,8 @@ test.describe('Billing API — data that UI displays', () => {
   let ownerToken: string
   let data: ReturnType<typeof generateTestData>
 
-  test.beforeEach(async ({ request, page }) => {
+  // Exact sums are asserted, so every test needs its own empty workspace. API only: no page needed.
+  test.beforeEach(async ({ request }) => {
     data = generateTestData()
     const api = new ApiEndpoint(request)
     await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
@@ -38,11 +39,6 @@ test.describe('Billing API — data that UI displays', () => {
     }
     ownerToken = wsInfo.token
     workspaceUuid = wsInfo.workspace
-
-    // Straight in on the account token: the login form plus the workspace picker are two more page
-    // loads, and this hook runs before every test in the file.
-    const token = await api.loginAndGetToken(data.userName, '1234')
-    await loginByToken(page, token, wsInfo)
   })
 
   // ── AI section ───────────────────────────────────────────────────────────────
@@ -497,25 +493,29 @@ test.describe('Billing API — data that UI displays', () => {
 
     expect(avDuration).toBe(23)
   })
+})
 
-  // ── Auth ─────────────────────────────────────────────────────────────────────
-
-  test('Admin endpoint rejects non-admin token', async ({ request }) => {
+// Nothing is written here, so the worker's shared workspace is enough: no fresh one per test.
+test.describe('Billing API — auth', () => {
+  test('Admin endpoint rejects non-admin token', async ({ request, sharedWorkspace }) => {
+    const { ws } = await sharedWorkspace()
     const res = await request.post(`${BILLING_URL}/api/v1/ai/transcript`, {
-      headers: ownerHeaders(ownerToken),
+      headers: ownerHeaders(ws.token as string),
       data: []
     })
     expect(res.status()).toBe(401)
   })
 
-  test('Stats endpoint rejects missing token', async ({ request }) => {
-    const res = await request.get(`${BILLING_URL}/api/v1/${workspaceUuid}/stats`)
+  test('Stats endpoint rejects missing token', async ({ request, sharedWorkspace }) => {
+    const { ws } = await sharedWorkspace()
+    const res = await request.get(`${BILLING_URL}/api/v1/${ws.workspace}/stats`)
     expect(res.status()).toBe(401)
   })
 
-  test('Stats endpoint rejects token from a different workspace', async ({ request }) => {
+  test('Stats endpoint rejects token from a different workspace', async ({ request, sharedWorkspace }) => {
+    const { ws } = await sharedWorkspace()
     const res = await request.get(`${BILLING_URL}/api/v1/00000000-0000-0000-0000-000000000000/stats`, {
-      headers: ownerHeaders(ownerToken)
+      headers: ownerHeaders(ws.token as string)
     })
     expect(res.status()).toBe(401)
   })

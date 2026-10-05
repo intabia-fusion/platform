@@ -329,6 +329,9 @@ interface YamlConfig {
   }
 }
 
+// A value without '/' (e.g. ".png") is not a mime type: datalake stores it as text/plain and preview runs soffice on the image.
+const avatarContentType = (value: string | undefined): string => (value?.includes('/') === true ? value : 'image/png')
+
 // A non-numeric env value falls through to the caller's default instead of poisoning it with NaN.
 const parseNumber = (str: string | undefined): number | undefined => {
   if (str === undefined) {
@@ -567,7 +570,7 @@ const config: Config = (() => {
     Password: yamlConfig?.bot?.password ?? process.env.PASSWORD ?? 'password',
     AvatarPath: yamlConfig?.bot?.avatar?.path ?? process.env.AVATAR_PATH ?? './assets/avatar.png',
     AvatarName: yamlConfig?.bot?.avatar?.name ?? process.env.AVATAR_NAME ?? 'ai_bot_avatar_v1',
-    AvatarContentType: yamlConfig?.bot?.avatar?.contentType ?? process.env.AVATAR_CONTENT_TYPE ?? 'image/png',
+    AvatarContentType: avatarContentType(yamlConfig?.bot?.avatar?.contentType ?? process.env.AVATAR_CONTENT_TYPE),
 
     // Port configuration
     Port: yamlConfig?.port ?? parseNumber(process.env.PORT) ?? 4010,

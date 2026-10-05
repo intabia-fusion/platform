@@ -260,19 +260,22 @@ export async function uploadFile (page: Page, fileName: string, fileUploadTestId
 
   // Resolve the file path using the 'resolveFilePath' function
   const filePath = resolveFilePath(fileName)
+  // Armed before setFiles: the response can land before setFiles returns.
+  const uploaded = page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/upload/'), {
+    timeout: 15000
+  })
+  // Avatar pickers upload only on Save and show the cropper first; Save does nothing until it is ready.
+  const cropperReady = page.locator('.cropper-container').waitFor({ state: 'visible', timeout: 15000 })
   await fileChooser.setFiles(filePath)
-
-  // Replace with a more reliable condition for determining when the upload is complete, if
-  // possible.
-  await page.waitForTimeout(2000)
+  await Promise.any([uploaded, cropperReady])
 }
 
 export async function getInviteLink (page: Page): Promise<string | null> {
   const leftSideMenuPage = new LeftSideMenuPage(page)
-  // Settle the initial render, or a navigate closes the popup mid-flight. Bounded and optional:
-  // a freshly created workspace has no nav panel, and the toPass loop below retries anyway.
+  // Settle the initial render, or a navigate closes the popup mid-flight. Profile button, not
+  // appHeader: a fresh workspace has no header. Bounded and optional, the toPass below retries.
   await leftSideMenuPage
-    .appHeader()
+    .profileButton()
     .waitFor({ state: 'visible', timeout: 5000 })
     .catch(() => {})
   const linkLocator = page.locator('.antiPopup .link')

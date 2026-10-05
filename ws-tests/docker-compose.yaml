@@ -533,7 +533,7 @@ services:
       - LAST_NAME=AI
       - PASSWORD=password
       - AVATAR_PATH=./avatar.png
-      - AVATAR_CONTENT_TYPE=.png
+      - AVATAR_CONTENT_TYPE=image/png
       - STATS_URL=http://stats:4901
       - OPENAI_API_KEY=token
       - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b

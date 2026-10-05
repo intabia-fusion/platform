@@ -60,8 +60,14 @@ Kill-switch: `SHARED_SYSTEM_MODEL=false` (дефолт true) отключает 
 
 ## Где модель НЕ шарится
 
-`services/export` и `server/workspace-service` строят пайплайн на один воркспейс за запуск - общая модель дороже выигрыша. `services/activity`/`services/notifications` берут готовые `hierarchy`/`modelDb` из `client.getModel()`, а `ModelMiddleware.init` строит модель повторно из `txAdapter` для того же воркспейса - известное дублирование, не устранено.
+`services/export` и `server/workspace-service` строят пайплайн на один воркспейс за запуск - общая модель дороже выигрыша. `services/notifications` берёт готовые `hierarchy`/`modelDb` из `client.getModel()`, а `ModelMiddleware.init` строит модель повторно из `txAdapter` для того же воркспейса - известное дублирование, не устранено.
+
+`services/activity` переведён: `Worker` строит и замораживает `sysHierarchy`/`sysModel` один раз (`SHARED_SYSTEM_MODEL=false` - без шаринга), `Workspace.create` делает `new Hierarchy(shared)` + `new ModelDb(hierarchy, shared)` и `ModelMiddleware.create(sysModel, undefined, true)`. `getModel` с транзактора не вызывается, `RestClient` только для записи (`tx(txApply)`). Код activity общую модель не мутирует (проверено: `findAllSync` в activity.ts только читает, мутируются лишь собственные tx).
 
 ## Тесты общей модели
 
 `core/src/__tests__/sharedModel.test.ts` + `sharedModelEdge.test.ts` (харнесс на синтетических сценариях: атрибуты, классификаторы, документы, операторы `$push`/`$pull`/`$inc`/dotted `$set`, каждый сверяет снапшот shared-модели, соседнего и свежего воркспейса, плюс что все доки остались frozen). `models/all/src/__tests__/sharedModel.test.ts` - те же сценарии на реальной модели. `models/all/src/__tests__/model.test.ts` - эквивалентность каждого read-метода standalone/overlay по всем классам модели. `models/all/src/__tests__/model.bench.ts` - бенчи read-методов, standalone против оверлея.
+
+Хеш модели в `ModelMiddleware.setModel` (без filter) = цепочка sha1 по всей системной модели (~90% CPU init воркспейса, 3688+ tx); хеш префикса `systemTx` кэшируется в `WeakMap` по ссылке массива (один массив на процесс в pipeline/activity/notifications), результат бит-в-бит прежний. С filter - считается целиком.
+
+activity и notifications передают `ModelMiddleware.create(..., false)` (`computeHash`): loadModel/`context.lastHash` у них никто не читает, хеш не считается, `lastHash` остаётся `''`.

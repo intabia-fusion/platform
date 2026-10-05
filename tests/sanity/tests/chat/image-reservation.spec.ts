@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-import { expect, test } from '../fixtures'
+import { closeSharedPage, enterWorkspace, expect, sharedPageTest as test } from '../fixtures'
 import path from 'path'
 
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
-import { generateTestData, loginByToken } from '../utils'
+import { generateTestData } from '../utils'
 
 test.describe('Chat image container space reservation tests', () => {
   // Ensure deterministic DPR = 1
@@ -26,6 +26,8 @@ test.describe('Chat image container space reservation tests', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
+
+  test.afterAll(closeSharedPage)
 
   test.beforeEach(async ({ page, sharedWorkspace }, testInfo) => {
     const shared = await sharedWorkspace()
@@ -37,7 +39,7 @@ test.describe('Chat image container space reservation tests', () => {
     channelPage = new ChannelPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await loginByToken(page, shared.token, shared.ws, 'chunter')
+    await enterWorkspace(page, shared, 'chunter')
   })
 
   const testImages = [

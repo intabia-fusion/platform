@@ -67,7 +67,9 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     readonly systemTx: Tx[],
     readonly filter?: (h: Hierarchy, model: Tx[]) => Tx[],
     // System model already applied to a shared parent of this workspace's model.
-    readonly systemModelShared: boolean = false
+    readonly systemModelShared: boolean = false,
+    // false: nobody loads the model from this pipeline, so lastHash stays ''.
+    readonly computeHash: boolean = true
   ) {
     super(context, next)
   }
@@ -79,9 +81,10 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     next: Middleware | undefined,
     systemTx: Tx[],
     filter?: (h: Hierarchy, model: Tx[]) => Tx[],
-    systemModelShared: boolean = false
+    systemModelShared: boolean = false,
+    computeHash: boolean = true
   ): Promise<Middleware> {
-    const middleware = new ModelMiddleware(context, next, systemTx, filter, systemModelShared)
+    const middleware = new ModelMiddleware(context, next, systemTx, filter, systemModelShared, computeHash)
     await middleware.init(ctx)
     return middleware
   }
@@ -89,10 +92,11 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
   static create (
     tx: Tx[],
     filter?: (h: Hierarchy, model: Tx[]) => Tx[],
-    systemModelShared: boolean = false
+    systemModelShared: boolean = false,
+    computeHash: boolean = true
   ): MiddlewareCreator {
     return (ctx, context, next) => {
-      return this.doCreate(ctx, context, next, tx, filter, systemModelShared)
+      return this.doCreate(ctx, context, next, tx, filter, systemModelShared, computeHash)
     }
   }
 
@@ -196,7 +200,7 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     // addTxes feeds the hierarchy itself, so an extra pass would just deserialize everything twice.
     this.context.modelDb.addTxes(ctx, this.filter !== undefined ? fmodel : toApply, true)
 
-    this.setModel(fmodel)
+    if (this.computeHash) this.setModel(fmodel, this.filter === undefined)
     // Only once init cannot fail any more: a middleware that threw never reaches the pipeline,
     // so nothing would ever close it and untrack it again.
     ModelMiddleware.track(this)
@@ -223,6 +227,7 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
         }
       }
     }
+    if (!this.computeHash) return
     const h = crypto.createHash('sha1')
     h.update(this.lastHash)
     h.update(JSON.stringify(tx))
@@ -235,16 +240,30 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     this.context.lastHash = this.lastHash
   }
 
-  private setModel (model: Tx[]): void {
-    let last = ''
-    model.map((it, index) => {
-      const h = crypto.createHash('sha1')
-      h.update(last)
-      h.update(JSON.stringify(it))
-      last = h.digest('hex')
-      return [last, index]
-    })
-    this.setLastHash(last)
+  // The hash chain over the system model is the same for every workspace: computed once per array.
+  private static readonly systemHashes = new WeakMap<Tx[], string>()
+
+  private static chain (last: string, txes: Tx[]): string {
+    for (const it of txes) {
+      last = crypto.createHash('sha1').update(last).update(JSON.stringify(it)).digest('hex')
+    }
+    return last
+  }
+
+  // `model` starts with systemTx when startsWithSystem (no filter): its prefix hash is reused.
+  private setModel (model: Tx[], startsWithSystem: boolean = false): void {
+    if (!startsWithSystem) {
+      this.setLastHash(ModelMiddleware.chain('', model))
+      return
+    }
+    let prefix = ModelMiddleware.systemHashes.get(this.systemTx)
+    if (prefix === undefined) {
+      // The cached prefix is valid only while the array is unchanged: a later push must throw.
+      Object.freeze(this.systemTx)
+      prefix = ModelMiddleware.chain('', this.systemTx)
+      ModelMiddleware.systemHashes.set(this.systemTx, prefix)
+    }
+    this.setLastHash(ModelMiddleware.chain(prefix, model.slice(this.systemTx.length)))
   }
 
   async loadModel (ctx: MeasureContext, lastModelTx: Timestamp, hash?: string): Promise<Tx[] | LoadModelResponse> {

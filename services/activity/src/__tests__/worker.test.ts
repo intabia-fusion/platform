@@ -27,6 +27,7 @@ import { Worker } from '../worker'
 let mockModel = new Set<string>()
 let mockGate: Promise<void> = Promise.resolve()
 const mockCreated: FakeWorkspace[] = []
+const mockShared: any[][] = []
 
 class FakeWorkspace {
   closed = false
@@ -48,7 +49,7 @@ jest.mock('../utils', () => ({
   getTransactorApiEndpoint: () => 'http://transactor'
 }))
 jest.mock('@hcengineering/api-client', () => ({
-  createRestClient: () => ({ getModel: async () => ({ model: {}, hierarchy: {} }) })
+  createRestClient: () => ({})
 }))
 jest.mock('@hcengineering/server-storage', () => ({
   buildStorageFromConfig: () => ({}),
@@ -58,7 +59,8 @@ jest.mock('@hcengineering/server-token', () => ({ generateToken: () => 'token' }
 jest.mock('../workspace', () => ({
   __esModule: true,
   default: {
-    create: async () => {
+    create: async (...args: any[]) => {
+      mockShared.push([args[2], args[3]])
       // Snapshot before the gate: the model is read from the transactor before the load finishes.
       const classes = new Set(mockModel)
       await mockGate
@@ -95,6 +97,7 @@ describe('Worker after workspace restore', () => {
     mockModel = new Set([Issue])
     mockGate = Promise.resolve()
     mockCreated.length = 0
+    mockShared.length = 0
     worker = new Worker(ctx, [])
   })
 
@@ -135,5 +138,15 @@ describe('Worker after workspace restore', () => {
 
     expect(mockCreated).toHaveLength(2)
     expect(mockCreated[0].closed).toBe(true)
+  })
+
+  it('gives every workspace the same system model', async () => {
+    await worker.tx(ctx, 'ws1' as WorkspaceUuid, createTx(Issue))
+    await worker.tx(ctx, 'ws2' as WorkspaceUuid, createTx(Issue))
+
+    expect(mockShared).toHaveLength(2)
+    expect(mockShared[0][0]).toBeDefined()
+    expect(mockShared[0][0]).toBe(mockShared[1][0])
+    expect(mockShared[0][1]).toBe(mockShared[1][1])
   })
 })

@@ -43,24 +43,25 @@ export class SpotlightPopup extends CommonPage {
       await this.input().fill(search, { timeout: 5000 })
       await expect(this.input()).toHaveValue(search, { timeout: 3000 })
     })
-    await this.page.waitForTimeout(500)
   }
 
   // Indexing is async and the popup queries only when the input changes, so waiting on the
   // rendered result set never refreshes it - retype the query until the index catches up.
   async checkSearchResult (search: string, count: number, timeoutMs: number = 60000): Promise<void> {
+    const query = await this.input().inputValue()
     if (count === 0) {
+      // Absence passes at once, before the query was answered; there is no signal for "answered",
+      // so a typed query gets a fixed settle. Positive counts below retry on their own.
+      if (query !== '') await this.page.waitForTimeout(500)
       await expect(this.searchResult(search)).toHaveCount(0, { timeout: 15000 })
       return
     }
-    const query = await this.input().inputValue()
     await expect(async () => {
       await expect(this.searchResult(search))
         .toHaveCount(count, { timeout: 5000 })
         .catch(async (err) => {
           await this.input().fill('')
           await this.input().fill(query)
-          await this.page.waitForTimeout(500)
           throw err
         })
     }).toPass({ intervals: [1000, 2000, 3000], timeout: timeoutMs })

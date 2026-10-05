@@ -2,7 +2,7 @@ import { expect, test } from '../fixtures'
 import { generateId, PlatformSetting, PlatformURI, setTestOptions } from '../utils'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { NewIssue } from '../model/tracker/types'
-import { prepareNewIssueWithOpenStep } from './common-steps'
+import { prepareNewIssueWithOpenByApiStep } from './common-steps'
 import { PublicLinkPopup } from '../model/tracker/public-link-popup'
 
 test.describe('Tracker public link issues tests', () => {
@@ -22,7 +22,7 @@ test.describe('Tracker public link issues tests', () => {
         await page.goto(`${PlatformURI}/workbench/sanity-ws`)
         await setTestOptions(page)
 
-        await prepareNewIssueWithOpenStep(page, publicLinkIssue)
+        await prepareNewIssueWithOpenByApiStep(page, publicLinkIssue)
 
         const issuesDetailsPage = new IssuesDetailsPage(page)
         await issuesDetailsPage.moreActionOnIssue('Public link')
@@ -76,7 +76,7 @@ test.describe('Tracker public link issues tests', () => {
         await page.goto(`${PlatformURI}/workbench/sanity-ws`)
         await setTestOptions(page)
 
-        await prepareNewIssueWithOpenStep(page, publicLinkIssue)
+        await prepareNewIssueWithOpenByApiStep(page, publicLinkIssue)
 
         const issuesDetailsPage = new IssuesDetailsPage(page)
         await issuesDetailsPage.moreActionOnIssue('Public link')

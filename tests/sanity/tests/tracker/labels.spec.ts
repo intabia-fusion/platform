@@ -7,7 +7,7 @@ import { NewProjectPage } from '../model/tracker/new-project-page'
 import { SettingsPage } from '../model/settings-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewIssue, NewProject } from '../model/tracker/types'
-import { prepareNewIssueWithOpenStep } from './common-steps'
+import { prepareNewIssueWithOpenByApiStep, prepareNewIssueWithOpenStep } from './common-steps'
 import { generateProjectId } from './tracker.utils'
 
 test.use({
@@ -34,7 +34,7 @@ test.describe('Tracker labels tests', () => {
       projectName: 'Default'
     }
 
-    await prepareNewIssueWithOpenStep(page, newIssue)
+    await prepareNewIssueWithOpenByApiStep(page, newIssue)
     await issuesDetailsPage.editIssue({ createLabel: true, labels: label })
     await issuesDetailsPage.checkIssue({ ...newIssue, labels: label })
 
@@ -53,7 +53,7 @@ test.describe('Tracker labels tests', () => {
     await labelsPage.openLabels()
     await labelsPage.createLabel(label)
 
-    await prepareNewIssueWithOpenStep(page, newIssue)
+    await prepareNewIssueWithOpenByApiStep(page, newIssue)
     await issuesDetailsPage.addExistingLabel(label)
     await issuesDetailsPage.checkIssue({ ...newIssue, labels: label })
   })

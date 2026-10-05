@@ -59,7 +59,7 @@ jest.mock('../utils/utils', () => ({
   MAX_NOTIFICATION_TYPE_PRIORITY: 1000
 }))
 jest.mock('@hcengineering/api-client', () => ({
-  createRestClient: () => ({ getModel: async () => ({ model: {}, hierarchy: {} }) })
+  createRestClient: () => ({})
 }))
 jest.mock('@hcengineering/server-storage', () => ({
   buildStorageFromConfig: () => ({}),
