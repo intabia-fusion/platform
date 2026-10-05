@@ -23,6 +23,7 @@ import core, {
   type DomainResult,
   type FindOptions,
   type FindResult,
+  type Hierarchy,
   type MeasureContext,
   type ModelDb,
   type OperationDomain,
@@ -205,7 +206,7 @@ export class SessionDataImpl implements SessionData {
     >,
     readonly service: string,
     readonly grant?: PermissionsGrant,
-    readonly apiKey?: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[] },
+    readonly apiKey?: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[], grantsSpaces: boolean },
     public opsApi?: boolean
   ) {
     this._removedMap = _removedMap
@@ -261,6 +262,17 @@ export function loadBrandingMap (brandingPath?: string): BrandingMap {
   }
 
   return brandings
+}
+
+// Space classes a workspace API key may be granted without membership - the same list the key's space
+// picker offers (setting-resources). DMs and PersonSpaces stay member-only even when listed.
+const apiKeyGrantableSpaceClasses = ['tracker:class:Project', 'chunter:class:Channel', 'document:class:Teamspace']
+
+export function getApiKeyGrantableClasses (hierarchy: Hierarchy): Array<Ref<Class<Doc>>> {
+  return apiKeyGrantableSpaceClasses
+    .map((it) => it as Ref<Class<Doc>>)
+    .filter((it) => hierarchy.hasClass(it))
+    .flatMap((it) => hierarchy.getDescendants(it))
 }
 
 export function wrapPipeline (

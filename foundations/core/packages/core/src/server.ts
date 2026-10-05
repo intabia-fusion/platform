@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -76,10 +77,12 @@ export interface SessionData {
 
   // API key grant from the token (extra.apiops/apispaces/apiall), undefined for a user session.
   // opsOnly: named operations are checkable only on /api/v1/ops, so raw CUD is refused there.
+  // grantsSpaces: a workspace key (issued by an Owner) reads and writes its spaces without being a member.
   apiKey?: {
     canWrite: boolean
     opsOnly: boolean
     spaces: Ref<Space>[]
+    grantsSpaces: boolean
   }
   // Set by the /api/v1/ops route on the session data it writes under.
   opsApi?: boolean

@@ -38,6 +38,7 @@ export interface KeyGrant {
   socialId: PersonId
   ops: string[]
   spaces: Ref<Space>[]
+  personal?: boolean
 }
 
 /** Same shape `loginWithApiKey` issues - keep in step. Issued here so the key itself never enters the queue. */
@@ -46,7 +47,8 @@ function issueKeyToken (grant: KeyGrant, workspace: WorkspaceUuid): string {
     apikey: grant.keyId,
     apisid: grant.socialId,
     ...(grant.ops.length > 0 ? { apiops: grant.ops.join(',') } : {}),
-    ...(grant.spaces.length > 0 ? { apispaces: grant.spaces.join(',') } : {})
+    ...(grant.spaces.length > 0 ? { apispaces: grant.spaces.join(',') } : {}),
+    ...(grant.personal === false ? { apiws: '1' } : {})
   })
 }
 

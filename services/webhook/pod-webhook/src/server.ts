@@ -351,6 +351,7 @@ async function handleIngest (deps: IngestDeps, req: Request, res: Response): Pro
     action,
     ops: check.ops,
     spaces: check.spaces,
+    personal: check.personal,
     payload: body,
     receivedAt: Date.now(),
     attempt: 0
@@ -469,6 +470,7 @@ async function queueRuleJobs (
       action: job.rule.action,
       ops: check.ops,
       spaces: check.spaces,
+      personal: check.personal,
       payload: job.payload,
       receivedAt: Date.now(),
       attempt: 0,

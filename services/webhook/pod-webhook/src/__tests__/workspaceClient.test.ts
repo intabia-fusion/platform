@@ -84,6 +84,19 @@ describe('getTransactorTarget', () => {
     expect(decodeToken(used[0][0]).extra?.apikey).toBeUndefined()
   })
 
+  test('only a workspace key token carries apiws, a personal or legacy job does not', async () => {
+    ;(createRestClient as jest.Mock).mockReturnValue({ ensurePerson: jest.fn().mockResolvedValue({}) })
+
+    const ctx = newCtx()
+    const workspace = '77777777-7777-4777-8777-777777777777' as any
+    const tokenOf = async (overrides: Partial<KeyGrant>): Promise<string> =>
+      (await getTransactorTarget(ctx, config, workspace, grant(overrides))).token
+
+    expect(decodeToken(await tokenOf({ personal: false })).extra?.apiws).toBe('1')
+    expect(decodeToken(await tokenOf({ personal: true })).extra?.apiws).toBeUndefined()
+    expect(decodeToken(await tokenOf({})).extra?.apiws).toBeUndefined()
+  })
+
   test('a failed ensurePerson call does not fail target resolution', async () => {
     const ensurePerson = jest.fn().mockRejectedValue(new Error('forbidden'))
     ;(createRestClient as jest.Mock).mockReturnValue({ ensurePerson })

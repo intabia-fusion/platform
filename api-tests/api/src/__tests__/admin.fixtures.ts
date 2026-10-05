@@ -93,13 +93,16 @@ export interface MailMessage {
 }
 
 /** Waits for a message to the given address, newest first. Returns undefined if none arrives. */
-export async function waitForMail (to: string, timeoutMs = 30000): Promise<MailMessage | undefined> {
+export async function waitForMail (to: string, timeoutMs = 30000, subject?: string): Promise<MailMessage | undefined> {
   const until = Date.now() + timeoutMs
   while (Date.now() < until) {
     const res = await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent('to:' + to)}&limit=20`)
     if (res.ok) {
       const body = await res.json()
-      const found = (body.messages ?? []).find((m: MailMessage) => m.To?.some((t) => t.Address === to))
+      const found = (body.messages ?? []).find(
+        (m: MailMessage) =>
+          m.To?.some((t) => t.Address === to) && (subject === undefined || m.Subject.includes(subject))
+      )
       if (found !== undefined) return found
     }
     await new Promise((resolve) => setTimeout(resolve, 1000))

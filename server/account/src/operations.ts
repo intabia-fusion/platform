@@ -3505,6 +3505,7 @@ async function sendApiKeyCreatedEmail (
 
     const lang = branding?.defaultLanguage
     const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
       ws: sanitizeEmail(ws.name !== '' ? ws.name : ws.url),
       name: sanitizeEmail(secret.name),
       masked: secret.masked,
@@ -3539,6 +3540,7 @@ async function sendApiKeyRevokedEmail (
 
     const lang = branding?.defaultLanguage
     const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
       ws: sanitizeEmail(ws.name !== '' ? ws.name : ws.url),
       name: sanitizeEmail(secret.name),
       masked: secret.masked,
@@ -3813,6 +3815,9 @@ export async function loginWithApiKey (
   }
   if (secret.spaces.length > 0) {
     extra.apispaces = secret.spaces.join(',')
+  }
+  if (secret.personal !== true) {
+    extra.apiws = '1'
   }
 
   // Interim token carries the key's identity + permissions + workspace; selectWorkspace re-signs

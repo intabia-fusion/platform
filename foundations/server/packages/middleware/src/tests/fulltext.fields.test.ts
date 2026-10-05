@@ -200,11 +200,18 @@ describe('FullTextMiddleware fields', () => {
   })
 
   it('does not forward `fields` to the index, which knows nothing about it', async () => {
-    indexResult = { docs: [] }
-    const mw = new FullTextMiddleware(pipelineContext, next, 'http://fulltext', 'token')
-    await mw.searchFulltext(ctx, { query: 'q' }, { limit: 10, fields: ['message'] }).catch(() => {})
+    // A real fetch to http://fulltext waits on DNS, which alone can outlast the test timeout.
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({ json: async () => ({ docs: [] }) } as unknown as Response)
+    try {
+      const mw = new FullTextMiddleware(pipelineContext, next, 'http://fulltext', 'token')
+      await mw.searchFulltext(ctx, { query: 'q' }, { limit: 10, fields: ['message'] })
 
-    const forwarded = (next.searchFulltext as jest.Mock).mock.calls[0]?.[2]
-    if (forwarded !== undefined) expect(forwarded.fields).toBeUndefined()
+      const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+      expect(body.options).toEqual({ limit: 10 })
+    } finally {
+      fetchMock.mockRestore()
+    }
   })
 })

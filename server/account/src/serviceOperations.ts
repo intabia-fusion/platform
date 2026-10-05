@@ -1983,6 +1983,7 @@ export async function verifyApiKey (
     spaces: secret.spaces,
     // Independent of ops/unrestricted - a key with full rights still needs `incoming` set explicitly.
     incoming: secret.incoming === true,
+    personal: secret.personal === true,
     createdBy: secret.createdBy
   }
 }
