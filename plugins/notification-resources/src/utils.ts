@@ -40,12 +40,40 @@ import view, { decodeObjectURI, encodeObjectURI, type LinkIdProvider } from '@hc
 import { getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import workbench, { type Application, type LocationData } from '@hcengineering/workbench'
 
+// Chat spaces go by their link id alone, as in the chat (`<name>-<id>`); other docs as `<id>|<class>`.
+export function encodeInboxURI (id: string, _class: Ref<Class<Doc>>): string {
+  const hierarchy = getClient().getHierarchy()
+  const isChatSpace = hierarchy.hasClass(_class) && hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+  return isChatSpace ? id : encodeObjectURI(id, _class)
+}
+
+// Old `<id>|<class>` links keep resolving. A class-less one is a chat space: the concrete class
+// comes with the context or the doc (`resolveInboxObjectClass`).
+export function decodeInboxURI (value: string | undefined): [Ref<Doc>, Ref<Class<Doc>>] {
+  const decoded = decodeURIComponent(value ?? '')
+  if (decoded === '' || decoded.includes('|')) return decodeObjectURI(decoded)
+  return [decoded as Ref<Doc>, chunter.class.ChunterSpace]
+}
+
+// The panel is a mixin of the concrete class, which a class-less chat link does not carry.
+export async function resolveInboxObjectClass (
+  _id: Ref<Doc>,
+  _class: Ref<Class<Doc>>,
+  context?: DocNotifyContext
+): Promise<Ref<Class<Doc>>> {
+  if (_class !== chunter.class.ChunterSpace) return _class
+  if (context?.objectId === _id) return context.objectClass
+  if (context?.parentObjectId === _id && context.parentObjectClass !== undefined) return context.parentObjectClass
+  const doc = await getClient().findOne(_class, { _id }, { projection: { _id: 1, _class: 1 } })
+  return doc?._class ?? _class
+}
+
 export async function resolveLocation (loc: Location): Promise<ResolvedLocation | undefined> {
   if (loc.path[2] !== notificationId) {
     return undefined
   }
 
-  const [_id, _class] = decodeObjectURI(loc.path[3])
+  const [_id, _class] = decodeInboxURI(loc.path[3])
 
   if (_id === undefined || _class === undefined) {
     return {
@@ -80,12 +108,12 @@ async function generateLocation (
   if (thread === undefined) {
     return {
       loc: {
-        path: [appComponent, workspace, notificationId, encodeObjectURI(_id, _class)],
+        path: [appComponent, workspace, notificationId, encodeInboxURI(_id, _class)],
         fragment: undefined,
         query: { ...loc.query }
       },
       defaultLocation: {
-        path: [appComponent, workspace, notificationId, encodeObjectURI(_id, _class)],
+        path: [appComponent, workspace, notificationId, encodeInboxURI(_id, _class)],
         fragment: undefined,
         query: { ...loc.query }
       }
@@ -94,12 +122,12 @@ async function generateLocation (
 
   return {
     loc: {
-      path: [appComponent, workspace, notificationId, encodeObjectURI(_id, _class), threadId as string],
+      path: [appComponent, workspace, notificationId, encodeInboxURI(_id, _class), threadId as string],
       fragment: undefined,
       query: { ...loc.query }
     },
     defaultLocation: {
-      path: [appComponent, workspace, notificationId, encodeObjectURI(_id, _class), threadId as string],
+      path: [appComponent, workspace, notificationId, encodeInboxURI(_id, _class), threadId as string],
       fragment: undefined,
       query: { ...loc.query }
     }
@@ -128,7 +156,7 @@ async function navigateToInboxDoc (
     return
   }
 
-  loc.path[3] = encodeObjectURI(_id, _class)
+  loc.path[3] = encodeInboxURI(_id, _class)
 
   if (thread !== undefined) {
     loc.path[4] = thread
@@ -142,6 +170,8 @@ async function navigateToInboxDoc (
   }
 
   loc.query = { ...loc.query, context, message: message ?? null }
+  // A key without a value still shows in the link, as a bare `message`.
+  if (message === undefined) delete loc.query.message
   messageInFocus.set(message)
   Analytics.handleEvent('inbox.ReadDoc', { objectId: _id, objectClass: _class, thread, message })
   navigate(loc)
@@ -152,8 +182,8 @@ async function navigateToInboxDoc (
       if (token !== navigateToInboxDocToken) return
       if (resolvedId !== _id) {
         const currentLoc = getCurrentLocation()
-        if (currentLoc.path[2] === notificationId && currentLoc.path[3] === encodeObjectURI(_id, _class)) {
-          currentLoc.path[3] = encodeObjectURI(resolvedId, _class)
+        if (currentLoc.path[2] === notificationId && currentLoc.path[3] === encodeInboxURI(_id, _class)) {
+          currentLoc.path[3] = encodeInboxURI(resolvedId, _class)
           navigate(currentLoc, true)
         }
       }
@@ -263,7 +293,7 @@ export async function locationDataResolver (loc: Location): Promise<LocationData
   const client = getClient()
 
   try {
-    const [id, _class] = decodeObjectURI(loc.path[3])
+    const [id, _class] = decodeInboxURI(loc.path[3])
     const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
     const _id: Ref<Doc> | undefined = await parseLinkId(linkProviders, id, _class)
 

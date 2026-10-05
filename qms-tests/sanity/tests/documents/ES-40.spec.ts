@@ -1,6 +1,7 @@
 import { test } from '@playwright/test'
 import {
   attachScreenshot,
+  generateId,
   getNewPage,
   HomepageURI,
   PlatformSettingSecond,
@@ -29,7 +30,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
     )
     await allure.tms('TESTS-391', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-391')
     await test.step('2. check if non member can see space', async () => {
-      const folderName = faker.word.words(1)
+      const folderName = `${faker.word.words(1)}-${generateId(6)}`
       const documentContentPage = new DocumentContentPage(page)
       await documentContentPage.clickAddFolderButton()
       await documentContentPage.fillDocumentSpaceFormManager(folderName)

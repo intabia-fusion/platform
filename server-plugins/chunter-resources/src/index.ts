@@ -15,7 +15,7 @@
 //
 
 import activity, { ActivityMessage } from '@hcengineering/activity'
-import chunter, { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
+import chunter, { Channel, ChatMessage, ThreadMessage } from '@hcengineering/chunter'
 import contact, { formatName, type Person } from '@hcengineering/contact'
 import core, {
   Class,
@@ -38,10 +38,18 @@ import core, {
   getClassCollaborators,
   AccountUuid,
   RateLimiter,
+  generateId,
+  combineAttributes,
   SortingOrder,
+  type Space,
   WorkspaceUuid
 } from '@hcengineering/core'
-import notification, { DocNotifyContext, isUnreadMessageChunk, ReadState } from '@hcengineering/notification'
+import notification, {
+  DocNotifyContext,
+  isUnreadMessageChunk,
+  ReadPosition,
+  ReadState
+} from '@hcengineering/notification'
 import {
   getAccountBySocialId,
   getAddCollaboratorsTxes,
@@ -484,6 +492,41 @@ async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control
   return res
 }
 
+export async function OnChannelJoin (txes: TxUpdateDoc<Channel>[], control: TriggerControl): Promise<Tx[]> {
+  const res: Tx[] = []
+  for (const tx of txes) {
+    const accounts: AccountUuid[] = combineAttributes([tx.operations], 'members', '$push', '$each')
+    if (accounts.length === 0) continue
+
+    const state = (
+      await control.findAll(control.ctx, notification.class.ReadState, { attachedTo: tx.objectId }, { limit: 1 })
+    )[0]
+
+    const timestamp = tx.modifiedOn - 1
+    const operations: Record<AccountUuid, ReadPosition> = {}
+    for (const account of accounts) {
+      if ((state?.[account]?.timestamp ?? 0) >= timestamp) continue
+      // Only the timestamp is compared, the id is a placeholder: same as the client's forced read
+      operations[account] = { messageId: generateId<ActivityMessage>(), timestamp }
+    }
+    if (Object.keys(operations).length === 0) continue
+
+    if (state === undefined) {
+      res.push(
+        control.txFactory.createTxCreateDoc(notification.class.ReadState, tx.objectId as Ref<Space>, {
+          attachedTo: tx.objectId,
+          attachedToClass: tx.objectClass,
+          collection: 'readStates',
+          ...operations
+        })
+      )
+      continue
+    }
+    res.push(control.txFactory.createTxUpdateDoc(state._class, state.space, state._id, operations))
+  }
+  return res
+}
+
 async function OnPersonNameChanged (txes: TxUpdateDoc<Person>[], control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
   for (const tx of txes) {
@@ -513,7 +556,8 @@ export default async () => ({
     OnUserStatus,
     OnCollaboratorAdded,
     OnCollaboratorRemoved,
-    OnPersonNameChanged
+    OnPersonNameChanged,
+    OnChannelJoin
   },
   function: {
     CommentRemove,

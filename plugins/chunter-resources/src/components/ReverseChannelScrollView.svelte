@@ -29,6 +29,7 @@
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { BlankView, ModernButton, Scroller, Loading, isAppFocusedStore } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
+  import { fade } from 'svelte/transition'
   import type { ChatMessage } from '@hcengineering/chunter'
 
   import type { ChatViewport } from '../chatViewport'
@@ -57,6 +58,8 @@
   export let withInput: boolean = true
   export let readonly: boolean = false
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
+  export let onReady: (() => void) | undefined = undefined
+  export let fadeOverlay = true
 
   const minMsgHeightRem = 2
   const loadMoreThreshold = 200
@@ -176,6 +179,21 @@
   const reader = {}
   $: isReadingTail = !freeze && !isPageHidden && isScrollInitialized && isScrollAtBottom && $isTailLoadedStore
   $: inboxClient.setDocReading(object._id, isReadingTail, reader)
+
+  // What is on screen is read once when the view stops reading: when it is left, or frozen (a channel
+  // under its thread, one being replaced by the next view and still fading out), and nothing after.
+  let isLeft = false
+  function leave (): void {
+    if (isLeft) return
+    isLeft = true
+    inboxClient.setDocReading(object._id, false, reader)
+    if (!isPageHidden && isScrollInitialized) {
+      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
+    }
+    flushReadQueue()
+  }
+  $: if (freeze) leave()
+  $: if (!freeze) isLeft = false
 
   $: void inboxClient.getReadState(object._id).then((it) => {
     readState = it
@@ -351,6 +369,8 @@
       isScrollInitialized = true
     } else if (separatorIndex === -1) {
       await wait()
+      // A fresh view is at the bottom already, a reload (Latest messages) keeps the old position.
+      scrollToBottom()
       isScrollInitialized = true
       shouldScrollToNew = true
       isScrollAtBottom = true
@@ -688,11 +708,7 @@
   })
 
   onDestroy(() => {
-    inboxClient.setDocReading(object._id, false, reader)
-    if (!isFreeze() && isScrollInitialized) {
-      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
-    }
-    flushReadQueue()
+    leave()
     chatReadMessagesStore.update(() => new Set())
     if (observer !== undefined) {
       observer.disconnect()
@@ -744,11 +760,17 @@
   }
 
   $: loadingOverlay = $isLoadingStore || !isReadStateLoaded || !isScrollInitialized
+
+  let isReadyReported = false
+  $: if (!loadingOverlay && !isReadyReported) {
+    isReadyReported = true
+    onReady?.()
+  }
 </script>
 
 <div class="flex-col relative" class:h-full={fullHeight}>
   {#if loadingOverlay}
-    <div class="overlay">
+    <div class="overlay" out:fade={{ duration: fadeOverlay ? 100 : 0 }}>
       <Loading />
     </div>
   {/if}

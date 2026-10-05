@@ -37,6 +37,7 @@
   import { onDestroy, tick } from 'svelte'
 
   import ChannelComponent from './Channel.svelte'
+  import FadeSwap from './FadeSwap.svelte'
   import ChannelHeader from './ChannelHeader.svelte'
   import DocAside from './chat/DocAside.svelte'
   import chunter from '../plugin'
@@ -79,9 +80,9 @@
     navigate(loc)
   }
 
-  $: _readonly = hierarchy.isDerived(object._class, core.class.Space)
-    ? readonly || (object as Space).archived
-    : readonly
+  function isReadonly (object: Doc, readonly: boolean): boolean {
+    return hierarchy.isDerived(object._class, core.class.Space) ? readonly || (object as Space).archived : readonly
+  }
   $: showJoinOverlay = shouldShowJoinOverlay(object)
   $: isDocChat = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
   $: withAside =
@@ -264,8 +265,8 @@
 
     <div class="popupPanel-body" class:asideShown={withAside && isAsideShown}>
       <div class="popupPanel-body__main searchHost">
-        {#key object._id}
-          {#if !_readonly && shouldShowJoinOverlay(object)}
+        <FadeSwap key={object._id} item={object} let:item let:current let:revealed let:onReady>
+          {#if !isReadonly(item, readonly) && shouldShowJoinOverlay(item)}
             <div class="body h-full w-full clear-mins flex-center">
               <div class="joinOverlay">
                 <div class="an-element__label header">
@@ -279,9 +280,18 @@
               </div>
             </div>
           {:else}
-            <ChannelComponent readonly={_readonly} {object} autofocus={autofocus && !searchOpened} />
+            <!-- The outgoing channel neither follows the location (it would jump to a message it lacks) nor reads. -->
+            <ChannelComponent
+              readonly={isReadonly(item, readonly)}
+              object={item}
+              syncLocation={current}
+              freeze={current !== true}
+              autofocus={autofocus && !searchOpened && current}
+              fadeOverlay={revealed}
+              {onReady}
+            />
           {/if}
-        {/key}
+        </FadeSwap>
         {#if searchOpened}
           <div class="searchOverlay" class:hidden={searchDismissed}>
             <SearchPanel

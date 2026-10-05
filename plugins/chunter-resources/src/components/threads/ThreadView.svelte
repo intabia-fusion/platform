@@ -28,7 +28,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { ActivityMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
-  import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
+  import { messageInFocus } from '@hcengineering/activity-resources'
   import contact from '@hcengineering/contact'
   import attachment from '@hcengineering/attachment'
 
@@ -36,6 +36,7 @@
   import { getObjectIcon, getChannelName } from '../../utils'
   import { threadMessagesStore } from '../../stores'
   import ThreadContent from './ThreadContent.svelte'
+  import FadeSwap from '../FadeSwap.svelte'
 
   export let _id: Ref<ActivityMessage>
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
@@ -96,6 +97,10 @@
       channelName = res
     })
   )
+
+  // Kept while the next thread's message is on its way: dropping it would unmount the fade between them.
+  let shownMessage: ActivityMessage | undefined = message
+  $: if (message !== undefined) shownMessage = message
 
   let breadcrumbs: BreadcrumbItem[] = []
   $: breadcrumbs = showHeader ? getBreadcrumbsItems(channel, channelName) : []
@@ -160,10 +165,20 @@
   </Header>
 {/if}
 
-{#if message}
-  {#key _id}
-    <ThreadContent bind:selectedMessageId {message} {autofocus} {readonly} {onReply} />
-  {/key}
+{#if shownMessage !== undefined}
+  <FadeSwap key={shownMessage._id} item={shownMessage} let:item let:current let:revealed let:onReady>
+    <!-- The outgoing thread neither follows the selection (it would jump to a message it lacks) nor reads. -->
+    <ThreadContent
+      selectedMessageId={current === true ? selectedMessageId : undefined}
+      message={item}
+      autofocus={autofocus && current}
+      {readonly}
+      {onReply}
+      fadeOverlay={revealed}
+      freeze={current !== true}
+      {onReady}
+    />
+  </FadeSwap>
 {:else if isLoading}
   <Loading />
 {/if}

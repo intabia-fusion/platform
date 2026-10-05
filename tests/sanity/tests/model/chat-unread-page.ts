@@ -21,13 +21,22 @@ export class ChatUnreadPage extends CommonPage {
   readonly section = (id: string): Locator => this.page.locator(`[data-testid="section-${id}"]`)
   readonly sectionCounter = (id: string): Locator => this.section(id).locator('.hulyNavGroup-header .notifyMarker')
 
+  // A switched channel or thread fades out over the next one for a moment, inert (FadeSwap.svelte): its
+  // messages and separator are still in the DOM, only the live ones count.
+  private readonly live = (): Locator => this.page.locator(':not([inert] *)')
+
   // The channel view only: a thread in the sidebar has a separator of its own.
   readonly newSeparator = (): Locator =>
-    this.page.locator('.hulyComponent:not(#sidebar *) .label', { hasText: /^New$/ })
+    this.page.locator('.hulyComponent:not(#sidebar *) .label:not([inert] *)', { hasText: /^New$/ })
 
-  readonly newSeparatorInSidebar = (): Locator => this.page.locator('#sidebar .label', { hasText: /^New$/ })
-  readonly latestMessagesButton = (): Locator => this.page.getByRole('button', { name: 'Latest messages' })
-  readonly message = (text: string): Locator => this.page.locator('.hulyComponent .activityMessage', { hasText: text })
+  readonly newSeparatorInSidebar = (): Locator =>
+    this.page.locator('#sidebar .label:not([inert] *)', { hasText: /^New$/ })
+
+  readonly latestMessagesButton = (): Locator =>
+    this.page.getByRole('button', { name: 'Latest messages' }).and(this.live())
+
+  readonly message = (text: string): Locator =>
+    this.page.locator('.hulyComponent .activityMessage:not([inert] *)', { hasText: text })
 
   /** The sort of the Threads list: a dropdown in its header, remembered per browser. */
   async selectThreadsSort (label: 'By last reply' | 'By creation date'): Promise<void> {

@@ -1010,7 +1010,7 @@ test.describe('QMS. Documents tests', () => {
   })
 
   test('TESTS-352. Create a document', async ({ page }) => {
-    const folderName = faker.word.words(1)
+    const folderName = `${faker.word.words(1)}-${generateId(6)}`
     const documentTitle = faker.word.words(2)
     await allure.description('Requirement\nUsers need to create a new document')
     await allure.tms('TESTS-352', 'https://front.hc.engineering/workbench/platform/tracker/TESTS-352')

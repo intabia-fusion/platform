@@ -24,7 +24,7 @@ import { notificationId } from '@hcengineering/notification'
 import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
 import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
-import view, { encodeObjectURI } from '@hcengineering/view'
+import view, { encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
 import {
   closeWidgetTab,
   createWidgetTab,
@@ -195,6 +195,18 @@ export async function chunterSpaceLinkFragmentProvider (doc: ChunterSpace): Prom
   return loc
 }
 
+// The link id of a location goes stale: `<name>-<id>` keeps the old name after a rename, old links
+// carry `<id>|<class>`. Only the doc id it decodes to says which doc is open.
+async function isLocationObject (
+  providers: LinkIdProvider[],
+  value: string | undefined,
+  _id: Ref<Doc>
+): Promise<boolean> {
+  const [locId, locClass] = decodeChatURI(value)
+  if (locId === '' || !getClient().getHierarchy().hasClass(locClass)) return false
+  return (await parseLinkId(providers, locId, locClass)) === _id
+}
+
 export async function buildThreadLink (
   loc: Location,
   _id: Ref<Doc>,
@@ -208,7 +220,7 @@ export async function buildThreadLink (
 
   const specials = chatSpecials.map(({ id }) => id)
   const objectURI = encodeChatURI(id, _class)
-  const isSameChannel = loc.path[3] === objectURI
+  const isSameChannel = await isLocationObject(providers, loc.path[3], _id)
 
   if (!isSameChannel) {
     loc.query = { message: threadParent }
@@ -276,7 +288,7 @@ export async function getMessageLocation (doc: ActivityMessage): Promise<Locatio
   return await buildThreadLink(loc, doc.attachedTo, doc.attachedToClass, doc._id)
 }
 
-export async function resetChunterLocIfEqual (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
+export async function resetChunterLocIfEqual (_id: Ref<Doc>): Promise<void> {
   const loc = getCurrentLocation()
 
   if (loc.path[2] !== chunterId) {
@@ -285,11 +297,7 @@ export async function resetChunterLocIfEqual (_id: Ref<Doc>, _class: Ref<Class<D
 
   const client = getClient()
   const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-  const id = await getObjectLinkId(providers, _id, _class, doc)
-
-  const [locId] = decodeChatURI(loc.path[3])
-
-  if (locId !== id) {
+  if (!(await isLocationObject(providers, loc.path[3], _id))) {
     return
   }
 
@@ -428,6 +436,7 @@ export async function openThreadInSidebar (
 
   const message = msg ?? (await client.findOne(activity.class.ActivityMessage, { _id }))
   if (message === undefined) return
+  threadMessagesStore.set(message)
 
   const object = doc ?? (await client.findOne(message.attachedToClass, { _id: message.attachedTo }))
   if (object === undefined) return

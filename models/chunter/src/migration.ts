@@ -47,7 +47,7 @@ import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
 import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import notification, { type DocNotifyContext } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 export const DOMAIN_NOTIFICATION = 'notification' as Domain
@@ -130,6 +130,22 @@ export async function createRandom (client: MigrationUpgradeClient, tx: TxOperat
         chunter.space.Random
       )
     }
+  }
+}
+
+// The default channels are created here, past the trigger that gives any other doc its read state,
+// and a channel without one cannot be read.
+async function createDefaultReadStates (tx: TxOperations): Promise<void> {
+  for (const _id of [chunter.space.General, chunter.space.Random]) {
+    const channel = await tx.findOne(chunter.class.Channel, { _id })
+    if (channel === undefined) continue
+    const state = await tx.findOne(notification.class.ReadState, { attachedTo: _id })
+    if (state !== undefined) continue
+    await tx.createDoc(notification.class.ReadState, _id, {
+      attachedTo: _id,
+      attachedToClass: channel._class,
+      collection: 'readStates'
+    })
   }
 }
 
@@ -444,6 +460,12 @@ export const chunterOperation: MigrateOperation = {
           const tx = new TxOperations(client, core.account.System)
           await createGeneral(client, tx)
           await createRandom(client, tx)
+        }
+      },
+      {
+        state: 'default-channels-read-states-v1',
+        func: async (client) => {
+          await createDefaultReadStates(new TxOperations(client, core.account.System))
         }
       }
     ])

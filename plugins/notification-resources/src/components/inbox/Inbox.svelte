@@ -33,13 +33,19 @@
     Separator,
     Scroller
   } from '@hcengineering/ui'
-  import view, { decodeObjectURI } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { parseLinkId } from '@hcengineering/view-resources'
   import { getResource } from '@hcengineering/platform'
 
   import notification from '../../plugin'
   import type { InboxFilter } from '../../types'
-  import { resetInboxContext, resolveLocation, selectInboxContext } from '../../utils'
+  import {
+    decodeInboxURI,
+    resetInboxContext,
+    resolveInboxObjectClass,
+    resolveLocation,
+    selectInboxContext
+  } from '../../utils'
   import { onDestroy, onMount } from 'svelte'
   import InboxHeader from './InboxHeader.svelte'
   import InboxGroupedListView from './InboxGroupedListView.svelte'
@@ -131,18 +137,13 @@
       return
     }
 
-    const [id, _class] = decodeObjectURI(loc?.loc.path[3] ?? '')
-    const _id = await parseLinkId(linkProviders, id, _class)
+    const [id, linkClass] = decodeInboxURI(loc.loc.path[3])
+    const _id = await parseLinkId(linkProviders, id, linkClass)
 
     if (token !== syncLocationToken) return
-    urlObjectId = _id
-    urlObjectClass = _class
 
     const thread = loc?.loc.path[4] as Ref<ActivityMessage>
     const queryContext = loc.loc.query?.context as Ref<DocNotifyContext>
-
-    urlObjectId = _id
-    urlObjectClass = _class
 
     let context: DocNotifyContext | undefined = undefined
 
@@ -155,7 +156,12 @@
       context = await inboxClient.getContextByDoc(thread ?? _id)
     }
 
+    const _class = await resolveInboxObjectClass(_id, linkClass, context)
+
     if (token !== syncLocationToken) return
+    // Set together with the context: a half-updated pair picks another panel and remounts the channel.
+    urlObjectId = _id
+    urlObjectClass = _class
     selectedContextId = context?._id
 
     if (selectedContextId !== selectedContext?._id) {
