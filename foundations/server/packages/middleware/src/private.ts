@@ -30,7 +30,8 @@ import core, {
   type Tx,
   type TxCUD,
   TxProcessor,
-  systemAccountUuid
+  systemAccountUuid,
+  toFindResult
 } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
@@ -114,7 +115,7 @@ export class PrivateMiddleware extends BaseMiddleware implements Middleware {
         }
       }
     }
-    const findResult = await this.provideFindAll(ctx, _class, newQuery, options)
+    let findResult = await this.provideFindAll(ctx, _class, newQuery, options)
     if (domain === DOMAIN_TX) {
       const account = ctx.contextData.account
       const socialStrings = account.socialIds
@@ -125,12 +126,15 @@ export class PrivateMiddleware extends BaseMiddleware implements Middleware {
             return domain != null && this.targetDomains.includes(domain)
           })
         )
-        ;(findResult as FindResult<Doc> as FindResult<Tx>).filter(
+        const visible = (findResult as FindResult<Doc> as FindResult<Tx>).filter(
           (p) =>
             !TxProcessor.isExtendsCUD(p._class) ||
             !targetClasses.has((p as TxCUD<Doc>).objectClass) ||
             (p.createdBy !== undefined && socialStrings.includes(p.createdBy))
         )
+        // Only hidden txes of the fetched page are subtracted; ones past the limit still count.
+        const total = findResult.total >= 0 ? findResult.total - (findResult.length - visible.length) : findResult.total
+        findResult = toFindResult(visible as Doc[], total, findResult.lookupMap) as FindResult<T>
       }
     }
     if (options?.lookup !== undefined) {

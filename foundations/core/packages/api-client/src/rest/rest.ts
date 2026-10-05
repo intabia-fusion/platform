@@ -267,7 +267,7 @@ export class RestClientImpl implements RestClient {
       }
       this.updateRateLimit(response)
       return await extractJson<Account>(response)
-    })
+    }, isRLE)
     if (result.error !== undefined) {
       throw new PlatformError(result.error)
     }
@@ -382,7 +382,7 @@ export class RestClientImpl implements RestClient {
       }
       this.updateRateLimit(response)
       return await extractJson<TxResult>(response)
-    })
+    }, isRLE)
     if (result.error !== undefined) {
       throw new PlatformError(result.error)
     }

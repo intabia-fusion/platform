@@ -18,32 +18,22 @@ import type { Doc } from '../classes'
 
 describe('operator edge cases and potential bugs', () => {
   describe('$push operator edge cases', () => {
-    it('BUG: $push with $each on null field should handle gracefully', () => {
+    it('$push with $each on null field creates the array', () => {
       const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: null } as unknown as Doc
       const operator = _getOperator('$push')
 
-      // This exposes a bug: when arr is null and we use $each, nothing happens
       operator(doc, { arr: { $each: [1, 2, 3] } })
 
-      // Bug: should init the array and push items, but arr stays null; uncomment to see:
-      // expect((doc as any).arr).toEqual([1, 2, 3])
-
-      // Current behavior (documents the bug):
-      expect((doc as any).arr).toBe(null)
+      expect((doc as any).arr).toEqual([1, 2, 3])
     })
 
-    it('BUG: $push with $each on non-array field should handle gracefully', () => {
+    it('$push with $each on non-array field reports error and replaces', () => {
       const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: 'string' } as unknown as Doc
       const operator = _getOperator('$push')
 
-      // This exposes a bug: when arr is a non-array and we use $each, nothing happens
       operator(doc, { arr: { $each: [1, 2, 3] } })
 
-      // Bug: should report an error and replace with array, but arr stays a string; uncomment
-      // to see: expect((doc as any).arr).toEqual([1, 2, 3])
-
-      // Current behavior (documents the bug):
-      expect((doc as any).arr).toBe('string')
+      expect((doc as any).arr).toEqual([1, 2, 3])
     })
 
     it('$push without $each on null field works correctly', () => {
@@ -236,5 +226,15 @@ describe('operator edge cases and potential bugs', () => {
 
       expect((doc as any).arr).toBeUndefined()
     })
+  })
+})
+
+describe('$push object without $each on null field', () => {
+  it('creates the array', () => {
+    const doc: Doc = { _id: '1' as any, _class: 'test' as any, arr: null } as unknown as Doc
+
+    _getOperator('$push')(doc, { arr: { a: 1 } as any })
+
+    expect((doc as any).arr).toEqual([{ a: 1 }])
   })
 })

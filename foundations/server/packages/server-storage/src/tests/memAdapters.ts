@@ -5,7 +5,7 @@ import core, {
   type MeasureContext,
   type WorkspaceDataId
 } from '@hcengineering/core'
-import { getDataId } from '@hcengineering/server-core'
+import { getDataId, NoSuchKeyError } from '@hcengineering/server-core'
 import type { BlobStorageIterator, BucketInfo, StorageAdapter, UploadedObjectInfo } from '@hcengineering/storage'
 import { Readable } from 'stream'
 
@@ -68,6 +68,9 @@ export class MemStorageAdapter implements StorageAdapter {
     const readable = new Readable()
     readable._read = () => {}
     const content = this.files.get(getDataId(wsIds) + '/' + objectName)?.content
+    if (content === undefined) {
+      throw new NoSuchKeyError('NoSuchKey')
+    }
     readable.push(content)
     readable.push(null)
     return readable
@@ -125,7 +128,7 @@ export class MemStorageAdapter implements StorageAdapter {
   async read (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string): Promise<Buffer[]> {
     const content = this.files.get(getDataId(wsIds) + '/' + objectName)?.content
     if (content === undefined) {
-      throw new Error('NoSuchKey')
+      throw new NoSuchKeyError('NoSuchKey')
     }
     return [content]
   }
@@ -138,7 +141,7 @@ export class MemStorageAdapter implements StorageAdapter {
     length?: number | undefined
   ): Promise<Readable> {
     // Partial are not supported by
-    throw new Error('NoSuchKey')
+    throw new NoSuchKeyError('NoSuchKey')
   }
 
   async getUrl (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string): Promise<string> {

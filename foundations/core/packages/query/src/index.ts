@@ -975,7 +975,11 @@ export class LiveQuery implements WithTx, Client {
   private async doRefresh (q: Query): Promise<void> {
     const qid = ++q.refreshId
     const res = await this.client.findAll(q._class, q.query, q.options)
-    if (q.refreshId === qid && (!deepEqual(res, q.result) || (res.total !== q.total && q.options?.total === true))) {
+    const current = q.result instanceof Promise ? await q.result : q.result
+    if (
+      q.refreshId === qid &&
+      (!deepEqual(res, current.getDocs()) || (res.total !== q.total && q.options?.total === true))
+    ) {
       q.result = new ResultArray(res, this.getHierarchy())
       q.refsRegistered = false
       q.total = res.total
@@ -1031,7 +1035,7 @@ export class LiveQuery implements WithTx, Client {
       for (const key in q.query) {
         const value = (q.query as any)[key]
         const tkey = checkMixinKey(key, q._class, this.client.getHierarchy())
-        if ((doc as any)[tkey] === undefined) continue
+        if (getObjectValue(tkey, doc) === undefined) continue
         const res = findProperty([doc], tkey, value)
         if (res.length === 0) {
           return false

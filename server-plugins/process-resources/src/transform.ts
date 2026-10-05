@@ -242,8 +242,8 @@ export function FirstWorkingDayAfter (val: Timestamp): Timestamp {
   const value = new Date(val)
   const day = value.getUTCDay()
   if (day === 6 || day === 0) {
-    const date = value.getDate() + (day === 6 ? 2 : 1)
-    const res = value.setDate(date)
+    const date = value.getUTCDate() + (day === 6 ? 2 : 1)
+    const res = value.setUTCDate(date)
     return res
   }
   return val

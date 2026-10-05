@@ -126,6 +126,7 @@ export async function OnDepartmentStaff (txes: Tx[], control: TriggerControl): P
             )
           )
         }
+        continue
       }
       const push = (await buildHierarchy(departmentId, control)).map((p) => p._id)
 
@@ -244,6 +245,7 @@ export async function OnEmployeeDeactivate (txes: Tx[], control: TriggerControl)
 const RequestTitlePresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const request = doc as Request
   const employee = (await control.findAll(control.ctx, contact.mixin.Employee, { _id: request.attachedTo }))[0]
+  if (employee === undefined) return ''
   const who = getName(control.hierarchy, employee, control.branding?.lastNameFirst)
   const type = await translate(control.modelDb.getObject(request.type).label, {}, control.branding?.defaultLanguage)
 

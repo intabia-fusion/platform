@@ -405,26 +405,34 @@ export class TxOperations implements Omit<Client, 'notify'> {
 
     if (!this.getHierarchy().hasMixin(doc, mixin)) {
       await this.createMixin(doc._id, doc._class, doc.space, mixin, raw as MixinData<Doc, Doc>, modifiedOn, modifiedBy)
-      TxProcessor.applyUpdate(this.getHierarchy().as(doc, mixin), raw)
+      TxProcessor.applyUpdate(mixinValues(doc, mixin), raw)
       return doc
     }
 
     const documentUpdate: MixinUpdate<Doc, Doc> = {}
+    const current = this.getHierarchy().as(doc, mixin)
     for (const [k, v] of Object.entries(raw)) {
       if (['_class', '_id', 'modifiedBy', 'modifiedOn', 'space', 'attachedTo', 'attachedToClass'].includes(k)) {
         continue
       }
-      const dv = (doc as any)[k]
+      const dv = (current as any)[k]
       if (!deepEqual(dv, v) && v != null) {
         ;(documentUpdate as any)[k] = v
       }
     }
     if (Object.keys(documentUpdate).length > 0) {
       await this.updateMixin(doc._id, doc._class, doc.space, mixin, documentUpdate, modifiedOn, modifiedBy)
-      TxProcessor.applyUpdate(this.getHierarchy().as(doc, mixin), documentUpdate)
+      TxProcessor.applyUpdate(mixinValues(doc, mixin), documentUpdate)
     }
     return doc
   }
+}
+
+// Mixin attributes live under the mixin key of the document, as TxMixin applies them
+function mixinValues (doc: Doc, mixin: Ref<Class<Mixin<Doc>>>): any {
+  const target = Hierarchy.toDoc(doc) as any
+  target[mixin] ??= {}
+  return target[mixin]
 }
 
 export function getDiffUpdate<T extends Doc> (doc: T, update: T | Data<T> | DocumentUpdate<T>): DocumentUpdate<T> {

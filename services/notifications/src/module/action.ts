@@ -83,7 +83,11 @@ export async function handleReadNotificationAction (
     return
   }
 
-  const { reactionIds = [], messageIds = [], commonIds = [], mentionIds = [] } = action
+  // Non-web clients send null for empty lists, which a destructuring default does not cover
+  const reactionIds = action.reactionIds ?? []
+  const messageIds = action.messageIds ?? []
+  const commonIds = action.commonIds ?? []
+  const mentionIds = action.mentionIds ?? []
 
   const ops: DocumentUpdate<DocNotifyContext> = { $pull: {} }
   let decrease = 0

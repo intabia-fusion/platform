@@ -156,7 +156,19 @@ export class BackRPCServer<ClientT extends string = ClientId> {
 
   private async start (): Promise<void> {
     const port = this.port === 'random' ? 0 : this.port
-    this.bound = this.router.bind(`tcp://${this.host}:${port}`)
+    const endpoint = `tcp://${this.host}:${port}`
+    // A socket closed on this port frees it asynchronously, so a restart may briefly see EADDRINUSE.
+    this.bound = (async () => {
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await this.router.bind(endpoint)
+          return
+        } catch (err: any) {
+          if (err?.code !== 'EADDRINUSE' || attempt >= 50) throw err
+          await new Promise((resolve) => setTimeout(resolve, 20))
+        }
+      }
+    })()
     await this.bound
 
     // Read messages from clients.

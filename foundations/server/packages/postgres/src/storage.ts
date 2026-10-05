@@ -1170,9 +1170,18 @@ abstract class PostgresAdapterBase implements DbAdapter {
       if (options?.skipClass === true && _key === '_class') {
         continue
       }
-      const value = query[_key]
+      let value = query[_key]
       if (value === undefined) continue
-      const key = escape(_key)
+      let key = escape(_key)
+      // 'arr._id': v over an array of objects is the containment form {arr: {_id: v}}
+      const dot = key.indexOf('.')
+      if (dot > 0 && typeof value !== 'object' && !key.startsWith('$') && !key.includes('.', dot + 1)) {
+        const head = key.slice(0, dot)
+        if (!this.hierarchy.isMixin(head as Ref<Class<Doc>>) && this.getValueType(_class, head) === 'dataArray') {
+          value = { [key.slice(dot + 1)]: value }
+          key = head
+        }
+      }
       const valueType = this.getValueType(_class, key)
       const tkey = this.getKey(_class, baseDomain, key, joins, valueType === 'dataArray')
       const translated = this.translateQueryValue(vars, tkey, value, valueType, columnTypeOf(baseDomain, key))
@@ -1371,6 +1380,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     columnType?: DataType
   ): string | undefined {
     const tkeyData = tkey.includes('data') && (tkey.includes('->') || tkey.includes('#>>'))
+    const rawValue = value
     if (tkeyData && (Array.isArray(value) || (typeof value !== 'object' && typeof value !== 'string'))) {
       value = Array.isArray(value)
         ? value.map((it) => (it == null ? null : `${it}`))
@@ -1448,7 +1458,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
             }
             break
           case '$nin':
-            if (Array.isArray(val) && val.includes(null)) {
+            if (type === 'array') {
+              res.push(`NOT (${tkey} && ${vars.addArrayI(val, valType)})`)
+            } else if (type === 'dataArray') {
+              res.push(`(${tkey} IS NULL OR NOT (${tkey} ?| ${vars.addArrayI(val, valType)}))`)
+            } else if (Array.isArray(val) && val.includes(null)) {
               res.push(`(${tlkey} != ALL(${vars.addArray(val, valType)}) AND ${tkey} IS NOT NULL)`)
             } else if (Array.isArray(val) && val.length > 0) {
               res.push(`${tlkey} != ALL(${vars.addArray(val, valType)})`)
@@ -1475,7 +1489,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
             break
           case '$all':
             if (arrowCount > 0) {
-              res.push(`${tkey} @> '${JSON.stringify(val)}'::jsonb`)
+              res.push(`${tkey} @> '${simpleEscape(JSON.stringify(val))}'::jsonb`)
             } else {
               res.push(`${tkey} @> ${vars.addArray(val, valType)}`)
             }
@@ -1512,7 +1526,8 @@ abstract class PostgresAdapterBase implements DbAdapter {
       }
       if (Object.keys(nonOperator).length > 0) {
         const qkey = tkey.replace('#>>', '->').replace('{', '').replace('}', '')
-        res.push(`(${qkey} @> '${JSON.stringify(nonOperator)}' or ${qkey} @> '[${JSON.stringify(nonOperator)}]')`)
+        const lit = simpleEscape(JSON.stringify(nonOperator))
+        res.push(`(${qkey} @> '${lit}' or ${qkey} @> '[${lit}]')`)
       }
       return res.length === 0 ? undefined : res.join(' AND ')
     }
@@ -1526,7 +1541,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       ? `${tlkey} = ${vars.add(value, valType)}`
       : type === 'array'
         ? `${tkey} @> '${typeof value === 'string' ? '{"' + escape(value) + '"}' : value}'`
-        : `${tkey} @> '${typeof value === 'string' ? '"' + escape(value) + '"' : value}'`
+        : `${tkey} @> '${typeof rawValue === 'number' || typeof rawValue === 'boolean' ? JSON.stringify(rawValue) : typeof value === 'string' ? '"' + escape(value) + '"' : value}'`
   }
 
   private getReverseFrom (vars: ValuesVariables, join: JoinProps): string {
@@ -1947,8 +1962,10 @@ export class PostgresAdapter extends PostgresAdapterBase {
           } else {
             const current = updateGroup.get(updateTx.objectId)
             if (current !== undefined) {
-              current.operations = { ...current.operations, ...updateTx.operations }
-              updateGroup.set(updateTx.objectId, current)
+              updateGroup.set(updateTx.objectId, {
+                ...current,
+                operations: { ...current.operations, ...updateTx.operations }
+              })
             } else {
               updateGroup.set(updateTx.objectId, updateTx)
             }
@@ -2069,7 +2086,11 @@ export class PostgresAdapter extends PostgresAdapterBase {
     txes: TxUpdateDoc<Doc>[],
     schemaFields: SchemaAndFields
   ): Promise<TxResult[]> {
-    const byOperator = groupByArray(txes, (it) => hasOperator(it.operations))
+    // An undefined value removes the key; the bulk jsonb merge can only add keys, so such updates go row by row.
+    const byOperator = groupByArray(
+      txes,
+      (it) => hasOperator(it.operations) || Object.values(it.operations).includes(undefined)
+    )
 
     const withOperator = byOperator.get(true)
     const withoutOperator = byOperator.get(false)
@@ -2223,6 +2244,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
           }
         } catch (err: any) {
           ctx.error('failed to update docs', { err })
+          throw err
         }
         return result
       },
@@ -2278,24 +2300,20 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
     if (tx.length === 0) {
       return []
     }
-    try {
-      const modelTxes: Tx[] = []
-      const baseTxes: Tx[] = []
-      for (const _tx of tx) {
-        if (_tx.objectSpace === core.space.Model) {
-          modelTxes.push(_tx)
-        } else {
-          baseTxes.push(_tx)
-        }
+    const modelTxes: Tx[] = []
+    const baseTxes: Tx[] = []
+    for (const _tx of tx) {
+      if (_tx.objectSpace === core.space.Model) {
+        modelTxes.push(_tx)
+      } else {
+        baseTxes.push(_tx)
       }
-      if (modelTxes.length > 0) {
-        await this.insert(ctx, DOMAIN_MODEL_TX, modelTxes)
-      }
-      if (baseTxes.length > 0) {
-        await this.insert(ctx, DOMAIN_TX, baseTxes)
-      }
-    } catch (err) {
-      console.error(err)
+    }
+    if (modelTxes.length > 0) {
+      await this.insert(ctx, DOMAIN_MODEL_TX, modelTxes)
+    }
+    if (baseTxes.length > 0) {
+      await this.insert(ctx, DOMAIN_TX, baseTxes)
     }
     return []
   }

@@ -64,7 +64,9 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
       return
     }
     if (this.wasInit === false) {
-      this.wasInit = (async () => {
+      this.wasInit = ctx.with('init-space-permissions', {}, async (ctx) => {
+        // System context: the first request's user must not filter what is loaded
+        ctx.contextData = undefined
         const spaces: Space[] = (await this.next?.findAll(ctx, core.class.Space, {})) ?? []
 
         for (const space of spaces) {
@@ -74,10 +76,15 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
         }
 
         this.whitelistSpaces = new Set(spaces.filter((s) => !this.isTypedSpaceClass(s._class)).map((p) => p._id))
-      })()
+      })
     }
     if (this.wasInit instanceof Promise) {
-      await this.wasInit
+      try {
+        await this.wasInit
+      } catch (err: any) {
+        this.wasInit = false
+        throw err
+      }
       this.wasInit = true
     }
   }
@@ -305,7 +312,7 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
   private handleRemove (tx: TxCUD<Space>): void {
     const removeTx = tx as TxRemoveDoc<Space>
     if (!this.context.hierarchy.isDerived(removeTx.objectClass, core.class.Space)) return
-    if (removeTx._class !== core.class.TxCreateDoc) return
+    if (removeTx._class !== core.class.TxRemoveDoc) return
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.permissionsBySpace[tx.objectId]
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete

@@ -256,7 +256,7 @@ export async function OnTypedSpaceCreate (_txes: Tx[], control: TriggerControl):
       const members = ctx.attributes.members
       if (members.length === 0) continue
       result.push(
-        control.txFactory.createTxUpdateDoc(ctx.objectClass, ctx.space, ctx.objectId, {
+        control.txFactory.createTxUpdateDoc(ctx.objectClass, ctx.objectSpace, ctx.objectId, {
           owners: [members[0]]
         })
       )

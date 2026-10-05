@@ -2036,7 +2036,7 @@ function withServiceUnavailable<T, F extends (...args: any[]) => Promise<T>> (f:
 }
 
 function withRetryUntilMaxAttempts<T, F extends (...args: any[]) => Promise<T>> (f: F, maxAttempts: number = 5): F {
-  const shouldFail = (err: any, attempt: number): boolean => !isNetworkError(err) || attempt === maxAttempts
+  const shouldFail = (err: any, attempt: number): boolean => !isNetworkError(err) || attempt + 1 >= maxAttempts
 
   return withRetry(f, shouldFail)
 }

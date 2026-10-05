@@ -87,6 +87,7 @@ const ReminderUrlPresenter: StringPresenterFn = async (
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
 
+  if (target == null) return undefined
   return await getDocUrl(control, target)
 }
 
@@ -97,6 +98,7 @@ const ReminderIdentifierPresenter: StringPresenterFn = async (
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
 
+  if (target == null) return undefined
   return await getDocIdentifier(control, target)
 }
 

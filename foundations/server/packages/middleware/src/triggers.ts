@@ -56,6 +56,32 @@ import serverCore, {
 } from '@hcengineering/server-core'
 import { filterBroadcastOnly } from './utils'
 
+// Parallel trigger queries share one contextData: the flag stays set until the last of them ends.
+const triggerDepth = new WeakMap<SessionData, { depth: number, prev: boolean | undefined }>()
+
+function enterTriggerCtx (data: SessionData | undefined): void {
+  if (data === undefined) return
+  const state = triggerDepth.get(data)
+  if (state !== undefined) {
+    state.depth++
+  } else {
+    triggerDepth.set(data, { depth: 1, prev: data.isTriggerCtx })
+  }
+  data.isTriggerCtx = true
+}
+
+function leaveTriggerCtx (data: SessionData | undefined): void {
+  if (data === undefined) return
+  const state = triggerDepth.get(data)
+  if (state === undefined || --state.depth > 0) return
+  triggerDepth.delete(data)
+  if (state.prev === undefined) {
+    delete data.isTriggerCtx
+  } else {
+    data.isTriggerCtx = state.prev
+  }
+}
+
 /**
  * @public
  */
@@ -136,18 +162,19 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     const findAll: SessionFindAll = async (ctx, _class, query, options) => {
       const _ctx: MeasureContext = (options as ServerFindOptions<Doc>)?.ctx ?? ctx
       delete (options as ServerFindOptions<Doc>)?.ctx
-      if (_ctx.contextData !== undefined) {
-        _ctx.contextData.isTriggerCtx = true
+      enterTriggerCtx(_ctx.contextData)
+      try {
+        // Use live query
+        const results = await this.findAll(_ctx, _class, query, options)
+        return toFindResult(
+          results.map((v) => {
+            return this.context.hierarchy.updateLookupMixin(_class, v, options)
+          }),
+          results.total
+        )
+      } finally {
+        leaveTriggerCtx(_ctx.contextData)
       }
-
-      // Use live query
-      const results = await this.findAll(_ctx, _class, query, options)
-      return toFindResult(
-        results.map((v) => {
-          return this.context.hierarchy.updateLookupMixin(_class, v, options)
-        }),
-        results.total
-      )
     }
 
     const removed = await ctx.with('process-remove', {}, (ctx) => this.processRemove(ctx, txes, findAll))
@@ -189,7 +216,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
             { domain, _class, query: query as any, options: pureOptions as any },
             () =>
               // We sure ctx is required to be passed
-              this.context.liveQuery?.queryFind(_class, query) ??
+              this.context.liveQuery?.queryFind(_class, query, pureOptions as any) ??
               this.provideFindAll(ctx, _class, query, { ...options })
           )
         })
@@ -292,21 +319,12 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
 
   private async processDerivedTxes (ctx: MeasureContext<SessionData>, derived: Tx[]): Promise<void> {
     if (derived.length > 0) {
-      const prevFlag = ctx.contextData?.isTriggerCtx
-      if (ctx.contextData !== undefined) {
-        ctx.contextData.isTriggerCtx = true
-      }
+      enterTriggerCtx(ctx.contextData)
       try {
         derived.sort((a, b) => a.modifiedOn - b.modifiedOn)
         await this.context.derived?.tx(ctx, derived)
       } finally {
-        if (ctx.contextData !== undefined) {
-          if (prevFlag === undefined) {
-            delete ctx.contextData.isTriggerCtx
-          } else {
-            ctx.contextData.isTriggerCtx = prevFlag
-          }
-        }
+        leaveTriggerCtx(ctx.contextData)
       }
       // We need to perform broadcast here
     }

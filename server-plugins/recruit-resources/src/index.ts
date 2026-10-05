@@ -42,6 +42,10 @@ function getSequenceId (doc: Vacancy | Applicant, hierarchy: Hierarchy): string 
   return label !== undefined ? `${label}-${doc.number}` : doc.number.toString()
 }
 
+async function linkIdProvider (doc: Doc, control: TriggerControl): Promise<string> {
+  return getSequenceId(doc as Vacancy | Applicant, control.hierarchy)
+}
+
 /**
  * @public
  */
@@ -109,7 +113,7 @@ export default async () => ({
     VacancyIdentifierPresenter: vacancyIdentifierPresenter,
     ApplicationUrlPresenter: applicationUrlPresenter,
     ApplicationIdentifierPresenter: applicationIdentifierPresenter,
-    LinkIdProvider: getSequenceId
+    LinkIdProvider: linkIdProvider
   },
   trigger: {
     OnRecruitUpdate

@@ -455,7 +455,6 @@ async function OnCardRemove (ctx: TxRemoveDoc<Card>[], control: TriggerControl):
   for (const key in removedCard.blobs ?? {}) {
     const val = removedCard.blobs[key]
     if (val === undefined) continue
-    const toDelete: string[] = []
     toDelete.push(val.file)
   }
 
@@ -636,7 +635,7 @@ async function updateParentInfoName (
   for (const child of childs) {
     if (child._id === originParent) continue
     const parentInfo = child.parentInfo
-    const index = parentInfo.findIndex((p) => p._id === parent)
+    const index = parentInfo.findIndex((p) => p._id === originParent)
     if (index === -1) {
       continue
     }
@@ -730,21 +729,32 @@ const CardUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterC
   return concatLink(front, path)
 }
 
+// These triggers read only the first tx, but get every matching tx of the request.
+function eachTx<T extends Tx> (trigger: (ctx: T[], control: TriggerControl) => Promise<Tx[]>) {
+  return async (txes: T[], control: TriggerControl): Promise<Tx[]> => {
+    const res: Tx[] = []
+    for (const tx of txes) {
+      res.push(...(await trigger([tx], control)))
+    }
+    return res
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
     CardUrlPresenter
   },
   trigger: {
-    OnAttribute,
-    OnAttributeRemove,
-    OnViewletUpdate,
-    OnMasterTagCreate,
-    OnMasterTagRemove,
-    OnTagRemove,
-    OnCardRemove,
-    OnCardCreate,
-    OnCardUpdate,
+    OnAttribute: eachTx(OnAttribute),
+    OnAttributeRemove: eachTx(OnAttributeRemove),
+    OnViewletUpdate: eachTx(OnViewletUpdate),
+    OnMasterTagCreate: eachTx(OnMasterTagCreate),
+    OnMasterTagRemove: eachTx(OnMasterTagRemove),
+    OnTagRemove: eachTx(OnTagRemove),
+    OnCardRemove: eachTx(OnCardRemove),
+    OnCardCreate: eachTx(OnCardCreate),
+    OnCardUpdate: eachTx(OnCardUpdate),
     OnCardTag
   }
 })

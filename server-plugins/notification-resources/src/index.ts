@@ -93,14 +93,14 @@ async function OnEmployeeDeactivate (txes: TxCUD<Doc>[], control: TriggerControl
   for (const tx of txes) {
     const actualTx = tx
     if (core.class.TxMixin !== actualTx._class) {
-      return []
+      continue
     }
     const ctx = actualTx as TxMixin<Person, Employee>
     if (ctx.mixin !== contact.mixin.Employee || ctx.attributes.active !== false) {
-      return []
+      continue
     }
     const person = (await control.findAll(control.ctx, contact.class.Person, { _id: ctx.objectId }))[0]
-    if (person?.personUuid === undefined) return []
+    if (person?.personUuid === undefined) continue
 
     const subscriptions = await control.findAll(control.ctx, notification.class.PushSubscription, {
       user: person.personUuid as AccountUuid

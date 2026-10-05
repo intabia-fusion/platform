@@ -14,7 +14,7 @@
 //
 
 import type { LoginInfoWithWorkspaces } from '@hcengineering/account-client'
-import type { Account, WorkspaceIds } from '@hcengineering/core'
+import core, { WorkspaceEvent, type Account, type WorkspaceIds } from '@hcengineering/core'
 import type { ClientSessionCtx, OneSecondCounters } from '@hcengineering/server-core'
 import type { Token } from '@hcengineering/server-token'
 
@@ -42,5 +42,81 @@ describe('ClientSession.includeSessionContext', () => {
     session.includeSessionContext(ctx)
 
     expect((ctx.ctx as any).contextData.opsApi).toBeUndefined()
+  })
+})
+
+describe('ClientSession upload/clean without allowUpload', () => {
+  const make = (): { session: ClientSession, ctx: ClientSessionCtx, ops: any } => {
+    const counters = {} as unknown as OneSecondCounters
+    const session = new ClientSession(
+      makeToken(),
+      {} as unknown as WorkspaceIds,
+      {} as unknown as Account,
+      {} as unknown as LoginInfoWithWorkspaces,
+      false,
+      counters
+    )
+    const ops = { upload: jest.fn(), clean: jest.fn() }
+    jest.spyOn(session, 'getOps').mockReturnValue(ops as any)
+    const ctx = {
+      ctx: { error: jest.fn() },
+      pipeline: {},
+      requestId: 1,
+      sendResponse: jest.fn(),
+      sendError: jest.fn()
+    } as unknown as ClientSessionCtx
+    return { session, ctx, ops }
+  }
+
+  it('upload is rejected once and does not run', async () => {
+    const { session, ctx, ops } = make()
+    await session.upload(ctx, 'tx' as any, [])
+    expect(ops.upload).not.toHaveBeenCalled()
+    expect(ctx.sendResponse).toHaveBeenCalledTimes(1)
+    expect(ctx.sendResponse).toHaveBeenCalledWith(1, { error: 'Upload not allowed' })
+  })
+
+  it('clean is rejected once and does not run', async () => {
+    const { session, ctx, ops } = make()
+    await session.clean(ctx, 'tx' as any, [])
+    expect(ops.clean).not.toHaveBeenCalled()
+    expect(ctx.sendResponse).toHaveBeenCalledTimes(1)
+    expect(ctx.sendResponse).toHaveBeenCalledWith(1, { error: 'Clean not allowed' })
+  })
+})
+
+describe('ClientSession.broadcast', () => {
+  const make = (): { session: ClientSession, socket: any } => {
+    const session = new ClientSession(
+      makeToken(),
+      {} as unknown as WorkspaceIds,
+      {} as unknown as Account,
+      {} as unknown as LoginInfoWithWorkspaces,
+      false,
+      {} as unknown as OneSecondCounters
+    )
+    return { session, socket: { send: jest.fn() } }
+  }
+  const txes = (n: number): any[] =>
+    Array.from({ length: n }, (_, i) => ({
+      _id: `tx${i}`,
+      _class: core.class.TxCreateDoc,
+      objectClass: core.class.Space
+    }))
+
+  it('sends a small batch as is', () => {
+    const { session, socket } = make()
+    const batch = txes(3)
+    session.broadcast({} as any, socket, batch)
+    expect(socket.send.mock.calls[0][1]).toEqual({ result: batch })
+  })
+
+  it('collapses a batch over 10000 txes into one bulk update event', () => {
+    const { session, socket } = make()
+    session.broadcast({} as any, socket, txes(10001))
+    const result = socket.send.mock.calls[0][1].result
+    expect(result).toHaveLength(1)
+    expect(result[0].event).toBe(WorkspaceEvent.BulkUpdate)
+    expect(result[0].params._class).toEqual([core.class.Space])
   })
 })

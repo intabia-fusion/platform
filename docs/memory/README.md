@@ -102,3 +102,4 @@
 - [test-phase-single-jest.md](test-phase-single-jest.md) - The test phase runs one jest, not one per package
 - [test-run-telemetry.md](test-run-telemetry.md) - Test run telemetry
 - [ui-component-tests-vitest.md](ui-component-tests-vitest.md) - Component tests in packages/ui (vitest)
+- [zmq_port_rebind.md](zmq_port_rebind.md) - ZeroMQ: повторный bind только что закрытого порта на Linux

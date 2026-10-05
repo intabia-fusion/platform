@@ -296,9 +296,10 @@ export class PostgresDB implements BlobDB {
   async createBlobData (ctx: MeasureContext, data: BlobWithDataRecord): Promise<void> {
     const { workspace, name, hash, location, parent, filename, size, type } = data
 
-    // First upsert into data table
-    await this.execute(
-      `
+    await this.sql.begin(async (tx) => {
+      await tx.unsafe(
+        injectVars(
+          `
       INSERT INTO blob.data (hash, location, filename, size, type)
       VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (hash, location) DO UPDATE SET
@@ -306,12 +307,13 @@ export class PostgresDB implements BlobDB {
         size = EXCLUDED.size,
         type = EXCLUDED.type
     `,
-      [hash, location, filename, size, type]
-    )
+          [hash, location, filename, size, type]
+        )
+      )
 
-    // Then upsert into blob table
-    await this.execute(
-      `
+      await tx.unsafe(
+        injectVars(
+          `
       INSERT INTO blob.blob (workspace, name, hash, location, parent, deleted_at)
       VALUES ($1, $2, $3, $4, $5, NULL)
       ON CONFLICT (workspace, name) DO UPDATE SET
@@ -320,8 +322,10 @@ export class PostgresDB implements BlobDB {
         parent = EXCLUDED.parent,
         deleted_at = EXCLUDED.deleted_at
     `,
-      [workspace, name, hash, location, parent]
-    )
+          [workspace, name, hash, location, parent]
+        )
+      )
+    })
   }
 
   async deleteBlob (ctx: MeasureContext, blob: BlobId): Promise<void> {

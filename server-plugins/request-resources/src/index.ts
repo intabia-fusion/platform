@@ -61,7 +61,7 @@ async function OnRequestUpdate (ctx: TxUpdateDoc<Request>, control: TriggerContr
   if (ctx.operations.$push?.approved !== undefined) {
     const request = (await control.findAll(control.ctx, ctx.objectClass, { _id: ctx.objectId }))[0]
 
-    if (request.approved.length === request.requiredApprovesCount) {
+    if (request !== undefined && request.approved.length === request.requiredApprovesCount) {
       const collectionTx = control.txFactory.createTxUpdateDoc(ctx.objectClass, ctx.objectSpace, ctx.objectId, {
         status: RequestStatus.Completed
       })

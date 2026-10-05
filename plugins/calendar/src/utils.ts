@@ -160,17 +160,15 @@ function generateMonthlyValues (rule: RecurringRule, currentDate: Date, from: Ti
       for (const day of byMonthDay) {
         const originalDate = new Date(currentDate.getTime())
         const sameDate = new Date(
-          Date.UTC(
-            currentDate.getUTCFullYear(),
-            currentDate.getUTCMonth(),
-            day,
-            originalDate.getUTCHours(),
-            originalDate.getUTCMinutes(),
-            originalDate.getUTCSeconds(),
-            originalDate.getUTCMilliseconds()
-          )
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          day,
+          originalDate.getHours(),
+          originalDate.getMinutes(),
+          originalDate.getSeconds(),
+          originalDate.getMilliseconds()
         )
-        if (sameDate.getUTCMonth() === currentDate.getUTCMonth()) {
+        if (sameDate.getMonth() === currentDate.getMonth()) {
           // Valid day for this month
           candidates.push(sameDate)
         }

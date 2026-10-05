@@ -20,7 +20,7 @@ export function unwrapETag (etag: string): string {
   }
 
   // Remove surrounding quotes
-  if (etag.startsWith('"') && etag.endsWith('"')) {
+  if (etag.length >= 2 && etag.startsWith('"') && etag.endsWith('"')) {
     etag = etag.slice(1, -1)
   }
 

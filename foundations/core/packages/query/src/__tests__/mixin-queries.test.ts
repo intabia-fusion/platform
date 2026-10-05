@@ -191,4 +191,29 @@ describe('mixin queries', () => {
     expect(doc?.someField).toBe('cached')
     expect(findAllCalls()).toBeGreaterThan(before)
   })
+
+  it('matches a dotted mixin key in matchQuery', async () => {
+    const { liveQuery, factory } = await getClient()
+    const id = await createProject(factory, 'mx-key')
+    await factory.createMixin(id, test.class.TestProject, core.space.Model, test.mixin.TestProjectMixin, {
+      someField: 'x'
+    })
+    const key = `${test.mixin.TestProjectMixin}.someField`
+    await subscribe<TestProject>(liveQuery, test.class.TestProject, { prjName: 'mx-key' })
+    const query = [...(liveQuery as any).queries.get(test.class.TestProject).values()][0]
+    query.query = { [key]: 'x' }
+    const tx = {
+      _id: 'tx1',
+      _class: core.class.TxUpdateDoc,
+      objectId: id,
+      objectClass: test.class.TestProject,
+      objectSpace: core.space.Model,
+      space: core.space.Tx,
+      modifiedBy: core.account.System,
+      modifiedOn: 0,
+      operations: { [key]: 'x' }
+    }
+    expect(await (liveQuery as any).matchQuery(query, tx, new Map())).toBe(true)
+    expect(await (liveQuery as any).matchQuery(query, { ...tx, operations: { [key]: 'y' } }, new Map())).toBe(false)
+  })
 })

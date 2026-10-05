@@ -56,7 +56,8 @@ const predicates: Record<string, PredicateFactory> = {
       throw new Error('$all predicate requires array')
     }
     return (docs) =>
-      execPredicate(docs, propertyKey, (value: any[]) => {
+      execPredicate(docs, propertyKey, (value) => {
+        if (!Array.isArray(value)) return false
         for (const val of o) {
           if (!value.includes(val)) return false
         }
@@ -90,7 +91,7 @@ const predicates: Record<string, PredicateFactory> = {
 
   $regex: (o: { $regex: string, $options: string }, propertyKey: string): Predicate => {
     const re = new RegExp(o.$regex, o.$options)
-    return (docs) => execPredicate(docs, propertyKey, (value) => value.match(re) !== null)
+    return (docs) => execPredicate(docs, propertyKey, (value) => typeof value === 'string' && value.match(re) !== null)
   },
   $gt: (o, propertyKey) => {
     return (docs) => execPredicate(docs, propertyKey, (value) => value > o)
@@ -153,7 +154,7 @@ export function createPredicates (o: Record<string, any>, propertyKey: string): 
   const result: Predicate[] = []
   for (const key of keys) {
     const factory = predicates[key]
-    if (factory === undefined) throw new Error('unknown predicate: ' + keys[0])
+    if (factory === undefined) throw new Error('unknown predicate: ' + key)
     result.push(factory(o[key], propertyKey))
   }
   return result

@@ -112,6 +112,7 @@ async function buildDirectName (
   if (direct.type === 'person') {
     const companion = members.find((m) => m !== account) ?? members[0]
     const companionPerson = (await control.findAll(control.ctx, contact.class.Person, { personUuid: companion }))[0]
+    if (companionPerson === undefined) return ''
     return formatName(companionPerson.name, control.branding?.lastNameFirst) ?? ''
   } else {
     if (direct.name.trim().length > 0) {
