@@ -13,14 +13,21 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Separator, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import type { Ref } from '@hcengineering/core'
+  import type { Floor } from '@hcengineering/love'
   import { onDestroy } from 'svelte'
   import Hall from './Hall.svelte'
+  import OfficeNavigator from './OfficeNavigator.svelte'
+  import { officeFloors, officeSegment, selectedFloor } from '../stores'
 
   const localNav: boolean = $deviceInfo.navigator.visible
   const savedNav = localStorage.getItem('love-visibleNav')
   if (savedNav !== undefined) $deviceInfo.navigator.visible = savedNav === 'true'
   $: localStorage.setItem('love-visibleNav', JSON.stringify($deviceInfo.navigator.visible))
+
+  // A floor id in the URL (an opened link, a reload) picks that floor.
+  $: if ($officeFloors.some((it) => it._id === $officeSegment)) selectedFloor.set($officeSegment as Ref<Floor>)
 
   onDestroy(() => {
     $deviceInfo.navigator.visible = localNav
@@ -28,5 +35,9 @@
 </script>
 
 <div class="hulyPanels-container">
+  {#if $deviceInfo.navigator.visible}
+    <OfficeNavigator />
+    <Separator name={'workbench'} float={$deviceInfo.navigator.float} index={0} color={'transparent'} separatorSize={0} short />
+  {/if}
   <Hall />
 </div>

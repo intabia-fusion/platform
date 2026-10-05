@@ -19,6 +19,12 @@ import WidgetSwitcher from './components/meeting/widget/WidgetSwitcher.svelte'
 import MeetingMinutesPresenter from './components/MeetingMinutesPresenter.svelte'
 import MeetingMinutesSection from './components/MeetingMinutesSection.svelte'
 import EditMeetingMinutes from './components/EditMeetingMinutes.svelte'
+import EditPermanentMeeting from './components/EditPermanentMeeting.svelte'
+import EditScheduledMeeting from './components/EditScheduledMeeting.svelte'
+import MeetingSessionsFooter from './components/MeetingSessionsFooter.svelte'
+import MeetingAccessEditor from './components/MeetingAccessEditor.svelte'
+import CreatePermanentMeetingPopup from './components/CreatePermanentMeetingPopup.svelte'
+import PermanentMeetingPresenter from './components/PermanentMeetingPresenter.svelte'
 import EditRoom from './components/EditRoom.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
 import FloorView from './components/FloorView.svelte'
@@ -114,6 +120,12 @@ export default async (): Promise<Resources> => ({
     MeetingMinutesPresenter,
     MeetingMinutesSection,
     EditMeetingMinutes,
+    EditPermanentMeeting,
+    EditScheduledMeeting,
+    MeetingSessionsFooter,
+    MeetingAccessEditor,
+    CreatePermanentMeetingPopup,
+    PermanentMeetingPresenter,
     EditRoom,
     FloorAttributePresenter,
     FloorView,

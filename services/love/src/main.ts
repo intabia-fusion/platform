@@ -36,6 +36,7 @@ import {
 import { type Person } from '@hcengineering/contact'
 import {
   loveId,
+  type MeetingLinkKind,
   MeetingMinutes,
   MeetingStatus,
   parseRoomName,
@@ -64,7 +65,7 @@ import {
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken, { decodeToken, generateToken } from '@hcengineering/server-token'
 import cors from 'cors'
-import express, { type Request } from 'express'
+import express, { type Request, type Response } from 'express'
 import {
   EgressClient,
   RoomAgentDispatch,
@@ -80,9 +81,10 @@ import { claimSession, liveSessionsOf } from './sessions'
 import { LimitsState } from './limits'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
-import { WorkspaceClient } from './workspaceClient'
+import { type MeetingTarget, type ResolveSessionResult, WorkspaceClient } from './workspaceClient'
 import { GuestManager } from './guests'
 import { createToken, decodeMeetingToken, extractToken, getRoomName, getWorkspaceId, updateMetadata } from './utils'
+import { hashGuestPassword } from './passwords'
 import { setBillingProducer, type BillingMessage } from './queue'
 /**
  * Recursively converts all BigInt values in an object to strings.
@@ -475,6 +477,139 @@ export const main = async (): Promise<void> => {
     const wsClient = await WorkspaceClient.create(workspaceId, ctx)
     return await wsClient.findPersonByAccount(account)
   }
+
+  // Shared gate of /meetingLink, /meetingPassword and /resolveSession: sends the error and
+  // returns undefined unless the caller is a participant of the meeting.
+  async function authorizeTarget (
+    req: Request,
+    res: Response,
+    eventId: string,
+    kind: MeetingLinkKind
+  ): Promise<{ workspaceId: WorkspaceUuid, wsClient: WorkspaceClient, target: MeetingTarget } | undefined> {
+    const token = extractToken(req.headers)
+    const workspaceId = getWorkspaceId(req)
+    if (token === undefined || workspaceId === undefined) {
+      res.status(401).send()
+      return undefined
+    }
+
+    let account: AccountUuid
+    try {
+      account = decodeToken(token).account
+    } catch {
+      res.status(401).send()
+      return undefined
+    }
+    const wsClient = await WorkspaceClient.create(workspaceId, ctx)
+    const target = await wsClient.findMeetingTarget(eventId, kind)
+    if (target === undefined) {
+      res.status(404).send({ error: 'Meeting not found' })
+      return undefined
+    }
+    if (account !== systemAccountUuid && !(await wsClient.isMeetingParticipant(target, account))) {
+      res.status(403).send({ error: 'Not a participant of this meeting' })
+      return undefined
+    }
+    return { workspaceId, wsClient, target }
+  }
+
+  // The shareable link of a meeting. Only a participant may ask for one - the link is a pointer,
+  // but handing it out is still an invitation.
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.get('/meetingLink', async (req, res) => {
+    const eventId = req.query.eventId
+    if (typeof eventId !== 'string' || eventId === '') {
+      res.status(400).send({ error: 'Missing eventId' })
+      return
+    }
+    const kind = req.query.kind === 'meeting' ? 'meeting' : 'event'
+    const authorized = await authorizeTarget(req, res, eventId, kind)
+    if (authorized === undefined) return
+    const { workspaceId, target } = authorized
+
+    const shortId = await guestManager.createMeetingLink(
+      target.pointer,
+      workspaceId,
+      target.link?.linkVersion ?? 1,
+      kind
+    )
+    if (shortId === null) {
+      res.status(502).send({ error: 'Failed to create link' })
+      return
+    }
+    res.status(200).send({ shortId })
+  })
+
+  // Sets or clears the guest password of a meeting link. Only love ever computes the hash - the
+  // plaintext never reaches a document, and the hash never reaches back out of this endpoint.
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.post('/meetingPassword', async (req, res) => {
+    const eventId = req.body.eventId
+    if (typeof eventId !== 'string' || eventId === '') {
+      res.status(400).send({ error: 'Missing eventId' })
+      return
+    }
+    const kind = req.body.kind === 'meeting' ? 'meeting' : 'event'
+    const password = req.body.password
+    if (password !== null && typeof password !== 'string') {
+      res.status(400).send({ error: 'Invalid password' })
+      return
+    }
+    // Hashing '' would let anyone in by sending '' - removing a password is `null`.
+    if (typeof password === 'string' && password.trim() === '') {
+      res.status(400).send({ error: 'Password must not be empty' })
+      return
+    }
+    const authorized = await authorizeTarget(req, res, eventId, kind)
+    if (authorized === undefined) return
+    const { wsClient, target } = authorized
+
+    try {
+      await wsClient.setGuestPassword(target, password === null ? undefined : hashGuestPassword(password))
+      res.status(200).send()
+    } catch (err: any) {
+      ctx.error('Failed to set guest password', { error: err?.message ?? String(err), eventId })
+      res.status(500).send({ error: 'Failed to set guest password' })
+    }
+  })
+
+  // A scheduled meeting is addressed by its series, not by a session id: the session for the
+  // current occurrence may not exist yet, and the service is the only place allowed to open one.
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.post('/resolveSession', async (req, res) => {
+    const eventId = req.body.eventId
+    if (typeof eventId !== 'string' || eventId === '') {
+      res.status(400).send({ error: 'Missing eventId' })
+      return
+    }
+    const kind = req.body.kind === 'meeting' ? 'meeting' : 'event'
+    let resolved: ResolveSessionResult
+    try {
+      // Opening a session materializes a MeetingMinutes, so it needs the same gate as /meetingLink.
+      const authorized = await authorizeTarget(req, res, eventId, kind)
+      if (authorized === undefined) return
+      const { wsClient } = authorized
+      resolved = await wsClient.resolveSession(eventId, Date.now(), true, kind)
+    } catch (err: any) {
+      // Without this the caller waits for a response that never comes.
+      ctx.error('Failed to resolve a meeting session', { error: err?.message ?? String(err), eventId })
+      res.status(500).send({ error: 'Failed to resolve meeting session' })
+      return
+    }
+
+    if ('meeting' in resolved) {
+      res.status(200).send({ meetingId: resolved.meeting._id, occurrence: resolved.meeting.occurrence })
+      return
+    }
+    if (resolved.error === 'no-occurrence') {
+      // Too early, or the series is over - the client shows a lobby with this date.
+      res.status(403).send({ error: 'Meeting is not open', nextOccurrence: resolved.nextOccurrence })
+    } else if (resolved.error === 'not-found') {
+      res.status(404).send({ error: 'Meeting not found' })
+    } else {
+      res.status(409).send({ error: 'Meeting session is being created' })
+    }
+  })
 
   // Answers "am I really still in these meetings?" - a ParticipantInfo row outlives a closed tab,
   // so the client cannot tell a live second session from a leftover on its own.

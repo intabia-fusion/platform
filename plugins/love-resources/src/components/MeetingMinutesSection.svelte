@@ -16,6 +16,7 @@
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { MeetingMinutes } from '@hcengineering/love'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label, Section, Scroller } from '@hcengineering/ui'
   import {
     FilterBar,
@@ -34,6 +35,9 @@
   export let _class: Ref<Class<Doc>>
   export let readonly: boolean = false
   export let meetings: number
+  // Sessions of a permanent meeting or a series are found by their own link, not by attachedTo.
+  export let query: DocumentQuery<MeetingMinutes> | undefined = undefined
+  export let label: IntlString = love.string.MeetingMinutes
 
   const me = getCurrentAccount()
 
@@ -52,7 +56,7 @@
   })
 
   let baseQuery: DocumentQuery<MeetingMinutes>
-  $: baseQuery = { attachedTo: objectId }
+  $: baseQuery = query ?? { attachedTo: objectId }
   let resultQuery: DocumentQuery<MeetingMinutes>
   $: resultQuery = { ...baseQuery }
 
@@ -60,7 +64,7 @@
 </script>
 
 {#if canViewMinutes}
-  <Section label={love.string.MeetingMinutes} icon={love.icon.Cam}>
+  <Section {label} icon={love.icon.Cam}>
     <svelte:fragment slot="header">
       {#if viewlet}
         <ViewletSettingButton kind={'tertiary'} {viewlet} bind:viewOptions />
