@@ -3505,6 +3505,7 @@ async function sendApiKeyCreatedEmail (
 
     const lang = branding?.defaultLanguage
     const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
       ws: sanitizeEmail(ws.name !== '' ? ws.name : ws.url),
       name: sanitizeEmail(secret.name),
       masked: secret.masked,
@@ -3539,6 +3540,7 @@ async function sendApiKeyRevokedEmail (
 
     const lang = branding?.defaultLanguage
     const params = {
+      app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName),
       ws: sanitizeEmail(ws.name !== '' ? ws.name : ws.url),
       name: sanitizeEmail(secret.name),
       masked: secret.masked,
