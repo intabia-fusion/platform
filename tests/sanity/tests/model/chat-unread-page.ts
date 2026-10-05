@@ -29,9 +29,14 @@ export class ChatUnreadPage extends CommonPage {
   readonly newSeparator = (): Locator =>
     this.page.locator('.hulyComponent:not(#sidebar *) .label:not([inert] *)', { hasText: /^New$/ })
 
-  readonly newSeparatorInSidebar = (): Locator => this.page.locator('#sidebar .label:not([inert] *)', { hasText: /^New$/ })
-  readonly latestMessagesButton = (): Locator => this.page.getByRole('button', { name: 'Latest messages' }).and(this.live())
-  readonly message = (text: string): Locator => this.page.locator('.hulyComponent .activityMessage:not([inert] *)', { hasText: text })
+  readonly newSeparatorInSidebar = (): Locator =>
+    this.page.locator('#sidebar .label:not([inert] *)', { hasText: /^New$/ })
+
+  readonly latestMessagesButton = (): Locator =>
+    this.page.getByRole('button', { name: 'Latest messages' }).and(this.live())
+
+  readonly message = (text: string): Locator =>
+    this.page.locator('.hulyComponent .activityMessage:not([inert] *)', { hasText: text })
 
   /** The sort of the Threads list: a dropdown in its header, remembered per browser. */
   async selectThreadsSort (label: 'By last reply' | 'By creation date'): Promise<void> {

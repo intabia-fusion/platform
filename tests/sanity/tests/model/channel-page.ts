@@ -19,7 +19,9 @@ export class ChannelPage extends CommonPage {
   readonly buttonSendMessage = (): Locator => this.page.locator('button:has(g#Send):not([inert] *)')
   readonly textMessage = (messageText: string, strict = false): Locator =>
     strict
-      ? this.page.locator('.hulyComponent .activityMessage div[data-delivered]:not([inert] *)', { hasText: messageText })
+      ? this.page.locator('.hulyComponent .activityMessage div[data-delivered]:not([inert] *)', {
+          hasText: messageText
+        })
       : this.page.locator('.hulyComponent .activityMessage:not([inert] *)', { hasText: messageText })
 
   readonly textMessageInSidebar = (messageText: string, strict = false): Locator =>
