@@ -816,7 +816,9 @@ export const main = async (): Promise<void> => {
         return
       }
 
-      res.status(await kickParticipant(ctx, roomClient, wsClient, workspaceId, meeting, targetAccount as AccountUuid)).send()
+      res
+        .status(await kickParticipant(ctx, roomClient, wsClient, workspaceId, meeting, targetAccount as AccountUuid))
+        .send()
     } catch (err: any) {
       ctx.error('[kickParticipant] failed', {
         workspaceId,
