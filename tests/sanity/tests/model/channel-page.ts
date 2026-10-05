@@ -11,21 +11,21 @@ export class ChannelPage extends CommonPage {
     this.page = page
   }
 
-  // A switched channel or thread fades out over the next one for a moment, inert, its input still in the DOM
-  // (FadeSwap.svelte): only the live one counts.
+  // A switched channel or thread fades out over the next one for a moment, inert, its input and messages
+  // still in the DOM (FadeSwap.svelte): only the live ones count.
   readonly inputMessage = (): Locator => this.page.locator('div[class~="text-editor-view"]:not([inert] *)')
   // Ancestor button, not the icon: `disabled={!canSubmit}` sits on it (ReferenceInput.svelte),
   // so only this locator supports toBeEnabled() and Playwright's own disabled-click check.
   readonly buttonSendMessage = (): Locator => this.page.locator('button:has(g#Send):not([inert] *)')
   readonly textMessage = (messageText: string, strict = false): Locator =>
     strict
-      ? this.page.locator('.hulyComponent .activityMessage div[data-delivered]', { hasText: messageText })
-      : this.page.locator('.hulyComponent .activityMessage', { hasText: messageText })
+      ? this.page.locator('.hulyComponent .activityMessage div[data-delivered]:not([inert] *)', { hasText: messageText })
+      : this.page.locator('.hulyComponent .activityMessage:not([inert] *)', { hasText: messageText })
 
   readonly textMessageInSidebar = (messageText: string, strict = false): Locator =>
     strict
-      ? this.page.locator('#sidebar .activityMessage div[data-delivered]', { hasText: messageText })
-      : this.page.locator('#sidebar .activityMessage', { hasText: messageText })
+      ? this.page.locator('#sidebar .activityMessage div[data-delivered]:not([inert] *)', { hasText: messageText })
+      : this.page.locator('#sidebar .activityMessage:not([inert] *)', { hasText: messageText })
 
   readonly channelName = (channel: string): Locator =>
     this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', { name: channel })
