@@ -187,7 +187,12 @@ function defineFilters (builder: Builder): void {
       'priority',
       'space',
       'createdBy',
-      'assignee',
+      {
+        _class: tracker.class.Issue,
+        key: 'assignee',
+        component: view.component.ObjectFilter,
+        showNested: false
+      },
       {
         _class: tracker.class.Issue,
         key: 'component',
