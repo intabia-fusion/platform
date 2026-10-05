@@ -95,7 +95,7 @@ export class ClientSession implements Session {
   // instead of spreading on every request.
   private readonly workspaceForSession: WorkspaceIds
   private readonly permissionsGrantCached: PermissionsGrant | undefined
-  private readonly apiKeyCached: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[] } | undefined
+  private readonly apiKeyCached: SessionData['apiKey']
   private readonly serviceName: string
 
   constructor (
@@ -116,7 +116,7 @@ export class ClientSession implements Session {
 
   // extra.apikey/apiops/apispaces/apiall come from loginWithApiKey; ApiKeyPermissionsMiddleware enforces them.
   // An unrestricted key (extra.apiall) writes with the user's own rights, still narrowed by its spaces.
-  private computeApiKeyPermissions (): { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[] } | undefined {
+  private computeApiKeyPermissions (): SessionData['apiKey'] {
     const extra = this.token.extra
     if (extra?.apikey == null) {
       return
@@ -125,7 +125,13 @@ export class ClientSession implements Session {
     const ops = typeof extra.apiops === 'string' && extra.apiops !== '' ? extra.apiops.split(',') : []
     const spaces =
       typeof extra.apispaces === 'string' && extra.apispaces !== '' ? (extra.apispaces.split(',') as Ref<Space>[]) : []
-    return { canWrite: unrestricted || ops.length > 0, opsOnly: !unrestricted, spaces }
+    // extra.apiws marks a workspace key; a personal key stays within its user's own membership.
+    return {
+      canWrite: unrestricted || ops.length > 0,
+      opsOnly: !unrestricted,
+      spaces,
+      grantsSpaces: extra.apiws != null
+    }
   }
 
   private computePermissionsGrant (): PermissionsGrant | undefined {

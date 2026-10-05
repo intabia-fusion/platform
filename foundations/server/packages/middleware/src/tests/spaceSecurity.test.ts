@@ -2274,6 +2274,73 @@ describe('SpaceSecurityMiddleware', () => {
       await expect(mw.tx(ctx, [createTx])).resolves.not.toThrow()
     })
 
+    describe('workspace API key', () => {
+      const channelClass = 'chunter:class:Channel' as Ref<Class<Space>>
+      const keyCtx = (spaces: string[], grantsSpaces = true): SessionData =>
+        createSessionData(createAccount('key1'), {
+          apiKey: { canWrite: true, opsOnly: true, spaces: spaces as Array<Ref<Space>>, grantsSpaces }
+        })
+
+      beforeEach(() => {
+        jest.spyOn(hierarchy, 'hasClass').mockImplementation((cls) => cls === channelClass)
+        jest
+          .spyOn(hierarchy, 'getDescendants')
+          .mockImplementation((cls) => (cls === channelClass ? [channelClass] : []))
+      })
+
+      it('writes into a private channel it was issued for', async () => {
+        const mw = await createMiddleware([
+          createSpace('private1', ['user1'], { private: true, owners: ['user1'], _class: channelClass })
+        ])
+        ctx.contextData = keyCtx(['private1'])
+
+        await expect(mw.tx(ctx, [docTx('private1')])).resolves.not.toThrow()
+      })
+
+      it('is refused when the key is personal', async () => {
+        const mw = await createMiddleware([
+          createSpace('private1', ['user1'], { private: true, owners: ['user1'], _class: channelClass })
+        ])
+        ctx.contextData = keyCtx(['private1'], false)
+
+        await expect(mw.tx(ctx, [docTx('private1')])).rejects.toThrow()
+      })
+
+      it('is refused in a private space outside its grant', async () => {
+        const mw = await createMiddleware([
+          createSpace('private1', ['user1'], { private: true, owners: ['user1'], _class: channelClass }),
+          createSpace('private2', ['user1'], { private: true, owners: ['user1'], _class: channelClass })
+        ])
+        ctx.contextData = keyCtx(['private1'])
+
+        await expect(mw.tx(ctx, [docTx('private2')])).rejects.toThrow()
+      })
+
+      it('is refused in a listed space of a class the key cannot be granted', async () => {
+        const mw = await createMiddleware([
+          createSpace('person1', ['user1'], {
+            private: true,
+            owners: ['user1'],
+            _class: 'contact:class:PersonSpace' as Ref<Class<Space>>
+          })
+        ])
+        ctx.contextData = keyCtx(['person1'])
+
+        await expect(mw.tx(ctx, [docTx('person1')])).rejects.toThrow()
+      })
+
+      it('does not bring back an archived space into a search', async () => {
+        const mw = await createMiddleware([
+          createSpace('archived1', ['user1'], { private: true, archived: true, _class: channelClass })
+        ])
+        ctx.contextData = keyCtx(['archived1'])
+
+        await mw.searchFulltext(ctx, { query: 'test' }, { limit: 10 })
+        const passed = (nextMiddleware.searchFulltext as jest.Mock).mock.calls[0][1].spaces as Array<Ref<Space>>
+        expect(passed).not.toContain('archived1')
+      })
+    })
+
     // addSecurity only lets Owner skip the space filter for the Space domain itself (reading/
     // listing spaces); for regular documents in other spaces the membership check still applies.
     it('does NOT exempt AccountRole.Owner from the write-membership check outside the Space domain', async () => {

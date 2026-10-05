@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 import core, {
-  type Account,
   AccountRole,
   type AccountUuid,
   type AttachedDoc,
@@ -49,6 +48,7 @@ import core, {
 } from '@hcengineering/core'
 import {
   BaseMiddleware,
+  getApiKeyGrantableClasses,
   type Middleware,
   type PipelineContext,
   type ServerFindOptions,
@@ -586,6 +586,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     // Guests are judged by GuestPermissionsMiddleware, which knows the collaborator rules addSecurity
     // mirrors for reads; membership alone would cut off collaborators who are not space members.
     if (guestRoles.has(account.role)) return
+    if (this.isApiKeyGranted(ctx, this.spacesMap.get(cudTx.objectSpace))) return
     if (!this.canWriteSpace(cudTx.objectSpace, account.uuid)) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
@@ -762,7 +763,12 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
   }
 
-  private getAllAllowedSpaces (account: Account, showArchived: boolean, forSearch: boolean = false): Ref<Space>[] {
+  private getAllAllowedSpaces (
+    ctx: MeasureContext<SessionData>,
+    showArchived: boolean,
+    forSearch: boolean = false
+  ): Ref<Space>[] {
+    const account = ctx.contextData.account
     const includeSystem = !forSearch || ![AccountRole.Guest, AccountRole.ReadOnlyGuest].includes(account.role)
     const includePublic = account.role !== AccountRole.ReadOnlyGuest
 
@@ -780,12 +786,24 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
 
     for (const space of this.spacesMap.values()) {
       if (!showArchived && space.archived) continue
-      if (isWorkspaceOwner || space.members.has(account.uuid) || (includePublic && !space.private)) {
+      if (
+        isWorkspaceOwner ||
+        space.members.has(account.uuid) ||
+        (includePublic && !space.private) ||
+        this.isApiKeyGranted(ctx, space)
+      ) {
         result.push(space._id)
       }
     }
 
     return result
+  }
+
+  // A workspace API key reaches the spaces listed on it without membership, if their class is grantable.
+  private isApiKeyGranted (ctx: MeasureContext<SessionData>, space: SpaceInfo | undefined): boolean {
+    const apiKey = ctx.contextData.apiKey
+    if (space === undefined || apiKey?.grantsSpaces !== true || !apiKey.spaces.includes(space._id)) return false
+    return getApiKeyGrantableClasses(this.context.hierarchy).includes(space._class)
   }
 
   override async findAll<T extends Doc>(
@@ -822,7 +840,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const newQuery = { ...query }
     const account = ctx.contextData.account
     if (!isSystem(account, ctx)) {
-      const allowed = this.getAllAllowedSpaces(account, false, true)
+      const allowed = this.getAllAllowedSpaces(ctx, false, true)
       if (query.spaces !== undefined) {
         const allowedSet = new Set(allowed)
         newQuery.spaces = query.spaces.filter((s) => allowedSet.has(s))
@@ -839,7 +857,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (isSystem(account, ctx)) return
     const owner = isOwner(account, ctx)
     const h = this.context.hierarchy
-    const allowedSpaces = new Set(this.getAllAllowedSpaces(account, showArchived))
+    const allowedSpaces = new Set(this.getAllAllowedSpaces(ctx, showArchived))
     for (const key in lookup) {
       const val = lookup[key]
       if (Array.isArray(val)) {

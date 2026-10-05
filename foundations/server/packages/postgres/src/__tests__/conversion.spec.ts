@@ -374,4 +374,35 @@ describe('addSecurity - SQL injection prevention', () => {
     // It should appear in parameterized values
     expect(values).toContain(uuid)
   })
+
+  it('lets a workspace API key read the spaces it was issued for, and only them', () => {
+    const { adapter } = createTestContext()
+    jest.spyOn((adapter as any).modelDb, 'findAllSync').mockReturnValue([])
+    const keySpaces = ['private-channel']
+    const makeVars = (values: any[]): any => ({
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return `$${values.length}${type}`
+      }
+    })
+
+    const granted: any[] = []
+    const workspaceKey = {
+      ...createAccount('key-account'),
+      apiKey: { canWrite: true, opsOnly: true, spaces: keySpaces, grantsSpaces: true }
+    } as unknown as SessionData
+    const res = adapter.addSecurity(core.class.Doc, makeVars(granted), {}, false, 'chunk', workspaceKey)
+    expect(res).toContain('sec._id = ANY(')
+    expect(granted).toContainEqual(keySpaces)
+
+    const personal: any[] = []
+    const personalKey = {
+      ...createAccount('user'),
+      apiKey: { canWrite: true, opsOnly: true, spaces: keySpaces, grantsSpaces: false }
+    } as unknown as SessionData
+    expect(adapter.addSecurity(core.class.Doc, makeVars(personal), {}, false, 'chunk', personalKey)).not.toContain(
+      'sec._id = ANY('
+    )
+    expect(personal).not.toContainEqual(keySpaces)
+  })
 })

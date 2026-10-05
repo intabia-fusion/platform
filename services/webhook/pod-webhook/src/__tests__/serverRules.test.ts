@@ -48,6 +48,7 @@ const baseCheck: ApiKeyCheck = {
   ops: ['chat:post', 'issue:create'],
   spaces: [],
   incoming: true,
+  personal: false,
   createdBy: 'account_1' as any
 }
 

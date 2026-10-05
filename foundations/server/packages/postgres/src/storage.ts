@@ -84,6 +84,7 @@ import {
   type DbAdapterHandler,
   type DomainHelperOperations,
   estimateDocSize,
+  getApiKeyGrantableClasses,
   type RawFindIterator,
   type ServerFindOptions,
   type TxAdapter
@@ -676,7 +677,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
             : ''
         const archivedCheck = showArchived ? '' : ' AND sec.archived = false'
         const accUuidVar = vars.add(acc.uuid, '::text')
-        const q = `(sec._id = '${core.space.Space}' OR sec."_class" = '${core.class.SystemSpace}' OR sec.members @> ARRAY[${accUuidVar}]${privateCheck})${archivedCheck}`
+        // A workspace API key reads the spaces it was issued for without being their member.
+        const apiKey = sessionContext.apiKey
+        const keyCheck =
+          apiKey?.grantsSpaces === true && apiKey.spaces.length > 0
+            ? ` OR (sec._id = ANY(${vars.add(apiKey.spaces, '::text[]')}) AND sec."_class" = ANY(${vars.add(getApiKeyGrantableClasses(this.hierarchy), '::text[]')}))`
+            : ''
+        const q = `(sec._id = '${core.space.Space}' OR sec."_class" = '${core.class.SystemSpace}' OR sec.members @> ARRAY[${accUuidVar}]${privateCheck}${keyCheck})${archivedCheck}`
         const res = `EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_SPACE)} sec WHERE sec._id = ${domain}.${key} AND sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND ${q})`
 
         const collabSec = getClassCollaborators(this.modelDb, this.hierarchy, _class)

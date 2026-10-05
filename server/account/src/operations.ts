@@ -3816,6 +3816,9 @@ export async function loginWithApiKey (
   if (secret.spaces.length > 0) {
     extra.apispaces = secret.spaces.join(',')
   }
+  if (secret.personal !== true) {
+    extra.apiws = '1'
+  }
 
   // Interim token carries the key's identity + permissions + workspace; selectWorkspace re-signs
   // it with the resolved role/endpoint, keeping the extra fields and the exp on the returned

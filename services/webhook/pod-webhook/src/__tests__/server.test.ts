@@ -43,6 +43,7 @@ const baseCheck: ApiKeyCheck = {
   ops: ['issue:create'],
   spaces: [],
   incoming: true,
+  personal: false,
   createdBy: 'account_1' as any
 }
 

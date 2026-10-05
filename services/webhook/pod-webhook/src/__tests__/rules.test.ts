@@ -26,6 +26,7 @@ function baseCheck (overrides: Record<string, unknown> = {}): any {
     ops: ['chat:post'],
     spaces: [],
     incoming: true,
+    personal: false,
     createdBy: 'person_uuid_1',
     ...overrides
   }

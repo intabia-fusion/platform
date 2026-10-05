@@ -20,3 +20,5 @@ Compare each locale against `en.json`: a value byte-identical to the English one
 untranslated. Legit exceptions are strings that are the same in every language - `URL`,
 `API + Webhooks`, the `https://example.com/webhooks` placeholder, `Endpoint` in the romance
 locales, `Name`/`Operation` in German.
+
+A param missing from `translate()` params makes `IntlMessageFormat.format` throw, and `translate` returns the bare key (`account:string:ApiKeyCreatedHTML`). The HTML templates use `{app}` in the header and footer while Subject/Text often do not, so only the HTML part breaks. Every sender passes `app: branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)`.

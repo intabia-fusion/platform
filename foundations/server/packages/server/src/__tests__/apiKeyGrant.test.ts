@@ -34,21 +34,48 @@ describe('ClientSession api key grant caching', () => {
     const token = makeToken({ apikey: 'key-1', apiops: 'issue:create', apispaces: 'space-1' })
     const session = new ClientSession(token, workspace, account, info, false, counters)
 
-    expect((session as any).apiKeyCached).toEqual({ canWrite: true, opsOnly: true, spaces: ['space-1'] })
+    expect((session as any).apiKeyCached).toEqual({
+      canWrite: true,
+      opsOnly: true,
+      spaces: ['space-1'],
+      grantsSpaces: false
+    })
   })
 
   it('a key without operations cannot write at all', () => {
     const token = makeToken({ apikey: 'key-2', apispaces: 'space-2' })
     const session = new ClientSession(token, workspace, account, info, false, counters)
 
-    expect((session as any).apiKeyCached).toEqual({ canWrite: false, opsOnly: true, spaces: ['space-2'] })
+    expect((session as any).apiKeyCached).toEqual({
+      canWrite: false,
+      opsOnly: true,
+      spaces: ['space-2'],
+      grantsSpaces: false
+    })
   })
 
   it('extra.apiall writes through any API, still narrowed by its spaces', () => {
     const token = makeToken({ apikey: 'key-1', apiall: '1', apispaces: 'space-3' })
     const session = new ClientSession(token, workspace, account, info, false, counters)
 
-    expect((session as any).apiKeyCached).toEqual({ canWrite: true, opsOnly: false, spaces: ['space-3'] })
+    expect((session as any).apiKeyCached).toEqual({
+      canWrite: true,
+      opsOnly: false,
+      spaces: ['space-3'],
+      grantsSpaces: false
+    })
+  })
+
+  it('extra.apiws grants a workspace key its spaces', () => {
+    const token = makeToken({ apikey: 'key-4', apiops: 'chat:post', apispaces: 'space-4', apiws: '1' })
+    const session = new ClientSession(token, workspace, account, info, false, counters)
+
+    expect((session as any).apiKeyCached).toEqual({
+      canWrite: true,
+      opsOnly: true,
+      spaces: ['space-4'],
+      grantsSpaces: true
+    })
   })
 
   it('no extra.apikey produces no apiKey grant', () => {

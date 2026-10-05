@@ -647,6 +647,8 @@ export interface ApiKeyCheck {
   spaces: Ref<Space>[]
   /** Whether this key may be used on pod-webhook's ingest routes. */
   incoming: boolean
+  /** A personal key acts within its user's own membership; a workspace key gets its spaces granted. */
+  personal: boolean
   /** Used by pod-webhook to accept incoming rules only from the key creator's PersonSpace. */
   createdBy: AccountUuid
 }

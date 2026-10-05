@@ -52,6 +52,8 @@ export interface WebhookJobMessage {
   action: ApiKeyOperation
   ops: ApiKeyOperation[]
   spaces: Ref<Space>[]
+  // Absent on jobs queued before the field existed - treated as personal, no spaces granted.
+  personal?: boolean
   // Raw request body (action/space plus action-specific fields), forwarded as-is to the consumer.
   payload: Record<string, unknown>
   receivedAt: number
