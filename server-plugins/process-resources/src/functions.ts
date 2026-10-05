@@ -496,7 +496,7 @@ export async function RunSubProcess (
       const currentExecution = await control.client.findAll(process.class.Execution, {
         process: target._id,
         card: _card,
-        done: false
+        status: ExecutionStatus.Active
       })
       if (currentExecution.length > 0) {
         // todo, show erro after merge another pr
@@ -522,7 +522,7 @@ export async function RunSubProcess (
       _id
     )
 
-    rollback.push(control.client.txFactory.createTxRemoveDoc(process.class.Execution, core.space.Workspace, _id))
+    rollback.push(control.client.txFactory.createTxRemoveDoc(process.class.Execution, execution.space, _id))
 
     res.push(tx)
     resultContext.push({

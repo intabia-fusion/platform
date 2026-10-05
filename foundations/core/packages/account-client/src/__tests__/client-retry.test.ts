@@ -73,3 +73,22 @@ describe('AccountClient network retries', () => {
     expect(err.status.code).toBe(platform.status.ServiceUnavailable)
   })
 })
+
+describe('AccountClient getProviders retries', () => {
+  const realFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  it('makes exactly maxAttempts (5) calls on a network error', async () => {
+    const fetchMock = jest.fn(async () => {
+      throw new TypeError('Failed to fetch')
+    })
+    globalThis.fetch = fetchMock
+
+    await expect(getClient('http://accounts.test').getProviders()).rejects.toThrow()
+
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+  })
+})

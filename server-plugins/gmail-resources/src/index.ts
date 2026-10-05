@@ -82,6 +82,7 @@ export const IsIncomingMessageTypeMatch: TypeMatchFunc = async (
   const { hierarchy } = client
   const message = _typeObject as DocUpdateMessage
   if (!hierarchy.isDerived(message.objectClass, gmail.class.Message)) return false
+  if (message.action !== 'create') return false
 
   const gmailMessage = (
     await client.findAll(client.ctx, gmail.class.Message, { _id: message.objectId as Ref<Message> }, { limit: 1 })

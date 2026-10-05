@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type MeasureContext, type SessionData, type Tx } from '@hcengineering/core'
+import core, { type MeasureContext, type SessionData, toFindResult, type Tx } from '@hcengineering/core'
 import type { PipelineContext } from '@hcengineering/server-core'
 import { TriggersMiddleware } from '../triggers'
 
@@ -88,6 +88,108 @@ describe('TriggersMiddleware isTriggerCtx lifecycle', () => {
       ;(ctx.contextData as any).isTriggerCtx = false
       await (middleware as any).processDerivedTxes(ctx, [sampleTx])
       expect((ctx.contextData as any).isTriggerCtx).toBe(false)
+    } finally {
+      await middleware.close()
+    }
+  })
+})
+
+describe('TriggersMiddleware queryFind', () => {
+  it('passes options to the live query', async () => {
+    const queryFind = jest.fn(async () => [])
+    const context = {
+      hierarchy: { findDomain: () => 'space' } as any,
+      liveQuery: { queryFind }
+    } as unknown as PipelineContext
+    const middleware = new TriggersMiddleware(context, undefined)
+    const m = middleware as any
+    m.processRemove = async () => []
+    m.processCollection = async () => []
+    m.processMove = async () => []
+    let control: any
+    m.processSyncTriggers = async (_ctx: any, _txes: any, tc: any) => {
+      control = tc
+      return []
+    }
+    const ctx: any = {
+      contextData: { asyncRequests: [] },
+      with: async (_n: string, _p: any, op: any) => await op(ctx)
+    }
+    try {
+      await m.processDerived(ctx, [])
+      const options = { limit: 1, sort: { modifiedOn: -1 } }
+      await control.queryFind(ctx, core.class.Space, {}, options)
+      expect(queryFind).toHaveBeenCalledWith(core.class.Space, {}, expect.objectContaining(options))
+    } finally {
+      await middleware.close()
+    }
+  })
+})
+
+describe('TriggersMiddleware trigger findAll', () => {
+  it('does not leave isTriggerCtx set after the query', async () => {
+    const context = { hierarchy: { updateLookupMixin: (_c: any, v: any) => v } as any } as unknown as PipelineContext
+    const middleware = new TriggersMiddleware(context, undefined)
+    const m = middleware as any
+    m.processRemove = async () => []
+    m.processCollection = async () => []
+    m.processMove = async () => []
+    m.findAll = async () => toFindResult([])
+    let control: any
+    m.processSyncTriggers = async (_ctx: any, _txes: any, tc: any) => {
+      control = tc
+      return []
+    }
+    const ctx: any = {
+      contextData: { asyncRequests: [] },
+      with: async (_n: string, _p: any, op: any) => await op(ctx)
+    }
+    try {
+      await m.processDerived(ctx, [])
+      await control.findAll(ctx, core.class.Space, {})
+      expect(ctx.contextData.isTriggerCtx).toBeUndefined()
+    } finally {
+      await middleware.close()
+    }
+  })
+})
+
+describe('TriggersMiddleware parallel trigger findAll', () => {
+  it('keeps isTriggerCtx until the last parallel query ends, then restores it', async () => {
+    const context = { hierarchy: { updateLookupMixin: (_c: any, v: any) => v } as any } as unknown as PipelineContext
+    const middleware = new TriggersMiddleware(context, undefined)
+    const m = middleware as any
+    m.processRemove = async () => []
+    m.processCollection = async () => []
+    m.processMove = async () => []
+    const release: Record<string, () => void> = {}
+    const seen: Record<string, boolean | undefined> = {}
+    m.findAll = async (ctx: any, _class: any, query: any) => {
+      await new Promise<void>((resolve) => {
+        release[query.id] = resolve
+      })
+      seen[query.id] = ctx.contextData.isTriggerCtx
+      return toFindResult([])
+    }
+    let control: any
+    m.processSyncTriggers = async (_ctx: any, _txes: any, tc: any) => {
+      control = tc
+      return []
+    }
+    const ctx: any = {
+      contextData: { asyncRequests: [] },
+      with: async (_n: string, _p: any, op: any) => await op(ctx)
+    }
+    try {
+      await m.processDerived(ctx, [])
+      const a = control.findAll(ctx, core.class.Space, { id: 'a' })
+      const b = control.findAll(ctx, core.class.Space, { id: 'b' })
+      release.a()
+      await a
+      release.b()
+      await b
+      expect(seen.b).toBe(true)
+      expect(ctx.contextData.isTriggerCtx).toBeUndefined()
     } finally {
       await middleware.close()
     }

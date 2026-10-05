@@ -40,7 +40,12 @@ export const consoleLogger = (logParams: Record<string, any>): MeasureLogger => 
     )
   },
   warn: (msg, args) => {
-    console.warn(msg, ...Object.entries(args ?? {}).map((it) => `${it[0]}=${JSON.stringify(replacer(it[1]))}`))
+    console.warn(
+      msg,
+      ...Object.entries({ ...(args ?? {}), ...(logParams ?? {}) }).map(
+        (it) => `${it[0]}=${JSON.stringify(replacer(it[1]))}`
+      )
+    )
   },
   close: async () => {},
   logOperation: (operation, time, params) => {}

@@ -58,6 +58,16 @@ describe('dslContext roundtrip', () => {
     expect((parsed as any).functions?.length).toBeGreaterThanOrEqual(1)
   })
 
+  test('SOURCE keeps all props', () => {
+    const original = {
+      type: 'attribute',
+      key: 'x',
+      sourceFunction: { func: 'src' as any, props: { a: 1, b: 2 } }
+    } as any
+    const parsed = parseDSLContext(createDSLContext(original))
+    expect((parsed as any).sourceFunction.props).toEqual({ a: 1, b: 2 })
+  })
+
   test('nested template with arrow inside should not split modifiers', () => {
     // eslint-disable-next-line no-template-curly-in-string
     const dsl = '${@x=>MYFUNC(${@inner=>OTHER()})=>FALLBACK(1)}'

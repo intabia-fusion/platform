@@ -31,22 +31,26 @@ function $push (document: Doc, keyval: Record<string, PropertyType>): void {
     }
     const kvk = keyval[key]
     if (typeof kvk === 'object' && kvk != null) {
-      const arr = doc[key] as Array<any>
+      let arr = doc[key] as Array<any>
       const desc = kvk as Position<PropertyType>
+      if (!Array.isArray(arr)) {
+        if (arr !== null) {
+          Analytics.handleError(new Error(`invalid array value: ${JSON.stringify(arr)} `))
+        }
+        arr = doc[key] = []
+      }
       if ('$each' in desc) {
-        if (arr != null && Array.isArray(arr)) {
-          arr.splice(desc.$position ?? 0, 0, ...desc.$each)
-          if (desc.$slice !== undefined) {
-            if (desc.$slice === 0) {
-              arr.splice(0, arr.length)
-            } else if (desc.$slice > 0) {
-              if (arr.length > desc.$slice) {
-                arr.splice(desc.$slice)
-              }
-            } else if (desc.$slice < 0) {
-              if (arr.length > -desc.$slice) {
-                arr.splice(0, arr.length + desc.$slice)
-              }
+        arr.splice(desc.$position ?? 0, 0, ...desc.$each)
+        if (desc.$slice !== undefined) {
+          if (desc.$slice === 0) {
+            arr.splice(0, arr.length)
+          } else if (desc.$slice > 0) {
+            if (arr.length > desc.$slice) {
+              arr.splice(desc.$slice)
+            }
+          } else if (desc.$slice < 0) {
+            if (arr.length > -desc.$slice) {
+              arr.splice(0, arr.length + desc.$slice)
             }
           }
         }

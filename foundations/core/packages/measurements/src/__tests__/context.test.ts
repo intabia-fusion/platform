@@ -34,6 +34,16 @@ describe('context', () => {
       consoleSpy.mockRestore()
     })
 
+    it('should include logParams in warn messages', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const logger = consoleLogger({ service: 'test' })
+
+      logger.warn('Test message', { key: 'value' })
+
+      expect(consoleSpy).toHaveBeenCalledWith('Test message', 'key="value"', 'service="test"')
+      consoleSpy.mockRestore()
+    })
+
     it('should log error messages', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
       const logger = consoleLogger({ service: 'test' })

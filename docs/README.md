@@ -57,6 +57,7 @@
 | Документ | О чём |
 | --- | --- |
 | [changelog.update.task.md](changelog.update.task.md) | Как обновлять changelog |
+| [fix-glitches.md](fix-glitches.md) | Ветка fix-glitches: исправленные дефекты, зачем, тесты, что меняется для клиентов, что не исправлено |
 
 ## Неактивный код
 

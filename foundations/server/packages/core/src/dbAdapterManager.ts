@@ -105,11 +105,11 @@ export class DbAdapterManagerImpl implements DBAdapterManager {
                 break
             }
 
-            if (oldDocuments < 50 && info.documents > 50) {
+            if (oldDocuments <= 50 && info.documents > 50) {
               // We have more 50 documents, we need to check for indexes
               void this.domainHelper?.checkDomain(this.metrics, domain, info.documents, helper)
             }
-            if (oldDocuments > 50 && info.documents < 50) {
+            if (oldDocuments > 50 && info.documents <= 50) {
               // We have more 50 documents, we need to check for indexes
               void this.domainHelper?.checkDomain(this.metrics, domain, info.documents, helper)
             }

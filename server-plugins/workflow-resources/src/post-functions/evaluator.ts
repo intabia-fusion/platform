@@ -31,9 +31,8 @@ export async function resolveValue (val: WorkflowFieldValue, task: Task, control
     let result = await evaluateWorkflowValue(val, task, control)
     if (result == null) return undefined
 
-    const transforms = functions.filter((it) => it.type === 'transform')
-    if (transforms.length > 0 && val.functions != null) {
-      result = applyValueFunctions(val.functions, result, transforms)
+    if (functions.length > 0 && val.functions != null) {
+      result = applyValueFunctions(val.functions, result, functions)
     }
 
     return result

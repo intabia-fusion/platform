@@ -914,14 +914,23 @@ export class TSessionManager implements SessionManager {
 
         const accountUuid = account.account
         if (accountUuid !== systemAccountUuid && accountUuid !== guestAccount) {
-          await this.usersProducer.send(ctx, workspace.wsId.uuid, [
-            userEvents.login({
-              user: accountUuid,
-              sessions: this.countUserSessions(workspace, accountUuid),
-              socialIds: account.socialIds.map((it) => it._id),
-              timestamp: Date.now()
-            })
-          ])
+          try {
+            await this.usersProducer.send(ctx, workspace.wsId.uuid, [
+              userEvents.login({
+                user: accountUuid,
+                sessions: this.countUserSessions(workspace, accountUuid),
+                socialIds: account.socialIds.map((it) => it._id),
+                timestamp: Date.now()
+              })
+            ])
+          } catch (err: any) {
+            // The caller never gets the session, so it must not stay registered.
+            this.sessions.delete(ws.id)
+            if (workspace.sessions.get(session.sessionId)?.session === session) {
+              workspace.sessions.delete(session.sessionId)
+            }
+            throw err
+          }
         }
 
         // Mark workspace as init completed and we had at least one client.

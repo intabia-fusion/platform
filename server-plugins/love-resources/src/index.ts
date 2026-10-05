@@ -139,12 +139,14 @@ async function roomJoinHandler (info: ParticipantInfo, control: TriggerControl):
   }
 
   const roomInfo = roomInfos.find((ri) => ri.room === targetRoom)
-  if (roomInfo !== undefined && !roomInfo.persons.includes(info.person)) {
-    res.push(
-      control.txFactory.createTxUpdateDoc(love.class.RoomInfo, core.space.Workspace, roomInfo._id, {
-        $push: { persons: info.person }
-      })
-    )
+  if (roomInfo !== undefined) {
+    if (!roomInfo.persons.includes(info.person)) {
+      res.push(
+        control.txFactory.createTxUpdateDoc(love.class.RoomInfo, core.space.Workspace, roomInfo._id, {
+          $push: { persons: info.person }
+        })
+      )
+    }
   } else {
     const room = (await control.findAll(control.ctx, love.class.Room, { _id: targetRoom }))[0]
     if (room === undefined) return []

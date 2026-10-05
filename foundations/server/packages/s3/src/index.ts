@@ -373,7 +373,8 @@ export class S3Service implements StorageAdapter {
         return readable
       }
     } catch (err: any) {
-      // In case of error return undefined
+      // Only a missing key is NoSuchKey; an S3 outage must not look like a missing file
+      if (err?.name !== 'NoSuchKey' && err?.name !== 'NotFound' && err?.$metadata?.httpStatusCode !== 404) throw err
       throw new NoSuchKeyError(`uuid=${wsIds.uuid} dataId=${wsIds.dataId} missing ${objectName}`, err)
     }
   }

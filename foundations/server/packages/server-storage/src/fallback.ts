@@ -29,6 +29,17 @@ class NoSuchKeyError extends Error {
   }
 }
 
+// Adapters report a missing object as NoSuchKey/NotFound codes, minio's message or datalake's NotFoundError.
+function isMissing (err: any): boolean {
+  return (
+    err?.code === 'NoSuchKey' ||
+    err?.code === 'NotFound' ||
+    err?.Code === 'NoSuchKey' ||
+    err?.message === 'No such key' ||
+    err?.name === 'NotFoundError'
+  )
+}
+
 /**
  * Perform operations on storage adapter and map required information into BinaryDocument into provided DbAdapter storage.
  */
@@ -187,13 +198,15 @@ export class FallbackStorageAdapter implements StorageAdapter, StorageAdapterEx 
 
   @withContext('fallback-get', {})
   async get (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string): Promise<Readable> {
+    let failure: any
     for (const { adapter } of this.adapters) {
       try {
         return await adapter.get(ctx, wsIds, objectName)
       } catch (err: any) {
-        // ignore
+        if (!isMissing(err)) failure = failure ?? err
       }
     }
+    if (failure !== undefined) throw failure
     throw new NoSuchKeyError(`uuid=${wsIds.uuid} dataId=${wsIds.dataId} missing ${objectName}`)
   }
 
@@ -205,25 +218,29 @@ export class FallbackStorageAdapter implements StorageAdapter, StorageAdapterEx 
     offset: number,
     length?: number | undefined
   ): Promise<Readable> {
+    let failure: any
     for (const { adapter } of this.adapters) {
       try {
         return await adapter.partial(ctx, wsIds, objectName, offset, length)
       } catch (err: any) {
-        // ignore
+        if (!isMissing(err)) failure = failure ?? err
       }
     }
+    if (failure !== undefined) throw failure
     throw new NoSuchKeyError(`uuid=${wsIds.uuid} dataId=${wsIds.dataId} missing ${objectName}`)
   }
 
   @withContext('fallback-read', {})
   async read (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string): Promise<Buffer[]> {
+    let failure: any
     for (const { adapter } of this.adapters) {
       try {
         return await adapter.read(ctx, wsIds, objectName)
       } catch (err: any) {
-        // Ignore
+        if (!isMissing(err)) failure = failure ?? err
       }
     }
+    if (failure !== undefined) throw failure
     throw new NoSuchKeyError(`uuid=${wsIds.uuid} dataId=${wsIds.dataId} missing ${objectName}`)
   }
 

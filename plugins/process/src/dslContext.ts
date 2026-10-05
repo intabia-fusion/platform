@@ -241,7 +241,8 @@ function parseModifiers (modifiers: string[]): Modifiers {
       const inside = m.slice('=>SOURCE('.length, -1)
       const parts = splitTopLevel(inside, ',')
       const funcRef = parts[0]
-      const props = parts.length > 1 && parts[1].length > 0 ? parseProps(parts[1]) : {}
+      const propsStr = parts.slice(1).join(',')
+      const props = propsStr.length > 0 ? parseProps(propsStr) : {}
       res.sourceFunction = { func: expandFuncRef(funcRef), props }
     } else if (m.startsWith('=>FALLBACK(')) {
       const inside = m.slice('=>FALLBACK('.length, -1)

@@ -382,7 +382,7 @@ export function matchLastTxLoader (dbUrl: string): LastTxLoader | undefined {
 
 export function getWorkspaceDestroyAdapter (dbUrl: string): WorkspaceDestroyAdapter {
   for (const [k, v] of Object.entries(destroyFactories)) {
-    if (dbUrl.startsWith(k)) {
+    if (k !== '' && dbUrl.startsWith(k)) {
       return v(dbUrl)
     }
   }

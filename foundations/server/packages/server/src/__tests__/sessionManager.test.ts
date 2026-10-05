@@ -1046,6 +1046,29 @@ describe('TSessionManager', () => {
     })
   })
 
+  describe('addSession', () => {
+    it('removes the session from the maps when the login event is not sent', async () => {
+      const wsUuid = 'ws-1' as WorkspaceUuid
+      const user = 'user-1' as AccountUuid
+      const account: any = {
+        account: user,
+        socialIds: [{ _id: 'p1', type: 'email', value: 'a@b.c' }],
+        workspaces: { [wsUuid]: { role: AccountRole.User } }
+      }
+      const workspace: any = { sessions: new Map(), wsId: { uuid: wsUuid }, context: {} }
+      jest.spyOn(sessionManager, 'getLoginWithWorkspaceInfo').mockResolvedValue(account)
+      jest.spyOn(sessionManager, 'getWorkspace').mockResolvedValue({ workspace } as any)
+      mockUsersProducer.send.mockRejectedValue(new Error('queue down'))
+      const ws: any = { id: 'sock-1', send: jest.fn() }
+      const token = { account: user, workspace: wsUuid } as unknown as Token
+
+      await expect(sessionManager.addSession(mockContext, ws, token, 'raw', undefined)).rejects.toThrow('queue down')
+
+      expect(sessionManager.sessions.has('sock-1')).toBe(false)
+      expect(workspace.sessions.size).toBe(0)
+    })
+  })
+
   describe('createSession', () => {
     it('should create session for regular user', () => {
       const token = {

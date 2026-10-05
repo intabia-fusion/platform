@@ -370,4 +370,24 @@ describe('connect function', () => {
     await client.close()
     await new Promise((resolve) => setTimeout(resolve, 50))
   })
+
+  it('closes the session on terminate without error', async () => {
+    const mockWs = new MockWebSocket('ws://localhost:3333')
+    mockWebSockets.push(mockWs)
+    const client: any = connect(
+      'ws://localhost:3333',
+      jest.fn(),
+      'test-workspace' as WorkspaceUuid,
+      'u' as PersonUuid,
+      {
+        socketFactory: (url: string) => mockWs
+      }
+    )
+    connections.push(client)
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    client.handleMsg(1, { id: -1, terminate: true })
+
+    expect(client.closed).toBe(true)
+  })
 })

@@ -233,7 +233,7 @@ export async function OnToDoUpdate (txes: Tx[], control: TriggerControl): Promis
       }
       const wasProcessed = await control.findAll(control.ctx, core.class.TxUpdateDoc, {
         objectId: todo._id,
-        doneOn: { $exists: true }
+        'operations.doneOn': { $exists: true }
       })
       // Do not process already processed todos.
       if (wasProcessed.filter((p) => p._id !== tx._id).length > 0) {

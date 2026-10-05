@@ -63,12 +63,21 @@ export class Workspace {
 
   async with<T>(op: (pipeline: Pipeline) => Promise<T>): Promise<T> {
     this.operations++
-    let pipeline = this.getPipeline()
-    if (pipeline instanceof Promise) {
-      pipeline = await pipeline
-      this.pipeline = pipeline
-    }
     try {
+      let pipeline = this.getPipeline()
+      if (pipeline instanceof Promise) {
+        const building = pipeline
+        try {
+          pipeline = await building
+        } catch (err: any) {
+          // Do not cache a failed build, next call should try again.
+          if (this.pipeline === building) {
+            this.pipeline = undefined
+          }
+          throw err
+        }
+        this.pipeline = pipeline
+      }
       return await op(pipeline)
     } finally {
       this.operations--

@@ -394,6 +394,18 @@ describe('handleReadNotificationAction: reactions, mentions and commons read', (
     ])
   })
 
+  it('treats null id lists from a non-web client as empty', async () => {
+    const nullTx = {
+      ...tx,
+      attributes: { ...tx.attributes, reactionIds: null, commonIds: null, mentionIds: null, messageIds: null }
+    } as unknown as TxCreateDoc<ReadNotificationAction>
+
+    await expect(
+      handleReadNotificationAction(mockClient as Client, mockCache as Cache, result, nullTx)
+    ).resolves.toBeUndefined()
+    expect(mockClient.txFactory.createTxUpdateDoc).not.toHaveBeenCalled()
+  })
+
   it('dismisses nothing when the phone has no subscription', async () => {
     mockCache.getPushSubscriptions.mockResolvedValue([{ _id: 'sub-web', endpoint: 'https://push.example.com/x' }])
 

@@ -282,6 +282,7 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
 
   if (!shouldSync) return []
 
+  const { hierarchy } = control
   const chats = (
     await control.ctx.with('syncChat:findChats', {}, () =>
       control.findAll(control.ctx, chunter.class.Chat, {
@@ -292,7 +293,6 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
     )
   ).filter((chat) => !hierarchy.isDerived(chat.attachedToClass, chunter.class.Channel))
 
-  const { hierarchy } = control
   const res: Tx[] = []
 
   const batchSize = 200

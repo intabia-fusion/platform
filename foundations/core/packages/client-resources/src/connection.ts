@@ -460,19 +460,22 @@ class Connection implements ClientConnection {
       void broadcastEvent(RateLimitUpdatedEvent, undefined)
     }
 
-    if (resp.error !== undefined) {
-      if (resp.terminate === true) {
-        if (
-          resp.error.code !== platform.status.WorkspaceArchived &&
-          resp.error.code !== platform.status.WorkspaceNotFound
-        ) {
-          Analytics.handleError(new PlatformError(resp.error))
-        }
-        this.closed = true
-        this.websocket?.close()
+    if (resp.terminate === true) {
+      if (
+        resp.error !== undefined &&
+        resp.error.code !== platform.status.WorkspaceArchived &&
+        resp.error.code !== platform.status.WorkspaceNotFound
+      ) {
+        Analytics.handleError(new PlatformError(resp.error))
+      }
+      this.closed = true
+      this.websocket?.close()
+      if (resp.error !== undefined) {
         this.opt?.onError?.(resp.error.code)
       }
+    }
 
+    if (resp.error !== undefined) {
       if (resp.id !== undefined) {
         const promise = this.requests.get(resp.id)
 
@@ -608,11 +611,11 @@ class Connection implements ClientConnection {
           let lookupMap: Record<string, Doc> | undefined
 
           for (const c of promise.chunks) {
-            if (c.data.total !== 0) {
+            if (c.data.total !== undefined) {
               total = c.data.total
             }
             if (c.data.lookupMap !== undefined) {
-              lookupMap = c.data.lookupMap
+              lookupMap = { ...lookupMap, ...c.data.lookupMap }
             }
             result = result.concat(c.data)
           }
