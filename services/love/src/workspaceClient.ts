@@ -579,21 +579,6 @@ export class WorkspaceClient {
   }
 
   /**
-   * Cleans up ParticipantInfo records for a specific person in a meeting.
-   * Used after explicitly kicking a participant from LiveKit.
-   */
-  async cleanupParticipantFromMeeting (meetingId: Ref<MeetingMinutes>, person: Ref<Person>): Promise<void> {
-    const participants = await this.client.findAll(love.class.ParticipantInfo, {
-      meeting: meetingId,
-      person
-    })
-
-    for (const p of participants) {
-      await this.client.remove(p)
-    }
-  }
-
-  /**
    * Find a Person ref by its id (returns undefined when not found).
    */
   async findPersonRefById (personId: Ref<Person>): Promise<Ref<Person> | undefined> {

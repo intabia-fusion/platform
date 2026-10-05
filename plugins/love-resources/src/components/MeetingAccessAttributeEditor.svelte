@@ -18,6 +18,7 @@
   import { type AccountUuid, type Ref, getCurrentAccount, AccountRole } from '@hcengineering/core'
   import type { MeetingMinutes } from '@hcengineering/love'
   import type { IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { loveClient } from '../utils'
 
@@ -57,7 +58,7 @@
     }
   }
 
-  function handleChange (selected: AccountUuid[]): void {
+  async function handleChange (selected: AccountUuid[]): Promise<void> {
     if (!isOwner) return
 
     const previousList = attributeKey === 'owners' ? effectiveOwners : effectiveMembers
@@ -68,13 +69,19 @@
       return
     }
 
-    if (removed.length > 0 && attributeKey === 'members') {
+    if (attributeKey === 'owners') {
+      // An owner outside members gets 403 from /getToken of a private meeting.
+      await getClient().update(object, { owners: selected, members: [...new Set([...effectiveMembers, ...selected])] })
+      return
+    }
+
+    // The server kicks only someone already out of members; a public meeting is not gated by members.
+    await onChange?.(selected)
+    if (removed.length > 0 && attributeKey === 'members' && object.private) {
       removed.forEach((targetAccount) => {
         void loveClient.kickParticipant(object._id, targetAccount)
       })
     }
-
-    void onChange?.(selected)
   }
 </script>
 

@@ -76,7 +76,7 @@ import { join } from 'path'
 import { updateLiveKitSessions } from './billing'
 import config from './config'
 import { LiveKitPollingService } from './polling'
-import { claimSession, liveSessionsOf } from './sessions'
+import { claimSession, kickParticipant, liveSessionsOf } from './sessions'
 import { LimitsState } from './limits'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
@@ -775,7 +775,6 @@ export const main = async (): Promise<void> => {
   app.post('/kickParticipant', async (req, res) => {
     const { meetingId, workspaceId } = decodeMeetingToken(req, res)
     if (meetingId === undefined || workspaceId === undefined) {
-      res.status(400).send({ error: 'Missing meetingId or workspaceId' })
       return
     }
 
@@ -817,27 +816,7 @@ export const main = async (): Promise<void> => {
         return
       }
 
-      const targetPerson = await wsClient.findPersonByAccount(targetAccount as AccountUuid)
-      if (targetPerson === undefined) {
-        ctx.warn('[kickParticipant] Target person not found', { targetAccount })
-        res.status(404).send({ error: 'Person not found' })
-        return
-      }
-
-      const roomName = getRoomName(workspaceId, meetingId)
-      try {
-        await roomClient.removeParticipant(roomName, targetPerson)
-        ctx.info('[kickParticipant] Successfully removed from LiveKit', { targetPerson })
-      } catch (err: any) {
-        ctx.error('[kickParticipant] Failed to remove from LiveKit', {
-          err: err?.message ?? String(err),
-          targetPerson
-        })
-      }
-
-      await wsClient.cleanupParticipantFromMeeting(meetingId, targetPerson)
-
-      res.status(200).send({ success: true })
+      res.status(await kickParticipant(ctx, roomClient, wsClient, workspaceId, meeting, targetAccount as AccountUuid)).send()
     } catch (err: any) {
       ctx.error('[kickParticipant] failed', {
         workspaceId,
