@@ -23,6 +23,7 @@ import {
   DocNotifyContext,
   NotificationIntl,
   NotificationMessage,
+  QueueDismissAllMessage,
   QueueDismissMessage,
   QueueNotificationMessage,
   UnreadMessage,
@@ -83,6 +84,10 @@ export function isNativePushEndpoint (endpoint: string): boolean {
 
 export function isQueueDismissMessage (message: QueueNotificationMessage): message is QueueDismissMessage {
   return message.kind === 'dismiss'
+}
+
+export function isQueueDismissAllMessage (message: QueueNotificationMessage): message is QueueDismissAllMessage {
+  return message.kind === 'dismiss-all'
 }
 
 // How long a call push rings the phone: long enough for a cold start of the app.

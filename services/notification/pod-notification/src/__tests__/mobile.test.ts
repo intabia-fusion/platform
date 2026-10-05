@@ -17,18 +17,22 @@ import type { Class, Doc, Ref } from '@hcengineering/core'
 
 import {
   apnsAlertPayload,
+  androidTag,
   apnsCallCancelPayload,
+  apnsDismissAllPayload,
   apnsDismissPayload,
   apnsVoipPayload,
   fcmAlertMessage,
   fcmCallCancelMessage,
   fcmCallMessage,
+  fcmDismissAllMessage,
   fcmDismissMessage,
   PushKind,
   pushTarget,
   rustoreAlertMessage,
   rustoreCallCancelMessage,
   rustoreCallMessage,
+  rustoreDismissAllMessage,
   rustoreDismissMessage
 } from '../mobile'
 
@@ -128,7 +132,7 @@ describe('alert payloads', () => {
 })
 
 describe('dismiss payloads', () => {
-  const data = { objectId, objectClass, tags: ['msg-1', 'msg-2'], readUpTo: 2000 }
+  const data = { kind: 'dismiss' as const, objectId, objectClass, tags: ['msg-1', 'msg-2'], readUpTo: 2000 }
 
   it('APNs: background content-available, no alert, the dismiss keys', () => {
     expect(apnsDismissPayload(data)).toEqual({
@@ -249,5 +253,56 @@ describe('call payloads', () => {
       data: { kind: 'call-cancel', inviteId: 'invite-1' },
       android: { ttl: '45s' }
     })
+  })
+})
+
+describe('dismiss-all payloads', () => {
+  const data = { kind: 'dismiss-all' as const, workspace: 'ws-1' as any, readUpTo: 3000 }
+
+  it('APNs: background content-available, the workspace and the time, no document and no tags', () => {
+    expect(apnsDismissAllPayload(data)).toEqual({
+      aps: { 'content-available': 1 },
+      kind: 'dismiss-all',
+      workspace: 'ws-1',
+      readUpTo: 3000
+    })
+  })
+
+  it('FCM: data only', () => {
+    expect(fcmDismissAllMessage('tok', data)).toEqual({
+      token: 'tok',
+      data: { kind: 'dismiss-all', workspace: 'ws-1', readUpTo: '3000' },
+      android: { priority: 'HIGH', ttl: '86400s' }
+    })
+  })
+
+  it('RuStore: data only, the FCM shape', () => {
+    expect(rustoreDismissAllMessage('tok', data)).toEqual({
+      token: 'tok',
+      data: { kind: 'dismiss-all', workspace: 'ws-1', readUpTo: '3000' },
+      android: { ttl: '86400s' }
+    })
+  })
+})
+
+describe('the workspace of an alert', () => {
+  const data = { title: 't', body: 'b', tag: 'msg-1', createdOn: 1000, workspace: 'ws-1' as any }
+
+  it('is in the Android notification tag with the time: the SDK-drawn alert keeps nothing else', () => {
+    expect((fcmAlertMessage('tok', data) as any).android.notification.tag).toBe('ws-1|1000|msg-1')
+    expect((rustoreAlertMessage('tok', data) as any).android.notification.tag).toBe('ws-1|1000|msg-1')
+    // `data.tag` stays the plain id: that is what a dismiss names.
+    expect((fcmAlertMessage('tok', data) as any).data.tag).toBe('msg-1')
+  })
+
+  it('leaves the plain id as the tag when the workspace or the time is unknown', () => {
+    expect(androidTag({ title: 't', body: 'b', tag: 'msg-1' })).toBe('msg-1')
+    expect(androidTag({ title: 't', body: 'b' })).toBeUndefined()
+  })
+
+  it('goes with the alert on every transport, for a workspace dismiss to find it', () => {
+    expect(apnsAlertPayload(data).workspace).toBe('ws-1')
+    expect((fcmAlertMessage('tok', data) as any).data.workspace).toBe('ws-1')
+    expect((rustoreAlertMessage('tok', data) as any).data.workspace).toBe('ws-1')
   })
 })

@@ -28,6 +28,22 @@
 - Чужой `TxUpdateDoc<DocNotifyContext>` (не из `serviceTxes`) инвалидирует запись кэша, а не патчит её: это либо эхо записи, пережившей рестарт сервиса, либо чужая правка; перечитать безопаснее, чем накладывать (`updateNotifyContext`, `cache.ts`).
 - При удалении сообщения чанк уменьшается только если `author.account !== context.user` (`handleRemoveMessage`): свои сообщения в собственный unread-таймлайн не попадают, и декремент снял бы чужой счётчик.
 
+## Read all / Clear all
+
+- Партицию Tx читает один consumer по порядку (`worker.tx` ждёт `workspace.tx`): долгая обработка одного экшена задерживает уведомления всех воркспейсов партиции. Поэтому read/clear all - запросы в БД (`Client.bulkUpdate`/`bulkRemove`), а не Tx на контекст.
+- Писать контексты мимо транзактора может только сам сервис: он считает абсолютные `unreadMessagesCount`/`notifiedMessagesCount` со своей копии контекста, чужая запись между чтением кэша и апдейтом даёт расхождение. После записи кэш сбрасывается (`cache.dropInbox`, весь воркспейс, в `finally`).
+- `rawUpdate` Postgres-адаптера без `$`-операторов - один `UPDATE` с `jsonb_set`; с операторами читает строки `FOR UPDATE` и пишет по одной. Пустой массив и объект под новым ключом проверены в `storage-coverage.itest.ts`. Подзапрос не умеет: `objectId` для позиций `ReadState` берутся отдельной выборкой с проекцией.
+- Порядок: позиции `ReadState`, потом контексты, потом отмена пушей. Упавший запрос оставляет контексты непрочитанными, и повтор экшена делает всё заново; отмена отложенного пуша в памяти необратима, поэтому она после записи.
+- Позиция `ReadState` - `tx.modifiedOn` экшена (часы транзактора, как у `createdOn` сообщений); двигается только у контекстов с `unreadMessagesCount > 0`.
+- `TxWorkspaceEvent.BulkUpdate` не адресуется одному аккаунту: без `objectClass` `spaceSec` (spaceSecurity.ts) шлёт его всему воркспейсу. Клиентам аккаунта уходит транзиентный `InboxChangeEvent` в их `PersonSpace`; пространство берётся по аккаунту из кэша, не из экшена.
+- `InboxChangeEvent` шлётся на любой экшен своего аккаунта, даже если менять было нечего: клиент держит лоадер до него (таймаут 10 с). Отправка не ждётся (`track`), ошибка только в лог.
+- Сторы `NotificationClientImpl` (`contextByDoc`, `contextById`, `readStateByDoc`) наполняет tx-listener, а не live-запрос: по событию их перечитывает `reloadInbox`, live-запросы - `refreshQueries` (локальный `BulkUpdate`).
+- Триггеры транзактора на Tx контекстов (`ChunterMiddleware`, `ReferenceTrigger`) реагируют только на создание и `$push` в `latestNotifications`. Флаг «есть непрочитанное в другом воркспейсе» пересчитывает `Worker.recheckUserNotifyStatus`.
+- Отложенные пуши снимаются по аккаунту (`cancelByAccount`), письма - одним cancel `letter:<account>:%`: time machine отменяет по `LIKE` в пределах воркспейса (`services/worker/src/db.ts`). Перед отправкой оба перепроверяют прочитанность по БД (`areHeldPushesRead`).
+- На телефон уходит одно `dismiss-all` (`workspace`, `readUpTo` = время экшена) вместо dismiss на контекст: id уведомлений не нужны, контексты целиком не читаются. iOS даёт на фоновые пуши несколько штук в час (README pod-notification).
+- Android: alert в фоне рисует SDK (RuStore/FCM) без `data` на уведомлении, приложению виден только тег. `android.notification.tag` = `<workspace>|<createdOn>|<id>` (`androidTag`, pod-notification `mobile.ts`); `data.tag` - голый id.
+- Приложение без обработки `dismiss-all` на Android рисует неизвестный `kind` как обычный пуш (`showPush`, `Push.kt` в platform-go): сервер и приложение выходят вместе.
+
 ## Жизненный цикл сервиса
 
 - Партиция читается по порядку, и одна вечно падающая Tx (сломанный воркспейс, транзактор отвечает 500) блокировала бы уведомления всех воркспейсов партиции. Tx, падающая дольше `giveUpAfterMs` = 5 мин, логируется и дропается, а воркспейс уходит в cooldown на 5 мин (`WorkspaceBreaker`, `services/notifications/src/breaker.ts`): иначе каждая следующая Tx того же воркспейса снова держала бы партицию по 5 минут. После cooldown одна Tx-проба получает бюджет 30 с. По той же причине `pod-notification` после 3 попыток `withRetry` подтверждает сообщение: push при недоступном accounts-сервисе теряется, но партиция идёт дальше.

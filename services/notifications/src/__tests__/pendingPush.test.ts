@@ -102,6 +102,20 @@ describe('PendingPushHolder', () => {
     expect(publish.mock.calls.map(([m]) => m.id).sort((a, b) => a.localeCompare(b))).toEqual(['newer', 'theirs'])
   })
 
+  it('cancels everything held for the account, whatever it is read by, and nothing of the others', async () => {
+    const { holder, publish } = make()
+    holder.hold(held({ notificationId: 'msg', createdOn: 100 }))
+    holder.hold(held({ notificationId: 'reaction', createdOn: 120, readBy: 'reactions' }))
+    holder.hold(held({ notificationId: 'theirs', createdOn: 100, account: other }))
+
+    expect(holder.cancelByAccount(acc).sort((a, b) => a.localeCompare(b))).toEqual(['msg', 'reaction'])
+    expect(holder.size).toBe(1)
+
+    jest.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(publish.mock.calls.map(([m]) => m.id)).toEqual(['theirs'])
+  })
+
   it('leaves a push read by its own id alone when the document is read by position', async () => {
     const { holder, publish } = make()
     holder.hold(held({ notificationId: 'msg', createdOn: 100 }))

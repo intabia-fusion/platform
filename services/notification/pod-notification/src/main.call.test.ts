@@ -101,6 +101,7 @@ describe('call push routing', () => {
 
   it('never sends a dismiss to a VoIP token', async () => {
     await sendDismissToSubscription([voip, apns], {
+      kind: 'dismiss',
       objectId: 'doc-1' as any,
       objectClass: 'c' as any,
       tags: [],

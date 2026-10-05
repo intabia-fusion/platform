@@ -1,7 +1,14 @@
 import type { AccountUuid } from '@hcengineering/core'
 import { QueueTopic } from '@hcengineering/server-core'
 
-import { cancelLetters, HELD_NOTIFICATIONS_TOPIC, heldLetterId, heldLetterPattern, scheduleLetter } from '../heldLetter'
+import {
+  cancelAccountLetters,
+  cancelLetters,
+  HELD_NOTIFICATIONS_TOPIC,
+  heldLetterId,
+  heldLetterPattern,
+  scheduleLetter
+} from '../heldLetter'
 import { emptyResult } from '../utils/result'
 
 const acc = 'acc-1' as AccountUuid
@@ -22,6 +29,14 @@ describe('held letters in the time machine', () => {
     const pattern = heldLetterPattern(acc, 'n-1')
     expect(pattern).toBe('letter:acc-1:n-1:%')
     expect(new RegExp('^' + pattern.replace('%', '.*') + '$').test(heldLetterId(held))).toBe(true)
+  })
+
+  it('cancels every letter of the account with one prefix its letters match', () => {
+    const result = emptyResult()
+    cancelAccountLetters(result, acc)
+    expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:acc-1:%' }])
+    const held: any = { account: acc, notificationId: 'n-1', provider: 'email' }
+    expect(heldLetterId(held).startsWith('letter:acc-1:')).toBe(true)
   })
 
   it('cancels one pattern per notification and nothing for an empty list', () => {

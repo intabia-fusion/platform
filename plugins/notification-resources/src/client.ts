@@ -17,6 +17,7 @@ import { type ActivityMessage } from '@hcengineering/activity'
 import core, {
   type Account,
   AccountRole,
+  type Class,
   type Client,
   type Doc,
   generateId,
@@ -30,15 +31,22 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
+import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 import notification, {
+  type ClearAllNotificationAction,
   type DocNotificationSetting,
   type DocNotifyContext,
+  type InboxChangeEvent,
   type NotificationClient,
+  type ReadAllNotificationAction,
   type ReadState,
   type UnreadContext
 } from '@hcengineering/notification'
-import { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
+import { addTxListener, createQuery, getClient, onClient, refreshQueries } from '@hcengineering/presentation'
 import { get, writable } from 'svelte/store'
+
+// How long the read/clear all loader waits for the service before giving the inbox back.
+const INBOX_ACTION_TIMEOUT_MS = 10000
 
 export class NotificationClientImpl implements NotificationClient {
   protected static _instance: NotificationClientImpl | undefined = undefined
@@ -77,6 +85,8 @@ export class NotificationClientImpl implements NotificationClient {
 
   public readonly clearingAllInbox = writable(false)
   public readonly readingAllInbox = writable(false)
+
+  private inboxReloaded: (() => void) | undefined = undefined
 
   private readonly inboxUnreadQuery = createQuery(true)
   private readonly chatUnreadQuery = createQuery(true)
@@ -619,75 +629,72 @@ export class NotificationClientImpl implements NotificationClient {
   }
 
   async clearAll (): Promise<void> {
-    const ops = getClient().apply(undefined, 'clearNotifications', true)
-
     if (get(this.clearingAllInbox)) return
 
     try {
       this.clearingAllInbox.set(true)
-      const contexts = await ops.findAll(
-        notification.class.DocNotifyContext,
-        {
-          user: getCurrentAccount().uuid
-        },
-        { projection: { _id: 1, _class: 1, space: 1, objectId: 1 } }
-      )
-      for (const context of contexts) {
-        await ops.removeDoc(context._class, context.space, context._id)
-        await this.forceReadDocState(context.objectId, ops)
-      }
-      await ops.commit()
+      await this.runInboxAction(notification.class.ClearAllNotificationAction)
     } finally {
       this.clearingAllInbox.set(false)
     }
   }
 
   async readAll (): Promise<void> {
-    const ops = getClient().apply(undefined, 'readAll', true)
-
     if (get(this.readingAllInbox) || get(this.clearingAllInbox)) return
 
     try {
       this.readingAllInbox.set(true)
-      const contexts = await ops.findAll(
-        notification.class.DocNotifyContext,
-        {
-          user: getCurrentAccount().uuid,
-          unreadCount: { $gt: 0 }
-        },
-        {
-          projection: {
-            _id: 1,
-            _class: 1,
-            space: 1,
-            objectId: 1,
-            objectClass: 1,
-            unreadReactions: 1,
-            unreadCommons: 1,
-            unreadMentions: 1
-          }
-        }
-      )
-      for (const context of contexts) {
-        const reactionIds = context.unreadReactions?.map((n) => n.id) ?? []
-        const commonIds = context.unreadCommons?.map((n) => n.id) ?? []
-        const mentionIds = context.unreadMentions?.map((n) => n.id) ?? []
-
-        if (reactionIds.length > 0 || commonIds.length > 0 || mentionIds.length > 0) {
-          await ops.createDoc(notification.class.ReadNotificationAction, context.space, {
-            attachedTo: context.objectId,
-            attachedToClass: context.objectClass,
-            account: getCurrentAccount().uuid,
-            reactionIds,
-            commonIds,
-            mentionIds
-          })
-        }
-        await this.forceReadDocState(context.objectId, ops)
-      }
-      await ops.commit()
+      await this.runInboxAction(notification.class.ReadAllNotificationAction)
     } finally {
       this.readingAllInbox.set(false)
+    }
+  }
+
+  private async runInboxAction (
+    _class: Ref<Class<ReadAllNotificationAction | ClearAllNotificationAction>>
+  ): Promise<void> {
+    const reloaded = new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, INBOX_ACTION_TIMEOUT_MS)
+      this.inboxReloaded = () => {
+        clearTimeout(timeout)
+        resolve()
+      }
+    })
+    try {
+      await getClient().createDoc(_class, getCurrentEmployeeSpace(), { account: getCurrentAccount().uuid })
+      await reloaded
+    } finally {
+      this.inboxReloaded?.()
+      this.inboxReloaded = undefined
+    }
+  }
+
+  async reloadInbox (): Promise<void> {
+    const docs = Array.from(get(this.contextByDoc).keys())
+    try {
+      const [contexts] = await Promise.all([
+        getClient().findAll(notification.class.DocNotifyContext, {
+          user: getCurrentAccount().uuid,
+          objectId: { $in: docs }
+        }),
+        this.loadReadStates(Array.from(get(this.readStateByDoc).keys())),
+        refreshQueries([notification.class.DocNotifyContext, notification.class.ReadState])
+      ])
+      const byDoc = new Map(contexts.map((it) => [it.objectId, it]))
+      // In place: a lookup started meanwhile has put its own keys into these maps.
+      this.contextByDoc.update((state) => {
+        for (const doc of docs) state.set(doc, byDoc.get(doc) ?? null)
+        return state
+      })
+      this.contextById.update((state) => {
+        for (const [id, context] of state) {
+          if (context != null && !byDoc.has(context.objectId)) state.delete(id)
+        }
+        for (const context of contexts) state.set(context._id, context)
+        return state
+      })
+    } finally {
+      this.inboxReloaded?.()
     }
   }
 }
@@ -706,6 +713,10 @@ addTxListener((txes: Tx[]) => {
             notificationClient.readStateByDoc.update((readStateByDoc) => {
               return readStateByDoc.set(state.attachedTo, state)
             })
+          }
+        } else if (createTx.objectClass === notification.class.InboxChangeEvent) {
+          if ((createTx as TxCreateDoc<InboxChangeEvent>).attributes.account === getCurrentAccount().uuid) {
+            void notificationClient.reloadInbox()
           }
         } else if (createTx.objectClass === notification.class.DocNotifyContext) {
           const context = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotifyContext>)

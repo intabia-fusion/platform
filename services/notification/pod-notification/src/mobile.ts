@@ -18,6 +18,7 @@ import {
   NATIVE_PUSH_SCHEMES,
   type PushCallData,
   type PushData,
+  type PushDismissAllData,
   type PushDismissData
 } from '@hcengineering/notification'
 import { createPrivateKey, sign } from 'crypto'
@@ -115,7 +116,6 @@ function apnsConnect (): ClientHttp2Session {
   return session
 }
 
-const DISMISS_KIND = 'dismiss'
 const CALL_KIND = 'call'
 const CALL_CANCEL_KIND = 'call-cancel'
 
@@ -132,17 +132,27 @@ export function apnsAlertPayload (data: PushData): Record<string, unknown> {
     tag: data.tag,
     objectId: data.objectId,
     objectClass: data.objectClass,
-    createdOn: data.createdOn
+    createdOn: data.createdOn,
+    workspace: data.workspace
   }
 }
 
 export function apnsDismissPayload (data: PushDismissData): Record<string, unknown> {
   return {
     aps: { 'content-available': 1 },
-    kind: DISMISS_KIND,
+    kind: data.kind,
     objectId: data.objectId,
     objectClass: data.objectClass,
     tags: data.tags,
+    readUpTo: data.readUpTo
+  }
+}
+
+export function apnsDismissAllPayload (data: PushDismissAllData): Record<string, unknown> {
+  return {
+    aps: { 'content-available': 1 },
+    kind: data.kind,
+    workspace: data.workspace,
     readUpTo: data.readUpTo
   }
 }
@@ -189,8 +199,12 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
 }
 
 // A background push, priority 5: iOS delivers it when it sees fit, never to a force-quit app.
-export async function sendApnsDismiss (token: string, data: PushDismissData): Promise<Delivery> {
-  return await apnsRequest(token, { 'apns-push-type': 'background', 'apns-priority': '5' }, apnsDismissPayload(data))
+export async function sendApnsDismiss (token: string, data: PushDismissData | PushDismissAllData): Promise<Delivery> {
+  return await apnsRequest(
+    token,
+    { 'apns-push-type': 'background', 'apns-priority': '5' },
+    data.kind === 'dismiss-all' ? apnsDismissAllPayload(data) : apnsDismissPayload(data)
+  )
 }
 
 // PushKit wants its own topic; Apple drops the push once the call is over.
@@ -332,6 +346,14 @@ function fcmData (values: Record<string, string | number | undefined>): Record<s
   )
 }
 
+// A background alert is drawn by the vendor SDK, which keeps none of `data` on the notification:
+// the tag is all the app can read there. So it carries the workspace and the time besides the
+// id, for a dismiss-all to tell which notifications it is about.
+export function androidTag (data: PushData): string | undefined {
+  if (data.tag === undefined || data.workspace === undefined || data.createdOn === undefined) return data.tag
+  return `${data.workspace}|${data.createdOn}|${data.tag}`
+}
+
 export function fcmAlertMessage (token: string, data: PushData): Record<string, unknown> {
   return {
     token,
@@ -342,9 +364,10 @@ export function fcmAlertMessage (token: string, data: PushData): Record<string, 
       tag: data.tag,
       objectId: data.objectId,
       objectClass: data.objectClass,
-      createdOn: data.createdOn
+      createdOn: data.createdOn,
+      workspace: data.workspace
     }),
-    android: { priority: 'HIGH', ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+    android: { priority: 'HIGH', ttl: `${config.TTL}s`, notification: { tag: androidTag(data) } }
   }
 }
 
@@ -352,12 +375,20 @@ export function fcmDismissMessage (token: string, data: PushDismissData): Record
   return {
     token,
     data: fcmData({
-      kind: DISMISS_KIND,
+      kind: data.kind,
       objectId: data.objectId,
       objectClass: data.objectClass,
       tags: JSON.stringify(data.tags),
       readUpTo: data.readUpTo
     }),
+    android: { priority: 'HIGH', ttl: `${config.TTL}s` }
+  }
+}
+
+export function fcmDismissAllMessage (token: string, data: PushDismissAllData): Record<string, unknown> {
+  return {
+    token,
+    data: fcmData({ kind: data.kind, workspace: data.workspace, readUpTo: data.readUpTo }),
     android: { priority: 'HIGH', ttl: `${config.TTL}s` }
   }
 }
@@ -383,8 +414,10 @@ export async function sendFcm (token: string, data: PushData): Promise<Delivery>
   return await fcmRequest(fcmAlertMessage(token, data))
 }
 
-export async function sendFcmDismiss (token: string, data: PushDismissData): Promise<Delivery> {
-  return await fcmRequest(fcmDismissMessage(token, data))
+export async function sendFcmDismiss (token: string, data: PushDismissData | PushDismissAllData): Promise<Delivery> {
+  return await fcmRequest(
+    data.kind === 'dismiss-all' ? fcmDismissAllMessage(token, data) : fcmDismissMessage(token, data)
+  )
 }
 
 export async function sendFcmCall (token: string, data: PushData, call: PushCallData): Promise<Delivery> {
@@ -433,9 +466,10 @@ export function rustoreAlertMessage (token: string, data: PushData): Record<stri
       tag: data.tag,
       objectId: data.objectId,
       objectClass: data.objectClass,
-      createdOn: data.createdOn
+      createdOn: data.createdOn,
+      workspace: data.workspace
     }),
-    android: { ttl: `${config.TTL}s`, notification: { tag: data.tag } }
+    android: { ttl: `${config.TTL}s`, notification: { tag: androidTag(data) } }
   }
 }
 
@@ -443,7 +477,7 @@ export function rustoreDismissMessage (token: string, data: PushDismissData): Re
   return {
     token,
     data: fcmData({
-      kind: DISMISS_KIND,
+      kind: data.kind,
       objectId: data.objectId,
       objectClass: data.objectClass,
       tags: JSON.stringify(data.tags),
@@ -461,12 +495,22 @@ export function rustoreCallCancelMessage (token: string, inviteId: string): Reco
   return { token, data: { kind: CALL_CANCEL_KIND, inviteId }, android: { ttl: `${CALL_RING_MS / 1000}s` } }
 }
 
+export function rustoreDismissAllMessage (token: string, data: PushDismissAllData): Record<string, unknown> {
+  return {
+    token,
+    data: fcmData({ kind: data.kind, workspace: data.workspace, readUpTo: data.readUpTo }),
+    android: { ttl: `${config.TTL}s` }
+  }
+}
+
 export async function sendRustore (token: string, data: PushData): Promise<Delivery> {
   return await rustoreRequest(rustoreAlertMessage(token, data))
 }
 
-export async function sendRustoreDismiss (token: string, data: PushDismissData): Promise<Delivery> {
-  return await rustoreRequest(rustoreDismissMessage(token, data))
+export async function sendRustoreDismiss (token: string, data: PushDismissData | PushDismissAllData): Promise<Delivery> {
+  return await rustoreRequest(
+    data.kind === 'dismiss-all' ? rustoreDismissAllMessage(token, data) : rustoreDismissMessage(token, data)
+  )
 }
 
 export async function sendRustoreCall (token: string, data: PushData, call: PushCallData): Promise<Delivery> {

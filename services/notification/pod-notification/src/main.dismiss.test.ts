@@ -14,7 +14,11 @@
 //
 
 import core, { type AccountUuid, type PersonId, type Ref } from '@hcengineering/core'
-import notification, { type PushDismissData, type PushSubscription } from '@hcengineering/notification'
+import notification, {
+  type PushDismissAllData,
+  type PushDismissData,
+  type PushSubscription
+} from '@hcengineering/notification'
 
 import { sendDismissToSubscription } from './main'
 import { Delivery, sendApnsDismiss, sendFcmDismiss } from './mobile'
@@ -59,6 +63,7 @@ function subscription (id: string, endpoint: string): PushSubscription {
 }
 
 const dismiss: PushDismissData = {
+  kind: 'dismiss',
   objectId: 'doc-1' as any,
   objectClass: 'DocClass' as any,
   tags: ['msg-1'],
@@ -98,5 +103,19 @@ describe('sendDismissToSubscription with native transports configured', () => {
     )
 
     expect(failed).toEqual(['sub-apns'])
+  })
+
+  it('sends a dismiss-all the same way, by transport', async () => {
+    ;(sendApnsDismiss as jest.Mock).mockResolvedValue(Delivery.Ok)
+    ;(sendFcmDismiss as jest.Mock).mockResolvedValue(Delivery.Ok)
+    const all: PushDismissAllData = { kind: 'dismiss-all', workspace: 'ws-1' as any, readUpTo: 100 }
+
+    await sendDismissToSubscription(
+      [subscription('sub-web', 'https://example.com/endpoint'), subscription('sub-apns', 'apns://token-a')],
+      all
+    )
+
+    expect(sendApnsDismiss).toHaveBeenCalledWith('token-a', all)
+    expect(sendFcmDismiss).not.toHaveBeenCalled()
   })
 })

@@ -13,11 +13,12 @@
 // limitations under the License.
 //
 
-import { Timestamp } from '@hcengineering/core'
+import { AccountUuid, Timestamp } from '@hcengineering/core'
 import {
   DocNotifyContext,
   isNativePushEndpoint,
   isUnreadMessageId,
+  QueueDismissAllMessage,
   QueueDismissMessage,
   UnreadMessage
 } from '@hcengineering/notification'
@@ -115,6 +116,25 @@ export async function pushDismissMessage (
     }
     result.queueMessages.push(message)
   }
+}
+
+export async function pushDismissAllMessage (
+  cache: Cache,
+  result: Result,
+  account: AccountUuid,
+  readUpTo: Timestamp
+): Promise<void> {
+  const subscriptions = (await cache.getPushSubscriptions(account)).filter((it) => isNativePushEndpoint(it.endpoint))
+  if (subscriptions.length === 0) return
+
+  const message: QueueDismissAllMessage = {
+    kind: 'dismiss-all',
+    id: `dismiss-all:${account}:${readUpTo}`,
+    account,
+    pushSubscriptions: subscriptions,
+    readUpTo
+  }
+  result.queueMessages.push(message)
 }
 
 export const DISMISS_TAGS_PER_MESSAGE = 50

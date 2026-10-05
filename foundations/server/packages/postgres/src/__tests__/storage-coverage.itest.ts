@@ -656,6 +656,37 @@ describe('PostgreSQL storage.ts coverage', () => {
       expect(updated?.name).toBe('updated-via-raw')
     })
 
+    it('rawUpdate sets an empty array, an object under a new key and a number on every matched row', async () => {
+      for (const name of ['bulk-1', 'bulk-2', 'bulk-3']) {
+        await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+          name,
+          description: '',
+          rate: 7,
+          arr: [1, 2, 3]
+        })
+      }
+      await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'other',
+        description: '',
+        rate: 7,
+        arr: [9]
+      })
+
+      await serverStorage.rawUpdate<Task>('test-task' as Domain, { name: { $like: 'bulk-%' }, rate: { $gt: 0 } }, {
+        arr: [],
+        rate: 0,
+        'acc-1111-2222': { messageId: 'm1', timestamp: 1000 }
+      } as any)
+
+      const all = await client.findAll<Task>(taskPlugin.class.Task, {}, { sort: { name: SortingOrder.Ascending } })
+      expect(all.map((t) => [t.name, t.arr, t.rate, (t as any)['acc-1111-2222']])).toEqual([
+        ['bulk-1', [], 0, { messageId: 'm1', timestamp: 1000 }],
+        ['bulk-2', [], 0, { messageId: 'm1', timestamp: 1000 }],
+        ['bulk-3', [], 0, { messageId: 'm1', timestamp: 1000 }],
+        ['other', [9], 7, undefined]
+      ])
+    })
+
     it('rawUpdate applies an operator update ($inc)', async () => {
       const id = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
         name: 'to-inc',
