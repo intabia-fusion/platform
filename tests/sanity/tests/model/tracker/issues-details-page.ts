@@ -147,16 +147,20 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       const status = data.status
       // The dropdown locator matches any element whose class ends in "opup", so a stray tooltip or
       // leftover popup can swallow the click and leave the status untouched. Retry until it sticks.
+      // Compare lowercase - callers pass "ToDo" vs UI's "Todo".
+      const target = status.toLowerCase()
+      const read = async (): Promise<string> => ((await this.buttonStatus().textContent()) ?? '').trim().toLowerCase()
       await expect(async () => {
-        await this.buttonStatus().click()
-        await this.selectFromDropdown(this.page, status)
-        // Wait for the value to stabilize: the stored status overwrites the fresh one, so the final
-        // check sees a stale value. Compare lowercase - callers pass "ToDo" vs UI's "Todo".
-        const settled = await waitStable(
-          async () => ((await this.buttonStatus().textContent()) ?? '').trim().toLowerCase(),
-          { stableFor: 1000, interval: 200, timeout: 8000 }
-        )
-        expect(settled).toBe(status.toLowerCase())
+        // Not again once it took: closing statuses open a dialog over the button.
+        if ((await read()) !== target) {
+          await this.buttonStatus().click()
+          await this.selectFromDropdown(this.page, status)
+        }
+        // The button keeps the old status until the update's round trip, over a second under load:
+        // only a reached value may count as settled. The stored status can still overwrite it.
+        await expect.poll(read, { timeout: 8000 }).toBe(target)
+        const settled = await waitStable(read, { stableFor: 1000, interval: 200, timeout: 8000 })
+        expect(settled).toBe(target)
       }).toPass({ intervals: retryIntervals, timeout: 20000 })
     }
     if (data.priority != null) {

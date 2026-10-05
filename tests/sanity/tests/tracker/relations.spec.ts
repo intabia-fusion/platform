@@ -5,6 +5,18 @@ import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-m
 import { NewIssue } from '../model/tracker/types'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { prepareNewIssueByApiStep } from './common-steps'
+import { readIssueBlockedByIdentifiers } from '../API/TrackerApi'
+import { retry } from '../retry'
+
+// RelationsPopup's onClose does not await the write: a reload before it lands leaves the reverse list empty.
+async function waitForBlockedBySynced (secondIssueTitle: string, firstIssueId: string): Promise<void> {
+  await retry(async () => {
+    const blockedBy = await readIssueBlockedByIdentifiers(secondIssueTitle)
+    if (!blockedBy.includes(firstIssueId)) {
+      throw new Error(`blockedBy write not visible yet on ${secondIssueTitle}: ${JSON.stringify(blockedBy)}`)
+    }
+  })
+}
 
 test.use({
   storageState: PlatformSetting
@@ -78,6 +90,7 @@ test.describe('Relations', () => {
       await issuesDetailsPage.fillSearchForIssueModal(secondIssue.title)
 
       // TODO remove reload after fixed https://front.hc.engineering/workbench/platform/tracker/UBERF-5652
+      await waitForBlockedBySynced(secondIssue.title, firstIssueId)
       await page.reload()
       await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
       await issuesDetailsPage.checkIssue({
@@ -219,7 +232,7 @@ test.describe('Relations', () => {
       description: 'Second. Remove blocking'
     }
     const secondIssueId = await prepareNewIssueByApiStep(page, secondIssue)
-    await prepareNewIssueByApiStep(page, firstIssue)
+    const firstIssueId = await prepareNewIssueByApiStep(page, firstIssue)
     await issuesPage.openIssueByName(firstIssue.title)
 
     await test.step('Mark as blocking and remove it', async () => {
@@ -228,6 +241,7 @@ test.describe('Relations', () => {
       await issuesDetailsPage.fillSearchForIssueModal(secondIssue.title)
 
       // reverse blockedBy list needs a reload to appear (client-side re-match limitation)
+      await waitForBlockedBySynced(secondIssue.title, firstIssueId)
       await page.reload()
       await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
       await issuesDetailsPage.checkIssue({

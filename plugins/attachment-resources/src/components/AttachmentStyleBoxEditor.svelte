@@ -37,6 +37,8 @@
   let prevObjectClass: Ref<Class<Doc>>
 
   let haveUnsavedChanges = false
+  // The save resolves before its tx reaches the queries: a doc older than it is a pre-save copy.
+  let savedAt = 0
 
   /*
     There is no onMount when go from one issue to another one via mention
@@ -57,8 +59,8 @@
   $: object &&
     queryClient.query(object._class, { _id: object._id }, async (result: Doc[]) => {
       if (result.length > 0) {
-        if (!haveUnsavedChanges) {
-          const doc = result[0]
+        const doc = result[0]
+        if (!haveUnsavedChanges && doc.modifiedOn >= savedAt) {
           description = getAttribute(client, doc, key)
         }
       }
@@ -78,6 +80,7 @@
 
     const old = getAttribute(client, object, key)
     if (description !== old) {
+      savedAt = Date.now()
       await updateAttribute(client, object, object._class, key, description)
       haveUnsavedChanges = false
       dispatch('saved', true)

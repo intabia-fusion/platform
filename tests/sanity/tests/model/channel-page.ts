@@ -281,7 +281,13 @@ export class ChannelPage extends CommonPage {
 
   /** The chat is open when its header carries the name; the navigator entry can lag behind. */
   async waitOpenedChannel (channel: string): Promise<void> {
-    await expect(this.openedChannelHeader(channel)).toBeVisible({ timeout: 30000 })
+    try {
+      await expect(this.openedChannelHeader(channel)).toBeVisible({ timeout: 30000 })
+    } catch (e) {
+      // Cause unconfirmed: name what is open - wrong channel, none, or the right one rendered late.
+      const shown = await this.page.locator('.hulyHeader-container .hulyHeader-titleGroup').allTextContents()
+      throw new Error(`"${channel}" header never appeared; header now shows ${JSON.stringify(shown)}`)
+    }
   }
 
   async clickChooseChannel (channel: string): Promise<void> {

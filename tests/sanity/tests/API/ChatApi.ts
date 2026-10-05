@@ -240,6 +240,14 @@ export class ChatMember {
     return { _id: person._id, name: (person as any).name }
   }
 
+  /** The notifications service recounts a context from the queue, a while after the read state is written. */
+  /** `undefined` while the service has not created the context yet. */
+  async hasUnreadContext (doc: Ref<Doc>): Promise<boolean | undefined> {
+    const context: any = await this.client.findOne(docNotifyContextClass, { user: this.account, objectId: doc } as any)
+    if (context === undefined) return undefined
+    return (context.unreadCount ?? 0) > 0 || (context.unreadMessagesCount ?? 0) > 0
+  }
+
   /**
    * Marks everything unread read, returns the count; unread includes setup/bot/join noise and
    * leftovers from earlier tests. `except`: channels under test, which only the UI may read.
