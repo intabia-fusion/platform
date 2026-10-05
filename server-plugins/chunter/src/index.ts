@@ -28,7 +28,8 @@ export default plugin(serverChunterId, {
     OnUserStatus: '' as Resource<TriggerFunc>,
     OnCollaboratorAdded: '' as Resource<TriggerFunc>,
     OnCollaboratorRemoved: '' as Resource<TriggerFunc>,
-    OnPersonNameChanged: '' as Resource<TriggerFunc>
+    OnPersonNameChanged: '' as Resource<TriggerFunc>,
+    OnChannelJoin: '' as Resource<TriggerFunc>
   },
   function: {
     CommentRemove: '' as Resource<ObjectDDParticipantFunc>,

@@ -186,7 +186,7 @@
             'chats',
             { hidden: true }
           )
-          await resetChunterLocIfEqual(object._id, object._class, object)
+          await resetChunterLocIfEqual(object._id)
         }
       })
     }

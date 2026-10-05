@@ -354,7 +354,7 @@ export async function leaveChannel (channel: Space | undefined, value: AccountUu
     }
   } else {
     await client.update(channel, { $pull: { members: value } })
-    await resetChunterLocIfEqual(channel._id, channel._class, channel)
+    await resetChunterLocIfEqual(channel._id)
   }
 }
 

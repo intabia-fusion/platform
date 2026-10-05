@@ -36,6 +36,8 @@
   export let collection: string | undefined = undefined
   export let withInput: boolean = true
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
+  export let onReady: (() => void) | undefined = undefined
+  export let fadeOverlay = true
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -94,5 +96,7 @@
     {withInput}
     {readonly}
     {onReply}
+    {onReady}
+    {fadeOverlay}
   />
 {/if}

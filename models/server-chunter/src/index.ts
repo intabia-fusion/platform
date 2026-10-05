@@ -107,6 +107,15 @@ export function createModel (builder: Builder): void {
     isAsync: true
   })
 
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnChannelJoin,
+    txMatch: {
+      objectClass: chunter.class.Channel,
+      _class: core.class.TxUpdateDoc
+    },
+    isAsync: false
+  })
+
   builder.mixin<NotificationType, TypeMatch>(
     chunter.ids.JoinChannelNotification,
     notification.class.MessageNotificationType,

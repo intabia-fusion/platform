@@ -38,23 +38,9 @@ import core, {
 import notification from '@hcengineering/notification'
 import { type StorageAdapter, type TriggerControl } from '@hcengineering/server-core'
 import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON } from '@hcengineering/text-core'
-import { isCollaborativeType, isMarkupType } from './utils'
 import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
 
-export function isDocMentioned (doc: Ref<Doc>, content: string): boolean {
-  const references = []
-
-  const node = markupToJSON(content)
-  references.push(...extractReferences(node))
-
-  for (const ref of references) {
-    if (ref.objectId === doc) {
-      return true
-    }
-  }
-
-  return false
-}
+import { isCollaborativeType, isMarkupType } from './utils'
 
 async function getCreateReferencesTxes (
   ctx: MeasureContext,

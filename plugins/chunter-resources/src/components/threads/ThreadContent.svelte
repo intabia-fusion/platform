@@ -32,6 +32,8 @@
   export let autofocus = true
   export let readonly: boolean = false
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
+  export let onReady: (() => void) | undefined = undefined
+  export let fadeOverlay = true
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -87,6 +89,8 @@
       fullHeight={false}
       fixedInput={false}
       {onReply}
+      {onReady}
+      {fadeOverlay}
     >
       <svelte:fragment slot="header">
         <div class="mt-3">
