@@ -34,11 +34,11 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
     'component',
     'milestone',
     'attachedTo',
-    'createdBy',
-    'modifiedBy',
-    'estimation',
-    'remainingTime',
-    'reportedTime'
+    { key: 'createdBy', hidden: true },
+    { key: 'modifiedBy', hidden: true },
+    { key: 'estimation', hidden: true },
+    { key: 'remainingTime', hidden: true },
+    { key: 'reportedTime', hidden: true }
   ],
   orderBy: [
     ['modifiedOn', SortingOrder.Descending],
@@ -293,7 +293,15 @@ export function defineViewlets (builder: Builder): void {
   )
 
   const subIssuesOptions: ViewOptionsModel = {
-    groupBy: ['status', 'kind', 'assignee', 'priority', 'milestone', 'createdBy', 'modifiedBy'],
+    groupBy: [
+      'status',
+      'kind',
+      'assignee',
+      'priority',
+      'milestone',
+      { key: 'createdBy', hidden: true },
+      { key: 'modifiedBy', hidden: true }
+    ],
     orderBy: [
       ['rank', SortingOrder.Ascending],
       ['kind', SortingOrder.Ascending],
@@ -364,7 +372,14 @@ export function defineViewlets (builder: Builder): void {
   )
 
   const milestoneIssueOptions: ViewOptionsModel = {
-    groupBy: ['status', 'assignee', 'priority', 'component', 'createdBy', 'modifiedBy'],
+    groupBy: [
+      'status',
+      'assignee',
+      'priority',
+      'component',
+      { key: 'createdBy', hidden: true },
+      { key: 'modifiedBy', hidden: true }
+    ],
     orderBy: [
       ['rank', SortingOrder.Ascending],
       ['status', SortingOrder.Ascending],
@@ -406,7 +421,14 @@ export function defineViewlets (builder: Builder): void {
   )
 
   const componentIssueOptions: ViewOptionsModel = {
-    groupBy: ['status', 'assignee', 'priority', 'milestone', 'createdBy', 'modifiedBy'],
+    groupBy: [
+      'status',
+      'assignee',
+      'priority',
+      'milestone',
+      { key: 'createdBy', hidden: true },
+      { key: 'modifiedBy', hidden: true }
+    ],
     orderBy: [
       ['rank', SortingOrder.Ascending],
       ['status', SortingOrder.Ascending],
@@ -454,7 +476,14 @@ export function defineViewlets (builder: Builder): void {
       attachTo: tracker.class.IssueTemplate,
       descriptor: view.viewlet.List,
       viewOptions: {
-        groupBy: ['assignee', 'priority', 'component', 'milestone', 'createdBy', 'modifiedBy'],
+        groupBy: [
+          'assignee',
+          'priority',
+          'component',
+          'milestone',
+          { key: 'createdBy', hidden: true },
+          { key: 'modifiedBy', hidden: true }
+        ],
         orderBy: [
           ['priority', SortingOrder.Ascending],
           ['modifiedOn', SortingOrder.Descending],

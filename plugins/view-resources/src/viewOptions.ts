@@ -22,7 +22,8 @@ import {
   type Viewlet,
   type ViewletDescriptor,
   type ViewOptionsModel,
-  type BuildModelKey
+  type BuildModelKey,
+  type GroupingKey
 } from '@hcengineering/view'
 import { get, writable } from 'svelte/store'
 import view from './plugin'
@@ -115,8 +116,12 @@ export function getDefaults (viewOptions?: ViewOptionsModel): ViewOptions {
   if (viewOptions === undefined) {
     return defaultOptions
   }
+
+  const firstGroupBy = viewOptions.groupBy[0] ?? defaultOptions.groupBy[0]
+  const firstGroupByKey = typeof firstGroupBy === 'string' ? firstGroupBy : firstGroupBy.key
+
   const res: ViewOptions = {
-    groupBy: [viewOptions.groupBy[0] ?? defaultOptions.groupBy[0]],
+    groupBy: [firstGroupByKey],
     orderBy: viewOptions.orderBy?.[0] ?? defaultOptions.orderBy
   }
   for (const opt of viewOptions.other) {
@@ -289,7 +294,12 @@ export function isAttribute (val: Config): val is AttributeConfig {
   return val.type === 'attribute'
 }
 
-function normalizeGroupBy (groupBy: string[]): string[] {
-  if (!Array.isArray(groupBy)) return groupBy
-  return groupBy.slice(0, MAX_GROUPING_DEPTH)
+function normalizeGroupBy (groupBy: GroupingKey[] | string): string[] {
+  if (typeof groupBy === 'string') {
+    return [groupBy]
+  }
+
+  if (!Array.isArray(groupBy)) return []
+
+  return groupBy.slice(0, MAX_GROUPING_DEPTH).map((k: GroupingKey) => (typeof k === 'string' ? k : k.key))
 }
