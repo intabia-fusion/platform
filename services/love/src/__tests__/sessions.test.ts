@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { Ref, WorkspaceUuid } from '@hcengineering/core'
+import { AccountUuid, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import { MeetingMinutes } from '@hcengineering/love'
-import { claimSession, liveSessionsOf } from '../sessions'
-import { createMockContext } from './test-helpers'
+import { claimSession, kickParticipant, liveSessionsOf } from '../sessions'
+import { createMockContext, createMockMeeting } from './test-helpers'
 
 const workspace = 'workspace-1' as WorkspaceUuid
 const joined = 'meeting-new' as Ref<MeetingMinutes>
@@ -105,5 +105,52 @@ describe('liveSessionsOf', () => {
     const roomClient = { listParticipants: jest.fn().mockRejectedValue(new Error('room not found')) }
 
     expect(await liveSessionsOf(createMockContext(), roomClient as any, workspace, person, [abandoned])).toEqual([])
+  })
+})
+
+describe('kickParticipant', () => {
+  const owner = 'account-owner' as AccountUuid
+  const member = 'account-member' as AccountUuid
+  const removed = 'account-removed' as AccountUuid
+  const meeting = createMockMeeting({ _id: joined, private: true, owners: [owner], members: [owner, member] })
+
+  let ctx: ReturnType<typeof createMockContext>
+  let roomClient: { removeParticipant: jest.Mock }
+  let wsClient: { findPersonByAccount: jest.Mock }
+
+  beforeEach(() => {
+    ctx = createMockContext()
+    roomClient = { removeParticipant: jest.fn().mockResolvedValue(undefined) }
+    wsClient = { findPersonByAccount: jest.fn().mockResolvedValue(person) }
+  })
+
+  async function kick (target: AccountUuid): Promise<number> {
+    return await kickParticipant(ctx, roomClient as any, wsClient as any, workspace, meeting, target)
+  }
+
+  it('kicks someone already taken out of members', async () => {
+    expect(await kick(removed)).toBe(200)
+    expect(roomClient.removeParticipant).toHaveBeenCalledWith(`${workspace}_${joined}`, person)
+  })
+
+  // A direct call must not drop an owner or a member the client never removed.
+  it('refuses to kick an owner or a current member', async () => {
+    expect(await kick(owner)).toBe(409)
+    expect(await kick(member)).toBe(409)
+    expect(roomClient.removeParticipant).not.toHaveBeenCalled()
+  })
+
+  it('answers 404 for an account without a person', async () => {
+    wsClient.findPersonByAccount.mockResolvedValue(undefined)
+
+    expect(await kick(removed)).toBe(404)
+  })
+
+  // Removing an invited member who never joined is the common case, not an error.
+  it('treats a participant not in the room as done', async () => {
+    roomClient.removeParticipant.mockRejectedValue(new Error('participant not found'))
+
+    expect(await kick(removed)).toBe(200)
+    expect(ctx.error).not.toHaveBeenCalled()
   })
 })

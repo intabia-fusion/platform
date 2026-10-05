@@ -38,6 +38,9 @@
   export let emptyLabel: IntlString | undefined = undefined
   export let allowGuests: boolean = false
   export let attributeKey: string | undefined = undefined
+  export let protectedAccounts: AccountUuid[] = []
+
+  $: protectedPersons = protectedAccounts.map((a) => $employeeRefByAccountUuidStore.get(a)).filter(notEmpty)
 
   $: accounts = Array.isArray(value) ? value : typeof value === 'string' ? [value] : []
 
@@ -158,4 +161,5 @@
   width={width ?? 'min-content'}
   {kind}
   create={allowGuests ? { component: contact.component.CreateGuest, label: contact.string.AddGuest } : undefined}
+  protectedItems={protectedPersons}
 />

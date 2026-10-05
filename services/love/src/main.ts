@@ -76,7 +76,7 @@ import { join } from 'path'
 import { updateLiveKitSessions } from './billing'
 import config from './config'
 import { LiveKitPollingService } from './polling'
-import { claimSession, liveSessionsOf } from './sessions'
+import { claimSession, kickParticipant, liveSessionsOf } from './sessions'
 import { LimitsState } from './limits'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
@@ -768,6 +768,65 @@ export const main = async (): Promise<void> => {
         error: err?.message ?? String(err)
       })
       res.status(500).send()
+    }
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.post('/kickParticipant', async (req, res) => {
+    const { meetingId, workspaceId } = decodeMeetingToken(req, res)
+    if (meetingId === undefined || workspaceId === undefined) {
+      return
+    }
+
+    const targetAccount = req.body?.targetAccount
+    if (typeof targetAccount !== 'string' || targetAccount === '') {
+      res.status(400).send({ error: 'Missing targetAccount' })
+      return
+    }
+
+    const callerToken = extractToken(req.headers)
+    if (callerToken === undefined) {
+      res.status(401).send({ error: 'Unauthorized' })
+      return
+    }
+
+    try {
+      const wsClient = await WorkspaceClient.create(workspaceId, ctx)
+      const meeting = await wsClient.findMeetingById(meetingId)
+      if (meeting === undefined) {
+        res.status(404).send({ error: 'Meeting not found' })
+        return
+      }
+
+      const callerAccount = decodeToken(callerToken).account
+      const isMeetingOwner = (meeting.owners ?? []).includes(callerAccount)
+
+      let isWorkspaceOwner = false
+      if (!isMeetingOwner) {
+        try {
+          const wsLoginInfo = await getAccountClient(callerToken).getLoginInfoByToken()
+          isWorkspaceOwner = isWorkspaceLoginInfo(wsLoginInfo) && wsLoginInfo.role === AccountRole.Owner
+        } catch (err: any) {
+          ctx.warn('Failed to resolve caller role', { error: err?.message ?? String(err) })
+        }
+      }
+
+      if (!isMeetingOwner && !isWorkspaceOwner) {
+        res.status(403).send({ error: 'Forbidden: only owners can kick participants' })
+        return
+      }
+
+      res
+        .status(await kickParticipant(ctx, roomClient, wsClient, workspaceId, meeting, targetAccount as AccountUuid))
+        .send()
+    } catch (err: any) {
+      ctx.error('[kickParticipant] failed', {
+        workspaceId,
+        meetingId,
+        targetAccount,
+        error: err?.message ?? String(err)
+      })
+      res.status(500).send({ error: 'Internal server error' })
     }
   })
 

@@ -49,6 +49,7 @@
 4. **Knock в приватную комнату.** `sendKnockRequest()` (`invites.ts`) -> триггер разворачивает на всех `owners` активного приватного `MeetingMinutes` -> accept любым owner -> `$push` в `members` -> knocker подключается.
 5. **Автозавершение и reconciliation.** `services/love/src/polling.ts` каждый цикл: `closeRoomIfOwnerGone()` (по штампу `ownerLeftAt` в LiveKit-metadata), `closeRoomIfAgentsOnly()` (штамп `humansLeftAt`), `stopOrphanEgresses()`. `activateMeeting`/`finishMeeting` - `services/love/src/workspaceClient.ts`.
 6. **Запись встречи.** `/startRecord` -> `RecordingProcessor.startRecording` (`services/love/src/recordings.ts`) резервирует `PendingRecording` через `createPendingRecording()` (`workspaceClient.ts`, `TxApplyIf`-транзакция, см. ниже) **до** вызова Egress; webhook `egress_ended` (`services/love/src/webhook.ts`) сохраняет файл (`saveFile`, `webhook.ts`) как `attachment.class.Attachment` на встрече - видео с `video/*` дальше подхватывает конвейер транскодирования (см. `../memory/video-transcoding-storage.md`).
+7. **Участники и организаторы встречи.** `members`/`owners` у `MeetingMinutes` правит `MeetingAccessAttributeEditor` (`plugins/love-resources/src/components`): менять может owner встречи или владелец воркспейса, последнего owner и owners в members снять нельзя, новый owner сразу попадает в `members`. Удаление из `members` приватной встречи сначала сохраняется, затем клиент вызывает `/kickParticipant` (`loveClient.kickParticipant`) -> `kickParticipant` (`services/love/src/sessions.ts`) выкидывает человека из LiveKit-комнаты; owner или текущего member сервер не выкидывает (409).
 
 ## Фичи
 
@@ -58,7 +59,7 @@
 Полностью описаны и проверены в `../love.md`, разделы 4-9 (жизненный цикл, подключение, присутствие, invite/knock, гости, запись/транскрипция) и §10 (исправленные дефекты D1-D27). Не дублируется здесь.
 
 ### Телеметрия звонков (FUSIO-261, после `love.md`)
-- **Trace ID звонка.** `MeetingMinutes.traceId` генерируется при первом `getRoomToken()` и персистится на документе; все последующие HTTP-запросы клиента (`/getToken`, `/startRecord`, `/finishMeeting`, `/liveSessions`, `/language`, `/guestToken`) несут заголовок `traceparent` (W3C trace context) и `x-participant-id`. - `newCallTraceId()`, `callTraceParent()`, `plugins/love/src/tracing.ts`; `LoveClient.buildHeaders()`, `plugins/love-resources/src/loveClient.ts`.
+- **Trace ID звонка.** `MeetingMinutes.traceId` генерируется при первом `getRoomToken()` и персистится на документе; все последующие HTTP-запросы клиента (`/getToken`, `/startRecord`, `/finishMeeting`, `/liveSessions`, `/language`, `/guestToken`, `/kickParticipant`) несут заголовок `traceparent` (W3C trace context) и `x-participant-id`. - `newCallTraceId()`, `callTraceParent()`, `plugins/love/src/tracing.ts`; `LoveClient.buildHeaders()`, `plugins/love-resources/src/loveClient.ts`.
 - **Проброс trace в очередь.** `services/love/src/main.ts` читает `traceId` встречи и прокидывает `traceparent` в `ctx.with(...)` при обработке webhook-сообщения очереди, плюс атрибуты `meeting.id`/`participant.id` на HTTP-спан через middleware.
 - **Аналитика сервиса.** `configureAnalytics('love', ...)` и `@hcengineering/measurements-otlp` подключены в `services/love/src/index.ts`.
 

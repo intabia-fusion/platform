@@ -38,6 +38,7 @@
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let create: ObjectCreate | undefined = undefined
   export let readonly = false
+  export let disallowDeselect: Ref<Person>[] | undefined = undefined
 
   const client = getClient()
 
@@ -87,6 +88,7 @@
   bind:ignoreObjects={ignoreUsers}
   {shadows}
   create={_create}
+  {disallowDeselect}
   on:update
   on:close
   on:changeContent

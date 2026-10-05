@@ -14,7 +14,7 @@
 //
 
 import { type Person } from '@hcengineering/contact'
-import { type MeasureContext, type Ref, type WorkspaceUuid } from '@hcengineering/core'
+import { type AccountUuid, type MeasureContext, type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import { type MeetingMinutes } from '@hcengineering/love'
 import { type RoomServiceClient } from 'livekit-server-sdk'
 
@@ -81,6 +81,31 @@ export async function liveSessionsOf (
     }
   }
   return live
+}
+
+/**
+ * Kicks someone the client has already taken out of `members`; owners and members are refused,
+ * so a direct call cannot drop them. The `participant_left` webhook drops the ParticipantInfo.
+ */
+export async function kickParticipant (
+  ctx: MeasureContext,
+  roomClient: RoomServiceClient,
+  wsClient: WorkspaceClient,
+  workspaceId: WorkspaceUuid,
+  meeting: MeetingMinutes,
+  target: AccountUuid
+): Promise<number> {
+  if ((meeting.owners ?? []).includes(target) || meeting.members.includes(target)) return 409
+  const person = await wsClient.findPersonByAccount(target)
+  if (person === undefined) return 404
+  try {
+    await roomClient.removeParticipant(getRoomName(workspaceId, meeting._id), person)
+    ctx.info('Kicked a removed member', { person, meetingId: meeting._id })
+  } catch (err: any) {
+    // Never joined or already left.
+    ctx.info('Nothing to kick', { person, meetingId: meeting._id, reason: err?.message })
+  }
+  return 200
 }
 
 async function isInRoom (
