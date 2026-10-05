@@ -6,7 +6,7 @@
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
-  import { isDropdownType, isToggleType, noCategory } from '../viewOptions'
+  import { isDropdownType, isToggleType, noCategory, MAX_GROUPING_DEPTH } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet
@@ -14,10 +14,10 @@
   export let viewOptions: ViewOptions
 
   const dispatch = createEventDispatcher()
+  const maxGroupDepth = Math.min(config.groupDepth ?? MAX_GROUPING_DEPTH, MAX_GROUPING_DEPTH)
 
-  const groups =
-    viewOptions.groupBy[viewOptions.groupBy.length - 1] === noCategory ||
-    viewOptions.groupBy.length === config.groupDepth
+  $: groups =
+    viewOptions.groupBy[viewOptions.groupBy.length - 1] === noCategory || viewOptions.groupBy.length >= maxGroupDepth
       ? [...viewOptions.groupBy]
       : [...viewOptions.groupBy, noCategory]
 
@@ -49,7 +49,7 @@
     groups[i] = value
     if (value === noCategory) {
       groups.length = i + 1
-    } else if (config.groupDepth === undefined || config.groupDepth > viewOptions.groupBy.length) {
+    } else if (maxGroupDepth > viewOptions.groupBy.length) {
       groups.length = i + 1
       groups[i + 1] = noCategory
     }
