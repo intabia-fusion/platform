@@ -34,6 +34,7 @@
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
   export let onReady: (() => void) | undefined = undefined
   export let fadeOverlay = true
+  export let freeze = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -91,6 +92,7 @@
       {onReply}
       {onReady}
       {fadeOverlay}
+      {freeze}
     >
       <svelte:fragment slot="header">
         <div class="mt-3">

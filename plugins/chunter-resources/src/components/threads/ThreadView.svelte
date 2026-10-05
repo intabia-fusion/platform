@@ -167,7 +167,7 @@
 
 {#if shownMessage !== undefined}
   <FadeSwap key={shownMessage._id} item={shownMessage} let:item let:current let:revealed let:onReady>
-    <!-- Only the current thread follows the selection: the outgoing one would jump to a message it lacks. -->
+    <!-- The outgoing thread neither follows the selection (it would jump to a message it lacks) nor reads. -->
     <ThreadContent
       selectedMessageId={current === true ? selectedMessageId : undefined}
       message={item}
@@ -175,6 +175,7 @@
       {readonly}
       {onReply}
       fadeOverlay={revealed}
+      freeze={current !== true}
       {onReady}
     />
   </FadeSwap>

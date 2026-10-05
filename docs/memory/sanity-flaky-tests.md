@@ -129,6 +129,15 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`kanban` "drop into same cell does not update document"**: `after.modifiedOn` came back 109ms *lower* than `before.modifiedOn`, which an update after `before` cannot produce. One transactor, host/container clock skew 0-15ms - neither explains it.
 - **A lost webhook loses the "Joined meeting" activity for good**: only the webhook path writes it (`webhook.ts addActivityToMeeting`), the polling fallback creates the participant but no activity.
 
+## Chat view swap (FadeSwap)
+
+CI 2026-10-05 (branch read-on-join): 6 failed + 7 flaky in `chat-unread.spec.ts`, `message-search.spec.ts`, `chat.spec.ts`, plus QMS TESTS-161. All from `FadeSwap.svelte` (channel/thread switch fades the next view over the previous one), not from the tests:
+- `strict mode violation ... text-editor-view resolved to 2 elements`: during the swap (up to ~400 ms) both views are in the DOM, and `toBeVisible`/`fill`/`click` on a non-unique locator fail at once, without retrying. The outgoing layer is now `inert`; `channel-page.ts` `inputMessage`/`buttonSendMessage`/sidebar input take `:not([inert] *)`.
+- Counters one short ("expected 2, received 1", marker not found): the outgoing channel kept reading while it faded, and a test leaves a channel and sends to it at once. The outgoing view is frozen now and reads what it shows once on freeze (`leave()` in ReverseChannelScrollView), as on destroy before.
+- "New" separator back / opened mid-history after leave+reopen: a quick return reused the still-mounted old view (state of the previous visit). Every switch gets a fresh layer now (layers go by id, not by key).
+- QMS TESTS-161 `div.header intercepts pointer events`: QMS embeds `ThreadView` in an auto-height comment; absolute layers collapsed and overlapped the next comment. The first layer stays in the flow now.
+QMS REQ-10 `getByRole('button', { name: 'um' })` resolving to 19 buttons is unrelated: a one-word faker folder name matches by substring; folder names get a `generateId` suffix (REQ-10, documents, ES-40). See [chat-viewport.md](chat-viewport.md).
+
 ## Kanban drag
 
 Everything the drop checks must compare, learned over three rounds:

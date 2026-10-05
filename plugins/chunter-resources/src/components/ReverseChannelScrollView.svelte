@@ -180,6 +180,21 @@
   $: isReadingTail = !freeze && !isPageHidden && isScrollInitialized && isScrollAtBottom && $isTailLoadedStore
   $: inboxClient.setDocReading(object._id, isReadingTail, reader)
 
+  // What is on screen is read once when the view stops reading: when it is left, or frozen (a channel
+  // under its thread, one being replaced by the next view and still fading out), and nothing after.
+  let isLeft = false
+  function leave (): void {
+    if (isLeft) return
+    isLeft = true
+    inboxClient.setDocReading(object._id, false, reader)
+    if (!isPageHidden && isScrollInitialized) {
+      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
+    }
+    flushReadQueue()
+  }
+  $: if (freeze) leave()
+  $: if (!freeze) isLeft = false
+
   $: void inboxClient.getReadState(object._id).then((it) => {
     readState = it
     isReadStateLoaded = true
@@ -693,11 +708,7 @@
   })
 
   onDestroy(() => {
-    inboxClient.setDocReading(object._id, false, reader)
-    if (!isFreeze() && isScrollInitialized) {
-      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
-    }
-    flushReadQueue()
+    leave()
     chatReadMessagesStore.update(() => new Set())
     if (observer !== undefined) {
       observer.disconnect()

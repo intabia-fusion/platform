@@ -24,47 +24,49 @@
   // The `.layer` opacity transition.
   const fadeMs = 100
 
+  // Every switch gets a view of its own, as a remount gave: the one it leaves, or one it comes back to
+  // while that still fades out, keeps the state of the visit (frozen, scrolled, its unread marker).
+  // Two layers of one key can be on screen at once, so they go by `id`.
   interface Layer {
-    key: string
+    id: number
     item: T
   }
 
   let layers: Layer[] = []
-  let revealedKey: string | undefined = undefined
+  let lastId = 0
+  let lastKey: string | undefined = undefined
+  let revealedId: number | undefined = undefined
   let revealTimer: ReturnType<typeof setTimeout> | undefined = undefined
   let dropFrame: number | undefined = undefined
   let dropTimer: ReturnType<typeof setTimeout> | undefined = undefined
 
   $: layers = place(key, item)
+  $: currentId = layers[layers.length - 1]?.id
 
   function place (key: string, item: T): Layer[] {
-    const revealedIndex = layers.findIndex((it) => it.key === revealedKey)
-    if (revealedIndex === -1) {
-      reveal(key)
-      return [{ key, item }]
+    // Not a switch, an update of the current one.
+    if (key === lastKey) {
+      return layers.map((it, index) => (index === layers.length - 1 ? { ...it, item } : it))
     }
-    const index = layers.findIndex((it) => it.key === key)
-    if (index === -1) {
-      clearTimeout(revealTimer)
-      revealTimer = setTimeout(() => {
-        reveal(key)
-      }, waitMs)
-      return [layers[revealedIndex], { key, item }]
+    lastKey = key
+    const layer = { id: ++lastId, item }
+    const revealed = layers.find((it) => it.id === revealedId)
+    if (revealed === undefined) {
+      reveal(layer.id)
+      return [layer]
     }
-    if (index === revealedIndex) {
-      // Back to the shown one, or just its update: only waiting layers above go, the one fading out below stays.
-      clearTimeout(revealTimer)
-      revealTimer = undefined
-      return [...layers.slice(0, index), { key, item }]
-    }
-    return layers.map((it) => (it.key === key ? { key, item } : it))
+    clearTimeout(revealTimer)
+    revealTimer = setTimeout(() => {
+      reveal(layer.id)
+    }, waitMs)
+    return [revealed, layer]
   }
 
-  function reveal (key: string): void {
+  function reveal (id: number): void {
     clearTimeout(revealTimer)
     revealTimer = undefined
-    if (revealedKey === key) return
-    revealedKey = key
+    if (revealedId === id) return
+    revealedId = id
     cancelDrop()
     // Counted from the next frame: the fade starts there, and the long task of a mount can hold it back well
     // past the reveal. A fade that never runs still drops the previous view, which must not stay mounted.
@@ -77,7 +79,7 @@
   // Layers above the shown one are still waiting to come in, only those below go.
   function dropBelow (): void {
     dropTimer = undefined
-    const index = layers.findIndex((it) => it.key === revealedKey)
+    const index = layers.findIndex((it) => it.id === revealedId)
     if (index > 0) layers = layers.slice(index)
   }
 
@@ -95,15 +97,20 @@
 </script>
 
 <div class="layers">
-  {#each layers as layer, index (layer.key)}
+  {#each layers as layer, index (layer.id)}
     <!-- Only a layer above the shown one waits: the one below stays opaque until it is dropped. -->
-    <div class="layer" class:waiting={index > layers.findIndex((it) => it.key === revealedKey)}>
+    <!-- The outgoing one is inert: still on screen, it is no longer the content to act on. -->
+    <div
+      class="layer"
+      class:waiting={index > layers.findIndex((it) => it.id === revealedId)}
+      inert={layer.id !== currentId ? true : undefined}
+    >
       <slot
         item={layer.item}
-        current={layer.key === key}
-        revealed={layer.key === revealedKey}
+        current={layer.id === currentId}
+        revealed={layer.id === revealedId}
         onReady={() => {
-          if (layer.key === key) reveal(layer.key)
+          if (layer.id === currentId) reveal(layer.id)
         }}
       />
     </div>
@@ -113,6 +120,8 @@
 <style lang="scss">
   .layers {
     position: relative;
+    display: flex;
+    flex-direction: column;
     flex: 1;
     width: 100%;
     height: 100%;
@@ -120,14 +129,21 @@
     min-height: 0;
   }
 
-  // Stacked in order: the next content lies over the previous one.
+  // The first layer keeps the box its size in the flow: an auto-height host (a comment thread in a
+  // document) would collapse around absolute content. The next one lies over it.
   .layer {
-    position: absolute;
-    inset: 0;
     display: flex;
     flex-direction: column;
-    background-color: var(--theme-panel-color);
-    transition: opacity 100ms ease-out;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+
+    & + .layer {
+      position: absolute;
+      inset: 0;
+      background-color: var(--theme-panel-color);
+      transition: opacity 100ms ease-out;
+    }
 
     &.waiting {
       opacity: 0;

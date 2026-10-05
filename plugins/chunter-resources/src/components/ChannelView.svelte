@@ -280,11 +280,12 @@
               </div>
             </div>
           {:else}
-            <!-- The outgoing channel stops following the location: it would jump to a message it lacks. -->
+            <!-- The outgoing channel neither follows the location (it would jump to a message it lacks) nor reads. -->
             <ChannelComponent
               readonly={isReadonly(item, readonly)}
               object={item}
               syncLocation={current}
+              freeze={current !== true}
               autofocus={autofocus && !searchOpened && current}
               fadeOverlay={revealed}
               {onReady}

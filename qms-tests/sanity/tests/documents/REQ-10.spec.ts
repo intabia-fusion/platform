@@ -61,7 +61,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
         title: `Complete document-${generateId()}`,
         description: `Complete document description-${generateId()}`
       }
-      const folderName = faker.word.words(1)
+      const folderName = `${faker.word.words(1)}-${generateId(6)}`
       const documentContentPage = new DocumentContentPage(page)
       await documentContentPage.clickAddFolderButton()
       await documentContentPage.fillDocumentSpaceFormManager(folderName)
@@ -91,7 +91,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
     )
     await allure.tms('TESTS-402', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-402')
     await test.step('2. check if non member can see space', async () => {
-      const folderName = faker.word.words(1)
+      const folderName = `${faker.word.words(1)}-${generateId(6)}`
       const documentContentPage = new DocumentContentPage(page)
       await documentContentPage.clickAddFolderButton()
       await documentContentPage.fillDocumentSpaceFormManager(folderName)
@@ -107,7 +107,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
     )
     await allure.tms('TESTS-403', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-403')
     await test.step('2. check if non member edit or create a new doc in space', async () => {
-      const folderName = faker.word.words(1)
+      const folderName = `${faker.word.words(1)}-${generateId(6)}`
       const documentContentPage = new DocumentContentPage(page)
       const completeDocument: NewDocument = {
         template: 'HR (HR)',
@@ -125,7 +125,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
   test('TESTS-404. As a space member only, I cannot create any doc from that space', async ({ page, browser }) => {
     await allure.description('Requirement\nUser is not able to create any document from that space')
     await allure.tms('TESTS-404', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-404')
-    const folderName = faker.word.words(1)
+    const folderName = `${faker.word.words(1)}-${generateId(6)}`
     const userThirdPage = await getThirdPage(browser)
     const documentContentPage = new DocumentContentPage(page)
     const documentContentPageThird = new DocumentContentPage(userThirdPage)
@@ -152,7 +152,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
     }
     await allure.tms('TESTS-405', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-405')
     await test.step('2. cCheck if user can not create documents as a space member', async () => {
-      const folderName = faker.word.words(1)
+      const folderName = `${faker.word.words(1)}-${generateId(6)}`
       const documentContentPage = new DocumentContentPage(page)
       await documentContentPage.clickAddFolderButton()
       await documentContentPage.fillQuaraManager(folderName)
@@ -176,7 +176,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents ensure that documents of ex
       'Requirement\nUser is not a part of space members and cannot see or edit any document from that space'
     )
     await allure.tms('TESTS-390', 'https://tracex.hc.engineering/workbench/platform/tracker/TESTS-390')
-    const folderName = faker.word.words(1)
+    const folderName = `${faker.word.words(1)}-${generateId(6)}`
     const userSecondPage = await getSecondPage(browser)
     const documentContentPage = new DocumentContentPage(page)
     const documentContentPageSecond = new DocumentContentPage(userSecondPage)
