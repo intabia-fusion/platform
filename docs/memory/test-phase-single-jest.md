@@ -23,6 +23,10 @@ The phase is 84.6s rather than 37.7s because `@hcengineering/kafka` (19.7s) and 
 
 `--coverage` is dropped in the shared run: coverage is per-run, not per-project. No package sets a `coverageThreshold` and CI does not read the reports, so nothing checks it; `pnpm test --no-test-group` still collects it per package. Whole-workspace coverage has its own entry point, `pnpm coverage` - see `test-groups-and-coverage.md`, which also covers why `collectCoverageFrom` only works when it is declared globally with package-relative patterns.
 
+## A package's globalSetup runs for the whole run
+
+A `globalSetup` declared by one project runs in the jest parent process before any worker starts, so whatever it puts in `process.env` reaches every package of the shared run. `process-resources` once set `TZ=America/Los_Angeles` there, and `@hcengineering/calendar`'s UTC-based tests failed in `pnpm test` while passing on their own. Set such state inside the test file and restore it in `afterAll` (see `recurring-tz.test.ts` for TZ).
+
 ## Leftover kafka topics wedge the next run
 
 When a fulltext suite fails in `beforeAll`, `afterAll` never runs and its topics stay. They accumulate across runs until topic creation fails for everyone, which then looks like an unrelated timeout. Clearing them:
