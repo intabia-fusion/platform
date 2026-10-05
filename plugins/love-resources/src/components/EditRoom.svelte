@@ -18,8 +18,8 @@
   import type { Room } from '@hcengineering/love'
   import {
     isOffice,
+    isServiceRoom,
     MeetingStatus,
-    isScheduledJoinable,
     type MeetingMinutes,
     type ParticipantInfo
   } from '@hcengineering/love'
@@ -64,14 +64,13 @@
     dispatch('open', { ignoreKeys: ['name'] })
   })
 
-  // The store holds everything but Finished, unordered, so a plain find could pick next week's
-  // Scheduled meeting. Live ones win; a Scheduled one only inside its start window.
+  // Scheduled meetings live on the service floor and never occupy this room, so only a live
+  // session of the room itself can be joined here.
   function pickRoomMeeting (roomId: Ref<Room>, all: MeetingMinutes[]): MeetingMinutes | undefined {
     const ofRoom = all.filter((it) => it.roomId === roomId)
     return (
       ofRoom.find((it) => it.status === MeetingStatus.Active) ??
-      ofRoom.find((it) => it.status === MeetingStatus.Pending) ??
-      ofRoom.find((it) => isScheduledJoinable(it))
+      ofRoom.find((it) => it.status === MeetingStatus.Pending)
     )
   }
 
@@ -124,6 +123,9 @@
     if (role === AccountRole.Guest || role === AccountRole.ReadOnlyGuest) {
       return false
     }
+    // The service room is not a place to walk into: its sessions are opened from the calendar,
+    // each one for its own occurrence.
+    if (isServiceRoom(object)) return false
 
     if (isOffice(object)) {
       // Do not show connect button in own office

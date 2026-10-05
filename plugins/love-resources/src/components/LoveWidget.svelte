@@ -20,7 +20,7 @@
   import { Breadcrumbs, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import lovePlg from '../plugin'
-  import { ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
+  import { ensureOfficeDetailsLoaded, officeFloors, rooms, selectedFloor } from '../stores'
   import FloorPreview from './FloorPreview.svelte'
   import EditFloorPopup from './EditFloorPopup.svelte'
 
@@ -31,8 +31,8 @@
   const me = getCurrentAccount()
   let floor: Floor | undefined
 
-  $: if (floor === undefined && $floors.length > 0) {
-    floor = $floors[0]
+  $: if (floor === undefined && $officeFloors.length > 0) {
+    floor = $officeFloors[0]
   }
 
   function getRooms (rooms: Room[], floor: Ref<Floor>): Room[] {
@@ -73,7 +73,7 @@
 <div class="hulyModal-container noTopIndent type-aside">
   <div class="hulyModal-content">
     <Scroller>
-      {#each $floors as _floor}
+      {#each $officeFloors as _floor}
         <FloorPreview
           showRoomName
           floor={_floor}

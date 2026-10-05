@@ -68,19 +68,11 @@ describe('GuestManager.handleGuestJoin', () => {
     manager = new GuestManager(createMockContext(), roomClient as any)
   })
 
-  it('returns 403 when meeting is Scheduled (not started yet)', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Scheduled } as unknown as MeetingMinutes)
-    const req = createMockReq({ token: 'guest-token' })
-    const res = createMockRes()
-
-    await manager.handleGuestJoin(req, res)
-
-    expect(res.status).toHaveBeenCalledWith(403)
-    expect(res.send).toHaveBeenCalledWith({ error: 'Meeting has not started yet.' })
-  })
-
   it('returns 403 when meeting is Finished', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Finished } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Finished
+    } as unknown as MeetingMinutes)
     const req = createMockReq({ token: 'guest-token' })
     const res = createMockRes()
 
@@ -91,7 +83,10 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 404 when meeting is Active but no LiveKit room exists', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     roomClient.listRooms.mockResolvedValue([])
     const req = createMockReq({ token: 'guest-token' })
     const res = createMockRes()
@@ -103,7 +98,10 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 200 with token/roomName/person when Active, room exists and person is created', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     wsClient.ensurePersonByName.mockResolvedValue(personRef)
     const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()
@@ -118,7 +116,10 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 500 when ensurePersonByName fails to produce a person', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     wsClient.ensurePersonByName.mockResolvedValue(undefined)
     const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()

@@ -73,8 +73,6 @@
     await joinMeeting(object)
   }
 
-  $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
-
   function showConnectionButton (
     object: MeetingMinutes,
     connecting: boolean,
@@ -135,7 +133,7 @@
       {/if}
       {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
         <Button
-          label={connectLabel}
+          label={love.string.JoinMeeting}
           size="large"
           kind="primary"
           on:click={connect}

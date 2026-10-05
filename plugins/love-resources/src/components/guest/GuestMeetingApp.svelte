@@ -33,7 +33,6 @@
 
   import love from '../../plugin'
   import type { MeetingMinutes } from '@hcengineering/love'
-  import { MeetingStatus } from '@hcengineering/love'
   import { workbenchId } from '@hcengineering/workbench'
   import GuestControlBar from './GuestControlBar.svelte'
   import type { Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
@@ -55,15 +54,18 @@
 
   // Guest info / resolution state
   let guestInfo: {
-    meetingId: Ref<MeetingMinutes>
+    meetingId?: Ref<MeetingMinutes>
     workspace: WorkspaceUuid
     workspaceUrl: string
     now: Timestamp
-    meetingStatus: MeetingStatus
-    meetingScheduledDate?: Timestamp
+    // What the link opens onto right now: waiting for the meeting, joining it, or looking back.
+    mode?: 'before' | 'live' | 'after'
+    nextOccurrence?: Timestamp
     meetingEnd?: Timestamp
-    roomFound: boolean
-    title: string
+    roomFound?: boolean
+    title?: string
+    // The link carries a guest password - nothing else in this object is populated until it checks out.
+    passwordRequired?: boolean
   } | null = null
   let resolving = false
   let resolveError: string | null = null
@@ -279,9 +281,11 @@
         return
       }
 
-      // Attempt automatic workspace resolve/select if URL is present
+      // Attempt automatic workspace resolve/select if URL is present. Skipped while a password is
+      // pending - there is no meetingId to deep-link into yet, and a member goes through the
+      // password field like everyone else, or opens the workspace directly on their own.
       const wsUrl = guestInfo?.workspaceUrl ?? guestInfo?.workspace ?? null
-      if (wsUrl != null) {
+      if (wsUrl != null && guestInfo?.passwordRequired !== true) {
         try {
           const selectFn = await getResource(login.function.SelectWorkspace)
           const selectResult = await selectFn?.(wsUrl, null, false)
@@ -414,7 +418,7 @@
   $: now = $ticker
 
   let duration: string
-  $: durValue = (guestInfo?.meetingScheduledDate ?? 0) - now
+  $: durValue = (guestInfo?.nextOccurrence ?? 0) - now
   $: void formatDuration(durValue, $themeStore.language).then((res) => {
     duration = res
   })
@@ -431,7 +435,7 @@
         />
       </div>
     {/if}
-    {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
+    {#if guestInfo?.mode === 'after'}
       <div class="center">
         <div class="message flex flex-col justify-center">
           <div class="flex flex-row-center justify-center fs-title mb-2">
@@ -441,7 +445,7 @@
           </div>
         </div>
       </div>
-    {:else if guestInfo?.meetingStatus === MeetingStatus.Scheduled}
+    {:else if guestInfo?.mode === 'before'}
       <div class="center">
         <div class="message flex flex-col items-center">
           <div class="flex flex-col flex-row-center">
@@ -493,7 +497,7 @@
       {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center fs-title mb-2">
-            {#if guestInfo.workspaceUrl !== ''}
+            {#if guestInfo.workspaceUrl !== '' && guestInfo.passwordRequired !== true}
               <div class="message flex flex-row-center justify-center">
                 <Label label={love.string.Meeting} />
                 <div class="p-1">
@@ -516,6 +520,7 @@
             {guestToken}
             workspaceId={guestInfo.workspace ?? undefined}
             workspaceName={guestInfo.workspaceUrl ?? undefined}
+            passwordRequired={guestInfo.passwordRequired === true}
           />
         </div>
       {/if}
