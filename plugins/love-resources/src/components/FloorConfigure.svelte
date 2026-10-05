@@ -16,7 +16,7 @@
   import type { Contact } from '@hcengineering/contact'
   import type { DocumentUpdate, Ref } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
-  import { GRID_WIDTH, getFreeSpace } from '@hcengineering/love'
+  import { GRID_WIDTH, getFreeSpace, isServiceFloor } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import {
     ButtonIcon,
@@ -319,7 +319,10 @@
       on:selected={changeFloor}
     />
     <svelte:fragment slot="actions">
-      <ButtonIcon icon={IconAdd} size={'small'} on:click={addRoom} />
+      <!-- The service floor holds exactly one room, created by fixed id along with the floor. -->
+      {#if !isServiceFloor(floor)}
+        <ButtonIcon icon={IconAdd} size={'small'} on:click={addRoom} />
+      {/if}
       <div class="hulyHeader-divider short" />
       <ModernButton
         label={lovePlg.string.FinalizeEditing}

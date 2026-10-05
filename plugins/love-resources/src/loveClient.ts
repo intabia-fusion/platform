@@ -1,5 +1,11 @@
 import { concatLink, type Ref } from '@hcengineering/core'
-import love, { type MeetingMinutes, type Room, callTraceParent, newCallTraceId } from '@hcengineering/love'
+import love, {
+  type MeetingLinkKind,
+  type MeetingMinutes,
+  type Room,
+  callTraceParent,
+  newCallTraceId
+} from '@hcengineering/love'
 import { getMetadata } from '@hcengineering/platform'
 import { getPlatformToken } from './utils'
 import { getCurrentEmployee } from '@hcengineering/contact'
@@ -29,6 +35,57 @@ const LOVE_HOUSEKEEPING_TIMEOUT_MS = 4000
 export class LoveClient {
   async getRoomToken (meetingMinutes: MeetingMinutes): Promise<string> {
     return await this.refreshRoomToken(meetingMinutes)
+  }
+
+  /**
+   * The shareable link of a meeting series.
+   *
+   * Assembled on demand rather than stored: the account service deduplicates short links by
+   * payload, so the same meeting always yields the same URL.
+   */
+  async getMeetingLink (eventId: string, kind: MeetingLinkKind = 'event'): Promise<string> {
+    const query = new URLSearchParams({ eventId, kind })
+    const res = await this.request(`/meetingLink?${query.toString()}`, {
+      headers: { Authorization: 'Bearer ' + getPlatformToken() }
+    })
+    const data = await res.json()
+    return data?.shortId ?? ''
+  }
+
+  /**
+   * The session to join for a scheduled meeting, opening it if this occurrence has come.
+   *
+   * Sessions of a series are created by the service alone - a client doing it left two writers
+   * racing over one occurrence.
+   */
+  async resolveSession (
+    eventId: string,
+    kind: MeetingLinkKind = 'event'
+  ): Promise<{ meetingId: Ref<MeetingMinutes>, occurrence?: number }> {
+    const res = await this.request('/resolveSession', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + getPlatformToken(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ eventId, kind })
+    })
+    return await res.json()
+  }
+
+  /**
+   * Sets or clears (`password: null`) the guest password of a meeting link. The plaintext never
+   * touches a document - love hashes it server-side and never sends the hash back either.
+   */
+  async setGuestPassword (eventId: string, password: string | null, kind: 'event' | 'meeting' = 'event'): Promise<void> {
+    await this.request('/meetingPassword', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + getPlatformToken(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ eventId, kind, password })
+    })
   }
 
   async updateSessionLanguage (mm: MeetingMinutes, room: Room): Promise<void> {
@@ -75,6 +132,15 @@ export class LoveClient {
       console.error(err)
       throw err
     }
+  }
+
+  private async request (path: string, init: RequestInit): Promise<Response> {
+    const res = await fetch(concatLink(this.getLoveEndpoint(), path), init)
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new LoveServiceError(res.status, `${path.split('?')[0].slice(1)} failed: ${res.status} ${text}`)
+    }
+    return res
   }
 
   private getLoveEndpoint (): string {
@@ -176,7 +242,9 @@ export class LoveClient {
       }
     }
 
-    const res = await fetch(concatLink(endpoint, '/getToken'), {
+    // Failures carry the status: callers (auto-join after knock-accept) tell a transient 403
+    // (membership propagation race) from a permanent denial.
+    const res = await this.request('/getToken', {
       method: 'POST',
       headers: await this.buildHeaders(meetingMinutes.traceId, platformToken),
       body: JSON.stringify({
@@ -187,14 +255,6 @@ export class LoveClient {
         y
       })
     })
-    if (!res.ok) {
-      // Surface the status — callers (auto-join after knock-accept) need to
-      // distinguish a transient 403 (membership propagation race) from a
-      // permanent denial. Returning the response body as the token would
-      // otherwise be passed straight into LiveKit and fail opaquely.
-      const text = await res.text().catch(() => '')
-      throw new LoveServiceError(res.status, `getToken failed: ${res.status} ${text}`)
-    }
     return await res.text()
   }
 
