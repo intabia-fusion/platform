@@ -3,6 +3,7 @@ import { createIssueWithDescription } from '../API/TrackerApi'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewIssue } from '../model/tracker/types'
 import { faker } from '@faker-js/faker'
+import { retry } from '../retry'
 
 export async function prepareNewIssueStep (page: Page, issue: NewIssue): Promise<string> {
   return await test.step('Prepare document', async () => {
@@ -38,7 +39,11 @@ export async function prepareNewIssueWithOpenStep (
 async function createIssueByApiAndFind (issuesPage: IssuesPage, issue: NewIssue): Promise<void> {
   await createIssueWithDescription(issue.title, issue.description, issue.projectName)
   await issuesPage.searchIssueByName(issue.title)
-  await expect(issuesPage.issueIdLocator(issue.title).first()).toBeVisible({ timeout: 15000 })
+  // Backlog folds when it holds >20 rows before the search lands, and stays folded with the one row left.
+  await retry(async () => {
+    await issuesPage.expandCollapsedCategories()
+    await expect(issuesPage.issueIdLocator(issue.title).first()).toBeVisible({ timeout: 5000 })
+  }, 15000)
 }
 
 export async function prepareNewIssueByApiStep (page: Page, issue: NewIssue): Promise<string> {

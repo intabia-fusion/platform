@@ -261,6 +261,21 @@ export async function readIssueIdentifier (issueTitle: string): Promise<string |
   }
 }
 
+/** Identifiers of the issues that block `issueTitle` on the server - RelationsPopup's onClose
+ *  fires the write without awaiting it, so the popup can close before it lands. */
+export async function readIssueBlockedByIdentifiers (issueTitle: string): Promise<string[]> {
+  const { client } = await connectTracker()
+  try {
+    const issue = await client.findOne(tracker.class.Issue, { title: issueTitle })
+    const ids = (issue?.blockedBy ?? []).map((r) => r._id as Ref<Issue>)
+    if (ids.length === 0) return []
+    const blockers = await client.findAll(tracker.class.Issue, { _id: { $in: ids } })
+    return blockers.map((b) => b.identifier)
+  } finally {
+    await client.close()
+  }
+}
+
 /** Whether a component edit reached the server - the panel can render an unsaved value. */
 export async function readComponentDescription (label: string): Promise<string | undefined> {
   const { client } = await connectTracker()

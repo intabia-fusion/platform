@@ -629,6 +629,8 @@ test.describe('Chat unread state tests', () => {
     // The counter of an open thread is hidden either way: what counts is the position it wrote.
     const thread = { _id: mine } as unknown as typeof chat.channel
     await expect.poll(async () => await chat.me.hasReadChannel(thread), { timeout: 15000 }).toBe(true)
+    // Until the service recounts the context, closing the thread shows its stale count for a moment.
+    await expect.poll(async () => await chat.me.hasUnreadContext(mine), { timeout: 15000 }).toBe(false)
     await channelPage.closeReplyButton().click()
     await unread.checkNavCounterStaysAway('Threads')
     await checkMarkersOff(chat, ['chat'])

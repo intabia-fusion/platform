@@ -241,19 +241,38 @@ export class ChatMember {
   }
 
   /**
+   * The notifications service recounts a context from the queue, a while after the read state is written.
+   * `undefined` while the service has not created the context yet.
+   */
+  async hasUnreadContext (doc: Ref<Doc>): Promise<boolean | undefined> {
+    const context: any = await this.client.findOne(docNotifyContextClass, { user: this.account, objectId: doc } as any)
+    if (context === undefined) return undefined
+    return (context.unreadCount ?? 0) > 0 || (context.unreadMessagesCount ?? 0) > 0
+  }
+
+  /**
    * Marks everything unread read, returns the count; unread includes setup/bot/join noise and
    * leftovers from earlier tests. `except`: channels under test, which only the UI may read.
    */
   async readEverything (except: Array<Ref<Doc>> = []): Promise<number> {
     const contexts = await this.client.findAll(docNotifyContextClass, { user: this.account } as any)
-    const unread = contexts.filter(
-      (it: any) =>
-        (it.unreadCount > 0 || it.unreadMessagesCount > 0) &&
-        // A thread lives in the space of its channel.
-        !except.includes(it.objectId) &&
-        !except.includes(it.objectSpace)
-    )
-    for (const context of unread as any[]) {
+    // A thread lives in the space of its channel.
+    const candidates = contexts.filter((it: any) => !except.includes(it.objectId) && !except.includes(it.objectSpace))
+    let unread = 0
+    for (const context of candidates as any[]) {
+      const state = await this.client.findOne(readStateClass, { attachedTo: context.objectId } as any)
+      // Date.now() can tie or run ahead of the createdOn of a message sent right after (same ms, or
+      // another clock), marking it read: read up to the last existing message's own createdOn.
+      const last = await this.client.findOne(
+        'activity:class:ActivityMessage' as Ref<Class<Doc>>,
+        { attachedTo: context.objectId } as any,
+        { sort: { createdOn: -1 } } as any
+      )
+      // By the read position too: the service counts a fresh message (the bot greeting) a while after
+      // the app already shows it as unread, and a counter-only pass left it there.
+      const behind = last !== undefined && ((state as any)?.[this.account]?.timestamp ?? 0) < (last as any).createdOn
+      if (!(context.unreadCount > 0 || context.unreadMessagesCount > 0 || behind)) continue
+      unread++
       const reactionIds = (context.unreadReactions ?? []).map((it: any) => it.id)
       const commonIds = (context.unreadCommons ?? []).map((it: any) => it.id)
       const mentionIds = (context.unreadMentions ?? []).map((it: any) => it.id)
@@ -267,21 +286,13 @@ export class ChatMember {
           mentionIds
         } as any)
       }
-      const state = await this.client.findOne(readStateClass, { attachedTo: context.objectId } as any)
       if (state === undefined) continue
-      // Date.now() can tie or run ahead of the createdOn of a message sent right after (same ms, or
-      // another clock), marking it read: read up to the last existing message's own createdOn.
-      const last = await this.client.findOne(
-        'activity:class:ActivityMessage' as Ref<Class<Doc>>,
-        { attachedTo: context.objectId } as any,
-        { sort: { createdOn: -1 } } as any
-      )
       const timestamp = (last as any)?.createdOn ?? Date.now()
       await this.client.updateDoc(state._class, state.space, state._id, {
         [this.account]: { messageId: generateId(), timestamp }
       } as any)
     }
-    return unread.length
+    return unread
   }
 
   /**

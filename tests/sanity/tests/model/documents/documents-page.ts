@@ -118,7 +118,8 @@ export class DocumentsPage extends CommonPage {
     // The tools button only exists while the group is hovered, so a re-render of the navigator
     // hides it again and a plain click waits out the whole timeout. Re-hover on every attempt.
     await expect(async () => {
-      await header.hover()
+      // Bounded like the click: an unbounded hover on a reflowing list eats the whole retry budget.
+      await header.hover({ timeout: 5000 })
       await tools.click({ timeout: 5000 })
     }).toPass({ intervals: retryIntervals, timeout: 20000 })
     await this.selectFromDropdown(this.page, action)

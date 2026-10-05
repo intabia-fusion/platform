@@ -314,6 +314,12 @@ test.describe('ai-bot scenarios', () => {
     await expect(low).not.toHaveClass(/pressed/, { timeout: 15000 })
 
     await test.step('The pick survives a reload', async () => {
+      // The card flips before the save reaches the server, and a reload aborts a save in flight:
+      // a second window reads the stored level first.
+      const other = await page.context().newPage()
+      await (await other.goto(settingsUrl))?.finished()
+      await expect(other.locator('[data-id="btnAiLevel-middle"]')).toHaveClass(/pressed/, { timeout: 30000 })
+      await other.close()
       await (await page.goto(`${PlatformURI}/workbench/${data.workspaceName}/setting/ai-settings/basic`))?.finished()
       await expect(page.locator('[data-id="btnAiLevel-middle"]')).toHaveClass(/pressed/, { timeout: 30000 })
     })

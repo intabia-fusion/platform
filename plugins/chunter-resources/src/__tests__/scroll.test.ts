@@ -32,6 +32,12 @@ jest.mock('@hcengineering/notification', () => ({
   isUnreadMessageId: () => true
 }))
 
+const mockReadStates = new Map<string, any>()
+jest.mock('@hcengineering/notification-resources', () => {
+  const { readable } = jest.requireActual('svelte/store')
+  return { NotificationClientImpl: { getClient: () => ({ readStateByDoc: readable(mockReadStates) }) } }
+})
+
 // eslint-disable-next-line import/first
 import { readViewportMessages } from '../scroll'
 
@@ -131,5 +137,16 @@ describe('readViewportMessages', () => {
     jest.advanceTimersByTime(1000)
     await settle()
     expect(mockUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not move the position back from a state newer than the one it was handed', async () => {
+    const stale: any = { _id: 'rs', attachedTo: 'chat-moved', me: { messageId: 'old', timestamp: 500 } }
+    mockReadStates.set('chat-moved', { ...stale, me: { messageId: 'latest', timestamp: 5000 } })
+    const { scrollDiv, contentDiv } = view({ m1: element(10, 30) })
+
+    readViewportMessages('chat-moved' as any, [message('m1', 1000)], scrollDiv, contentDiv, undefined, stale, true)
+    await settle()
+
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 })

@@ -269,9 +269,6 @@
       // Switch of workspace
       return
     }
-    closeTooltip()
-    closePopup()
-
     await syncLoc(loc)
     await updateWindowTitle(loc)
     checkOnHide()
@@ -279,6 +276,11 @@
 
   onDestroy(
     location.subscribe((loc) => {
+      // Here, not in doSyncLoc: queued behind a slow sync, it would close a popup opened after this change.
+      if (workspaceId === loc.path[1]) {
+        closeTooltip()
+        closePopup()
+      }
       void doSyncLoc(loc)
     })
   )
@@ -399,6 +401,10 @@
   async function syncLoc (loc: Location): Promise<void> {
     accessDeniedStore.set(false)
     const originalLoc = JSON.stringify(loc)
+    // A location that changed during an await has its own sync queued: this one must not navigate or
+    // close the panel over it. By reference: every change is a new object, and `loc` is edited in place.
+    const startLoc = $location
+    const superseded = (): boolean => $location !== startLoc
     if ($tabIdStore !== $prevTabIdStore) {
       if ($prevTabIdStore != null) {
         const prevTab = tabs.find((t) => t._id === $prevTabIdStore)
@@ -477,6 +483,7 @@
       }
     }
 
+    if (superseded()) return
     if (
       space === undefined &&
       ((navigatorModel?.spaces?.length ?? 0) > 0 || (navigatorModel?.specials?.length ?? 0) > 0)
@@ -514,6 +521,7 @@
       }
     }
 
+    if (superseded()) return
     if (app !== undefined) {
       localStorage.setItem(`${locationStorageKeyId}_${app}`, originalLoc)
     }

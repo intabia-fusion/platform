@@ -312,6 +312,29 @@ describe('NotificationClientImpl', () => {
       expect(findAllMock).toHaveBeenCalledTimes(1)
     })
 
+    it('keeps a ReadState created while its lookup ran', async () => {
+      let release: (value: any[]) => void = () => {}
+      findAllMock.mockImplementationOnce(
+        async () =>
+          await new Promise((resolve) => {
+            release = resolve
+          })
+      )
+      const client = NotificationClientImpl.getClient()
+      await initClient(client)
+
+      const lookup = client.getReadState('docA' as any)
+      await Promise.resolve()
+      await Promise.resolve()
+      // The create reaches the tx listener before the query answers with its older snapshot.
+      const created = { _id: 'rsA', attachedTo: 'docA', modifiedOn: 1 } as any
+      client.readStateByDoc.update((map) => map.set('docA' as any, created))
+      release([])
+
+      expect(await lookup).toEqual(created)
+      expect(get(client.readStateByDoc).get('docA' as any)).toEqual(created)
+    })
+
     it('does not query again for a document known to have no ReadState', async () => {
       findAllMock.mockResolvedValueOnce([])
       const client = NotificationClientImpl.getClient()

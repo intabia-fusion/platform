@@ -35,9 +35,14 @@
   export let imageOnly: boolean = false
   export let lessCrop: boolean = false
 
-  $: selectedAvatarType = person?.avatarType ?? AvatarType.COLOR
-  $: selectedAvatar = person?.avatar
-  $: selectedAvatarProps = person?.avatarProps
+  // Via primitives: a parent re-render passes a new `person` object with the same values, and must not
+  // reset a pick made in the popup before the parent's createAvatar() reads it.
+  $: personAvatarType = person?.avatarType
+  $: personAvatar = person?.avatar
+  $: personAvatarProps = JSON.stringify(person?.avatarProps)
+  $: selectedAvatarType = personAvatarType ?? AvatarType.COLOR
+  $: selectedAvatar = personAvatar
+  $: selectedAvatarProps = personAvatarProps === undefined ? undefined : JSON.parse(personAvatarProps)
 
   export async function createAvatar (): Promise<Data<AvatarInfo>> {
     const result: Data<AvatarInfo> = {

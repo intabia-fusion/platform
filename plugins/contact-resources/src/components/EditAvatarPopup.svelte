@@ -27,6 +27,7 @@
   const dispatch = createEventDispatcher()
   const CropperP = getResource(imageCropper.component.Cropper)
   let cropper: any
+  let ready = false
 
   function onSelect (e: any) {
     const newFile = e.target?.files[0] as File | undefined
@@ -65,10 +66,10 @@
 <div class="editavatar-container">
   {#await CropperP then Cropper}
     <div class="cropper">
-      <Cropper bind:this={cropper} image={file} {lessCrop} />
+      <Cropper bind:this={cropper} bind:ready image={file} {lessCrop} />
     </div>
     <div class="footer">
-      <Button label={presentation.string.Save} kind={'primary'} size={'large'} on:click={onCrop} />
+      <Button label={presentation.string.Save} kind={'primary'} size={'large'} disabled={!ready} on:click={onCrop} />
       <div class="mx-3 clear-mins">
         <Button label={presentation.string.Change} size={'large'} on:click={selectAnother} />
       </div>

@@ -15,7 +15,9 @@ import { Issue, NewIssue } from '../model/tracker/types'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 
 test.use({
-  storageState: PlatformSetting
+  storageState: PlatformSetting,
+  // Move flake (panel keeps TSK- id, then closes) is rare and unexplained by code: keep a trace of it.
+  trace: 'retain-on-failure'
 })
 test.describe('Tracker sub-issues tests', () => {
   let issuesPage: IssuesPage
@@ -179,7 +181,7 @@ test.describe('Tracker sub-issues tests', () => {
       .toHaveText(/SECON-\d+/)
       .catch(async (err) => {
         // Tells a move that never reached the server from a panel that missed its update (1/5, unresolved).
-        throw new Error(`${err.message}\nstored ${await readIssueIdentifier(newIssue.title)}`)
+        throw new Error(`${err.message}\nstored ${await readIssueIdentifier(newIssue.title)}\nurl ${page.url()}`)
       })
     await issuesDetailsPage.openSubIssueByName(newSubIssue.title)
     await expect(issuesDetailsPage.textIdentifier()).toHaveText(/SECON-\d+/)

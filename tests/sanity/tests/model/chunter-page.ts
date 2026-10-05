@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonPage } from './common-page'
 import { SignUpData } from './common-types'
+import { retry } from '../retry'
 
 export class ChunterPage extends CommonPage {
   readonly page: Page
@@ -31,9 +32,15 @@ export class ChunterPage extends CommonPage {
 
   // Through the "new" menu of the chat header, not the "+" of a section: the "+" exists only while
   // the pointer is over the section header, and the navigator re-renders under it as chats come in.
+  // Retried to the open form: right after enterWorkspace re-points a warm window something closes popups
+  // for a moment (cause unknown, runs 20261013-165458/172346) - the menu, its item or the form itself.
   async clickAddChannel (): Promise<void> {
-    await this.buttonNewChat().click()
-    await this.selectFromDropdown(this.page, 'New channel')
+    await retry(async () => {
+      if (await this.inputNewChannelName().isVisible()) return
+      if (!(await this.popupSpanLabel('New channel').isVisible())) await this.buttonNewChat().click({ timeout: 5000 })
+      await this.popupSpanLabel('New channel').click({ timeout: 5000 })
+      await expect(this.inputNewChannelName()).toBeVisible({ timeout: 3000 })
+    })
   }
 
   async clickAddDirect (): Promise<void> {
@@ -41,13 +48,23 @@ export class ChunterPage extends CommonPage {
     await this.selectFromDropdown(this.page, 'New direct chat')
   }
 
+  // A form closed under the test reads like a created channel: only the navigator row proves Create landed.
+  // Whole name: `links-x` is a prefix of `links-x-target`, and the longer one already counted as created.
   async createChannel (channelName: string, privateChannel: boolean): Promise<void> {
-    await this.inputNewChannelName().fill(channelName)
-    if (privateChannel) {
-      await this.checkboxMakePublic().click()
-      await this.checkboxMakePrivate().click()
-    }
-    await this.buttonCreateChannel().click()
+    const created = this.page
+      .locator('[data-testid="section-chunter:class:Channel"]')
+      .getByRole('button', { name: new RegExp(`(^|\\s)${channelName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`) })
+    await retry(async () => {
+      if (await created.isVisible()) return
+      await this.clickAddChannel()
+      await this.inputNewChannelName().fill(channelName, { timeout: 5000 })
+      if (privateChannel) {
+        await this.checkboxMakePublic().click({ timeout: 5000 })
+        await this.checkboxMakePrivate().click({ timeout: 5000 })
+      }
+      await this.buttonCreateChannel().click({ timeout: 5000 })
+      await expect(created).toBeVisible({ timeout: 10000 })
+    }, 45000)
   }
 
   async openChannel (channelName: string): Promise<void> {

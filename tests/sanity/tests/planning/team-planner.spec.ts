@@ -9,6 +9,8 @@ import { IssuesPage } from '../model/tracker/issues-page'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
 import { deleteEventsByTitle } from '../API/CalendarApi'
+import { connectTracker, createIssue, getProjectContext } from '../API/TrackerApi'
+import contact from '@hcengineering/contact'
 
 test.use({
   storageState: PlatformSetting
@@ -68,6 +70,19 @@ test.describe('Team Planner tests', () => {
   })
 
   test('Clearing the filter resets the selected project', async ({ page }) => {
+    // The Space filter lists only projects some ToDo is in, and the restored workspace has none:
+    // without an issue ToDo of its own the test waited for another spec to create one.
+    const { client } = await connectTracker()
+    try {
+      const employee = await client.findOne(contact.mixin.Employee, { active: true })
+      await createIssue(client, await getProjectContext(client), {
+        title: `Team filter ${generateId()}`,
+        status: 'Todo',
+        assignee: employee?._id
+      })
+    } finally {
+      await client.close()
+    }
     const leftSideMenuPage = new LeftSideMenuPage(page)
     const teamPage = new TeamPage(page)
 

@@ -19,6 +19,7 @@ import notification, { type DocNotifyContext, type ReadState, isUnreadMessageId 
 import { type Doc, getCurrentAccount, type Ref } from '@hcengineering/core'
 import { get, writable } from 'svelte/store'
 import { getClient } from '@hcengineering/presentation'
+import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
 export function messageInView (msgElement: Element, containerRect: DOMRect): boolean {
   const rect = msgElement.getBoundingClientRect()
@@ -150,8 +151,11 @@ export async function readMessages (
   const newTimestamp = lastMessage.createdOn ?? lastMessage.modifiedOn ?? 0
 
   if (readState != null && newTimestamp > 0) {
+    // Not the state handed in: a debounced read keeps the one from before it, and "Latest messages" moves
+    // the position on meanwhile (readDoc), so the old window's read would put it back.
+    const current = get(NotificationClientImpl.getClient().readStateByDoc).get(readState.attachedTo) ?? readState
     const storedTimestampUpdates = get(lastViewTimestampStore).get(readState.attachedTo)
-    const position = readState[me.uuid]
+    const position = current[me.uuid]
     const prevTimestamp = Math.max(storedTimestampUpdates ?? 0, position?.timestamp ?? 0)
 
     if (prevTimestamp < newTimestamp) {
@@ -160,7 +164,7 @@ export async function readMessages (
         return store
       })
 
-      await op.update(readState, {
+      await op.update(current, {
         [me.uuid]: {
           messageId: lastMessage._id,
           timestamp: newTimestamp

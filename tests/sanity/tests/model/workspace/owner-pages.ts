@@ -11,7 +11,8 @@ export class OwnersPage {
   spacesAdminText = (): Locator => this.page.getByText('Admin Members')
   addMemberButton = (): Locator => this.page.getByRole('button', { name: 'Members' })
   selectMember = (memberName: string): Locator => this.page.getByRole('button', { name: memberName })
-  workspaceLogo = (): Locator => this.page.locator('.hulyComponent .hulyAvatar-container')
+  // Scoped to General: the Profile tab shown until the tab switch lands has an avatar of its own.
+  workspaceLogo = (): Locator => this.page.locator('.hulyComponent .ws .hulyAvatar-container')
   publicTemplate = (): Locator => this.page.getByText('Public templates')
   createTemplate = (): Locator => this.page.getByRole('button', { name: 'CREATE TEMPLATE' })
   saveTemplate = (): Locator => this.page.getByRole('button', { name: 'Save template' })

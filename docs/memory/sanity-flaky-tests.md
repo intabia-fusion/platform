@@ -65,6 +65,24 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **Click a row's link, not the cell**: `tr > :has-text(name)` clicks the cell centre, which misses a short name once
   longer names widen the column (`createCandidateWithSkills` broke 3/3 after talent ids got longer).
 
+- **`isVisible()` as "already done" is instant**: a list not rendered yet reads as gone. `deleteAttachmentToIssue` skipped the delete that way; trust absence only after the click.
+
+- **A settings tab click changes the URL at once, the content only after `doSyncLoc`**: the old tab (Profile, with its own `.hulyAvatar-container`) stays ~100ms. "Change workspace picture" clicked the user's avatar; scope locators to the target tab. Found with console DIAG in the trace after 6 wrong fixes.
+- **A list category folds once, before the search lands.** `ListCategory.initCollapsed` re-runs only on level changes, so
+  Backlog folded at >20 rows stays folded with the one searched row (`createIssueByApiAndFind` expands in a retry).
+- **An object filter lists only values some doc already has.** The planner Space filter showed only "Not selected": the
+  restored sanity-ws has no ProjectToDo, the first comes from another spec. A test that picks a value creates its own doc.
+- **A popup dies with any location change** (`Workbench` closes popups on it). A click on a nav row's actions that
+  misses the "..." button opens the row's channel and kills the menu it opened: click the button, retry until the item shows.
+- **A warm window is not settled right after `enterWorkspace`**: for ~200ms something closes popups and
+  modals with the URL unchanged (closer not found). `clickAddChannel`/`createChannel` retry to the open form
+  and to the navigator row - a closed form is no proof Create landed.
+- **Unread counters lag the app**: the service counts a fresh message (bot greeting) after the UI marks it.
+  `readEverything` also reads contexts whose read position is behind the last message.
+- **`getByRole({ name })` is a substring too**: `links-x` matched `links-x-target`, and a "created yet?" check
+  returned at once, leaving the form's overlay over the next click. `exact` breaks on the unread count in the
+  name; nav channel locators match the whole word (`(^|\s)name(\s|$)`).
+
 ## Product-side causes
 
 | What | Where | Effect |
@@ -79,6 +97,13 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | Calendar keeps a stale event after a slot change | UBERF-4273 | A slot added right after a delete never appears |
 | Calendar block under 44px renders no body | `EventElement.svelte` (`empty`) | `hasText` finds no title once ~6 events share an hour |
 | Tag popup renders 50 tags per category | `TagsPopup.svelte` (`slice(0, 50)`) | A fresh tag past the cut is invisible; search for it instead |
+| `doSyncLoc` is queued by `reduceCalls`; it used to call `closePopup()` when it ran, not when the location changed | `Workbench.svelte` | A popup opened after the change is closed; a stale `syncLoc` also `closePanel()`s over the new page. `syncLoc` edits `loc` in place - compare `$location` by reference |
+| AI level card saves without awaiting (`void save()`) | `AISpaceSettingsEditor.svelte` | A reload right after the click can lose the level |
+| Status button shows the old status until the update round trip (>1s under load) | `StatusEditor.svelte` | "Stable for 1s" takes the old value; a retry click lands under the close-todos dialog |
+| A save resolves before its tx reaches the live queries | `AttachmentStyleBoxEditor.svelte` (`savedAt`) | A callback for another tx (`$inc`) brings the pre-save doc and reverts the editor |
+| Do not drop `getCurrentDoc` copies older than the doc in the query | `foundations/core/packages/query` (`getCurrentDoc`) | `modifiedOn` is not monotonic: a request replays a tx prepared earlier (`approveTx`/`rejectedTx`) with its old `modifiedOn`; a guard on it froze QMS doc states |
+| A sent message renders before the server has it (`pendingCreatedDocs`) | `ChatMessagePresenter.svelte` (`data-delivered`) | A reload right after it shows loses the message |
+| Tag popup selects a tag it creates | `TagsPopup.svelte` `onCreateTagElement` | A click on the new tag unselects it |
 | `move()` returns silently when `dragCard` is unset | `packages/kanban/src/components/Kanban.svelte` `move()` | A drop with no dragstart changes nothing, reports nothing |
 | Templates group by assignee; the group stays collapsed and virtualised | Templates list | A fresh template is absent from the DOM |
 | `CreateCustomer.svelte`'s reactive `findContacts` call never cancels the previous duplicate lookup | contact | The empty-name answer overtakes the typed one, `matches` stays empty for good |
@@ -90,6 +115,15 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `Move.svelte` fills `issueToUpdate` (a Map) via `.set()` with no reassignment | `tracker-resources` Move | Svelte misses it: keep-attributes toggle stays disabled if issues resolve after the target pick |
 | Channel nav entry waits for a `Chat` doc from async `OnCollaboratorAdded` | `ChatNavGroup.svelte` | Lags past UI timeouts. Pushing the open object by id was reverted: it kept an unsubscribed open channel in the nav |
 | (same, recruit vacancy/applicant chats) | `ChatApi.waitForLinkedChat` | Tests poll the server `Chat` doc before checking the nav |
+| A joiner's members-version bump crosses the queue (batch 500ms) after his first tx | `middleware/src/seatLimits.ts` | Not in `seatSet` -> read-only -> `Forbidden` on `ensureEmployee`, invite page blank. Fixed: rebuild once for an unknown member |
+| `handleHello` switched the session to binary+snappy before the hello was sent | `server/src/sessionManager.ts` | A broadcast in that window was undecodable (`Unknown extension type 214`) and dropped by the client. Fixed: modes set after the hello |
+| Crop Save was enabled before cropperjs was ready; `crop()` returned `undefined` | `image-cropper-resources` Cropper, `EditAvatarPopup` | Pick silently falls back to a colour. Save now disabled until `ready` (not the picture flake's cause) |
+| `EditableAvatar` reset its pick on any new `person` object from the parent | `contact-resources` EditableAvatar | Reset now only on changed values (latent, not the picture flake's cause) |
+| `loadReadStates` overwrote the cache with its query snapshot | `notification-resources/src/client.ts` | A `ReadState` created while the lookup ran (listener set it first) became `null` for good: `readDoc`/viewport reads wrote nothing ("Latest messages" 1/100). Fixed: keep the newer, test in `client.test.ts` |
+| nginx upstream `keepalive` pool kept idle sockets 60s, Node closes them at 5s | `tests/nginx.conf`, `dev/nginx.conf` | Reused closed socket: 502 "upstream prematurely closed" on `POST /_account/` -> `ServiceUnavailable` (not retried, POST). Fixed: `keepalive_timeout 4s` per upstream |
+| Context unread counters are recounted by the notifications service from the queue | `services/notifications/src/utils/context.ts` | Lag after `readState`: closing a thread right after reading shows the stale count for a moment |
+| REST session dropped by the hang check | `sessionManager.createOpContext` | `socialStringsToUsers` built from live sessions only: every REST tx of that user fails `AccountMismatch` (500, retried ~165x) |
+| A debounced read wrote back an older position | `chunter-resources/src/scroll.ts` `readMessages` | compared with the `readState` captured at debounce time, not `readStateByDoc`: after "Latest messages" (`readDoc`) the old window's read moved the channel back to unread |
 
 ## Open
 
@@ -126,6 +160,9 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   - 4 failures in 20 versus 1 flake in a full run, so the retry was reverted. Needs a locator matching both renderings.
   Second shape (1/5, unresolved): the open panel kept the old `TSK-` id for 15s; the failure now reports
   the stored identifier to split "move never landed" from "panel missed the update".
+  2026-10-02: stored `SECON-4` (move landed), panel showed `TSK-129` ~15s, then was gone. Spec keeps a trace now.
+  Same shape in todos "Closing an issue": `client.update` resolved (MessageBox shown), panel kept `Todo` 20s+. No server revert; cause open.
+- **Two "Close Action Item?" boxes from one status pick** (todos): a shared popup `id` is no fix - the box vanished and left its overlay blocking clicks. Reverted.
 - **`kanban` "drop into same cell does not update document"**: `after.modifiedOn` came back 109ms *lower* than `before.modifiedOn`, which an update after `before` cannot produce. One transactor, host/container clock skew 0-15ms - neither explains it.
 - **A lost webhook loses the "Joined meeting" activity for good**: only the webhook path writes it (`webhook.ts addActivityToMeeting`), the polling fallback creates the participant but no activity.
 

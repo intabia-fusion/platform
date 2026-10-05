@@ -155,8 +155,10 @@ export class InboxPage extends CommonPage {
     await this.inboxChat(text).click()
   }
 
+  // In the inbox's tab list: clicked while the app switch is under way, a bare getByText also hit the
+  // chat navigator still on screen ("Channels & DMs", the Channels section).
   async clickOnInboxFilter (text: string): Promise<void> {
-    await this.inboxChat(text).click()
+    await this.page.locator('.tablist-container').getByText(text).click()
   }
 
   async checkIfIssueIsPresentInInbox (issueTitle: string): Promise<void> {

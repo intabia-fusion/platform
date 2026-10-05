@@ -169,18 +169,17 @@
     return res
   }
 
-  function initCollapsed (singleCat: boolean, lastLevel: boolean, level: number): void {
+  // `count` re-runs it as a search narrows the list: decided once, Backlog folded at 20+ rows stayed folded with one.
+  function initCollapsed (singleCat: boolean, lastLevel: boolean, level: number, count: number): void {
     if (localStorage.getItem(categoryCollapseKey) === null) {
       collapsed =
-        (!disableHeader &&
-          !singleCat &&
-          itemProj.length > (lastLevel ? autoFoldLimit : singleCategoryLimit) / (level + 1)) ||
+        (!disableHeader && !singleCat && count > (lastLevel ? autoFoldLimit : singleCategoryLimit) / (level + 1)) ||
         parentCategories > 10 ||
         (level > 1 && parentCategories > 5)
     }
   }
 
-  $: initCollapsed(singleCat, lastLevel, level)
+  $: initCollapsed(singleCat, lastLevel, level, itemProj.length)
 
   const handleRowFocused = (object: Doc) => {
     dispatch('row-focus', object)

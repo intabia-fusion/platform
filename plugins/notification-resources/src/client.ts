@@ -256,7 +256,14 @@ export class NotificationClientImpl implements NotificationClient {
 
     this.readStateByDoc.update((map) => {
       for (const id of ids) {
-        map.set(id, statesByDoc.get(id) ?? null)
+        // A state created while the query ran arrives first through the tx listener; the older
+        // snapshot must not turn it back into "absent", nothing would bring it again.
+        const current = map.get(id)
+        const found = statesByDoc.get(id)
+        const state =
+          current != null && (found === undefined || current.modifiedOn > found.modifiedOn) ? current : found
+        map.set(id, state ?? null)
+        if (state != null) statesByDoc.set(id, state)
       }
       return map
     })
