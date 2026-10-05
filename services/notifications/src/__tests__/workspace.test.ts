@@ -16,6 +16,7 @@
 // '../config' throws at import time without env vars, so it's mocked (like other test files);
 // server-pipeline/middleware resolve fine as real deps under ts-jest.
 import core from '@hcengineering/core'
+import notification from '@hcengineering/notification'
 
 import { QueueTopic } from '@hcengineering/server-core'
 
@@ -529,5 +530,115 @@ describe('Workspace holds the native pushes of an applied batch (bare instance)'
     expect(result.queueMessages).toEqual([])
     expect(result.createAppPushNotificationTx).toEqual([])
     expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:a:n-0:%' }])
+  })
+})
+
+describe('Workspace.processTx: read all (bare instance)', () => {
+  function bare (): any {
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.inProgress = new Set()
+    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.hierarchy = { findDomain: () => 'transient', isDerived: (a: string, b: string) => a === b }
+    instance.model = { addTxes: jest.fn() }
+    instance.cache = {
+      tx: jest.fn(),
+      getCachedUserStatus: jest.fn(),
+      getAccountBySocialId: jest.fn().mockResolvedValue('user-1'),
+      getPushSubscriptions: jest.fn().mockResolvedValue([]),
+      getPersonSpaces: jest.fn().mockResolvedValue([{ _id: 'person-space', account: 'user-1' }]),
+      dropInbox: jest.fn(),
+      resetContexts: jest.fn()
+    }
+    instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
+    instance.timeMachine = { send: jest.fn().mockResolvedValue(undefined) }
+    instance.ws = { uuid: 'ws-1' }
+    instance.rest = { tx: jest.fn().mockResolvedValue(undefined) }
+    instance.txFactory = {
+      createTxApplyIf: jest.fn(),
+      createTxCreateDoc: jest.fn((_class, space, attributes) => ({ _id: 'event-tx', _class, space, attributes }))
+    }
+    instance.pendingPush = { hold: jest.fn() }
+    instance.client = {
+      ctx: instance.ctx,
+      findAll: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn().mockResolvedValue({ _id: 'ctx-0' }),
+      bulkUpdate: jest.fn().mockResolvedValue(undefined),
+      bulkRemove: jest.fn().mockResolvedValue(undefined)
+    }
+    return instance
+  }
+  const action = {
+    _id: 'action-1',
+    _class: core.class.TxCreateDoc,
+    objectClass: notification.class.ReadAllNotificationAction,
+    objectSpace: 'someone-elses-space',
+    modifiedBy: 'social-1',
+    modifiedOn: 1000,
+    attributes: { account: 'user-1' }
+  }
+  it('costs the transactor one call whatever the inbox: the event to the person space of the account', async () => {
+    const instance = bare()
+
+    await instance.processTx(action)
+    await Promise.all(Array.from(instance.inProgress))
+
+    expect(instance.client.bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(instance.txFactory.createTxApplyIf).not.toHaveBeenCalled()
+    expect(instance.rest.tx).toHaveBeenCalledTimes(1)
+    // The space comes from the account, not from the action a client wrote.
+    expect(instance.txFactory.createTxCreateDoc).toHaveBeenCalledWith(
+      notification.class.InboxChangeEvent,
+      'person-space',
+      { account: 'user-1' }
+    )
+  })
+
+  it('answers with the event even when nothing was unread: the client holds its loader until then', async () => {
+    const instance = bare()
+    instance.client.findOne.mockResolvedValue(undefined)
+
+    await instance.processTx(action)
+    await Promise.all(Array.from(instance.inProgress))
+
+    expect(instance.client.bulkUpdate).not.toHaveBeenCalled()
+    expect(instance.rest.tx).toHaveBeenCalledTimes(1)
+  })
+
+  it('sends no event for an action written for somebody else', async () => {
+    const instance = bare()
+    instance.cache.getAccountBySocialId.mockResolvedValue('user-2')
+
+    await instance.processTx(action)
+    await Promise.all(Array.from(instance.inProgress))
+
+    expect(instance.rest.tx).not.toHaveBeenCalled()
+  })
+
+  it('does not wait for the event: the queue moves on while the transactor is slow', async () => {
+    const instance = bare()
+    let sent: () => void = () => {}
+    instance.rest.tx.mockImplementation(async () => {
+      await new Promise<void>((resolve) => {
+        sent = resolve
+      })
+    })
+
+    await instance.processTx(action)
+
+    // The tx is done, the event is still on its way and close() would wait for it.
+    expect(instance.inProgress.size).toBe(1)
+    sent()
+    await Promise.all(Array.from(instance.inProgress))
+    expect(instance.inProgress.size).toBe(0)
+  })
+
+  it('a failed event is logged, not thrown: the inbox is read and a retry would send nothing', async () => {
+    const instance = bare()
+    instance.rest.tx.mockRejectedValue(new Error('forbidden'))
+
+    await expect(instance.processTx(action)).resolves.toBeUndefined()
+    await Promise.all(Array.from(instance.inProgress))
+
+    expect(instance.ctx.error).toHaveBeenCalledTimes(1)
   })
 })

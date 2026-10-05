@@ -126,6 +126,15 @@ export class PendingPushHolder {
     return cancelled
   }
 
+  // A whole-inbox read: everything held for the account is read, whatever it is about.
+  cancelByAccount (account: AccountUuid): string[] {
+    const cancelled: string[] = []
+    for (const [key, entry] of this.entries) {
+      if (entry.held.account === account && this.drop(key)) cancelled.push(entry.held.notificationId)
+    }
+    return cancelled
+  }
+
   async flushByAccount (account: AccountUuid): Promise<void> {
     await this.release((entry) => entry.held.account === account)
   }

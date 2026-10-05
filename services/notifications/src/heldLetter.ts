@@ -41,6 +41,10 @@ export function heldLetterPattern (account: AccountUuid, notificationId: string)
   return `${LETTER}:${account}:${notificationId}:%`
 }
 
+export function cancelAccountLetters (result: Result, account: AccountUuid): void {
+  result.timeMachine.push({ type: 'cancel', id: `${LETTER}:${account}:%` })
+}
+
 export function scheduleLetter (result: Result, held: HeldPush, holdMs: number, now: Timestamp = Date.now()): void {
   const schedule: TimeMachineMessage<HeldPush> = {
     type: 'schedule',

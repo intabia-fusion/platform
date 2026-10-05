@@ -200,8 +200,14 @@ export async function clearAll (): Promise<void> {
     {
       label: notification.string.RemoveAllConfirmationTitle,
       message: notification.string.RemoveAllConfirmationMessage,
+      richMessage: true,
+      okLabel: notification.string.ClearAll,
+      dangerous: true,
+      // Not awaited: the service works in the background, the inbox header shows the progress.
       action: async () => {
-        await client.clearAll()
+        void client.clearAll().catch((err) => {
+          console.error('Failed to clear all notifications', err)
+        })
       }
     },
     'top'
@@ -211,7 +217,21 @@ export async function clearAll (): Promise<void> {
 export async function readAll (): Promise<void> {
   const client = NotificationClientImpl.getClient()
 
-  await client.readAll()
+  showPopup(
+    MessageBox,
+    {
+      label: notification.string.ReadAllConfirmationTitle,
+      message: notification.string.ReadAllConfirmationMessage,
+      richMessage: true,
+      okLabel: notification.string.MarkReadAll,
+      action: async () => {
+        void client.readAll().catch((err) => {
+          console.error('Failed to mark all notifications as read', err)
+        })
+      }
+    },
+    'top'
+  )
 }
 
 export async function editDocNotificationsVisibilityTester (doc: Doc | Doc[] | undefined): Promise<boolean> {

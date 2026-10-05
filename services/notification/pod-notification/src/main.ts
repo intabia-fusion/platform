@@ -20,10 +20,12 @@ import notification, {
   PushSubscription,
   type PushCallData,
   type PushData,
+  type PushDismissAllData,
   type PushDismissData,
   QueueNotificationMessage,
   PUSH_NOTIFICATION_TITLE_SIZE,
   PUSH_NOTIFICATION_BODY_SIZE,
+  isQueueDismissAllMessage,
   isQueueDismissMessage,
   truncate
 } from '@hcengineering/notification'
@@ -147,7 +149,7 @@ export async function sendPushToSubscription (
  */
 export async function sendDismissToSubscription (
   subscriptions: PushSubscription[],
-  data: PushDismissData
+  data: PushDismissData | PushDismissAllData
 ): Promise<Ref<PushSubscription>[]> {
   const promises = subscriptions.map(async (subscription) => {
     const target = pushTarget(subscription.endpoint)
@@ -247,8 +249,15 @@ export const main = async (): Promise<void> => {
           async () => {
             const value = queueMessage.value
             let failedSubscriptionIds: Ref<PushSubscription>[] = []
-            if (isQueueDismissMessage(value)) {
+            if (isQueueDismissAllMessage(value)) {
               failedSubscriptionIds = await sendDismissToSubscription(value.pushSubscriptions, {
+                kind: value.kind,
+                workspace: queueMessage.workspace,
+                readUpTo: value.readUpTo
+              })
+            } else if (isQueueDismissMessage(value)) {
+              failedSubscriptionIds = await sendDismissToSubscription(value.pushSubscriptions, {
+                kind: value.kind,
                 objectId: value.objectId,
                 objectClass: value.objectClass,
                 tags: value.tags,
@@ -268,7 +277,8 @@ export const main = async (): Promise<void> => {
                   group: value.group,
                   objectId: value.objectId,
                   objectClass: value.objectClass,
-                  createdOn: value.createdOn
+                  createdOn: value.createdOn,
+                  workspace: queueMessage.workspace
                 },
                 value.call
               )

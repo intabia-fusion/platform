@@ -236,6 +236,12 @@ class WorkspaceCache {
     }
   }
 
+  public dropInbox (): void {
+    this.resetContexts()
+    this.readStatesByDocCache.clear()
+    this.readStateToDocMap.clear()
+  }
+
   /**
    * Resolves notification providers and types configurations.
    */

@@ -19,6 +19,7 @@ import {
   type Class,
   type Doc,
   type DocumentQuery,
+  type DocumentUpdate,
   type FindOptions,
   FindResult,
   Hierarchy,
@@ -94,6 +95,13 @@ export interface Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ) => Promise<WithLookup<T> | undefined>
+
+  bulkUpdate: <T extends Doc>(
+    _class: Ref<Class<T>>,
+    query: DocumentQuery<T>,
+    operations: DocumentUpdate<T>
+  ) => Promise<void>
+  bulkRemove: <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>) => Promise<void>
 
   // Native pushes waiting for their receiver to read or leave; absent in tests that do not care.
   pendingPush?: PendingPushHolder

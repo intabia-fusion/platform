@@ -44,6 +44,9 @@ import {
   TxNotificationType,
   PushSubscription,
   ReadNotificationAction,
+  ReadAllNotificationAction,
+  ClearAllNotificationAction,
+  InboxChangeEvent,
   CreateNotificationAction
 } from './types'
 
@@ -87,6 +90,9 @@ const notification = plugin(notificationId, {
     NotificationAppearancePreference: '' as Ref<Class<NotificationAppearancePreference>>,
     DocNotificationSetting: '' as Ref<Class<DocNotificationSetting>>,
     ReadNotificationAction: '' as Ref<Class<ReadNotificationAction>>,
+    ReadAllNotificationAction: '' as Ref<Class<ReadAllNotificationAction>>,
+    ClearAllNotificationAction: '' as Ref<Class<ClearAllNotificationAction>>,
+    InboxChangeEvent: '' as Ref<Class<InboxChangeEvent>>,
     CreateNotificationAction: '' as Ref<Class<CreateNotificationAction>>
   },
   ids: {
@@ -154,6 +160,8 @@ const notification = plugin(notificationId, {
     MarkReadAll: '' as IntlString,
     RemoveAllConfirmationTitle: '' as IntlString,
     RemoveAllConfirmationMessage: '' as IntlString,
+    ReadAllConfirmationTitle: '' as IntlString,
+    ReadAllConfirmationMessage: '' as IntlString,
     UnsubscribeConfirmationTitle: '' as IntlString,
     UnsubscribeConfirmationMessage: '' as IntlString,
     UnsubscribeSpaceConfirmationTitle: '' as IntlString,

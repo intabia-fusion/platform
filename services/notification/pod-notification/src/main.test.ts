@@ -184,6 +184,7 @@ describe('sendDismissToSubscription', () => {
     const native: PushSubscription = { ...web, _id: 'sub-apns' as Ref<PushSubscription>, endpoint: 'apns://token' }
 
     const failed = await sendDismissToSubscription([web, native], {
+      kind: 'dismiss',
       objectId: 'doc-1' as any,
       objectClass: 'DocClass' as any,
       tags: ['msg-1'],

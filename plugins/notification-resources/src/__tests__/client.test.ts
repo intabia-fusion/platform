@@ -72,6 +72,7 @@ jest.mock('@hcengineering/core', () => ({
 }))
 
 const findAllMock = jest.fn()
+const findOneMock = jest.fn()
 const applyFindAllMock = jest.fn()
 const createDocMock = jest.fn()
 const removeDocMock = jest.fn()
@@ -87,6 +88,8 @@ const applyMock = jest.fn(() => ({
 
 const mockClient = {
   findAll: findAllMock,
+  findOne: findOneMock,
+  createDoc: createDocMock,
   apply: applyMock
 }
 
@@ -105,11 +108,21 @@ const unreadQueryQueryMock = jest.fn((_class: any, query: any, callback: (res: a
   }
 })
 
+const refreshQueriesMock = jest.fn(async (..._args: unknown[]) => {})
 let txListener: ((txes: Tx[]) => void) | undefined
 let onClientCallback: ((client: unknown, account: unknown) => void | Promise<void>) | undefined
 
+jest.mock('@hcengineering/contact', () => ({
+  __esModule: true,
+  default: {},
+  getCurrentEmployeeSpace: () => 'person-space'
+}))
+
 jest.mock('@hcengineering/presentation', () => ({
   getClient: jest.fn(() => mockClient),
+  refreshQueries: async (...args: unknown[]) => {
+    await refreshQueriesMock(...args)
+  },
   createQuery: jest.fn(() => ({
     query: unreadQueryQueryMock,
     unsubscribe: jest.fn()
@@ -576,67 +589,130 @@ describe('NotificationClientImpl', () => {
     })
   })
 
-  describe('readAll', () => {
-    it('issues one commit and one createDoc per unread context with something to read', async () => {
-      const ctxWithUnread = makeContext({
-        _id: 'ctx1' as any,
-        objectId: 'd1' as any,
-        unreadReactions: [{ id: 'r1' } as any],
-        unreadCommons: [],
-        unreadMentions: []
-      })
-      const ctxNothingToRead = makeContext({
-        _id: 'ctx2' as any,
-        objectId: 'd2' as any,
-        unreadReactions: [],
-        unreadCommons: [],
-        unreadMentions: []
-      })
-      applyFindAllMock.mockResolvedValueOnce([ctxWithUnread, ctxNothingToRead])
-      // forceReadDocState() looks up ReadState per context via the plain (non-apply) client.
+  describe('readAll / clearAll', () => {
+    const inboxChanged = (account: string = mockAccount.uuid): any => ({
+      _class: 'core:class:TxCreateDoc',
+      objectClass: notification.class.InboxChangeEvent,
+      objectId: 'event-1',
+      attributes: { account }
+    })
+    async function flush (): Promise<void> {
+      for (let i = 0; i < 10; i++) await Promise.resolve()
+    }
+
+    beforeEach(() => {
       findAllMock.mockResolvedValue([])
-
-      const client = NotificationClientImpl.getClient()
-      await client.readAll()
-
-      expect(applyMock).toHaveBeenCalledTimes(1)
-      expect(commitMock).toHaveBeenCalledTimes(1)
-      expect(createDocMock).toHaveBeenCalledTimes(1)
-      expect(createDocMock).toHaveBeenCalledWith(
-        notification.class.ReadNotificationAction,
-        ctxWithUnread.space,
-        expect.objectContaining({ attachedTo: ctxWithUnread.objectId, reactionIds: ['r1'] })
-      )
     })
 
-    it('does nothing but reset the flag when there are no unread contexts', async () => {
-      applyFindAllMock.mockResolvedValueOnce([])
-      findAllMock.mockResolvedValue([])
+    afterEach(() => {
+      jest.useRealTimers()
+    })
 
+    it('readAll sends one ReadAllNotificationAction and holds the flag until the service says it is done', async () => {
       const client = NotificationClientImpl.getClient()
-      await client.readAll()
+      const done = client.readAll()
+      await flush()
 
-      expect(commitMock).toHaveBeenCalledTimes(1)
-      expect(createDocMock).not.toHaveBeenCalled()
+      expect(applyMock).not.toHaveBeenCalled()
+      expect(createDocMock).toHaveBeenCalledTimes(1)
+      expect(createDocMock).toHaveBeenCalledWith(notification.class.ReadAllNotificationAction, 'person-space', {
+        account: mockAccount.uuid
+      })
+      expect(get(client.readingAllInbox)).toBe(true)
+
+      // Somebody else's event is not ours to wait for.
+      txListener?.([inboxChanged('acc-other')])
+      await flush()
+      expect(get(client.readingAllInbox)).toBe(true)
+
+      txListener?.([inboxChanged()])
+      await done
       expect(get(client.readingAllInbox)).toBe(false)
     })
-  })
 
-  describe('clearAll', () => {
-    it('issues one commit and removes every context returned by findAll', async () => {
-      const ctx1 = makeContext({ _id: 'ctx1' as any, objectId: 'd1' as any })
-      const ctx2 = makeContext({ _id: 'ctx2' as any, objectId: 'd2' as any })
-      applyFindAllMock.mockResolvedValueOnce([ctx1, ctx2])
-      // forceReadDocState() looks up ReadState per context via the plain (non-apply) client.
-      findAllMock.mockResolvedValue([])
+    it('gives the inbox back after the timeout when the event never comes', async () => {
+      jest.useFakeTimers()
+      const client = NotificationClientImpl.getClient()
+      const done = client.readAll()
+      await flush()
+
+      await jest.advanceTimersByTimeAsync(10000)
+      await done
+      expect(get(client.readingAllInbox)).toBe(false)
+    })
+
+    it('drops the flag when the action could not be sent', async () => {
+      createDocMock.mockRejectedValueOnce(new Error('offline'))
 
       const client = NotificationClientImpl.getClient()
-      await client.clearAll()
+      await expect(client.readAll()).rejects.toThrow('offline')
 
-      expect(applyMock).toHaveBeenCalledTimes(1)
-      expect(commitMock).toHaveBeenCalledTimes(1)
-      expect(removeDocMock).toHaveBeenCalledTimes(2)
+      expect(get(client.readingAllInbox)).toBe(false)
+    })
+
+    it('readAll is ignored while a clear all is running', async () => {
+      const client = NotificationClientImpl.getClient()
+      const clearing = client.clearAll()
+      await client.readAll()
+      await flush()
+
+      expect(createDocMock).toHaveBeenCalledTimes(1)
+      txListener?.([inboxChanged()])
+      await clearing
+    })
+
+    it('clearAll sends one ClearAllNotificationAction and holds the flag until the service says it is done', async () => {
+      const client = NotificationClientImpl.getClient()
+      const done = client.clearAll()
+      await flush()
+
+      expect(removeDocMock).not.toHaveBeenCalled()
+      expect(createDocMock).toHaveBeenCalledTimes(1)
+      expect(createDocMock).toHaveBeenCalledWith(notification.class.ClearAllNotificationAction, 'person-space', {
+        account: mockAccount.uuid
+      })
+      expect(get(client.clearingAllInbox)).toBe(true)
+
+      txListener?.([inboxChanged()])
+      await done
       expect(get(client.clearingAllInbox)).toBe(false)
+    })
+
+    it('an InboxChangeEvent re-runs the live queries and reads the stores again', async () => {
+      const client = NotificationClientImpl.getClient()
+      const read = makeContext({ _id: 'ctxA' as any, objectId: 'docA' as any, unreadCount: 3 })
+      const gone = makeContext({ _id: 'ctxB' as any, objectId: 'docB' as any, unreadCount: 1 })
+      findAllMock.mockResolvedValueOnce([read, gone])
+      await client.getContextsByDoc(['docA' as any, 'docB' as any, 'docNone' as any])
+      findAllMock.mockReset()
+
+      // After the service's statement: docA is read, the context of docB is removed.
+      findAllMock.mockImplementation(async (_class: string) =>
+        _class === notification.class.DocNotifyContext ? [{ ...read, unreadCount: 0 }] : []
+      )
+      txListener?.([inboxChanged()])
+      await flush()
+
+      expect(refreshQueriesMock).toHaveBeenCalledWith([
+        notification.class.DocNotifyContext,
+        notification.class.ReadState
+      ])
+      expect(findAllMock).toHaveBeenCalledWith(notification.class.DocNotifyContext, {
+        user: mockAccount.uuid,
+        objectId: { $in: ['docA', 'docB', 'docNone'] }
+      })
+      expect(get(client.contextByDoc).get('docA' as any)?.unreadCount).toBe(0)
+      expect(get(client.contextByDoc).get('docB' as any)).toBeNull()
+      expect(get(client.contextById).get('ctxA' as any)?.unreadCount).toBe(0)
+      expect(get(client.contextById).has('ctxB' as any)).toBe(false)
+    })
+
+    it('ignores the InboxChangeEvent of another account', async () => {
+      NotificationClientImpl.getClient()
+      txListener?.([inboxChanged('acc-other')])
+      await flush()
+
+      expect(refreshQueriesMock).not.toHaveBeenCalled()
     })
   })
 })

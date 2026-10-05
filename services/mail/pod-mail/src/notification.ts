@@ -38,7 +38,9 @@ export function createUserNotificationsHandler (
     try {
       const msg = message.value
       // A dismiss or a call cancel carries no letter; the template check keeps other kinds out too.
-      if (msg.kind === 'dismiss' || msg.kind === 'call-cancel' || msg.template == null) return
+      if (msg.kind === 'dismiss' || msg.kind === 'dismiss-all' || msg.kind === 'call-cancel' || msg.template == null) {
+        return
+      }
       const shouldEmail = (msg.providers[gmail.providers.EmailNotificationProvider]?.length ?? 0) > 0
       if (!shouldEmail) return
 

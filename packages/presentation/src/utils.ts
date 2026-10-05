@@ -21,6 +21,7 @@ import core, {
   type AnyAttribute,
   type ArrOf,
   type AttachedDoc,
+  type BulkUpdateEvent,
   type Class,
   type Client,
   type Collection,
@@ -54,6 +55,8 @@ import core, {
   type TxCreateDoc,
   type TxCUD,
   TxOperations,
+  type TxWorkspaceEvent,
+  WorkspaceEvent,
   TxProcessor,
   type TxResult,
   type TxUpdateDoc,
@@ -95,6 +98,26 @@ export function addTxListener (l: TxListener): void {
 
 export function getRawLiveQuery (): LQ {
   return rawLiveQuery
+}
+
+/**
+ * Re-runs the live queries over these classes, as a BulkUpdate from the server does. For documents
+ * a service changed in the database past the tx stream and announced with an event of its own.
+ * @public
+ */
+export async function refreshQueries (classes: Array<Ref<Class<Doc>>>): Promise<void> {
+  const event: TxWorkspaceEvent<BulkUpdateEvent> = {
+    _id: generateId(),
+    _class: core.class.TxWorkspaceEvent,
+    event: WorkspaceEvent.BulkUpdate,
+    params: { _class: classes },
+    modifiedBy: core.account.System,
+    modifiedOn: Date.now(),
+    objectSpace: core.space.DerivedTx,
+    space: core.space.DerivedTx
+  }
+  await liveQuery?.tx(event)
+  await rawLiveQuery?.tx(event)
 }
 
 /**

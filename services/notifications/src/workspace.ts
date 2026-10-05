@@ -21,6 +21,7 @@ import core, {
   Doc,
   type DocumentQuery,
   type FindOptions,
+  type LowLevelStorage,
   FindResult,
   Hierarchy,
   MeasureContext,
@@ -42,6 +43,8 @@ import notification, {
   QueueNotificationMessage,
   ReadState,
   ReadNotificationAction,
+  ReadAllNotificationAction,
+  ClearAllNotificationAction,
   CreateNotificationAction,
   DocNotifyContext,
   UnreadReaction,
@@ -77,7 +80,12 @@ import { setUnreadMessagesCounts } from './utils/context'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
-import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
+import {
+  handleReadNotificationAction,
+  handleReadAllNotificationAction,
+  handleClearAllNotificationAction,
+  handleCreateNotificationAction
+} from './module/action'
 import { HeldPush, PendingPushHolder } from './pendingPush'
 import { heldLetterId, type HeldLetterId } from './heldLetter'
 
@@ -290,6 +298,23 @@ class Workspace {
     const result: Result = emptyResult()
     const txCache: TxCache = getEmptyTxCache()
 
+    if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadAllNotificationAction)) {
+      const readAll = tx as TxCUD<ReadAllNotificationAction>
+      await this.finishInboxAction(
+        result,
+        await handleReadAllNotificationAction(this.client, this.cache, result, readAll)
+      )
+      return
+    }
+    if (this.hierarchy.isDerived(tx.objectClass, notification.class.ClearAllNotificationAction)) {
+      const clearAll = tx as TxCUD<ClearAllNotificationAction>
+      await this.finishInboxAction(
+        result,
+        await handleClearAllNotificationAction(this.client, this.cache, result, clearAll)
+      )
+      return
+    }
+
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadNotificationAction)) {
       await handleReadNotificationAction(this.client, this.cache, result, tx as TxCUD<ReadNotificationAction>)
     } else if (this.hierarchy.isDerived(tx.objectClass, notification.class.CreateNotificationAction)) {
@@ -317,6 +342,30 @@ class Workspace {
       // Derived counters are filled once here, after every handler had its say on the context txes.
       await setUnreadMessagesCounts(result, this.cache, this.client)
       await this.applyResult(result)
+    }
+  }
+
+  private async finishInboxAction (result: Result, account: AccountUuid | undefined): Promise<void> {
+    if (!isEmptyResult(result)) await this.applyResult(result)
+    if (account !== undefined) void this.track(this.notifyInboxChanged(account))
+  }
+
+  private async notifyInboxChanged (account: AccountUuid): Promise<void> {
+    try {
+      const [space] = await this.cache.getPersonSpaces([account])
+      if (space === undefined) return
+      const event = this.txFactory.createTxCreateDoc(notification.class.InboxChangeEvent, space._id, { account })
+      await withRetry(() => this.rest.tx(event), {
+        maxRetries: applyAttempts,
+        isRetryable: isTransientError,
+        delayStrategy: applyBackoff
+      })
+    } catch (e: unknown) {
+      // The inbox is read; a redelivered action would find nothing to do and send no event either.
+      this.ctx.error('Failed to tell the clients their inbox changed, they show it stale until a reload', {
+        error: e instanceof Error ? e.message : String(e),
+        account
+      })
     }
   }
 
@@ -448,6 +497,12 @@ class Workspace {
       ): Promise<FindResult<T>> => {
         return await this.pipeline.findAll(this.ctx, _class, query, options)
       },
+      bulkUpdate: async (_class, query, operations) => {
+        await this.lowLevel().rawUpdate(this.hierarchy.getDomain(_class), query, operations)
+      },
+      bulkRemove: async (_class, query) => {
+        await this.lowLevel().rawDeleteMany(this.hierarchy.getDomain(_class), query)
+      },
       findOne: async <T extends Doc>(
         _class: Ref<Class<T>>,
         query: DocumentQuery<T>,
@@ -456,6 +511,12 @@ class Workspace {
         return (await this.pipeline.findAll(this.ctx, _class, query, { ...options, limit: 1 }))[0]
       }
     }
+  }
+
+  private lowLevel (): LowLevelStorage {
+    const storage = this.pipeline.context.lowLevelStorage
+    if (storage === undefined) throw new Error('Low level storage is not defined')
+    return storage
   }
 
   public isInProgress (): boolean {

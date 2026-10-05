@@ -49,7 +49,8 @@ import platform from '@hcengineering/platform'
 import notification, {
   TxNotificationType,
   QueueNotificationMessage,
-  DocNotifyContext
+  DocNotifyContext,
+  ReadAllNotificationAction
 } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import { PersonSpace } from '@hcengineering/contact'
@@ -116,6 +117,8 @@ export class Worker {
       activity.class.ActivityMessage,
       activity.class.Reaction,
       notification.class.ReadNotificationAction,
+      notification.class.ReadAllNotificationAction,
+      notification.class.ClearAllNotificationAction,
       notification.class.CreateNotificationAction,
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
@@ -237,6 +240,13 @@ export class Worker {
     if (workspace == null) return
 
     await workspace.tx(tx)
+
+    if (
+      this.sysHierarchy.isDerived(tx.objectClass, notification.class.ReadAllNotificationAction) ||
+      this.sysHierarchy.isDerived(tx.objectClass, notification.class.ClearAllNotificationAction)
+    ) {
+      await this.recheckUserNotifyStatus(ws, workspace, tx as TxCreateDoc<ReadAllNotificationAction>)
+    }
   }
 
   private async getTxUser (
@@ -297,6 +307,23 @@ export class Worker {
 
       this.scheduleStatusUpdate(user, wsUuid, unread)
     }
+  }
+
+  private async recheckUserNotifyStatus (
+    wsUuid: WorkspaceUuid,
+    workspace: Workspace,
+    tx: TxCreateDoc<ReadAllNotificationAction>
+  ): Promise<void> {
+    const user = tx.attributes?.account
+    if (user == null || user === systemAccountUuid) return
+    // Asked from the database, not taken from the action: an action for a foreign account is ignored.
+    const unread =
+      (await workspace.client.findOne(
+        notification.class.DocNotifyContext,
+        { user, unreadCount: { $gt: 0 } },
+        { limit: 1, projection: { _id: 1, unreadCount: 1, user: 1 } }
+      )) != null
+    this.scheduleStatusUpdate(user, wsUuid, unread)
   }
 
   private scheduleStatusUpdate (user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean): void {

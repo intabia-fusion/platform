@@ -113,6 +113,7 @@ export class InboxPage extends CommonPage {
   async markAllAsRead (): Promise<void> {
     await this.menuButton().click()
     await this.page.getByRole('button', { name: 'Mark all as read' }).click()
+    await this.page.locator('.msgbox-container').getByRole('button', { name: 'Mark all as read' }).click()
   }
 
   async toggleUnreadsFilter (): Promise<void> {
@@ -184,8 +185,8 @@ export class InboxPage extends CommonPage {
     await expect(async () => {
       await this.menuButton().click()
       await this.page.getByRole('button', { name: 'Clear all' }).click()
-      await expect(this.page.getByText('Remove all notifications?').nth(0)).toBeVisible()
-      await this.page.getByRole('button', { name: 'Ok' }).click()
+      await expect(this.page.getByText('Clear all notifications?').nth(0)).toBeVisible()
+      await this.page.locator('.msgbox-container').getByRole('button', { name: 'Clear all' }).click()
       const settled = await waitStable(async () => await this.notificationCard().count(), {
         stableFor: 1000,
         interval: 250,

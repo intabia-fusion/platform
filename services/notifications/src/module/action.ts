@@ -14,10 +14,14 @@
 //
 
 import core, {
+  AccountUuid,
   Doc,
+  DocumentQuery,
   DocumentUpdate,
+  generateId,
   readOnlyGuestAccountUuid,
   Ref,
+  Timestamp,
   TxCreateDoc,
   TxCUD,
   TxProcessor
@@ -26,6 +30,8 @@ import notification, {
   CreateNotificationAction,
   DocNotifyContext,
   ReadNotificationAction,
+  ReadAllNotificationAction,
+  ClearAllNotificationAction,
   NotificationIntl,
   CommonNotification,
   CommonNotificationLite,
@@ -42,9 +48,12 @@ import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
-import { cancelHeldPushes, pushDismissMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
+import { cancelHeldPushes, pushDismissMessage, pushDismissAllMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
 import { pushNotification } from './notification'
+import { cancelAccountLetters } from '../heldLetter'
 import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
+
+const READ_STATE_CHUNK = 500
 
 export async function handleReadNotificationAction (
   client: Client,
@@ -181,6 +190,127 @@ export async function handleReadNotificationAction (
   const read = dismissScopeOf([...unreadMessagesToRead, ...unreadChunksToRead], readPosition, cancelled)
   read.tags.push(...readAbout.filter((id) => !cancelled.has(id)))
   await pushDismissMessage(cache, result, context, read)
+}
+
+export async function handleReadAllNotificationAction (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  tx: TxCUD<ReadAllNotificationAction>
+): Promise<AccountUuid | undefined> {
+  const account = await getOwnActionAccount(client, cache, tx)
+  if (account === undefined) return
+
+  const unread: DocumentQuery<DocNotifyContext> = { user: account, unreadCount: { $gt: 0 } }
+  if (!(await hasContext(client, unread))) return account
+
+  const docs = await getUnreadMessagesDocIds(client, unread)
+  try {
+    await moveReadPositions(client, account, docs, tx.modifiedOn)
+    await client.bulkUpdate(notification.class.DocNotifyContext, unread, {
+      unreadMessages: [],
+      unreadReactions: [],
+      unreadMentions: [],
+      unreadCommons: [],
+      unreadCount: 0,
+      unreadMessagesCount: 0,
+      notifiedMessagesCount: 0
+    })
+  } finally {
+    cache.dropInbox()
+  }
+  await dismissAllPushes(client, cache, result, account, tx.modifiedOn)
+  return account
+}
+
+export async function handleClearAllNotificationAction (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  tx: TxCUD<ClearAllNotificationAction>
+): Promise<AccountUuid | undefined> {
+  const account = await getOwnActionAccount(client, cache, tx)
+  if (account === undefined) return
+
+  const all: DocumentQuery<DocNotifyContext> = { user: account }
+  if (!(await hasContext(client, all))) return account
+
+  const docs = await getUnreadMessagesDocIds(client, all)
+  try {
+    await moveReadPositions(client, account, docs, tx.modifiedOn)
+    await client.bulkRemove(notification.class.DocNotifyContext, all)
+  } finally {
+    cache.dropInbox()
+  }
+  await dismissAllPushes(client, cache, result, account, tx.modifiedOn)
+  return account
+}
+
+async function hasContext (client: Client, query: DocumentQuery<DocNotifyContext>): Promise<boolean> {
+  return (await client.findOne(notification.class.DocNotifyContext, query, { projection: { _id: 1 } })) !== undefined
+}
+
+async function getUnreadMessagesDocIds (client: Client, query: DocumentQuery<DocNotifyContext>): Promise<Ref<Doc>[]> {
+  const contexts = await client.findAll(
+    notification.class.DocNotifyContext,
+    { ...query, unreadMessagesCount: { $gt: 0 } },
+    { projection: { _id: 1, objectId: 1 } }
+  )
+  return contexts.map((it) => it.objectId)
+}
+
+async function getOwnActionAccount (
+  client: Client,
+  cache: Cache,
+  _tx: TxCUD<ReadAllNotificationAction | ClearAllNotificationAction>
+): Promise<AccountUuid | undefined> {
+  if (_tx._class !== core.class.TxCreateDoc) return undefined
+
+  const tx = _tx as TxCreateDoc<ReadAllNotificationAction | ClearAllNotificationAction>
+  const account = tx.attributes.account
+
+  if (tx.modifiedBy !== core.account.System && (await cache.getAccountBySocialId(tx.modifiedBy)) !== account) {
+    client.ctx.warn('Read/clear all notification action for a foreign account, ignored', {
+      account,
+      modifiedBy: tx.modifiedBy
+    })
+    return undefined
+  }
+  return account
+}
+
+async function dismissAllPushes (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  account: AccountUuid,
+  readUpTo: Timestamp
+): Promise<void> {
+  client.pendingPush?.cancelByAccount(account)
+  cancelAccountLetters(result, account)
+  try {
+    await pushDismissAllMessage(cache, result, account, readUpTo)
+  } catch (e: unknown) {
+    client.ctx.warn('Failed to dismiss the pushes of a read inbox, they stay on the devices', {
+      error: e instanceof Error ? e.message : String(e),
+      account
+    })
+  }
+}
+
+async function moveReadPositions (
+  client: Client,
+  account: AccountUuid,
+  docs: Ref<Doc>[],
+  timestamp: Timestamp
+): Promise<void> {
+  for (let i = 0; i < docs.length; i += READ_STATE_CHUNK) {
+    await client.bulkUpdate(
+      notification.class.ReadState,
+      { attachedTo: { $in: docs.slice(i, i + READ_STATE_CHUNK) } },
+      { [account]: { messageId: generateId<ActivityMessage>(), timestamp } }
+    )
+  }
 }
 
 export async function handleCreateNotificationAction (

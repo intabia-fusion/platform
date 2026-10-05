@@ -28,6 +28,7 @@ import {
   Timestamp,
   Markup,
   Space,
+  WorkspaceUuid,
   AttachedDoc,
   type TxOperations
 } from '@hcengineering/core'
@@ -59,6 +60,7 @@ export interface PushData {
   objectClass?: Ref<Class<Doc>>
   createdOn?: Timestamp
   group?: Ref<Doc>
+  workspace?: WorkspaceUuid
 }
 
 /**
@@ -67,9 +69,20 @@ export interface PushData {
  * A `readUpTo` of zero names nothing beyond the tags (a read of reactions, mentions or commons).
  */
 export interface PushDismissData {
+  kind: 'dismiss'
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   tags: string[]
+  readUpTo: Timestamp
+}
+
+/**
+ * Sent to the native apps when the person read or cleared the whole inbox elsewhere: every
+ * notification of `workspace` created at or before `readUpTo` is gone.
+ */
+export interface PushDismissAllData {
+  kind: 'dismiss-all'
+  workspace: WorkspaceUuid
   readUpTo: Timestamp
 }
 
@@ -399,7 +412,19 @@ export interface QueueCallCancelMessage extends QueueMessageBase {
   kind: 'call-cancel'
 }
 
-export type QueueNotificationMessage = QueueNotifyMessage | QueueDismissMessage | QueueCallCancelMessage
+export interface QueueDismissAllMessage {
+  kind: 'dismiss-all'
+  id: string
+  account: AccountUuid
+  pushSubscriptions: PushSubscription[]
+  readUpTo: Timestamp
+}
+
+export type QueueNotificationMessage =
+  | QueueNotifyMessage
+  | QueueDismissMessage
+  | QueueDismissAllMessage
+  | QueueCallCancelMessage
 
 export interface NotificationIntl {
   titleIntl: IntlString
@@ -500,6 +525,18 @@ export interface ReadNotificationAction extends Doc<PersonSpace> {
   messageIds?: Ref<ActivityMessage>[]
   commonIds?: string[]
   mentionIds?: string[]
+}
+
+export interface ReadAllNotificationAction extends Doc<PersonSpace> {
+  account: AccountUuid
+}
+
+export interface ClearAllNotificationAction extends Doc<PersonSpace> {
+  account: AccountUuid
+}
+
+export interface InboxChangeEvent extends Doc<PersonSpace> {
+  account: AccountUuid
 }
 
 export interface CreateNotificationAction extends Doc<PersonSpace> {

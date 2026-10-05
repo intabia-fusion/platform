@@ -154,14 +154,15 @@ The `PushData` delivered to clients:
 | `objectId` | string | No | Id of the document the notification is about (the chat); the web service worker skips the notification when a focused tab shows it, a native app drops it when a dismiss with `readUpTo >= createdOn` got there first |
 | `objectClass` | string | No | Class of that document |
 | `createdOn` | number | No | Timestamp (ms) of the message the notification is about |
+| `workspace` | string | No | Uuid of the workspace the notification belongs to; a dismiss-all finds the notification by it |
 
 How the alert reaches each transport:
 
 | Key | Web Push | APNs | FCM, RuStore |
 |-----|----------|------|-----|
 | `title`, `body` | JSON body | `aps.alert` | `notification` |
-| `tag` | JSON body | `aps.thread-id`, `apns-collapse-id` header (so the tag is the delivered notification's identifier), custom `tag` | `data.tag`, `android.notification.tag` |
-| `url`, `domain`, `objectId`, `objectClass`, `createdOn` | JSON body | custom keys beside `aps` | `data` (strings) |
+| `tag` | JSON body | `aps.thread-id`, `apns-collapse-id` header (so the tag is the delivered notification's identifier), custom `tag` | `data.tag`; `android.notification.tag` is `<workspace>\|<createdOn>\|<tag>` (the plain tag when either is unknown): a background alert is drawn by the vendor SDK and keeps nothing of `data`, the tag is all a dismiss can read on it |
+| `url`, `domain`, `objectId`, `objectClass`, `createdOn`, `workspace` | JSON body | custom keys beside `aps` | `data` (strings) |
 
 APNs headers: `apns-push-type: alert`, `apns-priority: 10`, `apns-expiration: now + TTL`. FCM: `android.priority: HIGH`, `android.ttl: TTL`. RuStore: `android.ttl: TTL` (its API has no priority field).
 
@@ -192,6 +193,24 @@ the guidance), so a dismiss can lag or be dropped when reads are frequent. Such 
 stays until the app takes it down itself. The notifications service sends a dismiss only for
 pushes that left the service (a push still held and cancelled by the read gets none), and splits
 a long tag list into several messages of 50 tags to stay under the 4 KB payload.
+
+### Dismiss-all
+
+"Mark all as read" and "Clear all" in the inbox read everything at once. The notifications
+service publishes one `QueueNotificationMessage` with `kind: "dismiss-all"` (see
+`QueueDismissAllMessage`), whatever the size of the inbox, and this service sends one push per
+native subscription. Web Push gets nothing, as with a dismiss.
+
+| Key | APNs | FCM, RuStore | Meaning |
+|-----|------|-----|---------|
+| headers | as a dismiss | as a dismiss | nothing to show, no sound |
+| `kind` | custom `"dismiss-all"` | `data.kind` | message type |
+| `workspace` | custom, string | `data.workspace` | uuid of the workspace |
+| `readUpTo` | custom, number | `data.readUpTo`, string | the time of the action |
+
+What the app does: remove every delivered notification whose `workspace` is this one and whose
+`createdOn <= readUpTo` (on Android both are read from the notification tag when the SDK drew it); remember `readUpTo` for the workspace and do not show an alert of that
+workspace that arrives later with `createdOn <= readUpTo`; refresh the badge.
 
 ### Incoming call
 

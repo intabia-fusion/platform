@@ -89,6 +89,9 @@ import {
   type CommonNotification,
   type UnreadMention,
   type ReadNotificationAction,
+  type ReadAllNotificationAction,
+  type ClearAllNotificationAction,
+  type InboxChangeEvent,
   type CreateNotificationAction,
   type CommonNotificationLite,
   type NotificationIntl
@@ -332,6 +335,30 @@ export class TReadNotificationAction extends TDoc implements ReadNotificationAct
   mentionIds?: string[]
 }
 
+@Model(notification.class.ReadAllNotificationAction, core.class.Doc, DOMAIN_TRANSIENT)
+export class TReadAllNotificationAction extends TDoc implements ReadAllNotificationAction {
+  declare space: Ref<PersonSpace>
+
+  @Prop(TypeAccountUuid(), core.string.Account)
+  account!: AccountUuid
+}
+
+@Model(notification.class.ClearAllNotificationAction, core.class.Doc, DOMAIN_TRANSIENT)
+export class TClearAllNotificationAction extends TDoc implements ClearAllNotificationAction {
+  declare space: Ref<PersonSpace>
+
+  @Prop(TypeAccountUuid(), core.string.Account)
+  account!: AccountUuid
+}
+
+@Model(notification.class.InboxChangeEvent, core.class.Doc, DOMAIN_TRANSIENT)
+export class TInboxChangeEvent extends TDoc implements InboxChangeEvent {
+  declare space: Ref<PersonSpace>
+
+  @Prop(TypeAccountUuid(), core.string.Account)
+  account!: AccountUuid
+}
+
 @Model(notification.class.CreateNotificationAction, core.class.Doc, DOMAIN_TRANSIENT)
 export class TCreateNotificationAction extends TDoc implements CreateNotificationAction {
   declare space: Ref<PersonSpace>
@@ -435,6 +462,9 @@ export function createModel (builder: Builder): void {
     TNotificationAppearancePreference,
     TDocNotificationSetting,
     TReadNotificationAction,
+    TReadAllNotificationAction,
+    TClearAllNotificationAction,
+    TInboxChangeEvent,
     TCreateNotificationAction
   )
 
@@ -502,12 +532,30 @@ export function createModel (builder: Builder): void {
   builder.mixin(notification.class.ReadNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
     broadcastOnly: true
   })
+  builder.mixin(notification.class.ReadAllNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
+  builder.mixin(notification.class.ClearAllNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
+  builder.mixin(notification.class.InboxChangeEvent, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
   builder.mixin(notification.class.CreateNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
     broadcastOnly: true
   })
 
   builder.mixin(notification.class.ReadNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest
+  })
+  builder.mixin(notification.class.ReadAllNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest
+  })
+  builder.mixin(notification.class.ClearAllNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest
+  })
+  builder.mixin(notification.class.InboxChangeEvent, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Admin
   })
   builder.mixin(notification.class.CreateNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Admin

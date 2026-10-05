@@ -132,7 +132,9 @@ describe('WorkspaceCache', () => {
       txFactory: {} as unknown as Client['txFactory'],
       branding: { lastNameFirst: true, defaultLanguage: 'ru' } as unknown as Client['branding'],
       findAll: jest.fn(),
-      findOne: jest.fn()
+      findOne: jest.fn(),
+      bulkUpdate: jest.fn(),
+      bulkRemove: jest.fn()
     }
 
     mockIsDerived.mockReset()
@@ -233,6 +235,30 @@ describe('WorkspaceCache', () => {
       const cached = await cache.getContexts('doc-1' as Ref<Doc>)
       expect(mockClient.findAll).not.toHaveBeenCalled()
       expect(cached).toEqual(mockContexts)
+    })
+  })
+
+  describe('dropInbox', () => {
+    it('reads every context and read state back from the database', async () => {
+      const mine = { _id: 'ctx-1', objectId: 'doc-1', user: 'acc-1' } as unknown as DocNotifyContext
+      const foreign = { _id: 'ctx-2', objectId: 'doc-2', user: 'acc-2' } as unknown as DocNotifyContext
+      mockClient.findAll.mockResolvedValueOnce([mine] as any).mockResolvedValueOnce([foreign] as any)
+      await cache.getContexts('doc-1' as Ref<Doc>)
+      await cache.getContexts('doc-2' as Ref<Doc>)
+      mockClient.findOne.mockResolvedValue({ _id: 'rs-1', attachedTo: 'doc-1' } as any)
+      await cache.getDocReadState('doc-1' as Ref<Doc>)
+      mockClient.findAll.mockClear()
+      mockClient.findOne.mockClear()
+
+      cache.dropInbox()
+
+      expect(cache.getCachedContext('ctx-1' as Ref<DocNotifyContext>)).toBeUndefined()
+      expect(cache.getCachedContext('ctx-2' as Ref<DocNotifyContext>)).toBeUndefined()
+      mockClient.findAll.mockResolvedValueOnce([{ ...mine, unreadCount: 0 }] as any)
+      await cache.getContexts('doc-1' as Ref<Doc>)
+      await cache.getDocReadState('doc-1' as Ref<Doc>)
+      expect(mockClient.findAll).toHaveBeenCalledTimes(1)
+      expect(mockClient.findOne).toHaveBeenCalledTimes(1)
     })
   })
 

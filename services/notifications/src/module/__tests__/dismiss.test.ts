@@ -17,7 +17,7 @@ import { Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
 import { UnreadMessage } from '@hcengineering/notification'
 
-import { pushDismissMessage, dismissScopeOf } from '../dismiss'
+import { pushDismissMessage, pushDismissAllMessage, dismissScopeOf } from '../dismiss'
 import { emptyResult } from '../../utils/result'
 
 const id = (value: string): Ref<ActivityMessage> => value as Ref<ActivityMessage>
@@ -109,5 +109,34 @@ describe('pushDismissMessage with many tags', () => {
       ['dismiss:ctx-1:500:m-50', 50, 500],
       ['dismiss:ctx-1:500:m-100', 20, 500]
     ])
+  })
+})
+
+describe('pushDismissAllMessage', () => {
+  const cache = (endpoints: string[]): any => ({
+    getPushSubscriptions: jest.fn().mockResolvedValue(endpoints.map((endpoint) => ({ _id: endpoint, endpoint })))
+  })
+
+  it('sends one message for the whole workspace to the native subscriptions', async () => {
+    const result = emptyResult()
+    await pushDismissAllMessage(cache(['apns://a', 'https://web', 'fcm://b']), result, 'user-1' as any, 1000)
+    expect(result.queueMessages).toEqual([
+      {
+        kind: 'dismiss-all',
+        id: 'dismiss-all:user-1:1000',
+        account: 'user-1',
+        pushSubscriptions: [
+          { _id: 'apns://a', endpoint: 'apns://a' },
+          { _id: 'fcm://b', endpoint: 'fcm://b' }
+        ],
+        readUpTo: 1000
+      }
+    ])
+  })
+
+  it('sends nothing to an account without a native app', async () => {
+    const result = emptyResult()
+    await pushDismissAllMessage(cache(['https://web']), result, 'user-1' as any, 1000)
+    expect(result.queueMessages).toEqual([])
   })
 })
