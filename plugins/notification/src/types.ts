@@ -73,6 +73,19 @@ export interface PushDismissData {
   readUpTo: Timestamp
 }
 
+/**
+ * The incoming call a push rings the phone with: a meeting invite or a knock. `inviteId` is the
+ * invite the receiver answers; past `expiresAt` the phone must not ring.
+ */
+export interface PushCallData {
+  inviteId: Ref<Doc>
+  meetingId?: Ref<Doc>
+  roomId?: Ref<Doc>
+  callerName: string
+  callerPerson: Ref<Doc>
+  expiresAt: Timestamp
+}
+
 export interface PushSubscriptionKeys {
   p256dh: string
   auth: string
@@ -364,6 +377,9 @@ export interface QueueNotifyMessage extends QueueMessageBase {
 
   template?: { subject: string, text: string, html: string }
 
+  // Set for a call: the phones ring instead of showing a banner.
+  call?: PushCallData
+
   providers: Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
   createdOn: Timestamp
 }
@@ -378,7 +394,12 @@ export interface QueueDismissMessage extends QueueMessageBase {
   readUpTo: Timestamp
 }
 
-export type QueueNotificationMessage = QueueNotifyMessage | QueueDismissMessage
+/** The call `objectId` names was answered, declined or cancelled: the phones stop ringing. */
+export interface QueueCallCancelMessage extends QueueMessageBase {
+  kind: 'call-cancel'
+}
+
+export type QueueNotificationMessage = QueueNotifyMessage | QueueDismissMessage | QueueCallCancelMessage
 
 export interface NotificationIntl {
   titleIntl: IntlString
@@ -489,4 +510,5 @@ export interface CreateNotificationAction extends Doc<PersonSpace> {
   type?: Ref<NotificationType>
   notification: CommonNotificationLite
   intl?: Partial<NotificationIntl>
+  call?: PushCallData
 }

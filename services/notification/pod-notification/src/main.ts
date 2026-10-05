@@ -18,6 +18,7 @@ import { notEmpty } from '@hcengineering/core'
 import core, { type MeasureContext, systemAccountUuid, type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import notification, {
   PushSubscription,
+  type PushCallData,
   type PushData,
   type PushDismissData,
   QueueNotificationMessage,
@@ -44,10 +45,16 @@ import {
   pushTarget,
   rustoreConfigured,
   sendApns,
+  sendApnsCallCancel,
   sendApnsDismiss,
+  sendApnsVoip,
   sendFcm,
+  sendFcmCall,
+  sendFcmCallCancel,
   sendFcmDismiss,
   sendRustore,
+  sendRustoreCall,
+  sendRustoreCallCancel,
   sendRustoreDismiss,
   sendTimeoutMs
 } from './mobile'
@@ -62,31 +69,52 @@ const errorMessages = ['expired', 'Unregistered', 'No such subscription', 'Vapid
  */
 export async function sendPushToSubscription (
   subscriptions: PushSubscription[],
-  data: PushData
+  data: PushData,
+  call?: PushCallData
 ): Promise<Ref<PushSubscription>[]> {
+  // A call nobody can answer any more rings no phone: it goes out as an ordinary banner, a missed call.
+  const ringing = call !== undefined && call.expiresAt > Date.now() ? call : undefined
+  // Never anything but a live call on VoIP: iOS kills an app that does not turn a VoIP push into a call.
+  const voip =
+    ringing !== undefined && apnsConfigured()
+      ? subscriptions.flatMap((sub) => {
+          const target = pushTarget(sub.endpoint)
+          return target.kind === PushKind.ApnsVoip ? [{ sub, token: target.token }] : []
+        })
+      : []
+  const voipSent = Promise.all(voip.map(async (it) => await sendApnsVoip(it.token, data, ringing as PushCallData)))
   const promises = subscriptions.map(async (subscription) => {
     const target = pushTarget(subscription.endpoint)
+    if (target.kind === PushKind.ApnsVoip) {
+      const i = voip.findIndex((it) => it.sub === subscription)
+      return i >= 0 && (await voipSent)[i] === Delivery.Gone ? subscription._id : null
+    }
     if (target.kind === PushKind.Apns) {
+      // A phone that rang through CallKit needs no banner; a failed VoIP delivery falls back to it,
+      // or the call is lost without a trace. Decided per account, not per device: an old app on a
+      // second iPhone of the same person gets nothing once any of its phones rang.
+      if ((await voipSent).includes(Delivery.Ok)) return null
       if (apnsConfigured() && (await sendApns(target.token, data)) === Delivery.Gone) {
         return subscription._id
       }
       return null
     }
     if (target.kind === PushKind.Fcm) {
-      if (fcmConfigured() && (await sendFcm(target.token, data)) === Delivery.Gone) {
-        return subscription._id
-      }
-      return null
+      if (!fcmConfigured()) return null
+      const delivery =
+        ringing !== undefined ? await sendFcmCall(target.token, data, ringing) : await sendFcm(target.token, data)
+      return delivery === Delivery.Gone ? subscription._id : null
     }
     if (target.kind === PushKind.RuStore) {
       if (!rustoreConfigured()) {
         console.warn(`RuStore is not configured, skipping subscription ${subscription._id}`)
         return null
       }
-      if ((await sendRustore(target.token, data)) === Delivery.Gone) {
-        return subscription._id
-      }
-      return null
+      const delivery =
+        ringing !== undefined
+          ? await sendRustoreCall(target.token, data, ringing)
+          : await sendRustore(target.token, data)
+      return delivery === Delivery.Gone ? subscription._id : null
     }
     try {
       await webpush.sendNotification(subscription, JSON.stringify(data), {
@@ -142,6 +170,27 @@ export async function sendDismissToSubscription (
       return null
     }
     return null
+  })
+  const results = await Promise.all(promises)
+  return results.filter(notEmpty)
+}
+
+/** Stops the ringing on the native apps; a VoIP token gets nothing, it may only carry calls. */
+export async function sendCallCancelToSubscription (
+  subscriptions: PushSubscription[],
+  inviteId: string
+): Promise<Ref<PushSubscription>[]> {
+  const promises = subscriptions.map(async (subscription) => {
+    const target = pushTarget(subscription.endpoint)
+    let delivery: Delivery | undefined
+    if (target.kind === PushKind.Apns && apnsConfigured()) {
+      delivery = await sendApnsCallCancel(target.token, inviteId)
+    } else if (target.kind === PushKind.Fcm && fcmConfigured()) {
+      delivery = await sendFcmCallCancel(target.token, inviteId)
+    } else if (target.kind === PushKind.RuStore && rustoreConfigured()) {
+      delivery = await sendRustoreCallCancel(target.token, inviteId)
+    }
+    return delivery === Delivery.Gone ? subscription._id : null
   })
   const results = await Promise.all(promises)
   return results.filter(notEmpty)
@@ -205,18 +254,24 @@ export const main = async (): Promise<void> => {
                 tags: value.tags,
                 readUpTo: value.readUpTo
               })
+            } else if (value.kind === 'call-cancel') {
+              failedSubscriptionIds = await sendCallCancelToSubscription(value.pushSubscriptions, value.objectId)
             } else if ((value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0) {
-              failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
-                tag: value.id,
-                title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
-                body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
-                domain: value.domain,
-                url: value.url,
-                group: value.group,
-                objectId: value.objectId,
-                objectClass: value.objectClass,
-                createdOn: value.createdOn
-              })
+              failedSubscriptionIds = await sendPushToSubscription(
+                value.pushSubscriptions,
+                {
+                  tag: value.id,
+                  title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
+                  body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
+                  domain: value.domain,
+                  url: value.url,
+                  group: value.group,
+                  objectId: value.objectId,
+                  objectClass: value.objectClass,
+                  createdOn: value.createdOn
+                },
+                value.call
+              )
             }
 
             if (failedSubscriptionIds.length > 0) {

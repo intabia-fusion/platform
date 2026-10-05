@@ -68,8 +68,11 @@ export function getNotificationMessageId (inboxNotification: ContextNotification
   return inboxNotification.messageId
 }
 
+// `apns-voip` is a PushKit token: only calls go there, since iOS kills an app that does not report
+// every VoIP push as a CallKit call.
 export const NATIVE_PUSH_SCHEMES = {
   apns: 'apns://',
+  apnsVoip: 'apns-voip://',
   fcm: 'fcm://',
   rustore: 'rustore://'
 } as const
@@ -81,6 +84,9 @@ export function isNativePushEndpoint (endpoint: string): boolean {
 export function isQueueDismissMessage (message: QueueNotificationMessage): message is QueueDismissMessage {
   return message.kind === 'dismiss'
 }
+
+// How long a call push rings the phone: long enough for a cold start of the app.
+export const CALL_RING_MS = 45_000
 
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
 export const PUSH_NOTIFICATION_BODY_SIZE = 150

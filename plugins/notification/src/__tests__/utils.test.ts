@@ -80,6 +80,7 @@ describe('getNotifiedMessagesTotal', () => {
 describe('isNativePushEndpoint', () => {
   it('recognises the device token schemes of the native apps', () => {
     expect(isNativePushEndpoint('apns://abc123')).toBe(true)
+    expect(isNativePushEndpoint('apns-voip://abc123')).toBe(true)
     expect(isNativePushEndpoint('fcm://xyz789')).toBe(true)
     expect(isNativePushEndpoint('rustore://def456')).toBe(true)
   })

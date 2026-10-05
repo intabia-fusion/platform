@@ -837,7 +837,8 @@ describe('pushNotification', () => {
       ['the receiver is away', { receiver: { online: true, away: true } }],
       ['the receiver is offline', { receiver: { online: false, away: false } }],
       ['the notification is not unread, so nothing could read it later', { unreadMessage: undefined }],
-      ['there is no native subscription', { pushSubscriptions: [web] }]
+      ['there is no native subscription', { pushSubscriptions: [web] }],
+      ['it is a call, over before anyone could read it', { call: { inviteId: 'invite-1', expiresAt: 145_000 } }]
     ])('sends everything at once when %s', async (_name, overrides: any) => {
       mockData = { ...mockData, ...overrides, receiver: { ...mockData.receiver, ...(overrides.receiver ?? {}) } }
 
@@ -846,6 +847,7 @@ describe('pushNotification', () => {
       expect(result.heldPushes).toHaveLength(0)
       expect(result.queueMessages).toHaveLength(1)
       expect((result.queueMessages[0] as QueueNotifyMessage).pushSubscriptions).toEqual(mockData.pushSubscriptions)
+      expect((result.queueMessages[0] as QueueNotifyMessage).call).toEqual(overrides.call)
     })
   })
 

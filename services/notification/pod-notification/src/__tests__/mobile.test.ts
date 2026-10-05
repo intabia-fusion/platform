@@ -17,12 +17,18 @@ import type { Class, Doc, Ref } from '@hcengineering/core'
 
 import {
   apnsAlertPayload,
+  apnsCallCancelPayload,
   apnsDismissPayload,
+  apnsVoipPayload,
   fcmAlertMessage,
+  fcmCallCancelMessage,
+  fcmCallMessage,
   fcmDismissMessage,
   PushKind,
   pushTarget,
   rustoreAlertMessage,
+  rustoreCallCancelMessage,
+  rustoreCallMessage,
   rustoreDismissMessage
 } from '../mobile'
 
@@ -34,6 +40,7 @@ jest.mock('../config', () => ({
 describe('pushTarget', () => {
   it('reads a device token out of its scheme', () => {
     expect(pushTarget('apns://abc123')).toEqual({ kind: PushKind.Apns, token: 'abc123' })
+    expect(pushTarget('apns-voip://voip1')).toEqual({ kind: PushKind.ApnsVoip, token: 'voip1' })
     expect(pushTarget('fcm://xyz789')).toEqual({ kind: PushKind.Fcm, token: 'xyz789' })
     expect(pushTarget('rustore://def456')).toEqual({ kind: PushKind.RuStore, token: 'def456' })
   })
@@ -159,6 +166,88 @@ describe('dismiss payloads', () => {
         readUpTo: '2000'
       },
       android: { ttl: '86400s' }
+    })
+  })
+})
+
+describe('call payloads', () => {
+  const now = 1_000_000
+  const data = {
+    tag: 'notify-1',
+    title: 'Call',
+    body: 'Ann is calling',
+    url: 'https://app/x',
+    domain: 'https://app/workbench/ws',
+    objectId,
+    objectClass,
+    createdOn: now
+  }
+  const call = {
+    inviteId: 'invite-1' as Ref<Doc>,
+    roomId: 'room-1' as Ref<Doc>,
+    callerName: 'Ann',
+    callerPerson: 'person-ann' as Ref<Doc>,
+    expiresAt: now + 45_000
+  }
+  const fields = {
+    kind: 'call',
+    inviteId: 'invite-1',
+    roomId: 'room-1',
+    callerName: 'Ann',
+    callerPerson: 'person-ann',
+    url: 'https://app/x',
+    domain: 'https://app/workbench/ws',
+    tag: 'notify-1',
+    objectId: 'doc-1',
+    objectClass: 'chunter:class:Channel'
+  }
+
+  beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(now)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('APNs VoIP: the call keys only, numbers kept, no aps alert, absent keys left out', () => {
+    expect(apnsVoipPayload(data, call)).toEqual({ ...fields, expiresAt: now + 45_000, createdOn: now })
+  })
+
+  it('FCM: data only, high priority, ttl down to the end of the ringing', () => {
+    expect(fcmCallMessage('tok', data, call)).toEqual({
+      token: 'tok',
+      data: { ...fields, expiresAt: String(now + 45_000), createdOn: String(now) },
+      android: { priority: 'HIGH', ttl: '45s' }
+    })
+    expect(fcmCallMessage('tok', data, { ...call, expiresAt: now + 10_500 })).toMatchObject({
+      android: { ttl: '11s' }
+    })
+  })
+
+  it('RuStore: the FCM call shape, no notification block', () => {
+    expect(rustoreCallMessage('tok', data, call)).toEqual({
+      token: 'tok',
+      data: { ...fields, expiresAt: String(now + 45_000), createdOn: String(now) },
+      android: { ttl: '45s' }
+    })
+  })
+
+  it('cancel: background on APNs, data only on FCM and RuStore', () => {
+    expect(apnsCallCancelPayload('invite-1')).toEqual({
+      aps: { 'content-available': 1 },
+      kind: 'call-cancel',
+      inviteId: 'invite-1'
+    })
+    expect(fcmCallCancelMessage('tok', 'invite-1')).toEqual({
+      token: 'tok',
+      data: { kind: 'call-cancel', inviteId: 'invite-1' },
+      android: { priority: 'HIGH', ttl: '45s' }
+    })
+    expect(rustoreCallCancelMessage('tok', 'invite-1')).toEqual({
+      token: 'tok',
+      data: { kind: 'call-cancel', inviteId: 'invite-1' },
+      android: { ttl: '45s' }
     })
   })
 })

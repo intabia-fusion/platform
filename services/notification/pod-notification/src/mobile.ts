@@ -13,7 +13,13 @@
 // limitations under the License.
 //
 
-import { NATIVE_PUSH_SCHEMES, type PushData, type PushDismissData } from '@hcengineering/notification'
+import {
+  CALL_RING_MS,
+  NATIVE_PUSH_SCHEMES,
+  type PushCallData,
+  type PushData,
+  type PushDismissData
+} from '@hcengineering/notification'
 import { createPrivateKey, sign } from 'crypto'
 import { connect, constants, type ClientHttp2Session } from 'http2'
 import config from './config'
@@ -28,6 +34,7 @@ import config from './config'
 export enum PushKind {
   Web = 'web',
   Apns = 'apns',
+  ApnsVoip = 'apnsVoip',
   Fcm = 'fcm',
   RuStore = 'rustore'
 }
@@ -35,11 +42,12 @@ export enum PushKind {
 export type PushTarget =
   | { kind: PushKind.Web }
   | { kind: PushKind.Apns, token: string }
+  | { kind: PushKind.ApnsVoip, token: string }
   | { kind: PushKind.Fcm, token: string }
   | { kind: PushKind.RuStore, token: string }
 
 export function pushTarget (endpoint: string): PushTarget {
-  for (const kind of [PushKind.Apns, PushKind.Fcm, PushKind.RuStore] as const) {
+  for (const kind of [PushKind.Apns, PushKind.ApnsVoip, PushKind.Fcm, PushKind.RuStore] as const) {
     const scheme = NATIVE_PUSH_SCHEMES[kind]
     if (endpoint.startsWith(scheme)) return { kind, token: endpoint.slice(scheme.length) }
   }
@@ -108,6 +116,8 @@ function apnsConnect (): ClientHttp2Session {
 }
 
 const DISMISS_KIND = 'dismiss'
+const CALL_KIND = 'call'
+const CALL_CANCEL_KIND = 'call-cancel'
 
 export function apnsAlertPayload (data: PushData): Record<string, unknown> {
   return {
@@ -137,6 +147,33 @@ export function apnsDismissPayload (data: PushDismissData): Record<string, unkno
   }
 }
 
+// What every channel carries about a call, beside the keys of an ordinary push.
+function callFields (data: PushData, call: PushCallData): Record<string, string | number | undefined> {
+  return {
+    kind: CALL_KIND,
+    inviteId: call.inviteId,
+    meetingId: call.meetingId,
+    roomId: call.roomId,
+    callerName: call.callerName,
+    callerPerson: call.callerPerson,
+    expiresAt: call.expiresAt,
+    url: data.url,
+    domain: data.domain,
+    tag: data.tag,
+    objectId: data.objectId,
+    objectClass: data.objectClass,
+    createdOn: data.createdOn
+  }
+}
+
+export function apnsVoipPayload (data: PushData, call: PushCallData): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(callFields(data, call)).filter(([, value]) => value !== undefined))
+}
+
+export function apnsCallCancelPayload (inviteId: string): Record<string, unknown> {
+  return { aps: { 'content-available': 1 }, kind: CALL_CANCEL_KIND, inviteId }
+}
+
 // An alert, not a silent push: iOS throttles `content-available` alone. `apns-collapse-id`
 // makes the tag the notification's identifier on the device, so a dismiss can name it.
 export async function sendApns (token: string, data: PushData): Promise<Delivery> {
@@ -154,6 +191,33 @@ export async function sendApns (token: string, data: PushData): Promise<Delivery
 // A background push, priority 5: iOS delivers it when it sees fit, never to a force-quit app.
 export async function sendApnsDismiss (token: string, data: PushDismissData): Promise<Delivery> {
   return await apnsRequest(token, { 'apns-push-type': 'background', 'apns-priority': '5' }, apnsDismissPayload(data))
+}
+
+// PushKit wants its own topic; Apple drops the push once the call is over.
+export async function sendApnsVoip (token: string, data: PushData, call: PushCallData): Promise<Delivery> {
+  return await apnsRequest(
+    token,
+    {
+      'apns-push-type': 'voip',
+      'apns-priority': '10',
+      'apns-topic': `${config.ApnsTopic}.voip`,
+      'apns-expiration': String(Math.floor(call.expiresAt / 1000))
+    },
+    apnsVoipPayload(data, call)
+  )
+}
+
+// Never on VoIP: a VoIP push must become a call, so a cancel goes the background way and may lag.
+export async function sendApnsCallCancel (token: string, inviteId: string): Promise<Delivery> {
+  return await apnsRequest(
+    token,
+    {
+      'apns-push-type': 'background',
+      'apns-priority': '5',
+      'apns-expiration': String(Math.floor((Date.now() + CALL_RING_MS) / 1000))
+    },
+    apnsCallCancelPayload(inviteId)
+  )
 }
 
 async function apnsRequest (
@@ -298,12 +362,37 @@ export function fcmDismissMessage (token: string, data: PushDismissData): Record
   }
 }
 
+// Data-only, so the app draws the call screen itself; FCM drops it once the call is over.
+export function fcmCallMessage (token: string, data: PushData, call: PushCallData): Record<string, unknown> {
+  return { token, data: fcmData(callFields(data, call)), android: { priority: 'HIGH', ttl: callTtl(call) } }
+}
+
+export function fcmCallCancelMessage (token: string, inviteId: string): Record<string, unknown> {
+  return {
+    token,
+    data: { kind: CALL_CANCEL_KIND, inviteId },
+    android: { priority: 'HIGH', ttl: `${CALL_RING_MS / 1000}s` }
+  }
+}
+
+function callTtl (call: PushCallData): string {
+  return `${Math.max(0, Math.ceil((call.expiresAt - Date.now()) / 1000))}s`
+}
+
 export async function sendFcm (token: string, data: PushData): Promise<Delivery> {
   return await fcmRequest(fcmAlertMessage(token, data))
 }
 
 export async function sendFcmDismiss (token: string, data: PushDismissData): Promise<Delivery> {
   return await fcmRequest(fcmDismissMessage(token, data))
+}
+
+export async function sendFcmCall (token: string, data: PushData, call: PushCallData): Promise<Delivery> {
+  return await fcmRequest(fcmCallMessage(token, data, call))
+}
+
+export async function sendFcmCallCancel (token: string, inviteId: string): Promise<Delivery> {
+  return await fcmRequest(fcmCallCancelMessage(token, inviteId))
 }
 
 async function fcmRequest (message: Record<string, unknown>): Promise<Delivery> {
@@ -364,12 +453,28 @@ export function rustoreDismissMessage (token: string, data: PushDismissData): Re
   }
 }
 
+export function rustoreCallMessage (token: string, data: PushData, call: PushCallData): Record<string, unknown> {
+  return { token, data: fcmData(callFields(data, call)), android: { ttl: callTtl(call) } }
+}
+
+export function rustoreCallCancelMessage (token: string, inviteId: string): Record<string, unknown> {
+  return { token, data: { kind: CALL_CANCEL_KIND, inviteId }, android: { ttl: `${CALL_RING_MS / 1000}s` } }
+}
+
 export async function sendRustore (token: string, data: PushData): Promise<Delivery> {
   return await rustoreRequest(rustoreAlertMessage(token, data))
 }
 
 export async function sendRustoreDismiss (token: string, data: PushDismissData): Promise<Delivery> {
   return await rustoreRequest(rustoreDismissMessage(token, data))
+}
+
+export async function sendRustoreCall (token: string, data: PushData, call: PushCallData): Promise<Delivery> {
+  return await rustoreRequest(rustoreCallMessage(token, data, call))
+}
+
+export async function sendRustoreCallCancel (token: string, inviteId: string): Promise<Delivery> {
+  return await rustoreRequest(rustoreCallCancelMessage(token, inviteId))
 }
 
 async function rustoreRequest (message: Record<string, unknown>): Promise<Delivery> {

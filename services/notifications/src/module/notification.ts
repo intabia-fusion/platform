@@ -30,7 +30,8 @@ import notificationPlugin, {
   NotificationTemplate,
   QueueNotifyMessage,
   appendAndCollapseUnreadMessages,
-  isNativePushEndpoint
+  isNativePushEndpoint,
+  PushCallData
 } from '@hcengineering/notification'
 import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
@@ -73,6 +74,8 @@ interface CreateNotificationData {
   // Source markup for the email template. The embedded `notification` carries an excerpt of a
   // long message; the queue and the letter get the whole text.
   markup?: Markup
+
+  call?: PushCallData
 }
 
 export async function pushNotification (
@@ -139,7 +142,8 @@ export async function pushNotification (
       objectClass,
       objectSpace,
       createdOn: data.notification.createdOn,
-      template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup)
+      template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url, data.markup),
+      call: data.call
     }
     const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
     const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
@@ -159,8 +163,10 @@ export async function pushNotification (
           }
     // While the receiver is at the computer, the push to their phone waits (client.pendingPush,
     // in memory) for them to read the notification there first; the browser gets its push at once.
+    // A call does not wait: it is over long before anyone reads it.
     const holdsPush =
       client.pendingPush !== undefined &&
+      data.call === undefined &&
       readBy !== undefined &&
       receiver.online &&
       !receiver.away &&
