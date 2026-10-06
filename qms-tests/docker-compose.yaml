@@ -192,6 +192,8 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Dev/testing only: signUp with a password and no email code. NEVER set in prod.
+      - ALLOW_SKIP_OTP_PASSWORD_SIGNUP=true
       - WORKSPACE_LIMIT_PER_USER=100
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml

@@ -189,6 +189,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.AdminOtpDevCode, process.env.ADMIN_OTP_DEV_CODE)
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
+  setMetadata(account.metadata.AllowSkipOtpPasswordSignUp, process.env.ALLOW_SKIP_OTP_PASSWORD_SIGNUP === 'true')
   // Self-host edition: account is the single LICENSE_KEY holder. Verify once at startup; payment pods
   // fetch the result via getLicenseInfo (no key of their own). maxUsers=0 on dev (no baked key) ->
   // no clamp; community (no/invalid key) -> 15; licensed -> key's maxUsers. Payment allowed on dev,

@@ -1,0 +1,12 @@
+# Region configuration for the secure stand (docker-compose.secure.yaml)
+# Single transactor + collaborator; behind nginx on host port 8443 (TLS)
+
+regions:
+  '':
+    name: America
+    transactors:
+      - external: wss://localhost:8443/_tr0
+        internal: ws://transactor0:3334
+    collaborators:
+      - external: wss://localhost:8443/_cl0
+        internal: ws://collaborator0:3079

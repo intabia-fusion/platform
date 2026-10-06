@@ -46,6 +46,8 @@ export const accountPlugin = plugin(accountId, {
     AdminOtpDevCode: '' as Metadata<string>,
     WsLivenessDays: '' as Metadata<number>,
     AllowReadonlyGuests: '' as Metadata<boolean>,
+    // Dev/testing only: signUp with a password and no email code (ALLOW_SKIP_OTP_PASSWORD_SIGNUP). Never set in prod.
+    AllowSkipOtpPasswordSignUp: '' as Metadata<boolean>,
     // Free fallback limits (defaults, FREE_PLAN_LIMITS env overrides). Always present — applied to every
     // tier subscription on read; an unpaid workspace runs on these instead of full read-only. Not persisted.
     FreePlanLimits: '' as Metadata<TierLimits>,
