@@ -107,9 +107,15 @@
   }
 
   let inAction = false
+  let submitAttempted = false
 
   function performAction (action: Action): void {
     if (inAction) return
+    // Enter submits the form even while the button is disabled.
+    if (proceedDisabled) {
+      submitAttempted = true
+      return
+    }
 
     for (const field of fields) {
       trim(field.name)
@@ -226,7 +232,7 @@
         />
       </div>
     {/each}
-    <slot name="after-fields" />
+    <slot name="after-fields" {submitAttempted} />
     <div class="status">
       <StatusControl {status} />
     </div>

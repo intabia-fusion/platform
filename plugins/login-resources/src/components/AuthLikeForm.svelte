@@ -49,8 +49,8 @@
 
 <slot name="before-form" />
 <Form {caption} {status} {proceedDisabled} {fields} object={formData} {action} ignoreInitialValidation {signUpDisabled}>
-  <div slot="after-fields" class="form-row">
-    <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
+  <div slot="after-fields" class="form-row" let:submitAttempted>
+    <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules highlight={submitAttempted} />
   </div>
 </Form>
 <slot name="after-form" />

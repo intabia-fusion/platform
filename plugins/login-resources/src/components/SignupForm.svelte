@@ -150,7 +150,7 @@
 
 {#if step === OtpLoginSteps.Email}
   <Form bind:this={form} {caption} {subtitle} {status} {fields} {object} {action} {proceedDisabled} withProviders>
-    <div slot="after-fields" class="form-row">
+    <div slot="after-fields" class="form-row" let:submitAttempted>
       {#if useOTP}
         <label class="check-label">
           <input
@@ -164,7 +164,7 @@
           <Label label={login.string.SetPasswordNow} />
         </label>
       {/if}
-      <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules />
+      <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules highlight={submitAttempted} />
     </div>
   </Form>
 {/if}
