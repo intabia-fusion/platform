@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.54] - 2026-10-07
+
+* 🚀 FEATURES: · FUSION-1468: Extract images on pasting ([#525](https://github.com/hcengineering/platform/issues/525))
+* 🐛 BUG FIXES: · FUSIO-1389: Fix register without checks ([#524](https://github.com/hcengineering/platform/issues/524)) · New flag for dev stands ([#526](https://github.com/hcengineering/platform/issues/526))
+
 ## [0.8.53] - 2026-10-06
 
 * 🚀 FEATURES: · Support calls for mobile devices ([#513](https://github.com/hcengineering/platform/issues/513)) · Read/Clear all inbox ([#518](https://github.com/hcengineering/platform/issues/518)) · FUSIO-666 - Доработка логики изменения участников и владельцев встречи ([#473](https://github.com/hcengineering/platform/issues/473)) · FUSIO-1443 - Ограничение вложенности группировки ([#514](https://github.com/hcengineering/platform/issues/514)) · FUSIO-1444 - Удаление подпунктов исполнителя из фильтров ([#516](https://github.com/hcengineering/platform/issues/516))
