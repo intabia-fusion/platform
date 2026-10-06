@@ -4,7 +4,7 @@
 //
 
 import activity, { type ActivityInfoMessage } from '@hcengineering/activity'
-import chunter, { type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
+import chunter, { type ChatMessage, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -12,6 +12,7 @@ import core, {
   type Tx,
   type TxCreateDoc,
   TxFactory,
+  type TxRemoveDoc,
   TxProcessor,
   systemAccountUuid
 } from '@hcengineering/core'
@@ -129,4 +130,22 @@ function collaboratorTxes (
 ): Tx[] {
   const missing = members.filter((m) => !existing.some((c) => c.attachedTo === dm && c.collaborator === m))
   return getAddCollaboratorsTxes(dm, chunter.class.DirectMessage, core.space.Space, control, missing)
+}
+
+export async function OnReportedMessageRemoved (
+  txes: TxRemoveDoc<ChatMessage>[],
+  control: TriggerControl
+): Promise<Tx[]> {
+  const removed = new Set<string>(txes.map((tx) => tx.objectId))
+  const cards = await control.findAll(control.ctx, activity.class.ActivityInfoMessage, {
+    message: chunter.string.ContentReport,
+    'props.messageId': { $in: Array.from(removed) }
+  })
+  const res: Tx[] = []
+  for (const card of cards) {
+    const { messageId, ...props } = card.props ?? {}
+    if (!removed.has(messageId)) continue
+    res.push(systemTxFactory.createTxUpdateDoc(activity.class.ActivityInfoMessage, card.space, card._id, { props }))
+  }
+  return res
 }

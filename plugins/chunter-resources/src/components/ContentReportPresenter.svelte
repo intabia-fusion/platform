@@ -79,7 +79,10 @@
       messageLoaded = true
     })
   } else {
+    // No messageId: the server stripped it when the message was deleted.
     messageQuery.unsubscribe()
+    message = undefined
+    messageLoaded = true
   }
 
   // The quoted message's author, by the social id the message was written with.

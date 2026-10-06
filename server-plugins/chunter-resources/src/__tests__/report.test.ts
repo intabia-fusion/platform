@@ -19,11 +19,12 @@ import core, {
   type Tx,
   type TxCreateDoc,
   TxFactory,
+  type TxUpdateDoc,
   systemAccountUuid,
   toFindResult
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
-import { OnContentReport } from '../report'
+import { OnContentReport, OnReportedMessageRemoved } from '../report'
 
 // The trigger asks the account service for the members; here it is Alice (User) and three owners.
 jest.mock('@hcengineering/server-token', () => ({ generateToken: () => 'system-token' }))
@@ -85,6 +86,9 @@ function chatMessage (fields: Partial<ChatMessage> = {}): ChatMessage {
   } as unknown as ChatMessage
 }
 
+// Report cards already in the owners' direct messages, for OnReportedMessageRemoved.
+let infoCards: Array<Partial<ActivityInfoMessage>> = []
+
 interface Stand {
   control: TriggerControl
   txes: Tx[]
@@ -101,6 +105,10 @@ function stand (message: ChatMessage | undefined): Stand {
     { _id: 'dm:bob', _class: chunter.class.DirectMessage, members: [systemAccountUuid, ACC_BOB] }
   ]
   const findAll = async (_ctx: unknown, _class: Ref<any>, query: any): Promise<any> => {
+    if (_class === activity.class.ActivityInfoMessage) {
+      const ids: string[] = query['props.messageId']?.$in ?? []
+      return toFindResult(infoCards.filter((it) => ids.includes(it.props?.messageId)) as any)
+    }
     if (_class === chunter.class.ChatMessage) {
       // The store answers a base-class query with derived docs too: a thread reply is a ChatMessage.
       return toFindResult(query._id === message?._id ? [message as ChatMessage] : [])
@@ -290,5 +298,38 @@ describe('OnContentReport', () => {
     const s = stand(undefined)
     const txes = await OnContentReport([request({ account: 'acc-stranger', reason: 'spam' })], s.control)
     expect(txes).toEqual([])
+  })
+
+  it('strips messageId from the cards of a deleted message, leaving the others alone', async () => {
+    const s = stand(chatMessage())
+    infoCards = [
+      {
+        _id: 'card1' as Ref<ActivityInfoMessage>,
+        space: DM_OWNER2,
+        props: { kind: 'message', messageId: 'msg1', quote: 'hello world', reason: 'spam' }
+      },
+      {
+        _id: 'card2' as Ref<ActivityInfoMessage>,
+        space: DM_OWNER2,
+        props: { kind: 'message', messageId: 'other', quote: 'x', reason: 'spam' }
+      },
+      { _id: 'card3' as Ref<ActivityInfoMessage>, space: DM_OWNER2, props: { kind: 'person', reason: 'abuse' } }
+    ]
+    try {
+      const remove = new TxFactory(ALICE).createTxRemoveDoc(
+        chunter.class.ChatMessage,
+        CHANNEL,
+        'msg1' as Ref<ChatMessage>
+      )
+      const txes = await OnReportedMessageRemoved([remove], s.control)
+      expect(txes).toHaveLength(1)
+      const update = txes[0] as TxUpdateDoc<ActivityInfoMessage>
+      expect(update._class).toBe(core.class.TxUpdateDoc)
+      expect(update.objectId).toBe('card1')
+      expect(update.modifiedBy).toBe(core.account.System)
+      expect(update.operations.props).toEqual({ kind: 'message', quote: 'hello world', reason: 'spam' })
+    } finally {
+      infoCards = []
+    }
   })
 })

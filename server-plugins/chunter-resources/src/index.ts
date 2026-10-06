@@ -58,7 +58,7 @@ import {
   getPersonSpaces
 } from '@hcengineering/server-contact'
 import { TriggerControl } from '@hcengineering/server-core'
-import { OnContentReport } from './report'
+import { OnContentReport, OnReportedMessageRemoved } from './report'
 
 import {
   ChannelIconPresenter,
@@ -554,6 +554,7 @@ export default async () => ({
   trigger: {
     ChunterTrigger,
     OnContentReport,
+    OnReportedMessageRemoved,
     OnUserStatus,
     OnCollaboratorAdded,
     OnCollaboratorRemoved,

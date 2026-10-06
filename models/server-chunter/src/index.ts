@@ -76,7 +76,17 @@ export function createModel (builder: Builder): void {
     txMatch: {
       _class: core.class.TxCreateDoc,
       objectClass: chunter.class.ContentReportAction
-    }
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnReportedMessageRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: { $in: [chunter.class.ChatMessage, chunter.class.ThreadMessage] }
+    },
+    isAsync: true
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
