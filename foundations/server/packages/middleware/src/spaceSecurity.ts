@@ -428,7 +428,14 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     return res
   }
 
-  private async checkSpacePermissions (ctx: MeasureContext<SessionData>, tx: TxCUD<Space>): Promise<void> {
+  private async checkSpacePermissions (
+    ctx: MeasureContext<SessionData>,
+    tx: TxCUD<Space>,
+    derived: boolean
+  ): Promise<void> {
+    // A space the server derived (e.g. a DM a trigger opens for someone else) is not the session user's doing.
+    // Derived-ness comes from the pipeline stage, not from tx.space, which the client fills in.
+    if (derived) return
     // Skip permission checks for system account and owner role
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid || account.role === AccountRole.Owner) {
@@ -592,14 +599,15 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
   }
 
-  private async processTx (ctx: MeasureContext<SessionData>, tx: Tx): Promise<void> {
+  // derived: the tx was produced by the server (reached handleBroadcast without passing tx()).
+  private async processTx (ctx: MeasureContext<SessionData>, tx: Tx, derived: boolean): Promise<void> {
     const h = this.context.hierarchy
     // ApplyTxMiddleware unwraps these downstream, so the inner txes never come back through here.
     if (tx._class === core.class.TxApplyIf) {
       const processed: Set<Ref<Tx>> | undefined = ctx.contextData.contextCache.get('processed')
       for (const t of (tx as TxApplyIf).txes) {
         processed?.add(t._id)
-        await this.processTx(ctx, t)
+        await this.processTx(ctx, t, derived)
       }
       return
     }
@@ -607,7 +615,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       const cudTx = tx as TxCUD<Doc>
       const isSpace = h.isDerived(cudTx.objectClass, core.class.Space)
       if (isSpace) {
-        await this.checkSpacePermissions(ctx, cudTx as TxCUD<Space>)
+        await this.checkSpacePermissions(ctx, cudTx as TxCUD<Space>, derived)
         await this.handleTx(ctx, cudTx as TxCUD<Space>)
       } else {
         this.checkWriteAccess(ctx, cudTx)
@@ -622,7 +630,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     ctx.contextData.contextCache.set('processed', processed)
     for (const tx of txes) {
       processed.add(tx._id)
-      await this.processTx(ctx, tx)
+      await this.processTx(ctx, tx, false)
     }
     return await this.provideTx(ctx, txes)
   }
@@ -633,7 +641,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     ctx.contextData.contextCache.set('processed', processed)
     for (const txd of ctx.contextData.broadcast.txes) {
       if (!processed.has(txd._id)) {
-        await this.processTx(ctx, txd)
+        await this.processTx(ctx, txd, true)
       }
     }
 

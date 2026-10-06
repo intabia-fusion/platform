@@ -32545,6 +32545,9 @@ importers:
       '@hcengineering/server-calendar':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/calendar
+      '@hcengineering/server-client':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/client
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -33618,6 +33621,9 @@ importers:
 
   server-plugins/chunter:
     dependencies:
+      '@hcengineering/activity':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/activity
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -33718,6 +33724,9 @@ importers:
       '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
         version: link:../activity
+      '@hcengineering/server-client':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/client
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -33727,6 +33736,12 @@ importers:
       '@hcengineering/server-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/server-token':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/token
+      '@hcengineering/text-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text-core
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../../plugins/view

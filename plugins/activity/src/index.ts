@@ -108,6 +108,12 @@ export interface ActivityInfoMessage extends ActivityMessage {
 
   // A possible set of links to some platform resources.
   links?: { _class: Ref<Class<Doc>>, _id: Ref<Doc> }[]
+  markup?: Markup
+}
+
+export interface ActivityInfoMessageViewlet extends Doc {
+  match: DocumentQuery<ActivityInfoMessage>
+  presenter: AnyComponent
 }
 
 export interface DocUpdateMessageHistory {
@@ -304,6 +310,7 @@ export default plugin(activityId, {
     DocUpdateMessage: '' as Ref<Class<DocUpdateMessage>>,
     ActivityMessage: '' as Ref<Class<ActivityMessage>>,
     ActivityInfoMessage: '' as Ref<Class<ActivityInfoMessage>>,
+    ActivityInfoMessageViewlet: '' as Ref<Class<ActivityInfoMessageViewlet>>,
     ActivityMessageControl: '' as Ref<Class<ActivityMessageControl>>,
     DocUpdateMessageViewlet: '' as Ref<Class<DocUpdateMessageViewlet>>,
     ActivityMessagesFilter: '' as Ref<Class<ActivityMessagesFilter>>,

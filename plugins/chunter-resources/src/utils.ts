@@ -32,6 +32,7 @@ import {
 import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@hcengineering/contact'
 import { employeeByAccountStore, PersonIcon } from '@hcengineering/contact-resources'
 import core, {
+  systemAccountUuid,
   AccountRole,
   type AccountUuid,
   type Class,
@@ -159,6 +160,10 @@ export async function buildDmName (client: Client, name: string, accounts: Accou
   }
 
   for (const acc of accounts) {
+    if (acc === systemAccountUuid) {
+      names.push(await translate(core.string.System, {}))
+      continue
+    }
     const employee = employeeByAccount.get(acc) ?? personByAccount.get(acc)
 
     if (employee === undefined) {

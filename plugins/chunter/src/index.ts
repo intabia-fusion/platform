@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { ActivityInfoMessage, ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
 import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
@@ -38,9 +38,18 @@ export interface Channel extends ChunterSpace {
   emoji?: number | number[]
 }
 
-/**
- * @public
- */
+export type ContentReportReason = 'spam' | 'abuse' | 'inappropriate' | 'other'
+
+export const contentReportReasons: ContentReportReason[] = ['spam', 'abuse', 'inappropriate', 'other']
+
+// A report the client files, in its own PersonSpace so nobody else receives the transient doc;
+// the server turns it into moderation cards. Either a channel message or a person.
+export interface ContentReportAction extends Doc {
+  messageId?: Ref<ChatMessage>
+  account?: AccountUuid
+  reason: ContentReportReason
+}
+
 export interface DirectMessage extends ChunterSpace {
   type: 'person' | 'group'
 }
@@ -115,9 +124,12 @@ export default plugin(chunterId, {
     ChunterBrowser: '' as Asset,
     Copy: '' as Asset,
     Messages: '' as Asset,
-    Bookmarks: '' as Asset
+    Bookmarks: '' as Asset,
+    Report: '' as Asset
   },
   component: {
+    ContentReportPresenter: '' as AnyComponent,
+    ReportReasonPopup: '' as AnyComponent,
     DmHeader: '' as AnyComponent,
     ThreadView: '' as AnyComponent,
     Thread: '' as AnyComponent,
@@ -139,6 +151,7 @@ export default plugin(chunterId, {
     ChunterSpace: '' as Ref<Class<ChunterSpace>>,
     Channel: '' as Ref<Class<Channel>>,
     DirectMessage: '' as Ref<Class<DirectMessage>>,
+    ContentReportAction: '' as Ref<Class<ContentReportAction>>,
     ChatMessage: '' as Ref<Class<ChatMessage>>,
     ChatSyncInfo: '' as Ref<Class<ChatSyncInfo>>,
     Chat: '' as Ref<Class<Chat>>
@@ -223,7 +236,25 @@ export default plugin(chunterId, {
     HideAll: '' as IntlString,
     GroupChat: '' as IntlString,
     Seen: '' as IntlString,
-    Threads: '' as IntlString
+    Threads: '' as IntlString,
+    ContentReport: '' as IntlString,
+    ContentReportNotification: '' as IntlString,
+    ContentReportNotificationBody: '' as IntlString,
+    ContentReportOpen: '' as IntlString,
+    ContentReportDeleteMessage: '' as IntlString,
+    ReportMessage: '' as IntlString,
+    ContentReportReason: '' as IntlString,
+    ContentReportSent: '' as IntlString,
+    ContentReportSentText: '' as IntlString,
+    ContentReportFrom: '' as IntlString,
+    ContentReportAbout: '' as IntlString,
+    ContentReportTitle: '' as IntlString,
+    ContentReportWhere: '' as IntlString,
+    ContentReportMessageGone: '' as IntlString,
+    ContentReportSpam: '' as IntlString,
+    ContentReportAbuse: '' as IntlString,
+    ContentReportInappropriate: '' as IntlString,
+    ContentReportOther: '' as IntlString
   },
   emailTemplate: {
     DMNotificationText: '' as IntlString,
@@ -244,6 +275,7 @@ export default plugin(chunterId, {
     ThreadNotification: '' as Ref<MessageNotificationType<ThreadMessage>>,
     ChannelNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
     JoinChannelNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
+    ContentReportNotification: '' as Ref<MessageNotificationType<ActivityInfoMessage>>,
     ChatWidget: '' as Ref<Widget>
   },
   extensions: {

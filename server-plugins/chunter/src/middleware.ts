@@ -24,11 +24,12 @@ import core, {
   combineAttributes,
   systemAccountUuid
 } from '@hcengineering/core'
-import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'
-import { PersonSpace } from '@hcengineering/contact'
+import chunter, { Chat, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
+import contact, { PersonSpace } from '@hcengineering/contact'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
+import activity, { ActivityInfoMessage } from '@hcengineering/activity'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
@@ -87,6 +88,15 @@ export class ChunterMiddleware extends BaseMiddleware {
         }
       }
 
+      if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityInfoMessage)) {
+        await this.onInfoMessage(ctx, tx as TxCUD<ActivityInfoMessage>)
+      }
+      if (
+        _tx._class === core.class.TxCreateDoc &&
+        hierarchy.isDerived(tx.objectClass, chunter.class.ContentReportAction)
+      ) {
+        await this.onReportAction(ctx, _tx as TxCreateDoc<ContentReportAction>)
+      }
       if (
         _tx._class === core.class.TxCreateDoc &&
         this.context.hierarchy.isDerived(tx.objectClass, chunter.class.DirectMessage)
@@ -184,6 +194,28 @@ export class ChunterMiddleware extends BaseMiddleware {
     return chats
   }
 
+  private async onInfoMessage (ctx: MeasureContext<SessionData>, tx: TxCUD<ActivityInfoMessage>): Promise<void> {
+    if (ctx.contextData.isTriggerCtx === true || ctx.contextData.account.uuid === systemAccountUuid) return
+    if (tx._class === core.class.TxCreateDoc) {
+      const doc = TxProcessor.createDoc2Doc(tx as TxCreateDoc<ActivityInfoMessage>)
+      if (doc.message !== chunter.string.ContentReport) return
+      this.throwForbidden()
+    }
+    if (tx._class === core.class.TxUpdateDoc) {
+      const update = tx as TxUpdateDoc<ActivityInfoMessage>
+      if (update.operations.message === chunter.string.ContentReport) this.throwForbidden()
+      const current = (await this.findAll(ctx, activity.class.ActivityInfoMessage, { _id: update.objectId }))[0]
+      if (current?.message === chunter.string.ContentReport) this.throwForbidden()
+    }
+  }
+
+  private async onReportAction (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<ContentReportAction>): Promise<void> {
+    const account = ctx.contextData.account
+    if (account.uuid === systemAccountUuid) return
+    const space = (await this.findAll(ctx, contact.class.PersonSpace, { _id: tx.objectSpace as Ref<PersonSpace> }))[0]
+    if (space?.account !== account.uuid) this.throwForbidden()
+  }
+
   private async onDirectCreate (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<DirectMessage>): Promise<void> {
     const account = ctx.contextData.account
 
@@ -191,9 +223,7 @@ export class ChunterMiddleware extends BaseMiddleware {
     tx.attributes.archived = false
     tx.attributes.autoJoin = false
     tx.attributes.private = true
-    // A service creates directs on someone else's behalf (ai-bot welcome): adding the system account
-    // makes it a three-member group, which skips the referenceId dedup below.
-    if (account.uuid !== systemAccountUuid) {
+    if (account.uuid !== systemAccountUuid && ctx.contextData.isTriggerCtx !== true) {
       tx.attributes.members = Array.from(new Set([...tx.attributes.members, account.uuid]))
     }
     tx.attributes.type = tx.attributes.members.length > 2 ? 'group' : 'person'
