@@ -5,6 +5,7 @@
 
   export let agreedPersonalData: boolean = false
   export let agreedRules: boolean = false
+  export let highlight: boolean = false
 
   let personalDatalabel = ''
   $: void translate(
@@ -56,14 +57,24 @@
 </script>
 
 <label class="check-label">
-  <input type="checkbox" data-testid="checkbox-personal-data" bind:checked={agreedPersonalData} />
+  <input
+    type="checkbox"
+    data-testid="checkbox-personal-data"
+    class:invalid={highlight && !agreedPersonalData}
+    bind:checked={agreedPersonalData}
+  />
   <span class="consent-link" role="presentation" on:click={handleLinkClick} on:keydown={handleLinkKeyDown}>
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html personalDatalabel}
   </span>
 </label>
 <label class="check-label">
-  <input type="checkbox" data-testid="checkbox-rules" bind:checked={agreedRules} />
+  <input
+    type="checkbox"
+    data-testid="checkbox-rules"
+    class:invalid={highlight && !agreedRules}
+    bind:checked={agreedRules}
+  />
   <span class="consent-link" role="presentation" on:click={handleLinkClick} on:keydown={handleLinkKeyDown}>
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html rulesLabel}
@@ -102,6 +113,10 @@
   .check-label input[type='checkbox']:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .check-label input[type='checkbox'].invalid {
+    border-color: var(--system-error-color);
   }
 
   .check-label input[type='checkbox']:checked {

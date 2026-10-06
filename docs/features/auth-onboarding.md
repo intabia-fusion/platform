@@ -90,6 +90,7 @@
 ### Логин и регистрация
 - **Пароль с блокировкой после N попыток.** `login()`, `recordFailedLoginAttempt`/`isAccountPasswordLocked` - `server/account/src/operations.ts`, `server/account/src/utils.ts`.
 - **Email OTP логин/регистрация.** `loginOtp`/`validateOtp`/`signUpOtp` - `server/account/src/operations.ts`.
+- **Согласие на обработку ПДн и правила.** Вызов регистрации (`signUpOtp`, `signUp`, `signUpJoin`, OAuth) считается согласием; сервер согласие не проверяет и не хранит. Клиент собирает его чекбоксами `ConsentCheckboxes.svelte` в `SignupForm.svelte`/`AuthLikeForm.svelte`, отправка (кнопка и Enter) блокируется в `performAction()` `Form.svelte` по `proceedDisabled`.
 - **Регистрация паролем (deprecated, только dev без mail-сервиса).** `signUp()`, флаг `hasSignUp` в `getMethods()` - `operations.ts`.
 - **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword` - `operations.ts`. Политика сложности пароля - только клиентская валидация, см. `docs/password_policy.md`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.

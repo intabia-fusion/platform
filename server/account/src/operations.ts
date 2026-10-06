@@ -377,6 +377,10 @@ export async function signUp (
   }
 }
 
+/**
+ * Calling this operation means the user accepted the personal data processing consent and the platform rules.
+ * The server does not check or store the consent: the client must collect it before the call.
+ */
 export async function signUpOtp (
   ctx: MeasureContext,
   db: AccountDB,
