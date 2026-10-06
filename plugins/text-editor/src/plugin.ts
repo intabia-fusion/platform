@@ -15,7 +15,14 @@
 //
 
 import { type Class, type Ref } from '@hcengineering/core'
-import { type Asset, type IntlString, type Metadata, type Plugin, plugin } from '@hcengineering/platform'
+import {
+  type Asset,
+  type IntlString,
+  type Metadata,
+  type Plugin,
+  plugin,
+  type StatusCode
+} from '@hcengineering/platform'
 
 import { type TextEditorExtensionFactory, type RefInputActionItem, TextEditorAction, CollaboratorType } from './types'
 
@@ -25,6 +32,9 @@ import { type TextEditorExtensionFactory, type RefInputActionItem, TextEditorAct
 export const textEditorId = 'text-editor' as Plugin
 
 export default plugin(textEditorId, {
+  status: {
+    ImagePasteNotSupported: '' as StatusCode
+  },
   class: {
     RefInputActionItem: '' as Ref<Class<RefInputActionItem>>,
     TextEditorExtensionFactory: '' as Ref<Class<TextEditorExtensionFactory>>,

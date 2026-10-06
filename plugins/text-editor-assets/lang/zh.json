@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "此处无法粘贴图片。请从复制的内容中移除图片后重试。"
+  },
   "string": {
     "TableOfContents": "目录",
     "Suggested": "推荐",
@@ -39,7 +42,6 @@
     "FullDescription": "完整描述",
     "NoFullDescription": "没有详细描述",
     "EnableDiffMode": "差异模式",
-
     "AddColumnBefore": "在前面添加",
     "AddColumnAfter": "在后面添加",
     "DeleteColumn": "删除",
@@ -48,7 +50,6 @@
     "DeleteRow": "删除",
     "DeleteTable": "删除",
     "Duplicate": "重复",
-
     "CategoryRow": "行",
     "CategoryColumn": "列",
     "Table": "表格",

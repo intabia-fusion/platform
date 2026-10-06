@@ -178,7 +178,7 @@ const subKits = {
     (e, context: EditorKitContext) =>
       ({
         fileUpload: e(FileUploadExtension, false),
-        imageUpload: e(ImageUploadExtension, false),
+        imageUpload: e(ImageUploadExtension),
         indent: e(IndentExtension, indentExtensionOptions),
         smartPaste: e(SmartPasteExtension),
         tableMetadataPaste: e(TableMetadataPasteExtension),

@@ -62,6 +62,7 @@ services:
     restart: unless-stopped
   postgres:
     image: postgres:18.1
+    init: true
     command: ['postgres', '-p', '5433']
     # Both regions share this instance, each in its own database - see postgres-init/.
     volumes:

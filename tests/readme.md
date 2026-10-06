@@ -14,6 +14,14 @@ pnpm docker:build
 ./prepare.sh
 ```
 
+To try a code change on a running stand without losing its data, rebuild the images and recreate only the service containers and nginx - postgres, minio, redpanda and elastic keep running with their volumes:
+
+```bash
+pnpm docker:build
+./reload-pg.sh             # every service built from local images
+./reload-pg.sh front0      # only the listed services
+```
+
 ### An already build version
 
 ```bash

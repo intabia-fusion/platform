@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Sem nelze vložit obrázky. Odstraňte je z kopírovaného obsahu a zkuste to znovu."
+  },
   "string": {
     "TableOfContents": "Obsah",
     "Suggested": "NAVRŽENO",

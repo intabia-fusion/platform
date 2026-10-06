@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Aquí no se pueden pegar imágenes. Quítelas del contenido copiado e inténtelo de nuevo."
+  },
   "string": {
     "TableOfContents": "Índice",
     "Suggested": "SUGERIDO",
@@ -21,7 +24,7 @@
     "Update": "Actualizar",
     "Remove": "Eliminar",
     "NotePlaceholder": "Añadir una nota...",
-    "SampleText": "Texto de ejemplo", 
+    "SampleText": "Texto de ejemplo",
     "Send": "Enviar",
     "Attach": "Adjuntar",
     "TextStyle": "Estilo de texto",

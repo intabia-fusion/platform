@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Non è possibile incollare immagini qui. Rimuovile dal contenuto copiato e riprova."
+  },
   "string": {
     "TableOfContents": "Indice dei contenuti",
     "Suggested": "SUGGERIRE",

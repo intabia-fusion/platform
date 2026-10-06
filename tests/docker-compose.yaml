@@ -72,6 +72,9 @@ services:
     restart: unless-stopped
   postgres:
     image: postgres:18.1
+    # Healthcheck processes orphaned by a timeout get reparented to PID 1; postgres as PID 1 treats
+    # their abnormal exit as a backend crash and restarts every connection.
+    init: true
     command: ["postgres", "-p", "5433"]
     ports:
       - 5433:5433
