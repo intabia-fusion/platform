@@ -2,6 +2,12 @@
 
 Changelog.
 
+## [0.8.53] - 2026-10-06
+
+* 🚀 FEATURES: · Support calls for mobile devices ([#513](https://github.com/hcengineering/platform/issues/513)) · Read/Clear all inbox ([#518](https://github.com/hcengineering/platform/issues/518)) · FUSIO-666 - Доработка логики изменения участников и владельцев встречи ([#473](https://github.com/hcengineering/platform/issues/473)) · FUSIO-1443 - Ограничение вложенности группировки ([#514](https://github.com/hcengineering/platform/issues/514)) · FUSIO-1444 - Удаление подпунктов исполнителя из фильтров ([#516](https://github.com/hcengineering/platform/issues/516))
+* 🐛 BUG FIXES: · Bug fixes ([#522](https://github.com/hcengineering/platform/issues/522)) · Inbox/chat fixes ([#520](https://github.com/hcengineering/platform/issues/520)) · FUSIO-1484: API key access to granted spaces and key e-mails ([#515](https://github.com/hcengineering/platform/issues/515)) · Fix double desktop push (fixed multiple store subscriptions) ([#511](https://github.com/hcengineering/platform/issues/511)) · Fix error during fulltext ([#510](https://github.com/hcengineering/platform/issues/510))
+* 🧩 OTHER: · Improve build ([#519](https://github.com/hcengineering/platform/issues/519)) · Do not ship a broken bundle in docker images ([#512](https://github.com/hcengineering/platform/issues/512)) · Persona testing stand
+
 ## [0.8.52] - 2026-10-02
 
 * 🐛 BUG FIXES: · FUSIO-1454, FUSIO-1452, FUSIO-1453: Fix project status groups and empty tracker views ([#507](https://github.com/hcengineering/platform/issues/507)) · FUSIO-1449: Fix the use of non-existent styles ([#508](https://github.com/hcengineering/platform/issues/508)) · FUSIO-1455: Fix thread reading ([#506](https://github.com/hcengineering/platform/issues/506))
