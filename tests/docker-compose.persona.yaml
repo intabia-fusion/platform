@@ -117,40 +117,6 @@ services:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
       - ACCOUNTS_URL=http://account:3003
     restart: unless-stopped
-  # Queue mode as on prod: account puts sign-up codes and invites on the `mail` topic.
-  mail:
-    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
-    pull_policy: ${DOCKER_PULL_POLICY:-never}
-    depends_on:
-      redpanda:
-        condition: service_started
-      mailpit:
-        condition: service_started
-    environment:
-      - MODE=queue
-      - PORT=8097
-      - SOURCE=noreply@intabia-platform.ru
-      - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - REGION=
-      - SMTP_HOST=mailpit
-      - SMTP_PORT=1025
-      - SMTP_USERNAME=platform
-      - SMTP_PASSWORD=platform
-      - SMTP_TLS_MODE=ignore
-      - SMTP_ALLOW_SELF_SIGNED=true
-      - ACCOUNTS_URL=http://account:3003
-      - SECRET=secret
-      - APP_NAME=Intabia Platform
-    restart: unless-stopped
-  mailpit:
-    image: axllent/mailpit
-    ports:
-      - 8025:8025
-    environment:
-      MP_SMTP_AUTH_ACCEPT_ANY: 1
-      MP_SMTP_AUTH_ALLOW_INSECURE: 1
-    restart: unless-stopped
-
   landing:
     image: ${LANDING_IMAGE}
     environment:

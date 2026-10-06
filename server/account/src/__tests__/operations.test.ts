@@ -32,6 +32,7 @@ import { type AccountDB, type SocialId } from '../types'
 import {
   createInvite,
   createInviteLink,
+  createWorkspace,
   sendInvite,
   getLoginInfoByToken,
   releaseSocialId,
@@ -40,6 +41,7 @@ import {
   login,
   confirm,
   signUp,
+  signUpJoin,
   validateOtp,
   signUpOtp,
   restorePassword,
@@ -1785,8 +1787,115 @@ describe('account operations', () => {
       jest.clearAllMocks()
     })
 
+    describe('createWorkspace', () => {
+      const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+
+      test('should reject an API key token', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: mockAccountId, extra: { apikey: 'key-id' } })
+
+        await expect(
+          createWorkspace(mockCtx, mockDb, mockBranding, mockToken, { workspaceName: 'ws' })
+        ).rejects.toThrow(forbidden)
+        expect(mockDb.socialId.find).not.toHaveBeenCalled()
+      })
+
+      test('should reject the read-only guest account', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: readOnlyGuestAccountUuid })
+
+        await expect(
+          createWorkspace(mockCtx, mockDb, mockBranding, mockToken, { workspaceName: 'ws' })
+        ).rejects.toThrow(forbidden)
+        expect(mockDb.socialId.find).not.toHaveBeenCalled()
+      })
+
+      test('should reject an automatic account', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: mockAccountId })
+        ;(mockDb.socialId.find as jest.Mock).mockResolvedValue([
+          { _id: 'huly-id' as PersonId, type: SocialIdType.HULY, personUuid: mockAccountId, verifiedOn: Date.now() }
+        ])
+        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({ uuid: mockAccountId, firstName: mockFirstName })
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({ uuid: mockAccountId, automatic: true })
+
+        await expect(
+          createWorkspace(mockCtx, mockDb, mockBranding, mockToken, { workspaceName: 'ws' })
+        ).rejects.toThrow(forbidden)
+      })
+    })
+
+    describe('signUpJoin', () => {
+      test('should reject without system token when password sign up is not allowed', async () => {
+        jest.spyOn(utils, 'signUpByEmail')
+        jest.spyOn(utils, 'getWorkspaceJoinInfo')
+        ;(getMetadata as jest.Mock).mockReturnValue(undefined)
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: mockAccountId })
+
+        await expect(
+          signUpJoin(mockCtx, mockDb, mockBranding, mockToken, {
+            email: mockEmail,
+            password: mockPassword,
+            first: mockFirstName,
+            inviteId: 'invite-id',
+            workspaceUrl: ''
+          })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+        expect(utils.getWorkspaceJoinInfo).not.toHaveBeenCalled()
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
+      })
+    })
+
     describe('signUp', () => {
-      test('should create account when email service not configured', async () => {
+      const signUpParams = {
+        email: mockEmail,
+        password: mockPassword,
+        firstName: mockFirstName,
+        lastName: mockLastName
+      }
+
+      const mockSignUpDeps = (allowPasswordSignUp: boolean | undefined): void => {
+        jest
+          .spyOn(utils, 'signUpByEmail')
+          .mockResolvedValue({ account: mockAccountId, socialId: 'social-id' as PersonId })
+        jest.spyOn(utils, 'confirmEmail').mockResolvedValue('social-id' as PersonId)
+        jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
+        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({ uuid: mockPersonId, firstName: mockFirstName })
+        ;(getMetadata as jest.Mock).mockImplementation((key) =>
+          key === accountPlugin.metadata.AllowSkipOtpPasswordSignUp ? allowPasswordSignUp : undefined
+        )
+      }
+
+      test('should reject without system token when password sign up is not allowed', async () => {
+        mockSignUpDeps(undefined)
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: mockAccountId, extra: { service: 'github' } })
+
+        await expect(signUp(mockCtx, mockDb, mockBranding, mockToken, signUpParams)).rejects.toThrow(
+          new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        )
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
+      })
+
+      test('should reject an invalid token when password sign up is not allowed', async () => {
+        mockSignUpDeps(false)
+        ;(decodeToken as jest.Mock).mockImplementation(() => {
+          throw new Error('invalid token')
+        })
+
+        await expect(signUp(mockCtx, mockDb, mockBranding, '', signUpParams)).rejects.toThrow(
+          new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        )
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
+      })
+
+      test('should allow system token when password sign up is not allowed', async () => {
+        mockSignUpDeps(undefined)
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: systemAccountUuid, extra: { service: 'aibot' } })
+
+        const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, signUpParams)
+
+        expect(result.account).toBe(mockAccountId)
+        expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
+      })
+
+      test('should create account when password sign up is allowed', async () => {
         const mockSocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockAccountId,
@@ -1808,11 +1917,11 @@ describe('account operations', () => {
         jest.spyOn(utils, 'confirmEmail').mockResolvedValue(mockSocialId._id)
         jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
-        ;(getMetadata as jest.Mock).mockImplementation((key) => {
-          if (key === accountPlugin.metadata.MailQueue) {
-            return undefined
-          }
-          return ''
+        ;(getMetadata as jest.Mock).mockImplementation(
+          (key) => key === accountPlugin.metadata.AllowSkipOtpPasswordSignUp
+        )
+        ;(decodeToken as jest.Mock).mockImplementation(() => {
+          throw new Error('invalid token')
         })
 
         const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, {

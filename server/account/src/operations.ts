@@ -336,7 +336,7 @@ export async function loginOtp (
 
 /**
  * Given an email, password, first name, and last name, creates a new account, without email confirmation.
- * The email confirmation is not required if the email service is not configured.
+ * Allowed only for the system account token or when ALLOW_SKIP_OTP_PASSWORD_SIGNUP is set (dev/test stands).
  *
  * ---------DEPRECATED. Only to be used for dev setups without mail service. Use signUpOtp instead.
  */
@@ -359,6 +359,11 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  if (getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true && !isSystemToken(token)) {
+    ctx.error('Password sign up is not allowed', { email })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
   const { account, socialId } = await signUpByEmail(ctx, db, branding, email, password, firstName, lastName ?? '')
   const person = await db.person.findOne({ uuid: account })
   if (person == null) {
@@ -374,6 +379,15 @@ export async function signUp (
     name: getPersonName(person),
     socialId,
     token: generateToken(account)
+  }
+}
+
+// Not extra.service: generateToken stamps it on every token a service pod mints, user tokens included.
+function isSystemToken (token: string | undefined): boolean {
+  try {
+    return decodeToken(token ?? '').account === systemAccountUuid
+  } catch {
+    return false
   }
 }
 
@@ -640,6 +654,11 @@ export async function createWorkspace (
 
   const { account, extra } = decodeTokenVerbose(ctx, token)
 
+  if (extra?.apikey != null || account === readOnlyGuestAccountUuid) {
+    ctx.warn('Workspace creation is not allowed for this token', { account })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
   checkRateLimit(account, workspaceName)
 
   ctx.info('Creating workspace record', { workspaceName, account, region })
@@ -658,6 +677,10 @@ export async function createWorkspace (
   const accountObj = await db.account.findOne({ uuid: account })
   if (accountObj == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
+  }
+  if (accountObj.automatic === true) {
+    ctx.warn('Workspace creation is not allowed for an automatic account', { account })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   // Get a list of created workspaces
@@ -1408,6 +1431,11 @@ export async function signUpJoin (
 
   if (password == null || password === '' || first == null || first === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  if (getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true && !isSystemToken(token)) {
+    ctx.error('Password sign up is not allowed', { email })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   const workspaceJoinInfo = await getWorkspaceJoinInfo(ctx, db, email, inviteId, workspaceUrl)

@@ -1,0 +1,88 @@
+# Secure stand: the sanity stack over HTTPS with the production sign-up checks on - no password
+# sign-up without a code, no fixed admin OTP, the default workspace limit. Codes go to mailpit
+# (docker-compose.mail.yaml). Publishes only nginx on 8443 (TLS) and mailpit on 8026, so it runs
+# beside the sanity and persona stands. Started by tests/prepare-secure.sh, which makes the cert.
+services:
+  nginx:
+    ports: !override
+      - 8443:8443
+    volumes:
+      - ./nginx-ssl.conf:/etc/nginx/extra/ssl.conf:ro
+      - ./.secure/cert.pem:/etc/nginx/certs/cert.pem:ro
+      - ./.secure/key.pem:/etc/nginx/certs/key.pem:ro
+  postgres:
+    ports: !reset []
+  pgbouncer:
+    ports: !reset []
+  redpanda:
+    ports: !reset []
+  elastic:
+    ports: !reset []
+  datalake:
+    ports: !reset []
+  analytics:
+    ports: !reset []
+  redis-test:
+    ports: !reset []
+  mailpit:
+    ports: !override
+      - 8026:8025
+
+  front0:
+    volumes:
+      - ./branding-secure.json:/app/dist/branding-test.json
+    environment:
+      - ACCOUNTS_URL=https://localhost:8443/_account
+      - REKONI_URL=https://localhost:8443/_rekoni
+      - BRANDING_URL=https://localhost:8443/branding-test.json
+      - STATS_API=https://localhost:8443/_stats
+      - STREAM_URL=https://localhost:8443/_stream/recording
+      - FILES_URL=https://localhost:8443/_datalake/blob/:workspace/:blobId/:filename
+      - UPLOAD_URL=https://localhost:8443/_datalake/upload/form-data/:workspace
+      - DATALAKE_URL=https://localhost:8443/_datalake
+      - PRINT_URL=https://localhost:8443/_print
+      - BILLING_URL=https://localhost:8443/_billing
+      - PAYMENT_URL=https://localhost:8443/_payment
+      - WEBHOOK_SERVICE_URL=https://localhost:8443/_webhook
+      - AI_URL=https://localhost:8443/_ai
+      - PREVIEW_URL=https://localhost:8443/_preview
+      - LINK_PREVIEW_URL=https://localhost:8443/_link-preview
+      - LOVE_ENDPOINT=https://localhost:8443/_love
+      - ANALYTICS_COLLECTOR_URL=https://localhost:8443/_analytics
+      - USE_OTP=true
+  account:
+    volumes:
+      - ./branding-secure.json:/var/cfg/branding.json
+      - ./region-config-secure.yaml:/var/cfg/region-config.yaml
+    environment:
+      - FRONT_URL=https://localhost:8443
+      - ADMIN_OTP_DEV_CODE=
+      - ALLOW_SKIP_OTP_PASSWORD_SIGNUP=false
+      # Prod sets no limit, so the code default applies.
+      - WORKSPACE_LIMIT_PER_USER=10
+  workspace:
+    volumes:
+      - ./branding-secure.json:/var/cfg/branding.json
+      - ./region-config-secure.yaml:/var/cfg/region-config.yaml
+  transactor0:
+    volumes:
+      - ./branding-secure.json:/var/cfg/branding.json
+    environment:
+      - FRONT_URL=https://localhost:8443
+  activity:
+    volumes:
+      - ./branding-secure.json:/var/cfg/branding.json
+  notifications:
+    volumes:
+      - ./branding-secure.json:/var/cfg/branding.json
+    environment:
+      - FRONT_URL=https://localhost:8443
+  stream:
+    environment:
+      - STREAM_BASE_URL=https://localhost:8443/_stream
+  payment:
+    environment:
+      - FRONT_URL=https://localhost:8443
+  tbank-subscriptions:
+    environment:
+      - FRONT_URL=https://localhost:8443

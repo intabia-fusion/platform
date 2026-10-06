@@ -110,7 +110,7 @@ const sanity: StandConfig = {
 const persona: StandConfig = {
   ...sanity,
   project: 'persona',
-  composeFiles: [...PURE_PG_COMPOSE, 'docker-compose.persona.yaml'],
+  composeFiles: [...PURE_PG_COMPOSE, 'docker-compose.mail.yaml', 'docker-compose.persona.yaml'],
   // Only nginx is published (on 8084, beside the sanity stand), so nothing else can be waited on.
   accountsUrl: 'http://localhost:8084/_account',
   elasticPort: undefined,
@@ -120,6 +120,15 @@ const persona: StandConfig = {
   accounts: [],
   workspaces: [],
   post: undefined
+}
+
+// Prod sign-up checks over HTTPS, codes in mailpit; no seed - accounts sign up through OTP.
+const secure: StandConfig = {
+  ...persona,
+  project: 'secure',
+  composeFiles: [...PURE_PG_COMPOSE, 'docker-compose.mail.yaml', 'docker-compose.secure.yaml'],
+  accountsUrl: 'https://localhost:8443/_account',
+  waitPorts: [['localhost', 8443]]
 }
 
 const ws: StandConfig = {
@@ -377,6 +386,7 @@ const api: StandConfig = {
 export const stands: Record<string, StandConfig> = {
   sanity,
   persona,
+  secure,
   ws,
   api,
   'ws-cockroach': wsCockroach,
