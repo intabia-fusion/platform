@@ -423,7 +423,7 @@
 
         history: false,
         shortcuts: {
-          imageUpload: canAttachFiles && { attachFile, getFileUrl },
+          imageUpload: { attachFile, getFileUrl },
           fileUpload: canAttachFiles && { attachFile }
         },
         submit: false,

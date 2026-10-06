@@ -2,6 +2,7 @@ import { type Locator, type Page, expect } from '@playwright/test'
 import { CommonPage } from '../common-page'
 import { uploadFile } from '../../utils'
 import path from 'path'
+import { readFileSync } from 'fs'
 
 export class DocumentContentPage extends CommonPage {
   readonly page: Page
@@ -323,6 +324,17 @@ export class DocumentContentPage extends CommonPage {
   async checkToDo (text: string, checked: boolean): Promise<void> {
     await this.rowToDo(text).hover()
     await expect(this.checkboxToDo(text)).toBeChecked({ checked, timeout: 5000 })
+  }
+
+  // Pastes HTML with the image inlined as base64, like Google Docs and Word put it on the clipboard.
+  async pasteHtmlWithDataImage (text: string): Promise<void> {
+    const dataUrl = `data:image/jpeg;base64,${readFileSync(path.join(__dirname, '../../files/cat.jpeg')).toString('base64')}`
+    await this.inputContentParapraph().click()
+    await this.inputContent().evaluate((editor, html) => {
+      const data = new DataTransfer()
+      data.setData('text/html', html)
+      editor.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
+    }, `<p>${text}</p><p><img src="${dataUrl}"></p>`)
   }
 
   async addImageToDocument (page: Page): Promise<void> {

@@ -173,6 +173,14 @@ test.describe('Content in the Documents tests', () => {
       })
     })
 
+    test('Pasted base64 image is uploaded as a file', async () => {
+      await documentContentPage.pasteHtmlWithDataImage('Pasted with image')
+      await expect(documentContentPage.page.getByText('Pasted with image')).toBeVisible()
+      const image = documentContentPage.imageInContent()
+      await expect(image).toHaveAttribute('file-id', /.+/, { timeout: 30000 })
+      await expect(image).not.toHaveAttribute('src', /^data:/)
+    })
+
     test.skip('Check Image size manipulations', async ({ page }) => {
       await documentContentPage.addImageToDocument(page)
 

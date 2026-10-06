@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Bilder können hier nicht eingefügt werden. Entfernen Sie sie aus dem kopierten Inhalt und versuchen Sie es erneut."
+  },
   "string": {
     "TableOfContents": "Inhaltsverzeichnis",
     "Suggested": "NLICHE",

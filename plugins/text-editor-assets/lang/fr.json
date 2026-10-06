@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Impossible de coller des images ici. Retirez-les du contenu copié et réessayez."
+  },
   "string": {
     "TableOfContents": "Table des matières",
     "Suggested": "Suggéré",

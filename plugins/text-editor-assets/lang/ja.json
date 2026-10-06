@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "ここには画像を貼り付けできません。コピーした内容から画像を削除して、もう一度お試しください。"
+  },
   "string": {
     "TableOfContents": "目次",
     "Suggested": "候補",

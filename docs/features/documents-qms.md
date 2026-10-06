@@ -96,6 +96,7 @@
 
 ### Совместное редактирование (`text-editor`)
 - **Rich text на tiptap.** Заголовки, форматирование, ссылки, списки, таблицы, изображения; категории форматов `TextFormatCategory`. - `plugins/text-editor/src/types.ts`.
+- **Вставка картинок из буфера и drop.** Файлы и base64-картинки из вставленного HTML (Google Docs, Word) загружаются через `attachFile`, в ydoc base64 не попадает; в редакторе без `attachFile` такая вставка отклоняется с ошибкой. FUSIO-1468, подробности - `docs/memory/editor-image-paste.md`. - `plugins/text-editor-resources/src/components/extension/shortcuts/imageUpload.ts`.
 - **Упоминания по `@`.** `ReferenceExtension` + `Suggestion` + попап списка людей. - `plugins/text-editor-resources/src/components/extension/reference.ts`, `plugins/text-editor-resources/src/components/extension/suggestion.ts`.
 - **Доска рисования с undo.** Узел текста, открывающий попап-редактор с отдельным undo/redo. - `plugins/text-editor-resources/src/components/extension/drawingBoard.ts`.
 - **Таблицы в тексте: refresh/diff/original data.** Таблица может обновляться из источника, показывать diff и исходные данные отдельными попапами. - `plugins/text-editor-resources/src/components/extension/table/actions/{refreshTable,showTableDiff,seeOriginalTableData}.ts`.

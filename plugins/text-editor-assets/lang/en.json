@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Images can't be pasted here. Remove them from the copied content and try again."
+  },
   "string": {
     "TableOfContents": "Table of contents",
     "Suggested": "SUGGESTED",
@@ -76,7 +79,6 @@
     "CategoryVersioning": "Versioning",
     "TableDiffLabel": "Table Changes",
     "TableRefreshConfirmationLabel": "Confirm Table Refresh",
-
     "ConvertToLinkPreview": "Show as a link",
     "ConvertToEmbedPreview": "Show as a content preview",
     "UnableToLoadEmbeddedContent": "Link preview couldn't be loaded due to permission settings or unsupported content",

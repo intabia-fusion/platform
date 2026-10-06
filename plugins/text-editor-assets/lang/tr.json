@@ -1,4 +1,7 @@
 {
+  "status": {
+    "ImagePasteNotSupported": "Buraya görsel yapıştırılamaz. Görselleri kopyalanan içerikten kaldırıp tekrar deneyin."
+  },
   "string": {
     "TableOfContents": "İçindekiler",
     "Suggested": "ÖNERİLEN",
