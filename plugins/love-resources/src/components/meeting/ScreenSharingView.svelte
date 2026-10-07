@@ -115,6 +115,9 @@
   function trySetActiveTrack (track: Track | undefined): boolean {
     if (track === undefined) return false
     if (track.kind !== Track.Kind.Video || track.source !== Track.Source.ScreenShare) return false
+
+    if (track.mediaStreamTrack?.readyState !== 'live') return false
+
     hasActiveTrack = true
     activeTrack = track
     track.attach(screen)
@@ -129,7 +132,9 @@
     }
     // Another participant may still be sharing: without this rescan their stream silently
     // vanishes from the UI when whoever we were showing stops.
-    scanForScreenShare()
+    setTimeout(() => {
+      scanForScreenShare()
+    }, 50)
   }
 
   function scanForScreenShare (): void {

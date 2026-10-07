@@ -16,6 +16,9 @@
   import IconMembers from '@hcengineering/contact-resources/src/components/icons/Members.svelte'
   import love from '../../../plugin'
   import { showParticipantsInModal } from '../../../stores'
+  import { screenSharingState, ScreenSharingState } from '../../../liveKitClient'
+
+  $: hasScreenShare = $screenSharingState !== ScreenSharingState.Inactive
 </script>
 
 <ModernButton
@@ -26,6 +29,7 @@
   }}
   kind={'secondary'}
   size={'large'}
+  disabled={!hasScreenShare}
   on:click={() => {
     $showParticipantsInModal = !$showParticipantsInModal
   }}

@@ -42,6 +42,7 @@
   export let adaptive: 'default' | 'freezeActions' | 'doubleRow' | 'disabled' = 'disabled'
   export let showCancelButton: boolean = true
   export let scrollableContent = true
+  export let className: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -73,7 +74,7 @@
 <svelte:window on:keydown={onKeyDown} />
 
 <div
-  class="hulyModal-container {type} {width ?? ''}"
+  class="hulyModal-container {type} {width ?? ''} {className ?? ''}"
   class:hidden
   class:noTopIndent
   style={maxWidth ? `max-width: ${maxWidth};` : ''}
