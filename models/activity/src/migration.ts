@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -52,6 +53,7 @@ import {
   getSocialKeyByOldAccount
 } from '@hcengineering/model-core'
 import notification, { type DocNotifyContext, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
+import { removeOrphanPreferences } from '@hcengineering/model-preference'
 
 import { activityId, DOMAIN_ACTIVITY, DOMAIN_REACTION, DOMAIN_USER_MENTION } from './index'
 import activity from './plugin'
@@ -947,6 +949,13 @@ export const activityOperation: MigrateOperation = {
         state: 'aggregate-doc-update-messages-v1',
         mode: 'upgrade',
         func: migrateAggregateDocUpdateMessages
+      },
+      {
+        state: 'remove-orphan-saved-messages-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          await removeOrphanPreferences(client, activity.class.SavedMessage, activity.class.ActivityMessage)
+        }
       }
     ])
   },

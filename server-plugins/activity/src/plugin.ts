@@ -32,6 +32,7 @@ export const serverActivityPlugin = plugin(serverActivityId, {
   trigger: {
     OnDocRemoved: '' as Resource<TriggerFunc>,
     OnDocClassChanged: '' as Resource<TriggerFunc>,
+    OnActivityMessageRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>
   },
   class: {
