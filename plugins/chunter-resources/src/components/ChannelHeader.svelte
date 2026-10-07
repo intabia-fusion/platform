@@ -42,6 +42,7 @@
   export let canOpenInSidebar: boolean = false
   export let closeOnEscape: boolean = true
   export let hideTitle: boolean = false
+  export let withPinned: boolean = true
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -113,6 +114,16 @@
     <slot name="search" />
   </svelte:fragment>
   <svelte:fragment slot="actions">
+    {#if object !== undefined && withPinned}
+      <PinnedMessages
+        {_id}
+        {_class}
+        space={object.space}
+        withRefs={(object.references ?? 0) > 0}
+        iconOnly={realWidth < 380}
+        on:select
+      />
+    {/if}
     {#if directPerson !== undefined}
       <ComponentExtensions
         extension={chunter.extensions.DirectHeaderExtension}
@@ -129,14 +140,4 @@
     {/if}
     <slot name="actions" />
   </svelte:fragment>
-  {#if object}
-    <PinnedMessages
-      {_id}
-      {_class}
-      space={object.space}
-      withRefs={(object.references ?? 0) > 0}
-      iconOnly={realWidth < 380}
-      on:select
-    />
-  {/if}
 </Header>

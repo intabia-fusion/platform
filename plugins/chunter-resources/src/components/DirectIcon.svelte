@@ -35,6 +35,7 @@
   const client = getClient()
 
   let persons: Person[] = []
+  let isLoaded = false
 
   if (_id !== undefined && value === undefined) {
     void client.findOne(chunter.class.DirectMessage, { _id }).then((res) => {
@@ -46,6 +47,7 @@
 
   $: void getDmPersons(client, value?.members ?? members ?? []).then((res) => {
     persons = res
+    isLoaded = true
   })
 
   let avatarSize = size
@@ -54,6 +56,10 @@
     avatarSize = 'x-small'
   }
 </script>
+
+{#if !isLoaded}
+  <div class="placeholder hulyAvatarSize-{avatarSize}" />
+{/if}
 
 {#if persons.length === 1}
   <Avatar person={persons[0]} size={avatarSize} name={persons[0].name} {showStatus} />
@@ -93,6 +99,11 @@
 {/if}
 
 <style lang="scss">
+  .placeholder {
+    flex-shrink: 0;
+    aspect-ratio: 1;
+  }
+
   .group {
     display: flex;
     align-items: center;
