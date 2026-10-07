@@ -410,9 +410,7 @@ async function removeMentions (
     const unreadIds = (context.unreadMentions ?? []).filter((it) => ids.includes(it.id)).map((it) => it.id)
     const unreadMsg =
       messageId != null
-        ? context.unreadMessages?.find(
-          (it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true
-        )
+        ? context.unreadMessages?.find((it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true)
         : undefined
 
     if (ids.length > 0) {

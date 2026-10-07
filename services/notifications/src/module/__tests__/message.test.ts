@@ -717,7 +717,10 @@ describe('message module', () => {
         const context = {
           ...base,
           unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }],
-          unreadReactions: [{ id: 'react-1', attachedTo: 'msg-1' }, { id: 'react-2', attachedTo: 'msg-other' }]
+          unreadReactions: [
+            { id: 'react-1', attachedTo: 'msg-1' },
+            { id: 'react-2', attachedTo: 'msg-other' }
+          ]
         } as unknown as DocNotifyContext
         mockCache.getContexts.mockResolvedValue([context])
         const pendingPush = { cancel: jest.fn().mockReturnValue(false) }
