@@ -299,6 +299,9 @@ export interface AccountClient {
   updateBackupInfo: (info: BackupStatus) => Promise<void>
   // Workspace comes from the token. false: not taken (acquire) or lost (renew) - stop the backup.
   updateBackupLease: (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number) => Promise<boolean>
+  // Fulltext only, workspace comes from the token. take: true when the flag was set and is now cleared.
+  setNeedsReindex: () => Promise<void>
+  takeNeedsReindex: () => Promise<boolean>
   updateUsageInfo: (info: UsageStatus) => Promise<void>
   updateWorkspaceRoleBySocialKey: (socialKey: string, targetRole: AccountRole) => Promise<void>
   ensurePerson: (
@@ -1268,6 +1271,14 @@ class AccountClientImpl implements AccountClient {
 
   async updateBackupLease (owner: string, action: 'acquire' | 'renew' | 'release', ttlMs?: number): Promise<boolean> {
     return await this.rpc<boolean>({ method: 'updateBackupLease' as const, params: { owner, action, ttlMs } })
+  }
+
+  async setNeedsReindex (): Promise<void> {
+    await this.rpc({ method: 'setNeedsReindex' as const, params: {} })
+  }
+
+  async takeNeedsReindex (): Promise<boolean> {
+    return await this.rpc<boolean>({ method: 'takeNeedsReindex' as const, params: {} })
   }
 
   async updateUsageInfo (usageInfo: UsageStatus): Promise<void> {

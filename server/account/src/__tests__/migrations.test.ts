@@ -135,3 +135,20 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v45/v46 backu
     }
   })
 })
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v51 needs_reindex [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddl = migrations.find(([id]) => id === 'account_db_v51_workspace_needs_reindex')?.[1] ?? ''
+
+  it('registers the migration once', () => {
+    expect(ids.filter((id) => id === 'account_db_v51_workspace_needs_reindex')).toHaveLength(1)
+  })
+
+  it('adds needs_reindex with the bool type of this flavor and no default, alone in its batch', () => {
+    expect(ddl).toContain(`needs_reindex ${flavor === 'cockroach' ? 'BOOL' : 'BOOLEAN'}`)
+    expect(ddl).not.toMatch(/DEFAULT/i)
+    expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
+    expect(ddl).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+  })
+})

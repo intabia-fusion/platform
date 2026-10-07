@@ -38,7 +38,7 @@
 | `Account` | учётная запись (hash/salt пароля, blockedOn, failedLoginAttempts) | `server/account/src/types.ts` |
 | `Person` | профиль человека (firstName/lastName/phoneHint) | `server/account/src/types.ts` |
 | `SocialId` | идентификатор входа (email, oauth-провайдер) | `server/account/src/types.ts` |
-| `Workspace` / `WorkspaceStatus` | воркспейс и его жизненный цикл (mode, deleteOn, backup-lease) | `server/account/src/types.ts` |
+| `Workspace` / `WorkspaceStatus` | воркспейс и его жизненный цикл (mode, deleteOn, backup-lease, needsReindex) | `server/account/src/types.ts` |
 | `Member` | роль участника воркспейса | `server/account/src/types.ts` |
 | `AdminAction` | запись аудита админ-действий | `server/account/src/types.ts` |
 | `WorkspaceInvite` | инвайт/access-link | `server/account/src/types.ts` |
@@ -71,6 +71,8 @@
 **4. Создание воркспейса и вход по инвайту.**
 1. `createWorkspace()` (`operations.ts`) создаёт запись `Workspace`/`WorkspaceStatus` в режиме создания.
 2. Воркер `workspace-service` (`server/workspace-service/src/service.ts`) опрашивает `getPendingWorkspace(region, version, operation)` и выполняет `createWorkspace()`/`upgradeWorkspace()` - `server/workspace-service/src/ws-operations.ts`. Режим `WS_OPERATION` (`create`/`upgrade`/`all`/`all+backup`) задаётся env, читается в `server/workspace-service/src/index.ts`.
+   Запросы переиндексации от миграций хранятся в `_migrations` воркспейса (`server/tool/src/reindex.ts`) и уходят в очередь только после `upgrade-done`, когда версия уже повышена (`sendPendingReindex`); так они переживают и падение пода посреди апгрейда.
+   Если фуллтекст всё же пропустил переиндексацию из-за несовпадения версии (ручной reindex неактивного воркспейса), он ставит `workspace_status.needs_reindex` через сервисный RPC `setNeedsReindex`; после апгрейда снимает флаг атомарным `takeNeedsReindex` (`serviceOperations.ts`, `postgres.ts`) и запускает полную переиндексацию.
 3. Приглашённый проходит `join()`/`joinByInvite()`/`checkJoin()`/`checkAutoJoin()`/`signUpJoin()` (`operations.ts`).
 4. Если аккаунт создан без инвайта - `sendCrmNotificationIfNotInvited()` (`operations.ts`).
 

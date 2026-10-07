@@ -1208,6 +1208,20 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
+  async takeNeedsReindex (workspace: WorkspaceUuid): Promise<boolean> {
+    const table = this.workspaceStatus.getTableName()
+    return await this.withRetry(async (rTx) => {
+      const res: any = await rTx.unsafe(
+        `UPDATE ${table}
+         SET needs_reindex = NULL
+         WHERE workspace_uuid = $1 AND needs_reindex
+         RETURNING workspace_uuid`,
+        [workspace]
+      )
+      return (res?.length ?? 0) > 0
+    })
+  }
+
   async setPassword (accountUuid: AccountUuid, hash: Buffer, salt: Buffer): Promise<void> {
     await this.withRetry(
       async (rTx) =>

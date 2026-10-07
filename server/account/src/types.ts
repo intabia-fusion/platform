@@ -137,6 +137,8 @@ export interface WorkspaceStatus extends WorkspaceVersion {
   backupInfo?: BackupStatus
   usageInfo?: UsageStatus
   deleteOn?: Timestamp
+  // Fulltext skipped a reindex on a version mismatch; it runs once the workspace is upgraded.
+  needsReindex?: boolean
 
   targetRegion?: string
 }
@@ -620,6 +622,8 @@ export interface AccountDB {
     now: number,
     until: number
   ) => Promise<boolean>
+  // Clears needs_reindex in one conditional update. True only for the caller that actually cleared it.
+  takeNeedsReindex: (workspace: WorkspaceUuid) => Promise<boolean>
   setPassword: (accountId: AccountUuid, passwordHash: Buffer, salt: Buffer) => Promise<void>
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>

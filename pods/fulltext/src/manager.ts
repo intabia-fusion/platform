@@ -10,7 +10,7 @@ import type {
   WorkspaceUuid
 } from '@hcengineering/core'
 import core, { Hierarchy, ModelDb, systemAccountUuid, TxProcessor, versionToString } from '@hcengineering/core'
-import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { getAccountClient, getTransactorEndpoint, withRetry } from '@hcengineering/server-client'
 import {
   createContentAdapter,
   QueueTopic,
@@ -38,6 +38,13 @@ import { fulltextModelFilter } from './utils'
 import { WorkspaceIndexer } from './workspace'
 
 const closeTimeout = 5 * 60 * 1000
+// needs_reindex calls are retried, then logged: a stuck account service must not stall the queues.
+const accountAttempts = 5
+
+/** The workspace is not on the version this pod indexes. */
+export class WrongVersionError extends Error {}
+
+export type WithIndexerResult = 'done' | 'wrong-version' | 'unavailable'
 
 export class WorkspaceManager {
   indexers = new Map<string, WorkspaceIndexer | Promise<WorkspaceIndexer>>()
@@ -207,9 +214,13 @@ export class WorkspaceManager {
         }
 
         const values = wsMsgs.map((m) => m.value)
-        await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
+        const result = await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
           await indexer.fulltext.processTransactions(this.ctx, values, control)
         })
+        if (result !== 'done') {
+          // Not thrown, so not dead-lettered either: these documents stay unindexed until a full reindex.
+          this.ctx.error('dropped transactions, indexer not available', { ws, count: wsMsgs.length, reason: result })
+        }
       } catch (err: any) {
         if (this.txDeadLetterProducer !== undefined) {
           await this.txDeadLetterProducer.send(
@@ -262,6 +273,11 @@ export class WorkspaceManager {
         return
       }
       await this.fulltextProducer.send(ctx, ws, [workspaceEvents.fullReindex()])
+    } else if (mm.type === QueueWorkspaceEvent.Reindex) {
+      if (this.restoring.has(ws)) {
+        return
+      }
+      await this.fulltextProducer.send(ctx, ws, [mm])
     } else if (
       mm.type === QueueWorkspaceEvent.Deleted ||
       mm.type === QueueWorkspaceEvent.Archived ||
@@ -277,6 +293,7 @@ export class WorkspaceManager {
     } else if (mm.type === QueueWorkspaceEvent.Upgraded) {
       this.ctx.warn('Upgraded', this.supportedVersion)
       await this.closeWorkspace(ws)
+      await this.runDeferredReindex(this.ctx, ws)
     }
   }
 
@@ -297,7 +314,8 @@ export class WorkspaceManager {
     }
 
     if (mm.type === QueueWorkspaceEvent.FullReindex) {
-      await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
+      const taken = await this.withAccount(this.ctx, ws, 'take deferred reindex', (client) => client.takeNeedsReindex())
+      const result = await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
         await indexer.dropWorkspace()
         const toIndex = await indexer.getIndexClassess()
         this.ctx.info('reindex starting full', { workspace: ws })
@@ -319,10 +337,13 @@ export class WorkspaceManager {
         )
         this.ctx.info('reindex full done', { workspace: ws })
       })
+      if (result === 'wrong-version' || (taken === true && result !== 'done')) {
+        await this.deferReindex(this.ctx, ws)
+      }
     } else if (mm.type === QueueWorkspaceEvent.Reindex) {
       const mmd = mm as QueueWorkspaceReindexMessage
       if (!this.restoring.has(ws)) {
-        await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
+        const result = await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
           try {
             await indexer.reindex(this.ctx, mmd.domain, mmd.classes, control)
           } catch (err: any) {
@@ -330,7 +351,52 @@ export class WorkspaceManager {
             throw err
           }
         })
+        if (result === 'wrong-version') {
+          await this.deferReindex(this.ctx, ws)
+        }
       }
+    }
+  }
+
+  // Always a fulltext service token: createIndexer may run on a search request with the user's token.
+  private async withAccount<T>(
+    ctx: MeasureContext,
+    ws: WorkspaceUuid,
+    what: string,
+    op: (client: ReturnType<typeof getAccountClient>) => Promise<T>
+  ): Promise<T | undefined> {
+    const token = generateToken(systemAccountUuid, ws, { service: 'fulltext' })
+    try {
+      return await withRetry(
+        async () => await op(getAccountClient(token)),
+        (_err, attempt) => attempt >= accountAttempts - 1
+      )()
+    } catch (err: any) {
+      ctx.error(`failed to ${what}`, { workspace: ws, err })
+      return undefined
+    }
+  }
+
+  private async deferReindex (ctx: MeasureContext, ws: WorkspaceUuid): Promise<void> {
+    const done = await this.withAccount(ctx, ws, 'defer reindex', async (client) => {
+      await client.setNeedsReindex()
+      return true
+    })
+    if (done === true) {
+      ctx.info('reindex deferred until upgrade', { workspace: ws })
+    }
+  }
+
+  // The flag is taken atomically: of several pods and triggers only one queues the reindex.
+  private async runDeferredReindex (ctx: MeasureContext, ws: WorkspaceUuid): Promise<void> {
+    const taken = await this.withAccount(ctx, ws, 'take deferred reindex', (client) => client.takeNeedsReindex())
+    if (taken !== true) return
+    try {
+      await this.fulltextProducer.send(ctx, ws, [workspaceEvents.fullReindex()])
+      ctx.info('deferred reindex queued', { workspace: ws })
+    } catch (err: any) {
+      ctx.error('failed to queue deferred reindex', { workspace: ws, err })
+      await this.deferReindex(ctx, ws)
     }
   }
 
@@ -378,7 +444,7 @@ export class WorkspaceManager {
         })
         if (idle) {
           this.wrongVersionAttempts.delete(workspace)
-          throw new Error('Workspace idle, skipping reindex')
+          throw new WrongVersionError('Workspace idle, skipping reindex')
         }
         const attempts = (this.wrongVersionAttempts.get(workspace) ?? 0) + 1
         this.wrongVersionAttempts.set(workspace, attempts)
@@ -387,9 +453,13 @@ export class WorkspaceManager {
           continue
         }
         this.wrongVersionAttempts.delete(workspace)
-        throw new Error('Workspace limit reached')
+        throw new WrongVersionError('Workspace limit reached')
       }
       this.wrongVersionAttempts.delete(workspace)
+      if (workspaceInfo.needsReindex === true) {
+        // Upgraded may have reached a pod on another version and left the flag set: pick it up here.
+        await this.runDeferredReindex(ctx, workspace)
+      }
       ctx.warn('indexer created', { workspace })
       return await WorkspaceIndexer.create(
         ctx,
@@ -418,7 +488,7 @@ export class WorkspaceManager {
     token: string | undefined,
     create: boolean = false,
     op: (indexer: WorkspaceIndexer) => Promise<void>
-  ): Promise<boolean> {
+  ): Promise<WithIndexerResult> {
     while (this.restoring.has(workspace)) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
@@ -428,7 +498,7 @@ export class WorkspaceManager {
       this.indexers.set(workspace, idx)
     }
     if (idx === undefined) {
-      return false
+      return 'unavailable'
     }
     try {
       if (idx instanceof Promise) {
@@ -437,12 +507,12 @@ export class WorkspaceManager {
       }
     } catch (err: any) {
       this.indexers.delete(workspace)
-      return false
+      return err instanceof WrongVersionError ? 'wrong-version' : 'unavailable'
     }
     if (await idx.doOperation(op)) {
       this.indexers.delete(workspace)
     }
-    return true
+    return 'done'
   }
 
   async shutdown (deleteTopics: boolean = false): Promise<void> {

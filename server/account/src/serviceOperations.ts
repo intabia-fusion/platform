@@ -1483,6 +1483,40 @@ export async function updateBackupLease (
   return await db.updateBackupLease(workspace, owner, action, now, now + clampedTtl)
 }
 
+function decodeFulltextToken (ctx: MeasureContext, token: string): WorkspaceUuid {
+  const { extra, workspace } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'fulltext') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return workspace
+}
+
+/**
+ * Fulltext skipped a reindex because the workspace version did not match its own.
+ */
+export async function setNeedsReindex (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<void> {
+  const workspace = decodeFulltextToken(ctx, token)
+  await db.workspaceStatus.update({ workspaceUuid: workspace }, { needsReindex: true })
+}
+
+/**
+ * Clears the flag; true when it was set, so the caller has to run the reindex.
+ */
+export async function takeNeedsReindex (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<boolean> {
+  const workspace = decodeFulltextToken(ctx, token)
+  return await db.takeNeedsReindex(workspace)
+}
+
 export async function updateUsageInfo (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2832,6 +2866,8 @@ export type AccountServiceMethods =
   | 'workerHandshake'
   | 'updateBackupInfo'
   | 'updateBackupLease'
+  | 'setNeedsReindex'
+  | 'takeNeedsReindex'
   | 'updateUsageInfo'
   | 'assignWorkspace'
   | 'listWorkspaces'
@@ -2919,6 +2955,8 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     workerHandshake: wrap(workerHandshake),
     updateBackupInfo: wrap(updateBackupInfo),
     updateBackupLease: wrap(updateBackupLease),
+    setNeedsReindex: wrap(setNeedsReindex),
+    takeNeedsReindex: wrap(takeNeedsReindex),
     updateUsageInfo: wrap(updateUsageInfo),
     assignWorkspace: wrap(assignWorkspace),
     listWorkspaces: wrap(listWorkspaces),
