@@ -213,6 +213,7 @@
       allowClose={embedded}
       {isAsideShown}
       canOpenInSidebar={true}
+      withPinned={!searchOpened}
       on:close
       on:select={handleMessageSelect}
       withSearch={false}
