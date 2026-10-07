@@ -211,6 +211,7 @@
 </script>
 
 <Modal
+  className="export-task-type-modal"
   type="type-popup"
   width="large"
   label={plugin.string.ExportTaskTypeDialogTitle}
@@ -321,7 +322,7 @@
 </Modal>
 
 <style lang="scss">
-  :global(.hulyModal-container.type-popup) {
+  :global(.export-task-type-modal.hulyModal-container.type-popup) {
     height: auto;
   }
 

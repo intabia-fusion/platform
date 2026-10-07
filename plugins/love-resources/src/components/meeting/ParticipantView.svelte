@@ -279,7 +279,8 @@
   .parent {
     position: relative;
     flex-shrink: 0;
-    height: max-content;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     min-height: 0;
     max-height: 100%;
     background-color: black;

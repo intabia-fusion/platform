@@ -34,6 +34,7 @@
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
   import ScreenSharingView from './meeting/ScreenSharingView.svelte'
   import SpeakingWhileMutedIndicator from './meeting/SpeakingWhileMutedIndicator.svelte'
+  import { screenSharingState, ScreenSharingState } from '../liveKitClient'
 
   export let canMaximize: boolean = true
   export let room: TypeRoom
@@ -105,9 +106,14 @@
   }
 
   function updateStyle (count: number, screenSharing: boolean): void {
-    columns = screenSharing ? 1 : Math.min(Math.ceil(Math.sqrt(count)), 8)
+    columns = screenSharing ? 1 : Math.min(Math.max(1, Math.ceil(Math.sqrt(count))), 8)
     rows = Math.ceil(count / columns)
-    gridStyle = `grid-template-columns: repeat(${columns}, 1fr); aspect-ratio: ${columns * 1280}/${rows * 720};`
+
+    if (isModal) {
+      gridStyle = `grid-template-columns: repeat(${columns}, 1fr);`
+    } else {
+      gridStyle = `grid-template-columns: repeat(${columns}, 1fr); aspect-ratio: ${columns * 1280}/${rows * 720};`
+    }
   }
 
   const handleFullScreen = () => ($isFullScreen = document.fullscreenElement != null)
@@ -167,6 +173,13 @@
     $infos.filter((it) => it.meeting === $currentMeetingMinutes?._id).length ?? lk.numParticipants,
     withScreenSharing
   )
+
+  $: hasScreenShare = $screenSharingState !== ScreenSharingState.Inactive
+  $: shouldShowParticipants = isModal ? !hasScreenShare || $showParticipantsInModal : !$roomModalActive
+
+  $: if (isModal && !hasScreenShare && !$showParticipantsInModal) {
+    $showParticipantsInModal = true
+  }
 </script>
 
 <div bind:this={roomEl} class="flex-col-center w-full h-full" class:theme-dark={$isFullScreen}>
@@ -180,6 +193,7 @@
   {/if}
   <div
     class="room-container"
+    class:modal-view={isModal}
     class:sharing={withScreenSharing}
     class:many={columns > 3}
     class:hidden={loading}
@@ -190,7 +204,7 @@
         <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
       {/if}
     </div>
-    {#if ($showParticipantsInModal && isModal) || !$roomModalActive}
+    {#if shouldShowParticipants}
       <div class="videoGrid" style={withScreenSharing ? '' : gridStyle} class:scroll-m-0={withScreenSharing}>
         <ParticipantsListView
           room={room._id}
@@ -306,6 +320,35 @@
       &:not(.sharing) .videoGrid,
       &.sharing {
         gap: var(--spacing-0_5);
+      }
+    }
+
+    &.modal-view:not(.sharing) {
+      .videoGrid {
+        width: 100%;
+        height: 100%;
+        align-items: stretch;
+
+        > :global(.video) {
+          min-width: 0;
+          min-height: 0;
+        }
+
+        :global(.parent) {
+          height: 100%;
+          max-height: 100%;
+        }
+
+        :global(.cover) :global(.video) {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        :global(.ava) {
+          max-height: 12rem;
+          max-width: 12rem;
+        }
       }
     }
   }
