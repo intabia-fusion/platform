@@ -30,7 +30,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | workflow-resources | `plugins/workflow-resources/src` | UI редактора workflow, триггеры удаления (`WorkflowTrigger.ts`) |
 | workflow-assets | `plugins/workflow-assets/lang` | Локализация |
 | server-workflow | `server-plugins/workflow/src` | `WorkflowMiddleware` - валидация переходов статуса |
-| server-workflow-resources | `server-plugins/workflow-resources/src` | Каскадное удаление (Workflow/TaskType/Status/Screen) |
+| server-workflow-resources | `server-plugins/workflow-resources/src` | Каскадное удаление (Workflow/TaskType/Status/Screen/Attribute) |
 | model-tags | `models/tags/src` | `TagCategory`/`TagElement`/`TagReference` (метки Issue) |
 | tags, tags-resources, tags-assets | `plugins/tags*` | Типы и UI меток |
 | server-tags, server-tags-resources | `server-plugins/tags*` | Триггеры на удаление тегов/ссылок |
@@ -92,7 +92,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **Правила перехода.** Validators (`FieldRequired`, `SubtaskStatus`, `ParentStatus`), Requests (`ScreenRequest`), Post-functions (`UpdateFieldValue`, `ClearFieldValue`) - единая форма `WorkflowRuleConfig`. - `plugins/workflow/src/schema/`.
 - **36 функций-трансформов значений** (строковые/числовые/даты/конверсии/агрегаты) для `UpdateFieldValue`. - `models/workflow/src/functions.ts`.
 - **Конфликты переходов.** `findTransitionConflict`/`hasSelfTransition`/`getTransitionConflict`. - `plugins/workflow/src/utils.ts`.
-- **Каскадное удаление.** `OnWorkflowDelete`/`OnTaskTypeDelete`/`OnStatusDelete`/`OnScreenDelete`. - `server-plugins/workflow-resources/src/WorkflowTrigger.ts`.
+- **Каскадное удаление.** `OnWorkflowDelete`/`OnTaskTypeDelete`/`OnStatusDelete`/`OnScreenDelete`/`OnAttributeDelete`. - `server-plugins/workflow-resources/src/WorkflowTrigger.ts`. `OnAttributeDelete` снимает удалённый атрибут с экранов (`ScreenField`) и вычищает его из `props.fields` правил переходов, правило без полей удаляется (`stripAttributeFromRules` - `plugins/workflow/src/utils.ts`). Попап удаления атрибута заранее показывает затронутые экраны и workflow с переходами - `plugins/workflow-resources/src/components/AttributeUsages.svelte`, зарегистрирован как `setting.class.AttributeUsageProvider` в `models/workflow/src/index.ts`.
 - **Экспорт/импорт workflow-конфигурации.** Токены `$status:`/`$taskType:`/`$screen:`/`$attr:`, `NameResolver` (минимальный ref при коллизии имён), отчёт совместимости статусов/атрибутов/экранов. - `plugins/workflow/src/transfer/` (7 файлов: `export.ts`, `import.ts`, `compatibility.ts`, `resolver.ts`, `utils.ts`, `types.ts`, `index.ts`).
 
 ### Views (list/kanban)
@@ -121,6 +121,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - Изменить viewlet/колонки списка/канбана -> `models/tracker/src/viewlets.ts`.
 - Поменять группировку/сортировку/swim lanes -> `issuesOptions` (`models/tracker/src/viewlets.ts`).
 - Изменить экспорт/импорт конфигурации workflow -> `plugins/workflow/src/transfer/` (`export.ts`/`import.ts`/`compatibility.ts`).
+- Добавить в правило новое место, где хранится ссылка на атрибут -> `stripAttributeFromRules` (`plugins/workflow/src/utils.ts`): по ней триггер `OnAttributeDelete` чистит правила, а попап удаления атрибута ищет затронутые workflow.
 - Изменить иерархию/наследование типов задач -> `models/task/src/index.ts` (`TTaskType`) + `plugins/task/src/transfer/` (перенос между проектами).
 - Поправить формат длительности (`2h 30m`) -> `plugins/tracker/src/duration.ts`.
 

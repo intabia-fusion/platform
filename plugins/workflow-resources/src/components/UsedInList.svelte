@@ -12,37 +12,34 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { Icon, IconOpenedArrow, Label } from '@hcengineering/ui'
-  import type { Workflow } from '@hcengineering/workflow'
 
-  import plugin from '../../plugin'
-  import { navigateToWorkflow } from '../../location'
+  import type { UsedInItem } from '../types'
 
-  export let workflows: Workflow[] = []
-  export let headerLabel: IntlString = plugin.string.UsedInWorkflows
+  export let headerLabel: IntlString
+  export let icon: Asset
+  export let items: UsedInItem[] = []
 </script>
 
-{#if workflows.length > 0}
-  <div class="screen-used-workflows">
-    <div class="screen-used-workflows--header">
+{#if items.length > 0}
+  <div class="used-in-list">
+    <div class="used-in-list--header">
       <Label label={headerLabel} />
     </div>
-    <div class="screen-used-workflows--list">
-      {#each workflows as wf (wf._id)}
-        <button
-          type="button"
-          class="screen-used-workflows--item"
-          title={wf.name}
-          on:click|stopPropagation={() => {
-            navigateToWorkflow(wf._id, true)
-          }}
-        >
-          <span class="screen-used-workflows--icon-box">
-            <Icon icon={plugin.icon.Workflow} size="small" />
+    <div class="used-in-list--list">
+      {#each items as item (item.id)}
+        <button type="button" class="used-in-list--item" title={item.name} on:click|stopPropagation={item.onClick}>
+          <span class="used-in-list--icon-box">
+            <Icon {icon} size="small" />
           </span>
-          <span class="screen-used-workflows--name">{wf.name}</span>
-          <span class="screen-used-workflows--arrow">
+          <span class="used-in-list--text">
+            <span class="used-in-list--name">{item.name}</span>
+            {#if item.details !== undefined}
+              <span class="used-in-list--details">{item.details}</span>
+            {/if}
+          </span>
+          <span class="used-in-list--arrow">
             <Icon icon={IconOpenedArrow} size="x-small" />
           </span>
         </button>
@@ -52,7 +49,7 @@
 {/if}
 
 <style lang="scss">
-  .screen-used-workflows {
+  .used-in-list {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -94,7 +91,7 @@
         background-color: var(--global-ui-active-BackgroundColor);
         border-color: var(--global-subtle-ui-BorderColor);
 
-        .screen-used-workflows--arrow {
+        .used-in-list--arrow {
           opacity: 1;
           transform: translateX(2px);
         }
@@ -113,15 +110,29 @@
       flex-shrink: 0;
     }
 
+    &--text {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    &--name,
+    &--details {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     &--name {
       font-size: 0.875rem;
       font-weight: 500;
       color: var(--global-primary-TextColor);
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+
+    &--details {
+      font-size: 0.75rem;
+      color: var(--global-secondary-TextColor);
     }
 
     &--arrow {

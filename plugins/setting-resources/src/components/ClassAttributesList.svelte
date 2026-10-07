@@ -19,7 +19,7 @@
   import core from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getResource } from '@hcengineering/platform'
-  import presentation, { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { Action, AnySvelteComponent } from '@hcengineering/ui'
   import { IconCopy, IconDelete, IconEdit, Menu, getEventPositionElement, showPopup } from '@hcengineering/ui'
   import { getContextActions, SortableList } from '@hcengineering/view-resources'
@@ -27,6 +27,7 @@
   import ClassAttributeRow from './ClassAttributeRow.svelte'
   import { makeRank, toRank } from '@hcengineering/rank'
   import EditAttribute from './EditAttribute.svelte'
+  import { showDeleteAttributePopup } from '../utils'
   import { TypeIdentifier } from '@hcengineering/model'
 
   export let _class: Ref<Class<Doc>>
@@ -101,18 +102,7 @@
   }
 
   export async function removeAttribute (attribute: AnyAttribute, exist: boolean): Promise<void> {
-    showPopup(
-      MessageBox,
-      {
-        label: settings.string.DeleteAttribute,
-        message: exist ? settings.string.DeleteAttributeExistConfirm : settings.string.DeleteAttributeConfirm,
-        action: async () => {
-          await client.remove(attribute)
-          update()
-        }
-      },
-      'top'
-    )
+    await showDeleteAttributePopup(attribute, exist, update)
   }
 
   async function showMenu (ev: MouseEvent, attribute: AnyAttribute): Promise<void> {

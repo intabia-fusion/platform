@@ -13,15 +13,25 @@
 // limitations under the License.
 //
 
-import { type Ref, type Status, type Tx, type TxRemoveDoc, type TxUpdateDoc } from '@hcengineering/core'
+import {
+  type AnyAttribute,
+  type DocumentUpdate,
+  type Ref,
+  type Status,
+  type Tx,
+  type TxRemoveDoc,
+  type TxUpdateDoc
+} from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { type TaskType, type Project } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
 import workflowPlugin, {
+  stripAttributeFromRules,
   type ProjectWorkflow,
   type Screen,
   type ScreenProps,
-  type Workflow
+  type Workflow,
+  type WorkflowTransition
 } from '@hcengineering/workflow'
 
 export async function OnWorkflowDelete (txes: TxRemoveDoc<Workflow>[], control: TriggerControl): Promise<Tx[]> {
@@ -149,6 +159,42 @@ export async function OnScreenDelete (txes: TxRemoveDoc<Screen>[], control: Trig
         requests: remaining
       })
     )
+  }
+
+  return result
+}
+
+export async function OnAttributeDelete (txes: TxRemoveDoc<AnyAttribute>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+  const removedAttributeIds = new Set<Ref<AnyAttribute>>(txes.map((it) => it.objectId))
+
+  if (removedAttributeIds.size === 0) return result
+
+  const fields = await control.findAll(control.ctx, workflow.class.ScreenField, {
+    attribute: { $in: Array.from(removedAttributeIds) }
+  })
+  for (const field of fields) {
+    result.push(
+      control.txFactory.createTxCollectionCUD(
+        field.attachedToClass,
+        field.attachedTo,
+        field.space,
+        field.collection,
+        control.txFactory.createTxRemoveDoc(field._class, field.space, field._id)
+      )
+    )
+  }
+
+  const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {})
+  for (const t of transitions) {
+    const validators = stripAttributeFromRules(t.validators, removedAttributeIds)
+    const postFunctions = stripAttributeFromRules(t.postFunctions, removedAttributeIds)
+    if (validators === undefined && postFunctions === undefined) continue
+
+    const update: DocumentUpdate<WorkflowTransition> = {}
+    if (validators !== undefined) update.validators = validators
+    if (postFunctions !== undefined) update.postFunctions = postFunctions
+    result.push(control.txFactory.createTxUpdateDoc(workflow.class.WorkflowTransition, t.space, t._id, update))
   }
 
   return result

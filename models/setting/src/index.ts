@@ -35,6 +35,7 @@ import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   DOMAIN_SETTING,
   settingId,
+  type AttributeUsageProvider,
   type ClassifierOrder,
   type Editable,
   type Handler,
@@ -84,6 +85,11 @@ export class TSettingsCategory extends TDoc implements SettingsCategory {
   component!: AnyComponent
   role!: AccountRole
   adminOnly?: boolean
+}
+
+@Model(setting.class.AttributeUsageProvider, core.class.Doc, DOMAIN_MODEL)
+export class TAttributeUsageProvider extends TDoc implements AttributeUsageProvider {
+  component!: AnyComponent
 }
 
 @Model(setting.class.WorkspaceSettingCategory, core.class.Doc, DOMAIN_MODEL)
@@ -223,7 +229,8 @@ export function createModel (builder: Builder): void {
     TWebhookStat,
     TWebhookIncomingRule,
     TSpaceTypeEditor,
-    TSpaceTypeCreator
+    TSpaceTypeCreator,
+    TAttributeUsageProvider
   )
 
   builder.createDoc(

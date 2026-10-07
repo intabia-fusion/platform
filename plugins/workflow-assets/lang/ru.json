@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Обновить поля на экране «{name}»",
     "ScreenNotSelected": "Экран не выбран",
     "UsedInWorkflows": "Используется в воркфлоу:",
+    "AttributeRemovedFromScreens": "Поле будет убрано с экранов:",
+    "AttributeRulesChangedInWorkflows": "Правила, использующие атрибут, будут изменены или удалены в воркфлоу:",
     "ScreenClassDisabledUsedInWorkflows": "Нельзя изменить класс, так как экран используется в воркфлоу: {names}",
     "UsedInProjects": "Используется в проектах:",
     "WorkflowsWillBeDeleted": "Следующие воркфлоу привязаны к этому типу задач и тоже будут удалены:",

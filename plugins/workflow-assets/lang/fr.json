@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Mettre à jour les champs dans l'écran \"{name}\"",
     "ScreenNotSelected": "Écran non sélectionné",
     "UsedInWorkflows": "Utilisé dans les workflows :",
+    "AttributeRemovedFromScreens": "Le champ sera retiré des écrans :",
+    "AttributeRulesChangedInWorkflows": "Les règles utilisant cet attribut seront modifiées ou supprimées dans les workflows :",
     "UsedInProjects": "Utilisé dans les projets :",
     "WorkflowsWillBeDeleted": "Les workflows suivants sont liés à ce type de tâche et seront également supprimés :",
     "General": "Général",

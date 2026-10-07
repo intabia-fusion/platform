@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Felder in der Maske \"{name}\" aktualisieren",
     "ScreenNotSelected": "Keine Maske ausgewählt",
     "UsedInWorkflows": "In Workflows verwendet:",
+    "AttributeRemovedFromScreens": "Das Feld wird aus den Masken entfernt:",
+    "AttributeRulesChangedInWorkflows": "Regeln, die dieses Attribut verwenden, werden in Workflows geändert oder entfernt:",
     "UsedInProjects": "In Projekten verwendet:",
     "WorkflowsWillBeDeleted": "Die folgenden Workflows sind mit diesem Aufgabentyp verknüpft und werden ebenfalls gelöscht:",
     "General": "Allgemein",

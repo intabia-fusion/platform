@@ -45,12 +45,12 @@
   import { addScreenTab } from '@hcengineering/workflow'
   import tracker from '@hcengineering/tracker'
 
-  import { navigateToScreen } from '../../location'
+  import { navigateToScreen, navigateToWorkflow } from '../../location'
   import plugin from '../../plugin'
   import type { DisplayAttribute, DisplayAttributeGroup } from '../../utils'
   import { getDisplayAttributes } from '../../utils'
   import ScreenTabEditor from './ScreenTabEditor.svelte'
-  import ScreenUsedWorkflows from './ScreenUsedWorkflows.svelte'
+  import UsedInList from '../UsedInList.svelte'
 
   export let objectId: Ref<Screen>
   export let name: string | undefined = undefined
@@ -235,8 +235,18 @@
         label: plugin.string.DeleteScreen,
         message: plugin.string.DeleteScreenConfirm,
         params: { name: screen.name },
-        component: usedWorkflows.length > 0 ? ScreenUsedWorkflows : undefined,
-        componentProps: { workflows: usedWorkflows },
+        component: usedWorkflows.length > 0 ? UsedInList : undefined,
+        componentProps: {
+          headerLabel: plugin.string.UsedInWorkflows,
+          icon: plugin.icon.Workflow,
+          items: usedWorkflows.map((wf) => ({
+            id: wf._id,
+            name: wf.name,
+            onClick: () => {
+              navigateToWorkflow(wf._id, true)
+            }
+          }))
+        },
         dangerous: true,
         action: async () => {
           if (screen != null) {

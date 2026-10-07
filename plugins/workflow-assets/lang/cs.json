@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Aktualizovat pole na obrazovce \"{name}\"",
     "ScreenNotSelected": "Obrazovka není vybrána",
     "UsedInWorkflows": "Použito ve workflow:",
+    "AttributeRemovedFromScreens": "Pole bude odebráno z obrazovek:",
+    "AttributeRulesChangedInWorkflows": "Pravidla používající tento atribut budou změněna nebo odebrána ve workflow:",
     "UsedInProjects": "Použito v projektech:",
     "WorkflowsWillBeDeleted": "Následující workflow jsou propojena s tímto typem úkolu a budou také smazána:",
     "General": "Obecné",
