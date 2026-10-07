@@ -67,7 +67,7 @@ import {
   isSender
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
-import { cancelLetters } from '../heldLetter'
+import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import config from '../config'
@@ -225,10 +225,16 @@ async function handleRemoveMessage (
   for (const context of contexts) {
     let operations: DocumentUpdate<DocNotifyContext> = {}
     const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
-    // A push or a letter still waiting for this message, or for a mention in it, has nothing left to say.
-    const gone = Array.from(new Set([tx.objectId, ...idsToRemove]))
-    for (const id of gone) client.pendingPush?.cancel(context.user, id)
-    cancelLetters(result, context.user, gone)
+    // A push or a letter still waiting for this message, for a mention in it or for a reaction
+    // on it, has nothing left to say.
+    const gone = Array.from(new Set([tx.objectId, ...idsToRemove, ...unreadReactionIdsOf(context, tx.objectId)]))
+    const cancelled = cancelHeldPushes(client, result, context, 0, gone)
+    // The pushes that already reached the phone come down with the message. Only the tags: the
+    // read position stays where it was, the other alerts of the chat are still unread.
+    await pushDismissMessage(cache, result, context, {
+      tags: pushedAbout(context, tx).filter((id) => !cancelled.has(id)),
+      readUpTo: 0
+    })
 
     if (idsToRemove.length > 0) {
       operations = {
@@ -308,6 +314,28 @@ async function handleRemoveMessage (
     }
     result.updateContextTx.push(updateTx)
   }
+}
+
+// What may be on the phone: the message if notified (a chunk is a guess, a stray tag is a no-op)
+// and its reactions. Mentions are taken down by the mention module.
+function pushedAbout (context: DocNotifyContext, tx: TxRemoveDoc<ActivityMessage>): string[] {
+  const tags: string[] = []
+  const unread = context.unreadMessages?.find((it) => isUnreadMessageId(it) && it.id === tx.objectId)
+  const createdOn = tx.removedDoc?.createdOn
+  const pushed =
+    unread !== undefined
+      ? isUnreadMessageId(unread) && unread.notified === true
+      : createdOn !== undefined &&
+        (context.unreadMessages ?? []).some(
+          (it) => isUnreadMessageChunk(it) && it.from <= createdOn && createdOn <= it.to && (it.notifiedCount ?? 0) > 0
+        )
+  if (pushed) tags.push(tx.objectId)
+  tags.push(...unreadReactionIdsOf(context, tx.objectId))
+  return tags
+}
+
+function unreadReactionIdsOf (context: DocNotifyContext, messageId: Ref<ActivityMessage>): string[] {
+  return (context.unreadReactions ?? []).filter((it) => it.attachedTo === messageId).map((it) => it.id)
 }
 
 // `ReadState.latestMessage*` feed the unread anchor on the clients and the "recent direct" check

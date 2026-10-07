@@ -213,6 +213,7 @@ describe('message module', () => {
 
     // Default mock setups
     mockCache.getDocReadState.mockResolvedValue(undefined)
+    mockCache.getPushSubscriptions.mockResolvedValue([])
     mockCache.getSender.mockResolvedValue({ socialId: 'author-social', account: 'author-account' })
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
     mockGetBaseDisplayParams.mockResolvedValue({ intlParams: { doc: 'doc' }, intlParamsNotLocalized: {} })
@@ -651,7 +652,7 @@ describe('message module', () => {
         space: 'space-1',
         user: 'user-1',
         unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }],
-        unreadReactions: [{ attachedTo: 'msg-1' }],
+        unreadReactions: [{ id: 'react-1', attachedTo: 'msg-1' }],
         unreadMentions: [{ messageId: 'msg-1' }],
         lastNotify: 50
       } as unknown as DocNotifyContext
@@ -665,9 +666,14 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      // The push held for the receiver to read this message first is dropped with it, the letter too.
+      // The push held for the receiver to read this message first is dropped with it, the letter too,
+      // and the same for the reaction on it.
       expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'msg-1')
-      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:msg-1:%' }])
+      expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'react-1')
+      expect(result.timeMachine).toEqual([
+        { type: 'cancel', id: 'letter:user-1:msg-1:%' },
+        { type: 'cancel', id: 'letter:user-1:react-1:%' }
+      ])
       expect(result.updateContextTx).toHaveLength(1)
       expect(result.updateContextTx[0].operations).toEqual({
         $pull: {
@@ -679,6 +685,108 @@ describe('message module', () => {
           unreadCount: -2 // -1 for unreadMessage notified, -1 for reaction
         },
         lastNotify: 40
+      })
+    })
+
+    describe('dismiss of the pushes already on the phone', () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-1',
+        attachedTo: 'doc-1',
+        removedDoc: { createdOn: 100 }
+      } as unknown as TxRemoveDoc<ActivityMessage>
+      const base = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        user: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'obj-space',
+        unreadCount: 2
+      }
+
+      beforeEach(() => {
+        mockCache.getPushSubscriptions.mockResolvedValue([
+          { _id: 'apns', endpoint: 'apns://a' },
+          { _id: 'web', endpoint: 'https://push.example/x' }
+        ])
+      })
+
+      it('takes the notified message and the reactions on it down, native subscriptions only', async () => {
+        const context = {
+          ...base,
+          unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }],
+          unreadReactions: [{ id: 'react-1', attachedTo: 'msg-1' }, { id: 'react-2', attachedTo: 'msg-other' }]
+        } as unknown as DocNotifyContext
+        mockCache.getContexts.mockResolvedValue([context])
+        const pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+        ;(mockClient as any).pendingPush = pendingPush
+
+        await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+        // The reaction on the message may still be waiting too, in a card or not.
+        expect(pendingPush.cancel.mock.calls).toEqual([
+          ['user-1', 'msg-1'],
+          ['user-1', 'react-1']
+        ])
+        expect(result.queueMessages).toEqual([
+          {
+            kind: 'dismiss',
+            id: 'dismiss:ctx-1:msg-1',
+            account: 'user-1',
+            objectId: 'doc-1',
+            objectClass: 'DocClass',
+            objectSpace: 'obj-space',
+            pushSubscriptions: [{ _id: 'apns', endpoint: 'apns://a' }],
+            tags: ['msg-1', 'react-1'],
+            readUpTo: 0
+          }
+        ])
+      })
+
+      it('takes a message counted in a notified chunk down', async () => {
+        const context = {
+          ...base,
+          unreadMessages: [{ from: 50, to: 150, count: 3, notifiedCount: 2 }]
+        } as unknown as DocNotifyContext
+        mockCache.getContexts.mockResolvedValue([context])
+        ;(mockClient as any).pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+
+        await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+        expect(result.queueMessages.map((it) => (it as any).tags)).toEqual([['msg-1']])
+      })
+
+      it('sends nothing for a push still held: the cancel is enough', async () => {
+        const context = {
+          ...base,
+          unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true }]
+        } as unknown as DocNotifyContext
+        mockCache.getContexts.mockResolvedValue([context])
+        ;(mockClient as any).pendingPush = { cancel: jest.fn().mockReturnValue(true) }
+
+        await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+        expect(result.queueMessages).toEqual([])
+        expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:msg-1:%' }])
+      })
+
+      it('sends nothing for a message that was never pushed or is in a chunk nobody was told about', async () => {
+        const context = {
+          ...base,
+          unreadMessages: [
+            { id: 'msg-1', createdOn: 100 },
+            { from: 200, to: 300, count: 2 }
+          ]
+        } as unknown as DocNotifyContext
+        mockCache.getContexts.mockResolvedValue([context])
+        ;(mockClient as any).pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+
+        await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+        expect(result.queueMessages).toEqual([])
+        expect(mockCache.getPushSubscriptions).not.toHaveBeenCalled()
       })
     })
 

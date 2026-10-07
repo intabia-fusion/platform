@@ -103,7 +103,7 @@ describe('handleReaction', () => {
       getContexts: jest.fn(),
       getContext: jest.fn(),
       getSender: jest.fn(),
-      getPushSubscriptions: jest.fn()
+      getPushSubscriptions: jest.fn().mockResolvedValue([])
     }
 
     txCache = {
@@ -395,6 +395,67 @@ describe('handleReaction', () => {
       // A push or a letter about the removed reaction that was still waiting for the person is dropped.
       expect(mockClient.pendingPush.cancel).toHaveBeenCalledWith('user-1', 'react-1')
       expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:react-1:%' }])
+    })
+
+    describe('dismiss of a reaction push already on the phone', () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        attachedTo: 'msg-1',
+        objectId: 'react-1'
+      } as unknown as TxRemoveDoc<Reaction>
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1' as Ref<Space>,
+        user: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'obj-space',
+        unreadReactions: [{ id: 'react-1', attachedTo: 'msg-1' }],
+        latestNotifications: [{ type: 'reaction', id: 'react-1' }],
+        lastNotify: 100
+      } as unknown as DocNotifyContext
+
+      beforeEach(() => {
+        mockCache.getDoc.mockResolvedValue({ _id: 'msg-1', createdBy: 'user-1', attachedTo: 'doc-1' })
+        mockCache.getAccountBySocialId.mockResolvedValue('user-1')
+        mockCache.getContext.mockResolvedValue(context)
+        mockCache.getPushSubscriptions.mockResolvedValue([{ _id: 'apns', endpoint: 'apns://a' }])
+      })
+
+      it('takes the push down when it had left the service', async () => {
+        mockClient.pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+
+        await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
+
+        expect(result.queueMessages).toEqual([
+          expect.objectContaining({
+            kind: 'dismiss',
+            account: 'user-1',
+            objectId: 'doc-1',
+            tags: ['react-1'],
+            readUpTo: 0,
+            pushSubscriptions: [{ _id: 'apns', endpoint: 'apns://a' }]
+          })
+        ])
+      })
+
+      it('sends nothing when the push was still held', async () => {
+        mockClient.pendingPush = { cancel: jest.fn().mockReturnValue(true) }
+
+        await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
+
+        expect(result.queueMessages).toEqual([])
+      })
+
+      it('sends nothing for a reaction already read', async () => {
+        mockCache.getContext.mockResolvedValue({ ...context, unreadReactions: [] })
+        mockClient.pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+
+        await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
+
+        expect(result.queueMessages).toEqual([])
+      })
     })
   })
 })
