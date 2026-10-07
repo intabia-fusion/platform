@@ -89,6 +89,22 @@ export async function pushDismissMessage (
   read: DismissScope
 ): Promise<void> {
   if (read.readUpTo === 0 && read.tags.length === 0) return
+  // One removal can take down a message and the mention in it from two modules: the tags join
+  // the dismiss already queued for the context instead of costing the phone a second push.
+  if (read.readUpTo === 0) {
+    const queued = result.queueMessages.find(
+      (it): it is QueueDismissMessage =>
+        it.kind === 'dismiss' &&
+        it.account === context.user &&
+        it.objectId === context.objectId &&
+        it.readUpTo === 0 &&
+        it.tags.length + read.tags.length <= DISMISS_TAGS_PER_MESSAGE
+    )
+    if (queued !== undefined) {
+      for (const tag of read.tags) if (!queued.tags.includes(tag)) queued.tags.push(tag)
+      return
+    }
+  }
   const subscriptions = (await cache.getPushSubscriptions(context.user)).filter((it) =>
     isNativePushEndpoint(it.endpoint)
   )

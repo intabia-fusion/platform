@@ -72,6 +72,20 @@ describe('pushDismissMessage', () => {
     ])
   })
 
+  it('joins a tags-only dismiss to the one already queued for the context', async () => {
+    const result = emptyResult()
+    const c = cache(['apns://a'])
+    await pushDismissMessage(c, result, context, { tags: ['m-1'], readUpTo: 0 })
+    await pushDismissMessage(c, result, context, { tags: ['n-1', 'm-1'], readUpTo: 0 })
+    await pushDismissMessage(c, result, { ...context, _id: 'ctx-2', objectId: 'doc-2' }, { tags: ['r-2'], readUpTo: 0 })
+    expect(result.queueMessages.map((it) => (it as any).tags)).toEqual([['m-1', 'n-1'], ['r-2']])
+    expect(c.getPushSubscriptions).toHaveBeenCalledTimes(2)
+
+    // A read position is a dismiss of its own, not a list of tags to extend.
+    await pushDismissMessage(c, result, context, { tags: ['m-2'], readUpTo: 100 })
+    expect(result.queueMessages).toHaveLength(3)
+  })
+
   it('sends nothing when the read names no tag and no position', async () => {
     const result = emptyResult()
     await pushDismissMessage(cache(['apns://a']), result, context, { tags: [], readUpTo: 0 })

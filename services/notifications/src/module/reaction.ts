@@ -27,7 +27,7 @@ import notification, {
 } from '@hcengineering/notification'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
-import { cancelLetters } from '../heldLetter'
+import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 import Cache from '../cache'
 import {
   getAllowedProviders,
@@ -182,12 +182,16 @@ async function handleRemoveReaction (
   const contexts = context != null ? [context] : []
 
   for (const context of contexts) {
-    // A push or a letter about the reaction still waiting for the person is not needed.
-    client.pendingPush?.cancel(context.user, tx.objectId)
-    cancelLetters(result, context.user, [tx.objectId])
+    // A push or a letter about the reaction still waiting for the person is not needed; a push
+    // already on the phone comes down.
+    const cancelled = cancelHeldPushes(client, result, context, 0, [tx.objectId])
+    const unread = hasUnreadReaction(context, tx.objectId)
+    if (unread && !cancelled.has(tx.objectId)) {
+      await pushDismissMessage(cache, result, context, { tags: [tx.objectId], readUpTo: 0 })
+    }
     const ops: DocumentUpdate<DocNotifyContext> = {}
 
-    if (hasUnreadReaction(context, tx.objectId)) {
+    if (unread) {
       ops.$pull = { unreadReactions: { id: tx.objectId } }
       ops.$inc = { unreadCount: -1 }
     }

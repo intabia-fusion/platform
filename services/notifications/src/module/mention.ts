@@ -59,7 +59,7 @@ import {
   getPushGroup
 } from '../utils/utils'
 import { pushNotification } from './notification'
-import { cancelLetters } from '../heldLetter'
+import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 
 export async function handleMention (
   client: Client,
@@ -407,24 +407,31 @@ async function removeMentions (
     const ids = (context.latestNotifications ?? [])
       .filter((it) => it.type === 'mention' && it.messageId === messageId)
       .map((it) => it.id)
+    const unreadIds = (context.unreadMentions ?? []).filter((it) => ids.includes(it.id)).map((it) => it.id)
+    const unreadMsg =
+      messageId != null
+        ? context.unreadMessages?.find((it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true)
+        : undefined
 
     if (ids.length > 0) {
       op.$pull = { latestNotifications: { id: { $in: ids } } }
-      // A push or a letter still waiting for the mention is not needed.
-      for (const id of ids) client.pendingPush?.cancel(account, id)
-      cancelLetters(result, account, ids)
+      // A push or a letter still waiting for the mention is not needed; a push already on the
+      // phone comes down. Unread is what was pushed: a mention outside a message by its own id,
+      // a mention in a message by the message's entry.
+      const cancelled = cancelHeldPushes(client, result, context, 0, ids)
+      const pushed = unreadMsg != null && isUnreadMessageId(unreadMsg) && unreadMsg.notified === true
+      await pushDismissMessage(cache, result, context, {
+        tags: ids.filter((id) => !cancelled.has(id) && (pushed || unreadIds.includes(id))),
+        readUpTo: 0
+      })
     }
 
-    const unreadIds = (context.unreadMentions ?? []).filter((it) => ids.includes(it.id)).map((it) => it.id)
     if (unreadIds.length > 0) {
       op.$pull = { ...op.$pull, unreadMentions: { id: { $in: unreadIds } } }
       op.$inc = { unreadCount: -unreadIds.length }
     }
 
     if (messageId != null) {
-      const unreadMsg = context.unreadMessages?.find(
-        (it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true
-      )
       if (unreadMsg != null && isUnreadMessageId(unreadMsg)) {
         op.$update = {
           unreadMessages: {

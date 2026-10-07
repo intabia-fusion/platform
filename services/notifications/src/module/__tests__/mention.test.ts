@@ -180,7 +180,7 @@ describe('mention module', () => {
       getReceivers: jest.fn(),
       getCollaborators: jest.fn(),
       getUserStatuses: jest.fn(),
-      getPushSubscriptions: jest.fn(),
+      getPushSubscriptions: jest.fn().mockResolvedValue([]),
       getDoc: jest.fn(),
       getContext: jest.fn()
     }
@@ -710,6 +710,8 @@ describe('mention module', () => {
         _id: 'ctx-1',
         _class: 'DocNotifyContext',
         space: 'space-1',
+        user: 'user-1',
+        objectId: 'doc-1',
         lastNotify: 100,
         unreadCount: 1,
         latestNotifications: [
@@ -741,6 +743,89 @@ describe('mention module', () => {
       // A push or a letter still waiting for the removed mention is dropped with it.
       expect(pendingPush.cancel).toHaveBeenCalledWith('user-1', 'n-doc')
       expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:n-doc:%' }])
+    })
+
+    it('takes the push of a removed mention down from the phone when it had left the service', async () => {
+      const tx = {
+        _class: core.class.TxUpdateDoc,
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        createdOn: 100,
+        modifiedBy: 'user-2',
+        operations: { description: '<content>' }
+      } as unknown as TxCUD<Doc>
+      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
+
+      const attrs = new Map()
+      attrs.set('description', {
+        name: 'description',
+        type: { _class: core.class.TypeMarkup }
+      } as unknown as AnyAttribute)
+      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
+      mockClient.hierarchy.isDerived.mockImplementation(
+        (cls: string, target: string) => target === contact.class.Person
+      )
+      mockExtractReferences.mockReturnValue([
+        { objectId: 'employee-3', objectClass: contact.class.Person, parentNode: { type: 'paragraph' } }
+      ])
+      mockJsonToMarkup.mockReturnValue('{"text":"new"}')
+
+      mockClient.findAll.mockImplementation(async (cls: string) =>
+        cls === activity.class.UserMentionInfo
+          ? [
+              {
+                _id: 'mention-info-1',
+                _class: activity.class.UserMentionInfo,
+                space: 'space-1',
+                user: 'employee-1',
+                attachedTo: 'doc-1',
+                content: '{"text":"old"}'
+              }
+            ]
+          : []
+      )
+      mockCache.getDoc.mockImplementation(async (_id: string, cls: string) =>
+        cls === contact.class.Person ? { personUuid: 'user-1' as AccountUuid } : undefined
+      )
+      mockCache.getContext.mockResolvedValue({
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        user: 'user-1',
+        objectId: 'doc-1',
+        objectClass: 'DocClass',
+        objectSpace: 'space-1',
+        lastNotify: 100,
+        unreadCount: 1,
+        latestNotifications: [
+          { id: 'n-doc', type: 'mention', createdOn: 100 },
+          { id: 'n-comment', type: 'mention', messageId: 'msg-9', createdOn: 90 }
+        ],
+        unreadMentions: [{ id: 'n-doc' }]
+      })
+      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
+      mockCache.getContexts.mockResolvedValue([])
+      mockCache.getSettings.mockResolvedValue({})
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getDocSettings.mockResolvedValue([])
+      mockCache.getReceivers.mockResolvedValue([])
+      const pendingPush = { cancel: jest.fn().mockReturnValue(false) }
+      ;(mockClient as any).pendingPush = pendingPush
+      mockCache.getPushSubscriptions.mockResolvedValue([{ _id: 'apns', endpoint: 'apns://a' }])
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, doc, 'test-type' as any)
+
+      // The mention outside a message is unread by its own id: its push is on the phone, so it comes down.
+      expect(result.queueMessages).toEqual([
+        expect.objectContaining({ kind: 'dismiss', account: 'user-1', tags: ['n-doc'], readUpTo: 0 })
+      ])
+      expect(result.timeMachine).toEqual([{ type: 'cancel', id: 'letter:user-1:n-doc:%' }])
+
+      // Held and cancelled by the removal instead: nothing to take down.
+      result.queueMessages = []
+      pendingPush.cancel.mockReturnValue(true)
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, doc, 'test-type' as any)
+      expect(result.queueMessages).toEqual([])
     })
 
     it('keeps the mentions of an @everyone message when it is edited without touching the mention', async () => {
