@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,7 @@ import core, { TDoc } from '@hcengineering/model-core'
 import preference, { DOMAIN_PREFERENCE, type Preference, type SpacePreference } from '@hcengineering/preference'
 
 export { preferenceId } from '@hcengineering/preference'
-export { preferenceOperation } from './migration'
+export { preferenceOperation, removeOrphanPreferences } from './migration'
 export { preference as default }
 
 @Model(preference.class.Preference, core.class.Doc, DOMAIN_PREFERENCE)

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -46,6 +47,17 @@ export async function OnAttachmentDelete (
   }
   if (toDelete.length > 0) {
     await storageAdapter.remove(ctx, workspace, toDelete)
+  }
+
+  // Bookmarks belong to every user who saved the file, not only to the one removing it.
+  const saved = await findAll(
+    ctx,
+    attachment.class.SavedAttachments,
+    { attachedTo: { $in: txes.map((tx) => (tx as TxRemoveDoc<Attachment>).objectId) } },
+    { projection: { _id: 1, _class: 1, space: 1 } }
+  )
+  for (const it of saved) {
+    result.push(txFactory.createTxRemoveDoc(it._class, it.space, it._id))
   }
 
   return result

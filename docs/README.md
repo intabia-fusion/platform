@@ -58,6 +58,7 @@
 | --- | --- |
 | [changelog.update.task.md](changelog.update.task.md) | Как обновлять changelog |
 | [fix-glitches.md](fix-glitches.md) | Ветка fix-glitches: исправленные дефекты, зачем, тесты, что меняется для клиентов, что не исправлено |
+| [saved-orphans.md](saved-orphans.md) | FUSIO-1508: закладки на удалённые сообщения и вложения - причина, триггеры, миграция, тесты |
 
 ## Неактивный код
 

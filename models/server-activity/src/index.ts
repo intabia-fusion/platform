@@ -91,6 +91,15 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnActivityMessageRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: activity.class.ActivityMessage
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocClassChanged,
     txMatch: {
       _class: core.class.TxUpdateDoc

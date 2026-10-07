@@ -19,6 +19,11 @@
   "devDependencies": {
     "cross-env": "catalog:",
     "@hcengineering/platform-rig": "workspace:^0.7.19",
+    "@hcengineering/test-containers": "workspace:^0.7.0",
+    "@hcengineering/pod-db-migrator": "workspace:^0.7.0",
+    "@hcengineering/model-all": "workspace:^0.7.0",
+    "@hcengineering/model-preference": "workspace:^0.7.0",
+    "@hcengineering/postgres": "workspace:^0.7.22",
     "@types/node": "catalog:",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "eslint-plugin-import": "catalog:",

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,6 +20,7 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient
 } from '@hcengineering/model'
+import { removeOrphanPreferences } from '@hcengineering/model-preference'
 import attachment, { attachmentId, DOMAIN_ATTACHMENT } from '.'
 
 export const attachmentOperation: MigrateOperation = {
@@ -35,6 +37,13 @@ export const attachmentOperation: MigrateOperation = {
               attachedToClass: 'chunter:class:ChatMessage'
             }
           )
+        }
+      },
+      {
+        state: 'remove-orphan-saved-attachments-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient): Promise<void> => {
+          await removeOrphanPreferences(client, attachment.class.SavedAttachments, attachment.class.Attachment)
         }
       }
     ])

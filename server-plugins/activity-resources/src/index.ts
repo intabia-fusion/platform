@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -49,6 +50,20 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
   return result
 }
 
+// Bookmarks belong to every user who saved the message, not only to the one removing it.
+export async function OnActivityMessageRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const removed = txes.filter((tx) => tx._class === core.class.TxRemoveDoc).map((tx) => tx.objectId)
+  if (removed.length === 0) return []
+
+  const saved = await control.findAll(
+    control.ctx,
+    activity.class.SavedMessage,
+    { attachedTo: { $in: removed as Ref<ActivityMessage>[] } },
+    { projection: { _id: 1, _class: 1, space: 1 } }
+  )
+  return saved.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
+}
+
 export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
@@ -86,6 +101,7 @@ export default async () => ({
   trigger: {
     ReferenceTrigger,
     OnDocRemoved,
-    OnDocClassChanged
+    OnDocClassChanged,
+    OnActivityMessageRemoved
   }
 })

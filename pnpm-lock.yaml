@@ -38452,9 +38452,24 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../plugins/workflow-assets
     devDependencies:
+      '@hcengineering/model-all':
+        specifier: workspace:^0.7.0
+        version: link:../../models/all
+      '@hcengineering/model-preference':
+        specifier: workspace:^0.7.0
+        version: link:../../models/preference
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@hcengineering/pod-db-migrator':
+        specifier: workspace:^0.7.0
+        version: link:../../services/db-migrator
+      '@hcengineering/postgres':
+        specifier: workspace:^0.7.22
+        version: link:../../foundations/server/packages/postgres
+      '@hcengineering/test-containers':
+        specifier: workspace:^0.7.0
+        version: link:../../foundations/server/packages/test-containers
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
