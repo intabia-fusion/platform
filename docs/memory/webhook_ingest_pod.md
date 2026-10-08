@@ -31,7 +31,7 @@ TSK-2026-09-01-009..014,021,022,054,056 (приём) + TSK-015..020,050,053 (con
   промахе не чаще 10 с; задача/документ - `findOne` на запрос. Ошибка поиска не блокирует
   (задание ставится непроверенным): отправитель ретраит только 5xx, а 4xx ему нужен честный.
 
-## ponytail-ограничения (искать при добавлении второй реплики)
+## Ограничения одной реплики (искать при добавлении второй реплики)
 
 `src/store.ts` (`WebhookStore`) держит идемпотентность (`Idempotency-Key`, TTL ~сутки) и статус
 задания (`queued`/`done`/`failed` + `result`/`error`) в памяти процесса, lazy sweep по TTL. Одному поду
@@ -48,8 +48,7 @@ HTTP-ручка окажутся в разных подах, `GET /job/:id` не
   создаёт (чужой - `services/worker`, он же time-machine, в проде `enabled: false`, см.
   `foundation-tasks/docs/infra/2026-08-29-201-time-machine-deploy.md`). Backoff 30с/1м/2м/4м/8м, 5
   попыток, потом dead-letter в `failed`. Если продюсер в `QueueTopic.TimeMachine` падает (топика
-  нет/брокер недоступен) - job сразу `failed` с причиной, а не висит в `queued` навечно (`//
-  ponytail:` в `src/consumer.ts`).
+  нет/брокер недоступен) - job сразу `failed` с причиной, а не висит в `queued` навечно (комментарий в `src/consumer.ts`).
 - Резолв покрыл все 6 операций через существующие
   `createIssue`/`updateIssue`/`commentIssue`/`postMessage`/`createDocument`/`updateDocument`
   без обходных путей.

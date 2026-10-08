@@ -361,7 +361,7 @@ const docCreate: OpsExecutor = async (client, payload, uploadMarkup) => {
   const title = requireString(payload, 'title')
   const content = optionalMarkdown(payload, 'body', ['content', 'contentRef']) ?? optionalString(payload, 'content')
   const contentRef = optionalString(payload, 'contentRef') as MarkupBlobRef | undefined
-  // ponytail: parent takes a raw Ref<Document> - documents have no human identifier like an issue's
+  // Parent takes a raw Ref<Document> - documents have no human identifier like an issue's
   // FUSIO-42, add title-scoped lookup if callers need to name a parent doc instead of pasting its id.
   const parent = optionalString(payload, 'parent') as Ref<Document> | undefined
 

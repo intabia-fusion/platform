@@ -253,7 +253,7 @@ export const webhookEventSamples: Record<WebhookEventType, Record<string, unknow
     organizationId: '9c858f36-6b1a-4d3a-8f2e-1a2b3c4d5e6f'
   },
   // `data.identifier` is present only if pod-webhook still has this issue's create cached in-process
-  // (see txTranslator.ts's `ponytail:` note) - unknown after a restart, same as `updatedFrom`. Without
+  // (see the cache note in txTranslator.ts) - unknown after a restart, same as `updatedFrom`. Without
   // it there is no issue link either: the front resolves an issue by its identifier.
   'issue.status_changed': {
     action: 'update',

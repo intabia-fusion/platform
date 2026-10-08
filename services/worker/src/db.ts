@@ -26,7 +26,7 @@ export interface DelayedEventRecord {
 
 const delayedEventsTable = 'time_machine.delayed_events'
 
-// ponytail: caps a single poll's batch so a large backlog isn't pulled in one query; the rest
+// Caps a single poll's batch so a large backlog isn't pulled in one query; the rest
 // drains over the following polls, oldest first. Bump if POLL_INTERVAL * this stops draining backlog.
 const EXPIRED_EVENTS_BATCH_SIZE = 500
 

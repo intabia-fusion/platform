@@ -54,7 +54,7 @@ export type ObjectCache = Map<string, Record<string, unknown>>
 // Soft cap. Not an LRU: re-setting a key keeps its insertion order, so this drops the oldest-created.
 const MAX_CACHE_ENTRIES = 50_000
 
-// ponytail: in-process only. After a restart, a rebalance, or for an object whose create this pod
+// In-process only. After a restart, a rebalance, or for an object whose create this pod
 // never saw, `updatedFrom` comes back empty - unknown, not wrong. Accurate state needs a snapshot store.
 
 function trackedClasses (rules: DomainRule[]): Set<Ref<Class<Doc>>> {
@@ -294,7 +294,7 @@ function collapseUpdates (
   for (const { rule, fields } of grouped.values()) {
     const updatedFrom: Record<string, unknown> = {}
     // `identifier` rides the same cache as `updatedFrom` - present only if this pod's cache still
-    // has it from the object's create (see the `ponytail:` note above), omitted otherwise.
+    // has it from the object's create (see the cache note above), omitted otherwise.
     const data: Record<string, unknown> = { id: objectId }
     let actor = (touched.get(fields[0]) as { actor: PersonId }).actor
     for (const field of fields) {

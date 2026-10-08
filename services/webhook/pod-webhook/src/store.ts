@@ -17,7 +17,7 @@ import type { WebhookJobRecord } from './types'
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000 // ~1 day, per spec
 
-// ponytail: single-replica, in-memory, swept lazily on write. A second replica needs a shared cache
+// Single-replica, in-memory, swept lazily on write. A second replica needs a shared cache
 // instead - callers only ever see WebhookJobRecord.
 export class WebhookStore {
   private readonly jobs = new Map<string, WebhookJobRecord>()

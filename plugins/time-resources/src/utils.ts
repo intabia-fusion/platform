@@ -124,7 +124,7 @@ export async function findPrimaryCalendar (): Promise<Ref<Calendar>> {
  * Activity counters read no tx payload, and an unbounded scan of the tx domain is what made one
  * staging transactor run out of memory (FUSIO-1344).
  *
- * ponytail: the limit truncates silently - on a busy workspace the oldest days of the window
+ * The limit truncates silently - on a busy workspace the oldest days of the window
  * lose their counters (newest survive, the sort is descending). Per-day queries if that shows.
  */
 export function activityTxQuery (

@@ -156,7 +156,7 @@ async function retryOrFail (
     await scheduleRetry(ctx, queue, job.workspace, QueueTopic.Webhook, job.jobId, backoffDelayMs(job.attempt), nextJob)
     // Job stays 'queued' - it comes back through QueueTopic.Webhook once the delay elapses.
   } catch (scheduleErr) {
-    // ponytail: time-machine is off in prod. If scheduling the retry fails, fail the job outright
+    // Time-machine is off in prod. If scheduling the retry fails, fail the job outright
     // rather than leave it stuck in 'queued' forever.
     const scheduleMessage = scheduleErr instanceof Error ? scheduleErr.message : String(scheduleErr)
     store.markFailed(job.jobId, `${message} (retry scheduling failed: ${scheduleMessage})`)

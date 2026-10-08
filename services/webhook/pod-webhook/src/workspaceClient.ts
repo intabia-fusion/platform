@@ -67,7 +67,7 @@ interface CachedEndpoint {
   expiresAt: number
 }
 
-// ponytail: cached for the process lifetime (with a TTL below) and identity-independent, so both
+// Cached for the process lifetime (with a TTL below) and identity-independent, so both
 // target helpers share it.
 const endpoints = new Map<WorkspaceUuid, CachedEndpoint>()
 
@@ -105,7 +105,7 @@ async function resolveTarget (config: Config, workspace: WorkspaceUuid, token: s
   return { token, transactorUrl, workspaceUrl, rest }
 }
 
-// ponytail: cached for the process lifetime, keyed by (workspace, keyId) - a key rename needs a pod
+// Cached for the process lifetime, keyed by (workspace, keyId) - a key rename needs a pod
 // restart to reach the workspace Person. Acceptable: the Person doc is a display-name convenience.
 const ensuredPersons = new Set<string>()
 

@@ -180,12 +180,7 @@ export async function createServer (
 
   app.get('/blob/:workspace', withAdminAuthorization, withWorkspace, wrapRequest(ctx, 'listBlobs', handleBlobList))
 
-  app.head(
-    '/blob/:workspace/:name',
-    withAuthorization,
-    withBlob,
-    wrapRequest(ctx, 'headBlob', handleBlobHead)
-  )
+  app.head('/blob/:workspace/:name', withAuthorization, withBlob, wrapRequest(ctx, 'headBlob', handleBlobHead))
 
   app.head(
     '/blob/:workspace/:name/:filename',
@@ -194,12 +189,7 @@ export async function createServer (
     wrapRequest(ctx, 'headBlob', handleBlobHead)
   )
 
-  app.get(
-    '/blob/:workspace/:name',
-    withAuthorization,
-    withBlob,
-    wrapRequest(ctx, 'getBlob', handleBlobGet)
-  )
+  app.get('/blob/:workspace/:name', withAuthorization, withBlob, wrapRequest(ctx, 'getBlob', handleBlobGet))
 
   app.get(
     '/blob/:workspace/:name/:filename([^?]+)',
@@ -230,12 +220,7 @@ export async function createServer (
 
   // Blob meta
 
-  app.get(
-    '/meta/:workspace/:name',
-    withAuthorization,
-    withBlob,
-    wrapRequest(ctx, 'getMeta', handleMetaGet)
-  )
+  app.get('/meta/:workspace/:name', withAuthorization, withBlob, wrapRequest(ctx, 'getMeta', handleMetaGet))
 
   app.put('/meta/:workspace/:name', withAuthorization, withBlob, wrapRequest(ctx, 'putMeta', handleMetaPut))
 

@@ -538,7 +538,7 @@ export async function requestUserInput (
 }
 
 function getAttributeRank (attribute: AnyAttribute | undefined): string {
-  return attribute === undefined ? '' : attribute.rank ?? toRank(attribute._id) ?? ''
+  return attribute === undefined ? '' : (attribute.rank ?? toRank(attribute._id) ?? '')
 }
 
 export async function getTransitionUserInput (
