@@ -34,7 +34,7 @@ import {
   type PlatformQueue,
   type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
-import { WorkspaceManager } from '../manager'
+import { accountAttempts, WorkspaceManager } from '../manager'
 import { WorkspaceIndexer } from '../workspace'
 import { genMinModel } from './minmodel'
 
@@ -52,6 +52,8 @@ const ws = 'ws-1' as WorkspaceUuid
 const model = genMinModel()
 const ctx = new MeasureMetricsContext('manager-test', {})
 const control: ConsumerControl = { pause: jest.fn(), heartbeat: jest.fn().mockResolvedValue(undefined) }
+// withRetry waits 1 s between account attempts.
+const accountRetryMs = accountAttempts * 1000
 
 describe('fulltext deferred reindex', () => {
   let mgr: WorkspaceManager
@@ -169,15 +171,15 @@ describe('fulltext deferred reindex', () => {
       expect(account.setNeedsReindex).not.toHaveBeenCalled()
     })
 
-    it('a failing flag write is retried three times, then logged without failing the message', async () => {
+    it('a failing flag write is retried accountAttempts times, then logged without failing the message', async () => {
       jest.useFakeTimers()
       account.setNeedsReindex.mockRejectedValue(new Error('account down'))
 
       const done = fulltextEvent(workspaceEvents.fullReindex())
-      await jest.advanceTimersByTimeAsync(5000)
+      await jest.advanceTimersByTimeAsync(accountRetryMs)
       await expect(done).resolves.toBeUndefined()
 
-      expect(account.setNeedsReindex).toHaveBeenCalledTimes(3)
+      expect(account.setNeedsReindex).toHaveBeenCalledTimes(accountAttempts)
     })
 
     it('transactions skipped on a version mismatch do not set the flag, but are logged as dropped', async () => {
@@ -289,10 +291,10 @@ describe('fulltext deferred reindex', () => {
       account.takeNeedsReindex.mockRejectedValue(new Error('account down'))
 
       const done = mgr.withIndexer(ctx, ws, 'token', true, jest.fn())
-      await jest.advanceTimersByTimeAsync(5000)
+      await jest.advanceTimersByTimeAsync(accountRetryMs)
 
       expect(await done).toBe('done')
-      expect(account.takeNeedsReindex).toHaveBeenCalledTimes(3)
+      expect(account.takeNeedsReindex).toHaveBeenCalledTimes(accountAttempts)
       expect(producer.send).not.toHaveBeenCalled()
       expect(flag).toBe(true)
     })

@@ -39,7 +39,7 @@ import { WorkspaceIndexer } from './workspace'
 
 const closeTimeout = 5 * 60 * 1000
 // needs_reindex calls are retried, then logged: a stuck account service must not stall the queues.
-const accountAttempts = 5
+export const accountAttempts = 5
 
 /** The workspace is not on the version this pod indexes. */
 export class WrongVersionError extends Error {}

@@ -51,7 +51,7 @@
 Детали вызовов account:
 
 - только с сервисным токеном фуллтекста (`withAccount`): `createIndexer` вызывается и из поиска (`pods/fulltext/src/server.ts`) с токеном пользователя, а RPC пускает только `extra.service === 'fulltext'`;
-- 3 попытки через 1 с, потом `ctx.error` и обработка идёт дальше: per-message consumer (`@hcengineering/kafka`) повторяет упавшее сообщение бесконечно и держит партицию.
+- `accountAttempts` (5) попыток через 1 с, потом `ctx.error` и обработка идёт дальше: per-message consumer (`@hcengineering/kafka`) повторяет упавшее сообщение бесконечно и держит партицию.
 
 ## Что не покрыто
 
