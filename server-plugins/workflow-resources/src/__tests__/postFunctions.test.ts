@@ -1150,7 +1150,9 @@ describe('Workflow Post-Functions', () => {
       isDerived: (c: any, target: any) => c === target,
       findAttribute: (_cls: any, key: any) => {
         if (key === 'createdBy') return { _id: key, name: key, type: { _class: core.class.TypePersonId } }
-        if (key === 'assignee') { return { _id: key, name: key, type: { _class: core.class.RefTo, to: contact.class.Person } } }
+        if (key === 'assignee') {
+          return { _id: key, name: key, type: { _class: core.class.RefTo, to: contact.class.Person } }
+        }
         return undefined
       }
     })
