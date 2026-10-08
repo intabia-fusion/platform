@@ -36,8 +36,7 @@ import {
   withAuthorization,
   withBlob,
   withWorkspace,
-  withReadonly,
-  withOptionalAuth
+  withReadonly
 } from './middleware'
 import {
   handleBlobDelete,
@@ -183,28 +182,28 @@ export async function createServer (
 
   app.head(
     '/blob/:workspace/:name',
-    withOptionalAuth(config.Secure),
+    withAuthorization,
     withBlob,
     wrapRequest(ctx, 'headBlob', handleBlobHead)
   )
 
   app.head(
     '/blob/:workspace/:name/:filename',
-    withOptionalAuth(config.Secure),
+    withAuthorization,
     withBlob,
     wrapRequest(ctx, 'headBlob', handleBlobHead)
   )
 
   app.get(
     '/blob/:workspace/:name',
-    withOptionalAuth(config.Secure),
+    withAuthorization,
     withBlob,
     wrapRequest(ctx, 'getBlob', handleBlobGet)
   )
 
   app.get(
     '/blob/:workspace/:name/:filename([^?]+)',
-    withOptionalAuth(config.Secure),
+    withAuthorization,
     withBlob,
     wrapRequest(ctx, 'getBlob', handleBlobGet)
   )
@@ -233,7 +232,7 @@ export async function createServer (
 
   app.get(
     '/meta/:workspace/:name',
-    withOptionalAuth(config.Secure),
+    withAuthorization,
     withBlob,
     wrapRequest(ctx, 'getMeta', handleMetaGet)
   )
