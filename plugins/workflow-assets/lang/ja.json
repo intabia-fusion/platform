@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "「{name}」画面のフィールドを更新",
     "ScreenNotSelected": "画面が選択されていません",
     "UsedInWorkflows": "使用されているワークフロー:",
+    "AttributeRemovedFromScreens": "このフィールドは次の画面から削除されます：",
+    "AttributeRulesChangedInWorkflows": "この属性を使用しているルールは、次のワークフローで変更または削除されます:",
     "UsedInProjects": "使用されているプロジェクト:",
     "WorkflowsWillBeDeleted": "以下のワークフローはこのタスクタイプに関連付けられており、同時に削除されます:",
     "General": "全般",

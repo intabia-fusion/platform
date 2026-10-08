@@ -134,6 +134,16 @@ export interface SettingsCategory extends Doc {
 
 /**
  * @public
+ *
+ * Extends the attribute delete confirmation: `component` gets `attribute` and lists the documents
+ * that refer to it and will be cleaned up along with it; renders nothing when there are none.
+ */
+export interface AttributeUsageProvider extends Doc {
+  component: AnyComponent
+}
+
+/**
+ * @public
  */
 export interface InviteSettings extends Configuration {
   expirationTime: number
@@ -435,7 +445,8 @@ export default plugin(settingId, {
     WebhookEndpoint: '' as Ref<Class<WebhookEndpoint>>,
     WebhookDelivery: '' as Ref<Class<WebhookDelivery>>,
     WebhookStat: '' as Ref<Class<WebhookStat>>,
-    WebhookIncomingRule: '' as Ref<Class<WebhookIncomingRule>>
+    WebhookIncomingRule: '' as Ref<Class<WebhookIncomingRule>>,
+    AttributeUsageProvider: '' as Ref<Class<AttributeUsageProvider>>
   },
   component: {
     Settings: '' as AnyComponent,

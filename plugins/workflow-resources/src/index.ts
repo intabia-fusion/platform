@@ -21,6 +21,7 @@ import ProjectTypeScreensSectionEditor from './components/ProjectTypeScreensSect
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
 import WorkflowDiagramPopup from './components/editor/WorkflowDiagramPopup.svelte'
 import ScreenEditor from './components/screen/ScreenEditor.svelte'
+import AttributeUsages from './components/AttributeUsages.svelte'
 import ScreenRequestEditor from './components/requests/editors/ScreenRequestEditor.svelte'
 import ScreenRequestPresenter from './components/requests/presenters/ScreenRequestPresenter.svelte'
 import FieldRequired from './components/validators/editors/FieldRequared.svelte'
@@ -90,6 +91,7 @@ export default async (): Promise<Resources> => ({
     WorkflowEditor,
     WorkflowDiagramPopup,
     ScreenEditor,
+    AttributeUsages,
     ContextSubmenuPopup
   },
   requestEditor: {

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,7 +26,7 @@
   } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import type { Asset } from '@hcengineering/platform'
-  import { getEmbeddedLabel, getResource, translateCB } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { AnyComponent, DropdownIntlItem } from '@hcengineering/ui'
   import {
@@ -44,6 +45,7 @@
   import view from '@hcengineering/view-resources/src/plugin'
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
+  import { showDeleteAttributePopup } from '../utils'
 
   export let attribute: AnyAttribute
   export let exist: boolean
@@ -155,13 +157,8 @@
     }
   }
 
-  async function remove (evt: MouseEvent): Promise<void> {
-    const impl = await getResource(view.actionImpl.Delete)
-    await impl(attribute, evt, {
-      afterDelete: () => {
-        clearSettingsStore()
-      }
-    })
+  async function remove (): Promise<void> {
+    await showDeleteAttributePopup(attribute, exist, clearSettingsStore)
   }
 
   async function hide (): Promise<void> {

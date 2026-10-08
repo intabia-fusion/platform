@@ -13,7 +13,15 @@
 // limitations under the License.
 //
 
-import core, { Data, DocumentUpdate, type Ref, SortingOrder, type Status, type TxOperations } from '@hcengineering/core'
+import core, {
+  type AnyAttribute,
+  Data,
+  DocumentUpdate,
+  type Ref,
+  SortingOrder,
+  type Status,
+  type TxOperations
+} from '@hcengineering/core'
 import { Project, TaskType, ProjectType, makeRank } from '@hcengineering/task'
 
 import workflow from './plugin'
@@ -31,6 +39,7 @@ import type {
   WorkflowConstValue,
   WorkflowValuePreset,
   WorkflowTransformCall,
+  WorkflowRuleConfig,
   AnyRuleConfig
 } from './schema'
 
@@ -357,6 +366,46 @@ export async function removeScreenField (
     workflow.class.ScreenTab,
     'fields'
   )
+}
+
+function fieldReferencesAttribute (
+  field: Field & { value?: WorkflowFieldValue },
+  attributes: ReadonlySet<Ref<AnyAttribute>>
+): boolean {
+  if (attributes.has(field.attribute)) return true
+  const value = field.value
+  return value != null && (isThisValue(value) || isParentValue(value)) && attributes.has(value.attribute)
+}
+
+/**
+ * Drops the fields that reference any of `attributes` (directly or through a this/parent value)
+ * from the rules' `props.fields`; a rule left without fields is dropped as well.
+ * Returns undefined when none of the rules references the attributes.
+ */
+export function stripAttributeFromRules<T extends WorkflowRuleConfig> (
+  rules: T[] | undefined,
+  attributes: ReadonlySet<Ref<AnyAttribute>>
+): T[] | undefined {
+  if (rules == null || rules.length === 0) return undefined
+  let changed = false
+  const result: T[] = []
+  for (const rule of rules) {
+    const fields = rule.props?.fields
+    if (!Array.isArray(fields)) {
+      result.push(rule)
+      continue
+    }
+    const remaining = fields.filter((f) => !fieldReferencesAttribute(f, attributes))
+    if (remaining.length === fields.length) {
+      result.push(rule)
+      continue
+    }
+    changed = true
+    if (remaining.length > 0) {
+      result.push({ ...rule, props: { ...rule.props, fields: remaining } })
+    }
+  }
+  return changed ? result : undefined
 }
 
 // Builder API for Workflow Value Expressions

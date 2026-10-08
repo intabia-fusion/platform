@@ -15212,6 +15212,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/setting
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../../plugins/task

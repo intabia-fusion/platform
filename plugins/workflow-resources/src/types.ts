@@ -21,6 +21,13 @@ import { type AnySvelteComponent } from '@hcengineering/ui'
 import plugin from './plugin'
 import RuleEditor from './components/rules/RuleEditor.svelte'
 
+export interface UsedInItem {
+  id: string
+  name: string
+  details?: string
+  onClick: () => void
+}
+
 export interface ScreenModalResult<T extends Doc = Doc> {
   update?: DocumentUpdate<T>
   txes?: Array<TxCUD<Doc>>

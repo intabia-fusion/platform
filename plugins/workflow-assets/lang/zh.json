@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "更新“{name}”界面中的字段",
     "ScreenNotSelected": "未选择界面",
     "UsedInWorkflows": "已用于工作流：",
+    "AttributeRemovedFromScreens": "该字段将从以下界面中移除：",
+    "AttributeRulesChangedInWorkflows": "使用此属性的规则将在以下工作流中被修改或删除：",
     "UsedInProjects": "已用于项目：",
     "WorkflowsWillBeDeleted": "以下工作流已绑定到此任务类型，也将被删除：",
     "General": "常规",

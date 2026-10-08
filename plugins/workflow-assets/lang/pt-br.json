@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Atualizar campos na tela \"{name}\"",
     "ScreenNotSelected": "Tela não selecionada",
     "UsedInWorkflows": "Usado em fluxos de trabalho:",
+    "AttributeRemovedFromScreens": "O campo será removido das telas:",
+    "AttributeRulesChangedInWorkflows": "As regras que usam este atributo serão alteradas ou removidas nos fluxos de trabalho:",
     "UsedInProjects": "Usado em projetos:",
     "WorkflowsWillBeDeleted": "Os seguintes fluxos de trabalho estão vinculados a este tipo de tarefa e também serão excluídos:",
     "General": "Geral",

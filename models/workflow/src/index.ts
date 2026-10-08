@@ -16,6 +16,7 @@
 import core, { AccountRole } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import presentation from '@hcengineering/model-presentation'
+import setting from '@hcengineering/setting'
 
 import workflow from './plugin'
 import {
@@ -67,6 +68,10 @@ export function createModel (builder: Builder): void {
     createAccessLevel: AccountRole.Maintainer,
     updateAccessLevel: AccountRole.Maintainer,
     removeAccessLevel: AccountRole.Maintainer
+  })
+
+  builder.createDoc(setting.class.AttributeUsageProvider, core.space.Model, {
+    component: workflow.component.AttributeUsages
   })
 
   builder.createDoc(

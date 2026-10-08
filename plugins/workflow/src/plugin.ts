@@ -154,7 +154,8 @@ export default plugin(workflowId, {
     WorkflowEditor: '' as AnyComponent,
     WorkflowDiagramPopup: '' as AnyComponent,
     ProjectTypeScreensSectionEditor: '' as AnyComponent,
-    ScreenEditor: '' as AnyComponent
+    ScreenEditor: '' as AnyComponent,
+    AttributeUsages: '' as AnyComponent
   },
   icon: {
     Workflows: '' as Asset,
@@ -270,6 +271,8 @@ export default plugin(workflowId, {
     ScreenRequestPresenter: '' as IntlString,
     ScreenNotSelected: '' as IntlString,
     UsedInWorkflows: '' as IntlString,
+    AttributeRemovedFromScreens: '' as IntlString,
+    AttributeRulesChangedInWorkflows: '' as IntlString,
     ScreenClassDisabledUsedInWorkflows: '' as IntlString,
     UsedInProjects: '' as IntlString,
     WorkflowsWillBeDeleted: '' as IntlString,

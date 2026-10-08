@@ -3,6 +3,7 @@ import { getClient as getAccountClientRaw, type AccountClient } from '@hcenginee
 import contact, { getFirstName, getLastName } from '@hcengineering/contact'
 import { employeeByPersonIdStore } from '@hcengineering/contact-resources'
 import {
+  type AnyAttribute,
   type Class,
   type Doc,
   type Hierarchy,
@@ -19,6 +20,7 @@ import login from '@hcengineering/login'
 import platform, { getMetadata, PlatformError, translate } from '@hcengineering/platform'
 import presentation, {
   getClient,
+  MessageBox,
   OtpConfirmDialog,
   type OtpConfirmProps,
   type OtpConfirmResult
@@ -26,9 +28,10 @@ import presentation, {
 import type { PersonRating } from '@hcengineering/rating'
 import setting from '@hcengineering/setting'
 import { type TemplateDataProvider } from '@hcengineering/templates'
-import { showPopup } from '@hcengineering/ui'
+import { showPopup, themeStore } from '@hcengineering/ui'
 import { get } from 'svelte/store'
 
+import AttributeUsages from './components/AttributeUsages.svelte'
 import settingsRes from './plugin'
 
 function isEditable (hierarchy: Hierarchy, p: Class<Doc>): boolean {
@@ -170,4 +173,30 @@ export async function requestOperationOtpCode (): Promise<string | undefined> {
       resolve(res != null && res.code.length > 0 ? res.code : undefined)
     })
   })
+}
+
+/** Confirms removing a custom attribute and lists what refers to it (`setting.class.AttributeUsageProvider`). */
+export async function showDeleteAttributePopup (
+  attribute: AnyAttribute,
+  exist: boolean,
+  onDeleted?: () => void
+): Promise<void> {
+  const name = await translate(attribute.label, {}, get(themeStore).language)
+  showPopup(
+    MessageBox,
+    {
+      label: settingsRes.string.DeleteAttribute,
+      message: exist ? settingsRes.string.DeleteAttributeExistConfirm : settingsRes.string.DeleteAttributeConfirm,
+      params: { name },
+      component: AttributeUsages,
+      componentProps: { attribute },
+      okLabel: presentation.string.Delete,
+      dangerous: true,
+      action: async () => {
+        await getClient().remove(attribute)
+        onDeleted?.()
+      }
+    },
+    'top'
+  )
 }

@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Update fields in the \"{name}\" screen",
     "ScreenNotSelected": "Screen not selected",
     "UsedInWorkflows": "Used in workflows:",
+    "AttributeRemovedFromScreens": "The field will be removed from screens:",
+    "AttributeRulesChangedInWorkflows": "Rules using this attribute will be changed or removed in workflows:",
     "ScreenClassDisabledUsedInWorkflows": "Cannot change class while screen is used in workflows: {names}",
     "UsedInProjects": "Used in projects:",
     "WorkflowsWillBeDeleted": "The following workflows are tied to this task type and will also be deleted:",

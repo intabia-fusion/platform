@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "Aggiorna i campi nella schermata \"{name}\"",
     "ScreenNotSelected": "Schermata non selezionata",
     "UsedInWorkflows": "Utilizzato nei flussi di lavoro:",
+    "AttributeRemovedFromScreens": "Il campo verrà rimosso dalle schermate:",
+    "AttributeRulesChangedInWorkflows": "Le regole che utilizzano questo attributo verranno modificate o rimosse nei flussi di lavoro:",
     "UsedInProjects": "Utilizzato nei progetti:",
     "WorkflowsWillBeDeleted": "I seguenti flussi di lavoro sono collegati a questo tipo di attività e verranno anch'essi eliminati:",
     "General": "Generale",

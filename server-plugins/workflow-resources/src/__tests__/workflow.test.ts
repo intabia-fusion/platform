@@ -14,6 +14,7 @@
 //
 
 import core, {
+  type AnyAttribute,
   type Doc,
   generateId,
   type Ref,
@@ -29,7 +30,13 @@ import core, {
 import { type TriggerControl, type PipelineContext } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import workflowPlugin, { type Screen, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
+import workflowPlugin, {
+  type Screen,
+  type ScreenField,
+  type ScreenTab,
+  type Workflow,
+  type WorkflowTransition
+} from '@hcengineering/workflow'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
 
 import { PostFunctionsTrigger } from '../PostFunctions'
@@ -1233,6 +1240,97 @@ describe('PostFunctionsTrigger', () => {
         _class: core.class.TxUpdateDoc,
         objectId: 't-1',
         operations: { requests: [keptRequest] }
+      })
+    })
+  })
+
+  describe('OnAttributeDelete', () => {
+    it('should remove screen fields and strip rule fields of the removed attribute', async () => {
+      const { OnAttributeDelete } = jest.requireActual('../WorkflowTrigger')
+      const removedAttr = 'attr-removed' as Ref<AnyAttribute>
+      const otherAttr = 'attr-other' as Ref<AnyAttribute>
+      const space = core.space.Workspace
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.Tx,
+        objectId: removedAttr,
+        objectClass: core.class.Attribute,
+        objectSpace: core.space.Model,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const screenField = {
+        _id: 'sf-1' as Ref<ScreenField>,
+        _class: workflow.class.ScreenField,
+        space,
+        attachedTo: 'tab-1' as Ref<ScreenTab>,
+        attachedToClass: workflow.class.ScreenTab,
+        collection: 'fields',
+        attribute: removedAttr,
+        fieldKey: 'removed'
+      }
+
+      const removedField = { attribute: removedAttr, fieldKey: 'removed' }
+      const otherField = { attribute: otherAttr, fieldKey: 'other' }
+      const requiredBoth = {
+        id: 'v-both',
+        rule: workflowPlugin.validator.FieldRequired,
+        props: { fields: [removedField, otherField] }
+      }
+      const clearOnlyRemoved = {
+        id: 'p-only',
+        rule: workflowPlugin.postFunction.ClearFieldValue,
+        props: { fields: [removedField] }
+      }
+      const transitionAffected = {
+        _id: 't-1' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        validators: [requiredBoth],
+        postFunctions: [clearOnlyRemoved]
+      }
+      const transitionUntouched = {
+        _id: 't-2' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        validators: [{ id: 'v-other', rule: workflowPlugin.validator.FieldRequired, props: { fields: [otherField] } }]
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class) => {
+          if (_class === workflow.class.ScreenField) return [screenField]
+          if (_class === workflow.class.WorkflowTransition) return [transitionAffected, transitionUntouched]
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnAttributeDelete([removeTx as any], mockControl as any)
+
+      expect(mockControl.findAll).toHaveBeenCalledWith(expect.anything(), workflow.class.ScreenField, {
+        attribute: { $in: [removedAttr] }
+      })
+      expect(result).toHaveLength(2)
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxRemoveDoc,
+        objectId: 'sf-1',
+        objectClass: workflow.class.ScreenField,
+        attachedTo: 'tab-1',
+        attachedToClass: workflow.class.ScreenTab,
+        collection: 'fields'
+      })
+      expect(result[1]).toMatchObject({
+        _class: core.class.TxUpdateDoc,
+        objectId: 't-1',
+        operations: {
+          validators: [{ ...requiredBoth, props: { fields: [otherField] } }],
+          postFunctions: []
+        }
       })
     })
   })

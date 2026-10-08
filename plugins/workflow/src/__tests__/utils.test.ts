@@ -44,6 +44,7 @@ import {
   removeScreenTab,
   addScreenField,
   removeScreenField,
+  stripAttributeFromRules,
   WorkflowValue,
   isPresetValue,
   isThisValue,
@@ -1082,6 +1083,46 @@ describe('Workflow Utilities', () => {
         const val = WorkflowValue.const({ num: 42 }, [transformCall])
         expect(val).toEqual({ type: 'const', value: { num: 42 }, functions: [transformCall] })
       })
+    })
+  })
+
+  describe('stripAttributeFromRules', () => {
+    const attrRemoved = 'attr-removed' as Ref<AnyAttribute>
+    const removed = new Set([attrRemoved])
+    const fieldRemoved: Field = { attribute: attrRemoved, fieldKey: 'removed' }
+    const fieldKept: Field = { attribute: attrAssignee, fieldKey: 'assignee' }
+
+    function rule (id: string, props: Record<string, any>): AnyRuleConfig {
+      return { id, ruleClass: workflow.class.WorkflowValidator, rule: validatorType, props }
+    }
+
+    it('should return undefined when no rule references the attribute', () => {
+      expect(stripAttributeFromRules(undefined, removed)).toBeUndefined()
+      expect(stripAttributeFromRules([], removed)).toBeUndefined()
+      expect(stripAttributeFromRules([rule('r1', { fields: [fieldKept] })], removed)).toBeUndefined()
+    })
+
+    it('should drop only the field of the removed attribute and keep the rule', () => {
+      const result = stripAttributeFromRules([rule('r1', { fields: [fieldRemoved, fieldKept] })], removed)
+      expect(result).toEqual([rule('r1', { fields: [fieldKept] })])
+    })
+
+    it('should drop the rule left without fields and keep the others', () => {
+      const other = rule('r2', { fields: [fieldKept] })
+      const withoutFields = rule('r3', { statuses: {} })
+      const result = stripAttributeFromRules([rule('r1', { fields: [fieldRemoved] }), other, withoutFields], removed)
+      expect(result).toEqual([other, withoutFields])
+    })
+
+    it('should drop a field whose this/parent value reads the removed attribute', () => {
+      const copyFromThis = { ...fieldKept, value: WorkflowValue.this(fieldRemoved) }
+      const copyFromParent = { ...fieldKept, value: WorkflowValue.parent(fieldRemoved) }
+      const constValue = { ...fieldKept, value: WorkflowValue.const(attrRemoved) }
+      const result = stripAttributeFromRules(
+        [rule('r1', { fields: [copyFromThis, copyFromParent, constValue] })],
+        removed
+      )
+      expect(result).toEqual([rule('r1', { fields: [constValue] })])
     })
   })
 })

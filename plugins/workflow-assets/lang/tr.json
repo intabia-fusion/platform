@@ -95,6 +95,8 @@
     "ScreenRequestPresenter": "\"{name}\" ekranındaki alanları güncelle",
     "ScreenNotSelected": "Ekran seçilmedi",
     "UsedInWorkflows": "İş akışlarında kullanılıyor:",
+    "AttributeRemovedFromScreens": "Alan şu ekranlardan kaldırılacak:",
+    "AttributeRulesChangedInWorkflows": "Bu özniteliği kullanan kurallar iş akışlarında değiştirilecek veya kaldırılacak:",
     "UsedInProjects": "Projelerde kullanılıyor:",
     "WorkflowsWillBeDeleted": "Aşağıdaki iş akışları bu görev türüne bağlıdır ve onlar da silinecektir:",
     "General": "Genel",
