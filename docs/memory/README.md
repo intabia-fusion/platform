@@ -72,6 +72,7 @@
 - [clisr_wire_protocol.md](clisr_wire_protocol.md) - clisr: формат кадров и глубина отправки
 - [cockroach-dropped.md](cockroach-dropped.md) - CockroachDB dropped from the test lane (possible, not supported for now)
 - [fulltext_bulk_mode.md](fulltext_bulk_mode.md) - Fulltext pod - bulk mode
+- [fulltext_needs_reindex.md](fulltext_needs_reindex.md) - Fulltext: отложенная переиндексация (needs_reindex)
 - [kafka_consumer_test_overhead.md](kafka_consumer_test_overhead.md) - Kafka consumer lifecycle dominates fulltext test time
 - [livequery-coverage-and-bench.md](livequery-coverage-and-bench.md) - LiveQuery: инварианты, покрытие и бенчмарки
 - [livequery-tx-ordering.md](livequery-tx-ordering.md) - LiveQuery tx ordering vs ClientImpl.tx

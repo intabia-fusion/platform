@@ -116,7 +116,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV47Migration(ns, flavor),
     getV48Migration(ns, flavor),
     getV49Migration(ns),
-    getV50Migration(ns)
+    getV50Migration(ns),
+    getV51Migration(ns, flavor)
   ]
 }
 
@@ -1298,6 +1299,17 @@ function getV50Migration (ns: string): [string, string] {
     `
     ALTER TABLE ${ns}.workspace
     ADD COLUMN IF NOT EXISTS max_api_keys SMALLINT;
+    `
+  ]
+}
+
+function getV51Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v51_workspace_needs_reindex',
+    /* Fulltext skipped a reindex on a version mismatch; it runs after the upgrade. No default: no backfill. */
+    `
+    ALTER TABLE ${ns}.workspace_status ADD COLUMN IF NOT EXISTS needs_reindex ${types.bool};
     `
   ]
 }

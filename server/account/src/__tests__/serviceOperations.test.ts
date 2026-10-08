@@ -54,7 +54,9 @@ import {
   adminUpdateSubscription,
   getPersonInfo,
   updateWorkspaceInfo,
-  updateBackupLease
+  updateBackupLease,
+  setNeedsReindex,
+  takeNeedsReindex
 } from '../serviceOperations'
 
 // Mock platform
@@ -2456,5 +2458,46 @@ describe('updateBackupLease', () => {
     })
 
     expect(result).toBe(false)
+  })
+})
+
+describe('needs reindex', () => {
+  const mockCtx = { error: jest.fn() } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockDb = {
+      workspaceStatus: { update: jest.fn().mockResolvedValue(undefined) },
+      takeNeedsReindex: jest.fn().mockResolvedValue(true)
+    }
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'fulltext' }, workspace: workspaceUuid })
+  })
+
+  test.each([['workspace'], ['backup'], [undefined]])('rejects a %s token', async (service) => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service }, workspace: workspaceUuid })
+    const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+
+    await expect(setNeedsReindex(mockCtx, mockDb, mockBranding, mockToken)).rejects.toThrow(forbidden)
+    await expect(takeNeedsReindex(mockCtx, mockDb, mockBranding, mockToken)).rejects.toThrow(forbidden)
+    expect(mockDb.workspaceStatus.update).not.toHaveBeenCalled()
+    expect(mockDb.takeNeedsReindex).not.toHaveBeenCalled()
+  })
+
+  test('set raises the flag on the token workspace', async () => {
+    await setNeedsReindex(mockCtx, mockDb, mockBranding, mockToken)
+
+    expect(mockDb.workspaceStatus.update).toHaveBeenCalledWith({ workspaceUuid }, { needsReindex: true })
+  })
+
+  test('take passes through the db result for the token workspace', async () => {
+    mockDb.takeNeedsReindex.mockResolvedValue(false)
+
+    expect(await takeNeedsReindex(mockCtx, mockDb, mockBranding, mockToken)).toBe(false)
+    expect(mockDb.takeNeedsReindex).toHaveBeenCalledWith(workspaceUuid)
   })
 })

@@ -969,6 +969,8 @@ export interface WorkspaceInfoWithStatus extends WorkspaceInfo {
   usageInfo?: UsageStatus
   // Deferred deletion: when the workspace gets purged for good. Absent means not scheduled.
   deleteOn?: Timestamp
+  // Fulltext skipped a reindex on a version mismatch; it runs once the workspace is upgraded.
+  needsReindex?: boolean
   processingAttemps: number
   // Self-host edition of this deployment (dev|community|licensed) — same for every workspace, carried
   // here so the workspace-select screen can show a "Community" badge. Absent on older servers.

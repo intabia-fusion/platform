@@ -510,6 +510,15 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       const accountClient = getAccountClient(getToolToken(wsInfo.uuid))
       const queue = getPlatformQueue('tool', info.region)
       const wsProducer = queue.getProducer<QueueWorkspaceMessage>(toolCtx, QueueTopic.Workspace)
+      const markUpgradeDone = async (): Promise<void> => {
+        await updateWorkspaceInfo(measureCtx, db, null, getToolToken(), {
+          workspaceUuid: info.uuid,
+          event: 'upgrade-done',
+          version,
+          progress: 100
+        })
+      }
+      let upgradeDone = false
       await upgradeWorkspace(
         measureCtx,
         version,
@@ -519,18 +528,21 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
         coreWsInfo,
         consoleModelLogger,
         wsProducer,
-        async () => {},
+        async (event) => {
+          // The version has to be raised here: migration reindex requests are sent right after upgrade-done.
+          if (event === 'upgrade-done') {
+            await markUpgradeDone()
+            upgradeDone = true
+          }
+        },
         forceUpdate,
         forceIndexes,
         true
       )
-
-      await updateWorkspaceInfo(measureCtx, db, null, getToolToken(), {
-        workspaceUuid: info.uuid,
-        event: 'upgrade-done',
-        version,
-        progress: 100
-      })
+      if (!upgradeDone) {
+        // Nothing to upgrade: still mark the workspace upgraded, as before.
+        await markUpgradeDone()
+      }
 
       console.log(metricsToString(measureCtx.metrics, 'upgrade', 60))
 

@@ -1,4 +1,5 @@
 import {
+  DOMAIN_MIGRATION,
   type Doc,
   type DocumentQuery,
   type Domain,
@@ -18,14 +19,9 @@ import {
   type MigrationIterator,
   type ModelLogger
 } from '@hcengineering/model'
-import {
-  type Pipeline,
-  type StorageAdapter,
-  workspaceEvents,
-  type PlatformQueueProducer,
-  type QueueWorkspaceMessage
-} from '@hcengineering/server-core'
+import { type Pipeline, type StorageAdapter } from '@hcengineering/server-core'
 import { type AccountClient } from '@hcengineering/account-client'
+import { reindexRequest, type ReindexRequest } from './reindex'
 
 /**
  * Upgrade client implementation.
@@ -41,7 +37,6 @@ export class MigrateClientImpl implements MigrationClient {
     readonly storageAdapter: StorageAdapter,
     readonly accountClient: AccountClient,
     readonly wsIds: WorkspaceIds,
-    readonly queue: PlatformQueueProducer<QueueWorkspaceMessage>,
     ctx?: MeasureContext
   ) {
     if (this.pipeline.context.lowLevelStorage === undefined) {
@@ -127,11 +122,16 @@ export class MigrateClientImpl implements MigrationClient {
     await this.lowLevel.rawDeleteMany(domain, query)
   }
 
+  // Stored, not sent: the workspace service sends it after upgrade-done (sendPendingReindex).
   async fullReindex (): Promise<void> {
-    await this.queue.send(this.ctx, this.wsIds.uuid, [workspaceEvents.fullReindex()])
+    await this.create(DOMAIN_MIGRATION, reindexRequest())
   }
 
   async reindex (domain: Domain, classes: Ref<Class<Doc>>[]): Promise<void> {
-    await this.queue.send(this.ctx, this.wsIds.uuid, [workspaceEvents.reindex(domain, classes)])
+    const request = reindexRequest(domain, classes)
+    // Two migrations may ask for the same domain: keep the classes of both.
+    const [stored] = await this.lowLevel.rawFindAll<ReindexRequest>(DOMAIN_MIGRATION, { _id: request._id })
+    request.classes = Array.from(new Set([...(stored?.classes ?? []), ...classes]))
+    await this.create(DOMAIN_MIGRATION, request)
   }
 }

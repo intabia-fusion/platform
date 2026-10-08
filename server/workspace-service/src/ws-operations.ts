@@ -28,7 +28,15 @@ import {
 import { getServerPipeline, getTxAdapterFactory } from '@hcengineering/server-pipeline'
 import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { generateToken } from '@hcengineering/server-token'
-import { initializeWorkspace, initModel, prepareTools, updateModel, upgradeModel } from '@hcengineering/server-tool'
+import {
+  dropPendingReindex,
+  initializeWorkspace,
+  initModel,
+  prepareTools,
+  sendPendingReindex,
+  updateModel,
+  upgradeModel
+} from '@hcengineering/server-tool'
 
 /**
  * @public
@@ -376,7 +384,6 @@ export async function upgradeWorkspaceWith (
       connection,
       storageAdapter,
       accountClient,
-      queue,
       migrationOperation,
       logger,
       async (value) => {
@@ -387,11 +394,42 @@ export async function upgradeWorkspaceWith (
     )
 
     await handleWsEvent?.('upgrade-done', version, 100, '')
+    // Migrations store their reindex requests (MigrateClientImpl); only now, with the version raised, the
+    // fulltext indexer can run them. A failed upgrade leaves them stored for the retry.
+    await sendMigrationReindex(ctx, pipeline, queue, wsIds, mode)
   } catch (err: any) {
     ctx.error('upgrade-failed', { message: err.message })
     void handleWsEvent?.('ping', version, 0, `Upgrade failed: ${err.message}`)
     throw err
   } finally {
     clearInterval(updateProgressHandle)
+  }
+}
+
+async function sendMigrationReindex (
+  ctx: MeasureContext,
+  pipeline: Pipeline,
+  queue: PlatformQueueProducer<QueueWorkspaceMessage>,
+  wsIds: WorkspaceIds,
+  mode: MigrateMode
+): Promise<void> {
+  const lowLevel = pipeline.context.lowLevelStorage
+  if (lowLevel === undefined) {
+    ctx.warn('no low level storage, migration reindex requests stay stored', { workspace: wsIds.uuid })
+    return
+  }
+  try {
+    if (mode === 'create') {
+      // A new workspace gets Created, and the fulltext indexer runs a full reindex on it.
+      await dropPendingReindex(ctx, lowLevel)
+      return
+    }
+    const sent = await sendPendingReindex(ctx, lowLevel, queue, wsIds.uuid)
+    if (sent.length > 0) {
+      ctx.info('migration reindex requests sent', { workspace: wsIds.uuid, events: sent.map((it) => it.type) })
+    }
+  } catch (err: any) {
+    // Logged only: the version is raised already, and the requests stay stored for the next upgrade.
+    ctx.error('failed to send migration reindex requests', { workspace: wsIds.uuid, err })
   }
 }

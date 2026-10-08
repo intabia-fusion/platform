@@ -47,14 +47,7 @@ import {
   prefetchSpaces,
   tryMigrate
 } from '@hcengineering/model'
-import {
-  type DbAdapter,
-  DomainIndexHelperImpl,
-  type Pipeline,
-  type PlatformQueueProducer,
-  type QueueWorkspaceMessage,
-  type StorageAdapter
-} from '@hcengineering/server-core'
+import { type DbAdapter, DomainIndexHelperImpl, type Pipeline, type StorageAdapter } from '@hcengineering/server-core'
 import { type InitScript, WorkspaceInitializer } from './initializer'
 import toolPlugin from './plugin'
 import { MigrateClientImpl } from './upgrade'
@@ -71,6 +64,7 @@ const SLOW_OP_MS = 250
 
 export * from './connect'
 export * from './plugin'
+export * from './reindex'
 export * from './utils'
 export { toolPlugin as default }
 
@@ -265,7 +259,6 @@ export async function upgradeModel (
   connection: Client,
   storageAdapter: StorageAdapter,
   accountClient: AccountClient,
-  queue: PlatformQueueProducer<QueueWorkspaceMessage>,
   migrateOperations: [string, MigrateOperation][],
   logger: ModelLogger = consoleModelLogger,
   progress: (value: number) => Promise<void>,
@@ -288,8 +281,7 @@ export async function upgradeModel (
     logger,
     storageAdapter,
     accountClient,
-    wsIds,
-    queue
+    wsIds
   )
 
   await progress(0)
@@ -326,8 +318,7 @@ export async function upgradeModel (
     logger,
     storageAdapter,
     accountClient,
-    wsIds,
-    queue
+    wsIds
   )
 
   const upgradeIndexes = async (): Promise<void> => {
@@ -407,8 +398,7 @@ async function prepareMigrationClient (
   logger: ModelLogger,
   storageAdapter: StorageAdapter,
   accountClient: AccountClient,
-  wsIds: WorkspaceIds,
-  queue: PlatformQueueProducer<QueueWorkspaceMessage>
+  wsIds: WorkspaceIds
 ): Promise<{
   migrateClient: MigrateClientImpl
   migrateState: Map<string, Set<string>>
@@ -421,7 +411,6 @@ async function prepareMigrationClient (
     storageAdapter,
     accountClient,
     wsIds,
-    queue,
     ctx
   )
   const states = await migrateClient.find<MigrationState>(DOMAIN_MIGRATION, { _class: core.class.MigrationState })
