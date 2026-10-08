@@ -54,9 +54,9 @@ export async function FirstMatchValue (
   }
   if (!Array.isArray(value)) return value
   const { _class, ...otherProps } = props
-  if (_class == null) return
   if (value.length === 0) return
   if (typeof value[0] === 'string') {
+    if (_class == null) return
     const docs = await control.client.findAll(_class, { _id: { $in: value } })
     return matchQuery(docs, otherProps, core.class.Doc, control.client.getHierarchy(), true)[0]?._id
   } else if (typeof value[0] === 'object') {
