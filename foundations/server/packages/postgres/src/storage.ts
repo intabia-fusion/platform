@@ -1432,7 +1432,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           case '$in':
             switch (type) {
               case 'common':
-                if (Array.isArray(val) && val.includes(null)) {
+                if (Array.isArray(val) && val.some((it) => it == null)) {
                   const vv = vars.addArray(val, valType)
                   res.push(`(${tlkey} = ANY(${vv}) OR ${tkey} IS NULL)`)
                 } else {
@@ -1462,7 +1462,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
               res.push(`NOT (${tkey} && ${vars.addArrayI(val, valType)})`)
             } else if (type === 'dataArray') {
               res.push(`(${tkey} IS NULL OR NOT (${tkey} ?| ${vars.addArrayI(val, valType)}))`)
-            } else if (Array.isArray(val) && val.includes(null)) {
+            } else if (Array.isArray(val) && val.some((it) => it == null)) {
               res.push(`(${tlkey} != ALL(${vars.addArray(val, valType)}) AND ${tkey} IS NOT NULL)`)
             } else if (Array.isArray(val) && val.length > 0) {
               res.push(`${tlkey} != ALL(${vars.addArray(val, valType)})`)

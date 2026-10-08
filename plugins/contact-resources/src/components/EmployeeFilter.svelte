@@ -64,7 +64,7 @@
       projection: { [filter.key.key]: 1, space: 1 }
     })
     for (const object of baseObjects) {
-      const value = getObjectValue(filter.key.key, object) ?? undefined
+      const value = getObjectValue(filter.key.key, object) ?? null
       targets.add(value)
     }
     for (const object of filter.value) {
@@ -82,8 +82,8 @@
           }
     objectsPromise = client.findAll(contact.mixin.Employee, resultQuery, { sort: { name: SortingOrder.Ascending } })
     values = await objectsPromise
-    if (targets.has(undefined)) {
-      values.unshift(undefined)
+    if (targets.has(null)) {
+      values.unshift(null)
     }
     if (values.length !== targets.size) {
       const oldSize = filter.value.length
@@ -116,7 +116,7 @@
       if (value) {
         filter.value = [...filter.value, value._id]
       } else {
-        filter.value = [...filter.value, undefined]
+        filter.value = [...filter.value, null]
       }
     }
 
