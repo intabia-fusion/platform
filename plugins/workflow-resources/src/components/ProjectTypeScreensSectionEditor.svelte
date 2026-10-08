@@ -18,6 +18,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
@@ -73,6 +74,7 @@
     dataId="btnAddScreen"
     {disabled}
     loading={isLoading}
+    tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : undefined}
     on:click={() => {
       if (disabled) return
       if ($settingsStore.id !== 'createScreen') {

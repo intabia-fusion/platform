@@ -36,3 +36,8 @@ Things the workflow UI does that a test has to know:
 - A fresh Tracker task type comes with `Backlog / Todo / New state / Won / Lost`, not the statuses of the default project.
 - Confirmations are `MessageBox`, i.e. `div.msgbox-container div.footer button`, not a form with a submit button.
 - Issue status options are `div.selectPopup div.list-item span.overflow-label`.
+
+## UpdateFieldValue value sources
+
+- A `this`/`parent` value stores `mixin = attributeOf` even for a plain class (`createdBy` -> `core.class.Doc`); the server reads it through `hierarchy.as`, which falls back to the doc's own field.
+- `createdBy` is a `PersonId`; into a person ref it goes as its `Person` via `SocialIdentity`, decided by the source attribute type in `resolveValue` (`server-plugins/workflow-resources/src/post-functions/evaluator.ts`), not by the field name.

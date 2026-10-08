@@ -116,6 +116,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - Поменять разбивку "потрачено/запланировано" -> `splitReportedTime` (`plugins/tracker/src/index.ts`).
 - Добавить/поменять правило workflow (validator/request/post-function) -> `plugins/workflow/src/schema/` + сервер `server-plugins/workflow/src/middleware.ts`.
 - Добавить функцию-трансформ значения для `UpdateFieldValue` -> `models/workflow/src/functions.ts`.
+- Какие поля можно выбрать источником значения `UpdateFieldValue` -> `isAttributeCompatible` / `SOURCE_ONLY_FIELDS` в `plugins/workflow-resources/src/components/postFunctions/editors/update-field/utils.ts`; приведение значения к типу поля на сервере -> `resolveValue` в `server-plugins/workflow-resources/src/post-functions/evaluator.ts`.
 - Изменить статусы по умолчанию классического Issue -> `classicIssueTaskStatuses` (`models/tracker/src/index.ts`) + `defineSpaceType`.
 - Добавить действие над Issue (хоткей/попап) -> `models/tracker/src/actions.ts`.
 - Изменить viewlet/колонки списка/канбана -> `models/tracker/src/viewlets.ts`.

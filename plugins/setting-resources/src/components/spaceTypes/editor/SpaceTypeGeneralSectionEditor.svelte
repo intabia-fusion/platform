@@ -145,7 +145,14 @@
           hasMenu
         />
         {#if canDelete}
-          <ButtonIcon icon={IconDelete} size="small" kind="secondary" {disabled} on:click={handleDelete} />
+          <ButtonIcon
+            icon={IconDelete}
+            size="small"
+            kind="secondary"
+            {disabled}
+            tooltip={disabled ? { label: settingRes.string.OwnerOrMaintainerRequired } : undefined}
+            on:click={handleDelete}
+          />
         {/if}
       </div>
     </div>

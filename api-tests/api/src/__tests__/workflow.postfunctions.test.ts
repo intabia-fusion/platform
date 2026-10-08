@@ -23,6 +23,7 @@ import workflow, {
   type WorkflowTransformCall
 } from '@hcengineering/workflow'
 import tracker, { type Issue } from '@hcengineering/tracker'
+import contact, { type SocialIdentityRef } from '@hcengineering/contact'
 
 import {
   connect,
@@ -311,6 +312,24 @@ describe('workflow post-functions', () => {
         return (await readField(issue, 'assignee')) ?? undefined
       })
       expect(assignee).toBeTruthy()
+    })
+
+    it('writes the task author from createdBy into a person field', async () => {
+      const ctx = await withWorkflow([
+        {
+          name: 'Start',
+          from: ['Backlog'],
+          to: 'Todo',
+          postFunctions: [updateField('assignee', thisField('createdBy'))]
+        }
+      ])
+      const issue = await createIssue(ctx, { status: 'Backlog' })
+      const createdBy = await readField(issue, 'createdBy')
+      const author = await client.findOne(contact.class.SocialIdentity, { _id: createdBy as SocialIdentityRef })
+      expect(author).toBeDefined()
+
+      await setStatus(ctx, issue, 'Todo')
+      await expectField(issue, 'assignee', author?.attachedTo)
     })
 
     it.each([

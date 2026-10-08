@@ -17,6 +17,7 @@
   import type { SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
 
   import ClassAttributes from '../../ClassAttributes.svelte'
+  import settingRes from '../../../plugin'
 
   export let type: SpaceType | undefined
   export let descriptor: SpaceTypeDescriptor | undefined
@@ -24,5 +25,11 @@
 </script>
 
 {#if type !== undefined && descriptor !== undefined}
-  <ClassAttributes _class={type.targetClass} {disabled} showHierarchy showMixins />
+  <ClassAttributes
+    _class={type.targetClass}
+    {disabled}
+    disabledTooltip={{ label: settingRes.string.OwnerOrMaintainerRequired }}
+    showHierarchy
+    showMixins
+  />
 {/if}

@@ -19,7 +19,7 @@
   import { toRank } from '@hcengineering/rank'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import type { AnySvelteComponent, LabelAndProps } from '@hcengineering/ui'
   import {
     ActionIcon,
     ButtonIcon,
@@ -58,6 +58,7 @@
   export let flat: boolean = false
   export let showHeader: boolean = true
   export let disabled: boolean = true
+  export let disabledTooltip: LabelAndProps | undefined = undefined
   export let isCard: boolean = false
   export let showAll: boolean = false
   export let attributeMapper:
@@ -252,6 +253,7 @@
       size={'small'}
       dataId={'btnAdd'}
       {disabled}
+      tooltip={disabled ? disabledTooltip : undefined}
       on:click={(ev) => {
         createAttribute(ev)
       }}
@@ -288,6 +290,7 @@
             icon={IconAdd}
             size={'small'}
             {disabled}
+            tooltip={disabled ? disabledTooltip : undefined}
             on:click={(ev) => {
               createAttributeFor(clazz2._id, ev)
             }}

@@ -79,7 +79,7 @@ export async function UpdateFieldValue (
           ...(await updateCollectionOrArrField(control, attr, targetClass, task, config, [...currentTxes, ...res]))
         )
       } else {
-        const v = await resolveValue(config.value, task, control)
+        const v = await resolveValue(config.value, task, control, attr)
         if (v === undefined) continue
         if (mixin == null) {
           if (v === null) {

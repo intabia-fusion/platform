@@ -17,6 +17,7 @@
   import { SortingOrder } from '@hcengineering/core'
   import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
@@ -187,7 +188,12 @@
   }
 
   $: isLoading = isWorkflowsLoading
-  $: addDisabled = disabled || taskTypes.length === 0
+  $: addDisabledReason = disabled
+    ? setting.string.OwnerOrMaintainerRequired
+    : taskTypes.length === 0
+      ? plugin.string.TaskTypeRequired
+      : undefined
+  $: addDisabled = addDisabledReason !== undefined
 
   onDestroy(() => {
     clearSettingsStore()
@@ -201,7 +207,10 @@
   <div class="header-actions flex-row-center flex-gap-1">
     <ButtonMenu
       icon={task.icon.Import}
-      tooltip={{ label: plugin.string.Import, direction: 'bottom' }}
+      tooltip={{
+        label: disabled ? setting.string.OwnerOrMaintainerRequired : plugin.string.Import,
+        direction: 'bottom'
+      }}
       size="small"
       kind="tertiary"
       dataId="btnImportWorkflows"
@@ -217,7 +226,7 @@
       dataId="btnAddWorkflow"
       disabled={addDisabled}
       loading={isLoading}
-      tooltip={taskTypes.length === 0 ? { label: plugin.string.TaskTypeRequired } : undefined}
+      tooltip={addDisabled ? { label: addDisabledReason } : undefined}
       on:click={() => {
         if (disabled) return
         if ($settingsStore.id !== 'createWorkflow') {

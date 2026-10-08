@@ -58,6 +58,8 @@ export const EXCLUDED_FIELDS = new Set([
   'blockedBy',
   'relations'
 ])
+// Not updatable, but usable as a value source: the task author goes into person fields
+const SOURCE_ONLY_FIELDS = new Set(['createdBy'])
 export const EXCLUDED_TYPES = new Set([
   core.class.TypeMarkup,
   core.class.TypeCollaborativeDoc,
@@ -114,6 +116,11 @@ export function isExcludedAttribute (attr: AnyAttribute): boolean {
   return false
 }
 
+function isExcludedSourceAttribute (attr: AnyAttribute): boolean {
+  if (attr.hidden !== true && SOURCE_ONLY_FIELDS.has(attr.name)) return false
+  return isExcludedAttribute(attr)
+}
+
 export interface CompatibilityResult {
   compatible: boolean
   functions?: WorkflowTransformCall[]
@@ -163,6 +170,11 @@ export function isAttributeCompatible (
     }
 
     return { compatible: false }
+  }
+
+  // A social id (createdBy) is resolved to its person on the server
+  if (srcType._class === core.class.TypePersonId && hierarchy.isDerived(targetType._class, core.class.RefTo)) {
+    return { compatible: hierarchy.isDerived((targetType as RefTo<Doc>).to, contact.class.Person) }
   }
 
   if (srcType._class === targetType._class) {
@@ -270,7 +282,7 @@ function getDirectFieldOptions (
   const items: ContextOption[] = []
   allAttrs.forEach((srcAttr) => {
     if (type === 'this' && srcAttr._id === attr._id) return
-    if (isExcludedAttribute(srcAttr)) return
+    if (isExcludedSourceAttribute(srcAttr)) return
     const compat = isAttributeCompatible(hierarchy, srcAttr, attr)
     if (compat.compatible && compat.functions == null) {
       items.push({
@@ -301,7 +313,7 @@ function getConversionGroupOptions (
 
   const collectConvertibleItems = (srcAttr: AnyAttribute, isParent: boolean): void => {
     if (!isParent && srcAttr._id === attr._id) return
-    if (isExcludedAttribute(srcAttr)) return
+    if (isExcludedSourceAttribute(srcAttr)) return
     const compat = isAttributeCompatible(hierarchy, srcAttr, attr)
     if (compat.compatible && compat.functions != null && compat.functions.length > 0) {
       const funcCall = compat.functions[0]
