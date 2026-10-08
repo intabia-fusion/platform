@@ -469,7 +469,11 @@ export function startHttpServer (
   app.put('/api/v1/broadcast', (req, res) => {
     try {
       const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
-      decodeToken(token)
+      if (decodeToken(token).account !== systemAccountUuid) {
+        res.writeHead(404, {})
+        res.end()
+        return
+      }
 
       const ws = req.query.workspace as WorkspaceUuid
 
