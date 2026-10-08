@@ -14,13 +14,21 @@
 -->
 <script lang="ts">
   import type { Ref, Space } from '@hcengineering/core'
-  import { Component } from '@hcengineering/ui'
+  import { getResource } from '@hcengineering/platform'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import contact from '@hcengineering/contact'
   import type { Filter } from '@hcengineering/view'
 
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined
   export let onChange: (e: Filter) => void
+
+  let Component: AnySvelteComponent | undefined
+  getResource(contact.component.PersonIdFilter).then((res) => {
+    Component = res as AnySvelteComponent
+  })
 </script>
 
-<Component is={contact.component.PersonIdFilter} props={{ filter, space, onChange }} />
+{#if Component}
+  <svelte:component this={Component} {filter} {space} {onChange} />
+{/if}
