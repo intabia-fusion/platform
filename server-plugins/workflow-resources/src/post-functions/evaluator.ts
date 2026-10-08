@@ -18,18 +18,28 @@ import { type Task } from '@hcengineering/task'
 import workflow, { type WorkflowFieldValue, WorkflowValueFunction } from '@hcengineering/workflow'
 
 import tracker from '@hcengineering/tracker'
-import { Class, Doc, Mixin, Ref } from '@hcengineering/core'
+import core, { AnyAttribute, Class, Doc, Mixin, PersonId, Ref, RefTo } from '@hcengineering/core'
 import contact, { Person, SocialIdentityRef } from '@hcengineering/contact'
 
 import { applyValueFunctions } from './transforms'
 
-export async function resolveValue (val: WorkflowFieldValue, task: Task, control: TriggerControl): Promise<unknown> {
+export async function resolveValue (
+  val: WorkflowFieldValue,
+  task: Task,
+  control: TriggerControl,
+  target?: AnyAttribute
+): Promise<unknown> {
   try {
     if (val == null) return undefined
 
     const functions = getFunctions(control, val)
     let result = await evaluateWorkflowValue(val, task, control)
     if (result == null) return undefined
+
+    if (target != null) {
+      result = await convertPersonId(control, task, val, target, result)
+      if (result == null) return undefined
+    }
 
     if (functions.length > 0 && val.functions != null) {
       result = applyValueFunctions(val.functions, result, functions)
@@ -76,11 +86,38 @@ async function evalPreset (preset: string, control: TriggerControl): Promise<any
 }
 
 export async function getCurrentUser (control: TriggerControl): Promise<Ref<Person> | undefined> {
+  return await getPersonRef(control, control.ctx.contextData.account.primarySocialId)
+}
+
+async function getPersonRef (control: TriggerControl, personId: PersonId): Promise<Ref<Person> | undefined> {
   return (
-    await control.findAll(control.ctx, contact.class.SocialIdentity, {
-      _id: control.ctx.contextData.account.primarySocialId as SocialIdentityRef
-    })
+    await control.findAll(
+      control.ctx,
+      contact.class.SocialIdentity,
+      { _id: personId as SocialIdentityRef },
+      { limit: 1 }
+    )
   )[0]?.attachedTo
+}
+
+/**
+ * A PersonId field (createdBy) holds a social id, while a person field takes the Person ref.
+ * Undefined for a social id without a person (System, integrations).
+ */
+async function convertPersonId (
+  control: TriggerControl,
+  task: Task,
+  val: WorkflowFieldValue,
+  target: AnyAttribute,
+  value: unknown
+): Promise<unknown> {
+  if (val.type !== 'this' && val.type !== 'parent') return value
+  const h = control.hierarchy
+  const source = h.findAttribute(val.mixin ?? task._class, val.fieldKey)
+  if (source?.type._class !== core.class.TypePersonId) return value
+  if (!h.isDerived(target.type._class, core.class.RefTo)) return value
+  if (!h.isDerived((target.type as RefTo<Doc>).to, contact.class.Person)) return value
+  return await getPersonRef(control, value as PersonId)
 }
 
 function evalThisField (control: TriggerControl, task: Task, fieldKey: string, mixin?: Ref<Mixin<Doc>>): unknown {

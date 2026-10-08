@@ -72,6 +72,7 @@
       size="small"
       dataId={'btnAdd'}
       {disabled}
+      tooltip={disabled ? { label: settingRes.string.OwnerOrMaintainerRequired } : undefined}
       on:click={(ev) => {
         $settingsStore = { id: 'createRole', component: CreateRole, props: { type, descriptor } }
       }}

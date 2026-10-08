@@ -29,6 +29,7 @@
   } from '@hcengineering/ui'
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
+  import setting from '@hcengineering/setting'
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import type { TaskTypeExportConfig } from '@hcengineering/task'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
@@ -219,7 +220,10 @@
       />
       <ButtonMenu
         icon={task.icon.Import}
-        tooltip={{ label: task.string.Import, direction: 'bottom' }}
+        tooltip={{
+          label: disabled ? setting.string.OwnerOrMaintainerRequired : task.string.Import,
+          direction: 'bottom'
+        }}
         size="small"
         kind="tertiary"
         dataId={'btnImportTaskTypes'}
@@ -234,6 +238,7 @@
         size="small"
         dataId={'btnAdd'}
         {disabled}
+        tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : undefined}
         on:click={() => {
           if (disabled) {
             return

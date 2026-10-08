@@ -1142,6 +1142,86 @@ describe('Workflow Post-Functions', () => {
     expect((removeTx.operations as any).$pull?.members).toBe('current-user-uuid')
   })
 
+  describe('createdBy as a value source', () => {
+    const transition: WorkflowTransition = { _id: 't-1' } as any
+    const parentId = 'parent-author-task' as Ref<Task>
+
+    const hierarchy = createMockHierarchy({
+      isDerived: (c: any, target: any) => c === target,
+      findAttribute: (_cls: any, key: any) => {
+        if (key === 'createdBy') return { _id: key, name: key, type: { _class: core.class.TypePersonId } }
+        if (key === 'assignee') {
+          return { _id: key, name: key, type: { _class: core.class.RefTo, to: contact.class.Person } }
+        }
+        return undefined
+      }
+    })
+
+    function createControl (): TriggerControl {
+      return {
+        ctx: mockCtx,
+        hierarchy,
+        txFactory,
+        modelDb: { findAllSync: () => [] } as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+          if (_class === contact.class.SocialIdentity) {
+            if (query._id === 'social-author') return [{ _id: 'social-author', attachedTo: 'person-author' }]
+            if (query._id === 'social-parent-author') {
+              return [{ _id: 'social-parent-author', attachedTo: 'person-parent-author' }]
+            }
+            return []
+          }
+          if (_class === task.class.Task && query._id === parentId) {
+            return [createMockTask({ _id: parentId, createdBy: 'social-parent-author' as any })]
+          }
+          return []
+        })
+      } as any
+    }
+
+    function assignFrom (type: 'this' | 'parent'): any {
+      return {
+        fields: [
+          {
+            fieldKey: 'assignee',
+            attribute: 'assignee' as any,
+            value: { type, attribute: 'createdBy' as any, fieldKey: 'createdBy', mixin: core.class.Doc }
+          }
+        ]
+      }
+    }
+
+    it('should assign the task to its author', async () => {
+      const currentTask = createMockTask({ createdBy: 'social-author' as any, assignee: 'person-other' as any })
+
+      const res = await UpdateFieldValue(createControl(), currentTask, transition, assignFrom('this'))
+
+      expect(res.length).toBe(1)
+      expect((res[0] as TxUpdateDoc<Task>).operations).toEqual({ assignee: 'person-author' })
+    })
+
+    it('should assign the task to the author of its parent', async () => {
+      const currentTask = createMockTask({
+        createdBy: 'social-author' as any,
+        attachedTo: parentId,
+        attachedToClass: task.class.Task
+      })
+
+      const res = await UpdateFieldValue(createControl(), currentTask, transition, assignFrom('parent'))
+
+      expect(res.length).toBe(1)
+      expect((res[0] as TxUpdateDoc<Task>).operations).toEqual({ assignee: 'person-parent-author' })
+    })
+
+    it('should leave the assignee unchanged when the author has no person', async () => {
+      const currentTask = createMockTask({ createdBy: core.account.System, assignee: 'person-other' as any })
+
+      const res = await UpdateFieldValue(createControl(), currentTask, transition, assignFrom('this'))
+
+      expect(res.length).toBe(0)
+    })
+  })
+
   it('should test isCollectionOrArrAttribute utility correctly', () => {
     const hierarchy = {
       isDerived: (c: any, target: any) =>
