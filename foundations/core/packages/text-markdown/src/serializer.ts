@@ -178,9 +178,9 @@ export const storeNodes: Record<string, NodeProcessor> = {
           (state.imageUrl +
             `${attrs['file-id']}` +
             `?file=${attrs['file-id']}` +
-            (attrs.width != null ? '&width=' + state.esc(`${attrs.width}`) : '') +
-            (attrs.height != null ? '&height=' + state.esc(`${attrs.height}`) : '') +
-            (attrs.token != null ? '&token=' + state.esc(`${attrs.token}`) : '')) +
+            (attrs.width != null ? '&width=' + encodeURIComponent(String(attrs.width)) : '') +
+            (attrs.height != null ? '&height=' + encodeURIComponent(String(attrs.height)) : '') +
+            (attrs.token != null ? '&token=' + encodeURIComponent(String(attrs.token)) : '')) +
           (attrs.title != null ? ' ' + state.quote(`${attrs.title}`) : '') +
           ')'
       )
@@ -192,8 +192,8 @@ export const storeNodes: Record<string, NodeProcessor> = {
           '](' +
           (state.imageUrl +
             `${attrs['file-id']}` +
-            (attrs.width != null ? '&width=' + state.esc(`${attrs.width}`) : '') +
-            (attrs.height != null ? '&height=' + state.esc(`${attrs.height}`) : '')) +
+            (attrs.width != null ? '&width=' + encodeURIComponent(String(attrs.width)) : '') +
+            (attrs.height != null ? '&height=' + encodeURIComponent(String(attrs.height)) : '')) +
           (attrs.title != null ? ' ' + state.quote(`${attrs.title}`) : '') +
           ')'
       )
@@ -201,11 +201,14 @@ export const storeNodes: Record<string, NodeProcessor> = {
       if (attrs.width != null || attrs.height != null) {
         state.write(
           '<img' +
-            (attrs.width != null ? ` width="${state.esc(`${attrs.width}`)}"` : '') +
-            (attrs.height != null ? ` height="${state.esc(`${attrs.height}`)}"` : '') +
-            ` src="${state.esc(`${attrs.src}`)}"` +
-            (attrs.alt != null ? ` alt="${state.esc(`${attrs.alt}`)}"` : '') +
-            (attrs.title != null ? '>' + state.quote(`${attrs.title}`) + '</img>' : '>')
+            (attrs.width != null ? ' width="' + state.htmlEsc(String(attrs.width)) + '"' : '') +
+            (attrs.height != null ? ' height="' + state.htmlEsc(String(attrs.height)) + '"' : '') +
+            ' src="' +
+            state.htmlEsc(String(attrs.src ?? '')) +
+            '"' +
+            (attrs.alt != null ? ' alt="' + state.htmlEsc(String(attrs.alt)) + '"' : '') +
+            (attrs.title != null ? ' title="' + state.htmlEsc(String(attrs.title)) + '"' : '') +
+            '>'
         )
       } else {
         state.write(

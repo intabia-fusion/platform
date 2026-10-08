@@ -1118,6 +1118,14 @@ describe('markupToMarkdown', () => {
           }
         ]
       }
+    },
+    {
+      name: 'image attributes are html-escaped',
+      markdown: '<img width="10" src="x&quot; onerror=&quot;alert(1)" alt="a&lt;b&gt;">',
+      markup: {
+        type: 'doc',
+        content: [{ type: 'image', attrs: { src: 'x" onerror="alert(1)', alt: 'a<b>', width: 10 } }]
+      }
     }
   ]
 
