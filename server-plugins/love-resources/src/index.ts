@@ -37,6 +37,7 @@ import love, {
   loveId,
   MeetingMinutes,
   MeetingStatus,
+  type Office,
   ParticipantInfo,
   Room,
   RoomInfo,
@@ -57,6 +58,7 @@ import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activ
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
+  const assigned = new Set<Ref<Office>>()
   for (const tx of txes) {
     let employeeId: Ref<Person> | undefined
     let employee: Employee | undefined
@@ -67,17 +69,27 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
       if (createTx.objectClass === contact.mixin.Employee) {
         employee = TxProcessor.createDoc2Doc(createTx)
         employeeId = createTx.objectId
+        if (!employee.active) continue
       }
     } else if (tx._class === core.class.TxMixin) {
       // Handle TxMixin (Employee added as mixin to Person) - used by AI bot
       const mixinTx = tx as TxMixin<Person, Employee>
       if (mixinTx.mixin === contact.mixin.Employee) {
         employeeId = mixinTx.objectId
-        // Check if employee is being activated
+        if (mixinTx.attributes.active === false) {
+          const rooms = await control.findAll(control.ctx, love.class.Office, { person: employeeId })
+          for (const room of rooms) {
+            result.push(control.txFactory.createTxUpdateDoc(room._class, room.space, room._id, { person: null }))
+          }
+          continue
+        }
         if (mixinTx.attributes.active !== true) {
           continue
         }
-        employee = mixinTx.attributes as Employee
+        // A mixin tx carries only the changed fields: the activation comes from the tx, the role from the stored employee
+        employee = (
+          await control.findAll(control.ctx, contact.mixin.Employee, { _id: employeeId as Ref<Employee> }, { limit: 1 })
+        )[0]
       }
     }
 
@@ -85,10 +97,6 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
       continue
     }
 
-    // Skip if employee is not active or is a guest
-    if (!employee.active) {
-      continue
-    }
     if (employee.role === 'GUEST') {
       continue
     }
@@ -101,8 +109,11 @@ export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<
     }
 
     // Find a free office and assign it
-    const freeRoom = (await control.findAll(control.ctx, love.class.Office, { person: null }))[0]
+    const freeRoom = (await control.findAll(control.ctx, love.class.Office, { person: null })).find(
+      (it) => !assigned.has(it._id)
+    )
     if (freeRoom !== undefined) {
+      assigned.add(freeRoom._id)
       result.push(
         control.txFactory.createTxUpdateDoc(freeRoom._class, freeRoom.space, freeRoom._id, {
           person: employeeId
