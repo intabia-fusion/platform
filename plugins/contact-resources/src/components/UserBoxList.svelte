@@ -45,6 +45,7 @@
 
   export let sort: ((a: Person, b: Person) => number) | undefined = undefined
   export let protectedItems: Ref<Person>[] = []
+  export let protectLastSelected: boolean = false
 
   let popupResult: PopupResult | undefined = undefined
   let prevReadonly: boolean = readonly
@@ -79,6 +80,7 @@
       allowDeselect: false,
       selectedUsers: filter(items),
       disallowDeselect: filter(protectedItems),
+      protectLastSelected,
       filter: (it: Doc) => {
         const h = getClient().getHierarchy()
         if (h.hasMixin(it, contact.mixin.Employee)) {

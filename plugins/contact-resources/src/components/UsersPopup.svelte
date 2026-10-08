@@ -39,6 +39,7 @@
   export let create: ObjectCreate | undefined = undefined
   export let readonly = false
   export let disallowDeselect: Ref<Person>[] | undefined = undefined
+  export let protectLastSelected: boolean = false
 
   const client = getClient()
 
@@ -89,6 +90,7 @@
   {shadows}
   create={_create}
   {disallowDeselect}
+  {protectLastSelected}
   on:update
   on:close
   on:changeContent
