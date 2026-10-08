@@ -33,6 +33,7 @@ import task, {
   migrateDefaultStatusesBase,
   migrateTaskTypesToClasses
 } from '@hcengineering/model-task'
+import { migrateMixinCustomAttributesPref } from '@hcengineering/model-view'
 
 import lead from './plugin'
 import { defaultLeadStatuses } from './spaceType'
@@ -198,6 +199,13 @@ export const leadOperation: MigrateOperation = {
         state: 'migrateTaskTypesToClasses-v6',
         mode: 'upgrade',
         func: migrateLeadTaskTypesToClasses
+      },
+      {
+        state: 'migrateTaskTypeMixinPrefs-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          await migrateMixinCustomAttributesPref(client, 'lead:mixin:LeadTypeData', lead.class.LeadTaskType)
+        }
       }
     ])
   },

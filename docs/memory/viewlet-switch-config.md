@@ -1,0 +1,9 @@
+# Виды: список с конфигом канбана
+
+Область: [Трекер](../features/tracker.md)
+
+- Открытие приложения по корню (`/workbench/<ws>/tracker`) восстанавливает последний special, но URL не меняется: `fragment` из `parseHash` - `''`, а не `undefined`, поэтому `navigate(loc)` в `syncLoc` (`Workbench.svelte`) не вызывается никогда. `loc.path[3..4]` правятся в объекте, который `setResolvedLocation` уже держит по ссылке (`location.ts`), а в store ушёл клон. Без повторного `setResolvedLocation(loc)` `getCurrentResolvedLocation()` даёт `.../tracker/all-issues`, а `$resolvedLocationStore` - `.../tracker`.
+- `ViewletSelector` читает ключ вида из store, а `setActiveViewletId(id, undefined)` пишет по `getCurrentResolvedLocation()`. При расхождении клик по «Доске» пишет в один ключ, `getActiveViewlet` в том же тике не находит его в другом и откатывает на `viewlets[0]`. Радиокнопка `Switcher` остаётся на канбане: `selected` не изменился, Svelte не трогает `checked`.
+- `LiveQuery.query` (presentation) сравнивал вызов с последним выполненным запросом, а `doQuery` откладывается `reduceCalls`: A -> B -> A в одном тике считался «A без изменений», подписка оставалась на B. Так `ViewletContentView` получал `configurations` канбана при виде списка, а `ListCategories` предпочитает `configurations[_class]` над `config`.
+- Воспроизведение на dev-стенде: открыть `/tracker/all-issues`, затем `/tracker` (откроются «Все задачи» при URL `/tracker`), нажать «Доска».
+- Тесты: e2e `tests/sanity/tests/tracker/viewlet-switch.spec.ts` (падает без `setResolvedLocation` в `syncLoc`), `plugins/view-resources/src/__tests__/viewletConfigurations.test.ts`, `packages/presentation/src/___tests___/liveQuery.test.ts`. Повторно открывать голый `/tracker` в тесте нельзя: `syncLoc` сохраняет его как последний location трекера (`originalLoc`), и следующее открытие не восстанавливает special - пустой экран.

@@ -5,6 +5,7 @@
 ## Трекер - [tracker.md](../features/tracker.md)
 
 - [workflow-tests.md](workflow-tests.md) - Workflow feature: import/export API and API tests
+- [viewlet-switch-config.md](viewlet-switch-config.md) - Виды: список с конфигом канбана (ключ вида, LiveQuery A -> B -> A)
 
 ## Чат и уведомления - [chat.md](../features/chat.md), [notifications.md](../features/notifications.md)
 

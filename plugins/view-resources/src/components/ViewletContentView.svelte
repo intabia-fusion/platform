@@ -10,6 +10,7 @@
 
   import { injectCustomAttributes } from '../utils'
   import { injectDescendantAttributes } from '../descendantAttributes'
+  import { buildViewletConfigurations } from '../viewletConfigurations'
 
   export let viewlet: WithLookup<Viewlet>
   export let _class: Ref<Class<Doc>>
@@ -35,10 +36,8 @@
   $: loading = configurationsLoading || preferencesLoading
 
   let configurationRaw: Viewlet[] = []
-  let configurations: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
 
   function fetchConfigurations (viewlet: Viewlet): void {
-    configurations = {}
     configurationsLoading = objectConfigurations.query(
       view.class.Viewlet,
       {
@@ -69,28 +68,10 @@
     )
   }
 
-  function updateConfiguration (configurationRaw: Viewlet[], preference: ViewletPreference[]): void {
-    const newConfigurations: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
-
-    for (const v of configurationRaw) {
-      newConfigurations[v.attachTo] = v.config
-    }
-
-    // Add viewlet configurations.
-    for (const pref of preference) {
-      const vl = configurationRaw.find((it) => it._id === pref.attachedTo)
-      if (vl === undefined) continue
-      const base = pref.config.length > 0 ? pref.config : vl.config
-      newConfigurations[vl.attachTo] = injectCustomAttributes(base, pref.customAttributes)
-    }
-
-    configurations = newConfigurations
-  }
-
   $: fetchConfigurations(viewlet)
   $: fetchPreferences(configurationRaw)
 
-  $: updateConfiguration(configurationRaw, preference)
+  $: configurations = buildViewletConfigurations(viewlet, configurationRaw, preference)
 
   $: currentPreference = preference.find((it) => it.attachedTo === viewlet._id)
   $: config = injectDescendantAttributes(
