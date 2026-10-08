@@ -22,6 +22,7 @@ import WebSocket from 'ws'
 
 import {
   Hierarchy,
+  systemAccountUuid,
   MeasureMetricsContext,
   ModelDb,
   toFindResult,
@@ -137,6 +138,32 @@ describe('server', () => {
   afterAll(async () => {
     await sessionMgr.closeWorkspaces(new MeasureMetricsContext('test', {}))
     await serverShutdown()
+  })
+
+  describe('broadcast', () => {
+    const workspace = '123e4567-e89b-12d3-a456-426614174001' as WorkspaceUuid
+    const put = async (token: string): Promise<number> =>
+      (
+        await fetch(`http://localhost:${port}/api/v1/broadcast?workspace=${workspace}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ _id: 'tx1' })
+        })
+      ).status
+
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
+    it('accepts the system token only', async () => {
+      const spy = jest.spyOn(sessionMgr, 'broadcastAll').mockImplementation(() => {})
+
+      expect(await put(generateToken('123e4567-e89b-12d3-a456-426614174000' as PersonUuid, workspace))).toBe(404)
+      expect(spy).not.toHaveBeenCalled()
+
+      expect(await put(generateToken(systemAccountUuid, workspace))).toBe(200)
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('should connect to server', (done) => {
