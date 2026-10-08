@@ -121,15 +121,19 @@ test.describe('Statuses of a project type in tracker', () => {
 
   test('a project without issues shows a placeholder when there are no groups', async () => {
     await openIssues(plainProject, ViewletSelectors.Table)
-    // Assignee has no empty groups: without issues the list has nothing to show
+    await expect(listHeader('Backlog')).toBeVisible()
+    await expect(page.getByText('No issues yet', { exact: true })).toHaveCount(0)
+    await setShowEmptyGroups(false)
     await setViewGroup(page, 'Assignee')
     await expect(page.getByText('No issues yet', { exact: true })).toBeVisible()
     await setViewGroup(page, 'Status')
     await expect(page.getByText('No issues yet', { exact: true })).toBeVisible()
+    await setShowEmptyGroups(true)
   })
 
   test('the list shows empty groups only for statuses of the project type', async () => {
-    await setShowEmptyGroups(true)
+    await openIssues(plainProject, ViewletSelectors.Table)
+
     for (const status of baseStatuses) {
       await expect(listHeader(status)).toBeVisible()
     }
@@ -137,13 +141,13 @@ test.describe('Statuses of a project type in tracker', () => {
     await expect(listHeader(extraStatus)).toHaveCount(0)
 
     await openIssues(extendedProject, ViewletSelectors.Table)
-    await setShowEmptyGroups(true)
     await expect(listHeader(extraStatus)).toBeVisible()
     await expect(listHeader('Backlog')).toBeVisible()
   })
 
   test('a status added, renamed or deleted in settings changes an open project list', async () => {
-    // The list of the extended project stays open with empty groups shown
+    await openIssues(extendedProject, ViewletSelectors.Table)
+
     const lateStatus = `Late-${generateId(4)}`
     const renamedStatus = `Renamed-${generateId(4)}`
     const headerNames = async (): Promise<string[]> =>
@@ -181,12 +185,11 @@ test.describe('Statuses of a project type in tracker', () => {
 
   test('the board shows columns only for statuses of the project type', async () => {
     await openIssues(extendedProject, ViewletSelectors.Board)
-    await setShowEmptyGroups(true)
+
     await expect(boardColumn(extraStatus)).toBeVisible()
     await expect(boardColumn('Backlog')).toBeVisible()
 
     await openIssues(plainProject, ViewletSelectors.Board)
-    await setShowEmptyGroups(true)
     await expect(boardColumn('Backlog')).toBeVisible()
     await expect(boardColumn('Todo')).toBeVisible()
     await expect(boardColumn(extraStatus)).toHaveCount(0)

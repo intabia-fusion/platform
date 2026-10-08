@@ -186,15 +186,19 @@ test.describe('Tracker tests', () => {
     await navigate(page)
     await issuesPage.navigateToIssues()
     await issuesPage.searchIssueByName('!!!!')
-    await issuesPage.openViewOptionsAndToggleShouldShowAll()
     await issuesPage.clickModelSelectorAll()
     await issuesPage.verifyCategoryHeadersVisibility()
     await issuesPage.openViewOptionsAndToggleShouldShowAll()
+    await issuesPage.verifyCategoryHeadersHidden()
+    await issuesPage.openViewOptionsAndToggleShouldShowAll()
+    await issuesPage.verifyCategoryHeadersVisibility()
 
     await page.click(ViewletSelectors.Board)
-    await issuesPage.openViewOptionsAndToggleShouldShowAll()
     await issuesPage.verifyCategoryHeadersVisibilityKanban()
     await issuesPage.openViewOptionsAndToggleShouldShowAll()
+    await issuesPage.verifyCategoryHeadersHiddenKanban()
+    await issuesPage.openViewOptionsAndToggleShouldShowAll()
+    await issuesPage.verifyCategoryHeadersVisibilityKanban()
   })
 
   test.describe('Task types in Kanban', () => {
