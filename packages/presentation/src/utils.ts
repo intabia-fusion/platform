@@ -673,6 +673,11 @@ export class LiveQuery {
     // We need to prevent callback with old values to be happening
     // One time refresh in case of client recreation
     this.clientRecreated = false
+    // Remember the request now: doQuery is deferred, and A -> B -> A in one tick would stay on B.
+    this.oldCallback = callback
+    this.oldClass = _class
+    this.oldOptions = options
+    this.oldQuery = query
     void this.reducedDoQuery(++this.reqId, _class, query, callback as any, options)
     return true
   }
@@ -697,12 +702,7 @@ export class LiveQuery {
     options: FindOptions<T> | undefined
   ): void {
     if (pipeline === undefined) {
-      // We need remember values to perform refresh.
-      this.oldCallback = callback
-      this.oldClass = _class
-      this.oldOptions = options
-      this.oldQuery = query
-
+      // Values for refresh are remembered in query().
       return
     }
     const piplineQuery = pipeline.subscribe(_class, query, options, () => {

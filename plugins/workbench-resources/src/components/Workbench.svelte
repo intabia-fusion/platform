@@ -496,6 +496,8 @@
             navigate(loc)
             return
           }
+          // URL keeps the bare app path: publish the restored special to match getCurrentResolvedLocation().
+          setResolvedLocation(loc)
         }
       }
     }
