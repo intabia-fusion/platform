@@ -2,6 +2,7 @@
 // Copyright © 2020 Anticrm Platform Contributors.
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -119,7 +120,7 @@ import view from './plugin'
 import { classPresenter, createAction } from './utils'
 
 export { viewId } from '@hcengineering/view'
-export { viewOperation } from './migration'
+export { migrateMixinCustomAttributesPref, viewOperation } from './migration'
 export type { ViewAction, Viewlet }
 
 export const DOMAIN_VIEW = 'view' as Domain

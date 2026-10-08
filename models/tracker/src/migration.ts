@@ -37,6 +37,7 @@ import {
 import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
 import { DOMAIN_TASK, migrateDefaultStatusesBase, migrateTaskTypesToClasses } from '@hcengineering/model-task'
+import { migrateMixinCustomAttributesPref } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
 import task from '@hcengineering/task'
 import tracker, {
@@ -463,6 +464,13 @@ export const trackerOperation: MigrateOperation = {
         state: 'migrateTaskTypesToClasses-v8',
         mode: 'upgrade',
         func: migrateIssueTaskTypes
+      },
+      {
+        state: 'migrateTaskTypeMixinPrefs-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          await migrateMixinCustomAttributesPref(client, 'tracker:mixin:IssueTypeData', tracker.class.IssueTaskType)
+        }
       }
     ])
   },

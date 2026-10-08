@@ -41,6 +41,7 @@ import task, {
   migrateDefaultStatusesBase,
   migrateTaskTypesToClasses
 } from '@hcengineering/model-task'
+import { migrateMixinCustomAttributesPref } from '@hcengineering/model-view'
 import { recruitId, type Applicant } from '@hcengineering/recruit'
 import { DOMAIN_CALENDAR } from '@hcengineering/model-calendar'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
@@ -91,6 +92,17 @@ export const recruitOperation: MigrateOperation = {
         state: 'migrateTaskTypesToClasses-v6',
         mode: 'upgrade',
         func: migrateApplicationTaskTypes
+      },
+      {
+        state: 'migrateTaskTypeMixinPrefs-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          await migrateMixinCustomAttributesPref(
+            client,
+            'recruit:mixin:ApplicantTypeData',
+            recruit.class.ApplicantTaskType
+          )
+        }
       }
     ])
   },

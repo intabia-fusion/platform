@@ -35,6 +35,7 @@ import core, {
 } from '@hcengineering/core'
 
 import { DOMAIN_VIEW } from '.'
+import { remapMixinCustomAttributes } from './customAttributesPref'
 
 async function removeDoneStatePref (client: MigrationClient): Promise<void> {
   const prefs = await client.find<ViewletPreference>(DOMAIN_PREFERENCE, {
@@ -251,14 +252,9 @@ async function migrateAccsInSavedFilters (client: MigrationClient): Promise<void
   client.logger.log('finished processing view filtered view accounts in filters ', {})
 }
 
-async function cleanupCustomAttributesPref (client: MigrationClient): Promise<void> {
-  const hierarchy = client.hierarchy
-  client.logger.log('processing cleanup of non-existent customAttributes in viewlet preferences', {})
-
-  const prefs = await client.find<ViewletPreference>(DOMAIN_PREFERENCE, {
-    _class: view.class.ViewletPreference
-  })
-
+async function getPrefAttachTo (
+  client: MigrationClient
+): Promise<(pref: ViewletPreference) => Ref<Class<Doc>> | undefined> {
   const modelViewlets = client.model.findAllSync<Viewlet>(view.class.Viewlet, {})
   const dbViewlets = await client.find<Viewlet>(DOMAIN_MODEL, {
     _class: view.class.Viewlet
@@ -276,14 +272,28 @@ async function cleanupCustomAttributesPref (client: MigrationClient): Promise<vo
     }
   }
 
+  return (pref) => {
+    const attachTo = viewletAttachMap.get(pref.attachedTo)
+    if (attachTo === undefined && client.hierarchy.hasClass(pref.attachedTo as unknown as Ref<Class<Doc>>)) {
+      return pref.attachedTo as unknown as Ref<Class<Doc>>
+    }
+    return attachTo
+  }
+}
+
+async function cleanupCustomAttributesPref (client: MigrationClient): Promise<void> {
+  const hierarchy = client.hierarchy
+  client.logger.log('processing cleanup of non-existent customAttributes in viewlet preferences', {})
+
+  const prefs = await client.find<ViewletPreference>(DOMAIN_PREFERENCE, {
+    _class: view.class.ViewletPreference
+  })
+  const prefAttachTo = await getPrefAttachTo(client)
+
   for (const pref of prefs) {
     if (pref.customAttributes == null || pref.customAttributes.length === 0) continue
 
-    let attachTo = viewletAttachMap.get(pref.attachedTo)
-    if (attachTo === undefined && hierarchy.hasClass(pref.attachedTo as unknown as Ref<Class<Doc>>)) {
-      attachTo = pref.attachedTo as unknown as Ref<Class<Doc>>
-    }
-
+    const attachTo = prefAttachTo(pref)
     if (attachTo === undefined) continue
 
     const validCustomAttributes = pref.customAttributes.filter((key) => {
@@ -304,6 +314,34 @@ async function cleanupCustomAttributesPref (client: MigrationClient): Promise<vo
       )
     }
   }
+}
+
+/**
+ * Viewlet preferences keep `${oldMixin}.${attr}` keys of custom attributes after migrateMixinToClassInModel moved
+ * them to newClass. Run it right after that migration in the same plugin.
+ */
+export async function migrateMixinCustomAttributesPref (
+  client: MigrationClient,
+  oldMixin: string,
+  newClass: Ref<Class<Doc>>
+): Promise<void> {
+  const prefs = await client.find<ViewletPreference>(DOMAIN_PREFERENCE, {
+    _class: view.class.ViewletPreference,
+    customAttributes: { $exists: true }
+  })
+  const prefAttachTo = await getPrefAttachTo(client)
+
+  let updated = 0
+  for (const pref of prefs) {
+    const attachTo = prefAttachTo(pref)
+    if (attachTo === undefined) continue
+    const res = remapMixinCustomAttributes(client.hierarchy, attachTo, pref, oldMixin, newClass)
+    if (res === undefined) continue
+    // Arrays, not undefined: rawUpdate skips undefined fields.
+    await client.update(DOMAIN_PREFERENCE, { _id: pref._id }, res)
+    updated++
+  }
+  client.logger.log('remapped mixin custom attributes in viewlet preferences', { oldMixin, newClass, updated })
 }
 
 export const viewOperation: MigrateOperation = {
