@@ -28,7 +28,7 @@ import { BaseMiddleware } from '@hcengineering/server-core'
  * @public
  */
 export class ApplyTxMiddleware extends BaseMiddleware implements Middleware {
-  scopes = new Map<string, Promise<any>>()
+  scopes = new Map<string, Promise<void>>()
 
   static async create (ctx: MeasureContext, context: PipelineContext, next?: Middleware): Promise<Middleware> {
     return new ApplyTxMiddleware(context, next)
@@ -105,45 +105,48 @@ export class ApplyTxMiddleware extends BaseMiddleware implements Middleware {
     if (applyIf.scope == null) {
       return { passed: true, onEnd: () => {} }
     }
-    // Wait for synchronized.
-    const scopePromise = this.scopes.get(applyIf.scope)
-
-    if (scopePromise != null) {
-      await scopePromise
-    }
-
-    let onEnd = (): void => {}
-    // Put sync code
-    this.scopes.set(
-      applyIf.scope,
-      new Promise((resolve) => {
-        onEnd = () => {
-          this.scopes.delete(applyIf.scope as unknown as string)
-          resolve(null)
-        }
+    // Applies of one scope run one after another: each waits for the tail of the queue and becomes the new tail.
+    const scope = applyIf.scope
+    const prev = this.scopes.get(scope) ?? Promise.resolve()
+    let release = (): void => {}
+    const tail = prev.then(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
       })
-    )
+    })
+    this.scopes.set(scope, tail)
+    const onEnd = (): void => {
+      release()
+      if (this.scopes.get(scope) === tail) this.scopes.delete(scope)
+    }
+    await prev
+
     let passed = true
     let reason: string | undefined
-    if (applyIf.match != null) {
-      for (const { _class, query } of applyIf.match) {
-        const res = await this.provideFindAll(ctx, _class, query, { limit: 1 })
-        if (res.length === 0) {
-          passed = false
-          reason = `match query failed: class=${_class}, query=${JSON.stringify(query)}`
-          break
+    try {
+      if (applyIf.match != null) {
+        for (const { _class, query } of applyIf.match) {
+          const res = await this.provideFindAll(ctx, _class, query, { limit: 1 })
+          if (res.length === 0) {
+            passed = false
+            reason = `match query failed: class=${_class}, query=${JSON.stringify(query)}`
+            break
+          }
         }
       }
-    }
-    if (passed && applyIf.notMatch != null) {
-      for (const { _class, query } of applyIf.notMatch) {
-        const res = await this.provideFindAll(ctx, _class, query, { limit: 1 })
-        if (res.length > 0) {
-          passed = false
-          reason = `notMatch query failed: class=${_class}, query=${JSON.stringify(query)} (found ${res.length} matching document(s))`
-          break
+      if (passed && applyIf.notMatch != null) {
+        for (const { _class, query } of applyIf.notMatch) {
+          const res = await this.provideFindAll(ctx, _class, query, { limit: 1 })
+          if (res.length > 0) {
+            passed = false
+            reason = `notMatch query failed: class=${_class}, query=${JSON.stringify(query)} (found ${res.length} matching document(s))`
+            break
+          }
         }
       }
+    } catch (err: any) {
+      onEnd()
+      throw err
     }
     return { passed, onEnd, reason }
   }
