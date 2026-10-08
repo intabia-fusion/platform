@@ -884,6 +884,8 @@ export type ViewOptionModel = ToggleViewOption | DropdownViewOption
  */
 export type OrderOption = [string, SortingOrder]
 
+export type GroupingKey = string | { key: string, hidden?: boolean }
+
 /**
  * @public
  */
@@ -921,7 +923,7 @@ export interface CustomObjectLinkProvider extends Class<Doc> {
  * @public
  */
 export interface ViewOptionsModel {
-  groupBy: string[]
+  groupBy: GroupingKey[]
   orderBy: OrderOption[]
   other: ViewOptionModel[]
   groupDepth?: number

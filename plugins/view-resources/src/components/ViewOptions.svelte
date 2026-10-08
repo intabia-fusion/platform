@@ -2,7 +2,7 @@
   import { getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
-  import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel } from '@hcengineering/view'
+  import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel, GroupingKey } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
@@ -25,15 +25,8 @@
   const hierarchy = client.getHierarchy()
   const lookup = buildConfigLookup(hierarchy, viewlet.attachTo, viewlet.config, viewlet.options?.lookup)
 
-  const groupBy = config.groupBy
-    .filter((p) => canResolveAttribute(hierarchy, viewlet.attachTo, p, lookup))
-    .map((p) => {
-      return {
-        id: p,
-        label: getKeyLabel(client, viewlet.attachTo, p, lookup)
-      }
-    })
-    .concat({ id: noCategory, label: view.string.NoGrouping })
+  const getKey = (k: GroupingKey): string => (typeof k === 'string' ? k : k.key)
+  const isHidden = (k: GroupingKey): boolean => (typeof k === 'string' ? false : (k.hidden ?? false))
 
   const orderBy = config.orderBy
     .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
@@ -60,10 +53,26 @@
     })
   }
 
-  function getItems (groupBy: DropdownIntlItem[], i: number, current: string[]): DropdownIntlItem[] {
-    const notAllowed = current.slice(0, i)
-    return groupBy.filter((p) => !notAllowed.includes(p.id as string))
-  }
+  $: allGroupByItems = config.groupBy
+    .filter((p) => canResolveAttribute(hierarchy, viewlet.attachTo, getKey(p), lookup))
+    .map((p) => ({
+      id: getKey(p),
+      label: getKeyLabel(client, viewlet.attachTo, getKey(p), lookup)
+    }))
+    .concat({ id: noCategory, label: view.string.NoGrouping })
+
+  $: dropdownItems = groups.map((_, i) => {
+    const notAllowed = viewOptions.groupBy.slice(0, i)
+
+    return allGroupByItems.filter((p) => {
+      if (notAllowed.includes(p.id as string)) return false
+
+      const isHiddenItem = config.groupBy.some((k) => getKey(k) === p.id && isHidden(k))
+      const isCurrentlyUsed = viewOptions.groupBy.includes(p.id as string)
+
+      return !(isHiddenItem && !isCurrentlyUsed)
+    })
+  })
 
   const changeToggle = (model: ViewOptionModel) => {
     viewOptions[model.key] = !viewOptions[model.key]
@@ -92,7 +101,7 @@
           label={view.string.Grouping}
           kind={'regular'}
           size={'medium'}
-          items={getItems(groupBy, i, viewOptions.groupBy)}
+          items={dropdownItems[i]}
           selected={group}
           width="10rem"
           justify="left"
