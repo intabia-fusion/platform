@@ -50,13 +50,12 @@
       const current = me.uuid !== undefined ? [me.uuid] : []
       protectedAccounts = Array.from(new Set([...owners, ...current]))
     } else {
-      if (effectiveOwners.length === 1) {
-        protectedAccounts = effectiveOwners
-      } else {
-        protectedAccounts = []
-      }
+      // owners: статическая защита не нужна — «последнего» защищает сам popup
+      protectedAccounts = []
     }
   }
+
+  $: protectLastSelected = attributeKey === 'owners'
 
   async function handleChange (selected: AccountUuid[]): Promise<void> {
     if (!isOwner) return
@@ -99,4 +98,5 @@
   {allowGuests}
   {attributeKey}
   {protectedAccounts}
+  {protectLastSelected}
 />

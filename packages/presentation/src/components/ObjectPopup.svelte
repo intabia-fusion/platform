@@ -60,7 +60,7 @@
   export let type: 'text' | 'object' | 'presenter' = 'text'
   export let showVersions: boolean = false
   export let forceShowSelected: boolean = true
-
+  export let protectLastSelected: boolean = false
   export let onSelect: ((doc: Doc) => void) | undefined = undefined
 
   export let filter: (it: Doc) => boolean = () => {
@@ -184,6 +184,7 @@
   {create}
   {readonly}
   {disallowDeselect}
+  {protectLastSelected}
   {embedded}
   {loading}
   {type}

@@ -67,7 +67,7 @@
   export let loading: boolean = false
   export let type: 'text' | 'object' | 'presenter' = 'text'
   export let showVersions: boolean = false
-
+  export let protectLastSelected: boolean = false
   export let onSelect: ((doc: Doc) => void) | undefined = undefined
 
   let search: string = ''
@@ -177,7 +177,13 @@
     return obj
   }
 
-  const forbiddenDeselectItemIds = new Set(disallowDeselect)
+  $: forbiddenDeselectItemIds = (() => {
+    const base = new Set(disallowDeselect ?? [])
+    if (protectLastSelected && selectedObjects.length === 1) {
+      base.add(selectedObjects[0])
+    }
+    return base
+  })()
 
   function getGroup (doc: Doc, groupBy: any): any {
     if (created.find((it) => it._id === doc._id) !== undefined) {

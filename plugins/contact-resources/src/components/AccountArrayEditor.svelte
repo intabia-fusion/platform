@@ -39,6 +39,7 @@
   export let allowGuests: boolean = false
   export let attributeKey: string | undefined = undefined
   export let protectedAccounts: AccountUuid[] = []
+  export let protectLastSelected: boolean = false
 
   $: protectedPersons = protectedAccounts.map((a) => $employeeRefByAccountUuidStore.get(a)).filter(notEmpty)
 
@@ -162,4 +163,5 @@
   {kind}
   create={allowGuests ? { component: contact.component.CreateGuest, label: contact.string.AddGuest } : undefined}
   protectedItems={protectedPersons}
+  {protectLastSelected}
 />
