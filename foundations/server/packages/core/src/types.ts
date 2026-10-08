@@ -350,7 +350,10 @@ export interface IndexedDoc {
   searchShortTitle?: string
   searchShortTitle_fields?: any[]
   searchIcon_fields?: any[]
+  /** Text of `SearchPresenter.contentField` */
   fulltextSummary?: string
+  /** Text of the other attributes, all text without `contentField` */
+  fulltextExtra?: string
 
   /** Text of the attribute named by `SearchPresenter.highlightableField`, tuned for snippets. */
   highlightableContent?: string
@@ -530,6 +533,8 @@ export interface SearchPresenter extends Class<Doc> {
   shortTitle?: FieldTemplateComponent | FieldTemplate
   scoring?: SearchScoring[]
   highlightableField?: string
+  /** Main text attribute: goes to `fulltextSummary`, the rest to `fulltextExtra` */
+  contentField?: string
   indexCollection?: boolean
 }
 

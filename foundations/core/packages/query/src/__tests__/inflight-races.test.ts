@@ -291,14 +291,14 @@ describe('LiveQuery - tx arrives while the initial findAll is still in flight', 
 })
 
 describe('LiveQuery - option and LRU branches', () => {
-  it('honours $searchStrict as a non-field query key when re-matching a live doc (L239)', async () => {
+  it('honours $searchIn as a non-field query key when re-matching a live doc (L239)', async () => {
     const storage = await createClient(connect)
-    // Raw mock has no fulltext engine (see search-queries.test.ts); strip $search/$searchStrict
+    // Raw mock has no fulltext engine (see search-queries.test.ts); strip $search/$searchIn
     // before hitting it so the initial subscribe can still find the doc.
     const rawFindAll = storage.findAll.bind(storage)
     const stripped: Client = Object.assign(Object.create(Object.getPrototypeOf(storage)), storage, {
       findAll: async (_class: any, query: any, options: any) => {
-        const { $search, $searchStrict, ...rest } = query ?? {}
+        const { $search, $searchIn, ...rest } = query ?? {}
         return await rawFindAll(_class, rest, options)
       }
     })
@@ -315,10 +315,8 @@ describe('LiveQuery - option and LRU branches', () => {
     await new Promise<void>((resolve) => {
       liveQuery.query<TestProject>(
         test.class.TestProject,
-        // $searchStrict is a query directive, not a field of TestProject - not in DocumentQuery<T>.
-        { $searchStrict: true, prjName: 'strict-target' } satisfies DocumentQuery<TestProject> & {
-          $searchStrict: boolean
-        },
+        // A directive, not a field
+        { $searchIn: ['title', 'identifier'], prjName: 'strict-target' } satisfies DocumentQuery<TestProject>,
         (res) => {
           last = res
           resolve()
@@ -327,8 +325,7 @@ describe('LiveQuery - option and LRU branches', () => {
     })
     expect(last).toHaveLength(1)
 
-    // If match() treated $searchStrict as an ordinary field key, findProperty would find no doc
-    // whose `$searchStrict` property equals true and this update would drop the doc from results.
+    // Matched as a field, $searchIn would drop the doc here
     await factory.updateDoc(test.class.TestProject, core.space.Model, id, { description: 'updated' })
     await settle()
 

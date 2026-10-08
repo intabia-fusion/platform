@@ -120,7 +120,8 @@ export function createModel (builder: Builder): void {
       component: card.component.CardIcon,
       fields: [['_id']]
     },
-    title: [['title']]
+    title: [['title']],
+    contentField: 'content'
   })
 
   builder.mixin(card.class.Card, core.class.Class, serverActivity.mixin.UrlPresenter, {

@@ -91,6 +91,7 @@
 ## Фичи
 
 ### Обычные документы (`document`)
+- **Основной текст в поиске.** `contentField: 'content'` у `document.class.Document` (`models/server-document/src/index.ts`): текст содержимого - в `fulltextSummary`, заголовок и прочие атрибуты - в `fulltextExtra`. У `DocumentMeta` основного текста нет (тело - отдельный `ControlledDocument`), весь её текст в `fulltextExtra`.
 - **Иерархия документов в teamspace.** Дерево с drag&drop (`DropMarker`/`DropArea`), блокировка документа при редактировании (`lockedBy`). - `plugins/document-resources/src/components/navigator/DocHierarchy.svelte`, `plugins/document-resources/src/components/EditDoc.svelte`.
 - **История версий и восстановление содержимого.** RPC `getVersions`/`getVersionContent` на collaborator-сервере (снапшоты Y.Doc по имени `<objectId>-<objectAttr>-<timestamp>`), UI в сайдбаре History. FUSIO-1127. - `server/collaborator/src/rpc/methods/getVersions.ts`, `packages/presentation/src/collaborator.ts`, `plugins/document-resources/src/components/sidebar/History.svelte`.
 

@@ -75,7 +75,8 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(time.class.ToDo, core.class.Class, serverCore.mixin.SearchPresenter, {
-    title: [['title']]
+    title: [['title']],
+    contentField: 'description'
   })
 
   builder.mixin<NotificationType, TypeMatch>(

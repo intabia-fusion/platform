@@ -61,12 +61,20 @@ export type ObjQueryType<T> = (T extends Array<infer U> ? U | U[] | QuerySelecto
 
 /**
  * @public
+ * What `$search` runs over: `content` is `SearchPresenter.contentField`, `extra` the other attributes,
+ * `attached` comments, labels and attachments.
+ */
+export type SearchTarget = 'title' | 'identifier' | 'content' | 'extra' | 'attached'
+
+/**
+ * @public
  */
 export type DocumentQuery<T extends Doc> = {
   [P in keyof T]?: ObjQueryType<T[P]>
 } & {
   $search?: string
-  $searchStrict?: boolean // Search only by searchTitle and ignore search by attached docs (comments, attachments etc)
+  // Without it: all fields and attached docs
+  $searchIn?: SearchTarget[]
   // support nested queries e.g. 'user.friends.name'
   // this will mark all unrecognized properties as any (including nested queries)
   [key: string]: any

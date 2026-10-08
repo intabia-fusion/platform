@@ -132,13 +132,15 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(chunter.class.Channel, core.class.Class, serverCore.mixin.SearchPresenter, {
     searchIcon: chunter.icon.Hashtag,
-    title: [['name']]
+    title: [['name']],
+    contentField: 'description'
   })
 
   builder.mixin(chunter.class.ChatMessage, core.class.Class, serverCore.mixin.SearchPresenter, {
     title: [['func', serverChunter.function.ChatMessageSearchTitleProvider, 'title']],
     shortTitle: [['func', serverChunter.function.ChatMessageSearchTitleProvider, 'short']],
     highlightableField: 'message',
+    contentField: 'message',
     indexCollection: true
   })
 }

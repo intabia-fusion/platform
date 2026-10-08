@@ -24,6 +24,7 @@ import {
   Ref,
   SearchOptions,
   SearchQuery,
+  SearchTarget,
   TxResult,
   WorkspaceUuid
 } from '@hcengineering/core'
@@ -59,6 +60,10 @@ function getIndexVersion (): string {
 const mappings: estypes.MappingTypeMapping = {
   properties: {
     fulltextSummary: {
+      type: 'text',
+      analyzer: 'rebuilt_english'
+    },
+    fulltextExtra: {
       type: 'text',
       analyzer: 'rebuilt_english'
     },
@@ -175,6 +180,20 @@ const mappings: estypes.MappingTypeMapping = {
   }
 }
 
+const searchTargetFields: Record<SearchTarget, string[]> = {
+  title: [
+    'searchTitle^50',
+    'searchTitle.translit^10',
+    'searchTitle.keyboard_latin_to_cyrillic^10',
+    'searchTitle.keyboard_cyrillic_to_latin^10'
+  ],
+  identifier: ['searchShortTitle^50'],
+  content: ['fulltextSummary'],
+  extra: ['fulltextExtra'],
+  // Searched by the middleware
+  attached: []
+}
+
 class ElasticAdapter implements FullTextAdapter {
   private readonly getFulltextDocId: (workspaceId: WorkspaceUuid, doc: Ref<Doc>) => Ref<Doc>
   private readonly getDocId: (workspaceId: WorkspaceUuid, fulltext: Ref<Doc>) => Ref<Doc>
@@ -209,7 +228,9 @@ class ElasticAdapter implements FullTextAdapter {
           })
         )
         for (const [propName, propType] of Object.entries(mappings.properties ?? {})) {
-          if ((mapping as any)[indexName]?.mappings?.properties?.[propName]?.type !== propType.type) {
+          // A missing property is added by putMapping; a drop would empty search in every workspace
+          const existing = (mapping as any)[indexName]?.mappings?.properties?.[propName]
+          if (existing !== undefined && existing.type !== propType.type) {
             shouldDropExistingIndex = true
             break
           }
@@ -327,16 +348,15 @@ class ElasticAdapter implements FullTextAdapter {
     try {
       const { viewerId } = options
       const searchIn = options.searchIn ?? 'all'
-      const titleFields = [
-        'searchTitle^50',
-        'searchShortTitle^50',
-        'searchTitle.translit^10',
-        'searchTitle.keyboard_latin_to_cyrillic^10',
-        'searchTitle.keyboard_cyrillic_to_latin^10'
-      ]
+      const titleFields = [...searchTargetFields.title, ...searchTargetFields.identifier]
       // An explicit field list instead of '*': the wildcard expands over every mapped field,
       // including keyword fields holding uuids, which is both noise and measurably slower.
-      const contentFields = ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3']
+      const contentFields = [
+        'highlightableContent^8',
+        'highlightableContent.ru^8',
+        'fulltextSummary^3',
+        'fulltextExtra^3'
+      ]
       const fields =
         searchIn === 'title' ? titleFields : searchIn === 'content' ? contentFields : [...titleFields, ...contentFields]
       const prefixFields = fields.filter((f) => !f.split('^')[0].includes('.'))
@@ -633,14 +653,11 @@ class ElasticAdapter implements FullTextAdapter {
     viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
-    const fields = [
-      'searchTitle^50',
-      'searchShortTitle^50',
-      'searchTitle.translit^10',
-      'searchTitle.keyboard_latin_to_cyrillic^10',
-      'searchTitle.keyboard_cyrillic_to_latin^10',
-      ...(query.$searchStrict === true ? [] : ['*'])
-    ]
+    const fields =
+      query.$searchIn === undefined
+        ? [...searchTargetFields.title, ...searchTargetFields.identifier, '*']
+        : query.$searchIn.flatMap((target) => searchTargetFields[target] ?? [])
+    if (fields.length === 0) return []
 
     const request: any = {
       bool: {
@@ -710,6 +727,12 @@ class ElasticAdapter implements FullTextAdapter {
           should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
         }
       })
+    }
+
+    // Hard filter, unlike the boosting keys below
+    const restrictions: Record<string, string[]> = query.$filter ?? {}
+    for (const [field, values] of Object.entries(restrictions)) {
+      request.bool.filter.push({ terms: { [field]: values } })
     }
 
     for (const [q, v] of Object.entries(query)) {

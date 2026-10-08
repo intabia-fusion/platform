@@ -79,6 +79,7 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, serverCore.mixin.SearchPresenter, {
     searchIcon: love.icon.MeetingMinutes,
-    title: [['name']]
+    title: [['name']],
+    contentField: 'summary'
   })
 }

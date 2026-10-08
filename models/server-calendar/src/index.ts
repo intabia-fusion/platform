@@ -40,7 +40,8 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(calendar.class.Event, core.class.Class, serverCore.mixin.SearchPresenter, {
-    title: [['title']]
+    title: [['title']],
+    contentField: 'description'
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
