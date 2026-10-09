@@ -15,7 +15,7 @@
 
 // '../config' throws at import time without env vars, so it's mocked (like other test files);
 // server-pipeline/middleware resolve fine as real deps under ts-jest.
-import core from '@hcengineering/core'
+import core, { DOMAIN_TRANSIENT } from '@hcengineering/core'
 import notification from '@hcengineering/notification'
 
 import { QueueTopic } from '@hcengineering/server-core'
@@ -640,5 +640,35 @@ describe('Workspace.processTx: read all (bare instance)', () => {
     await Promise.all(Array.from(instance.inProgress))
 
     expect(instance.ctx.error).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Workspace client: transient docs come from the transactor (bare instance)', () => {
+  function makeInstance (): any {
+    const instance: any = Object.create((Workspace as any).prototype)
+    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.hierarchy = {
+      findDomain: jest.fn((cls) => (cls === core.class.UserStatus ? DOMAIN_TRANSIENT : 'notification'))
+    }
+    instance.rest = { findAll: jest.fn().mockResolvedValue([{ _id: 'us-1', online: true }]) }
+    instance.pipeline = { findAll: jest.fn().mockResolvedValue([{ _id: 'ctx-1' }]) }
+    return instance
+  }
+
+  it('reads UserStatus through the transactor REST, not the empty local InMemory adapter', async () => {
+    const instance = makeInstance()
+    const client = instance.getClient()
+
+    expect(await client.findAll(core.class.UserStatus, {})).toEqual([{ _id: 'us-1', online: true }])
+    expect(await client.findOne(core.class.UserStatus, {})).toEqual({ _id: 'us-1', online: true })
+    expect(instance.rest.findAll).toHaveBeenLastCalledWith(core.class.UserStatus, {}, { limit: 1 })
+    expect(instance.pipeline.findAll).not.toHaveBeenCalled()
+  })
+
+  it('reads other classes through the local pipeline', async () => {
+    const instance = makeInstance()
+
+    expect(await instance.getClient().findAll(notification.class.DocNotifyContext, {})).toEqual([{ _id: 'ctx-1' }])
+    expect(instance.rest.findAll).not.toHaveBeenCalled()
   })
 })
