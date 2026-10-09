@@ -18,6 +18,7 @@ export function createModel (builder: Builder): void {
       component: products.component.ProductSearchIcon,
       fields: [['icon'], ['color']]
     },
-    title: [['name']]
+    title: [['name']],
+    contentField: 'fullDescription'
   })
 }

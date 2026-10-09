@@ -54,7 +54,7 @@
     contact.mixin.Employee,
     {
       $search: `*${search}*`,
-      $searchStrict: true
+      $searchIn: ['title', 'identifier']
     },
     (res) => {
       employees = res
@@ -88,7 +88,7 @@
           ...(search !== ''
             ? {
                 $search: search !== '' ? `*${search}*` : undefined,
-                $searchStrict: true
+                $searchIn: ['title', 'identifier']
               }
             : {}),
           '$lookup.attachedTo._id': { $exists: true }

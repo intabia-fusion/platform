@@ -35,7 +35,7 @@
 | `MeetingSchedule extends Schedule` | Миксин на booking-page календаря | `plugins/love/src/types.ts` |
 | `DevicesPreference extends Preference` | Настройки устройств (микрофон, noise cancellation, blur, камера) | `plugins/love/src/types.ts` |
 | `MeetingStatus` (enum) | `Active`/`Finished`/`Pending`/`Scheduled` | `plugins/love/src/types.ts` |
-| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary`, `traceId`, счётчики | `plugins/love/src/types.ts` |
+| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary` (основной текст в поиске, `contentField` в `models/server-love`), `traceId`, счётчики | `plugins/love/src/types.ts` |
 | `PendingRecording extends AttachedDoc` | Запись через LiveKit Egress, `egressId`/`format`/`status` | `plugins/love/src/types.ts` |
 | `UserMeetingInvite extends Doc` | Invite/knock, домен `DOMAIN_TRANSIENT` + `TransientTTL(30s)` | `plugins/love/src/types.ts` |
 

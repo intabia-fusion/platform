@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, Ref, SearchTarget, WithLookup } from '@hcengineering/core'
   import core, { getCurrentAccount, reduceCalls, SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { LiveQuery } from '@hcengineering/presentation'
@@ -99,7 +99,7 @@
         search !== ''
           ? {
               $search: search !== '' ? `*${search}*` : undefined,
-              $searchStrict: true
+              $searchIn: ['title', 'identifier'] as SearchTarget[]
             }
           : {
               hidden: false

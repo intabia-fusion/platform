@@ -66,7 +66,7 @@
       ...(search !== ''
         ? {
             $search: `*${search}*`,
-            $searchStrict: true
+            $searchIn: ['title', 'identifier']
           }
         : {
             hidden: false
@@ -83,7 +83,7 @@
       contact.mixin.Employee,
       {
         $search: `*${search}*`,
-        $searchStrict: true
+        $searchIn: ['title', 'identifier']
       },
       (res) => {
         employees = res

@@ -189,6 +189,7 @@ trigger: {
 - [memory/cockroach-dropped.md](memory/cockroach-dropped.md) - CockroachDB dropped from the test lane (possible, not supported for now)
 - [memory/fulltext_bulk_mode.md](memory/fulltext_bulk_mode.md) - Fulltext pod - bulk mode
 - [memory/fulltext_needs_reindex.md](memory/fulltext_needs_reindex.md) - Fulltext: отложенная переиндексация (needs_reindex)
+- [memory/fulltext_search_fields.md](memory/fulltext_search_fields.md) - Fulltext: основной текст, `$searchIn` и `$filter`
 - [memory/kafka_consumer_test_overhead.md](memory/kafka_consumer_test_overhead.md) - Kafka consumer lifecycle dominates fulltext test time
 - [memory/livequery-coverage-and-bench.md](memory/livequery-coverage-and-bench.md) - LiveQuery: инварианты, покрытие и бенчмарки
 - [memory/livequery-tx-ordering.md](memory/livequery-tx-ordering.md) - LiveQuery tx ordering vs ClientImpl.tx

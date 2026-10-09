@@ -34,7 +34,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | model-tags | `models/tags/src` | `TagCategory`/`TagElement`/`TagReference` (метки Issue) |
 | tags, tags-resources, tags-assets | `plugins/tags*` | Типы и UI меток |
 | server-tags, server-tags-resources | `server-plugins/tags*` | Триггеры на удаление тегов/ссылок |
-| model-card, card, card-resources | `models/card`, `plugins/card*` | Отдельная generic-модель "карточек" (`Card`/`MasterTag`/`Tag`) - трекер её не импортирует |
+| model-card, card, card-resources | `models/card`, `plugins/card*` | Отдельная generic-модель "карточек" (`Card`/`MasterTag`/`Tag`) - трекер её не импортирует; основной текст карточки в поиске - `content` (`contentField`, `models/server-card`) |
 
 ## Модель данных
 
@@ -101,6 +101,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **Порядок групп по статусу.** `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
 - **Опции показа.** `shouldShowSubIssues`, `shouldShowAll`, `hideArchived`. - `models/tracker/src/viewlets.ts`.
 - **Пустой список задач.** `IssuesView` передаёт `emptyState` (`BlankViewProps`) через `ViewletContentView`; `ListView` и `KanbanView` трекера показывают `BlankView`, когда документы загружены и групп нет (`empty` из `ListCategories`/`List`): "No issues yet" или "Nothing found" при фильтре/поиске. - `plugins/tracker-resources/src/components/issues/IssuesView.svelte`, `plugins/view-resources/src/components/list/ListView.svelte`, `plugins/tracker-resources/src/components/issues/KanbanView.svelte`.
+- **Поиск в списке задач.** Строка поиска `IssuesView` ищет только по заголовку, идентификатору и описанию: `$searchIn: ['title', 'identifier', 'content']`, где описание - `contentField` поисковика `Issue` (`models/server-tracker/src/index.ts`). Метки, комментарии и вложения не ищутся, для них есть фильтры. Порядок - выбранная сортировка вида, поиск только отбирает задачи. Откат - убрать `$searchIn` в `IssuesView`. - `plugins/tracker-resources/src/components/issues/IssuesView.svelte`, `foundations/server/packages/elastic/src/adapter.ts` (`searchTargetFields`).
 - **Пустые группы/колонки статусов.** `showEmptyGroups` передаёт `space` вида в `GetAllValuesFunc`; `getAllStates` берёт статусы только типов задач этого типа проекта и пересчитывает группы при изменении этих типов задач (`watchTaskTypes`; пересчёт ждёт, пока `taskTypeStore`/`statusStore` получат то же изменение, иначе показывалось предыдущее состояние). - `plugins/view-resources/src/viewOptions.ts`, `plugins/task-resources/src/index.ts`.
 
 ### Проекты, компоненты, вехи
@@ -121,6 +122,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - Добавить действие над Issue (хоткей/попап) -> `models/tracker/src/actions.ts`.
 - Изменить viewlet/колонки списка/канбана -> `models/tracker/src/viewlets.ts`.
 - Поменять группировку/сортировку/swim lanes -> `issuesOptions` (`models/tracker/src/viewlets.ts`).
+- Поменять, по чему ищет строка поиска задач -> `$searchIn` в `IssuesView.svelte`; поля индекса за каждым значением -> `searchTargetFields` (`foundations/server/packages/elastic/src/adapter.ts`), основной текст класса -> `contentField` его `SearchPresenter`.
 - Изменить экспорт/импорт конфигурации workflow -> `plugins/workflow/src/transfer/` (`export.ts`/`import.ts`/`compatibility.ts`).
 - Добавить в правило новое место, где хранится ссылка на атрибут -> `stripAttributeFromRules` (`plugins/workflow/src/utils.ts`): по ней триггер `OnAttributeDelete` чистит правила, а попап удаления атрибута ищет затронутые workflow.
 - Изменить иерархию/наследование типов задач -> `models/task/src/index.ts` (`TTaskType`) + `plugins/task/src/transfer/` (перенос между проектами).
@@ -145,5 +147,6 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - [../time-tracking-examples.md](../time-tracking-examples.md) - разбор кейсов агрегации дерева оценок.
 - [../workflow.md](../workflow.md) - покрытие тестами фичи Workflow (jest/Playwright/ручные сценарии).
 - [../memory/workflow-tests.md](../memory/workflow-tests.md) - заметки по тестам workflow.
+- [../memory/fulltext_search_fields.md](../memory/fulltext_search_fields.md) - раскладка текста в индексе, `$searchIn`, `$filter`.
 - [../memory/planner-todo-issue-decoupling.md](../memory/planner-todo-issue-decoupling.md) - FUSIO-38, развязка ToDo/Issue, переназначение исполнителя, `TimeSpendReport.workslot`.
 - [planner-calendar.md](planner-calendar.md) - Планировщик (`ToDo`/`WorkSlot`), Team Planner, календарь - смежная система, откуда приходят time-report'ы по слотам.

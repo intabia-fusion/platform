@@ -24,6 +24,8 @@ import {
   Ref,
   SearchOptions,
   SearchQuery,
+  SearchTarget,
+  searchTargets,
   TxResult,
   WorkspaceUuid
 } from '@hcengineering/core'
@@ -59,6 +61,10 @@ function getIndexVersion (): string {
 const mappings: estypes.MappingTypeMapping = {
   properties: {
     fulltextSummary: {
+      type: 'text',
+      analyzer: 'rebuilt_english'
+    },
+    fulltextExtra: {
       type: 'text',
       analyzer: 'rebuilt_english'
     },
@@ -175,6 +181,37 @@ const mappings: estypes.MappingTypeMapping = {
   }
 }
 
+const searchTargetFields: Record<Exclude<SearchTarget, 'all'>, string[]> = {
+  title: [
+    'searchTitle^50',
+    'searchTitle.translit^10',
+    'searchTitle.keyboard_latin_to_cyrillic^10',
+    'searchTitle.keyboard_cyrillic_to_latin^10'
+  ],
+  identifier: ['searchShortTitle^50'],
+  content: ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3'],
+  extra: ['fulltextExtra^3'],
+  // Searched by the middleware
+  attached: []
+}
+
+// An explicit field list instead of '*': the wildcard expands over every mapped field,
+// including keyword fields holding uuids, which is both noise and measurably slower.
+function searchFields (targets: SearchTarget[]): string[] {
+  // An unknown value from REST adds nothing, a prototype key included
+  return targets.flatMap((target) =>
+    target !== 'all' && Object.hasOwn(searchTargetFields, target) ? searchTargetFields[target] : []
+  )
+}
+
+// query_string syntax: an unbalanced `(` or `/` fails the whole request
+const queryStringReserved = new Set('+-=&|!(){}[]^"~?:\\/<>')
+
+// Word separators, as in the indexed text; `*` stays a wildcard
+function plainQueryString (text: string): string {
+  return Array.from(text, (ch) => (queryStringReserved.has(ch) ? ' ' : ch)).join('')
+}
+
 class ElasticAdapter implements FullTextAdapter {
   private readonly getFulltextDocId: (workspaceId: WorkspaceUuid, doc: Ref<Doc>) => Ref<Doc>
   private readonly getDocId: (workspaceId: WorkspaceUuid, fulltext: Ref<Doc>) => Ref<Doc>
@@ -209,7 +246,9 @@ class ElasticAdapter implements FullTextAdapter {
           })
         )
         for (const [propName, propType] of Object.entries(mappings.properties ?? {})) {
-          if ((mapping as any)[indexName]?.mappings?.properties?.[propName]?.type !== propType.type) {
+          // A missing property is added by putMapping; a drop would empty search in every workspace
+          const existing = (mapping as any)[indexName]?.mappings?.properties?.[propName]
+          if (existing !== undefined && existing.type !== propType.type) {
             shouldDropExistingIndex = true
             break
           }
@@ -326,19 +365,8 @@ class ElasticAdapter implements FullTextAdapter {
   ): Promise<SearchStringResult> {
     try {
       const { viewerId } = options
-      const searchIn = options.searchIn ?? 'all'
-      const titleFields = [
-        'searchTitle^50',
-        'searchShortTitle^50',
-        'searchTitle.translit^10',
-        'searchTitle.keyboard_latin_to_cyrillic^10',
-        'searchTitle.keyboard_cyrillic_to_latin^10'
-      ]
-      // An explicit field list instead of '*': the wildcard expands over every mapped field,
-      // including keyword fields holding uuids, which is both noise and measurably slower.
-      const contentFields = ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3']
-      const fields =
-        searchIn === 'title' ? titleFields : searchIn === 'content' ? contentFields : [...titleFields, ...contentFields]
+      const fields = searchFields(searchTargets(options.searchIn) ?? ['title', 'identifier', 'content', 'extra'])
+      if (fields.length === 0) return { docs: [] }
       const prefixFields = fields.filter((f) => !f.split('^')[0].includes('.'))
 
       const mainQuery = query.query.startsWith('*')
@@ -359,7 +387,7 @@ class ElasticAdapter implements FullTextAdapter {
                 {
                   // Clause 2: Match anywhere
                   query_string: {
-                    query: query.query,
+                    query: plainQueryString(query.query),
                     analyze_wildcard: true,
                     allow_leading_wildcard: true,
                     lenient: true,
@@ -633,14 +661,12 @@ class ElasticAdapter implements FullTextAdapter {
     viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
-    const fields = [
-      'searchTitle^50',
-      'searchShortTitle^50',
-      'searchTitle.translit^10',
-      'searchTitle.keyboard_latin_to_cyrillic^10',
-      'searchTitle.keyboard_cyrillic_to_latin^10',
-      ...(query.$searchStrict === true ? [] : ['*'])
-    ]
+    const targets = searchTargets(query.$searchIn)
+    const fields =
+      targets === undefined
+        ? [...searchTargetFields.title, ...searchTargetFields.identifier, '*']
+        : searchFields(targets)
+    if (fields.length === 0) return []
 
     const request: any = {
       bool: {
@@ -664,7 +690,7 @@ class ElasticAdapter implements FullTextAdapter {
                       {
                         // Clause 2: Match anywhere
                         query_string: {
-                          query: query.$search,
+                          query: plainQueryString(query.$search),
                           analyze_wildcard: true,
                           allow_leading_wildcard: true,
                           lenient: true,
@@ -710,6 +736,12 @@ class ElasticAdapter implements FullTextAdapter {
           should: [{ bool: { must_not: { exists: { field: 'viewerId' } } } }, { term: { viewerId } }]
         }
       })
+    }
+
+    // Hard filter, unlike the boosting keys below
+    const restrictions: Record<string, string[]> = query.$filter ?? {}
+    for (const [field, values] of Object.entries(restrictions)) {
+      request.bool.filter.push({ terms: { [field]: values } })
     }
 
     for (const [q, v] of Object.entries(query)) {

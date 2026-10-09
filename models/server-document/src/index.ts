@@ -28,7 +28,8 @@ export function createModel (builder: Builder): void {
       component: document.component.DocumentSearchIcon,
       fields: [['icon'], ['color']]
     },
-    title: [['title']]
+    title: [['title']],
+    contentField: 'content'
   })
 
   builder.mixin<Class<Doc>, ObjectDDParticipant>(

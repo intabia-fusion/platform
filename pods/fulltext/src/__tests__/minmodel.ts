@@ -18,12 +18,14 @@ import core, {
   type Arr,
   type AttachedDoc,
   type Attribute,
+  type Blob,
   type Class,
   ClassifierKind,
   type Data,
   type Doc,
   type Domain,
   IndexKind,
+  type MarkupBlobRef,
   type Mixin,
   type Obj,
   type PersonId,
@@ -35,6 +37,7 @@ import core, {
 } from '@hcengineering/core'
 import type { IntlString, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
+import serverCore from '@hcengineering/server-core'
 
 import buildModel from '@hcengineering/model-all'
 
@@ -94,6 +97,15 @@ export interface TestDocument extends Doc {
   title: string
 
   description: string
+
+  body?: MarkupBlobRef
+
+  file?: Ref<Blob>
+}
+
+/** No SearchPresenter, so no contentField. */
+export interface TestNote extends Doc {
+  text: string
 }
 
 /**
@@ -106,7 +118,8 @@ export const test = plugin('test' as Plugin, {
   class: {
     TestComment: '' as Ref<Class<AttachedComment>>,
     TestProject: '' as Ref<Class<TestProject>>,
-    TestDocument: '' as Ref<Class<TestDocument>>
+    TestDocument: '' as Ref<Class<TestDocument>>,
+    TestNote: '' as Ref<Class<TestNote>>
   }
 })
 
@@ -164,8 +177,40 @@ export function genMinModel (): Tx[] {
         name: 'description',
         type: core.class.TypeString,
         index: IndexKind.FullText
-      })
+      }),
+      // The indexer reads `type._class`
+      createAttribute(test.class.TestDocument, {
+        name: 'body',
+        type: { _class: core.class.TypeCollaborativeDoc, label: 'Body' as IntlString },
+        index: IndexKind.FullText
+      }),
+      createAttribute(test.class.TestDocument, {
+        name: 'file',
+        type: { _class: core.class.TypeBlob, label: 'File' as IntlString },
+        index: IndexKind.FullText
+      }),
+      txFactory.createTxMixin(
+        test.class.TestDocument as Ref<Class<Doc>>,
+        core.class.Class,
+        core.space.Model,
+        serverCore.mixin.SearchPresenter,
+        { title: [['title']], contentField: 'description' }
+      )
     ]
+  )
+
+  txes.push(
+    createClass(test.class.TestNote, {
+      label: 'TestNote' as IntlString,
+      extends: core.class.Doc,
+      kind: ClassifierKind.CLASS,
+      domain: DOMAIN_TEST
+    }),
+    createAttribute(test.class.TestNote, {
+      name: 'text',
+      type: core.class.TypeString,
+      index: IndexKind.FullText
+    })
   )
 
   const u1 = 'User1' as AccountUuid

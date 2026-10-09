@@ -56,7 +56,8 @@
   let search = ''
   let searchQuery: DocumentQuery<Issue> = { ...query }
   function updateSearchQuery (search: string): void {
-    searchQuery = search === '' ? { ...query } : { ...query, $search: search }
+    searchQuery =
+      search === '' ? { ...query } : { ...query, $search: search, $searchIn: ['title', 'identifier', 'content'] }
   }
   $: if (query) updateSearchQuery(search)
   let resultQuery: DocumentQuery<Issue> = { ...searchQuery }

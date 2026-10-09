@@ -14,8 +14,9 @@
 | time-assets | `plugins/time-assets` | Локализация планировщика |
 | server-time | `server-plugins/time` | Типы серверного плагина (триггеры, ToDoFactory) |
 | server-time-resources | `server-plugins/time-resources` | Серверные триггеры ToDo/WorkSlot/Issue |
-| model-server-time | `models/server-time` | Регистрация серверных триггеров time в модели |
+| model-server-time | `models/server-time` | Регистрация серверных триггеров time в модели, `SearchPresenter` ToDo (основной текст - `description`) |
 | model-calendar | `models/calendar` | Модель Calendar/Event/BusySlot/Schedule, миграции |
+| model-server-calendar | `models/server-calendar` | Серверные триггеры calendar, `SearchPresenter` Event (основной текст - `description`) |
 | calendar | `plugins/calendar` | Типы плагина, recurrence/busy-утилиты |
 | calendar-resources | `plugins/calendar-resources` | UI календаря (DayCalendar, Schedule, CalDAV) |
 | calendar-assets | `plugins/calendar-assets` | Локализация календаря |

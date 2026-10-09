@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Ref, SearchResultDoc, TxOperations } from '@hcengineering/core'
+import type { Ref, SearchOptions, SearchResultDoc, TxOperations } from '@hcengineering/core'
 import { type ObjectSearchCategory } from './types'
 import plugin from './plugin'
 import { getClient } from './utils'
@@ -30,6 +30,22 @@ export interface SearchItem {
   num: number
   item: SearchResultDoc
   category: ObjectSearchCategory
+}
+
+/**
+ * @public
+ */
+export interface SearchForOptions {
+  searchIn?: SearchOptions['searchIn']
+  infix?: boolean
+}
+
+// A `*` the user typed at an edge already does the job: `rel*` stays `rel*`, not `rel**`
+function searchPattern (query: string, infix: boolean): string {
+  let pattern = query
+  if (infix && !pattern.startsWith('*')) pattern = `*${pattern}`
+  if (!pattern.endsWith('*')) pattern = `${pattern}*`
+  return pattern
 }
 
 function packSearchResultsForListView (sections: SearchSection[]): SearchItem[] {
@@ -53,7 +69,8 @@ async function searchCategory (
   client: TxOperations,
   category: ObjectSearchCategory,
   query: string,
-  limit?: number
+  limit?: number,
+  options?: SearchForOptions
 ): Promise<SearchSection | undefined> {
   if (category.classToSearch === undefined) return
   const classes =
@@ -62,11 +79,12 @@ async function searchCategory (
       : [category.classToSearch]
   const r = await client.searchFulltext(
     {
-      query: `${query}*`,
+      query: searchPattern(query, options?.infix === true),
       classes
     },
     {
-      limit: limit ?? 5
+      limit: limit ?? 5,
+      searchIn: options?.searchIn
     }
   )
   return { category, items: r.docs }
@@ -76,12 +94,13 @@ async function doFulltextSearch (
   client: TxOperations,
   categories: ObjectSearchCategory[],
   query: string,
-  limit?: number
+  limit?: number,
+  options?: SearchForOptions
 ): Promise<SearchSection[]> {
   const sections: SearchSection[] = []
   const promises: Array<Promise<SearchSection | undefined>> = []
   for (const cat of categories) {
-    promises.push(searchCategory(client, cat, query, limit))
+    promises.push(searchCategory(client, cat, query, limit, options))
   }
 
   const resolvedSections = await Promise.all(promises)
@@ -107,7 +126,8 @@ export async function searchFor (
   context: 'mention' | 'spotlight',
   query: string,
   category?: Ref<ObjectSearchCategory>,
-  limit?: number
+  limit?: number,
+  options?: SearchForOptions
 ): Promise<{ items: SearchItem[], query: string }> {
   const client = getClient()
   let categories = categoriesByContext.get(context)
@@ -124,6 +144,6 @@ export async function searchFor (
 
   const cats = category === undefined ? categories : categories.filter((it) => it._id === category)
 
-  const sections = await doFulltextSearch(client, cats, query, limit)
+  const sections = await doFulltextSearch(client, cats, query, limit, options)
   return { items: packSearchResultsForListView(sections), query }
 }

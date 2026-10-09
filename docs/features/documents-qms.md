@@ -91,13 +91,14 @@
 ## Фичи
 
 ### Обычные документы (`document`)
+- **Основной текст в поиске.** `contentField: 'content'` у `document.class.Document` (`models/server-document/src/index.ts`): текст содержимого - в `fulltextSummary`, заголовок и прочие атрибуты - в `fulltextExtra`. У `DocumentMeta` основного текста нет (тело - отдельный `ControlledDocument`), весь её текст в `fulltextExtra`.
 - **Иерархия документов в teamspace.** Дерево с drag&drop (`DropMarker`/`DropArea`), блокировка документа при редактировании (`lockedBy`). - `plugins/document-resources/src/components/navigator/DocHierarchy.svelte`, `plugins/document-resources/src/components/EditDoc.svelte`.
 - **История версий и восстановление содержимого.** RPC `getVersions`/`getVersionContent` на collaborator-сервере (снапшоты Y.Doc по имени `<objectId>-<objectAttr>-<timestamp>`), UI в сайдбаре History. FUSIO-1127. - `server/collaborator/src/rpc/methods/getVersions.ts`, `packages/presentation/src/collaborator.ts`, `plugins/document-resources/src/components/sidebar/History.svelte`.
 
 ### Совместное редактирование (`text-editor`)
 - **Rich text на tiptap.** Заголовки, форматирование, ссылки, списки, таблицы, изображения; категории форматов `TextFormatCategory`. - `plugins/text-editor/src/types.ts`.
 - **Вставка картинок из буфера и drop.** Файлы и base64-картинки из вставленного HTML (Google Docs, Word) загружаются через `attachFile`, в ydoc base64 не попадает; в редакторе без `attachFile` такая вставка отклоняется с ошибкой. FUSIO-1468, подробности - `docs/memory/editor-image-paste.md`. - `plugins/text-editor-resources/src/components/extension/shortcuts/imageUpload.ts`.
-- **Упоминания по `@`.** `ReferenceExtension` + `Suggestion` + попап списка людей. - `plugins/text-editor-resources/src/components/extension/reference.ts`, `plugins/text-editor-resources/src/components/extension/suggestion.ts`.
+- **Упоминания по `@`.** `ReferenceExtension` + `Suggestion` + попап списка людей. Попап (`MentionPopup`) ищет по категориям `ObjectSearchCategory` с контекстом `mention` только по заголовку и идентификатору и с вхождением в любом месте слова: `searchFor(..., { searchIn: ['title', 'identifier'], infix: true })` -> `searchFulltext` с тем же `searchIn` и запросом `*слово*` (совпадения с начала слова выше); спотлайт ищет и по тексту, только с начала слова. - `plugins/text-editor-resources/src/components/extension/reference.ts`, `plugins/text-editor-resources/src/components/extension/suggestion.ts`, `plugins/text-editor-resources/src/components/MentionPopup.svelte`, `packages/presentation/src/search.ts`.
 - **Доска рисования с undo.** Узел текста, открывающий попап-редактор с отдельным undo/redo. - `plugins/text-editor-resources/src/components/extension/drawingBoard.ts`.
 - **Таблицы в тексте: refresh/diff/original data.** Таблица может обновляться из источника, показывать diff и исходные данные отдельными попапами. - `plugins/text-editor-resources/src/components/extension/table/actions/{refreshTable,showTableDiff,seeOriginalTableData}.ts`.
 - **Совместная осведомлённость.** Курсоры/имена/цвета участников через awareness Hocuspocus. - `plugins/text-editor/src/types.ts`.
