@@ -76,11 +76,15 @@
       expired = true
     } else {
       expired = false
-      timer = setTimeout(() => { expired = true }, apiKey.expiresOn - Date.now())
+      timer = setTimeout(() => {
+        expired = true
+      }, apiKey.expiresOn - Date.now())
     }
   }
 
-  onDestroy(() => { clearTimeout(timer) })
+  onDestroy(() => {
+    clearTimeout(timer)
+  })
 
   function openRules (): void {
     showPopup(WebhookRulesSection, { apiKey })
