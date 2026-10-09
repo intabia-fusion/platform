@@ -274,7 +274,8 @@ export class TSessionManager implements SessionManager {
               new Map(),
               'transactor'
             )
-            await pipeline.tx(ctx, [tx])
+            // A copy per workspace: the pipeline rewrites objectSpace to this workspace's PersonSpace.
+            await pipeline.tx(ctx, [{ ...tx }])
             await pipeline.handleBroadcast(ctx)
           })
         }

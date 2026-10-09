@@ -52,9 +52,9 @@ export async function handleReadState (
   if (tx._class !== core.class.TxUpdateDoc) return
 
   const updateTx = tx as TxUpdateDoc<ReadState>
-  const updateKeys = Object.keys(updateTx.operations).filter((key) => !skipKeys.includes(key))
+  const positions = readPositions(updateTx)
 
-  if (updateKeys.length === 0) return
+  if (positions.length === 0) return
 
   const readState = await cache.getReadState(updateTx.objectId)
   if (readState == null) {
@@ -64,19 +64,21 @@ export async function handleReadState (
 
   const contexts = await cache.getContexts(readState.attachedTo)
 
-  for (const [key, value] of Object.entries(updateTx.operations)) {
-    if (skipKeys.includes(key)) continue
-
-    const account = key as AccountUuid
-    const position = value as ReadPosition | null | undefined
-
-    const ts = position?.timestamp ?? 0
-    if (ts === 0) continue
-
+  for (const [account, ts] of positions) {
     const context = contexts.find((it) => it.user === account)
     if (context == null) continue
     await readContext(client, cache, result, context, ts)
   }
+}
+
+export function readPositions (tx: TxUpdateDoc<ReadState>): Array<[AccountUuid, Timestamp]> {
+  const positions: Array<[AccountUuid, Timestamp]> = []
+  for (const [key, value] of Object.entries(tx.operations)) {
+    if (skipKeys.includes(key)) continue
+    const ts = (value as ReadPosition | null | undefined)?.timestamp ?? 0
+    if (ts !== 0) positions.push([key as AccountUuid, ts])
+  }
+  return positions
 }
 
 async function readContext (
