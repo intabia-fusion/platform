@@ -37,17 +37,25 @@
   export let onEdit: ((event: MouseEvent) => void) | undefined = undefined
   export let compact = false
 
+  function asRefId (val: unknown): Ref<Person> | undefined {
+    return typeof val === 'string' && val.length > 0 ? (val as Ref<Person>) : undefined
+  }
+
   let person: Person | undefined
   const query = createQuery()
-  $: value &&
+
+  $: validValue = asRefId(value)
+
+  $: if (validValue !== undefined) {
     query.query(
       _class,
-      { _id: value },
+      { _id: validValue },
       (res) => {
         ;[person] = res
       },
       { limit: 1 }
     )
+  }
 
   function getValue (person: Person | undefined, value: Ref<Person> | null | undefined): Person | null | undefined {
     if (value === undefined || value === null) {

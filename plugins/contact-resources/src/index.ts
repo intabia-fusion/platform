@@ -140,6 +140,7 @@ import {
   channelTitleProvider,
   contactTitleProvider,
   employeeSort,
+  personSort,
   filterChannelHasMessagesResult,
   filterChannelHasNewMessagesResult,
   filterChannelInResult,
@@ -469,6 +470,7 @@ export default async (): Promise<Resources> => ({
       url: person.avatarProps?.url
     }),
     EmployeeSort: employeeSort,
+    PersonSort: personSort,
     FilterChannelInResult: filterChannelInResult,
     FilterChannelNinResult: filterChannelNinResult,
     FilterChannelHasMessagesResult: filterChannelHasMessagesResult,

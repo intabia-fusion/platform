@@ -19,7 +19,7 @@
   import { getObjectPresenter } from '../utils'
   import { Analytics } from '@hcengineering/analytics'
 
-  export let objectId: Ref<Doc> | undefined = undefined
+  export let objectId: Ref<Doc> | string | undefined = undefined
   export let _class: Ref<Class<Doc>> | undefined = undefined
   export let value: Doc | RelatedDocument | undefined = undefined
   export let props: Record<string, any> = {}
@@ -39,14 +39,20 @@
   const docQuery = createQuery()
   let doc: Doc | undefined
 
-  $: if (value === undefined && _class != null && objectId != null) {
-    docQuery.query(_class, { _id: objectId }, (r) => {
+  function asRefId (val: unknown): Ref<Doc> | undefined {
+    return typeof val === 'string' && val.length > 0 ? (val as Ref<Doc>) : undefined
+  }
+
+  $: validObjectId = asRefId(objectId)
+
+  $: if (value === undefined && _class != null && validObjectId != null) {
+    docQuery.query(_class, { _id: validObjectId }, (r) => {
       doc = r.shift()
     })
   } else if (
     value?._id !== undefined &&
     value?._class !== undefined &&
-    objectId === undefined &&
+    validObjectId === undefined &&
     _class === undefined &&
     (value as Doc)?.space === undefined
   ) {

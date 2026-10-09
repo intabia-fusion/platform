@@ -25,10 +25,12 @@
   export let disabled: boolean = false
   export let shouldShowName: boolean = true
   export let shrink: number = 0
+
+  $: validValue = typeof value === 'string' ? value : undefined
 </script>
 
 <ObjectPresenter
-  objectId={value}
+  objectId={validValue}
   _class={core.class.Space}
   {shouldShowAvatar}
   {shouldShowName}

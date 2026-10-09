@@ -157,6 +157,29 @@ export async function employeeSort (client: TxOperations, value: Array<Ref<Emplo
   })
 }
 
+export async function personSort (
+  client: TxOperations,
+  value: Array<Ref<Person> | null | undefined>
+): Promise<Array<Ref<Person> | null | undefined>> {
+  const h = client.getHierarchy()
+  const employees = get(employeeByIdStore)
+  const missing = value.filter((v): v is Ref<Person> => v != null && !employees.has(v as Ref<Employee>))
+  const persons = toIdMap(
+    missing.length > 0 ? await client.findAll(contact.class.Person, { _id: { $in: missing } }) : []
+  )
+  const nameOf = (id: Ref<Person>): string => {
+    const p = employees.get(id as Ref<Employee>) ?? persons.get(id)
+    return p !== undefined ? getName(h, p) : ''
+  }
+
+  return [...value].sort((a, b) => {
+    if (a == null && b == null) return 0
+    if (a == null) return 1
+    if (b == null) return -1
+    return nameOf(a).localeCompare(nameOf(b), undefined, { sensitivity: 'base' })
+  })
+}
+
 export async function filterChannelHasMessagesResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
   const result = await getRefs(filter, onUpdate, true)
   return { $in: result }

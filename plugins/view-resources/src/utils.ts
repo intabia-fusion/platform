@@ -24,7 +24,6 @@ import core, {
   TxProcessor,
   getCurrentAccount,
   getObjectValue,
-  type AggregateValue,
   type AnyAttribute,
   type ApplyOperations,
   type Association,
@@ -105,8 +104,10 @@ import { get, writable } from 'svelte/store'
 import { filterDocMixins } from './docMixins'
 import plugin from './plugin'
 import { noCategory } from './viewOptions'
+import { sortNamedCategories } from './categorySorting'
 
 export { getFiltredKeys, isCollectionAttr } from '@hcengineering/presentation'
+export { concatCategories } from './categoryUtils'
 
 /**
  * Define some properties to be used to show component until data is properly loaded.
@@ -1303,33 +1304,6 @@ function getAssociationSubField (key: string): string | undefined {
   return subFieldParts.join('.')
 }
 
-export function concatCategories (arr1: CategoryType[], arr2: CategoryType[]): CategoryType[] {
-  const uniqueValues = new Set<string | number | undefined>()
-  const uniqueObjects = new Map<string | number, AggregateValue>()
-
-  for (const item of arr1) {
-    if (typeof item === 'object') {
-      const id = item.name
-      uniqueObjects.set(id as any, item)
-    } else {
-      uniqueValues.add(item)
-    }
-  }
-
-  for (const item of arr2) {
-    if (typeof item === 'object') {
-      const id = item.name
-      if (!uniqueObjects.has(id as any)) {
-        uniqueObjects.set(id as any, item)
-      }
-    } else {
-      uniqueValues.add(item)
-    }
-  }
-
-  return [...uniqueValues, ...uniqueObjects.values()]
-}
-
 /**
  * @public
  */
@@ -1341,13 +1315,15 @@ export async function sortCategories (
   viewletDescriptorId?: Ref<ViewletDescriptor>
 ): Promise<any[]> {
   const hierarchy = client.getHierarchy()
+
   const clazz = hierarchy.getClass(attrClass)
   const sortFunc = hierarchy.as(clazz, view.mixin.SortFuncs)
-  if (sortFunc?.func === undefined) {
-    return existingCategories
+  if (sortFunc?.func !== undefined) {
+    const f = await getResource(sortFunc.func)
+    return await f(client, existingCategories, space, viewletDescriptorId)
   }
-  const f = await getResource(sortFunc.func)
-  return await f(client, existingCategories, space, viewletDescriptorId)
+
+  return await sortNamedCategories(client, attrClass, existingCategories)
 }
 
 /**

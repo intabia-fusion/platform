@@ -67,8 +67,11 @@
 
   const dispatch = createEventDispatcher()
 
+  $: categoryValue =
+    typeof category === 'object' && category !== null ? (category.values?.[0]?._id ?? category.name) : category
+
   // Get pre-fetched reference document if available
-  $: categoryRefDoc = getCategoryReference(categoryRefsMap, groupByKey, category as Ref<Doc>)
+  $: categoryRefDoc = getCategoryReference(categoryRefsMap, groupByKey, categoryValue as Ref<Doc>)
 
   let accentColor: ColorDefinition | undefined = undefined
 
@@ -146,7 +149,7 @@
       {:else if headerComponent}
         <svelte:component
           this={headerComponent.presenter}
-          value={category}
+          value={categoryValue}
           {...categoryRefDoc ? { object: categoryRefDoc } : {}}
           space={space ?? (items.every((i) => i?.space === items[0]?.space) ? items[0]?.space : undefined)}
           size={'small'}
@@ -187,7 +190,16 @@
         {/if}
         <div class="flex-row-center flex-reverse flex-grow mr-2 gap-2 reverse">
           {#each extraHeaders ?? [] as extra}
-            <Component is={extra} props={{ ...props, value: category, category: groupByKey, docs: items, itemsProj }} />
+            <Component
+              is={extra}
+              props={{
+                ...props,
+                value: categoryValue,
+                category: groupByKey,
+                docs: items,
+                itemsProj
+              }}
+            />
           {/each}
         </div>
       {/if}
