@@ -29,6 +29,7 @@ import core, {
   TxProcessor,
   TxRemoveDoc,
   TxUpdateDoc,
+  UserStatus,
   WorkspaceUuid
 } from '@hcengineering/core'
 import activity from '@hcengineering/activity'
@@ -50,20 +51,27 @@ import notification, {
   TxNotificationType,
   QueueNotificationMessage,
   DocNotifyContext,
-  ReadAllNotificationAction
+  ReadAllNotificationAction,
+  ReadState
 } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import { sharedSystemModel } from '@hcengineering/middleware'
 import { PersonSpace } from '@hcengineering/contact'
+import { LRUCache } from 'lru-cache'
 
 import Workspace from './workspace'
 import type { HeldPush } from './pendingPush'
 import type { TimeMachineMessage } from './types'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils/utils'
 import config from './config'
+import { readPositions } from './module/read'
 
 // The bot can be created after the service starts, so an unresolved lookup is repeated.
 const AI_BOT_LOOKUP_INTERVAL_MS = 60 * 1000
+// A cross-workspace flag is re-checked at most this often per account; real changes go by the contexts.
+const RECHECK_MS = 60 * 1000
+// A re-check resends an unchanged flag only this long after the last send: a write around the service heals.
+const SENT_FLAG_TTL_MS = 10 * 60 * 1000
 
 export class Worker {
   private readonly sysHierarchy = new Hierarchy()
@@ -80,6 +88,9 @@ export class Worker {
   private readonly flushInterval: NodeJS.Timeout | undefined = undefined
 
   private readonly pendingStatusUpdates = new Map<AccountUuid, Record<WorkspaceUuid, boolean>>()
+  private flushing: Promise<void> | undefined
+  private readonly rechecked = new LRUCache<string, true>({ max: 10000, ttl: RECHECK_MS })
+  private readonly sentFlags = new LRUCache<string, boolean>({ max: 10000, ttl: SENT_FLAG_TTL_MS })
 
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
@@ -150,8 +161,15 @@ export class Worker {
   }
 
   private async flushPendingUpdates (): Promise<void> {
-    if (this.pendingStatusUpdates.size === 0) return
+    // One flush at a time: an overlapping one could overtake an older value of the same user and workspace.
+    if (this.flushing !== undefined || this.pendingStatusUpdates.size === 0) return
+    this.flushing = this.sendPendingUpdates().finally(() => {
+      this.flushing = undefined
+    })
+    await this.flushing
+  }
 
+  private async sendPendingUpdates (): Promise<void> {
     const updates = Array.from(this.pendingStatusUpdates.entries())
     this.pendingStatusUpdates.clear()
     const timestamp = Date.now()
@@ -177,8 +195,11 @@ export class Worker {
         )
       )
       results.forEach((res, index) => {
-        if (res.status !== 'rejected') return
         const { user, wsUuid, hasUnread } = batch[index]
+        if (res.status !== 'rejected') {
+          this.sentFlags.set(`${user}:${wsUuid}`, hasUnread)
+          return
+        }
         this.ctx.error('Failed to send notifyStatusChanged to queue', { e: res.reason, user, wsUuid, hasUnread })
 
         // Keep the failed flag for the next tick unless a newer one arrived meanwhile.
@@ -253,6 +274,20 @@ export class Worker {
     ) {
       await this.recheckUserNotifyStatus(ws, workspace, tx as TxCreateDoc<ReadAllNotificationAction>)
     }
+    // A read changes no counter when nothing it read had notified, so a stale flag heals on it.
+    if (
+      tx._class === core.class.TxUpdateDoc &&
+      this.sysHierarchy.isDerived(tx.objectClass, notification.class.ReadState)
+    ) {
+      for (const [user] of readPositions(tx as TxUpdateDoc<ReadState>)) {
+        await this.recheck(ws, workspace, user)
+      }
+    }
+    // Reached only for a workspace open here: UserStatus is no trigger, so nothing is loaded for it.
+    if (this.sysHierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
+      const user = await this.cameOnline(workspace, tx as TxCUD<UserStatus>)
+      if (user !== undefined) await this.recheck(ws, workspace, user)
+    }
   }
 
   private async getTxUser (
@@ -286,7 +321,9 @@ export class Worker {
     if (user == null || user === systemAccountUuid || user === (await this.getAiBotAccount())) return
 
     if (_tx._class === core.class.TxCreateDoc) {
-      this.scheduleStatusUpdate(user, wsUuid, true)
+      if (((_tx as TxCreateDoc<DocNotifyContext>).attributes.unreadCount ?? 0) > 0) {
+        this.scheduleStatusUpdate(user, wsUuid, true)
+      }
     } else {
       let unread = false
       if (_tx._class === core.class.TxUpdateDoc) {
@@ -303,16 +340,54 @@ export class Worker {
       const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
       if (wsClient == null) return
 
-      unread =
-        unread ||
-        (await wsClient.client.findOne(
-          notification.class.DocNotifyContext,
-          { user, unreadCount: { $gt: 0 } },
-          { limit: 1, projection: { _id: 1, unreadCount: 1, user: 1 } }
-        )) != null
+      unread = unread || (await this.hasUnread(wsClient, user))
 
       this.scheduleStatusUpdate(user, wsUuid, unread)
     }
+  }
+
+  private async hasUnread (workspace: Workspace, user: AccountUuid): Promise<boolean> {
+    return (
+      (await workspace.client.findOne(
+        notification.class.DocNotifyContext,
+        { user, unreadCount: { $gt: 0 } },
+        { limit: 1, projection: { _id: 1, unreadCount: 1, user: 1 } }
+      )) != null
+    )
+  }
+
+  private async recheck (wsUuid: WorkspaceUuid, workspace: Workspace, user: AccountUuid): Promise<void> {
+    if (user === systemAccountUuid || user === (await this.getAiBotAccount())) return
+    const key = `${user}:${wsUuid}`
+    if (this.rechecked.has(key)) return
+    this.rechecked.set(key, true)
+    try {
+      const unread = await this.hasUnread(workspace, user)
+      // Every flag sent costs a write and a fan-out to the account's sessions: an unchanged one stays home.
+      const pending = this.pendingStatusUpdates.get(user)?.[wsUuid]
+      if (pending === undefined && this.sentFlags.get(key) === unread) return
+      this.scheduleStatusUpdate(user, wsUuid, unread)
+    } catch (e: any) {
+      // A healing pass only: it must not fail the tx it rides on.
+      this.rechecked.delete(key)
+      this.ctx.warn('Failed to re-check the cross-workspace unread flag', {
+        user,
+        wsUuid,
+        error: e?.message ?? String(e)
+      })
+    }
+  }
+
+  // An update names no user: the status is looked up in the cache, which the tx has just updated.
+  private async cameOnline (workspace: Workspace, tx: TxCUD<UserStatus>): Promise<AccountUuid | undefined> {
+    if (tx._class === core.class.TxCreateDoc) {
+      const status = (tx as TxCreateDoc<UserStatus>).attributes
+      return status.online ? status.user : undefined
+    }
+    if (tx._class !== core.class.TxUpdateDoc || (tx as TxUpdateDoc<UserStatus>).operations.online !== true) {
+      return undefined
+    }
+    return (await workspace.cache.getUserStatuses()).find((it) => it._id === tx.objectId)?.user
   }
 
   private async recheckUserNotifyStatus (
@@ -323,13 +398,7 @@ export class Worker {
     const user = tx.attributes?.account
     if (user == null || user === systemAccountUuid) return
     // Asked from the database, not taken from the action: an action for a foreign account is ignored.
-    const unread =
-      (await workspace.client.findOne(
-        notification.class.DocNotifyContext,
-        { user, unreadCount: { $gt: 0 } },
-        { limit: 1, projection: { _id: 1, unreadCount: 1, user: 1 } }
-      )) != null
-    this.scheduleStatusUpdate(user, wsUuid, unread)
+    this.scheduleStatusUpdate(user, wsUuid, await this.hasUnread(workspace, user))
   }
 
   private scheduleStatusUpdate (user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean): void {
@@ -421,14 +490,18 @@ export class Worker {
   public async close (): Promise<void> {
     clearInterval(this.clearInterval)
     clearInterval(this.flushInterval)
-    this.pendingStatusUpdates.clear()
     const open = Array.from(this.workspaces.values())
     this.workspaces.clear()
-    await Promise.allSettled(
-      open.map(async (workspace) => {
+    await Promise.allSettled([
+      // The consumers are stopped by now: what is pending is final, and a dropped "read" would stick.
+      (async () => {
+        await this.flushing
+        await this.flushPendingUpdates()
+      })(),
+      ...open.map(async (workspace) => {
         await workspace.close()
       })
-    )
+    ])
     await Promise.allSettled([this.userEventProducer.close(), this.producer.close(), this.timeMachine.close()])
   }
 

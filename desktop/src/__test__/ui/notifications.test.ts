@@ -73,7 +73,9 @@ jest.mock('@hcengineering/notification', () => ({
   translateNotification: async (push: any) => ({ title: `Title: ${push.titleIntl}`, body: `Body: ${push.bodyIntl}` })
 }))
 jest.mock('@hcengineering/desktop-preferences', () => ({ defaultNotificationPreference: { showNotifications: true } }))
-jest.mock('@hcengineering/presentation', () => ({ getCurrentWorkspaceUuid: () => 'workspace-1' }))
+jest.mock('@hcengineering/presentation', () => ({
+  getCurrentWorkspaceUuid: () => g.__mockCurrentWorkspace ?? 'workspace-1'
+}))
 
 // Now import configureNotifications and mocked functions
 import { removeAppPush } from '@hcengineering/notification-resources'
@@ -181,5 +183,23 @@ describe('configureNotifications', () => {
     // DB entry should still be cleaned up, but no OS notification displayed
     expect(removeAppPush).toHaveBeenCalledWith(mockPush)
     expect(g.__mockElectronAPI.sendNotification).not.toHaveBeenCalled()
+  })
+
+  it('moves the cross-workspace dot when the current workspace changes', async () => {
+    const notifyConnectionCallback = eventListeners.NotifyConnection
+    g.__mockActivePreferences.set({ showNotifications: true, showUnreadCounter: true })
+    g.__mockWorkspacesStore.set([{ uuid: 'workspace-1' }, { uuid: 'workspace-2' }])
+    g.__mockCurrentWorkspace = 'workspace-1'
+    g.__mockCrossWorkspaceNotificationStore.set({ account: 'acc', 'workspace-2': true })
+    await notifyConnectionCallback()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(g.__mockElectronAPI.setBadge.mock.lastCall[0]).toBe('•')
+
+    // Switched to the workspace with the unread: nothing is left elsewhere, the store did not change.
+    g.__mockCurrentWorkspace = 'workspace-2'
+    await notifyConnectionCallback()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(g.__mockElectronAPI.setBadge.mock.lastCall[0]).toBe(0)
+    g.__mockCurrentWorkspace = undefined
   })
 })

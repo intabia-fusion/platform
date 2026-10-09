@@ -61,6 +61,7 @@ export async function handlePresenceBatch (
 
   if (usersWithBadgeUpdates.size > 0) {
     const userIds = Array.from(usersWithBadgeUpdates)
+    const snapshotOn = Date.now()
     const allStatuses = await db.accountWorkspaceBadgeStatus.find({ accountUuid: { $in: userIds } })
     const statusesByUser = groupByArray(allStatuses, (it) => it.accountUuid)
 
@@ -79,7 +80,7 @@ export async function handlePresenceBatch (
           objectSpace: core.space.Workspace, // Replace it with real person space in middleware
           space: core.space.DerivedTx,
           modifiedBy: core.account.System,
-          modifiedOn: Date.now(),
+          modifiedOn: snapshotOn,
           createdBy: core.account.System,
           attributes: {
             account: user,
