@@ -186,6 +186,10 @@ export function matchQuery<T extends Doc> (
     if (skipLookup && key.startsWith('$lookup.')) {
       continue
     }
+    // A fulltext directive, not a field
+    if (key === '$searchIn') {
+      continue
+    }
     const value = (query as any)[key]
     const tkey = checkMixinKey(key, clazz, hierarchy)
     result = findProperty(result, tkey, value)

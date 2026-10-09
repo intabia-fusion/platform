@@ -123,6 +123,19 @@ describe('FullTextMiddleware $searchIn', () => {
     expect(addExtraFind).not.toHaveBeenCalled()
   })
 
+  it("searches everything, attached documents too, when $searchIn names 'all'", async () => {
+    await mw.findAll(ctx, ISSUE, { $search: 'release', $searchIn: ['all'] })
+
+    expect(searches.map((it) => it.classes)).toEqual([[ISSUE], [COMMENT]])
+    expect(addExtraFind).toHaveBeenCalled()
+  })
+
+  it('searches everything, attached documents too, when $searchIn is null', async () => {
+    await mw.findAll(ctx, ISSUE, { $search: 'release', $searchIn: null as any })
+
+    expect(searches.map((it) => it.classes)).toEqual([[ISSUE], [COMMENT]])
+  })
+
   it("searches the attached documents when $searchIn names 'attached'", async () => {
     await mw.findAll(ctx, ISSUE, { $search: 'release', $searchIn: ['title', 'attached'] })
 

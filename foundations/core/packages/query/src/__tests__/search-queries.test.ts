@@ -238,6 +238,22 @@ describe('LiveQuery $search handling', () => {
     }
   })
 
+  it('adds a doc that starts to match a query with $searchIn but no $search', async () => {
+    // A small group of a searched list: ListCategory drops $search only
+    const { liveQuery, factory } = await getSearchClient(new Set())
+    const id = await createProject(factory, 'other')
+    const sub = await subscribe<TestProject>(liveQuery, test.class.TestProject, {
+      prjName: 'target',
+      $searchIn: ['title']
+    })
+    expect(sub.last()).toHaveLength(0)
+
+    await factory.updateDoc(test.class.TestProject, core.space.Model, id, { prjName: 'target' })
+    await settle()
+
+    expect(sub.last().map((it) => it._id)).toEqual([id])
+  })
+
   it('updates a doc in place when it still matches $search after an edit', async () => {
     const id = generateId<TestProject>()
     const matches = new Set<Ref<Doc>>([id])

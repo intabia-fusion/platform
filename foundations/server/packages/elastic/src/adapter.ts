@@ -25,6 +25,7 @@ import {
   SearchOptions,
   SearchQuery,
   SearchTarget,
+  searchTargets,
   TxResult,
   WorkspaceUuid
 } from '@hcengineering/core'
@@ -180,7 +181,7 @@ const mappings: estypes.MappingTypeMapping = {
   }
 }
 
-const searchTargetFields: Record<SearchTarget, string[]> = {
+const searchTargetFields: Record<Exclude<SearchTarget, 'all'>, string[]> = {
   title: [
     'searchTitle^50',
     'searchTitle.translit^10',
@@ -188,10 +189,27 @@ const searchTargetFields: Record<SearchTarget, string[]> = {
     'searchTitle.keyboard_cyrillic_to_latin^10'
   ],
   identifier: ['searchShortTitle^50'],
-  content: ['fulltextSummary'],
-  extra: ['fulltextExtra'],
+  content: ['highlightableContent^8', 'highlightableContent.ru^8', 'fulltextSummary^3'],
+  extra: ['fulltextExtra^3'],
   // Searched by the middleware
   attached: []
+}
+
+// An explicit field list instead of '*': the wildcard expands over every mapped field,
+// including keyword fields holding uuids, which is both noise and measurably slower.
+function searchFields (targets: SearchTarget[]): string[] {
+  // An unknown value from REST adds nothing, a prototype key included
+  return targets.flatMap((target) =>
+    target !== 'all' && Object.hasOwn(searchTargetFields, target) ? searchTargetFields[target] : []
+  )
+}
+
+// query_string syntax: an unbalanced `(` or `/` fails the whole request
+const queryStringReserved = new Set('+-=&|!(){}[]^"~?:\\/<>')
+
+// Word separators, as in the indexed text; `*` stays a wildcard
+function plainQueryString (text: string): string {
+  return Array.from(text, (ch) => (queryStringReserved.has(ch) ? ' ' : ch)).join('')
 }
 
 class ElasticAdapter implements FullTextAdapter {
@@ -347,18 +365,8 @@ class ElasticAdapter implements FullTextAdapter {
   ): Promise<SearchStringResult> {
     try {
       const { viewerId } = options
-      const searchIn = options.searchIn ?? 'all'
-      const titleFields = [...searchTargetFields.title, ...searchTargetFields.identifier]
-      // An explicit field list instead of '*': the wildcard expands over every mapped field,
-      // including keyword fields holding uuids, which is both noise and measurably slower.
-      const contentFields = [
-        'highlightableContent^8',
-        'highlightableContent.ru^8',
-        'fulltextSummary^3',
-        'fulltextExtra^3'
-      ]
-      const fields =
-        searchIn === 'title' ? titleFields : searchIn === 'content' ? contentFields : [...titleFields, ...contentFields]
+      const fields = searchFields(searchTargets(options.searchIn) ?? ['title', 'identifier', 'content', 'extra'])
+      if (fields.length === 0) return { docs: [] }
       const prefixFields = fields.filter((f) => !f.split('^')[0].includes('.'))
 
       const mainQuery = query.query.startsWith('*')
@@ -379,7 +387,7 @@ class ElasticAdapter implements FullTextAdapter {
                 {
                   // Clause 2: Match anywhere
                   query_string: {
-                    query: query.query,
+                    query: plainQueryString(query.query),
                     analyze_wildcard: true,
                     allow_leading_wildcard: true,
                     lenient: true,
@@ -653,10 +661,11 @@ class ElasticAdapter implements FullTextAdapter {
     viewerId?: string
   ): Promise<IndexedDoc[]> {
     if (query.$search === undefined) return []
+    const targets = searchTargets(query.$searchIn)
     const fields =
-      query.$searchIn === undefined
+      targets === undefined
         ? [...searchTargetFields.title, ...searchTargetFields.identifier, '*']
-        : query.$searchIn.flatMap((target) => searchTargetFields[target] ?? [])
+        : searchFields(targets)
     if (fields.length === 0) return []
 
     const request: any = {
@@ -681,7 +690,7 @@ class ElasticAdapter implements FullTextAdapter {
                       {
                         // Clause 2: Match anywhere
                         query_string: {
-                          query: query.$search,
+                          query: plainQueryString(query.$search),
                           analyze_wildcard: true,
                           allow_leading_wildcard: true,
                           lenient: true,

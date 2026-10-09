@@ -19,6 +19,7 @@ import core, {
   hashWorkspace,
   isFullTextAttribute,
   isIndexedAttribute,
+  searchTargets,
   toFindResult,
   type AttachedDoc,
   type Class,
@@ -129,7 +130,8 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
     if ($search === undefined) {
       return toFindResult<T>([])
     }
-    const searchAttached = $searchIn == null || $searchIn.includes('attached')
+    const targets = searchTargets($searchIn)
+    const searchAttached = targets == null || targets.includes('attached')
 
     const ids: Set<Ref<Doc>> = new Set<Ref<Doc>>()
     const childIds: Set<Ref<Doc>> = new Set<Ref<Doc>>()

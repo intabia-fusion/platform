@@ -36,6 +36,7 @@ import {
   type PersonId,
   type PersonUuid,
   type Ref,
+  type SearchOptions,
   type SessionData,
   type Space,
   type Tx,
@@ -163,6 +164,34 @@ describe('server', () => {
 
       expect(await put(generateToken(systemAccountUuid, workspace))).toBe(200)
       expect(spy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('search-fulltext', () => {
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
+    it('reads searchIn as a comma separated list', async () => {
+      const workspace = '123e4567-e89b-12d3-a456-426614174001' as WorkspaceUuid
+      // No account service here: a stub session takes the call
+      const searchFulltextRaw = jest.fn(async (ctx: any, query: any, options: SearchOptions) => ({ docs: [] }))
+      jest
+        .spyOn(sessionMgr, 'addSession')
+        .mockResolvedValue({ session: { searchFulltextRaw }, workspaceId: workspace, context: toolCtx } as any)
+      jest.spyOn(sessionMgr, 'handleRPC').mockImplementation(async (ctx, service, method, ws, operation) => {
+        await operation({} as any, undefined)
+        return undefined
+      })
+
+      const token = generateToken('123e4567-e89b-12d3-a456-426614174000' as PersonUuid, workspace)
+      const res = await fetch(
+        `http://localhost:${port}/api/v1/search-fulltext/${workspace}?query=q&searchIn=title,identifier`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      expect(res.status).toBe(200)
+      expect(searchFulltextRaw.mock.calls[0][2].searchIn).toEqual(['title', 'identifier'])
     })
   })
 

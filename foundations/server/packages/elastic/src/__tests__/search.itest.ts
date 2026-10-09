@@ -456,29 +456,59 @@ describe('Elastic search string', () => {
     expect(fragments.join(' ')).toContain('<b>quarterly</b>')
   })
 
-  it("matches the title when searchIn is 'title'", async () => {
+  it('matches the title when searchIn names title and identifier', async () => {
     // `i1` carries its text in searchTitle only, so it is reachable through the title path.
-    const result = await adapter.searchString(ctx, ws, { query: 'release notes' }, { searchIn: 'title' })
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'release notes' },
+      { searchIn: ['title', 'identifier'] }
+    )
     expect(ids(result)).toContain('i1')
   })
 
-  it("ignores the title when searchIn is 'content'", async () => {
+  it('ignores the title when searchIn names content and extra', async () => {
     // Every message shares the title "Alice — General", so a query matching a title must not
     // pull in rows whose body never mentions it - that is what the mode is for.
-    const result = await adapter.searchString(ctx, ws, { query: 'Alice' }, { searchIn: 'content' })
+    const result = await adapter.searchString(ctx, ws, { query: 'Alice' }, { searchIn: ['content', 'extra'] })
     expect(ids(result)).toEqual([])
   })
 
-  it("matches through fulltextSummary when searchIn is 'content'", async () => {
+  it("matches through fulltextSummary when searchIn names 'content'", async () => {
     // `i1` has no highlightableContent of its own, but `fulltextSummary` is one of the content
     // fields the query runs over, so it is still reachable in this mode.
-    const result = await adapter.searchString(ctx, ws, { query: 'release notes' }, { searchIn: 'content' })
+    const result = await adapter.searchString(ctx, ws, { query: 'release notes' }, { searchIn: ['content'] })
     expect(ids(result)).toContain('i1')
     expect(ids(result)).toContain('m1')
   })
 
-  it("matches through fulltextExtra when searchIn is 'content'", async () => {
-    const result = await adapter.searchString(ctx, ws, { query: 'kilimanjaro' }, { searchIn: 'content' })
+  it("matches through fulltextExtra when searchIn names 'extra' only", async () => {
+    const extra = await adapter.searchString(ctx, ws, { query: 'kilimanjaro' }, { searchIn: ['extra'] })
+    expect(ids(extra)).toEqual(['i2'])
+    const content = await adapter.searchString(ctx, ws, { query: 'kilimanjaro' }, { searchIn: ['content'] })
+    expect(ids(content)).toEqual([])
+  })
+
+  it('takes query_string syntax in an infix query for plain text', async () => {
+    for (const query of ['*elease/*', '*elease (*', '*elease "*', '*elease:*']) {
+      const result = await adapter.searchString(ctx, ws, { query }, { searchIn: ['title'] })
+      expect(result.failed).toBeUndefined()
+      expect(ids(result)).toContain('i1')
+    }
+  })
+
+  it('searches nowhere for an unknown searchIn value', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'release' },
+      { searchIn: ['constructor' as SearchTarget] }
+    )
+    expect(result).toEqual({ docs: [] })
+  })
+
+  it("searches every field with searchIn 'all'", async () => {
+    const result = await adapter.searchString(ctx, ws, { query: 'kilimanjaro' }, { searchIn: ['all'] })
     expect(ids(result)).toEqual(['i2'])
   })
 
@@ -488,8 +518,9 @@ describe('Elastic search string', () => {
       return await adapter.search(ctx, ws, [OTHER_CLASS], { $search: query + '*', $searchIn: searchIn }, 100, 0)
     }
 
-    it('runs over every field without $searchIn', async () => {
+    it("runs over every field without $searchIn and with 'all'", async () => {
       expect(ids({ docs: await find('quokka') }).sort()).toEqual(['t1', 't2', 't3'])
+      expect(ids({ docs: await find('quokka', ['all']) }).sort()).toEqual(['t1', 't2', 't3'])
     })
 
     it("runs over the title only for 'title'", async () => {
@@ -526,6 +557,20 @@ describe('Elastic search string', () => {
     it("finds nothing in the index for 'attached' alone", async () => {
       expect(await find('quokka', ['attached'])).toEqual([])
     })
+
+    it('takes query_string syntax in an infix query for plain text', async () => {
+      const docs = await adapter.search(ctx, ws, [OTHER_CLASS], { $search: '*uokka (*', $searchIn: ['title'] }, 100, 0)
+      expect(ids({ docs })).toEqual(['t1'])
+    })
+
+    it('runs over everything with a null $searchIn', async () => {
+      expect(ids({ docs: await find('quokka', null as any) }).sort()).toEqual(['t1', 't2', 't3'])
+    })
+
+    it('finds an identifier by its middle', async () => {
+      const docs = await adapter.search(ctx, ws, [OTHER_CLASS], { $search: '*K-2*', $searchIn: ['identifier'] }, 100, 0)
+      expect(ids({ docs })).toEqual(['t2'])
+    })
   })
 
   it('searches title and content together by default', async () => {
@@ -534,16 +579,16 @@ describe('Elastic search string', () => {
     expect(ids(result)).toContain('m1')
   })
 
-  it("matches russian content when searchIn is 'content'", async () => {
+  it("matches russian content when searchIn names 'content'", async () => {
     // Base form against the inflected `квартального` in the text.
-    const result = await adapter.searchString(ctx, ws, { query: 'квартальный' }, { searchIn: 'content' })
+    const result = await adapter.searchString(ctx, ws, { query: 'квартальный' }, { searchIn: ['content'] })
     expect(ids(result)).toContain('r1')
   })
 
-  it("ignores the title for a russian query when searchIn is 'content'", async () => {
+  it("ignores the title for a russian query when searchIn names 'content'", async () => {
     // The latin counterpart matches on the author name; this one on the channel half of the
     // title, which every message in `space:general` shares.
-    const result = await adapter.searchString(ctx, ws, { query: 'General' }, { searchIn: 'content' })
+    const result = await adapter.searchString(ctx, ws, { query: 'General' }, { searchIn: ['content'] })
     expect(ids(result)).toEqual([])
   })
 

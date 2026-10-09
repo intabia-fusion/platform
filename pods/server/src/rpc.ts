@@ -674,7 +674,11 @@ export function registerRPC (
         limit: req.query.limit !== undefined ? parseInt(req.query.limit as string) : undefined,
         cursor: req.query.cursor as string | undefined,
         sort: req.query.sort as SearchOptions['sort'],
-        searchIn: req.query.searchIn as SearchOptions['searchIn'],
+        // A comma separated list: `searchIn=title,identifier`
+        searchIn:
+          req.query.searchIn !== undefined
+            ? ((req.query.searchIn as string).split(',') as SearchOptions['searchIn'])
+            : undefined,
         fuzzy: req.query.fuzzy !== undefined ? req.query.fuzzy === 'true' : undefined,
         // Either `true` or a JSON object, so the bare flag survives the query string.
         highlight:

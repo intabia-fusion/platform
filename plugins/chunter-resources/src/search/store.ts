@@ -121,7 +121,7 @@ export function createChatSearchStore (scope: ChatSearchScope = {}): ChatSearchS
         {
           limit: PAGE_SIZE,
           sort: state.sort,
-          searchIn: 'content',
+          searchIn: ['content'],
           cursor: append ? cursor : undefined,
           highlight: true,
           fields: ['message']
