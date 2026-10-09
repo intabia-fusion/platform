@@ -223,6 +223,7 @@
     "ApiKeyLastUsed": "Последнее использование",
     "ApiKeyNeverUsed": "Не использовался",
     "ApiKeyRevoked": "Отозван",
+    "ApiKeyExpired": "Истёк",
     "ApiKeyReadOnly": "Только чтение",
     "RevokeApiKey": "Отозвать",
     "RevokeApiKeyConfirm": "Вы уверены, что хотите отозвать этот API-ключ? Сервисы, использующие его, немедленно потеряют доступ. Это действие необратимо.",
