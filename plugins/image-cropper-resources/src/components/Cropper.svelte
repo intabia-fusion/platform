@@ -19,11 +19,15 @@
   export let image: Blob
   export let cropSize = 1200
   export let lessCrop: boolean = false
+  // crop() returns nothing until cropperjs is ready: smartcrop on a large image takes a while.
+  export let ready = false
 
   let imgRef: HTMLImageElement
   let cropper: Cropper | undefined
 
   async function init (image: Blob) {
+    // Before the first await: a replaced image must not be saved as the old crop meanwhile.
+    ready = false
     const bitmap = await createImageBitmap(image)
     const canvas = document.createElement('canvas')
     canvas.height = bitmap.height
@@ -64,6 +68,7 @@
           width: initialArea.width * yC
         })
         cropper = cropperInst
+        ready = true
       }
     })
   }

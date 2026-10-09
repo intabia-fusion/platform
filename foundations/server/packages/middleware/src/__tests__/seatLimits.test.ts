@@ -187,4 +187,16 @@ describe('SeatLimitsMiddleware', () => {
 
     expect((await runTx(mw, { uuid: uuid('u2'), role: AccountRole.User })).rejected).toBe(false)
   })
+
+  it('seats a member who joined before the members-version bump arrived', async () => {
+    let members = [member('owner', AccountRole.Owner)]
+    const { context, provider } = makeContext(members, 2)
+    ;(provider as any).getWorkspaceMembers = async () => members
+    const mw = await SeatLimitsMiddleware.create(ctx, context, makeNext().next)
+    expect((await runTx(mw, { uuid: uuid('owner'), role: AccountRole.Owner })).rejected).toBe(false)
+
+    // Joined in the account service; no version bump yet.
+    members = [member('owner', AccountRole.Owner), member('u1', AccountRole.User)]
+    expect((await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User })).rejected).toBe(false)
+  })
 })

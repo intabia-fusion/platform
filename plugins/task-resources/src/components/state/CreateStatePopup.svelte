@@ -41,6 +41,7 @@
   import { ColorsPopup, statusStore } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
   import emojiPlugin from '@hcengineering/emoji'
+  import { get } from 'svelte/store'
   import { taskTypeStore, typeStore } from '../..'
   import task from '../../plugin'
   import ApproveStatusRenamePopup from './ApproveStatusRenamePopup.svelte'
@@ -63,6 +64,15 @@
   export let readonly: boolean = true
 
   value = status?.name ?? valuePattern ?? ''
+
+  // Same id StatesProjectEditor opens us with: a slow rename may finish after another status was
+  // opened, and must not close that one.
+  const openedId = status?._id ?? '#'
+  function closeIfStillOpen (): void {
+    if (get(settingsStore).id === openedId) {
+      clearSettingsStore()
+    }
+  }
 
   const client = getClient()
 
@@ -205,7 +215,7 @@
 
     canDelete = sameCategory.length > 1
     selectableStates = sameCategory.filter((it) => it._id !== status?._id)
-    clearSettingsStore()
+    closeIfStillOpen()
   }
 
   let selected: number = icon === iconWithEmoji ? 1 : 0
@@ -281,7 +291,7 @@
           await renameStatuses(_type, _taskType, estatus._id, newStatus._id)
 
           closePopup()
-          clearSettingsStore()
+          closeIfStillOpen()
         }
       },
       undefined

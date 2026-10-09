@@ -707,13 +707,17 @@ export class IssuesPage extends CommonTrackerPage {
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
     const item = this.textPopupAddAttachmentsFile().filter({ hasText: filePath }).first()
+    let clicked = false
     // Same hover tooltip as the check below, and it can stay closed - one closed tooltip failed the
     // whole test. Removing an attachment that is already gone is a no-op, so retry the pair.
     await retry(async () => {
       await this.hoverAttachmentButton(issueName)
-      if (!(await item.isVisible())) return
+      // Absent before any click means the list has not rendered yet, not that it is deleted.
+      if (clicked && !(await item.isVisible())) return
+      await expect(item).toBeVisible({ timeout: 5000 })
       await this.deleteAttachmentLink(filePath).hover()
       await this.deleteAttachmentLink(filePath).click()
+      clicked = true
       await expect(item).toBeVisible({ visible: false })
     })
   }

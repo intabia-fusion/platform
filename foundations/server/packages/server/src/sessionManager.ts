@@ -1881,8 +1881,10 @@ export class TSessionManager implements SessionManager {
   ): Promise<void> {
     try {
       const hello = request as HelloRequest
-      service.binaryMode = hello.binary ?? false
-      service.useCompression = this.enableCompression ? (hello.compression ?? false) : false
+      // Applied after the hello is sent: a broadcast packed in the new mode before it, the client
+      // cannot read yet and drops.
+      const binaryMode = hello.binary ?? false
+      const useCompression = this.enableCompression ? (hello.compression ?? false) : false
       service.clientKind = hello.client
 
       if (LOGGING_ENABLED) {
@@ -1891,8 +1893,8 @@ export class TSessionManager implements SessionManager {
           workspaceId: workspace.wsId.uuid,
           userId: service.getUser(),
           user: service.getSocialIds().find((it) => it.type !== SocialIdType.HULY)?.value,
-          binary: service.binaryMode,
-          compression: service.useCompression,
+          binary: binaryMode,
+          compression: useCompression,
           client: service.clientKind,
           timeToHello: Date.now() - service.createTime,
           workspaceUsers: workspace.sessions.size,
@@ -1909,15 +1911,17 @@ export class TSessionManager implements SessionManager {
         const helloResponse: HelloResponse = {
           id: -1,
           result: 'hello',
-          binary: service.binaryMode,
+          binary: binaryMode,
           reconnect,
           serverVersion: this.serverVersion,
           lastTx: pipeline.context.lastTx,
           lastHash: pipeline.context.lastHash,
           account,
-          useCompression: service.useCompression
+          useCompression
         }
         await ws.send(ctx, helloResponse, false, false)
+        service.binaryMode = binaryMode
+        service.useCompression = useCompression
       })
       if (account.uuid !== guestAccount && account.uuid !== systemAccountUuid) {
         // Batched + broadcast once per second (see queueStatus).
