@@ -28,7 +28,7 @@ describe('syncChat', () => {
         with: async (_n: string, _p: any, op: any) => await op({}),
         info: () => {}
       },
-      hierarchy: { isDerived: () => false },
+      hierarchy: { getDescendants: (_class: string) => [_class] },
       txFactory: {
         createTxUpdateDoc: () => ({ _class: 'update' }),
         createTxCollectionCUD: () => ({ _class: 'collection' })
@@ -43,5 +43,72 @@ describe('syncChat', () => {
     const res = await syncChat(control, { user: 'u1' } as unknown as UserStatus, 10 ** 15)
 
     expect(res.map((t) => t._class)).toEqual(['collection', 'update'])
+  })
+
+  it('excludes every chunter space chat in the query', async () => {
+    const syncInfo = { _class: chunter.class.ChatSyncInfo, space: 's', _id: 'sync-1', timestamp: 0 }
+    const chats = [
+      { _class: chunter.class.Chat, space: 's', _id: 'chat-doc', attachedTo: 'doc-1', attachedToClass: 'x' },
+      {
+        _class: chunter.class.Chat,
+        space: 's',
+        _id: 'chat-direct',
+        attachedTo: 'dm-1',
+        attachedToClass: chunter.class.DirectMessage
+      },
+      {
+        _class: chunter.class.Chat,
+        space: 's',
+        _id: 'chat-channel',
+        attachedTo: 'ch-1',
+        attachedToClass: 'x:class:OnboardingChannel'
+      }
+    ]
+    let chatQuery: any
+    const hidden: string[] = []
+    const control = {
+      ctx: {
+        with: async (_n: string, _p: any, op: any) => await op({}),
+        info: () => {}
+      },
+      hierarchy: {
+        getDescendants: (_class: string) =>
+          _class === chunter.class.ChunterSpace
+            ? [_class, chunter.class.Channel, 'x:class:OnboardingChannel', chunter.class.DirectMessage]
+            : [_class]
+      },
+      txFactory: {
+        createTxUpdateDoc: (_c: any, _s: any, objectId: string) => ({ _class: 'update', objectId }),
+        createTxCollectionCUD: (_c: any, _a: any, _s: any, _col: any, tx: any) => {
+          hidden.push(tx.objectId)
+          return { _class: 'collection' }
+        }
+      },
+      findAll: async (_ctx: any, _class: any, query: any) => {
+        if (_class === chunter.class.ChatSyncInfo) return [syncInfo]
+        if (_class === chunter.class.Chat) {
+          chatQuery = query
+          return chats.filter((it) => !(query.attachedToClass.$nin as string[]).includes(it.attachedToClass))
+        }
+        return []
+      }
+    } as unknown as TriggerControl
+
+    await syncChat(control, { user: 'u1' } as unknown as UserStatus, 10 ** 15)
+
+    expect(chatQuery).toEqual({
+      account: 'u1',
+      hidden: false,
+      pinned: false,
+      attachedToClass: {
+        $nin: [
+          chunter.class.ChunterSpace,
+          chunter.class.Channel,
+          'x:class:OnboardingChannel',
+          chunter.class.DirectMessage
+        ]
+      }
+    })
+    expect(hidden).toEqual(['chat-doc'])
   })
 })
