@@ -99,7 +99,7 @@ import view, {
   type Viewlet,
   type ViewletDescriptor
 } from '@hcengineering/view'
-import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@hcengineering/contact'
+import contact, { getAllSocialStringsByPersonRef, getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { get, writable } from 'svelte/store'
 
 import { filterDocMixins } from './docMixins'
@@ -1341,13 +1341,78 @@ export async function sortCategories (
   viewletDescriptorId?: Ref<ViewletDescriptor>
 ): Promise<any[]> {
   const hierarchy = client.getHierarchy()
+
+  if (hierarchy.isDerived(attrClass, contact.class.Person)) {
+    return await sortPersonCategories(client, existingCategories)
+  }
+
   const clazz = hierarchy.getClass(attrClass)
   const sortFunc = hierarchy.as(clazz, view.mixin.SortFuncs)
-  if (sortFunc?.func === undefined) {
-    return existingCategories
+  if (sortFunc?.func !== undefined) {
+    const f = await getResource(sortFunc.func)
+    return await f(client, existingCategories, space, viewletDescriptorId)
   }
-  const f = await getResource(sortFunc.func)
-  return await f(client, existingCategories, space, viewletDescriptorId)
+
+  return await sortNamedCategories(client, attrClass, existingCategories)
+}
+
+async function sortPersonCategories (client: TxOperations, categories: any[]): Promise<any[]> {
+  const emptyCategories = categories.filter((c) => c == null)
+  const refs = categories.filter((c): c is Ref<Doc> => typeof c === 'string' && c.length > 0)
+  if (refs.length === 0) return categories
+
+  const persons = await client.findAll(contact.class.Person, {
+    _id: { $in: refs as Array<Ref<Person>> }
+  })
+
+  const personById = new Map<Ref<Doc>, Person>(persons.map((p) => [p._id as Ref<Doc>, p]))
+
+  const sortedRefs = [...refs].sort((a, b) => {
+    const nameA = personById.get(a as Ref<Doc>)?.name ?? ''
+    const nameB = personById.get(b as Ref<Doc>)?.name ?? ''
+    return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' })
+  })
+
+  return [...sortedRefs, ...emptyCategories]
+}
+
+async function sortNamedCategories (
+  client: TxOperations,
+  attrClass: Ref<Class<Doc>>,
+  categories: any[]
+): Promise<any[]> {
+  const categoryName = (category: any): string => {
+    if (typeof category === 'string') return category
+    if (typeof category === 'object' && category !== null) {
+      const name = (category as { name?: unknown }).name
+      if (typeof name === 'string') return name
+    }
+    return ''
+  }
+
+  const isEmpty = (c: any): boolean => c == null || (typeof c === 'object' && categoryName(c) === '')
+
+  const emptyCategories = categories.filter(isEmpty)
+  const rest = categories.filter((c) => !isEmpty(c))
+  if (rest.length === 0) return categories
+
+  const keys = [...new Set(rest.map(categoryName))].filter((k) => k.length > 0)
+  const docs = await client.findAll(attrClass, { _id: { $in: keys as Array<Ref<Doc>> } })
+  const nameById = new Map(docs.map((d) => [d._id, (d as NamedDoc).name ?? (d as NamedDoc).label ?? '']))
+
+  const nameOf = (c: any): string => {
+    const key = categoryName(c)
+    return nameById.get(key as Ref<Doc>) ?? key
+  }
+
+  const sorted = [...rest].sort((a, b) => nameOf(a).localeCompare(nameOf(b), undefined, { sensitivity: 'base' }))
+
+  return [...sorted, ...emptyCategories]
+}
+
+interface NamedDoc extends Doc {
+  name?: string
+  label?: string
 }
 
 /**
