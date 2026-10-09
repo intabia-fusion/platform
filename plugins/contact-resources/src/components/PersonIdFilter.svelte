@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Person, SocialIdentity } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-  import type { FindResult, PersonId, Ref, Space } from '@hcengineering/core'
+  import type { FindResult, PersonId, Ref, Space, WithLookup } from '@hcengineering/core'
   import core, { getObjectValue, includesAny } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
@@ -42,7 +42,7 @@
   filter.modes = filter.modes === undefined ? [view.filter.FilterObjectIn, view.filter.FilterObjectNin] : filter.modes
   filter.mode = filter.mode === undefined ? filter.modes[0] : filter.mode
 
-  let socialIdentities: (SocialIdentity | undefined | null)[] = []
+  let socialIdentities: (WithLookup<SocialIdentity> | undefined | null)[] = []
   let socialIdentitiesPromise: Promise<FindResult<SocialIdentity>> | undefined
   let personIdToPersonMap: Record<PersonId, Ref<Person>> = {}
   let personToPersonIdsMap: Record<Ref<Person>, PersonId[]> = {}
@@ -82,13 +82,15 @@
     const resultQuery =
       search !== ''
         ? {
-            key: { $like: '%' + search + '%' },
+            '$lookup.attachedTo.name': { $like: '%' + search + '%' },
             _id: { $in: Array.from(targets.keys()) }
           }
         : {
             _id: { $in: Array.from(targets.keys()) }
           }
-    socialIdentitiesPromise = client.findAll(contact.class.SocialIdentity, resultQuery)
+    socialIdentitiesPromise = client.findAll(contact.class.SocialIdentity, resultQuery, {
+      lookup: { attachedTo: contact.class.Person }
+    })
     socialIdentities = await socialIdentitiesPromise
     if (targets.has(undefined)) {
       socialIdentities.unshift(undefined)
@@ -97,26 +99,24 @@
     personIdToPersonMap = (socialIdentities ?? []).reduce<Record<string, Ref<Person>>>((acc, sid) => {
       if (sid == null) return acc
 
-      const personId = sid.attachedTo
+      const person = sid?.$lookup?.attachedTo
 
-      if (personId == null) return acc
+      if (person == null) return acc
 
-      acc[sid._id] = personId
+      acc[sid._id] = person._id
 
       return acc
     }, {})
     personToPersonIdsMap = (socialIdentities ?? []).reduce<Record<Ref<Person>, PersonId[]>>((acc, sid) => {
       if (sid == null) return acc
 
-      const personId = sid.attachedTo
+      const person = sid?.$lookup?.attachedTo
 
-      if (personId == null) return acc
+      if (person == null) return acc
 
-      if (acc[personId] == null) {
-        acc[personId] = []
-      }
+      acc[person._id] ??= []
 
-      acc[personId].push(sid._id)
+      acc[person._id].push(sid._id)
 
       return acc
     }, {})

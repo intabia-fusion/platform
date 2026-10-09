@@ -24,7 +24,7 @@
   export let onChange: (e: Filter) => void
 
   let Component: AnySvelteComponent | undefined
-  getResource(contact.component.PersonIdFilter).then((res) => {
+  void getResource(contact.component.PersonIdFilter).then((res) => {
     Component = res as AnySvelteComponent
   })
 </script>
