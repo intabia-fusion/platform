@@ -642,12 +642,17 @@ class WorkspaceCache {
       return Array.from(this.userStatusesMap.values())
     }
 
-    const statuses = await this.client.findAll(core.class.UserStatus, {})
-
-    for (const status of statuses) {
-      this.userStatusesMap.set(status._id, status)
+    try {
+      const statuses = await this.client.findAll(core.class.UserStatus, {})
+      this.userStatusesMap.clear()
+      for (const status of statuses) {
+        this.userStatusesMap.set(status._id, status)
+      }
+      this.userStatusesLoaded = true
+    } catch (e: any) {
+      // Unknown presence reads as offline: the push goes at once instead of the notification failing.
+      this.ctx.warn('Failed to load user statuses', { error: e?.message ?? String(e) })
     }
-    this.userStatusesLoaded = true
 
     return Array.from(this.userStatusesMap.values())
   }
@@ -733,6 +738,9 @@ class WorkspaceCache {
       const status = this.userStatusesMap.get(tx.objectId as Ref<UserStatus>)
       if (status !== undefined) {
         this.userStatusesMap.set(status._id, this.updateOrMixin(tx, status))
+      } else {
+        // Its create went by unseen (an update names no user): read the statuses afresh.
+        this.userStatusesLoaded = false
       }
     }
     if (hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
