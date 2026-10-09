@@ -24,6 +24,7 @@
     "SendAgain": "重新发送",
     "SendAgainIn": "可在  后再次发送",
     "Value": "值",
+    "ApiKeyExpired": "已过期",
     "Signout": "退出登录",
     "Settings": "设置",
     "SelectWorkspace": "选择工作区",

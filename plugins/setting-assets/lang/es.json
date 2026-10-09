@@ -24,6 +24,7 @@
     "SendAgain": "Enviar de nuevo",
     "SendAgainIn": "Se puede enviar de nuevo en",
     "Value": "Valor",
+    "ApiKeyExpired": "Caducada",
     "Signout": "Cerrar sesión",
     "Settings": "Ajustes",
     "SelectWorkspace": "Seleccionar espacio de trabajo",

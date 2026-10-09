@@ -53,6 +53,7 @@
     "Attribute": "Attribute",
     "Custom": "Custom",
     "Type": "Type",
+    "ApiKeyExpired": "Expired",
     "WithTime": "WithTime",
     "DateMode": "Date mode",
     "CreatingAttribute": "Creating an attribute",

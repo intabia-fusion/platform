@@ -77,6 +77,7 @@ export default mergeIds(settingId, setting, {
     Maintainer: '' as IntlString,
     Guest: '' as IntlString,
     Owner: '' as IntlString,
+    ApiKeyExpired: '' as IntlString,
     MinValue: '' as IntlString,
     MaxValue: '' as IntlString,
     IntegerOnly: '' as IntlString,
