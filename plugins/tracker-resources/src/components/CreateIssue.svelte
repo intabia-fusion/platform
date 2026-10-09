@@ -1027,7 +1027,7 @@
         showButtons={false}
         kind={'indented'}
         isScrollable={false}
-        kitOptions={{ reference: true, leftMenu: false }}
+        kitOptions={{ reference: true, leftMenu: false, mode: 'full' }}
         enableAttachments={false}
         bind:content={object.description}
         placeholder={tracker.string.IssueDescriptionPlaceholder}
