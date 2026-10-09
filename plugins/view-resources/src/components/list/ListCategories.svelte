@@ -143,7 +143,7 @@
               const f = await getResource(categoryFunc.action)
               const res = hierarchy.clone(await f(_class, query, space, groupByKey, update, queryId))
               if (res !== undefined) {
-                result = concatCategories(res, result)
+                result = concatCategories(result, res)
                 break
               }
             }
