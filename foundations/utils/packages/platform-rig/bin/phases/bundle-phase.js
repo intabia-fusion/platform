@@ -27,6 +27,7 @@ let cachedVersion = null
 let cachedGitRevision = null
 
 const versionFilePath = join(commonScriptsPath, 'version.txt')
+const { escapeNonLatin1File } = require(join(commonScriptsPath, 'escape-non-latin1.js'))
 let cachedModelVersion = null
 
 try {
@@ -349,8 +350,10 @@ async function runEsbuildDirect(cwd, config, bundleScript, packageName) {
       keepNames: config.keepNames,
       sourcemap: config.sourcemap,
       external: config.external,
-      define
+      define,
+      charset: 'ascii'
     })
+    escapeNonLatin1File(path.join(cwd, config.outdir, 'bundle.js'))
 
     // Handle post-processing (e.g., models/all: && node ./bundle/bundle.js > ./bundle/model.json)
     if (bundleScript && hasPostProcessing(bundleScript)) {

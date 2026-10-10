@@ -2,6 +2,7 @@ const esbuild = require('esbuild')
 const path = require('path')
 const fs = require('fs')
 const { execSync } = require('child_process')
+const { escapeNonLatin1File } = require('./escape-non-latin1.js')
 
 const SCRIPT_DIR = __dirname
 
@@ -79,8 +80,10 @@ async function bundle(config) {
       keepNames: config.keepNames,
       sourcemap: config.sourcemap,
       external: config.external,
-      define: config.define
+      define: config.define,
+      charset: 'ascii'
     })
+    escapeNonLatin1File(path.join(config.outdir, config.outfile))
 
     console.log('Build completed successfully!')
   } catch (error) {

@@ -19,12 +19,14 @@ const dev = (process.env.CLIENT_TYPE ?? '') === 'dev' || mode === 'development'
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 console.log('mode', mode)
 const MinimizerPlugin = require('minimizer-webpack-plugin')
+const { EscapeNonLatin1Plugin } = require('../common/scripts/escape-non-latin1.js')
 const minifiers = {
   swc: { minify: MinimizerPlugin.swcMinify, minimizerOptions: { ecma: 2022 } },
   // Same as the server bundles (common/scripts/esbuild.js): keep names, no syntax lowering.
-  esbuild: { minify: MinimizerPlugin.esbuildMinify, minimizerOptions: { target: 'esnext', keepNames: true, charset: 'utf8' } },
+  esbuild: { minify: MinimizerPlugin.esbuildMinify, minimizerOptions: { target: 'esnext', keepNames: true, charset: 'ascii' } },
   terser: { minify: MinimizerPlugin.terserMinify }
 }
+
 // MINIFIER=esbuild|swc|terser selects the JS minifier for production builds; esbuild by default.
 const minifier = minifiers[process.env.MINIFIER ?? 'esbuild']
 if (minifier === undefined) {
@@ -167,13 +169,12 @@ module.exports = [
       filename: '[name].js',
       chunkFilename: '[name].js',
       publicPath: './',
-      chunkFormat: false,
       clean: true
     },
     optimization: prod
       ? {
           minimize: true,
-          minimizer: [new MinimizerPlugin(minifier)]
+          minimizer: [new MinimizerPlugin(minifier), new EscapeNonLatin1Plugin()]
         }
       : {
           minimize: false,

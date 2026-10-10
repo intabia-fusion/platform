@@ -116,7 +116,7 @@
 
 - `services/love/src/config.ts` - обязательные env (`ACCOUNTS_URL`, `LIVEKIT_*`, `SECRET` и др.); падает при импорте, если чего-то нет.
 - `EGRESS_REQUEST_TIMEOUT_SEC` - таймаут запроса к LiveKit `EgressClient` (по умолчанию 30s).
-- `useKrisp = false` в `plugins/love-resources/src/utils.ts` - Krisp noise-cancellation отключена фич-флагом (платный LiveKit add-on, нестабилен), обвязка сохранена.
+- Krisp noise-cancellation (платный LiveKit add-on) удалена вместе с зависимостью `@livekit/krisp-noise-filter`; шумоподавление микрофона - только WebRTC `noiseSuppression` по `DevicesPreference.noiseCancellation` (`liveKitClient.ts`).
 - `DevicesPreference` (`micEnabled`, `noiseCancellation`, `blurRadius`, `camEnabled`, `speakingWhileMutedAlert`) - персональные настройки устройств, `plugins/love/src/types.ts`.
 - `Room.startWithTranscription`/`startWithRecording`/`startPrivate` - настройки на комнату.
 
