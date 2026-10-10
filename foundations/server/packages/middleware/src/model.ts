@@ -28,6 +28,7 @@ import core, {
   type Timestamp,
   type Tx,
   type TxCUD,
+  modelTxHashJson,
   DOMAIN_MODEL,
   DOMAIN_TX,
   withContext
@@ -230,7 +231,7 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     if (!this.computeHash) return
     const h = crypto.createHash('sha1')
     h.update(this.lastHash)
-    h.update(JSON.stringify(tx))
+    h.update(modelTxHashJson(tx))
     const hash = h.digest('hex')
     this.setLastHash(hash)
   }
@@ -245,7 +246,7 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
 
   private static chain (last: string, txes: Tx[]): string {
     for (const it of txes) {
-      last = crypto.createHash('sha1').update(last).update(JSON.stringify(it)).digest('hex')
+      last = crypto.createHash('sha1').update(last).update(modelTxHashJson(it)).digest('hex')
     }
     return last
   }

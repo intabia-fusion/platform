@@ -25,7 +25,9 @@ import core, {
   type Class,
   toFindResult,
   type Status,
-  type WithLookup
+  type WithLookup,
+  ClassifierKind,
+  Hierarchy
 } from '@hcengineering/core'
 import { type TriggerControl, type PipelineContext } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType } from '@hcengineering/task'
@@ -111,6 +113,19 @@ function createUpdateTx (
 }
 
 type FindAllFn = (ctx: any, _class: Ref<Class<Doc>>, query: any, options?: any) => Promise<Doc[]>
+
+function projectHierarchy (): Hierarchy {
+  const hierarchy = new Hierarchy()
+  const factory = new TxFactory(core.account.System)
+  const define = (_id: Ref<Class<Doc>>, kind: ClassifierKind, base?: Ref<Class<Doc>>): void => {
+    hierarchy.tx(factory.createTxCreateDoc(core.class.Class, core.space.Model, { kind, extends: base } as any, _id))
+  }
+  define(core.class.Obj, ClassifierKind.CLASS)
+  define(core.class.Doc, ClassifierKind.CLASS, core.class.Obj)
+  define(task.class.Project, ClassifierKind.CLASS, core.class.Doc)
+  define(workflow.mixin.ProjectWorkflow, ClassifierKind.MIXIN, task.class.Project)
+  return hierarchy
+}
 
 function createMockControl (findAllImpl: FindAllFn): TriggerControl & { getHierarchy: () => any } {
   const control = {
@@ -919,10 +934,7 @@ describe('PostFunctionsTrigger', () => {
       const txFactory = new TxFactory(testAccount)
       const mockControl = {
         ctx: {} as any,
-        hierarchy: {
-          isDerived: (derived: any, base: any) =>
-            derived === workflow.class.Workflow && base === workflow.class.Workflow
-        },
+        hierarchy: projectHierarchy(),
         findAll: jest.fn().mockResolvedValue([projectWorkflow]),
         txFactory
       }
@@ -941,6 +953,53 @@ describe('PostFunctionsTrigger', () => {
             'task-type-2': otherWorkflowId
           }
         }
+      })
+    })
+
+    it('reads the workflows mapping stored under the mixin key of a raw document', async () => {
+      const { OnWorkflowDelete } = jest.requireActual('../WorkflowTrigger')
+      const workflowId = 'wf-1' as Ref<Workflow>
+      const otherWorkflowId = 'wf-2' as Ref<Workflow>
+      const projectId = 'proj-1' as Ref<Project>
+      const projectSpace = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: workflowId,
+        objectClass: workflow.class.Workflow,
+        objectSpace: projectSpace,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const rawProject = {
+        _id: projectId,
+        _class: task.class.Project,
+        space: projectSpace,
+        [workflow.mixin.ProjectWorkflow]: {
+          workflows: {
+            'task-type-1': workflowId,
+            'task-type-2': otherWorkflowId
+          }
+        }
+      }
+
+      const mockControl = {
+        ctx: {} as any,
+        hierarchy: projectHierarchy(),
+        findAll: jest.fn().mockResolvedValue([rawProject]),
+        txFactory: new TxFactory(testAccount)
+      }
+
+      const result = await OnWorkflowDelete([removeTx as any], mockControl as any)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        objectId: projectId,
+        mixin: workflow.mixin.ProjectWorkflow,
+        attributes: { workflows: { 'task-type-2': otherWorkflowId } }
       })
     })
 
@@ -974,10 +1033,7 @@ describe('PostFunctionsTrigger', () => {
       const txFactory = new TxFactory(testAccount)
       const mockControl = {
         ctx: {} as any,
-        hierarchy: {
-          isDerived: (derived: any, base: any) =>
-            derived === workflow.class.Workflow && base === workflow.class.Workflow
-        },
+        hierarchy: projectHierarchy(),
         findAll: jest.fn().mockResolvedValue([projectWorkflow]),
         txFactory
       }

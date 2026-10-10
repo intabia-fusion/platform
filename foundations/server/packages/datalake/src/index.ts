@@ -33,7 +33,15 @@ import {
 } from '@hcengineering/server-core'
 import serverToken, { generateToken } from '@hcengineering/server-token'
 import { type Readable } from 'stream'
-import { type UploadObjectParams, DatalakeClient, type WorkspaceStats, type WorkspaceStatsByType } from './client'
+import { buffer } from 'stream/consumers'
+import {
+  type ObjectMetadata,
+  type UploadObjectParams,
+  DatalakeClient,
+  directUploadLimit,
+  type WorkspaceStats,
+  type WorkspaceStatsByType
+} from './client'
 import { NotFoundError } from './error'
 
 export { DatalakeClient, type WorkspaceStats, type WorkspaceStatsByType }
@@ -209,10 +217,19 @@ export class DatalakeService implements StorageAdapter {
       size
     }
 
+    // The direct upload reads the stream into memory anyway; as a buffer it survives a retry.
+    if (typeof stream !== 'string' && !Buffer.isBuffer(stream) && (size === undefined || size < directUploadLimit)) {
+      stream = await buffer(stream)
+    }
+    // A stream is consumed by the failed attempt and cannot be replayed; multipart retries each part itself.
+    const replayable = typeof stream === 'string' || Buffer.isBuffer(stream)
     const { etag } = await ctx.with(
       'put',
       {},
-      (ctx) => this.retry(ctx, () => this.client.putObject(ctx, wsIds.uuid, objectName, stream, params)),
+      (ctx) => {
+        const upload = (): Promise<ObjectMetadata> => this.client.putObject(ctx, wsIds.uuid, objectName, stream, params)
+        return replayable ? this.retry(ctx, upload) : upload()
+      },
       { workspace: wsIds.uuid, objectName }
     )
 

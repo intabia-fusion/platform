@@ -202,7 +202,7 @@ class Client implements HulylakeClient {
         {
           method: 'GET',
           headers: this.authHeaders({
-            Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}`
+            Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}-`
           })
         },
         retryOptions

@@ -32,7 +32,7 @@ import {
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { Status, UNAUTHORIZED, unknownStatus } from '@hcengineering/platform'
+import platform, { PlatformError, Status, UNAUTHORIZED, unknownStatus } from '@hcengineering/platform'
 import { RPCHandler, type Response } from '@hcengineering/rpc'
 import {
   doSessionOp,
@@ -60,6 +60,7 @@ import http, { type IncomingMessage } from 'http'
 import morgan from 'morgan'
 import os from 'os'
 import { compress } from 'snappy'
+import { Transform } from 'stream'
 import { setImmediate } from 'timers/promises'
 import 'utf-8-validate'
 import { WebSocketServer, type RawData, type WebSocket } from 'ws'
@@ -268,13 +269,19 @@ export function startHttpServer (
 
       switch (operation) {
         case 'maintenance': {
-          void retrieveJson(req).then((message) => {
-            const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
-            sessions.scheduleMaintenance(timeMinutes, message)
+          void retrieveJson(req)
+            .then((message) => {
+              const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
+              sessions.scheduleMaintenance(timeMinutes, message)
 
-            res.writeHead(200)
-            res.end()
-          })
+              res.writeHead(200)
+              res.end()
+            })
+            .catch((err) => {
+              ctx.error('JSON parse error', { err })
+              res.writeHead(400, {})
+              res.end()
+            })
           return
         }
         case 'wipe-statistics': {
@@ -353,6 +360,7 @@ export function startHttpServer (
   app.put(
     '/api/v1/blob',
     catchError(async (req, res) => {
+      let received = 0
       try {
         const authHeader = req.headers.authorization
         if (authHeader === undefined) {
@@ -387,6 +395,14 @@ export function startHttpServer (
           res.end()
           return
         }
+        // The declared size is not trusted: count what is actually read.
+        const body = new Transform({
+          transform (chunk: Buffer, encoding, callback) {
+            received += chunk.length
+            callback(received > MAX_FILE_SIZE ? new Error('File too large') : null, chunk)
+          }
+        })
+        req.on('error', (err) => body.destroy(err))
         await ctx.with(
           'storage upload',
           {},
@@ -395,7 +411,7 @@ export function startHttpServer (
               ctx,
               wsIds,
               name,
-              size === 0 ? '' : req,
+              size === 0 ? '' : req.pipe(body),
               contentType,
               size !== -1 ? size : undefined
             )
@@ -408,6 +424,12 @@ export function startHttpServer (
           { contentType, workspace: wsIds.uuid }
         )
       } catch (err: any) {
+        if (received > MAX_FILE_SIZE) {
+          // The rest of the body is left unread, so the connection cannot be reused.
+          res.writeHead(413, { 'Content-Type': 'application/json', Connection: 'close' })
+          res.end(JSON.stringify({ error: 'File too large' }))
+          return
+        }
         Analytics.handleError(err)
         ctx.error('/api/v1/blob put error', { err })
         res.writeHead(200, {
@@ -434,6 +456,7 @@ export function startHttpServer (
 
         if (wsIds.uuid == null) {
           res.status(403).send({ error: 'No workspace found' })
+          return
         }
 
         const name = req.query.name as string
@@ -461,6 +484,12 @@ export function startHttpServer (
       } catch (err: any) {
         Analytics.handleError(err)
         ctx.error('/api/v1/blob get error', { err })
+        // An unreachable account service says nothing about the token; 401 would send the client to log in again.
+        if (err instanceof PlatformError && err.status.code === platform.status.ServiceUnavailable) {
+          res.status(503).send({ error: 'Service unavailable' })
+          return
+        }
+        res.status(401).send({ error: 'Unauthorized' })
       }
     })
   )

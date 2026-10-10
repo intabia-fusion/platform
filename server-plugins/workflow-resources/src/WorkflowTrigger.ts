@@ -43,12 +43,14 @@ export async function OnWorkflowDelete (txes: TxRemoveDoc<Workflow>[], control: 
   const projects = await control.findAll(control.ctx, workflow.mixin.ProjectWorkflow, {})
 
   for (const project of projects) {
-    if (project.workflows == null) continue
+    // findAll may hand back a raw document with mixin fields under the mixin key (mocks, a direct adapter call).
+    const workflows = control.hierarchy.as(project, workflow.mixin.ProjectWorkflow).workflows
+    if (workflows == null) continue
 
     const updatedWorkflows: Record<Ref<TaskType>, Ref<Workflow>> = {}
     let modified = false
 
-    for (const [taskType, wfId] of Object.entries(project.workflows)) {
+    for (const [taskType, wfId] of Object.entries(workflows)) {
       if (wfId != null && removedWorkflowIds.has(wfId)) {
         modified = true
       } else if (wfId != null) {

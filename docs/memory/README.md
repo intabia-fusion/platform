@@ -78,6 +78,7 @@
 - [kafka_consumer_test_overhead.md](kafka_consumer_test_overhead.md) - Kafka consumer lifecycle dominates fulltext test time
 - [livequery-coverage-and-bench.md](livequery-coverage-and-bench.md) - LiveQuery: инварианты, покрытие и бенчмарки
 - [livequery-tx-ordering.md](livequery-tx-ordering.md) - LiveQuery tx ordering vs ClientImpl.tx
+- [model-hash.md](model-hash.md) - Хеш модели: живая tx против прочитанной из Postgres
 - [pod_log_volume.md](pod_log_volume.md) - Pod log volume: what was actually filling it
 - [postgres-reverse-lookup-sort.md](postgres-reverse-lookup-sort.md) - Postgres: sort by reverse lookup field
 - [rpc-json-protocol.md](rpc-json-protocol.md) - RPC: протокол транзактора

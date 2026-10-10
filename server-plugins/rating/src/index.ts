@@ -79,14 +79,14 @@ export class RatingMiddleware extends BaseMiddleware {
     // Should allow only one reaction per document per user for Emoji, Like, Usefull
     const current = await this.provideFindAll(ctx, rating.class.DocReaction, {
       attachedTo: create.attachedTo,
-      attachedToClass: create.objectClass
+      attachedToClass: create.attachedToClass,
+      createdBy: create.createdBy ?? create.modifiedBy
     })
     if (
       current.some(
         (it) =>
           it.reactionType === create.attributes.reactionType &&
-          (it.value === create.attributes.value ||
-            (create.attributes.reactionType === ReactionKind.Emoji && it.emoji === create.attributes.emoji))
+          (create.attributes.reactionType !== ReactionKind.Emoji || it.emoji === create.attributes.emoji)
       )
     ) {
       throw new Error('Duplicate emoji reaction is not allowed.')

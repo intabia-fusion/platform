@@ -204,7 +204,7 @@ export function registerRPC (
         return
       }
       let token = req.headers.authorization as string
-      if (token === null) {
+      if (token === undefined) {
         sendError(res, 401, { message: 'Missing Authorization header' })
         return
       }
@@ -759,7 +759,7 @@ export function registerRPC (
         ): Promise<FindResult<T>> => {
           return await session.findAllRaw(ctx, _class, query, opts)
         },
-        tx: async (tx: Tx): Promise<TxResult> => await session.txRaw(ctx, tx)
+        tx: async (tx: Tx): Promise<TxResult> => (await session.txRaw(ctx, tx)).result
       }
 
       const socialIdEntry: SocialId = {

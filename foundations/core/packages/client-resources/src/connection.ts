@@ -990,7 +990,7 @@ class Connection implements ClientConnection {
             uncompressedSize,
             ratio: compressedSize > 0 && uncompressedSize > 0 ? (uncompressedSize / compressedSize).toFixed(2) : 'n/a',
             count: result.length,
-            lookupDocs: result.lookupMap !== undefined ? Object.keys(result.lookupMap).length : 0,
+            lookupDocs: result.lookupMap != null ? Object.keys(result.lookupMap).length : 0,
             pendingCount: this.requests.size,
             sinceReconnectMs: this.lastReconnectAt === 0 ? -1 : platformNow() - this.lastReconnectAt
           })

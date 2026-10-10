@@ -20,6 +20,9 @@ import { Readable } from 'stream'
 import { DatalakeError, NetworkError, NotFoundError } from './error'
 import { unwrapETag } from './utils'
 
+/** Objects below this size, or of unknown size, go in one request read fully into memory. */
+export const directUploadLimit = 64 * 1024 * 1024
+
 /** @public */
 export interface ObjectMetadata {
   lastModified: number
@@ -177,7 +180,7 @@ export class DatalakeClient {
     const url = this.getObjectUrl(ctx, workspace, objectName)
     const headers = {
       ...this.headers,
-      Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}`
+      Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}-`
     }
 
     let response
@@ -263,7 +266,7 @@ export class DatalakeClient {
       }
     }
 
-    if (size === undefined || size < 64 * 1024 * 1024) {
+    if (size === undefined || size < directUploadLimit) {
       return await ctx.with(
         'direct-upload',
         {},

@@ -144,7 +144,7 @@ export class StorageClientImpl implements StorageClient {
     const response = await wrappedFetch(url, {
       headers: {
         ...this.headers,
-        Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}`
+        Range: length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}-`
       }
     })
 

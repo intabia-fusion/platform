@@ -15,6 +15,7 @@
 
 import core, {
   type AccountUuid,
+  type PersonId,
   type Hierarchy,
   type Class,
   ClassifierKind,
@@ -25,7 +26,8 @@ import core, {
   type Space,
   type Tx,
   type TxCUD,
-  TxFactory
+  TxFactory,
+  modelTxHashJson
 } from '@hcengineering/core'
 import type { IntlString } from '@hcengineering/platform'
 import crypto from 'node:crypto'
@@ -119,6 +121,17 @@ async function makeMiddleware (userTx: Tx[], filter?: (h: Hierarchy, model: Tx[]
       return release
     }
   }
+}
+
+// A jsonb column hands back object keys in its own order, not in the order the tx was built.
+function reorderKeys<T> (value: T): T {
+  if (Array.isArray(value)) return value.map((it) => reorderKeys(it)) as T
+  if (value === null || typeof value !== 'object') return value
+  return Object.fromEntries(
+    Object.entries(value)
+      .reverse()
+      .map(([k, v]) => [k, reorderKeys(v)])
+  ) as T
 }
 
 const sleep = async (ms: number): Promise<void> => {
@@ -344,8 +357,8 @@ describe('ModelMiddleware model cache', () => {
 
   it('should hash the same with a cached system prefix as chaining every tx', async () => {
     const systemTx = genCoreModel().concat([classTx(itemClass), classTx('core:class:Account' as Ref<Class<Doc>>)])
-    const legacy = (txes: Tx[]): string =>
-      txes.reduce((last, it) => crypto.createHash('sha1').update(last).update(JSON.stringify(it)).digest('hex'), '')
+    const chainEach = (txes: Tx[]): string =>
+      txes.reduce((last, it) => crypto.createHash('sha1').update(last).update(modelTxHashJson(it)).digest('hex'), '')
     // Second iteration runs with the prefix cache already warm.
     for (const userTx of [makeUserTx(3), makeUserTx(0), makeUserTx(5)]) {
       const harness = createHarness()
@@ -358,7 +371,7 @@ describe('ModelMiddleware model cache', () => {
         systemTx
       )) as ModelMiddleware
       created.push(m)
-      expect(m.lastHash).toBe(legacy(systemTx.concat(userTx)))
+      expect(m.lastHash).toBe(chainEach(systemTx.concat(userTx)))
     }
     expect(() => systemTx.push(classTx(itemClass))).toThrow()
   })
@@ -402,6 +415,46 @@ describe('ModelMiddleware model cache', () => {
     // The newest txs survive; the oldest were already committed to the DB by then.
     const objectIds = new Set(model.map((it) => (it as any).objectId))
     expect(objectIds.has(`test:class:Bulk${n - 1}`)).toBe(true)
+  })
+
+  describe('hash of reordered keys', () => {
+    // One system model for both sides: genCoreModel stamps fresh ids on every call.
+    const systemTx = genCoreModel().concat([classTx(itemClass), classTx('core:class:Account' as Ref<Class<Doc>>)])
+
+    async function hashOf (dbTx: Tx[], liveTx: Tx[] = []): Promise<string> {
+      const harness = createHarness()
+      const adapter = (harness.pipelineContext.adapterManager as any).getAdapter(DOMAIN_TX, true)
+      adapter.getModel = async (): Promise<Tx[]> => dbTx
+      const m = (await ModelMiddleware.doCreate(
+        harness.ctx,
+        harness.pipelineContext,
+        makeNextMiddleware(harness),
+        systemTx
+      )) as ModelMiddleware
+      created.push(m)
+      await m.tx(harness.ctx, liveTx)
+      return m.lastHash
+    }
+
+    it('should hash a model tx the same whatever its key order', async () => {
+      const userTx = makeUserTx(3)
+      expect(await hashOf(reorderKeys(userTx))).toBe(await hashOf(userTx))
+    })
+
+    it('should give the same hash for live model txs and the same txs read back from the DB', async () => {
+      const userTx = [classTx('test:class:Live1' as Ref<Class<Doc>>), classTx('test:class:Live2' as Ref<Class<Doc>>)]
+      expect(await hashOf(reorderKeys(userTx))).toBe(await hashOf([], userTx))
+    })
+
+    // Postgres keeps createdBy and createdOn in columns: absent ones come back as null and modifiedOn.
+    it('should give the same hash for a live update tx and the same tx read back from the DB', async () => {
+      const userFactory = new TxFactory('user1' as PersonId)
+      const live = userFactory.createTxUpdateDoc(core.class.Class, core.space.Model, itemClass, {
+        label: 'Renamed' as IntlString
+      })
+      const stored = { ...reorderKeys(live), createdBy: null, createdOn: live.modifiedOn } as unknown as Tx
+      expect(await hashOf([stored])).toBe(await hashOf([], [live]))
+    })
   })
 
   it('should answer a stale hash with the full cached model', async () => {

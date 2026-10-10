@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeQueries, buildSocialIdString, parseSocialIdString } from '..'
+import { mergeQueries, buildSocialIdString, parseSocialIdString, canonicalJson } from '..'
 import { SocialIdType } from '../classes'
 import { TxFactory } from '../tx'
 
@@ -213,5 +213,18 @@ describe('TxFactory with meta', () => {
       { silent: true }
     )
     expect(tx.meta).toEqual({ silent: true })
+  })
+})
+
+describe('canonicalJson', () => {
+  it('does not depend on key order at any level', () => {
+    const a = { b: 1, a: { d: [{ y: 1, x: 2 }], c: null } }
+    const b = { a: { c: null, d: [{ x: 2, y: 1 }] }, b: 1 }
+    expect(canonicalJson(a)).toEqual(canonicalJson(b))
+    expect(canonicalJson(a)).toEqual('{"a":{"c":null,"d":[{"x":2,"y":1}]},"b":1}')
+  })
+
+  it('keeps array order', () => {
+    expect(canonicalJson([2, 1])).not.toEqual(canonicalJson([1, 2]))
   })
 })

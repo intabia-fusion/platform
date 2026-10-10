@@ -89,6 +89,29 @@ export function generateUuid (): string {
   return crypto.randomUUID()
 }
 
+/**
+ * JSON with object keys sorted at every level: the model hash must not depend on key order,
+ * which differs between a live tx and the same tx read back from the database.
+ * @public
+ */
+export function canonicalJson (value: unknown): string {
+  return JSON.stringify(value, (_key, v) => {
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) return v
+    const sorted: Record<string, unknown> = {}
+    for (const k of Object.keys(v).sort()) sorted[k] = v[k]
+    return sorted
+  })
+}
+
+/**
+ * JSON a model tx hash is taken over. A tx read back from the database differs from the live one:
+ * an absent `createdBy` comes back as null, an absent `createdOn` as `modifiedOn`.
+ * @public
+ */
+export function modelTxHashJson (tx: Tx): string {
+  return canonicalJson({ ...tx, createdBy: tx.createdBy ?? undefined, createdOn: tx.createdOn ?? tx.modifiedOn })
+}
+
 /** @public */
 export function isId (value: any): value is Ref<any> {
   return typeof value === 'string' && /^[0-9a-f]{24,24}$/.test(value)

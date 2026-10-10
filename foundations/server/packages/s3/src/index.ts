@@ -472,7 +472,7 @@ export class S3Service implements StorageAdapter {
     offset: number,
     length?: number
   ): Promise<Readable> {
-    const range = length !== undefined ? `bytes=${offset}-${offset + length}` : `bytes=${offset}-`
+    const range = length !== undefined ? `bytes=${offset}-${offset + length - 1}` : `bytes=${offset}-`
     return await this.doGet(ctx, wsIds, objectName, range)
   }
 

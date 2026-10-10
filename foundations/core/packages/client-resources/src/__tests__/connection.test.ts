@@ -268,6 +268,26 @@ describe('MockWebSocket', () => {
   })
 })
 
+// Answers findAll the way a JSON-mode server does for a slow query without lookups.
+class SlowFindWebSocket extends MockWebSocket {
+  send (data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    const message = typeof data === 'string' ? data : new TextDecoder().decode(data as ArrayBuffer)
+    const method = message !== pingConst ? JSON.parse(message).method : undefined
+    if (method === 'hello') {
+      this.simulateMessage(JSON.stringify({ id: -1, result: 'hello', binary: false, useCompression: false }))
+      return
+    }
+    if (method === 'findAll') {
+      const { id } = JSON.parse(message)
+      this.simulateMessage(
+        JSON.stringify({ id, time: 600, result: { dataType: 'TotalArray', total: 0, lookupMap: null, value: [] } })
+      )
+      return
+    }
+    super.send(data)
+  }
+}
+
 describe('connect function', () => {
   let connections: Array<{ close: () => Promise<void> }> = []
   let mockWebSockets: MockWebSocket[] = []
@@ -389,5 +409,31 @@ describe('connect function', () => {
     client.handleMsg(1, { id: -1, terminate: true })
 
     expect(client.closed).toBe(true)
+  })
+
+  it('resolves a slow findAll with a null lookupMap', async () => {
+    const mockWs = new SlowFindWebSocket('ws://localhost:3333')
+    mockWebSockets.push(mockWs)
+    const client = connect('ws://localhost:3333', jest.fn(), 'test-workspace' as WorkspaceUuid, 'u' as PersonUuid, {
+      socketFactory: (url: string) => mockWs
+    })
+    connections.push(client)
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    // The slow-query report runs in the browser only.
+    ;(globalThis as any).window = {}
+    try {
+      const result = await Promise.race([
+        client.findAll(core.class.Space, {}),
+        new Promise((resolve, reject) =>
+          setTimeout(() => {
+            reject(new Error('findAll did not resolve'))
+          }, 1000)
+        )
+      ])
+      expect(result).toHaveLength(0)
+    } finally {
+      delete (globalThis as any).window
+    }
   })
 })
