@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Besprechungsraum {number}",
     "VoiceRoomNum": "Audioraum {number}",
     "JoinRequestTitle": "Beitrittsanfrage",
-    "JoinRequestBody": "{name} möchte dem Meeting beitreten"
+    "JoinRequestBody": "{name} möchte dem Meeting beitreten",
+    "OnboardingCalls": "Anrufe",
+    "OnboardingCallsDescription": "Das Büro ist eine virtuelle Etage mit Räumen: Klicken Sie auf den Raum eines Kollegen, um ihn anzurufen, oder betreten Sie einen gemeinsamen Raum für einen Teamanruf.",
+    "OnboardingCallsStep1": "Öffnen Sie das Büro in der linken Leiste",
+    "OnboardingCallsStep2": "Klicken Sie auf einen Raum, um beizutreten und zu sprechen",
+    "EmptyStateMeetingMinutesTitle": "Noch keine Meetingprotokolle",
+    "EmptyStateMeetingMinutesDescription": "Das Protokoll wird automatisch erstellt, sobald ein Meeting beginnt."
   }
 }

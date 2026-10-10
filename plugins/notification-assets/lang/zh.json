@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "对您的消息做出了反应",
     "Clearing": "正在清除...",
-    "Reading": "正在读取..."
+    "Reading": "正在读取...",
+    "OnboardingInbox": "收件箱",
+    "OnboardingInboxDescription": "收件箱汇集提及、回复以及您关注内容的变更，让您看到需要处理的事项。",
+    "OnboardingInboxStep1": "点击左侧栏中的铃铛",
+    "OnboardingInboxStep2": "打开通知即可跳转到消息或问题",
+    "InboxEmptyTitle": "暂无通知",
+    "InboxEmptyHint": "提及、私信以及你关注的任务和文档的变更都会出现在这里。",
+    "InboxSelectTitle": "选择一条通知",
+    "InboxSelectHint": "在左侧列表中打开一条通知。"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

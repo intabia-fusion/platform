@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "No drives yet",
+    "EmptyStateDriveDescription": "A drive is a shared folder tree for files your team uploads and organizes together.",
+    "EmptyStateDriveCreateLabel": "Create drive",
+    "EmptyStateFilesTitle": "No files here yet",
+    "EmptyStateFilesDescription": "Upload files with the Upload Files button or drag them here.",
+    "OnboardingCreateDrive": "Create a drive",
+    "OnboardingUploadFile": "Upload a file",
+    "OnboardingDriveStep1": "Click the arrow next to \"Upload Files\"",
+    "OnboardingDriveStep2": "Choose \"Create Drive\"",
+    "OnboardingFilesStep1": "Open a drive in the navigation panel",
+    "OnboardingFilesStep2": "Click \"Upload Files\" or drag files into the window",
+    "EmptyTitle": "Files live on drives",
+    "EmptyHint": "Open a drive in the panel on the left or create a new one. A drive is a shared folder for a team or a project."
   }
 }

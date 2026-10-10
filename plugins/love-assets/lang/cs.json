@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Zasedací místnost {number}",
     "VoiceRoomNum": "Hlasová místnost {number}",
     "JoinRequestTitle": "Žádost o připojení",
-    "JoinRequestBody": "{name} se chce připojit k setkání"
+    "JoinRequestBody": "{name} se chce připojit k setkání",
+    "OnboardingCalls": "Hovory",
+    "OnboardingCallsDescription": "Kancelář je virtuální patro s místnostmi: kliknutím na místnost kolegy mu zavoláte, nebo vstupte do sdílené místnosti pro týmový hovor.",
+    "OnboardingCallsStep1": "Otevřete Kancelář na levém panelu",
+    "OnboardingCallsStep2": "Klikněte na místnost, připojte se a mluvte",
+    "EmptyStateMeetingMinutesTitle": "Zatím žádné zápisy ze schůzek",
+    "EmptyStateMeetingMinutesDescription": "Zápis se vytvoří automaticky, jakmile schůzka začne."
   }
 }

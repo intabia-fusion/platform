@@ -386,6 +386,35 @@ describe('account operations', () => {
       )
     })
 
+    test('should refuse the 31st invite within a minute', async () => {
+      // A caller of its own: the limiter is module state shared with the other tests.
+      const sender = { uuid: 'rate-limited-sender' as PersonUuid }
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: sender.uuid,
+        workspace: mockWorkspace.uuid,
+        extra: {}
+      })
+      ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(sender)
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
+      ;(mockDb.invite.insertOne as jest.Mock).mockResolvedValue('invite-id')
+
+      for (let i = 0; i < 30; i++) {
+        await sendInvite(mockCtx, mockDb, mockBranding, mockToken, {
+          email: `u${i}@example.com`,
+          role: AccountRole.User
+        })
+      }
+      await expect(
+        sendInvite(mockCtx, mockDb, mockBranding, mockToken, { email: 'u30@example.com', role: AccountRole.User })
+      ).rejects.toThrow(
+        new PlatformError(
+          new Status(Severity.ERROR, platform.status.WorkspaceRateLimit, { workspace: mockWorkspace.uuid })
+        )
+      )
+      expect(mockDb.invite.insertOne).toHaveBeenCalledTimes(30)
+    })
+
     test('should throw error if caller has insufficient role', async () => {
       ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
       ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)

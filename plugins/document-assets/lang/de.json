@@ -59,7 +59,21 @@
     "Icon": "Symbol",
     "Color": "Farbe",
     "ForbidCreateTeamspacePermission": "Arbeitsbereichserstellung verbieten",
-    "ForbidCreateTeamspacePermissionDescription": "Verbietet Benutzern das Erstellen neuer Arbeitsbereiche"
+    "ForbidCreateTeamspacePermissionDescription": "Verbietet Benutzern das Erstellen neuer Arbeitsbereiche",
+    "EmptyStateTeamspaceTitle": "Noch keine Arbeitsbereiche",
+    "EmptyStateTeamspaceDescription": "Arbeitsbereiche gruppieren Dokumente nach Team oder Thema und legen fest, wer sie lesen und bearbeiten darf.",
+    "EmptyStateTeamspaceCreateLabel": "Arbeitsbereich erstellen",
+    "EmptyStateDocumentTitle": "Noch keine Dokumente",
+    "EmptyStateDocumentDescription": "Dokumente sind gemeinsame Seiten für Spezifikationen, Notizen und Wikis innerhalb eines Arbeitsbereichs.",
+    "EmptyStateDocumentCreateLabel": "Dokument erstellen",
+    "OnboardingCreateTeamspace": "Erstellen Sie einen Arbeitsbereich",
+    "OnboardingWriteDocument": "Schreiben Sie ein Dokument",
+    "OnboardingTeamspaceStep1": "Klicken Sie auf den Pfeil neben „Dokument erstellen“",
+    "OnboardingTeamspaceStep2": "Wählen Sie „Arbeitsbereich erstellen“",
+    "OnboardingDocumentsStep1": "Klicken Sie auf „Dokument erstellen“",
+    "OnboardingDocumentsStep2": "Geben Sie einen Titel ein und klicken Sie auf „Erstellen“",
+    "EmptyTitle": "Dokumente liegen in Arbeitsbereichen",
+    "EmptyHint": "Öffnen Sie einen Arbeitsbereich im Panel links oder erstellen Sie einen neuen. Ein Arbeitsbereich ist ein Bereich für ein Thema oder ein Team, zum Beispiel „Richtlinien“."
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

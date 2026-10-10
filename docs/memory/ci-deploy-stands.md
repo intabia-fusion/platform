@@ -28,3 +28,7 @@
 ## Почта и OTP на стендах
 
 Почта (account -> redpanda -> mail_server -> mailpit) работает, но nodemailer отбрасывает адрес без `@` ("No recipients defined") - OTP для логинов `admin`/`user1` не доходил. Seed поэтому создаёт `admin@admin`, `user1@user1`, `user2@user2` (`ci_deploy.sh`). `isEmail` в `server/account/src/utils.ts` требует точку в домене (regex `(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+...`), но проверяет только операции с почтовыми ящиками (`operations.ts`), не логин.
+
+## notification падал на стенде после #225
+
+`pod-notification` после `8ebfcffcc3` (#225) стал Kafka-консьюмером без HTTP-сервера и требует `ACCOUNTS_URL` и `SECRET` (`services/notification/pod-notification/src/config.ts`, `required`), без них бросает `Missing env variables` и уходит в restart loop. Selfhost `compose.yml` передавал только старые `PORT`/`SOURCE`/`PUSH_*`, и `ci_deploy.sh` падал на "Stand is not up after 7 minutes" (job 261566). `mail_server` не падает, но без этих переменных берёт дефолты `http://localhost:3000`/`secret` из `services/mail/pod-mail/src/config.ts`. Новая переменная окружения сервиса требует правки selfhost `compose.yml` вместе с `dev/docker-compose.yaml`.

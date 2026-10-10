@@ -72,7 +72,7 @@ test.describe('Drive tests', () => {
   test('Upload/rename/delete file, check file was uploaded, renamed and deleted', async () => {
     await drivesPage.clickOnDrive(drive)
     const fileName = 'cat.jpeg'
-    await uploadFile(leftMenu.page, fileName, 'Upload files')
+    await uploadFile(leftMenu.page, fileName, /^Upload Files$/)
     await filesPage.checkFileExists(fileName)
     const newFileName = 'dog.jpeg'
     await filesPage.renameFile(fileName, newFileName)

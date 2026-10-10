@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Sala de reuniones {number}",
     "VoiceRoomNum": "Sala de voz {number}",
     "JoinRequestTitle": "Solicitud para unirse",
-    "JoinRequestBody": "{name} quiere unirse a la reunión"
+    "JoinRequestBody": "{name} quiere unirse a la reunión",
+    "OnboardingCalls": "Llamadas",
+    "OnboardingCallsDescription": "La Oficina es una planta virtual con salas: haz clic en la sala de un compañero para llamarlo, o entra en una sala compartida para una llamada de equipo.",
+    "OnboardingCallsStep1": "Abre Oficina en la barra de la izquierda",
+    "OnboardingCallsStep2": "Haz clic en una sala para unirte y hablar",
+    "EmptyStateMeetingMinutesTitle": "Aún no hay minutos de reuniones",
+    "EmptyStateMeetingMinutesDescription": "Los minutos se crean automáticamente cuando comienza una reunión."
   }
 }

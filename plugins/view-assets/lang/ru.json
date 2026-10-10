@@ -162,6 +162,11 @@
     "ForbidAttributeChanges": "Запретить изменение: ",
     "AllowAttributeChanges": "Разрешить изменение: ",
     "RelationshipTable": "Таблица связей",
-    "GroupAndSort": "Группировка и сортировка"
+    "GroupAndSort": "Группировка и сортировка",
+    "EmptyStateDescription": "Здесь пока ничего нет",
+    "NothingFound": "Ничего не найдено",
+    "NothingFoundHidden": "{count, plural, one {# объект не подходит} few {# объекта не подходят} other {# объектов не подходят}} под поиск или фильтры.",
+    "ChangeSearchQuery": "Попробуйте другой запрос или сбросьте фильтры.",
+    "EmptyStateCreateLabel": "Создать"
   }
 }

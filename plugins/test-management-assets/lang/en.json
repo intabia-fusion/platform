@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Test cases not selected} one {# test case selected} few {# test cases selected} other {# test cases selected}}",
     "DefaultAssignee": "Default assignee",
     "TestPlanTitle": "Test plan title",
-    "RunAssistant": "Run assistant"
+    "RunAssistant": "Run assistant",
+    "EmptyStateTestSuiteTitle": "No test suites yet",
+    "EmptyStateTestSuiteDescription": "A test suite groups test cases for one feature or module.",
+    "EmptyStateTestSuiteCreateLabel": "Create test suite",
+    "EmptyStateTestCaseTitle": "No test cases yet",
+    "EmptyStateTestCaseDescription": "A test case is a set of steps to check and the expected result.",
+    "EmptyStateTestCaseCreateLabel": "Create test case",
+    "EmptyStateTestResultTitle": "No results yet",
+    "EmptyStateTestResultDescription": "Results appear as test cases are run in a test run.",
+    "EmptyStateTestPlanItemTitle": "No test cases in the plan yet",
+    "EmptyStateTestPlanItemDescription": "Add the test cases that the plan should cover.",
+    "EmptyStateTestPlanItemCreateLabel": "Add test case"
   }
 }

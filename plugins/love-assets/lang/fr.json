@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Salle de réunion {number}",
     "VoiceRoomNum": "Salle vocale {number}",
     "JoinRequestTitle": "Demande d'adhésion",
-    "JoinRequestBody": "{name}  souhaite rejoindre la réunion"
+    "JoinRequestBody": "{name}  souhaite rejoindre la réunion",
+    "OnboardingCalls": "Appels",
+    "OnboardingCallsDescription": "Le Bureau est un étage virtuel avec des salles : cliquez sur la salle d'un collègue pour l'appeler, ou entrez dans une salle commune pour un appel d'équipe.",
+    "OnboardingCallsStep1": "Ouvrez Bureau dans la barre de gauche",
+    "OnboardingCallsStep2": "Cliquez sur une salle pour la rejoindre et discuter",
+    "EmptyStateMeetingMinutesTitle": "Aucune minute de réunion pour le moment",
+    "EmptyStateMeetingMinutesDescription": "Les minutes sont créées automatiquement au début d'une réunion."
   }
 }

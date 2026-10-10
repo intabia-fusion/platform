@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,11 +24,14 @@
   import type { SelectionFocusProvider } from '../../selection'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
   import { getResultOptions, getResultQuery } from '../../viewOptions'
+  import view from '../../plugin'
+  import ViewletEmptyState from '../ViewletEmptyState.svelte'
   import ListCategories from './ListCategories.svelte'
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Doc> = {}
+  export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let options: FindOptions<Doc> | undefined = undefined
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
   export let config: Array<string | BuildModelKey>
@@ -47,7 +51,6 @@
   export let listProvider: SelectionFocusProvider
   export let singleCategoryLimit: number | undefined = undefined
   export let readonly: boolean = false
-  export let empty: boolean = false
 
   const limiter = new RateLimiter(10)
 
@@ -57,13 +60,11 @@
   let docs: Doc[] = []
   let fastDocs: Doc[] = []
   let slowDocs: Doc[] = []
+  let docsReceived = false
 
   $: orderBy = viewOptions.orderBy
 
   const docsQuery = createQuery()
-  let docsLoaded = false
-  let noCategories = false
-  $: empty = docsLoaded && noCategories
   const docsQuerySlow = createQuery()
 
   $: lookup = buildConfigLookup(client.getHierarchy(), _class, config, options?.lookup)
@@ -108,7 +109,7 @@
     (res) => {
       fastDocs = res
       fastQueryIds = new Set(res.map((it) => it._id))
-      docsLoaded = true
+      docsReceived = true
     },
     { ...categoryQueryOptions, limit: 1000 }
   )
@@ -127,6 +128,29 @@
   }
 
   $: docs = [...fastDocs, ...slowDocs.filter((it) => !fastQueryIds.has(it._id))]
+
+  // "Show empty groups" and other category options render groups without docs, so the list is not empty.
+  $: showsEmptyCategories = (viewOptionsConfig ?? []).some(
+    (it) => it.actionTarget === 'category' && Boolean(viewOptions[it.key] ?? it.defaultValue)
+  )
+  $: isEmpty = docsReceived && docs.length === 0 && !showsEmptyCategories
+
+  // Only counted once the list is actually empty, so a non-empty list never pays for it.
+  let gtotal = 0
+  const gtotalQ = createQuery()
+  $: if (isEmpty && totalQuery !== undefined) {
+    gtotalQ.query(
+      _class,
+      totalQuery,
+      (res) => {
+        gtotal = res.total === -1 ? 0 : res.total
+      },
+      { limit: 1, total: true }
+    )
+  } else {
+    gtotalQ.unsubscribe()
+    gtotal = 0
+  }
 
   // Build lookups for category references to avoid individual presenter queries
   let categoryRefsMap = new Map<string, Map<Ref<Doc>, Doc>>()
@@ -256,56 +280,59 @@
   let listCategories: ListCategories
 </script>
 
-<div class="list-container" bind:this={listDiv}>
-  <ListCategories
-    bind:this={listCategories}
-    bind:empty={noCategories}
-    newObjectProps={() => (space != null ? { space } : {})}
-    {docs}
-    {categoryRefsMap}
-    {_class}
-    {space}
-    {selection}
-    query={resultQuery}
-    {lookup}
-    {baseMenuClass}
-    {config}
-    {configurations}
-    {viewOptions}
-    {viewOptionsConfig}
-    {selectedObjectIds}
-    {limiter}
-    {listProvider}
-    level={0}
-    groupPersistKey={''}
-    {createItemDialog}
-    {createItemDialogProps}
-    {createItemLabel}
-    {createItemEvent}
-    {singleCategoryLimit}
-    on:check
-    on:uncheckAll={uncheckAll}
-    on:row-focus
-    {flatHeaders}
-    {disableHeader}
-    {props}
-    {listDiv}
-    {compactMode}
-    bind:dragItem
-    on:select={(evt) => {
-      select(0, evt.detail)
-    }}
-    on:select-next={(evt) => {
-      select(2, evt.detail)
-    }}
-    on:select-prev={(evt) => {
-      select(-2, evt.detail)
-    }}
-    on:collapsed
-    {resultQuery}
-    {resultOptions}
-    {readonly}
-  />
+<div class="list-container" class:filling={isEmpty} bind:this={listDiv}>
+  {#if isEmpty}
+    <ViewletEmptyState {_class} {query} {gtotal} {space} {createItemDialog} {createItemDialogProps} />
+  {:else}
+    <ListCategories
+      bind:this={listCategories}
+      newObjectProps={() => (space != null ? { space } : {})}
+      {docs}
+      {categoryRefsMap}
+      {_class}
+      {space}
+      {selection}
+      query={resultQuery}
+      {lookup}
+      {baseMenuClass}
+      {config}
+      {configurations}
+      {viewOptions}
+      {viewOptionsConfig}
+      {selectedObjectIds}
+      {limiter}
+      {listProvider}
+      level={0}
+      groupPersistKey={''}
+      {createItemDialog}
+      {createItemDialogProps}
+      {createItemLabel}
+      {createItemEvent}
+      {singleCategoryLimit}
+      on:check
+      on:uncheckAll={uncheckAll}
+      on:row-focus
+      {flatHeaders}
+      {disableHeader}
+      {props}
+      {listDiv}
+      {compactMode}
+      bind:dragItem
+      on:select={(evt) => {
+        select(0, evt.detail)
+      }}
+      on:select-next={(evt) => {
+        select(2, evt.detail)
+      }}
+      on:select-prev={(evt) => {
+        select(-2, evt.detail)
+      }}
+      on:collapsed
+      {resultQuery}
+      {resultOptions}
+      {readonly}
+    />
+  {/if}
 </div>
 
 <style lang="scss">
@@ -317,5 +344,12 @@
     height: max-content;
     min-width: auto;
     min-height: 0;
+
+    // Empty state: stretch to fill the Scroller's box instead of shrinking to content height,
+    // so BlankView centers in the whole viewlet area rather than sitting under the header.
+    &.filling {
+      flex: 1;
+      height: 100%;
+    }
   }
 </style>

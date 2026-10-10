@@ -64,6 +64,8 @@
     "ReportedDays": "報告された日数",
     "Tasks": "タスク",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "部署にはまだ従業員がいません",
+    "EmptyStateStaffDescription": "会社の組織構造で、部署に従業員を追加してください。"
   }
 }

@@ -160,6 +160,11 @@
     "ForbidAttributeChanges": "Interdire les modifications: ",
     "AllowAttributeChanges": "Autoriser les modifications: ",
     "RelationshipTable": "Matrice de traçabilité",
-    "GroupAndSort": "Grouper et trier"
+    "GroupAndSort": "Grouper et trier",
+    "EmptyStateDescription": "Rien ici pour l'instant",
+    "NothingFound": "Aucun résultat",
+    "NothingFoundHidden": "{count, plural, one {# élément ne correspond pas} other {# éléments ne correspondent pas}} à la recherche ou aux filtres.",
+    "ChangeSearchQuery": "Essayez une autre recherche ou effacez les filtres.",
+    "EmptyStateCreateLabel": "Créer"
   }
 }

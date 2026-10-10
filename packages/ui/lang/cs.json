@@ -118,6 +118,9 @@
     "Received": "Přijato",
     "TrafficValue": "{count} zpráv, {kb} KB",
     "Latency": "Latence",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "NavigatorHidden": "Levé menu je skryté",
+    "ShowMenu": "Zobrazit menu",
+    "NormalSize": "Normální velikost"
   }
 }

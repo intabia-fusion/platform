@@ -377,7 +377,12 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "Mixins": "Mixiny",
+    "BaseClasses": "Základní třídy",
+    "MixinColon": "Mixin:",
+    "Login": "Přihlášení",
+    "Primary": "Primární"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

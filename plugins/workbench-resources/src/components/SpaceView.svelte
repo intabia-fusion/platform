@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Component, resolvedLocationStore } from '@hcengineering/ui'
+  import { BlankView, Component, resolvedLocationStore } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -30,6 +31,7 @@
   } from '@hcengineering/view-resources'
   import type { ViewConfiguration } from '@hcengineering/workbench'
   import { onDestroy } from 'svelte'
+  import workbench from '../plugin'
   import SpaceContent from './SpaceContent.svelte'
   import SpaceHeader from './SpaceHeader.svelte'
 
@@ -37,6 +39,8 @@
   export let currentView: ViewConfiguration | undefined
   export let createItemDialog: AnyComponent | undefined = undefined
   export let createItemLabel: IntlString | undefined = undefined
+  export let emptyTitle: IntlString | undefined = undefined
+  export let emptyHint: IntlString | undefined = undefined
 
   let search: string = ''
   let viewlet: WithLookup<Viewlet> | undefined = undefined
@@ -127,4 +131,9 @@
   {#if viewOptions}
     <SpaceContent space={space._id} {_class} {createItemDialog} {viewOptions} {createItemLabel} bind:search {viewlet} />
   {/if}
+{:else}
+  <BlankView
+    header={emptyTitle ?? workbench.string.SelectToOpen}
+    label={emptyHint ?? workbench.string.SelectToOpenHint}
+  />
 {/if}

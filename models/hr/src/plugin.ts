@@ -23,6 +23,8 @@ import { type Action, type ActionCategory, type ViewAction } from '@hcengineerin
 
 export default mergeIds(hrId, hr, {
   string: {
+    EmptyStateStaffTitle: '' as IntlString,
+    EmptyStateStaffDescription: '' as IntlString,
     Request: '' as IntlString,
     Vacation: '' as IntlString,
     Sick: '' as IntlString,

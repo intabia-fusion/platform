@@ -356,7 +356,7 @@ export const testing = (localStorage.getItem('#platform.testing.enabled') ?? 'fa
 export const rootBarExtensions = writable<
   Array<
     [
-      'left' | 'right',
+      'left' | 'center' | 'right',
       {
         id: string
         component: AnyComponent | AnySvelteComponent
@@ -395,7 +395,7 @@ export function formatNumberCompact (num: number, maximumFractionDigits = 2): st
   }).format(num)
 }
 
-export function pushRootBarComponent (pos: 'left' | 'right', component: AnyComponent, order?: number): void {
+export function pushRootBarComponent (pos: 'left' | 'center' | 'right', component: AnyComponent, order?: number): void {
   rootBarExtensions.update((cur) => {
     if (cur.find((p) => p[1].component === component) === undefined) {
       cur.push([
@@ -456,5 +456,30 @@ export function pushRootBarProgressComponent (
       }
     }
     return cur
+  })
+}
+
+// Polls for a selector to appear (e.g. after navigating to another app), up to timeoutMs.
+export async function waitForElement (selector: string, timeoutMs = 5000): Promise<HTMLElement | undefined> {
+  const existing = document.querySelector<HTMLElement>(selector)
+  if (existing !== null) return existing
+
+  return await new Promise((resolve) => {
+    const cleanup = (): void => {
+      observer.disconnect()
+      clearTimeout(timeout)
+    }
+    const observer = new MutationObserver(() => {
+      const el = document.querySelector<HTMLElement>(selector)
+      if (el !== null) {
+        cleanup()
+        resolve(el)
+      }
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    const timeout = setTimeout(() => {
+      cleanup()
+      resolve(undefined)
+    }, timeoutMs)
   })
 }

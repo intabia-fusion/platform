@@ -421,6 +421,23 @@ export function createSystemType (
 }
 
 export function createModel (builder: Builder): void {
+  builder.mixin(card.class.Card, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: card.string.EmptyStateCardTitle,
+    description: card.string.EmptyStateCardDescription,
+    createLabel: card.string.EmptyStateCardCreateLabel
+  })
+
+  builder.mixin(card.class.CardSpace, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: card.string.EmptyStateCardSpaceTitle,
+    description: card.string.EmptyStateCardSpaceDescription,
+    createLabel: card.string.EmptyStateCardSpaceCreateLabel
+  })
+
+  builder.mixin(card.class.FavoriteCard, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: card.string.EmptyStateFavoriteCardTitle,
+    description: card.string.EmptyStateFavoriteCardDescription
+  })
+
   builder.createModel(
     TPermissionObjectClass,
     TMasterTag,

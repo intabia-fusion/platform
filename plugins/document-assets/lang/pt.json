@@ -59,7 +59,21 @@
     "Icon": "Ícone",
     "Color": "Cor",
     "ForbidCreateTeamspacePermission": "Proibir criação de espaço de trabalho",
-    "ForbidCreateTeamspacePermissionDescription": "Proíbe os utilizadores de criar novos espaços de trabalho"
+    "ForbidCreateTeamspacePermissionDescription": "Proíbe os utilizadores de criar novos espaços de trabalho",
+    "EmptyStateTeamspaceTitle": "Ainda não há espaços de trabalho",
+    "EmptyStateTeamspaceDescription": "Os espaços de trabalho agrupam documentos por equipa ou tema e controlam quem os pode ler e editar.",
+    "EmptyStateTeamspaceCreateLabel": "Criar espaço de trabalho",
+    "EmptyStateDocumentTitle": "Ainda não há documentos",
+    "EmptyStateDocumentDescription": "Os documentos são páginas colaborativas para especificações, notas e wikis dentro de um espaço de trabalho.",
+    "EmptyStateDocumentCreateLabel": "Criar documento",
+    "OnboardingCreateTeamspace": "Crie um espaço de trabalho",
+    "OnboardingWriteDocument": "Escreva um documento",
+    "OnboardingTeamspaceStep1": "Clique na seta junto a «Criar um documento»",
+    "OnboardingTeamspaceStep2": "Escolha «Criar espaço de trabalho»",
+    "OnboardingDocumentsStep1": "Clique em “Criar um documento”",
+    "OnboardingDocumentsStep2": "Introduza um título e clique em “Criar”",
+    "EmptyTitle": "Os documentos ficam em espaços de trabalho",
+    "EmptyHint": "Abra um espaço de trabalho no painel à esquerda ou crie um novo. Um espaço de trabalho é uma secção para um tema ou uma equipa, por exemplo «Políticas»."
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

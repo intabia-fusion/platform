@@ -119,6 +119,8 @@
     "Received": "Alınan",
     "TrafficValue": "{count} mesaj, {kb} KB",
     "Latency": "Gecikme",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "NavigatorHidden": "Sol menü gizli",
+    "ShowMenu": "Menüyü göster"
   }
 }

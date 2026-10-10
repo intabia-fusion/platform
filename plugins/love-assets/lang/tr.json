@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Toplantı Odası {number}",
     "VoiceRoomNum": "Sesli Oda {number}",
     "JoinRequestTitle": "Katılma isteği",
-    "JoinRequestBody": "{name} toplantıya katılmak istiyor"
+    "JoinRequestBody": "{name} toplantıya katılmak istiyor",
+    "OnboardingCalls": "Aramalar",
+    "OnboardingCallsDescription": "Ofis, odalardan oluşan sanal bir kattır: bir meslektaşınızı aramak için odasına tıklayın veya ekip görüşmesi için ortak bir odaya girin.",
+    "OnboardingCallsStep1": "Soldaki çubukta Ofis uygulamasını açın",
+    "OnboardingCallsStep2": "Katılmak ve konuşmak için bir odaya tıklayın",
+    "EmptyStateMeetingMinutesTitle": "Henüz toplantı tutanağı yok",
+    "EmptyStateMeetingMinutesDescription": "Tutanak, toplantı başladığında otomatik olarak oluşturulur."
   }
 }

@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,12 +24,14 @@
     FindOptions,
     Lookup,
     Ref,
+    Space,
     TxOperations,
     TypedSpace
   } from '@hcengineering/core'
   import core, { SortingOrder, getObjectValue, mergeQueries } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { createQuery, getClient, reduceCalls, updateAttribute } from '@hcengineering/presentation'
+  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import ui, {
     Button,
     CheckBox,
@@ -61,6 +64,7 @@
   import type { Readable } from 'svelte/store'
   import { getResource } from '@hcengineering/platform'
   import { canChangeAttribute } from '../permissions'
+  import ViewletEmptyState from './ViewletEmptyState.svelte'
 
   export let _class: Ref<Class<Doc>>
   export let query: DocumentQuery<Doc>
@@ -76,6 +80,12 @@
   export let showFooter = false
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
   export let viewOptions: ViewOptions | undefined = undefined
+
+  // Opt-in: embedded tables (attachments, leads, recruit...) render their own empty placeholder.
+  export let emptyState: boolean = false
+  export let space: Ref<Space> | undefined = undefined
+  export let createItemDialog: AnyComponent | AnySvelteComponent | undefined = undefined
+  export let createItemDialogProps: Record<string, any> | undefined = undefined
 
   export let totalQuery: DocumentQuery<Doc> | undefined = undefined
 
@@ -383,124 +393,142 @@
 {#if !model || isBuildingModel}
   <Loading />
 {:else}
-  <table
-    id={tableId}
-    use:resizeObserver={(element) => {
-      width = element.clientWidth
-    }}
-    class="antiTable"
-    class:metaColumn={enableChecking || showNotification}
-    class:highlightRows
-  >
-    {#if !hiddenHeader}
-      <thead class="scroller-thead">
-        <tr class="scroller-thead__tr">
-          {#if enableChecking || showNotification}
-            <th>
-              {#if enableChecking && objects?.length > 0}
-                <div class="antiTable-cells__checkCell" class:checkall={checkedSet.size > 0}>
-                  <CheckBox
-                    symbol={allItemsSelected ? 'check' : 'minus'}
-                    checked={checkedSet.size > 0}
-                    on:value={(event) => {
-                      check(objects, event.detail)
-                    }}
-                  />
-                </div>
-              {/if}
-            </th>
-          {/if}
-          {#each model.filter((m) => !m.displayProps?.grow) as attribute}
-            <th
-              class:w-full={attribute.displayProps?.grow === true}
-              class:sortable={attribute.sortingKey}
-              class:sorted={attribute.sortingKey === _sortKey}
-              class:align-left={attribute.displayProps?.align === 'left'}
-              class:align-center={attribute.displayProps?.align === 'center'}
-              class:align-right={attribute.displayProps?.align === 'right'}
-              on:click={() => {
-                changeSorting(attribute.sortingKey)
-              }}
-            >
-              <div class="antiTable-cells">
-                {#if attribute.label}
-                  <Label label={attribute.label} />
-                {/if}
-                {#if attribute.sortingKey === _sortKey}
-                  <div class="icon">
-                    <IconUpDown size={'small'} descending={sortOrder === SortingOrder.Descending} />
-                  </div>
-                {/if}
-              </div>
-            </th>
-          {/each}
-        </tr>
-      </thead>
-    {/if}
-    {#if objects.length > 0 || objectsRecieved}
-      <tbody>
-        {#each objects as object, row (object._id)}
-          <tr
-            class="antiTable-body__row"
-            class:checking={checkedSet.has(object._id)}
-            class:fixed={row === selection}
-            class:selected={row === selection}
-            on:mouseover={mouseAttractor(() => {
-              onRow(object)
-            })}
-            on:mouseenter={mouseAttractor(() => {
-              onRow(object)
-            })}
-            on:focus={() => {}}
-            bind:this={refs[row]}
-            on:contextmenu={contextHandler(object, row)}
-            use:lazyObserver={(val) => {
-              if (val && row >= rowLimit) {
-                rowLimit = row + 10
-              }
-            }}
-          >
+  <div class="antiTable-container" class:filling={emptyState && objects.length === 0 && objectsRecieved}>
+    <table
+      id={tableId}
+      use:resizeObserver={(element) => {
+        width = element.clientWidth
+      }}
+      class="antiTable"
+      class:metaColumn={enableChecking || showNotification}
+      class:highlightRows
+    >
+      {#if !hiddenHeader}
+        <thead class="scroller-thead">
+          <tr class="scroller-thead__tr">
             {#if enableChecking || showNotification}
-              <td class="relative">
-                {#if showNotification}
-                  <div class="antiTable-cells__notifyCell">
-                    {#if enableChecking}
-                      <div class="antiTable-cells__checkCell">
-                        <CheckBox
-                          checked={checkedSet.has(object._id)}
-                          on:value={(event) => {
-                            check([object], event.detail)
-                          }}
-                        />
-                      </div>
-                    {/if}
-                    <Component
-                      is={notification.component.NotificationPresenter}
-                      props={{ value: object, kind: enableChecking ? 'table' : 'block' }}
-                    />
-                  </div>
-                {:else}
-                  <div class="antiTable-cells__checkCell">
+              <th>
+                {#if enableChecking && objects?.length > 0}
+                  <div class="antiTable-cells__checkCell" class:checkall={checkedSet.size > 0}>
                     <CheckBox
-                      checked={checkedSet.has(object._id)}
+                      symbol={allItemsSelected ? 'check' : 'minus'}
+                      checked={checkedSet.size > 0}
                       on:value={(event) => {
-                        check([object], event.detail)
+                        check(objects, event.detail)
                       }}
                     />
                   </div>
                 {/if}
-              </td>
+              </th>
             {/if}
-            {#await canEdit(object) then canEditObject}
-              {#if row < rowLimit}
-                {#each model.filter((m) => !m.displayProps?.grow) as attribute, cell}
-                  <td
-                    class:align-left={attribute.displayProps?.align === 'left'}
-                    class:align-center={attribute.displayProps?.align === 'center'}
-                    class:align-right={attribute.displayProps?.align === 'right'}
-                  >
-                    {#if !cell}
-                      <div class="antiTable-cells__firstCell">
+            {#each model.filter((m) => !m.displayProps?.grow) as attribute}
+              <th
+                class:w-full={attribute.displayProps?.grow === true}
+                class:sortable={attribute.sortingKey}
+                class:sorted={attribute.sortingKey === _sortKey}
+                class:align-left={attribute.displayProps?.align === 'left'}
+                class:align-center={attribute.displayProps?.align === 'center'}
+                class:align-right={attribute.displayProps?.align === 'right'}
+                on:click={() => {
+                  changeSorting(attribute.sortingKey)
+                }}
+              >
+                <div class="antiTable-cells">
+                  {#if attribute.label}
+                    <Label label={attribute.label} />
+                  {/if}
+                  {#if attribute.sortingKey === _sortKey}
+                    <div class="icon">
+                      <IconUpDown size={'small'} descending={sortOrder === SortingOrder.Descending} />
+                    </div>
+                  {/if}
+                </div>
+              </th>
+            {/each}
+          </tr>
+        </thead>
+      {/if}
+      {#if objects.length > 0}
+        <tbody>
+          {#each objects as object, row (object._id)}
+            <tr
+              class="antiTable-body__row"
+              class:checking={checkedSet.has(object._id)}
+              class:fixed={row === selection}
+              class:selected={row === selection}
+              on:mouseover={mouseAttractor(() => {
+                onRow(object)
+              })}
+              on:mouseenter={mouseAttractor(() => {
+                onRow(object)
+              })}
+              on:focus={() => {}}
+              bind:this={refs[row]}
+              on:contextmenu={contextHandler(object, row)}
+              use:lazyObserver={(val) => {
+                if (val && row >= rowLimit) {
+                  rowLimit = row + 10
+                }
+              }}
+            >
+              {#if enableChecking || showNotification}
+                <td class="relative">
+                  {#if showNotification}
+                    <div class="antiTable-cells__notifyCell">
+                      {#if enableChecking}
+                        <div class="antiTable-cells__checkCell">
+                          <CheckBox
+                            checked={checkedSet.has(object._id)}
+                            on:value={(event) => {
+                              check([object], event.detail)
+                            }}
+                          />
+                        </div>
+                      {/if}
+                      <Component
+                        is={notification.component.NotificationPresenter}
+                        props={{ value: object, kind: enableChecking ? 'table' : 'block' }}
+                      />
+                    </div>
+                  {:else}
+                    <div class="antiTable-cells__checkCell">
+                      <CheckBox
+                        checked={checkedSet.has(object._id)}
+                        on:value={(event) => {
+                          check([object], event.detail)
+                        }}
+                      />
+                    </div>
+                  {/if}
+                </td>
+              {/if}
+              {#await canEdit(object) then canEditObject}
+                {#if row < rowLimit}
+                  {#each model.filter((m) => !m.displayProps?.grow) as attribute, cell}
+                    <td
+                      class:align-left={attribute.displayProps?.align === 'left'}
+                      class:align-center={attribute.displayProps?.align === 'center'}
+                      class:align-right={attribute.displayProps?.align === 'right'}
+                    >
+                      {#if !cell}
+                        <div class="antiTable-cells__firstCell">
+                          <svelte:component
+                            this={attribute.presenter}
+                            value={getValue(attribute, object)}
+                            onChange={getOnChange(object, attribute)}
+                            label={attribute.label}
+                            attribute={attribute.attribute}
+                            {...joinProps(
+                              attribute,
+                              object,
+                              readonly ||
+                                $restrictionStore.readonly ||
+                                !canChangeAttr(object, attribute.attribute, $permissionsStore),
+                              canEditObject
+                            )}
+                          />
+                        </div>
+                      {:else}
                         <svelte:component
                           this={attribute.presenter}
                           value={getValue(attribute, object)}
@@ -516,58 +544,50 @@
                             canEditObject
                           )}
                         />
+                      {/if}
+                    </td>
+                  {/each}
+                {/if}
+              {/await}
+            </tr>
+          {/each}
+        </tbody>
+      {:else if loadingProps !== undefined}
+        <tbody>
+          {#each Array(getLoadingLength(loadingProps, options)) as i, row}
+            <tr class="antiTable-body__row" class:fixed={row === selection}>
+              {#each model.filter((m) => !m.displayProps?.grow) as attribute, cell}
+                {#if !cell}
+                  {#if enableChecking}
+                    <td>
+                      <div class="antiTable-cells__checkCell">
+                        <CheckBox checked={false} />
                       </div>
-                    {:else}
-                      <svelte:component
-                        this={attribute.presenter}
-                        value={getValue(attribute, object)}
-                        onChange={getOnChange(object, attribute)}
-                        label={attribute.label}
-                        attribute={attribute.attribute}
-                        {...joinProps(
-                          attribute,
-                          object,
-                          readonly ||
-                            $restrictionStore.readonly ||
-                            !canChangeAttr(object, attribute.attribute, $permissionsStore),
-                          canEditObject
-                        )}
-                      />
-                    {/if}
-                  </td>
-                {/each}
-              {/if}
-            {/await}
-          </tr>
-        {/each}
-      </tbody>
-    {:else if loadingProps !== undefined}
-      <tbody>
-        {#each Array(getLoadingLength(loadingProps, options)) as i, row}
-          <tr class="antiTable-body__row" class:fixed={row === selection}>
-            {#each model.filter((m) => !m.displayProps?.grow) as attribute, cell}
-              {#if !cell}
-                {#if enableChecking}
-                  <td>
-                    <div class="antiTable-cells__checkCell">
-                      <CheckBox checked={false} />
-                    </div>
+                    </td>
+                  {/if}
+                  <td id={`loader-${i}-${attribute.key}`}>
+                    <Spinner size="small" />
                   </td>
                 {/if}
-                <td id={`loader-${i}-${attribute.key}`}>
-                  <Spinner size="small" />
-                </td>
-              {/if}
-            {/each}
-          </tr>
-        {/each}
-      </tbody>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      {/if}
+    </table>
+    {#if loading > 0}<Loading />{/if}
+    {#if emptyState && objects.length === 0 && objectsRecieved}
+      <div class="antiTable-emptyFill">
+        <ViewletEmptyState {_class} {query} {gtotal} {space} {createItemDialog} {createItemDialogProps} />
+      </div>
     {/if}
-  </table>
-  {#if loading > 0}<Loading />{/if}
+  </div>
 {/if}
 {#if showFooter}
-  <div class="space" />
+  {#if !(emptyState && objects.length === 0 && objectsRecieved)}
+    <!-- Empty state already fills the gap; this spacer would steal its flex space. -->
+    <div class="space" />
+  {/if}
   <div class="footer" style="width: {width}px;">
     <div class="content" class:padding={showNotification || enableChecking}>
       <span class="select-text">
@@ -605,6 +625,29 @@
   .space {
     flex-grow: 1;
     height: 100%;
+  }
+
+  // Wraps <table> so the empty overlay below can cover the whole viewlet area, thead included.
+  .antiTable-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+
+    &.filling {
+      flex: 1;
+      height: 100%;
+    }
+  }
+
+  // Absolute over the whole container (not flowing after thead), so the card centers the
+  // same way regardless of header height; thead stays visible/clickable underneath.
+  .antiTable-emptyFill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
   }
 
   .footer {

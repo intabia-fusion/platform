@@ -5,7 +5,7 @@
 
 | Документ | Что внутри |
 |---|---|
-| [packages-ui.md](packages-ui.md) | `@hcengineering/ui` - 155 публичных компонентов: кнопки, поля, дропдауны, попапы, layout, навигация, статусы, даты. Плюс раздел "Выбор между похожими" (Button vs ModernButton, EditBox vs ModernEditbox, Popup vs Modal vs Dialog и т.д.) |
+| [packages-ui.md](packages-ui.md) | `@hcengineering/ui` - 156 публичных компонентов: кнопки, поля, дропдауны, попапы, layout, навигация, статусы, даты. Плюс раздел "Выбор между похожими" (Button vs ModernButton, EditBox vs ModernEditbox, Popup vs Modal vs Dialog и т.д.) |
 | [packages-presentation.md](packages-presentation.md) | `@hcengineering/presentation` - работа с клиентом и данными (`getClient`, `createQuery`, `LiveQuery`), просмотр контента (`MessageViewer`, `FilePreview`), выбор объектов и пространств, карточки, атрибуты, файлы |
 | [view-resources.md](view-resources.md) | `plugins/view-resources` - презентеры и редакторы атрибутов, таблицы, вьюлеты, фильтры, панели. Плюс реестр `view.component.*` |
 

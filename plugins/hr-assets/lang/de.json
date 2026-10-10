@@ -64,6 +64,8 @@
     "ReportedDays": "Gemeldete Tage",
     "Tasks": "Aufgaben",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "Noch keine Mitarbeiter in der Abteilung",
+    "EmptyStateStaffDescription": "Fügen Sie der Abteilung in der Unternehmensstruktur Mitarbeiter hinzu."
   }
 }

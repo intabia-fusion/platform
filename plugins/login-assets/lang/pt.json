@@ -35,7 +35,7 @@
     "Copy": "Copiar",
     "Copied": "Copiado",
     "Close": "Fechar",
-    "InviteDescription": "Partilhe este link para convidar outros utilizadores",
+    "InviteDescription": "Partilhe um link para convidar pessoas para o espaço de trabalho",
     "WantAnotherWorkspace": "Quer criar outro espaço de trabalho?",
     "ChangeAccount": "Alterar conta",
     "NotSeeingWorkspace": "Não vê o seu espaço de trabalho?",
@@ -127,6 +127,12 @@
     "DeleteAccountConfirm": "A conta será marcada para exclusão e removida definitivamente em {days} dias. Entrando antes disso, você poderá cancelar. Continuar?",
     "DeleteAccountBlockedAdmin": "Uma conta de administrador não pode ser eliminada aqui.",
     "DeleteAccountBlocked": "É o único proprietário de: {workspaces}. Elimine primeiro esses espaços de trabalho ou transfira-os.",
-    "CodeSent": "Um código de confirmação foi enviado para seu e-mail."
+    "CodeSent": "Um código de confirmação foi enviado para seu e-mail.",
+    "InviteByEmail": "Ou envie os convites por email: um endereço ou vários, separados por vírgulas",
+    "SendInvite": "Enviar",
+    "InviteSentTo": "Convites enviados: {email}",
+    "InviteDefaultsNoLimit": "Por predefinição, o link é válido por {hours} h, com utilizações ilimitadas.",
+    "InviteDefaultsLimit": "Por predefinição, o link é válido por {hours} h, até {limit} utilizações.",
+    "InviteDefaultsMask": "Apenas para endereços que correspondam a {mask}."
   }
 }

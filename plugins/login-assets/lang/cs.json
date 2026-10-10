@@ -35,7 +35,7 @@
     "Copy": "Kopírovat",
     "Copied": "Zkopírováno",
     "Close": "Zavřít",
-    "InviteDescription": "Sdílejte tento odkaz pro pozvání dalších uživatelů",
+    "InviteDescription": "Sdílejte odkaz a pozvěte lidi do pracovního prostoru",
     "WantAnotherWorkspace": "Chcete vytvořit další pracovní prostor?",
     "ChangeAccount": "Změnit účet",
     "NotSeeingWorkspace": "Nevidíte svůj pracovní prostor?",
@@ -129,6 +129,12 @@
     "DeleteAccountBlocked": "Jste jediný vlastník: {workspaces}. Nejprve tyto pracovní prostory smažte nebo je předejte někomu jinému.",
     "CodeSent": "Potvrzovací kód byl odeslán na váš e-mail.",
     "EnterCode": "Zadejte kód",
-    "WorkspaceArchivedDesc": "Pracovní prostor byl archivován kvůli nečinnosti."
+    "WorkspaceArchivedDesc": "Pracovní prostor byl archivován kvůli nečinnosti.",
+    "InviteByEmail": "Nebo pošlete pozvánky e-mailem: jednu adresu nebo více, oddělených čárkami",
+    "SendInvite": "Odeslat",
+    "InviteSentTo": "Pozvánky odeslány: {email}",
+    "InviteDefaultsNoLimit": "Ve výchozím nastavení je odkaz platný {hours} h a počet použití není omezen.",
+    "InviteDefaultsLimit": "Ve výchozím nastavení je odkaz platný {hours} h, nejvýše {limit} použití.",
+    "InviteDefaultsMask": "Pouze pro adresy odpovídající masce {mask}."
   }
 }

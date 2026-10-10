@@ -86,6 +86,14 @@
     "TwoColumns": "2列",
     "Grid": "グリッド",
     "RichtextProperties": "リッチテキストフィールド",
-    "ShowAllVersions": "すべてのバージョンを表示"
+    "ShowAllVersions": "すべてのバージョンを表示",
+    "EmptyStateCardTitle": "カードはまだありません",
+    "EmptyStateCardDescription": "カードは、タイプごとに自分で定義したフィールドを持つレコードです。",
+    "EmptyStateCardCreateLabel": "カードを作成",
+    "EmptyStateCardSpaceTitle": "カードスペースはまだありません",
+    "EmptyStateCardSpaceDescription": "スペースは、1つのトピックやチームのカードをまとめます。",
+    "EmptyStateCardSpaceCreateLabel": "スペースを作成",
+    "EmptyStateFavoriteCardTitle": "お気に入りのカードはまだありません",
+    "EmptyStateFavoriteCardDescription": "カードをお気に入りに追加すると、ここに表示されます。"
   }
 }

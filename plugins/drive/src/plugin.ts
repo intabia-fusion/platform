@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -78,7 +79,13 @@ export const drivePlugin = plugin(driveId, {
     UpdateFolderPermission: '' as IntlString,
     UpdateFolderPermissionDescription: '' as IntlString,
     RemoveFolderPermission: '' as IntlString,
-    RemoveFolderPermissionDescription: '' as IntlString
+    RemoveFolderPermissionDescription: '' as IntlString,
+
+    EmptyStateDriveTitle: '' as IntlString,
+    EmptyStateDriveDescription: '' as IntlString,
+    EmptyStateDriveCreateLabel: '' as IntlString,
+    EmptyStateFilesTitle: '' as IntlString,
+    EmptyStateFilesDescription: '' as IntlString
   },
   descriptor: {
     DriveType: '' as Ref<SpaceTypeDescriptor>

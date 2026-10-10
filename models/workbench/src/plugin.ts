@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 import { type Doc, type Ref, type Space } from '@hcengineering/core'
 import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
-import { workbenchId } from '@hcengineering/workbench'
+import { workbenchId, type OnboardingCard } from '@hcengineering/workbench'
 import workbench from '@hcengineering/workbench-resources/src/plugin'
 import type { ActionCategory, ViewActionAvailabilityFunction } from '@hcengineering/view'
 
@@ -27,7 +28,36 @@ export default mergeIds(workbenchId, workbench, {
   },
   string: {
     Application: '' as IntlString,
-    HiddenApplication: '' as IntlString
+    HiddenApplication: '' as IntlString,
+    OnboardingInviteTeam: '' as IntlString,
+    OnboardingInviteTeamDescription: '' as IntlString,
+    OnboardingAppearance: '' as IntlString,
+    OnboardingAppearanceDescription: '' as IntlString,
+    OnboardingOpenAppearance: '' as IntlString,
+    OnboardingSearch: '' as IntlString,
+    OnboardingSearchDescription: '' as IntlString,
+    OnboardingOpenSearch: '' as IntlString,
+    OnboardingInviteStep1: '' as IntlString,
+    OnboardingInviteStep2: '' as IntlString,
+    OnboardingAppearanceStep1: '' as IntlString,
+    OnboardingAppearanceStep2: '' as IntlString,
+    OnboardingSearchStep1: '' as IntlString,
+    OnboardingSearchStep2: '' as IntlString,
+    OnboardingHelpCenter: '' as IntlString,
+    OnboardingHelpCenterDescription: '' as IntlString,
+    OnboardingHelpCenterStep2: '' as IntlString,
+    OnboardingOpenAccountMenu: '' as IntlString,
+    OnboardingCategoryBasics: '' as IntlString,
+    OnboardingCategoryTasks: '' as IntlString,
+    OnboardingCategoryChats: '' as IntlString,
+    OnboardingCategoryDocuments: '' as IntlString,
+    OnboardingCategoryMeetings: '' as IntlString
+  },
+  ids: {
+    OnboardingInviteCard: '' as Ref<OnboardingCard>,
+    OnboardingAppearanceCard: '' as Ref<OnboardingCard>,
+    OnboardingSearchCard: '' as Ref<OnboardingCard>,
+    OnboardingHelpCenterCard: '' as Ref<OnboardingCard>
   },
   function: {
     HasArchiveSpaces: '' as Resource<(spaces: Space[]) => Promise<boolean>>,

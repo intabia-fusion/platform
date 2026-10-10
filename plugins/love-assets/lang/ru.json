@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Переговорная {number}",
     "VoiceRoomNum": "Голосовая комната {number}",
     "JoinRequestTitle": "Запрос на вступление",
-    "JoinRequestBody": "{name} хочет присоединиться к встрече"
+    "JoinRequestBody": "{name} хочет присоединиться к встрече",
+    "OnboardingCalls": "Звонки",
+    "OnboardingCallsDescription": "Офис - виртуальный этаж с комнатами: кликните по комнате коллеги, чтобы позвонить, или зайдите в общую комнату для командного звонка.",
+    "OnboardingCallsStep1": "Откройте Офис на панели слева",
+    "OnboardingCallsStep2": "Нажмите на комнату, чтобы войти и созвониться",
+    "EmptyStateMeetingMinutesTitle": "Пока нет протоколов встреч",
+    "EmptyStateMeetingMinutesDescription": "Протокол создаётся сам, когда начинается встреча."
   }
 }

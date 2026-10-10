@@ -130,6 +130,17 @@
     "DontTranslate": "Don't translate",
     "SelectLanguage": "Select language",
     "SelectLanguages": "Select languages",
-    "RecentlyUsed": "Recently used"
+    "RecentlyUsed": "Recently used",
+    "EmptyStateOrganizationTitle": "No companies yet",
+    "EmptyStateOrganizationDescription": "A company is a card for an organization: a client, a partner or a supplier.",
+    "EmptyStateOrganizationCreateLabel": "Create company",
+    "EmptyStatePersonTitle": "No persons yet",
+    "EmptyStatePersonDescription": "A person is a card for someone outside the team: a client, a partner or a contact.",
+    "EmptyStatePersonCreateLabel": "Create person",
+    "EmptyStateEmployeeTitle": "No employees yet",
+    "EmptyStateEmployeeDescription": "Employees are members of the workspace. Invite colleagues and they will show up here.",
+    "EmptyStateMemberTitle": "No company members yet",
+    "EmptyStateMemberDescription": "People who work at this company are listed here.",
+    "EmptyStateMemberCreateLabel": "Add member"
   }
 }

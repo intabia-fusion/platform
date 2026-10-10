@@ -21,12 +21,14 @@ import core, {
   TxCreateDoc,
   TxRemoveDoc,
   TxUpdateDoc,
-  PersonId
+  PersonId,
+  systemAccountUuid
 } from '@hcengineering/core'
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, { DocNotifyContext, UnreadMessageId } from '@hcengineering/notification'
 import { Receiver, Sender } from '@hcengineering/server-notification'
 import { Employee, PersonSpace } from '@hcengineering/contact'
+import chunter from '@hcengineering/chunter'
 
 import { Result, TxCache } from '../../types'
 import { handleMessage, addUnreadMessage } from '../message'
@@ -495,6 +497,19 @@ describe('message module', () => {
 
         expect(mockGetPushGroup).toHaveBeenCalledWith(mockClient, expect.objectContaining({ _id: 'msg-1' }))
         expect(mockPushNotification.mock.calls[0][4]).toEqual(expect.objectContaining({ group: 'channel-1' }))
+      })
+
+      it('skips join notification when system adds the receiver to a default channel', async () => {
+        sender.account = systemAccountUuid
+        mockCache.getSender.mockResolvedValue(sender)
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: chunter.ids.JoinChannelNotification }]
+        })
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).not.toHaveBeenCalled()
+        expect(mockGetCreateContextTx).not.toHaveBeenCalled()
       })
 
       it('adds unread message if provider type does not exist', async () => {

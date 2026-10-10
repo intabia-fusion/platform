@@ -119,6 +119,8 @@
     "Received": "Ricevuto",
     "TrafficValue": "{count} msg, {kb} KB",
     "Latency": "Latenza",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "NavigatorHidden": "Il menu a sinistra è nascosto",
+    "ShowMenu": "Mostra menu"
   }
 }

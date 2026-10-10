@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,7 +31,7 @@ import type {
   Viewlet,
   ViewletDescriptor
 } from '@hcengineering/view'
-import { type WidgetTab, type LocationData } from '@hcengineering/workbench'
+import { type WidgetTab, type LocationData, type OnboardingCard } from '@hcengineering/workbench'
 
 export default mergeIds(chunterId, chunter, {
   completion: {
@@ -79,6 +80,12 @@ export default mergeIds(chunterId, chunter, {
     ChannelCreatedMessage: '' as AnyComponent
   },
   string: {
+    EmptyStateChannelTitle: '' as IntlString,
+    EmptyStateChannelDescription: '' as IntlString,
+    EmptyStateChannelCreateLabel: '' as IntlString,
+    EmptyStateDirectMessageTitle: '' as IntlString,
+    EmptyStateDirectMessageDescription: '' as IntlString,
+    EmptyStateDirectMessageCreateLabel: '' as IntlString,
     ApplicationLabelChunter: '' as IntlString,
     MentionedIn: '' as IntlString,
     Content: '' as IntlString,
@@ -99,7 +106,15 @@ export default mergeIds(chunterId, chunter, {
     Reacted: '' as IntlString,
     RepliedToThread: '' as IntlString,
     ChannelMessages: '' as IntlString,
-    JoinChannel: '' as IntlString
+    JoinChannel: '' as IntlString,
+    OnboardingChats: '' as IntlString,
+    OnboardingChatsDescription: '' as IntlString,
+    OnboardingAskJulia: '' as IntlString,
+    OnboardingAskJuliaDescription: '' as IntlString,
+    OnboardingChatsStep1: '' as IntlString,
+    OnboardingChatsStep2: '' as IntlString,
+    OnboardingAskJuliaStep1: '' as IntlString,
+    OnboardingAskJuliaStep2: '' as IntlString
   },
   viewlet: {
     Chat: '' as Ref<ViewletDescriptor>,
@@ -108,7 +123,9 @@ export default mergeIds(chunterId, chunter, {
   },
   ids: {
     ChunterNotificationGroup: '' as Ref<NotificationGroup>,
-    ChatMessagesActivityFilter: '' as Ref<ActivityMessagesFilter>
+    ChatMessagesActivityFilter: '' as Ref<ActivityMessagesFilter>,
+    OnboardingChatsCard: '' as Ref<OnboardingCard>,
+    OnboardingAskJuliaCard: '' as Ref<OnboardingCard>
   },
   space: {
     General: '' as Ref<Channel>,

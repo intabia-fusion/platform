@@ -130,6 +130,17 @@
     "DontTranslate": "翻訳しない",
     "SelectLanguage": "言語を選択",
     "SelectLanguages": "言語を選択",
-    "RecentlyUsed": "最近使用した"
+    "RecentlyUsed": "最近使用した",
+    "EmptyStateOrganizationTitle": "企業はまだありません",
+    "EmptyStateOrganizationDescription": "企業は組織のカードです。顧客、パートナー、サプライヤーなどを登録します。",
+    "EmptyStateOrganizationCreateLabel": "企業を作成",
+    "EmptyStatePersonTitle": "個人はまだいません",
+    "EmptyStatePersonDescription": "個人はチーム外の人物のカードです。顧客、パートナー、連絡先などを登録します。",
+    "EmptyStatePersonCreateLabel": "個人を作成",
+    "EmptyStateEmployeeTitle": "従業員はまだいません",
+    "EmptyStateEmployeeDescription": "従業員はワークスペースのメンバーです。同僚を招待すると、ここに表示されます。",
+    "EmptyStateMemberTitle": "企業のメンバーはまだいません",
+    "EmptyStateMemberDescription": "この企業で働く人がここに表示されます。",
+    "EmptyStateMemberCreateLabel": "メンバーを追加"
   }
 }

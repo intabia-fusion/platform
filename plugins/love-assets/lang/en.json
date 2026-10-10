@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Meeting Room {number}",
     "VoiceRoomNum": "Voice Room {number}",
     "JoinRequestTitle": "Request to join",
-    "JoinRequestBody": "{name}  wants to join the meeting"
+    "JoinRequestBody": "{name}  wants to join the meeting",
+    "OnboardingCalls": "Calls",
+    "OnboardingCallsDescription": "The Office is a virtual floor with rooms: click a colleague's room to call them, or enter a shared room for a team call.",
+    "OnboardingCallsStep1": "Open the Office on the left bar",
+    "OnboardingCallsStep2": "Click a room to join it and talk",
+    "EmptyStateMeetingMinutesTitle": "No meeting minutes yet",
+    "EmptyStateMeetingMinutesDescription": "Minutes are created automatically when a meeting starts."
   }
 }

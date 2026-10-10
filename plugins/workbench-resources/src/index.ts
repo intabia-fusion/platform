@@ -25,6 +25,7 @@ import Workbench from './components/Workbench.svelte'
 import ServerManager from './components/ServerManager.svelte'
 import WorkbenchTabs from './components/WorkbenchTabs.svelte'
 import Themes from './components/Themes.svelte'
+import OnboardingButton from './components/OnboardingButton.svelte'
 import { canCloseTab, closeCurrentTab, closeTab, OpenInNewTab, pinTab, unpinTab } from './workbench'
 import { closeWidget, closeWidgetTab, createWidgetTab, getSidebarObject } from './sidebar'
 
@@ -57,7 +58,8 @@ export default async (): Promise<Resources> => ({
     Workbench,
     ServerManager,
     WorkbenchTabs,
-    Themes
+    Themes,
+    OnboardingButton
   },
   function: {
     HasArchiveSpaces: hasArchiveSpaces,
