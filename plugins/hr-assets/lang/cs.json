@@ -64,6 +64,8 @@
     "ReportedDays": "Reported days",
     "Tasks": "Tasks",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "V oddělení zatím nejsou žádní pracovníci",
+    "EmptyStateStaffDescription": "Přidejte pracovníky do oddělení ve struktuře společnosti."
   }
 }

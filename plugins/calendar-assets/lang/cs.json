@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "Synchronizované kalendáře",
     "Account": "Účet",
     "NoCalendars": "Kalendáře pro synchronizaci nejsou vybrány",
-    "PersonalCalendar": "Osobní kalendář"
+    "PersonalCalendar": "Osobní kalendář",
+    "OnboardingMeetings": "Schůzky a události",
+    "OnboardingMeetingsDescription": "Kliknutím na volný čas v kalendáři naplánujete událost s účastníky a místností.",
+    "OnboardingMeetingsStep1": "Otevřete Plánovač na levém panelu",
+    "OnboardingMeetingsStep2": "Klikněte na volný čas v kalendáři"
   }
 }

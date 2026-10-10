@@ -18,6 +18,10 @@ not only `en.json`/`ru.json`. A missing key falls back to English silently, so n
 gap ships. Keep placeholders, HTML tags and ICU plural categories per language. Delegate the bulk
 translation to a Sonnet sub-agent.
 
+Edit locales with `pnpm i18n` (`common/scripts/i18n.js`), not ad-hoc scripts: `set <pkg> --file keys.json`
+writes a key to all locales and refuses a new key without every locale, `rm` removes from all,
+`missing <pkg> --json` gives a template to fill, `check` verifies lang dirs changed vs `develop`.
+
 ## Sub-agents with Sonnet
 
 Prefer spawning sub-agents with `model: "sonnet"` for tasks that fit:

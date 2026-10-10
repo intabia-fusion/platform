@@ -38,6 +38,21 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Henüz sürücü yok",
+    "EmptyStateDriveDescription": "Sürücü, ekibinizin birlikte yüklediği ve düzenlediği dosyalar için paylaşılan bir klasör ağacıdır.",
+    "EmptyStateDriveCreateLabel": "Sürücü oluştur",
+    "ForbidCreateDrivePermission": "Sürücü oluşturmayı yasakla",
+    "ForbidCreateDrivePermissionDescription": "Kullanıcıların yeni sürücü oluşturmasını yasakla",
+    "EmptyStateFilesTitle": "Burada henüz dosya yok",
+    "EmptyStateFilesDescription": "Dosyaları Dosya Yükle düğmesiyle yükleyin veya buraya sürükleyin.",
+    "OnboardingCreateDrive": "Bir sürücü oluşturun",
+    "OnboardingUploadFile": "Bir dosya yükleyin",
+    "OnboardingDriveStep1": "\"Dosya Yükle\" yanındaki oka tıklayın",
+    "OnboardingDriveStep2": "\"Sürücü Oluştur\" seçeneğini seçin",
+    "OnboardingFilesStep1": "Gezinti panelinde bir sürücü açın",
+    "OnboardingFilesStep2": "“Dosya Yükle” düğmesine tıklayın veya dosyaları pencereye sürükleyin",
+    "EmptyTitle": "Dosyalar sürücülerde tutulur",
+    "EmptyHint": "Soldaki panelden bir sürücü açın veya yeni bir tane oluşturun. Sürücü, bir ekip veya proje için ortak bir klasördür."
   }
 }

@@ -13,10 +13,16 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref } from '@hcengineering/core'
+import { getCurrentAccount, SortingOrder, type Doc, type Ref } from '@hcengineering/core'
 import drive, { type File, type Drive, type Folder, driveId } from '@hcengineering/drive'
 import { getClient } from '@hcengineering/presentation'
-import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@hcengineering/ui'
+import {
+  getCurrentResolvedLocation,
+  getPanelURI,
+  navigate,
+  type Location,
+  type ResolvedLocation
+} from '@hcengineering/ui'
 import view, { type ObjectPanel } from '@hcengineering/view'
 import { accessDeniedStore } from '@hcengineering/view-resources'
 
@@ -41,6 +47,18 @@ export function getDriveLink (_id: Ref<Drive>): Location {
   loc.path[3] = _id
 
   return loc
+}
+
+// Onboarding "upload a file": the upload button exists only inside a drive, so open one first.
+export async function openFirstDrive (): Promise<void> {
+  const loc = getCurrentResolvedLocation()
+  if (loc.path[2] === driveId && loc.path[3] !== undefined && loc.path[3] !== 'browser') return
+  const doc = await getClient().findOne(
+    drive.class.Drive,
+    { archived: false, members: getCurrentAccount().uuid },
+    { sort: { modifiedOn: SortingOrder.Descending } }
+  )
+  if (doc !== undefined) navigate(getDriveLink(doc._id))
 }
 
 export function getFolderLink (_id: Ref<Folder>): Location {

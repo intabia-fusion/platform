@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -51,7 +52,23 @@ export default mergeIds(workbenchId, workbench, {
     AccessDenied: '' as IntlString,
     Widget: '' as IntlString,
     WidgetPreference: '' as IntlString,
-    Tab: '' as IntlString
+    Tab: '' as IntlString,
+    OnboardingProgress: '' as IntlString,
+    OnboardingBack: '' as IntlString,
+    OnboardingNext: '' as IntlString,
+    OnboardingStepDone: '' as IntlString,
+    OnboardingStepSkipped: '' as IntlString,
+    OnboardingFinished: '' as IntlString,
+    OnboardingFinishedText: '' as IntlString,
+    OnboardingOpenDocs: '' as IntlString,
+    OnboardingClose: '' as IntlString,
+    OnboardingRestartDescription: '' as IntlString,
+    OnboardingTargetUnavailable: '' as IntlString,
+    OnboardingChooseCategory: '' as IntlString,
+    OnboardingAllCategories: '' as IntlString,
+    OnboardingCancel: '' as IntlString,
+    OnboardingCancelled: '' as IntlString,
+    OnboardingCancelledText: '' as IntlString
   },
   metadata: {
     MobileAllowed: '' as Metadata<boolean>

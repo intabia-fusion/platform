@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Noch keine Laufwerke",
+    "EmptyStateDriveDescription": "Ein Laufwerk ist eine gemeinsame Ordnerstruktur für Dateien, die Ihr Team gemeinsam hochlädt und organisiert.",
+    "EmptyStateDriveCreateLabel": "Laufwerk erstellen",
+    "EmptyStateFilesTitle": "Hier sind noch keine Dateien",
+    "EmptyStateFilesDescription": "Laden Sie Dateien über die Schaltfläche „Dateien Hochladen“ hoch oder ziehen Sie sie hierher.",
+    "OnboardingCreateDrive": "Erstellen Sie ein Laufwerk",
+    "OnboardingUploadFile": "Laden Sie eine Datei hoch",
+    "OnboardingDriveStep1": "Klicken Sie auf den Pfeil neben „Dateien Hochladen“",
+    "OnboardingDriveStep2": "Wählen Sie „Laufwerk erstellen“",
+    "OnboardingFilesStep1": "Öffnen Sie ein Laufwerk im Navigationsbereich",
+    "OnboardingFilesStep2": "Klicken Sie auf „Dateien Hochladen“ oder ziehen Sie Dateien in das Fenster",
+    "EmptyTitle": "Dateien liegen auf Laufwerken",
+    "EmptyHint": "Öffnen Sie ein Laufwerk im Panel links oder erstellen Sie ein neues. Ein Laufwerk ist ein gemeinsamer Ordner für ein Team oder ein Projekt."
   }
 }

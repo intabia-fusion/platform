@@ -23,6 +23,7 @@
   import { ActionContext, getClient } from '@hcengineering/presentation'
   import type { AnyComponent, Location } from '@hcengineering/ui'
   import {
+    BlankView,
     closePanel,
     Component,
     defineSeparators,
@@ -322,6 +323,18 @@
           props: { context: selectedContext, autofocus: false }
         }}
         on:close={() => selectContext(undefined)}
+      />
+    {:else if contexts.length === 0 && !$hasInboxNextPageStore}
+      <BlankView
+        icon={notification.icon.Inbox}
+        header={notification.string.InboxEmptyTitle}
+        label={notification.string.InboxEmptyHint}
+      />
+    {:else if contexts.length > 0}
+      <BlankView
+        icon={notification.icon.Inbox}
+        header={notification.string.InboxSelectTitle}
+        label={notification.string.InboxSelectHint}
       />
     {/if}
   </div>

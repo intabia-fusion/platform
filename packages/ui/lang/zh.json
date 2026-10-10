@@ -119,6 +119,8 @@
     "Received": "已接收",
     "TrafficValue": "{count} 条, {kb} KB",
     "Latency": "延迟",
-    "LatencyValue": "{ms} 毫秒"
+    "LatencyValue": "{ms} 毫秒",
+    "NavigatorHidden": "左侧菜单已隐藏",
+    "ShowMenu": "显示菜单"
   }
 }

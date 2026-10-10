@@ -214,6 +214,11 @@ export function fitPopupPositionedElement (
     if (dirV === 'bottom') newProps.top = `${rect.top - 4}px`
     else newProps.bottom = `${docHeight - rect.bottom - 4}px`
     direction = `${dirV}|${dirH}`
+  } else if (alignment?.kind === 'centered') {
+    newProps.top = `${rect.bottom + 8}px`
+    const left = rect.left + rect.width / 2 - rectPopup.width / 2
+    newProps.left = `${Math.max(16, Math.min(left, docWidth - rectPopup.width - 16))}px`
+    direction = 'bottom'
   } else if (alignment.position !== undefined) {
     if (alignment.position.v === 'top') {
       newProps.top = `${rect.top}px`

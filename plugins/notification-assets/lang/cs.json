@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "reagoval na vaši zprávu",
     "Clearing": "Vymazávam...",
-    "Reading": "Čítam..."
+    "Reading": "Čítam...",
+    "OnboardingInbox": "Doručená pošta",
+    "OnboardingInboxDescription": "Doručená pošta shromažďuje zmínky, odpovědi a změny v tom, co sledujete, takže vidíte, co vyžaduje vaši pozornost.",
+    "OnboardingInboxStep1": "Klikněte na zvonek na levém panelu",
+    "OnboardingInboxStep2": "Otevřete oznámení a přejděte ke zprávě nebo úkolu",
+    "InboxEmptyTitle": "Zatím žádná oznámení",
+    "InboxEmptyHint": "Sem přicházejí zmínky, přímé zprávy a změny v úkolech a dokumentech, které sledujete.",
+    "InboxSelectTitle": "Vyberte oznámení",
+    "InboxSelectHint": "Otevřete oznámení v seznamu vlevo."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -86,6 +86,14 @@
     "TwoColumns": "Dva sloupce",
     "Grid": "Mřížka",
     "RichtextProperties": "Textová pole",
-    "ShowAllVersions": "Ukázat všechny verze"
+    "ShowAllVersions": "Ukázat všechny verze",
+    "EmptyStateCardTitle": "Zatím žádné karty",
+    "EmptyStateCardDescription": "Karta je záznam s poli, která si sami definujete pro její typ.",
+    "EmptyStateCardCreateLabel": "Vytvořit kartu",
+    "EmptyStateCardSpaceTitle": "Zatím žádné prostory karet",
+    "EmptyStateCardSpaceDescription": "Prostor seskupuje karty jednoho tématu nebo týmu.",
+    "EmptyStateCardSpaceCreateLabel": "Vytvořit prostor",
+    "EmptyStateFavoriteCardTitle": "Zatím žádné oblíbené karty",
+    "EmptyStateFavoriteCardDescription": "Přidejte kartu do oblíbených a objeví se zde."
   }
 }

@@ -101,7 +101,15 @@
     "Appearance": "Внешний вид",
     "ReactedToYourMessage": "отреагировал(а) на ваше сообщение",
     "Clearing": "Очистка...",
-    "Reading": "Чтение..."
+    "Reading": "Чтение...",
+    "OnboardingInbox": "Входящие",
+    "OnboardingInboxDescription": "Во Входящих собираются упоминания, ответы и изменения в том, за чем вы следите: здесь видно, что требует вашего внимания.",
+    "OnboardingInboxStep1": "Нажмите на колокольчик на панели слева",
+    "OnboardingInboxStep2": "Откройте уведомление, чтобы перейти к сообщению или задаче",
+    "InboxEmptyTitle": "Уведомлений пока нет",
+    "InboxEmptyHint": "Сюда приходят упоминания, личные сообщения и изменения в задачах и документах, на которые вы подписаны.",
+    "InboxSelectTitle": "Выберите уведомление",
+    "InboxSelectHint": "Откройте уведомление в списке слева."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} добавил(а) вас как соавтора в {doc}.",

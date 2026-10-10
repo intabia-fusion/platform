@@ -49,10 +49,11 @@ export default mergeIds(chunterId, chunter, {
   actionImpl: {},
   string: {
     Channel: '' as IntlString,
+    ChatEmptyTitle: '' as IntlString,
+    ChatEmptyHint: '' as IntlString,
     DirectMessage: '' as IntlString,
     DirectMessages: '' as IntlString,
     CreateChannel: '' as IntlString,
-    NewDirectMessage: '' as IntlString,
     ChannelName: '' as IntlString,
     ChannelNamePlaceholder: '' as IntlString,
     ChannelDescription: '' as IntlString,

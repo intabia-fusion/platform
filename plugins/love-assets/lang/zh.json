@@ -169,6 +169,12 @@
     "MeetingRoomNum": "会议室 {number}",
     "VoiceRoomNum": "语音房间 {number}",
     "JoinRequestTitle": "加入请求",
-    "JoinRequestBody": "{name} 想加入会议"
+    "JoinRequestBody": "{name} 想加入会议",
+    "OnboardingCalls": "通话",
+    "OnboardingCallsDescription": "办公室是带有房间的虚拟楼层：点击同事的房间即可呼叫，或进入公共房间进行团队通话。",
+    "OnboardingCallsStep1": "在左侧栏中打开“办公室”",
+    "OnboardingCallsStep2": "点击房间即可加入并通话",
+    "EmptyStateMeetingMinutesTitle": "暂无会议记录",
+    "EmptyStateMeetingMinutesDescription": "会议开始时会自动创建会议记录。"
   }
 }

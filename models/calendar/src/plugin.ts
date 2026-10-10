@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,7 +28,7 @@ import {
   type Viewlet,
   type ViewletDescriptor
 } from '@hcengineering/view'
-import { type Widget } from '@hcengineering/workbench'
+import { type OnboardingCard, type Widget } from '@hcengineering/workbench'
 
 export default mergeIds(calendarId, calendar, {
   component: {
@@ -60,7 +61,11 @@ export default mergeIds(calendarId, calendar, {
     CreatedReminder: '' as IntlString,
     ConfigLabel: '' as IntlString,
     ConfigDescription: '' as IntlString,
-    IntegrationDescr: '' as IntlString
+    IntegrationDescr: '' as IntlString,
+    OnboardingMeetings: '' as IntlString,
+    OnboardingMeetingsDescription: '' as IntlString,
+    OnboardingMeetingsStep1: '' as IntlString,
+    OnboardingMeetingsStep2: '' as IntlString
   },
   viewlet: {
     Calendar: '' as Ref<ViewletDescriptor>,
@@ -69,6 +74,7 @@ export default mergeIds(calendarId, calendar, {
   ids: {
     CalendarNotificationGroup: '' as Ref<NotificationGroup>,
     CalendarWidget: '' as Ref<Widget>,
-    Settings: '' as Ref<Doc>
+    Settings: '' as Ref<Doc>,
+    OnboardingMeetingsCard: '' as Ref<OnboardingCard>
   }
 })

@@ -227,7 +227,7 @@ export interface PopupPositionElement {
     v: VerticalAlignment
     h: HorizontalAlignment
   }
-  kind?: 'submenu'
+  kind?: 'submenu' | 'centered' // centered: below the element, horizontally centered on it
 }
 
 export const posAlignment = [
@@ -429,6 +429,17 @@ export interface DeviceOptions {
   theme?: string
   language?: string
   replacedPanel?: HTMLElement
+}
+
+/**
+ * @public
+ * A text-link action rendered by BlankView. Either a translated `label` or a plain-text `title`
+ * (e.g. an object name that has no IntlString, like a channel or space name).
+ */
+export interface EmptyStateAction {
+  label: IntlString
+  labelParams?: Record<string, any>
+  onClick: () => void
 }
 
 export interface TimelineItem {

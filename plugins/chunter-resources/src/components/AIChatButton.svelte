@@ -13,27 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount } from '@hcengineering/core'
   import { getMetadata } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
   import aiBot from '@hcengineering/ai-bot'
-  import { getBotAccount } from '@hcengineering/ai-bot-resources'
   import view from '@hcengineering/view'
   import { AppItem } from '@hcengineering/workbench-resources'
-  import chunter, { createAndGetDirect } from '@hcengineering/chunter'
+  import chunter from '@hcengineering/chunter'
 
-  import { openChannelInSidebar } from '../navigation'
+  import { openAIChat } from '../utils'
 
   // No ai-bot endpoint configured -> no assistant, no button.
   $: enabled = (getMetadata(aiBot.metadata.EndpointURL) ?? '') !== ''
-
-  async function openAIChat (): Promise<void> {
-    const botAccount = await getBotAccount()
-    if (botAccount === undefined) return
-    const direct = await createAndGetDirect(getClient(), [getCurrentAccount().uuid, botAccount])
-    if (direct === undefined) return
-    await openChannelInSidebar(direct._id, chunter.class.DirectMessage, direct)
-  }
 </script>
 
 {#if enabled}
@@ -41,6 +30,7 @@
     icon={view.icon.AiStar}
     label={chunter.string.TalkToYulia}
     size="small"
+    dataId="ai-chat-button"
     on:click={() => {
       void openAIChat()
     }}

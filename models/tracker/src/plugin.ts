@@ -21,7 +21,7 @@ import { trackerId } from '@hcengineering/tracker'
 import tracker from '@hcengineering/tracker-resources/src/plugin'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
 import { type Action, type ViewAction, type Viewlet, type ViewletViewAction } from '@hcengineering/view'
-import { type Application } from '@hcengineering/workbench'
+import { type Application, type OnboardingCard } from '@hcengineering/workbench'
 import { type DocUpdateMessage } from '@hcengineering/activity'
 
 export default mergeIds(trackerId, tracker, {
@@ -39,7 +39,15 @@ export default mergeIds(trackerId, tracker, {
     ConfigDescription: '' as IntlString,
     AllProjects: '' as IntlString,
     MapRelatedIssues: '' as IntlString,
-    Extensions: '' as IntlString
+    Extensions: '' as IntlString,
+    OnboardingCreateProject: '' as IntlString,
+    EmptyTitle: '' as IntlString,
+    EmptyHint: '' as IntlString,
+    OnboardingAddIssue: '' as IntlString,
+    OnboardingProjectsStep1: '' as IntlString,
+    OnboardingProjectsStep2: '' as IntlString,
+    OnboardingIssuesStep1: '' as IntlString,
+    OnboardingIssuesStep2: '' as IntlString
   },
   component: {
     MilestoneSelector: '' as AnyComponent,
@@ -75,7 +83,9 @@ export default mergeIds(trackerId, tracker, {
     BaseProjectType: '' as Ref<ProjectType>,
     DefaultProjectType: '' as Ref<ProjectType>,
     KanbanSwimLaneActions: '' as Ref<Doc>,
-    KanbanSwimLaneActionsExtension: '' as Ref<Doc>
+    KanbanSwimLaneActionsExtension: '' as Ref<Doc>,
+    OnboardingProjectsCard: '' as Ref<OnboardingCard>,
+    OnboardingIssuesCard: '' as Ref<OnboardingCard>
   },
   actionImpl: {
     Move: '' as ViewAction,

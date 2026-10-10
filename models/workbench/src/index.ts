@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,15 @@
 // limitations under the License.
 //
 
-import { AccountRole, type AccountUuid, type Class, DOMAIN_MODEL, type Ref, type Space } from '@hcengineering/core'
+import {
+  AccountRole,
+  type AccountUuid,
+  type Class,
+  DOMAIN_MODEL,
+  type Ref,
+  type Space,
+  type Timestamp
+} from '@hcengineering/core'
 import { type Builder, Mixin, Model, Prop, TypeRef, UX } from '@hcengineering/model'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import { createAction } from '@hcengineering/model-view'
@@ -25,6 +34,10 @@ import type {
   Application,
   ApplicationNavModel,
   HiddenApplication,
+  OnboardingAction,
+  OnboardingCard,
+  OnboardingCardDoneWhen,
+  OnboardingPreference,
   SpaceView,
   ViewConfiguration,
   Widget,
@@ -39,7 +52,7 @@ import workbench from './plugin'
 
 export { workbenchId } from '@hcengineering/workbench'
 export { workbenchOperation } from './migration'
-export type { Application, Widget }
+export type { Application, Widget, OnboardingCard }
 export { WidgetType } from '@hcengineering/workbench'
 
 @Model(workbench.class.Application, core.class.Doc, DOMAIN_MODEL)
@@ -105,6 +118,29 @@ export class TWorkbenchTab extends TPreference implements WorkbenchTab {
   isPinned!: boolean
 }
 
+@Model(workbench.class.OnboardingCard, core.class.Doc, DOMAIN_MODEL)
+export class TOnboardingCard extends TDoc implements OnboardingCard {
+  application?: Ref<Application>
+  label!: IntlString
+  description!: IntlString
+  category!: IntlString
+  order!: number
+  actions!: OnboardingAction[]
+  accessLevel?: AccountRole
+  doneWhen?: OnboardingCardDoneWhen
+  screenshots?: IntlString[]
+}
+
+@Model(workbench.class.OnboardingPreference, preference.class.Preference)
+export class TOnboardingPreference extends TPreference implements OnboardingPreference {
+  showHints!: boolean
+  completed!: Array<Ref<OnboardingCard>>
+  skipped?: Array<Ref<OnboardingCard>>
+  startedAt?: Timestamp
+  cancelled?: boolean
+  progress!: Record<string, Timestamp>
+}
+
 export function createModel (builder: Builder): void {
   builder.createModel(
     TApplication,
@@ -113,13 +149,22 @@ export function createModel (builder: Builder): void {
     TApplicationNavModel,
     TWidget,
     TWidgetPreference,
-    TWorkbenchTab
+    TWorkbenchTab,
+    TOnboardingCard,
+    TOnboardingPreference
   )
 
   builder.mixin(workbench.class.WorkbenchTab, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest,
     removeAccessLevel: AccountRole.Guest,
     updateAccessLevel: AccountRole.Guest
+  })
+
+  // Per-account preference, same access pattern as DesktopNotificationPreference.
+  builder.mixin(workbench.class.OnboardingPreference, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest,
+    updateAccessLevel: AccountRole.Guest,
+    removeAccessLevel: AccountRole.Guest
   })
 
   builder.mixin(workbench.class.Application, core.class.Class, view.mixin.ObjectPresenter, {
@@ -219,6 +264,85 @@ export function createModel (builder: Builder): void {
       component: view.component.SidebarPreviewWidget
     },
     view.ids.PreviewWidget as Ref<Widget>
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      label: workbench.string.OnboardingInviteTeam,
+      description: workbench.string.OnboardingInviteTeamDescription,
+      category: workbench.string.OnboardingCategoryBasics,
+      order: 10,
+      accessLevel: AccountRole.User,
+      screenshots: [workbench.string.OnboardingInviteStep1, workbench.string.OnboardingInviteStep2],
+      actions: [
+        {
+          // models/workbench has no dependency on setting and login: same keys as the account menu item.
+          label: 'setting:string:InviteWorkspace' as IntlString,
+          component: 'login:component:InviteLink' as AnyComponent
+        }
+      ]
+    },
+    workbench.ids.OnboardingInviteCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      label: workbench.string.OnboardingAppearance,
+      description: workbench.string.OnboardingAppearanceDescription,
+      category: workbench.string.OnboardingCategoryBasics,
+      order: 12,
+      screenshots: [workbench.string.OnboardingAppearanceStep1, workbench.string.OnboardingAppearanceStep2],
+      actions: [
+        {
+          label: workbench.string.OnboardingOpenAppearance,
+          target: { selector: '#statusbar-settings' }
+        }
+      ]
+    },
+    workbench.ids.OnboardingAppearanceCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      label: workbench.string.OnboardingSearch,
+      description: workbench.string.OnboardingSearchDescription,
+      category: workbench.string.OnboardingCategoryBasics,
+      order: 17,
+      screenshots: [workbench.string.OnboardingSearchStep1, workbench.string.OnboardingSearchStep2],
+      actions: [
+        {
+          label: workbench.string.OnboardingOpenSearch,
+          target: { selector: '#statusbar-search' }
+        }
+      ]
+    },
+    workbench.ids.OnboardingSearchCard
+  )
+
+  // Last step: where help lives, including "take the tour again".
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      label: workbench.string.OnboardingHelpCenter,
+      description: workbench.string.OnboardingHelpCenterDescription,
+      category: workbench.string.OnboardingCategoryBasics,
+      order: 1000,
+      screenshots: [workbench.string.OnboardingInviteStep1, workbench.string.OnboardingHelpCenterStep2],
+      actions: [
+        {
+          label: workbench.string.OnboardingOpenAccountMenu,
+          target: { selector: '[data-id="profile-button"]' }
+        }
+      ]
+    },
+    workbench.ids.OnboardingHelpCenterCard
   )
 }
 

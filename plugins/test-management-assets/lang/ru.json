@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Тест-кейсы не выбраны} one {# тест-кейс выбран} few {# тест-кейса выбраны} other {# тест-кейсов выбрано}}",
     "DefaultAssignee": "Исполнитель по умолчанию",
     "TestPlanTitle": "Название плана тестирования",
-    "RunAssistant": "Помощник запуска"
+    "RunAssistant": "Помощник запуска",
+    "EmptyStateTestSuiteTitle": "Пока нет тестовых наборов",
+    "EmptyStateTestSuiteDescription": "Тестовый набор группирует тест-кейсы одной функции или модуля.",
+    "EmptyStateTestSuiteCreateLabel": "Создать набор",
+    "EmptyStateTestCaseTitle": "Пока нет тест-кейсов",
+    "EmptyStateTestCaseDescription": "Тест-кейс - шаги проверки и ожидаемый результат.",
+    "EmptyStateTestCaseCreateLabel": "Создать тест-кейс",
+    "EmptyStateTestResultTitle": "Пока нет результатов",
+    "EmptyStateTestResultDescription": "Результаты появляются, когда тест-кейсы проходят в тестовом прогоне.",
+    "EmptyStateTestPlanItemTitle": "В плане пока нет тест-кейсов",
+    "EmptyStateTestPlanItemDescription": "Добавьте в план тест-кейсы, которые нужно пройти.",
+    "EmptyStateTestPlanItemCreateLabel": "Добавить тест-кейс"
   }
 }

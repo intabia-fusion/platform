@@ -16,11 +16,24 @@
 import { testManagementId } from '@hcengineering/test-management'
 import testManganement from '@hcengineering/test-management-resources/src/plugin'
 import type { Ref } from '@hcengineering/core'
-import { mergeIds } from '@hcengineering/platform'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 import type { ActionCategory } from '@hcengineering/view'
 
 export default mergeIds(testManagementId, testManganement, {
+  string: {
+    EmptyStateTestSuiteTitle: '' as IntlString,
+    EmptyStateTestSuiteDescription: '' as IntlString,
+    EmptyStateTestSuiteCreateLabel: '' as IntlString,
+    EmptyStateTestCaseTitle: '' as IntlString,
+    EmptyStateTestCaseDescription: '' as IntlString,
+    EmptyStateTestCaseCreateLabel: '' as IntlString,
+    EmptyStateTestResultTitle: '' as IntlString,
+    EmptyStateTestResultDescription: '' as IntlString,
+    EmptyStateTestPlanItemTitle: '' as IntlString,
+    EmptyStateTestPlanItemDescription: '' as IntlString,
+    EmptyStateTestPlanItemCreateLabel: '' as IntlString
+  },
   category: {
     TestSuite: '' as Ref<ActionCategory>,
     TestCase: '' as Ref<ActionCategory>,

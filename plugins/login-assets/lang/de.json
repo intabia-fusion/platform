@@ -35,7 +35,7 @@
     "Copy": "Kopieren",
     "Copied": "Kopiert",
     "Close": "Schließen",
-    "InviteDescription": "Teilen Sie diesen Link, um andere Benutzer einzuladen",
+    "InviteDescription": "Teilen Sie einen Link, um Personen in den Arbeitsbereich einzuladen",
     "WantAnotherWorkspace": "Möchten Sie einen weiteren Arbeitsbereich erstellen?",
     "ChangeAccount": "Konto wechseln",
     "NotSeeingWorkspace": "Sehen Sie Ihren Arbeitsbereich nicht?",
@@ -128,6 +128,12 @@
     "DeleteAccountBlockedAdmin": "Ein Administratorkonto kann hier nicht gelöscht werden.",
     "DeleteAccountBlocked": "Sie sind alleiniger Eigentümer von: {workspaces}. Löschen Sie diese Arbeitsbereiche zuerst oder übergeben Sie sie.",
     "CodeSent": "Ein Bestätigungscode wurde an Ihre E-Mail gesendet.",
-    "EnterCode": "Code eingeben"
+    "EnterCode": "Code eingeben",
+    "InviteByEmail": "Oder senden Sie die Einladungen per E-Mail: eine Adresse oder mehrere, durch Kommas getrennt",
+    "SendInvite": "Senden",
+    "InviteSentTo": "Einladungen gesendet: {email}",
+    "InviteDefaultsNoLimit": "Standardmäßig ist der Link {hours} Std. gültig, die Anzahl der Verwendungen ist unbegrenzt.",
+    "InviteDefaultsLimit": "Standardmäßig ist der Link {hours} Std. gültig, bis zu {limit} Verwendungen.",
+    "InviteDefaultsMask": "Nur für Adressen, die der Maske {mask} entsprechen."
   }
 }

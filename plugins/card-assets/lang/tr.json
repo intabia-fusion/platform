@@ -86,6 +86,14 @@
     "TwoColumns": "İki sütun",
     "Grid": "Izgara",
     "RichtextProperties": "Zengin metin alanları",
-    "ShowAllVersions": "Tüm sürümleri göster"
+    "ShowAllVersions": "Tüm sürümleri göster",
+    "EmptyStateCardTitle": "Henüz kart yok",
+    "EmptyStateCardDescription": "Kart, türü için kendinizin tanımladığı alanlara sahip bir kayıttır.",
+    "EmptyStateCardCreateLabel": "Kart oluştur",
+    "EmptyStateCardSpaceTitle": "Henüz kart alanı yok",
+    "EmptyStateCardSpaceDescription": "Alan, tek bir konu veya ekibe ait kartları bir araya getirir.",
+    "EmptyStateCardSpaceCreateLabel": "Alan oluştur",
+    "EmptyStateFavoriteCardTitle": "Henüz favori kart yok",
+    "EmptyStateFavoriteCardDescription": "Bir kartı favorilere ekleyin, burada görünecektir."
   }
 }

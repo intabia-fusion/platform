@@ -2,7 +2,7 @@
   "string": {
     "Department": "部门",
     "ParentDepartmentLabel": "上级部门",
-    "Structure":"结构",
+    "Structure": "结构",
     "CreateDepartment": "创建部门",
     "CreateDepartmentLabel": "部门",
     "DepartmentPlaceholder": "部门",
@@ -64,6 +64,8 @@
     "ReportedDays": "Reported days",
     "Tasks": "Tasks",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "部门中暂无员工",
+    "EmptyStateStaffDescription": "在公司结构中为部门添加员工。"
   }
 }

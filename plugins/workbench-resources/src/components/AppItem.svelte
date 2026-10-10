@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,6 +26,7 @@
   export let loading: boolean = false
   export let notify: boolean = false
   export let navigator: boolean = false
+  export let dataId: string | undefined = undefined
 </script>
 
 <button
@@ -34,6 +36,7 @@
   class:navigator
   class:mini={$deviceInfo.appsMini}
   id={'app-' + label}
+  data-id={dataId}
   disabled={loading}
   use:tooltip={{ label }}
   on:click

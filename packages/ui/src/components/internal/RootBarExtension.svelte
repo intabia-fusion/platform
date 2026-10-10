@@ -3,7 +3,7 @@
   import { rootBarExtensions } from '../../utils'
   import Component from '../Component.svelte'
 
-  export let position: 'left' | 'right'
+  export let position: 'left' | 'center' | 'right'
   let oldLoc: string | undefined = undefined
   locationStore.subscribe((newLocation) => {
     if (oldLoc !== undefined && oldLoc !== newLocation.path[0]) {

@@ -59,7 +59,21 @@
     "Icon": "Ikona",
     "Color": "Barva",
     "ForbidCreateTeamspacePermission": "Zakázat vytvoření týmového prostoru",
-    "ForbidCreateTeamspacePermissionDescription": "Zakazuje uživatelům vytvářet nové týmové prostory"
+    "ForbidCreateTeamspacePermissionDescription": "Zakazuje uživatelům vytvářet nové týmové prostory",
+    "EmptyStateTeamspaceTitle": "Zatím žádné týmové prostory",
+    "EmptyStateTeamspaceDescription": "Týmové prostory seskupují dokumenty podle týmu nebo tématu a určují, kdo je může číst a upravovat.",
+    "EmptyStateTeamspaceCreateLabel": "Vytvořit týmový prostor",
+    "EmptyStateDocumentTitle": "Zatím žádné dokumenty",
+    "EmptyStateDocumentDescription": "Dokumenty jsou společné stránky pro specifikace, poznámky a wiki uvnitř týmového prostoru.",
+    "EmptyStateDocumentCreateLabel": "Vytvořit dokument",
+    "OnboardingCreateTeamspace": "Vytvořte týmový prostor",
+    "OnboardingWriteDocument": "Napište dokument",
+    "OnboardingTeamspaceStep1": "Klikněte na šipku vedle „Vytvořit dokument“",
+    "OnboardingTeamspaceStep2": "Zvolte „Vytvořit týmový prostor“",
+    "OnboardingDocumentsStep1": "Klikněte na „Vytvořit dokument“",
+    "OnboardingDocumentsStep2": "Zadejte název a klikněte na „Vytvořit“",
+    "EmptyTitle": "Dokumenty jsou v týmových prostorech",
+    "EmptyHint": "Otevřete týmový prostor v panelu vlevo nebo vytvořte nový. Týmový prostor je sekce pro téma nebo tým, například „Směrnice“."
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

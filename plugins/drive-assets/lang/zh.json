@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "暂无磁盘",
+    "EmptyStateDriveDescription": "磁盘是一个共享文件夹树，供团队共同上传和整理文件。",
+    "EmptyStateDriveCreateLabel": "创建磁盘",
+    "EmptyStateFilesTitle": "这里还没有文件",
+    "EmptyStateFilesDescription": "使用“上传文件”按钮上传文件，或将文件拖到这里。",
+    "OnboardingCreateDrive": "创建磁盘",
+    "OnboardingUploadFile": "上传文件",
+    "OnboardingDriveStep1": "点击“上传文件”旁边的箭头",
+    "OnboardingDriveStep2": "选择“创建磁盘”",
+    "OnboardingFilesStep1": "在导航面板中打开一个云盘",
+    "OnboardingFilesStep2": "点击“上传文件”，或将文件拖到窗口中",
+    "EmptyTitle": "文件存放在磁盘中",
+    "EmptyHint": "在左侧面板中打开磁盘，或新建一个。磁盘是团队或项目的共享文件夹。"
   }
 }

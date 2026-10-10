@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -70,7 +71,14 @@ export const documentPlugin = plugin(documentId, {
     CreateDocument: '' as IntlString,
     Documents: '' as IntlString,
     ForbidCreateTeamspacePermission: '' as IntlString,
-    ForbidCreateTeamspacePermissionDescription: '' as IntlString
+    ForbidCreateTeamspacePermissionDescription: '' as IntlString,
+
+    EmptyStateTeamspaceTitle: '' as IntlString,
+    EmptyStateTeamspaceDescription: '' as IntlString,
+    EmptyStateTeamspaceCreateLabel: '' as IntlString,
+    EmptyStateDocumentTitle: '' as IntlString,
+    EmptyStateDocumentDescription: '' as IntlString,
+    EmptyStateDocumentCreateLabel: '' as IntlString
   },
   emailTemplate: {
     ContentNotificationText: '' as IntlString,

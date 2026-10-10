@@ -59,7 +59,21 @@
     "Icon": "Иконка",
     "Color": "Цвет",
     "ForbidCreateTeamspacePermission": "Запретить создание пространства",
-    "ForbidCreateTeamspacePermissionDescription": "Запрещает пользователям создавать новые пространства"
+    "ForbidCreateTeamspacePermissionDescription": "Запрещает пользователям создавать новые пространства",
+    "EmptyStateTeamspaceTitle": "Пока нет пространств",
+    "EmptyStateTeamspaceDescription": "Пространства документов группируют документы по команде или теме и определяют, кто может их читать и редактировать.",
+    "EmptyStateTeamspaceCreateLabel": "Создать пространство",
+    "EmptyStateDocumentTitle": "Пока нет документов",
+    "EmptyStateDocumentDescription": "Документ - совместная страница для спецификаций, заметок и вики внутри пространства документов.",
+    "EmptyStateDocumentCreateLabel": "Создать документ",
+    "OnboardingCreateTeamspace": "Создайте пространство документов",
+    "OnboardingWriteDocument": "Напишите документ",
+    "OnboardingTeamspaceStep1": "Нажмите на стрелку рядом с «Создать документ»",
+    "OnboardingTeamspaceStep2": "Выберите «Создать пространство»",
+    "OnboardingDocumentsStep1": "Нажмите «Создать документ»",
+    "OnboardingDocumentsStep2": "Введите название и нажмите «Создать»",
+    "EmptyTitle": "Документы хранятся в пространствах",
+    "EmptyHint": "Откройте пространство в панели слева или создайте новое. Пространство - раздел по теме или команде, например «Регламенты»."
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

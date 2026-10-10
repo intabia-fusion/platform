@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "reacionou ao seu mensagem",
     "Clearing": "Limpando...",
-    "Reading": "Lendo..."
+    "Reading": "Lendo...",
+    "OnboardingInbox": "Caixa de Entrada",
+    "OnboardingInboxDescription": "A Caixa de Entrada reúne menções, respostas e alterações no que acompanha, para ver o que precisa da sua atenção.",
+    "OnboardingInboxStep1": "Clique no sino na barra à esquerda",
+    "OnboardingInboxStep2": "Abra uma notificação para ir à mensagem ou ao problema",
+    "InboxEmptyTitle": "Ainda não há notificações",
+    "InboxEmptyHint": "Aqui chegam menções, mensagens diretas e alterações em tarefas e documentos que acompanha.",
+    "InboxSelectTitle": "Escolha uma notificação",
+    "InboxSelectHint": "Abra uma notificação na lista à esquerda."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

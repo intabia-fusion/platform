@@ -503,6 +503,26 @@ export function createModel (builder: Builder): void {
     notification.app.Inbox
   )
 
+  // No `application`: the inbox app is hidden from the app list, and a card of a hidden app is not shown.
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      label: notification.string.OnboardingInbox,
+      description: notification.string.OnboardingInboxDescription,
+      category: workbench.string.OnboardingCategoryBasics,
+      order: 80,
+      screenshots: [notification.string.OnboardingInboxStep1, notification.string.OnboardingInboxStep2],
+      actions: [
+        {
+          label: notification.string.Inbox,
+          target: { application: notificationId }
+        }
+      ]
+    },
+    notification.ids.OnboardingInboxCard
+  )
+
   builder.mixin(notification.class.DocNotifyContext, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: notification.component.DocNotifyContextPresenter
   })

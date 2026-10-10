@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Ainda não há unidades",
+    "EmptyStateDriveDescription": "Uma unidade é uma árvore de pastas partilhada para ficheiros que a sua equipa carrega e organiza em conjunto.",
+    "EmptyStateDriveCreateLabel": "Criar unidade",
+    "EmptyStateFilesTitle": "Ainda não há ficheiros aqui",
+    "EmptyStateFilesDescription": "Carregue ficheiros com o botão Carregar Arquivos ou arraste-os para aqui.",
+    "OnboardingCreateDrive": "Crie uma unidade",
+    "OnboardingUploadFile": "Carregue um ficheiro",
+    "OnboardingDriveStep1": "Clique na seta junto a «Carregar Arquivos»",
+    "OnboardingDriveStep2": "Escolha «Criar unidade»",
+    "OnboardingFilesStep1": "Abra uma unidade no painel de navegação",
+    "OnboardingFilesStep2": "Clique em “Carregar Arquivos” ou arraste ficheiros para a janela",
+    "EmptyTitle": "Os ficheiros ficam em unidades",
+    "EmptyHint": "Abra uma unidade no painel à esquerda ou crie uma nova. Uma unidade é uma pasta partilhada de uma equipa ou de um projeto."
   }
 }

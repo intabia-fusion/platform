@@ -332,6 +332,8 @@ function defineApplication (
       hidden: false,
       locationResolver: tracker.resolver.Location,
       navigatorModel: {
+        emptyTitle: tracker.string.EmptyTitle,
+        emptyHint: tracker.string.EmptyHint,
         specials: [
           {
             id: opt.myIssuesId,
@@ -514,6 +516,36 @@ export function createModel (builder: Builder): void {
     presenters: [tracker.component.IssueStatistics]
   })
 
+  builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: tracker.string.EmptyStateIssueTitle,
+    description: tracker.string.EmptyStateIssueDescription,
+    createLabel: tracker.string.EmptyStateIssueCreateLabel
+  })
+
+  builder.mixin(tracker.class.Component, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: tracker.string.EmptyStateComponentTitle,
+    description: tracker.string.EmptyStateComponentDescription,
+    createLabel: tracker.string.EmptyStateComponentCreateLabel
+  })
+
+  builder.mixin(tracker.class.Milestone, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: tracker.string.EmptyStateMilestoneTitle,
+    description: tracker.string.EmptyStateMilestoneDescription,
+    createLabel: tracker.string.EmptyStateMilestoneCreateLabel
+  })
+
+  builder.mixin(tracker.class.IssueTemplate, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: tracker.string.EmptyStateTemplateTitle,
+    description: tracker.string.EmptyStateTemplateDescription,
+    createLabel: tracker.string.EmptyStateTemplateCreateLabel
+  })
+
+  builder.mixin(tracker.class.Project, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: tracker.string.EmptyStateProjectTitle,
+    description: tracker.string.EmptyStateProjectDescription,
+    createLabel: tracker.string.EmptyStateProjectCreateLabel
+  })
+
   defineSortAndGrouping(builder)
 
   defineCollaborators(builder, tracker.class.Issue, { fields: ['createdBy', 'assignee'] })
@@ -535,6 +567,54 @@ export function createModel (builder: Builder): void {
   })
 
   defineApplication(builder, { myIssuesId, allIssuesId, issuesId, componentsId, milestonesId, templatesId, labelsId })
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: tracker.app.Tracker,
+      label: tracker.string.OnboardingCreateProject,
+      description: tracker.string.EmptyStateProjectDescription,
+      category: workbench.string.OnboardingCategoryTasks,
+      order: 15,
+      accessLevel: AccountRole.User,
+      screenshots: [tracker.string.OnboardingProjectsStep1, tracker.string.OnboardingProjectsStep2],
+      doneWhen: { _class: tracker.class.Project },
+      actions: [
+        {
+          label: tracker.string.CreateProject,
+          target: { application: trackerId, selector: '[data-id~="tracker-string-CreateProject"]' }
+        }
+      ]
+    },
+    tracker.ids.OnboardingProjectsCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: tracker.app.Tracker,
+      label: tracker.string.OnboardingAddIssue,
+      description: tracker.string.EmptyStateIssueDescription,
+      category: workbench.string.OnboardingCategoryTasks,
+      order: 14,
+      accessLevel: AccountRole.User,
+      screenshots: [tracker.string.OnboardingIssuesStep1, tracker.string.OnboardingIssuesStep2],
+      doneWhen: { _class: tracker.class.Issue },
+      actions: [
+        {
+          label: tracker.string.NewIssue,
+          // With a saved draft the main header button is "Resume draft" under another data-id.
+          target: {
+            application: trackerId,
+            selector: '[data-id~="tracker-string-NewIssue"], [data-id~="tracker-string-ResumeDraft"]'
+          }
+        }
+      ]
+    },
+    tracker.ids.OnboardingIssuesCard
+  )
 
   defineActions(builder, issuesId, componentsId, myIssuesId)
 

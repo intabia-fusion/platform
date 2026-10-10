@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Sala de reuniões {number}",
     "VoiceRoomNum": "Sala de voz {number}",
     "JoinRequestTitle": "Solicitação de entrada",
-    "JoinRequestBody": "{name} quer participar da reunião"
+    "JoinRequestBody": "{name} quer participar da reunião",
+    "OnboardingCalls": "Chamadas",
+    "OnboardingCallsDescription": "O Escritório é um andar virtual com salas: clique na sala de um colega para ligar para ele ou entre em uma sala compartilhada para uma chamada em equipe.",
+    "OnboardingCallsStep1": "Abra Escritório na barra à esquerda",
+    "OnboardingCallsStep2": "Clique em uma sala para entrar e conversar",
+    "EmptyStateMeetingMinutesTitle": "Nenhuma minuta de reunião ainda",
+    "EmptyStateMeetingMinutesDescription": "As minutas são criadas automaticamente quando uma reunião começa."
   }
 }

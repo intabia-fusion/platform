@@ -126,6 +126,21 @@
     "DontTranslate": "Nepřekládat",
     "SelectLanguage": "Vyberte jazyk",
     "SelectLanguages": "Vyberte jazyky",
-    "RecentlyUsed": "Nedávně použité"
+    "RecentlyUsed": "Nedávně použité",
+    "EmptyStateOrganizationTitle": "Zatím žádné společnosti",
+    "EmptyStateOrganizationDescription": "Společnost je karta organizace: klienta, partnera nebo dodavatele.",
+    "EmptyStateOrganizationCreateLabel": "Vytvořit společnost",
+    "EmptyStatePersonTitle": "Zatím žádné osoby",
+    "EmptyStatePersonDescription": "Osoba je karta člověka mimo tým: klienta, partnera nebo kontaktu.",
+    "EmptyStatePersonCreateLabel": "Vytvořit osobu",
+    "EmptyStateEmployeeTitle": "Zatím žádní zaměstnanci",
+    "EmptyStateEmployeeDescription": "Zaměstnanci jsou členové pracovního prostoru. Pozvěte kolegy a objeví se zde.",
+    "EmptyStateMemberTitle": "Zatím žádní zaměstnanci společnosti",
+    "EmptyStateMemberDescription": "Zde jsou lidé, kteří pracují v této společnosti.",
+    "EmptyStateMemberCreateLabel": "Přidat zaměstnance",
+    "SocialId": "Sociální ID",
+    "SocialIds": "Sociální ID",
+    "Type": "Typ",
+    "Confirmed": "Potvrzeno"
   }
 }

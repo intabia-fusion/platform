@@ -137,6 +137,7 @@
     actions.push(...getMenu(items, ['main']))
     if (hasAccountRole(account, AccountRole.User) && !isDisabled('invites')) {
       actions.push({
+        id: 'invite-workspace',
         icon: setting.icon.InviteWorkspace,
         label: setting.string.InviteWorkspace,
         action: async () => {
@@ -166,6 +167,7 @@
     }
 
     actions.push({
+      id: 'help-and-support',
       icon: setting.icon.Support,
       label: workbench.string.HelpAndSupport,
       action: async () => {

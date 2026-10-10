@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "ドライブはまだありません",
+    "EmptyStateDriveDescription": "ドライブは、チームがアップロードして整理するファイルのための共有フォルダツリーです。",
+    "EmptyStateDriveCreateLabel": "ドライブを作成",
+    "EmptyStateFilesTitle": "まだファイルがありません",
+    "EmptyStateFilesDescription": "「ファイルをアップロード」ボタンでアップロードするか、ここにドラッグしてください。",
+    "OnboardingCreateDrive": "ドライブを作成する",
+    "OnboardingUploadFile": "ファイルをアップロードする",
+    "OnboardingDriveStep1": "「ファイルをアップロード」の横の矢印をクリックします",
+    "OnboardingDriveStep2": "「ドライブを作成」を選択します",
+    "OnboardingFilesStep1": "ナビゲーションパネルでドライブを開きます",
+    "OnboardingFilesStep2": "「ファイルをアップロード」をクリックするか、ファイルをウィンドウにドラッグします",
+    "EmptyTitle": "ファイルはドライブにあります",
+    "EmptyHint": "左のパネルでドライブを開くか、新しく作成してください。ドライブはチームやプロジェクトの共有フォルダです。"
   }
 }

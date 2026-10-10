@@ -130,6 +130,17 @@
     "DontTranslate": "不翻译",
     "SelectLanguage": "选择语言",
     "SelectLanguages": "选择语言",
-    "RecentlyUsed": "最近使用"
+    "RecentlyUsed": "最近使用",
+    "EmptyStateOrganizationTitle": "暂无公司",
+    "EmptyStateOrganizationDescription": "公司是组织的卡片:客户、合作伙伴或供应商。",
+    "EmptyStateOrganizationCreateLabel": "创建公司",
+    "EmptyStatePersonTitle": "暂无个人",
+    "EmptyStatePersonDescription": "个人是团队外人员的卡片:客户、合作伙伴或联系人。",
+    "EmptyStatePersonCreateLabel": "创建个人",
+    "EmptyStateEmployeeTitle": "暂无员工",
+    "EmptyStateEmployeeDescription": "员工是工作区的成员。邀请同事后,他们会显示在这里。",
+    "EmptyStateMemberTitle": "暂无公司员工",
+    "EmptyStateMemberDescription": "在此公司工作的人员会列在这里。",
+    "EmptyStateMemberCreateLabel": "添加员工"
   }
 }

@@ -2,7 +2,7 @@
   "string": {
     "Department": "Department",
     "ParentDepartmentLabel": "Parent department",
-    "Structure":"Structure",
+    "Structure": "Structure",
     "CreateDepartment": "Create department",
     "CreateDepartmentLabel": "Department",
     "DepartmentPlaceholder": "Department",
@@ -64,6 +64,8 @@
     "ReportedDays": "Reported days",
     "Tasks": "Tasks",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "No staff in the department yet",
+    "EmptyStateStaffDescription": "Add staff to the department in the company structure."
   }
 }

@@ -35,7 +35,7 @@
     "Copy": "复制",
     "Copied": "已复制",
     "Close": "关闭",
-    "InviteDescription": "分享此链接以邀请其他用户",
+    "InviteDescription": "分享链接以邀请他人加入工作区",
     "WantAnotherWorkspace": "想要创建另一个工作区？",
     "ChangeAccount": "更换账户",
     "NotSeeingWorkspace": "没有看到你的工作区？",
@@ -127,6 +127,12 @@
     "DeleteAccountConfirm": "账户将被标记为删除，并在 {days} 天后彻底移除。在此之前登录即可取消。是否继续?",
     "DeleteAccountBlockedAdmin": "管理员账户无法在此删除。",
     "DeleteAccountBlocked": "您是以下工作区的唯一所有者：{workspaces}。请先删除这些工作区或将其移交他人。",
-    "CodeSent": "确认码已发送到您的邮箱。"
+    "CodeSent": "确认码已发送到您的邮箱。",
+    "InviteByEmail": "或通过电子邮件发送邀请：一个或多个地址，以逗号分隔",
+    "SendInvite": "发送",
+    "InviteSentTo": "邀请已发送：{email}",
+    "InviteDefaultsNoLimit": "默认情况下，链接有效期为 {hours} 小时，使用次数不限。",
+    "InviteDefaultsLimit": "默认情况下，链接有效期为 {hours} 小时，最多可使用 {limit} 次。",
+    "InviteDefaultsMask": "仅限匹配 {mask} 的地址。"
   }
 }

@@ -160,6 +160,11 @@
     "ForbidAttributeChanges": "Proibir alterações: ",
     "AllowAttributeChanges": "Permitir alterações: ",
     "RelationshipTable": "Tabela de relacionamentos",
-    "GroupAndSort": "Agrupar e classificar"
+    "GroupAndSort": "Agrupar e classificar",
+    "EmptyStateDescription": "Nada aqui por enquanto",
+    "NothingFound": "Nada encontrado",
+    "NothingFoundHidden": "{count, plural, one {# item não corresponde} other {# itens não correspondem}} à pesquisa ou aos filtros.",
+    "ChangeSearchQuery": "Experimente outra pesquisa ou limpe os filtros.",
+    "EmptyStateCreateLabel": "Criar"
   }
 }

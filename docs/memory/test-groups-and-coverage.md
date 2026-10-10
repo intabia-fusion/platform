@@ -346,3 +346,5 @@ Timeline of `ci_test.sh` on 10.0.2.2 (12 cores, images warm), before -> after:
 - Integration runs overlap (shared, `kafka`, `pod-fulltext`) and vitest runs beside them. Unit runs stay one after another: side by side, desktop and the shared run took 77s against 48s.
 - Under that load the elastic container takes over 60s to boot; `search.itest.ts`'s `beforeAll` had an explicit 60s timeout, now 240s.
 - `admin-gates` #11 counted every `read_accounts` audit row, and `account-blocking` lists accounts in a parallel worker - it now counts only its own actor's rows.
+
+- GitLab shell runners: the stand pods write `api-tests/coverage/<image>/*.json` as root through the bind mounts of `docker-compose.coverage.yaml`. The `docker stop` trap in `ci_test.sh` does not help with that, so the next job on the same runner fails in `get_sources` with "chmod: ... Operation not permitted" before any script runs (pipeline 57463, 2026-09-28: uitest:* on runner-06, migration-deploy-dev on runner-04).

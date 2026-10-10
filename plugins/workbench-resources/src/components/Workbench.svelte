@@ -64,6 +64,7 @@
     resizeObserver,
     resolvedLocationStore,
     Separator,
+    setNavigatorVisible,
     setResolvedLocation,
     showPanel,
     showPopup,
@@ -164,10 +165,12 @@
   $deviceInfo.navigator.visible = !hiddenNavigator
 
   async function toggleNav (): Promise<void> {
-    $deviceInfo.navigator.visible = !$deviceInfo.navigator.visible
-    if (!$deviceInfo.navigator.float) {
-      hiddenNavigator = !$deviceInfo.navigator.visible
-      localStorage.setItem('hiddenNavigator', `${hiddenNavigator}`)
+    const visible = !$deviceInfo.navigator.visible
+    if ($deviceInfo.navigator.float) {
+      $deviceInfo.navigator.visible = visible
+    } else {
+      hiddenNavigator = !visible
+      setNavigatorVisible(visible)
     }
     closeTooltip()
     if (currentApplication != null && navigatorModel != null) {
@@ -248,6 +251,9 @@
   onMount(() => {
     pushRootBarComponent('right', view.component.SearchSelector)
     pushRootBarComponent('left', workbench.component.WorkbenchTabs, 30)
+    if (getMetadata(workbench.metadata.Onboarding) !== false) {
+      pushRootBarComponent('center', workbench.component.OnboardingButton)
+    }
     void getResource(login.function.GetWorkspaces).then(async (getWorkspaceFn) => {
       $workspacesStore = await getWorkspaceFn()
       await updateWindowTitle(getLocation())
@@ -889,6 +895,7 @@
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             id="profile-button"
+            data-id="profile-button"
             class="cursor-pointer"
             on:click|stopPropagation={() => showPopup(AccountPopup, {}, popupPosition)}
           >
@@ -1031,7 +1038,14 @@
               <h2><Label label={workbench.string.AccessDenied} /></h2>
             </div>
           {:else}
-            <SpaceView {currentSpace} {currentView} {createItemDialog} {createItemLabel} />
+            <SpaceView
+              {currentSpace}
+              {currentView}
+              {createItemDialog}
+              {createItemLabel}
+              emptyTitle={navigatorModel?.emptyTitle}
+              emptyHint={navigatorModel?.emptyHint}
+            />
           {/if}
         </div>
       </div>

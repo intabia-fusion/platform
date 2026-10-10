@@ -146,6 +146,7 @@
         size="small"
         kind="tertiary"
         inheritColor
+        dataId="chat-new-button"
         on:click={handlePenClick}
       />
     </div>

@@ -130,6 +130,17 @@
     "DontTranslate": "Ne pas traduire",
     "SelectLanguage": "Sélectionner la langue",
     "SelectLanguages": "Sélectionner les langues",
-    "RecentlyUsed": "Utilisé récemment"
+    "RecentlyUsed": "Utilisé récemment",
+    "EmptyStateOrganizationTitle": "Aucune entreprise pour le moment",
+    "EmptyStateOrganizationDescription": "Une entreprise est la fiche d'une organisation : un client, un partenaire ou un fournisseur.",
+    "EmptyStateOrganizationCreateLabel": "Créer une entreprise",
+    "EmptyStatePersonTitle": "Aucune personne pour le moment",
+    "EmptyStatePersonDescription": "Une personne est la fiche de quelqu'un hors de l'équipe : un client, un partenaire ou un contact.",
+    "EmptyStatePersonCreateLabel": "Créer une personne",
+    "EmptyStateEmployeeTitle": "Aucun employé pour le moment",
+    "EmptyStateEmployeeDescription": "Les employés sont les membres de l'espace de travail. Invitez vos collègues et ils apparaîtront ici.",
+    "EmptyStateMemberTitle": "Aucun employé de l'entreprise pour le moment",
+    "EmptyStateMemberDescription": "Les personnes qui travaillent dans cette entreprise sont listées ici.",
+    "EmptyStateMemberCreateLabel": "Ajouter un employé"
   }
 }
