@@ -26,16 +26,18 @@ import core, {
 import type { TriggerControl } from '@hcengineering/server-core'
 import { OnContentReport, OnReportedMessageRemoved } from '../report'
 
-// The trigger asks the account service for the members; here it is Alice (User) and three owners.
+// The trigger asks the account service for the members; by default Alice (User) and three owners.
+const allMembers = [
+  { person: 'acc-alice', role: 'USER' },
+  { person: 'acc-bob', role: 'OWNER' },
+  { person: 'acc-owner1', role: 'OWNER' },
+  { person: 'acc-owner2', role: 'OWNER' }
+]
+let mockMembers = allMembers
 jest.mock('@hcengineering/server-token', () => ({ generateToken: () => 'system-token' }))
 jest.mock('@hcengineering/server-client', () => ({
   getAccountClient: () => ({
-    getWorkspaceMembers: async () => [
-      { person: 'acc-alice', role: 'USER' },
-      { person: 'acc-bob', role: 'OWNER' },
-      { person: 'acc-owner1', role: 'OWNER' },
-      { person: 'acc-owner2', role: 'OWNER' }
-    ]
+    getWorkspaceMembers: async () => mockMembers
   })
 }))
 
@@ -177,8 +179,19 @@ function cards (txes: Tx[]): Array<TxCreateDoc<ActivityInfoMessage>> {
   ) as Array<TxCreateDoc<ActivityInfoMessage>>
 }
 
+function collaborators (txes: Tx[]): string[] {
+  const collabs = txes.filter(
+    (tx) => tx._class === core.class.TxCreateDoc && (tx as TxCreateDoc<Doc>).objectClass === core.class.Collaborator
+  ) as Array<TxCreateDoc<Collaborator>>
+  return collabs.map((tx) => `${tx.attributes.attachedTo}:${tx.attributes.collaborator}`).sort()
+}
+
 describe('OnContentReport', () => {
-  it('drops a system card into each owner direct message, skipping only the reporter', async () => {
+  beforeEach(() => {
+    mockMembers = allMembers
+  })
+
+  it('drops a system card into each owner direct message, skipping the reporter and the reported owner', async () => {
     const s = stand(chatMessage())
     const req = request({ messageId: 'msg1', reason: 'abuse' })
     const txes = await OnContentReport([req], s.control)
@@ -191,10 +204,8 @@ describe('OnContentReport', () => {
     expect(newDms[0].attributes.members).toEqual([systemAccountUuid, ACC_OWNER1])
 
     const created = cards(txes)
-    // Bob is an owner too: he gets the card even though it is about him.
-    expect(created.map((tx) => tx.attributes.attachedTo).sort()).toEqual(
-      [DM_OWNER2, 'dm:bob', newDms[0].objectId].sort()
-    )
+    // Bob is an owner too, but the other owners handle a report on him.
+    expect(created.map((tx) => tx.attributes.attachedTo).sort()).toEqual([DM_OWNER2, newDms[0].objectId].sort())
     for (const card of created) {
       expect(card.modifiedBy).toBe(core.account.System)
       expect(card.attributes.message).toBe(chunter.string.ContentReport)
@@ -223,18 +234,19 @@ describe('OnContentReport', () => {
     expect(txes.some((tx) => tx._class === core.class.TxRemoveDoc)).toBe(false)
 
     // Collaborators come from this trigger, the contact one ignores derived creates: both members of the
-    // new direct message and the missing ones of Bob's, none for Owner2 who has them.
-    const collabs = txes.filter(
-      (tx) => tx._class === core.class.TxCreateDoc && (tx as TxCreateDoc<Doc>).objectClass === core.class.Collaborator
-    ) as Array<TxCreateDoc<Collaborator>>
-    expect(collabs.map((tx) => `${tx.attributes.attachedTo}:${tx.attributes.collaborator}`).sort()).toEqual(
-      [
-        `${newDms[0].objectId}:${systemAccountUuid}`,
-        `${newDms[0].objectId}:${ACC_OWNER1}`,
-        `dm:bob:${systemAccountUuid}`,
-        `dm:bob:${ACC_BOB}`
-      ].sort()
+    // new direct message, none for Owner2 who has them.
+    expect(collaborators(txes)).toEqual(
+      [`${newDms[0].objectId}:${systemAccountUuid}`, `${newDms[0].objectId}:${ACC_OWNER1}`].sort()
     )
+  })
+
+  it('still sends a report on the only owner to that owner', async () => {
+    mockMembers = allMembers.filter((m) => m.person === 'acc-alice' || m.person === 'acc-bob')
+    const s = stand(chatMessage())
+    const txes = await OnContentReport([request({ messageId: 'msg1', reason: 'abuse' })], s.control)
+    expect(cards(txes).map((tx) => tx.attributes.attachedTo)).toEqual(['dm:bob'])
+    // Bob's direct message lost its collaborators: the trigger restores the missing ones.
+    expect(collaborators(txes)).toEqual([`dm:bob:${systemAccountUuid}`, `dm:bob:${ACC_BOB}`].sort())
   })
 
   it('maps an unknown reason to other', async () => {
@@ -270,7 +282,8 @@ describe('OnContentReport', () => {
     const s = stand(undefined)
     const txes = await OnContentReport([request({ account: ACC_BOB, reason: 'abuse' })], s.control)
     const created = cards(txes)
-    expect(created).toHaveLength(3)
+    // Owner1 and Owner2; Bob is the one reported.
+    expect(created).toHaveLength(2)
     for (const card of created) {
       expect(card.attributes.props).toMatchObject({
         kind: 'person',

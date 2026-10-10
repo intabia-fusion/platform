@@ -205,6 +205,8 @@
     "IntegerOnly": "Pouze celá čísla",
     "AccessControl": "Řízení přístupu",
     "DangerZone": "Nebezpečná zóna",
+    "ContentReports": "Nahlášení",
+    "ContentReportsDescription": "Umožňuje členům nahlašovat zprávy v kanálech a ostatní členy. Nahlášení dostávají vlastníci pracovního prostoru",
     "ApiAccess": "Přístup k API",
     "CreateApiKey": "Vytvořit API klíč",
     "ApiKeyName": "Název",

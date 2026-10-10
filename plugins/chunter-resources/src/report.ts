@@ -19,8 +19,9 @@ import {
   hasAccountRole
 } from '@hcengineering/core'
 import { type IntlString, translate } from '@hcengineering/platform'
-import { getClient } from '@hcengineering/presentation'
+import { configurationStore, getClient } from '@hcengineering/presentation'
 import { NotificationSeverity, addNotification, getEventPositionElement, showPopup } from '@hcengineering/ui'
+import { get } from 'svelte/store'
 
 import ReportNotification from './components/ReportNotification.svelte'
 
@@ -31,9 +32,13 @@ export const reasonLabels: Record<ContentReportReason, IntlString> = {
   other: chunter.string.ContentReportOther
 }
 
+function areReportsEnabled (): boolean {
+  return get(configurationStore).get(chunter.ids.ContentReportsConfiguration)?.enabled === true
+}
+
 /** Somebody else's message in a channel; owners moderate directly and get no report action. */
 export async function canReportMessage (doc?: Doc | Doc[]): Promise<boolean> {
-  if (doc === undefined || Array.isArray(doc)) return false
+  if (doc === undefined || Array.isArray(doc) || !areReportsEnabled()) return false
   const message = doc as ChatMessage
   const me = getCurrentAccount()
   if (hasAccountRole(me, AccountRole.Owner)) return false
@@ -47,7 +52,7 @@ export async function canReportMessage (doc?: Doc | Doc[]): Promise<boolean> {
 }
 
 export async function canReportPerson (doc?: Doc | Doc[]): Promise<boolean> {
-  if (doc === undefined || Array.isArray(doc)) return false
+  if (doc === undefined || Array.isArray(doc) || !areReportsEnabled()) return false
   const person = doc as Person
   const me = getCurrentAccount()
   if (hasAccountRole(me, AccountRole.Owner)) return false

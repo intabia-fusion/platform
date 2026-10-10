@@ -14,7 +14,18 @@
 //
 
 import { ActivityInfoMessage, ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timestamp } from '@hcengineering/core'
+import {
+  AccountUuid,
+  AttachedDoc,
+  Class,
+  Configuration,
+  Doc,
+  Markup,
+  Mixin,
+  Ref,
+  Space,
+  Timestamp
+} from '@hcengineering/core'
 import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
@@ -276,6 +287,7 @@ export default plugin(chunterId, {
     ChannelNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
     JoinChannelNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     ContentReportNotification: '' as Ref<MessageNotificationType<ActivityInfoMessage>>,
+    ContentReportsConfiguration: '' as Ref<Configuration>,
     ChatWidget: '' as Ref<Widget>
   },
   extensions: {

@@ -212,6 +212,8 @@ export class ChunterMiddleware extends BaseMiddleware {
   private async onReportAction (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<ContentReportAction>): Promise<void> {
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid) return
+    const configs = await this.findAll(ctx, core.class.Configuration, { _id: chunter.ids.ContentReportsConfiguration })
+    if (!configs.some((it) => it.enabled)) this.throwForbidden()
     const space = (await this.findAll(ctx, contact.class.PersonSpace, { _id: tx.objectSpace as Ref<PersonSpace> }))[0]
     if (space?.account !== account.uuid) this.throwForbidden()
   }

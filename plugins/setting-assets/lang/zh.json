@@ -210,6 +210,8 @@
     "IntegerOnly": "仅整数",
     "AccessControl": "访问控制",
     "DangerZone": "危险区域",
+    "ContentReports": "举报",
+    "ContentReportsDescription": "允许成员举报频道中的消息和其他成员。举报将发送给工作区所有者",
     "ApiAccess": "API访问",
     "CreateApiKey": "创建 API 密钥",
     "ApiKeyName": "名称",

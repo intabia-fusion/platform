@@ -1,4 +1,4 @@
-import { type AccountUuid, type Ref, type Doc, systemAccountUuid, TxFactory } from '@hcengineering/core'
+import core, { type AccountUuid, type Ref, type Doc, systemAccountUuid, TxFactory } from '@hcengineering/core'
 import chunter from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
 import { ChunterMiddleware } from '../middleware'
@@ -77,10 +77,18 @@ describe('onInfoMessage', () => {
   })
 })
 
-/** Runs the private onReportAction with stubbed storage; `spaces` is what findAll answers. */
-async function onReportAction (actor: AccountUuid, space: string, spaces: unknown[]): Promise<void> {
+const ENABLED = [{ _id: chunter.ids.ContentReportsConfiguration, enabled: true }]
+
+/** Runs the private onReportAction with stubbed storage: `spaces` and `configs` are what findAll answers. */
+async function onReportAction (
+  actor: AccountUuid,
+  space: string,
+  spaces: unknown[],
+  configs: unknown[] = ENABLED
+): Promise<void> {
   const middleware = Object.create(ChunterMiddleware.prototype)
-  middleware.findAll = async () => spaces
+  middleware.findAll = async (_ctx: unknown, _class: unknown) =>
+    _class === core.class.Configuration ? configs : spaces
   const ctx = { contextData: { account: { uuid: actor } } }
   const tx = factory.createTxCreateDoc(chunter.class.ContentReportAction, space as Ref<any>, { reason: 'spam' } as any)
   await middleware.onReportAction(ctx, tx)
@@ -97,5 +105,11 @@ describe('onReportAction', () => {
   })
   it('lets the system account through', async () => {
     await expect(onReportAction(systemAccountUuid, 'general', [])).resolves.toBeUndefined()
+  })
+  it('refuses any report while the workspace has reports off', async () => {
+    await expect(onReportAction(USER, 'ps-user', mine, [])).rejects.toThrow()
+    await expect(
+      onReportAction(USER, 'ps-user', mine, [{ _id: chunter.ids.ContentReportsConfiguration, enabled: false }])
+    ).rejects.toThrow()
   })
 })

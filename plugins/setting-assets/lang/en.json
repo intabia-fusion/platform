@@ -208,6 +208,8 @@
     "IntegerOnly": "Integer numbers only",
     "AccessControl": "Access control",
     "DangerZone": "Danger zone",
+    "ContentReports": "Reports",
+    "ContentReportsDescription": "Lets members report messages in channels and other members. Reports go to the workspace owners",
     "ApiAccess": "API access",
     "CreateApiKey": "Create API key",
     "ApiKeyName": "Name",

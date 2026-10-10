@@ -57,7 +57,7 @@ async function handleReport (action: ContentReportAction, control: TriggerContro
     return []
   }
 
-  const owners = ownersToNotify(members, [reporter.account])
+  const owners = ownersToNotify(members, [reporter.account], subject.author?.account)
   if (owners.length === 0) {
     ctx.warn('content report: no owners to notify', { reporter: reporter.account, members: members.length })
     return []
@@ -79,11 +79,17 @@ async function workspaceMembers (control: TriggerControl): Promise<WorkspaceMemb
   }
 }
 
-/** Workspace owners, minus the people in `except` and the system itself. */
-function ownersToNotify (members: WorkspaceMember[], except: AccountUuid[]): AccountUuid[] {
-  return members
+/** Owners minus `except` and the system; the reported owner gets the card only when nobody else would. */
+function ownersToNotify (
+  members: WorkspaceMember[],
+  except: AccountUuid[],
+  reported: AccountUuid | undefined
+): AccountUuid[] {
+  const owners = members
     .filter((m) => m.role === AccountRole.Owner && !except.includes(m.person) && m.person !== systemAccountUuid)
     .map((m) => m.person)
+  const others = owners.filter((it) => it !== reported)
+  return others.length > 0 ? others : owners
 }
 
 async function deliver (card: Card, owners: AccountUuid[], control: TriggerControl): Promise<Tx[]> {

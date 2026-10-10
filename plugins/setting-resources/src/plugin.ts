@@ -136,6 +136,8 @@ export default mergeIds(settingId, setting, {
     EnablePermissionsConfirmation: '' as IntlString,
     BetaWarning: '' as IntlString,
     DangerZone: '' as IntlString,
+    ContentReports: '' as IntlString,
+    ContentReportsDescription: '' as IntlString,
     AccessControl: '' as IntlString,
     GuestAccess: '' as IntlString,
     GuestAccessDescription: '' as IntlString,
