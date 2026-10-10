@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type Chat, chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
+import { type Chat, type ChatMessage, chunterId, type DirectMessage, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   TxOperations,
   type Class,
@@ -26,7 +26,8 @@ import core, {
   DOMAIN_SPACE,
   type AccountUuid,
   DOMAIN_COLLABORATOR,
-  type Collaborator
+  type Collaborator,
+  type TxUpdateDoc
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -360,6 +361,60 @@ async function removeUnavailableChats (client: MigrationClient): Promise<void> {
   }
 }
 
+export async function unhideAutoHiddenDirects (client: MigrationClient): Promise<void> {
+  const hiddenDirects = new Map(
+    (
+      await client.find<Chat>(
+        DOMAIN_CHUNTER_DOC,
+        { _class: chunter.class.Chat, attachedToClass: chunter.class.DirectMessage, hidden: true },
+        { projection: { _id: 1, attachedTo: 1 } }
+      )
+    ).map((it) => [it._id, it.attachedTo])
+  )
+  if (hiddenDirects.size === 0) return
+
+  // One pass: tx.objectId has no index, a per-batch $in would scan the table every time.
+  const lastHiddenTx = new Map<Ref<Chat>, TxUpdateDoc<Chat>>()
+  const txIterator = await client.traverse<TxUpdateDoc<Chat>>(DOMAIN_TX, {
+    _class: core.class.TxUpdateDoc,
+    objectClass: chunter.class.Chat,
+    'operations.hidden': { $exists: true }
+  })
+  try {
+    while (true) {
+      const txes = (await txIterator.next(1000)) ?? []
+      if (txes.length === 0) break
+      for (const tx of txes) {
+        if (!hiddenDirects.has(tx.objectId)) continue
+        const last = lastHiddenTx.get(tx.objectId)
+        if (last !== undefined && last.modifiedOn > tx.modifiedOn) continue
+        lastHiddenTx.set(tx.objectId, tx)
+      }
+    }
+  } finally {
+    await txIterator.close()
+  }
+
+  const toUnhide: Ref<Chat>[] = []
+  for (const [chatId, direct] of hiddenDirects) {
+    const tx = lastHiddenTx.get(chatId)
+    if (tx?.operations.hidden === true) {
+      // A message after the user's hide means the chat was auto-unhidden: a DerivedTx, not stored in DOMAIN_TX.
+      const newer = await client.find<ChatMessage>(
+        DOMAIN_ACTIVITY,
+        { _class: chunter.class.ChatMessage, attachedTo: direct, createdOn: { $gt: tx.modifiedOn } },
+        { limit: 1, projection: { _id: 1 } }
+      )
+      if (newer.length === 0) continue
+    }
+    toUnhide.push(chatId)
+  }
+  for (let i = 0; i < toUnhide.length; i += 500) {
+    await client.update<Chat>(DOMAIN_CHUNTER_DOC, { _id: { $in: toUnhide.slice(i, i + 500) } }, { hidden: false })
+  }
+  client.logger.log('unhidden auto-hidden directs', { count: toUnhide.length, hidden: hiddenDirects.size })
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -449,6 +504,11 @@ export const chunterOperation: MigrateOperation = {
         state: 'remove-unavailable-chats-v1',
         mode: 'upgrade',
         func: removeUnavailableChats
+      },
+      {
+        state: 'unhide-auto-hidden-directs-v1',
+        mode: 'upgrade',
+        func: unhideAutoHiddenDirects
       }
     ])
   },
