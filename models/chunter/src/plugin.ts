@@ -53,6 +53,8 @@ export default mergeIds(chunterId, chunter, {
     EmployeePresenter: '' as AnyComponent
   },
   action: {
+    ReportMessage: '' as Ref<Action>,
+    ReportPerson: '' as Ref<Action>,
     MarkCommentUnread: '' as Ref<Action>,
     MarkUnread: '' as Ref<Action>,
     ArchiveChannel: '' as Ref<Action>,
@@ -62,6 +64,8 @@ export default mergeIds(chunterId, chunter, {
     ForwardMessage: '' as Ref<Action>
   },
   actionImpl: {
+    ReportMessage: '' as ViewAction,
+    ReportPerson: '' as ViewAction,
     ArchiveChannel: '' as ViewAction,
     UnarchiveChannel: '' as ViewAction,
     DeleteChatMessage: '' as ViewAction,
@@ -115,6 +119,8 @@ export default mergeIds(chunterId, chunter, {
     Random: '' as Ref<Channel>
   },
   function: {
+    CanReportMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
+    CanReportPerson: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     GetLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<string>>,
     GetFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
     CanDeleteMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,

@@ -210,6 +210,8 @@
     "IntegerOnly": "Nur ganze Zahlen",
     "AccessControl": "Zugriffskontrolle",
     "DangerZone": "Gefahrenzone",
+    "ContentReports": "Meldungen",
+    "ContentReportsDescription": "Ermöglicht es Mitgliedern, Nachrichten in Kanälen und andere Mitglieder zu melden. Meldungen gehen an die Eigentümer des Arbeitsbereichs",
     "ApiAccess": "API-Zugriff",
     "CreateApiKey": "API-Schlüssel erstellen",
     "ApiKeyName": "Name",

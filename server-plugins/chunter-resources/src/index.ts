@@ -58,6 +58,7 @@ import {
   getPersonSpaces
 } from '@hcengineering/server-contact'
 import { TriggerControl } from '@hcengineering/server-core'
+import { OnContentReport, OnReportedMessageRemoved } from './report'
 
 import {
   ChannelIconPresenter,
@@ -552,6 +553,8 @@ async function OnPersonNameChanged (txes: TxUpdateDoc<Person>[], control: Trigge
 export default async () => ({
   trigger: {
     ChunterTrigger,
+    OnContentReport,
+    OnReportedMessageRemoved,
     OnUserStatus,
     OnCollaboratorAdded,
     OnCollaboratorRemoved,

@@ -21,6 +21,7 @@ import serverCore, {
 import serverNotification from '@hcengineering/server-notification'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken from '@hcengineering/server-token'
+import serverClient from '@hcengineering/server-client'
 import { join } from 'path'
 import { start } from '.'
 import { profileStart, profileStop } from './profiler'
@@ -76,6 +77,7 @@ setMetadata(serverCore.metadata.FrontUrl, config.frontUrl)
 setMetadata(serverCore.metadata.FilesUrl, config.filesUrl)
 setMetadata(serverToken.metadata.Secret, config.serverSecret)
 setMetadata(serverToken.metadata.Service, 'transactor')
+setMetadata(serverClient.metadata.Endpoint, config.accountsUrl)
 setMetadata(serverNotification.metadata.MailUrl, config.mailUrl ?? '')
 setMetadata(serverNotification.metadata.MailAuthToken, config.mailAuthToken)
 setMetadata(serverNotification.metadata.WebPushUrl, config.webPushUrl)

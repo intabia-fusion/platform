@@ -210,6 +210,8 @@
     "IntegerOnly": "Nombres entiers uniquement",
     "AccessControl": "Contrôle d'accès",
     "DangerZone": "Zone dangereuse",
+    "ContentReports": "Signalements",
+    "ContentReportsDescription": "Permet aux membres de signaler des messages dans les canaux et d'autres membres. Les signalements sont envoyés aux propriétaires de l'espace de travail",
     "ApiAccess": "Accès API",
     "CreateApiKey": "Créer une clé API",
     "ApiKeyName": "Nom",

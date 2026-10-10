@@ -210,6 +210,8 @@
     "IntegerOnly": "整数のみ",
     "AccessControl": "アクセス制御",
     "DangerZone": "危険ゾーン",
+    "ContentReports": "通報",
+    "ContentReportsDescription": "メンバーがチャンネル内のメッセージや他のメンバーを通報できるようにします。通報はワークスペースの所有者に届きます",
     "ApiAccess": "APIアクセス",
     "CreateApiKey": "APIキーを作成",
     "ApiKeyName": "名前",

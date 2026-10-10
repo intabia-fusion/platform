@@ -210,6 +210,8 @@
     "IntegerOnly": "Sadece tam sayılar",
     "AccessControl": "Erişim kontrolü",
     "DangerZone": "Tehlike bölgesi",
+    "ContentReports": "Şikayetler",
+    "ContentReportsDescription": "Üyelerin kanallardaki mesajları ve diğer üyeleri şikayet etmesine olanak tanır. Şikayetler çalışma alanı sahiplerine iletilir",
     "ApiAccess": "API erişimi",
     "CreateApiKey": "API anahtarı oluştur",
     "ApiKeyName": "Ad",

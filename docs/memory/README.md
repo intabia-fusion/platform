@@ -10,6 +10,7 @@
 ## Чат и уведомления - [chat.md](../features/chat.md), [notifications.md](../features/notifications.md)
 
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
+- [content-reports.md](content-reports.md) - Чат: жалобы и опция воркспейса для них
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
 - [push_voip_calls.md](push_voip_calls.md) - Push входящего звонка: VoIP
 

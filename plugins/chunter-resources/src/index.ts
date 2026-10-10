@@ -44,6 +44,9 @@ import SavedMessages from './components/chat/specials/SavedMessages.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
 import DmHeader from './components/DmHeader.svelte'
 import DmPresenter from './components/DmPresenter.svelte'
+import { canReportMessage, canReportPerson, reportMessage, reportPerson } from './report'
+import ContentReportPresenter from './components/ContentReportPresenter.svelte'
+import ReportReasonPopup from './components/ReportReasonPopup.svelte'
 import EditChannel from './components/EditChannel.svelte'
 import ChatMessageNotificationLabel from './components/notification/ChatMessageNotificationLabel.svelte'
 import JoinChannelNotificationPresenter from './components/notification/JoinChannelNotificationPresenter.svelte'
@@ -176,6 +179,8 @@ export default async (): Promise<Resources> => ({
     ChunterBrowser,
     DmHeader,
     DmPresenter,
+    ContentReportPresenter,
+    ReportReasonPopup,
     EditChannel,
     ThreadView,
     SavedMessages,
@@ -216,6 +221,8 @@ export default async (): Promise<Resources> => ({
     ChannelTitleProvider,
     CanDeleteMessage: canDeleteMessage,
     CanCopyMessageLink: canCopyMessageLink,
+    CanReportMessage: canReportMessage,
+    CanReportPerson: canReportPerson,
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
     GetChunterSpaceLinkId: getChunterSpaceLinkId,
     ParseChunterSpaceLinkId: parseChunterSpaceLinkId,
@@ -255,6 +262,8 @@ export default async (): Promise<Resources> => ({
     ShowOriginalMessage: showOriginalMessage,
     StartConversation: startConversationAction,
     ReplyToMessage: replyToMessage,
-    ForwardMessage: forwardMessage
+    ForwardMessage: forwardMessage,
+    ReportMessage: reportMessage,
+    ReportPerson: reportPerson
   }
 })

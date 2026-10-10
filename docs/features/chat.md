@@ -92,6 +92,12 @@
 - **Бейджи.** Число `unreadMessagesCount`, цвет по `notifiedMessagesCount`, маркер приложения `ShowNotifyMarkerFn` + `showChatBadge`, счётчик Threads `unreadThreadsCountStore`. - navigator/ChatNavItem.svelte; plugins/chunter-resources/src/index.ts; stores.ts.
 - **Скрытые и закреплённые чаты.** `Chat.hidden/pinned`, auto-unhide (`ChunterMiddleware`), auto-hide (`syncChat`).
 
+### Жалобы
+
+- **Опция воркспейса, по умолчанию выключена.** `core.class.Configuration` с id `chunter.ids.ContentReportsConfiguration`: нет документа или `enabled: false` - жалоб нет. Переключатель "Жалобы" в Настройки -> Общее виден только владельцу - plugins/setting-resources/src/components/General.svelte; писать в `DOMAIN_CONFIGURATION` может только владелец (`ConfigurationMiddleware`).
+- **Действие "Пожаловаться".** На чужом сообщении в канале (в DM - только на пользователя) и на пользователе; владельцам не показывается. - `canReportMessage`/`canReportPerson`, plugins/chunter-resources/src/report.ts; actions в models/chunter/src/actions.ts.
+- **Доставка владельцам.** Клиент создаёт транзиентный `ContentReportAction` в своём PersonSpace; `ChunterMiddleware.onReportAction` отвечает `Forbidden`, если опция выключена или PersonSpace чужой; триггер `OnContentReport` кладёт карточку (`ActivityInfoMessage` с `chunter.string.ContentReport`) в DM каждого владельца с системой, кроме автора жалобы. Владелец, на которого пожаловались, карточку не получает, если её получит кто-то ещё; единственному владельцу она приходит всё равно (`ownersToNotify`). Создать или изменить такую карточку пользователь не может - `onInfoMessage`. - server-plugins/chunter/src/middleware.ts, server-plugins/chunter-resources/src/{report,reportCard}.ts.
+
 ### Производительность
 
 - **Server-side агрегация activity.** При частых обновлениях markup storage объединяет `DocUpdateMessage` в окне `activityAggregationDelay` (по умолчанию 5 минут). - server/collaborator/src/storage/platform.ts.
@@ -110,6 +116,7 @@
 - Изменить условия auto-unhide / auto-hide чатов -> server-plugins/chunter/src/middleware.ts (`tx`), server-plugins/chunter-resources/src/index.ts (`syncChat`, `hideDelay`).
 - Поменять формулу поиска по сообщениям -> plugins/chunter-resources/src/search/store.ts.
 - Добавить/поменять action на сообщении или канале -> models/chunter/src/actions.ts.
+- Изменить, кто и на что может пожаловаться -> `canReportMessage`/`canReportPerson`, plugins/chunter-resources/src/report.ts; серверная проверка - `ChunterMiddleware.onReportAction`.
 - Добавить чат-тип уведомления -> `defineNotifications`, models/chunter/src/notifications.ts.
 - Изменить окно агрегации activity-записей -> `activityAggregationDelay`, server/collaborator/src/storage/platform.ts.
 - Написать sanity-тест на доставку/непрочитанное -> `ChatMember` (tests/sanity/tests/API/ChatApi.ts) для второго пользователя по REST, `ChatUnreadPage` (tests/sanity/tests/model/chat-unread-page.ts).
@@ -118,13 +125,14 @@
 
 - `NotificationAppearancePreference.showChatBadge` - маркер на иконке чата.
 - `DocNotificationSetting.mode` - режим канала (all/mentions/mute).
+- `chunter.ids.ContentReportsConfiguration` - жалобы на сообщения и пользователей, по умолчанию выключены (см. "Жалобы").
 - Константы клиента: `limit=50`, `MAX_CACHE_SIZE=10`, `TTL_MS=15 мин` (chatViewport.ts); дебаунс чтения 500 мс (scroll.ts); `loadMoreThreshold=200`, `newSeparatorOffset=150`, `forceReadPauseMs=3000` (ReverseChannelScrollView.svelte); `SUMMARY_TIMEOUT_MS=3 мин` (stores.ts).
 - Константы сервера: `updateChatInfoDelay=24 ч`, `hideDelay=14 дней`, `syncChatCoalesceMs=60 с` (server-plugins/chunter-resources/src/index.ts).
 
 ## Тесты
 
 - Unit: plugins/chunter-resources/src/__tests__/{chatViewport,scroll,stores,utils}.test.ts (инициализация вьюпорта, анкоры, пагинация без пропусков/дублей, версии, live-Tx, LRU/TTL; чтение по дебаунсу; `unreadThreadsCountStore`).
-- Unit: server-plugins/chunter/src/__tests__/direct-create.spec.ts (dedup/инварианты DM); server-plugins/chunter-resources/src/__tests__/{search,threadReplies}.test.ts (`threadReplies` - пересчёт `lastReply`/`repliedPersons` при удалении ответа).
+- Unit: server-plugins/chunter/src/__tests__/direct-create.spec.ts (dedup/инварианты DM); server-plugins/chunter/src/__tests__/content-report.spec.ts (жалоба только при включённой опции и из своего PersonSpace, карточки пишет только система); server-plugins/chunter-resources/src/__tests__/report.test.ts (`OnContentReport`); server-plugins/chunter-resources/src/__tests__/{search,threadReplies}.test.ts (`threadReplies` - пересчёт `lastReply`/`repliedPersons` при удалении ответа).
 - Unit: plugins/chunter-resources/src/search/__tests__/{store,resolve,classes,highlight}.test.ts; plugins/chunter-assets/src/__tests__/lang.test.ts.
 - Sanity (Playwright): tests/sanity/tests/chat/{chat,direct-chat,message-search}.spec.ts; tests/sanity/tests/chat/chat-notifications.spec.ts (realtime-доставка без reload: сообщения, треды, реакции, правки, mention, mute); tests/sanity/tests/chat/chat-unread.spec.ts (счётчики, маркеры, "New", "Latest messages", mentions-only/muted, тред, открытый до первого ответа, Threads и его сортировки); tests/sanity/tests/chat/threads-list.spec.ts (порядок Threads: время последнего ответа, свой ответ, одновременные ответы, правки и реакции, неперерисовка строк, неподвижный скролл, вторая вкладка, тред без ответов, плашка чата в Threads и Saved), page object tests/sanity/tests/model/threads-list-page.ts. Page objects: tests/sanity/tests/model/{channel-page,chunter-page,chat-unread-page}.ts; REST-помощник tests/sanity/tests/API/ChatApi.ts (`ChatMember`: второй пользователь через API вместо второго браузера).
 
