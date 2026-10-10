@@ -80,6 +80,9 @@ import Table from './components/Table.svelte'
 import TableBrowser from './components/TableBrowser.svelte'
 import TimestampPresenter from './components/TimestampPresenter.svelte'
 import TreeView from './components/TreeView.svelte'
+import TimelineView from './components/TimelineView.svelte'
+import TimelineMonthSelector from './components/TimelineMonthSelector.svelte'
+import TimelineRangeDropdown from './components/TimelineRangeDropdown.svelte'
 import UpDownNavigator from './components/UpDownNavigator.svelte'
 import ValueSelector from './components/ValueSelector.svelte'
 import ViewletContentView from './components/ViewletContentView.svelte'
@@ -160,6 +163,8 @@ import {
   canLeaveSpace,
   isClipboardAvailable
 } from './visibilityTester'
+export * from './timeline'
+export { TimelineMonthSelector, TimelineRangeDropdown }
 export { getActions, getContextActions, invokeAction, showMenu, actionGroupOrder } from './actions'
 export { default as ActionButton } from './components/ActionButton.svelte'
 export { default as ActionHandler } from './components/ActionHandler.svelte'
@@ -359,6 +364,7 @@ export default async (): Promise<Resources> => ({
     MasterDetailView,
     AssociationPresenter,
     TreeView,
+    TimelineView,
     MasterDetailBrowser,
     ReadOnlyNotification,
     ForbiddenNotification,

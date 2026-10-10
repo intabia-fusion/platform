@@ -37,6 +37,11 @@ export interface NewMilestone {
   name: string
   description?: string
   status?: string
+  startDate?: {
+    day: string
+    month: string
+    year: string
+  }
   targetDate?: {
     day: string
     month: string

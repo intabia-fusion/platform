@@ -111,6 +111,7 @@
   export let shouldSaveDraft: boolean = true
   export let parentIssue: Issue | undefined
   export let originalIssue: Issue | undefined
+  export let onCreated: ((id: Ref<Issue>) => Promise<void>) | undefined = undefined
 
   const mDraftController = new MultipleDraftController(tracker.ids.IssueDraft)
   const id: Ref<Issue> = generateId()
@@ -674,6 +675,14 @@
       descriptionBox?.removeDraft(false)
       console.error(err)
       Analytics.handleEvent(TrackerEvents.IssueCreated, { ok: false, project: currentProject.identifier })
+      Analytics.handleError(err)
+      return
+    }
+    // The issue exists already: a hook failure must not run the failure path above.
+    try {
+      await onCreated?.(created.id)
+    } catch (err: any) {
+      console.error(err)
       Analytics.handleError(err)
     }
   }

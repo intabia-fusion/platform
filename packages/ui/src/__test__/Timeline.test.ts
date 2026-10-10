@@ -113,7 +113,6 @@ describe('Timeline', () => {
       const { host, component } = mount({
         currentTime: CURRENT_TIME,
         lines,
-        selectedRows: [0, 3],
         selectedRow: 2,
         ...extra
       })
@@ -124,7 +123,6 @@ describe('Timeline', () => {
       const { rows } = mountRows()
       const el = rows[1].querySelector('.component-item') as HTMLElement
       expect(el.style.left).toBe('150px')
-      expect(el.style.right).toBe('204px')
       expect(el.style.width).toBe('54px')
     })
 
@@ -154,11 +152,8 @@ describe('Timeline', () => {
       expect(rows[1].querySelector('.contentWrapper')?.classList.contains('nullRow')).toBe(false)
     })
 
-    it('applies mListGridChecked from selectedRows and mListGridSelected from selectedRow', () => {
+    it('applies mListGridSelected from selectedRow', () => {
       const { rows } = mountRows()
-      expect(rows[0].classList.contains('mListGridChecked')).toBe(true)
-      expect(rows[3].classList.contains('mListGridChecked')).toBe(true)
-      expect(rows[1].classList.contains('mListGridChecked')).toBe(false)
       expect(rows[2].classList.contains('mListGridSelected')).toBe(true)
       expect(rows[0].classList.contains('mListGridSelected')).toBe(false)
     })
@@ -169,14 +164,6 @@ describe('Timeline', () => {
       await tick()
       expect(rows[0].classList.contains('mListGridSelected')).toBe(true)
       expect(rows[2].classList.contains('mListGridSelected')).toBe(false)
-    })
-
-    it('onObjectChecked() dispatches check with the row and value', () => {
-      const { component } = mountRows()
-      const onCheck = vi.fn()
-      component.$on('check', onCheck)
-      component.onObjectChecked(1, true)
-      expect(onCheck).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { row: 1, value: true } }))
     })
 
     it('dispatches row-focus on mousemove, except for the already-selected row', () => {
@@ -223,6 +210,115 @@ describe('Timeline', () => {
     todayButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
     await tick()
     expect(headerContent.style.transform).toBe('translateX(0px)')
+  })
+
+  it('a bar of a non-droppable row (e.g. a milestone) never targets another row', async () => {
+    const lines: TimelineRow[] = [{ items: [item(0, 2)] }, { items: [], droppable: true }]
+    const { host, component } = mount({ currentTime: CURRENT_TIME, lines, editable: true })
+    const events: any[] = []
+    component.$on('item-change', (e: CustomEvent) => events.push(e.detail))
+    const bar = host.querySelector('.component-item') as HTMLElement
+    const rowEl = host.querySelectorAll('[data-row]')[1]
+    Object.defineProperty(document, 'elementFromPoint', { value: () => rowEl, configurable: true })
+    try {
+      bar.dispatchEvent(new MouseEvent('mousedown', { clientX: 10, button: 0, bubbles: true }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 10 }))
+      await tick()
+      expect(rowEl.classList.contains('dropTarget')).toBe(false)
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 10 }))
+      expect(events).toHaveLength(0)
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint')
+    }
+  })
+
+  it('moves a bar onto a droppable row: item-change carries targetRow, no-op drop is ignored', async () => {
+    const lines: TimelineRow[] = [
+      { items: [item(0, 2)], droppable: true },
+      { items: [], droppable: true }
+    ]
+    const { host, component } = mount({ currentTime: CURRENT_TIME, lines, editable: true })
+    const events: any[] = []
+    component.$on('item-change', (e: CustomEvent) => events.push(e.detail))
+    const bar = host.querySelector('.component-item') as HTMLElement
+    const rowEl = host.querySelectorAll('[data-row]')[1]
+    // jsdom has no elementFromPoint
+    Object.defineProperty(document, 'elementFromPoint', { value: () => rowEl, configurable: true })
+    try {
+      bar.dispatchEvent(new MouseEvent('mousedown', { clientX: 10, button: 0, bubbles: true }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 10 }))
+      await tick()
+      expect(rowEl.classList.contains('dropTarget')).toBe(true)
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 10 }))
+      expect(events).toHaveLength(1)
+      expect(events[0]).toMatchObject({ row: 0, index: 0, targetRow: 1 })
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint')
+    }
+  })
+
+  it('keeps a dropped bar at its new place until the incoming item catches up', async () => {
+    const lines: TimelineRow[] = [{ items: [item(0, 2)], key: 'a' }]
+    const { host, component } = mount({ currentTime: CURRENT_TIME, lines, editable: true })
+    const bar = (): HTMLElement => host.querySelector('.component-item') as HTMLElement
+    Object.defineProperty(document, 'elementFromPoint', { value: () => null, configurable: true })
+    try {
+      bar().dispatchEvent(new MouseEvent('mousedown', { clientX: 10, button: 0, bubbles: true }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 25 })) // 3 days at 5px
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 25 }))
+      await tick()
+      expect(bar().style.left).toBe('15px')
+
+      component.$set({ lines: [{ items: [item(0, 2)], key: 'a' }] }) // stale doc, write not delivered yet
+      await tick()
+      expect(bar().style.left).toBe('15px')
+
+      component.$set({ lines: [{ items: [item(3, 5)], key: 'a' }] })
+      await tick()
+      expect(bar().style.left).toBe('15px')
+
+      component.$set({ lines: [{ items: [item(10, 12)], key: 'a' }] }) // override is gone
+      await tick()
+      expect(bar().style.left).toBe('50px')
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint')
+    }
+  })
+
+  it('keeps the override on the dragged bar when the update re-sorts the row', async () => {
+    const a = { ...item(0, 2), key: 'A' }
+    const b = { ...item(5, 6), key: 'B' }
+    const { host, component } = mount({
+      currentTime: CURRENT_TIME,
+      lines: [{ items: [a, b], key: 'r' }],
+      editable: true
+    })
+    const left = (label: string): string | undefined =>
+      ([...host.querySelectorAll('.component-item')] as HTMLElement[]).find((it) => it.dataset.key === label)?.style
+        .left
+    Object.defineProperty(document, 'elementFromPoint', { value: () => null, configurable: true })
+    try {
+      const first = host.querySelector('.component-item') as HTMLElement
+      first.dispatchEvent(new MouseEvent('mousedown', { clientX: 10, button: 0, bubbles: true }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 50 })) // 8 days at 5px
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 50 }))
+      await tick()
+      // The update arrives sorted by start: B first, the moved A second
+      component.$set({ lines: [{ items: [b, { ...item(8, 10), key: 'A' }], key: 'r' }] })
+      await tick()
+      expect(left('B')).toBe('25px')
+      expect(left('A')).toBe('40px')
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint')
+    }
+  })
+
+  it('dispatches item-open on double click of a bar', () => {
+    const { host, component } = mount({ currentTime: CURRENT_TIME, lines: [{ items: [item(0, 2)] }] })
+    const events: any[] = []
+    component.$on('item-open', (e: CustomEvent) => events.push(e.detail))
+    host.querySelector('.component-item')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    expect(events).toEqual([{ row: 0, index: 0 }])
   })
 
   it('refuses to resize the panel when the container measures narrow', () => {

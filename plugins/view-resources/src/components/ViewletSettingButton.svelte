@@ -55,15 +55,17 @@
   {#if viewOptions}
     <ViewOptionsButton {viewlet} {kind} {viewOptions} {viewOptionsConfig} />
   {/if}
-  <ButtonIcon
-    icon={view.icon.Configure}
-    {disabled}
-    {kind}
-    size={'small'}
-    {pressed}
-    tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
-    dataId={'btn-viewSetting'}
-    bind:element={btn}
-    on:click={clickHandler}
-  />
+  {#if viewlet.descriptor !== view.viewlet.Timeline}
+    <ButtonIcon
+      icon={view.icon.Configure}
+      {disabled}
+      {kind}
+      size={'small'}
+      {pressed}
+      tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
+      dataId={'btn-viewSetting'}
+      bind:element={btn}
+      on:click={clickHandler}
+    />
+  {/if}
 {/if}
