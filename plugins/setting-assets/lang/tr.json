@@ -211,7 +211,7 @@
     "AccessControl": "Erişim kontrolü",
     "DangerZone": "Tehlike bölgesi",
     "ContentReports": "Şikayetler",
-    "ContentReportsDescription": "Üyelerin kanallardaki mesajları ve diğer üyeleri şikayet etmesine olanak tanır. Şikayetler çalışma alanı sahiplerine iletilir",
+    "ContentReportsDescription": "Üyelerin mesajları ve diğer üyeleri şikayet etmesine olanak tanır",
     "ApiAccess": "API erişimi",
     "CreateApiKey": "API anahtarı oluştur",
     "ApiKeyName": "Ad",

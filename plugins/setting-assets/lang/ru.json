@@ -211,7 +211,7 @@
     "AccessControl": "Контроль доступа",
     "DangerZone": "Опасная зона",
     "ContentReports": "Жалобы",
-    "ContentReportsDescription": "Позволяет участникам жаловаться на сообщения в каналах и на других участников. Жалобы получают владельцы рабочего пространства",
+    "ContentReportsDescription": "Разрешить участникам жаловаться на сообщения и других участников",
     "ApiAccess": "Доступ к API",
     "CreateApiKey": "Создать API-ключ",
     "ApiKeyName": "Имя",

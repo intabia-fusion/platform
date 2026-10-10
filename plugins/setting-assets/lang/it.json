@@ -211,7 +211,7 @@
     "AccessControl": "Controllo accessi",
     "DangerZone": "Zona pericolosa",
     "ContentReports": "Segnalazioni",
-    "ContentReportsDescription": "Consente ai membri di segnalare i messaggi nei canali e altri membri. Le segnalazioni arrivano ai proprietari dello spazio di lavoro",
+    "ContentReportsDescription": "Consente ai membri di segnalare messaggi e altri membri",
     "ApiAccess": "Accesso API",
     "CreateApiKey": "Crea chiave API",
     "ApiKeyName": "Nome",

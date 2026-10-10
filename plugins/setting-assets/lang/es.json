@@ -199,7 +199,7 @@
     "AccessControl": "Control de acceso",
     "DangerZone": "Zona de peligro",
     "ContentReports": "Denuncias",
-    "ContentReportsDescription": "Permite a los miembros denunciar mensajes en canales y a otros miembros. Las denuncias llegan a los propietarios del espacio de trabajo",
+    "ContentReportsDescription": "Permite a los miembros denunciar mensajes y a otros miembros",
     "ApiAccess": "Acceso API",
     "CreateApiKey": "Crear clave de API",
     "ApiKeyName": "Nombre",

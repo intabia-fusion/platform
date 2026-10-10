@@ -211,7 +211,7 @@
     "AccessControl": "Zugriffskontrolle",
     "DangerZone": "Gefahrenzone",
     "ContentReports": "Meldungen",
-    "ContentReportsDescription": "Ermöglicht es Mitgliedern, Nachrichten in Kanälen und andere Mitglieder zu melden. Meldungen gehen an die Eigentümer des Arbeitsbereichs",
+    "ContentReportsDescription": "Ermöglicht es Mitgliedern, Nachrichten und andere Mitglieder zu melden",
     "ApiAccess": "API-Zugriff",
     "CreateApiKey": "API-Schlüssel erstellen",
     "ApiKeyName": "Name",

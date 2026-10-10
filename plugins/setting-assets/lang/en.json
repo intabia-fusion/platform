@@ -209,7 +209,7 @@
     "AccessControl": "Access control",
     "DangerZone": "Danger zone",
     "ContentReports": "Reports",
-    "ContentReportsDescription": "Lets members report messages in channels and other members. Reports go to the workspace owners",
+    "ContentReportsDescription": "Allow members to report messages and other members",
     "ApiAccess": "API access",
     "CreateApiKey": "Create API key",
     "ApiKeyName": "Name",

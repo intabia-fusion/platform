@@ -206,7 +206,7 @@
     "AccessControl": "Řízení přístupu",
     "DangerZone": "Nebezpečná zóna",
     "ContentReports": "Nahlášení",
-    "ContentReportsDescription": "Umožňuje členům nahlašovat zprávy v kanálech a ostatní členy. Nahlášení dostávají vlastníci pracovního prostoru",
+    "ContentReportsDescription": "Umožňuje členům nahlašovat zprávy a ostatní členy",
     "ApiAccess": "Přístup k API",
     "CreateApiKey": "Vytvořit API klíč",
     "ApiKeyName": "Název",
