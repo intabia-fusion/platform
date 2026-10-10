@@ -8,7 +8,7 @@ services:
       - ASR_ENABLED=true
 
   aibot_client_asr:
-    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
+    image: "${AI_BOT_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}}"
     pull_policy: ${DOCKER_PULL_POLICY:-never}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -29,7 +29,7 @@ services:
 
   # Streams meeting audio from LiveKit to aibot; love dispatches it to every room by AGENTS.
   love-agent:
-    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/love-agent:${DOCKER_TAG:-latest}"
+    image: "${LOVE_AGENT_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/love-agent:${DOCKER_TAG:-latest}}"
     pull_policy: ${DOCKER_PULL_POLICY:-never}
     extra_hosts:
       - 'host.docker.internal:host-gateway'

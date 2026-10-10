@@ -1,7 +1,7 @@
 # oaitt (GigaAM ONNX on CPU) as the STT backend of docker-compose.asr.yaml: `./prepare-pg.sh --asr`.
 services:
   oaitt:
-    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/oaitt-onnx:${OAITT_TAG:-1.0.0}"
+    image: "${OAITT_ONNX_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/oaitt-onnx:${OAITT_TAG:-1.0.0}}"
     restart: unless-stopped
 
   aibot_client_asr:
