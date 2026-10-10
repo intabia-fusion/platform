@@ -160,6 +160,11 @@
     "ForbidAttributeChanges": "属性の変更を禁止: ",
     "AllowAttributeChanges": "属性の変更を許可: ",
     "RelationshipTable": "関係テーブル",
-    "GroupAndSort": "グループ化と並べ替え"
+    "GroupAndSort": "グループ化と並べ替え",
+    "EmptyStateDescription": "まだ何もありません",
+    "NothingFound": "見つかりませんでした",
+    "NothingFoundHidden": "{count, plural, other {#件}}の項目が検索またはフィルターに一致しません。",
+    "ChangeSearchQuery": "別の検索語を試すか、フィルターをクリアしてください。",
+    "EmptyStateCreateLabel": "作成"
   }
 }

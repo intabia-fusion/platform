@@ -373,4 +373,21 @@ export const deviceOptionsStore = writable<DeviceOptions>({
   firstDayOfWeek: 1
 })
 
+/**
+ * @public
+ * Sets navigator visibility and persists it the same way Workbench does, so BlankView's
+ * "show menu" hint and the sidebar toggle stay in sync.
+ */
+export function setNavigatorVisible (visible: boolean): void {
+  deviceOptionsStore.update((info) => {
+    info.navigator.visible = visible
+    return info
+  })
+  try {
+    localStorage.setItem('hiddenNavigator', String(!visible))
+  } catch (err) {
+    // Storage may be unavailable (private mode, disabled cookies) - visibility still applies.
+  }
+}
+
 export default uis

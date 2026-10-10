@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,6 +18,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Location } from '@hcengineering/ui'
   import {
+    BlankView,
     Component,
     defineSeparators,
     getCurrentLocation,
@@ -231,6 +233,12 @@
       />
     {:else if object}
       <ChannelView {object} />
+    {:else if currentSpecial === undefined && selectedData === undefined}
+      <BlankView
+        icon={chunter.icon.Chunter}
+        header={chunter.string.ChatEmptyTitle}
+        label={chunter.string.ChatEmptyHint}
+      />
     {/if}
   </div>
 </div>

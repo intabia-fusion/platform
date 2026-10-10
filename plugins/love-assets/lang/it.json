@@ -169,6 +169,12 @@
     "MeetingRoomNum": "Sala riunioni {number}",
     "VoiceRoomNum": "Stanza vocale {number}",
     "JoinRequestTitle": "Richiesta di partecipazione",
-    "JoinRequestBody": "{name} vuole partecipare alla riunione"
+    "JoinRequestBody": "{name} vuole partecipare alla riunione",
+    "OnboardingCalls": "Chiamate",
+    "OnboardingCallsDescription": "L'Ufficio è un piano virtuale con stanze: clicca sulla stanza di un collega per chiamarlo, oppure entra in una stanza condivisa per una chiamata di team.",
+    "OnboardingCallsStep1": "Apri Ufficio nella barra a sinistra",
+    "OnboardingCallsStep2": "Fai clic su una stanza per entrare e parlare",
+    "EmptyStateMeetingMinutesTitle": "Ancora nessun verbale di riunione",
+    "EmptyStateMeetingMinutesDescription": "Il verbale viene creato automaticamente all'inizio di una riunione."
   }
 }

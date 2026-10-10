@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,8 +17,8 @@
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { ActionContext } from '@hcengineering/presentation'
-  import type { AnyComponent, BlankViewProps } from '@hcengineering/ui'
-  import { BlankView, Scroller, resizeObserver } from '@hcengineering/ui'
+  import type { AnyComponent } from '@hcengineering/ui'
+  import { Scroller, resizeObserver } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { onMount } from 'svelte'
   import type { SelectDirection } from '../..'
@@ -28,6 +29,7 @@
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Doc> = {}
+  export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let options: FindOptions<Doc> | undefined = undefined
   export let viewlet: Viewlet
   export let config: Array<string | BuildModelKey>
@@ -42,9 +44,6 @@
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
   export let props: Record<string, any> = {}
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
-  export let emptyState: BlankViewProps | undefined = undefined
-
-  let empty = false
 
   let list: List
   let scroll: Scroller
@@ -73,13 +72,8 @@
   use:resizeObserver={(evt) => {
     listWidth = evt.clientWidth
   }}
-  class="w-full h-full py-4 clear-mins relative"
+  class="w-full h-full py-4 clear-mins"
 >
-  {#if emptyState !== undefined && empty}
-    <div class="list-empty">
-      <BlankView {...emptyState} />
-    </div>
-  {/if}
   <Scroller
     bind:this={scroll}
     bind:divScroll
@@ -90,10 +84,10 @@
   >
     <List
       bind:this={list}
-      bind:empty
       {_class}
       {space}
       {query}
+      {totalQuery}
       {config}
       {configurations}
       {options}
@@ -126,13 +120,3 @@
     />
   </Scroller>
 </div>
-
-<style lang="scss">
-  .list-empty {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-  }
-</style>

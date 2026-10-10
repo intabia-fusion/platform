@@ -382,7 +382,8 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "BetaWarning": "Als Beta gekennzeichnete Module sind zu experimentellen Zwecken verfügbar und funktionieren möglicherweise nicht vollständig. Wir empfehlen derzeit nicht, sich auf Beta-Funktionen für kritische Arbeiten zu verlassen."
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

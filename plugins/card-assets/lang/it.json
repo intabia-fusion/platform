@@ -86,6 +86,14 @@
     "TwoColumns": "Due colonne",
     "Grid": "Griglia",
     "RichtextProperties": "Campo di testo",
-    "ShowAllVersions": "Tutte le versioni"
+    "ShowAllVersions": "Tutte le versioni",
+    "EmptyStateCardTitle": "Ancora nessuna carta",
+    "EmptyStateCardDescription": "Una carta è un record con campi che definisci tu per il suo tipo.",
+    "EmptyStateCardCreateLabel": "Crea carta",
+    "EmptyStateCardSpaceTitle": "Ancora nessuno spazio per le carte",
+    "EmptyStateCardSpaceDescription": "Uno spazio raggruppa le carte di un argomento o di un team.",
+    "EmptyStateCardSpaceCreateLabel": "Crea spazio",
+    "EmptyStateFavoriteCardTitle": "Ancora nessuna carta preferita",
+    "EmptyStateFavoriteCardDescription": "Aggiungi una carta ai preferiti e apparirà qui."
   }
 }

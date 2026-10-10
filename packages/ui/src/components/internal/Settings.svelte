@@ -29,4 +29,4 @@
   }
 </script>
 
-<StatusBarButton bind:element icon={Settings} {pressed} on:click={showSettings} />
+<StatusBarButton id={'statusbar-settings'} bind:element icon={Settings} {pressed} on:click={showSettings} />

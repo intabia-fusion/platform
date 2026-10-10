@@ -2,7 +2,7 @@
   "string": {
     "Department": "Департамент",
     "ParentDepartmentLabel": "Родительский департамент",
-    "Structure":"Структура",
+    "Structure": "Структура",
     "CreateDepartment": "Создать департамент",
     "CreateDepartmentLabel": "Департамент",
     "DepartmentPlaceholder": "Департамент",
@@ -64,6 +64,8 @@
     "ReportedDays": "Отчетных дней",
     "Tasks": "Задач",
     "TPD": "Оплачиваемых дней",
-    "EXTRa": "Переработанных дней"
+    "EXTRa": "Переработанных дней",
+    "EmptyStateStaffTitle": "Пока нет сотрудников в отделе",
+    "EmptyStateStaffDescription": "Добавьте сотрудников в отдел в структуре компании."
   }
 }

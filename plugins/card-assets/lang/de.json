@@ -86,6 +86,14 @@
     "TwoColumns": "Zwei spaltig",
     "Grid": "Gitter",
     "RichtextProperties": "Textfelder",
-    "ShowAllVersions": "Alle Versionen anzeigen"
+    "ShowAllVersions": "Alle Versionen anzeigen",
+    "EmptyStateCardTitle": "Noch keine Karten",
+    "EmptyStateCardDescription": "Eine Karte ist ein Datensatz mit Feldern, die Sie für ihren Typ selbst festlegen.",
+    "EmptyStateCardCreateLabel": "Karte erstellen",
+    "EmptyStateCardSpaceTitle": "Noch keine Kartenbereiche",
+    "EmptyStateCardSpaceDescription": "Ein Bereich fasst die Karten eines Themas oder Teams zusammen.",
+    "EmptyStateCardSpaceCreateLabel": "Bereich erstellen",
+    "EmptyStateFavoriteCardTitle": "Noch keine favorisierten Karten",
+    "EmptyStateFavoriteCardDescription": "Fügen Sie eine Karte zu den Favoriten hinzu, und sie erscheint hier."
   }
 }

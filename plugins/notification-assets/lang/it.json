@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "ha reagito al tuo messaggio",
     "Clearing": "Cancellazione in corso...",
-    "Reading": "Lettura in corso..."
+    "Reading": "Lettura in corso...",
+    "OnboardingInbox": "Posta in arrivo",
+    "OnboardingInboxDescription": "La posta in arrivo raccoglie menzioni, risposte e modifiche in ciò che segui, così vedi cosa richiede la tua attenzione.",
+    "OnboardingInboxStep1": "Fai clic sulla campanella nella barra a sinistra",
+    "OnboardingInboxStep2": "Apri una notifica per andare al messaggio o all'issue",
+    "InboxEmptyTitle": "Ancora nessuna notifica",
+    "InboxEmptyHint": "Qui arrivano menzioni, messaggi diretti e modifiche a task e documenti che segui.",
+    "InboxSelectTitle": "Scegli una notifica",
+    "InboxSelectHint": "Apri una notifica nell'elenco a sinistra."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

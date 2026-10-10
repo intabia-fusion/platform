@@ -42,7 +42,7 @@ import GridView from './components/GridView.svelte'
 import MoveResource from './components/MoveResource.svelte'
 import ResourcePresenter from './components/ResourcePresenter.svelte'
 
-import { getDriveLink, getFileLink, getFolderLink, resolveLocation } from './navigation'
+import { getDriveLink, getFileLink, getFolderLink, openFirstDrive, resolveLocation } from './navigation'
 import { restoreFileVersion, showCreateFolderPopup, showRenameResourcePopup } from './utils'
 
 const toFileObjectSearchResult = (e: WithLookup<File>): ObjectSearchResult => ({
@@ -309,7 +309,8 @@ export default async (): Promise<Resources> => ({
     CanUpdateFileVersion,
     CanDeleteFileVersion,
     FileTitleProvider,
-    FolderTitleProvider
+    FolderTitleProvider,
+    OpenFirstDrive: openFirstDrive
   },
   resolver: {
     Location: resolveLocation

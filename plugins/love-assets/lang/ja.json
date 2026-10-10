@@ -169,6 +169,12 @@
     "MeetingRoomNum": "会議室 {number}",
     "VoiceRoomNum": "ボイスルーム {number}",
     "JoinRequestTitle": "参加リクエスト",
-    "JoinRequestBody": "{name} がミーティングへの参加を希望しています"
+    "JoinRequestBody": "{name} がミーティングへの参加を希望しています",
+    "OnboardingCalls": "通話",
+    "OnboardingCallsDescription": "オフィスは部屋のある仮想フロアです。同僚の部屋をクリックして通話するか、共有ルームに入ってチーム通話を行います。",
+    "OnboardingCallsStep1": "左側のバーで「オフィス」を開きます",
+    "OnboardingCallsStep2": "ルームをクリックして参加し、通話します",
+    "EmptyStateMeetingMinutesTitle": "議事録はまだありません",
+    "EmptyStateMeetingMinutesDescription": "議事録は会議の開始時に自動的に作成されます。"
   }
 }

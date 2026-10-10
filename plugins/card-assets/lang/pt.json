@@ -86,6 +86,14 @@
     "TwoColumns": "Duas colunas",
     "Grid": "Grade",
     "RichtextProperties": "Campo de texto",
-    "ShowAllVersions": "Todas as versões"
+    "ShowAllVersions": "Todas as versões",
+    "EmptyStateCardTitle": "Ainda não há cartões",
+    "EmptyStateCardDescription": "Um cartão é um registo com campos que você define para o seu tipo.",
+    "EmptyStateCardCreateLabel": "Criar cartão",
+    "EmptyStateCardSpaceTitle": "Ainda não há espaços de cartões",
+    "EmptyStateCardSpaceDescription": "Um espaço agrupa os cartões de um tema ou equipa.",
+    "EmptyStateCardSpaceCreateLabel": "Criar espaço",
+    "EmptyStateFavoriteCardTitle": "Ainda não há cartões favoritos",
+    "EmptyStateFavoriteCardDescription": "Adicione um cartão aos favoritos e ele aparecerá aqui."
   }
 }

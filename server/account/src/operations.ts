@@ -659,8 +659,6 @@ export async function createWorkspace (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  checkRateLimit(account, workspaceName)
-
   ctx.info('Creating workspace record', { workspaceName, account, region })
 
   // Any confirmed social ID will do
@@ -795,14 +793,12 @@ export async function createInvite (
   })
 }
 
-// TODO: Temporary solution to prevent spam using sendInvite
-const invitesSend = new Map<
-  string,
-  {
-    lastSend: number
-    totalSend: number
-  }
->()
+// In-memory per account pod, so a soft anti-spam cap rather than an exact quota: invite emails go to
+// any address the caller types.
+const invitesSend = new Map<string, { minuteStart: number, minuteCount: number, dayStart: number, dayCount: number }>()
+// A team is invited in one go from the invite dialog (several addresses at once).
+const INVITES_PER_MINUTE = 30
+const INVITES_PER_DAY = 200
 
 export async function sendInvite (
   ctx: MeasureContext,
@@ -835,6 +831,7 @@ export async function sendInvite (
 
   const callerRole = await db.getWorkspaceRole(account, workspace.uuid)
   verifyAllowedRole(callerRole, role, extra)
+  checkInviteRateLimit(account, workspace.uuid)
 
   const inviteLink = await createInviteLink(ctx, db, branding, token, params)
   const inviteEmail = await getInviteEmail(branding, email, inviteLink, workspace, expHours ?? 48, false)
@@ -1019,31 +1016,30 @@ export async function createInviteLink (
   return link
 }
 
-function checkRateLimit (email: string, workspaceName: string): void {
+function checkInviteRateLimit (account: string, workspaceName: string): void {
   const now = Date.now()
-  const lastInvites = invitesSend.get(email)
-  if (lastInvites !== undefined) {
-    lastInvites.totalSend++
-    lastInvites.lastSend = now
-    if (lastInvites.totalSend > 5 && now - lastInvites.lastSend < 60 * 1000) {
-      // Less 60 seconds between invites
-      throw new PlatformError(
-        new Status(Severity.ERROR, platform.status.WorkspaceRateLimit, { workspace: workspaceName })
-      )
-    }
-    invitesSend.delete(email)
-  } else {
-    invitesSend.set(email, {
-      lastSend: now,
-      totalSend: 1
-    })
+  const minute = 60 * 1000
+  const day = 24 * 60 * minute
+  const sent = invitesSend.get(account) ?? { minuteStart: now, minuteCount: 0, dayStart: now, dayCount: 0 }
+  if (now - sent.minuteStart >= minute) {
+    sent.minuteStart = now
+    sent.minuteCount = 0
   }
+  if (now - sent.dayStart >= day) {
+    sent.dayStart = now
+    sent.dayCount = 0
+  }
+  if (sent.minuteCount >= INVITES_PER_MINUTE || sent.dayCount >= INVITES_PER_DAY) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.WorkspaceRateLimit, { workspace: workspaceName })
+    )
+  }
+  sent.minuteCount++
+  sent.dayCount++
+  invitesSend.set(account, sent)
 
-  // We need to cleanup map
-  for (const [k, vv] of invitesSend.entries()) {
-    if (vv.lastSend < now - 60 * 1000) {
-      invitesSend.delete(k)
-    }
+  for (const [k, v] of invitesSend.entries()) {
+    if (now - v.dayStart >= day) invitesSend.delete(k)
   }
 }
 
@@ -1075,7 +1071,7 @@ export async function resendInvite (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
-  checkRateLimit(account, workspaceUuid)
+  checkInviteRateLimit(account, workspaceUuid)
 
   const callerRole = await db.getWorkspaceRole(account, workspace.uuid)
   verifyAllowedRole(callerRole, role, extra)

@@ -59,7 +59,21 @@
     "Icon": "Icône",
     "Color": "Couleur",
     "ForbidCreateTeamspacePermission": "Interdire la création d'espace d'équipe",
-    "ForbidCreateTeamspacePermissionDescription": "Interdit aux utilisateurs de créer de nouveaux espaces d'équipe"
+    "ForbidCreateTeamspacePermissionDescription": "Interdit aux utilisateurs de créer de nouveaux espaces d'équipe",
+    "EmptyStateTeamspaceTitle": "Aucun espace d'équipe pour le moment",
+    "EmptyStateTeamspaceDescription": "Les espaces d'équipe regroupent les documents par équipe ou par sujet et déterminent qui peut les lire et les modifier.",
+    "EmptyStateTeamspaceCreateLabel": "Créer un espace d'équipe",
+    "EmptyStateDocumentTitle": "Aucun document pour le moment",
+    "EmptyStateDocumentDescription": "Les documents sont des pages collaboratives pour les spécifications, les notes et les wikis au sein d'un espace d'équipe.",
+    "EmptyStateDocumentCreateLabel": "Créer un document",
+    "OnboardingCreateTeamspace": "Créez un espace d'équipe",
+    "OnboardingWriteDocument": "Rédigez un document",
+    "OnboardingTeamspaceStep1": "Cliquez sur la flèche à côté de «Créer un document»",
+    "OnboardingTeamspaceStep2": "Choisissez «Créer un espace d'équipe»",
+    "OnboardingDocumentsStep1": "Cliquez sur « Créer un document »",
+    "OnboardingDocumentsStep2": "Saisissez un titre et cliquez sur « Créer »",
+    "EmptyTitle": "Les documents sont dans des espaces d'équipe",
+    "EmptyHint": "Ouvrez un espace d'équipe dans le panneau de gauche ou créez-en un nouveau. Un espace d'équipe est une section pour un sujet ou une équipe, par exemple « Règlements »."
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

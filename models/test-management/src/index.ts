@@ -171,6 +171,29 @@ function defineApplication (builder: Builder): void {
 }
 
 export function createModel (builder: Builder): void {
+  builder.mixin(testManagement.class.TestSuite, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: testManagement.string.EmptyStateTestSuiteTitle,
+    description: testManagement.string.EmptyStateTestSuiteDescription,
+    createLabel: testManagement.string.EmptyStateTestSuiteCreateLabel
+  })
+
+  builder.mixin(testManagement.class.TestCase, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: testManagement.string.EmptyStateTestCaseTitle,
+    description: testManagement.string.EmptyStateTestCaseDescription,
+    createLabel: testManagement.string.EmptyStateTestCaseCreateLabel
+  })
+
+  builder.mixin(testManagement.class.TestResult, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: testManagement.string.EmptyStateTestResultTitle,
+    description: testManagement.string.EmptyStateTestResultDescription
+  })
+
+  builder.mixin(testManagement.class.TestPlanItem, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: testManagement.string.EmptyStateTestPlanItemTitle,
+    description: testManagement.string.EmptyStateTestPlanItemDescription,
+    createLabel: testManagement.string.EmptyStateTestPlanItemCreateLabel
+  })
+
   builder.createModel(
     TTypeTestCaseType,
     TTypeTestCasePriority,

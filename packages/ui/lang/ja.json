@@ -119,6 +119,8 @@
     "Received": "受信",
     "TrafficValue": "{count}件, {kb} KB",
     "Latency": "遅延",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "NavigatorHidden": "左メニューが非表示になっています",
+    "ShowMenu": "メニューを表示"
   }
 }

@@ -86,6 +86,14 @@
     "TwoColumns": "两列",
     "Grid": "网格",
     "RichtextProperties": "富文本字段",
-    "ShowAllVersions": "显示所有版本"
+    "ShowAllVersions": "显示所有版本",
+    "EmptyStateCardTitle": "暂无卡片",
+    "EmptyStateCardDescription": "卡片是一条记录,其字段由您为其类型自行定义。",
+    "EmptyStateCardCreateLabel": "创建卡片",
+    "EmptyStateCardSpaceTitle": "暂无卡片空间",
+    "EmptyStateCardSpaceDescription": "空间用于归集同一主题或团队的卡片。",
+    "EmptyStateCardSpaceCreateLabel": "创建空间",
+    "EmptyStateFavoriteCardTitle": "暂无收藏的卡片",
+    "EmptyStateFavoriteCardDescription": "将卡片加入收藏后,它会显示在这里。"
   }
 }

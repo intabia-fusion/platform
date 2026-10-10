@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Cas de test non sélectionnés} one {# cas de test sélectionné} few {# cas de test sélectionnés} other {# cas de test sélectionnés}}",
     "DefaultAssignee": "Assigné par défaut",
     "TestPlanTitle": "Titre",
-    "RunAssistant": "Exécuter l'assistant"
+    "RunAssistant": "Exécuter l'assistant",
+    "EmptyStateTestSuiteTitle": "Aucune suite de tests pour le moment",
+    "EmptyStateTestSuiteDescription": "Une suite de tests regroupe les cas de test d'une fonctionnalité ou d'un module.",
+    "EmptyStateTestSuiteCreateLabel": "Créer une suite",
+    "EmptyStateTestCaseTitle": "Aucun cas de test pour le moment",
+    "EmptyStateTestCaseDescription": "Un cas de test est un ensemble d'étapes de vérification et le résultat attendu.",
+    "EmptyStateTestCaseCreateLabel": "Créer un cas de test",
+    "EmptyStateTestResultTitle": "Aucun résultat pour le moment",
+    "EmptyStateTestResultDescription": "Les résultats apparaissent au fur et à mesure que les cas de test sont exécutés dans une exécution d'essai.",
+    "EmptyStateTestPlanItemTitle": "Aucun cas de test dans le plan pour le moment",
+    "EmptyStateTestPlanItemDescription": "Ajoutez les cas de test que le plan doit couvrir.",
+    "EmptyStateTestPlanItemCreateLabel": "Ajouter un cas de test"
   }
 }

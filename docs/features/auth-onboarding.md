@@ -97,6 +97,7 @@
 - **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword` - `operations.ts`. Политика сложности пароля - только клиентская валидация, см. `docs/password_policy.md`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.
 - **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`.
+- **Приглашение по email.** Диалог `InviteLink.svelte` (`plugins/login-resources`): блок ссылки (при настройках пространства по умолчанию показано, сколько действует ссылка, предел использований и маска) и под ним рамка с полем для одного или нескольких адресов через запятую и "Отправить" (`sendInvite` по каждому адресу по очереди: одноразовая ссылка письмом; при отказе неотправленные адреса остаются в поле). `sendInvite`/`resendInvite` ограничены `checkInviteRateLimit` (`server/account/src/operations.ts`): 30 в минуту и 200 в сутки на аккаунт, в памяти пода account, сверх - `platform.status.WorkspaceRateLimit`.
 - **Привязка social identity.** `addEmailSocialId`/`addHulyAssistantSocialId`/`refreshHulyAssistantToken`/`releaseSocialId` - `operations.ts`.
 
 ### Сессии и токены

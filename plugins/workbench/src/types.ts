@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,17 @@
 // limitations under the License.
 //
 
-import type { AccountRole, AccountUuid, Class, Doc, DocumentQuery, Obj, Ref, Space } from '@hcengineering/core'
+import type {
+  AccountRole,
+  AccountUuid,
+  Class,
+  Doc,
+  DocumentQuery,
+  Obj,
+  Ref,
+  Space,
+  Timestamp
+} from '@hcengineering/core'
 import { NotificationAppearancePreference } from '@hcengineering/notification'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
@@ -167,6 +178,9 @@ export interface NavigatorModel {
   specials?: SpecialNavModel[]
   groups?: GroupsNavModel[]
   hideStarred?: boolean
+  // Center screen while nothing is open: says what this application keeps and where to find it.
+  emptyTitle?: IntlString
+  emptyHint?: IntlString
 }
 
 export interface NavCountStore {
@@ -222,4 +236,53 @@ export interface ViewConfiguration {
 /** @public */
 export interface SpaceView extends Class<Obj> {
   view: ViewConfiguration
+}
+
+/** @public */
+export interface OnboardingActionTarget {
+  application?: string // navigate to this app alias first, if not already there
+  selector?: string // the real button to press there, prefer [data-id="..."]
+}
+
+/** @public */
+export interface OnboardingAction {
+  label: IntlString
+  component?: AnyComponent // opened as a popup
+  func?: Resource<() => Promise<void>> // the action itself, or a preparation before pressing target.selector
+  target?: OnboardingActionTarget // press the real button the step screenshot shows
+}
+
+/** @public */
+export interface OnboardingCardDoneWhen {
+  _class: Ref<Class<Doc>> // auto-complete once the user has created a doc of this class
+  byMember?: boolean // match `members` instead of `createdBy`, for spaces the user joined rather than created
+}
+
+/** @public */
+export interface OnboardingCard extends Doc {
+  application?: Ref<Application> // card group; hidden together with a hidden or disabled app
+  label: IntlString
+  description: IntlString // explains the platform term the step introduces and what to press
+  category: IntlString // section on the tour's title page; sections go in the order of their first step
+  order: number
+  actions: OnboardingAction[]
+  accessLevel?: AccountRole // e.g. invite only for User and above
+  doneWhen?: OnboardingCardDoneWhen
+  // Captions of a click-by-click walkthrough, one screenshot each; without it the step has one screenshot.
+  screenshots?: IntlString[]
+}
+
+/** @public */
+export interface OnboardingPreference extends Preference {
+  showHints: boolean
+  completed: Array<Ref<OnboardingCard>>
+  // Steps the user skipped: they count as passed and are not offered again until "Start over".
+  skipped?: Array<Ref<OnboardingCard>>
+  // doneWhen only counts docs created since this moment, so pre-existing data does not tick steps.
+  startedAt?: Timestamp
+  // "Cancel the tour": hides the top bar button until "Start over"; empty-state hints stay.
+  cancelled?: boolean
+  // First-time timestamps by stable key: 'opened', 'hintsOff',
+  // '<cardId>:done', '<cardId>:<actionLabel>'.
+  progress: Record<string, Timestamp>
 }

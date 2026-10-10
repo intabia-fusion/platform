@@ -119,6 +119,8 @@
     "Received": "Получено",
     "TrafficValue": "{count} сообщ., {kb} КБ",
     "Latency": "Задержка",
-    "LatencyValue": "{ms} мс"
+    "LatencyValue": "{ms} мс",
+    "NavigatorHidden": "Левое меню скрыто",
+    "ShowMenu": "Показать меню"
   }
 }

@@ -35,7 +35,7 @@
     "Copy": "Copy",
     "Copied": "Copied",
     "Close": "Close",
-    "InviteDescription": "Share this link to invite other users",
+    "InviteDescription": "Share a link to invite people to the workspace",
     "WantAnotherWorkspace": "Want to create another workspace?",
     "ChangeAccount": "Change account",
     "NotSeeingWorkspace": "Not seeing your workspace?",
@@ -127,6 +127,12 @@
     "CancelWorkspaceDeletion": "Cancel deletion",
     "AccountDeletionScheduled": "Account scheduled for deletion",
     "AccountDeletionScheduledDesc": "Your account will be deleted on {date}. Cancel the deletion to keep it. Workspaces you scheduled stay scheduled - restore each of them separately.",
-    "CancelAccountDeletion": "Cancel deletion"
+    "CancelAccountDeletion": "Cancel deletion",
+    "InviteByEmail": "Or email the invites: one address or several, separated by commas",
+    "SendInvite": "Send",
+    "InviteSentTo": "Invites sent: {email}",
+    "InviteDefaultsNoLimit": "By default the link is valid for {hours} h, with unlimited uses.",
+    "InviteDefaultsLimit": "By default the link is valid for {hours} h, up to {limit} uses.",
+    "InviteDefaultsMask": "Only for addresses matching {mask}."
   }
 }

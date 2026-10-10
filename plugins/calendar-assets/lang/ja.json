@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "同期されたカレンダー",
     "Account": "アカウント",
     "NoCalendars": "同期するカレンダーが選択されていません",
-    "PersonalCalendar": "個人カレンダー"
+    "PersonalCalendar": "個人カレンダー",
+    "OnboardingMeetings": "会議とイベント",
+    "OnboardingMeetingsDescription": "カレンダーの空いている時間枠をクリックして、参加者と会議室を指定したイベントを予定しましょう。",
+    "OnboardingMeetingsStep1": "左側のバーで「プランナー」を開きます",
+    "OnboardingMeetingsStep2": "カレンダーの空いている時間枠をクリックします"
   }
 }

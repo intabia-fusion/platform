@@ -130,6 +130,17 @@
     "DontTranslate": "Не переводить",
     "SelectLanguage": "Выберите язык",
     "SelectLanguages": "Выберите языки",
-    "RecentlyUsed": "Недавно использованные"
+    "RecentlyUsed": "Недавно использованные",
+    "EmptyStateOrganizationTitle": "Пока нет компаний",
+    "EmptyStateOrganizationDescription": "Компания - карточка организации: клиента, партнёра или поставщика.",
+    "EmptyStateOrganizationCreateLabel": "Создать компанию",
+    "EmptyStatePersonTitle": "Пока нет персон",
+    "EmptyStatePersonDescription": "Персона - карточка человека вне команды: клиента, партнёра или контакта.",
+    "EmptyStatePersonCreateLabel": "Создать персону",
+    "EmptyStateEmployeeTitle": "Пока нет сотрудников",
+    "EmptyStateEmployeeDescription": "Сотрудники - участники рабочего пространства. Пригласите коллег, и они появятся здесь.",
+    "EmptyStateMemberTitle": "Пока нет сотрудников компании",
+    "EmptyStateMemberDescription": "Здесь люди, которые работают в этой компании.",
+    "EmptyStateMemberCreateLabel": "Добавить сотрудника"
   }
 }

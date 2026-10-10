@@ -86,6 +86,14 @@
     "TwoColumns": "Два столбца",
     "Grid": "Сетка",
     "RichtextProperties": "Текстовые поля",
-    "ShowAllVersions": "Показывать все версии"
+    "ShowAllVersions": "Показывать все версии",
+    "EmptyStateCardTitle": "Пока нет карточек",
+    "EmptyStateCardDescription": "Карточка - запись с полями, которые вы задаёте сами для её типа.",
+    "EmptyStateCardCreateLabel": "Создать карточку",
+    "EmptyStateCardSpaceTitle": "Пока нет пространств карточек",
+    "EmptyStateCardSpaceDescription": "Пространство объединяет карточки одной темы или команды.",
+    "EmptyStateCardSpaceCreateLabel": "Создать пространство",
+    "EmptyStateFavoriteCardTitle": "Пока нет избранных карточек",
+    "EmptyStateFavoriteCardDescription": "Добавьте карточку в избранное, и она появится здесь."
   }
 }

@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "あなたのメッセージに反応しました",
     "Clearing": "クリア中...",
-    "Reading": "読み込み中..."
+    "Reading": "読み込み中...",
+    "OnboardingInbox": "受信箱",
+    "OnboardingInboxDescription": "受信箱には、メンション、返信、フォロー中の項目の変更が集まり、対応が必要なものがひと目でわかります。",
+    "OnboardingInboxStep1": "左側のバーのベルをクリックします",
+    "OnboardingInboxStep2": "通知を開くと、メッセージやイシューに移動します",
+    "InboxEmptyTitle": "まだ通知はありません",
+    "InboxEmptyHint": "メンション、ダイレクトメッセージ、フォロー中の課題やドキュメントの変更がここに届きます。",
+    "InboxSelectTitle": "通知を選択してください",
+    "InboxSelectHint": "左のリストから通知を開いてください。"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Test senaryosu seçilmedi} one {# test senaryosu seçildi} few {# test senaryosu seçildi} other {# test senaryosu seçildi}}",
     "DefaultAssignee": "Varsayılan atanan",
     "TestPlanTitle": "Test planı başlığı",
-    "RunAssistant": "Asistan çalıştır"
+    "RunAssistant": "Asistan çalıştır",
+    "EmptyStateTestSuiteTitle": "Henüz test paketi yok",
+    "EmptyStateTestSuiteDescription": "Test paketi, tek bir özellik veya modüle ait test senaryolarını gruplar.",
+    "EmptyStateTestSuiteCreateLabel": "Test paketi oluştur",
+    "EmptyStateTestCaseTitle": "Henüz test senaryosu yok",
+    "EmptyStateTestCaseDescription": "Test senaryosu, kontrol adımları ve beklenen sonuçtan oluşur.",
+    "EmptyStateTestCaseCreateLabel": "Test senaryosu oluştur",
+    "EmptyStateTestResultTitle": "Henüz sonuç yok",
+    "EmptyStateTestResultDescription": "Sonuçlar, test senaryoları bir test çalıştırmasında çalıştırıldıkça görünür.",
+    "EmptyStateTestPlanItemTitle": "Planda henüz test senaryosu yok",
+    "EmptyStateTestPlanItemDescription": "Planın kapsaması gereken test senaryolarını ekleyin.",
+    "EmptyStateTestPlanItemCreateLabel": "Test senaryosu ekle"
   }
 }

@@ -86,6 +86,14 @@
     "TwoColumns": "Two columns",
     "Grid": "Grid",
     "RichtextProperties": "Richtext Properties",
-    "ShowAllVersions": "Show all versions"
+    "ShowAllVersions": "Show all versions",
+    "EmptyStateCardTitle": "No cards yet",
+    "EmptyStateCardDescription": "A card is a record with fields you define for its type.",
+    "EmptyStateCardCreateLabel": "Create card",
+    "EmptyStateCardSpaceTitle": "No card spaces yet",
+    "EmptyStateCardSpaceDescription": "A space groups cards of one topic or team.",
+    "EmptyStateCardSpaceCreateLabel": "Create space",
+    "EmptyStateFavoriteCardTitle": "No favorite cards yet",
+    "EmptyStateFavoriteCardDescription": "Add a card to favorites and it will show up here."
   }
 }

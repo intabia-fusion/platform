@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Keine Testfälle ausgewählt} one {# Testfall ausgewählt} few {# Testfälle ausgewählt} other {# Testfälle ausgewählt}}",
     "DefaultAssignee": "Standardzugewiesene Person",
     "TestPlanTitle": "Testplantitel",
-    "RunAssistant": "Durchlaufführer"
+    "RunAssistant": "Durchlaufführer",
+    "EmptyStateTestSuiteTitle": "Noch keine Test Suites",
+    "EmptyStateTestSuiteDescription": "Eine Test Suite fasst Testfälle für eine Funktion oder ein Modul zusammen.",
+    "EmptyStateTestSuiteCreateLabel": "Test Suite erstellen",
+    "EmptyStateTestCaseTitle": "Noch keine Testfälle",
+    "EmptyStateTestCaseDescription": "Ein Testfall besteht aus Prüfschritten und dem erwarteten Ergebnis.",
+    "EmptyStateTestCaseCreateLabel": "Testfall erstellen",
+    "EmptyStateTestResultTitle": "Noch keine Ergebnisse",
+    "EmptyStateTestResultDescription": "Ergebnisse erscheinen, sobald Testfälle in einem Testdurchlauf ausgeführt werden.",
+    "EmptyStateTestPlanItemTitle": "Noch keine Testfälle im Plan",
+    "EmptyStateTestPlanItemDescription": "Fügen Sie die Testfälle hinzu, die der Plan abdecken soll.",
+    "EmptyStateTestPlanItemCreateLabel": "Testfall hinzufügen"
   }
 }

@@ -373,7 +373,16 @@
     "WebhookRulePreviewItems": "Items ({count})",
     "WebhookRulePreviewTooMany": "Only the first {max} items are processed",
     "WebhookRuleConditionPassed": "passed",
-    "WebhookRuleConditionFailed": "failed"
+    "WebhookRuleConditionFailed": "failed",
+    "SpaceTypes": "Tipos de espaço",
+    "NewSpaceType": "Novo tipo de espaço",
+    "SpaceTypeTitle": "Título do tipo de espaço",
+    "General": "Geral",
+    "Description": "Descrição",
+    "CountSpaces": "{count, plural, =0 {Nenhum espaço} =1 {# espaço} other {# espaços}}",
+    "Roles": "Funções",
+    "RoleName": "Nome da função",
+    "Permissions": "Permissões"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

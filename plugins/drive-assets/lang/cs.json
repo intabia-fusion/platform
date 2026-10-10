@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Zatím žádné disky",
+    "EmptyStateDriveDescription": "Disk je sdílený strom složek pro soubory, které tým společně nahrává a organizuje.",
+    "EmptyStateDriveCreateLabel": "Vytvořit disk",
+    "EmptyStateFilesTitle": "Zatím zde nejsou žádné soubory",
+    "EmptyStateFilesDescription": "Nahrajte soubory tlačítkem Nahrát Soubory nebo je sem přetáhněte.",
+    "OnboardingCreateDrive": "Vytvořte disk",
+    "OnboardingUploadFile": "Nahrajte soubor",
+    "OnboardingDriveStep1": "Klikněte na šipku vedle „Nahrát Soubory“",
+    "OnboardingDriveStep2": "Zvolte „Vytvořit disk“",
+    "OnboardingFilesStep1": "Otevřete disk v navigačním panelu",
+    "OnboardingFilesStep2": "Klikněte na „Nahrát Soubory“ nebo přetáhněte soubory do okna",
+    "EmptyTitle": "Soubory jsou na discích",
+    "EmptyHint": "Otevřete disk v panelu vlevo nebo vytvořte nový. Disk je sdílená složka týmu nebo projektu."
   }
 }

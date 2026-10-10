@@ -64,6 +64,8 @@
     "ReportedDays": "Raporlanan günler",
     "Tasks": "Görevler",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "Departmanda henüz çalışan yok",
+    "EmptyStateStaffDescription": "Şirket yapısında departmana çalışan ekleyin."
   }
 }

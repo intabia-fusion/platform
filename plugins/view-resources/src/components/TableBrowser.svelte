@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, SortingOrder, Space } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
+  import type { IntlString } from '@hcengineering/platform'
   import { ActionContext } from '@hcengineering/presentation'
-  import type { FadeOptions } from '@hcengineering/ui'
+  import type { AnyComponent, AnySvelteComponent, FadeOptions } from '@hcengineering/ui'
   import { Scroller, tableSP } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { onDestroy, onMount } from 'svelte'
@@ -28,12 +30,16 @@
   import { setViewOptions } from '../viewOptions'
 
   export let _class: Ref<Class<Doc>>
+  export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Doc>
   export let totalQuery: DocumentQuery<Doc> | undefined = undefined
   export let showNotification: boolean = false
   export let options: FindOptions<Doc> | undefined = undefined
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
   export let config: Array<BuildModelKey | string>
+  export let createItemDialog: AnyComponent | AnySvelteComponent | undefined = undefined
+  export let createItemDialogProps: Record<string, any> | undefined = undefined
+  export let createItemLabel: IntlString | undefined = undefined
   export let enableChecking = true
   export let tableId: string | undefined = undefined
   export let fade: FadeOptions = tableSP
@@ -116,6 +122,7 @@
   <Table
     bind:this={table}
     {_class}
+    {space}
     {config}
     {options}
     {query}
@@ -125,6 +132,9 @@
     {loadingProps}
     highlightRows={true}
     {enableChecking}
+    emptyState={true}
+    {createItemDialog}
+    {createItemDialogProps}
     showFooter
     checked={$selection ?? []}
     {preferredSorting}

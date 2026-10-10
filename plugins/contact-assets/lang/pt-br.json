@@ -80,8 +80,6 @@
     "NotSpecified": "Não especificado",
     "Whatsapp": "WhatsApp",
     "WhatsappPlaceholder": "WhatsApp",
-    "Skype": "Skype",
-    "SkypePlaceholder": "Skype",
     "Profile": "Perfil",
     "ProfilePlaceholder": "Perfil...",
     "CurrentEmployee": "Funcionário atual",
@@ -132,6 +130,17 @@
     "DontTranslate": "Não traduzir",
     "SelectLanguage": "Selecionar idioma",
     "SelectLanguages": "Selecionar idiomas",
-    "RecentlyUsed": "Utilizado recentemente"
+    "RecentlyUsed": "Utilizado recentemente",
+    "EmptyStateOrganizationTitle": "Nenhuma empresa ainda",
+    "EmptyStateOrganizationDescription": "Uma empresa é o cartão de uma organização: um cliente, um parceiro ou um fornecedor.",
+    "EmptyStateOrganizationCreateLabel": "Criar empresa",
+    "EmptyStatePersonTitle": "Nenhuma pessoa ainda",
+    "EmptyStatePersonDescription": "Uma pessoa é o cartão de alguém fora da equipe: um cliente, um parceiro ou um contato.",
+    "EmptyStatePersonCreateLabel": "Criar pessoa",
+    "EmptyStateEmployeeTitle": "Nenhum funcionário ainda",
+    "EmptyStateEmployeeDescription": "Os funcionários são membros do espaço de trabalho. Convide colegas e eles aparecerão aqui.",
+    "EmptyStateMemberTitle": "Nenhum funcionário da empresa ainda",
+    "EmptyStateMemberDescription": "As pessoas que trabalham nesta empresa são listadas aqui.",
+    "EmptyStateMemberCreateLabel": "Adicionar funcionário"
   }
 }

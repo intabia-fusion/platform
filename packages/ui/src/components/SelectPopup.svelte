@@ -169,6 +169,7 @@
             {@const item = filteredObjects[itemId]}
             <button
               class="menu-item withList w-full"
+              data-id={`select-${String(item.id).replaceAll(':', '-')}`}
               on:click={() => {
                 sendSelect(item.id)
               }}
