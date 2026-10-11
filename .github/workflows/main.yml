@@ -575,6 +575,11 @@ jobs:
         run: |
           cd desktop-package
           node scripts/verify-manifests.js deploy latest
+      - name: Fetch blockmaps of previous releases
+        # Differential updates need the blockmap of the installed version; the image holds one build.
+        run: |
+          cd desktop-package
+          node scripts/fetch-previous-blockmaps.js deploy https://platform.intabia.ru/_dist --limit=5
       # - name: Publish distribution assets and version
       #   uses: ryand56/r2-upload-action@latest
       #   with:
@@ -650,6 +655,7 @@ jobs:
             ./desktop-package/deploy/*.yml
             ./desktop-package/deploy/*.yaml
             ./desktop-package/deploy/*.blockmap
+            ./desktop-package/deploy/previous-blockmaps.json
 
       - name: Set release info
         id: release_info

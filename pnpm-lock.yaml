@@ -444,8 +444,8 @@ catalogs:
       specifier: ^8.0.1
       version: 8.1.1
     electron:
-      specifier: ^44.2.0
-      version: 44.2.0
+      specifier: ^44.7.0
+      version: 44.7.0
     electron-squirrel-startup:
       specifier: ~1.0.0
       version: 1.0.1
@@ -1726,7 +1726,7 @@ importers:
         version: 8.1.1(webpack@5.111.1)
       electron:
         specifier: 'catalog:'
-        version: 44.2.0(supports-color@8.1.1)
+        version: 44.7.0(supports-color@8.1.1)
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -1883,7 +1883,7 @@ importers:
         version: 7.0.3
       electron:
         specifier: 'catalog:'
-        version: 44.2.0(supports-color@8.1.1)
+        version: 44.7.0(supports-color@8.1.1)
       electron-builder:
         specifier: ^26.16.0
         version: 26.16.0(supports-color@8.1.1)
@@ -50635,8 +50635,8 @@ packages:
   electron-windows-badge@1.1.0:
     resolution: {integrity: sha512-hWFbUk9u3fQHcKzTAcjZAN7XH9bL9oH9g20RRDU/DVDNqdMI03GzlBZfR/R8R1krYu9AT4biLqSCAxnt9LMAfA==}
 
-  electron@44.2.0:
-    resolution: {integrity: sha512-oK1icjhapp3xsUZycO9WZaLmd3hJnA7ieobC4mpdtO1pEN+PPGWpA3m1Mgzzuc1wzSD2Wai4zcH4yfpGJqxFMA==}
+  electron@44.7.0:
+    resolution: {integrity: sha512-aUq9/zLAAFYc+a9gy6cd0C3Y/N/RmovLCD8TV8LhIzNhuND6HEgsu96jJz9cbAxvckSPv+Trf2PKEjktoZgFkw==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -53961,6 +53961,7 @@ packages:
 
   plyr@3.7.8:
     resolution: {integrity: sha512-yG/EHDobwbB/uP+4Bm6eUpJ93f8xxHjjk2dYcD1Oqpe1EcuQl5tzzw9Oq+uVAzd2lkM11qZfydSiyIpiB8pgdA==}
+    deprecated: 'Plyr is deprecated and receives security updates only. Use Video.js 10 for new projects. Migration guide: https://videojs.org/docs/framework/html/guides/migrate-from-plyr'
 
   png-chunks-extract@1.0.0:
     resolution: {integrity: sha512-ZiVwF5EJ0DNZyzAqld8BP1qyJBaGOFaq9zl579qfbkcmOwWLLO4I9L8i2O4j3HkI6/35i0nKG2n+dZplxiT89Q==}
@@ -63707,7 +63708,7 @@ snapshots:
 
   electron-windows-badge@1.1.0: {}
 
-  electron@44.2.0(supports-color@8.1.1):
+  electron@44.7.0(supports-color@8.1.1):
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0(supports-color@8.1.1)
@@ -67049,6 +67050,40 @@ snapshots:
       esbuild: 0.28.2
       html-minifier-terser: 6.1.0
       postcss: 8.5.6
+      sharp: 0.35.3(@types/node@24.13.3)
+      svgo: 2.8.0
+      uglify-js: 3.19.3
+
+  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.5.0
+      terser: 5.51.2
+      webpack: 5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      '@swc/core': 1.16.2(@swc/helpers@0.5.19)
+      clean-css: 5.3.3
+      csso: 4.2.0
+      esbuild: 0.28.2
+      html-minifier-terser: 6.1.0
+      sharp: 0.34.5
+      svgo: 2.8.0
+      uglify-js: 3.19.3
+
+  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.5.0
+      terser: 5.51.2
+      webpack: 5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      '@swc/core': 1.16.2(@swc/helpers@0.5.19)
+      clean-css: 5.3.3
+      csso: 4.2.0
+      esbuild: 0.28.2
+      html-minifier-terser: 6.1.0
       sharp: 0.35.3(@types/node@24.13.3)
       svgo: 2.8.0
       uglify-js: 3.19.3
@@ -70551,6 +70586,84 @@ snapshots:
       graceful-fs: 4.2.11
       mime-db: 1.54.0
       minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(postcss@8.5.6)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
+      schema-utils: 4.5.0
+      tapable: 2.3.0
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    optionalDependencies:
+      webpack-cli: 7.2.3(js-yaml@5.4.1)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(webpack-dev-server@6.0.0)(webpack@5.111.1)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@napi-rs/image'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - imagemin
+      - lightningcss
+      - postcss
+      - sharp
+      - svgo
+      - uglify-js
+
+  webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      browserslist: 4.28.9
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.25.1
+      es-module-lexer: 2.3.2
+      events: 3.3.0
+      graceful-fs: 4.2.11
+      mime-db: 1.54.0
+      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
+      schema-utils: 4.5.0
+      tapable: 2.3.0
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    optionalDependencies:
+      webpack-cli: 7.2.3(js-yaml@5.4.1)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(webpack-dev-server@6.0.0)(webpack@5.111.1)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@napi-rs/image'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - imagemin
+      - lightningcss
+      - postcss
+      - sharp
+      - svgo
+      - uglify-js
+
+  webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      browserslist: 4.28.9
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.25.1
+      es-module-lexer: 2.3.2
+      events: 3.3.0
+      graceful-fs: 4.2.11
+      mime-db: 1.54.0
+      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
       schema-utils: 4.5.0
       tapable: 2.3.0
       watchpack: 2.5.2
