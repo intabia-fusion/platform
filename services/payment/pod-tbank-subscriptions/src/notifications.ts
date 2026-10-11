@@ -116,6 +116,7 @@ function mailContext (storage: SubscriptionStorage, config: Config): BillingMail
     planLabel: async (plan, type, lang) => await getPlanLabel(config, plan, type, lang),
     planCurrency: async (plan, type) => await getPlanCurrency(config, plan, type),
     frontUrl: config.FrontUrl,
+    productName: config.ProductName,
     supportEmail: config.SupportEmail,
     supportUrl: config.SupportUrl,
     billingEmails: config.BillingEmails

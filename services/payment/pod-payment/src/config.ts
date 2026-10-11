@@ -70,6 +70,7 @@ export interface Config {
   MailFrom?: string // From address; unset lets pod-mail use its own configured SOURCE
   SupportEmail?: string // Support contact shown in the mail footer
   SupportUrl?: string // Support link (e.g. Telegram) shown in the mail footer
+  ProductName?: string // Mail header/footer name; unset falls back to the billing-mail default
 }
 
 // An unset var in docker-compose arrives as an empty string, and Number('') is 0 — treat it as absent.
@@ -131,7 +132,8 @@ const config: Config = (() => {
     PlanConfigRateLimitMax: parseNumber(process.env.PLAN_CONFIG_RATE_LIMIT_MAX),
     MailFrom: process.env.MAIL_FROM,
     SupportEmail: process.env.SUPPORT_EMAIL,
-    SupportUrl: process.env.SUPPORT_URL
+    SupportUrl: process.env.SUPPORT_URL,
+    ProductName: process.env.PRODUCT_NAME
   }
 
   const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl', 'Provider', 'PlanConfig']

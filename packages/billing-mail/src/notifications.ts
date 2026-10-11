@@ -33,6 +33,7 @@ import {
   buildUpcoming,
   buildExpired,
   buildSupportFooter,
+  productName,
   resolveWorkspaceLink,
   serviceHtml,
   resolveLang,
@@ -50,7 +51,7 @@ function buildMessage (
   lang: Lang,
   workspaceSlug: string | null
 ): MailMessage {
-  return buildDunning(reason, planLabel, billingUrl(mail, workspaceSlug), lang)
+  return buildDunning(reason, planLabel, billingUrl(mail, workspaceSlug), lang, productName(mail))
 }
 
 /**
@@ -162,6 +163,7 @@ export async function notifyPaymentSucceeded (
       const currency = await mail.planCurrency(sub.plan, sub.type)
       const slug = await mail.storage.getWorkspaceUrl(sub.workspaceUuid)
       const fields: SuccessFields = {
+        app: productName(mail),
         customer: formatCustomer(name, email),
         plan: planLabel,
         // Charged: delta in case of upgrade, else - the recurring price.
@@ -250,6 +252,7 @@ export async function notifyUpcoming (
     const currency = await mail.planCurrency(sub.plan, sub.type)
     const ws = await mail.storage.getWorkspaceInfo(sub.workspaceUuid)
     const fields: UpcomingFields = {
+      app: productName(mail),
       workspace: ws?.name ?? '',
       workspaceUrl: ws !== null ? `${mail.frontUrl.replace(/\/+$/, '')}/workbench/${ws.url}` : '',
       plan: planLabel,
@@ -300,6 +303,7 @@ export async function notifyExpired (
     const showAmount = kind !== 'trial' && sub.amount != null && sub.amount > 0
     const amount = showAmount ? formatAmount(sub.amount, await mail.planCurrency(sub.plan, sub.type)) : ''
     const fields: ExpiredFields = {
+      app: productName(mail),
       workspace: ws?.name ?? '',
       workspaceUrl: ws !== null ? `${mail.frontUrl.replace(/\/+$/, '')}/workbench/${ws.url}` : '',
       plan: planLabel,

@@ -14,8 +14,8 @@
 //
 
 import { formatAmount, formatDate, formatDateTime } from '../render'
-import { notifyExpired, notifyPaymentSucceeded, notifyUpcoming } from '../notifications'
-import { DEFAULT_CURRENCY } from '../types'
+import { notifyExpired, notifyPaymentFailed, notifyPaymentSucceeded, notifyUpcoming } from '../notifications'
+import { DEFAULT_CURRENCY, DEFAULT_PRODUCT_NAME } from '../types'
 
 describe('formatAmount', () => {
   test('minor units render with two decimals', () => {
@@ -195,5 +195,91 @@ describe('receipt for a one-time purchase', () => {
 
   test('no subscription period is printed: a purchase has none', () => {
     expect(sent[0].text).not.toContain('Период подписки')
+  })
+})
+
+describe('mail layout', () => {
+  const ctx: any = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+
+  const sub: any = {
+    id: 'sub_1',
+    workspaceUuid: 'ws-1',
+    accountUuid: 'acc-1',
+    type: 'tier',
+    plan: 'business',
+    amount: 49900,
+    periodStart: Date.UTC(2026, 8, 7, 11, 26),
+    periodEnd: Date.UTC(2026, 9, 7, 11, 26),
+    providerData: { paymentId: '42' }
+  }
+
+  const mailWith = (sent: any[], extra: any = {}): any => ({
+    storage: {
+      getAccountContact: async () => ({ name: '<i>Иван</i>', email: 'payer@x.com', locale: 'ru' }),
+      getWorkspaceInfo: async () => ({ name: 'Моя компания', url: 'my-company' }),
+      getWorkspaceUrl: async () => 'my-company'
+    },
+    send: async (_c: any, to: string, msg: any) => {
+      sent.push({ to, ...msg })
+    },
+    planLabel: async () => 'Бизнес',
+    planCurrency: async () => '₽',
+    frontUrl: 'https://app.intabia.ru',
+    ...extra
+  })
+
+  test('the header carries the configured product name', async () => {
+    const sent: any[] = []
+    await notifyUpcoming(ctx, mailWith(sent, { productName: 'Acme & Co' }), sub, 'trial', sub.periodEnd)
+    expect(sent[0].html).toContain('>Acme &amp; Co</span>')
+    expect(sent[0].html).toContain('&copy; Acme &amp; Co')
+  })
+
+  test('an empty PRODUCT_NAME (unset compose var) falls back to the default', async () => {
+    const sent: any[] = []
+    await notifyExpired(ctx, mailWith(sent, { productName: '' }), sub, 'trial', sub.periodEnd)
+    expect(sent[0].html).toContain(`>${DEFAULT_PRODUCT_NAME}</span>`)
+  })
+
+  test('every customer mail is a full document in the mail language', async () => {
+    const sent: any[] = []
+    const mail = mailWith(sent)
+    await notifyUpcoming(ctx, mail, sub, 'trial', sub.periodEnd)
+    await notifyExpired(ctx, mail, sub, 'trial', sub.periodEnd)
+    await notifyPaymentSucceeded(ctx, mail, sub, 'purchase')
+    await notifyPaymentFailed(ctx, mail, sub, 'failed')
+    expect(sent).toHaveLength(4)
+    for (const msg of sent) {
+      expect(msg.html.startsWith('<!DOCTYPE html><html lang="ru">')).toBe(true)
+    }
+  })
+
+  test('the CTA is a button to the billing settings', async () => {
+    const sent: any[] = []
+    await notifyUpcoming(ctx, mailWith(sent), sub, 'trial', sub.periodEnd)
+    expect(sent[0].html).toMatch(
+      /<a href="https:\/\/app\.intabia\.ru\/workbench\/my-company\/setting\/setting\/billing" style="[^"]*">Выбрать тариф<\/a>/
+    )
+  })
+
+  test('the receipt escapes the payer name', async () => {
+    const sent: any[] = []
+    await notifyPaymentSucceeded(ctx, mailWith(sent), sub, 'purchase')
+    expect(sent[0].html).toContain('&lt;i&gt;Иван&lt;/i&gt;')
+    expect(sent[0].html).not.toContain('<i>Иван</i>')
+  })
+
+  test('support contacts go to the muted footer', async () => {
+    const sent: any[] = []
+    await notifyUpcoming(ctx, mailWith(sent, { supportEmail: 'help@x.com' }), sub, 'trial', sub.periodEnd)
+    expect(sent[0].html).toContain('Контакты поддержки: <a href="mailto:help@x.com"')
+    expect(sent[0].text).toContain('Контакты поддержки: help@x.com')
+  })
+
+  test('the payment-failed mail offers a retry button and keeps the admin hint', async () => {
+    const sent: any[] = []
+    await notifyPaymentFailed(ctx, mailWith(sent), sub, 'final')
+    expect(sent[0].html).toContain('>Повторить платёж</a>')
+    expect(sent[0].html).toContain('При необходимости свяжитесь с администратором ответным письмом.')
   })
 })

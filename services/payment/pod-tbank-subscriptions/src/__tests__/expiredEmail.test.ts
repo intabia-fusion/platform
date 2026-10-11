@@ -154,7 +154,7 @@ describe('access-ended email: content per kind', () => {
 describe('access-ended email: workspace row', () => {
   test('name is the link text, url is the href', async () => {
     await notifyExpired(makeCtx(), makeStorage(), config, sub, 'oneoff', ENDED)
-    expect(sent[0].html).toContain('<a href="https://app.intabia.ru/workbench/my-company">Моя компания</a>')
+    expect(sent[0].html).toMatch(/<a href="https:\/\/app\.intabia\.ru\/workbench\/my-company"[^>]*>Моя компания<\/a>/)
   })
 
   test('workspace lookup failed -> row is dropped, no raw uuid leaks to the customer', async () => {

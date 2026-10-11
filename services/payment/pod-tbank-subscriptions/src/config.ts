@@ -50,6 +50,7 @@ export interface Config {
   BillingEmails?: string[] // Service inbox(es) notified on failed charges (comma-separated env)
   SupportEmail?: string // Support contact shown in the receipt-email footer
   SupportUrl?: string // Support link (e.g. Telegram) shown in the receipt-email footer
+  ProductName?: string // Mail header/footer name; unset falls back to the billing-mail default
 
   // pod-payment base URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
   PaymentUrl: string
@@ -85,6 +86,7 @@ const config: Config = (() => {
       .filter((e) => e.length > 0),
     SupportEmail: process.env.SUPPORT_EMAIL,
     SupportUrl: process.env.SUPPORT_URL,
+    ProductName: process.env.PRODUCT_NAME,
     PaymentUrl: process.env.PAYMENT_URL
   }
 

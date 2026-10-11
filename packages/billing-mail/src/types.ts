@@ -23,6 +23,9 @@ export const DEFAULT_LANG: Lang = 'ru'
 /** Used when a plan-config item carries no `currency`. Keep in step with `currencyOf`'s fallback. */
 export const DEFAULT_CURRENCY = '₽'
 
+/** Used when a pod has no PRODUCT_NAME. */
+export const DEFAULT_PRODUCT_NAME = 'Intabia Platform'
+
 export interface MailMessage {
   subject: string
   text: string
@@ -74,6 +77,8 @@ export interface BillingMailContext {
   planCurrency: PlanCurrencyResolver
   /** Front base URL, used to build the billing deep link. */
   frontUrl: string
+  /** Product name in the mail header and footer; unset or empty falls back to DEFAULT_PRODUCT_NAME. */
+  productName?: string
   /** Support contacts rendered into the footer; both optional. */
   supportEmail?: string
   supportUrl?: string

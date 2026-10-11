@@ -27,8 +27,7 @@ export default {
       note: 'Автоматические попытки списания исчерпаны.'
     },
     retryText: 'Вы можете повторить платёж вручную: {url}',
-    retryHtmlPrefix: 'Вы можете',
-    retryLink: 'повторить платёж вручную',
+    retryButton: 'Повторить платёж',
     contactAdmin: 'При необходимости свяжитесь с администратором ответным письмом.'
   },
   en: {
@@ -42,8 +41,7 @@ export default {
       note: 'Automatic retries are now exhausted.'
     },
     retryText: 'You can also retry the payment manually: {url}',
-    retryHtmlPrefix: 'You can also',
-    retryLink: 'retry the payment manually',
+    retryButton: 'Retry payment',
     contactAdmin: 'If you need help, reply to this email to contact the administrator.'
   }
 }

@@ -16,7 +16,14 @@
 import type { WorkspaceUuid } from '@hcengineering/core'
 import type { SubscriptionData } from '@hcengineering/account-client'
 
-import { type Lang, DEFAULT_LANG, DEFAULT_CURRENCY, type MailMessage, type BillingMailContext } from './types'
+import {
+  type Lang,
+  DEFAULT_LANG,
+  DEFAULT_CURRENCY,
+  DEFAULT_PRODUCT_NAME,
+  type MailMessage,
+  type BillingMailContext
+} from './types'
 import receiptTemplates from './templates/receipt'
 import dunningTemplates from './templates/dunning'
 import serviceTemplate from './templates/service'
@@ -80,6 +87,87 @@ export function escapeHtml (str: string): string {
     .replace(/'/g, '&#39;')
 }
 
+/** Header/footer product name: the pod's PRODUCT_NAME, or the default when unset or empty. */
+export function productName (mail: BillingMailContext): string {
+  return mail.productName !== undefined && mail.productName !== '' ? mail.productName : DEFAULT_PRODUCT_NAME
+}
+
+// Same card as the account OTP letters (server/account/lang); inline styles because mail clients drop <style>.
+const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+
+export interface MailLayout {
+  app: string
+  lang: Lang
+  lead: string // html
+  note?: string // html
+  rows: Array<[string, string]> // [label, value html]
+  cta: { label: string, url: string }
+  footer: string[] // html, muted text under a divider; empty entries are skipped
+}
+
+export function renderLayout (m: MailLayout): string {
+  const app = escapeHtml(m.app)
+  const lead = `<p style="margin:0 0 12px 0;font-size:17px;line-height:1.55;color:#18181B;font-family:${FONT}">${m.lead}</p>`
+  const note =
+    m.note !== undefined && m.note !== ''
+      ? `<p style="margin:0;font-size:15px;line-height:1.65;color:#52525B;font-family:${FONT}">${m.note}</p>`
+      : ''
+  const rows =
+    m.rows.length === 0
+      ? ''
+      : '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;background-color:#FAFAFA;border:1px solid #E4E4E7;border-radius:8px"><tr><td style="padding:8px 20px">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+        m.rows
+          .map(([label, value], i) => {
+            const border = i === 0 ? '' : 'border-top:1px solid #F0F0F2;'
+            return (
+              `<tr><td style="${border}padding:10px 16px 10px 0;font-size:14px;line-height:1.4;color:#71717A;vertical-align:top;white-space:nowrap;font-family:${FONT}">${label}</td>` +
+              `<td align="right" style="${border}padding:10px 0;font-size:14px;line-height:1.4;font-weight:600;color:#18181B;text-align:right;vertical-align:top;word-break:break-word;font-family:${FONT}">${value}</td></tr>`
+            )
+          })
+          .join('') +
+        '</table></td></tr></table>'
+  const cta =
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px"><tr><td style="background-color:#18181B;border-radius:8px">' +
+    `<a href="${escapeHtml(m.cta.url)}" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;font-family:${FONT}">${m.cta.label}</a>` +
+    '</td></tr></table>'
+  const footerParts = m.footer.filter((f) => f !== '')
+  const footer =
+    footerParts.length === 0
+      ? ''
+      : '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px"><tr><td style="border-top:1px solid #F4F4F5;padding-top:24px">' +
+        footerParts
+          .map(
+            (f, i) =>
+              `<p style="margin:${i === 0 ? '0' : '8px 0 0 0'};font-size:12px;color:#A1A1AA;line-height:1.5;font-family:${FONT}">${f}</p>`
+          )
+          .join('') +
+        '</td></tr></table>'
+  return (
+    `<!DOCTYPE html><html lang="${m.lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>` +
+    `<body style="margin:0;padding:0;background-color:#F2F2F7;font-family:${FONT};-webkit-font-smoothing:antialiased">` +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F2F2F7;padding:40px 16px"><tr><td align="center">' +
+    '<table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;width:100%">' +
+    `<tr><td style="background-color:#18181B;border-radius:12px 12px 0 0;padding:24px 40px"><span style="display:inline-block;font-size:18px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;font-family:${FONT}">${app}</span></td></tr>` +
+    '<tr><td style="background-color:#FFFFFF;padding:36px 40px;border:1px solid #E4E4E7;border-top:none;border-radius:0 0 12px 12px">' +
+    lead +
+    note +
+    rows +
+    cta +
+    footer +
+    '</td></tr>' +
+    `<tr><td align="center" style="padding:20px 0"><p style="margin:0;font-size:12px;color:#9CA3AF;font-family:${FONT}">&copy; ${app} &mdash; All rights reserved</p></td></tr>` +
+    '</table></td></tr></table></body></html>'
+  )
+}
+
+const FOOTER_LINK = 'color:#71717A;text-decoration:underline'
+
+// Link inside a details row: the row value is bold dark text, keep the link in that colour.
+function rowLink (url: string, label: string): string {
+  return `<a href="${escapeHtml(url)}" style="color:#18181B;text-decoration:underline">${escapeHtml(label)}</a>`
+}
+
 // Localized copy for all email families, kept as data in ./templates/* (bundled by esbuild).
 export const RECEIPT = receiptTemplates as Record<Lang, (typeof receiptTemplates)['ru']>
 export const DUNNING = dunningTemplates as Record<Lang, (typeof dunningTemplates)['ru']>
@@ -88,22 +176,33 @@ export const UPCOMING = upcomingTemplates as Record<Lang, (typeof upcomingTempla
 export const EXPIRED = expiredTemplates as Record<Lang, (typeof expiredTemplates)['ru']>
 
 // Render a payment-failed email from the dunning template. Markup + retry link stay here; copy is data.
-export function buildDunning (reason: PaymentFailedReason, plan: string, url: string, lang: Lang): MailMessage {
+export function buildDunning (
+  reason: PaymentFailedReason,
+  plan: string,
+  url: string,
+  lang: Lang,
+  app: string
+): MailMessage {
   const t = DUNNING[lang]
   const block = t[reason]
   const p = { plan, url }
   return {
     subject: t.subject,
     text: `${fill(block.lead, p)}\n\n${block.note}\n\n${fill(t.retryText, p)}\n\n${t.contactAdmin}`,
-    html:
-      `<p>${fill(block.lead, { plan: `<b>${plan}</b>` })}</p>` +
-      `<p>${block.note}</p>` +
-      `<p>${t.retryHtmlPrefix} <a href="${url}">${t.retryLink}</a>.</p>` +
-      `<p>${t.contactAdmin}</p>`
+    html: renderLayout({
+      app,
+      lang,
+      lead: fill(block.lead, { plan: `<b>${plan}</b>` }),
+      note: block.note,
+      rows: [],
+      cta: { label: t.retryButton, url },
+      footer: [t.contactAdmin]
+    })
   }
 }
 
 export interface SuccessFields {
+  app: string // product name for the header/footer
   customer: string // payer display: "Имя (email)", or just email/name when one is missing
   plan: string // localized plan label
   amount: string // formatted, e.g. "990.00 ₽"
@@ -115,7 +214,7 @@ export interface SuccessFields {
   periodEnd: string // subscription period end, e.g. "21.09.2026"
   url: string
   supportText: string // pre-rendered support contacts block (plain text), '' when none
-  supportHtml: string // pre-rendered support contacts block (html), '' when none
+  supportHtml: string // pre-rendered support contacts line (html), '' when none
 }
 
 // Render a receipt email from the receipt template.
@@ -146,34 +245,35 @@ export function buildReceipt (
     subject: fill(t.subject, { plan: f.plan, paidAtDate: f.paidAtDate }),
     text:
       `${intro}\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join('\n') + `\n\n${t.manageLink}: ${f.url}` + f.supportText,
-    html:
-      `<p>${introHtml}</p>` +
-      '<p>' +
-      rows.map(([k, v]) => `${k}: <b>${v}</b>`).join('<br/>') +
-      '</p>' +
-      `<p><a href="${f.url}">${t.manageLink}</a></p>` +
-      f.supportHtml
+    html: renderLayout({
+      app: f.app,
+      lang,
+      lead: introHtml,
+      rows: rows.map(([k, v]) => [k, escapeHtml(v)]),
+      cta: { label: t.manageLink, url: f.url },
+      footer: [f.supportHtml]
+    })
   }
 }
 
-/** Support-contacts footer for the receipt email. Returns empty strings when no contact is configured. */
+/** Support-contacts line for the mail footer. Returns empty strings when no contact is configured. */
 export function buildSupportFooter (mail: BillingMailContext, lang: Lang): { text: string, html: string } {
   const parts: string[] = []
   const partsHtml: string[] = []
   if (mail.supportEmail !== undefined && mail.supportEmail !== '') {
     parts.push(mail.supportEmail)
-    partsHtml.push(`<a href="mailto:${mail.supportEmail}">${mail.supportEmail}</a>`)
+    partsHtml.push(`<a href="mailto:${mail.supportEmail}" style="${FOOTER_LINK}">${mail.supportEmail}</a>`)
   }
   if (mail.supportUrl !== undefined && mail.supportUrl !== '') {
     parts.push(mail.supportUrl)
-    partsHtml.push(`<a href="${mail.supportUrl}">${mail.supportUrl}</a>`)
+    partsHtml.push(`<a href="${mail.supportUrl}" style="${FOOTER_LINK}">${mail.supportUrl}</a>`)
   }
   if (parts.length === 0) return { text: '', html: '' }
 
   const label = RECEIPT[lang].support
   return {
     text: `\n\n${label}: ${parts.join(', ')}`,
-    html: `<hr/><p style="color:#888;font-size:12px">${label}: ${partsHtml.join(', ')}</p>`
+    html: `${label}: ${partsHtml.join(', ')}`
   }
 }
 
@@ -290,6 +390,7 @@ export function formatPaymentMethod (sub: SubscriptionData, lang: Lang): string 
 }
 
 export interface UpcomingFields {
+  app: string // product name for the header/footer
   workspace: string // workspace display name, '' when it could not be resolved (hides the row)
   workspaceUrl: string // link to the workspace, '' when unknown (renders the name as plain text)
   plan: string // localized plan label
@@ -298,7 +399,7 @@ export interface UpcomingFields {
   paymentMethod: string // e.g. "Карта •••• 0777"; '' when unknown (hides the row)
   url: string
   supportText: string // pre-rendered support contacts block (plain text), '' when none
-  supportHtml: string // pre-rendered support contacts block (html), '' when none
+  supportHtml: string // pre-rendered support contacts line (html), '' when none
 }
 
 // Render an upcoming-expiry reminder.
@@ -324,9 +425,7 @@ export function buildUpcoming (
           [
             l.workspace,
             f.workspaceUrl === '' ? f.workspace : `${f.workspace} (${f.workspaceUrl})`,
-            f.workspaceUrl === ''
-              ? escapeHtml(f.workspace)
-              : `<a href="${escapeHtml(f.workspaceUrl)}">${escapeHtml(f.workspace)}</a>`
+            f.workspaceUrl === '' ? escapeHtml(f.workspace) : rowLink(f.workspaceUrl, f.workspace)
           ]
         ]
   const rows: Row[] = [
@@ -343,18 +442,20 @@ export function buildUpcoming (
       rows.map(([k, v]) => `${k}: ${v}`).join('\n') +
       `\n\n${t.cta[kind]}: ${f.url}` +
       f.supportText,
-    html:
-      `<p>${leadHtml}</p>` +
-      `<p>${note}</p>` +
-      '<p>' +
-      rows.map(([k, v, vHtml]) => `${k}: <b>${vHtml ?? escapeHtml(v)}</b>`).join('<br/>') +
-      '</p>' +
-      `<p><a href="${f.url}">${t.cta[kind]}</a></p>` +
-      f.supportHtml
+    html: renderLayout({
+      app: f.app,
+      lang,
+      lead: leadHtml,
+      note,
+      rows: rows.map(([k, v, vHtml]) => [k, vHtml ?? escapeHtml(v)]),
+      cta: { label: t.cta[kind], url: f.url },
+      footer: [f.supportHtml]
+    })
   }
 }
 
 export interface ExpiredFields {
+  app: string // product name for the header/footer
   workspace: string // workspace display name, '' when it could not be resolved (hides the row)
   workspaceUrl: string // link to the workspace, '' when unknown (renders the name as plain text)
   plan: string // localized plan label
@@ -362,7 +463,7 @@ export interface ExpiredFields {
   amount: string // formatted last charge, e.g. "1000.00 $"; '' hides the row (trial has no amount)
   url: string
   supportText: string // pre-rendered support contacts block (plain text), '' when none
-  supportHtml: string // pre-rendered support contacts block (html), '' when none
+  supportHtml: string // pre-rendered support contacts line (html), '' when none
 }
 
 // Render an access-ended email.
@@ -383,9 +484,7 @@ export function buildExpired (kind: ExpiredKind, family: 'tier' | 'package', f: 
           [
             l.workspace,
             f.workspaceUrl === '' ? f.workspace : `${f.workspace} (${f.workspaceUrl})`,
-            f.workspaceUrl === ''
-              ? escapeHtml(f.workspace)
-              : `<a href="${escapeHtml(f.workspaceUrl)}">${escapeHtml(f.workspace)}</a>`
+            f.workspaceUrl === '' ? escapeHtml(f.workspace) : rowLink(f.workspaceUrl, f.workspace)
           ]
         ]
   const rows: Row[] = [
@@ -401,13 +500,14 @@ export function buildExpired (kind: ExpiredKind, family: 'tier' | 'package', f: 
       rows.map(([k, v]) => `${k}: ${v}`).join('\n') +
       `\n\n${t.cta[kind]}: ${f.url}` +
       f.supportText,
-    html:
-      `<p>${leadHtml}</p>` +
-      `<p>${note}</p>` +
-      '<p>' +
-      rows.map(([k, v, vHtml]) => `${k}: <b>${vHtml ?? escapeHtml(v)}</b>`).join('<br/>') +
-      '</p>' +
-      `<p><a href="${f.url}">${t.cta[kind]}</a></p>` +
-      f.supportHtml
+    html: renderLayout({
+      app: f.app,
+      lang,
+      lead: leadHtml,
+      note,
+      rows: rows.map(([k, v, vHtml]) => [k, vHtml ?? escapeHtml(v)]),
+      cta: { label: t.cta[kind], url: f.url },
+      footer: [f.supportHtml]
+    })
   }
 }

@@ -119,6 +119,7 @@ export function createMailContext (
     planLabel: createPlanLabelResolver(planConfig),
     planCurrency: createPlanCurrencyResolver(planConfig),
     frontUrl: config.FrontUrl,
+    productName: config.ProductName,
     supportEmail: config.SupportEmail,
     supportUrl: config.SupportUrl
   }
