@@ -2275,12 +2275,42 @@ describe('SpaceSecurityMiddleware', () => {
       const mw = await createMiddleware([createSpace('private1', ['user1'], { private: true, owners: ['user1'] })])
 
       const outsider = createAccount('outsider')
-      ctx.contextData = createSessionData(outsider)
-
       const createTx = docTx('private1')
       ;(createTx as any).space = core.space.DerivedTx
 
-      await expect(mw.tx(ctx, [createTx])).resolves.not.toThrow()
+      // A trigger's tx reaches handleBroadcast without passing tx(): that is what makes it derived.
+      ctx.contextData = createSessionData(outsider, {
+        broadcast: { txes: [createTx], targets: {}, queue: [], sessions: {} }
+      })
+      await expect(mw.handleBroadcast(ctx)).resolves.not.toThrow()
+    })
+
+    it('checks a client tx that claims DerivedTx like any other', async () => {
+      const mw = await createMiddleware([createSpace('private1', ['user1'], { private: true, owners: ['user1'] })])
+
+      const outsider = createAccount('outsider')
+      const txes = [
+        docTx('private1'),
+        txFactory.createTxUpdateDoc(core.class.Doc, 'private1' as Ref<Space>, 'doc1' as Ref<Doc>, {}),
+        txFactory.createTxRemoveDoc(core.class.Doc, 'private1' as Ref<Space>, 'doc1' as Ref<Doc>)
+      ]
+      for (const tx of txes) {
+        ;(tx as any).space = core.space.DerivedTx
+        ctx.contextData = createSessionData(outsider)
+        await expect(mw.tx(ctx, [tx])).rejects.toThrow()
+      }
+      expect(nextMiddleware.tx).not.toHaveBeenCalled()
+    })
+
+    it('allows a tx inside the trigger context regardless of membership', async () => {
+      const mw = await createMiddleware([createSpace('private1', ['user1'], { private: true, owners: ['user1'] })])
+
+      const outsider = createAccount('outsider')
+      ctx.contextData = createSessionData(outsider, { isTriggerCtx: true })
+
+      const derivedTx = docTx('private1')
+      ;(derivedTx as any).space = core.space.DerivedTx
+      await expect(mw.tx(ctx, [docTx('private1'), derivedTx])).resolves.not.toThrow()
     })
 
     it('allows the system account to write into any space', async () => {

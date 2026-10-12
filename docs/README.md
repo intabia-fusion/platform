@@ -22,6 +22,7 @@
 | [features/README.md](features/README.md) | Карта продуктовых областей: где код, как работает, куда смотреть |
 | [connection_reconnect.md](connection_reconnect.md) | WebSocket клиента: подключение и переподключение |
 | [space_security_broadcasts.md](space_security_broadcasts.md) | `SpaceSecurityMiddleware`: кому уходят broadcast-транзакции |
+| [tx_security_fixes.md](tx_security_fixes.md) | Исправления безопасности приёма транзакций: пути полей и признак tx от триггера |
 | [pulse.md](pulse.md) | Transient-документы вместо hulypulse (присутствие, typing) |
 | [stream_integration.md](stream_integration.md) | Как платформа работает с `foundations/stream`: загрузка, транскодинг, плеер |
 | [api-client.md](api-client.md) | npm-пакет `@intabia-fusion/api`: REST и LiveQuery |

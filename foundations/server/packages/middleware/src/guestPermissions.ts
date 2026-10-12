@@ -74,7 +74,7 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
         if (await this.isForbiddenSpaceTx(ctx, cudTx as TxCUD<Space>, account)) {
           throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
         }
-      } else if (cudTx.space !== core.space.DerivedTx && (await this.isForbiddenTx(ctx, cudTx, account))) {
+      } else if (ctx.contextData.isTriggerCtx !== true && (await this.isForbiddenTx(ctx, cudTx, account))) {
         throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
       }
     }

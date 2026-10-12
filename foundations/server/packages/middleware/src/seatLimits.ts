@@ -212,13 +212,13 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   }
 
   /** A tx is allowed for read-only members only if its target class is whitelisted (e.g. messages). */
-  private isReadOnlyAllowed (tx: Tx, allowed: Set<Ref<Class<Doc>>>): boolean {
+  private isReadOnlyAllowed (ctx: MeasureContext<SessionData>, tx: Tx, allowed: Set<Ref<Class<Doc>>>): boolean {
     if (tx._class === core.class.TxApplyIf) {
-      return (tx as TxApplyIf).txes.every((inner) => this.isReadOnlyAllowed(inner, allowed))
+      return (tx as TxApplyIf).txes.every((inner) => this.isReadOnlyAllowed(ctx, inner, allowed))
     }
     const cud = tx as TxCUD<Doc>
     // System-generated derived tx (triggers/collections) are not user writes — pass through.
-    if (cud.space === core.space.DerivedTx) return true
+    if (ctx.contextData?.isTriggerCtx === true) return true
     const objectClass = cud.objectClass
     if (objectClass == null) return false
     for (const cls of allowed) {
@@ -231,7 +231,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private async enforceReadOnly (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const allowed = this.readOnlyAllowedClasses()
     for (const tx of txes) {
-      if (!this.isReadOnlyAllowed(tx, allowed)) {
+      if (!this.isReadOnlyAllowed(ctx, tx, allowed)) {
         throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
       }
     }

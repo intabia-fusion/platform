@@ -586,8 +586,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
 
   /** Same bypasses addSecurity uses for reads. Owner is not one of them: it only skips the filter for the Space domain. */
   // Callers must have awaited init(): both tx() and handleBroadcast() do.
-  private checkWriteAccess (ctx: MeasureContext<SessionData>, cudTx: TxCUD<Doc>): void {
-    if (cudTx.space === core.space.DerivedTx) return
+  private checkWriteAccess (ctx: MeasureContext<SessionData>, cudTx: TxCUD<Doc>, derived: boolean): void {
+    // tx.space comes from the client: only the server marks a tx as a trigger's.
+    if (derived || ctx.contextData.isTriggerCtx === true) return
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid || account.role === AccountRole.Admin) return
     // Guests are judged by GuestPermissionsMiddleware, which knows the collaborator rules addSecurity
@@ -618,7 +619,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         await this.checkSpacePermissions(ctx, cudTx as TxCUD<Space>, derived)
         await this.handleTx(ctx, cudTx as TxCUD<Space>)
       } else {
-        this.checkWriteAccess(ctx, cudTx)
+        this.checkWriteAccess(ctx, cudTx, derived)
         await this.handeCollaborator(ctx, cudTx as TxCUD<Collaborator>)
       }
     }

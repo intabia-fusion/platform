@@ -89,10 +89,11 @@ function makeNext (): { next: Middleware, passed: () => boolean } {
 async function runTx (
   mw: SeatLimitsMiddleware,
   account: { uuid: AccountUuid, role: AccountRole },
-  txes: Tx[] = [WRITE_TX]
+  txes: Tx[] = [WRITE_TX],
+  contextData: object = {}
 ): Promise<{ rejected: boolean }> {
   const ctx = new MeasureMetricsContext('test', {})
-  ;(ctx as any).contextData = { account: { ...account, fullSocialIds: [] } }
+  ;(ctx as any).contextData = { account: { ...account, fullSocialIds: [] }, ...contextData }
   try {
     await mw.tx(ctx as any, txes)
     return { rejected: false }
@@ -114,6 +115,27 @@ describe('SeatLimitsMiddleware', () => {
     expect((await runTx(mw, { uuid: uuid('owner'), role: AccountRole.Owner })).rejected).toBe(false)
     expect((await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User })).rejected).toBe(false)
     expect((await runTx(mw, { uuid: uuid('u2'), role: AccountRole.User })).rejected).toBe(true)
+  })
+
+  it('keeps a seatless member read-only when the tx claims DerivedTx', async () => {
+    const members = [member('owner', AccountRole.Owner), member('u1', AccountRole.User)]
+    const { context } = makeContext(members, 1)
+    const { next, passed } = makeNext()
+    const mw = await SeatLimitsMiddleware.create(ctx, context, next)
+
+    const derivedTx = { ...WRITE_TX, space: core.space.DerivedTx } as unknown as Tx
+    expect((await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User }, [derivedTx])).rejected).toBe(true)
+    expect(passed()).toBe(false)
+  })
+
+  it('passes a seatless member tx inside the trigger context', async () => {
+    const members = [member('owner', AccountRole.Owner), member('u1', AccountRole.User)]
+    const { context } = makeContext(members, 1)
+    const { next } = makeNext()
+    const mw = await SeatLimitsMiddleware.create(ctx, context, next)
+
+    const u1 = { uuid: uuid('u1'), role: AccountRole.User }
+    expect((await runTx(mw, u1, [WRITE_TX], { isTriggerCtx: true })).rejected).toBe(false)
   })
 
   it('excludes aiBot (system account) from the seat count', async () => {

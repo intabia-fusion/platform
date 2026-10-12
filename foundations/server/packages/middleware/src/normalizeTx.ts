@@ -16,6 +16,7 @@
 import core, {
   type Class,
   type Doc,
+  isUnsafeKey,
   type MeasureContext,
   type Mixin,
   type OperationDomain,
@@ -75,6 +76,7 @@ export class NormalizeTxMiddleware extends BaseMiddleware implements Middleware 
         throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
       }
       this.sanitizeTxMeta(parsedTx, isSystemAccount)
+      this.sanitizePaths(ctx, parsedTx)
       parsedTxes.push(parsedTx)
     }
     return this.provideTx(ctx, parsedTxes)
@@ -92,6 +94,48 @@ export class NormalizeTxMiddleware extends BaseMiddleware implements Middleware 
         }
       }
     }
+  }
+
+  // These keys are field paths for setObjectValue and the operators: a __proto__ one pollutes the whole process.
+  private sanitizePaths (ctx: MeasureContext<SessionData>, tx: Tx): void {
+    if (tx._class === core.class.TxApplyIf) {
+      for (const childTx of (tx as TxApplyIf).txes) {
+        this.sanitizePaths(ctx, childTx)
+      }
+      return
+    }
+    let values: Record<string, any> | undefined
+    if (tx._class === core.class.TxCreateDoc) values = (tx as TxCreateDoc<Doc>).attributes
+    else if (tx._class === core.class.TxUpdateDoc) values = (tx as TxUpdateDoc<Doc>).operations
+    else if (tx._class === core.class.TxMixin) values = (tx as TxMixin<Doc, Doc>).attributes
+    if (values !== undefined && this.stripUnsafePaths(values)) {
+      ctx.warn('unsafe field path removed from tx', {
+        _id: tx._id,
+        _class: tx._class,
+        objectClass: (tx as TxCUD<Doc>).objectClass,
+        account: ctx.contextData.account.uuid
+      })
+    }
+  }
+
+  private stripUnsafePaths (values: Record<string, any>): boolean {
+    let removed = false
+    for (const [key, value] of Object.entries(values)) {
+      if (isUnsafeKey(key)) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete values[key]
+        removed = true
+      } else if (key.startsWith('$') && typeof value === 'object' && value !== null) {
+        for (const [field, arg] of Object.entries(value)) {
+          if (isUnsafeKey(field) || (key === '$rename' && typeof arg === 'string' && isUnsafeKey(arg))) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete value[field]
+            removed = true
+          }
+        }
+      }
+    }
+    return removed
   }
 
   private checkMeta (meta: unknown): meta is Record<string, string | number | boolean> | undefined {

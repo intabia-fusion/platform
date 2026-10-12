@@ -3,6 +3,16 @@ import { type Doc } from './classes'
 import { clone } from './clone'
 import core from './component'
 
+// Path segments that lead to Object.prototype instead of a field.
+const unsafeKeys = new Set(['__proto__', 'constructor', 'prototype'])
+
+/**
+ * @public
+ */
+export function isUnsafeKey (key: string): boolean {
+  return key.split('.').some((it) => unsafeKeys.has(it))
+}
+
 /**
  * @public
  */
@@ -41,6 +51,9 @@ export function setObjectValue (key: string, doc: Doc, newValue: any): void {
   key = key.split('\\$').join('$')
   let dots = key.split('.')
   // Replace escapting, since memdb is not escape keys
+  if (dots.some((it) => unsafeKeys.has(it))) {
+    return
+  }
 
   const last = dots[dots.length - 1]
   dots = dots.slice(0, -1)

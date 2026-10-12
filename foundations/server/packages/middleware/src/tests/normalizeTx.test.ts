@@ -198,4 +198,87 @@ describe('NormalizeTxMiddleware', () => {
       ).rejects.toThrow()
     })
   })
+
+  describe('field paths reaching Object.prototype', () => {
+    // JSON.parse keeps "__proto__" as an own key, the way a client message arrives.
+    const update = (operations: string): any => ({
+      _id: 'tx1',
+      _class: core.class.TxUpdateDoc,
+      space: 'core:space:Tx',
+      modifiedBy: 'user1',
+      modifiedOn: 1,
+      objectSpace: 'space:Test',
+      objectId: 'obj1',
+      objectClass: 'class:Test',
+      operations: JSON.parse(operations)
+    })
+
+    async function run (raw: any): Promise<{ tx: any, warn: jest.SpyInstance }> {
+      let captured: any[] = []
+      const next = {
+        tx: async (_ctx: any, txes: any) => {
+          captured = txes as any[]
+          return { txes: txes as any[] }
+        }
+      } as unknown as Middleware
+      const middleware = await NormalizeTxMiddleware.create(ctx, createPipelineContext(), next)
+      const sessionCtx: any = new MeasureMetricsContext('test', {})
+      sessionCtx.contextData = { account: userAccount }
+      const warn = jest.spyOn(sessionCtx, 'warn').mockImplementation(() => {})
+      await middleware.tx(sessionCtx, [raw])
+      return { tx: captured[0], warn }
+    }
+
+    it('removes unsafe keys and keeps the rest of the update', async () => {
+      const { tx, warn } = await run(
+        update('{"title": "x", "__proto__.isTriggerCtx": true, "a.constructor.prototype.y": 1, "$inc": {"n": 1}}')
+      )
+      expect(tx.operations).toEqual({ title: 'x', $inc: { n: 1 } })
+      expect(warn).toHaveBeenCalledTimes(1)
+    })
+
+    it('removes unsafe keys inside operators', async () => {
+      const { tx } = await run(
+        update(
+          '{"$push": {"__proto__": 1, "items": 2}, "$rename": {"a": "__proto__", "b": "c"}, "$unset": {"constructor": 1}}'
+        )
+      )
+      expect(Object.keys(tx.operations.$push)).toEqual(['items'])
+      expect(tx.operations.$rename).toEqual({ b: 'c' })
+      expect(tx.operations.$unset).toEqual({})
+    })
+
+    it('removes unsafe keys from mixin and create attributes', async () => {
+      const mixin = await run({
+        ...update('{}'),
+        _class: core.class.TxMixin,
+        mixin: 'mixin:Test',
+        attributes: JSON.parse('{"__proto__.x": 1, "ok": 2}')
+      })
+      expect(mixin.tx.attributes).toEqual({ ok: 2 })
+
+      const create = await run({
+        ...update('{}'),
+        _class: core.class.TxCreateDoc,
+        attributes: JSON.parse('{"__proto__": {"x": 1}, "ok": 2}')
+      })
+      expect(Object.keys(create.tx.attributes)).toEqual(['ok'])
+    })
+
+    it('removes unsafe keys from txes inside TxApplyIf', async () => {
+      const { tx } = await run({
+        ...update('{}'),
+        _class: core.class.TxApplyIf,
+        txes: [update('{"__proto__.x": 1, "ok": 2}')]
+      })
+      expect(tx.txes[0].operations).toEqual({ ok: 2 })
+    })
+
+    it('keeps ordinary paths untouched', async () => {
+      const ops = '{"a.b": 1, "constructorName": 2, "my__proto__": 3, "$push": {"items": 4}, "$rename": {"x": "y"}}'
+      const { tx, warn } = await run(update(ops))
+      expect(tx.operations).toEqual(JSON.parse(ops))
+      expect(warn).not.toHaveBeenCalled()
+    })
+  })
 })

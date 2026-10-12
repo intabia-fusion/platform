@@ -14,8 +14,9 @@
 // limitations under the License.
 //
 
-import { getObjectValue, setObjectValue } from '../objvalue'
+import { getObjectValue, isUnsafeKey, setObjectValue } from '../objvalue'
 import type { Doc } from '../classes'
+import { TxProcessor } from '../tx'
 
 describe('objvalue', () => {
   describe('getObjectValue', () => {
@@ -285,6 +286,43 @@ describe('objvalue', () => {
       setObjectValue('new.path.value', doc, 'data')
       expect((doc as any).new.path.value).toBe('data')
       expect((doc as any).existing).toBe('prop')
+    })
+  })
+
+  describe('paths reaching Object.prototype', () => {
+    afterEach(() => {
+      delete (Object.prototype as any).polluted
+    })
+
+    it('setObjectValue skips them', () => {
+      for (const key of ['__proto__.polluted', 'constructor.prototype.polluted', 'a.__proto__.polluted', '__proto__']) {
+        const doc = { _id: '1', a: {} } as unknown as Doc
+        setObjectValue(key, doc, true)
+        expect(doc).toEqual({ _id: '1', a: {} })
+      }
+      expect(({} as any).polluted).toBeUndefined()
+    })
+
+    it('update and mixin txes apply the rest without polluting', () => {
+      const doc: any = { _id: '1', n: 0 }
+      TxProcessor.applyUpdate(doc, { $inc: { n: 1 }, '__proto__.polluted': true, title: 'x' })
+      TxProcessor.updateMixin4Doc(doc, {
+        mixin: 'mixin:Test',
+        attributes: { 'constructor.prototype.polluted': true, ok: 1 }
+      } as any)
+      expect(doc.n).toBe(1)
+      expect(doc.title).toBe('x')
+      expect(doc['mixin:Test']).toEqual({ ok: 1 })
+      expect(({} as any).polluted).toBeUndefined()
+    })
+
+    it('isUnsafeKey matches whole segments only', () => {
+      expect(isUnsafeKey('__proto__')).toBe(true)
+      expect(isUnsafeKey('a.constructor')).toBe(true)
+      expect(isUnsafeKey('prototype.x')).toBe(true)
+      expect(isUnsafeKey('a.b')).toBe(false)
+      expect(isUnsafeKey('constructorName')).toBe(false)
+      expect(isUnsafeKey('my__proto__')).toBe(false)
     })
   })
 })

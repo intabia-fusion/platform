@@ -16,7 +16,7 @@
 
 // Tests for GuestPermissionsMiddleware: non-guest pass-through, user contact mutability, DocGuest/ReadOnlyGuest denial.
 
-import {
+import core, {
   AccountRole,
   generateId,
   Hierarchy,
@@ -489,6 +489,40 @@ describe('GuestPermissionsMiddleware', () => {
       const tx = makeCreateTx(TEST_CLASS, TEST_SPACE)
       const ctx = makeCtx(makeAccount(AccountRole.ReadOnlyGuest))
       await expect(mw.tx(ctx, [tx])).rejects.toThrow()
+    })
+  })
+
+  describe('Guest', () => {
+    function makeGuestMiddleware (createAccessLevel?: AccountRole): GuestPermissionsMiddleware {
+      const mw = makeMiddleware(async () => [])
+      ;(mw as any).context.hierarchy.isDerived = () => false
+      ;(mw as any).context.hierarchy.classHierarchyMixin = () =>
+        createAccessLevel !== undefined ? { createAccessLevel } : undefined
+      return mw
+    }
+
+    function derivedCreateTx (): Tx {
+      const tx = makeCreateTx(TEST_CLASS, TEST_SPACE)
+      ;(tx as any).space = core.space.DerivedTx
+      return tx
+    }
+
+    it('forbids a create the class does not grant to guests', async () => {
+      const ctx = makeCtx(makeAccount(AccountRole.Guest))
+      await expect(makeGuestMiddleware().tx(ctx, [makeCreateTx(TEST_CLASS, TEST_SPACE)])).rejects.toThrow()
+    })
+
+    it('checks a tx that claims DerivedTx like any other', async () => {
+      const ctx = makeCtx(makeAccount(AccountRole.Guest))
+      await expect(makeGuestMiddleware().tx(ctx, [derivedCreateTx()])).rejects.toThrow()
+      await expect(makeGuestMiddleware(AccountRole.Guest).tx(ctx, [derivedCreateTx()])).resolves.not.toThrow()
+    })
+
+    it('lets a tx through inside the trigger context', async () => {
+      const ctx = makeCtx(makeAccount(AccountRole.Guest))
+      ;(ctx.contextData as any).isTriggerCtx = true
+      const txes = [derivedCreateTx(), makeCreateTx(TEST_CLASS, TEST_SPACE)]
+      await expect(makeGuestMiddleware().tx(ctx, txes)).resolves.not.toThrow()
     })
   })
 })
