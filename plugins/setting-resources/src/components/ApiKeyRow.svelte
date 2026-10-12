@@ -18,11 +18,11 @@
   import { getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
+  import { ticker } from '@hcengineering/ui'
   import { Button, Label, showPopup } from '@hcengineering/ui'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import settingsRes from '../plugin'
   import WebhookRulesSection from './WebhookRulesSection.svelte'
-  import { onDestroy } from 'svelte'
 
   export let apiKey: ApiKeyInfo
   export let spaceNames: Map<Ref<Space>, string>
@@ -31,8 +31,6 @@
   export let stats: Map<string, number> | undefined = undefined
 
   let expanded = false
-  let expired = false
-  let timer: ReturnType<typeof setTimeout> | undefined
 
   function formatDate (timestamp: number): string {
     return new Date(timestamp).toLocaleString(getCurrentLanguage())
@@ -47,6 +45,7 @@
   }
 
   $: revoked = apiKey.revokedOn !== undefined
+  $: expired = apiKey.expiresOn != null && apiKey.expiresOn <= $ticker
   $: spacesLabel = apiKey.spaces.map((id) => spaceNames.get(id) ?? id).join(', ')
 
   // Rules are pod-webhook readable only from the key creator's own space - showing them for anyone
@@ -67,24 +66,6 @@
     rulesCountQuery.unsubscribe()
     ruleCount = 0
   }
-
-  $: {
-    clearTimeout(timer)
-    if (apiKey.expiresOn == null) {
-      expired = false
-    } else if (apiKey.expiresOn <= Date.now()) {
-      expired = true
-    } else {
-      expired = false
-      timer = setTimeout(() => {
-        expired = true
-      }, apiKey.expiresOn - Date.now())
-    }
-  }
-
-  onDestroy(() => {
-    clearTimeout(timer)
-  })
 
   function openRules (): void {
     showPopup(WebhookRulesSection, { apiKey })
