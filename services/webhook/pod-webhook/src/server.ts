@@ -20,7 +20,12 @@ import {
   type Ref,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { getClient as getAccountClient, type AccountClient, type ApiKeyCheck } from '@hcengineering/account-client'
+import {
+  apiKeyOperations,
+  getClient as getAccountClient,
+  type AccountClient,
+  type ApiKeyCheck
+} from '@hcengineering/account-client'
 import { SlidingWindowRateLimitter, type RateLimitInfo } from '@hcengineering/rpc'
 import type { PlatformQueueProducer } from '@hcengineering/server-core'
 import { PlatformError } from '@hcengineering/platform'
@@ -279,6 +284,16 @@ async function authenticateIngest (deps: IngestDeps, req: Request, res: Response
   return { ok: true, check }
 }
 
+// A body without `action` is almost always a third-party JSON sent to the raw route instead of /in.
+// Relative wording, since the pod usually sits behind a path prefix (/_webhook) it can't see.
+function unknownActionMessage (action: unknown, keySource: 'header' | 'path'): string {
+  if (action === undefined) {
+    const where = keySource === 'header' ? 'the same URL with /in instead of /action' : 'the same URL with /in appended'
+    return `Field "action" is missing. This route takes our own operation body: {"action": "<operation>", ...}. To send your own JSON and map it with the key's rules, POST it to ${where}`
+  }
+  return `Unknown action ${JSON.stringify(action)}, expected one of: ${apiKeyOperations.join(', ')}`
+}
+
 async function handleIngest (deps: IngestDeps, req: Request, res: Response): Promise<void> {
   const { ctx, config, producer, store, keySource } = deps
   const auth = await authenticateIngest(deps, req, res)
@@ -293,7 +308,7 @@ async function handleIngest (deps: IngestDeps, req: Request, res: Response): Pro
   // registry the consumer executes against, so the facade and the execution can't drift apart.
   if (!isKnownOperation(action)) {
     logCall(ctx, check.keyId, action, keySource, 'invalid_payload')
-    sendError(res, 400, 'invalid_payload', `Unknown action: ${String(action)}`)
+    sendError(res, 400, 'invalid_payload', unknownActionMessage(action, keySource))
     return
   }
   const field = targetField(action)

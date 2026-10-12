@@ -32,6 +32,12 @@
   import view from '@hcengineering/view'
   import settingsRes from '../plugin'
   import { buildWebhookExamples, PLACEHOLDER_KEY, targetKind } from '../webhookTargetKind'
+  import {
+    renderWebhookSnippet,
+    webhookSnippetToolLabels,
+    webhookSnippetTools,
+    type WebhookSnippetTool
+  } from '../webhookSnippets'
   import WebhookTargetPicker from './WebhookTargetPicker.svelte'
 
   interface TargetLike extends Doc {
@@ -50,11 +56,23 @@
   $: targetValue = target?.[kind.field]
   $: targetLabel = target !== undefined ? (target.name ?? target.title ?? target.identifier ?? '') : undefined
 
+  let tool: WebhookSnippetTool = 'json'
+  const toolItems: DropdownTextItem[] = webhookSnippetTools.map((t) => ({ id: t, label: webhookSnippetToolLabels[t] }))
+
   const serviceUrl = getMetadata(setting.metadata.WebhookServiceUrl) ?? ''
-  $: headerEndpoint = `POST ${concatLink(serviceUrl, '/api/v1/webhook/action')}`
+  // Absolute: the service url is relative when the pod sits behind the front's own origin, and these
+  // lines are pasted into curl or a script running elsewhere.
+  // Only the base goes through URL: it would percent-encode the <API_KEY> placeholder in the path.
+  const serviceBase = new URL(serviceUrl, window.location.origin).href
+  function absoluteUrl (path: string): string {
+    return concatLink(serviceBase, path)
+  }
+  const actionUrl = absoluteUrl('/api/v1/webhook/action')
+  const headerEndpoint = actionUrl
   // No live key/token ever appears here - examples get pasted into tickets and chats, and one carrying
   // a real credential would leak it. Only the placeholder and the header/path shape are shown.
-  $: pathEndpoint = `POST ${concatLink(serviceUrl, `/api/v1/webhook/k/${PLACEHOLDER_KEY}`)}`
+  const pathEndpoint = absoluteUrl(`/api/v1/webhook/k/${PLACEHOLDER_KEY}`)
+  const rulesEndpoint = absoluteUrl('/api/v1/webhook/in')
   // Without the `Bearer` scheme the key is not recognized and the call gets 401.
   const authHeader = `Authorization: Bearer ${PLACEHOLDER_KEY}`
 
@@ -90,6 +108,72 @@
       <div class="hulyComponent-content gap">
         <div class="hulyTableAttr-container">
           <div class="hulyTableAttr-header font-medium-12">
+            <Icon icon={settingsRes.icon.Setting} size="small" />
+            <span><Label label={settingsRes.string.WebhookIncomingEndpoint} /></span>
+          </div>
+          <div class="hulyTableAttr-content section">
+            <div class="endpointLine">
+              <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointHeaderAuth} /></div>
+              <div class="flex-row-center flex-gap-2">
+                <code class="endpointUrl select-text">POST {headerEndpoint}</code>
+                <Button
+                  kind="ghost"
+                  size="small"
+                  icon={IconCopy}
+                  showTooltip={{ label: view.string.CopyToClipboard }}
+                  on:click={() => {
+                    void copyText(headerEndpoint)
+                  }}
+                />
+              </div>
+              <div class="flex-row-center flex-gap-2">
+                <code class="endpointUrl select-text">{authHeader}</code>
+                <Button
+                  kind="ghost"
+                  size="small"
+                  icon={IconCopy}
+                  showTooltip={{ label: view.string.CopyToClipboard }}
+                  on:click={() => {
+                    void copyText(authHeader)
+                  }}
+                />
+              </div>
+            </div>
+            <div class="endpointLine">
+              <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointPathAuth} /></div>
+              <div class="flex-row-center flex-gap-2">
+                <code class="endpointUrl select-text">POST {pathEndpoint}</code>
+                <Button
+                  kind="ghost"
+                  size="small"
+                  icon={IconCopy}
+                  showTooltip={{ label: view.string.CopyToClipboard }}
+                  on:click={() => {
+                    void copyText(pathEndpoint)
+                  }}
+                />
+              </div>
+            </div>
+            <div class="endpointLine">
+              <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointRules} /></div>
+              <div class="flex-row-center flex-gap-2">
+                <code class="endpointUrl select-text">POST {rulesEndpoint}</code>
+                <Button
+                  kind="ghost"
+                  size="small"
+                  icon={IconCopy}
+                  showTooltip={{ label: view.string.CopyToClipboard }}
+                  on:click={() => {
+                    void copyText(rulesEndpoint)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hulyTableAttr-container">
+          <div class="hulyTableAttr-header font-medium-12">
             <Icon icon={settingsRes.icon.Integrations} size="small" />
             <span><Label label={settingsRes.string.WebhookExamplesIncoming} /></span>
           </div>
@@ -99,6 +183,10 @@
               <div class="flex-col flex-gap-1">
                 <Label label={settingsRes.string.WebhookConstructOperation} />
                 <DropdownLabels items={opItems} bind:selected={op} kind="regular" size="medium" justify="left" />
+              </div>
+              <div class="flex-col flex-gap-1">
+                <Label label={settingsRes.string.WebhookExampleTool} />
+                <DropdownLabels items={toolItems} bind:selected={tool} kind="regular" size="medium" justify="left" />
               </div>
               <div class="flex-col flex-gap-1">
                 <Label label={settingsRes.string.WebhookConstructTarget} />
@@ -119,60 +207,12 @@
         <div class="hulyTableAttr-container">
           <div class="hulyTableAttr-header font-medium-12">
             <Icon icon={settingsRes.icon.Setting} size="small" />
-            <span><Label label={settingsRes.string.WebhookIncomingEndpoint} /></span>
-          </div>
-          <div class="hulyTableAttr-content section">
-            <div class="endpointLine">
-              <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointHeaderAuth} /></div>
-              <div class="flex-row-center flex-gap-2">
-                <code class="endpointUrl">{headerEndpoint}</code>
-                <Button
-                  kind="ghost"
-                  size="small"
-                  icon={IconCopy}
-                  showTooltip={{ label: view.string.CopyToClipboard }}
-                  on:click={() => {
-                    void copyText(headerEndpoint)
-                  }}
-                />
-              </div>
-              <div class="flex-row-center flex-gap-2">
-                <code class="endpointUrl">{authHeader}</code>
-                <Button
-                  kind="ghost"
-                  size="small"
-                  icon={IconCopy}
-                  showTooltip={{ label: view.string.CopyToClipboard }}
-                  on:click={() => {
-                    void copyText(authHeader)
-                  }}
-                />
-              </div>
-            </div>
-            <div class="endpointLine">
-              <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointPathAuth} /></div>
-              <div class="flex-row-center flex-gap-2">
-                <code class="endpointUrl">{pathEndpoint}</code>
-                <Button
-                  kind="ghost"
-                  size="small"
-                  icon={IconCopy}
-                  showTooltip={{ label: view.string.CopyToClipboard }}
-                  on:click={() => {
-                    void copyText(pathEndpoint)
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="hulyTableAttr-container">
-          <div class="hulyTableAttr-header font-medium-12">
-            <Icon icon={settingsRes.icon.Setting} size="small" />
             <span><Label label={settingsRes.string.WebhookExamplePayload} /></span>
           </div>
           <div class="hulyTableAttr-content section">
+            {#if tool === 'postman'}
+              <div class="hint"><Label label={settingsRes.string.WebhookExamplePostmanHint} /></div>
+            {/if}
             {#each examples as example (example.title)}
               <div class="exampleCard">
                 <div class="flex-row-center flex-between">
@@ -183,14 +223,19 @@
                     icon={IconCopy}
                     showTooltip={{ label: view.string.CopyToClipboard }}
                     on:click={() => {
-                      void copyText(JSON.stringify(example.json, null, 2))
+                      void copyText(renderWebhookSnippet(tool, actionUrl, PLACEHOLDER_KEY, example.json))
                     }}
                   />
                 </div>
                 {#if example.hint}
                   <div class="hint warn"><Label label={example.hint} /></div>
                 {/if}
-                <pre class="samplePayload">{JSON.stringify(example.json, null, 2)}</pre>
+                <pre class="samplePayload select-text">{renderWebhookSnippet(
+                  tool,
+                  actionUrl,
+                  PLACEHOLDER_KEY,
+                  example.json
+                )}</pre>
               </div>
             {/each}
           </div>

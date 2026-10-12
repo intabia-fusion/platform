@@ -159,7 +159,7 @@
                   }}
                 />
               </div>
-              <pre class="samplePayload">{JSON.stringify(sample, null, 2)}</pre>
+              <pre class="samplePayload select-text">{JSON.stringify(sample, null, 2)}</pre>
             </div>
           </div>
         </div>

@@ -15,9 +15,9 @@
 <script lang="ts">
   import { apiKeyOperations, type ApiKeyInfo, type ApiKeyOperation } from '@hcengineering/account-client'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
-  import core, { type Doc, type DocumentUpdate, type Rank } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import presentation, { getClient, MessageViewer } from '@hcengineering/presentation'
+  import core, { concatLink, type Doc, type DocumentUpdate, type Rank } from '@hcengineering/core'
+  import { getMetadata, translate } from '@hcengineering/platform'
+  import presentation, { copyTextToClipboard, getClient, MessageViewer } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import setting, {
     evaluateWebhookRule,
@@ -36,6 +36,7 @@
     DropdownLabelsIntl,
     DropdownLabelsPopup,
     IconAdd,
+    IconCopy,
     IconDelete,
     Label,
     Modal,
@@ -50,7 +51,14 @@
   import settingsRes from '../plugin'
   import { listWebhookPaths, type WebhookSamplePath } from '../webhookSamplePaths'
   import { webhookRuleTemplates, type WebhookRuleTemplate, type WebhookRuleTemplateRule } from '../webhookRuleTemplates'
-  import { targetKind, webhookOpFieldNames } from '../webhookTargetKind'
+  import { PLACEHOLDER_KEY, targetKind, webhookOpFieldNames } from '../webhookTargetKind'
+  import {
+    renderWebhookSnippet,
+    webhookSnippetToolLabels,
+    webhookSnippetTools,
+    type WebhookSnippetTool
+  } from '../webhookSnippets'
+  import view from '@hcengineering/view'
   import WebhookTargetPicker from './WebhookTargetPicker.svelte'
   import { createEventDispatcher } from 'svelte'
 
@@ -99,8 +107,8 @@
   let saving = false
   let error: string | undefined
 
-  // Preselected for a rule created from a template, so its sample loads and the pickers work
-  // immediately even though a rule's originating request body is never stored.
+  // Preselected for a rule created from a template, so the source dropdown and the operation list
+  // reflect it; a rule saved before `sample` existed still gets the template's sample.
   let sourceSelected: string | number = existing?.template ?? 'custom'
   let selectedTemplate: WebhookRuleTemplate | undefined
   let selectedRule: WebhookRuleTemplateRule | undefined
@@ -137,7 +145,7 @@
     }
   }
 
-  let sampleBodyText = ''
+  let sampleBodyText = existing?.sample ?? ''
   let sampleParsed: unknown
   let sampleError: string | undefined
   // Must stay above the parse statement: Svelte keeps source order here, and everything derived
@@ -146,6 +154,24 @@
   $: ({ parsed: sampleParsed, error: sampleError } = parseSample(sampleBodyText))
 
   $: samplePaths = sampleParsed !== undefined ? listWebhookPaths(sampleParsed) : []
+
+  // The sample goes to /in, the only route that runs rules; /action expects our own `action` body.
+  const rulesUrl = new URL(
+    concatLink(getMetadata(setting.metadata.WebhookServiceUrl) ?? '', '/api/v1/webhook/in'),
+    window.location.origin
+  ).href
+  const sendToolItems: DropdownTextItem[] = webhookSnippetTools
+    .filter((t) => t !== 'json')
+    .map((t) => ({ id: t, label: webhookSnippetToolLabels[t] }))
+  let showSend = false
+  let sendTool: WebhookSnippetTool = 'curl'
+  $: sendSnippet =
+    sampleParsed !== undefined ? renderWebhookSnippet(sendTool, rulesUrl, PLACEHOLDER_KEY, sampleParsed) : ''
+
+  async function copyText (text: string): Promise<void> {
+    if (!window.isSecureContext) return
+    await copyTextToClipboard(text)
+  }
 
   // Paths relative to the forEach array's first element, for the `where` picker.
   function elementRelativePaths (paths: WebhookSamplePath[], forEach: string): WebhookSamplePath[] {
@@ -169,7 +195,8 @@
     selectedTemplate = tmpl
     selectedRule = tmpl?.rules.find((r) => r.name === ruleName)
     if (tmpl === undefined) return
-    sampleBodyText = JSON.stringify(tmpl.sample, null, 2)
+    // On open a saved sample is the user's own edit of the template's one - keep it.
+    if (id !== appliedSource || sampleBodyText.trim() === '') sampleBodyText = JSON.stringify(tmpl.sample, null, 2)
     if (id === appliedSource || selectedRule === undefined) return
     appliedSource = id
 
@@ -323,6 +350,12 @@
     fieldRows.filter((r) => r.key.trim().length > 0).map((r) => [r.key.trim(), r.template])
   )
   $: forEachValue = forEachPath.trim() !== '' ? forEachPath.trim() : undefined
+  // A template's own sample isn't stored, so the rule keeps showing the template's current one.
+  $: sampleValue =
+    sampleBodyText.trim() === '' ||
+    (selectedTemplate !== undefined && sampleBodyText === JSON.stringify(selectedTemplate.sample, null, 2))
+      ? undefined
+      : sampleBodyText
   $: whereValue =
     forEachValue !== undefined && whereConditions.length > 0 ? whereConditions.map(toCondition) : undefined
 
@@ -371,15 +404,20 @@
           action,
           target,
           fields,
-          template: selectedRule !== undefined ? String(sourceSelected) : undefined
+          template: selectedRule !== undefined ? String(sourceSelected) : undefined,
+          sample: sampleValue
         })
       } else {
         const upd: DocumentUpdate<WebhookIncomingRule> = {}
-        const unset: Partial<Record<'forEach' | 'where' | 'template', true>> = {}
+        const unset: Partial<Record<'forEach' | 'where' | 'template' | 'sample', true>> = {}
         const templateValue = selectedTemplate !== undefined ? String(sourceSelected) : undefined
         if (templateValue !== existing.template) {
           if (templateValue === undefined) unset.template = true
           else upd.template = templateValue
+        }
+        if (sampleValue !== existing.sample) {
+          if (sampleValue === undefined) unset.sample = true
+          else upd.sample = sampleValue
         }
         if (name.trim() !== existing.name) upd.name = name.trim()
         if (JSON.stringify(match) !== JSON.stringify(existing.match)) upd.match = match
@@ -448,6 +486,32 @@
           <div class="hint warn">
             <Label label={settingsRes.string.WebhookRuleSampleBodyInvalid} params={{ error: sampleError }} />
           </div>
+        {/if}
+        <div class="flex-row-center flex-gap-2">
+          <Button
+            kind="ghost"
+            size="small"
+            label={settingsRes.string.WebhookRuleSendExample}
+            disabled={sampleParsed === undefined}
+            on:click={() => {
+              showSend = !showSend
+            }}
+          />
+          {#if showSend && sampleParsed !== undefined}
+            <DropdownLabels items={sendToolItems} bind:selected={sendTool} kind="regular" size="small" />
+            <Button
+              kind="ghost"
+              size="small"
+              icon={IconCopy}
+              showTooltip={{ label: view.string.CopyToClipboard }}
+              on:click={() => {
+                void copyText(sendSnippet)
+              }}
+            />
+          {/if}
+        </div>
+        {#if showSend && sampleParsed !== undefined}
+          <pre class="sendSnippet select-text">{sendSnippet}</pre>
         {/if}
       </div>
     </div>
@@ -739,6 +803,17 @@
     flex: 1;
     min-height: 20rem;
     resize: vertical;
+  }
+  .sendSnippet {
+    max-height: 20rem;
+    overflow: auto;
+    margin: 0;
+    padding: 0.5rem;
+    font-family: monospace;
+    font-size: 0.75rem;
+    background: var(--theme-bg-color);
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.375rem;
   }
   .fieldBlock {
     display: flex;

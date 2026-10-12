@@ -174,7 +174,17 @@ describe('POST /api/v1/webhook/action', () => {
     sender = await startWebhookSender(baseCheck)
     const res = await sender.action(KEY, { action: 'bogus:op', space: 'FUSIO' })
     expect(res.status).toBe(400)
-    expect((await res.json()).error).toBe('invalid_payload')
+    const body = await res.json()
+    expect(body.error).toBe('invalid_payload')
+    expect(body.message).toContain('Unknown action "bogus:op", expected one of: issue:create')
+  })
+
+  test('body without action points to /in', async () => {
+    sender = await startWebhookSender(baseCheck)
+    const header = await (await sender.action(KEY, { name: 'test task', description: 'test description' })).json()
+    expect(header.message).toContain('with /in instead of /action')
+    const path = await (await sender.pathKey(KEY, { name: 'test task' })).json()
+    expect(path.message).toContain('with /in appended')
   })
 
   test('missing space -> 400 invalid_payload', async () => {

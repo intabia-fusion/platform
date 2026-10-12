@@ -17,5 +17,6 @@
   "VERSION": null,
   "MODEL_VERSION": null,
   "STATS_URL": "/_stats",
+  "WEBHOOK_SERVICE_URL": "http://localhost:8083/_webhook",
   "PASSWORD_STRICTNESS": "none"
 }

@@ -52,7 +52,12 @@
 
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div class="token" class:notSecure={!isSecureContext} class:over-underline={isSecureContext} on:click={copy}>
+  <div
+    class="token select-text"
+    class:notSecure={!isSecureContext}
+    class:over-underline={isSecureContext}
+    on:click={copy}
+  >
     {apiKey}
   </div>
 

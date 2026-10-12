@@ -46,7 +46,17 @@ services:
       - ACCOUNTS_URL=http://account:3003
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      # Sanity only: lets the SSRF guard deliver to the plain-http mock below.
+      - ALLOW_INSECURE_WEBHOOK_HTTP=true
+      - DEV_ALLOWED_WEBHOOK_HOSTS=webhook-mock
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
+  webhook-mock:
+    image: "${WEBHOOK_MOCK_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/webhook-mock:${DOCKER_TAG:-latest}}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    environment:
+      - PORT=4044
+      - WEBHOOK_URL=http://webhook:4043
     restart: unless-stopped
   activity:
     image: "${ACTIVITY_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/activity:${DOCKER_TAG:-latest}}"
@@ -264,6 +274,7 @@ services:
       - payment
       - preview
       - link-preview
+      - webhook-mock
     ports:
       - 8083:8083
     volumes:

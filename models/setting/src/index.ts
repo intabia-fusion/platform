@@ -199,6 +199,7 @@ export class TWebhookIncomingRule extends TDoc implements WebhookIncomingRule {
   target!: WebhookRuleTarget
   fields!: Record<string, string>
   template?: string
+  sample?: string
 }
 
 @Mixin(setting.mixin.SpaceTypeEditor, core.class.Class)

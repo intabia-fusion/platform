@@ -191,7 +191,7 @@
     <div class="fieldBlock">
       <Label label={settingsRes.string.WebhookIncomingEndpoint} />
       <div class="flex-row-center flex-gap-2">
-        <code class="endpointUrl">{endpoint}</code>
+        <code class="endpointUrl select-text">{endpoint}</code>
         <Button
           kind="ghost"
           size="small"

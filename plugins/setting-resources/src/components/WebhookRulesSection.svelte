@@ -15,14 +15,16 @@
 <script lang="ts">
   import type { ApiKeyInfo } from '@hcengineering/account-client'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
-  import { type Doc, SortingOrder } from '@hcengineering/core'
-  import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import { type Doc, SortingOrder, concatLink } from '@hcengineering/core'
+  import { getMetadata } from '@hcengineering/platform'
+  import { MessageBox, copyTextToClipboard, createQuery, getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import setting, { type WebhookIncomingRule } from '@hcengineering/setting'
   import {
     Button,
     ButtonIcon,
     IconAdd,
+    IconCopy,
     IconDelete,
     Label,
     Modal,
@@ -32,10 +34,12 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { SortableDocList } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import settingsRes from '../plugin'
   import { webhookRuleTemplates } from '../webhookRuleTemplates'
+  import { PLACEHOLDER_KEY } from '../webhookTargetKind'
   import WebhookRuleEditor from './WebhookRuleEditor.svelte'
   import WebhookRuleFromTemplate from './WebhookRuleFromTemplate.svelte'
 
@@ -57,6 +61,22 @@
     },
     { sort: { rank: SortingOrder.Descending }, limit: 1 }
   )
+
+  // Rules run only for these routes; the raw /action route expects our own `action` body instead.
+  const serviceUrl = getMetadata(setting.metadata.WebhookServiceUrl) ?? ''
+  // `verb` is shown but not copied - the copied text goes into a url field as is.
+  // Only the base goes through URL: it would percent-encode the <API_KEY> placeholder in the path.
+  const serviceBase = new URL(serviceUrl, window.location.origin).href
+  const endpoints = [
+    { verb: 'POST ', text: concatLink(serviceBase, '/api/v1/webhook/in') },
+    { verb: '', text: `Authorization: Bearer ${PLACEHOLDER_KEY}` },
+    { verb: 'POST ', text: concatLink(serviceBase, `/api/v1/webhook/k/${PLACEHOLDER_KEY}/in`) }
+  ]
+
+  async function copyText (text: string): Promise<void> {
+    if (!window.isSecureContext) return
+    await copyTextToClipboard(text)
+  }
 
   function toRule (doc: Doc): WebhookIncomingRule {
     return doc as WebhookIncomingRule
@@ -104,6 +124,23 @@
   hideFooter
   onCancel={() => dispatch('close')}
 >
+  <div class="endpoints">
+    <div class="dim"><Label label={settingsRes.string.WebhookIncomingEndpointRules} /></div>
+    {#each endpoints as line (line.text)}
+      <div class="flex-row-center flex-gap-2">
+        <code class="mono endpointUrl select-text">{line.verb}{line.text}</code>
+        <Button
+          kind="ghost"
+          size="small"
+          icon={IconCopy}
+          showTooltip={{ label: view.string.CopyToClipboard }}
+          on:click={() => {
+            void copyText(line.text)
+          }}
+        />
+      </div>
+    {/each}
+  </div>
   <div class="toolbar">
     <Button kind="regular" icon={IconAdd} label={settingsRes.string.CreateWebhookRule} on:click={openCreate} />
     <Button kind="regular" label={settingsRes.string.WebhookRuleFromTemplate} on:click={openFromTemplate} />
@@ -182,6 +219,16 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
+  }
+  .endpoints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .endpointUrl {
+    font-size: 0.8125rem;
+    word-break: break-all;
   }
   .dimmed {
     opacity: 0.5;

@@ -54,6 +54,8 @@ export interface WebhookIncomingRule extends Doc {
   fields: Record<string, string>
   // `<template id>:<rule name>` of the built-in template it came from; the editor reloads its sample.
   template?: string
+  // Request body the rule was built against, as typed - reopened for further editing.
+  sample?: string
 }
 
 export const WEBHOOK_RULE_MAX_JOBS = 50
