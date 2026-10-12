@@ -56,7 +56,8 @@ import {
   getLastNotify,
   hasMessageNotification,
   getAttachments,
-  getPushGroup
+  getPushGroup,
+  getApplets
 } from '../utils/utils'
 import { pushNotification } from './notification'
 import { cancelHeldPushes, pushDismissMessage } from './dismiss'
@@ -254,13 +255,15 @@ async function getMentionResult (
   reference: MentionRef
 ): Promise<MentionResult> {
   const attachments = message != null ? await getAttachments(message, client) : []
+  const applets = message != null ? await getApplets(message, client) : []
   const markup = message?.message ?? reference.markup
   return {
     notification: {
       markup: capMarkup(markup),
       truncated: isOversizedMarkup(markup) || undefined,
       messageId: message?._id,
-      attachments
+      attachments,
+      applets
     },
     markup,
     intl: {

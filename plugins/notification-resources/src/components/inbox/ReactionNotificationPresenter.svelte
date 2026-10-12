@@ -39,6 +39,7 @@
     </div>
     <ActivityMessagePreview
       value={{ ...value.message, attachedTo: objectId, attachedToClass: objectClass }}
+      applets={value.applets}
       type="content-only"
     />
   </div>

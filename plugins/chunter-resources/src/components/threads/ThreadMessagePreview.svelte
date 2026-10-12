@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,13 +16,14 @@
 
 <script lang="ts">
   import type { ThreadMessage } from '@hcengineering/chunter'
-  import type { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
+  import type { ActivityMessagePreviewType, ActivityMessageLite, AppletSnapshot } from '@hcengineering/activity'
 
   import ChatMessagePreview from '../chat-message/ChatMessagePreview.svelte'
 
   export let value: ActivityMessageLite<ThreadMessage>
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
+  export let applets: AppletSnapshot[] | undefined = undefined
 </script>
 
-<ChatMessagePreview {value} {readonly} {type} on:click />
+<ChatMessagePreview {value} {readonly} {type} {applets} on:click />

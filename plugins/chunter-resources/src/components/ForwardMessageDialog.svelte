@@ -30,7 +30,7 @@
   import ChatMessageInputLite from './chat-message/ChatMessageInputLite.svelte'
   import ReplyToMessagePresenter from './ReplyToMessagePresenter.svelte'
   import ChatModernTab from './ChatModernTab.svelte'
-  import { getForwardData } from '../utils'
+  import { getForwardData } from '../forwardData'
 
   export let message: WithLookup<ChatMessage>
 

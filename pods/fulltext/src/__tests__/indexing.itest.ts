@@ -253,6 +253,45 @@ describe('full-text-indexing', () => {
     expect(doc.fulltextSummary).toBe('')
   })
 
+  it('indexes the text of contentCollections items as the content of their parent', async () => {
+    const { pipeline, wsIds } = await preparePipeline(toolCtx, queue.queue)
+    try {
+      const ops = new TxOperations(wrapPipeline(toolCtx, pipeline, wsIds, true), core.account.System)
+      const docId = generateId<TestDocument>()
+      const commentId = generateId()
+
+      // Without triggers the counter is not raised by the comment: the document is created with it.
+      await ops.addCollection(
+        test.class.TestComment,
+        core.space.Workspace,
+        docId,
+        test.class.TestDocument,
+        'comments',
+        {
+          message: commentId
+        }
+      )
+      const indexed = new Promise<IndexedDoc>((resolve) => {
+        queue.fulltextListener = {
+          onIndexing: async (doc) => {
+            if (doc.id === docId) resolve(doc)
+          }
+        }
+      })
+      await ops.createDoc(
+        test.class.TestDocument,
+        core.space.Workspace,
+        { title: 'with comment', description: 'parent', comments: 1 },
+        docId
+      )
+      const doc = await indexed
+      expect(doc.fulltextSummary).toContain(commentId)
+      expect(doc.fulltextSummary).toContain('parent')
+    } finally {
+      await pipeline.close()
+    }
+  })
+
   it('check-full-pipeline', async () => {
     const { pipeline, wsIds } = await preparePipeline(toolCtx, queue.queue)
 

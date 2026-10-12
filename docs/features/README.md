@@ -36,6 +36,7 @@
 | Process (визуальные процессы над карточками) | [integrations.md](integrations.md) |
 | Card (generic-карточки) | [tracker.md](tracker.md) |
 | Сообщение, тред, канал, DM, поиск по чату, "New"-разделитель | [chat.md](chat.md) |
+| Опрос, викторина в сообщении (апплеты) | [chat.md](chat.md) |
 | Уведомление, inbox, реакция, упоминание, прочитано, push, email, бейдж, mute | [notifications.md](notifications.md) |
 | Лента активности (`DocUpdateMessage`) | [chat.md](chat.md) |
 | Комната, этаж, звонок, LiveKit, knock, приглашение, запись встречи | [office-meetings.md](office-meetings.md) |

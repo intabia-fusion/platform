@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage, type AppletInstance, type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   type Class,
   type Doc,
@@ -64,6 +64,20 @@ export async function OnActivityMessageRemoved (txes: TxCUD<Doc>[], control: Tri
   return saved.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
 }
 
+// Answers live in the voters' personal spaces and are not a collection of the poll, so no cascade reaches them.
+export async function OnPollRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const removed = txes.filter((tx) => tx._class === core.class.TxRemoveDoc).map((tx) => tx.objectId)
+  if (removed.length === 0) return []
+
+  const answers = await control.findAll(
+    control.ctx,
+    activity.class.PollAnswer,
+    { attachedTo: { $in: removed as Ref<AppletInstance>[] } },
+    { projection: { _id: 1, _class: 1, space: 1 } }
+  )
+  return answers.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
+}
+
 export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
@@ -102,6 +116,7 @@ export default async () => ({
     ReferenceTrigger,
     OnDocRemoved,
     OnDocClassChanged,
-    OnActivityMessageRemoved
+    OnActivityMessageRemoved,
+    OnPollRemoved
   }
 })
