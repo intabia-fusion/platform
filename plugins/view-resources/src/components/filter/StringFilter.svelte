@@ -13,56 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, resizeObserver, deviceOptionsStore, EditWithIcon, IconSearch } from '@hcengineering/ui'
-  import type { Filter } from '@hcengineering/view'
-  import { createEventDispatcher } from 'svelte'
-  import view from '../../plugin'
+  import type { Class, Doc, Ref, Space } from '@hcengineering/core'
+  import type { Filter, ViewOptions } from '@hcengineering/view'
+  import ValueFilter from './ValueFilter.svelte'
 
+  export let _class: Ref<Class<Doc>>
+  export let space: Ref<Space> | undefined = undefined
   export let filter: Filter
   export let onChange: (e: Filter) => void
-
-  const dispatch = createEventDispatcher()
-
-  let search = filter.value[0] ?? ''
-
-  filter.modes = [view.filter.FilterContains]
-  filter.mode ??= filter.modes[0]
-
-  export function onKeyDown (event: KeyboardEvent): boolean {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-
-      save()
-
-      return true
-    }
-    return false
-  }
-
-  function save () {
-    if (search == null || search === '') {
-      return
-    }
-    filter.value = [search]
-
-    onChange(filter)
-    dispatch('close')
-  }
+  export let viewOptions: ViewOptions | undefined = undefined
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')} on:keydown={onKeyDown}>
-  <div class="header no-border">
-    <EditWithIcon
-      icon={IconSearch}
-      size="large"
-      width="100%"
-      autoFocus={!$deviceOptionsStore.isMobile}
-      bind:value={search}
-      placeholder={filter.key.label}
-      on:change
-    />
-  </div>
-  <Button shape="filter" label={view.string.Apply} disabled={search === ''} on:click={save} />
-</div>
+<ValueFilter {_class} {space} {filter} {onChange} {viewOptions} on:close on:changeContent />

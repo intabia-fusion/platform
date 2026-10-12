@@ -90,6 +90,8 @@
         void makeQuery(query, filters)
       })
 
+      if (Object.keys(newValue).length === 0) continue
+
       let filterKey = filter.key.key
 
       const attr = client.getHierarchy().getAttribute(filter.key._class, filter.key.key)

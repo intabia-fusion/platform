@@ -13,7 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  export let value: string[]
+  import ui, { Label } from '@hcengineering/ui'
+  import type { Filter } from '@hcengineering/view'
+
+  export let value: Filter['value']
+  $: first = Array.isArray(value[0]) ? value[0][0] : value[0]
+  $: text = first == null ? '' : value.length > 1 ? `${first}, +${value.length - 1}` : `${first}`
 </script>
 
-{value[0]}
+{#if value.length > 0}
+  {#if first == null}
+    <Label label={ui.string.NotSelected} />{#if value.length > 1}{`, +${value.length - 1}`}{/if}
+  {:else}
+    {text}
+  {/if}
+{/if}
