@@ -14,15 +14,29 @@
 //
 
 import activity, { type ActivityMessageControl } from '@hcengineering/activity'
-import { type Chat, chunterId, type ChunterSpace } from '@hcengineering/chunter'
+import {
+  type Chat,
+  type ChatMessage,
+  chunterId,
+  type ChunterSpace,
+  type ContentReportAction,
+  type ContentReportReason
+} from '@hcengineering/chunter'
 import contact from '@hcengineering/contact'
-import { type Builder } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
+import { type Builder, Model } from '@hcengineering/model'
+import core, { TDoc } from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAttributeApplier } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { WidgetType } from '@hcengineering/workbench'
-import { AccountRole, type Class, type IndexingConfiguration } from '@hcengineering/core'
+import {
+  AccountRole,
+  type AccountUuid,
+  type Class,
+  DOMAIN_TRANSIENT,
+  type IndexingConfiguration,
+  type Ref
+} from '@hcengineering/core'
 
 import { defineActions } from './actions'
 import { defineNotifications } from './notifications'
@@ -43,11 +57,26 @@ export { chunterId } from '@hcengineering/chunter'
 export { chunterOperation } from './migration'
 export * from './types'
 
+@Model(chunter.class.ContentReportAction, core.class.Doc, DOMAIN_TRANSIENT)
+export class TContentReportAction extends TDoc implements ContentReportAction {
+  messageId?: Ref<ChatMessage>
+  account?: AccountUuid
+  reason!: ContentReportReason
+}
+
 export function createModel (builder: Builder): void {
+  builder.createDoc(activity.class.ActivityInfoMessageViewlet, core.space.Model, {
+    match: { message: chunter.string.ContentReport },
+    presenter: chunter.component.ContentReportPresenter
+  })
+  // The action lives in memory only until the trigger has read it.
+  builder.mixin(chunter.class.ContentReportAction, core.class.Class, core.mixin.TransientTTL, { ttl: 60 })
+
   builder.createModel(
     TChunterSpace,
     TChannel,
     TDirectMessage,
+    TContentReportAction,
     TChatMessage,
     TThreadMessage,
     TObjectChatPanel,

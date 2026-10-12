@@ -123,6 +123,7 @@
       categoryQueryOptions
     )
   } else {
+    docsQuerySlow.unsubscribe()
     slowDocs = []
   }
 

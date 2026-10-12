@@ -211,6 +211,8 @@
     "IntegerOnly": "Nombres entiers uniquement",
     "AccessControl": "Contrôle d'accès",
     "DangerZone": "Zone dangereuse",
+    "ContentReports": "Signalements",
+    "ContentReportsDescription": "Permet aux membres de signaler des messages et d'autres membres",
     "ApiAccess": "Accès API",
     "CreateApiKey": "Créer une clé API",
     "ApiKeyName": "Nom",

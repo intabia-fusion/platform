@@ -2018,6 +2018,37 @@ describe('SpaceSecurityMiddleware', () => {
         'Cannot create private space without being a member or owner'
       )
     })
+
+    it('allows a derived private space the session user is not a member of', async () => {
+      const mw = await createMiddleware([])
+
+      const account = createAccount('reporter')
+      const createTx = txFactory.createTxCreateDoc(
+        testSpaceClass,
+        core.space.Space,
+        {
+          name: '',
+          description: '',
+          private: true,
+          archived: false,
+          members: [systemAccountUuid, 'owner1' as AccountUuid]
+        },
+        'dmSpace3' as Ref<Space>
+      )
+
+      // A trigger's tx reaches handleBroadcast without passing tx(): that is what makes it derived.
+      ctx.contextData = createSessionData(account, {
+        broadcast: { txes: [createTx], targets: {}, queue: [], sessions: {} }
+      })
+      await expect(mw.handleBroadcast(ctx)).resolves.not.toThrow()
+
+      // The same tx sent by the client is checked, whatever space it claims.
+      ctx.contextData = createSessionData(account)
+      ;(createTx as any).space = core.space.DerivedTx
+      await expect(mw.tx(ctx, [createTx])).rejects.toThrow(
+        'Cannot create private space without being a member or owner'
+      )
+    })
   })
 
   describe('remove permissions', () => {

@@ -209,6 +209,8 @@
     "IntegerOnly": "Integer numbers only",
     "AccessControl": "Access control",
     "DangerZone": "Danger zone",
+    "ContentReports": "Reports",
+    "ContentReportsDescription": "Allow members to report messages and other members",
     "ApiAccess": "API access",
     "CreateApiKey": "Create API key",
     "ApiKeyName": "Name",

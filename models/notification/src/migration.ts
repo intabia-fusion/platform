@@ -1032,7 +1032,7 @@ async function migrateReadStatesSpace (client: MigrationClient): Promise<void> {
 async function hideInactiveChats (client: MigrationClient): Promise<void> {
   const iterator = await client.traverse<Chat>(DOMAIN_CHUNTER_DOC, {
     _class: chunter.class.Chat,
-    attachedToClass: { $ne: chunter.class.Channel },
+    attachedToClass: { $nin: client.hierarchy.getDescendants(chunter.class.ChunterSpace) },
     hidden: false,
     pinned: false
   })

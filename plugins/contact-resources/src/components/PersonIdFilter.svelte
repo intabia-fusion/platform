@@ -114,9 +114,7 @@
 
       if (person == null) return acc
 
-      if (acc[person._id] == null) {
-        acc[person._id] = []
-      }
+      acc[person._id] ??= []
 
       acc[person._id].push(sid._id)
 

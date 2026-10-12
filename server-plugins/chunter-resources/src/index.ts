@@ -58,6 +58,7 @@ import {
   getPersonSpaces
 } from '@hcengineering/server-contact'
 import { TriggerControl } from '@hcengineering/server-core'
+import { OnContentReport, OnReportedMessageRemoved } from './report'
 
 import {
   ChannelIconPresenter,
@@ -291,15 +292,14 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
   if (!shouldSync) return []
 
   const { hierarchy } = control
-  const chats = (
-    await control.ctx.with('syncChat:findChats', {}, () =>
-      control.findAll(control.ctx, chunter.class.Chat, {
-        user: status.user,
-        hidden: false,
-        isPinned: false
-      })
-    )
-  ).filter((chat) => !hierarchy.isDerived(chat.attachedToClass, chunter.class.Channel))
+  const chats = await control.ctx.with('syncChat:findChats', {}, () =>
+    control.findAll(control.ctx, chunter.class.Chat, {
+      account: status.user,
+      hidden: false,
+      pinned: false,
+      attachedToClass: { $nin: hierarchy.getDescendants(chunter.class.ChunterSpace) }
+    })
+  )
 
   const res: Tx[] = []
 
@@ -553,6 +553,8 @@ async function OnPersonNameChanged (txes: TxUpdateDoc<Person>[], control: Trigge
 export default async () => ({
   trigger: {
     ChunterTrigger,
+    OnContentReport,
+    OnReportedMessageRemoved,
     OnUserStatus,
     OnCollaboratorAdded,
     OnCollaboratorRemoved,

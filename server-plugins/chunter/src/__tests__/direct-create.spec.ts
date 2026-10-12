@@ -24,11 +24,12 @@ const OTHER = 'other-account' as AccountUuid
 async function onDirectCreate (
   actor: AccountUuid,
   members: AccountUuid[],
-  existing: unknown[] = []
+  existing: unknown[] = [],
+  trigger = false
 ): Promise<{ members: AccountUuid[], type?: string, referenceId?: string }> {
   const middleware = Object.create(ChunterMiddleware.prototype)
   middleware.findAll = async () => existing
-  const ctx = { contextData: { account: { uuid: actor } } }
+  const ctx = { contextData: { account: { uuid: actor }, isTriggerCtx: trigger } }
   const tx = { attributes: { members: [...members] } }
   await middleware.onDirectCreate(ctx, tx)
   return tx.attributes
@@ -50,6 +51,12 @@ describe('onDirectCreate', () => {
     expect(attrs.type).toBe('group')
   })
 
+  it('keeps a trigger-made direct at two members: the session actor is not a member of it', async () => {
+    // A moderation card goes to [system, owner] while the session belongs to the reporter.
+    const attrs = await onDirectCreate(OTHER, [systemAccountUuid, USER], [], true)
+    expect(attrs.members.sort()).toEqual([systemAccountUuid, USER].sort())
+    expect(attrs.type).toBe('person')
+  })
   it('refuses a second direct with the same two members', async () => {
     await expect(onDirectCreate(systemAccountUuid, [BOT, USER], [{ _id: 'existing' }])).rejects.toThrow()
   })

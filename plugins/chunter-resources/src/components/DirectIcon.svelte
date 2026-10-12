@@ -16,8 +16,8 @@
   import type { DirectMessage } from '@hcengineering/chunter'
   import type { Person } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-  import { Avatar, CombineAvatars } from '@hcengineering/contact-resources'
-  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import { Avatar, CombineAvatars, SystemAvatar } from '@hcengineering/contact-resources'
+  import { type AccountUuid, type Ref, systemAccountUuid } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { IconSize } from '@hcengineering/ui'
 
@@ -59,6 +59,8 @@
 
 {#if !isLoaded}
   <div class="placeholder hulyAvatarSize-{avatarSize}" />
+{:else if persons.length === 0 && (value?.members ?? members).includes(systemAccountUuid)}
+  <SystemAvatar size={avatarSize} />
 {/if}
 
 {#if persons.length === 1}

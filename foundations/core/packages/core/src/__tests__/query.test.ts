@@ -14,7 +14,11 @@
 //
 
 import type { Doc } from '../classes'
-import { findProperty } from '../query'
+import core from '../component'
+import { Hierarchy } from '../hierarchy'
+import { findProperty, matchQuery } from '../query'
+import { searchTargets } from '../storage'
+import { genMinModel } from './minmodel'
 
 describe('findProperty', () => {
   it('matches an object subset against an array-of-objects field', () => {
@@ -37,5 +41,27 @@ describe('findProperty', () => {
     const docs = [{ _id: 'a', tags: ['x', 'y'] }] as unknown as Doc[]
     expect(findProperty(docs, 'tags', 'x')).toHaveLength(1)
     expect(findProperty(docs, 'tags', 'z')).toHaveLength(0)
+  })
+})
+
+describe('matchQuery', () => {
+  it('takes $searchIn for a fulltext directive, not a field', () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of genMinModel()) {
+      hierarchy.tx(tx)
+    }
+    const docs = [{ _id: 'a', _class: core.class.Space, name: 'x' }] as unknown as Doc[]
+
+    expect(matchQuery(docs, { name: 'x', $searchIn: ['title'] }, core.class.Space, hierarchy)).toHaveLength(1)
+    expect(matchQuery(docs, { name: 'y', $searchIn: ['title'] }, core.class.Space, hierarchy)).toHaveLength(0)
+  })
+})
+
+describe('searchTargets', () => {
+  it('reads no list, null and a list with all as everything', () => {
+    expect(searchTargets(undefined)).toBeUndefined()
+    expect(searchTargets(null)).toBeUndefined()
+    expect(searchTargets(['title', 'all'])).toBeUndefined()
+    expect(searchTargets(['title', 'content'])).toEqual(['title', 'content'])
   })
 })

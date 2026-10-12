@@ -14,6 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import chunter from '@hcengineering/chunter'
   import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
   import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
   import type { AccountUuid, Configuration } from '@hcengineering/core'
@@ -28,7 +29,7 @@
   } from '@hcengineering/core'
   import login, { loginId } from '@hcengineering/login'
   import { translateCB } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
+  import { configurationStore, createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
   import type { WorkspaceSetting } from '@hcengineering/setting'
 
   import { requestOperationOtpCode } from '../utils'
@@ -214,6 +215,21 @@
       if (readonlyEmployee !== undefined) {
         await client.update(readonlyEmployee, { active: false })
       }
+    }
+  }
+
+  $: reportsConfiguration = $configurationStore.get(chunter.ids.ContentReportsConfiguration)
+
+  async function handleToggleReports (e: CustomEvent<boolean>): Promise<void> {
+    if (reportsConfiguration === undefined) {
+      await client.createDoc(
+        core.class.Configuration,
+        core.space.Workspace,
+        { enabled: e.detail },
+        chunter.ids.ContentReportsConfiguration
+      )
+    } else {
+      await client.update(reportsConfiguration, { enabled: e.detail })
     }
   }
 
@@ -413,6 +429,19 @@
           />
 
           {#if isWorkspaceOwner}
+            <div class="flex-col flex-gap-4 mt-6">
+              <div class="title"><Label label={settingsRes.string.ContentReports} /></div>
+              <div class="flex-row-center flex-gap-4">
+                <Label label={settingsRes.string.ContentReportsDescription} />
+                <Toggle
+                  on={reportsConfiguration?.enabled === true}
+                  on:change={(e) => {
+                    void handleToggleReports(e)
+                  }}
+                />
+              </div>
+            </div>
+
             <div class="flex-col flex-gap-4 mt-6">
               <div class="title"><Label label={settingsRes.string.DangerZone} /></div>
               <div class="w-32">

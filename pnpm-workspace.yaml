@@ -643,7 +643,7 @@ catalog:
   date-fns-tz: ^2.0.0
   dotenv: ^16.6.1
   dotenv-webpack: ^8.0.1
-  electron: ^44.2.0
+  electron: ^44.7.0
   electron-squirrel-startup: ~1.0.0
   electron-updater: ^6.8.9
   email-addresses: ^5.0.0

@@ -345,6 +345,43 @@ describe('TSessionManager', () => {
     })
   })
 
+  describe('online user tx', () => {
+    it('applies a separate copy of the tx in each workspace of the account', async () => {
+      const call = mockQueue.createConsumer.mock.calls.find((it: any[]) => it[1] === QueueTopic.OnlineUserTx)
+      const onMessage = call[3]
+      const applied: any[] = []
+      const fakeWorkspace = (uuid: string): any => ({
+        wsId: { uuid },
+        with: async (fn: (pipeline: any) => Promise<void>) => {
+          await fn({
+            context: { modelDb: {} },
+            // Like NotificationMiddleware: the space is rewritten to this workspace's PersonSpace.
+            tx: async (_ctx: unknown, txes: any[]) => {
+              txes[0].objectSpace = `person-space-${uuid}`
+              applied.push(txes[0])
+            },
+            handleBroadcast: async () => {}
+          })
+        }
+      })
+      for (const uuid of ['ws-1', 'ws-2']) {
+        sessionManager.workspaces.set(uuid as WorkspaceUuid, fakeWorkspace(uuid))
+        sessionManager.sessions.set(`socket-${uuid}`, {
+          session: { getUser: () => 'acc', workspace: { uuid } },
+          socket: {},
+          tickHash: 0
+        } as any)
+      }
+      const tx = { _id: 'tx-1', objectSpace: 'core:space:Workspace', attributes: { account: 'acc' } }
+
+      await onMessage(mockContext, { value: { tx, account: 'acc' } })
+
+      expect(applied.map((it) => it.objectSpace)).toEqual(['person-space-ws-1', 'person-space-ws-2'])
+      expect(applied[0]).not.toBe(applied[1])
+      expect(tx.objectSpace).toBe('core:space:Workspace')
+    })
+  })
+
   describe('countUserSessions', () => {
     it('should count sessions for specific user', () => {
       const accountUuid = 'user-123' as AccountUuid

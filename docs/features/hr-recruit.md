@@ -95,7 +95,7 @@ Training не связан с задачами трекера: импорт `@hc
 - **Собственная нумерация.** Identifier отклика (`APP-{n}`) пишется в персистентное поле миграцией (`models/recruit/src/migration.ts`, вместе с sequences); идентификатор вакансии (`VCN-{n}`) в БД не хранится, а вычисляется на лету presenter'ом (`getSequenceId`, `server-plugins/recruit-resources/src/index.ts`).
 - **Таксономия навыков.** Категории тегов кандидата подгружаются из `@anticrm/skillset` при инициализации воркспейса. - `models/recruit/src/migration.ts`.
 - **Письмо кандидату.** Экшен `WriteEmail` открывает Gmail-композер, виден только если у Applicant есть email-канал (`ApplicantHasEmail`). - `models/recruit/src/index.ts`.
-- **Короткие ссылки.** `LinkIdProvider` (deep-link, человекочитаемый URL) для Vacancy/Applicant/Opinion/Review; `SearchPresenter` (full-text поиск) только для Vacancy/Applicant. - `models/server-recruit/src/index.ts`.
+- **Короткие ссылки.** `LinkIdProvider` (deep-link, человекочитаемый URL) для Vacancy/Applicant/Opinion/Review; `SearchPresenter` (full-text поиск) только для Vacancy/Applicant; основной текст Vacancy в индексе - `fullDescription` (`contentField`), у Applicant основного текста нет, весь текст в `fulltextExtra`. - `models/server-recruit/src/index.ts`.
 
 ### Training
 - **Версионируемый курс.** `revision`/`state`/`releasedOn` - курс можно редактировать в черновике и выпускать новую редакцию. - `models/training/src/types.ts`.

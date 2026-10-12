@@ -20,6 +20,7 @@ import {
   type ActivityExtension,
   type ActivityExtensionKind,
   type ActivityInfoMessage,
+  type ActivityInfoMessageViewlet,
   type ActivityMessage,
   type ActivityMessageControl,
   type ActivityMessagePreview,
@@ -51,6 +52,7 @@ import core, {
   type Ref,
   type Blob,
   type Timestamp,
+  type Markup,
   type Tx,
   type TxCUD,
   AccountRole
@@ -200,6 +202,13 @@ export class TActivityInfoMessage extends TActivityMessage implements ActivityIn
   props!: Record<string, any>
   icon!: Asset
   iconProps!: Record<string, any>
+  markup?: Markup
+}
+
+@Model(activity.class.ActivityInfoMessageViewlet, core.class.Doc, DOMAIN_MODEL)
+export class TActivityInfoMessageViewlet extends TDoc implements ActivityInfoMessageViewlet {
+  match!: DocumentQuery<ActivityInfoMessage>
+  presenter!: AnyComponent
 }
 
 @Model(activity.class.ActivityMessageControl, core.class.Doc, DOMAIN_MODEL)
@@ -298,6 +307,7 @@ export function createModel (builder: Builder): void {
     TReaction,
     TActivityAttributeUpdatesPresenter,
     TActivityInfoMessage,
+    TActivityInfoMessageViewlet,
     TActivityMessageControl,
     TSavedMessage,
     TIgnoreActivity,

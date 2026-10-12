@@ -53,7 +53,7 @@
 | plugins/products | `plugins/products/src` | `Product`, `ProductVersion` (поверх controlled-documents) |
 | plugins/products-resources | `plugins/products-resources/src` | UI версий продукта, change control |
 | plugins/products-assets | `plugins/products-assets/src` | иконки/переводы |
-| models/server-products | `models/server-products/src` | `SearchPresenter` для глобального поиска |
+| models/server-products | `models/server-products/src` | `SearchPresenter` для глобального поиска (основной текст - `fullDescription`) |
 | models/print | `models/print/src` | действие "Print to PDF", DOCX-превью |
 | plugins/print | `plugins/print/src` | id плагина, `printToPDF`/`convertToHTML` (HTTP-клиент к поду) |
 | plugins/print-resources | `plugins/print-resources/src` | UI печати, публичная ссылка + подпись PDF |
@@ -160,7 +160,7 @@
 - **Связка версии с change control документом.** - `changeControl?: Ref<Document>`, `ChangeControlInlineEditor.svelte`, `plugins/products-resources/src/components/product-version/ChangeControlInlineEditor.svelte`.
 - **Роли продукта.** QARA / Manager / Qualified User, права controlled-documents. - `models/products/src/roles.ts`.
 - **Удаление версии продукта.** - `action.DeleteProductVersion` + `CanDeleteProductVersion`, `models/products/src/plugin.ts`.
-- **Поиск продукта в глобальном поиске.** SearchPresenter по name/icon/color. - `models/server-products/src/index.ts`.
+- **Поиск продукта в глобальном поиске.** SearchPresenter по name/icon/color; `contentField: 'fullDescription'` - основной текст в индексе (`fulltextSummary`), остальное в `fulltextExtra`. - `models/server-products/src/index.ts`.
 
 ### Print
 - **Печать документа в PDF.** Публичная ссылка + рендер в headless Chrome. - `printToPDF`, `plugins/print/src/utils.ts`; `print()`, `services/print/pod-print/src/print.ts` (puppeteer).

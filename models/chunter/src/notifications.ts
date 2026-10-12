@@ -16,7 +16,7 @@
 import { type Builder } from '@hcengineering/model'
 import notification from '@hcengineering/model-notification'
 import core, { defineCollaborators } from '@hcengineering/model-core'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type ActivityInfoMessage, type DocUpdateMessage } from '@hcengineering/activity'
 import { type MessageNotificationType } from '@hcengineering/notification'
 import { type ChatMessage, type ThreadMessage } from '@hcengineering/chunter'
 
@@ -70,6 +70,27 @@ export function defineNotifications (builder: Builder): void {
       }
     },
     chunter.ids.DMNotification
+  )
+
+  // A content report is an ActivityInfoMessage the reporter drops into the owner's direct
+  // message; DMNotification covers ChatMessage only, so it needs its own type to reach the inbox.
+  builder.createDoc<MessageNotificationType<ActivityInfoMessage>>(
+    notification.class.MessageNotificationType,
+    core.space.Model,
+    {
+      label: chunter.string.ContentReportNotification,
+      generated: false,
+      hidden: true,
+      messageClass: activity.class.ActivityInfoMessage,
+      objectClass: activity.class.ActivityInfoMessage,
+      attachedToClass: chunter.class.DirectMessage,
+      match: { message: chunter.string.ContentReport },
+      // The card's message is an IntlString, not markup: without this the push body would be the raw key.
+      notificationMessage: chunter.string.ContentReportNotificationBody,
+      defaultEnabled: true,
+      group: chunter.ids.ChunterNotificationGroup
+    },
+    chunter.ids.ContentReportNotification
   )
 
   builder.createDoc<MessageNotificationType<ChatMessage>>(
@@ -144,7 +165,8 @@ export function defineNotifications (builder: Builder): void {
       chunter.ids.DMNotification,
       chunter.ids.ChannelNotification,
       chunter.ids.ThreadNotification,
-      chunter.ids.JoinChannelNotification
+      chunter.ids.JoinChannelNotification,
+      chunter.ids.ContentReportNotification
     ]
   })
 
@@ -155,7 +177,8 @@ export function defineNotifications (builder: Builder): void {
       chunter.ids.DMNotification,
       chunter.ids.ChannelNotification,
       chunter.ids.ThreadNotification,
-      chunter.ids.JoinChannelNotification
+      chunter.ids.JoinChannelNotification,
+      chunter.ids.ContentReportNotification
     ]
   })
 
@@ -166,7 +189,8 @@ export function defineNotifications (builder: Builder): void {
       chunter.ids.DMNotification,
       chunter.ids.ChannelNotification,
       chunter.ids.ThreadNotification,
-      chunter.ids.JoinChannelNotification
+      chunter.ids.JoinChannelNotification,
+      chunter.ids.ContentReportNotification
     ]
   })
 

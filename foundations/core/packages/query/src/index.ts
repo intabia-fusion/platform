@@ -237,7 +237,7 @@ export class LiveQuery implements WithTx, Client {
     const query = q.query
     for (const key in query) {
       if (key === '$search') continue
-      if (key === '$searchStrict') continue
+      if (key === '$searchIn') continue
       if (skipLookup && key.startsWith('$lookup')) continue
       const value = (query as any)[key]
       const result = findProperty([doc], key, value)
@@ -568,7 +568,7 @@ export class LiveQuery implements WithTx, Client {
   private async checkSearch (q: Query, _id: Ref<Doc>): Promise<boolean> {
     const match = await this.client.findOne(
       q._class,
-      { $search: q.query.$search, $searchStrict: q.query.$searchStrict, _id },
+      { $search: q.query.$search, $searchIn: q.query.$searchIn, _id },
       q.options
     )
     if (q.result instanceof Promise) {
@@ -1182,12 +1182,17 @@ export class LiveQuery implements WithTx, Client {
           q._class,
           {
             $search: q.query.$search,
-            $searchStrict: q.query.$searchStrict,
+            $searchIn: q.query.$searchIn,
             _id: doc._id
           },
           q.options
         )
         if (match === undefined) return
+        // Copy: the tx doc is shared between queries
+        const source = (match as WithLookup<Doc>).$source
+        if (source != null) {
+          doc = { ...doc, $source: source } as unknown as Doc
+        }
       }
 
       const stored = q.result.push(doc)

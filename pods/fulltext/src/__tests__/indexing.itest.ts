@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import core, {
+  type Blob,
   generateId,
   MeasureMetricsContext,
   TxOperations,
@@ -22,7 +23,8 @@ import {
   wrapPipeline,
   type FulltextListener,
   type IndexedDoc,
-  type QueueWorkspaceMessage
+  type QueueWorkspaceMessage,
+  type StorageAdapter
 } from '@hcengineering/server-core'
 import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
@@ -67,8 +69,36 @@ class TestWorkspaceManager extends WorkspaceManager {
     return undefined
   }
 }
+/** The dummy storage serving `blobs`. */
+function blobStorage (blobs: Map<string, { contentType: string, content: string }>): StorageAdapter {
+  const storage = createDummyStorageAdapter()
+  storage.stat = async (ctx, wsIds, name) => {
+    const blob = blobs.get(name)
+    if (blob === undefined) return undefined
+    return {
+      _id: name as Ref<Blob>,
+      _class: core.class.Blob,
+      space: core.space.Configuration,
+      modifiedBy: core.account.System,
+      modifiedOn: 0,
+      provider: '',
+      contentType: blob.contentType,
+      etag: name,
+      version: null,
+      size: blob.content.length
+    }
+  }
+  storage.read = async (ctx, wsIds, name) => {
+    const blob = blobs.get(name)
+    if (blob === undefined) throw new Error(`no blob ${name}`)
+    return [Buffer.from(blob.content)]
+  }
+  return storage
+}
+
 class TestQueue {
   genId = generateId()
+  blobs = new Map<string, { contentType: string, content: string }>()
   config = parseQueueConfig(`${kafkaBroker};-testing-` + this.genId, 'fulltext-test-' + this.genId, '')
   fulltextListener: FulltextListener | undefined
   queue = createPlatformQueue(this.config)
@@ -85,7 +115,7 @@ class TestQueue {
       dbURL: dbUrl,
       hulylakeUrl: 'http://localhost:8096',
       config: dbConfig,
-      externalStorage: createDummyStorageAdapter(),
+      externalStorage: blobStorage(this.blobs),
       listener: {
         onIndexing: async (doc: IndexedDoc) => {
           return await this.fulltextListener?.onIndexing?.(doc)
@@ -107,23 +137,23 @@ class TestQueue {
     await this.queue.shutdown()
   }
 
-  async expectIndexingDoc (pattern: string, op: () => Promise<void>, timeoutMs: number = 10000): Promise<void> {
-    const waitPromise = new Promise<void>((resolve, reject) => {
+  async expectIndexingDoc (pattern: string, op: () => Promise<void>, timeoutMs: number = 10000): Promise<IndexedDoc> {
+    const waitPromise = new Promise<IndexedDoc>((resolve, reject) => {
       const to = setTimeout(() => {
         reject(new Error(`Timeout waiting for document with pattern "${pattern}" to be indexed`))
       }, timeoutMs)
       this.fulltextListener = {
         onIndexing: async (doc) => {
-          if ((doc.fulltextSummary ?? '')?.includes(pattern)) {
+          if ((doc.fulltextSummary ?? '').includes(pattern) || (doc.fulltextExtra ?? '').includes(pattern)) {
             clearTimeout(to)
-            resolve()
+            resolve(doc)
           }
         }
       }
     })
 
     await op()
-    await waitPromise
+    return await waitPromise
   }
 }
 
@@ -163,6 +193,64 @@ describe('full-text-indexing', () => {
         })
       ])
     })
+  })
+
+  it('indexes the contentField text into fulltextSummary and the rest into fulltextExtra', async () => {
+    const txProducer = queue.queue.getProducer<Tx>(toolCtx, QueueTopic.Tx)
+    const personId = randomUUID().toString() as PersonUuid
+    const wsId: WorkspaceUuid = randomUUID().toString() as WorkspaceUuid
+    const token = generateToken(personId, wsId)
+    await queue.mgr.withIndexer(toolCtx, wsId, token, true, async () => {})
+
+    const titleId = generateId()
+    const descriptionId = generateId()
+    const bodyId = generateId()
+    const fileId = generateId()
+
+    // A collaborative document and a text file
+    const body = generateId()
+    queue.blobs.set(body, {
+      contentType: 'application/json',
+      content: JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: bodyId }] }]
+      })
+    })
+    const file = generateId()
+    queue.blobs.set(file, { contentType: 'text/plain', content: fileId })
+
+    const doc = await queue.expectIndexingDoc(descriptionId, async () => {
+      await txProducer.send(toolCtx, wsId, [
+        createDoc(test.class.TestDocument, {
+          title: titleId,
+          description: descriptionId,
+          body: body as Ref<Blob>,
+          file: file as Ref<Blob>
+        })
+      ])
+    })
+    expect(doc.fulltextSummary).toContain(descriptionId)
+    for (const id of [titleId, bodyId, fileId]) {
+      expect(doc.fulltextSummary).not.toContain(id)
+      expect(doc.fulltextExtra).toContain(id)
+    }
+    expect(doc.fulltextExtra).not.toContain(descriptionId)
+  })
+
+  it('indexes all text of a class without contentField into fulltextExtra', async () => {
+    const txProducer = queue.queue.getProducer<Tx>(toolCtx, QueueTopic.Tx)
+    const personId = randomUUID().toString() as PersonUuid
+    const wsId: WorkspaceUuid = randomUUID().toString() as WorkspaceUuid
+    const token = generateToken(personId, wsId)
+    await queue.mgr.withIndexer(toolCtx, wsId, token, true, async () => {})
+
+    const textId = generateId()
+
+    const doc = await queue.expectIndexingDoc(textId, async () => {
+      await txProducer.send(toolCtx, wsId, [createDoc(test.class.TestNote, { text: textId })])
+    })
+    expect(doc.fulltextExtra).toContain(textId)
+    expect(doc.fulltextSummary).toBe('')
   })
 
   it('check-full-pipeline', async () => {

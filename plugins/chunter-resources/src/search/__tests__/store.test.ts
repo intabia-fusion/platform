@@ -347,7 +347,7 @@ describe('createChatSearchStore', () => {
     await settle()
 
     expect(searchFulltext.mock.calls[0][1]).toMatchObject({
-      searchIn: 'content',
+      searchIn: ['content'],
       highlight: true,
       fields: ['message']
     })

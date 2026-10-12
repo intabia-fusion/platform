@@ -32,6 +32,17 @@ pnpm docker:build
 # open http://localhost:8083
 ```
 
+### Custom image for a single service
+
+Every platform service image can be replaced through `<IMAGE_NAME>_IMAGE`, where the name is the
+image name in upper case with `-` turned into `_` (`transactor` -> `TRANSACTOR_IMAGE`,
+`rekoni-service` -> `REKONI_SERVICE_IMAGE`). Unset variables keep the default image. The version
+override file from `create-version-override.sh` pins every image and takes precedence.
+
+```bash
+TRANSACTOR_IMAGE=my-registry/transactor:dev ./prepare-pg.sh
+```
+
 ### Restore to pure DB
 
 To purge content of sanity workspace following command could be used.

@@ -77,6 +77,7 @@
     "@hcengineering/server": "workspace:^0.7.18",
     "@hcengineering/server-calendar": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
+    "@hcengineering/server-client": "workspace:^0.7.17",
     "@hcengineering/server-notification": "workspace:^0.7.0",
     "@hcengineering/server-pipeline": "workspace:^0.7.0",
     "@hcengineering/server-storage": "workspace:^0.7.17",

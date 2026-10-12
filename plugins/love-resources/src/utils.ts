@@ -18,7 +18,6 @@ import core, {
   type Space,
   type TxOperations,
   type WithLookup,
-  reduceCalls,
   generateId
 } from '@hcengineering/core'
 import {
@@ -47,10 +46,8 @@ import view from '@hcengineering/view'
 import { getObjectLinkFragment } from '@hcengineering/view-resources'
 import { type Widget, type WidgetTab } from '@hcengineering/workbench'
 import { openWidget, openWidgetTab, sidebarStore, updateWidgetState } from '@hcengineering/workbench-resources'
-import { isKrispNoiseFilterSupported, KrispNoiseFilter } from '@livekit/krisp-noise-filter'
 import { BackgroundBlur, type BackgroundOptions, type ProcessorWrapper } from '@livekit/track-processors'
 import {
-  LocalAudioTrack,
   type LocalTrack,
   type LocalTrackPublication,
   LocalVideoTrack,
@@ -82,115 +79,13 @@ export const isRecordingAvailable = writable<boolean>(false)
 export const isFullScreen = writable<boolean>(false)
 export const isShareWithSound = writable<boolean>(false)
 
-// Feature toggle: Krisp is a paid LiveKit add-on that has been failing to
-// authenticate (404). When false, microphone audio uses only the WebRTC
-// echoCancellation/noiseSuppression configured in audioCaptureDefaults.
-const useKrisp = false
-
-export let krispProcessor: ReturnType<typeof KrispNoiseFilter> | undefined = useKrisp ? KrispNoiseFilter() : undefined
 export let blurProcessor: ProcessorWrapper<BackgroundOptions> | undefined
 let localVideo: LocalVideoTrack | undefined
-
-// Kill-switch: after KRISP_MAX_FAILURES consecutive setEnabled failures we stop
-// attempting to enable Krisp for the session. Prevents 404 loops on broken deploys.
-const KRISP_MAX_FAILURES = 3
-let krispFailureCount = 0
-let krispDisabled = false
 
 try {
   blurProcessor = BackgroundBlur()
 } catch (err) {
   console.log("Can't set blur processor", err)
-}
-
-/**
- * Internal immediate recreate. Callers that must observe the new krispProcessor
- * before proceeding should await this directly — reduceCalls-wrapped variants
- * resolve when the call is scheduled, not when the recreation completes.
- */
-async function recreateKrispProcessorImmediate (): Promise<void> {
-  if (!useKrisp) return
-  try {
-    // Stop processor on all local audio tracks before recreating
-    // to release AudioContext references and avoid resource leaks
-    for (const publication of lk.localParticipant.trackPublications.values()) {
-      if (publication.track instanceof LocalAudioTrack) {
-        await publication.track.stopProcessor().catch(() => {})
-      }
-    }
-
-    krispProcessor = KrispNoiseFilter()
-    console.log('[utils] Krisp processor recreated')
-  } catch (err: any) {
-    console.error('[utils] Failed to recreate Krisp processor', err)
-  }
-}
-
-/**
- * Recreate Krisp noise filter processor. Called on reconnect to avoid
- * InvalidAccessError when old processor holds a stale AudioContext reference.
- * Stops processor on all local audio tracks before recreating to release resources.
- * Note: reduceCalls resolves when the call is scheduled, not when finished.
- * If you need to observe the new instance synchronously, use recreateKrispProcessorImmediate.
- */
-export const recreateKrispProcessor = reduceCalls(recreateKrispProcessorImmediate)
-
-async function setKrispProcessor (pub: LocalTrackPublication): Promise<void> {
-  if (!useKrisp || krispProcessor === undefined) return
-  if (pub.track instanceof LocalAudioTrack) {
-    if (!isKrispNoiseFilterSupported()) {
-      console.warn('enhanced noise filter is currently not supported on this browser')
-      return
-    }
-    if (krispDisabled) {
-      // Previous attempts failed repeatedly; don't route audio through Krisp.
-      try {
-        await pub.track.stopProcessor()
-      } catch {}
-      return
-    }
-    try {
-      // Stop existing processor to avoid AudioContext conflicts
-      try {
-        await pub.track.stopProcessor()
-      } catch {
-        // Ignore if no processor was set
-      }
-      // once instantiated the filter will begin initializing and will download additional resources
-      console.log('enabling LiveKit enhanced noise filter')
-      await pub.track.setProcessor(krispProcessor)
-      try {
-        await krispProcessor.setEnabled($myPreferences?.noiseCancellation ?? true)
-        krispFailureCount = 0
-      } catch (err: any) {
-        // Krisp failed to initialize (e.g. 404 on model resources). The processor is
-        // attached to the track but not functional — detach it, otherwise outgoing
-        // audio is routed through a dead processor and remote participants hear nothing.
-        krispFailureCount++
-        console.error(
-          `[utils] Krisp setEnabled failed (${krispFailureCount}/${KRISP_MAX_FAILURES}), detaching processor`,
-          err
-        )
-        try {
-          await pub.track.stopProcessor()
-        } catch {}
-        if (krispFailureCount >= KRISP_MAX_FAILURES) {
-          krispDisabled = true
-          console.warn('[utils] Krisp disabled for this session after repeated failures')
-        } else {
-          // Recreate the shared instance so the next attempt does not reuse the broken one.
-          // Use the immediate helper — reduceCalls returns before the recreation finishes.
-          await recreateKrispProcessorImmediate()
-        }
-        Analytics.handleError(err)
-      }
-    } catch (err: any) {
-      if (err?.message !== 'SDK_ALREADY_INITIALIZED') {
-        console.error(err)
-        Analytics.handleError(err)
-      }
-    }
-  }
 }
 
 async function setBlurProcessor (pub: LocalTrackPublication): Promise<void> {
@@ -246,10 +141,6 @@ export async function updateBlurRadius (value: number): Promise<void> {
 }
 
 lk.on(RoomEvent.LocalTrackPublished, (pub) => {
-  if (pub.source === Track.Source.Microphone) {
-    void setKrispProcessor(pub)
-  }
-
   if (pub.source === Track.Source.Camera) {
     void setBlurProcessor(pub)
   }
@@ -264,24 +155,6 @@ lk.on(RoomEvent.LocalTrackUnpublished, (pub) => {
 lk.on(RoomEvent.Connected, () => {
   Analytics.handleEvent(LoveEvents.ConnectedToRoom)
 })
-if (useKrisp) {
-  lk.on(RoomEvent.Disconnected, () => {
-    // Recreate Krisp processor on disconnect so that the next connect
-    // does not hit InvalidAccessError due to stale AudioContext references.
-    void recreateKrispProcessor()
-  })
-  lk.on(RoomEvent.Reconnecting, () => {
-    // Recreate Krisp processor on reconnecting to ensure fresh AudioContext
-    // before the connection is re-established.
-    void recreateKrispProcessor()
-  })
-  lk.on(RoomEvent.Reconnected, () => {
-    // Ensure processor is fresh after successful reconnection
-    // as the AudioContext may have changed during reconnect.
-    void recreateKrispProcessor()
-  })
-}
-
 export function closeMeetingMinutes (): void {
   const loc = getCurrentLocation()
 

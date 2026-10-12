@@ -362,7 +362,7 @@ export class RestClientImpl implements RestClient {
         params.append('sort', options.sort)
       }
       if (options.searchIn != null) {
-        params.append('searchIn', options.searchIn)
+        params.append('searchIn', options.searchIn.join(','))
       }
       if (options.fuzzy != null) {
         params.append('fuzzy', `${options.fuzzy}`)

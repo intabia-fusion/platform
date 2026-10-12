@@ -979,6 +979,13 @@ export const coreOperation: MigrateOperation = {
         func: async (client) => {
           await client.fullReindex()
         }
+      },
+      {
+        state: 'reindex-after-fulltext-extra',
+        mode: 'upgrade',
+        func: async (client) => {
+          await client.fullReindex()
+        }
       }
       // ,
       // {

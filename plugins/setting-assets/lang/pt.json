@@ -202,6 +202,8 @@
     "IntegerOnly": "Apenas números inteiros",
     "AccessControl": "Controle de acesso",
     "DangerZone": "Zona de perigo",
+    "ContentReports": "Denúncias",
+    "ContentReportsDescription": "Permite aos membros denunciar mensagens e outros membros",
     "ApiAccess": "Acesso à API",
     "CreateApiKey": "Criar chave de API",
     "ApiKeyName": "Nome",

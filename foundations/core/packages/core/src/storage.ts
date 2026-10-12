@@ -61,12 +61,28 @@ export type ObjQueryType<T> = (T extends Array<infer U> ? U | U[] | QuerySelecto
 
 /**
  * @public
+ * What `$search` runs over: `content` is `SearchPresenter.contentField`, `extra` the other attributes,
+ * `attached` comments, labels and attachments, `all` everything, the same as no list.
+ */
+export type SearchTarget = 'all' | 'title' | 'identifier' | 'content' | 'extra' | 'attached'
+
+/**
+ * @public
+ * The targets a search is limited to, `undefined` when it runs over everything: no list, `null` or `all` in it.
+ */
+export function searchTargets (targets: SearchTarget[] | null | undefined): SearchTarget[] | undefined {
+  return targets == null || targets.includes('all') ? undefined : targets
+}
+
+/**
+ * @public
  */
 export type DocumentQuery<T extends Doc> = {
   [P in keyof T]?: ObjQueryType<T[P]>
 } & {
   $search?: string
-  $searchStrict?: boolean // Search only by searchTitle and ignore search by attached docs (comments, attachments etc)
+  // Without it: all fields and attached docs
+  $searchIn?: SearchTarget[]
   // support nested queries e.g. 'user.friends.name'
   // this will mark all unrecognized properties as any (including nested queries)
   [key: string]: any
@@ -290,7 +306,8 @@ export interface SearchHighlightOptions {
  * @public
  */
 export interface SearchOptions {
-  searchIn?: 'title' | 'content' | 'all'
+  // Without it: every field
+  searchIn?: SearchTarget[]
   /** Ranks by how well a document matches instead of demanding every word, and forgives typos. */
   fuzzy?: boolean
   viewerId?: string

@@ -20,6 +20,7 @@ import core, {
   Class,
   Doc,
   type DocumentQuery,
+  DOMAIN_TRANSIENT,
   type FindOptions,
   type LowLevelStorage,
   FindResult,
@@ -495,7 +496,7 @@ class Workspace {
         query: DocumentQuery<T>,
         options?: FindOptions<T>
       ): Promise<FindResult<T>> => {
-        return await this.pipeline.findAll(this.ctx, _class, query, options)
+        return await this.find(_class, query, options)
       },
       bulkUpdate: async (_class, query, operations) => {
         await this.lowLevel().rawUpdate(this.hierarchy.getDomain(_class), query, operations)
@@ -508,9 +509,21 @@ class Workspace {
         query: DocumentQuery<T>,
         options?: FindOptions<T>
       ): Promise<WithLookup<T> | undefined> => {
-        return (await this.pipeline.findAll(this.ctx, _class, query, { ...options, limit: 1 }))[0]
+        return (await this.find(_class, query, { ...options, limit: 1 }))[0]
       }
     }
+  }
+
+  // Transient docs (UserStatus) live in the transactor's memory; this pipeline's InMemory adapter is empty.
+  private async find<T extends Doc>(
+    _class: Ref<Class<T>>,
+    query: DocumentQuery<T>,
+    options?: FindOptions<T>
+  ): Promise<FindResult<T>> {
+    if (this.hierarchy.findDomain(_class) === DOMAIN_TRANSIENT) {
+      return await this.rest.findAll(_class, query, options)
+    }
+    return await this.pipeline.findAll(this.ctx, _class, query, options)
   }
 
   private lowLevel (): LowLevelStorage {

@@ -25,12 +25,14 @@ import core, {
   type Class,
   type Client,
   type Doc,
+  type DocumentQuery,
   type FindResult,
   type IndexingUpdateEvent,
   type Ref,
   type Space,
   type Tx,
-  type TxWorkspaceEvent
+  type TxWorkspaceEvent,
+  type WithLookup
 } from '@hcengineering/core'
 import { LiveQuery } from '..'
 import { connect } from './connection'
@@ -42,26 +44,35 @@ interface TestProject extends Space {
 
 // Wraps a client so a query with `$search` is answered from `matches` instead of the raw
 // mock (which cannot honour `$search` at all - see file header).
-function withFulltextStub (storage: Client, matches: Set<Ref<Doc>>): Client {
+function withFulltextStub (
+  storage: Client,
+  matches: Set<Ref<Doc>>,
+  onSearch?: (query: DocumentQuery<Doc>) => void
+): Client {
   const rawFindAll = storage.findAll.bind(storage)
   return Object.assign(Object.create(Object.getPrototypeOf(storage)), storage, {
     findAll: async (_class: any, query: any, options: any) => {
       if (query?.$search == null) return await rawFindAll(_class, query, options)
-      const { $search, $searchStrict, ...rest } = query
+      onSearch?.(query)
+      const { $search, $searchIn, ...rest } = query
       const docs = await rawFindAll(_class, rest, options)
-      const filtered = docs.filter((d: Doc) => matches.has(d._id))
+      // Scored like the server
+      const filtered = docs.filter((d: Doc) => matches.has(d._id)).map((d: Doc) => ({ ...d, $source: { $score: 1 } }))
       return toFindResult(filtered, filtered.length)
     }
   })
 }
 
-async function getSearchClient (matches: Set<Ref<Doc>>): Promise<{
+async function getSearchClient (
+  matches: Set<Ref<Doc>>,
+  onSearch?: (query: DocumentQuery<Doc>) => void
+): Promise<{
   liveQuery: LiveQuery
   factory: TxOperations
   findAllCalls: () => number
 }> {
   const storage = await createClient(connect)
-  const searchAware = withFulltextStub(storage, matches)
+  const searchAware = withFulltextStub(storage, matches, onSearch)
   let calls = 0
   const rawFindAll = searchAware.findAll.bind(searchAware)
   const counting: Client = Object.assign(Object.create(Object.getPrototypeOf(searchAware)), searchAware, {
@@ -158,6 +169,8 @@ describe('LiveQuery $search handling', () => {
 
     expect(sub.last()).toHaveLength(1)
     expect(sub.last()[0].prjName).toBe('matches')
+    // The score of the fulltext check
+    expect((sub.last()[0] as WithLookup<TestProject>).$source?.$score).toBe(1)
   })
 
   it('refreshes the query when a full-limit doc drops out of the fulltext index', async () => {
@@ -200,6 +213,45 @@ describe('LiveQuery $search handling', () => {
     expect(findAllCalls()).toBe(before + 1)
     expect(sub.last()).toHaveLength(0)
     expect(sub.last().total).toBe(0)
+  })
+
+  it('passes $searchIn to the fulltext checks of an added and an updated doc', async () => {
+    const id = generateId<TestProject>()
+    const matches = new Set<Ref<Doc>>([id])
+    const checks: DocumentQuery<Doc>[] = []
+    const { liveQuery, factory } = await getSearchClient(matches, (query) => {
+      if (query._id !== undefined) checks.push(query)
+    })
+    await subscribe<TestProject>(liveQuery, test.class.TestProject, {
+      $search: 'foo',
+      $searchIn: ['title', 'content']
+    })
+
+    await createProject(factory, 'added', id) // handleDocAdd
+    await settle()
+    await factory.updateDoc(test.class.TestProject, core.space.Model, id, { prjName: 'edited' }) // checkSearch
+    await settle()
+
+    expect(checks).toHaveLength(2)
+    for (const check of checks) {
+      expect(check.$searchIn).toEqual(['title', 'content'])
+    }
+  })
+
+  it('adds a doc that starts to match a query with $searchIn but no $search', async () => {
+    // A small group of a searched list: ListCategory drops $search only
+    const { liveQuery, factory } = await getSearchClient(new Set())
+    const id = await createProject(factory, 'other')
+    const sub = await subscribe<TestProject>(liveQuery, test.class.TestProject, {
+      prjName: 'target',
+      $searchIn: ['title']
+    })
+    expect(sub.last()).toHaveLength(0)
+
+    await factory.updateDoc(test.class.TestProject, core.space.Model, id, { prjName: 'target' })
+    await settle()
+
+    expect(sub.last().map((it) => it._id)).toEqual([id])
   })
 
   it('updates a doc in place when it still matches $search after an edit', async () => {

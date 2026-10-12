@@ -66,7 +66,8 @@ export function createModel (builder: Builder): void {
       fields: [['status'], ['space']]
     },
     shortTitle: [['identifier']],
-    title: [['title']]
+    title: [['title']],
+    contentField: 'description'
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

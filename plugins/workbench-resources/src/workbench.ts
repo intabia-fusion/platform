@@ -340,9 +340,11 @@ onClient(() => {
     },
     (res) => {
       const r = res[0]
-      if (r != null) {
-        crossWorkspaceNotificationStore.set(r)
-      }
+      if (r == null) return
+      const current = get(crossWorkspaceNotificationStore)
+      // Every workspace keeps its own copies: after a switch its newest may be older than the one held.
+      if (current?.account === r.account && (current.createdOn ?? 0) > (r.createdOn ?? 0)) return
+      crossWorkspaceNotificationStore.set(r)
     },
     {
       limit: 1,

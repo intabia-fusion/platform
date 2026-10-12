@@ -122,6 +122,7 @@ export function configureNotifications (): void {
   addEventListener(workbench.event.NotifyConnection, async () => {
     subscribeUnreadCount()
     subscribeStores()
+    onCrossWorkspaceState(get(crossWorkspaceNotificationStore))
   })
 
   addEventListener(workbench.event.NotifyTitle, async (_, title: string) => {

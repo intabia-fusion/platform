@@ -10,6 +10,7 @@
 ## Чат и уведомления - [chat.md](../features/chat.md), [notifications.md](../features/notifications.md)
 
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
+- [content-reports.md](content-reports.md) - Чат: жалобы и опция воркспейса для них
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
 - [push_voip_calls.md](push_voip_calls.md) - Push входящего звонка: VoIP
 
@@ -73,6 +74,7 @@
 - [cockroach-dropped.md](cockroach-dropped.md) - CockroachDB dropped from the test lane (possible, not supported for now)
 - [fulltext_bulk_mode.md](fulltext_bulk_mode.md) - Fulltext pod - bulk mode
 - [fulltext_needs_reindex.md](fulltext_needs_reindex.md) - Fulltext: отложенная переиндексация (needs_reindex)
+- [fulltext_search_fields.md](fulltext_search_fields.md) - Fulltext: основной текст, `$searchIn` и `$filter`
 - [kafka_consumer_test_overhead.md](kafka_consumer_test_overhead.md) - Kafka consumer lifecycle dominates fulltext test time
 - [livequery-coverage-and-bench.md](livequery-coverage-and-bench.md) - LiveQuery: инварианты, покрытие и бенчмарки
 - [livequery-tx-ordering.md](livequery-tx-ordering.md) - LiveQuery tx ordering vs ClientImpl.tx

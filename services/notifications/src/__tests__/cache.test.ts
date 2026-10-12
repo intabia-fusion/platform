@@ -963,6 +963,40 @@ describe('WorkspaceCache', () => {
       expect(statuses[0].online).toBe(true)
     })
 
+    it('reloads the statuses after an update of a status it never saw created', async () => {
+      jest
+        .mocked(mockIsDerived)
+        .mockImplementation(
+          (cls: unknown, target: unknown) => cls === 'UserStatusClass' && target === core.class.UserStatus
+        )
+
+      mockClient.findAll.mockResolvedValueOnce([] as unknown as FindResult<UserStatus>)
+      expect(await cache.getUserStatuses()).toEqual([])
+
+      cache.tx({
+        _id: 'tx-update-unknown',
+        _class: core.class.TxUpdateDoc,
+        objectId: 'us-1',
+        objectClass: 'UserStatusClass',
+        operations: { away: false }
+      } as unknown as TxUpdateDoc<Doc>)
+
+      const fresh = { _id: 'us-1', _class: 'UserStatusClass', user: 'acc-1', online: true } as unknown as UserStatus
+      mockClient.findAll.mockResolvedValueOnce([fresh] as unknown as FindResult<UserStatus>)
+      expect(await cache.getUserStatuses()).toEqual([fresh])
+      expect(mockClient.findAll).toHaveBeenCalledTimes(2)
+    })
+
+    it('reads a failed status load as no statuses and retries it on the next call', async () => {
+      mockClient.findAll.mockRejectedValueOnce(new Error('transactor is down'))
+      expect(await cache.getUserStatuses()).toEqual([])
+      expect(mockCtx.warn).toHaveBeenCalledWith('Failed to load user statuses', { error: 'transactor is down' })
+
+      const status = { _id: 'us-1', user: 'acc-1', online: true } as unknown as UserStatus
+      mockClient.findAll.mockResolvedValueOnce([status] as unknown as FindResult<UserStatus>)
+      expect(await cache.getUserStatuses()).toEqual([status])
+    })
+
     it('handles TxUpdateDoc Person updates', async () => {
       jest
         .mocked(mockIsDerived)

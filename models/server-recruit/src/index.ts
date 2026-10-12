@@ -72,7 +72,8 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(recruit.class.Vacancy, core.class.Class, serverCore.mixin.SearchPresenter, {
     searchIcon: recruit.icon.Vacancy,
-    title: [['name']]
+    title: [['name']],
+    contentField: 'fullDescription'
   })
 
   builder.mixin(recruit.class.Applicant, core.class.Class, serverCore.mixin.SearchPresenter, {

@@ -76,6 +76,21 @@ const printThresholdMs = 2500
 
 const textLimit = 500 * 1024
 
+type TextField = 'fulltextSummary' | 'fulltextExtra'
+
+function appendText (indexedDoc: IndexedDoc, field: TextField, text: string): void {
+  indexedDoc[field] = (indexedDoc[field] ?? '') + '\n' + text
+}
+
+function normalizeText (text: string): string {
+  return text
+    .split(/ +|\t+|\f+/)
+    .filter((it) => it !== '')
+    .join(' ')
+    .split(/\n\n+/)
+    .join('\n')
+}
+
 // Global Memory management configuration
 
 /**
@@ -411,6 +426,9 @@ export class FullTextIndexPipeline implements FullTextPipeline {
       )
     }
     const searchPresenter = findSearchPresenter(this.hierarchy, _class)
+    const contentField = searchPresenter?.contentField
+    const textField = (attr: AnyAttribute): TextField =>
+      attr.name === contentField ? 'fulltextSummary' : 'fulltextExtra'
 
     let parentDocs: IdMap<Doc> | undefined
 
@@ -437,6 +455,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
               const content = getContent(this.hierarchy, attributes, doc)
 
               indexedDoc.fulltextSummary = ''
+              indexedDoc.fulltextExtra = ''
               indexedDoc.searchTitle = ''
 
               const highlightableField = searchPresenter?.highlightableField
@@ -468,15 +487,21 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
               for (const [, v] of Object.entries(content)) {
                 if (v.attr.type._class === core.class.TypeBlob) {
-                  await ctx.with('process-blob', {}, (ctx) => this.processBlob(ctx, v, doc, indexedDoc), {
+                  const text = await ctx.with('process-blob', {}, (ctx) => this.processBlob(ctx, v, doc), {
                     attr: v.attr.name,
                     value: v.value
                   })
+                  if (text != null) {
+                    appendText(indexedDoc, textField(v.attr), text)
+                  }
                   continue
                 }
 
                 if (v.attr.type._class === core.class.TypeCollaborativeDoc) {
-                  await this.processCollaborativeDoc(ctx, v, indexedDoc)
+                  const text = await this.processCollaborativeDoc(ctx, v)
+                  if (text != null) {
+                    appendText(indexedDoc, textField(v.attr), text)
+                  }
                   continue
                 }
                 if ((isFullTextAttribute(v.attr) || v.attr.isCustom === true) && v.value !== undefined) {
@@ -486,7 +511,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                   } else {
                     text = `${v.value}`
                   }
-                  indexedDoc.fulltextSummary += '\n' + text
+                  appendText(indexedDoc, textField(v.attr), text)
 
                   if (v.attr.name === highlightableField) {
                     indexedDoc.highlightableContent = text
@@ -525,6 +550,9 @@ export class FullTextIndexPipeline implements FullTextPipeline {
               if (indexedDoc.fulltextSummary.length > textLimit) {
                 indexedDoc.fulltextSummary = indexedDoc.fulltextSummary.slice(0, textLimit)
               }
+              if (indexedDoc.fulltextExtra.length > textLimit) {
+                indexedDoc.fulltextExtra = indexedDoc.fulltextExtra.slice(0, textLimit)
+              }
               if (indexedDoc.highlightableContent !== undefined && indexedDoc.highlightableContent.length > textLimit) {
                 indexedDoc.highlightableContent = indexedDoc.highlightableContent.slice(0, textLimit)
               }
@@ -562,6 +590,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
               if (this.hierarchy.isDerived(doc._class, chunter.class.DirectMessage)) {
                 const direct = doc as DirectMessage
+                // Found by member names in searchTitle
+                const noText = { fulltextSummary: '', fulltextExtra: '' }
 
                 const members = direct.members ?? []
                 let persons: Person[] = []
@@ -582,7 +612,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                     .filter((name) => name !== '')
                     .join(' ')
 
-                  const memberDoc = { ...indexedDoc, viewerId: members[0], searchTitle: title, fulltextSummary: title }
+                  const memberDoc = { ...indexedDoc, viewerId: members[0], searchTitle: title, ...noText }
 
                   if (this.listener?.onIndexing !== undefined) {
                     await this.listener.onIndexing(memberDoc)
@@ -598,7 +628,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                     .filter((name) => name !== '')
                     .join(' ')
 
-                  const memberDoc = { ...indexedDoc, viewerId: member, searchTitle: title, fulltextSummary: title }
+                  const memberDoc = { ...indexedDoc, viewerId: member, searchTitle: title, ...noText }
 
                   if (this.listener?.onIndexing !== undefined) {
                     await this.listener.onIndexing(memberDoc)
@@ -776,23 +806,14 @@ export class FullTextIndexPipeline implements FullTextPipeline {
   @withContext('process-collaborative-doc')
   private async processCollaborativeDoc (
     ctx: MeasureContext<any>,
-    v: { value: any, attr: AnyAttribute },
-    indexedDoc: IndexedDoc
-  ): Promise<void> {
+    v: { value: any, attr: AnyAttribute }
+  ): Promise<string | undefined> {
     const value = v.value as Ref<Blob>
     if (value !== undefined && value !== '') {
       try {
         const readable = await this.storageAdapter?.read(ctx, this.workspace, value)
         const markup = Buffer.concat(readable).toString()
-        let textContent = markupToText(markup)
-        textContent = textContent
-          .split(/ +|\t+|\f+/)
-          .filter((it) => it !== '')
-          .join(' ')
-          .split(/\n\n+/)
-          .join('\n')
-
-        indexedDoc.fulltextSummary += '\n' + textContent
+        return normalizeText(markupToText(markup))
       } catch (err: any) {
         Analytics.handleError(err)
         ctx.error('failed to handle blob', { _id: value, workspace: this.workspace.uuid })
@@ -803,9 +824,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
   private async processBlob (
     ctx: MeasureContext<any>,
     v: { value: any, attr: AnyAttribute },
-    doc: Doc<Space>,
-    indexedDoc: IndexedDoc
-  ): Promise<void> {
+    doc: Doc<Space>
+  ): Promise<string | undefined> {
     // We need retrieve value of attached document content.
     try {
       const ref = v.value as Ref<Blob>
@@ -832,7 +852,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
           return
         }
       }
-      await this.handleBlobRef(ctx, ref, indexedDoc)
+      return await this.handleBlobRef(ctx, ref)
     } catch (err: any) {
       ctx.warn('faild to process text content', {
         id: doc._id,
@@ -847,9 +867,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
   private async handleBlobRef (
     ctx: MeasureContext<any>,
     ref: Ref<Blob>,
-    indexedDoc: IndexedDoc,
     defaultContentType: string = ''
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const docInfo: Blob | undefined = await this.storageAdapter.stat(ctx, this.workspace, ref)
     if (docInfo !== undefined && docInfo.size < 30 * 1024 * 1024) {
       // We have blob, we need to decode it to string.
@@ -857,61 +876,38 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
       const ct = contentType.toLocaleLowerCase()
       if ((ct.includes('text/') && contentType !== 'text/rtf') || ct.includes('application/vnd.github.version.diff')) {
-        await this.handleTextBlob(ctx, docInfo, indexedDoc)
+        return await this.handleTextBlob(ctx, docInfo)
       } else if (isBlobAllowed(contentType)) {
-        await this.handleBlob(ctx, docInfo, indexedDoc)
+        return await this.handleBlob(ctx, docInfo)
       }
     }
   }
 
-  private async handleBlob (ctx: MeasureContext<any>, docInfo: Blob | undefined, indexedDoc: IndexedDoc): Promise<void> {
-    if (docInfo !== undefined) {
-      const contentType = (docInfo.contentType ?? '').split(';')[0]
+  private async handleBlob (ctx: MeasureContext<any>, docInfo: Blob): Promise<string> {
+    const contentType = (docInfo.contentType ?? '').split(';')[0]
 
-      if (docInfo.size > 30 * 1024 * 1024) {
-        throw new Error('Blob size exceeds limit of 30MB')
-      }
-      const buffer = Buffer.concat(
-        await ctx.with('fetch', {}, (ctx) => this.storageAdapter?.read(ctx, this.workspace, docInfo._id))
-      )
-      let textContent = await ctx.with(
-        'to-text',
-        {},
-        (ctx) => this.contentAdapter.content(ctx, this.workspace.uuid, docInfo._id, contentType, buffer),
-        {
-          workspace: this.workspace.uuid,
-          blobId: docInfo._id,
-          contentType
-        }
-      )
-      textContent = textContent
-        .split(/ +|\t+|\f+/)
-        .filter((it) => it !== '')
-        .join(' ')
-        .split(/\n\n+/)
-        .join('\n')
-
-      indexedDoc.fulltextSummary += '\n' + textContent
+    if (docInfo.size > 30 * 1024 * 1024) {
+      throw new Error('Blob size exceeds limit of 30MB')
     }
+    const buffer = Buffer.concat(
+      await ctx.with('fetch', {}, (ctx) => this.storageAdapter?.read(ctx, this.workspace, docInfo._id))
+    )
+    const textContent = await ctx.with(
+      'to-text',
+      {},
+      (ctx) => this.contentAdapter.content(ctx, this.workspace.uuid, docInfo._id, contentType, buffer),
+      {
+        workspace: this.workspace.uuid,
+        blobId: docInfo._id,
+        contentType
+      }
+    )
+    return normalizeText(textContent)
   }
 
-  private async handleTextBlob (
-    ctx: MeasureContext<any>,
-    docInfo: Blob | undefined,
-    indexedDoc: IndexedDoc
-  ): Promise<void> {
-    if (docInfo !== undefined) {
-      let textContent = Buffer.concat(await this.storageAdapter?.read(ctx, this.workspace, docInfo._id)).toString()
-
-      textContent = textContent
-        .split(/ +|\t+|\f+/)
-        .filter((it) => it !== '')
-        .join(' ')
-        .split(/\n\n+/)
-        .join('\n')
-
-      indexedDoc.fulltextSummary += '\n' + textContent
-    }
+  private async handleTextBlob (ctx: MeasureContext<any>, docInfo: Blob): Promise<string> {
+    const textContent = Buffer.concat(await this.storageAdapter?.read(ctx, this.workspace, docInfo._id)).toString()
+    return normalizeText(textContent)
   }
 }
 function isBlobAllowed (contentType: string): boolean {

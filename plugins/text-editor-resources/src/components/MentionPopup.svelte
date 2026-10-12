@@ -212,7 +212,10 @@
   }
 
   const updateItems = reduceCalls(async function (localQuery: string): Promise<void> {
-    const r = await searchFor('mention', localQuery)
+    const r = await searchFor('mention', localQuery, undefined, undefined, {
+      searchIn: ['title', 'identifier'],
+      infix: true
+    })
     if (r.query === query) {
       const latestIndex = r.items.findLastIndex((it) => it.category.classToSearch === contact.mixin.Employee)
       const multipleEmployeeSearchItems = await getMultipleEmployeeSearchItems(localQuery, latestIndex)

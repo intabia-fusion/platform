@@ -35,7 +35,7 @@
 | `MeetingSchedule extends Schedule` | Миксин на booking-page календаря | `plugins/love/src/types.ts` |
 | `DevicesPreference extends Preference` | Настройки устройств (микрофон, noise cancellation, blur, камера) | `plugins/love/src/types.ts` |
 | `MeetingStatus` (enum) | `Active`/`Finished`/`Pending`/`Scheduled` | `plugins/love/src/types.ts` |
-| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary`, `traceId`, счётчики | `plugins/love/src/types.ts` |
+| `MeetingMinutes extends Space` | Сам звонок: security-модель Space + `roomId`, `summary` (основной текст в поиске, `contentField` в `models/server-love`), `traceId`, счётчики | `plugins/love/src/types.ts` |
 | `PendingRecording extends AttachedDoc` | Запись через LiveKit Egress, `egressId`/`format`/`status` | `plugins/love/src/types.ts` |
 | `UserMeetingInvite extends Doc` | Invite/knock, домен `DOMAIN_TRANSIENT` + `TransientTTL(30s)` | `plugins/love/src/types.ts` |
 
@@ -116,7 +116,7 @@
 
 - `services/love/src/config.ts` - обязательные env (`ACCOUNTS_URL`, `LIVEKIT_*`, `SECRET` и др.); падает при импорте, если чего-то нет.
 - `EGRESS_REQUEST_TIMEOUT_SEC` - таймаут запроса к LiveKit `EgressClient` (по умолчанию 30s).
-- `useKrisp = false` в `plugins/love-resources/src/utils.ts` - Krisp noise-cancellation отключена фич-флагом (платный LiveKit add-on, нестабилен), обвязка сохранена.
+- Krisp noise-cancellation (платный LiveKit add-on) удалена вместе с зависимостью `@livekit/krisp-noise-filter`; шумоподавление микрофона - только WebRTC `noiseSuppression` по `DevicesPreference.noiseCancellation` (`liveKitClient.ts`).
 - `DevicesPreference` (`micEnabled`, `noiseCancellation`, `blurRadius`, `camEnabled`, `speakingWhileMutedAlert`) - персональные настройки устройств, `plugins/love/src/types.ts`.
 - `Room.startWithTranscription`/`startWithRecording`/`startPrivate` - настройки на комнату.
 

@@ -18,7 +18,7 @@ import { DocNotifyContext, ReadState } from '@hcengineering/notification'
 
 import { Client, Result } from '../../types'
 import Cache from '../../cache'
-import { handleReadState } from '../read'
+import { handleReadState, readPositions } from '../read'
 import { emptyResult } from '../../utils/result'
 
 describe('handleReadState', () => {
@@ -153,7 +153,7 @@ describe('handleReadState', () => {
 
     await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
-    expect(mockCache.getContexts).toHaveBeenCalledWith('doc-1')
+    expect(mockCache.getReadState).not.toHaveBeenCalled()
     expect(result.updateContextTx).toHaveLength(0)
   })
 
@@ -405,5 +405,23 @@ describe('handleReadState', () => {
       expect(mockCache.getPushSubscriptions).not.toHaveBeenCalled()
       expect(result.queueMessages).toHaveLength(0)
     })
+  })
+})
+
+describe('readPositions', () => {
+  it('lists the readers moved forward, skipping the service fields and reset positions', () => {
+    const tx = {
+      _class: core.class.TxUpdateDoc,
+      objectId: 'rs-1',
+      operations: {
+        'user-1': { timestamp: 5 },
+        'user-2': { timestamp: 0 },
+        'user-3': null,
+        latestMessageId: 'msg-1',
+        latestMessageTimestamp: 7
+      }
+    } as unknown as TxUpdateDoc<ReadState>
+
+    expect(readPositions(tx)).toEqual([['user-1', 5]])
   })
 })

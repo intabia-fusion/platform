@@ -72,6 +72,24 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnContentReport,
+    txMatch: {
+      _class: core.class.TxCreateDoc,
+      objectClass: chunter.class.ContentReportAction
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnReportedMessageRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: { $in: [chunter.class.ChatMessage, chunter.class.ThreadMessage] }
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverChunter.trigger.OnCollaboratorAdded,
     txMatch: {
       objectClass: core.class.Collaborator,
@@ -132,13 +150,15 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(chunter.class.Channel, core.class.Class, serverCore.mixin.SearchPresenter, {
     searchIcon: chunter.icon.Hashtag,
-    title: [['name']]
+    title: [['name']],
+    contentField: 'description'
   })
 
   builder.mixin(chunter.class.ChatMessage, core.class.Class, serverCore.mixin.SearchPresenter, {
     title: [['func', serverChunter.function.ChatMessageSearchTitleProvider, 'title']],
     shortTitle: [['func', serverChunter.function.ChatMessageSearchTitleProvider, 'short']],
     highlightableField: 'message',
+    contentField: 'message',
     indexCollection: true
   })
 }

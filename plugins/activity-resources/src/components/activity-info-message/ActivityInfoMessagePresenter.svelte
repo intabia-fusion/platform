@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { ActivityInfoMessage } from '@hcengineering/activity'
+  import activity, { type ActivityInfoMessage, type ActivityInfoMessageViewlet } from '@hcengineering/activity'
+  import { matchQuery } from '@hcengineering/core'
+  import { Component } from '@hcengineering/ui'
   import { Avatar, SystemAvatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { translateCB } from '@hcengineering/platform'
-  import { HTMLViewer } from '@hcengineering/presentation'
+  import { HTMLViewer, MessageViewer, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
   import { themeStore } from '@hcengineering/ui'
 
@@ -39,6 +41,13 @@
   export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
 
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const viewlets = client.getModel().findAllSync(activity.class.ActivityInfoMessageViewlet, {})
+
+  let viewlet: ActivityInfoMessageViewlet | undefined
+  $: viewlet = viewlets.find((v) => matchQuery([value], v.match, value._class, hierarchy, true).length > 0)
+
   let person: Person | undefined
   $: getPersonByPersonIdCb(value.createdBy ?? value.modifiedBy, (p) => {
     person = p ?? undefined
@@ -51,52 +60,77 @@
   })
 </script>
 
-<ActivityMessageTemplate
-  message={value}
-  parentMessage={undefined}
-  {person}
-  {showNotify}
-  {isHighlighted}
-  {isSelected}
-  {shouldScroll}
-  {embedded}
-  {withActions}
-  {actions}
-  {hoverable}
-  {hoverStyles}
-  viewlet={undefined}
-  {readonly}
-  {timeFormat}
-  {onClick}
->
-  <svelte:fragment slot="icon">
-    {#if value.icon}
-      <SystemAvatar size="medium" icon={value.icon} iconProps={value.iconProps} />
-    {:else if person}
-      <Avatar size="medium" {person} name={person.name} />
-    {:else}
-      <SystemAvatar size="medium" />
-    {/if}
-  </svelte:fragment>
-  <svelte:fragment slot="header">
-    <ActivityMessageHeader
-      message={value}
-      {person}
-      object={undefined}
-      parentObject={undefined}
-      isEdited={false}
-      {hideLink}
-      label={value.title}
-    />
-  </svelte:fragment>
-  <svelte:fragment slot="content">
-    <div class="flex-row-center">
-      <div class="customContent">
-        <HTMLViewer value={content} />
+{#if viewlet}
+  <Component
+    is={viewlet.presenter}
+    props={{
+      value,
+      showNotify,
+      isHighlighted,
+      isSelected,
+      shouldScroll,
+      embedded,
+      withActions,
+      actions,
+      hoverable,
+      hoverStyles,
+      hideLink,
+      readonly,
+      timeFormat,
+      onClick
+    }}
+  />
+{:else}
+  <ActivityMessageTemplate
+    message={value}
+    parentMessage={undefined}
+    {person}
+    {showNotify}
+    {isHighlighted}
+    {isSelected}
+    {shouldScroll}
+    {embedded}
+    {withActions}
+    {actions}
+    {hoverable}
+    {hoverStyles}
+    viewlet={undefined}
+    {readonly}
+    {timeFormat}
+    {onClick}
+  >
+    <svelte:fragment slot="icon">
+      {#if value.icon}
+        <SystemAvatar size="medium" icon={value.icon} iconProps={value.iconProps} />
+      {:else if person}
+        <Avatar size="medium" {person} name={person.name} />
+      {:else}
+        <SystemAvatar size="medium" />
+      {/if}
+    </svelte:fragment>
+    <svelte:fragment slot="header">
+      <ActivityMessageHeader
+        message={value}
+        {person}
+        object={undefined}
+        parentObject={undefined}
+        isEdited={false}
+        {hideLink}
+        label={value.title}
+      />
+    </svelte:fragment>
+    <svelte:fragment slot="content">
+      <div class="flex-row-center">
+        <div class="customContent">
+          <HTMLViewer value={content} />
+        </div>
       </div>
-    </div>
-  </svelte:fragment>
-</ActivityMessageTemplate>
+      {#if value.markup}
+        <MessageViewer message={value.markup} />
+      {/if}
+    </svelte:fragment>
+  </ActivityMessageTemplate>
+{/if}
 
 <style lang="scss">
   .customContent {

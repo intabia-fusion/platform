@@ -21,6 +21,7 @@ import {
   DEFAULT_HIDDEN_AFTER_MS,
   DEFAULT_IDLE_AFTER_MS,
   isUserAwayStore,
+  presenceReason,
   setSystemIdle,
   startActivityTracking
 } from '../presence'
@@ -46,6 +47,21 @@ describe('computeAway', () => {
 
   it('is away while the system is idle (locked screen, sleep)', () => {
     expect(computeAway({ lastInput: 1000, hiddenSince: undefined, systemIdle: true }, 1000, thresholds)).toBe(true)
+  })
+})
+
+describe('presenceReason', () => {
+  it('names what made the person away, system idle first', () => {
+    expect(presenceReason({ lastInput: 0, hiddenSince: 0, systemIdle: true }, DEFAULT_IDLE_AFTER_MS, thresholds)).toBe(
+      'system-idle'
+    )
+    expect(presenceReason({ lastInput: 0, hiddenSince: 0, systemIdle: false }, DEFAULT_IDLE_AFTER_MS, thresholds)).toBe(
+      'hidden'
+    )
+    expect(
+      presenceReason({ lastInput: 0, hiddenSince: undefined, systemIdle: false }, DEFAULT_IDLE_AFTER_MS, thresholds)
+    ).toBe('idle')
+    expect(presenceReason({ lastInput: 0, hiddenSince: undefined, systemIdle: false }, 0, thresholds)).toBe('active')
   })
 })
 
@@ -97,5 +113,21 @@ describe('activity tracking', () => {
 
     setSystemIdle(false)
     expect(get(isUserAwayStore)).toBe(false)
+  })
+
+  it('logs only the transitions, with the reason', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    try {
+      vi.advanceTimersByTime(DEFAULT_IDLE_AFTER_MS + 60_000)
+      window.dispatchEvent(new Event('keydown'))
+      vi.advanceTimersByTime(60_000)
+
+      expect(info.mock.calls.map((it) => it.slice(0, 2))).toEqual([
+        ['[presence] away', 'idle'],
+        ['[presence] here', 'active']
+      ])
+    } finally {
+      info.mockRestore()
+    }
   })
 })

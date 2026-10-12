@@ -105,6 +105,14 @@ const expose: IPCMainExposed = {
 
   config: async () => {
     configPromise ??= new Promise((resolve, reject) => {
+      // A bridged promise still pending at reload (offline retries) pins the whole old page in memory.
+      window.addEventListener(
+        'pagehide',
+        () => {
+          reject(new Error('Page unloaded'))
+        },
+        { once: true }
+      )
       ipcRenderer.invoke(IpcMessage.GetMainConfig).then(
         async (mainConfig) => {
           const serverConfig = await loadServerConfig(concatLink(mainConfig.FRONT_URL, mainConfig.CONFIG_URL))

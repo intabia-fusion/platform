@@ -131,7 +131,7 @@
         } else {
           return {
             $search: search,
-            $searchStrict: true,
+            $searchIn: ['title', 'identifier'],
             _id: { $in: _ids }
           }
         }

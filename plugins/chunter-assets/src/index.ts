@@ -26,5 +26,6 @@ loadMetadata(chunter.icon, {
   ChunterBrowser: `${icons}#chunterbrowser`,
   Copy: `${icons}#copy`,
   Messages: `${icons}#messages`,
-  Bookmarks: `${icons}#bookmarks`
+  Bookmarks: `${icons}#bookmarks`,
+  Report: `${icons}#report`
 })

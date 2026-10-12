@@ -43,10 +43,17 @@ export interface PresenceState {
   systemIdle: boolean
 }
 
+export type PresenceReason = 'system-idle' | 'hidden' | 'idle' | 'active'
+
+export function presenceReason (state: PresenceState, now: number, thresholds: PresenceThresholds): PresenceReason {
+  if (state.systemIdle) return 'system-idle'
+  if (state.hiddenSince !== undefined && now - state.hiddenSince >= thresholds.hiddenAfterMs) return 'hidden'
+  if (now - state.lastInput >= thresholds.idleAfterMs) return 'idle'
+  return 'active'
+}
+
 export function computeAway (state: PresenceState, now: number, thresholds: PresenceThresholds): boolean {
-  if (state.systemIdle) return true
-  if (state.hiddenSince !== undefined && now - state.hiddenSince >= thresholds.hiddenAfterMs) return true
-  return now - state.lastInput >= thresholds.idleAfterMs
+  return presenceReason(state, now, thresholds) !== 'active'
 }
 
 export function getPresenceThresholds (): PresenceThresholds {
@@ -59,8 +66,13 @@ export function getPresenceThresholds (): PresenceThresholds {
 const state: PresenceState = { lastInput: Date.now(), hiddenSince: undefined, systemIdle: false }
 
 function publish (): void {
-  const away = computeAway(state, Date.now(), getPresenceThresholds())
-  if (get(isUserAwayStore) !== away) isUserAwayStore.set(away)
+  const now = Date.now()
+  const reason = presenceReason(state, now, getPresenceThresholds())
+  const away = reason !== 'active'
+  if (get(isUserAwayStore) === away) return
+  // Only transitions are logged: what the server is told decides whether the phone push waits.
+  console.info(`[presence] ${away ? 'away' : 'here'}`, reason, new Date(now).toISOString())
+  isUserAwayStore.set(away)
 }
 
 function noteInput (): void {

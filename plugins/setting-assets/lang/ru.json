@@ -210,6 +210,8 @@
     "IntegrationIsUnstable": "Сервис интеграции испытывает проблемы. Некоторые функции могут работать некорректно.",
     "AccessControl": "Контроль доступа",
     "DangerZone": "Опасная зона",
+    "ContentReports": "Жалобы",
+    "ContentReportsDescription": "Разрешить участникам жаловаться на сообщения и других участников",
     "ApiAccess": "Доступ к API",
     "CreateApiKey": "Создать API-ключ",
     "ApiKeyName": "Имя",
