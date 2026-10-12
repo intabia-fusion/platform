@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, FindResult, Ref, Space } from '@hcengineering/core'
+  import type { Class, Doc, FindResult, Ref, RefTo, Space } from '@hcengineering/core'
   import core, { getObjectValue, SortingOrder, type WithLookup } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
+    Button,
     deviceOptionsStore,
     EditWithIcon,
     Icon,
@@ -32,56 +33,75 @@
   import view from '../../plugin'
   import { getPresenter } from '../../utils'
 
+  const dispatch = createEventDispatcher()
+
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
   export let filter: Filter
   export let onChange: (e: Filter) => void
   export let viewOptions: ViewOptions | undefined = undefined
 
-  filter.modes = [view.filter.FilterValueIn, view.filter.FilterValueNin]
-  filter.mode = filter.mode === undefined ? filter.modes[0] : filter.mode
-
-  $: isSearchable = [core.class.TypeNumber, core.class.EnumOf].includes(filter.key.attribute.type._class)
-
   const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  const isStringType = hierarchy.isDerived(filter.key.attribute.type._class, core.class.TypeString)
+
+  filter.modes = isStringType
+    ? [view.filter.FilterValueIn, view.filter.FilterValueNin, view.filter.FilterContains]
+    : [view.filter.FilterValueIn, view.filter.FilterValueNin]
+  if (filter.mode === undefined || !filter.modes.includes(filter.mode)) {
+    filter.mode = isStringType ? view.filter.FilterContains : view.filter.FilterValueIn
+  }
+
+  if (filter.mode === view.filter.FilterContains) {
+    if (filter.value.length > 0 && Array.isArray(filter.value[0])) filter.value = []
+  } else if (filter.value.length > 0 && !Array.isArray(filter.value[0])) {
+    filter.value = []
+  }
+
+  $: isSearchable =
+    isStringType || [core.class.TypeNumber, core.class.EnumOf].includes(filter.key.attribute.type._class)
+
   const key = { key: filter.key.key }
   const promise = getPresenter(client, filter.key._class, key, key)
 
   let values = new Set<any>()
   let sortedValues: any[] = []
-  let selectedValues: Set<any> = new Set<any>(filter.value.map((p) => p[0]))
+  let selectedValues = new Set<any>(filter.value.map((p) => p[0]))
   const realValues = new Map<any, Set<any>>()
 
   let objectsPromise: Promise<FindResult<Doc>> | undefined
-
   let filterUpdateTimeout: any | undefined
 
-  async function getValues (search: string): Promise<void> {
-    if (objectsPromise) {
+  let search: string =
+    filter.mode === view.filter.FilterContains && typeof filter.value[0] === 'string' ? filter.value[0] : ''
+
+  async function getValues (searchText: string): Promise<void> {
+    if (objectsPromise != null) {
       await objectsPromise
     }
     values.clear()
     realValues.clear()
     let prefix = ''
-    const hierarchy = client.getHierarchy()
     const attr = hierarchy.getAttribute(filter.key._class, filter.key.key)
     if (hierarchy.isMixin(attr.attributeOf)) {
       prefix = attr.attributeOf + '.'
     }
+
     const resultQuery =
-      isSearchable && search !== ''
+      isSearchable && searchText !== ''
         ? {
-            [prefix + filter.key.key]: { $like: '%' + search + '%' }
+            [prefix + filter.key.key]: { $like: '%' + searchText + '%' }
           }
         : {}
 
-    async function doQuery (limit: number | undefined, sortedValues: any[] | undefined): Promise<boolean> {
+    async function doQuery (limit: number | undefined, exclude: any[] | undefined): Promise<boolean> {
       const p = client.findAll(
         _class,
         {
           ...resultQuery,
           ...(space !== undefined ? { space } : {}),
-          ...(sortedValues !== undefined ? { [prefix + filter.key.key]: { $nin: sortedValues } } : {})
+          ...(exclude !== undefined ? { [prefix + filter.key.key]: { $nin: exclude } } : {})
         },
         {
           sort: { modifiedOn: SortingOrder.Descending },
@@ -94,8 +114,6 @@
         objectsPromise = p
       }
       const res: WithLookup<Doc>[] = await p
-      // We need to filter archived in case it is required
-
       for (const object of res) {
         let asDoc = object
         if (hierarchy.isMixin(filter.key._class)) {
@@ -106,17 +124,20 @@
         values.add(value)
         realValues.set(value, (realValues.get(value) ?? new Set()).add(realValue))
       }
-      for (const object of filter.value.map((p) => p[0])) {
-        values.add(object)
-      }
       return res.length >= (limit ?? 0)
     }
+
     const hasMore = await doQuery(1000, undefined)
+    for (const p of filter.value) {
+      if (Array.isArray(p)) {
+        values.add(p[0])
+        realValues.set(p[0], new Set(p[1]))
+      }
+    }
     values = values
     sortedValues = sortFilterValues([...values.keys()], (v) => isSelected(v, selectedValues))
     objectsPromise = undefined
 
-    // Check if we have all possible values, in case of enumeration
     if (hasMore) {
       await doQuery(undefined, Array.from(values))
       sortedValues = sortFilterValues([...values.keys()], (v) => isSelected(v, selectedValues))
@@ -127,17 +148,22 @@
   function getValue (obj: any): any {
     if (typeof obj === 'string') {
       const trim = obj.trim()
-      return trim.length > 0 ? trim.toUpperCase() : undefined
-    } else {
-      return obj ?? undefined
+      return trim.length > 0 ? trim.toUpperCase() : null
     }
+    return obj ?? null
   }
 
-  function isSelected (value: any, values: Set<any>): boolean {
-    return values.has(value)
+  function isSelected (value: any, vals: Set<any>): boolean {
+    return vals.has(value)
   }
 
   function handleFilterToggle (value: any): void {
+    if (filter.mode === view.filter.FilterContains) {
+      filter.mode = view.filter.FilterValueIn
+      filter.value = []
+      selectedValues = new Set()
+      search = ''
+    }
     if (isSelected(value, selectedValues)) {
       selectedValues.delete(value)
     } else {
@@ -148,26 +174,42 @@
     updateFilter(selectedValues)
   }
 
-  function updateFilter (newValues: Set<any>) {
+  function updateFilter (newValues: Set<any>): void {
     clearTimeout(filterUpdateTimeout)
 
     filterUpdateTimeout = setTimeout(() => {
       filter.value = [...newValues.values()].map((v) => {
-        return [v, [...(realValues.get(v) ?? [])]]
+        const realVals = realValues.get(v)
+        return v === null ? [null, [null]] : [v, [...(realVals ?? [])]]
       })
 
       onChange(filter)
     }, FILTER_DEBOUNCE_MS)
   }
 
-  let search: string = ''
+  export function onKeyDown (event: KeyboardEvent): boolean {
+    if (event.key === 'Enter' && isStringType && search !== '') {
+      event.preventDefault()
+      event.stopPropagation()
+      save()
+      return true
+    }
+    return false
+  }
 
-  const dispatch = createEventDispatcher()
+  function save (): void {
+    if (search == null || search === '') return
+    filter.mode = view.filter.FilterContains
+    filter.value = [search]
+    onChange(filter)
+    dispatch('close')
+  }
 
   $: void getValues(search)
 </script>
 
-<div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')} on:keydown={onKeyDown}>
   {#if isSearchable}
     <div class="header">
       <EditWithIcon
@@ -176,11 +218,14 @@
         width={'100%'}
         autoFocus={!$deviceOptionsStore.isMobile}
         bind:value={search}
-        placeholder={presentation.string.Search}
+        placeholder={filter.key.label}
       />
     </div>
   {:else}
     <div class="menu-space" />
+  {/if}
+  {#if isStringType && search !== ''}
+    <Button shape="filter" label={view.string.Apply} on:click={save} />
   {/if}
   <div class="scroll">
     <div class="box">
@@ -196,7 +241,7 @@
                 handleFilterToggle(value)
               }}
             >
-              {#if value !== undefined}
+              {#if value != null}
                 <div class="clear-mins flex-grow">
                   <svelte:component
                     this={attribute.presenter}

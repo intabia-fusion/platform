@@ -13,7 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  export let value: string[]
+  export let value: any[]
+  $: first = Array.isArray(value[0]) ? value[0][0] : value[0]
+  $: text = first == null ? '' : value.length > 1 ? `${first}, +${value.length - 1}` : `${first}`
 </script>
 
-{value[0]}
+{text}

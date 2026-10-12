@@ -22,6 +22,7 @@ import view, { viewId } from '@hcengineering/view'
 export default mergeIds(viewId, view, {
   component: {
     ObjectFilter: '' as AnyComponent,
+    StatusFilter: '' as AnyComponent,
     DateFilter: '' as AnyComponent,
     ValueFilter: '' as AnyComponent,
     ArrayFilter: '' as AnyComponent,

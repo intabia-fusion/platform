@@ -234,6 +234,10 @@ function defineFilters (builder: Builder): void {
     presenter: tracker.component.StatusFilterValuePresenter
   })
 
+  builder.mixin(tracker.class.IssueStatus, core.class.Class, view.mixin.AttributeFilter, {
+    component: view.component.StatusFilter
+  })
+
   //
   // Issue Template
   //
