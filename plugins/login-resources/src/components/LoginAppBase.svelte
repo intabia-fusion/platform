@@ -288,7 +288,7 @@
   }
 
   /* Desktop keeps a fixed, centered panel, so its Scroller handles overflow. */
-  @media (max-height: 760px) and (min-width: 769px) {
+  @media (min-width: 769px) {
     .panel-base {
       max-height: calc(100dvh - 2rem);
       overflow: hidden;
