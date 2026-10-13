@@ -165,8 +165,14 @@ jest.mock('@hcengineering/presentation', () => ({
   getClient: () => mockClient,
   createQuery: () => mockQuery,
   addTxListener: jest.fn(),
-  removeTxListener: jest.fn()
+  removeTxListener: jest.fn(),
+  onWorkspaceChange: jest.fn()
 }))
+
+// Registered when chatViewport.ts is imported, before beforeEach clears the mocks.
+const workspaceChangeListener: () => void = (
+  jest.requireMock('@hcengineering/presentation').onWorkspaceChange as jest.Mock
+).mock.calls[0][0]
 
 describe('ChatViewport', () => {
   const flushTasks = async (): Promise<void> => {
@@ -196,6 +202,18 @@ describe('ChatViewport', () => {
 
   afterEach(() => {
     ChatViewport.clearCache()
+  })
+
+  it('drops cached viewports on a workspace switch: `general` has the same id in every workspace', async () => {
+    mockClient.findAll.mockResolvedValue([])
+    const first = ChatViewport.getOrCreate({} as any, chatId, undefined)
+    first.release()
+    expect(ChatViewport.getOrCreate({} as any, chatId, undefined)).toBe(first)
+    first.release()
+
+    workspaceChangeListener()
+
+    expect(ChatViewport.getOrCreate({} as any, chatId, undefined)).not.toBe(first)
   })
 
   describe('Suite 1: Initial viewport', () => {

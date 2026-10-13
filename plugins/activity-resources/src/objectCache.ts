@@ -14,7 +14,7 @@
 //
 
 import core, { type Class, type Doc, type Ref, type Tx, type TxCUD } from '@hcengineering/core'
-import { addTxListener, getClient } from '@hcengineering/presentation'
+import { addTxListener, getClient, onWorkspaceChange } from '@hcengineering/presentation'
 
 // Activity cards look up their header object (a channel, a document) one per card, and many cards
 // share the same object. Lookups of one class issued in the same tick go out as a single `$in`
@@ -84,6 +84,11 @@ export async function getObjectById (_class: Ref<Class<Doc>>, _id: Ref<Doc>): Pr
   }
   return await pending
 }
+
+onWorkspaceChange(() => {
+  found.clear()
+  inflight.clear()
+})
 
 addTxListener((txes: Tx[]) => {
   for (const tx of txes) {

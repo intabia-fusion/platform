@@ -18,10 +18,15 @@ import core, { type Class, type Doc, type Ref, type Tx } from '@hcengineering/co
 const findAll = jest.fn()
 let txListener: ((txes: Tx[]) => void) | undefined
 
+let workspaceChangeListener: (() => void) | undefined
+
 jest.mock('@hcengineering/presentation', () => ({
   getClient: () => ({ findAll }),
   addTxListener: (listener: (txes: Tx[]) => void) => {
     txListener = listener
+  },
+  onWorkspaceChange: (listener: () => void) => {
+    workspaceChangeListener = listener
   }
 }))
 
@@ -67,6 +72,14 @@ describe('objectCache', () => {
     await getObjectById(clazz, id(50))
     expect(findAll).not.toHaveBeenCalled()
 
+    await getObjectById(clazz, id(2))
+    expect(findAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('forgets everything on a workspace switch', async () => {
+    await fill(1, 3)
+    workspaceChangeListener?.()
+    findAll.mockClear()
     await getObjectById(clazz, id(2))
     expect(findAll).toHaveBeenCalledTimes(1)
   })

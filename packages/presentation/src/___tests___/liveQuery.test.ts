@@ -13,8 +13,16 @@
 // limitations under the License.
 //
 
-import core, { type Client, type Doc, type FindResult, setCurrentAccount } from '@hcengineering/core'
-import { createQuery, setClient } from '../utils'
+import core, {
+  type Client,
+  type Doc,
+  type FindResult,
+  setCurrentAccount,
+  type WorkspaceUuid
+} from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
+import presentation from '../plugin'
+import { createQuery, onWorkspaceChange, setClient } from '../utils'
 
 interface Subscription {
   query: Record<string, any>
@@ -68,6 +76,8 @@ jest.mock('@hcengineering/query', () => ({
 
     async close (): Promise<void> {}
 
+    async refreshConnect (): Promise<void> {}
+
     isClosed (): boolean {
       return false
     }
@@ -85,7 +95,7 @@ async function settle (): Promise<void> {
 describe('LiveQuery', () => {
   beforeAll(async () => {
     setCurrentAccount({ uuid: 'test', role: 'USER', primarySocialId: 'test', socialIds: ['test'] } as any)
-    await setClient({ findAll: async () => [], notify: () => {} } as unknown as Client)
+    await setClient({ findAll: async () => [], notify: () => {}, close: async () => {} } as unknown as Client)
   })
 
   it('resubscribes to A after A -> B -> A within one tick', async () => {
@@ -115,5 +125,20 @@ describe('LiveQuery', () => {
     expect(q.query(core.class.Doc, { name: 'C' } as any, callback)).toBe(false)
     await settle()
     expect(q.query(core.class.Doc, { name: 'C' } as any, callback)).toBe(false)
+  })
+
+  it('runs workspace change listeners only when setClient connects to another workspace', async () => {
+    const client = { findAll: async () => [], notify: () => {}, close: async () => {} } as unknown as Client
+    const changed = jest.fn()
+    onWorkspaceChange(changed)
+
+    setMetadata(presentation.metadata.WorkspaceUuid, 'ws-a' as WorkspaceUuid)
+    await setClient(client)
+    await setClient(client)
+    expect(changed).not.toHaveBeenCalled()
+
+    setMetadata(presentation.metadata.WorkspaceUuid, 'ws-b' as WorkspaceUuid)
+    await setClient(client)
+    expect(changed).toHaveBeenCalledTimes(1)
   })
 })

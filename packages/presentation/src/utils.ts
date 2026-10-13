@@ -425,6 +425,19 @@ export function onClient (l: OnClientListener): void {
   }
 }
 
+const workspaceChangeListeners: Array<() => void> = []
+let clientWorkspace: string | undefined
+
+/**
+ * Runs when setClient connects to another workspace, before that workspace's UI mounts. Module-level
+ * caches keyed by document ids must drop their content here: system documents such as the `general`
+ * channel have the same `_id` in every workspace.
+ * @public
+ */
+export function onWorkspaceChange (l: () => void): void {
+  workspaceChangeListeners.push(l)
+}
+
 let txQueue: Tx[] = []
 
 export type RefreshListener = () => void
@@ -538,6 +551,13 @@ class ClientHookImpl implements Client {
  */
 export async function setClient (_client: Client): Promise<void> {
   pendingCreatedDocs.set({})
+  const workspace = getMetadata(plugin.metadata.WorkspaceUuid)
+  if (clientWorkspace !== undefined && clientWorkspace !== workspace) {
+    for (const l of workspaceChangeListeners) {
+      l()
+    }
+  }
+  clientWorkspace = workspace
   if (liveQuery !== undefined) {
     await liveQuery.close()
   }
