@@ -40,7 +40,14 @@
   import view from '@hcengineering/view-resources/src/plugin'
   import { buildConfigLookup, getPresenter } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
-  import { typesOfJoinedProjectsStore, selectedTaskTypeStore, selectedTypeStore, taskTypeStore, typeStore } from '..'
+  import {
+    getProjectType,
+    typesOfJoinedProjectsStore,
+    selectedTaskTypeStore,
+    selectedTypeStore,
+    taskTypeStore,
+    typeStore
+  } from '..'
 
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined
@@ -74,6 +81,7 @@
     joinedSpacesTypes: Ref<ProjectType>[]
   ): Promise<void> {
     await objectsPromise
+    const projectType = selectedProjectType ?? (await getProjectType(space))
     targets.clear()
 
     for (const object of filter.value) {
@@ -95,7 +103,7 @@
         .filter((it, index, arr) => it !== undefined && arr.indexOf(it) === index) as ProjectStatus[]
       const prjStatuses = new Map(
         (
-          (selectedProjectType !== undefined ? projectTypeStore.get(selectedProjectType) : undefined)?.statuses ??
+          (projectType !== undefined ? projectTypeStore.get(projectType) : undefined)?.statuses ??
           projectTypesNeeded ??
           []
         ).map((p) => [p._id, p])
@@ -105,7 +113,7 @@
           continue
         }
         if (hierarchy.isDerived(status._class, targetClass)) {
-          if (selectedProjectType === undefined) {
+          if (projectType === undefined) {
             if (status.ofAttribute === filter.key.attribute._id) {
               statuses.push(status)
               targets.add(status._id)

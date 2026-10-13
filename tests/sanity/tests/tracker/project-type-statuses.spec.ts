@@ -41,6 +41,8 @@ test.describe('Statuses of a project type in tracker', () => {
   const extendedProject = `Extended-${generateId(4)}`
 
   const listHeader = (name: string): Locator => page.locator('.categoryHeader').getByText(name, { exact: true })
+  const statusFilterItem = (name: string): Locator =>
+    page.locator('div.selectPopup button.menu-item').getByText(name, { exact: true })
   const boardColumn = (name: string): Locator =>
     page.locator('[data-id="kanban-column"]').getByText(name, { exact: true })
 
@@ -143,6 +145,21 @@ test.describe('Statuses of a project type in tracker', () => {
     await openIssues(extendedProject, ViewletSelectors.Table)
     await expect(listHeader(extraStatus)).toBeVisible()
     await expect(listHeader('Backlog')).toBeVisible()
+  })
+
+  test('the status filter of a project offers only statuses of its project type', async () => {
+    await openIssues(plainProject, ViewletSelectors.Table)
+    await issues.selectFilter('Status')
+    // The options arrive in one batch: Backlog shown means the extra status would be shown too
+    await expect(statusFilterItem('Backlog')).toBeVisible()
+    await expect(statusFilterItem(extraStatus)).toHaveCount(0)
+    await page.keyboard.press('Escape')
+
+    await openIssues(extendedProject, ViewletSelectors.Table)
+    await issues.selectFilter('Status')
+    await expect(statusFilterItem(extraStatus)).toBeVisible()
+    await expect(statusFilterItem('Backlog')).toBeVisible()
+    await page.keyboard.press('Escape')
   })
 
   test('a status added, renamed or deleted in settings changes an open project list', async () => {

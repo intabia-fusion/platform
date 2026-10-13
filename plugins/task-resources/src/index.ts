@@ -294,7 +294,7 @@ function whenStoresHave (taskTypes: TaskType[], fn: () => void): void {
   const unsubscribeStatuses = statusStore.subscribe(check)
 }
 
-async function getProjectType (space: Ref<Space> | undefined): Promise<Ref<ProjectType> | undefined> {
+export async function getProjectType (space: Ref<Space> | undefined): Promise<Ref<ProjectType> | undefined> {
   if (space === undefined) return undefined
   const projectId = space as Ref<Project>
   // activeProjects has no archived projects, the server has every project the user can open
