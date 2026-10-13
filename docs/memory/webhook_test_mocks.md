@@ -33,4 +33,3 @@ Express-приложение (`PORT` 4044, `WEBHOOK_URL` -> `http://webhook:4043
 - `tests/docker-compose.yaml`: сервис `webhook-mock` (образ `webhook-mock`, `PORT=4044`, `WEBHOOK_URL=http://webhook:4043`); собирается `pnpm docker:build` (`common/scripts/docker-fast.sh`).
 - Наружу через nginx стенда: `http://localhost:8083/_webhook-mock` (`tests/nginx.conf`), отдельного хостового порта нет; nginx `depends_on` включает `webhook-mock`, иначе upstream не резолвится.
 - Sanity `webhook` получил `ALLOW_INSECURE_WEBHOOK_HTTP=true` и `DEV_ALLOWED_WEBHOOK_HOSTS=webhook-mock`, иначе SSRF-guard (`ssrf.ts`) блокирует `http://webhook-mock:4044`.
-- Хелпер для Playwright: `tests/sanity/tests/webhook-mock.ts` (`clearDeliveries`, `getDeliveries`, `setResponseMode`, `verifyDelivery`); URL из `WEBHOOK_MOCK_URL`, по умолчанию `http://localhost:8083/_webhook-mock`.

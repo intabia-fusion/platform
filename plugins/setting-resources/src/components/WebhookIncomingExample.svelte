@@ -68,7 +68,6 @@
     return concatLink(serviceBase, path)
   }
   const actionUrl = absoluteUrl('/api/v1/webhook/action')
-  const headerEndpoint = actionUrl
   // No live key/token ever appears here - examples get pasted into tickets and chats, and one carrying
   // a real credential would leak it. Only the placeholder and the header/path shape are shown.
   const pathEndpoint = absoluteUrl(`/api/v1/webhook/k/${PLACEHOLDER_KEY}`)
@@ -115,14 +114,14 @@
             <div class="endpointLine">
               <div class="hint"><Label label={settingsRes.string.WebhookIncomingEndpointHeaderAuth} /></div>
               <div class="flex-row-center flex-gap-2">
-                <code class="endpointUrl select-text">POST {headerEndpoint}</code>
+                <code class="endpointUrl select-text">POST {actionUrl}</code>
                 <Button
                   kind="ghost"
                   size="small"
                   icon={IconCopy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
-                    void copyText(headerEndpoint)
+                    void copyText(actionUrl)
                   }}
                 />
               </div>
