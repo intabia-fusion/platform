@@ -84,6 +84,8 @@
 
 `server/account/src/__tests__/{deletion-real,deferred-deletion}.test.ts` - реальная БД, инварианты purge/FK, `findOrphanedWorkspaces`/`purgeAccount`. `ws-tests/api-tests/src/__tests__/{identity-deletion,deletion-emails,account-blocking}.test.ts` - сквозной путь через админский RPC и почту (mailpit), требует поднятый стенд.
 
+Наборы api-tests идут параллельно и делят один mailpit, поэтому `clearMail(to)` удаляет только письма на свой адрес (`DELETE /api/v1/search?query=to:...`). Полная очистка (`DELETE /api/v1/messages`) в `deletion-emails` стирала письма соседнего набора, и `api-key-emails` не находил «New API key issued». Замер 2026-10-13: 6 раундов по 3 параллельных jest-процесса с обоими наборами. С полной очисткой все 18 прогонов с падениями (41 из 162 тестов, письма не находятся), с адресной - 0 из 162. Копии одного набора запускать хотя бы с секундным разносом: email строится из `Date.now()`, при совпадении `signUp` падает на `social_id_key_unique`.
+
 ## Связанные документы
 
 - [Аутентификация, авторизация и онбординг](../features/auth-onboarding.md)

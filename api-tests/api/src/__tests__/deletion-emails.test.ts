@@ -74,7 +74,7 @@ describe('deletion-emails', () => {
   }, 300000)
 
   it('tells the owner when the workspace is scheduled, with the deadline and a way back', async () => {
-    await clearMail()
+    await clearMail(email)
 
     const res = await adminOp('performWorkspaceOperation', { workspaceId: wsUuid, event: 'delete', params: [] })
     expect(res.error).toBeUndefined()
@@ -95,7 +95,7 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('tells the owners when the deletion is called off', async () => {
-    await clearMail()
+    await clearMail(email)
 
     const cancelled = await adminOp('performWorkspaceOperation', {
       workspaceId: wsUuid,
@@ -111,7 +111,7 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('tells the owners when one of them deletes the workspace themselves', async () => {
-    await clearMail()
+    await clearMail(email)
 
     const selected = await rpc(config, userToken, 'selectWorkspace', { workspaceUrl, kind: 'external' })
     expect(selected.error).toBeUndefined()
@@ -126,7 +126,7 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('says nothing about calling it off when the workspace goes right away', async () => {
-    await clearMail()
+    await clearMail(email)
     const cancelled = await adminOp('performWorkspaceOperation', {
       workspaceId: wsUuid,
       event: 'cancel-delete',
@@ -135,7 +135,7 @@ describe('deletion-emails', () => {
     expect(cancelled.error).toBeUndefined()
     // The cancel letter lands asynchronously: cleared too early, it poses as the next one.
     expect((await waitForMail(email))?.Subject).toContain('will not be deleted')
-    await clearMail()
+    await clearMail(email)
 
     const res = await adminOp('performWorkspaceOperation', { workspaceId: wsUuid, event: 'delete-now', params: [] })
     expect(res.error).toBeUndefined()
@@ -150,7 +150,7 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('tells the person when their account is scheduled', async () => {
-    await clearMail()
+    await clearMail(email)
 
     const res = await adminOp('deleteAccount', { uuid: userAccount })
     expect(res.error).toBeUndefined()
@@ -164,7 +164,7 @@ describe('deletion-emails', () => {
   }, 120000)
 
   it('tells the person when they call the account deletion off', async () => {
-    await clearMail()
+    await clearMail(email)
 
     const res = await rpc(config, userToken, 'cancelAccountDeletion', {})
     expect(res.error).toBeUndefined()

@@ -117,7 +117,7 @@ export async function mailBody (id: string): Promise<string> {
   return `${body.Text ?? ''}\n${body.HTML ?? ''}`
 }
 
-/** Drops every stored message so a test sees only its own. */
-export async function clearMail (): Promise<void> {
-  await fetch(`${MAILPIT_URL}/api/v1/messages`, { method: 'DELETE' })
+/** Drops the messages to one address: suites run in parallel and share mailpit. */
+export async function clearMail (to: string): Promise<void> {
+  await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent('to:' + to)}`, { method: 'DELETE' })
 }
