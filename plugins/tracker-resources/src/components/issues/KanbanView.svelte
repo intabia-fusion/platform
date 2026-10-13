@@ -115,7 +115,9 @@
   export let options: FindOptions<DocWithRank> | undefined = undefined
   export let emptyState: BlankViewProps | undefined = undefined
 
-  $: groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
+  $: requestedGroupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
+  // Set together with categories: columns of the old grouping under a new key query {space: 0}.
+  let groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
   $: orderBy = viewOptions.orderBy
   $: compactMode = viewOptions.compactMode === true
 
@@ -334,54 +336,45 @@
 
   const queryId = generateId()
 
-  function update (): void {
-    void updateTaskKanbanCategories(
+  let headerComponent: AttributeModel | undefined
+
+  const updateCategories = reduceCalls(async function (
+    key: IssuesGrouping,
+    space: Ref<Project> | undefined,
+    tasks: DocWithRank[],
+    viewOptions: ViewOptions,
+    viewOptionsConfig: ViewOptionModel[] | undefined
+  ): Promise<void> {
+    const res = await updateTaskKanbanCategories(
       client,
       viewlet,
       _class,
       space,
       tasks,
-      groupByKey,
+      key,
       viewOptions,
       viewOptionsConfig,
       update,
       queryId
-    ).then((res) => {
-      categories = res
-      loadCategories = false
-    })
-  }
-
-  $: void updateTaskKanbanCategories(
-    client,
-    viewlet,
-    _class,
-    space,
-    tasks,
-    groupByKey,
-    viewOptions,
-    viewOptionsConfig,
-    update,
-    queryId
-  ).then((res) => {
+    )
+    // A missing presenter costs only the header, not the grouping.
+    const header =
+      key === noCategory ? undefined : await getPresenter(client, _class, { key }, { key }).catch(() => undefined)
+    // The grouping changed while loading: the next call applies the new one.
+    if (key !== requestedGroupByKey) return
+    groupByKey = key
+    headerComponent = header
     categories = res
     loadCategories = false
   })
 
-  const fullFilled: Record<string, boolean> = {}
-
-  function getHeader (_class: Ref<Class<Doc>>, groupByKey: string): void {
-    if (groupByKey === noCategory) {
-      headerComponent = undefined
-    } else {
-      void getPresenter(client, _class, { key: groupByKey }, { key: groupByKey }).then((p) => {
-        headerComponent = p
-      })
-    }
+  function update (): void {
+    void updateCategories(requestedGroupByKey, space, tasks, viewOptions, viewOptionsConfig)
   }
 
-  let headerComponent: AttributeModel | undefined
-  $: getHeader(_class, groupByKey)
+  $: void updateCategories(requestedGroupByKey, space, tasks, viewOptions, viewOptionsConfig)
+
+  const fullFilled: Record<string, boolean> = {}
 
   const getUpdateProps = (doc: Doc, category: CategoryType): DocumentUpdate<Item> | undefined => {
     const groupValue =
@@ -401,6 +394,11 @@
   const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space'])
 
   let swimLanes: SwimLane[] = []
+  // The field the lanes were built for: old lanes under a new field query {attachedTo: 3} and a
+  // drop on them writes it.
+  let swimLanesBy = 'none'
+  // Generic lane header presenter, set together with the lanes it renders.
+  let swimLanePresenter: AttributeModel | undefined
   let emptyLabel = ''
   const EMPTY_LABEL_BY_FIELD: Record<string, IntlString> = {
     assignee: tracker.string.NoAssignee,
@@ -415,15 +413,18 @@
     })
   }
 
-  function normalizeSwimValue (v: unknown): { key: string, value: unknown, empty: boolean, title?: string } {
+  function normalizeSwimValue (
+    field: string,
+    v: unknown
+  ): { key: string, value: unknown, empty: boolean, title?: string } {
     if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
-    if (swimLaneBy === 'attachedTo' && v === tracker.ids.NoParent) {
+    if (field === 'attachedTo' && v === tracker.ids.NoParent) {
       return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
     }
     // Components with the same label may exist in different projects — group
     // them under one swimlane keyed by the (case-folded, trimmed) label so the
     // user sees a single "Chat" lane instead of one per project.
-    if (swimLaneBy === 'component') {
+    if (field === 'component') {
       const c = $componentStore.get(v as Ref<TrackerComponent>)
       if (c !== undefined) {
         const label = c.label
@@ -441,7 +442,7 @@
     const seen = new Map<string, { value: unknown, empty: boolean, title?: string }>()
     for (const t of tasks) {
       const raw = getObjectValue(field, t)
-      const n = normalizeSwimValue(raw)
+      const n = normalizeSwimValue(field, raw)
       if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty, title: n.title })
     }
     // Priority has a fixed ordered set; preseed to keep empty lanes too.
@@ -496,31 +497,37 @@
           viewlet.descriptor
         )
         : undefined
+    const presenter =
+      field === 'none' || field === ''
+        ? undefined
+        : await getPresenter(client, _class, { key: field }, { key: field }).catch(() => undefined)
     if (seq !== laneOrderSeq) return
+    swimLanesBy = field
+    swimLanePresenter = presenter
     swimLanes = [...unassigned, ...orderSwimLanes(rest, sorted, laneFallbackKey)]
   }
 
   $: void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
-    if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
-    const raw = getObjectValue(swimLaneBy, doc)
-    return normalizeSwimValue(raw).key
+    if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
+    const raw = getObjectValue(swimLanesBy, doc)
+    return normalizeSwimValue(swimLanesBy, raw).key
   }
 
   function getSwimLaneQuery (swimLane: SwimLane): DocumentQuery<any> {
-    if (swimLaneBy === 'none' || swimLaneBy === '') return {}
-    return { [swimLaneBy]: swimLane.value }
+    if (swimLanesBy === 'none' || swimLanesBy === '') return {}
+    return { [swimLanesBy]: swimLane.value }
   }
 
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
-    if (swimLaneBy === 'none' || swimLaneBy === '') return undefined
-    if (IMMUTABLE_SWIM_FIELDS.has(swimLaneBy)) return undefined
+    if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
+    if (IMMUTABLE_SWIM_FIELDS.has(swimLanesBy)) return undefined
     let value: unknown = swimLane.value
     // Components are aggregated by label across projects; pick the ref that
     // belongs to the dropped issue's project, or skip the update entirely if
     // this lane has no matching component for the issue's project.
-    if (swimLaneBy === 'component') {
+    if (swimLanesBy === 'component') {
       const docSpace = (doc as any).space
       const lane = $componentStore.filter(
         (c) =>
@@ -532,8 +539,8 @@
       if (match === undefined) return undefined
       value = match
     }
-    const update: DocumentUpdate<Item> = { [swimLaneBy]: value }
-    if (swimLaneBy === 'attachedTo') {
+    const update: DocumentUpdate<Item> = { [swimLanesBy]: value }
+    if (swimLanesBy === 'attachedTo') {
       ;(update as any).attachedToClass = tracker.class.Issue
     }
     return update
@@ -552,14 +559,14 @@
   $: getSwimLaneHeaderStyle = (swimLane: SwimLane): { background?: string, color?: string } | undefined => {
     void swimLaneAccents
     if (!showColors) return undefined
-    if (swimLaneBy === 'priority') {
+    if (swimLanesBy === 'priority') {
       const color = getPlatformColorDef(
         IssuePriorityColor[(swimLane.value as IssuePriority) ?? IssuePriority.NoPriority],
         $themeStore.dark
       )
       return { background: color.background, color: color.title }
     }
-    if (swimLaneBy === 'assignee') {
+    if (swimLanesBy === 'assignee') {
       const emp = $employeeByIdStore.get(swimLane._id as Ref<Employee>)
       if (emp != null) {
         const name = getName(client.getHierarchy(), emp)
@@ -572,21 +579,6 @@
       return { background: accent.background, color: accent.title }
     }
     return undefined
-  }
-
-  // Generic lane header presenter resolution.
-  let swimLanePresenter: AttributeModel | undefined
-  $: void resolveSwimLanePresenter(swimLaneBy)
-  async function resolveSwimLanePresenter (field: string): Promise<void> {
-    if (field === 'none' || field === '') {
-      swimLanePresenter = undefined
-      return
-    }
-    try {
-      swimLanePresenter = await getPresenter(client, _class, { key: field }, { key: field })
-    } catch {
-      swimLanePresenter = undefined
-    }
   }
 
   $: swimLaneStorageKey = viewlet?._id != null ? `${String(viewlet._id)}-${swimLaneBy}` : undefined

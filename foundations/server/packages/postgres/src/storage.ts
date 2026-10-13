@@ -1380,13 +1380,37 @@ abstract class PostgresAdapterBase implements DbAdapter {
     columnType?: DataType
   ): string | undefined {
     const tkeyData = tkey.includes('data') && (tkey.includes('->') || tkey.includes('#>>'))
+    // A value of another type for a real column ({space: 0}, {modifiedOn: 'x'}) fails as
+    // `text = numeric` or `bigint = text`; such a value is compared with the column as text.
+    const textColumn = columnType === 'text' || columnType === 'text[]'
+    const mismatched = (it: any): boolean =>
+      it != null &&
+      columnType !== undefined &&
+      (textColumn
+        ? typeof it !== 'string'
+        : columnType === 'bool'
+          ? typeof it !== 'boolean'
+          : typeof it !== 'number' || !Number.isFinite(it))
+    const anyMismatched = (v: any): boolean => (Array.isArray(v) ? v.some(mismatched) : mismatched(v))
+    const toText = (it: any): string | null =>
+      it == null ? null : typeof it === 'object' ? JSON.stringify(it) : `${it}`
+    const asText = (v: any): any => (Array.isArray(v) ? v.map(toText) : toText(v))
+    const textKey = textColumn ? tkey : `${tkey}::text`
+    let keyAsText = false
     const rawValue = value
+    if (Array.isArray(value) && columnType !== undefined && !columnType.endsWith('[]')) {
+      // A scalar column never equals an array, and `=` on it fails as `text = text[]`.
+      return 'FALSE'
+    }
     if (tkeyData && (Array.isArray(value) || (typeof value !== 'object' && typeof value !== 'string'))) {
       value = Array.isArray(value)
         ? value.map((it) => (it == null ? null : `${it}`))
         : value == null
           ? null
           : `${value}`
+    } else if ((typeof value !== 'object' || Array.isArray(value)) && anyMismatched(value)) {
+      value = asText(value)
+      keyAsText = true
     }
 
     if (value === null) {
@@ -1397,21 +1421,36 @@ abstract class PostgresAdapterBase implements DbAdapter {
       const nonOperator: Record<string, any> = {}
       for (const operator in value) {
         let val = value[operator]
+        let opKeyAsText = false
         if (tkeyData && (Array.isArray(val) || (typeof val !== 'object' && typeof val !== 'string'))) {
           val = Array.isArray(val) ? val.map((it) => (it == null ? null : `${it}`)) : val == null ? null : `${val}`
+        } else if (operator !== '$exists' && operator !== '$size' && anyMismatched(val)) {
+          val = asText(val)
+          opKeyAsText = true
         }
 
         let valType = castForColumn(inferType(val), columnType, val)
-        const { tlkey, arrowCount } = prepareJsonValue(tkey, valType)
+        const prepared = prepareJsonValue(tkey, valType)
+        const tlkey = opKeyAsText ? textKey : prepared.tlkey
+        const arrowCount = prepared.arrowCount
         if (arrowCount > 0 && valType === '::text') {
           valType = ''
         }
 
+        const rangeOperator = rangeOperators[operator]
+        const rangeValue = value[operator]
+        if (
+          rangeOperator !== undefined &&
+          (opKeyAsText || (tkeyData && typeof rangeValue === 'number' && !Number.isFinite(rangeValue)))
+        ) {
+          // A range across types matches nothing: as text, '10' < '5' and the column index is lost.
+          res.push('FALSE')
+          continue
+        }
         // A jsonb value is read as text, and text orders '10' before '9': a number is compared as
         // a number.
-        const rangeOperator = rangeOperators[operator]
-        if (rangeOperator !== undefined && tkeyData && typeof value[operator] === 'number') {
-          res.push(`${numericJsonKey(tkey, this.dbFlavor)} ${rangeOperator} ${vars.add(value[operator], '::numeric')}`)
+        if (rangeOperator !== undefined && tkeyData && typeof rangeValue === 'number') {
+          res.push(`${numericJsonKey(tkey, this.dbFlavor)} ${rangeOperator} ${vars.add(rangeValue, '::numeric')}`)
           continue
         }
 
@@ -1524,7 +1563,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
             break
         }
       }
-      if (Object.keys(nonOperator).length > 0) {
+      if (Object.keys(nonOperator).length > 0 && columnType !== undefined) {
+        // An object never equals a scalar column value, and `@>` on it fails as `text @> unknown`.
+        res.push('FALSE')
+      } else if (Object.keys(nonOperator).length > 0) {
         const qkey = tkey.replace('#>>', '->').replace('{', '').replace('}', '')
         const lit = simpleEscape(JSON.stringify(nonOperator))
         res.push(`(${qkey} @> '${lit}' or ${qkey} @> '[${lit}]')`)
@@ -1538,7 +1580,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       valType = ''
     }
     return type === 'common'
-      ? `${tlkey} = ${vars.add(value, valType)}`
+      ? `${keyAsText ? textKey : tlkey} = ${vars.add(value, valType)}`
       : type === 'array'
         ? `${tkey} @> '${typeof value === 'string' ? '{"' + escape(value) + '"}' : value}'`
         : `${tkey} @> '${typeof rawValue === 'number' || typeof rawValue === 'boolean' ? JSON.stringify(rawValue) : typeof value === 'string' ? '"' + escape(value) + '"' : value}'`

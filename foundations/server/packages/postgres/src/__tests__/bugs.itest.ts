@@ -203,6 +203,70 @@ describe('postgres query bugs (real database)', () => {
     })
   })
 
+  describe('FUSIO-1552 value of another type for a real column', () => {
+    // Mismatched values are compared as text; a range across types and an object without
+    // operators match nothing.
+    it('answers instead of failing for every column type', async () => {
+      await operations.createDoc(spaceLikeClass, core.space.Space, {
+        name: 'a',
+        description: '',
+        private: false,
+        members: ['m1' as AccountUuid],
+        archived: false
+      })
+      await operations.createDoc(spaceLikeClass, core.space.Space, {
+        name: 'b',
+        description: '',
+        private: true,
+        members: ['m2' as AccountUuid],
+        archived: false
+      })
+      const cases: Array<[string, any, string[]]> = [
+        ['text = number', { space: 0 }, []],
+        ['text = boolean', { space: true }, []],
+        ['text = object', { space: { name: 'x', values: [] } }, []],
+        ['_id = number', { _id: 0 }, []],
+        ['text $in numbers', { space: { $in: [0, 1] } }, []],
+        ['text $in mixed', { space: { $in: [1, core.space.Space] } }, ['a', 'b']],
+        ['text $nin number', { space: { $nin: [0] } }, ['a', 'b']],
+        ['text $ne number', { space: { $ne: 0 } }, ['a', 'b']],
+        ['bool = string', { private: 'yes' }, []],
+        ['bool $in mixed', { private: { $in: ['x', true] } }, ['b']],
+        ['bool = object', { private: { name: 'x' } }, []],
+        ['bigint = string', { modifiedOn: 'abc' }, []],
+        ['bigint $in strings', { modifiedOn: { $in: ['abc'] } }, []],
+        ['bigint $in mixed', { modifiedOn: { $in: [1, 'abc'] } }, []],
+        ['bigint $ne string', { modifiedOn: { $ne: 'abc' } }, ['a', 'b']],
+        ['bigint = object', { modifiedOn: { name: 'x' } }, []],
+        ['text[] contains number', { members: 5 }, []],
+        ['text[] $in numbers', { members: { $in: [5] } }, []],
+        ['text[] $all numbers', { members: { $all: [5] } }, []],
+        ['text[] = object', { members: { name: 'x' } }, []],
+        ['text[] contains string', { members: 'm1' }, ['a']],
+        ['text = array (repeated URL param)', { space: ['x', 'y'] }, []],
+        ['bigint $gte NaN (bad date filter)', { modifiedOn: { $gte: NaN } }, []],
+        ['bigint = array', { modifiedOn: [1, 2] }, []],
+        ['jsonb $gte NaN', { name: { $gte: NaN } }, []],
+        ['bigint $gt number', { modifiedOn: { $gt: 5 } }, ['a', 'b']],
+        ['bigint $gt numeric string', { modifiedOn: { $gt: '5' } }, []],
+        ['text $gt number', { space: { $gt: 5 } }, []],
+        ['text $ne object', { space: { $ne: { a: 1 } } }, ['a', 'b']],
+        ['text $in objects', { space: { $in: [{ a: 1 }] } }, []],
+        ['bigint $ne object', { modifiedOn: { $ne: { a: 1 } } }, ['a', 'b']]
+      ]
+      const actual: Array<[string, string[] | string]> = []
+      for (const [label, query] of cases) {
+        try {
+          const r = await client.findAll<Space>(spaceLikeClass, query)
+          actual.push([label, r.map((it) => it.name).sort()])
+        } catch (err: any) {
+          actual.push([label, String(err?.message ?? err)])
+        }
+      }
+      expect(actual).toEqual(cases.map(([label, , expected]) => [label, expected]))
+    })
+  })
+
   describe('#38 $nin on a jsonb array', () => {
     it('{tags: {$nin: [x]}} excludes docs with x', async () => {
       await operations.createDoc(taggedClass, sp, { tags: ['a', 'b'] })

@@ -25,7 +25,7 @@
     Lookup,
     Ref
   } from '@hcengineering/core'
-  import core, { generateId, mergeQueries } from '@hcengineering/core'
+  import core, { generateId, mergeQueries, reduceCalls } from '@hcengineering/core'
   import type { DocWithRank, Item } from '@hcengineering/kanban'
   import { Kanban as KanbanUI } from '@hcengineering/kanban'
   import { getResource } from '@hcengineering/platform'
@@ -69,7 +69,9 @@
   export let config: (string | BuildModelKey)[]
   export let options: FindOptions<DocWithRank> | undefined = undefined
 
-  $: groupByKey = viewOptions.groupBy[0] ?? noCategory
+  $: requestedGroupByKey = viewOptions.groupBy[0] ?? noCategory
+  // Set together with categories: columns of the old grouping under a new key query {space: 0}.
+  let groupByKey: string = viewOptions.groupBy[0] ?? noCategory
   $: orderBy = viewOptions.orderBy
 
   let accentColors = new Map<string, ColorDefinition>()
@@ -170,50 +172,42 @@
 
   const queryId = generateId()
 
-  function update (): void {
-    void updateTaskKanbanCategories(
+  let headerComponent: AttributeModel | undefined
+
+  const updateCategories = reduceCalls(async function (
+    key: string,
+    space: Ref<Project> | undefined,
+    tasks: DocWithRank[],
+    viewOptions: ViewOptions,
+    viewOptionsConfig: ViewOptionModel[] | undefined
+  ): Promise<void> {
+    const res = await updateTaskKanbanCategories(
       client,
       viewlet,
       _class,
       space,
       tasks,
-      groupByKey,
+      key,
       viewOptions,
       viewOptionsConfig,
       update,
       queryId
-    ).then((res) => {
-      categories = res
-    })
-  }
-
-  $: void updateTaskKanbanCategories(
-    client,
-    viewlet,
-    _class,
-    space,
-    tasks,
-    groupByKey,
-    viewOptions,
-    viewOptionsConfig,
-    update,
-    queryId
-  ).then((res) => {
+    )
+    // A missing presenter costs only the header, not the grouping.
+    const header =
+      key === noCategory ? undefined : await getPresenter(client, _class, { key }, { key }).catch(() => undefined)
+    // The grouping changed while loading: the next call applies the new one.
+    if (key !== requestedGroupByKey) return
+    groupByKey = key
+    headerComponent = header
     categories = res
   })
 
-  function getHeader (_class: Ref<Class<Doc>>, groupByKey: string): void {
-    if (groupByKey === noCategory) {
-      headerComponent = undefined
-    } else {
-      void getPresenter(client, _class, { key: groupByKey }, { key: groupByKey }).then((p) => {
-        headerComponent = p
-      })
-    }
+  function update (): void {
+    void updateCategories(requestedGroupByKey, space, tasks, viewOptions, viewOptionsConfig)
   }
 
-  let headerComponent: AttributeModel | undefined
-  $: getHeader(_class, groupByKey)
+  $: void updateCategories(requestedGroupByKey, space, tasks, viewOptions, viewOptionsConfig)
 
   const getUpdateProps = (doc: Doc, category: CategoryType): DocumentUpdate<Item> | undefined => {
     const groupValue =

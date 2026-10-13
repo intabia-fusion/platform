@@ -96,9 +96,11 @@
   export let readonly: boolean = false
   export let empty: boolean = false
 
-  $: groupByKey = viewOptions.groupBy[level] ?? noCategory
+  $: requestedGroupByKey = viewOptions.groupBy[level] ?? noCategory
+  // Set together with categories and the header: old categories under a new key query {_id: 0}.
+  let groupByKey: string = viewOptions.groupBy[level] ?? noCategory
   let categories: CategoryType[] = []
-  $: void updateCategories(_class, space, docs, groupByKey, viewOptions, viewOptionsConfig)
+  $: void updateCategories(_class, space, docs, requestedGroupByKey, viewOptions, viewOptionsConfig)
 
   $: groupByDocs = groupBy(docs, groupByKey, categories)
 
@@ -127,21 +129,21 @@
       _class: Ref<Class<Doc>>,
       space: Ref<Space> | undefined,
       docs: Doc[],
-      groupByKey: string,
+      key: string,
       viewOptions: ViewOptions,
       viewOptionsModel: ViewOptionModel[] | undefined
     ): Promise<void> => {
       // indicate loading while we compute categories (used by Show More UI)
       isLoadingCategories = true
       try {
-        let result = await getCategories(client, _class, space, docs, groupByKey)
+        let result = await getCategories(client, _class, space, docs, key)
         if (level === 0) {
           for (const viewOption of viewOptionsModel ?? []) {
             if (viewOption.actionTarget !== 'category') continue
             const categoryFunc = viewOption as CategoryOption
             if (viewOptions[viewOption.key] ?? viewOption.defaultValue) {
               const f = await getResource(categoryFunc.action)
-              const res = hierarchy.clone(await f(_class, query, space, groupByKey, update, queryId))
+              const res = hierarchy.clone(await f(_class, query, space, key, update, queryId))
               if (res !== undefined) {
                 result = concatCategories(res, result)
                 break
@@ -149,6 +151,13 @@
             }
           }
         }
+        // A missing presenter costs only the header, not the grouping.
+        const header =
+          key === noCategory ? undefined : await getPresenter(client, _class, { key }, { key }).catch(() => undefined)
+        // The grouping changed while loading: the next call applies the new one.
+        if (key !== requestedGroupByKey) return
+        groupByKey = key
+        headerComponent = header
         categories = result
       } finally {
         categoriesComputed = true
@@ -160,21 +169,12 @@
   )
 
   function update (): void {
-    void updateCategories(_class, space, docs, groupByKey, viewOptions, viewOptionsConfig)
+    void updateCategories(_class, space, docs, requestedGroupByKey, viewOptions, viewOptionsConfig)
   }
 
   let itemModels = new Map<Ref<Class<Doc>>, AttributeModel[]>()
 
-  const getHeader = reduceCalls(async function (_class: Ref<Class<Doc>>, groupByKey: string): Promise<void> {
-    if (groupByKey === noCategory) {
-      headerComponent = undefined
-    } else {
-      await getPresenter(client, _class, { key: groupByKey }, { key: groupByKey }).then((p) => (headerComponent = p))
-    }
-  })
-
   let headerComponent: AttributeModel | undefined
-  $: void getHeader(_class, groupByKey)
 
   let configurationsVersion = 0
   const buildModels = reduceCalls(async function (

@@ -229,6 +229,59 @@ describe('number comparison on jsonb fields', () => {
   })
 })
 
+describe('mistyped values for real columns', () => {
+  function translate (
+    tkey: string,
+    value: any,
+    type: string,
+    columnType: string
+  ): { sql: string | undefined, values: any[] } {
+    const { adapter } = createTestContext()
+    const values: any[] = []
+    let idx = 1
+    const vars = {
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return `$${idx++}${type}`
+      },
+      addArray (value: any[], type: string = ''): string {
+        values.push(value)
+        return `$${idx++}${type}`
+      },
+      addArrayI (value: any[], type: string = ''): string {
+        values.push(value)
+        return `$${idx++}${type}`
+      }
+    }
+    return { sql: (adapter as any).translateQueryValue(vars, tkey, value, type, columnType), values }
+  }
+
+  // FUSIO-1552: a kanban switching grouping sent the old categories with the new key.
+  it('compares a number with a text column as text', () => {
+    expect(translate('task."space"', 2, 'common', 'text')).toEqual({ sql: 'task."space" = $1::text', values: ['2'] })
+    expect(translate('task."_id"', { $in: [0, 'a'] }, 'common', 'text')).toEqual({
+      sql: 'task."_id" = ANY($1::text[])',
+      values: [['0', 'a']]
+    })
+    expect(translate('task."attachedTo"', { $ne: 1 }, 'common', 'text').values).toEqual(['1'])
+    expect(translate('space."members"', 5, 'array', 'text[]').sql).toEqual('space."members" @> \'{"5"}\'')
+  })
+
+  it('matches nothing for an object without operators on a real column', () => {
+    expect(translate('space."_id"', { values: [] }, 'common', 'text').sql).toEqual('FALSE')
+    expect(translate('task."space"', { name: 'x', $ne: 'y' }, 'common', 'text').sql).toEqual(
+      '(task."space" != $1::text OR task."space" IS NULL) AND FALSE'
+    )
+  })
+
+  it('keeps numbers for number columns', () => {
+    expect(translate('task."modifiedOn"', 5, 'common', 'bigint')).toEqual({
+      sql: 'task."modifiedOn" = $1::bigint',
+      values: [5]
+    })
+  })
+})
+
 describe('projection', () => {
   it('mixin query projection', () => {
     const data = {

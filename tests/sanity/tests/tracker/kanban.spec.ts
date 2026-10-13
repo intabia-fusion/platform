@@ -28,7 +28,7 @@ import {
 import { KanbanBoardPage } from '../model/tracker/kanban-board-page'
 import { PlatformSetting, PlatformURI, generateId } from '../utils'
 import { retryIntervals } from '../retry'
-import { ViewletSelectors } from './tracker.utils'
+import { ViewletSelectors, setViewGroup } from './tracker.utils'
 
 async function openTrackerBoard (page: import('@playwright/test').Page, projectId: string): Promise<void> {
   const projectPath = encodeURIComponent(projectId)
@@ -864,5 +864,24 @@ test.describe('Kanban board', () => {
     // Card retains data-card-id during drag.
     await expect(card).toBeVisible()
     await page.mouse.up()
+  })
+
+  test('switching grouping does not query with the old categories', async ({ page }) => {
+    // FUSIO-1552: old categories under the new key sent {space: 0} or {_id: {values: []}} and
+    // Postgres failed with "operator does not exist", shown in the status bar.
+    const component = await createComponent(client, ctx.project._id, `grouping-${generateId(4)}`)
+    await createIssue(client, ctx, { title: `${titlePrefix}grouping`, status: 'Backlog', priority: 2, component })
+
+    await openTrackerBoard(page, ctx.project._id)
+    const errors = page.locator('.antiStatusBar .ERROR')
+    for (const viewlet of [ViewletSelectors.Board, ViewletSelectors.Table]) {
+      await page.click(viewlet)
+      for (const group of ['Priority', 'Project', 'Component', 'Parent issue', 'Priority', 'Parent issue']) {
+        await setViewGroup(page, group)
+        // The failed query lands after the switch; the status bar keeps the error until reload.
+        await page.waitForTimeout(500)
+        await expect(errors, `${viewlet} -> ${group}`).toHaveCount(0)
+      }
+    }
   })
 })

@@ -55,6 +55,8 @@ export async function navigate (page: Page): Promise<void> {
 }
 
 export async function setViewGroup (page: Page, groupName: string): Promise<void> {
+  // The viewlet button's tooltip covers btn-viewOptions while the pointer rests on it.
+  await page.mouse.move(0, 0)
   await page.click('button[data-id="btn-viewOptions"]')
   await page.click('.antiCard >> .grouping >> button >> nth=0')
   await page.click(`.menu-item:has-text("${groupName}")`)
