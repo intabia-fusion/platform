@@ -60,6 +60,12 @@
             --close-hover: #c42b1c;
         }
 
+        /* Own stacking context above the app root, whose content reaches z-index 10001. */
+        #desktop-app-titlebar-root {
+            position: relative;
+            z-index: 100000;
+        }
+
         .desktop-app-titlebar {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text-primary);
