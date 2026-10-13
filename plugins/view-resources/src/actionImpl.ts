@@ -31,6 +31,7 @@ import {
   type PopupPosAlignment,
   closeTooltip,
   isPopupPosAlignment,
+  isSafari,
   locationToUrl,
   navigate,
   showPanel,
@@ -76,8 +77,9 @@ async function CopyTextToClipboard (
 
 export async function copyText (text: any, contentType: string = 'text/plain'): Promise<void> {
   try {
-    // Check if ClipboardItem is available
-    if (typeof ClipboardItem !== 'undefined') {
+    // Chromium keeps every ClipboardItem write in a persistent root, which retains the page after reload.
+    // Safari needs it to keep the user gesture across the awaited text.
+    if (typeof ClipboardItem !== 'undefined' && (isSafari() || contentType !== 'text/plain')) {
       const clipboardData: Record<string, any> = {
         [contentType]: text instanceof Promise ? text : Promise.resolve(text)
       }

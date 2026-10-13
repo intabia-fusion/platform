@@ -67,7 +67,13 @@ import core, {
 } from '@hcengineering/core'
 import { addEventListener, getMetadata, getResource } from '@hcengineering/platform'
 import { LiveQuery as LQ } from '@hcengineering/query'
-import { type AnyComponent, type AnySvelteComponent, getRawCurrentLocation, workspaceId } from '@hcengineering/ui'
+import {
+  type AnyComponent,
+  type AnySvelteComponent,
+  getRawCurrentLocation,
+  isSafari,
+  workspaceId
+} from '@hcengineering/ui'
 import view, { type AttributeCategory, type AttributeEditor } from '@hcengineering/view'
 import { deepEqual } from 'fast-equals'
 import { onDestroy } from 'svelte'
@@ -599,7 +605,7 @@ export async function setClient (_client: Client): Promise<void> {
     txQueue.push(...tx)
     void notifyCaller()
   }
-  if (needRefresh || globalQueries.length > 0) {
+  if (needRefresh || globalQueries.size > 0) {
     await refreshClient(true)
   }
   const acc = getCurrentAccount()
@@ -657,7 +663,7 @@ export async function closeClient (): Promise<void> {
   await client?.close()
 }
 
-const globalQueries: LiveQuery[] = []
+const globalQueries = new Set<LiveQuery>()
 
 /**
  * @public
@@ -668,17 +674,28 @@ export class LiveQuery {
   private oldOptions: FindOptions<Doc> | undefined
   private oldCallback: ((result: FindResult<any>) => void | Promise<void>) | undefined
   private reqId = 0
-  unsubscribe: () => void = () => {}
+  private destroyed = false
+  private release: () => void = () => {}
   clientRecreated = false
 
-  constructor (noDestroy: boolean = false) {
+  constructor (private readonly noDestroy: boolean = false) {
     if (!noDestroy) {
       onDestroy(() => {
+        this.destroyed = true
         this.unsubscribe()
       })
-    } else {
-      globalQueries.push(this)
     }
+  }
+
+  unsubscribe = (): void => {
+    // A doQuery still waiting in reducedDoQuery sees a stale id and does not subscribe.
+    this.reqId++
+    this.release()
+    this.oldCallback = undefined
+    this.oldClass = undefined
+    this.oldOptions = undefined
+    this.oldQuery = undefined
+    globalQueries.delete(this)
   }
 
   query<T extends Doc>(
@@ -687,6 +704,10 @@ export class LiveQuery {
     callback: (result: FindResult<T>) => void | Promise<void>,
     options?: FindOptions<T>
   ): boolean {
+    // Components may query from async code that finishes after destroy; such a subscription would never be released.
+    if (this.destroyed) {
+      return false
+    }
     if (!this.needUpdate(_class, query, callback, options) && !this.clientRecreated) {
       return false
     }
@@ -698,6 +719,9 @@ export class LiveQuery {
     this.oldClass = _class
     this.oldOptions = options
     this.oldQuery = query
+    if (this.noDestroy) {
+      globalQueries.add(this)
+    }
     void this.reducedDoQuery(++this.reqId, _class, query, callback as any, options)
     return true
   }
@@ -737,7 +761,7 @@ export class LiveQuery {
       return
     }
 
-    this.unsubscribe()
+    this.release()
     this.oldCallback = callback
     this.oldClass = _class
     this.oldOptions = options
@@ -754,16 +778,12 @@ export class LiveQuery {
       },
       options
     )
-    this.unsubscribe = () => {
+    this.release = () => {
       unsub()
       void piplineQuery.then((res) => {
         res.unsubscribe()
       })
-      this.oldCallback = undefined
-      this.oldClass = undefined
-      this.oldOptions = undefined
-      this.oldQuery = undefined
-      this.unsubscribe = () => {}
+      this.release = () => {}
     }
   }
 
@@ -879,12 +899,17 @@ export function copyTextToClipboardOldBrowser (text: string): void {
  */
 export async function copyTextToClipboard (text: string | Promise<string>): Promise<void> {
   try {
-    // Safari specific behavior
-    // see https://bugs.webkit.org/show_bug.cgi?id=222262
-    const clipboardItem = new ClipboardItem({
-      'text/plain': text instanceof Promise ? text : Promise.resolve(text)
-    })
-    await navigator.clipboard.write([clipboardItem])
+    if (isSafari()) {
+      // Safari specific behavior
+      // see https://bugs.webkit.org/show_bug.cgi?id=222262
+      const clipboardItem = new ClipboardItem({
+        'text/plain': text instanceof Promise ? text : Promise.resolve(text)
+      })
+      await navigator.clipboard.write([clipboardItem])
+    } else {
+      // Chromium keeps every ClipboardItem write in a persistent root, which retains the page after reload
+      await navigator.clipboard.writeText(text instanceof Promise ? await text : text)
+    }
   } catch {
     // Fallback to default clipboard API implementation
     if (navigator.clipboard != null && typeof navigator.clipboard.writeText === 'function') {

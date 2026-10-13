@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
 
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
@@ -54,16 +54,20 @@
 
   const foldersManager = getFoldersManager(foldersStore, titleKey, parentKey, noParentId, plainList)
 
-  foldersStore.subscribe((newState) => {
-    foldersState = newState
-  })
+  onDestroy(
+    foldersStore.subscribe((newState) => {
+      foldersState = newState
+    })
+  )
 
   let selected: Ref<Doc> = getFolderId()
   let visibleItem: Doc | undefined = foldersState.folderById.get(selected)
-  location.subscribe(() => {
-    selected = getFolderId()
-    visibleItem = foldersState.folderById.get(selected)
-  })
+  onDestroy(
+    location.subscribe(() => {
+      selected = getFolderId()
+      visibleItem = foldersState.folderById.get(selected)
+    })
+  )
 
   const q = createQuery()
   q.query(

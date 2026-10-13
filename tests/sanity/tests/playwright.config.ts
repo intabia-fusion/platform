@@ -68,6 +68,27 @@ const platformUse: PlaywrightTestConfig['use'] = {
   }
 }
 
+// Opt-in, for Safari-only paths (ClipboardItem with a promise): WEBKIT=1 pnpm run uitest.
+// Needs `npx playwright install webkit`. WebKit rejects the Chromium flags and every permission
+// except clipboard-read.
+const webkitProject: NonNullable<PlaywrightTestConfig['projects']> =
+  process.env.WEBKIT === '1'
+    ? [
+        {
+          name: 'WebKit',
+          testMatch: /clipboard\/.*\.spec\.ts/,
+          use: {
+            ...platformUse,
+            ...devices['Desktop Safari'],
+            viewport: { width: 1440, height: 900 },
+            permissions: ['clipboard-read'],
+            launchOptions: {}
+          },
+          dependencies: ['setup']
+        }
+      ]
+    : []
+
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global.setup.ts'),
   globalTeardown: require.resolve('./global.teardown.ts'),
@@ -80,6 +101,7 @@ const config: PlaywrightTestConfig = {
       fullyParallel: false,
       dependencies: ['setup']
     },
+    ...webkitProject,
     {
       name: 'Platform',
       testIgnore: /love\//,

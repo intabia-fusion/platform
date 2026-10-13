@@ -31,11 +31,13 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  resolvedLocationStore.subscribe(() => {
-    if ($selectedFilterStore === undefined) {
-      load(_class)
-    }
-  })
+  onDestroy(
+    resolvedLocationStore.subscribe(() => {
+      if ($selectedFilterStore === undefined) {
+        load(_class)
+      }
+    })
+  )
 
   function load (_class: Ref<Class<Doc>> | undefined): void {
     const key = getFilterKey(_class)
@@ -50,9 +52,11 @@
     localStorage.setItem(key, JSON.stringify(p))
   }
 
-  filterStore.subscribe((p) => {
-    save(_class, p)
-  })
+  onDestroy(
+    filterStore.subscribe((p) => {
+      save(_class, p)
+    })
+  )
 
   function onChange (e: Filter | undefined): void {
     if (e !== undefined) setFilters([e])

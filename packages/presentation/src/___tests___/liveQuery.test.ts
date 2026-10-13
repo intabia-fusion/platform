@@ -22,14 +22,15 @@ import core, {
 } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import presentation from '../plugin'
-import { createQuery, onWorkspaceChange, setClient } from '../utils'
+import { createQuery, onWorkspaceChange, refreshClient, setClient } from '../utils'
 
 interface Subscription {
   query: Record<string, any>
   active: boolean
 }
 
-jest.mock('svelte', () => ({ onDestroy: () => {} }))
+const mockDestroyHandlers: Array<() => void> = []
+jest.mock('svelte', () => ({ onDestroy: (fn: () => void) => mockDestroyHandlers.push(fn) }))
 jest.mock('svelte/store', () => {
   const writable = (value: any): any => {
     const subs = new Set<(v: any) => void>()
@@ -125,6 +126,36 @@ describe('LiveQuery', () => {
     expect(q.query(core.class.Doc, { name: 'C' } as any, callback)).toBe(false)
     await settle()
     expect(q.query(core.class.Doc, { name: 'C' } as any, callback)).toBe(false)
+  })
+
+  it('does not subscribe when unsubscribed before the deferred query runs', async () => {
+    const q = createQuery(true)
+    q.query(core.class.Doc, { name: 'D' } as any, () => {})
+    q.unsubscribe()
+    await settle()
+
+    expect(subscriptions().filter((it) => it.query.name === 'D')).toEqual([])
+  })
+
+  it('ignores query() after component destroy', async () => {
+    mockDestroyHandlers.length = 0
+    const q = createQuery()
+    for (const destroy of mockDestroyHandlers) destroy()
+
+    expect(q.query(core.class.Doc, { name: 'E' } as any, () => {})).toBe(false)
+    await settle()
+    expect(subscriptions().filter((it) => it.query.name === 'E')).toEqual([])
+  })
+
+  it('does not resubscribe an unsubscribed global query on client refresh', async () => {
+    const q = createQuery(true)
+    q.query(core.class.Doc, { name: 'F' } as any, () => {})
+    await settle()
+    q.unsubscribe()
+    await refreshClient(true)
+    await settle()
+
+    expect(subscriptions().filter((it) => it.query.name === 'F' && it.active)).toEqual([])
   })
 
   it('runs workspace change listeners only when setClient connects to another workspace', async () => {

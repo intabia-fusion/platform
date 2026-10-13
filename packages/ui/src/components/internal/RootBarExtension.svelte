@@ -1,16 +1,19 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { location as locationStore, workspaceId } from '../../location'
   import { rootBarExtensions } from '../../utils'
   import Component from '../Component.svelte'
 
   export let position: 'left' | 'right'
   let oldLoc: string | undefined = undefined
-  locationStore.subscribe((newLocation) => {
-    if (oldLoc !== undefined && oldLoc !== newLocation.path[0]) {
-      rootBarExtensions.set([])
-    }
-    oldLoc = newLocation.path[0]
-  })
+  onDestroy(
+    locationStore.subscribe((newLocation) => {
+      if (oldLoc !== undefined && oldLoc !== newLocation.path[0]) {
+        rootBarExtensions.set([])
+      }
+      oldLoc = newLocation.path[0]
+    })
+  )
 
   $: sorted = $rootBarExtensions.sort((a, b) => a[1].order - b[1].order)
 </script>

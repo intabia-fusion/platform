@@ -18,7 +18,7 @@
   import type { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Button, Grid, IconDownOutline, IconUpOutline, Switcher, resizeObserver } from '@hcengineering/ui'
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import card from '../plugin'
   import MasterTagAttributes from './MasterTagAttributes.svelte'
   import TagAttributes from './TagAttributes.svelte'
@@ -35,16 +35,18 @@
   let width: number = 0
   let layoutMode: 'auto' | '1' | '2' = 'auto'
 
-  viewStore.subscribe((views) => {
-    if (views[value._class] !== undefined) {
-      layoutMode = views[value._class] as any
-    } else {
-      const masterTag = h.getClass(value._class) as MasterTag
-      if (masterTag.singleColumn) {
-        layoutMode = '1'
+  onDestroy(
+    viewStore.subscribe((views) => {
+      if (views[value._class] !== undefined) {
+        layoutMode = views[value._class] as any
+      } else {
+        const masterTag = h.getClass(value._class) as MasterTag
+        if (masterTag.singleColumn) {
+          layoutMode = '1'
+        }
       }
-    }
-  })
+    })
+  )
 
   $: columns = layoutMode === 'auto' ? (width > 600 ? 2 : 1) : parseInt(layoutMode)
 

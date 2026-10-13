@@ -691,9 +691,11 @@
   ) {
     $sidebarStore.widget = Array.from($sidebarStore.widgetsState.keys())[0]
   }
-  location.subscribe(() => {
-    if (mobileAdaptive && $sidebarStore.variant !== SidebarVariant.MINI) $sidebarStore.variant = SidebarVariant.MINI
-  })
+  onDestroy(
+    location.subscribe(() => {
+      if (mobileAdaptive && $sidebarStore.variant !== SidebarVariant.MINI) $sidebarStore.variant = SidebarVariant.MINI
+    })
+  )
   $: $deviceInfo.navigator.direction = $deviceInfo.isMobile && $deviceInfo.isPortrait ? 'horizontal' : 'vertical'
   let appsMini: boolean
   $: appsMini =

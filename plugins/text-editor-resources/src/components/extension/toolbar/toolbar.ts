@@ -425,6 +425,7 @@ export function ToolbarControlPlugin (editor: Editor, options: ToolbarOptions): 
 
       return {
         destroy () {
+          renderer.destroy()
           tippyNode.destroy()
           anchor.remove()
           window.removeEventListener('mousemove', mousemove)

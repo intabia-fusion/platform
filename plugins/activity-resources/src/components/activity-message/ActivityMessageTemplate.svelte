@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import type { ActivityMessage, ActivityMessageViewlet, ActivityMessageViewType } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import type { Person } from '@hcengineering/contact'
@@ -77,9 +78,11 @@
 
   let isSaved = false
 
-  savedMessagesStore.subscribe((saved) => {
-    isSaved = saved.some((savedMessage) => savedMessage.attachedTo === message._id)
-  })
+  onDestroy(
+    savedMessagesStore.subscribe((saved) => {
+      isSaved = saved.some((savedMessage) => savedMessage.attachedTo === message._id)
+    })
+  )
 
   $: void (
     withActions &&

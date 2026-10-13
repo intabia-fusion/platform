@@ -557,7 +557,7 @@ catalog:
   '@elastic/elasticsearch': ^8.19.1
   '@faker-js/faker': ^8.4.1
   '@koa/cors': ^5.0.0
-  '@playwright/test': ^1.62.1
+  '@playwright/test': ^1.64.0
   '@smithy/node-http-handler': ^4.12.1
   '@stylistic/eslint-plugin': ^3.1.0
   '@sveltejs/vite-plugin-svelte': ^3.1.2

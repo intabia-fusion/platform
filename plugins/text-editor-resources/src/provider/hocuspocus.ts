@@ -50,6 +50,7 @@ export class HocuspocusCollabProvider extends HocuspocusProvider implements Prov
 
   destroy (): void {
     super.destroy()
-    this.configuration.websocketProvider.disconnect()
+    // disconnect() keeps the connectionChecker interval, which retains the socket and its providers
+    this.configuration.websocketProvider.destroy()
   }
 }

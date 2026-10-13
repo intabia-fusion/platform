@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import type { ActivityMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import type { Action } from '@hcengineering/ui'
@@ -48,9 +49,11 @@
 
   $: void updateInlineActions(message, excludedActions)
 
-  savedMessagesStore.subscribe(() => {
-    void updateInlineActions(message, excludedActions)
-  })
+  onDestroy(
+    savedMessagesStore.subscribe(() => {
+      void updateInlineActions(message, excludedActions)
+    })
+  )
 
   function handleActionMenuOpened (): void {
     isActionMenuOpened = true

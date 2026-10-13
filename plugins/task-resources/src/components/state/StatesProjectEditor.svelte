@@ -21,7 +21,7 @@
   import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
   import { IconMoreV2, IconOpenedArrow, Label } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import task from '../../plugin'
 
   export let taskType: TaskType
@@ -145,11 +145,13 @@
     }
     return index
   }
-  settingsStore.subscribe((value) => {
-    if ((value.id === undefined && opened !== undefined) || (value.id !== undefined && value.id !== opened)) {
-      opened = undefined
-    }
-  })
+  onDestroy(
+    settingsStore.subscribe((value) => {
+      if ((value.id === undefined && opened !== undefined) || (value.id !== undefined && value.id !== opened)) {
+        opened = undefined
+      }
+    })
+  )
   const handleSelect = (_status: Status): void => {
     if (opened === undefined || opened !== _status._id) {
       opened = _status._id
