@@ -33,6 +33,7 @@
     "ClassSettingHint": "Sada nebo kategorie věcí se společnou vlastností, typem nebo kvalitou.",
     "ClassProperties": "Vlastnosti třídy",
     "Classes": "Třídy",
+    "ApiKeyExpired": "Vypršela",
     "Attributes": "Atributy",
     "DeleteAttribute": "Smazat atribut",
     "UnknownAttributeType": "Neznámý typ. Atribut lze pouze smazat",

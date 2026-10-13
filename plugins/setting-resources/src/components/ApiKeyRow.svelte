@@ -18,6 +18,7 @@
   import { getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
+  import { ticker } from '@hcengineering/ui'
   import { Button, Label, showPopup } from '@hcengineering/ui'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import settingsRes from '../plugin'
@@ -44,11 +45,12 @@
   }
 
   $: revoked = apiKey.revokedOn !== undefined
+  $: expired = apiKey.expiresOn != null && apiKey.expiresOn <= $ticker
   $: spacesLabel = apiKey.spaces.map((id) => spaceNames.get(id) ?? id).join(', ')
 
   // Rules are pod-webhook readable only from the key creator's own space - showing them for anyone
   // else's key would let a viewer add a rule the pod refuses to trust as coming from that key.
-  $: showRules = !revoked && apiKey.incoming === true && apiKey.createdBy === getCurrentAccount().uuid
+  $: showRules = !revoked && !expired && apiKey.incoming === true && apiKey.createdBy === getCurrentAccount().uuid
 
   let ruleCount = 0
   const rulesCountQuery = createQuery()
@@ -70,7 +72,7 @@
   }
 </script>
 
-<tr class="row" class:revoked>
+<tr class="row" class:revoked class:expired>
   <td class="chevronCell">
     <button
       class="chevron"
@@ -90,6 +92,8 @@
       <span class="name">{apiKey.name}</span>
       {#if revoked}
         <span class="badge"><Label label={settingsRes.string.ApiKeyRevoked} /></span>
+      {:else if expired}
+        <span class="badge expired"><Label label={settingsRes.string.ApiKeyExpired} /></span>
       {/if}
     </div>
   </td>
@@ -135,7 +139,7 @@
           on:click={openRules}
         />
       {/if}
-      {#if !revoked}
+      {#if !revoked && !expired}
         <Button
           label={settingsRes.string.RevokeApiKey}
           kind="dangerous"
@@ -149,7 +153,7 @@
   </td>
 </tr>
 {#if expanded}
-  <tr class="detail" class:revoked>
+  <tr class="detail" class:revoked class:expired>
     <td colspan="8">
       <div class="meta">
         {#if apiKey.ops.length > 0 && apiKey.unrestricted !== true}
@@ -187,7 +191,9 @@
     text-overflow: ellipsis;
   }
   .row.revoked td,
-  .detail.revoked td {
+  .detail.revoked td,
+  .row.expired td,
+  .detail.expired td {
     opacity: 0.5;
   }
   .chevronCell {
@@ -266,6 +272,9 @@
     border-radius: 0.5rem;
     background: var(--theme-error-color);
     color: white;
+  }
+  .badge.expired {
+    background: var(--theme-darker-color);
   }
   .statBadge {
     font-size: 0.75rem;
