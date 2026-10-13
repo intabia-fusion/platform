@@ -112,12 +112,14 @@ export async function OnWorkSlotUpdate (txes: Tx[], control: TriggerControl): Pr
         value: workSlotHours(workslot)
       })
       result.push(
-        control.txFactory.createTxCollectionCUD(
-          report.attachedToClass,
-          report.attachedTo,
-          report.space,
-          report.collection,
-          innerTx
+        feedVisibleTx(
+          control.txFactory.createTxCollectionCUD(
+            report.attachedToClass,
+            report.attachedTo,
+            report.space,
+            report.collection,
+            innerTx
+          )
         )
       )
     }
@@ -127,6 +129,10 @@ export async function OnWorkSlotUpdate (txes: Tx[], control: TriggerControl): Pr
 
 function workSlotHours (workslot: WorkSlot): number {
   return (workslot.dueDate - workslot.date) / 1000 / 60 / 60
+}
+
+function feedVisibleTx<T extends Tx> (tx: T): T {
+  return { ...tx, space: core.space.Tx }
 }
 
 export async function OnWorkSlotCreate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
@@ -166,7 +172,9 @@ async function workSlotReportTx (control: TriggerControl, workslot: WorkSlot): P
     issue.space,
     data as Data<TimeSpendReport>
   )
-  return control.txFactory.createTxCollectionCUD(issue._class, issue._id, issue.space, 'reports', innerTx)
+  return feedVisibleTx(
+    control.txFactory.createTxCollectionCUD(issue._class, issue._id, issue.space, 'reports', innerTx)
+  )
 }
 
 export async function OnWorkSlotRemove (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
@@ -183,12 +191,14 @@ export async function OnWorkSlotRemove (txes: Tx[], control: TriggerControl): Pr
     for (const report of reports) {
       const innerTx = control.txFactory.createTxRemoveDoc(report._class, report.space, report._id)
       result.push(
-        control.txFactory.createTxCollectionCUD(
-          report.attachedToClass,
-          report.attachedTo,
-          report.space,
-          report.collection,
-          innerTx
+        feedVisibleTx(
+          control.txFactory.createTxCollectionCUD(
+            report.attachedToClass,
+            report.attachedTo,
+            report.space,
+            report.collection,
+            innerTx
+          )
         )
       )
     }

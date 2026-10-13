@@ -220,4 +220,26 @@ describe('work slot time reporting', () => {
     expect(tx.objectId).toBe(reportRef)
     expect(tx.attachedTo).toBe(issueRef)
   })
+
+  it('keeps every report tx visible to the activity service', async () => {
+    const slot = createSlot(slotStart + HOUR)
+    const control = createMockControl(buildFindAll({ slot, reports: [report] }))
+
+    expect(control.txFactory.isDerived).toBe(true)
+
+    const created = await OnWorkSlotCreate([createSlotTx(slot)], control)
+    const createdOnMove = await OnWorkSlotUpdate(
+      [updateSlotTx({ dueDate: slot.dueDate })],
+      createMockControl(buildFindAll({ slot }))
+    )
+    const updated = await OnWorkSlotUpdate([updateSlotTx({ dueDate: slot.dueDate })], control)
+    const removed = await OnWorkSlotRemove([removeSlotTx()], control)
+
+    expect([...created, ...createdOnMove, ...updated, ...removed].map((it) => it.space)).toEqual([
+      core.space.Tx,
+      core.space.Tx,
+      core.space.Tx,
+      core.space.Tx
+    ])
+  })
 })
