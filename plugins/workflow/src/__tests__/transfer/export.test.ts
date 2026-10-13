@@ -13,9 +13,20 @@
 // limitations under the License.
 //
 
+import task from '@hcengineering/task'
+
 import workflow from '../../plugin'
-import { exportWorkflow } from '../../transfer'
-import { createMockTx, projectTypeId, statusDoneId, statusOpenId, taskTypeId, workflowId, ws1 } from './fixtures'
+import { exportWorkflow, exportWorkflowConfig } from '../../transfer'
+import {
+  createMockTx,
+  projectTypeId,
+  statusDoneId,
+  statusOpenId,
+  statusResolvedId,
+  taskTypeId,
+  workflowId,
+  ws1
+} from './fixtures'
 
 describe('Workflow Export', () => {
   describe('exportSingleWorkflow', () => {
@@ -223,6 +234,43 @@ describe('Workflow Export', () => {
 
       expect(config.workflows).toHaveLength(1)
       expect(config.workflows[0].id).toBe(workflowId)
+    })
+  })
+
+  describe('exportWorkflowConfig', () => {
+    it('exports only the statuses its workflows use', async () => {
+      const client = createMockTx({
+        docs: [
+          {
+            _id: 'tt-extra',
+            _class: task.class.TaskType,
+            name: 'Extra',
+            parent: projectTypeId,
+            statuses: [statusResolvedId]
+          }
+        ] as any[]
+      })
+      const config = await exportWorkflowConfig(client, projectTypeId, { workspace: ws1, projectTypeId })
+
+      expect(config.statuses?.map((s) => s.id).sort()).toEqual([statusDoneId, statusOpenId].sort())
+    })
+
+    it('takes rule attributes from the target classes of the task types', async () => {
+      const client = createMockTx({
+        docs: [
+          {
+            _id: 'tt-issue',
+            _class: task.class.TaskType,
+            name: 'Issue',
+            parent: projectTypeId,
+            targetClass: 'tracker:class:Issue',
+            statuses: []
+          }
+        ] as any[]
+      })
+      const config = await exportWorkflowConfig(client, projectTypeId, { workspace: ws1, projectTypeId })
+
+      expect(config.attributes).toContainEqual(expect.objectContaining({ id: 'attr-assignee-id', name: 'assignee' }))
     })
   })
 })

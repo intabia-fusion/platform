@@ -23,6 +23,7 @@ import core, {
   Ref,
   RefTo,
   Status,
+  StatusCategory,
   Tx,
   type TxCUD,
   TxCreateDoc,
@@ -38,6 +39,7 @@ import { isEmptyMarkup } from '@hcengineering/text'
 import workflow from './plugin'
 import {
   FieldRequiredProps,
+  type TaskStatusesProps,
   type ValidationResult,
   ValidatorClient,
   ValidatorContext,
@@ -327,40 +329,93 @@ async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]
   return translatedNames.join(', ')
 }
 
-function checkTaskTypeStatus (
-  statusesProp: Record<Ref<TaskType>, Ref<Status>[] | null> | undefined,
-  taskTypeId: Ref<TaskType>,
-  taskStatus: Ref<Status>
-): { ok: true } | { ok: false, allowedStatuses: Ref<Status>[] } {
-  if (statusesProp == null) return { ok: true }
+interface AllowedStatuses {
+  statuses: Ref<Status>[]
+  categories: Ref<StatusCategory>[]
+}
 
-  const allowed = statusesProp?.[taskTypeId]
-  if (allowed == null) {
-    return { ok: true }
+function toRefs<T> (value: unknown): T[] {
+  return Array.isArray(value) ? value.filter(notEmpty) : []
+}
+
+// undefined - the task type is not restricted
+function getAllowedStatuses (props: TaskStatusesProps, taskTypeId: Ref<TaskType>): AllowedStatuses | undefined {
+  const statuses = props.statuses?.[taskTypeId]
+  if (statuses === null) return undefined
+
+  const allowed: AllowedStatuses = {
+    statuses: toRefs<Ref<Status>>(statuses),
+    categories: toRefs<Ref<StatusCategory>>(props.categories?.[taskTypeId])
+  }
+  if (allowed.statuses.length > 0 || allowed.categories.length > 0) return allowed
+
+  const defaultCategories = toRefs<Ref<StatusCategory>>(props.defaultCategories)
+  return defaultCategories.length > 0 ? { statuses: [], categories: defaultCategories } : undefined
+}
+
+async function findViolation (
+  client: ValidatorClient,
+  props: TaskStatusesProps,
+  tasks: Array<Pick<Task, 'kind' | 'status'>>
+): Promise<AllowedStatuses | undefined> {
+  const checks = tasks
+    .map((it) => ({ status: it.status, allowed: getAllowedStatuses(props, it.kind) }))
+    .filter((it): it is { status: Ref<Status>, allowed: AllowedStatuses } => it.allowed !== undefined)
+  if (checks.length === 0) return undefined
+
+  const categoryByStatus = new Map<Ref<Status>, Ref<StatusCategory> | undefined>()
+  if (checks.some((it) => it.allowed.categories.length > 0)) {
+    const statuses: Array<Pick<Status, '_id' | 'category'>> = await client.findAll(
+      core.class.Status,
+      { _id: { $in: checks.map((it) => it.status) } },
+      { projection: { _id: 1, category: 1 } }
+    )
+    for (const st of statuses) {
+      categoryByStatus.set(st._id, st.category)
+    }
   }
 
-  if (Array.isArray(allowed)) {
-    const filterAllowed = allowed.filter(notEmpty)
-    if (filterAllowed.length === 0) {
-      return { ok: true }
-    }
-    if (filterAllowed.includes(taskStatus)) {
-      return { ok: true }
-    }
-    return { ok: false, allowedStatuses: filterAllowed }
+  for (const { status, allowed } of checks) {
+    if (allowed.statuses.includes(status)) continue
+    const category = categoryByStatus.get(status)
+    if (category !== undefined && allowed.categories.includes(category)) continue
+    return allowed
   }
+  return undefined
+}
 
-  return { ok: true }
+async function getAllowedNames (client: ValidatorClient, allowed: AllowedStatuses): Promise<string> {
+  const names: string[] = []
+  if (allowed.statuses.length > 0) {
+    names.push(await getStatusNames(client, allowed.statuses))
+  }
+  if (allowed.categories.length > 0) {
+    const categories: Array<Pick<StatusCategory, '_id' | 'label'>> = await client.findAll(
+      core.class.StatusCategory,
+      { _id: { $in: allowed.categories } },
+      { projection: { _id: 1, label: 1 } }
+    )
+    const labelMap = new Map(categories.map((c) => [c._id, c.label]))
+    for (const id of allowed.categories) {
+      const label = labelMap.get(id)
+      names.push(label !== undefined ? await translate(label, {}) : id)
+    }
+  }
+  return names.join(', ')
+}
+
+function isRestricted (props: TaskStatusesProps): boolean {
+  return !isEmptyValue(props.statuses) || !isEmptyValue(props.categories) || toRefs(props.defaultCategories).length > 0
 }
 
 export const SubtaskStatus: ValidatorFunc = async (
   client: ValidatorClient,
   taskDoc: Task,
   transition: WorkflowTransition,
-  props: Record<string, any>
+  _props: Record<string, any>
 ): Promise<ValidationResult> => {
-  const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
-  if (isEmptyValue(statusesMap)) {
+  const props = _props as TaskStatusesProps
+  if (!isRestricted(props)) {
     return { ok: true }
   }
 
@@ -369,35 +424,29 @@ export const SubtaskStatus: ValidatorFunc = async (
     { attachedTo: taskDoc._id },
     { projection: { kind: 1, status: 1 } }
   )
-  if (subtasks.length === 0) {
+  const violation = await findViolation(client, props, subtasks)
+  if (violation === undefined) {
     return { ok: true }
   }
 
-  for (const subtask of subtasks) {
-    const check = checkTaskTypeStatus(statusesMap, subtask.kind, subtask.status)
-    if (!check.ok) {
-      const flow = await getTransitionFlow(client, transition)
-      const statusesStr = await getStatusNames(client, check.allowedStatuses)
-      return {
-        ok: false,
-        reason: `Subtasks must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
-        reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: flow, statuses: statusesStr }
-      }
-    }
+  const flow = await getTransitionFlow(client, transition)
+  const statusesStr = await getAllowedNames(client, violation)
+  return {
+    ok: false,
+    reason: `Subtasks must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
+    reasonIntl: workflow.string.SubtaskStatusError,
+    intlParams: { transition: flow, statuses: statusesStr }
   }
-
-  return { ok: true }
 }
 
 export const ParentStatus: ValidatorFunc = async (
   client: ValidatorClient,
   taskDoc: Task,
   transition: WorkflowTransition,
-  props: Record<string, any>
+  _props: Record<string, any>
 ): Promise<ValidationResult> => {
-  const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
-  if (isEmptyValue(statusesMap)) {
+  const props = _props as TaskStatusesProps
+  if (!isRestricted(props)) {
     return { ok: true }
   }
 
@@ -410,22 +459,17 @@ export const ParentStatus: ValidatorFunc = async (
     { _id: taskDoc.attachedTo as Ref<Task> },
     { projection: { kind: 1, status: 1 } }
   )
-  if (parentTasks.length === 0) {
+  const violation = await findViolation(client, props, parentTasks.slice(0, 1))
+  if (violation === undefined) {
     return { ok: true }
   }
 
-  const parentTask = parentTasks[0]
-  const check = checkTaskTypeStatus(statusesMap, parentTask.kind, parentTask.status)
-  if (!check.ok) {
-    const flow = await getTransitionFlow(client, transition)
-    const statusesStr = await getStatusNames(client, check.allowedStatuses)
-    return {
-      ok: false,
-      reason: `Parent task must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
-      reasonIntl: workflow.string.ParentStatusError,
-      intlParams: { transition: flow, statuses: statusesStr }
-    }
+  const flow = await getTransitionFlow(client, transition)
+  const statusesStr = await getAllowedNames(client, violation)
+  return {
+    ok: false,
+    reason: `Parent task must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
+    reasonIntl: workflow.string.ParentStatusError,
+    intlParams: { transition: flow, statuses: statusesStr }
   }
-
-  return { ok: true }
 }

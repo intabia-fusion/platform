@@ -28,8 +28,7 @@ import FieldRequired from './components/validators/editors/FieldRequared.svelte'
 import SubtaskStatus from './components/validators/editors/SubtaskStatus.svelte'
 import ParentStatus from './components/validators/editors/ParentStatus.svelte'
 import FieldRequiredPresenter from './components/validators/presenters/FieldRequiredPresenter.svelte'
-import SubtaskStatusPresenter from './components/validators/presenters/SubtaskStatusPresenter.svelte'
-import ParentStatusPresenter from './components/validators/presenters/ParentStatusPresenter.svelte'
+import TaskStatusesPresenter from './components/validators/presenters/TaskStatusesPresenter.svelte'
 import UpdateFieldValue from './components/postFunctions/editors/UpdateFieldValue.svelte'
 import ContextSubmenuPopup from './components/postFunctions/editors/update-field/ContextSubmenuPopup.svelte'
 import ClearFieldValue from './components/postFunctions/editors/ClearFieldValue.svelte'
@@ -112,8 +111,8 @@ export default async (): Promise<Resources> => ({
   },
   validatorPresenter: {
     FieldRequired: FieldRequiredPresenter,
-    SubtaskStatus: SubtaskStatusPresenter,
-    ParentStatus: ParentStatusPresenter
+    SubtaskStatus: TaskStatusesPresenter,
+    ParentStatus: TaskStatusesPresenter
   },
   postFunctionEditor: {
     UpdateFieldValue,

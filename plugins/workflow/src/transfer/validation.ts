@@ -106,6 +106,11 @@ export function sanitizeWorkflowConfig (client: Client, input: unknown): Sanitiz
       }
     )
   }
+  if (raw.ruleStatuses !== undefined) {
+    // Only a fallback for statuses missing in the target, a broken one just loses it
+    const ignore = (): void => {}
+    config.ruleStatuses = sanitizeList(raw.ruleStatuses, (v) => sanitizeStatus(client, v, ignore), ignore)
+  }
   if (raw.enums !== undefined) {
     config.enums = sanitizeList(raw.enums, sanitizeEnum, (v) => {
       report('enum', workflow.string.ImportWarningInvalidEnum, { name: nameOf(v) })
@@ -138,8 +143,29 @@ export function sanitizeWorkflowConfig (client: Client, input: unknown): Sanitiz
       report('project', workflow.string.ImportWarningInvalidProject, { name: nameOf(v) })
     })
   }
+  bindStatusNames(config)
 
   return { config, warnings }
+}
+
+/** A project type export names transition statuses but lists them by id, the wizard would show each one twice. */
+function bindStatusNames (config: WorkflowConfig): void {
+  const ids = new Set<string>()
+  const idByName = new Map<string, StatusConfig['id']>()
+  for (const s of config.statuses ?? []) {
+    ids.add(s.id)
+    if (!idByName.has(s.name.toLowerCase())) idByName.set(s.name.toLowerCase(), s.id)
+  }
+  if (ids.size === 0) return
+  const bind = (ref: StatusConfig['id']): StatusConfig['id'] =>
+    ids.has(ref) ? ref : (idByName.get(ref.trim().toLowerCase()) ?? ref)
+  for (const wf of config.workflows) {
+    if (wf.initialStatuses !== undefined) wf.initialStatuses = wf.initialStatuses.map(bind)
+    for (const t of wf.transitions ?? []) {
+      t.to = bind(t.to)
+      if (t.from != null) t.from = t.from.map(bind)
+    }
+  }
 }
 
 type Report = (kind: ImportWarningKind, message: IntlString, params?: Record<string, string>) => void
@@ -161,7 +187,7 @@ function nameOf (value: unknown): string {
 }
 
 /** Rule and condition ids are model refs like `workflow:validator:FieldRequired`; users only need the last part. */
-function shortRuleName (rule: unknown): string {
+export function shortRuleName (rule: unknown): string {
   if (!isNonEmptyString(rule)) return '?'
   return rule.split(':').pop() ?? rule
 }

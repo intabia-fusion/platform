@@ -49,6 +49,7 @@ import type {
   WorkflowCompatibilityReport,
   WorkflowConfig
 } from './types'
+import { getStatusRuleWarnings, loadStatusRuleTarget, withStatusMapping } from './statusRules'
 import { extractRuleFieldReferences, getEnumRefFromType } from './utils'
 import { sanitizeWorkflowConfig } from './validation'
 
@@ -71,6 +72,14 @@ export async function checkWorkflowCompatibility (
   const transitions = extractTransitionsReport(config)
   const screens = await checkScreensCompatibility(client, config, targetTaskType)
   const hasScreens = hasScreensInConfig(config)
+  // The next wizard step maps or creates every workflow status, rule rows of this task type follow it
+  const statusRuleTarget = withStatusMapping(
+    await loadStatusRuleTarget(client, targetTaskType.parent, config),
+    config,
+    targetTaskType._id,
+    (id) => id
+  )
+  warnings.push(...(await getStatusRuleWarnings(client, config, statusRuleTarget)))
 
   return {
     warnings,
@@ -593,14 +602,6 @@ function checkAttributesCompatibility (
       (rawLabel !== undefined ? attributesByLabel.get(rawLabel) : undefined)
 
     const sourceType = attrConfig?.type
-    // A field the file only mentions in a rule or a screen: there is nothing to create it from, and guessing
-    // a type would make an attribute nobody asked for
-    const typeProblem =
-      attrConfig === undefined && matchedAttr === undefined
-        ? workflow.string.UnresolvableNotDescribed
-        : getAttributeTypeProblem(hierarchy, sourceType)
-    const isResolvable = typeProblem === undefined
-
     const enumMapping = new Map<Ref<Enum>, Ref<Enum>>()
     if (matchedAttr !== undefined) {
       const srcEnum = getEnumRefFromType(sourceType)
@@ -609,11 +610,17 @@ function checkAttributesCompatibility (
         enumMapping.set(srcEnum, tgtEnum)
       }
     }
-
     const isCompatible =
-      isResolvable &&
       matchedAttr !== undefined &&
       isAttributeTypeCompatible(hierarchy, sourceType, matchedAttr.type, new Set(), enumMapping)
+
+    // Type limits apply to creating an attribute, an existing compatible one like `createdBy` is mapped as is
+    const typeProblem = isCompatible
+      ? undefined
+      : attrConfig === undefined && matchedAttr === undefined
+        ? workflow.string.UnresolvableNotDescribed
+        : getAttributeTypeProblem(hierarchy, sourceType)
+    const isResolvable = typeProblem === undefined
 
     result.push({
       fieldKey,

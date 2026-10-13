@@ -22,12 +22,14 @@ import core, {
   Hierarchy,
   type Ref,
   type Status,
+  type StatusCategory,
   type TxCreateDoc,
   type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
 import task, { type Task, type TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
+import type { IntlString } from '@hcengineering/platform'
 
 import workflow from '../plugin'
 import { FieldRequired, SubtaskStatus, ParentStatus, isEmptyAttribute } from '../validators'
@@ -47,7 +49,8 @@ jest.mock('@hcengineering/platform', () => {
 
 function createMockValidatorClient (options?: {
   attributes?: Record<string, any>
-  statuses?: Array<Pick<Status, '_id' | 'name'>>
+  statuses?: Array<Pick<Status, '_id' | 'name' | 'category'>>
+  categories?: Array<Pick<StatusCategory, '_id' | 'label'>>
   subtasks?: Array<Pick<Task, 'kind' | 'status'>>
   parentTasks?: Array<Pick<Task, 'kind' | 'status'>>
 }): ValidatorClient {
@@ -80,6 +83,10 @@ function createMockValidatorClient (options?: {
       }
       return []
     }
+    if (_class === core.class.StatusCategory) {
+      const ids: string[] = query?._id?.$in ?? []
+      return (options?.categories ?? []).filter((c) => ids.includes(c._id))
+    }
     if (_class === task.class.Task) {
       if (query?.attachedTo !== undefined) {
         return options?.subtasks ?? []
@@ -105,6 +112,18 @@ describe('Workflow Validators', () => {
   const statusDone = 'status-done' as Ref<Status>
   const taskTypeBug = 'task-type-bug' as Ref<TaskType>
   const taskTypeFeature = 'task-type-feature' as Ref<TaskType>
+  const categoryActive = 'category-active' as Ref<StatusCategory>
+  const categoryWon = 'category-won' as Ref<StatusCategory>
+  const categoryLost = 'category-lost' as Ref<StatusCategory>
+  const statusMeta = [
+    { _id: statusOpen, name: 'Open', category: categoryActive },
+    { _id: statusInProgress, name: 'In Progress', category: categoryActive },
+    { _id: statusDone, name: 'Done', category: categoryWon }
+  ]
+  const categoryMeta = [
+    { _id: categoryWon, label: 'Completed' as IntlString },
+    { _id: categoryLost, label: 'Canceled' as IntlString }
+  ]
 
   const dummyTransition: WorkflowTransition = {
     _id: 'trans-1',
@@ -849,6 +868,89 @@ describe('Workflow Validators', () => {
         intlParams: { transition: 'status-open, In Progress ➜ Done', statuses: 'In Progress, Done' }
       })
     })
+
+    describe('categories', () => {
+      it('should pass when a subtask status belongs to an allowed category', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [{ kind: taskTypeBug, status: statusDone }],
+          statuses: statusMeta
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          statuses: {},
+          categories: { [taskTypeBug]: [categoryWon, categoryLost] }
+        })
+
+        expect(result).toEqual({ ok: true })
+      })
+
+      it('should list allowed statuses and categories when a subtask matches neither', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [{ kind: taskTypeBug, status: statusOpen }],
+          statuses: statusMeta,
+          categories: categoryMeta
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          statuses: { [taskTypeBug]: [statusInProgress] },
+          categories: { [taskTypeBug]: [categoryWon, categoryLost] }
+        })
+
+        expect(result).toEqual({
+          ok: false,
+          reason:
+            'Subtasks must be in allowed statuses (In Progress, Completed, Canceled) for transition Open, In Progress ➜ Done.',
+          reasonIntl: workflow.string.SubtaskStatusError,
+          intlParams: { transition: 'Open, In Progress ➜ Done', statuses: 'In Progress, Completed, Canceled' }
+        })
+      })
+
+      it('should pass when a subtask is in an allowed status outside the allowed categories', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [{ kind: taskTypeBug, status: statusInProgress }],
+          statuses: statusMeta
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          statuses: { [taskTypeBug]: [statusInProgress] },
+          categories: { [taskTypeBug]: [categoryWon] }
+        })
+
+        expect(result).toEqual({ ok: true })
+      })
+
+      it('should check task types without own settings against default categories', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [{ kind: taskTypeFeature, status: statusOpen }],
+          statuses: statusMeta,
+          categories: categoryMeta
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          statuses: { [taskTypeBug]: [statusDone] },
+          defaultCategories: [categoryWon]
+        })
+
+        expect(result).toMatchObject({ ok: false, intlParams: { statuses: 'Completed' } })
+      })
+
+      it('should prefer own task type settings over default categories', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [
+            { kind: taskTypeBug, status: statusOpen },
+            { kind: taskTypeFeature, status: statusInProgress }
+          ],
+          statuses: statusMeta
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          statuses: { [taskTypeBug]: null, [taskTypeFeature]: [statusInProgress] },
+          defaultCategories: [categoryWon]
+        })
+
+        expect(result).toEqual({ ok: true })
+      })
+    })
   })
 
   describe('ParentStatus', () => {
@@ -933,6 +1035,40 @@ describe('Workflow Validators', () => {
       })
 
       expect(result).toEqual({ ok: true })
+    })
+    it('should pass when parent status belongs to an allowed category', async () => {
+      const client = createMockValidatorClient({
+        parentTasks: [{ kind: taskTypeBug, status: statusOpen }],
+        statuses: statusMeta
+      })
+
+      const result = await ParentStatus(client, taskDocWithParent, dummyTransition, {
+        statuses: {},
+        categories: { [taskTypeBug]: [categoryActive] }
+      })
+
+      expect(result).toEqual({ ok: true })
+    })
+
+    it('should check a parent type without own settings against default categories', async () => {
+      const client = createMockValidatorClient({
+        parentTasks: [{ kind: taskTypeFeature, status: statusOpen }],
+        statuses: statusMeta,
+        categories: categoryMeta
+      })
+
+      const result = await ParentStatus(client, taskDocWithParent, dummyTransition, {
+        statuses: {},
+        defaultCategories: [categoryWon, categoryLost]
+      })
+
+      expect(result).toEqual({
+        ok: false,
+        reason:
+          'Parent task must be in allowed statuses (Completed, Canceled) for transition Open, In Progress ➜ Done.',
+        reasonIntl: workflow.string.ParentStatusError,
+        intlParams: { transition: 'Open, In Progress ➜ Done', statuses: 'Completed, Canceled' }
+      })
     })
   })
 })

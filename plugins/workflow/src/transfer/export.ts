@@ -40,6 +40,7 @@ import type {
   WorkflowRuleConfig
 } from '../schema'
 import { NameResolver, StatusToken, TaskTypeToken, buildResolver, identifierOf, remap } from './resolver'
+import { collectRuleStatusIds } from './statusRules'
 import { extractRuleFieldReferences, getEnumRefFromType } from './utils'
 import {
   type AttributeConfig,
@@ -129,6 +130,10 @@ async function resolveEnumInfoForAttributes (
   }
 
   return enumMap
+}
+
+function toStatusConfig (s: Status): StatusConfig {
+  return { id: s._id, name: s.name, color: s.color, category: s.category }
 }
 
 function isScreenRequestConfig (h: Hierarchy, rule: WorkflowRuleConfig<WorkflowRequest>): rule is ScreenRequestConfig {
@@ -308,14 +313,13 @@ export async function exportWorkflow (
   for (const id of referencedStatusIds) {
     const doc = statusDocById.get(id)
     if (doc !== undefined) {
-      statusConfigs.push({
-        id: doc._id,
-        name: doc.name,
-        color: doc.color,
-        category: doc.category
-      })
+      statusConfigs.push(toStatusConfig(doc))
     }
   }
+  const ruleStatusConfigs = Array.from(collectRuleStatusIds(transitions))
+    .map((id) => statusDocById.get(id))
+    .filter(notEmpty)
+    .map(toStatusConfig)
   statusConfigs.sort((a, b) => {
     const idxA = taskTypeStatusIndex.get(a.id)
     const idxB = taskTypeStatusIndex.get(b.id)
@@ -380,6 +384,7 @@ export async function exportWorkflow (
     projectTypeId: options.projectTypeId,
     screens: screens !== undefined && screens.length > 0 ? screens : undefined,
     statuses: statusConfigs.length > 0 ? statusConfigs : undefined,
+    ruleStatuses: ruleStatusConfigs.length > 0 ? ruleStatusConfigs : undefined,
     attributes: attributeConfigs.length > 0 ? attributeConfigs : undefined,
     mixins: mixinConfigs,
     enums: enumConfigs,
@@ -460,7 +465,8 @@ async function collectAttributeConfigs (
   const attributeByName = new Map<string, AnyAttribute>()
 
   for (const targetClass of targetClasses) {
-    if (targetClass == null) continue
+    // A class created after the model was loaded (a new task type over REST) is not in the hierarchy
+    if (targetClass == null || !hierarchy.hasClass(targetClass)) continue
     const allAttributes = hierarchy.getAllAttributes(targetClass)
     for (const attr of allAttributes.values()) {
       attributeById.set(attr._id, attr)
@@ -557,6 +563,7 @@ export async function exportWorkflowConfig (
   const referencedFieldKeys = new Set<string>()
   const referencedMixinIds = new Set<Ref<Mixin<Doc>>>()
   const statusIds = new Set<Ref<Status>>()
+  const ruleStatusIds = new Set<Ref<Status>>()
 
   const screenDocs = await client.findAll(workflow.class.Screen, { projectType: projectTypeId })
   const screens = await exportScreenConfigs(client, screenDocs, (f) => {
@@ -577,6 +584,7 @@ export async function exportWorkflowConfig (
     )
     const taskTypeName = nameOf(wf.taskType, TaskTypeToken)
     for (const s of wf.initialStatuses ?? []) statusIds.add(s)
+    for (const s of collectRuleStatusIds(transitions)) ruleStatusIds.add(s)
     for (const t of transitions) {
       if (t.to !== undefined) statusIds.add(t.to)
       for (const f of t.from ?? []) statusIds.add(f)
@@ -606,20 +614,14 @@ export async function exportWorkflowConfig (
     })
   }
 
-  const taskTypeDocs = await client.findAll(task.class.TaskType, { projectType: projectTypeId })
-  for (const tt of taskTypeDocs) {
-    for (const s of tt.statuses ?? []) {
-      statusIds.add(s)
-    }
-  }
+  // For target classes only: the import wizard would map and create the statuses of every task type
+  const taskTypeDocs = await client.findAll(task.class.TaskType, { parent: projectTypeId })
 
-  const statusDocs = await client.findAll(core.class.Status, { _id: { $in: Array.from(statusIds) } })
-  const statusConfigs: StatusConfig[] = statusDocs.map((s) => ({
-    id: s._id,
-    name: s.name,
-    color: s.color,
-    category: s.category
-  }))
+  const statusDocs = await client.findAll(core.class.Status, {
+    _id: { $in: Array.from(new Set([...statusIds, ...ruleStatusIds])) }
+  })
+  const statusConfigs = statusDocs.filter((s) => statusIds.has(s._id)).map(toStatusConfig)
+  const ruleStatusConfigs = statusDocs.filter((s) => ruleStatusIds.has(s._id)).map(toStatusConfig)
 
   const targetClasses = Array.from(
     new Set(
@@ -666,6 +668,7 @@ export async function exportWorkflowConfig (
     projectTypeId,
     screens: screens.length > 0 ? screens : undefined,
     statuses: statusConfigs.length > 0 ? statusConfigs : undefined,
+    ruleStatuses: ruleStatusConfigs.length > 0 ? ruleStatusConfigs : undefined,
     attributes: attributeConfigs.length > 0 ? attributeConfigs : undefined,
     mixins: mixinConfigs,
     enums: enumConfigs,

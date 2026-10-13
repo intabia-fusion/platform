@@ -146,6 +146,8 @@ export async function buildResolver (client: TxOperations, projectTypeId: Ref<Pr
       if (current === undefined || !currentStatusIds.has(current as Ref<Status>) || st._id < (current as Ref<Status>)) {
         resolver.setRef(StatusToken, st.name, st._id)
       }
+      // Task types can have own docs of the same name, each of them still exports by name
+      if (!resolver.toToken.has(st._id)) resolver.toToken.set(st._id, token)
     }
   }
 

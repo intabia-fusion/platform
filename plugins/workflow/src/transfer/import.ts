@@ -60,6 +60,13 @@ import { addScreenField, addScreenTab, addTransition, createWorkflow } from '../
 import { collectAttributeUsages, isAttributeTypeCompatible, isAttributeTypeResolvable } from './compatibility'
 import { findOrCreateEnum, getEnumRefFromType, isArrOfType, isEnumOfType } from './utils'
 import {
+  type StatusRuleTarget,
+  isStatusRule,
+  loadStatusRuleTarget,
+  remapStatusRuleProps,
+  withStatusMapping
+} from './statusRules'
+import {
   AttributeToken,
   NameResolver,
   ScreenToken,
@@ -227,33 +234,6 @@ export function filterAndRemapRuleProps (
     return { valid: true, props: { ...props, fields: filteredFields } }
   }
 
-  if (ruleId === workflow.validator.SubtaskStatus || ruleId === workflow.validator.ParentStatus) {
-    const ruleProps = props as { statuses?: Record<string, Ref<Status>[] | null> }
-    if (ruleProps.statuses === undefined) {
-      return { valid: true, props }
-    }
-
-    const filteredStatuses: Record<string, Ref<Status>[] | null> = {}
-    for (const [key, val] of Object.entries(ruleProps.statuses)) {
-      if (key.startsWith(TaskTypeToken)) {
-        const ttName = key.slice(TaskTypeToken.length)
-        const targetRef =
-          resolver?.getRef<TaskType>(TaskTypeToken, ttName) ?? resolver?.getRef<TaskType>(TaskTypeToken, key)
-        if (targetRef !== undefined) {
-          filteredStatuses[targetRef] = val
-        }
-      } else {
-        filteredStatuses[key] = val
-      }
-    }
-
-    if (Object.keys(filteredStatuses).length === 0) {
-      return { valid: false, props }
-    }
-
-    return { valid: true, props: { ...props, statuses: filteredStatuses } }
-  }
-
   return { valid: true, props }
 }
 
@@ -283,11 +263,19 @@ export function importRules<TRule extends WorkflowRule> (
   attrResolutions?: Record<string, AttributeResolutionConfig>,
   targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>,
   screenResolutions?: Record<string, ScreenResolutionConfig>,
-  attributeExists?: (ref: Ref<AnyAttribute>) => boolean
+  attributeExists?: (ref: Ref<AnyAttribute>) => boolean,
+  statusRuleTarget?: StatusRuleTarget
 ): WorkflowRuleConfig<TRule>[] | undefined {
   if (rules === undefined || rules.length === 0) return undefined
   const importedRules: WorkflowRuleConfig<TRule>[] = []
   for (const r of rules) {
+    const id = r.id ?? 'rule-' + generateId()
+    if (statusRuleTarget !== undefined && isStatusRule(r.rule)) {
+      // What is lost here was shown by the import wizard, see getStatusRuleWarnings
+      const { props } = remapStatusRuleProps(r.props ?? {}, statusRuleTarget)
+      if (props !== undefined) importedRules.push({ id, rule: r.rule, ruleClass: r.ruleClass, props })
+      continue
+    }
     let currentProps = r.props ?? {}
     if (attrResolutions !== undefined || screenResolutions !== undefined || targetAttributeById !== undefined) {
       const filtered = filterAndRemapRuleProps(
@@ -312,7 +300,7 @@ export function importRules<TRule extends WorkflowRule> (
       )
     }
     importedRules.push({
-      id: r.id ?? 'rule-' + generateId(),
+      id,
       rule: r.rule,
       ruleClass: r.ruleClass,
       props: remappedProps
@@ -1074,13 +1062,19 @@ async function restoreProjectWorkflows (
 function skipUnresolvableAttributes (
   hierarchy: Hierarchy,
   config: WorkflowConfig,
-  attrResolutions: Record<string, AttributeResolutionConfig>
+  attrResolutions: Record<string, AttributeResolutionConfig>,
+  targetClass: Ref<Class<Doc>>
 ): Record<string, AttributeResolutionConfig> {
   const result = { ...attrResolutions }
   const unresolvable = new Map<string, AttributeConfig>()
+  // All of them, `Doc` included: `createdBy` lives there
+  const targetAttributes = Array.from(hierarchy.getAllAttributes(targetClass).values())
   const allAttributes = [...(config.attributes ?? []), ...(config.mixins ?? []).flatMap((m) => m.attributes ?? [])]
   for (const ac of allAttributes) {
     if (isAttributeTypeResolvable(hierarchy, ac.type)) continue
+    // Only a created attribute needs an importable type, an existing compatible one is mapped
+    const existing = targetAttributes.find((a) => a._id === ac.id || a.name === ac.name)
+    if (existing !== undefined && isAttributeTypeCompatible(hierarchy, ac.type, existing.type)) continue
     unresolvable.set(ac.name, ac)
     if (ac.id !== undefined) unresolvable.set(ac.id, ac)
   }
@@ -1135,8 +1129,6 @@ export async function importWorkflowConfig (
 
   const hierarchy = client.getHierarchy()
 
-  // Handle attribute creation on target task type if requested
-  const attrResolutions = skipUnresolvableAttributes(hierarchy, config, resolution?.attributeResolutions ?? {})
   let targetTaskType: TaskType | undefined
   if (resolution?.targetTaskTypeId !== undefined) {
     targetTaskType = await client.findOne(task.class.TaskType, { _id: resolution.targetTaskTypeId })
@@ -1151,6 +1143,12 @@ export async function importWorkflowConfig (
   }
 
   const targetClass = targetTaskType?.targetClass ?? task.class.Task
+  const attrResolutions = skipUnresolvableAttributes(
+    hierarchy,
+    config,
+    resolution?.attributeResolutions ?? {},
+    targetClass
+  )
   const allTargetAttributes = hierarchy.getAllAttributes(targetClass, core.class.Doc)
   const targetAttributeById = new Map<Ref<AnyAttribute>, AnyAttribute>()
   for (const attr of allTargetAttributes.values()) {
@@ -1218,6 +1216,8 @@ export async function importWorkflowConfig (
     attributeExists,
     resolution
   )
+
+  const statusRuleTarget = await loadStatusRuleTarget(client, projectTypeId, config)
 
   // Pre-index config statuses once
   const configStatusById = new Map<Ref<Status>, StatusConfig>()
@@ -1304,6 +1304,11 @@ export async function importWorkflowConfig (
       resolver,
       resolution
     )
+    // Statuses created above are not in the target loaded before, the mapping knows them
+    const workflowStatusRules =
+      resolution?.statusMap !== undefined
+        ? withStatusMapping(statusRuleTarget, config, taskTypeId, (id) => resolution.statusMap?.[id])
+        : statusRuleTarget
 
     if (wf.initialStatuses !== undefined) {
       const initialStatuses: Ref<Status>[] = []
@@ -1396,7 +1401,8 @@ export async function importWorkflowConfig (
         attrResolutions,
         targetAttributeById,
         screenResolutions,
-        attributeExists
+        attributeExists,
+        workflowStatusRules
       )
       const importedPostFunctions = importRules(
         t.postFunctions,

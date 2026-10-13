@@ -80,6 +80,13 @@ export async function connect (): Promise<TxOperations> {
   return sharedClient
 }
 
+/** The shared client does not see classes created after it connected, e.g. the mixin of a new task type. */
+export async function connectWithFreshModel (): Promise<TxOperations> {
+  await connect()
+  if (sharedToken === undefined) throw new Error('Not connected')
+  return await createRestTxOperations(sharedToken.endpoint, sharedToken.workspaceId, sharedToken.token, true)
+}
+
 export interface TaskTypeSpec {
   name: string
   statuses: string[]

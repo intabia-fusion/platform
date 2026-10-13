@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-import {
+import core, {
   type AnyAttribute,
   generateId,
   type Ref,
@@ -22,10 +22,13 @@ import {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import workflow, {
+  checkWorkflowCompatibility,
   clearWorkflowConfig,
+  exportWorkflow,
   exportWorkflowConfig,
   importWorkflowConfig,
   type AttributeConfig,
+  type AttributeResolutionConfig,
   type PostFunctionConfig,
   type ProjectWorkflowsConfig,
   type RequestConfig,
@@ -36,6 +39,7 @@ import workflow, {
   type Workflow,
   type WorkflowConfig,
   type WorkflowConfigEntry,
+  type WorkflowImportResolution,
   type WorkflowTransition
 } from '@hcengineering/workflow'
 import task, { type Project, type ProjectType, type TaskType } from '@hcengineering/task'
@@ -43,6 +47,7 @@ import tracker from '@hcengineering/tracker'
 
 import {
   connect,
+  connectWithFreshModel,
   createIssue,
   createProject,
   createProjectTypeWith,
@@ -129,6 +134,13 @@ describe('workflow config transfer', () => {
       { name: 'Issue', statuses: Statuses },
       { name: 'Bug', statuses: Statuses }
     ])
+  }
+
+  // Task types of one project type can have distinct status docs of the same name
+  async function statusOf (type: ProjectTypeContext, taskType: string, name: string): Promise<Ref<Status> | undefined> {
+    const tt = await client.findOne(task.class.TaskType, { _id: type.taskTypes[taskType] })
+    const docs = await client.findAll(core.class.Status, { _id: { $in: tt?.statuses ?? [] } })
+    return docs.find((s) => s.name === name)?._id
   }
 
   function field (key: string): { attribute: Ref<AnyAttribute>, fieldKey: string } {
@@ -630,8 +642,162 @@ describe('workflow config transfer', () => {
       )
       const transition = await client.findOne(workflow.class.WorkflowTransition, { attachedTo: res.workflows[wfId] })
       const statuses = transition?.validators?.[0].props.statuses
-      expect(statuses[type.taskTypes.Bug]).toEqual([type.statuses.Done])
+      expect(statuses[type.taskTypes.Bug]).toEqual([await statusOf(type, 'Bug', 'Done')])
     })
+
+    it('drops unknown task types and replaces unknown statuses by their category', async () => {
+      const type = await freshType()
+      const wfId = generateId<Workflow>()
+      const config = makeConfig(type.projectTypeId, [
+        makeWorkflow(type, {
+          id: wfId,
+          name: 'Main',
+          taskTypeName: 'Issue',
+          transitions: [
+            {
+              name: 'Close',
+              from: [type.statuses.Backlog],
+              to: type.statuses.Done,
+              validators: [
+                {
+                  id: 'val-subtask-1',
+                  rule: workflow.validator.SubtaskStatus,
+                  ruleClass: workflow.class.WorkflowValidator,
+                  props: {
+                    statuses: { '$taskType:Bug': ['$status:Done', '$status:Verified'], '$taskType:Story': null }
+                  }
+                }
+              ]
+            }
+          ]
+        })
+      ])
+      const res = await importWorkflowConfig(client, type.projectTypeId, {
+        ...config,
+        // The fixture puts every status into Active
+        ruleStatuses: [{ id: generateId<Status>(), name: 'Verified', color: 1, category: task.statusCategory.Active }]
+      })
+      const transition = await client.findOne(workflow.class.WorkflowTransition, { attachedTo: res.workflows[wfId] })
+      expect(transition?.validators?.[0].props).toEqual({
+        statuses: { [type.taskTypes.Bug]: [await statusOf(type, 'Bug', 'Done')] },
+        categories: { [type.taskTypes.Bug]: [task.statusCategory.Active] }
+      })
+    })
+
+    it('takes the status the wizard creates in a row of the workflow task type', async () => {
+      const type = await freshType()
+      // The import reads the class of the target task type, created after the shared client connected
+      const fresh = await connectWithFreshModel()
+      const wfId = generateId<Workflow>()
+      const review = 'src-review' as Ref<Status>
+      const done = 'src-done' as Ref<Status>
+      const config = makeConfig(
+        type.projectTypeId,
+        [
+          makeWorkflow(type, {
+            id: wfId,
+            name: 'Main',
+            taskTypeName: 'Issue',
+            transitions: [
+              {
+                name: 'Close',
+                from: [review],
+                to: done,
+                validators: [
+                  {
+                    id: 'val-subtask-1',
+                    rule: workflow.validator.SubtaskStatus,
+                    ruleClass: workflow.class.WorkflowValidator,
+                    props: { statuses: { '$taskType:Issue': ['$status:Review'] } }
+                  }
+                ]
+              }
+            ]
+          })
+        ],
+        {
+          statuses: [
+            { id: review, name: 'Review', color: 1, category: task.statusCategory.Active },
+            { id: done, name: 'Done', color: 1, category: task.statusCategory.Won }
+          ]
+        }
+      )
+      const resolution: WorkflowImportResolution = {
+        targetTaskTypeId: type.taskTypes.Issue,
+        createMissingStatuses: true,
+        statusMap: { [done]: await statusOf(type, 'Issue', 'Done') }
+      }
+      const res = await importWorkflowConfig(fresh, type.projectTypeId, config, resolution)
+
+      const created = resolution.statusMap?.[review]
+      expect(created).toBeDefined()
+      const transition = await fresh.findOne(workflow.class.WorkflowTransition, { attachedTo: res.workflows[wfId] })
+      expect(transition?.from).toEqual([created])
+      expect(transition?.validators?.[0].props.statuses).toEqual({ [type.taskTypes.Issue]: [created] })
+    }, 30000)
+
+    it('keeps a rule reading createdBy when imported back into its task type', async () => {
+      const type = await freshType()
+      const wfId = generateId<Workflow>()
+      const res = await importWorkflowConfig(
+        client,
+        type.projectTypeId,
+        makeConfig(type.projectTypeId, [
+          makeWorkflow(type, {
+            id: wfId,
+            name: 'Creator',
+            taskTypeName: 'Issue',
+            transitions: [
+              {
+                name: 'Close',
+                from: [type.statuses.Backlog],
+                to: type.statuses.Done,
+                postFunctions: [
+                  {
+                    id: 'post-creator',
+                    rule: workflow.postFunction.UpdateFieldValue,
+                    ruleClass: workflow.class.WorkflowPostFunction,
+                    props: { fields: [{ ...field('assignee'), value: { type: 'this', ...field('createdBy') } }] }
+                  }
+                ]
+              }
+            ]
+          })
+        ])
+      )
+      // The wizard path reads the class of the task type, created after the shared client connected
+      const fresh = await connectWithFreshModel()
+      const exported = await exportWorkflow(fresh, res.workflows[wfId], {
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId
+      })
+
+      // createdBy has a type an attribute cannot be created with, but it exists and is mapped
+      const report = await checkWorkflowCompatibility(fresh, exported, type.taskTypes.Issue)
+      expect(report.attributes.find((a) => a.fieldKey === 'createdBy')).toMatchObject({
+        unresolvable: false,
+        isMatched: true
+      })
+
+      const attributeResolutions: Record<string, AttributeResolutionConfig> = {}
+      for (const a of report.attributes) {
+        attributeResolutions[a.fieldKey] = a.isMatched
+          ? { action: 'map', targetAttributeId: a.targetAttributeId }
+          : { action: 'create' }
+      }
+      const copy = await importWorkflowConfig(fresh, type.projectTypeId, exported, {
+        targetTaskTypeId: type.taskTypes.Issue,
+        name: 'Creator copy',
+        attributeResolutions
+      })
+      const transition = await fresh.findOne(workflow.class.WorkflowTransition, {
+        attachedTo: copy.workflows[exported.workflows[0].id]
+      })
+      expect(transition?.postFunctions?.[0].props.fields[0]).toMatchObject({
+        fieldKey: 'assignee',
+        value: { type: 'this', fieldKey: 'createdBy' }
+      })
+    }, 30000)
 
     it('keeps a null entry of a status map', async () => {
       const type = await freshType()

@@ -82,6 +82,7 @@ import TaskTypeDiagramPopup from './components/taskTypes/TaskTypeDiagramPopup.sv
 
 export { default as AssigneePresenter } from './components/AssigneePresenter.svelte'
 export { default as TypeSelector } from './components/TypeSelector.svelte'
+export { default as StatusCategoryIcon } from './components/state/StatusCategoryIcon.svelte'
 export * from './utils'
 export {
   StatePresenter,

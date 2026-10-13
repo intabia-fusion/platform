@@ -177,6 +177,8 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
         if (query.parent !== undefined) {
           return allDocs.filter((d) => d._class === task.class.TaskType && (d as any).parent === query.parent)
         }
+        // A task type has no such field, the real query finds nothing
+        if (query.projectType !== undefined) return []
         return allDocs.filter((d) => d._class === task.class.TaskType)
       }
       if (cls === core.class.Status) {

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Client, Ref, Status, Tx } from '@hcengineering/core'
+import { Client, Ref, Status, StatusCategory, Tx } from '@hcengineering/core'
 import type { Task, TaskType } from '@hcengineering/task'
 import type { IntlString, Resource } from '@hcengineering/platform'
 
@@ -60,13 +60,19 @@ export type WorkflowValidatorConfig<TProps extends Record<string, any> = Record<
 >
 
 export type FieldRequiredProps = FieldListProps
-export interface SubtaskStatusesProps {
+
+/**
+ * A task type passes if its status is listed in `statuses` or its category in `categories`; `null` means any status.
+ * A task type with neither is checked against `defaultCategories`, so the rule also covers task types added later.
+ */
+export interface TaskStatusesProps {
   statuses: Record<Ref<TaskType>, Ref<Status>[] | null>
+  categories?: Record<Ref<TaskType>, Ref<StatusCategory>[]>
+  defaultCategories?: Ref<StatusCategory>[]
 }
 
-export interface ParentStatusesProps {
-  statuses: Record<Ref<TaskType>, Ref<Status>[] | null>
-}
+export type SubtaskStatusesProps = TaskStatusesProps
+export type ParentStatusesProps = TaskStatusesProps
 
 export type FieldRequiredValidatorConfig = WorkflowValidatorConfig<FieldRequiredProps>
 export type SubtaskStatusesValidatorConfig = WorkflowValidatorConfig<SubtaskStatusesProps>

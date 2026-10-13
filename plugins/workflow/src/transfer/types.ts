@@ -90,6 +90,7 @@ export interface WorkflowConfig {
   projectTypeId: Ref<ProjectType>
   screens?: ScreenConfig[]
   statuses?: StatusConfig[]
+  ruleStatuses?: StatusConfig[]
   attributes?: AttributeConfig[]
   mixins?: WorkflowMixinConfig[]
   enums?: WorkflowEnumConfig[]

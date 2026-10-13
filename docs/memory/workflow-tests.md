@@ -10,7 +10,11 @@
 - inside rule `props` the same refs appear as tokens `$status:<name>`, `$taskType:<name>`, `$screen:<name>` and are remapped by a recursive walk that also rewrites object **keys** - `SubtaskStatuses.statuses` is keyed by task type ref;
 - attribute refs (`Field.attribute`) are model ids and stay as they are.
 
+`exportWorkflowConfig` writes transition statuses by name but lists `statuses` by id. `sanitizeWorkflowConfig` binds the names to the listed ids (`bindStatusNames`), otherwise the import wizard shows every status twice and its status mapping misses the name references. The exported `statuses` are only those of the workflows: the wizard maps every listed status and can create it in the target task type.
+
 Import reuses screens and workflows whose name already exists instead of duplicating them, so a repeated import is a no-op for them but still re-applies the project mapping.
+
+`importableTypeClasses` (`compatibility.ts`) limits only the attributes the import creates. An attribute the target class already has with a compatible type is mapped as is: `createdBy` is `TypePersonId`, not importable, and once was flagged "cannot import" even back into its own task type, dropping `UpdateFieldValue` fields that read it. The existing attribute is looked up with `hierarchy.getAllAttributes(targetClass)` without a `to`: `getAllAttributes(cls, core.class.Doc)` leaves out the attributes of `Doc` itself, `createdBy` among them.
 
 ## Where the tests live
 

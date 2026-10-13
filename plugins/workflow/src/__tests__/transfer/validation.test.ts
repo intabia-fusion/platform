@@ -30,7 +30,15 @@ import {
   sanitizeWorkflowConfig,
   type WorkflowConfig
 } from '../../transfer'
-import { createMockTx, projectTypeId, statusOpenId, targetTaskTypeId, taskTypeId, ws1 } from './fixtures'
+import {
+  createMockTx,
+  projectTypeId,
+  statusOpenId,
+  statusResolvedId,
+  targetTaskTypeId,
+  taskTypeId,
+  ws1
+} from './fixtures'
 
 /** Shape of a config produced by the Jira migration tool. */
 function jiraConfig (): any {
@@ -529,5 +537,176 @@ describe('Findings of the second pass', () => {
 
     await importWorkflowConfig(client, projectTypeId, config, { taskTypeMap: { [taskTypeId]: taskTypeId } as any })
     expect(client.updateCollection).not.toHaveBeenCalled()
+  })
+})
+
+describe('Statuses written by name in transitions', () => {
+  // The shape exportWorkflowConfig writes: transitions by status name, the status list by id
+  function byNameConfig (): WorkflowConfig {
+    return {
+      version: 1,
+      exportDate: '',
+      workspace: ws1,
+      projectTypeId,
+      statuses: [
+        { id: 'src-backlog' as Ref<Status>, name: 'Backlog', color: 1, category: 'active' as any },
+        { id: 'src-done' as Ref<Status>, name: 'Done', color: 2, category: 'completed' as any }
+      ],
+      workflows: [
+        {
+          id: 'wf-names' as any,
+          name: 'By names',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          initialStatuses: ['Backlog' as Ref<Status>],
+          transitions: [
+            {
+              id: 'tr-names' as Ref<WorkflowTransition>,
+              name: 'Close',
+              from: ['backlog' as Ref<Status>, 'Review' as Ref<Status>],
+              to: 'Done' as Ref<Status>
+            }
+          ]
+        }
+      ]
+    }
+  }
+
+  it('binds them to the listed status ids', () => {
+    const { config } = sanitizeWorkflowConfig(createMockTx(), byNameConfig())
+
+    expect(config.workflows[0].initialStatuses).toEqual(['src-backlog'])
+    expect(config.workflows[0].transitions?.[0]).toMatchObject({ from: ['src-backlog', 'Review'], to: 'src-done' })
+  })
+
+  it('shows each status once in the import wizard', async () => {
+    const report = await checkWorkflowCompatibility(createMockTx(), byNameConfig(), targetTaskTypeId)
+
+    expect(report.statuses.map((s) => s.sourceStatusId).sort()).toEqual(['Review', 'src-backlog', 'src-done'])
+  })
+
+  it('applies the wizard status mapping to them', async () => {
+    const client = createMockTx()
+    await importWorkflowConfig(client, projectTypeId, byNameConfig(), {
+      targetTaskTypeId,
+      statusMap: {
+        ['src-backlog' as Ref<Status>]: statusResolvedId,
+        ['src-done' as Ref<Status>]: statusOpenId,
+        ['Review' as Ref<Status>]: statusOpenId
+      }
+    })
+
+    expect(client.updateDoc).toHaveBeenCalledWith(workflow.class.Workflow, core.space.Workspace, expect.anything(), {
+      initialStatuses: [statusResolvedId]
+    })
+    expect(client.addCollection).toHaveBeenCalledWith(
+      workflow.class.WorkflowTransition,
+      core.space.Workspace,
+      expect.anything(),
+      workflow.class.Workflow,
+      'transitions',
+      expect.objectContaining({ from: [statusResolvedId, statusOpenId], to: statusOpenId })
+    )
+  })
+})
+
+describe('An existing attribute with a type that cannot be created', () => {
+  const createdBy = 'core:attribute:createdBy' as any
+  const assignee = 'attr-assignee-id' as any
+
+  // An assignee filled from the creator, as a post-function does
+  function config (): WorkflowConfig {
+    return {
+      version: 1,
+      exportDate: '',
+      workspace: ws1,
+      projectTypeId,
+      attributes: [
+        {
+          id: assignee,
+          name: 'assignee',
+          label: getEmbeddedLabel('Assignee'),
+          type: { _class: core.class.RefTo, to: 'contact:mixin:Employee' } as any
+        },
+        {
+          id: createdBy,
+          name: 'createdBy',
+          label: getEmbeddedLabel('Created by'),
+          type: { _class: core.class.TypePersonId } as any
+        }
+      ],
+      workflows: [
+        {
+          id: 'wf-creator' as any,
+          name: 'Creator',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: [
+            {
+              id: 'tr-creator' as Ref<WorkflowTransition>,
+              name: 'Close',
+              from: [statusOpenId],
+              to: statusResolvedId,
+              postFunctions: [
+                {
+                  id: 'fff',
+                  rule: workflow.postFunction.UpdateFieldValue,
+                  ruleClass: workflow.class.WorkflowPostFunction,
+                  props: {
+                    fields: [
+                      {
+                        attribute: assignee,
+                        fieldKey: 'assignee',
+                        value: { type: 'this', attribute: createdBy, fieldKey: 'createdBy' }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+
+  function client (): ReturnType<typeof createMockTx> {
+    const tx = createMockTx()
+    const attributes = new Map<string, any>([
+      [
+        'assignee',
+        { _id: assignee, name: 'assignee', type: { _class: core.class.RefTo, to: 'contact:mixin:Employee' } }
+      ],
+      ['createdBy', { _id: createdBy, name: 'createdBy', type: { _class: core.class.TypePersonId } }]
+    ])
+    ;(tx.getHierarchy().getAllAttributes as jest.Mock).mockReturnValue(attributes)
+    return tx
+  }
+
+  it('is mapped by the wizard, not reported as not importable', async () => {
+    const report = await checkWorkflowCompatibility(client(), config(), targetTaskTypeId)
+
+    expect(report.attributes.find((a) => a.fieldKey === 'createdBy')).toMatchObject({
+      unresolvable: false,
+      isMatched: true,
+      targetAttributeId: createdBy
+    })
+  })
+
+  it('stays in the rules that read it', async () => {
+    const tx = client()
+    await importWorkflowConfig(tx, projectTypeId, config(), {
+      targetTaskTypeId,
+      attributeResolutions: {
+        assignee: { action: 'map', targetAttributeId: assignee },
+        createdBy: { action: 'map', targetAttributeId: createdBy }
+      }
+    })
+
+    const call = (tx.updateCollection as jest.Mock).mock.calls.find((c) => c[6]?.postFunctions !== undefined)
+    expect(call?.[6].postFunctions[0].props.fields[0]).toMatchObject({
+      fieldKey: 'assignee',
+      value: { type: 'this', attribute: createdBy, fieldKey: 'createdBy' }
+    })
   })
 })

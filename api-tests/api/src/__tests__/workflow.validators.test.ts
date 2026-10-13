@@ -13,7 +13,15 @@
   limitations under the License.
 */
 
-import { generateId, type AnyAttribute, type Ref, type TxOperations, type WorkspaceUuid } from '@hcengineering/core'
+import {
+  generateId,
+  type AnyAttribute,
+  type Ref,
+  type StatusCategory,
+  type TxOperations,
+  type WorkspaceUuid
+} from '@hcengineering/core'
+import task from '@hcengineering/task'
 import workflow, {
   importWorkflowConfig,
   type RequestConfig,
@@ -85,6 +93,25 @@ describe('workflow validators', () => {
       ruleClass: workflow.class.WorkflowValidator,
       props: { statuses: mapped }
     }
+  }
+
+  function categoryRule (
+    rule: Ref<WorkflowRule>,
+    categories: Record<string, Array<Ref<StatusCategory>>>,
+    defaultCategories?: Array<Ref<StatusCategory>>,
+    statuses: Record<string, string[] | null> = {}
+  ): ValidatorConfig {
+    const config = statusRule(rule, statuses)
+    const mapped: Record<string, Array<Ref<StatusCategory>>> = {}
+    for (const [taskType, values] of Object.entries(categories)) {
+      mapped[`$taskType:${taskType}`] = values
+    }
+    config.props = {
+      ...config.props,
+      categories: mapped,
+      ...(defaultCategories !== undefined ? { defaultCategories } : {})
+    }
+    return config
   }
 
   async function withWorkflow (transitions: TransitionSpec[]): Promise<ProjectContext> {
@@ -514,6 +541,124 @@ describe('workflow validators', () => {
       await setStatus(ctx, parent, 'Todo')
       await setStatus(ctx, parent, 'Done')
       expect(await getStatus(ctx, parent)).toEqual('Done')
+    })
+  })
+
+  // The fixture puts every status into the Active category
+  describe('status categories', () => {
+    it('allows the parent when the subtask status is in an allowed category', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Finish',
+          from: ['Backlog'],
+          to: 'Done',
+          validators: [categoryRule(workflow.validator.SubtaskStatus, { Issue: [task.statusCategory.Active] })]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      await createIssue(ctx, { status: 'Backlog', parent })
+      await setStatus(ctx, parent, 'Done')
+      expect(await getStatus(ctx, parent)).toEqual('Done')
+    })
+
+    it('blocks the parent when the subtask status is outside the allowed categories', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Finish',
+          from: ['Backlog'],
+          to: 'Done',
+          validators: [categoryRule(workflow.validator.SubtaskStatus, { Issue: [task.statusCategory.Won] })]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      await createIssue(ctx, { status: 'Backlog', parent })
+      const err = await expectRejected(async () => {
+        await setStatus(ctx, parent, 'Done')
+      })
+      expect(err).toContain('SubtaskStatusError')
+    })
+
+    it('accepts an allowed status outside the allowed categories', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Finish',
+          from: ['Backlog'],
+          to: 'Done',
+          validators: [
+            categoryRule(workflow.validator.SubtaskStatus, { Issue: [task.statusCategory.Won] }, undefined, {
+              Issue: ['Backlog']
+            })
+          ]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      await createIssue(ctx, { status: 'Backlog', parent })
+      await setStatus(ctx, parent, 'Done')
+      expect(await getStatus(ctx, parent)).toEqual('Done')
+    })
+
+    it('checks a subtask type without its own setting against default categories', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Finish',
+          from: ['Backlog'],
+          to: 'Done',
+          validators: [categoryRule(workflow.validator.SubtaskStatus, {}, [task.statusCategory.Won], { Bug: null })]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      await createIssue(ctx, { status: 'Backlog', parent, taskType: 'Issue' })
+      const err = await expectRejected(async () => {
+        await setStatus(ctx, parent, 'Done')
+      })
+      expect(err).toContain('SubtaskStatusError')
+    })
+
+    it('prefers the own setting of a task type over default categories', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Finish',
+          from: ['Backlog'],
+          to: 'Done',
+          validators: [categoryRule(workflow.validator.SubtaskStatus, {}, [task.statusCategory.Won], { Issue: null })]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      await createIssue(ctx, { status: 'Backlog', parent, taskType: 'Issue' })
+      await setStatus(ctx, parent, 'Done')
+      expect(await getStatus(ctx, parent)).toEqual('Done')
+    })
+
+    it('blocks the subtask while the parent is outside default categories', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Start',
+          from: ['Backlog'],
+          to: 'InProgress',
+          validators: [categoryRule(workflow.validator.ParentStatus, {}, [task.statusCategory.Won])]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      const child = await createIssue(ctx, { status: 'Backlog', parent })
+      const err = await expectRejected(async () => {
+        await setStatus(ctx, child, 'InProgress')
+      })
+      expect(err).toContain('ParentStatusError')
+    })
+
+    it('allows the subtask when the parent status is in an allowed category', async () => {
+      const ctx = await withWorkflows([
+        {
+          name: 'Start',
+          from: ['Backlog'],
+          to: 'InProgress',
+          validators: [categoryRule(workflow.validator.ParentStatus, { Issue: [task.statusCategory.Active] })]
+        }
+      ])
+      const parent = await createIssue(ctx, { status: 'Backlog' })
+      const child = await createIssue(ctx, { status: 'Backlog', parent })
+      await setStatus(ctx, child, 'InProgress')
+      expect(await getStatus(ctx, child)).toEqual('InProgress')
     })
   })
 
