@@ -208,7 +208,9 @@ export function referencesFilter (message: ActivityMessage, _class?: Ref<Doc>): 
 
 export function attributesFilter (message: ActivityMessage, _class?: Ref<Doc>): boolean {
   if (message._class === activity.class.DocUpdateMessage) {
-    return (message as DocUpdateMessage).objectClass === _class
+    const { objectId, objectClass } = message as DocUpdateMessage
+    // objectClass goes stale when the doc class changes (task type), so own updates match by id
+    return objectId === message.attachedTo || objectClass === _class
   }
 
   return false
