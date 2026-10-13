@@ -83,7 +83,14 @@ import core, {
 } from '@hcengineering/core'
 import login from '@hcengineering/login'
 import { getMetadata, type IntlString, translate } from '@hcengineering/platform'
-import presentation, { addTxListener, createQuery, getClient, isDisabled, onClient } from '@hcengineering/presentation'
+import presentation, {
+  addTxListener,
+  createQuery,
+  getClient,
+  isDisabled,
+  onClient,
+  onWorkspaceChange
+} from '@hcengineering/presentation'
 import { type TemplateDataProvider } from '@hcengineering/templates'
 import {
   getCurrentResolvedLocation,
@@ -790,6 +797,11 @@ export function getSocialIdByPersonIdCb (personId: PersonId, cb: (socialId: Soci
 addTxListener(contactCache.handleTx)
 
 export const contactCacheStoreManager = ContactCacheStoreManager.instance
+
+onWorkspaceChange(() => {
+  contactCache.clear()
+  contactCacheStoreManager.reset()
+})
 
 export function getPersonRefByPersonIdStore (personIds: PersonId[]): Readable<Map<PersonId, Ref<Person>>> {
   return contactCacheStoreManager.getPersonRefByPersonIdStore(personIds)

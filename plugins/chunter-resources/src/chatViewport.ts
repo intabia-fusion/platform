@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { createQuery, getClient, addTxListener, removeTxListener } from '@hcengineering/presentation'
+import { createQuery, getClient, addTxListener, removeTxListener, onWorkspaceChange } from '@hcengineering/presentation'
 import core, {
   type Client,
   type Doc,
@@ -1133,3 +1133,8 @@ export class ChatViewport implements IChatViewport {
     }
   }
 }
+
+// Viewports are keyed by chat id, and `general`/`random` have the same id in every workspace.
+onWorkspaceChange(() => {
+  ChatViewport.clearCache()
+})

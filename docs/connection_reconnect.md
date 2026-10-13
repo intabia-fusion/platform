@@ -97,6 +97,10 @@ LiveQuery на `Reconnected` сохраняет последний извест�
   - активные подписки сортируются по размеру результата (сначала мелкие, чтобы быстрые запросы разблокировали UI раньше тяжёлых) и рефрешатся через `RateLimiter(REFRESH_CONCURRENCY=4)` - не более 4 параллельных `findAll` одновременно, что ограничивает шторм запросов после реконнекта;
 - возвращает `RefreshConnectStats` (счётчики dropped/active по классам); вызывающий (`packages/presentation/src/utils.ts:refreshClient`) логирует `[refresh] slow liveQuery refreshConnect`, только если сам вызов занял больше 1000 мс.
 
+## Смена воркспейса
+
+`setClient` (`packages/presentation/src/utils.ts`) сравнивает `presentation.metadata.WorkspaceUuid` с воркспейсом предыдущего клиента и при отличии вызывает слушателей `onWorkspaceChange`, до монтирования UI нового воркспейса. Кэши уровня модуля с ключом по `_id` документа обязаны сбрасываться здесь: системные документы (канал `general`) имеют одинаковый `_id` во всех воркспейсах, а `PersonId` общий для всех воркспейсов аккаунта.
+
 ## visibilitychange (`installVisibilityHandler`, `connection.ts`)
 
 При возврате вкладки в видимое состояние:

@@ -43,6 +43,19 @@ describe('ContactCache', () => {
     }
   })
 
+  it('clear() forgets persons of the previous workspace', () => {
+    cache.fillCachesForPersonId(personId, { ...socialId, $lookup: { attachedTo: person } } as any)
+    expect(cache.personByPersonId.get(personId)).toBe(person)
+
+    cache.clear()
+
+    expect(cache.personByPersonId.has(personId)).toBe(false)
+    expect(cache.personRefByPersonId.has(personId)).toBe(false)
+    expect(cache.personByRef.has(personRef)).toBe(false)
+    expect(cache.socialIdByPersonId.has(personId)).toBe(false)
+    expect(cache.personIdsByPersonRef.has(personRef)).toBe(false)
+  })
+
   describe('fillCachesForPersonId', () => {
     it('should handle null social identity', () => {
       cache.fillCachesForPersonId(personId, null)

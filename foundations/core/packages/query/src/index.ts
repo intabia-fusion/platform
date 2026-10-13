@@ -67,7 +67,6 @@ import core, {
   type DomainResult,
   type OperationDomain
 } from '@hcengineering/core'
-import { PlatformError } from '@hcengineering/platform'
 import { deepEqual } from 'fast-equals'
 import { Refs } from './refs'
 import { ResultArray } from './results'
@@ -196,14 +195,9 @@ export class LiveQuery implements WithTx, Client {
       if (clean) {
         this.cleanQuery(q)
       }
+      // q.refresh never rejects: reduceCalls catches and logs the error itself.
       void limiter.add(async () => {
-        try {
-          await this.refresh(q)
-        } catch (err: any) {
-          if (err instanceof PlatformError && err.message === 'connection closed') return
-          Analytics.handleError(err)
-          console.error(err)
-        }
+        await this.refresh(q)
       })
     }
     await limiter.waitProcessing()
