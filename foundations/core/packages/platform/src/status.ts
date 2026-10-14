@@ -19,7 +19,7 @@
  * @packageDocumentation
  */
 
-import type { IntlString, StatusCode } from './platform'
+import type { IntlString, Resource, StatusCode } from './platform'
 import platform from './platform'
 
 /**
@@ -34,12 +34,24 @@ export enum Severity {
 }
 
 /**
+ * Where the client shows a status
+ */
+export enum StatusDisplay {
+  StatusBar = 'statusbar',
+  Notification = 'notification'
+}
+
+/**
  * Options for Status
  * @public
  */
 export interface StatusOptions {
   timeout?: number
   propagate?: boolean
+  display?: StatusDisplay
+  title?: IntlString
+  component?: Resource<any>
+  group?: string
 }
 
 /**

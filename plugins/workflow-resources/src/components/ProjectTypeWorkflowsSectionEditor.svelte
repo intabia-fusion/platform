@@ -15,7 +15,6 @@
   import { onDestroy } from 'svelte'
   import type { Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
-  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
@@ -36,6 +35,7 @@
 
   import { navigateToWorkflow } from '../location'
   import plugin from '../plugin'
+  import { showWorkflowError } from '../utils'
   import CreateWorkflow from './CreateWorkflow.svelte'
   import ImportWorkflowPopup from './editor/ImportWorkflowPopup.svelte'
   import IconWorkflow from './icon/Workflow.svelte'
@@ -139,15 +139,17 @@
     }
   }
 
+  async function showFileUnreadable (file: string): Promise<void> {
+    await showWorkflowError(plugin.string.ImportErrorTitle, plugin.string.ImportFileUnreadable, { file })
+  }
+
   async function handleFileInputChange (e: Event): Promise<void> {
     const target = e.target as HTMLInputElement
     const file = target?.files?.[0]
     if (file == null || disabled || type === undefined) return
     try {
       if (!file.name.toLowerCase().endsWith('.json')) {
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
-        )
+        await showWorkflowError(plugin.string.ImportErrorTitle, plugin.string.ImportWrongFileType, { file: file.name })
         return
       }
 
@@ -156,15 +158,13 @@
       try {
         parsed = JSON.parse(text) as WorkflowConfig
       } catch {
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
-        )
+        await showFileUnreadable(file.name)
         return
       }
       if (parsed.version == null || !Array.isArray(parsed.workflows) || parsed.workflows.length === 0) {
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
-        )
+        await showWorkflowError(plugin.string.ImportErrorTitle, plugin.string.ImportNoWorkflows, {
+          file: file.name
+        })
         return
       }
       showPopup(
@@ -177,9 +177,7 @@
         'center'
       )
     } catch (err) {
-      await setPlatformStatus(
-        new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
-      )
+      await showFileUnreadable(file.name)
     } finally {
       if (fileInput !== undefined) {
         fileInput.value = ''

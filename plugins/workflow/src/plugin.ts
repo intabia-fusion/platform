@@ -155,7 +155,8 @@ export default plugin(workflowId, {
     WorkflowDiagramPopup: '' as AnyComponent,
     ProjectTypeScreensSectionEditor: '' as AnyComponent,
     ScreenEditor: '' as AnyComponent,
-    AttributeUsages: '' as AnyComponent
+    AttributeUsages: '' as AnyComponent,
+    WorkflowErrorNotification: '' as AnyComponent
   },
   icon: {
     Workflows: '' as Asset,
@@ -330,6 +331,22 @@ export default plugin(workflowId, {
     CopyScreensDescription: '' as IntlString,
     SelectWorkflowFile: '' as IntlString,
     InvalidWorkflowFile: '' as IntlString,
+    TaskNotCreatedTitle: '' as IntlString,
+    StatusChangeError: '' as IntlString,
+    ToMoveToStatus: '' as IntlString,
+    FillInFields: '' as IntlString,
+    SubtasksMustBeIn: '' as IntlString,
+    ParentTask: '' as IntlString,
+    MustBeIn: '' as IntlString,
+    ImportErrorTitle: '' as IntlString,
+    ImportWrongFileType: '' as IntlString,
+    ImportFileUnreadable: '' as IntlString,
+    ImportNoWorkflows: '' as IntlString,
+    ImportFailed: '' as IntlString,
+    ExportFailedTitle: '' as IntlString,
+    ExportFailed: '' as IntlString,
+    CopyFailedTitle: '' as IntlString,
+    CopyFailed: '' as IntlString,
     ImportSuccess: '' as IntlString,
     WorkflowsToImport: '' as IntlString,
     ScreensToImport: '' as IntlString,
@@ -427,10 +444,21 @@ export default plugin(workflowId, {
     ImportWarningRuleStatusMissing: '' as IntlString
   },
   status: {
-    InitialStatusNotAllowed: '' as StatusCode,
-    ForbiddenTransition: '' as StatusCode<{ from: string, to: string }>,
+    InitialStatusNotAllowed: '' as StatusCode<{
+      status: string
+      initialStatuses: string
+      count: number
+    }>,
+    ForbiddenTransition: '' as StatusCode<{
+      from: string
+      to: string
+      fromName: string
+      toName: string
+      task: string
+      refs: { task: string }
+    }>,
     SelfTransitionNotAllowed: '' as StatusCode<{ status: string }>,
-    TransitionConflict: '' as StatusCode<{ from: string, to: string, name?: string }>,
+    TransitionConflict: '' as StatusCode<{ from: string, to: string, fromName: string, toName: string, name?: string }>,
     ValidationFailed: '' as StatusCode<{ reason: string }>,
     WorkflowNotFound: '' as StatusCode
   }

@@ -1,33 +1,19 @@
 <script lang="ts">
   import type { Status } from '@hcengineering/platform'
-  import { Severity, translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import { Severity } from '@hcengineering/platform'
 
   import Info from './icons/Info.svelte'
-  import Label from './Label.svelte'
+  import StatusLabel from './StatusLabel.svelte'
 
   export let status: Status
   export let overflow: boolean = true
-
-  let params: Record<string, any> = {}
-
-  $: {
-    params = { ...(status?.params ?? {}) }
-    if (status?.notLocalizedParams != null) {
-      for (const [key, intlStr] of Object.entries(status.notLocalizedParams)) {
-        translateCB(intlStr, {}, $themeStore.language, (res) => {
-          params = { ...params, [key]: res }
-        })
-      }
-    }
-  }
 </script>
 
 <div class="flex-center container {status.severity}" class:overflow-label={overflow}>
   {#if status.severity !== Severity.OK}
     <Info size={'small'} />
     <span class="text-sm ml-2" class:overflow-label={overflow}>
-      <Label label={status.code} {params} />
+      <StatusLabel {status} />
     </span>
   {/if}
 </div>

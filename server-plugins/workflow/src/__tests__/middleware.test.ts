@@ -50,7 +50,7 @@ import workflow, {
 
 import { WorkflowMiddleware } from '../middleware'
 import serverWorkflow, { type ValidatorImpl } from '../index'
-import { Resource } from '@hcengineering/platform'
+import { Resource, StatusDisplay } from '@hcengineering/platform'
 
 interface PrivateMiddlewareAccess {
   getWorkflowRef: (
@@ -442,6 +442,11 @@ describe('WorkflowMiddleware', () => {
           expect(err.status?.code).toBe('workflow:status:TransitionConflict')
           expect(err.status?.params?.from).toBe('todo')
           expect(err.status?.params?.to).toBe('in-progress')
+          // Status docs are not mocked, so names fall back to ids.
+          expect(err.status?.params?.fromName).toBe('todo')
+          expect(err.status?.params?.toName).toBe('in-progress')
+          // The transition form shows this inline, so the server one stays in the status bar.
+          expect(err.status?.options?.display).toBeUndefined()
         }
       })
 
@@ -470,7 +475,11 @@ describe('WorkflowMiddleware', () => {
           to: 'done'
         })
 
-        await expect(middleware.tx(defaultCtx, [tx])).rejects.toThrow('workflow:status:TransitionConflict')
+        const result = middleware.tx(defaultCtx, [tx])
+        await expect(result).rejects.toThrow('workflow:status:TransitionConflict')
+        await expect(result).rejects.toMatchObject({
+          status: { params: { from: 'any', toName: 'done', name: 'Existing General Transition' } }
+        })
       })
     })
 
@@ -644,7 +653,19 @@ describe('WorkflowMiddleware', () => {
         'proj-1' as Ref<Space>
       )
 
-      await expect(middleware.tx(defaultCtx, [createTx])).rejects.toThrow('workflow:status:InitialStatusNotAllowed')
+      const result = middleware.tx(defaultCtx, [createTx])
+      await expect(result).rejects.toThrow('workflow:status:InitialStatusNotAllowed')
+      await expect(result).rejects.toMatchObject({
+        status: {
+          params: { status: 'in-progress', initialStatuses: 'todo, backlog', count: 2 },
+          options: {
+            display: StatusDisplay.Notification,
+            timeout: 10000,
+            title: workflow.string.TaskNotCreatedTitle,
+            group: 'workflow:status:InitialStatusNotAllowed:proj-1'
+          }
+        }
+      })
     })
 
     it('should allow task creation when Workflow has empty or null initialStatuses', async () => {
@@ -823,7 +844,26 @@ describe('WorkflowMiddleware', () => {
         'proj-1' as Ref<Space>
       )
 
-      await expect(middleware.tx(defaultCtx, [updateTx])).rejects.toThrow('workflow:status:ForbiddenTransition')
+      const result = middleware.tx(defaultCtx, [updateTx])
+      await expect(result).rejects.toThrow('workflow:status:ForbiddenTransition')
+      await expect(result).rejects.toMatchObject({
+        status: {
+          params: {
+            from: 'todo',
+            to: 'done',
+            fromName: 'todo',
+            toName: 'done',
+            task: 'TASK-1',
+            refs: { task: 'task-1' }
+          },
+          options: {
+            display: StatusDisplay.Notification,
+            title: workflow.string.StatusChangeError,
+            component: workflow.component.WorkflowErrorNotification,
+            group: 'workflow:status:ForbiddenTransition:task-1'
+          }
+        }
+      })
     })
 
     it('should allow an otherwise forbidden status when the task type changes in the same tx', async () => {
@@ -1195,7 +1235,20 @@ describe('WorkflowMiddleware', () => {
         'proj-1' as Ref<Space>
       )
 
-      await expect(middleware.tx(defaultCtx, [updateTx])).rejects.toThrow('workflow:status:ValidationFailed')
+      const result = middleware.tx(defaultCtx, [updateTx])
+      await expect(result).rejects.toThrow('workflow:status:ValidationFailed')
+      await expect(result).rejects.toMatchObject({
+        status: {
+          params: { task: 'TASK-1', refs: { task: 'task-1' } },
+          options: {
+            propagate: true,
+            timeout: 10000,
+            display: StatusDisplay.Notification,
+            title: workflow.string.StatusChangeError,
+            group: 'workflow:status:ValidationFailed:task-1'
+          }
+        }
+      })
     })
   })
 })

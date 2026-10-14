@@ -24,6 +24,7 @@ Two things that are easy to get wrong there:
 
 - `createRestTxOperations` must be called with `fullModel: true`. `createProjectType` (`plugins/task/src/utils.ts`) resolves descriptors out of the model and a trimmed model has none (throws "category is not found in model").
 - `createState` (`plugins/task/src/utils.ts`) does not deduplicate by name - every `createProjectTypeWith` call creates fresh `Status` docs, so different task types (even of the same project type) can end up with distinct `Status` docs sharing the same name. The fixture resolves a name to the smallest ref afterward, exactly like `buildResolver` in `plugins/workflow/src/transfer/resolver.ts` does for import - both must agree on the same doc for a given name.
+- `createProjectTypeWith` puts every status into the Active category. A check of category rules needs its own task type with real categories (`createProjectType` with a per-status `category` in the factory).
 
 ## Defect found by these tests
 

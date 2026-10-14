@@ -57,7 +57,7 @@
           <Icon {icon} size="medium" />
         </div>
       {/if}
-      <span class="overflow-label fs-bold text-base caption-color">{title}</span>
+      <span class="overflow-label fs-bold text-base caption-color"><slot name="title">{title}</slot></span>
     </div>
     {#if onClose !== undefined}
       <Button icon={Close} kind="ghost" size="small" dataId={'btnNotifyClose'} on:click={onClose} />
@@ -81,7 +81,7 @@
     display: flex;
     flex-direction: column;
     margin: 0.75rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     min-width: 25rem;
     max-width: 35rem;
     min-height: 7rem;

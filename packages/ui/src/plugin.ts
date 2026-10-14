@@ -169,7 +169,10 @@ export const uis = plugin(uiId, {
     Received: '' as IntlString,
     TrafficValue: '' as IntlString,
     Latency: '' as IntlString,
-    LatencyValue: '' as IntlString
+    LatencyValue: '' as IntlString,
+    StatusError: '' as IntlString,
+    StatusWarning: '' as IntlString,
+    StatusInfo: '' as IntlString
   },
   metadata: {
     DefaultApplication: '' as Metadata<AnyComponent>,

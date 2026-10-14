@@ -1,6 +1,13 @@
 <script lang="ts">
   import type { Status } from '@hcengineering/platform'
-  import platform, { OK, PlatformEvent, Severity, addEventListener, getMetadata } from '@hcengineering/platform'
+  import platform, {
+    OK,
+    PlatformEvent,
+    Severity,
+    StatusDisplay,
+    addEventListener,
+    getMetadata
+  } from '@hcengineering/platform'
   import { onDestroy, onMount } from 'svelte'
   import type { AnyComponent, WidthType } from '../../types'
   import { deviceSizes, deviceWidths } from '../../types'
@@ -24,6 +31,7 @@
   import RootBarExtension from './RootBarExtension.svelte'
   import Settings from './Settings.svelte'
   import { isAppFocusedStore } from '../../stores'
+  import { addStatusNotification } from '../../utils'
   import { startActivityTracking } from '../../presence'
 
   let application: AnyComponent | undefined
@@ -124,6 +132,7 @@
       maintenanceTime = _status.params.time
       maintenanceMessage = _status.params.message
     } else {
+      if (_status.options?.display === StatusDisplay.Notification && (await addStatusNotification(_status))) return
       if (_status.code === platform.status.RegularAccount) {
         readonlyAccount = false
         _status = OK

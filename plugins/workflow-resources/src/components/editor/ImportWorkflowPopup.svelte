@@ -14,11 +14,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import type { Ref, Status } from '@hcengineering/core'
-  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { closePopup, type IWizardStep, ModernWizardDialog } from '@hcengineering/ui'
+  import { closePopup, Icon, IconInfo, type IWizardStep, Label, ModernWizardDialog } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import workflow, {
     checkWorkflowCompatibility,
@@ -78,6 +77,7 @@
   let attributeResolutions: Record<string, AttributeResolutionConfig> = {}
   let createMissingStatuses = true
   let isSaving = false
+  let importFailed = false
 
   // --- Wizard Navigation State ---
   let selectedStep = initialConfig != null ? 'general' : 'file'
@@ -186,12 +186,14 @@
     ) {
       return
     }
+    importFailed = false
     selectedStep = targetStep
   }
 
   async function handleSubmit (): Promise<void> {
     if (!canSubmit || parsedConfig == null || selectedTaskTypeId === undefined) return
     isSaving = true
+    importFailed = false
     try {
       const resolution: WorkflowImportResolution = {
         targetTaskTypeId: selectedTaskTypeId,
@@ -213,11 +215,7 @@
       }
     } catch (err: any) {
       console.error('Failed to import workflow', err)
-      await setPlatformStatus(
-        new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, {
-          timeout: 4000
-        })
-      )
+      importFailed = true
     } finally {
       isSaving = false
     }
@@ -271,6 +269,14 @@
       />
     {/if}
   </div>
+  <svelte:fragment slot="footerMessage">
+    {#if importFailed}
+      <div class="importError">
+        <Icon icon={IconInfo} size="small" />
+        <Label label={plugin.string.ImportFailed} />
+      </div>
+    {/if}
+  </svelte:fragment>
 </ModernWizardDialog>
 
 <style lang="scss">
@@ -282,5 +288,12 @@
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+  }
+
+  .importError {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--theme-error-color);
   }
 </style>

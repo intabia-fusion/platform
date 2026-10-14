@@ -119,6 +119,9 @@
     "Received": "Recebido",
     "TrafficValue": "{count} msgs, {kb} KB",
     "Latency": "Latência",
-    "LatencyValue": "{ms} ms"
+    "LatencyValue": "{ms} ms",
+    "StatusError": "Erro",
+    "StatusWarning": "Aviso",
+    "StatusInfo": "Informação"
   }
 }

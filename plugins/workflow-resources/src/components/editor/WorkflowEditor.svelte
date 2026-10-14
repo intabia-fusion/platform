@@ -50,6 +50,7 @@
 
   import { navigateToWorkflow } from '../../location'
   import plugin from '../../plugin'
+  import { showWorkflowError } from '../../utils'
   import InitialStatusesEditor from './InitialStatusesEditor.svelte'
   import TaskTypeEditor from './TaskTypeEditor.svelte'
   import TransitionsEditor from './TransitionsEditor.svelte'
@@ -217,9 +218,7 @@
         URL.revokeObjectURL(url)
       } catch (err) {
         console.error('Failed to export workflow', err)
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 5000 })
-        )
+        await showWorkflowError(plugin.string.ExportFailedTitle, plugin.string.ExportFailed, { name: workflow.name })
       }
     } else if (actionId === 'clipboard') {
       try {
@@ -233,9 +232,7 @@
         )
       } catch (err) {
         console.error('Failed to copy workflow to clipboard', err)
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.ClipboardReadError, {}, undefined, { timeout: 5000 })
-        )
+        await showWorkflowError(plugin.string.CopyFailedTitle, plugin.string.CopyFailed, { name: workflow.name })
       }
     }
   }

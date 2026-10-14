@@ -119,6 +119,9 @@
     "Received": "Получено",
     "TrafficValue": "{count} сообщ., {kb} КБ",
     "Latency": "Задержка",
-    "LatencyValue": "{ms} мс"
+    "LatencyValue": "{ms} мс",
+    "StatusError": "Ошибка",
+    "StatusWarning": "Предупреждение",
+    "StatusInfo": "Информация"
   }
 }

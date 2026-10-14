@@ -30,24 +30,46 @@ import core, {
   type TxCreateDoc,
   type TxUpdateDoc,
   DocumentUpdate,
-  TxMixin
+  TxMixin,
+  type Status as DocStatus
 } from '@hcengineering/core'
 import task, { Project, type Task, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import { getResource, PlatformError, Severity, Status } from '@hcengineering/platform'
+import {
+  getResource,
+  type IntlString,
+  PlatformError,
+  Severity,
+  Status,
+  StatusDisplay,
+  type StatusOptions
+} from '@hcengineering/platform'
 import {
   type ProjectWorkflow,
   type Workflow,
   type WorkflowValidator,
   type WorkflowTransition,
   type ValidatorClient,
+  type ConflictInfo,
+  getStatusNameList,
   getTransitionConflict,
   hasSelfTransition
 } from '@hcengineering/workflow'
 
 import serverWorkflow, { type ValidatorImpl } from './index'
 
-const ErrorTimeout = 3 * 1000
+const StatusBarError: StatusOptions = { propagate: true, timeout: 3 * 1000 }
+
+function notification (title: IntlString, code: string, target: string): StatusOptions {
+  return {
+    propagate: true,
+    timeout: 10 * 1000,
+    display: StatusDisplay.Notification,
+    title,
+    component: workflow.component.WorkflowErrorNotification,
+    group: `${code}:${target}`
+  }
+}
 
 export class WorkflowMiddleware extends BaseMiddleware {
   private readonly projectWorkflowsCache = new Map<Ref<Project>, Record<Ref<TaskType>, Ref<Workflow>> | null>()
@@ -142,11 +164,19 @@ export class WorkflowMiddleware extends BaseMiddleware {
       const wf = (await this.provideFindAll(ctx, workflow.class.Workflow, { _id: workflowRef }, { limit: 1 }))[0]
       if (wf?.initialStatuses != null && wf.initialStatuses.length > 0) {
         if (!wf.initialStatuses.includes(task.status)) {
+          const names = await getStatusNameList(this.validatorClient(ctx), wf.initialStatuses)
           throw new PlatformError(
-            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status }, undefined, {
-              propagate: true,
-              timeout: ErrorTimeout
-            })
+            new Status(
+              Severity.ERROR,
+              workflow.status.InitialStatusNotAllowed,
+              {
+                status: task.status,
+                initialStatuses: names.join(', '),
+                count: names.length
+              },
+              undefined,
+              notification(workflow.string.TaskNotCreatedTitle, workflow.status.InitialStatusNotAllowed, task.space)
+            )
           )
         }
       }
@@ -193,18 +223,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     })
 
     if (allowedTransitions.length === 0) {
-      throw new PlatformError(
-        new Status(
-          Severity.ERROR,
-          workflow.status.ForbiddenTransition,
-          {
-            from: fromStatus,
-            to: toStatus
-          },
-          undefined,
-          { propagate: true, timeout: ErrorTimeout }
-        )
-      )
+      throw await this.forbiddenTransition(ctx, oldTask, toStatus)
     }
 
     const transition =
@@ -212,22 +231,71 @@ export class WorkflowMiddleware extends BaseMiddleware {
       allowedTransitions.find((t) => t.from == null || t.from.length === 0)
 
     if (transition === undefined) {
-      throw new PlatformError(
-        new Status(
-          Severity.ERROR,
-          workflow.status.ForbiddenTransition,
-          {
-            from: fromStatus,
-            to: toStatus
-          },
-          undefined,
-          { propagate: true, timeout: ErrorTimeout }
-        )
-      )
+      throw await this.forbiddenTransition(ctx, oldTask, toStatus)
     }
 
     const updatedTask = TxProcessor.updateDoc2Doc(oldTask, updateTx)
     await this.validateTransitionValidators(ctx, transition, updatedTask, txes)
+  }
+
+  private async forbiddenTransition (
+    ctx: MeasureContext<SessionData>,
+    oldTask: Task,
+    toStatus: Ref<DocStatus>
+  ): Promise<PlatformError<any>> {
+    const [fromName, toName] = await getStatusNameList(this.validatorClient(ctx), [oldTask.status, toStatus])
+    return new PlatformError(
+      new Status(
+        Severity.ERROR,
+        workflow.status.ForbiddenTransition,
+        {
+          from: oldTask.status,
+          to: toStatus,
+          fromName,
+          toName,
+          task: oldTask.identifier,
+          refs: { task: oldTask._id }
+        },
+        undefined,
+        notification(workflow.string.StatusChangeError, workflow.status.ForbiddenTransition, oldTask._id)
+      )
+    )
+  }
+
+  private async transitionConflict (
+    ctx: MeasureContext<SessionData>,
+    conflict: ConflictInfo,
+    to: Ref<DocStatus>
+  ): Promise<PlatformError<any>> {
+    const anyFrom = conflict.status === 'null'
+    const [toName, fromName] = await getStatusNameList(
+      this.validatorClient(ctx),
+      anyFrom ? [to] : [to, conflict.status]
+    )
+    return new PlatformError(
+      new Status(
+        Severity.ERROR,
+        workflow.status.TransitionConflict,
+        {
+          from: anyFrom ? 'any' : conflict.status,
+          to,
+          fromName: fromName ?? '',
+          toName,
+          name: conflict.transition.name
+        },
+        undefined,
+        StatusBarError
+      )
+    )
+  }
+
+  private validatorClient (ctx: MeasureContext<SessionData>): ValidatorClient {
+    return {
+      getHierarchy: () => this.context.hierarchy,
+      getModel: () => this.context.modelDb,
+      findAll: (_class, query, options) => this.provideFindAll(ctx, _class, query, options),
+      findOne: async (_class, query, options) => (await this.provideFindAll(ctx, _class, query, options))[0]
+    }
   }
 
   private async validateTransitionValidators (
@@ -239,12 +307,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     const validatorConfigs = transition.validators
     if (validatorConfigs == null || validatorConfigs.length === 0) return
 
-    const client: ValidatorClient = {
-      getHierarchy: () => this.context.hierarchy,
-      getModel: () => this.context.modelDb,
-      findAll: (_class, query, options) => this.provideFindAll(ctx, _class, query, options),
-      findOne: async (_class, query, options) => (await this.provideFindAll(ctx, _class, query, options))[0]
-    }
+    const client = this.validatorClient(ctx)
 
     const validatorIds = Array.from(new Set(validatorConfigs.map((v) => v.rule)))
     const validators = await this.provideFindAll(ctx, workflow.class.WorkflowValidator, { _id: { $in: validatorIds } })
@@ -265,16 +328,20 @@ export class WorkflowMiddleware extends BaseMiddleware {
         txes
       })
       if (!res.ok) {
+        const code = res.reasonIntl ?? workflow.status.ValidationFailed
         throw new PlatformError(
           new Status(
             Severity.ERROR,
-            res.reasonIntl ?? workflow.status.ValidationFailed,
+            code,
             {
               reason: res.reason,
-              ...res.intlParams
+              task: taskDoc.identifier,
+              space: taskDoc.space,
+              ...res.intlParams,
+              refs: { ...res.intlParams?.refs, task: taskDoc._id }
             },
             res.intlParamsNotLocalized,
-            { propagate: true, timeout: ErrorTimeout }
+            notification(workflow.string.StatusChangeError, code, taskDoc._id)
           )
         )
       }
@@ -287,19 +354,19 @@ export class WorkflowMiddleware extends BaseMiddleware {
       const transition = TxProcessor.createDoc2Doc(createTx)
       if (hasSelfTransition(transition)) {
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to }, undefined, {
-            propagate: true,
-            timeout: ErrorTimeout
-          })
+          new Status(
+            Severity.ERROR,
+            workflow.status.SelfTransitionNotAllowed,
+            { status: transition.to },
+            undefined,
+            StatusBarError
+          )
         )
       }
       const workflowRef = transition.attachedTo
       if (workflowRef == null) {
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}, undefined, {
-            propagate: true,
-            timeout: ErrorTimeout
-          })
+          new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}, undefined, StatusBarError)
         )
       }
 
@@ -308,23 +375,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
       })
       const conflict = getTransitionConflict(transition, currentTransitions)
       if (conflict != null) {
-        const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
-        throw new PlatformError(
-          new Status(
-            Severity.ERROR,
-            workflow.status.TransitionConflict,
-            {
-              from: fromStatus,
-              to: transition.to,
-              name: conflict.transition.name
-            },
-            undefined,
-            {
-              propagate: true,
-              timeout: ErrorTimeout
-            }
-          )
-        )
+        throw await this.transitionConflict(ctx, conflict, transition.to)
       }
     } else if (cud._class === core.class.TxUpdateDoc) {
       const updateTx = cud as TxUpdateDoc<WorkflowTransition>
@@ -336,10 +387,13 @@ export class WorkflowMiddleware extends BaseMiddleware {
           const updated = TxProcessor.updateDoc2Doc(transition, updateTx)
           if (hasSelfTransition(updated)) {
             throw new PlatformError(
-              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to }, undefined, {
-                propagate: true,
-                timeout: ErrorTimeout
-              })
+              new Status(
+                Severity.ERROR,
+                workflow.status.SelfTransitionNotAllowed,
+                { status: updated.to },
+                undefined,
+                StatusBarError
+              )
             )
           }
           const workflowRef = updated.attachedTo ?? transition.attachedTo
@@ -348,23 +402,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
           })
           const conflict = getTransitionConflict(updated, existingTransitions)
           if (conflict != null) {
-            const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
-            throw new PlatformError(
-              new Status(
-                Severity.ERROR,
-                workflow.status.TransitionConflict,
-                {
-                  from: fromStatus,
-                  to: updated.to,
-                  name: conflict.transition.name
-                },
-                undefined,
-                {
-                  propagate: true,
-                  timeout: ErrorTimeout
-                }
-              )
-            )
+            throw await this.transitionConflict(ctx, conflict, updated.to)
           }
         }
       }

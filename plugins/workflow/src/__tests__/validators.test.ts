@@ -52,7 +52,8 @@ function createMockValidatorClient (options?: {
   statuses?: Array<Pick<Status, '_id' | 'name' | 'category'>>
   categories?: Array<Pick<StatusCategory, '_id' | 'label'>>
   subtasks?: Array<Pick<Task, 'kind' | 'status'>>
-  parentTasks?: Array<Pick<Task, 'kind' | 'status'>>
+  parentTasks?: Array<Pick<Task, 'kind' | 'status'> & { identifier?: string }>
+  taskTypes?: Array<Pick<TaskType, '_id' | 'statuses'>>
 }): ValidatorClient {
   const findAttribute = jest.fn((_class: Ref<Class<any>>, fieldKey: string) => {
     const attr = options?.attributes !== undefined && fieldKey in options.attributes ? options.attributes[fieldKey] : {}
@@ -87,6 +88,9 @@ function createMockValidatorClient (options?: {
       const ids: string[] = query?._id?.$in ?? []
       return (options?.categories ?? []).filter((c) => ids.includes(c._id))
     }
+    if (_class === task.class.TaskType) {
+      return (options?.taskTypes ?? []).filter((t) => t._id === query?._id)
+    }
     if (_class === task.class.Task) {
       if (query?.attachedTo !== undefined) {
         return options?.subtasks ?? []
@@ -110,6 +114,7 @@ describe('Workflow Validators', () => {
   const statusOpen = 'status-open' as Ref<Status>
   const statusInProgress = 'status-in-progress' as Ref<Status>
   const statusDone = 'status-done' as Ref<Status>
+  const statusCanceled = 'status-canceled' as Ref<Status>
   const taskTypeBug = 'task-type-bug' as Ref<TaskType>
   const taskTypeFeature = 'task-type-feature' as Ref<TaskType>
   const categoryActive = 'category-active' as Ref<StatusCategory>
@@ -118,7 +123,13 @@ describe('Workflow Validators', () => {
   const statusMeta = [
     { _id: statusOpen, name: 'Open', category: categoryActive },
     { _id: statusInProgress, name: 'In Progress', category: categoryActive },
-    { _id: statusDone, name: 'Done', category: categoryWon }
+    { _id: statusDone, name: 'Done', category: categoryWon },
+    { _id: statusCanceled, name: 'Canceled', category: categoryLost }
+  ]
+  const typeStatuses = [statusOpen, statusInProgress, statusDone, statusCanceled]
+  const taskTypeMeta = [
+    { _id: taskTypeBug, statuses: typeStatuses },
+    { _id: taskTypeFeature, statuses: typeStatuses }
   ]
   const categoryMeta = [
     { _id: categoryWon, label: 'Completed' as IntlString },
@@ -207,38 +218,38 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition Open, status-in-progress ➜ Done.',
+        reason: 'To move the task to "Done", fill in: Due Date.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Open, status-in-progress ➜ Done' },
-        intlParamsNotLocalized: { field: 'Due Date' }
+        intlParams: { to: 'Done', fields: 'Due Date', count: 1, refs: { to: statusDone, fields: ['Due Date'] } }
       })
     })
 
-    it('should handle transition with no `from` statuses (Any status)', async () => {
+    it('should list every empty field, not only the first', async () => {
       const client = createMockValidatorClient({
         attributes: {
-          due: { label: 'Due Date' }
+          due: { label: 'Due Date' },
+          assignee: { label: 'Assignee' },
+          estimation: { label: 'Estimation' }
         },
         statuses: [{ _id: statusDone, name: 'Done' }]
       })
 
-      const transitionWithoutFrom: WorkflowTransition = {
-        ...dummyTransition,
-        from: null
-      }
+      const task = { ...taskDoc, due: null, assignee: null, estimation: 4 } as unknown as Task
 
-      const taskWithEmptyDue = { ...taskDoc, due: null } as unknown as Task
-
-      const result = await FieldRequired(client, taskWithEmptyDue, transitionWithoutFrom, {
-        fields: [{ fieldKey: 'due' }]
+      const result = await FieldRequired(client, task, dummyTransition, {
+        fields: [{ fieldKey: 'due' }, { fieldKey: 'estimation' }, { fieldKey: 'assignee' }, { fieldKey: 'due' }]
       })
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition Any ➜ Done.',
+        reason: 'To move the task to "Done", fill in: Due Date, Assignee.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' },
-        intlParamsNotLocalized: { field: 'Due Date' }
+        intlParams: {
+          to: 'Done',
+          fields: 'Due Date, Assignee',
+          count: 2,
+          refs: { to: statusDone, fields: ['Due Date', 'Assignee'] }
+        }
       })
     })
 
@@ -264,38 +275,14 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition status-open ➜ status-done.',
+        reason: 'To move the task to "status-done", fill in: Due Date.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'status-open ➜ status-done' },
-        intlParamsNotLocalized: { field: 'Due Date' }
-      })
-    })
-
-    it('should handle transition with empty `from` statuses array', async () => {
-      const client = createMockValidatorClient({
-        attributes: {
-          due: { label: 'Due Date' }
-        },
-        statuses: [{ _id: statusDone, name: 'Done' }]
-      })
-
-      const transitionWithEmptyFrom: WorkflowTransition = {
-        ...dummyTransition,
-        from: []
-      }
-
-      const taskWithEmptyDue = { ...taskDoc, due: null } as unknown as Task
-
-      const result = await FieldRequired(client, taskWithEmptyDue, transitionWithEmptyFrom, {
-        fields: [{ fieldKey: 'due' }]
-      })
-
-      expect(result).toEqual({
-        ok: false,
-        reason: 'Field "Due Date" is required for transition Any ➜ Done.',
-        reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' },
-        intlParamsNotLocalized: { field: 'Due Date' }
+        intlParams: {
+          to: 'status-done',
+          fields: 'Due Date',
+          count: 1,
+          refs: { to: statusDone, fields: ['Due Date'] }
+        }
       })
     })
 
@@ -781,9 +768,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Subtasks must be in allowed statuses (Done) for transition status-open, status-in-progress ➜ Done.',
+        reason: 'All subtasks must be in: Done.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'status-open, status-in-progress ➜ Done', statuses: 'Done' }
+        intlParams: { statuses: 'Done', count: 1, refs: { statuses: [statusDone] } }
       })
     })
 
@@ -862,10 +849,13 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason:
-          'Subtasks must be in allowed statuses (In Progress, Done) for transition status-open, In Progress ➜ Done.',
+        reason: 'All subtasks must be in: In Progress, Done.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'status-open, In Progress ➜ Done', statuses: 'In Progress, Done' }
+        intlParams: {
+          statuses: 'In Progress, Done',
+          count: 2,
+          refs: { statuses: [statusInProgress, statusDone] }
+        }
       })
     })
 
@@ -884,11 +874,12 @@ describe('Workflow Validators', () => {
         expect(result).toEqual({ ok: true })
       })
 
-      it('should list allowed statuses and categories when a subtask matches neither', async () => {
+      it('should spell out allowed categories as the statuses of the task type', async () => {
         const client = createMockValidatorClient({
           subtasks: [{ kind: taskTypeBug, status: statusOpen }],
           statuses: statusMeta,
-          categories: categoryMeta
+          categories: categoryMeta,
+          taskTypes: taskTypeMeta
         })
 
         const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
@@ -898,11 +889,28 @@ describe('Workflow Validators', () => {
 
         expect(result).toEqual({
           ok: false,
-          reason:
-            'Subtasks must be in allowed statuses (In Progress, Completed, Canceled) for transition Open, In Progress ➜ Done.',
+          reason: 'All subtasks must be in: In Progress, Done, Canceled.',
           reasonIntl: workflow.string.SubtaskStatusError,
-          intlParams: { transition: 'Open, In Progress ➜ Done', statuses: 'In Progress, Completed, Canceled' }
+          intlParams: {
+            statuses: 'In Progress, Done, Canceled',
+            count: 3,
+            refs: { statuses: [statusInProgress, statusDone, statusCanceled] }
+          }
         })
+      })
+
+      it('should report no statuses when the task type has none in the allowed category', async () => {
+        const client = createMockValidatorClient({
+          subtasks: [{ kind: taskTypeBug, status: statusOpen }],
+          statuses: statusMeta,
+          taskTypes: [{ _id: taskTypeBug, statuses: [statusOpen, statusInProgress] }]
+        })
+
+        const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
+          categories: { [taskTypeBug]: [categoryWon] }
+        })
+
+        expect(result).toMatchObject({ ok: false, intlParams: { statuses: '', count: 0 } })
       })
 
       it('should pass when a subtask is in an allowed status outside the allowed categories', async () => {
@@ -923,7 +931,8 @@ describe('Workflow Validators', () => {
         const client = createMockValidatorClient({
           subtasks: [{ kind: taskTypeFeature, status: statusOpen }],
           statuses: statusMeta,
-          categories: categoryMeta
+          categories: categoryMeta,
+          taskTypes: taskTypeMeta
         })
 
         const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
@@ -931,7 +940,7 @@ describe('Workflow Validators', () => {
           defaultCategories: [categoryWon]
         })
 
-        expect(result).toMatchObject({ ok: false, intlParams: { statuses: 'Completed' } })
+        expect(result).toMatchObject({ ok: false, intlParams: { statuses: 'Done', count: 1 } })
       })
 
       it('should prefer own task type settings over default categories', async () => {
@@ -1009,7 +1018,7 @@ describe('Workflow Validators', () => {
 
     it('should return validation error when parent task status is not allowed', async () => {
       const client = createMockValidatorClient({
-        parentTasks: [{ kind: taskTypeBug, status: statusOpen }],
+        parentTasks: [{ kind: taskTypeBug, status: statusOpen, identifier: 'TSK-1' }],
         statuses: [{ _id: statusDone, name: 'Done' }]
       })
 
@@ -1019,9 +1028,14 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Parent task must be in allowed statuses (Done) for transition status-open, status-in-progress ➜ Done.',
+        reason: 'The parent task TSK-1 must be in: Done.',
         reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'status-open, status-in-progress ➜ Done', statuses: 'Done' }
+        intlParams: {
+          parent: 'TSK-1',
+          statuses: 'Done',
+          count: 1,
+          refs: { parent: 'task-parent', statuses: [statusDone] }
+        }
       })
     })
 
@@ -1052,9 +1066,10 @@ describe('Workflow Validators', () => {
 
     it('should check a parent type without own settings against default categories', async () => {
       const client = createMockValidatorClient({
-        parentTasks: [{ kind: taskTypeFeature, status: statusOpen }],
+        parentTasks: [{ kind: taskTypeFeature, status: statusOpen, identifier: 'TSK-1' }],
         statuses: statusMeta,
-        categories: categoryMeta
+        categories: categoryMeta,
+        taskTypes: taskTypeMeta
       })
 
       const result = await ParentStatus(client, taskDocWithParent, dummyTransition, {
@@ -1064,10 +1079,14 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason:
-          'Parent task must be in allowed statuses (Completed, Canceled) for transition Open, In Progress ➜ Done.',
+        reason: 'The parent task TSK-1 must be in: Done, Canceled.',
         reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Open, In Progress ➜ Done', statuses: 'Completed, Canceled' }
+        intlParams: {
+          parent: 'TSK-1',
+          statuses: 'Done, Canceled',
+          count: 2,
+          refs: { parent: 'task-parent', statuses: [statusDone, statusCanceled] }
+        }
       })
     })
   })

@@ -97,10 +97,11 @@
     </div>
   </div>
 
-  <div slot="footerExtra">
+  <div slot="footerExtra" class="footerExtra">
     {#if hasBack}
       <Button kind="regular" size="large" label={ui.string.Back} icon={ArrowLeft} on:click={handleBack} {loading} />
     {/if}
+    <slot name="footerMessage" />
   </div>
 
   <div slot="footerButtons">
@@ -152,5 +153,12 @@
 
   .contentBody {
     padding: 1.5rem;
+  }
+
+  .footerExtra {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
   }
 </style>

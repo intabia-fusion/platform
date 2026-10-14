@@ -280,9 +280,14 @@ export const FieldRequired: ValidatorFunc = async (
   }
 
   const h = client.getHierarchy()
+  const missing: AnyAttribute[] = []
+  const seen = new Set<string>()
   for (const f of fields) {
     const fieldKey = f.fieldKey
     if (fieldKey == null || fieldKey === '') continue
+    const key = `${f.mixin ?? ''}.${fieldKey}`
+    if (seen.has(key)) continue
+    seen.add(key)
 
     const attribute = h.findAttribute(f.mixin ?? taskDoc._class, fieldKey)
 
@@ -290,43 +295,46 @@ export const FieldRequired: ValidatorFunc = async (
     if (attribute == null) continue
 
     if (await isEmptyAttribute(h, taskDoc, attribute, val, context?.txes, client)) {
-      const flow = await getTransitionFlow(client, transition)
-      const fieldName = await translate(attribute.label, {})
-      return {
-        ok: false,
-        reason: `Field "${fieldName}" is required for transition ${flow}.`,
-        reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: fieldName, transition: flow },
-        intlParamsNotLocalized: { field: attribute.label }
-      }
+      missing.push(attribute)
     }
   }
 
-  return { ok: true }
+  if (missing.length === 0) {
+    return { ok: true }
+  }
+
+  const [to] = await getStatusNameList(client, [transition.to])
+  const names = await Promise.all(missing.map(async (it) => await translate(it.label, {})))
+  return {
+    ok: false,
+    reason: `To move the task to "${to}", fill in: ${names.join(', ')}.`,
+    reasonIntl: workflow.string.FieldRequiredError,
+    intlParams: {
+      to,
+      fields: names.join(', '),
+      count: names.length,
+      refs: { to: transition.to, fields: missing.map((it) => it.label) }
+    }
+  }
 }
 
-async function getTransitionFlow (client: ValidatorClient, transition: WorkflowTransition): Promise<string> {
-  const fromStr =
-    transition.from != null && transition.from.length > 0 ? await getStatusNames(client, transition.from) : 'Any'
-  const toStr = await getStatusNames(client, [transition.to])
-  return `${fromStr} ➜ ${toStr}`
-}
-
-async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]): Promise<string> {
-  if (statusIds.length === 0) return ''
-  const statusDocs: Pick<Status, '_id' | 'name'>[] = await client.findAll(
+export async function getStatusNameList (
+  client: Pick<ValidatorClient, 'findAll'>,
+  statusIds: Array<Ref<Status>>
+): Promise<string[]> {
+  if (statusIds.length === 0) return []
+  const statusDocs: Array<Pick<Status, '_id' | 'name'>> = await client.findAll(
     core.class.Status,
     { _id: { $in: statusIds } },
     { projection: { _id: 1, name: 1 } }
   )
   const nameMap = new Map(statusDocs.map((s) => [s._id, s.name]))
-  const translatedNames = await Promise.all(
+  return await Promise.all(
     statusIds.map(async (id) => {
       const name = nameMap.get(id) ?? String(id)
       return await translate(name as IntlString, {})
     })
   )
-  return translatedNames.join(', ')
 }
 
 interface AllowedStatuses {
@@ -353,21 +361,26 @@ function getAllowedStatuses (props: TaskStatusesProps, taskTypeId: Ref<TaskType>
   return defaultCategories.length > 0 ? { statuses: [], categories: defaultCategories } : undefined
 }
 
+interface Violation {
+  task: Pick<Task, 'kind' | 'status'>
+  allowed: AllowedStatuses
+}
+
 async function findViolation (
   client: ValidatorClient,
   props: TaskStatusesProps,
   tasks: Array<Pick<Task, 'kind' | 'status'>>
-): Promise<AllowedStatuses | undefined> {
+): Promise<Violation | undefined> {
   const checks = tasks
-    .map((it) => ({ status: it.status, allowed: getAllowedStatuses(props, it.kind) }))
-    .filter((it): it is { status: Ref<Status>, allowed: AllowedStatuses } => it.allowed !== undefined)
+    .map((it) => ({ task: it, allowed: getAllowedStatuses(props, it.kind) }))
+    .filter((it): it is Violation => it.allowed !== undefined)
   if (checks.length === 0) return undefined
 
   const categoryByStatus = new Map<Ref<Status>, Ref<StatusCategory> | undefined>()
   if (checks.some((it) => it.allowed.categories.length > 0)) {
     const statuses: Array<Pick<Status, '_id' | 'category'>> = await client.findAll(
       core.class.Status,
-      { _id: { $in: checks.map((it) => it.status) } },
+      { _id: { $in: checks.map((it) => it.task.status) } },
       { projection: { _id: 1, category: 1 } }
     )
     for (const st of statuses) {
@@ -375,33 +388,36 @@ async function findViolation (
     }
   }
 
-  for (const { status, allowed } of checks) {
-    if (allowed.statuses.includes(status)) continue
+  for (const check of checks) {
+    const { status } = check.task
+    if (check.allowed.statuses.includes(status)) continue
     const category = categoryByStatus.get(status)
-    if (category !== undefined && allowed.categories.includes(category)) continue
-    return allowed
+    if (category !== undefined && check.allowed.categories.includes(category)) continue
+    return check
   }
   return undefined
 }
 
-async function getAllowedNames (client: ValidatorClient, allowed: AllowedStatuses): Promise<string> {
-  const names: string[] = []
-  if (allowed.statuses.length > 0) {
-    names.push(await getStatusNames(client, allowed.statuses))
-  }
-  if (allowed.categories.length > 0) {
-    const categories: Array<Pick<StatusCategory, '_id' | 'label'>> = await client.findAll(
-      core.class.StatusCategory,
-      { _id: { $in: allowed.categories } },
-      { projection: { _id: 1, label: 1 } }
-    )
-    const labelMap = new Map(categories.map((c) => [c._id, c.label]))
-    for (const id of allowed.categories) {
-      const label = labelMap.get(id)
-      names.push(label !== undefined ? await translate(label, {}) : id)
-    }
-  }
-  return names.join(', ')
+// Categories are spelled out as the statuses the task type has in them, in the task type order.
+async function expandAllowedStatuses (client: ValidatorClient, violation: Violation): Promise<Array<Ref<Status>>> {
+  const { statuses, categories } = violation.allowed
+  if (categories.length === 0) return statuses
+
+  const taskType: Pick<TaskType, 'statuses'> | undefined = (
+    await client.findAll(task.class.TaskType, { _id: violation.task.kind }, { projection: { statuses: 1 } })
+  )[0]
+  const typeStatuses = taskType?.statuses ?? []
+  const docs: Array<Pick<Status, '_id' | 'category'>> = await client.findAll(
+    core.class.Status,
+    { _id: { $in: typeStatuses } },
+    { projection: { _id: 1, category: 1 } }
+  )
+  const inCategory = new Set(
+    docs.filter((it) => it.category !== undefined && categories.includes(it.category)).map((it) => it._id)
+  )
+  const ids = typeStatuses.filter((it) => statuses.includes(it) || inCategory.has(it))
+  ids.push(...statuses.filter((it) => !ids.includes(it)))
+  return ids
 }
 
 function isRestricted (props: TaskStatusesProps): boolean {
@@ -419,7 +435,7 @@ export const SubtaskStatus: ValidatorFunc = async (
     return { ok: true }
   }
 
-  const subtasks: Pick<Task, 'kind' | 'status'>[] = await client.findAll(
+  const subtasks: Array<Pick<Task, 'kind' | 'status'>> = await client.findAll(
     task.class.Task,
     { attachedTo: taskDoc._id },
     { projection: { kind: 1, status: 1 } }
@@ -429,13 +445,17 @@ export const SubtaskStatus: ValidatorFunc = async (
     return { ok: true }
   }
 
-  const flow = await getTransitionFlow(client, transition)
-  const statusesStr = await getAllowedNames(client, violation)
+  const allowed = await expandAllowedStatuses(client, violation)
+  const names = await getStatusNameList(client, allowed)
   return {
     ok: false,
-    reason: `Subtasks must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
+    reason: `All subtasks must be in: ${names.join(', ')}.`,
     reasonIntl: workflow.string.SubtaskStatusError,
-    intlParams: { transition: flow, statuses: statusesStr }
+    intlParams: {
+      statuses: names.join(', '),
+      count: names.length,
+      refs: { statuses: allowed }
+    }
   }
 }
 
@@ -454,22 +474,28 @@ export const ParentStatus: ValidatorFunc = async (
     return { ok: true }
   }
 
-  const parentTasks: Pick<Task, 'kind' | 'status'>[] = await client.findAll(
+  const parentTasks: Array<Pick<Task, 'kind' | 'status' | 'identifier'>> = await client.findAll(
     task.class.Task,
     { _id: taskDoc.attachedTo as Ref<Task> },
-    { projection: { kind: 1, status: 1 } }
+    { projection: { kind: 1, status: 1, identifier: 1 } }
   )
   const violation = await findViolation(client, props, parentTasks.slice(0, 1))
   if (violation === undefined) {
     return { ok: true }
   }
 
-  const flow = await getTransitionFlow(client, transition)
-  const statusesStr = await getAllowedNames(client, violation)
+  const allowed = await expandAllowedStatuses(client, violation)
+  const names = await getStatusNameList(client, allowed)
+  const parent = parentTasks[0].identifier
   return {
     ok: false,
-    reason: `Parent task must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
+    reason: `The parent task ${parent} must be in: ${names.join(', ')}.`,
     reasonIntl: workflow.string.ParentStatusError,
-    intlParams: { transition: flow, statuses: statusesStr }
+    intlParams: {
+      parent,
+      statuses: names.join(', '),
+      count: names.length,
+      refs: { parent: taskDoc.attachedTo, statuses: allowed }
+    }
   }
 }

@@ -26,7 +26,15 @@ import core, {
   notEmpty,
   ClassifierKind
 } from '@hcengineering/core'
-import { type Asset, type IntlString, translate } from '@hcengineering/platform'
+import {
+  type Asset,
+  type IntlString,
+  setPlatformStatus,
+  Severity,
+  Status,
+  StatusDisplay,
+  translate
+} from '@hcengineering/platform'
 import { type IconComponent } from '@hcengineering/ui'
 import { getClient } from '@hcengineering/presentation'
 
@@ -286,4 +294,18 @@ export async function getDisplayAttributes (
   })
 
   return result
+}
+
+export async function showWorkflowError (
+  title: IntlString,
+  code: IntlString,
+  params: Record<string, any> = {}
+): Promise<void> {
+  await setPlatformStatus(
+    new Status(Severity.ERROR, code, params, undefined, {
+      timeout: 10 * 1000,
+      display: StatusDisplay.Notification,
+      title
+    })
+  )
 }

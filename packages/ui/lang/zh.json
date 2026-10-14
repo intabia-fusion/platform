@@ -119,6 +119,9 @@
     "Received": "已接收",
     "TrafficValue": "{count} 条, {kb} KB",
     "Latency": "延迟",
-    "LatencyValue": "{ms} 毫秒"
+    "LatencyValue": "{ms} 毫秒",
+    "StatusError": "错误",
+    "StatusWarning": "警告",
+    "StatusInfo": "信息"
   }
 }

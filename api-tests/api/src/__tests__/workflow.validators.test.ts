@@ -250,7 +250,7 @@ describe('workflow validators', () => {
       expect(err).toContain('FieldRequiredError')
     })
 
-    it('reports the first empty field of several', async () => {
+    it('reports every empty field, not only the first', async () => {
       const ctx = await withWorkflow([
         {
           name: 'Start',
@@ -259,11 +259,12 @@ describe('workflow validators', () => {
           validators: [fieldRequired('dueDate', 'estimation')]
         }
       ])
-      const issue = await createIssue(ctx, { status: 'Backlog', estimation: 4 })
+      const issue = await createIssue(ctx, { status: 'Backlog' })
       const err = await expectRejected(async () => {
         await setStatus(ctx, issue, 'InProgress')
       })
       expect(err).toContain('FieldRequiredError')
+      expect(err).toContain('"count":2')
     })
 
     it('passes once every listed field is filled', async () => {
