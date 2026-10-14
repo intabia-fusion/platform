@@ -319,6 +319,29 @@ export class TRecentlyUsedPersonsPreference extends TPreference implements Recen
 }
 
 export function createModel (builder: Builder): void {
+  builder.mixin(contact.class.Organization, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: contact.string.EmptyStateOrganizationTitle,
+    description: contact.string.EmptyStateOrganizationDescription,
+    createLabel: contact.string.EmptyStateOrganizationCreateLabel
+  })
+
+  builder.mixin(contact.class.Person, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: contact.string.EmptyStatePersonTitle,
+    description: contact.string.EmptyStatePersonDescription,
+    createLabel: contact.string.EmptyStatePersonCreateLabel
+  })
+
+  builder.mixin(contact.mixin.Employee, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: contact.string.EmptyStateEmployeeTitle,
+    description: contact.string.EmptyStateEmployeeDescription
+  })
+
+  builder.mixin(contact.class.Member, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: contact.string.EmptyStateMemberTitle,
+    description: contact.string.EmptyStateMemberDescription,
+    createLabel: contact.string.EmptyStateMemberCreateLabel
+  })
+
   builder.createModel(
     TAvatarProvider,
     TChannelProvider,

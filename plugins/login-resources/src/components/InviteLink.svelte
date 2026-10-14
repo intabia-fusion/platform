@@ -17,13 +17,24 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import { Button, EditBox, Grid, Label, Loading, MiniToggle, showPopup, ticker } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonIcon,
+    EditBox,
+    Grid,
+    IconClose,
+    Label,
+    Loading,
+    MiniToggle,
+    showPopup,
+    ticker
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import platform, { OK, PlatformError, Severity, Status } from '@hcengineering/platform'
 
   import login from '../plugin'
-  import { getAccountClient, getInviteLink } from '../utils'
+  import { getAccountClient, getInviteLink, sendInvite } from '../utils'
   import InviteWorkspace from './icons/InviteWorkspace.svelte'
   import StatusControl from './StatusControl.svelte'
 
@@ -65,6 +76,7 @@
     expHours = defaultValues.expirationTime
     emailMask = defaultValues.emailMask
     limit = defaultValues.limit
+    noLimit = limit === undefined || limit === -1
   }
 
   async function getLink (expHours: number, mask: string, limit: number | undefined, role: AccountRole): Promise<void> {
@@ -115,6 +127,41 @@
     limit: undefined
   }
 
+  // Invite one or several people by email: the account service creates a single-use link per address and mails it.
+  let inviteEmail = ''
+  let sending = false
+  let sentTo: string[] = []
+  let emailStatus: Status = OK
+  $: emails = inviteEmail.split(/[\s,;]+/).filter((it) => it !== '')
+  $: emailValid = emails.length > 0 && emails.every((it) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(it))
+
+  async function send (): Promise<void> {
+    if (!emailValid || sending) return
+    sending = true
+    emailStatus = OK
+    sentTo = []
+    try {
+      // One by one: a refusal (rate limit, seats) stops the rest and keeps them in the field.
+      for (const email of emails) {
+        await sendInvite(email, role)
+        sentTo = [...sentTo, email]
+      }
+      inviteEmail = ''
+    } catch (err: any) {
+      inviteEmail = emails.filter((it) => !sentTo.includes(it)).join(', ')
+      if (err instanceof PlatformError && err.status.code === platform.status.PlanLimitExceeded) {
+        showNoFreeSeats()
+        return
+      }
+      emailStatus =
+        err instanceof PlatformError
+          ? err.status
+          : new Status(Severity.ERROR, platform.status.UnknownError, { message: err.message })
+    } finally {
+      sending = false
+    }
+  }
+
   let link: string | undefined
   let loading = false
   let status: Status = OK
@@ -145,8 +192,18 @@
 
 <div class="antiPopup popup" class:secure={isSecureContext}>
   <div class="flex-between fs-title mb-9">
-    <Label label={login.string.InviteDescription} />
-    <InviteWorkspace size={'large'} />
+    <div class="flex-row-center flex-gap-2">
+      <InviteWorkspace size={'large'} />
+      <Label label={login.string.InviteDescription} />
+    </div>
+    <ButtonIcon
+      icon={IconClose}
+      kind={'tertiary'}
+      size={'small'}
+      on:click={() => {
+        dispatch('close')
+      }}
+    />
   </div>
   {#if isOwnerOrMaintainer && !ignoreSettings && seatsChecked}
     <Grid column={1} rowGap={1.5}>
@@ -177,6 +234,22 @@
         {/if}
       {/if}
     </Grid>
+  {/if}
+  {#if !ignoreSettings && useDefault && seatsChecked}
+    <!-- What the workspace defaults are, so the link is not a blind click. -->
+    <span class="text-sm content-dark-color" class:mt-2={isOwnerOrMaintainer}>
+      {#if defaultValues.limit === undefined || defaultValues.limit === -1}
+        <Label label={login.string.InviteDefaultsNoLimit} params={{ hours: defaultValues.expirationTime }} />
+      {:else}
+        <Label
+          label={login.string.InviteDefaultsLimit}
+          params={{ hours: defaultValues.expirationTime, limit: defaultValues.limit }}
+        />
+      {/if}
+      {#if defaultValues.emailMask !== ''}
+        {' '}<Label label={login.string.InviteDefaultsMask} params={{ mask: defaultValues.emailMask }} />
+      {/if}
+    </span>
   {/if}
   {#if status !== OK}
     <div class="mt-4 mb-4"><StatusControl {status} overflow /></div>
@@ -213,6 +286,40 @@
       />
     </div>
   {/if}
+  {#if seatsChecked}
+    <div class="email-invite">
+      <span class="text-sm content-dark-color"><Label label={login.string.InviteByEmail} /></span>
+      <div class="flex-row-center flex-gap-2">
+        <div class="flex-grow">
+          <EditBox
+            bind:value={inviteEmail}
+            placeholder={login.string.Email}
+            kind={'default-large'}
+            on:keydown={(e) => {
+              if (e.key === 'Enter') void send()
+            }}
+          />
+        </div>
+        <Button
+          label={login.string.SendInvite}
+          size={'medium'}
+          loading={sending}
+          disabled={!emailValid}
+          on:click={() => {
+            void send()
+          }}
+        />
+      </div>
+      {#if sentTo.length > 0}
+        <span class="text-sm content-color">
+          <Label label={login.string.InviteSentTo} params={{ email: sentTo.join(', ') }} />
+        </span>
+      {/if}
+      {#if emailStatus !== OK}
+        <StatusControl status={emailStatus} overflow />
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -220,12 +327,22 @@
     display: flex;
     flex-direction: column;
     padding: 1.75rem;
-    width: 30rem;
-    max-width: 40rem;
+    width: 40rem;
+    max-width: calc(100vw - 2rem);
     background: var(--popup-bg-color);
     border-radius: 1.25rem;
     user-select: none;
     box-shadow: var(--popup-shadow);
+
+    // A divider line, not a box: the email section is the second part of the same dialog.
+    .email-invite {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--theme-divider-color);
+    }
 
     .link {
       margin: 1.75rem 0 0;

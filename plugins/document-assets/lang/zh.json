@@ -63,7 +63,21 @@
     "Icon": "图标",
     "Color": "颜色",
     "ForbidCreateTeamspacePermission": "禁止创建团队空间",
-    "ForbidCreateTeamspacePermissionDescription": "禁止用户创建新团队空间"
+    "ForbidCreateTeamspacePermissionDescription": "禁止用户创建新团队空间",
+    "EmptyStateTeamspaceTitle": "暂无团队空间",
+    "EmptyStateTeamspaceDescription": "团队空间按团队或主题组织文档，并控制谁可以阅读和编辑。",
+    "EmptyStateTeamspaceCreateLabel": "创建团队空间",
+    "EmptyStateDocumentTitle": "暂无文档",
+    "EmptyStateDocumentDescription": "文档是团队空间内用于规格说明、笔记和 Wiki 的协作页面。",
+    "EmptyStateDocumentCreateLabel": "创建文档",
+    "OnboardingCreateTeamspace": "创建团队空间",
+    "OnboardingWriteDocument": "撰写文档",
+    "OnboardingTeamspaceStep1": "点击“创建文档”旁边的箭头",
+    "OnboardingTeamspaceStep2": "选择“创建团队空间”",
+    "OnboardingDocumentsStep1": "点击“创建文档”",
+    "OnboardingDocumentsStep2": "输入标题，然后点击“创建”",
+    "EmptyTitle": "文档存放在团队空间中",
+    "EmptyHint": "在左侧面板中打开团队空间，或新建一个。团队空间是按主题或团队划分的版块，例如「规章制度」。"
   },
   "emailTemplate": {
     "ContentNotificationText": "{body}",

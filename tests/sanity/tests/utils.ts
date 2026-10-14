@@ -253,7 +253,11 @@ function resolveFilePath (fileName: string): string {
  * @param fileName - name of the file to be uploaded
  * @param fileUploadTestId - test ID of the file input element (default: '@upload-file')
  */
-export async function uploadFile (page: Page, fileName: string, fileUploadTestId = 'Attached photo'): Promise<void> {
+export async function uploadFile (
+  page: Page,
+  fileName: string,
+  fileUploadTestId: string | RegExp = 'Attached photo'
+): Promise<void> {
   const uploadFileElement = page.getByText(fileUploadTestId)
 
   const [fileChooser] = await Promise.all([page.waitForEvent('filechooser'), uploadFileElement.click()])

@@ -63,6 +63,17 @@ export default mergeIds(contactId, contact, {
     CollaboratorPresenter: '' as AnyComponent
   },
   string: {
+    EmptyStateOrganizationTitle: '' as IntlString,
+    EmptyStateOrganizationDescription: '' as IntlString,
+    EmptyStateOrganizationCreateLabel: '' as IntlString,
+    EmptyStatePersonTitle: '' as IntlString,
+    EmptyStatePersonDescription: '' as IntlString,
+    EmptyStatePersonCreateLabel: '' as IntlString,
+    EmptyStateEmployeeTitle: '' as IntlString,
+    EmptyStateEmployeeDescription: '' as IntlString,
+    EmptyStateMemberTitle: '' as IntlString,
+    EmptyStateMemberDescription: '' as IntlString,
+    EmptyStateMemberCreateLabel: '' as IntlString,
     SearchEmployee: '' as IntlString,
     SearchPerson: '' as IntlString,
     SearchOrganization: '' as IntlString,

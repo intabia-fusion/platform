@@ -39,6 +39,7 @@
   import { WorkbenchEvents } from '@hcengineering/workbench'
   import { Analytics } from '@hcengineering/analytics'
 
+  import { restartOnboarding } from '../onboarding'
   import workbench from '../plugin'
   import RightArrowIcon from './icons/Collapsed.svelte'
   import DocumentationIcon from './icons/Documentation.svelte'
@@ -124,6 +125,19 @@
         Analytics.handleEvent(WorkbenchEvents.DocumentationOpened)
       }
     },
+    ...(getMetadata(workbench.metadata.Onboarding) !== false
+      ? [
+          {
+            icon: view.icon.TodoList,
+            title: workbench.string.Onboarding,
+            description: workbench.string.OnboardingRestartDescription,
+            onClick: () => {
+              closePopup()
+              void restartOnboarding()
+            }
+          }
+        ]
+      : []),
     {
       icon: view.icon.Setting,
       title: setting.string.Settings,

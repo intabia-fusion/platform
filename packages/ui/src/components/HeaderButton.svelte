@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -63,6 +64,7 @@
 </script>
 
 {#if mainAction !== undefined}
+  {@const mainActionDataId = mainAction.id !== null ? String(mainAction.id).replaceAll(':', '-') : undefined}
   {#if loading}
     <Loading shrink />
   {:else}
@@ -75,6 +77,7 @@
           label={mainAction.label}
           width="100%"
           on:click={mainAction.callback}
+          dataId={mainActionDataId}
           showTooltip={{
             direction: 'bottom',
             label: mainAction.label,
@@ -93,7 +96,12 @@
             items.find((a) => a.id === ev.detail)?.callback()
           }}
           on:click={mainAction.callback}
-          mainButtonId={mainAction.id !== null ? String(mainAction.id).replaceAll(':', '-') : undefined}
+          mainButtonId={mainActionDataId}
+          mainButtonDataId={mainActionDataId}
+          dropdownDataId={[
+            'header-menu',
+            ...items.filter((a) => a !== mainAction).map((a) => String(a.id).replaceAll(':', '-'))
+          ].join(' ')}
           showTooltipMain={{
             direction: 'bottom',
             label: mainAction.label,

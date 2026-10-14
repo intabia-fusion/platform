@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "Synchronisierte Kalender",
     "Account": "Konto",
     "NoCalendars": "Keine Kalender zur Synchronisation ausgewählt",
-    "PersonalCalendar": "Persönlicher Kalender"
+    "PersonalCalendar": "Persönlicher Kalender",
+    "OnboardingMeetings": "Meetings und Termine",
+    "OnboardingMeetingsDescription": "Klicken Sie auf einen freien Zeitraum im Kalender, um einen Termin mit Teilnehmern und Raum zu planen.",
+    "OnboardingMeetingsStep1": "Öffnen Sie den Planer in der linken Leiste",
+    "OnboardingMeetingsStep2": "Klicken Sie im Kalender auf einen freien Zeitraum"
   }
 }

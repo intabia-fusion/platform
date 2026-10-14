@@ -580,6 +580,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   } catch (err) {
     setMetadata(workbench.metadata.ExcludedApplicationsForAnonymous, [])
   }
+  setMetadata(workbench.metadata.Onboarding, true)
 
   initThemeStore()
 

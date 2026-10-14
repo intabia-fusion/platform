@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Aún no hay unidades",
+    "EmptyStateDriveDescription": "Una unidad es un árbol de carpetas compartido para los archivos que tu equipo sube y organiza en conjunto.",
+    "EmptyStateDriveCreateLabel": "Crear unidad",
+    "EmptyStateFilesTitle": "Aún no hay archivos aquí",
+    "EmptyStateFilesDescription": "Sube archivos con el botón Subir Archivos o arrástralos aquí.",
+    "OnboardingCreateDrive": "Crea una unidad",
+    "OnboardingUploadFile": "Sube un archivo",
+    "OnboardingDriveStep1": "Haga clic en la flecha junto a «Subir Archivos»",
+    "OnboardingDriveStep2": "Elija «Crear unidad»",
+    "OnboardingFilesStep1": "Abre una unidad en el panel de navegación",
+    "OnboardingFilesStep2": "Haz clic en «Subir Archivos» o arrastra archivos a la ventana",
+    "EmptyTitle": "Los archivos están en unidades",
+    "EmptyHint": "Abra una unidad en el panel de la izquierda o cree una nueva. Una unidad es una carpeta compartida de un equipo o un proyecto."
   }
 }

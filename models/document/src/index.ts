@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,7 +43,7 @@ import { generateClassNotificationTypes } from '@hcengineering/model-notificatio
 import presentation from '@hcengineering/model-presentation'
 import tracker from '@hcengineering/model-tracker'
 import view, { actionTemplates, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
+import workbench, { type Application } from '@hcengineering/model-workbench'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import { type Asset, getEmbeddedLabel } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
@@ -216,6 +217,12 @@ function defineTeamspace (builder: Builder): void {
     actions: [tracker.action.EditRelatedTargets, tracker.action.NewRelatedIssue]
   })
 
+  builder.mixin(document.class.Teamspace, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: document.string.EmptyStateTeamspaceTitle,
+    description: document.string.EmptyStateTeamspaceDescription,
+    createLabel: document.string.EmptyStateTeamspaceCreateLabel
+  })
+
   createAction(
     builder,
     {
@@ -298,6 +305,12 @@ function defineDocument (builder: Builder): void {
 
   builder.mixin(document.class.Document, core.class.Class, view.mixin.AttributeEditor, {
     inlineEditor: document.component.DocumentInlineEditor
+  })
+
+  builder.mixin(document.class.Document, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: document.string.EmptyStateDocumentTitle,
+    description: document.string.EmptyStateDocumentDescription,
+    createLabel: document.string.EmptyStateDocumentCreateLabel
   })
 
   // Actions
@@ -523,6 +536,8 @@ function defineApplication (builder: Builder): void {
       hidden: false,
       locationResolver: document.resolver.Location,
       navigatorModel: {
+        emptyTitle: document.string.EmptyTitle,
+        emptyHint: document.string.EmptyHint,
         specials: [
           {
             id: 'browser',
@@ -563,6 +578,50 @@ export function createModel (builder: Builder): void {
 
   defineApplication(builder)
   definePermissions(builder)
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: document.app.Documents as Ref<Application>,
+      label: document.string.OnboardingCreateTeamspace,
+      description: document.string.EmptyStateTeamspaceDescription,
+      category: workbench.string.OnboardingCategoryDocuments,
+      order: 40,
+      accessLevel: AccountRole.User,
+      screenshots: [document.string.OnboardingTeamspaceStep1, document.string.OnboardingTeamspaceStep2],
+      doneWhen: { _class: document.class.Teamspace },
+      actions: [
+        {
+          label: document.string.CreateTeamspace,
+          target: { application: documentId, selector: '[data-id~="document-string-CreateTeamspace"]' }
+        }
+      ]
+    },
+    document.ids.OnboardingTeamspaceCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: document.app.Documents as Ref<Application>,
+      label: document.string.OnboardingWriteDocument,
+      description: document.string.EmptyStateDocumentDescription,
+      category: workbench.string.OnboardingCategoryDocuments,
+      order: 41,
+      accessLevel: AccountRole.User,
+      screenshots: [document.string.OnboardingDocumentsStep1, document.string.OnboardingDocumentsStep2],
+      doneWhen: { _class: document.class.Document },
+      actions: [
+        {
+          label: document.string.CreateDocument,
+          target: { application: documentId, selector: '[data-id~="document-string-CreateDocument"]' }
+        }
+      ]
+    },
+    document.ids.OnboardingDocumentsCard
+  )
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: DOMAIN_DOCUMENT,

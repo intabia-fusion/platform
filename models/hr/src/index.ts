@@ -186,6 +186,11 @@ export class TPublicHoliday extends TDoc implements PublicHoliday {
 }
 
 export function createModel (builder: Builder): void {
+  builder.mixin(hr.mixin.Staff, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: hr.string.EmptyStateStaffTitle,
+    description: hr.string.EmptyStateStaffDescription
+  })
+
   builder.createModel(TDepartment, TRequest, TRequestType, TPublicHoliday, TStaff, TTzDate)
 
   builder.createDoc(

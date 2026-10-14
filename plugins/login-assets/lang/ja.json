@@ -28,7 +28,7 @@
     "Copy": "コピー",
     "Copied": "コピーしました",
     "Close": "閉じる",
-    "InviteDescription": "他のユーザーを招待するには、このリンクを共有してください",
+    "InviteDescription": "リンクを共有して、ワークスペースに人を招待します",
     "WantAnotherWorkspace": "別のワークスペースを作成しますか？",
     "ChangeAccount": "アカウントを変更",
     "NotSeeingWorkspace": "ワークスペースが見つかりませんか？",
@@ -127,6 +127,12 @@
     "DeleteAccountConfirm": "アカウントは削除予定となり、{days}日後に完全に削除されます。それまでにログインすれば取り消せます。続行しますか?",
     "DeleteAccountBlockedAdmin": "管理者アカウントはここから削除できません。",
     "DeleteAccountBlocked": "次のワークスペースの唯一のオーナーです: {workspaces}。先に削除するか、他の人に引き継いでください。",
-    "CodeSent": "確認コードをメールに送信しました。"
+    "CodeSent": "確認コードをメールに送信しました。",
+    "InviteByEmail": "または、メールで招待を送信します。アドレスは1つでも複数でも可（カンマ区切り）",
+    "SendInvite": "送信",
+    "InviteSentTo": "招待を送信しました：{email}",
+    "InviteDefaultsNoLimit": "デフォルトでは、リンクは{hours}時間有効で、使用回数に制限はありません。",
+    "InviteDefaultsLimit": "デフォルトでは、リンクは{hours}時間有効で、最大{limit}回使用できます。",
+    "InviteDefaultsMask": "{mask} に一致するアドレスのみ。"
   }
 }

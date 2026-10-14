@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "Calendari sincronizzati",
     "Account": "Account",
     "NoCalendars": "Nessun calendario selezionato per la sincronizzazione",
-    "PersonalCalendar": "Calendario personale"
+    "PersonalCalendar": "Calendario personale",
+    "OnboardingMeetings": "Riunioni ed eventi",
+    "OnboardingMeetingsDescription": "Fai clic su una fascia libera del calendario per pianificare un evento con partecipanti e una sala.",
+    "OnboardingMeetingsStep1": "Apri Pianificatore nella barra a sinistra",
+    "OnboardingMeetingsStep2": "Fai clic su una fascia libera nel calendario"
   }
 }

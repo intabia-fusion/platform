@@ -18,7 +18,7 @@ import { type Card, cardId } from '@hcengineering/card'
 import card from '@hcengineering/card-resources/src/plugin'
 import type { Client, Doc, DocumentQuery, Ref } from '@hcengineering/core'
 import {} from '@hcengineering/core'
-import { mergeIds, type Resource } from '@hcengineering/platform'
+import { type IntlString, mergeIds, type Resource } from '@hcengineering/platform'
 import { type TagCategory } from '@hcengineering/tags'
 import { type Location, type ResolvedLocation } from '@hcengineering/ui/src/types'
 import { type LocationData } from '@hcengineering/workbench'
@@ -26,6 +26,16 @@ import { type NotificationGroup } from '@hcengineering/notification'
 import {} from '@hcengineering/presentation'
 
 export default mergeIds(cardId, card, {
+  string: {
+    EmptyStateCardTitle: '' as IntlString,
+    EmptyStateCardDescription: '' as IntlString,
+    EmptyStateCardCreateLabel: '' as IntlString,
+    EmptyStateCardSpaceTitle: '' as IntlString,
+    EmptyStateCardSpaceDescription: '' as IntlString,
+    EmptyStateCardSpaceCreateLabel: '' as IntlString,
+    EmptyStateFavoriteCardTitle: '' as IntlString,
+    EmptyStateFavoriteCardDescription: '' as IntlString
+  },
   app: {
     Card: '' as Ref<Doc>
   },

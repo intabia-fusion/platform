@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -718,7 +719,23 @@ const pluginState = plugin(trackerId, {
     AddedBlocker: '' as IntlString,
     RemovedBlocker: '' as IntlString,
     AddedRelation: '' as IntlString,
-    RemovedRelation: '' as IntlString
+    RemovedRelation: '' as IntlString,
+
+    EmptyStateIssueTitle: '' as IntlString,
+    EmptyStateIssueDescription: '' as IntlString,
+    EmptyStateIssueCreateLabel: '' as IntlString,
+    EmptyStateComponentTitle: '' as IntlString,
+    EmptyStateComponentDescription: '' as IntlString,
+    EmptyStateComponentCreateLabel: '' as IntlString,
+    EmptyStateMilestoneTitle: '' as IntlString,
+    EmptyStateMilestoneDescription: '' as IntlString,
+    EmptyStateMilestoneCreateLabel: '' as IntlString,
+    EmptyStateTemplateTitle: '' as IntlString,
+    EmptyStateTemplateDescription: '' as IntlString,
+    EmptyStateTemplateCreateLabel: '' as IntlString,
+    EmptyStateProjectTitle: '' as IntlString,
+    EmptyStateProjectDescription: '' as IntlString,
+    EmptyStateProjectCreateLabel: '' as IntlString
   },
   emailTemplate: {
     AssigneeNotificationText: '' as IntlString,

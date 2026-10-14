@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,6 +29,8 @@
   export let dropdownIcon: Asset | AnySvelteComponent | undefined = undefined
   export let showTooltipMain: LabelAndProps | undefined = undefined
   export let mainButtonId: string | undefined = undefined
+  export let mainButtonDataId: string | undefined = undefined
+  export let dropdownDataId: string | undefined = undefined
   export let disabled: boolean = false
   export let loading: boolean = false
   export let focusIndex: number | undefined = undefined
@@ -59,6 +62,7 @@
     on:click
     showTooltip={showTooltipMain}
     id={mainButtonId}
+    dataId={mainButtonDataId}
   >
     <svelte:fragment slot="content">
       <div class="flex-row-center w-full flex-between relative">
@@ -78,6 +82,7 @@
       justify="center"
       borderStyle="none"
       on:click={openDropdown}
+      dataId={dropdownDataId}
       {size}
       disabled={disabled || loading}
       {noFocus}

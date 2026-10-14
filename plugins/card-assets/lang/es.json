@@ -86,6 +86,14 @@
     "TwoColumns": "Dos columnas",
     "Grid": "Cuadrícula",
     "RichtextProperties": "Campos de texto",
-    "ShowAllVersions": "Mostrar todas las versiones"
+    "ShowAllVersions": "Mostrar todas las versiones",
+    "EmptyStateCardTitle": "Aún no hay tarjetas",
+    "EmptyStateCardDescription": "Una tarjeta es un registro con campos que usted define para su tipo.",
+    "EmptyStateCardCreateLabel": "Crear tarjeta",
+    "EmptyStateCardSpaceTitle": "Aún no hay espacios de tarjetas",
+    "EmptyStateCardSpaceDescription": "Un espacio agrupa las tarjetas de un tema o equipo.",
+    "EmptyStateCardSpaceCreateLabel": "Crear espacio",
+    "EmptyStateFavoriteCardTitle": "Aún no hay tarjetas favoritas",
+    "EmptyStateFavoriteCardDescription": "Añade una tarjeta a favoritos y aparecerá aquí."
   }
 }

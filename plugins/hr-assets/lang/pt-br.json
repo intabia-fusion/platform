@@ -64,6 +64,8 @@
     "ReportedDays": "Dias reportados",
     "Tasks": "Tarefas",
     "TPD": "TPD",
-    "EXTRa": "EXTRa"
+    "EXTRa": "EXTRa",
+    "EmptyStateStaffTitle": "Nenhum colaborador no departamento ainda",
+    "EmptyStateStaffDescription": "Adicione colaboradores ao departamento na estrutura da empresa."
   }
 }

@@ -160,6 +160,11 @@
     "ForbidAttributeChanges": "Özellik yasakla: ",
     "AllowAttributeChanges": "Özellik izin ver: ",
     "RelationshipTable": "İlişki tablosu",
-    "GroupAndSort": "Grupla ve sırala"
+    "GroupAndSort": "Grupla ve sırala",
+    "EmptyStateDescription": "Burada henüz bir şey yok",
+    "NothingFound": "Hiçbir şey bulunamadı",
+    "NothingFoundHidden": "{count, plural, other {# öğe}} aramayla veya filtrelerle eşleşmiyor.",
+    "ChangeSearchQuery": "Farklı bir arama deneyin veya filtreleri temizleyin.",
+    "EmptyStateCreateLabel": "Oluştur"
   }
 }

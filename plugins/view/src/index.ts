@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -36,6 +37,7 @@ import {
   CollectionEditor,
   CollectionPresenter,
   CustomObjectLinkProvider,
+  EmptyStateInfo,
   FilterMode,
   FilteredView,
   Groupping,
@@ -112,6 +114,7 @@ const view = plugin(viewId, {
     ObjectTooltip: '' as Ref<Mixin<ObjectTooltip>>,
     SpaceHeader: '' as Ref<Mixin<SpaceHeader>>,
     SpaceName: '' as Ref<Mixin<SpaceName>>,
+    EmptyStateInfo: '' as Ref<Mixin<EmptyStateInfo>>,
     IgnoreActions: '' as Ref<Mixin<IgnoreActions>>,
     PreviewPresenter: '' as Ref<Mixin<PreviewPresenter>>,
     ListHeaderExtra: '' as Ref<Mixin<ListHeaderExtra>>,
@@ -210,6 +213,7 @@ const view = plugin(viewId, {
     PreviewWidget: '' as Ref<Doc>
   },
   string: {
+    EmptyStateCreateLabel: '' as IntlString,
     CustomizeView: '' as IntlString,
     CustomAttributes: '' as IntlString,
     LabelNA: '' as IntlString,

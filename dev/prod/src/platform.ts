@@ -818,6 +818,7 @@ export async function configurePlatform() {
   }
 
   setMetadata(workbench.metadata.DefaultHiddenApplications, ['contact', 'drive'])
+  setMetadata(workbench.metadata.Onboarding, true)
 
   setMetadata(setting.metadata.BackupUrl, config.BACKUP_URL ?? '')
   setMetadata(setting.metadata.WebhookServiceUrl, config.WEBHOOK_SERVICE_URL ?? '')

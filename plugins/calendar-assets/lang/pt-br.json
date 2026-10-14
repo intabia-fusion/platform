@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "Calendários sincronizados",
     "Account": "Conta",
     "NoCalendars": "Nenhum calendário encontrado",
-    "PersonalCalendar": "Calendário pessoal"
+    "PersonalCalendar": "Calendário pessoal",
+    "OnboardingMeetings": "Reuniões e eventos",
+    "OnboardingMeetingsDescription": "Clique em um horário livre no calendário para agendar um evento com participantes e uma sala.",
+    "OnboardingMeetingsStep1": "Abra Planejador na barra à esquerda",
+    "OnboardingMeetingsStep2": "Clique em um horário livre no calendário"
   }
 }

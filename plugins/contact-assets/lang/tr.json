@@ -125,6 +125,22 @@
     "Guest": "Misafir",
     "Deleted": "Silindi",
     "CannotMerge": "Hata: Global kişiler birleştirilemez",
-    "RecentlyUsed": "Son kullanımlar"
+    "RecentlyUsed": "Son kullanımlar",
+    "EmptyStateOrganizationTitle": "Henüz şirket yok",
+    "EmptyStateOrganizationDescription": "Şirket, bir kuruluşun kartıdır: müşteri, iş ortağı veya tedarikçi.",
+    "EmptyStateOrganizationCreateLabel": "Şirket oluştur",
+    "EmptyStatePersonTitle": "Henüz kişi yok",
+    "EmptyStatePersonDescription": "Kişi, ekip dışındaki birinin kartıdır: müşteri, iş ortağı veya bir bağlantı.",
+    "EmptyStatePersonCreateLabel": "Kişi oluştur",
+    "EmptyStateEmployeeTitle": "Henüz çalışan yok",
+    "EmptyStateEmployeeDescription": "Çalışanlar çalışma alanının üyeleridir. Meslektaşlarınızı davet edin, burada görünecekler.",
+    "EmptyStateMemberTitle": "Henüz şirket çalışanı yok",
+    "EmptyStateMemberDescription": "Bu şirkette çalışan kişiler burada listelenir.",
+    "EmptyStateMemberCreateLabel": "Çalışan ekle",
+    "AutoTranslation": "Otomatik çeviri",
+    "TranslateTo": "Şu dile çevir",
+    "DontTranslate": "Çevirme",
+    "SelectLanguage": "Dil seçin",
+    "SelectLanguages": "Dilleri seçin"
   }
 }

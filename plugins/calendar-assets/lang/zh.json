@@ -125,6 +125,10 @@
     "SynchronizedCalendars": "已同步的日历",
     "Account": "帐户",
     "NoCalendars": "未选择同步日历",
-    "PersonalCalendar": "个人日历"
+    "PersonalCalendar": "个人日历",
+    "OnboardingMeetings": "会议与活动",
+    "OnboardingMeetingsDescription": "点击日历中的空闲时段，即可安排包含参与者和会议室的活动。",
+    "OnboardingMeetingsStep1": "在左侧栏中打开“计划”",
+    "OnboardingMeetingsStep2": "点击日历中的空闲时段"
   }
 }

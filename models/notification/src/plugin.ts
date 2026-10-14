@@ -19,7 +19,7 @@ import notification, { notificationId } from '@hcengineering/notification'
 import { type IntlString, type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent, type Location } from '@hcengineering/ui/src/types'
 import { type Action, type ActionCategory, type ViewAction } from '@hcengineering/view'
-import { type Application, type LocationData } from '@hcengineering/workbench'
+import { type Application, type LocationData, type OnboardingCard } from '@hcengineering/workbench'
 
 export default mergeIds(notificationId, notification, {
   string: {
@@ -32,7 +32,14 @@ export default mergeIds(notificationId, notification, {
     Message: '' as IntlString,
     StarDocument: '' as IntlString,
     UnstarDocument: '' as IntlString,
-    Unsubscribe: '' as IntlString
+    Unsubscribe: '' as IntlString,
+    OnboardingInbox: '' as IntlString,
+    OnboardingInboxDescription: '' as IntlString,
+    OnboardingInboxStep1: '' as IntlString,
+    OnboardingInboxStep2: '' as IntlString
+  },
+  ids: {
+    OnboardingInboxCard: '' as Ref<OnboardingCard>
   },
   app: {
     Notification: '' as Ref<Application>,

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -975,6 +976,7 @@
     on:dragleave={dragLeave}
     on:dragleave
     class="calendar-container timeline-grid-bg"
+    data-id="calendar-grid"
     class:clearCells={clearCells || resizeId !== null || dragId !== null}
     class:cursor-row-resize={resizeId !== null && directionResize !== null}
     style:--calendar-ad-height={styleAD + 'px'}

@@ -40,6 +40,19 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyStateDriveTitle": "Aucun disque pour le moment",
+    "EmptyStateDriveDescription": "Un disque est une arborescence de dossiers partagée pour les fichiers que votre équipe téléverse et organise ensemble.",
+    "EmptyStateDriveCreateLabel": "Créer un disque",
+    "EmptyStateFilesTitle": "Aucun fichier pour le moment",
+    "EmptyStateFilesDescription": "Téléversez des fichiers avec le bouton Téléverser des Fichiers ou glissez-les ici.",
+    "OnboardingCreateDrive": "Créez un disque",
+    "OnboardingUploadFile": "Téléversez un fichier",
+    "OnboardingDriveStep1": "Cliquez sur la flèche à côté de «Téléverser des Fichiers»",
+    "OnboardingDriveStep2": "Choisissez «Créer un disque»",
+    "OnboardingFilesStep1": "Ouvrez un disque dans le panneau de navigation",
+    "OnboardingFilesStep2": "Cliquez sur « Téléverser des Fichiers » ou faites glisser des fichiers dans la fenêtre",
+    "EmptyTitle": "Les fichiers sont sur des disques",
+    "EmptyHint": "Ouvrez un disque dans le panneau de gauche ou créez-en un nouveau. Un disque est un dossier partagé pour une équipe ou un projet."
   }
 }

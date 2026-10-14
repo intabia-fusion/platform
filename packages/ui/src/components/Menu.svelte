@@ -146,6 +146,7 @@
             <button
               bind:this={btns[i]}
               class="ap-menuItem flex-row-center withIcon w-full"
+              data-id={action.id}
               class:hover={btns[i] === activeElement}
               on:mousemove={() => {
                 if (btns[i] !== activeElement) focusTarget(action, btns[i])
@@ -168,6 +169,7 @@
           <button
             bind:this={btns[i]}
             class="ap-menuItem antiPopup-submenu withIconHover"
+            data-id={action.id}
             class:hover={btns[i] === activeElement}
             on:mousemove={() => {
               if (btns[i] !== activeElement) focusTarget(action, btns[i])
@@ -191,6 +193,7 @@
           <button
             bind:this={btns[i]}
             class="ap-menuItem flex-row-center withIcon"
+            data-id={action.id}
             class:hover={btns[i] === activeElement}
             on:mousemove={() => {
               if (btns[i] !== activeElement) focusTarget(action, btns[i], action.isSubmenuRightClicking)

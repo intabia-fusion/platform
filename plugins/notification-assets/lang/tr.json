@@ -101,7 +101,15 @@
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
     "ReactedToYourMessage": "mesajınıza tepki verdi",
     "Clearing": "Temizleniyor...",
-    "Reading": "Okunuyor..."
+    "Reading": "Okunuyor...",
+    "OnboardingInbox": "Gelen Kutusu",
+    "OnboardingInboxDescription": "Gelen kutusu, takip ettiğiniz öğelerdeki anmaları, yanıtları ve değişiklikleri toplar; böylece dikkatinizi neyin gerektirdiğini görürsünüz.",
+    "OnboardingInboxStep1": "Soldaki çubukta çan simgesine tıklayın",
+    "OnboardingInboxStep2": "Mesaja veya soruna gitmek için bir bildirimi açın",
+    "InboxEmptyTitle": "Henüz bildirim yok",
+    "InboxEmptyHint": "Bahsetmeler, doğrudan mesajlar ve takip ettiğiniz görev ve belgelerdeki değişiklikler buraya gelir.",
+    "InboxSelectTitle": "Bir bildirim seçin",
+    "InboxSelectHint": "Soldaki listeden bir bildirim açın."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

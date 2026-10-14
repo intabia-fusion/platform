@@ -21,6 +21,10 @@ import notification, { notificationId } from '@hcengineering/notification'
 
 export default mergeIds(notificationId, notification, {
   string: {
+    InboxEmptyTitle: '' as IntlString,
+    InboxEmptyHint: '' as IntlString,
+    InboxSelectTitle: '' as IntlString,
+    InboxSelectHint: '' as IntlString,
     NoNotifications: '' as IntlString,
     Track: '' as IntlString,
     Remove: '' as IntlString,

@@ -126,6 +126,21 @@
     "DontTranslate": "Nicht übersetzen",
     "SelectLanguage": "Sprache auswählen",
     "SelectLanguages": "Sprachen auswählen",
-    "RecentlyUsed": "Zuletzt verwendet"
+    "RecentlyUsed": "Zuletzt verwendet",
+    "EmptyStateOrganizationTitle": "Noch keine Unternehmen",
+    "EmptyStateOrganizationDescription": "Ein Unternehmen ist eine Karte für eine Organisation: einen Kunden, Partner oder Lieferanten.",
+    "EmptyStateOrganizationCreateLabel": "Unternehmen erstellen",
+    "EmptyStatePersonTitle": "Noch keine Personen",
+    "EmptyStatePersonDescription": "Eine Person ist eine Karte für jemanden außerhalb des Teams: einen Kunden, Partner oder Kontakt.",
+    "EmptyStatePersonCreateLabel": "Person erstellen",
+    "EmptyStateEmployeeTitle": "Noch keine Mitarbeiter",
+    "EmptyStateEmployeeDescription": "Mitarbeiter sind Mitglieder des Arbeitsbereichs. Laden Sie Kollegen ein, und sie erscheinen hier.",
+    "EmptyStateMemberTitle": "Noch keine Mitarbeiter des Unternehmens",
+    "EmptyStateMemberDescription": "Hier sind die Personen aufgeführt, die in diesem Unternehmen arbeiten.",
+    "EmptyStateMemberCreateLabel": "Mitarbeiter hinzufügen",
+    "SocialId": "Soziale ID",
+    "SocialIds": "Soziale IDs",
+    "Type": "Typ",
+    "Confirmed": "Bestätigt"
   }
 }

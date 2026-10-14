@@ -268,6 +268,17 @@ export interface SpaceHeader extends Class<Doc> {
   header: AnyComponent
 }
 
+/**
+ * @public
+ * Empty-state copy for a class, shown by List/Table/SpaceView when there is nothing to show yet:
+ * why this object type exists and, if it can be created inline, the label for that action.
+ */
+export interface EmptyStateInfo extends Class<Doc> {
+  title: IntlString
+  description: IntlString
+  createLabel?: IntlString
+}
+
 export interface BaseQuery<T extends Doc> extends Class<T> {
   baseQuery: DocumentQuery<T>
 }

@@ -165,6 +165,11 @@
     "ForbidAttributeChanges": "禁止更改属性: ",
     "AllowAttributeChanges": "允许更改属性: ",
     "RelationshipTable": "关系表",
-    "GroupAndSort": "分组和排序"
+    "GroupAndSort": "分组和排序",
+    "EmptyStateDescription": "这里还没有内容",
+    "NothingFound": "未找到结果",
+    "NothingFoundHidden": "{count, plural, other {# 个项目}}与搜索或筛选条件不匹配。",
+    "ChangeSearchQuery": "请尝试其他搜索词或清除筛选条件。",
+    "EmptyStateCreateLabel": "创建"
   }
 }

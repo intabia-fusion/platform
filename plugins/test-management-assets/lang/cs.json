@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Testovací případy nevybrány} one {# testovací případ vybrán} few {# testovací případy vybrány} other {# testovacích případů vybráno}}",
     "DefaultAssignee": "Výchozí přiřazovatel",
     "TestPlanTitle": "Název plánu testování",
-    "RunAssistant": "Spustit asistenta"
+    "RunAssistant": "Spustit asistenta",
+    "EmptyStateTestSuiteTitle": "Zatím žádné testovací sady",
+    "EmptyStateTestSuiteDescription": "Testovací sada seskupuje testovací případy jedné funkce nebo modulu.",
+    "EmptyStateTestSuiteCreateLabel": "Vytvořit sadu",
+    "EmptyStateTestCaseTitle": "Zatím žádné testovací případy",
+    "EmptyStateTestCaseDescription": "Testovací případ jsou kroky ověření a očekávaný výsledek.",
+    "EmptyStateTestCaseCreateLabel": "Vytvořit testovací případ",
+    "EmptyStateTestResultTitle": "Zatím žádné výsledky",
+    "EmptyStateTestResultDescription": "Výsledky se objeví, jakmile se testovací případy spustí v testovacím běhu.",
+    "EmptyStateTestPlanItemTitle": "V plánu zatím nejsou žádné testovací případy",
+    "EmptyStateTestPlanItemDescription": "Přidejte testovací případy, které má plán pokrýt.",
+    "EmptyStateTestPlanItemCreateLabel": "Přidat testovací případ"
   }
 }

@@ -101,7 +101,15 @@
     "ShowChatBadge": "Show chat app badge",
     "ReactedToYourMessage": "Reacted to your message",
     "Clearing": "Clearing...",
-    "Reading": "Reading..."
+    "Reading": "Reading...",
+    "OnboardingInbox": "Inbox",
+    "OnboardingInboxDescription": "Inbox collects mentions, replies and changes in what you follow, so you see what needs your attention.",
+    "OnboardingInboxStep1": "Click the bell on the left bar",
+    "OnboardingInboxStep2": "Open a notification to go to the message or issue",
+    "InboxEmptyTitle": "No notifications yet",
+    "InboxEmptyHint": "Mentions, direct messages and changes in issues and documents you follow come here.",
+    "InboxSelectTitle": "Pick a notification",
+    "InboxSelectHint": "Open a notification in the list on the left."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {テストケースが選択されていません} one {# テストケースが選択されました} few {# テストケースが選択されました} other {# テストケースが選択されました}}",
     "DefaultAssignee": "デフォルトの担当者",
     "TestPlanTitle": "テスト計画のタイトル",
-    "RunAssistant": "実行アシスタント"
+    "RunAssistant": "実行アシスタント",
+    "EmptyStateTestSuiteTitle": "テストスイートはまだありません",
+    "EmptyStateTestSuiteDescription": "テストスイートは、1つの機能またはモジュールのテストケースをまとめます。",
+    "EmptyStateTestSuiteCreateLabel": "スイートを作成",
+    "EmptyStateTestCaseTitle": "テストケースはまだありません",
+    "EmptyStateTestCaseDescription": "テストケースは、確認手順と期待される結果のセットです。",
+    "EmptyStateTestCaseCreateLabel": "テストケースを作成",
+    "EmptyStateTestResultTitle": "結果はまだありません",
+    "EmptyStateTestResultDescription": "テスト実行でテストケースが実施されると、結果が表示されます。",
+    "EmptyStateTestPlanItemTitle": "計画にテストケースはまだありません",
+    "EmptyStateTestPlanItemDescription": "計画でカバーするテストケースを追加してください。",
+    "EmptyStateTestPlanItemCreateLabel": "テストケースを追加"
   }
 }

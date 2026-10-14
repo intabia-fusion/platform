@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,7 +29,8 @@ import core, { TDoc } from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAttributeApplier } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
-import { WidgetType } from '@hcengineering/workbench'
+import { type AnyComponent } from '@hcengineering/ui/src/types'
+import { WidgetType, type Application } from '@hcengineering/workbench'
 import {
   AccountRole,
   type AccountUuid,
@@ -71,6 +73,18 @@ export function createModel (builder: Builder): void {
   })
   // The action lives in memory only until the trigger has read it.
   builder.mixin(chunter.class.ContentReportAction, core.class.Class, core.mixin.TransientTTL, { ttl: 60 })
+
+  builder.mixin(chunter.class.Channel, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: chunter.string.EmptyStateChannelTitle,
+    description: chunter.string.EmptyStateChannelDescription,
+    createLabel: chunter.string.EmptyStateChannelCreateLabel
+  })
+
+  builder.mixin(chunter.class.DirectMessage, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: chunter.string.EmptyStateDirectMessageTitle,
+    description: chunter.string.EmptyStateDirectMessageDescription,
+    createLabel: chunter.string.EmptyStateDirectMessageCreateLabel
+  })
 
   builder.createModel(
     TChunterSpace,
@@ -396,6 +410,56 @@ export function createModel (builder: Builder): void {
     extension: activity.extension.ActivityEmployeePresenter,
     component: chunter.component.EmployeePresenter
   })
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: chunter.app.Chunter as Ref<Application>,
+      label: chunter.string.OnboardingChats,
+      description: chunter.string.OnboardingChatsDescription,
+      category: workbench.string.OnboardingCategoryChats,
+      order: 20,
+      accessLevel: AccountRole.User,
+      screenshots: [chunter.string.OnboardingChatsStep1, chunter.string.OnboardingChatsStep2],
+      doneWhen: { _class: chunter.class.ChatMessage },
+      actions: [
+        {
+          // Declared only in chunter-resources' plugin.ts, so referenced by id.
+          label: chunter.string.NewChannel,
+          component: 'chunter:component:CreateChannel' as AnyComponent,
+          target: { application: chunterId }
+        },
+        {
+          label: chunter.string.NewDirectChat,
+          component: 'chunter:component:CreateDirectChat' as AnyComponent,
+          target: { application: chunterId }
+        }
+      ]
+    },
+    chunter.ids.OnboardingChatsCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: chunter.app.Chunter as Ref<Application>,
+      label: chunter.string.OnboardingAskJulia,
+      description: chunter.string.OnboardingAskJuliaDescription,
+      category: workbench.string.OnboardingCategoryChats,
+      order: 25,
+      accessLevel: AccountRole.User,
+      screenshots: [chunter.string.OnboardingAskJuliaStep1, chunter.string.OnboardingAskJuliaStep2],
+      actions: [
+        {
+          label: chunter.string.TalkToYulia,
+          target: { selector: '[data-id="ai-chat-button"]' }
+        }
+      ]
+    },
+    chunter.ids.OnboardingAskJuliaCard
+  )
 
   defineActions(builder)
   defineNotifications(builder)

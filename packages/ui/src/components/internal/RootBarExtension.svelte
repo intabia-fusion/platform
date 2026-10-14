@@ -4,7 +4,7 @@
   import { rootBarExtensions } from '../../utils'
   import Component from '../Component.svelte'
 
-  export let position: 'left' | 'right'
+  export let position: 'left' | 'center' | 'right'
   let oldLoc: string | undefined = undefined
   onDestroy(
     locationStore.subscribe((newLocation) => {

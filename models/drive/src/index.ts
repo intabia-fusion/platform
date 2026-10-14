@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -59,8 +60,8 @@ import presentation from '@hcengineering/model-presentation'
 import print from '@hcengineering/model-print'
 import tracker from '@hcengineering/model-tracker'
 import view, { type Viewlet, actionTemplates, classPresenter, createAction } from '@hcengineering/model-view'
-import workbench from '@hcengineering/model-workbench'
-import { getEmbeddedLabel } from '@hcengineering/platform'
+import workbench, { type Application } from '@hcengineering/model-workbench'
+import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
 
 import drive from './plugin'
 import { definePermissions } from './permissions'
@@ -300,6 +301,12 @@ function defineDrive (builder: Builder): void {
     actions: [tracker.action.EditRelatedTargets, print.action.Print, tracker.action.NewRelatedIssue]
   })
 
+  builder.mixin(drive.class.Drive, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: drive.string.EmptyStateDriveTitle,
+    description: drive.string.EmptyStateDriveDescription,
+    createLabel: drive.string.EmptyStateDriveCreateLabel
+  })
+
   createAction(
     builder,
     {
@@ -341,6 +348,12 @@ function defineDrive (builder: Builder): void {
 
 function defineResource (builder: Builder): void {
   builder.createModel(TResource)
+
+  // Upload is a drag & drop / header button action, not a dialog: no create link here.
+  builder.mixin(drive.class.Resource, core.class.Class, view.mixin.EmptyStateInfo, {
+    title: drive.string.EmptyStateFilesTitle,
+    description: drive.string.EmptyStateFilesDescription
+  })
 
   builder.mixin(drive.class.Resource, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: drive.component.ResourcePresenter
@@ -772,6 +785,8 @@ function defineApplication (builder: Builder): void {
       hidden: false,
       locationResolver: drive.resolver.Location,
       navigatorModel: {
+        emptyTitle: drive.string.EmptyTitle,
+        emptyHint: drive.string.EmptyHint,
         specials: [
           {
             id: 'browser',
@@ -825,4 +840,51 @@ export function createModel (builder: Builder): void {
   defineFileVersion(builder)
   defineApplication(builder)
   definePermissions(builder)
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: drive.app.Drive as Ref<Application>,
+      label: drive.string.OnboardingCreateDrive,
+      description: drive.string.EmptyStateDriveDescription,
+      category: workbench.string.OnboardingCategoryDocuments,
+      order: 50,
+      accessLevel: AccountRole.User,
+      screenshots: [drive.string.OnboardingDriveStep1, drive.string.OnboardingDriveStep2],
+      doneWhen: { _class: drive.class.Drive },
+      actions: [
+        {
+          label: drive.string.CreateDrive,
+          target: { application: driveId, selector: '[data-id~="drive-string-CreateDrive"]' }
+        }
+      ]
+    },
+    drive.ids.OnboardingDriveCard
+  )
+
+  builder.createDoc(
+    workbench.class.OnboardingCard,
+    core.space.Model,
+    {
+      application: drive.app.Drive as Ref<Application>,
+      label: drive.string.OnboardingUploadFile,
+      description: drive.string.EmptyStateFilesDescription,
+      category: workbench.string.OnboardingCategoryDocuments,
+      order: 51,
+      accessLevel: AccountRole.User,
+      screenshots: [drive.string.OnboardingFilesStep1, drive.string.OnboardingFilesStep2],
+      doneWhen: { _class: drive.class.File },
+      actions: [
+        {
+          // Same key as the header upload button (uploader plugin); models/drive has no dependency on it.
+          label: 'uploader:string:UploadFiles' as IntlString,
+          // The upload button exists only inside a drive: open one, then press it.
+          func: drive.function.OpenFirstDrive,
+          target: { application: driveId, selector: '[data-id~="uploader-string-UploadFiles"]' }
+        }
+      ]
+    },
+    drive.ids.OnboardingFilesCard
+  )
 }

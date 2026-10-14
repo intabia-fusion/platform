@@ -90,6 +90,17 @@
     "SelectedTestCases": "{count, plural, =0 {Casos de teste não selecionados} one {# caso de teste selecionado} few {# casos de teste selecionados} other {# casos de teste selecionados}}",
     "DefaultAssignee": "Responsável padrão",
     "TestPlanTitle": "Título",
-    "RunAssistant": "Executar assistente"
+    "RunAssistant": "Executar assistente",
+    "EmptyStateTestSuiteTitle": "Ainda não há suites de testes",
+    "EmptyStateTestSuiteDescription": "Uma suite de testes agrupa os casos de teste de uma funcionalidade ou módulo.",
+    "EmptyStateTestSuiteCreateLabel": "Criar suite de testes",
+    "EmptyStateTestCaseTitle": "Ainda não há casos de teste",
+    "EmptyStateTestCaseDescription": "Um caso de teste é um conjunto de passos de verificação e o resultado esperado.",
+    "EmptyStateTestCaseCreateLabel": "Criar caso de teste",
+    "EmptyStateTestResultTitle": "Ainda não há resultados",
+    "EmptyStateTestResultDescription": "Os resultados aparecem à medida que os casos de teste são executados numa execução de teste.",
+    "EmptyStateTestPlanItemTitle": "Ainda não há casos de teste no plano",
+    "EmptyStateTestPlanItemDescription": "Adicione os casos de teste que o plano deve cobrir.",
+    "EmptyStateTestPlanItemCreateLabel": "Adicionar caso de teste"
   }
 }

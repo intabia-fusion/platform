@@ -159,6 +159,12 @@
     "RoleLabel": "Cargo: {role}",
     "ForbidAttributeChanges": "Proibir alterações: ",
     "AllowAttributeChanges": "Permitir alterações: ",
-    "RelationshipTable": "Tabela de relacionamentos"
+    "RelationshipTable": "Tabela de relacionamentos",
+    "EmptyStateDescription": "Nada aqui por enquanto",
+    "NothingFound": "Nada encontrado",
+    "NothingFoundHidden": "{count, plural, one {# item não corresponde} other {# itens não correspondem}} à busca ou aos filtros.",
+    "ChangeSearchQuery": "Tente outra busca ou limpe os filtros.",
+    "EmptyStateCreateLabel": "Criar",
+    "GroupAndSort": "Agrupar e ordenar"
   }
 }

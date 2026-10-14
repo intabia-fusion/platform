@@ -298,6 +298,11 @@
               <Label label={platform.status.SystemAccount} />
             </div>
           {/if}
+          {#if !secondRow}
+            <div class="flex-row-center center-items" style:-webkit-app-region={'no-drag'}>
+              <RootBarExtension position="center" />
+            </div>
+          {/if}
         </div>
         <div class="flex-row-reverse flex-gap-0-5" style:-webkit-app-region={'no-drag'}>
           <Settings />
@@ -317,6 +322,9 @@
         <div class="flex-between h-full content-color gap-3 px-1 second-row" style:-webkit-app-region={'no-drag'}>
           <div class="flex-row-center flex-gap-0-5">
             <RootBarExtension position="left" />
+          </div>
+          <div class="flex-row-center flex-gap-0-5">
+            <RootBarExtension position="center" />
           </div>
           <div class="flex-row-center flex-gap-0-5">
             <RootBarExtension position="right" />
@@ -374,6 +382,13 @@
       .status-info {
         flex-grow: 1;
         text-align: center;
+      }
+      // Centered on the window, not on the space left between the left and right items.
+      .center-items {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
       }
       .logo-status {
         font-weight: 500;
