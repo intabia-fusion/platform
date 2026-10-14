@@ -33,6 +33,7 @@ export const serverActivityPlugin = plugin(serverActivityId, {
     OnDocRemoved: '' as Resource<TriggerFunc>,
     OnDocClassChanged: '' as Resource<TriggerFunc>,
     OnActivityMessageRemoved: '' as Resource<TriggerFunc>,
+    OnPollRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>
   },
   class: {

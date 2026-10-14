@@ -102,6 +102,7 @@ const mockIsMuted = jest.fn()
 const mockGetMentionNotification = jest.fn()
 const mockHasMessageNotification = jest.fn()
 const mockGetAttachments = jest.fn()
+const mockGetApplets = jest.fn()
 
 const mockGetPushGroup = jest.fn()
 jest.mock('../../utils/utils', () => ({
@@ -115,7 +116,8 @@ jest.mock('../../utils/utils', () => ({
   hasMessageNotification: (...args: any[]) => mockHasMessageNotification(...args),
   getLastNotify: (context: any) =>
     Math.max(...(context.latestNotifications ?? []).map((it: any) => it.createdOn ?? 0), 0),
-  getAttachments: (...args: any[]) => mockGetAttachments(...args)
+  getAttachments: (...args: any[]) => mockGetAttachments(...args),
+  getApplets: (...args: any[]) => mockGetApplets(...args)
 }))
 
 describe('mention module', () => {
@@ -202,6 +204,7 @@ describe('mention module', () => {
     mockGetMentionNotification.mockReset()
     mockHasMessageNotification.mockReset()
     mockGetAttachments.mockReset()
+    mockGetApplets.mockReset()
 
     // Default mock setups
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
@@ -213,6 +216,7 @@ describe('mention module', () => {
     mockGetMentionNotification.mockReturnValue(null)
     mockHasMessageNotification.mockReturnValue(false)
     mockGetAttachments.mockResolvedValue([])
+    mockGetApplets.mockResolvedValue([])
     mockAreEqualJson.mockReturnValue(false)
     mockMarkupToText.mockReturnValue('mocked-text')
   })

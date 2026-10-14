@@ -5,6 +5,7 @@
 ## Раскладка текста в индексе
 
 - `fulltextSummary` - только текст атрибута `SearchPresenter.contentField`. Весь остальной текст идёт в `fulltextExtra`, у класса без `contentField` туда идёт весь текст. Раскладку делает `indexDocuments` (`server/indexer/src/indexer/indexer.ts`), полную переиндексацию запускает миграция `reindex-after-fulltext-extra` (`models/core/src/migration.ts`).
+- `SearchPresenter.contentCollections` - коллекции, текст FullText-атрибутов элементов которых `indexDocuments` дописывает в `fulltextSummary` и `highlightableContent` родителя. Элементы ищутся только у документов с ненулевым счётчиком коллекции: родитель переиндексируется, когда меняется счётчик, а не элемент. Своего механизма подмешивать текст дочерних документов в родителя у индексатора нет: поля `propagate*` у `FullTextSearchContext` убраны ещё в upstream (163f6785c9). Берутся только `TypeString` и `TypeMarkup`: у blob и collaborative-атрибутов значение - ссылка, а не текст. Используется у `ChatMessage` (`applets`): сообщение, где только опрос, находится по вопросу.
 - В непереиндексированном воркспейсе весь текст лежит в `fulltextSummary`, и `$searchIn: ['content']` находит там же кастомные атрибуты.
 - `fulltextExtra` не подсвечивается: в интерфейсе сниппеты показывает только поиск по чату (`plugins/chunter-resources/src/search/hydrate.ts`), только для ChatMessage и только из `highlightableContent`.
 

@@ -80,6 +80,7 @@ import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
 import { TaskMiddleware } from '@hcengineering/server-task'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
+import { ActivityMiddleware } from '@hcengineering/server-activity'
 
 import { createStorageDataAdapter } from './blobStorage'
 
@@ -192,6 +193,7 @@ export function createServerPipeline (
       TransientMiddleware.create,
       ChunterMiddleware.create,
       NotificationMiddleware.create,
+      ActivityMiddleware.create,
       TxMiddleware.create, // Store tx into transaction domain
       ...(opt.disableTriggers === true ? [] : [TriggersMiddleware.create]),
       ...(opt.fulltextUrl !== undefined

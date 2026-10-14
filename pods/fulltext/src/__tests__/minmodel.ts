@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -101,6 +102,8 @@ export interface TestDocument extends Doc {
   body?: MarkupBlobRef
 
   file?: Ref<Blob>
+
+  comments?: number
 }
 
 /** No SearchPresenter, so no contentField. */
@@ -157,6 +160,11 @@ export function genMinModel (): Tx[] {
       extends: core.class.AttachedDoc,
       kind: ClassifierKind.CLASS,
       domain: DOMAIN_TEST
+    }),
+    createAttribute(test.class.TestComment, {
+      name: 'message',
+      type: core.class.TypeString,
+      index: IndexKind.FullText
     })
   )
 
@@ -189,12 +197,16 @@ export function genMinModel (): Tx[] {
         type: { _class: core.class.TypeBlob, label: 'File' as IntlString },
         index: IndexKind.FullText
       }),
+      createAttribute(test.class.TestDocument, {
+        name: 'comments',
+        type: { _class: core.class.Collection, of: test.class.TestComment, label: 'Comments' as IntlString }
+      }),
       txFactory.createTxMixin(
         test.class.TestDocument as Ref<Class<Doc>>,
         core.class.Class,
         core.space.Model,
         serverCore.mixin.SearchPresenter,
-        { title: [['title']], contentField: 'description' }
+        { title: [['title']], contentField: 'description', contentCollections: ['comments'] }
       )
     ]
   )

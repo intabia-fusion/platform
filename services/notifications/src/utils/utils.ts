@@ -61,5 +61,6 @@ export {
   toNotificationMessage,
   isChatMessage,
   getAttachments,
-  isSender
+  isSender,
+  getApplets
 } from './misc'

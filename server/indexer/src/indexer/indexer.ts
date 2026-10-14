@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -399,6 +400,51 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     return toIdMap(result)
   }
 
+  private async findCollectionItems (
+    ctx: MeasureContext,
+    _class: Ref<Class<Doc>>,
+    docs: Doc[],
+    collections: string[]
+  ): Promise<Map<Ref<Doc>, AttachedDoc[]>> {
+    const result = new Map<Ref<Doc>, AttachedDoc[]>()
+    for (const collection of collections) {
+      const attr = this.hierarchy.findAttribute(_class, collection)
+      if (attr?.type._class !== core.class.Collection) continue
+      const ids = docs.filter((it) => ((it as any)[collection] ?? 0) > 0).map((it) => it._id)
+      if (ids.length === 0) continue
+      try {
+        const items = await this.storage.findAll<AttachedDoc>(
+          ctx,
+          (attr.type as Collection<AttachedDoc>).of,
+          { attachedTo: { $in: ids }, collection },
+          { skipSpace: true }
+        )
+        for (const item of items) {
+          result.set(item.attachedTo, [...(result.get(item.attachedTo) ?? []), item])
+        }
+      } catch (err: any) {
+        ctx.error('failed to find collection items for', { _class, collection, err })
+      }
+    }
+    return result
+  }
+
+  private getFullText (ctx: MeasureContext, doc: Doc): string[] {
+    const content = getContent(this.hierarchy, getFullTextIndexableAttributes(this.hierarchy, doc._class), doc)
+    const result: string[] = []
+    for (const [, v] of Object.entries(content)) {
+      // Plain text only: a blob or collaborative attribute holds a reference, not its text.
+      const textual = v.attr.type._class === core.class.TypeString || v.attr.type._class === core.class.TypeMarkup
+      if (!textual || !isFullTextAttribute(v.attr) || v.value === '') continue
+      result.push(
+        v.attr.type._class === core.class.TypeMarkup
+          ? ctx.withSync('markup-to-json-text', {}, () => jsonToText(markupToJSON(v.value)))
+          : `${v.value}`
+      )
+    }
+    return result
+  }
+
   async indexDocuments (
     ctx: MeasureContext,
     _class: Ref<Class<Doc>>,
@@ -431,6 +477,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
       attr.name === contentField ? 'fulltextSummary' : 'fulltextExtra'
 
     let parentDocs: IdMap<Doc> | undefined
+    const contentCollections = searchPresenter?.contentCollections ?? []
+    let collectionItems: Promise<Map<Ref<Doc>, AttachedDoc[]>> | undefined
 
     const rateLimit = new RateLimiter(10)
     // We need to add all to broadcast update
@@ -543,6 +591,19 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                     }
                   }
                   continue
+                }
+              }
+
+              if (contentCollections.length > 0) {
+                // The counter tells that items exist: a parent is indexed again when it changes.
+                collectionItems ??= this.findCollectionItems(ctx, _class, docs, contentCollections)
+                for (const item of (await collectionItems).get(doc._id) ?? []) {
+                  for (const text of this.getFullText(ctx, item)) {
+                    appendText(indexedDoc, 'fulltextSummary', text)
+                    if (indexedDoc.highlightableContent !== undefined) {
+                      indexedDoc.highlightableContent += '\n' + text
+                    }
+                  }
                 }
               }
 

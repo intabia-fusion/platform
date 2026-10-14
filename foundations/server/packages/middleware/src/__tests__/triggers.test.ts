@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type MeasureContext, type SessionData, toFindResult, type Tx } from '@hcengineering/core'
+import core, { generateId, type MeasureContext, type SessionData, toFindResult, type Tx } from '@hcengineering/core'
 import type { PipelineContext } from '@hcengineering/server-core'
 import { TriggersMiddleware } from '../triggers'
 
@@ -193,5 +193,86 @@ describe('TriggersMiddleware parallel trigger findAll', () => {
     } finally {
       await middleware.close()
     }
+  })
+})
+
+describe('TriggersMiddleware collection counters', () => {
+  const attributes: Record<string, any> = {
+    message: { type: { _class: core.class.TypeMarkup } },
+    applets: { type: { _class: core.class.Collection } }
+  }
+  const hierarchy = {
+    getDomain: () => 'activity',
+    findDomain: () => 'activity',
+    getBaseClass: (_class: string) => _class,
+    // Only the stored class declares the fields, the base class named in the tx does not.
+    findAttribute: (_class: string, name: string) => (_class === 'chat-message' ? attributes[name] : undefined)
+  }
+  const middleware = new TriggersMiddleware({ hierarchy } as any, undefined)
+  const ctxOf = (removedMap = new Map()): any => ({ contextData: { removedMap, broadcast: { txes: [] } } })
+  const parents = ['msg-1', 'msg-2', 'msg-3'].map((_id) => ({ _id, _class: 'chat-message', space: 'channel' }))
+  const findAll = async (_ctx: any, _class: string, query: any): Promise<any[]> =>
+    parents.filter((it) => it._id === query._id)
+  // Stored under msg-2, while every tx below names msg-1.
+  const reaction = {
+    _id: 'reaction-1',
+    _class: 'reaction',
+    attachedTo: 'msg-2',
+    attachedToClass: 'chat-message',
+    collection: 'applets'
+  }
+  const colTx = (_class: string, collection: string, extra: Record<string, any> = {}): Tx =>
+    ({
+      _id: generateId(),
+      _class,
+      space: core.space.Tx,
+      objectId: 'reaction-1',
+      objectClass: 'reaction',
+      objectSpace: 'channel',
+      attachedTo: 'msg-1',
+      attachedToClass: 'base-message',
+      collection,
+      modifiedBy: 'bob',
+      modifiedOn: 1,
+      ...extra
+    }) as any
+  const counters = (txes: any[]): any[] => txes.map((it) => [it.objectId, it.operations])
+
+  it('counts a collection only, by the class of the stored parent', async () => {
+    const txes = ['message', '_id', 'a.b', 'applets', 'undeclared'].map((it) => colTx(core.class.TxCreateDoc, it))
+    const result = await (middleware as any).processCollection(ctxOf(), txes, findAll)
+
+    expect(result.map((it: any) => it.operations)).toEqual([{ $inc: { applets: 1 } }, { $inc: { undeclared: 1 } }])
+  })
+
+  it('takes the parent of a removed document from the storage, not from its tx', async () => {
+    const removal = colTx(core.class.TxRemoveDoc, 'applets')
+    const ghost = colTx(core.class.TxRemoveDoc, 'applets', { objectId: 'ghost' })
+    const removedMap = new Map([[reaction._id, reaction]])
+    const result = await (middleware as any).processCollection(ctxOf(removedMap), [removal, ghost], findAll)
+
+    expect(counters(result)).toEqual([['msg-2', { $inc: { applets: -1 } }]])
+  })
+
+  it('moves a counter from the parent the document had before the update', async () => {
+    const next = {
+      findAll: async (_ctx: any, _class: string, query: { _id: { $in: string[] } }) =>
+        query._id.$in.includes(reaction._id) ? [reaction] : []
+    }
+    const mover = new TriggersMiddleware({ hierarchy } as any, next as any)
+    const move = colTx(core.class.TxUpdateDoc, 'applets', { operations: { attachedTo: 'msg-3' } })
+    const ghost = colTx(core.class.TxUpdateDoc, 'applets', { objectId: 'ghost', operations: { attachedTo: 'msg-3' } })
+    const moved = await (mover as any).findMovedDocs(ctxOf(), [move, ghost])
+    const result = await (mover as any).processCollection(ctxOf(), [move, ghost], findAll, moved)
+
+    expect(counters(result)).toEqual([
+      ['msg-2', { $inc: { applets: -1 } }],
+      ['msg-3', { $inc: { applets: 1 } }]
+    ])
+    await mover.close()
+  })
+
+  afterAll(async () => {
+    await middleware.close()
   })
 })

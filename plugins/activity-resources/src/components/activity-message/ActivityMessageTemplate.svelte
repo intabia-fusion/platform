@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,6 +30,7 @@
   import { getActions, restrictionStore, showMenu } from '@hcengineering/view-resources'
 
   import { messageInFocus, savedMessagesStore } from '../../activity'
+  import { getAppletContextActions } from '../../appletContextMenu'
   import type { MessageInlineAction } from '../../types'
   import ActivityMessageActions from '../ActivityMessageActions.svelte'
   import MessageTimestamp from '../MessageTimestamp.svelte'
@@ -158,12 +160,21 @@
 
   function handleContextMenu (event: MouseEvent): void {
     if (readonly) return
-    const showCustomPopup = !isTextClicked(event.target as HTMLElement, event.clientX, event.clientY)
+    const appletActions = getAppletContextActions(event)
+    // Applet items are reachable only from this menu, so over an applet even its text opens it.
+    const showCustomPopup =
+      appletActions.length > 0 || !isTextClicked(event.target as HTMLElement, event.clientX, event.clientY)
     if (showCustomPopup) {
       const overrides = onReply ? new Map([[activity.action.Reply, onReply]]) : new Map()
       showMenu(
         event,
-        { object: message, baseMenuClass: activity.class.ActivityMessage, excludedActions, overrides, actions },
+        {
+          object: message,
+          baseMenuClass: activity.class.ActivityMessage,
+          excludedActions,
+          overrides,
+          actions: [...appletActions, ...actions]
+        },
         () => {
           isActionsOpened = false
         }

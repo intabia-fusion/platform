@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage, Applet, AppletDraft, CreateAppletClient } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
@@ -28,12 +28,21 @@
   import type { Attachment } from '@hcengineering/attachment'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { getObjectId } from '@hcengineering/view-resources'
-  import { ThrottledCaller } from '@hcengineering/ui'
-  import { getSpace, editingMessageStore } from '@hcengineering/activity-resources'
+  import { getResource } from '@hcengineering/platform'
+  import { showPopup, ThrottledCaller } from '@hcengineering/ui'
+  import {
+    getSpace,
+    editingMessageStore,
+    AppletPreview,
+    getAppletDraftExpiry,
+    MAX_TIMER_DELAY
+  } from '@hcengineering/activity-resources'
   import { setTyping, clearTyping } from '@hcengineering/presence-resources'
 
   import ReplyToMessagePresenter from '../ReplyToMessagePresenter.svelte'
-  import { getChannelSpace, getForwardData } from '../../utils'
+  import { getChannelSpace } from '../../utils'
+  import { getForwardData } from '../../forwardData'
+  import { isMessageContentChanged, passesArrowKeys } from '../../chatInput'
   import { replyingToMessageStore } from '../../stores'
   import ChannelTypingInfo from '../ChannelTypingInfo.svelte'
   import AIRequestProgress from '../AIRequestProgress.svelte'
@@ -51,7 +60,10 @@
   export let withTypingInfo = false
   export let onKeyDown: ((e: KeyboardEvent) => void) | undefined = undefined
 
-  type MessageDraft = Pick<ChatMessage, '_id' | 'message' | 'attachments' | 'forwardedMessage'>
+  // Not `applets`: in edit mode the draft is the message itself, whose `applets` is a counter.
+  type MessageDraft = Pick<ChatMessage, '_id' | 'message' | 'attachments' | 'forwardedMessage'> & {
+    appletDrafts?: AppletDraft[]
+  }
 
   const dispatch = createEventDispatcher()
 
@@ -67,10 +79,11 @@
   const draftController = new DraftController<MessageDraft>(draftKey)
   const currentDraft = shouldSaveDraft ? $draftsStore[draftKey] : undefined
 
-  const emptyMessage: Pick<MessageDraft, 'message' | 'attachments' | 'forwardedMessage'> = {
+  const emptyMessage: Pick<MessageDraft, 'message' | 'attachments' | 'forwardedMessage' | 'appletDrafts'> = {
     message: EmptyMarkup,
     attachments: 0,
-    forwardedMessage: undefined
+    forwardedMessage: undefined,
+    appletDrafts: undefined
   }
 
   let inputRef: AttachmentRefInput
@@ -96,6 +109,38 @@
   }
 
   let forwardedMessage: WithLookup<ChatMessage> | undefined = undefined
+  let draftApplets: AppletDraft[] = chatMessage === undefined ? (currentMessage.appletDrafts ?? []) : []
+
+  // No field when empty: a draft without applets still counts as empty.
+  $: if (chatMessage === undefined) currentMessage.appletDrafts = draftApplets.length > 0 ? draftApplets : undefined
+
+  // A draft's time runs out while it waits: from then on its preview tells why, and the message is not sent.
+  let now = Date.now()
+  let expiryTimer: ReturnType<typeof setTimeout> | undefined
+  $: draftExpiry = Math.min(Infinity, ...draftApplets.map((it) => getAppletDraftExpiry(it) ?? Infinity))
+  $: draftExpired = draftExpiry <= now
+  $: {
+    clearTimeout(expiryTimer)
+    if (draftExpiry > now && draftExpiry !== Infinity) {
+      expiryTimer = setTimeout(
+        () => {
+          now = Date.now()
+        },
+        Math.min(draftExpiry - Date.now() + 100, MAX_TIMER_DELAY)
+      )
+    }
+  }
+  onDestroy(() => {
+    clearTimeout(expiryTimer)
+  })
+
+  function updateDraftApplet (id: string, params: Record<string, any>): void {
+    draftApplets = draftApplets.map((item) => (item.id === id ? { ...item, params } : item))
+  }
+
+  function removeDraftApplet (id: string): void {
+    draftApplets = draftApplets.filter((item) => item.id !== id)
+  }
 
   $: forwardedMessageId = chatMessage ? chatMessage.forwardedMessage : currentMessage.forwardedMessage
 
@@ -134,6 +179,7 @@
   function clear (): void {
     currentMessage = getDefault()
     _id = currentMessage._id
+    draftApplets = []
     inputRef.removeDraft(false)
   }
 
@@ -186,9 +232,9 @@
     currentMessage.attachments = attachments
   }
 
-  async function handleCreate (event: CustomEvent, _id: Ref<ChatMessage>): Promise<void> {
+  async function handleCreate (event: CustomEvent, _id: Ref<ChatMessage>, applets: AppletDraft[] = []): Promise<void> {
     try {
-      const res = await createMessage(event, _id, `chunter.create.${_class} ${object._class}`)
+      const res = await createMessage(event, _id, `chunter.create.${_class} ${object._class}`, applets)
 
       console.log(`create.${_class} measure`, res.serverTime, res.time)
       const objectId = await getObjectId(object, client.getHierarchy())
@@ -213,14 +259,16 @@
   }
 
   async function onMessage (event: CustomEvent): Promise<void> {
-    draftController.remove()
+    const applets = [...draftApplets]
+    // The edit input shares the draft key with the bottom one: saving an edit must keep that draft.
+    if (chatMessage === undefined) draftController.remove()
     inputRef.removeDraft(false)
 
     if (chatMessage !== undefined) {
       loading = true
       await handleEdit(event)
     } else {
-      void handleCreate(event, _id)
+      void handleCreate(event, _id, applets)
       void deleteTypingInfo()
     }
 
@@ -233,16 +281,22 @@
     loading = false
   }
 
-  async function createMessage (event: CustomEvent, _id: Ref<ChatMessage>, msg: string): Promise<CommitResult> {
+  async function createMessage (
+    event: CustomEvent,
+    messageId: Ref<ChatMessage>,
+    msg: string,
+    applets: AppletDraft[] = []
+  ): Promise<CommitResult> {
     const { message, attachments } = event.detail
     const operations = client.apply(undefined, msg)
+    const messageSpace = _class === chunter.class.ThreadMessage ? (object as ActivityMessage).space : getSpace(object)
 
     if (_class === chunter.class.ThreadMessage) {
       const parentMessage = object as ActivityMessage
 
       await operations.addCollection<ActivityMessage, ThreadMessage>(
         chunter.class.ThreadMessage,
-        parentMessage.space,
+        messageSpace,
         parentMessage._id,
         parentMessage._class,
         'replies',
@@ -253,12 +307,12 @@
           objectId: parentMessage.attachedTo,
           ...(forwardedMessage != null ? await getForwardData(forwardedMessage) : {})
         },
-        _id as Ref<ThreadMessage>
+        messageId as Ref<ThreadMessage>
       )
     } else {
       await operations.addCollection<Doc, ChatMessage>(
         _class,
-        getSpace(object),
+        messageSpace,
         object._id,
         object._class,
         collection,
@@ -267,9 +321,21 @@
           attachments,
           ...(forwardedMessage != null ? await getForwardData(forwardedMessage) : {})
         },
-        _id
+        messageId
       )
     }
+
+    for (const item of applets) {
+      await createAppletInstance(
+        item.appletId,
+        item.params,
+        messageId as Ref<ActivityMessage>,
+        _class as Ref<Class<ActivityMessage>>,
+        messageSpace,
+        operations
+      )
+    }
+
     return await operations.commit()
   }
 
@@ -301,7 +367,7 @@
 
   function handleKeyDown (event: KeyboardEvent): boolean {
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-      if (inputRef.isEmptyDraft() && chatMessage == null) {
+      if (passesArrowKeys(chatMessage, inputRef.isEmptyDraft(), draftApplets)) {
         onKeyDown?.(event)
       }
     }
@@ -349,6 +415,44 @@
       inputRef.focus()
     }
   }
+  const appletModels = client.getModel().findAllSync(activity.class.Applet, {})
+  let appletActions: RefAction[] = []
+  // Editing changes text and attachments only, a poll comes with a new message.
+  $: appletActions =
+    chatMessage !== undefined
+      ? []
+      : appletModels.map((applet) => ({
+          label: applet.label,
+          icon: applet.icon,
+          action: () => {
+            showAppletCreate(applet)
+          },
+          order: 99999
+        }))
+
+  // Outside the block above: a `draftApplets` read there would rebuild the input actions on every draft change.
+  function showAppletCreate (applet: Applet): void {
+    showPopup(applet.createComponent, { applet }, 'center', (result) => {
+      if (result != null) {
+        draftApplets = [...draftApplets, { id: generateId(), appletId: applet._id, params: result }]
+      }
+    })
+  }
+
+  async function createAppletInstance (
+    appletId: Ref<Applet>,
+    params: Record<string, any>,
+    targetId: Ref<ActivityMessage>,
+    targetClass: Ref<Class<ActivityMessage>>,
+    targetSpace: Ref<Space>,
+    op: CreateAppletClient
+  ): Promise<void> {
+    const applet = appletModels.find((it) => it._id === appletId)
+    if (applet?.createFn != null) {
+      const createFn = await getResource(applet.createFn)
+      await createFn(op, targetId, targetClass, targetSpace, params)
+    }
+  }
 </script>
 
 {#if chatMessage === undefined}
@@ -385,16 +489,45 @@
   {shouldSaveDraft}
   {boundary}
   {autofocus}
-  extraActions={voiceActions}
-  isContentChanged={chatMessage?.forwardedMessage !== forwardedMessage?._id &&
-    (!isEmptyMarkup(inputContent) || (currentMessage.attachments ?? 0) > 0 || forwardedMessage != null)}
+  extraActions={[...voiceActions, ...appletActions]}
+  hasHeader={draftApplets.length > 0}
+  disableSubmit={draftExpired}
+  isContentChanged={isMessageContentChanged({
+    edited: chatMessage,
+    forwardedMessage: forwardedMessage?._id,
+    text: inputContent,
+    attachments: currentMessage.attachments ?? 0,
+    drafts: draftApplets
+  })}
   on:message={onMessage}
   on:update={onUpdate}
   on:focus
   on:blur
   bind:loading
   onKeyDown={handleKeyDown}
-/>
+>
+  <svelte:fragment slot="header">
+    {#if draftApplets.length > 0}
+      {#each draftApplets as item, index (item.id)}
+        {@const model = appletModels.find((it) => it._id === item.appletId)}
+        {#if model}
+          <div class="item flex" class:item-indent={index > 0 || (currentMessage.attachments ?? 0) > 0}>
+            <AppletPreview
+              applet={item}
+              {model}
+              on:change={(e) => {
+                updateDraftApplet(item.id, e.detail)
+              }}
+              on:delete={() => {
+                removeDraftApplet(item.id)
+              }}
+            />
+          </div>
+        {/if}
+      {/each}
+    {/if}
+  </svelte:fragment>
+</AttachmentRefInput>
 
 {#if withTypingInfo}
   <div class="typing-row">
@@ -408,5 +541,10 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .item-indent {
+    padding-left: 1rem;
+    border-left: 1px solid var(--theme-divider-color);
   }
 </style>
