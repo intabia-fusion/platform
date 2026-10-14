@@ -72,6 +72,10 @@ export interface QueueWorkspaceMaintenanceMessage extends QueueWorkspaceMessage 
   timeoutMinutes: number
   message?: string
 }
+// Informational: the topic is already regional, workers do not filter by payload.
+export interface QueueWorkspaceWakeupMessage {
+  region: string
+}
 
 /** A one-time catalog purchase was paid & activated; the owning pod interprets `effect`. */
 export interface QueueWorkspacePurchaseMessage extends QueueWorkspaceMessage {

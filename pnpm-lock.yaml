@@ -6326,6 +6326,9 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+      '@testcontainers/redpanda':
+        specifier: 'catalog:'
+        version: 12.1.0(supports-color@8.1.1)
       '@types/jest':
         specifier: 'catalog:'
         version: 29.5.14
