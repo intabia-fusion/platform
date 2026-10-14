@@ -31,7 +31,7 @@
   import type { Chat } from '@hcengineering/chunter'
   import { chunterId } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
-  import { parseLinkId, getObjectLinkId } from '@hcengineering/view-resources'
+  import { parseLinkId, getObjectLinkId, openDoc } from '@hcengineering/view-resources'
   import type { ActivityMessage } from '@hcengineering/activity'
   import { loadSavedAttachments } from '@hcengineering/attachment-resources'
 
@@ -44,6 +44,7 @@
 
   const objectQuery = createQuery()
   const client = getClient()
+  const hierarchy = client.getHierarchy()
 
   const navigatorModel: NavigatorModel = {
     spaces: [],
@@ -173,7 +174,12 @@
 
     selectedData = { id, _class }
 
-    openChannel(selectedData.id, selectedData._class, undefined, true)
+    const isChatSpace = hierarchy.hasClass(_class) && hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+    if (isChatSpace) {
+      openChannel(selectedData.id, selectedData._class, undefined, true)
+    } else {
+      await openDoc(hierarchy, selectedObject)
+    }
   }
 
   defineSeparators('chat', [
