@@ -16663,9 +16663,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(supports-color@8.1.1))(sass@1.93.3)(supports-color@8.1.1)(terser@5.44.1))
-      autoprefixer:
-        specifier: 'catalog:'
-        version: 10.4.21(postcss@8.5.6)
       eslint:
         specifier: 'catalog:'
         version: 8.57.1(supports-color@8.1.1)

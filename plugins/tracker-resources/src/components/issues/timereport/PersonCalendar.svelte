@@ -20,7 +20,6 @@
   import {
     Label,
     Scroller,
-    Separator,
     areDatesEqual,
     daysInMonth,
     deviceOptionsStore as deviceInfo,
@@ -56,8 +55,8 @@
     return `width: ${columnWidthRem}rem;`
   }
 
-  export function getRowStyle (height: number = rowHeightRem): string {
-    return `height: ${height}rem;`
+  export function getRowStyle (): string {
+    return `height: ${rowHeightRem}rem;`
   }
 
   export function getHeaderStyle (): string {
@@ -69,39 +68,6 @@
 
   let containerWidth: number = window.outerWidth
   $: containerWidthRem = containerWidth / $deviceInfo.fontSize
-
-  let rowHeights: number[] = []
-  let appliedRowHeight = rowHeightRem
-
-  $: if (appliedRowHeight !== rowHeightRem) {
-    appliedRowHeight = rowHeightRem
-    rowHeights = persons.map(() => rowHeightRem)
-  } else if (rowHeights.length !== persons.length) {
-    rowHeights = persons.map((_, i) => rowHeights[i] ?? rowHeightRem)
-  }
-
-  const startRowResize = (event: PointerEvent, index: number): void => {
-    event.preventDefault()
-    if (rowHeights.length !== persons.length) {
-      rowHeights = persons.map((_, i) => rowHeights[i] ?? rowHeightRem)
-    }
-    const fontSize = $deviceInfo.fontSize
-    const min = rowHeightRem / 2
-    const max = rowHeightRem * 9
-    const startY = event.clientY
-    const startHeight = rowHeights[index] ?? rowHeightRem
-
-    const move = (ev: PointerEvent): void => {
-      const height = Math.min(Math.max(startHeight + (ev.clientY - startY) / fontSize, min), max)
-      rowHeights = rowHeights.map((it, i) => (i === index ? height : it))
-    }
-    const up = (): void => {
-      document.removeEventListener('pointermove', move)
-      document.removeEventListener('pointerup', up)
-    }
-    document.addEventListener('pointermove', move)
-    document.addEventListener('pointerup', up)
-  }
 
   // For 'end' anchor: days go backward from currentDate. For 'start' anchor: days go forward from startDate.
   $: values =
@@ -152,8 +118,8 @@
 
       <!-- Resource Content -->
       <div class="timeline-resource-content">
-        {#each persons as person, rowIndex}
-          <div class="timeline-row" style={getRowStyle(rowHeights[rowIndex] ?? rowHeightRem)}>
+        {#each persons as person}
+          <div class="timeline-row" style={getRowStyle()}>
             <div class="timeline-resource-cell flex-row-center" class:compact={personInfoInline}>
               <div class="flex {personInfoInline ? 'flex-row-center gap-2' : 'flex-col'}">
                 {#if person != null}
@@ -164,17 +130,6 @@
                 <slot name="person-info" {person} {leftDay} {rightDay} />
               </div>
             </div>
-          </div>
-          <div
-            class="timeline-row-resize"
-            role="separator"
-            aria-orientation="horizontal"
-            on:pointerdown|capture={(event) => {
-              event.stopPropagation()
-              startRowResize(event, rowIndex)
-            }}
-          >
-            <Separator name={'person-calendar-rows'} direction="vertical" index={-1} separatorSize={0} />
           </div>
         {/each}
       </div>
@@ -206,14 +161,15 @@
 
       <!-- Grid Content -->
       <div class="timeline-grid-content timeline-grid-bg">
-        {#each persons as person, rowIndex}
-          <div class="timeline-row flex" style={getRowStyle(rowHeights[rowIndex] ?? rowHeightRem)}>
+        {#each persons as person}
+          <div class="timeline-row flex" style={getRowStyle()}>
             <div class="timeline-events" />
 
-            {#each values as value}
+            {#each values as value, i}
               {@const day = resolveDay(value)}
               {@const today = areDatesEqual(todayDate, day)}
               {@const weekend = isWeekend(day)}
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
               <div
                 class="timeline-cell"
                 class:timeline-cell--today={today}
@@ -221,21 +177,10 @@
                 style={getCellStyle()}
               >
                 <div class:timeline-cell-today-marker={today && highlightToday}>
-                  <slot name="day" {day} {today} {weekend} {person} height={rowHeights[rowIndex] ?? rowHeightRem} width={columnWidthRem} />
+                  <slot name="day" {day} {today} {weekend} {person} height={rowHeightRem} width={columnWidthRem} />
                 </div>
               </div>
             {/each}
-          </div>
-          <div
-            class="timeline-row-resize"
-            role="separator"
-            aria-orientation="horizontal"
-            on:pointerdown|capture={(event) => {
-              event.stopPropagation()
-              startRowResize(event, rowIndex)
-            }}
-          >
-            <Separator name={'person-calendar-rows'} direction="vertical" index={-1} separatorSize={0} />
           </div>
         {/each}
       </div>
@@ -339,21 +284,6 @@
   .timeline-row {
     position: relative;
     border-bottom: $timeline-border;
-  }
-
-  .timeline-row-resize {
-    position: relative;
-    z-index: 2;
-    height: 0;
-
-    &::before {
-      position: absolute;
-      top: -4px;
-      left: 0;
-      width: 100%;
-      height: 8px;
-      content: '';
-    }
   }
 
   .timeline-events {

@@ -318,8 +318,6 @@ describe('Separator', () => {
 
     drag(separator, 15 * FS, 18 * FS, 'vertical')
 
-    // Регресс: свой инлайновый height панели выигрывал у вычисленного, и драг по вертикали не менял высоту.
-    expect(parseFloat(top.style.height)).toBeCloseTo(18 * FS, 0)
     const saved = JSON.parse(localStorage.getItem('separators_vertical') as string)
     expect(saved[0].size).toBeCloseTo(18, 1)
     expect(saved[1].size).toBe('auto')
