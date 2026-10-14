@@ -15,7 +15,6 @@ const {
 const { spawnSync } = require('child_process')
 
 const esbuild = require('esbuild')
-const { copy } = require('esbuild-plugin-copy')
 const sveltePlugin = require('esbuild-svelte')
 const { svelte2tsx } = require('svelte2tsx')
 const sveltePreprocess = require('svelte-preprocess')
@@ -135,6 +134,9 @@ async function performESBuildWithSvelte(filesToTranspile, options = {}) {
 
   // Build non-Svelte files
   if (nonSvelteFiles.length > 0) {
+    // Not esbuild-plugin-copy: on Windows its glob reads the backslashes of an absolute path as
+    // escapes and crawls the whole repo from process.cwd(), growing the build process until OOM.
+    copyJsonFiles('src', 'lib', cwd)
     await esbuild.build({
       entryPoints: nonSvelteFiles,
       bundle: false,
@@ -147,17 +149,7 @@ async function performESBuildWithSvelte(filesToTranspile, options = {}) {
       allowOverwrite: true,
       format: 'cjs',
       color: true,
-      absWorkingDir: cwd,
-      plugins: [
-        copy({
-          resolveFrom: 'cwd',
-          assets: {
-            from: [join(cwd, 'src/**/*.json')],
-            to: [outdir]
-          },
-          watch: false
-        })
-      ]
+      absWorkingDir: cwd
     })
   }
 
