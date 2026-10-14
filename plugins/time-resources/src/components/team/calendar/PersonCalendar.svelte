@@ -201,7 +201,14 @@
                 style={getCellStyle()}
               >
                 <div class:timeline-cell-today-marker={today && highlightToday}>
-                  <slot name="day" {day} {today} {weekend} {person} height={rowHeights[rowIndex] ?? rowHeightRem} width={columnWidthRem} />
+                  <slot name="day"
+                    {day}
+                    {today}
+                    {weekend}
+                    {person}
+                    height={rowHeights[rowIndex] ?? rowHeightRem}
+                    width={columnWidthRem}
+                  />
                 </div>
               </div>
             {/each}
