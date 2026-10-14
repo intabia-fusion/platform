@@ -221,7 +221,8 @@
                 style={getCellStyle()}
               >
                 <div class:timeline-cell-today-marker={today && highlightToday}>
-                  <slot name="day"
+                  <slot
+                    name="day"
                     {day}
                     {today}
                     {weekend}
