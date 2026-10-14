@@ -20,7 +20,7 @@ export function createSafeWindow (window: BrowserWindow): BrowserWindow {
         }
       }
       const value = Reflect.get(target, prop, receiver)
-      return typeof value === 'function' ? (value).bind(target) : value
+      return typeof value === 'function' ? value.bind(target) : value
     }
   }) as BrowserWindow
 }
