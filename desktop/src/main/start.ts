@@ -54,6 +54,7 @@ import { TrayController } from './tray'
 import { getFileInPublicBundledFolder } from './path'
 import { OsIntegration } from './osIntegration'
 import { IpcMessage } from '../ui/ipcMessages'
+import { createSafeWindow } from './winBadgeProxy'
 
 let isQuiting = false
 
@@ -152,13 +153,14 @@ function runTheApp (): void {
       windows.delete(window.id)
 
       if (mainWindow === window) {
+        winBadge = undefined
         const nextMain = Array.from(windows.values()).find((window) => !window.isDestroyed())
 
         if (nextMain != null) {
           mainWindow = nextMain
 
-          if (isWindows) {
-            winBadge = new WinBadge(mainWindow, { font: '14px arial' })
+          if (isWindows && mainWindow != null && !mainWindow.isDestroyed()) {
+            winBadge = new WinBadge(createSafeWindow(mainWindow), { font: '14px arial' })
           }
 
           setupWindowCleanup(mainWindow)
@@ -404,10 +406,8 @@ function runTheApp (): void {
       }
     })
 
-    if (isWindows) {
-      winBadge = new WinBadge(mainWindow, {
-        font: '14px arial'
-      })
+    if (isWindows && mainWindow != null && !mainWindow.isDestroyed()) {
+      winBadge = new WinBadge(createSafeWindow(mainWindow), { font: '14px arial' })
     }
   }
 
