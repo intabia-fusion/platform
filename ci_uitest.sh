@@ -32,7 +32,7 @@ cd "${project_dir}/${test_folder}/sanity"
 # `playwright install --with-deps` shells out to sudo apt-get. A runner without passwordless
 # sudo can still run the suite as long as the chromium system libs are already installed.
 if sudo -n true 2>/dev/null; then
-  pnpm run ci
+  pnpm run playwright:install
 else
   echo "No passwordless sudo on $(hostname) - installing chromium without system deps"
   pnpm exec playwright install chromium

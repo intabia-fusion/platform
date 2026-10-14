@@ -49,7 +49,7 @@ if [ "$PREPARE" = true ]; then
     echo "==> Building the test package"
     (cd .. && pnpm build --to @hcengineering/tests-sanity)
     echo "==> Ensuring playwright browsers"
-    (cd sanity && pnpm run ci)
+    (cd sanity && pnpm run playwright:install)
 
     echo
     echo "====================================================================="

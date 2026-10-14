@@ -63,7 +63,7 @@ runs:
       shell: bash
       run: |
         cd ./${{ inputs.test-folder }}/sanity
-        pnpm run ci
+        pnpm run playwright:install
 
     - name: Start profiling
       if: inputs.enable-profiling == 'true'

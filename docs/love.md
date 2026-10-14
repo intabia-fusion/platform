@@ -502,7 +502,7 @@ cd dev && ./run_livekit.sh     # порт 7880, webhook http://127.0.0.1:8098/we
 
 # 4. Тесты
 cd tests/sanity
-pnpm run ci                                          # установка браузера, первый раз
+pnpm run playwright:install                          # установка браузера, первый раз
 pnpm run uitest tests/love/meetings.all.spec.ts --reporter=list --retries=0 --workers=1
 pnpm run uitest tests/love/meetings.all.spec.ts -g "knocker auto-joins" --reporter=list --retries=0
 pnpm run debug tests/love/meetings.all.spec.ts       # headed

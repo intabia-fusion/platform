@@ -33,7 +33,7 @@ jobs:
       - name: Install Playwright
         run: |
           cd ./tests/sanity
-          pnpm run ci
+          pnpm run playwright:install
       - name: Run UI tests
         run: |
           cd ./tests/sanity
