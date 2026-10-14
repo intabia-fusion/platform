@@ -227,6 +227,26 @@ describe('LiveQuery benchmarks', () => {
     })
   }
 
+  it('subscribe to an already running query', async () => {
+    const { liveQuery, factory, serverCalls } = await getBench()
+    await createProjects(factory, 100, 'join')
+    const query = { prjName: { $like: 'join-%' } }
+    const unsubscribeFirst = await subscribe<TestProject>(liveQuery, test.class.TestProject, query)
+    const before = serverCalls()
+
+    // Each join is served from the running query: measures the delivery of its cached result.
+    const n = 500
+    const start = performance.now()
+    for (let i = 0; i < n; i++) {
+      const unsubscribe = await subscribe<TestProject>(liveQuery, test.class.TestProject, query)
+      unsubscribe()
+    }
+    record('join running query', n, performance.now() - start)
+    unsubscribeFirst()
+
+    expect(serverCalls()).toBe(before)
+  })
+
   it('findOne served from the Refs cache', async () => {
     const { liveQuery, factory, serverCalls } = await getBench()
     const ids = await createProjects(factory, 200, 'cache')

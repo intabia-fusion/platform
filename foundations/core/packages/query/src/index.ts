@@ -311,16 +311,18 @@ export class LiveQuery implements WithTx, Client {
       return await this.client.findOne(_class, query, options)
     }
     if (options?.projection !== undefined) {
-      options.projection = {
-        ...options.projection,
-        _class: 1,
-        space: 1,
-        modifiedOn: 1
+      options = {
+        ...options,
+        projection: {
+          ...options.projection,
+          _class: 1,
+          space: 1,
+          modifiedOn: 1
+        }
       }
     }
 
-    options ??= {}
-    options.limit = 1
+    options = { ...options, limit: 1 }
 
     const d = this.refs.findFromDocs(_class, query, options)
     if (d !== null) {
@@ -390,14 +392,15 @@ export class LiveQuery implements WithTx, Client {
     }
   ): void {
     q.callbacks.set(callback.callbackId, callback.callback)
-    setTimeout(async () => {
-      if (q !== undefined) {
+    // A microtask delivers the cached result before the next render; setTimeout costs >= 1ms.
+    queueMicrotask(() => {
+      void (async () => {
         if (q.result instanceof Promise) {
           q.result = await q.result
         }
         callback.callback(toFindResult(q.result.getResult(callback.callbackId), q.total))
-      }
-    }, 0)
+      })()
+    })
   }
 
   private getQuery<T extends Doc>(
@@ -500,11 +503,15 @@ export class LiveQuery implements WithTx, Client {
     options?: FindOptions<T>
   ): () => void {
     if (options?.projection !== undefined) {
-      options.projection = {
-        ...options.projection,
-        _class: 1,
-        space: 1,
-        modifiedOn: 1
+      // Copy: callers compare options with their previous call; a mutated object never matches.
+      options = {
+        ...options,
+        projection: {
+          ...options.projection,
+          _class: 1,
+          space: 1,
+          modifiedOn: 1
+        }
       }
     }
     const callbackId = generateId()
@@ -533,11 +540,14 @@ export class LiveQuery implements WithTx, Client {
     options?: FindOptions<T>
   ): Promise<FindResult<T>> {
     if (options?.projection !== undefined) {
-      options.projection = {
-        ...options.projection,
-        _class: 1,
-        space: 1,
-        modifiedOn: 1
+      options = {
+        ...options,
+        projection: {
+          ...options.projection,
+          _class: 1,
+          space: 1,
+          modifiedOn: 1
+        }
       }
     }
     const current = this.findQuery(_class, query, options)

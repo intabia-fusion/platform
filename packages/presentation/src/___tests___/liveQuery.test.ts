@@ -27,6 +27,7 @@ import { createQuery, onWorkspaceChange, refreshClient, setClient } from '../uti
 interface Subscription {
   query: Record<string, any>
   active: boolean
+  onResult: (res: any) => void
 }
 
 const mockDestroyHandlers: Array<() => void> = []
@@ -65,7 +66,7 @@ jest.mock('@hcengineering/query', () => ({
     static subscriptions: Subscription[] = []
 
     query (_class: any, query: Record<string, any>, onResult: (res: any) => void): () => void {
-      const sub: Subscription = { query, active: true }
+      const sub: Subscription = { query, active: true, onResult }
       ;(this.constructor as any).subscriptions.push(sub)
       void Promise.resolve().then(() => {
         if (sub.active) onResult([{ query }])
@@ -156,6 +157,49 @@ describe('LiveQuery', () => {
     await settle()
 
     expect(subscriptions().filter((it) => it.query.name === 'F' && it.active)).toEqual([])
+  })
+
+  it('subscribes only the last of several requests made in one tick', async () => {
+    const q = createQuery(true)
+    const callback = (): void => {}
+    q.query(core.class.Doc, { name: 'J1' } as any, callback)
+    q.query(core.class.Doc, { name: 'J2' } as any, callback)
+    q.query(core.class.Doc, { name: 'J3' } as any, callback)
+    await settle()
+
+    expect(
+      subscriptions()
+        .filter((it) => /^J/.test(it.query.name))
+        .map((it) => it.query.name)
+    ).toEqual(['J3'])
+  })
+
+  it('subscribes again after unsubscribe', async () => {
+    const q = createQuery(true)
+    const callback = (): void => {}
+    q.query(core.class.Doc, { name: 'K' } as any, callback)
+    await settle()
+    q.unsubscribe()
+    expect(q.query(core.class.Doc, { name: 'K' } as any, callback)).toBe(true)
+    await settle()
+
+    expect(subscriptions().filter((it) => it.query.name === 'K' && it.active)).toHaveLength(1)
+  })
+
+  it('drops results that a released subscription still delivers', async () => {
+    const q = createQuery(true)
+    const received: string[] = []
+    const callback = (res: FindResult<Doc>): void => {
+      received.push((res[0] as any).query.name)
+    }
+    q.query(core.class.Doc, { name: 'L1' } as any, callback)
+    await settle()
+    q.query(core.class.Doc, { name: 'L2' } as any, callback)
+    await settle()
+
+    const released = subscriptions().find((it) => it.query.name === 'L1')
+    released?.onResult([{ query: { name: 'L1' } }])
+    expect(received).toEqual(['L1', 'L2'])
   })
 
   it('runs workspace change listeners only when setClient connects to another workspace', async () => {

@@ -55,6 +55,27 @@ describe('query', () => {
     expect(result).toHaveLength(2)
   })
 
+  it('leaves the caller options untouched', async () => {
+    const { liveQuery } = await getClient()
+    const options = { projection: { name: 1 } } as const
+    const unsubscribe = await new Promise<() => void>((resolve) => {
+      const unsub = liveQuery.query<Space>(
+        core.class.Space,
+        {},
+        () => {
+          resolve(unsub)
+        },
+        options
+      )
+    })
+    unsubscribe()
+    await liveQuery.queryFind<Space>(core.class.Space, { private: false }, options)
+    const findOneOptions = { projection: { name: 1 } } as const
+    await liveQuery.findOne<Space>(core.class.Space, {}, findOneOptions)
+    expect(options).toEqual({ projection: { name: 1 } })
+    expect(findOneOptions).toEqual({ projection: { name: 1 } })
+  })
+
   it('query with param', async () => {
     const { liveQuery } = await getClient()
 
