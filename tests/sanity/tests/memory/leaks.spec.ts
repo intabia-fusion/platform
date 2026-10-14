@@ -23,6 +23,7 @@ import { expect, type SharedWorkspace, test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { loginByToken, PlatformURI } from '../utils'
+import { waitStable } from '../retry'
 
 // Each scenario repeats one user action N times and compares the renderer between the middle and
 // the end of the run: something created once on first use lands in the first half, a leak grows in
@@ -45,9 +46,10 @@ interface Sample {
   heapMb: number
 }
 
-async function sample (page: Page, cdp: CDPSession): Promise<Sample> {
-  // Debounced handlers (toolbar cursor, list virtualisation) settle before the count.
-  await page.waitForTimeout(1000)
+async function sample (cdp: CDPSession): Promise<Sample> {
+  // Settled, not a fixed second: debounced handlers (toolbar cursor, list virtualisation), and the app a step opened
+  // last can still be drawing its list - a sample taken mid-render read as ~50 nodes per iteration.
+  await waitStable(async () => (await cdp.send('Memory.getDOMCounters')).nodes, { stableFor: 1000, interval: 200 })
   for (let i = 0; i < 3; i++) {
     await cdp.send('HeapProfiler.collectGarbage')
   }
@@ -71,11 +73,11 @@ async function soak (page: Page, name: string, step: (i: number) => Promise<void
   const stepMs: number[] = []
   const stepFrames: number[] = []
   const half = Math.floor(iterations / 2)
-  const before = await sample(page, cdp)
+  const before = await sample(cdp)
   let middle = before
   for (let i = 0; i < iterations; i++) {
     if (i === half) {
-      middle = await sample(page, cdp)
+      middle = await sample(cdp)
     }
     const startedAt = Date.now()
     const startFrames = framesSent
@@ -83,9 +85,13 @@ async function soak (page: Page, name: string, step: (i: number) => Promise<void
     stepMs.push(Date.now() - startedAt)
     stepFrames.push(framesSent - startFrames)
   }
-  const after = await sample(page, cdp)
-  const nodes = (after.nodes - middle.nodes) / (iterations - half)
-  const heapMb = (after.heapMb - middle.heapMb) / (iterations - half)
+  const after = await sample(cdp)
+  // The smaller of both halves: a leak grows in each, while a one-off retention (~1800 nodes kept once, seen
+  // between two steady levels) lands in one half and, spread over it, read as 180 nodes per iteration.
+  const perIteration = (key: 'nodes' | 'heapMb'): number =>
+    Math.min((middle[key] - before[key]) / half, (after[key] - middle[key]) / (iterations - half))
+  const nodes = perIteration('nodes')
+  const heapMb = perIteration('heapMb')
   const tenth = Math.max(1, Math.floor(iterations / 10))
   const avg = (values: number[]): number => Math.round(values.reduce((a, b) => a + b, 0) / values.length)
   const trend = (values: number[]): string => `${avg(values.slice(0, tenth))} -> ${avg(values.slice(-tenth))}`
@@ -176,18 +182,23 @@ test.describe('Renderer memory does not grow with repeated actions', () => {
     // channels drop out of the navigator.
     const channels = ['general', 'random']
     const tag = Date.now()
+    // A channel being left stays in the DOM, inert, while it fades out: its copy of the message is not the one on screen.
     for (const name of channels) {
       await channelPage.clickChannel(name)
       for (let i = 0; i < 5; i++) {
         await channelPage.sendMessage(`${name} ${tag} message ${i}`)
       }
-      await expect(page.getByText(`${name} ${tag} message 4`)).toBeVisible()
+      await expect(
+        page.locator('.activityMessage:not([inert] *)', { hasText: `${name} ${tag} message 4` })
+      ).toBeVisible()
     }
 
     await soak(page, 'chat channels', async (i) => {
       const name = channels[i % channels.length]
       await channelPage.clickChannel(name)
-      await expect(page.getByText(`${name} ${tag} message 4`)).toBeVisible()
+      await expect(
+        page.locator('.activityMessage:not([inert] *)', { hasText: `${name} ${tag} message 4` })
+      ).toBeVisible()
     })
   })
 

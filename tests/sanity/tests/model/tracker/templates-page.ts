@@ -148,6 +148,8 @@ export class TemplatePage extends CommonTrackerPage {
     // The panel keeps re-rendering while the editor content settles, so the button moves under the
     // pointer or is replaced mid-click. Saving switches it to view mode - retry until it does.
     await retry(async () => {
+      // Gone already: an earlier click saved, the switch to view mode just came late.
+      if ((await save.count()) === 0) return
       await save.click({ timeout: 5000 })
       await expect(save).toHaveCount(0, { timeout: 3000 })
     })

@@ -72,7 +72,13 @@ export function registerStartTests (): void {
 
       // Open the most recent existing MeetingMinutes from the side activity (or create a new one).
       let meetingLink = page.getByRole('link', { name: /\d{4}/ }).first()
-      if ((await meetingLink.count()) === 0) {
+      // Not count(): it does not wait, an activity still loading read as "no meeting", and starting one then hit
+      // "You are already in a meeting" - this account sits in another test's meeting - whose dialog took the click.
+      const hasMeeting = await meetingLink.waitFor({ timeout: 5000 }).then(
+        () => true,
+        () => false
+      )
+      if (!hasMeeting) {
         const name = await clickFirstAvailableRegularRoom(page)
         test.skip(name === null, 'No regular room available')
         const connect = page.getByRole('button', { name: /Start meeting|Join meeting/i }).first()

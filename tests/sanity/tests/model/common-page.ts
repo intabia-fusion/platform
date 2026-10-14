@@ -378,10 +378,11 @@ export class CommonPage {
             break
           default:
             // The option list re-renders as it loads, so the row detaches mid-click; an untimed click
-            // then spends the whole 30s on an element that is gone.
+            // then spends the whole 30s on an element that is gone. Shorter than the outer retry: the
+            // values are read once when the popup opens, a missing one needs the popup reopened.
             await retry(async () => {
               await this.selectPopupMenu(filterSecondLevel).click({ timeout: 5000 })
-            })
+            }, 10000)
         }
         if (filter === 'Title' || filter === 'Name') {
           // Default timeout, so a slow render is not taken for a miss and applied twice.

@@ -33,7 +33,7 @@ export class ChannelPage extends CommonPage {
   readonly channelName = (channel: string): Locator =>
     this.page
       .locator('[data-testid="section-chunter:class:Channel"]')
-      .getByRole('button', { name: new RegExp(`(^|\\s)${channel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`) })
+      .getByRole('button', { name: new RegExp(`(^|\\s)${channel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i') })
 
   readonly browserTab = (): Locator => this.page.getByRole('link', { name: 'Browser' }).getByRole('button')
   readonly channelsAndDmsTab = (): Locator =>

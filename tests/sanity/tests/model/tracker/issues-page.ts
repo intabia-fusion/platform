@@ -1,8 +1,8 @@
 import { expect, type Locator } from '@playwright/test'
 import path from 'path'
-import { readStoredCommentCount } from '../../API/TrackerApi'
+import { readIssueIdentifier, readStoredCommentCount } from '../../API/TrackerApi'
 import { createIssue, toTime } from '../../tracker/tracker.utils'
-import { attachScreenshot, iterateLocator } from '../../utils'
+import { attachScreenshot, iterateLocator, PlatformURI } from '../../utils'
 import { retry, retryIntervals, waitStable } from '../../retry'
 import { CommonTrackerPage } from './common-tracker-page'
 import { NewIssue } from './types'
@@ -60,7 +60,8 @@ export class IssuesPage extends CommonTrackerPage {
   linkSidebarAll = (): Locator => this.page.locator('a[href$="all-issues"]')
   linkSidebarMyIssue = (): Locator => this.page.locator('a[href$="my-issues"]')
   buttonClearFilers = (): Locator => this.page.getByRole('button', { name: 'Clear filters' })
-  issuesList = (): Locator => this.page.locator('div.listGrid')
+  // Not the "Show more" row: it is a listGrid too, with no issue in it, and appears once a category outgrows its limit.
+  issuesList = (): Locator => this.page.locator('div.listGrid:not(.showMore)')
   buttonPopupCreateNewIssueParent = (): Locator => this.page.locator('div#parentissue-editor button')
   buttonPopupCreateNewIssueTemplate = (): Locator =>
     this.page.locator('form[id="tracker:string:NewIssue"] div[class*="title"] > div > button')
@@ -193,8 +194,22 @@ export class IssuesPage extends CommonTrackerPage {
     try {
       await this.notificationTimeoutSetting('5000')
       await createIssue(this.page, { name, assignee, status, taskType })
-      await this.page.waitForSelector(`text="${name}"`)
-      await this.viewIssueButton().click()
+      // The "Issue created" toast sometimes never shows (4 in 10 under 5 parallel repeats, the issue is
+      // stored; cause unknown): open the issue by its link then.
+      const toast = await this.viewIssueButton()
+        .waitFor({ timeout: 5000 })
+        .then(
+          () => true,
+          () => false
+        )
+      if (toast) {
+        await this.viewIssueButton().click()
+      } else {
+        let identifier: string | undefined
+        await expect.poll(async () => (identifier = await readIssueIdentifier(name))).toBeDefined()
+        const workspace = new URL(this.page.url()).pathname.split('/')[2]
+        await this.page.goto(`${PlatformURI}/workbench/${workspace}/tracker/${identifier as string}`)
+      }
     } finally {
       await this.notificationTimeoutSetting('0')
     }
@@ -594,9 +609,13 @@ export class IssuesPage extends CommonTrackerPage {
 
     // A just-applied filter leaves the list empty for a moment, and `iterateLocator` waits for a
     // stable count, not a non-empty one - an empty list reads as a filter that matched nothing.
-    await expect(this.issuesList().first(), `no issue row under the "${statusName}" filter`).toBeVisible({
-      timeout: 15000
-    })
+    // A status with 20+ issues folds with no row in the DOM: expand in the same wait.
+    await retry(async () => {
+      await this.expandCollapsedCategories()
+      await expect(this.issuesList().first(), `no issue row under the "${statusName}" filter`).toBeVisible({
+        timeout: 3000
+      })
+    }, 15000)
 
     let checked = 0
     for await (const locator of iterateLocator(this.issuesList())) {

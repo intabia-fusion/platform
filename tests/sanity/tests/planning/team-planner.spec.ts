@@ -75,11 +75,17 @@ test.describe('Team Planner tests', () => {
     const { client } = await connectTracker()
     try {
       const employee = await client.findOne(contact.mixin.Employee, { active: true })
-      await createIssue(client, await getProjectContext(client), {
+      const issue = await createIssue(client, await getProjectContext(client), {
         title: `Team filter ${generateId()}`,
         status: 'Todo',
         assignee: employee?._id
       })
+      // A trigger makes the ToDo after the issue lands; the filter reads its values once, when it opens.
+      await expect
+        .poll(async () => await client.findOne('time:class:ProjectToDo' as any, { attachedTo: issue }), {
+          timeout: 15000
+        })
+        .toBeDefined()
     } finally {
       await client.close()
     }

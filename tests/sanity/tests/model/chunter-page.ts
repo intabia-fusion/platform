@@ -51,9 +51,9 @@ export class ChunterPage extends CommonPage {
   // A form closed under the test reads like a created channel: only the navigator row proves Create landed.
   // Whole name: `links-x` is a prefix of `links-x-target`, and the longer one already counted as created.
   async createChannel (channelName: string, privateChannel: boolean): Promise<void> {
-    const created = this.page
-      .locator('[data-testid="section-chunter:class:Channel"]')
-      .getByRole('button', { name: new RegExp(`(^|\\s)${channelName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`) })
+    const created = this.page.locator('[data-testid="section-chunter:class:Channel"]').getByRole('button', {
+      name: new RegExp(`(^|\\s)${channelName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i')
+    })
     await retry(async () => {
       if (await created.isVisible()) return
       await this.clickAddChannel()

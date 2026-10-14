@@ -82,6 +82,14 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`getByRole({ name })` is a substring too**: `links-x` matched `links-x-target`, and a "created yet?" check
   returned at once, leaving the form's overlay over the next click. `exact` breaks on the unread count in the
   name; nav channel locators match the whole word (`(^|\s)name(\s|$)`).
+- **"Show more" is a `div.listGrid` row too** (a category past its limit), with no issue in it: a per-row check
+  waited on its missing icon. `issuesList()` excludes `.showMore`.
+- **A fixed wait before a memory sample measures a half-drawn app**: `leaks.spec` `sample()` waits for the DOM
+  node count to settle (1 in 10 "apps" runs read +49 nodes/iteration off a mid-render middle sample).
+- **The "Issue created" toast is not a reliable handle**: under parallel load it sometimes never shows while the
+  issue is stored (cause unknown). `createAndOpenIssue` falls back to the issue link after 5s.
+- **A memory soak's per-iteration growth is the smaller of its two halves**: a one-off retention (~1800 detached
+  nodes kept once) inside one half read as 180 nodes/iteration; a leak grows in both.
 
 ## Product-side causes
 
