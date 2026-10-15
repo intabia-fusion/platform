@@ -221,4 +221,34 @@ describe('SeatLimitsMiddleware', () => {
     members = [member('owner', AccountRole.Owner), member('u1', AccountRole.User)]
     expect((await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User })).rejected).toBe(false)
   })
+
+  it('rebuilds once per members-version for a non-member, not on every tx', async () => {
+    const { context, provider } = makeContext([member('owner', AccountRole.Owner)], 2)
+    const fetch = jest.spyOn(provider, 'getWorkspaceMembers')
+    const mw = await SeatLimitsMiddleware.create(ctx, context, makeNext().next)
+    const stranger = { uuid: uuid('stranger'), role: AccountRole.User }
+    expect((await runTx(mw, stranger)).rejected).toBe(true)
+    const afterFirst = fetch.mock.calls.length
+
+    expect((await runTx(mw, stranger)).rejected).toBe(true)
+    expect((await runTx(mw, stranger)).rejected).toBe(true)
+    expect(fetch.mock.calls.length).toBe(afterFirst)
+
+    // A bump may bring it in: allowed to look again.
+    ;(context.contextVars[MEMBERS_VERSION_KEY] as Map<WorkspaceUuid, number>).set(WS, 1)
+    await runTx(mw, stranger)
+    expect(fetch.mock.calls.length).toBeGreaterThan(afterFirst)
+  })
+
+  it('keeps the read-only path when the rebuild for an unknown member fails', async () => {
+    const { context, provider } = makeContext([member('owner', AccountRole.Owner)], 2)
+    const mw = await SeatLimitsMiddleware.create(ctx, context, makeNext().next)
+    expect((await runTx(mw, { uuid: uuid('owner'), role: AccountRole.Owner })).rejected).toBe(false)
+    ;(provider as any).getWorkspaceMembers = async () => {
+      throw new Error('account service down')
+    }
+    // A trigger-derived tx passes read-only enforcement: rejected here means the rebuild error leaked.
+    const res = await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User }, [WRITE_TX], { isTriggerCtx: true })
+    expect(res.rejected).toBe(false)
+  })
 })

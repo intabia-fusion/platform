@@ -75,8 +75,11 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **A popup dies with any location change** (`Workbench` closes popups on it). A click on a nav row's actions that
   misses the "..." button opens the row's channel and kills the menu it opened: click the button, retry until the item shows.
 - **A warm window is not settled right after `enterWorkspace`**: for ~200ms something closes popups and
-  modals with the URL unchanged (closer not found). `clickAddChannel`/`createChannel` retry to the open form
-  and to the navigator row - a closed form is no proof Create landed.
+  modals with the URL unchanged. Likely closer: `navigate()` (`packages/ui/src/location.ts`) called `closePopup()`
+  even for the current URL, so a late sync re-applying the location closed a popup opened meanwhile (also seen
+  in settings add-task-types, 3/3 attempts in run 20261015-153608). Now it closes only on a real move; the caller
+  was not pinned. `clickAddChannel`/`createChannel` retry to the open form and to the navigator row - a closed
+  form is no proof Create landed.
 - **Unread counters lag the app**: the service counts a fresh message (bot greeting) after the UI marks it.
   `readEverything` also reads contexts whose read position is behind the last message.
 - **`getByRole({ name })` is a substring too**: `links-x` matched `links-x-target`, and a "created yet?" check
@@ -108,7 +111,7 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `doSyncLoc` is queued by `reduceCalls`; it used to call `closePopup()` when it ran, not when the location changed | `Workbench.svelte` | A popup opened after the change is closed; a stale `syncLoc` also `closePanel()`s over the new page. `syncLoc` edits `loc` in place - compare `$location` by reference |
 | AI level card saves without awaiting (`void save()`) | `AISpaceSettingsEditor.svelte` | A reload right after the click can lose the level |
 | Status button shows the old status until the update round trip (>1s under load) | `StatusEditor.svelte` | "Stable for 1s" takes the old value; a retry click lands under the close-todos dialog |
-| A save resolves before its tx reaches the live queries | `AttachmentStyleBoxEditor.svelte` (`savedAt`) | A callback for another tx (`$inc`) brings the pre-save doc and reverts the editor |
+| A save resolves before its tx reaches the live queries | `AttachmentStyleBoxEditor.svelte` (`SaveVersion`) | A callback for another tx (`$inc`) brings the pre-save doc and reverts the editor. Compare server `modifiedOn` to the newest seen before the save, never to client `Date.now()`: `ModifiedMiddleware` stamps server time, and a client clock ahead hid other users' edits |
 | Do not drop `getCurrentDoc` copies older than the doc in the query | `foundations/core/packages/query` (`getCurrentDoc`) | `modifiedOn` is not monotonic: a request replays a tx prepared earlier (`approveTx`/`rejectedTx`) with its old `modifiedOn`; a guard on it froze QMS doc states |
 | A sent message renders before the server has it (`pendingCreatedDocs`) | `ChatMessagePresenter.svelte` (`data-delivered`) | A reload right after it shows loses the message |
 | Tag popup selects a tag it creates | `TagsPopup.svelte` `onCreateTagElement` | A click on the new tag unselects it |
@@ -123,7 +126,7 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 | `Move.svelte` fills `issueToUpdate` (a Map) via `.set()` with no reassignment | `tracker-resources` Move | Svelte misses it: keep-attributes toggle stays disabled if issues resolve after the target pick |
 | Channel nav entry waits for a `Chat` doc from async `OnCollaboratorAdded` | `ChatNavGroup.svelte` | Lags past UI timeouts. Pushing the open object by id was reverted: it kept an unsubscribed open channel in the nav |
 | (same, recruit vacancy/applicant chats) | `ChatApi.waitForLinkedChat` | Tests poll the server `Chat` doc before checking the nav |
-| A joiner's members-version bump crosses the queue (batch 500ms) after his first tx | `middleware/src/seatLimits.ts` | Not in `seatSet` -> read-only -> `Forbidden` on `ensureEmployee`, invite page blank. Fixed: rebuild once for an unknown member |
+| A joiner's members-version bump crosses the queue (batch 500ms) after his first tx | `middleware/src/seatLimits.ts` | Not in `seatSet` -> read-only -> `Forbidden` on `ensureEmployee`, invite page blank. Fixed: rebuild for an unknown member, once per members-version (a non-member would rebuild on every tx), errors caught like `refreshSeatSetIfStale` |
 | `handleHello` switched the session to binary+snappy before the hello was sent | `server/src/sessionManager.ts` | A broadcast in that window was undecodable (`Unknown extension type 214`) and dropped by the client. Fixed: modes set after the hello |
 | Crop Save was enabled before cropperjs was ready; `crop()` returned `undefined` | `image-cropper-resources` Cropper, `EditAvatarPopup` | Pick silently falls back to a colour. Save now disabled until `ready` (not the picture flake's cause) |
 | `EditableAvatar` reset its pick on any new `person` object from the parent | `contact-resources` EditableAvatar | Reset now only on changed values (latent, not the picture flake's cause) |

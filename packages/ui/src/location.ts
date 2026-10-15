@@ -200,10 +200,11 @@ export function stripLinkSlugs (url: string): string {
 }
 
 export function navigate (location: PlatformLocation, replace = false): boolean {
-  closePopup()
   const cur = locationToUrl(getCurrentLocation())
   const url = locationToUrl(location)
   if (cur !== url) {
+    // Only on a real move: a sync that re-applies the current location closed a popup opened meanwhile.
+    closePopup()
     const data = !desktopPlatform ? null : { location }
     const _url = !desktopPlatform ? url : undefined
     if (replace) {

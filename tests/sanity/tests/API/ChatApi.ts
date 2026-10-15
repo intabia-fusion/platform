@@ -258,16 +258,25 @@ export class ChatMember {
     const contexts = await this.client.findAll(docNotifyContextClass, { user: this.account } as any)
     // A thread lives in the space of its channel.
     const candidates = contexts.filter((it: any) => !except.includes(it.objectId) && !except.includes(it.objectSpace))
+    // One query, not one per context: callers loop this inside a 3s toPass, and contexts pile up over a run.
+    const states = await this.client.findAll(readStateClass, {
+      attachedTo: { $in: candidates.map((it: any) => it.objectId) }
+    } as any)
+    const stateByDoc = new Map(states.map((it: any) => [it.attachedTo, it]))
     let unread = 0
     for (const context of candidates as any[]) {
-      const state = await this.client.findOne(readStateClass, { attachedTo: context.objectId } as any)
+      const state = stateByDoc.get(context.objectId)
       // Date.now() can tie or run ahead of the createdOn of a message sent right after (same ms, or
       // another clock), marking it read: read up to the last existing message's own createdOn.
-      const last = await this.client.findOne(
-        'activity:class:ActivityMessage' as Ref<Class<Doc>>,
-        { attachedTo: context.objectId } as any,
-        { sort: { createdOn: -1 } } as any
-      )
+      // Without a state there is no position to move.
+      const last =
+        state === undefined
+          ? undefined
+          : await this.client.findOne(
+            'activity:class:ActivityMessage' as Ref<Class<Doc>>,
+            { attachedTo: context.objectId } as any,
+            { sort: { createdOn: -1 } } as any
+          )
       // By the read position too: the service counts a fresh message (the bot greeting) a while after
       // the app already shows it as unread, and a counter-only pass left it there.
       const behind = last !== undefined && ((state as any)?.[this.account]?.timestamp ?? 0) < (last as any).createdOn

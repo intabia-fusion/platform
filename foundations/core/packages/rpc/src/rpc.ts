@@ -200,7 +200,7 @@ export class RPCHandler {
     }
     const bytes = new Uint8Array(data)
     // A frame the server packed before it switched this session to binary (hello still in flight):
-    // JSON always starts with '{', a msgpack message (a map) never does.
+    // JSON always starts with '{', this packr's messages with a record definition (0xd4).
     if (bytes[0] === 0x7b) {
       return JSON.parse(new TextDecoder().decode(bytes), rpcJSONReceiver)
     }

@@ -348,3 +348,24 @@ export async function attachmentsApplier (
 
   return { txes }
 }
+
+/**
+ * Tells a queried doc written after the last save started from a pre-save copy the query still delivers.
+ * By the server's modifiedOn only: a client clock ahead of the server hid other users' edits for as long.
+ */
+export class SaveVersion {
+  private newest = 0
+  private savedFrom = 0
+
+  seen (modifiedOn: number): void {
+    this.newest = Math.max(this.newest, modifiedOn)
+  }
+
+  saving (modifiedOn: number): void {
+    this.savedFrom = Math.max(this.newest, modifiedOn)
+  }
+
+  isAfterSave (modifiedOn: number): boolean {
+    return modifiedOn > this.savedFrom
+  }
+}

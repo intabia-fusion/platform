@@ -15,9 +15,7 @@ import { Issue, NewIssue } from '../model/tracker/types'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 
 test.use({
-  storageState: PlatformSetting,
-  // Move flake (panel keeps TSK- id, then closes) is rare and unexplained by code: keep a trace of it.
-  trace: 'retain-on-failure'
+  storageState: PlatformSetting
 })
 test.describe('Tracker sub-issues tests', () => {
   let issuesPage: IssuesPage

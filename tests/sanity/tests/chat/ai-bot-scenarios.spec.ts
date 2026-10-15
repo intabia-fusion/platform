@@ -320,7 +320,7 @@ test.describe('ai-bot scenarios', () => {
       await (await other.goto(settingsUrl))?.finished()
       await expect(other.locator('[data-id="btnAiLevel-middle"]')).toHaveClass(/pressed/, { timeout: 30000 })
       await other.close()
-      await (await page.goto(`${PlatformURI}/workbench/${data.workspaceName}/setting/ai-settings/basic`))?.finished()
+      await (await page.goto(settingsUrl))?.finished()
       await expect(page.locator('[data-id="btnAiLevel-middle"]')).toHaveClass(/pressed/, { timeout: 30000 })
     })
   })

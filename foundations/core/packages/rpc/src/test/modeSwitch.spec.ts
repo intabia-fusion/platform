@@ -18,8 +18,18 @@ describe('RPCHandler mode switch', () => {
   })
 
   it('never mistakes a msgpack message for JSON', () => {
-    const packed = rpc.serialize({ ...msg }, true) as Uint8Array
-    expect(packed[0]).not.toBe(0x7b)
-    expect(rpc.readResponse(packed, true)).toEqual(msg)
+    const shapes: any[] = [
+      msg,
+      { id: -1, result: 'hello', binary: true },
+      { id: 2, error: { code: 'x' } },
+      { id: 3, result: [1, 2] },
+      { id: 4, result: 123 }
+    ]
+    // Twice each: a repeated shape is where a packr reusing its records could start with the record id.
+    for (const shape of [...shapes, ...shapes]) {
+      const packed = rpc.serialize({ ...shape }, true) as Uint8Array
+      expect(packed[0]).not.toBe(0x7b)
+      expect(rpc.readResponse(packed, true)).toEqual(shape)
+    }
   })
 })

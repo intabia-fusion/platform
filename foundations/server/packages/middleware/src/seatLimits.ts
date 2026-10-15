@@ -75,6 +75,8 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private usersLimit = 0
   private readonly seatSet = new Set<AccountUuid>()
   private readonly knownMembers = new Set<AccountUuid>()
+  /** Unknown accounts already rebuilt for at this members-version: a non-member must not rebuild on every tx. */
+  private readonly rebuiltFor = new Set<AccountUuid>()
   private integrationAccounts = new Set<AccountUuid>()
   /** System/AI account uuids (never occupy a seat). Resolved lazily; undefined = not yet resolved. */
   private systemAccounts: Set<AccountUuid> | undefined
@@ -202,6 +204,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     const current = versions?.get(this.context.workspace.uuid) ?? 0
     if (current === this.membersVersion) return
     this.membersVersion = current
+    this.rebuiltFor.clear()
     try {
       await this.buildSeatSet()
     } catch (err: any) {
@@ -285,8 +288,13 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     }
 
     // A fresh joiner can write before its members-version bump crosses the queue: rebuild for an unknown member.
-    if (!this.knownMembers.has(account.uuid)) {
-      await this.buildSeatSet()
+    if (!this.knownMembers.has(account.uuid) && !this.rebuiltFor.has(account.uuid)) {
+      this.rebuiltFor.add(account.uuid)
+      try {
+        await this.buildSeatSet()
+      } catch (err: any) {
+        ctx.error('SeatLimitsMiddleware: failed to rebuild seat set', { err })
+      }
       if (this.seatSet.has(account.uuid)) return await this.provideTx(ctx, txes)
     }
 

@@ -27,8 +27,8 @@ import { waitStable } from '../retry'
 
 // Each scenario repeats one user action N times and compares the renderer between the middle and
 // the end of the run: something created once on first use lands in the first half, a leak grows in
-// both. LEAK_ITERATIONS=100 for a soak run; 20 keeps sanity short.
-const iterations = Number(process.env.LEAK_ITERATIONS ?? 20)
+// both. LEAK_ITERATIONS=100 for a soak run; 20 keeps sanity short. At least 2: each half needs an iteration.
+const iterations = Math.max(2, Number(process.env.LEAK_ITERATIONS ?? 20))
 const warmup = 5
 
 // Per-repeat growth that still passes. A leaked issue panel was ~1500 DOM nodes and ~1 MB of
