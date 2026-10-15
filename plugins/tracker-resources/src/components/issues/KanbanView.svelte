@@ -32,7 +32,6 @@
   import { employeeByIdStore } from '@hcengineering/contact-resources'
   import type { Employee } from '@hcengineering/contact'
   import { getName } from '@hcengineering/contact'
-  import { defaultPriorities, issuePriorities } from '../../types'
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
@@ -46,7 +45,7 @@
     typeStore,
     updateTaskKanbanCategories
   } from '@hcengineering/task-resources'
-  import type { Component as TrackerComponent, Issue, Project } from '@hcengineering/tracker'
+  import type { Issue, Project } from '@hcengineering/tracker'
   import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
   import type { BlankViewProps, ColorDefinition } from '@hcengineering/ui'
   import {
@@ -91,7 +90,13 @@
   import tracker from '../../plugin'
   import { componentStore } from '../../component'
   import { activeProjects, IssuePriorityColor, sortSwimLaneValues } from '../../utils'
-  import { orderSwimLanes } from '../../swimLanes'
+  import {
+    buildSwimLanes,
+    normalizeSwimValue,
+    sortSwimLanes,
+    swimLaneUpdateProps,
+    UNASSIGNED_SWIM
+  } from '../../swimLanes'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
   import AssigneeEditor from './AssigneeEditor.svelte'
@@ -389,10 +394,6 @@
   }
 
   // SwimLane support (generic by attribute name).
-  const UNASSIGNED_SWIM = '__swim_unassigned__'
-  // Fields that must not be changed via drag (project immutable).
-  const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space'])
-
   let swimLanes: SwimLane[] = []
   // The field the lanes were built for: old lanes under a new field query {attachedTo: 3} and a
   // drop on them writes it.
@@ -413,59 +414,9 @@
     })
   }
 
-  function normalizeSwimValue (
-    field: string,
-    v: unknown
-  ): { key: string, value: unknown, empty: boolean, title?: string } {
-    if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
-    if (field === 'attachedTo' && v === tracker.ids.NoParent) {
-      return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
-    }
-    // Components with the same label may exist in different projects — group
-    // them under one swimlane keyed by the (case-folded, trimmed) label so the
-    // user sees a single "Chat" lane instead of one per project.
-    if (field === 'component') {
-      const c = $componentStore.get(v as Ref<TrackerComponent>)
-      if (c !== undefined) {
-        const label = c.label
-        return { key: 'component:' + label.toLowerCase().trim(), value: v, empty: false, title: label }
-      }
-    }
-    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      return { key: String(v), value: v, empty: false }
-    }
-    return { key: JSON.stringify(v), value: v, empty: false }
-  }
-
+  // A wrapper keeps the store and the label out of the reactive deps: their change does not re-sort the lanes.
   function buildGenericLanes (field: string, tasks: DocWithRank[]): SwimLane[] {
-    if (field === 'none' || field === '') return []
-    const seen = new Map<string, { value: unknown, empty: boolean, title?: string }>()
-    for (const t of tasks) {
-      const raw = getObjectValue(field, t)
-      const n = normalizeSwimValue(field, raw)
-      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty, title: n.title })
-    }
-    // Priority has a fixed ordered set; preseed to keep empty lanes too.
-    if (field === 'priority') {
-      for (const p of defaultPriorities) {
-        const k = String(p)
-        if (!seen.has(k)) seen.set(k, { value: p, empty: false })
-      }
-    }
-    const lanes: SwimLane[] = []
-    let unassigned: SwimLane | undefined
-    for (const [key, { value, empty, title }] of seen) {
-      const lane: SwimLane = {
-        _id: key,
-        title: empty ? emptyLabel : (title ?? ''),
-        value,
-        icon: field === 'priority' && !empty ? issuePriorities[value as IssuePriority]?.icon : undefined
-      }
-      if (empty) unassigned = lane
-      else lanes.push(lane)
-    }
-    if (unassigned !== undefined) lanes.unshift(unassigned)
-    return lanes
+    return buildSwimLanes(field, tasks, $componentStore, emptyLabel)
   }
 
   // Order of the lanes without a sort function for the field: components by label, employees by name,
@@ -484,19 +435,11 @@
   let laneOrderSeq = 0
   async function orderLanes (field: string, lanes: SwimLane[]): Promise<void> {
     const seq = ++laneOrderSeq
-    const unassigned = lanes.filter((it) => it._id === UNASSIGNED_SWIM)
-    const rest = lanes.filter((it) => it._id !== UNASSIGNED_SWIM)
-    const sorted =
-      rest.length > 1
-        ? await sortSwimLaneValues(
-          client,
-          _class,
-          space,
-          field,
-          rest.map((it) => it.value),
-          viewlet.descriptor
-        )
-        : undefined
+    const ordered = await sortSwimLanes(
+      lanes,
+      async (values) => await sortSwimLaneValues(client, _class, space, field, values, viewlet.descriptor),
+      laneFallbackKey
+    )
     const presenter =
       field === 'none' || field === ''
         ? undefined
@@ -504,7 +447,7 @@
     if (seq !== laneOrderSeq) return
     swimLanesBy = field
     swimLanePresenter = presenter
-    swimLanes = [...unassigned, ...orderSwimLanes(rest, sorted, laneFallbackKey)]
+    swimLanes = ordered
   }
 
   $: void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
@@ -512,38 +455,16 @@
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
     if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
     const raw = getObjectValue(swimLanesBy, doc)
-    return normalizeSwimValue(swimLanesBy, raw).key
+    return normalizeSwimValue(swimLanesBy, raw, $componentStore).key
   }
 
-  function getSwimLaneQuery (swimLane: SwimLane): DocumentQuery<any> {
-    if (swimLanesBy === 'none' || swimLanesBy === '') return {}
-    return { [swimLanesBy]: swimLane.value }
+  // Parent issues of the lanes are loaded by the board query, not by a header query per lane.
+  function getSwimLaneDocId (swimLane: SwimLane): Ref<Doc> | undefined {
+    return swimLanesBy === 'attachedTo' && swimLane._id !== UNASSIGNED_SWIM ? (swimLane.value as Ref<Doc>) : undefined
   }
 
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
-    if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
-    if (IMMUTABLE_SWIM_FIELDS.has(swimLanesBy)) return undefined
-    let value: unknown = swimLane.value
-    // Components are aggregated by label across projects; pick the ref that
-    // belongs to the dropped issue's project, or skip the update entirely if
-    // this lane has no matching component for the issue's project.
-    if (swimLanesBy === 'component') {
-      const docSpace = (doc as any).space
-      const lane = $componentStore.filter(
-        (c) =>
-          c.label.toLowerCase().trim() ===
-            ($componentStore.get(swimLane.value as Ref<TrackerComponent>)?.label ?? '').toLowerCase().trim() &&
-          c.space === docSpace
-      )
-      const match = lane.length > 0 ? lane[0]._id : undefined
-      if (match === undefined) return undefined
-      value = match
-    }
-    const update: DocumentUpdate<Item> = { [swimLanesBy]: value }
-    if (swimLanesBy === 'attachedTo') {
-      ;(update as any).attachedToClass = tracker.class.Issue
-    }
-    return update
+    return swimLaneUpdateProps(swimLanesBy, doc, swimLane, $componentStore)
   }
 
   let swimLaneAccents = new Map<string, ColorDefinition>()
@@ -727,7 +648,7 @@
     {swimLanes}
     swimLaneKey={swimLaneBy !== 'none' ? swimLaneBy : undefined}
     {getSwimLaneOfDoc}
-    {getSwimLaneQuery}
+    {getSwimLaneDocId}
     {getSwimLaneUpdateProps}
     {getSwimLaneHeaderStyle}
     compact={compactMode}
@@ -742,14 +663,17 @@
       showMenu(evt.detail.evt, { object: evt.detail.objects, baseMenuClass })
     }}
   >
-    <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:toggle>
+    <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:laneDoc let:docsLoaded let:toggle>
       <div class="swimlane-header-inner">
         {#if swimLane._id === UNASSIGNED_SWIM || swimLanePresenter === undefined}
           <span class="swimlane-title">{swimLane.title || emptyLabel}</span>
+        {:else if swimLanesBy === 'attachedTo' && laneDoc === undefined && !docsLoaded}
+          <span class="swimlane-title" />
         {:else}
           <svelte:component
             this={swimLanePresenter.presenter}
             value={swimLane.value}
+            object={laneDoc}
             kind="list-header"
             size="small"
             {space}

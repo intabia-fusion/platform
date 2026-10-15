@@ -223,6 +223,25 @@ describe('Refs document cache', () => {
     expect(findAllCalls()).toBe(before)
   })
 
+  it('starts an _id subscription from a query cached with a lookup, stripped of $lookup', async () => {
+    const { liveQuery, factory, findAllCalls } = await getClient()
+    const id = await createProject(factory, 'link-target')
+    // A list loaded with a lookup, then one live query per row by _id (DocNavLink on a kanban card).
+    await subscribe<TestProject>(
+      liveQuery,
+      test.class.TestProject,
+      { prjName: 'link-target' },
+      { lookup: { _id: { comments: test.class.TestComment } } }
+    )
+    const before = findAllCalls()
+
+    const row = await subscribe<TestProject>(liveQuery, test.class.TestProject, { _id: id })
+
+    expect(row.last()[0]?.prjName).toBe('link-target')
+    expect((row.last()[0] as any)?.$lookup).toBeUndefined()
+    expect(findAllCalls()).toBe(before)
+  })
+
   it('keeps a projected document out of the cache', async () => {
     const { liveQuery, factory, findAllCalls } = await getClient()
     await createProject(factory, 'projected')

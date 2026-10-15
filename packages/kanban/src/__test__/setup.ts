@@ -1,0 +1,59 @@
+import { initThemeStore } from '@hcengineering/theme'
+
+// jsdom ships no matchMedia, and importing the ui index pulls in players and layout helpers that use it.
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false
+  })) as unknown as typeof window.matchMedia
+}
+
+// jsdom has no PointerEvent; the separator is driven entirely by pointer events.
+if ((globalThis as any).PointerEvent === undefined) {
+  class PointerEventPolyfill extends MouseEvent {
+    readonly pointerId: number
+    constructor (type: string, params: MouseEventInit & { pointerId?: number } = {}) {
+      super(type, params)
+      this.pointerId = params.pointerId ?? 1
+    }
+  }
+  ;(globalThis as any).PointerEvent = PointerEventPolyfill
+}
+
+// Nothing calls Theme.svelte here, so themeStore is an empty writable and every component that
+// renders a Label ($themeStore.language) throws on mount.
+initThemeStore()
+
+// jsdom has no ResizeObserver, and `use:resizeObserver` sits on most components that size themselves.
+// A no-op is enough: jsdom never lays anything out, so it would never fire.
+if ((globalThis as any).ResizeObserver === undefined) {
+  ;(globalThis as any).ResizeObserver = class {
+    observe (): void {}
+    unobserve (): void {}
+    disconnect (): void {}
+  }
+}
+
+// jsdom stops at the layout boundary: these exist in every browser and in none of its tests.
+if ((globalThis as any).IntersectionObserver === undefined) {
+  ;(globalThis as any).IntersectionObserver = class {
+    observe (): void {}
+    unobserve (): void {}
+    disconnect (): void {}
+    takeRecords (): [] {
+      return []
+    }
+  }
+}
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = function (): void {}
+}
+if (typeof window.scrollTo !== 'function') {
+  window.scrollTo = (() => {}) as typeof window.scrollTo
+}

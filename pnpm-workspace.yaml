@@ -536,6 +536,7 @@ minimumReleaseAgeExclude:
   - '@typescript-eslint/visitor-keys@8.70.0'
 
 patchedDependencies:
+  '@tiptap/core@2.27.1': common/pnpm-patches/@tiptap__core@2.27.1.patch
   kafkajs@2.2.4: common/pnpm-patches/kafkajs@2.2.4.patch
   svelte-loader@3.2.4: common/pnpm-patches/svelte-loader@3.2.4.patch
 

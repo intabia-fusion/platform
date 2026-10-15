@@ -21,15 +21,27 @@
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
+    IdMap,
     Ref,
     Space
   } from '@hcengineering/core'
-  import { type Rank, RateLimiter } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { type Rank, toIdMap } from '@hcengineering/core'
+  import { createQuery, getClient, type LiveQuery } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import { IconChevronDown, IconChevronRight, Scroller, themeStore, defaultBackground } from '@hcengineering/ui'
+  import ui, {
+    Button,
+    IconChevronDown,
+    IconChevronRight,
+    IconMoreH,
+    Scroller,
+    themeStore,
+    defaultBackground
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import type { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
+  import { insertIndex, laneCellValues, loadCollapsed, neighbourRanks, saveCollapsed } from '../board'
+  import { type LaneDocs, mergeLaneDocs, planLaneQueries } from '../laneQueries'
+  import { cellKey, collectVisibleGroups, COLUMN_LIMIT, stateKey, SWIM_CELL_LIMIT } from '../visibleGroups'
   import KanbanRow from './KanbanRow.svelte'
 
   export let categories: CategoryType[] = []
@@ -64,7 +76,8 @@
   export let swimLaneKey: string | undefined = undefined
   export let getSwimLaneUpdateProps: ((doc: Doc, swimLane: SwimLane) => DocumentUpdate<Item> | undefined) | undefined =
     undefined
-  export let getSwimLaneQuery: ((swimLane: SwimLane) => DocumentQuery<DocWithRank>) | undefined = undefined
+  // Document a lane header shows (e.g. the parent issue); loaded by the board query and passed to the header slot.
+  export let getSwimLaneDocId: ((swimLane: SwimLane) => Ref<Doc> | undefined) | undefined = undefined
   export let getSwimLaneOfDoc: ((doc: Doc) => string | undefined) | undefined = undefined
   export let storageKey: string | undefined = undefined
   export let controlKey: string | undefined = undefined
@@ -96,33 +109,28 @@
 
   const dispatch = createEventDispatcher()
 
-  const limiter = new RateLimiter(10)
+  const SWIM_CELL_LIMIT_STEP = 10
+  const SWIM_LANE_PAGE = 20
+  const COLUMN_LIMIT_STEP = 20
+
+  // Per-cell card limit, keyed by cellKey; a cell absent here shows its initial limit.
+  let cellLimits = new Map<string, number>()
+  let laneLimit = SWIM_LANE_PAGE
+  $: shownSwimLanes = swimLanes.slice(0, laneLimit)
+
+  function cellLimit (limits: Map<string, number>, key: string, initial: number): number {
+    return limits.get(key) ?? initial
+  }
+
+  function showMore (key: string, initial: number, step: number): void {
+    cellLimits.set(key, cellLimit(cellLimits, key, initial) + step)
+    cellLimits = cellLimits
+  }
 
   $: swimLaneMode = swimLanes.length > 0 && swimLaneKey !== undefined
 
   // Collapse state persisted in localStorage.
   let collapsed = new Set<string>()
-
-  function loadCollapsed (key: string | undefined): Set<string> {
-    if (key === undefined || typeof localStorage === 'undefined') return new Set()
-    try {
-      const raw = localStorage.getItem(`kanban-swimlane-collapsed-${key}`)
-      if (raw == null) return new Set()
-      const arr: string[] = JSON.parse(raw)
-      return new Set(arr)
-    } catch {
-      return new Set()
-    }
-  }
-
-  function saveCollapsed (key: string | undefined, set: Set<string>): void {
-    if (key === undefined || typeof localStorage === 'undefined') return
-    try {
-      localStorage.setItem(`kanban-swimlane-collapsed-${key}`, JSON.stringify([...set]))
-    } catch {
-      // ignore
-    }
-  }
 
   $: collapsed = loadCollapsed(storageKey)
 
@@ -153,26 +161,14 @@
     _dragCardState: CategoryType | undefined,
     _dragCardTargetIndex: number | undefined
   ): Item[] {
-    const raw = getGroupByValues(_groupByDocs, category) ?? []
-    const ofDoc = getSwimLaneOfDoc
-    const inThisLane =
-      _dragCard !== undefined && _dragCardCurrentSwimLane?._id === swimLane._id && _dragCardState === category
-    const isOriginal =
-      _dragCard !== undefined && dragCardInitialSwimLane?._id === swimLane._id && dragCardInitialState === category
-    if (inThisLane && isOriginal && _dragCardTargetIndex === undefined) {
-      // Card stays at its original position in the original cell — no filtering of dragCard.
-      return ofDoc === undefined ? raw : raw.filter((doc) => doc._id === _dragCard?._id || ofDoc(doc) === swimLane._id)
-    }
-    const arr = raw.filter((doc) => doc._id !== _dragCard?._id)
-    const filtered = ofDoc === undefined ? arr : arr.filter((doc) => ofDoc(doc) === swimLane._id)
-    if (inThisLane && _dragCard !== undefined) {
-      const idx = _dragCardTargetIndex
-      if (idx !== undefined && idx >= 0 && idx <= filtered.length) {
-        return [...filtered.slice(0, idx), _dragCard, ...filtered.slice(idx)]
-      }
-      return [...filtered, _dragCard]
-    }
-    return filtered
+    return laneCellValues(getGroupByValues(_groupByDocs, category) ?? [], swimLane._id, category, getSwimLaneOfDoc, {
+      card: _dragCard,
+      initialLane: dragCardInitialSwimLane?._id,
+      initialState: dragCardInitialState,
+      lane: _dragCardCurrentSwimLane?._id,
+      state: _dragCardState,
+      targetIndex: _dragCardTargetIndex
+    })
   }
 
   // Legacy (non-swimlane) cell values. Returns raw cell content unchanged during
@@ -181,6 +177,81 @@
   // cascade across every column on every dragover and keeps drag interaction smooth.
   function getLegacyCategoryValues (category: CategoryType, _groupByDocs: typeof groupByDocs): Item[] {
     return getGroupByValues(_groupByDocs, category) ?? []
+  }
+
+  // One live query per lane (per column in the legacy layout), so a change re-runs only that lane.
+  // Its size is statuses x cell limit + 1, independent of the board size.
+  const laneQueries = new Map<string, LaneDocs & { query: LiveQuery }>()
+  let loadedDocs: IdMap<DocWithRank> = new Map()
+  // Lanes whose query has answered; a dropped lane leaves, so it waits for its header doc again.
+  let loadedKeys = new Set<string>()
+  let lastOptionsKey = ''
+
+  function syncLaneQueries (groups: Map<string, Array<Ref<Doc>>>, _options: typeof options): void {
+    const optionsKey = JSON.stringify(_options)
+    if (optionsKey !== lastOptionsKey) {
+      lastOptionsKey = optionsKey
+      laneQueries.forEach(({ query }) => {
+        query.unsubscribe()
+      })
+      laneQueries.clear()
+      loadedKeys = new Set()
+    }
+    const plan = planLaneQueries(new Map(Array.from(laneQueries, ([key, { ids }]) => [key, ids])), groups)
+    for (const key of plan.drop) {
+      laneQueries.get(key)?.query.unsubscribe()
+      laneQueries.delete(key)
+      loadedKeys.delete(key)
+    }
+    if (plan.drop.length > 0) loadedKeys = loadedKeys
+    for (const [key, ids] of plan.run) {
+      const entry = laneQueries.get(key) ?? { query: createQuery(true), ids, docs: new Map(), pending: true }
+      laneQueries.set(key, entry)
+      entry.ids = ids
+      entry.pending = true
+      entry.query.query(
+        _class,
+        { _id: { $in: ids as Array<Ref<DocWithRank>> } },
+        (res) => {
+          entry.docs = toIdMap(res)
+          entry.pending = false
+          loadedKeys = new Set(loadedKeys).add(key)
+          loadedDocs = mergeLaneDocs(laneQueries.values(), loadedDocs)
+        },
+        { ..._options, limit: ids.length }
+      )
+    }
+    // Docs of dropped queries stay in loadedDocs until the next result, so cards do not blink.
+    if (laneQueries.size === 0) loadedDocs = new Map()
+  }
+
+  onDestroy(() => {
+    laneQueries.forEach(({ query }) => {
+      query.unsubscribe()
+    })
+    stopAutoScroll()
+  })
+
+  let visibleGroups = new Map<string, Array<Ref<Doc>>>()
+  $: visibleGroups = collectVisibleGroups({
+    groupByDocs,
+    categories,
+    swimLanes: shownSwimLanes,
+    collapsed,
+    cellLimits,
+    swimLaneMode,
+    lanesPending: swimLaneKey !== undefined && swimLanes.length === 0,
+    dragging: isDragging,
+    previous: visibleGroups,
+    getSwimLaneOfDoc,
+    getSwimLaneDocId,
+    getGroupByValues
+  })
+  $: syncLaneQueries(visibleGroups, options)
+
+  function getLaneDoc (swimLane: SwimLane, docs: IdMap<DocWithRank>): DocWithRank | undefined {
+    const id = getSwimLaneDocId?.(swimLane)
+    return id !== undefined ? docs.get(id as Ref<DocWithRank>) : undefined
   }
 
   function countSwimLane (swimLane: SwimLane): number {
@@ -246,23 +317,16 @@
           state,
           dragCardTargetIndex
         )
-        const idx = visible.findIndex((p) => p._id === dragCard?._id)
-        if (idx !== -1) {
-          prevRank = visible[idx - 1]?.rank
-          nextRank = visible[idx + 1]?.rank
-        } else if (dragCardTargetIndex !== undefined) {
-          const without = visible.filter((p) => p._id !== dragCard?._id)
-          prevRank = without[dragCardTargetIndex - 1]?.rank
-          nextRank = without[dragCardTargetIndex]?.rank
+        // A card gone from its own cell during the drag keeps its rank.
+        if (visible.some((p) => p._id === dragCard?._id)) {
+          ;[prevRank, nextRank] = neighbourRanks(visible, dragCard._id, undefined)
         }
       } else {
-        const arr = getGroupByValues(groupByDocs, state) ?? []
-        const filtered = arr.filter((d) => d._id !== dragCard?._id)
-        const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
-        const fallback = originalIdx === -1 ? filtered.length : originalIdx
-        const idx = dragCardTargetIndex ?? fallback
-        prevRank = filtered[idx - 1]?.rank
-        nextRank = filtered[idx]?.rank
+        ;[prevRank, nextRank] = neighbourRanks(
+          getGroupByValues(groupByDocs, state) ?? [],
+          dragCard._id,
+          dragCardTargetIndex
+        )
       }
       if (prevRank !== undefined || nextRank !== undefined) {
         const newRank = makeRank(prevRank, nextRank)
@@ -330,7 +394,8 @@
 
   function autoScrollTick (): void {
     autoScrollRaf = undefined
-    if (!isDragging || scrollerEl === undefined) return
+    // bind:divScroll sets null once the Scroller is destroyed.
+    if (!isDragging || scrollerEl == null) return
     const r = scrollerEl.getBoundingClientRect()
     let dx = 0
     let dy = 0
@@ -449,11 +514,7 @@
       const insertAfter = dragswap(evt, targetIdx, dragIdx)
       if (!insertAfter) return
       const desired = dragIdx === -1 || dragIdx > targetIdx ? targetIdx : targetIdx + 1
-      const without = visible.filter((p) => p._id !== dragCard?._id)
-      let mapped = desired
-      if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
-      if (mapped < 0) mapped = 0
-      if (mapped > without.length) mapped = without.length
+      const mapped = insertIndex(desired, dragIdx, visible.length)
       if (dragCardTargetIndex !== mapped) {
         dragCardTargetIndex = mapped
         groupByDocs = groupByDocs
@@ -476,11 +537,7 @@
         return evt.offsetY < h / 2
       })()
       const desired = beforeTarget ? targetIdx : targetIdx + 1
-      const withoutLen = arr.length - (dragIdx !== -1 ? 1 : 0)
-      let mapped = desired
-      if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
-      if (mapped < 0) mapped = 0
-      if (mapped > withoutLen) mapped = withoutLen
+      const mapped = insertIndex(desired, dragIdx, arr.length)
       // Reorder dragCard inside the column array so Svelte can render the
       // preview without any imperative DOM placeholder. Strip ALL occurrences
       // of dragCard before insertion to defend against any transient parent
@@ -528,19 +585,15 @@
             state,
             dragCardTargetIndex
           )
-          const idx = visible.findIndex((p) => p._id === dragCard?._id)
-          if (idx !== -1) {
-            prevRank = visible[idx - 1]?.rank
-            nextRank = visible[idx + 1]?.rank
+          if (visible.some((p) => p._id === dragCard?._id)) {
+            ;[prevRank, nextRank] = neighbourRanks(visible, dragCard._id, undefined)
           }
         } else {
-          const arr = getGroupByValues(groupByDocs, state) ?? []
-          const filtered = arr.filter((d) => d._id !== dragCard?._id)
-          const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
-          const fallback = originalIdx === -1 ? filtered.length : originalIdx
-          const idx = dragCardTargetIndex ?? fallback
-          prevRank = filtered[idx - 1]?.rank
-          nextRank = filtered[idx]?.rank
+          ;[prevRank, nextRank] = neighbourRanks(
+            getGroupByValues(groupByDocs, state) ?? [],
+            dragCard._id,
+            dragCardTargetIndex
+          )
         }
         if (prevRank !== undefined || nextRank !== undefined) {
           const newRank = makeRank(prevRank, nextRank)
@@ -648,7 +701,7 @@
   }
 
   function visibleSwimLanes (): SwimLane[] {
-    return swimLanes.filter((s) => !collapsed.has(s._id))
+    return shownSwimLanes.filter((s) => !collapsed.has(s._id))
   }
 
   function getCellObjects (st: CategoryType, lane?: SwimLane): Item[] {
@@ -798,9 +851,6 @@
   export function check (docs: Doc[], value: boolean): void {
     dispatch('check', { docs, value })
   }
-  function stateKey (state: CategoryType): string {
-    return String(typeof state === 'object' ? state.name : state)
-  }
   const showMenu = async (evt: MouseEvent, object: Item): Promise<void> => {
     selection = objects.findIndex((p) => p._id === object._id)
     if (!checkedSet.has(object._id)) {
@@ -847,7 +897,7 @@
           {/each}
         </div>
 
-        {#each swimLanes as swimLane (swimLane._id)}
+        {#each shownSwimLanes as swimLane (swimLane._id)}
           {@const isCollapsed = collapsed.has(swimLane._id)}
           {@const laneCount = countSwimLane(swimLane)}
           {@const laneStyle = getSwimLaneHeaderStyle?.(swimLane)}
@@ -874,6 +924,8 @@
                   {swimLane}
                   count={laneCount}
                   collapsed={isCollapsed}
+                  laneDoc={getLaneDoc(swimLane, loadedDocs)}
+                  docsLoaded={loadedKeys.has(swimLane._id)}
                   toggle={() => {
                     toggleSwimLane(swimLane._id)
                   }}
@@ -928,7 +980,11 @@
                       {selection}
                       {checkedSet}
                       {state}
-                      {limiter}
+                      loaded={loadedDocs}
+                      limit={cellLimit(cellLimits, cellKey(swimLane._id, state), SWIM_CELL_LIMIT)}
+                      onShowMore={() => {
+                        showMore(cellKey(swimLane._id, state), SWIM_CELL_LIMIT, SWIM_CELL_LIMIT_STEP)
+                      }}
                       cardDragOver={(evt, obj) => {
                         cardDragOver(evt, obj, state)
                       }}
@@ -939,13 +995,6 @@
                         void onDragStart(obj, st, swimLane)
                       }}
                       {showMenu}
-                      {_class}
-                      {query}
-                      {options}
-                      {groupByKey}
-                      swimLaneQuery={getSwimLaneQuery?.(swimLane)}
-                      initialLimit={3}
-                      limitStep={10}
                     >
                       <svelte:fragment slot="card" let:object let:dragged>
                         <slot name="card" {object} {dragged} {swimLane} />
@@ -959,6 +1008,20 @@
             {/if}
           </div>
         {/each}
+        {#if swimLanes.length > laneLimit}
+          <div class="p-2 flex-center">
+            <span class="mr-2">{laneLimit} / {swimLanes.length}</span>
+            <Button
+              size="small"
+              icon={IconMoreH}
+              label={ui.string.ShowMore}
+              dataId="btn-kanban-show-more-lanes"
+              on:click={() => {
+                laneLimit += SWIM_LANE_PAGE
+              }}
+            />
+          </div>
+        {/if}
       </div>
     </Scroller>
   {:else}
@@ -1004,9 +1067,11 @@
                 {selection}
                 {checkedSet}
                 {state}
-                {limiter}
-                initialLimit={10}
-                limitStep={20}
+                loaded={loadedDocs}
+                limit={cellLimit(cellLimits, cellKey('', state), COLUMN_LIMIT)}
+                onShowMore={() => {
+                  showMore(cellKey('', state), COLUMN_LIMIT, COLUMN_LIMIT_STEP)
+                }}
                 cardDragOver={(evt, obj) => {
                   cardDragOver(evt, obj, state)
                 }}
@@ -1015,10 +1080,6 @@
                 }}
                 {onDragStart}
                 {showMenu}
-                {_class}
-                {query}
-                {options}
-                {groupByKey}
               >
                 <svelte:fragment slot="card" let:object let:dragged>
                   <slot name="card" {object} {dragged} />
