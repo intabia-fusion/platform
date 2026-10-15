@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import activity, { type ActivityMessage } from '@hcengineering/activity'
-import { type Doc, type Ref, type Timestamp, type TxCreateDoc, core } from '@hcengineering/core'
+import core, { type Doc, type Ref, type Timestamp, type TxCreateDoc } from '@hcengineering/core'
 import { addTxListener, getClient, onWorkspaceChange } from '@hcengineering/presentation'
 import { get, writable } from 'svelte/store'
 
