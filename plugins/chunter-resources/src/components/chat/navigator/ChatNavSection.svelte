@@ -42,6 +42,7 @@
   import chunter from '../../../plugin'
   import { getChannelName, getObjectIcon } from '../../../utils'
   import { getChatNavItemKey } from '../utils'
+  import { lastMessageByDoc } from '../lastMessage'
   import type { ChatNavItemModel, SortFnOptions } from '../types'
   import ChatNavItem from './ChatNavItem.svelte'
 
@@ -60,7 +61,9 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const dispatcher = createEventDispatcher()
-  const unreadByDoc = NotificationClientImpl.getClient().unreadByDoc
+  const notificationClient = NotificationClientImpl.getClient()
+  const unreadByDoc = notificationClient.unreadByDoc
+  const readStateByDoc = notificationClient.readStateByDoc
 
   let sortedItems: ChatNavItemModel[] = []
   let items: ChatNavItemModel[] = []
@@ -90,6 +93,14 @@
     return (i.object as WithLookup<Doc>)?.$source?.$score ?? 0
   }
 
+  $: loadReadStates(objects)
+
+  function loadReadStates (objects: { doc: Doc }[]): void {
+    for (const { doc } of objects) {
+      void notificationClient.loadReadState(doc._id)
+    }
+  }
+
   $: (() => {
     const newSortedItems = sortByScore
       ? items.sort((a, b) => {
@@ -97,9 +108,11 @@
           if (scoreDiff !== 0) return scoreDiff
           return (a.title ?? a.identifier).localeCompare(b.title ?? b.identifier)
         })
-      : sortFn(items, {
+      : sortFn([...items], {
           unreadByDoc: $unreadByDoc,
-          userStatusByAccount: $statusByUserStore
+          userStatusByAccount: $statusByUserStore,
+          readStateByDoc: $readStateByDoc,
+          lastMessageByDoc: $lastMessageByDoc
         })
 
     // Check if the underlying identifiers (ids) changed order to skip Svelte updates if unnecessary

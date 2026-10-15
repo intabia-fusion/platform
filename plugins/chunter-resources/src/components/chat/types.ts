@@ -19,9 +19,10 @@ import {
   type Ref,
   type UserStatus,
   type AccountUuid,
-  type DocumentQuery
+  type DocumentQuery,
+  type Timestamp
 } from '@hcengineering/core'
-import { type UnreadContext } from '@hcengineering/notification'
+import { type ReadState, type UnreadContext } from '@hcengineering/notification'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
 import { type Chat } from '@hcengineering/chunter'
 
@@ -30,6 +31,8 @@ export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 export interface SortFnOptions {
   unreadByDoc: Map<Ref<Doc>, UnreadContext>
   userStatusByAccount: Map<AccountUuid, UserStatus>
+  readStateByDoc: Map<Ref<Doc>, ReadState | null>
+  lastMessageByDoc: Map<Ref<Doc>, Timestamp>
 }
 
 export interface ChatNavGroupModel {
