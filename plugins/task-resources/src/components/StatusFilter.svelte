@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import type { Doc, FindResult, IdMap, Ref, RefTo, Space, Status } from '@hcengineering/core'
-  import core, { toIdMap } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
@@ -38,7 +37,7 @@
     statusStore
   } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
-  import { buildConfigLookup, getPresenter } from '@hcengineering/view-resources/src/utils'
+  import { buildConfigLookup, getPresenter, sortCategories } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
   import {
     getProjectType,
@@ -89,10 +88,14 @@
     }
     const type = selectedType !== undefined ? typeStore.get(selectedType) : undefined
     if (type !== undefined) {
-      values = type?.statuses?.map((p) => statusStore.get(p))
-      for (const value of values) {
+      const typeStatuses = (type.statuses ?? []).map((p) => statusStore.get(p))
+      for (const value of typeStatuses) {
         targets.add(value?._id)
       }
+      values = await sort(
+        typeStatuses.filter((p): p is Status => p !== undefined),
+        statusStore
+      )
       if (search !== '') {
         values = values.filter((p) => p?.name.includes(search))
       }
@@ -101,15 +104,14 @@
       const projectTypesNeeded = joinedSpacesTypes
         .flatMap((s) => projectTypeStore.get(s)?.statuses)
         .filter((it, index, arr) => it !== undefined && arr.indexOf(it) === index) as ProjectStatus[]
-      const prjStatuses = new Map(
-        (
-          (projectType !== undefined ? projectTypeStore.get(projectType) : undefined)?.statuses ??
-          projectTypesNeeded ??
-          []
-        ).map((p) => [p._id, p])
-      )
+      const entries =
+        (projectType !== undefined ? projectTypeStore.get(projectType) : undefined)?.statuses ??
+        projectTypesNeeded ??
+        []
+      // An entry without a task type is a status no task can have
+      const prjStatuses = new Set(entries.filter((p) => p.taskType !== undefined).map((p) => p._id))
       for (const status of statusStore.values()) {
-        if (prjStatuses.size > 0 && !prjStatuses.has(status._id)) {
+        if (entries.length > 0 && !prjStatuses.has(status._id)) {
           continue
         }
         if (hierarchy.isDerived(status._class, targetClass)) {
@@ -125,7 +127,7 @@
         }
       }
       statuses = statuses.filter((it, idx, arr) => arr.findIndex((q) => q._id === it._id) === idx)
-      values = await sort(statuses)
+      values = await sort(statuses, statusStore)
     }
     if (targets.has(undefined)) {
       values.unshift(undefined)
@@ -150,20 +152,12 @@
     objectsPromise = undefined
   }
 
-  async function sort (statuses: Status[]): Promise<Status[]> {
-    const categories = toIdMap(await client.findAll(core.class.StatusCategory, {}))
-    statuses.sort((a, b) => {
-      if (a.category !== undefined && b.category !== undefined && a.category !== b.category) {
-        const aCat = categories.get(a.category)
-        const bCat = categories.get(b.category)
-        if (aCat !== undefined && bCat !== undefined) {
-          return aCat.order - bCat.order
-        }
-      }
-      return a.name.localeCompare(b.name)
-    })
-
-    return statuses
+  // The same order as the list grouping; ids dropped by the sort function stay at the end
+  async function sort (statuses: Status[], byId: IdMap<Status>): Promise<Status[]> {
+    const ids = statuses.map((it) => it._id)
+    const sorted = (await sortCategories(client, targetClass, space, [...ids])) as Ref<Status>[]
+    const rest = ids.filter((id) => !sorted.includes(id))
+    return [...sorted, ...rest].map((id) => byId.get(id)).filter((it): it is Status => it !== undefined)
   }
 
   function isSelected (value: Doc | undefined | null, values: any[]): boolean {

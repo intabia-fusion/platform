@@ -14,10 +14,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IdMap, Ref, Status } from '@hcengineering/core'
+  import type { IdMap, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Project, ProjectType } from '@hcengineering/task'
-  import task from '@hcengineering/task'
+  import task, { getProjectTypeStates } from '@hcengineering/task'
   import { resizeObserver } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -25,12 +25,7 @@
 
   export let space: Ref<Project>
 
-  $: states = type
-    ? (($typeStore
-        .get(type._id)
-        ?.statuses?.map((p) => $statusStore.byId.get(p._id))
-        .filter((p) => p !== undefined) as Status[]) ?? [])
-    : []
+  $: states = getProjectTypeStates(type?._id, $typeStore, $statusStore.byId, true)
   const dispatch = createEventDispatcher()
 
   $: void getType(space, $typeStore)

@@ -186,6 +186,7 @@ export class SessionDataImpl implements SessionData {
   _contextCache: Map<string, any> | undefined
   _broadcast: SessionData['broadcast'] | undefined
   asyncRequests: SessionData['asyncRequests']
+  seatReadOnly: SessionData['seatReadOnly']
 
   constructor (
     readonly account: Account,
@@ -207,7 +208,8 @@ export class SessionDataImpl implements SessionData {
     readonly service: string,
     readonly grant?: PermissionsGrant,
     readonly apiKey?: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[], grantsSpaces: boolean },
-    public opsApi?: boolean
+    public opsApi?: boolean,
+    readonly readOnly?: boolean
   ) {
     this._removedMap = _removedMap
     this._contextCache = _contextCache

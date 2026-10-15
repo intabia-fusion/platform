@@ -83,6 +83,8 @@
     ListPresenter,
     ListSelectionProvider,
     noCategory,
+    provideCategoryValues,
+    provideStatusIconScope,
     openDoc,
     setGroupByValues,
     showMenu,
@@ -343,6 +345,10 @@
   $: listProvider.update(tasks)
 
   let categories: CategoryType[] = []
+  const categoryValues = provideCategoryValues()
+  $: categoryValues.set(categories)
+  const statusIconScope = provideStatusIconScope()
+  $: statusIconScope.set(resultQuery)
   let loadCategories = true
 
   const queryId = generateId()
@@ -1046,6 +1052,8 @@
     // A merged column names every status: the header grows instead of clipping them.
     &.merged {
       height: auto;
+      // In the column's flex layout the header would shrink and the names spill over the cards.
+      flex-shrink: 0;
       padding-bottom: 0.375rem;
 
       & > div {
@@ -1056,6 +1064,9 @@
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+      // Long lists scroll inside the header; the count and the toggle stay in view.
+      max-height: min(20rem, 40vh);
+      overflow-y: auto;
     }
     .count-col {
       display: flex;

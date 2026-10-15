@@ -1076,7 +1076,14 @@ export async function importWorkflowConfig (
 ): Promise<ImportResult> {
   const { config } = sanitizeWorkflowConfig(client, rawConfig)
 
-  const op = client.apply()
+  // Statuses created below are matched by name in the target workspace, not per project type: the apply commits
+  // only while the project type is as read here (every status added to it updates it), see createStatusesAtomic
+  const projectTypeAtStart = await client.findOne(task.class.ProjectType, { _id: projectTypeId })
+  const guarded = resolution?.createMissingStatuses === true && projectTypeAtStart !== undefined
+  const op = client.apply(guarded ? `task-status:${projectTypeId}` : undefined, 'import-workflow')
+  if (guarded && projectTypeAtStart !== undefined) {
+    op.match(task.class.ProjectType, { _id: projectTypeId, modifiedOn: projectTypeAtStart.modifiedOn })
+  }
 
   const existingWfs = await client.findAll(workflow.class.Workflow, { projectType: projectTypeId })
   const existingByName = new Map<string, Workflow>(existingWfs.map((w) => [w.name, w]))
@@ -1404,7 +1411,9 @@ export async function importWorkflowConfig (
   // Restore project mappings if the config has any and projects exist in the workspace
   await restoreProjectWorkflows(op, projectTypeId, config.projects, workflowByName, existingByName, resolver)
 
-  await op.commit()
+  if (!(await op.commit()).result) {
+    throw new Error('Workflow import was not applied: the project type is changed concurrently, retry')
+  }
 
   return result
 }

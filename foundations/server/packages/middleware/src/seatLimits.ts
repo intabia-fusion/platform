@@ -16,7 +16,10 @@ import core, {
   AccountRole,
   type AccountUuid,
   type Class,
+  type DomainParams,
+  type DomainResult,
   type MeasureContext,
+  type OperationDomain,
   type Ref,
   type SessionData,
   systemAccountUuid,
@@ -245,14 +248,33 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
+    if (await this.isSeatless(ctx)) {
+      return await this.enforceReadOnly(ctx, txes)
+    }
+    return await this.provideTx(ctx, txes)
+  }
+
+  // A domain request may write as the system account, which skips the seat check of tx.
+  async domainRequest (
+    ctx: MeasureContext<SessionData>,
+    domain: OperationDomain,
+    params: DomainParams
+  ): Promise<DomainResult> {
+    if (ctx.contextData !== undefined && (await this.isSeatless(ctx))) {
+      ctx.contextData.seatReadOnly = true
+    }
+    return await this.provideDomainRequest(ctx, domain, params)
+  }
+
+  private async isSeatless (ctx: MeasureContext<SessionData>): Promise<boolean> {
     const account = ctx.contextData?.account
-    if (account == null) return await this.provideTx(ctx, txes)
+    if (account == null) return false
 
     // System identities (system account, Admin operator, AI services) bypass all enforcement.
     const system = isSystemAccount(account, this.systemAccounts)
 
     if (system) {
-      return await this.provideTx(ctx, txes)
+      return false
     }
 
     if (!this.seatsInited) {
@@ -266,7 +288,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       }
     }
     if (this.usersLimit === 0) {
-      return await this.provideTx(ctx, txes)
+      return false
     }
 
     // Membership changes (join/leave/role) arrive as a host members-version bump; rebuild if stale.
@@ -274,17 +296,17 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     await this.refreshSeatSetIfStale(ctx)
 
     if (GUEST_ROLES.has(account.role)) {
-      return await this.provideTx(ctx, txes)
+      return false
     }
 
     // An API-key account takes no seat, so it is never in seatSet - and must not be read-only for it.
     // Only seat accounting is lifted: counted limits and the unpaid mode still apply elsewhere.
     if (this.integrationAccounts.has(account.uuid)) {
-      return await this.provideTx(ctx, txes)
+      return false
     }
 
     if (this.seatSet.has(account.uuid)) {
-      return await this.provideTx(ctx, txes)
+      return false
     }
 
     // A fresh joiner can write before its members-version bump crosses the queue: rebuild for an unknown member.
@@ -295,10 +317,10 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       } catch (err: any) {
         ctx.error('SeatLimitsMiddleware: failed to rebuild seat set', { err })
       }
-      if (this.seatSet.has(account.uuid)) return await this.provideTx(ctx, txes)
+      if (this.seatSet.has(account.uuid)) return false
     }
 
     // Seatless member (all seats taken): read-only except whitelisted message classes. Role untouched.
-    return await this.enforceReadOnly(ctx, txes)
+    return true
   }
 }

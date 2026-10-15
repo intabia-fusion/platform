@@ -42,7 +42,7 @@ import type {
   TxResult,
   WithLookup
 } from './storage'
-import { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
+import { type Tx, type TxCUD, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
 import { platformNow, platformNowDiff, toFindResult } from './utils'
 
 /**
@@ -119,7 +119,8 @@ class ClientImpl implements Client, BackupClient {
   notify?: (...tx: Tx[]) => void
   hierarchy!: Hierarchy
   model!: ModelDb
-  private readonly appliedModelTransactions = new Set<Ref<Tx>>()
+  // By tx id: the modifiedOn the local doc got from that own model tx
+  private readonly appliedModelTransactions = new Map<Ref<Tx>, Timestamp>()
   constructor (
     private readonly conn: ClientConnection,
     private readonly ctx: MeasureContext
@@ -186,7 +187,7 @@ class ClientImpl implements Client, BackupClient {
     if (tx.objectSpace === core.space.Model) {
       // Synchronous and one shared instance for model and hierarchy, as ModelMiddleware.tx on the server.
       this.model.addTxes(this.ctx, [tx], true)
-      this.appliedModelTransactions.add(tx._id)
+      this.appliedModelTransactions.set(tx._id, tx.modifiedOn)
     }
     // We need to handle it on server, before performing local live query updates.
     const result = await this.conn.tx(tx)
@@ -201,11 +202,18 @@ class ClientImpl implements Client, BackupClient {
     for (const t of tx) {
       try {
         if (t.objectSpace === core.space.Model) {
-          const hasTx = this.appliedModelTransactions.has(t._id)
-          if (!hasTx) {
+          const localModifiedOn = this.appliedModelTransactions.get(t._id)
+          if (localModifiedOn === undefined) {
             this.model.addTxes(this.ctx, [t], true)
           } else {
             this.appliedModelTransactions.delete(t._id)
+            // The server rewrites modifiedOn; keep the local doc in sync for compare-and-set on it
+            const doc = this.model.findObject((t as TxCUD<Doc>).objectId)
+            // A foreign tx that arrived before the echo has set its server time on the doc:
+            // keep that one when it is newer
+            if (doc !== undefined && (doc.modifiedOn === localModifiedOn || doc.modifiedOn < t.modifiedOn)) {
+              doc.modifiedOn = t.modifiedOn
+            }
           }
         }
       } catch (err) {

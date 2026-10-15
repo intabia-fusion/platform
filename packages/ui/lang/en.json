@@ -124,6 +124,7 @@
     "Reconnecting": "Reconnecting...",
     "RateLimit": "Rate limit",
     "RateLimitValue": "{remaining} of {limit} left, resets in {seconds}s",
+    "RateLimitUsage": "Requests in limit: {current} / {limit}",
     "Sent": "Sent",
     "Received": "Received",
     "TrafficValue": "{count} msgs, {kb} KB",

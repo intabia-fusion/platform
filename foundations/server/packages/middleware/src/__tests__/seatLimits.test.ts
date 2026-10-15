@@ -81,7 +81,8 @@ function makeNext (): { next: Middleware, passed: () => boolean } {
     tx: async (): Promise<TxMiddlewareResult> => {
       didPass = true
       return {}
-    }
+    },
+    domainRequest: async (_ctx: unknown, domain: string) => ({ domain, value: 'next' })
   } as unknown as Middleware
   return { next, passed: () => didPass }
 }
@@ -250,5 +251,45 @@ describe('SeatLimitsMiddleware', () => {
     // A trigger-derived tx passes read-only enforcement: rejected here means the rebuild error leaked.
     const res = await runTx(mw, { uuid: uuid('u1'), role: AccountRole.User }, [WRITE_TX], { isTriggerCtx: true })
     expect(res.rejected).toBe(false)
+  })
+
+  describe('domain request', () => {
+    const request = async (
+      mw: SeatLimitsMiddleware,
+      account: { uuid: AccountUuid, role: AccountRole }
+    ): Promise<{ seatReadOnly: boolean | undefined, value: unknown }> => {
+      const data: any = { account: { ...account, fullSocialIds: [] } }
+      const c = new MeasureMetricsContext('test', {})
+      ;(c as any).contextData = data
+      const res = await mw.domainRequest(c as any, 'd' as any, {})
+      return { seatReadOnly: data.seatReadOnly, value: res.value }
+    }
+
+    it('flags a seatless caller and still passes the request on', async () => {
+      const members = [member('owner', AccountRole.Owner), member('u1', AccountRole.User)]
+      const { context } = makeContext(members, 1)
+      const mw = await SeatLimitsMiddleware.create(ctx, context, makeNext().next)
+
+      expect(await request(mw, { uuid: uuid('u1'), role: AccountRole.User })).toEqual({
+        seatReadOnly: true,
+        value: 'next'
+      })
+    })
+
+    it('leaves a seated member, a guest and an integration account unflagged', async () => {
+      const members = [
+        member('owner', AccountRole.Owner),
+        member('guest', AccountRole.Guest),
+        member('apikey', AccountRole.User),
+        member('u1', AccountRole.User)
+      ]
+      const { context } = makeContext(members, 1, [], [uuid('apikey')])
+      const mw = await SeatLimitsMiddleware.create(ctx, context, makeNext().next)
+
+      expect((await request(mw, { uuid: uuid('owner'), role: AccountRole.Owner })).seatReadOnly).toBeUndefined()
+      expect((await request(mw, { uuid: uuid('guest'), role: AccountRole.Guest })).seatReadOnly).toBeUndefined()
+      expect((await request(mw, { uuid: uuid('apikey'), role: AccountRole.User })).seatReadOnly).toBeUndefined()
+      expect((await request(mw, { uuid: uuid('u1'), role: AccountRole.User })).seatReadOnly).toBe(true)
+    })
   })
 })

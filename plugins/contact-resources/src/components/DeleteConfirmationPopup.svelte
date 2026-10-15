@@ -37,6 +37,8 @@
   export let extraObjects: Doc[] | undefined = undefined
   export let title: IntlString | undefined = undefined
   export let titleParams: Record<string, any> | undefined = undefined
+  export let okLabel: IntlString | undefined = undefined
+  export let cancelLabel: IntlString | undefined = undefined
 
   const me = getCurrentEmployee()
   const objectArray = Array.isArray(object) ? object : [object]
@@ -57,12 +59,12 @@
   labelProps={titleParams}
   okAction={canDelete ? deleteAction : () => {}}
   canSave={true}
-  okLabel={canDelete ? view.string.LabelYes : ui.string.Ok}
+  okLabel={canDelete ? (okLabel ?? view.string.LabelYes) : ui.string.Ok}
   on:close={() => dispatch('close')}
 >
   <svelte:fragment slot="buttons">
     {#if canDelete}
-      <Button label={view.string.LabelNo} on:click={() => dispatch('close')} />
+      <Button label={cancelLabel ?? view.string.LabelNo} on:click={() => dispatch('close')} />
     {/if}
   </svelte:fragment>
   <div class="flex-grow flex-col">
@@ -74,7 +76,7 @@
         />
         <div class="mt-2">
           {#if objectArray.length === 1}
-            <ObjectMention object={objectArray[0]} />
+            <slot name="object"><ObjectMention object={objectArray[0]} /></slot>
           {/if}
         </div>
         {#if extraConfirmation !== undefined}

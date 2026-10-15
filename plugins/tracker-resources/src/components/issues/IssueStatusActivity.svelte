@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IdMap, Ref, Timestamp, Tx, TxCreateDoc, TxUpdateDoc, WithLookup } from '@hcengineering/core'
+  import type { IdMap, Ref, Timestamp, Tx, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Issue, IssueStatus } from '@hcengineering/tracker'
@@ -7,6 +7,7 @@
   import { statusStore } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
   import Duration from './Duration.svelte'
+  import { calcStatusDurations } from './statusHistory'
   import StatusPresenter from './StatusPresenter.svelte'
 
   export let issue: Issue
@@ -31,54 +32,23 @@
   )
 
   let displaySt: WithTime[] = []
-  function updateStatus (txes: Tx[], statuses: IdMap<IssueStatus>, _: number): void {
+  function updateStatus (
+    txes: Tx[],
+    statuses: IdMap<IssueStatus>,
+    status: Ref<IssueStatus>,
+    modifiedOn: Timestamp,
+    _: number
+  ): void {
     const result: WithTime[] = []
-
-    let current: Ref<IssueStatus> | undefined
-    let last: Timestamp = Date.now()
-    for (const it of txes) {
-      let newStatus: Ref<IssueStatus> | undefined
-      if (it._class === core.class.TxCreateDoc) {
-        const op = it as TxCreateDoc<Issue>
-        if (op.attributes.status !== undefined) {
-          newStatus = op.attributes.status
-          last = it.modifiedOn
-        }
-      }
-      if (it._class === core.class.TxUpdateDoc) {
-        const op = it as TxUpdateDoc<Issue>
-        if (op.operations.status !== undefined) {
-          newStatus = op.operations.status
-        }
-      }
-      if (current === undefined) {
-        current = newStatus
-        last = it.modifiedOn
-      } else if (current !== newStatus && newStatus !== undefined) {
-        let stateValue = result.find((it) => it.status?._id === current)
-        if (stateValue === undefined) {
-          stateValue = { status: statuses.get(current) as IssueStatus, duration: 0 }
-          result.push(stateValue)
-        }
-        stateValue.duration += it.modifiedOn - last
-        current = newStatus
-        last = it.modifiedOn
-      }
+    for (const it of calcStatusDurations(txes, status, modifiedOn, Date.now())) {
+      const st = statuses.get(it.status)
+      // The status may be removed by a status merge
+      if (st !== undefined) result.push({ status: st, duration: it.duration })
     }
-    if (current !== undefined) {
-      let stateValue = result.find((it) => it.status?._id === current)
-      if (stateValue === undefined) {
-        stateValue = { status: statuses.get(current) as IssueStatus, duration: 0 }
-        result.push(stateValue)
-      }
-      stateValue.duration += Date.now() - last
-    }
-
-    result.sort((a, b) => b.duration - a.duration)
     displaySt = result
   }
 
-  $: updateStatus(txes, $statusStore.byId, $ticker)
+  $: updateStatus(txes, $statusStore.byId, issue.status, issue.modifiedOn, $ticker)
 </script>
 
 <Row>

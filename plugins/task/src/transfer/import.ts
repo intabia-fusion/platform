@@ -28,7 +28,7 @@ import { getEmbeddedLabel, setPlatformStatus, unknownStatus } from '@hcengineeri
 import setting from '@hcengineering/setting'
 
 import task, { ProjectType, TaskType } from '../index'
-import { createState, findStatusAttr } from '../utils'
+import { createStatusesAtomic, findStatusAttr } from '../utils'
 import { createCustomAttributes } from './attributes'
 import type {
   TaskTypeConfigEntry,
@@ -56,35 +56,30 @@ function resolveUniqueTypeName (requestedName: string, existingNames: Set<string
 }
 
 /**
- * Reuses or creates statuses for an imported task type.
+ * Reuses or creates statuses for an imported task type; they are reserved in the project type for
+ * `taskTypeId` in a compare-and-set apply (see `createStatusesAtomic`).
  */
 async function createImportedStatuses (
   client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  taskTypeId: Ref<TaskType>,
   ofClass: Ref<Class<Doc>>,
   statusConfigs: TaskTypeStatusConfig[] | undefined
 ): Promise<Array<Ref<Status>>> {
   const hierarchy = client.getHierarchy()
   const statusAttr = findStatusAttr(hierarchy, ofClass) ?? hierarchy.getAttribute(task.class.Task, 'status')
-  const statusIds: Array<Ref<Status>> = []
-
-  for (const statusCfg of statusConfigs ?? []) {
-    const statusId = await createState(
-      client,
-      core.class.Status,
-      {
-        name: statusCfg.name,
-        color: statusCfg.color,
-        category: statusCfg.category,
-        ofAttribute: statusAttr._id
-      },
-      statusCfg.id
-    )
-    if (!statusIds.includes(statusId)) {
-      statusIds.push(statusId)
-    }
-  }
-
-  return statusIds
+  const res = await createStatusesAtomic(
+    client,
+    projectTypeId,
+    core.class.Status,
+    (statusConfigs ?? []).map((cfg) => ({
+      id: cfg.id,
+      data: { name: cfg.name, color: cfg.color, category: cfg.category, ofAttribute: statusAttr._id }
+    })),
+    { newTaskType: taskTypeId },
+    { onConflict: 'rename' }
+  )
+  return res.map((it) => it.id).filter((it, idx, arr) => arr.indexOf(it) === idx)
 }
 
 /**
@@ -203,26 +198,13 @@ async function updateProjectTypeBindings (
   projectType: ProjectType,
   createdTaskTypes: TaskType[]
 ): Promise<void> {
-  const allTaskIds = [...(projectType.tasks ?? [])]
+  // $push keeps task types that concurrent creators added meanwhile; the status entries were reserved with
+  // the statuses (createImportedStatuses)
   for (const tt of createdTaskTypes) {
-    if (!allTaskIds.includes(tt._id)) {
-      allTaskIds.push(tt._id)
+    if (!(projectType.tasks ?? []).includes(tt._id)) {
+      await client.update(projectType, { $push: { tasks: tt._id } })
     }
   }
-
-  const allStatuses = [...(projectType.statuses ?? [])]
-  for (const tt of createdTaskTypes) {
-    for (const sId of tt.statuses ?? []) {
-      if (!allStatuses.some((st) => st._id === sId && st.taskType === tt._id)) {
-        allStatuses.push({ _id: sId, taskType: tt._id })
-      }
-    }
-  }
-
-  await client.update(projectType, {
-    tasks: allTaskIds,
-    statuses: allStatuses
-  })
 }
 
 /**
@@ -261,10 +243,9 @@ export async function importTaskTypeConfig (
   // PASS 1: Create all entities (statuses, targetClass, attributes, mixins, taskType)
   for (const entry of entriesToImport) {
     const typeName = resolveUniqueTypeName(entry.name, existingNames, options?.renameDuplicates)
-    const statusIds = await createImportedStatuses(client, entry.ofClass, entry.statuses)
-
     // Always generate a new unique task type ID to ensure a fresh, independent entity
     const taskTypeId = generateId<TaskType>()
+    const statusIds = await createImportedStatuses(client, projectTypeId, taskTypeId, entry.ofClass, entry.statuses)
     const targetClassId = `${taskTypeId}:type:class` as Ref<Class<TaskType>>
 
     // Create targetClass and mixins

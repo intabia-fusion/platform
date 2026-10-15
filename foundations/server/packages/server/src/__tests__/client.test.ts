@@ -45,6 +45,32 @@ describe('ClientSession.includeSessionContext', () => {
   })
 })
 
+describe('ClientSession.includeSessionContext readOnly', () => {
+  const readOnlyOf = (extra?: Record<string, string>): boolean | undefined => {
+    const session = new ClientSession(
+      makeToken(extra),
+      {} as unknown as WorkspaceIds,
+      {} as unknown as Account,
+      {} as unknown as LoginInfoWithWorkspaces,
+      false,
+      {} as unknown as OneSecondCounters
+    )
+    const ctx = {
+      ctx: {},
+      pipeline: { context: { modelDb: {} } },
+      socialStringsToUsers: new Map()
+    } as unknown as ClientSessionCtx
+    session.includeSessionContext(ctx)
+    return (ctx.ctx as any).contextData.readOnly
+  }
+
+  it('follows the readonly flag of the token', () => {
+    expect(readOnlyOf({ readonly: 'true' })).toBe(true)
+    expect(readOnlyOf({ readonly: 'false' })).toBe(false)
+    expect(readOnlyOf()).toBe(false)
+  })
+})
+
 describe('ClientSession upload/clean without allowUpload', () => {
   const make = (): { session: ClientSession, ctx: ClientSessionCtx, ops: any } => {
     const counters = {} as unknown as OneSecondCounters

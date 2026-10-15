@@ -87,6 +87,12 @@ export interface SessionData {
   // Set by the /api/v1/ops route on the session data it writes under.
   opsApi?: boolean
 
+  // The token is read-only (guest, impersonation, archived workspace). The session refuses
+  // its tx itself, so only domain requests that write as the system account look at this.
+  readOnly?: boolean
+  // The member has no seat and SeatLimitsMiddleware refuses its tx; set on domain requests only.
+  seatReadOnly?: boolean
+
   asyncRequests?: ((ctx: MeasureContext, id?: string) => Promise<void>)[]
 }
 

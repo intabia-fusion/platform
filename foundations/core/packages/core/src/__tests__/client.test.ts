@@ -330,6 +330,70 @@ describe('client model transactions', () => {
     expect(hierarchy.findAttribute(core.class.Space, 's')).toBe(client.getModel().findObject(runtimeId))
   })
 
+  it('copies the server modifiedOn from the echo of a locally applied model tx without applying it twice', async () => {
+    const client = await createClient(async (handler) => {
+      const conn = await connect(handler)
+      conn.tx = async () => ({})
+      return conn
+    })
+    const factory = new TxFactory(core.account.System)
+    const space = (await client.findAll(core.class.Space, {}))[0]
+    const model = client.getModel()
+    const tx = factory.createTxUpdateDoc(core.class.Space, core.space.Model, space._id, {
+      $push: { members: 'm1' as any }
+    })
+    tx.modifiedOn = 1000
+    await client.tx(tx)
+    const before = model.getObject(space._id).members.length
+
+    await (client as unknown as { updateFromRemote: (...tx: Tx[]) => Promise<void> }).updateFromRemote({
+      ...tx,
+      modifiedOn: 2000
+    })
+    const doc = model.getObject(space._id)
+    expect(doc.modifiedOn).toBe(2000)
+    expect(doc.members.length).toBe(before)
+  })
+
+  // Columns: own tx local modifiedOn, foreign tx server modifiedOn (arrives before the echo,
+  // undefined: no such tx), echo server modifiedOn, expected local modifiedOn after both
+  it.each<[string, number, number | undefined, number, number]>([
+    ['keeps a newer foreign modifiedOn that arrived before the echo', 1000, 3000, 2000, 3000],
+    ['takes the echo modifiedOn over an older foreign one that arrived before it', 1000, 1500, 2000, 2000],
+    ['takes the echo modifiedOn when the local clock is ahead of the server', 5000, undefined, 2000, 2000]
+  ])('own tx echo %s', async (_name, local, foreign, echo, expected) => {
+    const client = await createClient(async (handler) => {
+      const conn = await connect(handler)
+      conn.tx = async () => ({})
+      return conn
+    })
+    const remote = async (...tx: Tx[]): Promise<void> => {
+      await (client as unknown as { updateFromRemote: (...tx: Tx[]) => Promise<void> }).updateFromRemote(...tx)
+    }
+    const factory = new TxFactory(core.account.System)
+    const space = (await client.findAll(core.class.Space, {}))[0]
+    const push = (member: string, modifiedOn: number): Tx =>
+      factory.createTxUpdateDoc(
+        core.class.Space,
+        core.space.Model,
+        space._id,
+        { $push: { members: member as any } },
+        undefined,
+        modifiedOn
+      )
+    const own = push('m1', local)
+    await client.tx(own)
+
+    if (foreign !== undefined) await remote(push('m2', foreign))
+    await remote({ ...own, modifiedOn: echo })
+
+    const doc = client.getModel().getObject(space._id)
+    expect(doc.modifiedOn).toBe(expected)
+    // Applied once each: the echo only syncs modifiedOn
+    expect(doc.members.filter((it) => it === ('m1' as any))).toHaveLength(1)
+    expect(doc.members.filter((it) => it === ('m2' as any))).toHaveLength(foreign !== undefined ? 1 : 0)
+  })
+
   it('applies model and hierarchy synchronously: unawaited class create followed by a doc of that class', async () => {
     const client = await createClient(connect)
     const factory = new TxFactory(core.account.System)

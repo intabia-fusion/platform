@@ -99,7 +99,8 @@ import view, {
   type ViewletDescriptor
 } from '@hcengineering/view'
 import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@hcengineering/contact'
-import { get, writable } from 'svelte/store'
+import { getContext, setContext } from 'svelte'
+import { get, writable, type Readable, type Writable } from 'svelte/store'
 
 import { filterDocMixins } from './docMixins'
 import plugin from './plugin'
@@ -2017,4 +2018,46 @@ export async function getObjectId (object: Doc, hierarchy: Hierarchy): Promise<s
   }
 
   return object._id
+}
+
+const categoryValuesKey = 'view:category-values'
+
+/**
+ * Called by a list or kanban on init: its group values, for the headers inside it that need to know which
+ * groups are shown together (see `getCategoryValues`).
+ * @public
+ */
+export function provideCategoryValues (): Writable<CategoryType[]> {
+  const values = writable<CategoryType[]>([])
+  setContext(categoryValuesKey, values)
+  return values
+}
+
+/**
+ * Group values of the list or kanban the calling component is rendered in, if any.
+ * @public
+ */
+export function getCategoryValues (): Readable<CategoryType[]> | undefined {
+  return getContext<Readable<CategoryType[]> | undefined>(categoryValuesKey)
+}
+
+const statusIconScopeKey = 'view:status-icon-scope'
+
+/**
+ * Called by a list or kanban on init: the effective query of the view, for status icons rendered inside it
+ * (see `getStatusIconScope`).
+ * @public
+ */
+export function provideStatusIconScope (): Writable<DocumentQuery<Doc>> {
+  const query = writable<DocumentQuery<Doc>>({})
+  setContext(statusIconScopeKey, query)
+  return query
+}
+
+/**
+ * Effective query of the list or kanban the calling component is rendered in, if any.
+ * @public
+ */
+export function getStatusIconScope (): Readable<DocumentQuery<Doc>> | undefined {
+  return getContext<Readable<DocumentQuery<Doc>> | undefined>(statusIconScopeKey)
 }

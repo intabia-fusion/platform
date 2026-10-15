@@ -24,6 +24,7 @@ import { TriggerFunc } from '@hcengineering/server-core'
 export const serverTaskId = 'server-task' as Plugin
 
 export { TaskMiddleware } from './middleware'
+export { mergeStatuses, type MergeEnv } from './statusMergeOps'
 
 /**
  * @public

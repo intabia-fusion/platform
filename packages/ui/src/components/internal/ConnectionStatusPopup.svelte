@@ -25,6 +25,14 @@
   <div class="row">
     <Label label={$connOnline ? uiPlugin.string.Connected : uiPlugin.string.Reconnecting} />
   </div>
+  {#if $connStats.rateCurrent !== undefined}
+    <div class="row">
+      <Label
+        label={uiPlugin.string.RateLimitUsage}
+        params={{ current: $connStats.rateCurrent, limit: $connStats.rateMax }}
+      />
+    </div>
+  {/if}
   {#if $connRate !== undefined}
     <div class="row">
       <span class="key"><Label label={uiPlugin.string.RateLimit} /></span>
