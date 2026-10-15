@@ -19,7 +19,7 @@ We fixed a lot of issues with chat + notifications, and did great work on inbox 
 **Chat UX**
 - Change a channel's icon/emoji; search inside chat navigator; separate Channels & DMs browser tab.
 - Filter archived chats, hide inaccessible directs, deduplicate direct-message channels.
-- Double-click a message opens its thread with scroll/focus synced to URL; unread-indicator fixes (gray/red dots).
+- Thread scroll/focus synced to URL; unread-indicator fixes (gray/red dots). Reply only via the message context menu: double-click/double-tap selects text, no auto-reply.
 - Performance: chat load slowness fix; server-side activity aggregation for faster history/scroll.
 
 **Notification controls**

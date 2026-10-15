@@ -30,7 +30,7 @@
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import type { Action } from '@hcengineering/ui'
-  import { Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
+  import { Button, IconEdit, languageStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
@@ -42,7 +42,6 @@
   import MessageChannelLabel from './MessageChannelLabel.svelte'
   import MessageReadPopup from './MessageReadPopup.svelte'
   import ForwardedMessagePresenter from '../ForwardedMessagePresenter.svelte'
-  import { replyToMessage } from '../../utils'
 
   export let value: WithLookup<ChatMessage> | undefined
   export let doc: Doc | undefined = undefined
@@ -259,25 +258,6 @@
   } else {
     displayText = value?.message ?? EmptyMarkup
   }
-
-  async function handleDbClick (e: MouseEvent): Promise<void> {
-    if ($deviceOptionsStore.isMobile) return
-    if (isEditing || value == null) return
-
-    const target = e.target as HTMLElement | null
-    if (
-      target?.closest(
-        '.replies-container, .replies, .hulyReactions-container, .reactions, .actions, .gallery, .attachment-preview, .forwarded-message, .read-marker, .avatar, .socialIcon, .saveMarker, .header, button, input, textarea, img, [role="button"]'
-      )
-    ) {
-      return
-    }
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    await replyToMessage(value)
-  }
 </script>
 
 {#if inline && object}
@@ -320,7 +300,6 @@
     {timeFormat}
     {onClick}
     {onReply}
-    on:dblclick={handleDbClick}
   >
     <svelte:fragment slot="header">
       {#if showChannel}
