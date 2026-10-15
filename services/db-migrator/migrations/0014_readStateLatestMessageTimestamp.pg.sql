@@ -9,7 +9,5 @@ WHERE "latestMessageTimestamp" IS NULL;
 -- The default covers a pod that loaded the table schema before this migration and keeps inserting
 -- without the column until it restarts.
 ALTER TABLE notification_read_state
-    ALTER COLUMN "latestMessageTimestamp" SET DEFAULT 0;
-
-ALTER TABLE notification_read_state
+    ALTER COLUMN "latestMessageTimestamp" SET DEFAULT 0,
     ALTER COLUMN "latestMessageTimestamp" SET NOT NULL;

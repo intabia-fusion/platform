@@ -508,7 +508,7 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
       pinned: false,
       hidden: false,
       collection: 'chats',
-      readState
+      ...(readState !== undefined ? { readState } : {})
     })
     res.push(
       control.txFactory.createTxCollectionCUD(
