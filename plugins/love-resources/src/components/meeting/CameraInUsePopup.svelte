@@ -35,8 +35,10 @@
 </script>
 
 <Modal
+  className="camera-in-use-popup"
   label={love.string.Camera}
   type="type-popup"
+  width="x-small"
   padding="0"
   okLabel={media.string.CameraInUseRetry}
   okAction={handleRetry}
@@ -50,9 +52,13 @@
 </Modal>
 
 <style lang="scss">
+  :global(.camera-in-use-popup.hulyModal-container.type-popup) {
+    height: auto;
+    min-height: 0;
+  }
+
   .camera-popup-content {
     padding: 1.25rem;
-    max-width: 32rem;
     overflow-wrap: break-word;
   }
 </style>
