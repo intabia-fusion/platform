@@ -195,6 +195,7 @@ trigger: {
 - [memory/livequery-tx-ordering.md](memory/livequery-tx-ordering.md) - LiveQuery tx ordering vs ClientImpl.tx
 - [memory/pod_log_volume.md](memory/pod_log_volume.md) - Pod log volume: what was actually filling it
 - [memory/postgres-reverse-lookup-sort.md](memory/postgres-reverse-lookup-sort.md) - Postgres: sort by reverse lookup field
+- [memory/postgres-lookup-projection.md](memory/postgres-lookup-projection.md) - Postgres: проекция по lookup
 - [memory/rpc-json-protocol.md](memory/rpc-json-protocol.md) - RPC: протокол транзактора
 - [memory/stats-slow-sql-tool.md](memory/stats-slow-sql-tool.md) - Stats SQL analysis tools (dev/tool)
 - [memory/transactor-workspace-memory.md](memory/transactor-workspace-memory.md) - Память транзактора на пространство

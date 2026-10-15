@@ -72,4 +72,7 @@ script is also the manual repair for a database whose row exists but whose chang
 
 The Postgres adapter reads the real columns of an existing table and stores whatever is missing
 inside `data` jsonb, without indexes. It logs `table is missing declared columns` on startup when
-that happens; treat that log line as a migration that has to be applied.
+that happens; treat that log line as a migration that has to be applied. The same read-back replaces the declared
+`notNull` with the real nullability, so `notNull: true` in `schemas.ts` only shapes `CREATE TABLE` of a new
+database; on an existing table the constraint comes from a migration. Once a column is `NOT NULL`, an
+insert that lacks it gets a dummy (`0`, `false`, `""`, `[]`) from `convertDoc` rather than a NULL.

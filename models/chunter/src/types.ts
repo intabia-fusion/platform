@@ -46,6 +46,7 @@ import {
   type Ref,
   type Timestamp
 } from '@hcengineering/core'
+import type { ReadState } from '@hcengineering/notification'
 import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@hcengineering/contact'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { TActivityMessage } from '@hcengineering/model-activity'
@@ -148,4 +149,5 @@ export class TChat extends TAttachedDoc implements Chat {
   account!: AccountUuid
   pinned!: boolean
   hidden!: boolean
+  readState?: Ref<ReadState>
 }

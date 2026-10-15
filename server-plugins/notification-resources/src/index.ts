@@ -138,7 +138,8 @@ async function OnDocCreated (txes: TxCreateDoc<Doc>[], control: TriggerControl):
       control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
         attachedTo: tx.objectId,
         attachedToClass: tx.objectClass,
-        collection: 'readStates'
+        collection: 'readStates',
+        latestMessageTimestamp: 0
       })
     )
   }

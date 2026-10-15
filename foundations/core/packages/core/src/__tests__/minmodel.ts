@@ -77,6 +77,10 @@ export interface TaskCheckItem extends AttachedDoc, WithState {
   complete: boolean
 }
 
+export interface TestHolder extends Doc {
+  refs: Ref<Space>[]
+}
+
 export const test = plugin('test' as Plugin, {
   mixin: {
     TestMixin: '' as Ref<Mixin<TestMixin>>,
@@ -86,6 +90,7 @@ export const test = plugin('test' as Plugin, {
     Task: '' as Ref<Class<Task>>,
     TaskCheckItem: '' as Ref<Class<TaskCheckItem>>,
     TestComment: '' as Ref<Class<AttachedComment>>,
+    TestHolder: '' as Ref<Class<TestHolder>>,
     TestMixinTodo: '' as Ref<Mixin<TaskMixinTodo>>
   },
   interface: {
@@ -209,6 +214,13 @@ export function genMinModel (): TxCUD<Doc>[] {
     createClass(test.class.TestComment, {
       label: 'TestComment' as IntlString,
       extends: core.class.AttachedDoc,
+      kind: ClassifierKind.CLASS
+    })
+  )
+  txes.push(
+    createClass(test.class.TestHolder, {
+      label: 'TestHolder' as IntlString,
+      extends: core.class.Doc,
       kind: ClassifierKind.CLASS
     })
   )

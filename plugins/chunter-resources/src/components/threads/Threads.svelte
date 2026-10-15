@@ -104,6 +104,7 @@
       },
       {
         lookup: { attachedTo: activity.class.ActivityMessage },
+        projection: { '$lookup.attachedTo.replies': 1, [`$lookup.attachedTo.${sort}`]: 1 },
         sort: { [`$lookup.attachedTo.${sort}`]: SortingOrder.Descending },
         limit: limit + 1
       }

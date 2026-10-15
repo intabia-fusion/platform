@@ -68,6 +68,7 @@ import core, {
   type OperationDomain
 } from '@hcengineering/core'
 import { deepEqual } from 'fast-equals'
+import { lookupFields, lookupProjection, projectionAt, txTouchesProjected, withLiveQueryOptions } from './projection'
 import { Refs } from './refs'
 import { ResultArray } from './results'
 import { Callback, Query, type QueryId } from './types'
@@ -263,15 +264,7 @@ export class LiveQuery implements WithTx, Client {
     if (this.client.getHierarchy().getDomain(_class) === DOMAIN_MODEL) {
       return await this.client.findAll(_class, query, options)
     }
-    const opt = { ...(options ?? {}) }
-    if (opt.projection !== undefined) {
-      opt.projection = {
-        ...opt.projection,
-        _class: 1,
-        space: 1,
-        modifiedOn: 1
-      }
-    }
+    const opt: FindOptions<T> = { ...(withLiveQueryOptions(options) ?? {}) }
 
     // Perform one document queries if applicable.
     const d = this.refs.findFromDocs(_class, query, opt)
@@ -310,19 +303,7 @@ export class LiveQuery implements WithTx, Client {
     if (this.client.getHierarchy().getDomain(_class) === DOMAIN_MODEL) {
       return await this.client.findOne(_class, query, options)
     }
-    if (options?.projection !== undefined) {
-      options = {
-        ...options,
-        projection: {
-          ...options.projection,
-          _class: 1,
-          space: 1,
-          modifiedOn: 1
-        }
-      }
-    }
-
-    options = { ...options, limit: 1 }
+    options = { ...withLiveQueryOptions(options), limit: 1 }
 
     const d = this.refs.findFromDocs(_class, query, options)
     if (d !== null) {
@@ -502,18 +483,8 @@ export class LiveQuery implements WithTx, Client {
     callback: (result: FindResult<T>) => void,
     options?: FindOptions<T>
   ): () => void {
-    if (options?.projection !== undefined) {
-      // Copy: callers compare options with their previous call; a mutated object never matches.
-      options = {
-        ...options,
-        projection: {
-          ...options.projection,
-          _class: 1,
-          space: 1,
-          modifiedOn: 1
-        }
-      }
-    }
+    // A copy: callers compare options with their previous call; a mutated object never matches.
+    options = withLiveQueryOptions(options)
     const callbackId = generateId()
     const q =
       this.getQuery(_class, query, { callback: callback as (result: Doc[]) => void, callbackId }, options) ??
@@ -539,17 +510,7 @@ export class LiveQuery implements WithTx, Client {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ): Promise<FindResult<T>> {
-    if (options?.projection !== undefined) {
-      options = {
-        ...options,
-        projection: {
-          ...options.projection,
-          _class: 1,
-          space: 1,
-          modifiedOn: 1
-        }
-      }
-    }
+    options = withLiveQueryOptions(options)
     const current = this.findQuery(_class, query, options)
     if (current === undefined) {
       const q = this.createQuery(
@@ -828,7 +789,8 @@ export class LiveQuery implements WithTx, Client {
       const udoc = q.result.findDoc(tx.objectId)
       await this.updatedDocCallback(q, q.result, udoc)
     } else if (this.matchQuerySync(q, tx) && (await this.matchQuery(q, tx, docCache))) {
-      await this.sort(q, tx)
+      // The document was pushed to the end: it is placed by the sort whatever the tx touched.
+      await this.sort(q, tx, true)
       const udoc = q.result.findDoc(tx.objectId)
       await this.updatedDocCallback(q, q.result, udoc)
     } else if (
@@ -896,7 +858,7 @@ export class LiveQuery implements WithTx, Client {
       q.result = await q.result
     }
     let needCallback = false
-    needCallback = await this.processLookupUpdateDoc(q.result, lookup, tx)
+    needCallback = await this.processLookupUpdateDoc(q.result, lookup, tx, q.options?.projection)
 
     if (needCallback) {
       if (q.options?.sort !== undefined) {
@@ -906,15 +868,19 @@ export class LiveQuery implements WithTx, Client {
     }
   }
 
+  // Patched whatever the tx touches; the callback only for a projected field or a changed membership.
   private async processLookupUpdateDoc (
     docs: ResultArray,
     lookup: Lookup<Doc>,
-    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>
+    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>,
+    projection?: Record<string, any>
   ): Promise<boolean> {
     let needCallback = false
     const lookupWays = this.getLookupWays(lookup, tx.objectClass)
     for (const lookupWay of lookupWays) {
       const [objWay, key, reverseLookupKey] = lookupWay
+      const fields = lookupFields(projection, objWay, key)
+      const notify = fields == null || txTouchesProjected(fields, tx)
       for (const resDoc of docs.getDocs()) {
         const obj = getObjectValue(objWay, resDoc)
         if (obj === undefined) continue
@@ -934,7 +900,12 @@ export class LiveQuery implements WithTx, Client {
                 needCallback = true
                 docs.updateDoc(resDoc, false)
               } else if (index === -1 && reverseLookupValue === obj._id) {
-                const doc = await this.findOne(tx.objectClass, { _id: tx.objectId })
+                const sub = lookupProjection(projectionAt(projection, objWay), key)
+                const doc = await this.findOne(
+                  tx.objectClass,
+                  { _id: tx.objectId },
+                  sub !== undefined ? { projection: sub } : undefined
+                )
                 if (doc !== undefined) {
                   value.push(doc)
                   index = value.length - 1
@@ -950,7 +921,7 @@ export class LiveQuery implements WithTx, Client {
             } else {
               TxProcessor.updateDoc2Doc(value[index], tx as TxUpdateDoc<Doc>)
             }
-            needCallback = true
+            if (notify) needCallback = true
             docs.updateDoc(resDoc, false)
           }
         } else {
@@ -961,7 +932,7 @@ export class LiveQuery implements WithTx, Client {
               } else {
                 TxProcessor.updateDoc2Doc(obj.$lookup[key], tx as TxUpdateDoc<Doc>)
               }
-              needCallback = true
+              if (notify) needCallback = true
               docs.updateDoc(resDoc, false)
             }
           }
@@ -1085,11 +1056,12 @@ export class LiveQuery implements WithTx, Client {
     _class: Ref<Class<T>>,
     doc: T,
     lookup: Lookup<T>,
-    result: LookupData<T>
+    result: LookupData<T>,
+    projection?: Record<string, any>
   ): Promise<void> {
     for (const key in lookup) {
       if (key === '_id') {
-        await this.getReverseLookupValue(doc, lookup, result)
+        await this.getReverseLookupValue(doc, lookup, result, projection)
         continue
       }
       const value = (lookup as any)[key]
@@ -1097,27 +1069,29 @@ export class LiveQuery implements WithTx, Client {
       const refId = getObjectValue(tkey, doc)
       if (refId == null) continue
 
-      if (Array.isArray(value)) {
-        const [_class, nested] = value
-        ;(result as any)[key] = await this.findOne(_class, { _id: refId })
-        const nestedResult = {}
-        const parent = (result as any)[key]
-        if (parent !== undefined) {
-          await this.getLookupValue(_class, parent, nested, nestedResult)
-          Object.assign(parent, {
-            $lookup: nestedResult
-          })
+      const sub = lookupProjection(projection, key)
+      const options = sub !== undefined ? { projection: sub } : undefined
+      // An array of references joins every one, as the server does.
+      const [lookupClass, nested] = Array.isArray(value) ? value : [value, undefined]
+      const found: Doc[] = Array.isArray(refId)
+        ? await this.findAll(lookupClass, { _id: { $in: refId } }, options)
+        : [await this.findOne(lookupClass, { _id: refId }, options)].filter((it) => it !== undefined)
+      if (nested !== undefined) {
+        for (const parent of found) {
+          const nestedResult = {}
+          await this.getLookupValue(lookupClass, parent, nested, nestedResult, sub)
+          Object.assign(parent, { $lookup: nestedResult })
         }
-      } else {
-        ;(result as any)[key] = await this.findOne(value, { _id: refId })
       }
+      ;(result as any)[key] = Array.isArray(refId) ? found : found[0]
     }
   }
 
   private async getReverseLookupValue<T extends Doc>(
     doc: T,
     lookup: ReverseLookups,
-    result: LookupData<T>
+    result: LookupData<T>,
+    projection?: Record<string, any>
   ): Promise<void> {
     for (const key in lookup._id) {
       if ((doc as any)[key] === undefined || (doc as any)[key] === 0) {
@@ -1135,13 +1109,23 @@ export class LiveQuery implements WithTx, Client {
       } else {
         _class = value
       }
-      ;(result as any)[key] = await this.findAll(_class, { [attr]: doc._id })
+      const sub = lookupProjection(projection, key)
+      ;(result as any)[key] = await this.findAll(
+        _class,
+        { [attr]: doc._id },
+        sub !== undefined ? { projection: sub } : undefined
+      )
     }
   }
 
-  private async lookup<T extends Doc>(_class: Ref<Class<T>>, doc: T, lookup: Lookup<T>): Promise<void> {
+  private async lookup<T extends Doc>(
+    _class: Ref<Class<T>>,
+    doc: T,
+    lookup: Lookup<T>,
+    projection?: Record<string, any>
+  ): Promise<void> {
     const result: LookupData<Doc> = {}
-    await this.getLookupValue(_class, doc, lookup, result)
+    await this.getLookupValue(_class, doc, lookup, result, projection)
     ;(doc as WithLookup<Doc>).$lookup = result
   }
 
@@ -1167,7 +1151,7 @@ export class LiveQuery implements WithTx, Client {
       q.result = await q.result
     }
     if (q.options?.lookup !== undefined && handleLookup) {
-      await this.lookup(q._class, doc, q.options.lookup)
+      await this.lookup(q._class, doc, q.options.lookup, q.options.projection)
       const matched = this.match(q, doc)
       if (!matched) needPush = false
     }
@@ -1666,6 +1650,14 @@ export class LiveQuery implements WithTx, Client {
     }
   }
 
+  // No `projection` key without one: callers compare options by deep equality.
+  private lookupOptions (
+    lookup: Lookup<Doc> | undefined,
+    projection: Record<string, any> | undefined
+  ): FindOptions<Doc> {
+    return projection !== undefined ? { lookup, projection } : { lookup }
+  }
+
   private async __updateLookup (q: Query, updatedDoc: WithLookup<Doc>, ops: any): Promise<void> {
     for (const key in ops) {
       if (!key.startsWith('$')) {
@@ -1678,13 +1670,13 @@ export class LiveQuery implements WithTx, Client {
               ;(updatedDoc.$lookup as any)[key] = await this.findAll(
                 lookupClass,
                 { _id: { $in: ops[key] } },
-                { lookup: nestedLookup }
+                this.lookupOptions(nestedLookup, lookupProjection(q.options.projection, key))
               )
             } else {
               ;(updatedDoc.$lookup as any)[key] = await this.findOne(
                 lookupClass,
                 { _id: ops[key] },
-                { lookup: nestedLookup }
+                this.lookupOptions(nestedLookup, lookupProjection(q.options.projection, key))
               )
             }
           }
@@ -1706,11 +1698,15 @@ export class LiveQuery implements WithTx, Client {
                   const pushData = await this.findAll(
                     lookupClass,
                     { _id: { $in: pops[pkey] } },
-                    { lookup: nestedLookup }
+                    this.lookupOptions(nestedLookup, lookupProjection(q.options.projection, pkey))
                   )
                   pp[pkey].push(...pushData)
                 } else {
-                  const d = await this.findOne(lookupClass, { _id: pops[pkey] }, { lookup: nestedLookup })
+                  const d = await this.findOne(
+                    lookupClass,
+                    { _id: pops[pkey] },
+                    this.lookupOptions(nestedLookup, lookupProjection(q.options.projection, pkey))
+                  )
                   if (d !== undefined) {
                     pp[pkey].push(d)
                   }
@@ -1756,10 +1752,10 @@ export class LiveQuery implements WithTx, Client {
     await this.__updateLookup(q, updatedDoc, ops)
   }
 
-  private async sort (q: Query, tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): Promise<void> {
+  private async sort (q: Query, tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, force = false): Promise<void> {
     const sort = q.options?.sort
     if (sort === undefined) return
-    let needSort = sort.modifiedBy !== undefined || sort.modifiedOn !== undefined
+    let needSort = force || sort.modifiedBy !== undefined || sort.modifiedOn !== undefined
     if (!needSort) needSort = this.checkNeedSort(sort, tx)
 
     if (needSort) {

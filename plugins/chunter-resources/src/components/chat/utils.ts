@@ -19,7 +19,6 @@ import core, {
   AccountRole,
   getCurrentAccount,
   hasAccountRole,
-  type UserStatus,
   type AccountUuid,
   type Ref,
   type Class,
@@ -36,7 +35,7 @@ import { type SpecialNavModel } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 
 import chunter from '../../plugin'
-import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel, type SortFnOptions } from './types'
+import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel } from './types'
 
 type SectionID = Ref<Class<Doc>> | 'starred'
 
@@ -92,7 +91,6 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
   {
     id: 'starred',
     label: chunter.string.Starred,
-    sortFn: sortAlphabetically,
     wrap: false,
     actionsFn: getPinnedActions,
     showEmpty: false,
@@ -103,7 +101,6 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
   },
   {
     id: 'channels',
-    sortFn: sortAlphabetically,
     wrap: true,
     actionsFn: getChannelsActions,
     createAction: createChannelAction,
@@ -115,7 +112,6 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
   },
   {
     id: 'direct',
-    sortFn: sortDirects,
     wrap: true,
     actionsFn: getDirectActions,
     createAction: createDirectAction,
@@ -127,7 +123,6 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
   },
   {
     id: 'activity',
-    sortFn: sortActivityChannels,
     wrap: true,
     actionsFn: () => getActivityActions({ readAll: true, hideAll: true }),
     maxSectionItems: 5,
@@ -139,95 +134,6 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     deferred: true
   }
 ]
-
-function sortAlphabetically (items: ChatNavItemModel[]): ChatNavItemModel[] {
-  return items.sort((i1, i2) => i1.title.localeCompare(i2.title))
-}
-
-function getDirectCompanion (direct: DirectMessage, myAcc: AccountUuid): AccountUuid | undefined {
-  return direct.members.find((member) => member !== myAcc)
-}
-
-function isOnline (user: AccountUuid | undefined, userStatusByAccount: Map<AccountUuid, UserStatus>): boolean {
-  if (user === undefined) {
-    return false
-  }
-
-  return userStatusByAccount.get(user)?.online ?? false
-}
-
-function isGroupChat (direct: DirectMessage): boolean {
-  return direct.members.length > 2
-}
-
-function sortDirects (items: ChatNavItemModel[], option: SortFnOptions): ChatNavItemModel[] {
-  const { userStatusByAccount } = option
-  const account = getCurrentAccount().uuid
-
-  return items.sort((i1, i2) => {
-    const direct1 = i1.object as DirectMessage
-    const direct2 = i2.object as DirectMessage
-
-    const isGroupChat1 = isGroupChat(direct1)
-    const isGroupChat2 = isGroupChat(direct2)
-
-    if (isGroupChat1 && isGroupChat2) {
-      return i1.title.localeCompare(i2.title)
-    }
-
-    if (isGroupChat1 && !isGroupChat2) {
-      const isOnline2 = isOnline(getDirectCompanion(direct2, account), userStatusByAccount)
-      return isOnline2 ? 1 : -1
-    }
-
-    if (!isGroupChat1 && isGroupChat2) {
-      const isOnline1 = isOnline(getDirectCompanion(direct1, account), userStatusByAccount)
-      return isOnline1 ? -1 : 1
-    }
-
-    const user1 = getDirectCompanion(direct1, account)
-    const user2 = getDirectCompanion(direct2, account)
-
-    if (user1 === undefined) {
-      return 1
-    }
-
-    if (user2 === undefined) {
-      return -1
-    }
-
-    const isOnline1 = isOnline(user1, userStatusByAccount)
-    const isOnline2 = isOnline(user2, userStatusByAccount)
-
-    if (isOnline1 === isOnline2) {
-      return i1.title.localeCompare(i2.title)
-    }
-
-    if (isOnline1 && !isOnline2) {
-      return -1
-    }
-
-    return 1
-  })
-}
-
-function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions): ChatNavItemModel[] {
-  const { unreadByDoc } = option
-
-  // Unread channels first, the most recently touched context on top, then by document activity.
-  return items.sort((i1, i2) => {
-    const unread1 = unreadByDoc.get(i1.id)
-    const unread2 = unreadByDoc.get(i2.id)
-    const hasUnread1 = (unread1?.unreadMessagesCount ?? 0) > 0
-    const hasUnread2 = (unread2?.unreadMessagesCount ?? 0) > 0
-
-    if (hasUnread1 && hasUnread2) return (unread2?.modifiedOn ?? 0) - (unread1?.modifiedOn ?? 0)
-    if (hasUnread1) return -1
-    if (hasUnread2) return 1
-
-    return i2.object.modifiedOn - i1.object.modifiedOn
-  })
-}
 
 function getPinnedActions (): Action[] {
   return [

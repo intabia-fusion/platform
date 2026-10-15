@@ -15,9 +15,8 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
-  import { statusByUserStore } from '@hcengineering/contact-resources'
   import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
-  import core, { notEmpty, reduceCalls } from '@hcengineering/core'
+  import core, { reduceCalls } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getResource, translate } from '@hcengineering/platform'
   import { getClient, isSpace } from '@hcengineering/presentation'
@@ -42,7 +41,7 @@
   import chunter from '../../../plugin'
   import { getChannelName, getObjectIcon } from '../../../utils'
   import { getChatNavItemKey } from '../utils'
-  import type { ChatNavItemModel, SortFnOptions } from '../types'
+  import type { ChatNavItemModel } from '../types'
   import ChatNavItem from './ChatNavItem.svelte'
 
   export let id: string
@@ -55,7 +54,6 @@
   export let createAction: Action | undefined
   export let objectId: Ref<Doc> | undefined
   export let sortByScore: boolean = false
-  export let sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -97,10 +95,7 @@
           if (scoreDiff !== 0) return scoreDiff
           return (a.title ?? a.identifier).localeCompare(b.title ?? b.identifier)
         })
-      : sortFn(items, {
-          unreadByDoc: $unreadByDoc,
-          userStatusByAccount: $statusByUserStore
-        })
+      : items
 
     // Check if the underlying identifiers (ids) changed order to skip Svelte updates if unnecessary
     const oldIds = sortedItems.map((i) => i.id).join()

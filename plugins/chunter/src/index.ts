@@ -26,7 +26,7 @@ import {
   Space,
   Timestamp
 } from '@hcengineering/core'
-import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
+import { MessageNotificationType, type DocNotifyContext, type ReadState } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
 import type { ComponentExtensionId } from '@hcengineering/ui'
@@ -114,6 +114,8 @@ export interface Chat extends AttachedDoc {
   space: Ref<PersonSpace>
   pinned: boolean
   hidden: boolean
+  // Joined by the chat navigator for the time of the last message; missing only until the backfill
+  readState?: Ref<ReadState>
 }
 
 /**

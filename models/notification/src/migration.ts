@@ -62,7 +62,11 @@ import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { type IntlString } from '@hcengineering/platform'
 
 import { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
-import { updateReadStatesFromDocNotifyContexts, initReadStatesLatestMessages } from './migrations/readState'
+import {
+  updateReadStatesFromDocNotifyContexts,
+  initReadStatesLatestMessages,
+  newReadState
+} from './migrations/readState'
 import { removeArchivedNotifications, removeEmptyContexts, removeArchivedContexts } from './migrations/clear'
 import { migrateNotificationsToEmbedded } from './migrations/migrateNotificationsToEmbedded'
 import { migrateDocNotifyContextSettings } from './migrations/settings'
@@ -678,6 +682,47 @@ export async function migrateNotificationsObject (client: MigrationClient): Prom
   }
 }
 
+async function findOrMakeReadStates (
+  client: MigrationClient,
+  collaborators: Collaborator[]
+): Promise<Map<Ref<Doc>, Ref<ReadState>>> {
+  const find = async (): Promise<Map<Ref<Doc>, Ref<ReadState>>> => {
+    const states = await client.find<ReadState>(
+      DOMAIN_READ_STATE,
+      { attachedTo: { $in: Array.from(new Set(collaborators.map((it) => it.attachedTo))) } },
+      { projection: { _id: 1, attachedTo: 1 } }
+    )
+    return new Map(states.map((it) => [it.attachedTo, it._id]))
+  }
+  const byDoc = await find()
+
+  const missing = new Map<Domain, Set<Ref<Doc>>>()
+  for (const it of collaborators) {
+    if (byDoc.has(it.attachedTo)) continue
+    const domain = client.hierarchy.findDomain(it.attachedToClass)
+    if (domain === undefined) continue
+    missing.set(domain, (missing.get(domain) ?? new Set()).add(it.attachedTo))
+  }
+  if (missing.size === 0) return byDoc
+
+  const states: ReadState[] = []
+  for (const [domain, ids] of missing) {
+    const docs = await client.find<Doc>(domain, { _id: { $in: Array.from(ids) } })
+    for (const doc of docs) states.push(await newReadState(client, doc))
+  }
+  if (states.length === 0) return byDoc
+  client.logger.log('read states made for documents without one', { count: states.length })
+  try {
+    await client.create(DOMAIN_READ_STATE, states)
+    for (const it of states) byDoc.set(it.attachedTo, it._id)
+    return byDoc
+  } catch (err: any) {
+    // The batch is refused as a whole on one row the unique index rejects: take what is there.
+    client.logger.error('read states batch refused, reading them back', { err })
+    return await find()
+  }
+}
+
 async function createChats (client: MigrationClient): Promise<void> {
   const iterator = await client.traverse<Collaborator>(DOMAIN_COLLABORATOR, {})
   const pinnedContexts = (await client.find(DOMAIN_DOC_NOTIFY, {
@@ -708,6 +753,8 @@ async function createChats (client: MigrationClient): Promise<void> {
     const collaborators = (await iterator.next(500)) ?? []
     if (collaborators.length === 0) break
 
+    const readStateByDoc = await findOrMakeReadStates(client, collaborators)
+
     const res: Chat[] = []
     for (const collaborator of collaborators) {
       if (processed.get(collaborator.attachedTo)?.includes(collaborator.collaborator) === true) continue
@@ -720,11 +767,14 @@ async function createChats (client: MigrationClient): Promise<void> {
       if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
         continue
       }
+      // Without a read state the chat waits for the chunter backfill to point it at one
+      const readState = readStateByDoc.get(collaborator.attachedTo)
       res.push({
         _id: generateId<Chat>(),
         _class: chunter.class.Chat,
         attachedTo: collaborator.attachedTo,
         attachedToClass: collaborator.attachedToClass,
+        ...(readState !== undefined ? { readState } : {}),
         hidden: false,
         pinned: pinnedContexts.some(
           (ctx) => ctx.objectId === collaborator.attachedTo && ctx.user === collaborator.collaborator
@@ -780,6 +830,7 @@ async function initReadStates (client: MigrationClient): Promise<void> {
               attachedTo: doc._id,
               attachedToClass: doc._class,
               collection: 'readStates',
+              latestMessageTimestamp: 0,
               modifiedOn: Date.now(),
               createdOn: Date.now(),
               createdBy: core.account.System,
@@ -835,6 +886,7 @@ async function initThreadReadStates (client: MigrationClient): Promise<void> {
           attachedTo: message._id,
           attachedToClass: classById.get(message._id) ?? activity.class.ActivityMessage,
           collection: 'readStates',
+          latestMessageTimestamp: 0,
           modifiedOn: Date.now(),
           createdOn: Date.now(),
           createdBy: core.account.System,

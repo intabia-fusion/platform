@@ -58,6 +58,11 @@ export class ChunterPage extends CommonPage {
     return this.page.getByRole('button', { name })
   }
 
+  // The titles of a navigator section, top to bottom; the section id is the class of its documents.
+  async sectionTitles (sectionId: string): Promise<string[]> {
+    return await this.page.locator(`[data-testid="section-${sectionId}"] .hulyNavItem-label`).allTextContents()
+  }
+
   async createDirectChat ({ firstName, lastName }: SignUpData): Promise<void> {
     // Retried by the caller, and a failed attempt leaves its modal up: every later click then
     // lands on the overlay instead of the page and waits out its whole timeout.

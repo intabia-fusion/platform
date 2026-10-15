@@ -82,6 +82,7 @@
 - [model-hash.md](model-hash.md) - Хеш модели: живая tx против прочитанной из Postgres
 - [pod_log_volume.md](pod_log_volume.md) - Pod log volume: what was actually filling it
 - [postgres-reverse-lookup-sort.md](postgres-reverse-lookup-sort.md) - Postgres: sort by reverse lookup field
+- [postgres-lookup-projection.md](postgres-lookup-projection.md) - Postgres: проекция по lookup (`$lookup.<path>.<field>` в projection)
 - [rpc-json-protocol.md](rpc-json-protocol.md) - RPC: протокол транзактора
 - [stats-slow-sql-tool.md](stats-slow-sql-tool.md) - Stats SQL analysis tools (dev/tool)
 - [transactor-workspace-memory.md](transactor-workspace-memory.md) - Память транзактора на пространство

@@ -106,6 +106,7 @@ import { defineActions } from './actions'
 
 export { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE, notificationId } from '@hcengineering/notification'
 export { notificationOperation } from './migration'
+export { newReadState } from './migrations/readState'
 export { notification as default }
 export { generateClassNotificationTypes } from './notifications'
 
@@ -305,7 +306,7 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
 @Model(notification.class.ReadState, core.class.Doc, DOMAIN_READ_STATE)
 export class TReadState extends TAttachedDoc implements ReadState {
   latestMessageId?: Ref<ActivityMessage>
-  latestMessageTimestamp?: Timestamp;
+  latestMessageTimestamp!: Timestamp;
   [key: AccountUuid]: ReadPosition
 }
 

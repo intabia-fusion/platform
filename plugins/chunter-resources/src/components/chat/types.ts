@@ -13,29 +13,15 @@
 // limitations under the License.
 //
 import { type Asset, type IntlString } from '@hcengineering/platform'
-import {
-  type Class,
-  type Doc,
-  type Ref,
-  type UserStatus,
-  type AccountUuid,
-  type DocumentQuery
-} from '@hcengineering/core'
-import { type UnreadContext } from '@hcengineering/notification'
+import { type Class, type Doc, type Ref, type DocumentQuery } from '@hcengineering/core'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
 import { type Chat } from '@hcengineering/chunter'
 
 export type ChatGroupID = 'activity' | 'direct' | 'channels' | 'starred'
 
-export interface SortFnOptions {
-  unreadByDoc: Map<Ref<Doc>, UnreadContext>
-  userStatusByAccount: Map<AccountUuid, UserStatus>
-}
-
 export interface ChatNavGroupModel {
   id: ChatGroupID
   label?: IntlString
-  sortFn: (items: ChatNavItemModel[], options: SortFnOptions) => ChatNavItemModel[]
   wrap: boolean
   actionsFn: () => Action[]
   createAction?: Action

@@ -555,6 +555,42 @@ describe('memdb', () => {
     expect((reverse[0].$lookup as any).comments).toHaveLength(2)
   })
 
+  it('joins every reference of an array field, nested lookups included', async () => {
+    const { model } = await createModel()
+    const client = new TxOperations(model, core.account.System)
+    const spaces = await client.findAll(core.class.Space, {})
+    expect(spaces).toHaveLength(2)
+
+    const holder = await client.createDoc(test.class.TestHolder, core.space.Model, {
+      refs: spaces.map((it) => it._id)
+    })
+    const empty = await client.createDoc(test.class.TestHolder, core.space.Model, { refs: [] })
+
+    const [joined] = await client.findAll(
+      test.class.TestHolder,
+      { _id: holder },
+      { lookup: { refs: core.class.Space } }
+    )
+    expect(((joined.$lookup as any).refs as Space[]).map((it) => it._id).sort()).toEqual(
+      spaces.map((it) => it._id).sort()
+    )
+
+    // The nested form: every element gets its own `$lookup` (empty here, the model space is no document).
+    const [nested] = await client.findAll(
+      test.class.TestHolder,
+      { _id: holder },
+      { lookup: { refs: [core.class.Space, { space: core.class.Space }] as any } }
+    )
+    const refs = (nested.$lookup as any).refs as Array<Space & { $lookup: Record<string, unknown> }>
+    expect(refs.map((it) => it._id).sort()).toEqual(spaces.map((it) => it._id).sort())
+    for (const it of refs) {
+      expect(it.$lookup).toEqual({})
+    }
+
+    const [none] = await client.findAll(test.class.TestHolder, { _id: empty }, { lookup: { refs: core.class.Space } })
+    expect((none.$lookup as any).refs).toHaveLength(0)
+  })
+
   it('mixin lookups', async () => {
     const { model } = await createModel()
 
