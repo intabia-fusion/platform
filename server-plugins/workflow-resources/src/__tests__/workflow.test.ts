@@ -698,13 +698,17 @@ describe('PostFunctionsTrigger', () => {
       const res = await FieldRequired(control as any, t, { name: 'Start', to: 'in-progress' as Ref<Status> } as any, {
         fields: [{ fieldKey: 'assignee' }]
       })
-      expect(res).toEqual(
-        expect.objectContaining({
-          ok: false,
-          reasonIntl: workflow.string.FieldRequiredError,
-          intlParams: { field: 'assignee', transition: 'Any ➜ in-progress' }
-        })
-      )
+      expect(res).toEqual({
+        ok: false,
+        reason: 'To move the task to "in-progress", fill in: assignee.',
+        reasonIntl: workflow.string.FieldRequiredError,
+        intlParams: {
+          to: 'in-progress',
+          fields: 'assignee',
+          count: 1,
+          refs: { to: 'in-progress', fields: ['assignee'] }
+        }
+      })
     })
 
     it('should return ok: true when required fields are present', async () => {
@@ -747,9 +751,9 @@ describe('PostFunctionsTrigger', () => {
       })
       expect(res).toEqual({
         ok: false,
-        reason: expect.stringContaining('allowed status'),
+        reason: 'All subtasks must be in: done.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
+        intlParams: { statuses: 'done', count: 1, refs: { statuses: ['done'] } }
       })
     })
 
@@ -788,14 +792,26 @@ describe('PostFunctionsTrigger', () => {
       })
       expect(res).toEqual({
         ok: false,
-        reason: expect.stringContaining('allowed status'),
+        reason: 'All subtasks must be in: done, resolved.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
+        intlParams: { statuses: 'done, resolved', count: 2, refs: { statuses: ['done', 'resolved'] } }
       })
     })
   })
 
   describe('ParentStatus Executor', () => {
+    const parentStatusError = {
+      ok: false,
+      reason: 'The parent task TASK-1 must be in: in-progress, done.',
+      reasonIntl: workflow.string.ParentStatusError,
+      intlParams: {
+        statuses: 'in-progress, done',
+        count: 2,
+        parent: 'TASK-1',
+        refs: { parent: 'parent-1', statuses: ['in-progress', 'done'] }
+      }
+    }
+
     it('should return ok: true when task has no parent task', async () => {
       const { ParentStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'child-1' as any, status: 'in-progress' as Ref<Status> })
@@ -824,12 +840,7 @@ describe('PostFunctionsTrigger', () => {
       const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'parent-type': ['in-progress', 'done'] }
       })
-      expect(res).toEqual({
-        ok: false,
-        reason: expect.stringContaining('allowed status'),
-        reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
-      })
+      expect(res).toEqual(parentStatusError)
     })
 
     it('should return ok: true when parent task is in allowed status', async () => {
@@ -871,12 +882,7 @@ describe('PostFunctionsTrigger', () => {
           'epic-type': ['in-progress', 'done']
         }
       })
-      expect(res).toEqual({
-        ok: false,
-        reason: expect.stringContaining('allowed status'),
-        reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
-      })
+      expect(res).toEqual(parentStatusError)
     })
 
     it('should return ok: true when status map value is null for TaskType', async () => {
