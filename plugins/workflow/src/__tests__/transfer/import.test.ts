@@ -622,6 +622,72 @@ describe('Workflow Import', () => {
     expect(res.screens['screen-req' as Ref<Screen>]).toBe('screen-b')
   })
 
+  describe('screen field order', () => {
+    const screenDocs = (id: string, name: string, fieldKeys: string[]): any[] => [
+      {
+        _id: id,
+        _class: workflow.class.Screen,
+        name,
+        projectType: projectTypeId,
+        targetClass: task.class.Task,
+        space: core.space.Workspace
+      },
+      { _id: `${id}-tab`, _class: workflow.class.ScreenTab, attachedTo: id, name: 'Main', rank: '0' },
+      ...fieldKeys.map((fieldKey, i) => ({
+        _id: `${id}-${fieldKey}`,
+        _class: workflow.class.ScreenField,
+        attachedTo: `${id}-tab`,
+        attribute: `attr-${fieldKey}`,
+        fieldKey,
+        required: false,
+        rank: String(i)
+      }))
+    ]
+
+    async function importScreen (docs: any[], name: string): Promise<Ref<Screen> | undefined> {
+      const client = createMockTx({ docs })
+      const config: WorkflowConfig = {
+        version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: ws1,
+        projectTypeId,
+        screens: [
+          {
+            id: 'screen-req' as Ref<Screen>,
+            name,
+            targetClass: task.class.Task,
+            tabs: [
+              {
+                name: 'Main',
+                fields: ['a', 'b'].map((fieldKey) => ({
+                  attribute: `attr-${fieldKey}` as any,
+                  fieldKey,
+                  required: false
+                }))
+              }
+            ]
+          }
+        ],
+        workflows: [{ id: workflowId, name: 'Wf with field order', taskTypeName: 'Bug', taskTypeId, transitions: [] }]
+      }
+      const res = await importWorkflowConfig(client, projectTypeId, config)
+      return res.screens['screen-req' as Ref<Screen>]
+    }
+
+    const reorderedAndOrdered = (): any[] => [
+      ...screenDocs('screen-a', 'Alpha Screen', ['b', 'a']),
+      ...screenDocs('screen-b', 'Beta Screen', ['a', 'b'])
+    ]
+
+    it('reuses a screen with the same fields in another order, preferring the same order', async () => {
+      expect(await importScreen(reorderedAndOrdered(), 'Gamma Screen')).toBe('screen-b')
+    })
+
+    it('prefers the same name over the same field order', async () => {
+      expect(await importScreen(reorderedAndOrdered(), 'Alpha Screen')).toBe('screen-a')
+    })
+  })
+
   it('remaps target and source attribute references in UpdateFieldValue post-function', async () => {
     const client = createMockTx({
       docs: [

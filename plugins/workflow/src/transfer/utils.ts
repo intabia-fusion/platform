@@ -140,6 +140,56 @@ export function getRefToClassFromType (type: Type<PropertyType> | undefined): Re
   return undefined
 }
 
+export interface ScreenLayoutTab {
+  name: string
+  fields: Array<{ key: string, required: boolean }>
+}
+
+/**
+ * `ordered` - same tabs and fields in the same order, `unordered` - same tabs and fields in another order.
+ */
+export type ScreenLayoutMatch = 'ordered' | 'unordered'
+
+function normalizeLayoutKey (value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function layoutSignature (tabs: ScreenLayoutTab[], ordered: boolean): string {
+  const tabSignatures = tabs.map((tab) => {
+    const fields = tab.fields.map((f) => `${normalizeLayoutKey(f.key)}:${f.required ? 1 : 0}`)
+    if (!ordered) fields.sort()
+    return JSON.stringify([normalizeLayoutKey(tab.name), fields])
+  })
+  if (!ordered) tabSignatures.sort()
+  return JSON.stringify(tabSignatures)
+}
+
+/**
+ * Compares two screen layouts by tab names and field keys with their `required` flag.
+ */
+export function matchScreenLayout (a: ScreenLayoutTab[], b: ScreenLayoutTab[]): ScreenLayoutMatch | undefined {
+  if (layoutSignature(a, true) === layoutSignature(b, true)) return 'ordered'
+  if (layoutSignature(a, false) === layoutSignature(b, false)) return 'unordered'
+  return undefined
+}
+
+/**
+ * Picks the screen to reuse among matching ones: the same name first, then the same field order.
+ */
+export function pickMatchingScreen<T extends { name: string }> (
+  name: string,
+  candidates: Array<{ screen: T, match: ScreenLayoutMatch | undefined }>
+): T | undefined {
+  let best: { screen: T, score: number } | undefined
+  for (const { screen, match } of candidates) {
+    if (match === undefined) continue
+    const sameName = normalizeLayoutKey(screen.name) === normalizeLayoutKey(name)
+    const score = (sameName ? 0 : 2) + (match === 'ordered' ? 0 : 1)
+    if (best === undefined || score < best.score) best = { screen, score }
+  }
+  return best?.screen
+}
+
 /**
  * Finds an existing enum matching the requested values or creates a new one.
  */

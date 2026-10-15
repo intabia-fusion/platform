@@ -14,6 +14,8 @@
 
 Import reuses screens and workflows whose name already exists instead of duplicating them, so a repeated import is a no-op for them but still re-applies the project mapping.
 
+Screen matching ignores the order of tabs and fields (user decision after a positional compare missed a hand-edited screen, bug "Экран перехода 10211"); the same order only breaks ties after the same name. `findAll` without `sort` gets no `ORDER BY` from the Postgres adapter (`storage.ts`, `options.sort` check): rows come in physical order, and an updated `ScreenField` (toggled "required", dragged) moves after the others. Dev stand 2026-10-15: 6 of 56 tabs with 2+ fields were out of rank order.
+
 `importableTypeClasses` (`compatibility.ts`) limits only the attributes the import creates. An attribute the target class already has with a compatible type is mapped as is: `createdBy` is `TypePersonId`, not importable, and once was flagged "cannot import" even back into its own task type, dropping `UpdateFieldValue` fields that read it. The existing attribute is looked up with `hierarchy.getAllAttributes(targetClass)` without a `to`: `getAllAttributes(cls, core.class.Doc)` leaves out the attributes of `Doc` itself, `createdBy` among them.
 
 ## Where the tests live

@@ -25,6 +25,7 @@ import core, {
   type PropertyType,
   type Ref,
   RefTo,
+  SortingOrder,
   type Status,
   type StatusCategory,
   type TxOperations,
@@ -50,7 +51,13 @@ import type {
   WorkflowConfig
 } from './types'
 import { getStatusRuleWarnings, loadStatusRuleTarget, withStatusMapping } from './statusRules'
-import { extractRuleFieldReferences, getEnumRefFromType } from './utils'
+import {
+  extractRuleFieldReferences,
+  getEnumRefFromType,
+  matchScreenLayout,
+  pickMatchingScreen,
+  type ScreenLayoutMatch
+} from './utils'
 import { sanitizeWorkflowConfig } from './validation'
 
 /**
@@ -105,13 +112,26 @@ async function checkScreensCompatibility (
     existingByName.set(s.name.toLowerCase(), s)
   }
 
+  // Without a sort rows come in physical order, which an update of a field changes
   const screenIds = Array.from(new Set(existingScreens.map((s) => s._id)))
   const existingTabs =
-    screenIds.length > 0 ? await client.findAll(workflow.class.ScreenTab, { attachedTo: { $in: screenIds } }) : []
+    screenIds.length > 0
+      ? await client.findAll(
+        workflow.class.ScreenTab,
+        { attachedTo: { $in: screenIds } },
+        { sort: { rank: SortingOrder.Ascending } }
+      )
+      : []
 
   const tabIds = Array.from(new Set(existingTabs.map((t) => t._id)))
   const existingFields =
-    tabIds.length > 0 ? await client.findAll(workflow.class.ScreenField, { attachedTo: { $in: tabIds } }) : []
+    tabIds.length > 0
+      ? await client.findAll(
+        workflow.class.ScreenField,
+        { attachedTo: { $in: tabIds } },
+        { sort: { rank: SortingOrder.Ascending } }
+      )
+      : []
 
   const hierarchy = client.getHierarchy()
   const allAttributes = hierarchy.getAllAttributes(targetTaskType.targetClass, core.class.Doc)
@@ -134,38 +154,23 @@ async function checkScreensCompatibility (
     fieldsByTab.set(f.attachedTo, list)
   }
 
-  function isScreenSignatureMatch (sc: ScreenConfig, existing: Screen): boolean {
+  function getScreenMatch (sc: ScreenConfig, existing: Screen): ScreenLayoutMatch | undefined {
     if (sc.targetClass !== undefined && existing.targetClass !== undefined && sc.targetClass !== existing.targetClass) {
-      return false
+      return undefined
     }
 
-    const impTabs = sc.tabs ?? []
-    const extTabs = tabsByScreen.get(existing._id) ?? []
-    if (impTabs.length !== extTabs.length) return false
-
-    for (let i = 0; i < impTabs.length; i++) {
-      const impTab = impTabs[i]
-      const extTab = extTabs[i]
-      if (impTab.name.trim().toLowerCase() !== extTab.name.trim().toLowerCase()) {
-        return false
-      }
-
-      const impFields = impTab.fields ?? []
-      const extFields = fieldsByTab.get(extTab._id) ?? []
-      if (impFields.length !== extFields.length) return false
-
-      for (let j = 0; j < impFields.length; j++) {
-        const impField = impFields[j]
-        const extField = extFields[j]
-        const impKey = (impField.fieldKey ?? impField.attribute).trim().toLowerCase()
-        const extKey = (extField.fieldKey ?? attrById.get(extField.attribute)?.name ?? extField.attribute)
-          .trim()
-          .toLowerCase()
-        if (impKey !== extKey) return false
-        if (Boolean(impField.required) !== Boolean(extField.required)) return false
-      }
-    }
-    return true
+    const impTabs = (sc.tabs ?? []).map((t) => ({
+      name: t.name,
+      fields: (t.fields ?? []).map((f) => ({ key: f.fieldKey ?? f.attribute, required: Boolean(f.required) }))
+    }))
+    const extTabs = (tabsByScreen.get(existing._id) ?? []).map((t) => ({
+      name: t.name,
+      fields: (fieldsByTab.get(t._id) ?? []).map((f) => ({
+        key: f.fieldKey ?? attrById.get(f.attribute)?.name ?? f.attribute,
+        required: Boolean(f.required)
+      }))
+    }))
+    return matchScreenLayout(impTabs, extTabs)
   }
 
   const result: ScreenCompatibilityItem[] = []
@@ -175,12 +180,10 @@ async function checkScreensCompatibility (
       totalFields += t.fields?.length ?? 0
     }
 
-    // 1. Try exact signature match with the same name first
-    let match = existingScreens.find(
-      (s) => s.name.trim().toLowerCase() === sc.name.trim().toLowerCase() && isScreenSignatureMatch(sc, s)
+    const match = pickMatchingScreen(
+      sc.name,
+      existingScreens.map((s) => ({ screen: s, match: getScreenMatch(sc, s) }))
     )
-    // 2. If not found, try any exact signature match
-    match ??= existingScreens.find((s) => isScreenSignatureMatch(sc, s))
 
     const existingByNameDoc = existingByName.get(sc.name.toLowerCase())
     const isExactMatch = match !== undefined

@@ -58,7 +58,16 @@ import type {
 } from '../schema'
 import { addScreenField, addScreenTab, addTransition, createWorkflow } from '../utils'
 import { collectAttributeUsages, isAttributeTypeCompatible, isAttributeTypeResolvable } from './compatibility'
-import { findOrCreateEnum, getEnumRefFromType, isArrOfType, isEnumOfType } from './utils'
+import {
+  findOrCreateEnum,
+  getEnumRefFromType,
+  isArrOfType,
+  isEnumOfType,
+  matchScreenLayout,
+  pickMatchingScreen,
+  type ScreenLayoutMatch,
+  type ScreenLayoutTab
+} from './utils'
 import {
   type StatusRuleTarget,
   isStatusRule,
@@ -790,90 +799,58 @@ async function autoCreateTargetClassAttributes (
   }
 }
 
-async function isScreenSignatureMatching (
+async function getScreenMatch (
   client: TxOperations,
   existingScreen: Screen,
   configScreen: ScreenConfig,
-  screenTargetClass: Ref<Class<Doc>>,
   attrResolutions: Record<string, AttributeResolutionConfig>,
   targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>
-): Promise<boolean> {
+): Promise<ScreenLayoutMatch | undefined> {
   const existingTabs = await client.findAll(
     workflow.class.ScreenTab,
     { attachedTo: existingScreen._id },
     { sort: { rank: SortingOrder.Ascending } }
   )
-  const configTabs = configScreen.tabs ?? []
-  if (existingTabs.length !== configTabs.length) {
-    return false
-  }
-
-  for (let i = 0; i < existingTabs.length; i++) {
-    const et = existingTabs[i]
-    const ct = configTabs[i]
-    if (et.name !== ct.name) {
-      return false
-    }
-
+  const existingLayout: ScreenLayoutTab[] = []
+  for (const et of existingTabs) {
     const existingFields = await client.findAll(
       workflow.class.ScreenField,
       { attachedTo: et._id },
       { sort: { rank: SortingOrder.Ascending } }
     )
-    const configFields = ct.fields ?? []
-    if (existingFields.length !== configFields.length) {
-      return false
-    }
+    existingLayout.push({
+      name: et.name,
+      fields: existingFields.map((ef) => ({ key: ef.fieldKey, required: ef.required }))
+    })
+  }
 
-    for (let j = 0; j < existingFields.length; j++) {
-      const ef = existingFields[j]
-      const cf = configFields[j]
-
-      if (ef.required !== cf.required) {
-        return false
-      }
-
+  const configLayout: ScreenLayoutTab[] = (configScreen.tabs ?? []).map((ct) => ({
+    name: ct.name,
+    fields: (ct.fields ?? []).map((cf) => {
       const attrRes = attrResolutions[cf.fieldKey]
       const expectedFieldKey =
         (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
           ? targetAttributeById.get(attrRes.targetAttributeId)?.name
           : undefined) ?? cf.fieldKey
+      return { key: expectedFieldKey, required: cf.required }
+    })
+  }))
 
-      if (ef.fieldKey !== expectedFieldKey) {
-        return false
-      }
-    }
-  }
-
-  return true
+  return matchScreenLayout(configLayout, existingLayout)
 }
 
 async function findMatchingScreen (
   client: TxOperations,
   existingScreens: Screen[],
   sc: ScreenConfig,
-  screenTargetClass: Ref<Class<Doc>>,
   attrResolutions: Record<string, AttributeResolutionConfig>,
   targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>
 ): Promise<Screen | undefined> {
-  // 1. Try exact signature match with the same name first
+  const candidates: Array<{ screen: Screen, match: ScreenLayoutMatch | undefined }> = []
   for (const s of existingScreens) {
-    if (
-      s.name.trim().toLowerCase() === sc.name.trim().toLowerCase() &&
-      (await isScreenSignatureMatching(client, s, sc, screenTargetClass, attrResolutions, targetAttributeById))
-    ) {
-      return s
-    }
+    candidates.push({ screen: s, match: await getScreenMatch(client, s, sc, attrResolutions, targetAttributeById) })
   }
-
-  // 2. If not found by name, try any exact signature match
-  for (const s of existingScreens) {
-    if (await isScreenSignatureMatching(client, s, sc, screenTargetClass, attrResolutions, targetAttributeById)) {
-      return s
-    }
-  }
-
-  return undefined
+  return pickMatchingScreen(sc.name, candidates)
 }
 
 /**
@@ -926,14 +903,7 @@ async function importScreens (
       isNewScreen = true
     } else {
       // resolution is undefined or screenRes not specified: check signature
-      const matchingScreen = await findMatchingScreen(
-        client,
-        existingScreens,
-        sc,
-        screenTargetClass,
-        attrResolutions,
-        targetAttributeById
-      )
+      const matchingScreen = await findMatchingScreen(client, existingScreens, sc, attrResolutions, targetAttributeById)
       if (matchingScreen !== undefined) {
         screenId = matchingScreen._id
       } else {

@@ -289,4 +289,111 @@ describe('Workflow Compatibility Check', () => {
     expect(report.screens?.[0].matchingScreenId).toBe(screenId)
     expect(report.screens?.[0].matchingScreenName).toBe('Existing Screen')
   })
+
+  describe('screen field order', () => {
+    const screenDoc = (id: string, name: string): any => ({
+      _id: id,
+      _class: workflow.class.Screen,
+      name,
+      projectType: projectTypeId,
+      targetClass: 'core:class:Doc'
+    })
+    const tabDoc = (screenId: string): any => ({
+      _id: `${screenId}-tab`,
+      _class: workflow.class.ScreenTab,
+      attachedTo: screenId,
+      name: 'General',
+      rank: '0'
+    })
+    const fieldDoc = (screenId: string, fieldKey: string, rank: string, required = false): any => ({
+      _id: `${screenId}-${fieldKey}`,
+      _class: workflow.class.ScreenField,
+      attachedTo: `${screenId}-tab`,
+      fieldKey,
+      rank,
+      required
+    })
+
+    // Rows come in store order like Postgres without ORDER BY, sorted by rank only on request
+    async function checkScreen (docs: any[], fieldKeys: string[]): Promise<any> {
+      const client = createMockTx()
+      client.findAll = jest.fn().mockImplementation((cls: any, query: any, options: any) => {
+        let res = docs.filter((d) => d._class === cls)
+        if (query?.attachedTo?.$in !== undefined) {
+          res = res.filter((d) => query.attachedTo.$in.includes(d.attachedTo) === true)
+        }
+        if (options?.sort?.rank !== undefined) res = [...res].sort((a, b) => a.rank.localeCompare(b.rank))
+        return Promise.resolve(res)
+      })
+      const config = await exportWorkflow(client, workflowId, { workspace: ws1, projectTypeId })
+      config.screens = [
+        {
+          id: 'screen-cfg' as any,
+          name: 'My Screen',
+          targetClass: 'core:class:Doc' as any,
+          tabs: [
+            {
+              name: 'General',
+              fields: fieldKeys.map((fieldKey) => ({ attribute: `attr-${fieldKey}` as any, fieldKey, required: false }))
+            }
+          ]
+        }
+      ]
+      const report = await checkWorkflowCompatibility(client, config, targetTaskTypeId)
+      return report.screens?.[0]
+    }
+
+    it('matches a screen with the same fields in another order', async () => {
+      const item = await checkScreen(
+        [screenDoc('s1', 'Other'), tabDoc('s1'), fieldDoc('s1', 'b', '1'), fieldDoc('s1', 'a', '2')],
+        ['a', 'b']
+      )
+      expect(item?.isExactMatch).toBe(true)
+      expect(item?.matchingScreenId).toBe('s1')
+    })
+
+    it('prefers a screen with the same field order, read by rank', async () => {
+      // s2 rows are out of rank order: read without a sort it looks reordered and loses to s1
+      const item = await checkScreen(
+        [
+          screenDoc('s1', 'Reordered'),
+          screenDoc('s2', 'Ordered'),
+          tabDoc('s1'),
+          tabDoc('s2'),
+          fieldDoc('s1', 'b', '1'),
+          fieldDoc('s1', 'a', '2'),
+          fieldDoc('s2', 'b', '2'),
+          fieldDoc('s2', 'a', '1')
+        ],
+        ['a', 'b']
+      )
+      expect(item?.matchingScreenId).toBe('s2')
+    })
+
+    it('prefers the same name over the same field order', async () => {
+      const item = await checkScreen(
+        [
+          screenDoc('s1', 'Ordered'),
+          screenDoc('s2', 'My Screen'),
+          tabDoc('s1'),
+          tabDoc('s2'),
+          fieldDoc('s1', 'a', '1'),
+          fieldDoc('s1', 'b', '2'),
+          fieldDoc('s2', 'b', '1'),
+          fieldDoc('s2', 'a', '2')
+        ],
+        ['a', 'b']
+      )
+      expect(item?.matchingScreenId).toBe('s2')
+    })
+
+    it('does not match a screen with another required flag', async () => {
+      const item = await checkScreen(
+        [screenDoc('s1', 'My Screen'), tabDoc('s1'), fieldDoc('s1', 'b', '1', true), fieldDoc('s1', 'a', '2')],
+        ['a', 'b']
+      )
+      expect(item?.isExactMatch).toBe(false)
+      expect(item?.isExisting).toBe(true)
+    })
+  })
 })
