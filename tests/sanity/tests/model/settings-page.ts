@@ -30,7 +30,9 @@ export class SettingsPage extends CommonPage {
       .locator('button.hulyTableAttr-content__row', { hasText: name })
 
   statusNameInput = (): Locator =>
-    this.page.locator('div.hulyModal-container.type-aside', { hasText: 'Edit state' }).getByPlaceholder('Status name')
+    this.page
+      .locator('div.hulyModal-container.type-aside', { hasText: /Edit state|Create state/ })
+      .getByPlaceholder('Status name')
 
   selectColorButton = (name: string): Locator =>
     this.page.locator('div.hulyTableAttr-container', { hasText: 'Color' }).locator(`div.color[data-id="${name}"]`)
@@ -54,7 +56,9 @@ export class SettingsPage extends CommonPage {
     this.page.locator('div.hulyModal-container.type-aside .hulyHeader-buttonsGroup.actions button').first()
 
   addStateButton = (): Locator =>
-    this.page.locator('div.hulyTableAttr-header', { hasText: 'Process states' }).locator('button')
+    this.page
+      .locator('div.hulyTableAttr-header', { hasText: 'Process states' })
+      .locator('button:not([data-id="btnAddExistingStatus"])')
 
   addTaskTypeButton = (): Locator =>
     this.page.locator('div.hulyTableAttr-header', { hasText: 'Task types' }).locator('button[data-id="btnAdd"]')
@@ -173,5 +177,57 @@ export class SettingsPage extends CommonPage {
   async changeIcon (): Promise<void> {
     await this.selectIconButton().click()
     await this.emojiIconButton('👀').click()
+  }
+
+  // Statuses section of a project type (not the "Process states" list of a task type)
+  addProjectTypeStatusButton = (): Locator => this.page.locator('button[data-id="btnAddProjectTypeStatus"]')
+  projectStatusRow = (name: string): Locator =>
+    this.page
+      .locator('div.hulyTableAttr-content.class.withTitle button.hulyTableAttr-content__row')
+      .filter({ has: this.page.getByText(name, { exact: true }) })
+
+  statusEditorAside = (): Locator => this.page.locator('div.hulyModal-container.type-aside')
+
+  // Delete buttons of the status confirmation and the merge confirmation share this label
+  popupDeleteButton = (): Locator => this.page.locator('div.popup').getByRole('button', { name: 'Delete', exact: true })
+
+  orphansBlock = (): Locator => this.page.locator('div.orphans')
+  orphanRow = (name: string): Locator =>
+    this.orphansBlock()
+      .locator('div.hulyTableAttr-content__row')
+      .filter({ has: this.page.getByText(name, { exact: true }) })
+
+  deleteSpaceTypeButton = (): Locator =>
+    this.page.locator('div.hulyComponent-content__header > div.flex-row').locator('button').last()
+
+  // Removes the opened project type; its statuses stay in the workspace
+  async deleteOpenedSpaceType (): Promise<void> {
+    await expect(this.deleteSpaceTypeButton()).toBeVisible()
+    await this.deleteSpaceTypeButton().click()
+    await this.page.locator('div.popup').getByRole('button', { name: 'Ok', exact: true }).click()
+  }
+
+  // Hierarchy section of the opened task type: the first group holds parents, the last one children
+  hierarchyParents = (): Locator => this.page.locator('.hierarchy-section .group').first()
+  hierarchyChildren = (): Locator => this.page.locator('.hierarchy-section .group').last()
+  hierarchyChip = (group: Locator, name: string): Locator =>
+    group.locator('.chip').filter({ has: this.page.getByText(name, { exact: true }) })
+
+  async addHierarchyType (group: Locator, name: string): Promise<void> {
+    await group.locator('.side button').first().click()
+    await this.parentTypeItem(name).click()
+    await expect(this.hierarchyChip(group, name)).toBeVisible()
+  }
+
+  async removeHierarchyType (group: Locator, name: string): Promise<void> {
+    await this.hierarchyChip(group, name).locator('button').last().click()
+    await expect(this.hierarchyChip(group, name)).toHaveCount(0)
+  }
+
+  async addProjectTypeStatus (name: string): Promise<void> {
+    await this.addProjectTypeStatusButton().click()
+    await this.statusEditorAside().getByPlaceholder('Status name').fill(name)
+    await this.asideFooterButton('Create').click()
+    await expect(this.projectStatusRow(name)).toBeVisible()
   }
 }

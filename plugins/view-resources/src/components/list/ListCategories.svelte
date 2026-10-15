@@ -51,7 +51,9 @@
     getCategories,
     getGroupByValues,
     getPresenter,
-    groupBy
+    groupBy,
+    provideCategoryValues,
+    provideStatusIconScope
   } from '../../utils'
   import { CategoryQuery, noCategory } from '../../viewOptions'
   import ListCategory from './ListCategory.svelte'
@@ -100,6 +102,10 @@
   // Set together with categories and the header: old categories under a new key query {_id: 0}.
   let groupByKey: string = viewOptions.groupBy[level] ?? noCategory
   let categories: CategoryType[] = []
+  const categoryValues = provideCategoryValues()
+  $: categoryValues.set(categories)
+  const statusIconScope = provideStatusIconScope()
+  $: statusIconScope.set(resultQuery)
   $: void updateCategories(_class, space, docs, requestedGroupByKey, viewOptions, viewOptionsConfig)
 
   $: groupByDocs = groupBy(docs, groupByKey, categories)

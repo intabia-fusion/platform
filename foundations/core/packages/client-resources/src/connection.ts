@@ -334,7 +334,9 @@ class Connection implements ClientConnection {
       received: this.receivedCount,
       sentBytes: this.sentBytes,
       receivedBytes: this.receivedBytes,
-      latency: this.latency
+      latency: this.latency,
+      rateCurrent: this.lastRateLimit?.current,
+      rateMax: this.lastRateLimit?.limit
     })
   }
 
@@ -423,6 +425,7 @@ class Connection implements ClientConnection {
   }
 
   currentRateLimit: RateLimitInfo | undefined
+  private lastRateLimit: RateLimitInfo | undefined // latest server-reported usage, for the stats popup
   slowDownTimer = 0
 
   // Traffic counters surfaced to the UI (see ConnectionStatsEvent).
@@ -442,6 +445,10 @@ class Connection implements ClientConnection {
     }
     this.receivedCount++
     this.receivedBytes += sizes.compressedSize
+
+    if (resp.rateLimit !== undefined) {
+      this.lastRateLimit = resp.rateLimit
+    }
 
     if (resp.rateLimit !== undefined && resp.rateLimit.remaining < 50) {
       this.currentRateLimit = resp.rateLimit

@@ -171,6 +171,7 @@ export const uis = plugin(uiId, {
     Reconnecting: '' as IntlString,
     RateLimit: '' as IntlString,
     RateLimitValue: '' as IntlString,
+    RateLimitUsage: '' as IntlString,
     Sent: '' as IntlString,
     Received: '' as IntlString,
     TrafficValue: '' as IntlString,

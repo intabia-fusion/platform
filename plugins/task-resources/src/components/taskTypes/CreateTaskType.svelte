@@ -20,7 +20,7 @@
   import { getEmbeddedLabel, getResource } from '@hcengineering/platform'
   import presentation, { getClient, hasResource } from '@hcengineering/presentation'
   import type { ProjectType, ProjectTypeDescriptor, Task, TaskType, TaskTypeDescriptor } from '@hcengineering/task'
-  import { createState, findStatusAttr } from '@hcengineering/task'
+  import { createProjectTypeStates, findStatusAttr } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { Icon, IconError, Modal, ModernEditbox, Label, Toggle, IconInfo } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
@@ -146,27 +146,28 @@
     }
 
     const taskTypeId: Ref<TaskType> = taskType?._id ?? generateId()
+    // Statuses created here are already reserved in the project type for this task type
+    const reserved = new Set<Ref<Status>>()
     if (_taskType.statuses.length === 0) {
       const categories = toIdMap(
         await client.findAll(core.class.StatusCategory, { _id: { $in: _taskType.statusCategories } })
       )
       const statusAttr =
         findStatusAttr(client.getHierarchy(), ofClass) ?? client.getHierarchy().getAttribute(task.class.Task, 'status')
+      const defaults: Array<Data<Status>> = []
       for (const st of _taskType.statusCategories) {
         const std = categories.get(st)
         if (std !== undefined) {
-          const s = await createState(client, _taskType.statusClass, {
-            name: std.defaultStatusName,
-            ofAttribute: statusAttr._id,
-            category: std._id
-          })
-          _taskType.statuses.push(s)
+          defaults.push({ name: std.defaultStatusName, ofAttribute: statusAttr._id, category: std._id })
         }
       }
+      const created = await createProjectTypeStates(client, type._id, defaults, _taskType.statusClass, taskTypeId)
+      _taskType.statuses.push(...created)
+      created.forEach((it) => reserved.add(it))
     }
 
     for (const s of _taskType.statuses) {
-      if (type.statuses.find((it) => it._id === s) === undefined) {
+      if (!reserved.has(s) && type.statuses.find((it) => it._id === s) === undefined) {
         await client.update(type, {
           $push: { statuses: { _id: s, taskType: taskTypeId } }
         })

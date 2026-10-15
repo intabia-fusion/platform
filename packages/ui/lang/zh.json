@@ -121,6 +121,7 @@
     "Reconnecting": "重新连接中...",
     "RateLimit": "速率限制",
     "RateLimitValue": "剩余 {remaining}/{limit}，{seconds}秒后重置",
+    "RateLimitUsage": "限额内请求数：{current} / {limit}",
     "Sent": "已发送",
     "Received": "已接收",
     "TrafficValue": "{count} 条, {kb} KB",

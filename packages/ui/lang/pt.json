@@ -121,6 +121,7 @@
     "Reconnecting": "Reconectando...",
     "RateLimit": "Limite de pedidos",
     "RateLimitValue": "{remaining} de {limit} restantes, repõe em {seconds}s",
+    "RateLimitUsage": "Pedidos no limite: {current} / {limit}",
     "Sent": "Enviado",
     "Received": "Recebido",
     "TrafficValue": "{count} msgs, {kb} KB",

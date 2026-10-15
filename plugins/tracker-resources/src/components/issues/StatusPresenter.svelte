@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
-  import type { ColorDefinition } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { tooltip, type ColorDefinition } from '@hcengineering/ui'
   import type { IssueStatus, Project } from '@hcengineering/tracker'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
   import type { ProjectType, TaskType } from '@hcengineering/task'
@@ -29,6 +30,8 @@
   export let accent: boolean = false
   export let inline: boolean = false
   export let shouldShowAvatar: boolean = true
+  // Shown in parentheses after the name, tells apart statuses of one name shown together
+  export let nameSuffix: string | undefined = undefined
 
   let accentedColor: ColorDefinition | undefined
 </script>
@@ -54,7 +57,7 @@
       {value.name}
     </span>
   {:else}
-    <div class="flex-presenter" style:color="inherit">
+    <div class="flex-presenter" style:color="inherit" style:min-width="0">
       {#if !inline && shouldShowAvatar}
         <IssueStatusIcon {value} {size} {space} on:accent-color {projectType} {taskType} />
       {/if}
@@ -64,8 +67,11 @@
         class:list-header={kind === 'list-header'}
         class:colorInherit
         class:fs-bold={accent}
+        use:tooltip={nameSuffix !== undefined
+          ? { label: getEmbeddedLabel(`${value.name} (${nameSuffix})`) }
+          : undefined}
       >
-        {value.name}
+        {value.name}{nameSuffix !== undefined ? ` (${nameSuffix})` : ''}
       </span>
     </div>
   {/if}

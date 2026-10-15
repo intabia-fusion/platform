@@ -29,6 +29,8 @@ export interface ConnStats {
   sentBytes: number
   receivedBytes: number
   latency: number
+  rateCurrent?: number
+  rateMax?: number
 }
 
 export const connOnline = writable<boolean>(true)

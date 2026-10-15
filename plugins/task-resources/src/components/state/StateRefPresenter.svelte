@@ -17,7 +17,7 @@
   import type { Ref, Status } from '@hcengineering/core'
   import type { Project } from '@hcengineering/task'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { getCategoryValues, statusStore } from '@hcengineering/view-resources'
   import StateEditor from './StateEditor.svelte'
   import StatePresenter from './StatePresenter.svelte'
 
@@ -30,9 +30,19 @@
   export let shrink: number = 1
   export let disabled: boolean = false
 
-  import { selectedTaskTypeStore, selectedTypeStore } from '../../index'
+  import { activeProjects, selectedTaskTypeStore, selectedTypeStore, taskTypeStore, typeStore } from '../../index'
+  import { getSuffixes } from '../../utils'
+
+  // Group values of the list or kanban this header belongs to
+  const categoryValues = getCategoryValues()
 
   $: state = $statusStore.byId.get(value)
+  $: nameSuffix =
+    kind === 'list-header' && categoryValues !== undefined && state !== undefined
+      ? getSuffixes($categoryValues ?? [], $statusStore.byId, $typeStore, $activeProjects, $taskTypeStore).get(
+          state._id
+        )
+      : undefined
 </script>
 
 {#if value}
@@ -45,6 +55,7 @@
       {shouldShowName}
       {disabled}
       {shrink}
+      {nameSuffix}
       on:accent-color
       taskType={$selectedTaskTypeStore}
       projectType={$selectedTypeStore}

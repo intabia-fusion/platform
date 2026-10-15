@@ -16,6 +16,7 @@
 
 import core, {
   type AnyAttribute,
+  type Attribute,
   Class,
   ClassifierKind,
   Data,
@@ -129,6 +130,22 @@ export function getOrderedTaskTypes (type: ProjectType | undefined, taskTypes: I
 
 /**
  * @public
+ * Task types of several project types for one merged status order: project types by name (then id), inside each
+ * its task types as the settings screen lists them. A single project type gives its own order, so a shared
+ * status has the same place in every view of that type; the order never depends on a selected task type.
+ */
+export function getStatusOrderTaskTypes (types: ProjectType[], taskTypes: IdMap<TaskType>): TaskType[] {
+  const sorted = [...types].sort((a, b) => {
+    const byName = a.name.localeCompare(b.name)
+    return byName !== 0 ? byName : a._id.localeCompare(b._id)
+  })
+  return sorted
+    .flatMap((it) => getOrderedTaskTypes(it, taskTypes))
+    .filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
+}
+
+/**
+ * @public
  * Merges the status sequences of the task types into one rank per status that keeps every task type's own
  * order: a status shared by several task types goes after everything that precedes it in any of them. Ties,
  * and conflicting orders, resolve by task type order, then by position in that task type.
@@ -188,6 +205,109 @@ export function mergeStatusOrder (orderedTaskTypes: TaskType[]): Map<Ref<Status>
 
 /**
  * @public
+ * One rank per status for the given project types, by name. Inside a type `ProjectType.statusOrder` goes
+ * first, then the merged task type order (`mergeStatusOrder`), then statuses of no task type in
+ * `ProjectType.statuses` order. No type has `statusOrder`: the plain merged order of all their task types.
+ */
+export function getProjectStatusRank (
+  types: Array<Pick<ProjectType, '_id' | 'name' | 'statuses' | 'tasks' | 'statusOrder'>>,
+  taskTypes: IdMap<TaskType>
+): Map<Ref<Status>, number> {
+  if (!types.some((it) => it.statusOrder !== undefined)) {
+    return mergeStatusOrder(getStatusOrderTaskTypes(types as ProjectType[], taskTypes))
+  }
+  const sorted = [...types].sort((a, b) => {
+    const byName = a.name.localeCompare(b.name)
+    return byName !== 0 ? byName : a._id.localeCompare(b._id)
+  })
+  const rank = new Map<Ref<Status>, number>()
+  for (const type of sorted) {
+    const merged = [...mergeStatusOrder(getOrderedTaskTypes(type as ProjectType, taskTypes))]
+      .sort((a, b) => a[1] - b[1])
+      .map(([id]) => id)
+    const ids = [...(type.statusOrder ?? []), ...merged, ...type.statuses.map((it) => it._id)]
+    for (const id of ids) {
+      if (!rank.has(id)) rank.set(id, rank.size)
+    }
+  }
+  return rank
+}
+
+/**
+ * @public
+ * Position of a status among the UNIQUE statuses of its category in the project type, for the category icon
+ * (`index` of `count`; `count` is one more than the number of statuses). Task types are ignored, so every
+ * place that shows the status draws the same icon. Order is `getProjectStatusRank`.
+ * `index` is 0 when the status is not in the project type.
+ */
+export function getStatusIconPosition (
+  type: Pick<ProjectType, 'statuses' | 'tasks' | 'statusOrder'> | undefined,
+  taskTypes: IdMap<TaskType>,
+  statuses: IdMap<Status>,
+  statusId: Ref<Status>
+): { index: number, count: number } {
+  const category = statuses.get(statusId)?.category
+  const unique = [...new Set((type?.statuses ?? []).map((it) => it._id))].filter(
+    (id) => statuses.get(id)?.category === category
+  )
+  const rank =
+    type !== undefined
+      ? getProjectStatusRank([{ _id: '' as Ref<ProjectType>, name: '', ...type }], taskTypes)
+      : new Map<Ref<Status>, number>()
+  const order = (id: Ref<Status>): number => rank.get(id) ?? rank.size
+  // Array.sort is stable, so equal ranks keep the ProjectType.statuses order
+  unique.sort((a, b) => order(a) - order(b))
+  return { index: unique.indexOf(statusId) + 1, count: unique.length + 1 }
+}
+
+/**
+ * @public
+ * Position of a status among the statuses of its category in the order of one task type (`TaskType.statuses`),
+ * same `index`/`count` convention as `getStatusIconPosition`. `undefined` when the task type does not list the status.
+ */
+export function getTaskTypeStatusIconPosition (
+  taskType: Pick<TaskType, 'statuses'> | undefined,
+  statuses: IdMap<Status>,
+  statusId: Ref<Status>
+): { index: number, count: number } | undefined {
+  const category = statuses.get(statusId)?.category
+  const unique = [...new Set(taskType?.statuses ?? [])].filter((id) => statuses.get(id)?.category === category)
+  const index = unique.indexOf(statusId)
+  return index < 0 ? undefined : { index: index + 1, count: unique.length + 1 }
+}
+
+/**
+ * @public
+ * Task type a `kind` condition of a query narrows to: a plain ref or `$in` with one value, otherwise `undefined`.
+ */
+export function getSingleQueryKind (kind: unknown): Ref<TaskType> | undefined {
+  if (typeof kind === 'string') return kind as Ref<TaskType>
+  const list = (kind as { $in?: unknown } | null | undefined)?.$in
+  return Array.isArray(list) && list.length === 1 && typeof list[0] === 'string'
+    ? (list[0] as Ref<TaskType>)
+    : undefined
+}
+
+/**
+ * @public
+ * The only task type of the project type, or the only one that lists any of `statusIds`; `undefined` when
+ * there are several (or none).
+ */
+export function getSingleStatusTaskType (
+  type: Pick<ProjectType, 'tasks'> | undefined,
+  taskTypes: IdMap<TaskType>,
+  statusIds: Array<Ref<Status>>
+): Ref<TaskType> | undefined {
+  if (type?.tasks.length === 1) return type.tasks[0]
+  const found = new Set<Ref<TaskType>>()
+  for (const id of type?.tasks ?? []) {
+    if (statusIds.some((it) => taskTypes.get(id)?.statuses.includes(it) === true)) found.add(id)
+  }
+  return found.size === 1 ? [...found][0] : undefined
+}
+
+/**
+ * @public
  * Comparator for status refs used by grouped views: by category (`categoryOrder`), then by the merged order
  * of the task types (`mergeStatusOrder`), then by name. Unknown categories and statuses outside
  * `orderedTaskTypes` go after the known ones.
@@ -195,9 +315,11 @@ export function mergeStatusOrder (orderedTaskTypes: TaskType[]): Map<Ref<Status>
 export function statusOrderComparator (
   categoryOrder: ReadonlyArray<Ref<StatusCategory>>,
   orderedTaskTypes: TaskType[],
-  statuses: IdMap<Status>
+  statuses: IdMap<Status>,
+  // Ranks that replace the merged order of `orderedTaskTypes`, see `getProjectStatusRank`
+  rankOverride?: Map<Ref<Status>, number>
 ): (a: Ref<Status>, b: Ref<Status>) => number {
-  const rank = mergeStatusOrder(orderedTaskTypes)
+  const rank = rankOverride ?? mergeStatusOrder(orderedTaskTypes)
   const unknownRank = rank.size
   const categoryIndex = (status: Status | undefined): number => {
     const idx = status?.category != null ? categoryOrder.indexOf(status.category) : -1
@@ -234,6 +356,425 @@ export async function createState<T extends Status> (
   return await client.createDoc(_class, core.space.Model, data)
 }
 
+type StatusLike = Pick<Status, '_id' | 'name' | 'ofAttribute' | 'category'>
+
+/**
+ * Identity of a status inside a project type: same attribute and same name,
+ * ignoring case and outer spaces.
+ * @public
+ */
+export function statusKey (ofAttribute: Ref<Attribute<Status>>, name: string): string {
+  return `${ofAttribute}:${name.trim().toLowerCase()}`
+}
+
+/**
+ * @public
+ */
+export type StatusReuse =
+  | { action: 'create' }
+  | { action: 'reuse', status: StatusLike }
+  // Same key exists in another category: the caller must reject the name.
+  | { action: 'conflict', status: StatusLike }
+
+/**
+ * Decides what to do with a status named `data.name`, given the statuses already
+ * in the project type.
+ * `exclude` is the status being renamed: it never matches itself.
+ * @public
+ */
+export function resolveStatusReuse (
+  existing: StatusLike[],
+  data: Pick<Data<Status>, 'ofAttribute' | 'name' | 'category'>,
+  exclude?: Ref<Status>
+): StatusReuse {
+  const key = statusKey(data.ofAttribute, data.name)
+  const same = existing.filter((it) => it._id !== exclude && statusKey(it.ofAttribute, it.name) === key)
+  const sameCategory = same.find((it) => it.category === data.category)
+  if (sameCategory !== undefined) return { action: 'reuse', status: sameCategory }
+  if (same.length > 0) return { action: 'conflict', status: same[0] }
+  return { action: 'create' }
+}
+
+/**
+ * True when no other project type lists the status, so changing the Status document itself is visible
+ * only inside `typeId`.
+ * @public
+ */
+export function isStatusOnlyInType (
+  statusId: Ref<Status>,
+  typeId: Ref<ProjectType>,
+  types: Iterable<Pick<ProjectType, '_id' | 'statuses'>>
+): boolean {
+  for (const t of types) {
+    if (t._id !== typeId && t.statuses.some((it) => it._id === statusId)) return false
+  }
+  return true
+}
+
+/**
+ * @public
+ * Why the new name of a status is rejected, if it is. `conflict`: the name exists in another category;
+ * `exists`: it is already listed by one of `taskTypes`; `duplicateWithTasks`: re-pointing to the existing
+ * status would move `tasks` tasks from the browser, which the duplicate merge does instead.
+ */
+export function getStatusNameBlock (
+  found: StatusReuse,
+  taskTypes: Array<Pick<TaskType, 'statuses'>>,
+  tasks: number
+): 'conflict' | 'exists' | 'duplicateWithTasks' | undefined {
+  if (found.action === 'create') return undefined
+  if (found.action === 'conflict') return 'conflict'
+  if (taskTypes.some((tt) => tt.statuses.includes(found.status._id))) return 'exists'
+  return tasks > 0 ? 'duplicateWithTasks' : undefined
+}
+
+/**
+ * @public
+ * A rename updates the Status document itself when the model does not define it, no other project type
+ * lists it and no other status of the project type has the new name. Model builders name documents by
+ * plugin id (`tracker:status:Backlog`), while `generateId` (user and import created ones) has no ':'.
+ * `createdBy` cannot tell them apart: the importer creates statuses as System too.
+ */
+export function canRenameStatusInPlace (
+  status: Pick<Status, '_id'>,
+  found: StatusReuse,
+  typeId: Ref<ProjectType>,
+  types: Iterable<Pick<ProjectType, '_id' | 'statuses'>>
+): boolean {
+  return found.action === 'create' && !status._id.includes(':') && isStatusOnlyInType(status._id, typeId, types)
+}
+
+/**
+ * @public
+ */
+export interface StatusPlacement {
+  taskType: Ref<TaskType>
+  // New status list of the task type, given its current list and the id of the created or reused status
+  place: (statuses: Array<Ref<Status>>, id: Ref<Status>) => Array<Ref<Status>>
+}
+
+/**
+ * @public
+ */
+export interface StatusItem {
+  data: Data<Status>
+  // Id to give a new status; an existing status with this id is used as is
+  id?: Ref<Status>
+  // `id` is a status of the project type to attach as it is, without the name rule
+  attachExisting?: boolean
+}
+
+/**
+ * Creates (or reuses, by the key rule) statuses of the project type and attaches them in one compare-and-set
+ * apply: it commits only while `ProjectType.modifiedOn` is the value read, and applies of one project type run
+ * one after another (the scope). Every status added to the project type updates it, so a concurrent creator
+ * makes the commit fail; this then re-reads and reuses what the other side created. Two creators of one key
+ * therefore end with one Status. No `notMatch` on the Status name: statuses are global and other project
+ * types have the same names.
+ *
+ * `placements` put the statuses into existing task types (the task types and the project type entries are
+ * updated in the same apply). With `newTaskType` instead, the statuses are reserved in the project type for a
+ * task type the caller creates right after. With `projectOnly` the statuses become entries of the project type
+ * without a task type.
+ * `onConflict`: a name that exists in another category throws, or gets the category name appended.
+ * @public
+ */
+export async function createStatusesAtomic (
+  client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  statusClass: Ref<Class<Status>>,
+  items: StatusItem[],
+  target: { placements?: StatusPlacement[], newTaskType?: Ref<TaskType>, projectOnly?: boolean },
+  options: {
+    icon?: ProjectStatus['icon']
+    // Store the color, icon and description of a created status in the project type entry too
+    projectEntry?: boolean
+    onConflict?: 'throw' | 'rename'
+    retries?: number
+    delay?: (attempt: number) => Promise<void>
+  } = {}
+): Promise<Array<{ id: Ref<Status>, reused: boolean }>> {
+  const retries = options.retries ?? 3
+  // A concurrent model update may not have reached this client yet
+  const delay =
+    options.delay ??
+    (async (attempt: number) => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 200 * attempt)
+      })
+    })
+  const placements = target.placements ?? []
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await delay(attempt)
+    const type = await client.findOne(task.class.ProjectType, { _id: projectTypeId })
+    if (type === undefined) throw new PlatformError(unknownStatus('No project type found'))
+    const known: StatusLike[] = await client.findAll(core.class.Status, {
+      _id: { $in: type.statuses.map((it) => it._id) }
+    })
+    const taskTypes = await client.findAll(task.class.TaskType, { _id: { $in: type.tasks } })
+
+    const resolved: Array<{ id: Ref<Status>, reused: boolean, create?: Data<Status> }> = []
+    for (const item of items) {
+      if (item.attachExisting === true && item.id !== undefined) {
+        resolved.push({ id: item.id, reused: true })
+        continue
+      }
+      let data = item.data
+      let reuse = resolveStatusReuse(known, data)
+      if (reuse.action === 'conflict') {
+        if (options.onConflict !== 'rename') throw new Error(`Status "${data.name}" exists in another category`)
+        const categoryName = client.getModel().findAllSync(core.class.StatusCategory, { _id: data.category })[0]
+        data = { ...data, name: `${data.name.trim()} (${categoryName?.defaultStatusName ?? data.category})` }
+        console.warn(`Status "${item.data.name}" exists in another category, created as "${data.name}"`)
+        reuse = resolveStatusReuse(known, data)
+      }
+      if (reuse.action === 'reuse') {
+        resolved.push({ id: reuse.status._id as Ref<Status>, reused: true })
+        continue
+      }
+      const existing = item.id !== undefined ? await client.findOne(core.class.Status, { _id: item.id }) : undefined
+      if (existing !== undefined) {
+        resolved.push({ id: existing._id, reused: false })
+        known.push(existing)
+        continue
+      }
+      const id = item.id ?? generateId<Status>()
+      resolved.push({ id, reused: false, create: data })
+      known.push({ _id: id, name: data.name, ofAttribute: data.ofAttribute, category: data.category })
+    }
+
+    const overrides: Array<{ taskTypeId: Ref<TaskType>, statuses: Array<Ref<Status>> }> = []
+    for (const p of placements) {
+      const tt = taskTypes.find((it) => it._id === p.taskType)
+      if (tt === undefined) throw new PlatformError(unknownStatus('No task type found'))
+      let list = tt.statuses
+      for (const r of resolved) list = p.place(list, r.id)
+      overrides.push({ taskTypeId: tt._id, statuses: list.filter((it, i, arr) => arr.indexOf(it) === i) })
+    }
+    const entryTaskType = overrides[0]?.taskTypeId ?? target.newTaskType
+    if (entryTaskType === undefined && target.projectOnly !== true) {
+      throw new Error('No task type to attach the statuses to')
+    }
+    const entries = [...type.statuses]
+    for (const r of resolved) {
+      if (entryTaskType === undefined) {
+        if (!entries.some((it) => it._id === r.id)) {
+          const created = options.projectEntry === true ? r.create : undefined
+          entries.push({
+            _id: r.id,
+            ...(created !== undefined
+              ? { color: created.color, icon: options.icon, description: created.description }
+              : {})
+          })
+        }
+        continue
+      }
+      const wanted = placements.length > 0 ? (r.reused ? undefined : entryTaskType) : entryTaskType
+      if (wanted !== undefined && !entries.some((it) => it._id === r.id && it.taskType === wanted)) {
+        const created = options.projectEntry === true ? r.create : undefined
+        entries.push({
+          _id: r.id,
+          ...(created !== undefined
+            ? { color: created.color, icon: options.icon, description: created.description }
+            : {}),
+          taskType: wanted
+        })
+      }
+    }
+
+    const op = client.apply(`task-status:${projectTypeId}`, 'create-status')
+    op.match(task.class.ProjectType, { _id: projectTypeId, modifiedOn: type.modifiedOn })
+    for (const r of resolved) {
+      if (r.create !== undefined) await op.createDoc(statusClass, core.space.Model, r.create, r.id)
+    }
+    for (const o of overrides) {
+      const tt = taskTypes.find((it) => it._id === o.taskTypeId) as TaskType
+      await op.update(tt, { statuses: o.statuses })
+    }
+    await op.update(type, {
+      statuses:
+        placements.length > 0
+          ? calculateStatuses(
+              { statuses: entries, tasks: type.tasks },
+              new Map(taskTypes.map((it) => [it._id, it])),
+              overrides
+            )
+          : entries
+    })
+    if ((await op.commit()).result) return resolved.map((r) => ({ id: r.id, reused: r.reused }))
+  }
+  throw new Error('Statuses were not created: project type is changed concurrently')
+}
+
+/**
+ * One status, see {@link createStatusesAtomic}. No `placements`: the status is only added to the project type.
+ * @public
+ */
+export async function createStatusAtomic (
+  client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  statusClass: Ref<Class<Status>>,
+  data: Data<Status>,
+  placements: StatusPlacement[],
+  icon?: ProjectStatus['icon'],
+  options: { retries?: number, delay?: (attempt: number) => Promise<void> } = {}
+): Promise<{ id: Ref<Status>, reused: boolean }> {
+  const [res] = await createStatusesAtomic(
+    client,
+    projectTypeId,
+    statusClass,
+    [{ data }],
+    { placements, projectOnly: placements.length === 0 },
+    {
+      ...options,
+      icon,
+      projectEntry: true
+    }
+  )
+  return res
+}
+
+/**
+ * @public
+ * The status that survives the merge of same-key statuses, the rule of the duplicate merge migration and of the
+ * statuses table: most tasks, then defined by the model, then oldest, then smallest id.
+ */
+export function chooseMergeTarget (
+  members: Array<{ _id: string, tasks: number, system: boolean, createdOn?: number }>
+): string {
+  const sorted = [...members].sort((a, b) => {
+    const diffs = [
+      b.tasks - a.tasks,
+      Number(b.system) - Number(a.system),
+      (a.createdOn ?? Infinity) - (b.createdOn ?? Infinity)
+    ]
+    return diffs.find((d) => d !== 0 && !Number.isNaN(d)) ?? a._id.localeCompare(b._id)
+  })
+  return sorted[0]._id
+}
+
+/**
+ * @public
+ * Disambiguation for statuses shown together under one name: for every status whose trimmed, case-insensitive
+ * name is shared with another listed status, the name of its project type, or of its project when that type has
+ * exactly one project. A status listed by several project types takes the first of them by name. When several
+ * statuses of one name get the same label (they come from one project type or project), the names of the task
+ * types that list the status are used instead. Statuses with a unique name, or without a project type, get no
+ * entry.
+ */
+export function getStatusNameSuffixes (
+  statuses: Status[],
+  types: Iterable<Pick<ProjectType, '_id' | 'name' | 'statuses'>>,
+  projects: Iterable<Pick<Project, '_id' | 'type' | 'name'>>,
+  taskTypes: Iterable<Pick<TaskType, '_id' | 'name' | 'parent' | 'statuses'>> = []
+): Map<Ref<Status>, string> {
+  const byName = new Map<string, Status[]>()
+  for (const s of statuses) {
+    const key = s.name.trim().toLowerCase()
+    byName.set(key, [...(byName.get(key) ?? []), s])
+  }
+  const sortedTypes = [...types].sort((a, b) => a.name.localeCompare(b.name))
+  const projectsByType = new Map<Ref<ProjectType>, Array<Pick<Project, 'name'>>>()
+  for (const p of projects) {
+    projectsByType.set(p.type, [...(projectsByType.get(p.type) ?? []), p])
+  }
+  const taskTypeList = [...taskTypes]
+  const result = new Map<Ref<Status>, string>()
+  for (const group of byName.values()) {
+    const unique = group.filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
+    if (unique.length < 2) continue
+    const labels = new Map<Ref<Status>, { label: string, type: Ref<ProjectType> }>()
+    for (const s of unique) {
+      const type = sortedTypes.find((t) => t.statuses.some((it) => it._id === s._id))
+      if (type === undefined) continue
+      const typeProjects = projectsByType.get(type._id) ?? []
+      labels.set(s._id, { label: typeProjects.length === 1 ? typeProjects[0].name : type.name, type: type._id })
+    }
+    for (const [id, { label, type }] of labels) {
+      const clash = [...labels].some(([other, it]) => other !== id && it.label === label)
+      const names = taskTypeList
+        .filter((tt) => tt.parent === type && tt.statuses.includes(id))
+        .map((tt) => tt.name)
+        .sort((a, b) => a.localeCompare(b))
+      result.set(id, clash && names.length > 0 ? names.join(', ') : label)
+    }
+  }
+  return result
+}
+
+/**
+ * @public
+ * Statuses of the project type a task type can still take: not in the task type and without a status of the same
+ * name in it. Grouped by category in `categoryOrder`, empty groups left out; the order inside a group is kept.
+ */
+export function getExistingStatusOptions (
+  projectTypeStatuses: Status[],
+  taskTypeStatuses: Status[],
+  categoryOrder: ReadonlyArray<Ref<StatusCategory>>
+): Array<{ category: Ref<StatusCategory> | undefined, statuses: Status[] }> {
+  const taken = new Set(taskTypeStatuses.map((it) => it._id))
+  const takenKeys = new Set(taskTypeStatuses.map((it) => statusKey(it.ofAttribute, it.name)))
+  const offered = projectTypeStatuses.filter(
+    (it, idx, arr) =>
+      !taken.has(it._id) &&
+      !takenKeys.has(statusKey(it.ofAttribute, it.name)) &&
+      arr.findIndex((p) => p._id === it._id) === idx
+  )
+  const groups = new Map<Ref<StatusCategory> | undefined, Status[]>()
+  for (const s of offered) groups.set(s.category, [...(groups.get(s.category) ?? []), s])
+  const index = (c: Ref<StatusCategory> | undefined): number => {
+    const i = c !== undefined ? categoryOrder.indexOf(c) : -1
+    return i >= 0 ? i : categoryOrder.length
+  }
+  return [...groups].sort((a, b) => index(a[0]) - index(b[0])).map(([category, statuses]) => ({ category, statuses }))
+}
+
+/**
+ * @public
+ * Statuses of the given attributes that no project type and no task type lists, the ones that got left behind
+ * when everything that used them was removed.
+ */
+export function getOrphanStatuses (
+  statuses: Iterable<Status>,
+  types: Iterable<Pick<ProjectType, 'statuses'>>,
+  taskTypes: Iterable<Pick<TaskType, 'statuses'>>,
+  attributes: ReadonlySet<Ref<Attribute<Status>>>
+): Status[] {
+  const used = new Set<Ref<Status>>()
+  for (const type of types) {
+    for (const it of type.statuses) used.add(it._id)
+  }
+  for (const taskType of taskTypes) {
+    for (const it of taskType.statuses) used.add(it)
+  }
+  return [...statuses].filter((it) => attributes.has(it.ofAttribute) && !used.has(it._id))
+}
+
+/**
+ * Groups of statuses sharing a key within one list, only groups with more than one status.
+ * @public
+ */
+export function findDuplicateStatusGroups<T extends StatusLike> (statuses: T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>()
+  for (const s of statuses) {
+    const key = statusKey(s.ofAttribute, s.name)
+    groups.set(key, [...(groups.get(key) ?? []), s])
+  }
+  for (const [key, list] of groups) {
+    if (list.length < 2) groups.delete(key)
+  }
+  return groups
+}
+
+/**
+ * @public
+ */
+export function countTasksByStatus (tasks: Array<{ status: Ref<Status> }>): Map<Ref<Status>, number> {
+  const counts = new Map<Ref<Status>, number>()
+  for (const t of tasks) counts.set(t.status, (counts.get(t.status) ?? 0) + 1)
+  return counts
+}
+
 /**
  * @public
  */
@@ -262,6 +803,13 @@ export function calculateStatuses (
       }
     }
   }
+  // A status in no task type stays in the project type, without a task type
+  const used = new Set(result.map((it) => it._id))
+  for (const [id, entry] of stIds) {
+    if (used.has(id)) continue
+    const { taskType, ...rest } = entry
+    result.push(rest)
+  }
   return result
 }
 
@@ -285,16 +833,59 @@ export type TaskTypeWithFactory = Omit<Data<TaskType>, 'statuses' | 'parent' | '
 
 type ProjectData = Omit<Data<ProjectType>, 'statuses' | 'targetClass'>
 
+// `known` holds the statuses of the project type created so far, so task types of one type share them.
+// A name that exists in another category gets the category name appended: an import must not fail halfway
+// and two statuses with the same name in one project type are confusing.
 async function createStates (
   client: TxOperations,
   states: Data<Status>[],
-  stateClass: Ref<Class<Status>>
+  stateClass: Ref<Class<Status>>,
+  known: StatusLike[]
 ): Promise<Ref<Status>[]> {
   const statuses: Ref<Status>[] = []
   for (const st of states) {
-    statuses.push(await createState(client, stateClass, st))
+    let data = st
+    let reuse = resolveStatusReuse(known, data)
+    if (reuse.action === 'conflict') {
+      const categoryName = client.getModel().findAllSync(core.class.StatusCategory, { _id: st.category })[0]
+      data = { ...st, name: `${st.name.trim()} (${categoryName?.defaultStatusName ?? st.category})` }
+      console.warn(`Status "${st.name}" exists in another category, created as "${data.name}"`)
+      reuse = resolveStatusReuse(known, data)
+    }
+    let id: Ref<Status>
+    if (reuse.action === 'reuse') {
+      id = reuse.status._id
+    } else {
+      id = await createState(client, stateClass, data)
+      known.push({ _id: id, name: data.name, ofAttribute: data.ofAttribute, category: data.category })
+    }
+    if (!statuses.includes(id)) statuses.push(id)
   }
   return statuses
+}
+
+/**
+ * Creates the statuses that the project type does not have yet and reserves them in the project type for
+ * `taskTypeId`, which the caller creates right after (see {@link createStatusesAtomic}). Returns ids in the
+ * order of `states`.
+ * @public
+ */
+export async function createProjectTypeStates (
+  client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  states: Data<Status>[],
+  stateClass: Ref<Class<Status>>,
+  taskTypeId: Ref<TaskType>
+): Promise<Ref<Status>[]> {
+  const res = await createStatusesAtomic(
+    client,
+    projectTypeId,
+    stateClass,
+    states.map((data) => ({ data })),
+    { newTaskType: taskTypeId },
+    { onConflict: 'rename' }
+  )
+  return res.map((it) => it.id).filter((it, idx, arr) => arr.indexOf(it) === idx)
 }
 
 /**
@@ -320,7 +911,10 @@ export async function createProjectType (
     throw new Error('category is not found in model')
   }
 
-  await createTaskTypes(tasks, _id, client, _statues, tasksData, _tasks, false)
+  const known: StatusLike[] = []
+  await createTaskTypes(tasks, _id, client, _statues, tasksData, _tasks, async (factory, statusClass) => {
+    return await createStates(client, factory, statusClass, known)
+  })
 
   const baseClassClass = client.getHierarchy().getClass(categoryObj.baseClass)
 
@@ -387,21 +981,23 @@ export async function createDefaultTaskType (
     descriptor.statusCategoriesFunc !== undefined
       ? (await getResource(descriptor.statusCategoriesFunc))(projectType)
       : [task.statusCategory.UnStarted, task.statusCategory.Active, task.statusCategory.Won, task.statusCategory.Lost]
+  const taskTypeId = generateId<TaskType>()
   let statuses =
     descriptor.defaultStatusesFunc !== undefined ? (await getResource(descriptor.defaultStatusesFunc))(projectType) : []
+  // Statuses created here are already reserved in the project type for the new task type
+  let reserved = false
   if (statuses.length === 0) {
     const categories = await client.findAll(core.class.StatusCategory, { _id: { $in: statusCategories } })
-    statuses = []
+    const defaults: Array<Data<Status>> = []
     for (const category of statusCategories) {
       const std = categories.find((it) => it._id === category)
       if (std === undefined) continue
-      statuses.push(
-        await createState(client, statusClass, { name: std.defaultStatusName, ofAttribute: statusAttr._id, category })
-      )
+      defaults.push({ name: std.defaultStatusName, ofAttribute: statusAttr._id, category })
     }
+    statuses = await createProjectTypeStates(client, projectType._id, defaults, statusClass, taskTypeId)
+    reserved = true
   }
 
-  const taskTypeId = generateId<TaskType>()
   const ofClassClass = h.getClass(ofClass)
   // Class for custom fields of the new task type
   const targetClass = await client.createDoc(core.class.Class, core.space.Model, {
@@ -440,15 +1036,13 @@ export async function createDefaultTaskType (
     taskTypeId
   )
 
-  await client.update(projectType, {
-    tasks: [...projectType.tasks, taskTypeId],
-    statuses: [
-      ...projectType.statuses,
-      ...statuses
-        .filter((s) => !projectType.statuses.some((it) => it._id === s))
-        .map((s) => ({ _id: s, taskType: taskTypeId }))
-    ]
-  })
+  // $push, not a rewrite of the lists: concurrent creators of statuses and task types keep their entries
+  await client.update(projectType, { $push: { tasks: taskTypeId } })
+  if (!reserved) {
+    for (const s of statuses.filter((it) => !projectType.statuses.some((p) => p._id === it))) {
+      await client.update(projectType, { $push: { statuses: { _id: s, taskType: taskTypeId } } })
+    }
+  }
   return taskTypeId
 }
 
@@ -469,7 +1063,18 @@ export async function updateProjectType (
   const tasksData = new Map<Ref<TaskType>, Data<TaskType>>()
   const _statues = new Set<Ref<Status>>()
 
-  const hasUpdates = await createTaskTypes(tasks, projectType, client, _statues, tasksData, _tasks, true)
+  // The project type exists: its statuses are created in compare-and-set applies, reserved for the new task type
+  const hasUpdates = await createTaskTypes(
+    tasks,
+    projectType,
+    client,
+    _statues,
+    tasksData,
+    _tasks,
+    async (factory, statusClass, taskId) =>
+      await createProjectTypeStates(client, projectType, factory, statusClass, taskId),
+    true
+  )
 
   if (hasUpdates) {
     const ttypes = await client.findAll<TaskType>(task.class.TaskType, { _id: { $in: _tasks } })
@@ -495,7 +1100,12 @@ async function createTaskTypes (
   _statues: Set<Ref<Status>>,
   tasksData: Map<Ref<TaskType>, Data<TaskType>>,
   _tasks: Ref<TaskType>[],
-  skipExisting: boolean
+  createStatuses: (
+    factory: Data<Status>[],
+    statusClass: Ref<Class<Status>>,
+    taskId: Ref<TaskType>
+  ) => Promise<Ref<Status>[]>,
+  skipExisting: boolean = false
 ): Promise<boolean> {
   const existingTaskTypes = await client.findAll(task.class.TaskType, { parent: _id })
 
@@ -512,7 +1122,7 @@ async function createTaskTypes (
     }
     hasUpdates = true
 
-    const statuses = await createStates(client, factory, data.statusClass)
+    const statuses = await createStatuses(factory, data.statusClass, taskId)
     for (const st of statuses) {
       _statues.add(st)
     }

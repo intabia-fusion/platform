@@ -330,6 +330,31 @@ describe('client model transactions', () => {
     expect(hierarchy.findAttribute(core.class.Space, 's')).toBe(client.getModel().findObject(runtimeId))
   })
 
+  it('copies the server modifiedOn from the echo of a locally applied model tx without applying it twice', async () => {
+    const client = await createClient(async (handler) => {
+      const conn = await connect(handler)
+      conn.tx = async () => ({})
+      return conn
+    })
+    const factory = new TxFactory(core.account.System)
+    const space = (await client.findAll(core.class.Space, {}))[0]
+    const model = client.getModel()
+    const tx = factory.createTxUpdateDoc(core.class.Space, core.space.Model, space._id, {
+      $push: { members: 'm1' as any }
+    })
+    tx.modifiedOn = 1000
+    await client.tx(tx)
+    const before = model.getObject(space._id).members.length
+
+    await (client as unknown as { updateFromRemote: (...tx: Tx[]) => Promise<void> }).updateFromRemote({
+      ...tx,
+      modifiedOn: 2000
+    })
+    const doc = model.getObject(space._id)
+    expect(doc.modifiedOn).toBe(2000)
+    expect(doc.members.length).toBe(before)
+  })
+
   it('applies model and hierarchy synchronously: unawaited class create followed by a doc of that class', async () => {
     const client = await createClient(connect)
     const factory = new TxFactory(core.account.System)

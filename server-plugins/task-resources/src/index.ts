@@ -17,7 +17,7 @@
 import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxRemoveDoc, TxUpdateDoc } from '@hcengineering/core'
 import { getEmbeddedLabel } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
-import task, { Task, TaskType } from '@hcengineering/task'
+import task, { calculateStatuses, ProjectType, Task, TaskType } from '@hcengineering/task'
 
 /**
  * @public
@@ -94,6 +94,22 @@ export async function OnTaskTypeRemove (txes: TxRemoveDoc<TaskType>[], control: 
       for (const attribute of attributes) {
         result.push(control.txFactory.createTxRemoveDoc(attribute._class, attribute.space, attribute._id))
       }
+    }
+    const projectType =
+      taskType !== undefined
+        ? control.modelDb.findAllSync<ProjectType>(task.class.ProjectType, { _id: taskType.parent })[0]
+        : undefined
+    if (projectType !== undefined) {
+      const tasks = projectType.tasks.filter((it) => it !== tx.objectId)
+      const remaining = new Map(
+        control.modelDb.findAllSync<TaskType>(task.class.TaskType, { _id: { $in: tasks } }).map((it) => [it._id, it])
+      )
+      result.push(
+        control.txFactory.createTxUpdateDoc(task.class.ProjectType, core.space.Model, projectType._id, {
+          tasks,
+          statuses: calculateStatuses({ statuses: projectType.statuses, tasks }, remaining, [])
+        })
+      )
     }
   }
   return result
