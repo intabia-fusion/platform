@@ -70,6 +70,13 @@ export interface Task extends AttachedDoc {
 /**
  * @public
  */
+export interface TimeManaged extends Task {
+  startDate?: Timestamp | null
+}
+
+/**
+ * @public
+ */
 export interface KanbanCard extends Class<Doc> {
   card: AnyComponent
 }
@@ -213,7 +220,8 @@ const task = plugin(taskId, {
   mixin: {
     KanbanCard: '' as Ref<Mixin<KanbanCard>>,
     TaskTypeClass: '' as Ref<Mixin<TaskTypeClass>>,
-    ProjectTypeClass: '' as Ref<Mixin<ProjectTypeClass>>
+    ProjectTypeClass: '' as Ref<Mixin<ProjectTypeClass>>,
+    TimeManaged: '' as Ref<Mixin<TimeManaged>>
   },
   attribute: {
     State: '' as Ref<Attribute<Status>>

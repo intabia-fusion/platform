@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -180,7 +181,8 @@ const view = plugin(viewId, {
     MasterDetail: '' as Ref<ViewletDescriptor>,
     Tree: '' as Ref<ViewletDescriptor>,
     Document: '' as Ref<ViewletDescriptor>,
-    RelationshipTable: '' as Ref<ViewletDescriptor>
+    RelationshipTable: '' as Ref<ViewletDescriptor>,
+    Timeline: '' as Ref<ViewletDescriptor>
   },
   component: {
     ActionsPopup: '' as AnyComponent,
@@ -203,7 +205,8 @@ const view = plugin(viewId, {
     ForbiddenNotification: '' as AnyComponent,
     DatePresenter: '' as AnyComponent,
     DateEditor: '' as AnyComponent,
-    SidebarPreviewWidget: '' as AnyComponent
+    SidebarPreviewWidget: '' as AnyComponent,
+    TimelineView: '' as AnyComponent
   },
   ids: {
     IconWithEmoji: '' as Asset,

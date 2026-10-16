@@ -50,6 +50,29 @@
   export let allowClose: boolean = !embedded
 
   let realObjectClass: Ref<Class<Doc>> = _class
+
+  function readMaxWidth (_class: Ref<Class<Doc>>): boolean {
+    try {
+      return localStorage.getItem(`${_class}.useMaxWidth`) === 'true'
+    } catch {
+      return false
+    }
+  }
+
+  function saveMaxWidth (_class: Ref<Class<Doc>>, value: boolean): void {
+    try {
+      localStorage.setItem(`${_class}.useMaxWidth`, value.toString())
+    } catch {}
+  }
+
+  let useMaxWidth = readMaxWidth(_class)
+  let widthClass = _class
+  // Re-read on class change so the old value is not saved under the new class.
+  $: if (widthClass !== _class) {
+    widthClass = _class
+    useMaxWidth = readMaxWidth(_class)
+  }
+  $: saveMaxWidth(widthClass, useMaxWidth)
   let lastId: Ref<Doc> | undefined
   let objectId: Ref<Doc> | undefined
   let object: Doc
@@ -255,6 +278,7 @@
     bind:content
     bind:panelWidth
     bind:innerWidth
+    bind:useMaxWidth
     on:open
     on:update={(ev) => {
       _update(ev.detail)

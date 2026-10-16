@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,7 +26,7 @@
   } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
-  import type { Issue } from '@hcengineering/tracker'
+  import type { Issue, Milestone } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { AnyComponent } from '@hcengineering/ui'
   import {
@@ -50,6 +51,7 @@
     openDocInSidebar
   } from '@hcengineering/view-resources'
   import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
+  import MilestonePresenter from '../../milestones/MilestonePresenter.svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { Analytics } from '@hcengineering/analytics'
 
@@ -74,6 +76,8 @@
   let lastId: Ref<Issue> | undefined
 
   const queryClient = createQuery()
+  const milestoneQuery = createQuery()
+  let milestone: Milestone | undefined
   const dispatch = createEventDispatcher()
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -88,6 +92,15 @@
   const inboxClient = NotificationClientImpl.getClient()
 
   let issueId: Ref<Issue> | undefined
+
+  $: if (issue?.milestone != null) {
+    milestoneQuery.query(tracker.class.Milestone, { _id: issue.milestone }, (res) => {
+      milestone = res[0]
+    })
+  } else {
+    milestoneQuery.unsubscribe()
+    milestone = undefined
+  }
 
   $: void getIssueIdByIdentifier(_id).then((res) => {
     issueId = res ?? (_id as Ref<Issue>)
@@ -259,6 +272,9 @@
       {#if (projectType?.tasks.length ?? 0) > 1 && taskType !== undefined}
         ({taskType.name})
       {/if}
+      {#if milestone !== undefined}
+        <span class="milestone" data-id="issue-title-milestone">(<MilestonePresenter value={milestone} />)</span>
+      {/if}
       <ComponentExtensions
         extension={tracker.extensions.EditIssueTitle}
         props={{ size: 'medium', kind: 'ghost', space: issue.space, value: issue, readonly }}
@@ -428,5 +444,12 @@
   .breadcrumb-separator {
     margin: 0 0.5rem;
     color: var(--theme-caption-color);
+  }
+  .milestone {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
   }
 </style>

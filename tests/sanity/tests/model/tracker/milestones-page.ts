@@ -14,8 +14,12 @@ export class MilestonesPage extends CommonTrackerPage {
   buttonNewMilestoneSetStatus = (): Locator =>
     this.page.locator('form[id="tracker:string:NewMilestone"] div.antiCard-pool button[type="button"]')
 
+  // The pool holds the start date button first and the target date one second.
+  buttonNewMilestoneStartDate = (): Locator =>
+    this.page.locator('form[id="tracker:string:NewMilestone"] div.antiCard-pool button.datetime-button').first()
+
   buttonNewMilestoneTargetDate = (): Locator =>
-    this.page.locator('form[id="tracker:string:NewMilestone"] div.antiCard-pool button.datetime-button')
+    this.page.locator('form[id="tracker:string:NewMilestone"] div.antiCard-pool button.datetime-button').last()
 
   buttonNewMilestoneCreate = (): Locator =>
     this.page.locator('form[id="tracker:string:NewMilestone"] button[type="submit"]')
@@ -30,6 +34,10 @@ export class MilestonesPage extends CommonTrackerPage {
       await this.buttonNewMilestoneSetStatus().click()
       await this.selectFromDropdown(this.page, data.status)
     }
+    if (data.startDate != null) {
+      await this.buttonNewMilestoneStartDate().click()
+      await this.fillDatePopup(data.startDate.day, data.startDate.month, data.startDate.year)
+    }
     if (data.targetDate != null) {
       await this.buttonNewMilestoneTargetDate().click()
       await this.fillDatePopup(data.targetDate.day, data.targetDate.month, data.targetDate.year)
@@ -38,7 +46,10 @@ export class MilestonesPage extends CommonTrackerPage {
       await this.buttonNewMilestoneTargetDate().click()
       await this.fillDatePopupInDays(data.targetDateInDays)
     }
+    // A re-render of the form (workbench still loading) drops what was typed: check, then wait for the form to go
+    await expect(this.inputNewMilestoneName()).toHaveValue(data.name)
     await this.buttonNewMilestoneCreate().click()
+    await expect(this.inputNewMilestoneName()).toHaveCount(0)
   }
 
   async openMilestoneByName (milestoneName: string): Promise<void> {
