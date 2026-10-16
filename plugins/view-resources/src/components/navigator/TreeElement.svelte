@@ -58,6 +58,7 @@
   export let draggable: boolean = false
 
   let pressed: boolean = false
+  let inlineBusy: boolean = false
   let inlineActions: Action[] = []
   let popupMenuActions: Action[] = []
 
@@ -78,7 +79,13 @@
   }
 
   async function onInlineClick (ev: MouseEvent, action: Action): Promise<void> {
-    void action.action([], ev)
+    if (inlineBusy) return
+    inlineBusy = true
+    try {
+      await action.action([], ev)
+    } finally {
+      inlineBusy = false
+    }
   }
 </script>
 
@@ -123,6 +130,7 @@
             size={'extra-small'}
             kind={'tertiary'}
             tooltip={{ label: action.label, direction: 'top' }}
+            loading={inlineBusy}
             on:click={(ev) => onInlineClick(ev, action)}
           />
         {/each}
@@ -134,8 +142,15 @@
           size={'extra-small'}
           kind={'tertiary'}
           tooltip={{ label: popupMenuActions[0].label, direction: 'top' }}
+          loading={inlineBusy}
           on:click={async (ev) => {
-            void popupMenuActions[0].action(_id, ev)
+            if (inlineBusy) return
+            inlineBusy = true
+            try {
+              await popupMenuActions[0].action(_id, ev)
+            } finally {
+              inlineBusy = false
+            }
           }}
         />
       {:else if popupMenuActions.length > 0}
@@ -191,6 +206,7 @@
             size={'extra-small'}
             kind={'tertiary'}
             tooltip={{ label: action.label, direction: 'bottom' }}
+            loading={inlineBusy}
             on:click={(ev) => onInlineClick(ev, action)}
           />
         {/each}
@@ -202,8 +218,15 @@
           size={'extra-small'}
           kind={'tertiary'}
           tooltip={{ label: popupMenuActions[0].label, direction: 'top' }}
+          loading={inlineBusy}
           on:click={async (ev) => {
-            void popupMenuActions[0].action(_id, ev)
+            if (inlineBusy) return
+            inlineBusy = true
+            try {
+              await popupMenuActions[0].action(_id, ev)
+            } finally {
+              inlineBusy = false
+            }
           }}
         />
       {:else if popupMenuActions.length > 0}

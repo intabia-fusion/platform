@@ -25,8 +25,16 @@
     await client.update(value, { title: value.title })
   }
 
+  let deleting = false
+
   async function handleDelete (): Promise<void> {
-    await client.remove(value)
+    if (deleting) return
+    deleting = true
+    try {
+      await client.remove(value)
+    } finally {
+      deleting = false
+    }
   }
 </script>
 
@@ -38,6 +46,7 @@
       tooltip={{ label: view.string.Delete, direction: 'bottom' }}
       size="extra-small"
       kind="tertiary"
+      loading={deleting}
       on:click={handleDelete}
     />
   </div>

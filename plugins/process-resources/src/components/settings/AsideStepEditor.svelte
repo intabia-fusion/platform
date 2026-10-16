@@ -51,14 +51,22 @@
     clearSettingsStore()
   }
 
+  let removing = false
+
   async function remove (): Promise<void> {
-    const doc = client.getModel().findObject(_id)
-    if (doc === undefined) return
-    const index = doc.actions.findIndex((it) => it._id === step._id)
-    if (index === -1) return
-    doc.actions.splice(index, 1)
-    await client.update(doc, { actions: doc.actions })
-    clearSettingsStore()
+    if (removing) return
+    removing = true
+    try {
+      const doc = client.getModel().findObject(_id)
+      if (doc === undefined) return
+      const index = doc.actions.findIndex((it) => it._id === step._id)
+      if (index === -1) return
+      doc.actions.splice(index, 1)
+      await client.update(doc, { actions: doc.actions })
+      clearSettingsStore()
+    } finally {
+      removing = false
+    }
   }
 
   function change (e: CustomEvent<Step<Doc>>): void {
@@ -76,7 +84,7 @@
 >
   <svelte:fragment slot="actions">
     {#if !readonly}
-      <ButtonIcon icon={IconDelete} size={'small'} kind={'tertiary'} on:click={remove} />
+      <ButtonIcon icon={IconDelete} size={'small'} kind={'tertiary'} loading={removing} on:click={remove} />
     {/if}
   </svelte:fragment>
   <div class="fs-title title text-xl" slot="title">

@@ -23,6 +23,20 @@
   let admin = false
   $: void fetchStats($ticker)
 
+  let wiping = false
+  async function wipeStatistics (): Promise<void> {
+    if (wiping) return
+    wiping = true
+    try {
+      await adminFetch(endpoint + '/api/v1/manage?operation=wipe-statistics', {
+        method: 'PUT'
+      })
+      await fetchStats(0)
+    } finally {
+      wiping = false
+    }
+  }
+
   export let sortingOrder: 'avg' | 'ops' | 'total' = 'ops'
   const sortOrder = [
     { id: 'avg', label: 'Average' },
@@ -48,13 +62,8 @@
       <Button
         icon={IconArrowRight}
         label={getEmbeddedLabel('Wipe statistics')}
-        on:click={() => {
-          void adminFetch(endpoint + '/api/v1/manage?operation=wipe-statistics', {
-            method: 'PUT'
-          }).then(async () => {
-            await fetchStats(0)
-          })
-        }}
+        loading={wiping}
+        on:click={wipeStatistics}
       />
     </div>
   </div>

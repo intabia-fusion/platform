@@ -55,28 +55,35 @@
     })
   }
 
+  let disconnecting = false
   async function onDisconnect (
     event: MouseEvent,
     prj: GithubProject,
     repository: GithubIntegrationRepository
   ): Promise<void> {
-    const issuesQuery = await client.findAll(
-      github.mixin.GithubIssue,
-      {
-        space: prj._id,
-        repository: repository._id
-      },
-      { total: true, limit: 1 }
-    )
-    showPopup(MessageBox, {
-      label: github.string.UnlinkRepository,
-      message: github.string.UnlinkMessage,
-      params: { repositoryName: repository.name, prjName: prj.name, total: issuesQuery.total },
-      richMessage: true,
-      action: async () => {
-        await disconnect(prj, repository)
-      }
-    })
+    if (disconnecting) return
+    disconnecting = true
+    try {
+      const issuesQuery = await client.findAll(
+        github.mixin.GithubIssue,
+        {
+          space: prj._id,
+          repository: repository._id
+        },
+        { total: true, limit: 1 }
+      )
+      showPopup(MessageBox, {
+        label: github.string.UnlinkRepository,
+        message: github.string.UnlinkMessage,
+        params: { repositoryName: repository.name, prjName: prj.name, total: issuesQuery.total },
+        richMessage: true,
+        action: async () => {
+          await disconnect(prj, repository)
+        }
+      })
+    } finally {
+      disconnecting = false
+    }
   }
 
   $: repos = asRepos(integration.$lookup?.repositories ?? [])
@@ -196,6 +203,7 @@
                   kind={'dangerous'}
                   label={github.string.UnlinkFromProject}
                   size={'medium'}
+                  loading={disconnecting}
                   on:click={(evt) => {
                     void onDisconnect(evt, prj, repository)
                   }}

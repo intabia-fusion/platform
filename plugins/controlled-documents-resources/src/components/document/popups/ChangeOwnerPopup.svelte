@@ -35,18 +35,24 @@
   let space: Space | undefined
   let owner: Ref<Employee> | undefined = undefined
   let canChange = false
+  let changingOwner = false
 
   const client = getClient()
   const query = createQuery()
   const dispatch = createEventDispatcher()
 
   const handleChangeOwner = async () => {
-    if (!canChange || !owner || !object || owner === object.owner) {
+    if (!canChange || !owner || !object || owner === object.owner || changingOwner) {
       return
     }
 
-    await client.update(object, { owner })
-    dispatch('close')
+    changingOwner = true
+    try {
+      await client.update(object, { owner })
+      dispatch('close')
+    } finally {
+      changingOwner = false
+    }
   }
 
   $: query.query(core.class.Space, { _id: object.space }, (res) => {
@@ -113,7 +119,8 @@
         <Button kind="regular" label={presentation.string.Cancel} on:click={() => dispatch('close')} />
         <Button
           kind={!isOwner ? 'primary' : 'dangerous'}
-          disabled={!canChange || !owner || owner === object.owner}
+          disabled={!canChange || !owner || owner === object.owner || changingOwner}
+          loading={changingOwner}
           label={presentation.string.Change}
           on:click={handleChangeOwner}
         />

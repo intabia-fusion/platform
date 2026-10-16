@@ -30,28 +30,36 @@
 
   $: isEvent = hierarchy.isDerived(value._class, calendar.class.Event)
 
+  let clicking = false
+
   async function click (ev: Event): Promise<void> {
-    if (isEvent) {
-      showPopup(SaveEventReminder, { objectId: value._id, objectClass: value._class }, ev.target as HTMLElement)
-    } else {
-      const currentUser = getCurrentEmployee()
-      const current = await client.findOne(calendar.class.Event, {
-        attachedTo: value._id,
-        participants: currentUser
-      })
-      if (current === undefined) {
-        showPopup(
-          CreateReminder,
-          { attachedTo: value._id, attachedToClass: value._class, title },
-          ev.target as HTMLElement
-        )
+    if (clicking) return
+    clicking = true
+    try {
+      if (isEvent) {
+        showPopup(SaveEventReminder, { objectId: value._id, objectClass: value._class }, ev.target as HTMLElement)
       } else {
-        showPopup(
-          DocRemindersPopup,
-          { attachedTo: value._id, attachedToClass: value._class, title },
-          ev.target as HTMLElement
-        )
+        const currentUser = getCurrentEmployee()
+        const current = await client.findOne(calendar.class.Event, {
+          attachedTo: value._id,
+          participants: currentUser
+        })
+        if (current === undefined) {
+          showPopup(
+            CreateReminder,
+            { attachedTo: value._id, attachedToClass: value._class, title },
+            ev.target as HTMLElement
+          )
+        } else {
+          showPopup(
+            DocRemindersPopup,
+            { attachedTo: value._id, attachedToClass: value._class, title },
+            ev.target as HTMLElement
+          )
+        }
       }
+    } finally {
+      clicking = false
     }
   }
 </script>
@@ -61,5 +69,6 @@
   kind={'ghost'}
   icon={calendar.icon.Reminder}
   showTooltip={{ label: isEvent ? calendar.string.RemindMeAt : calendar.string.Reminders }}
+  loading={clicking}
   on:click={(e) => click(e)}
 />

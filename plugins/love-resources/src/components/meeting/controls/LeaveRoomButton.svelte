@@ -16,9 +16,17 @@
   // Check if this is my office using myOffice store (works even when not in a meeting)
   $: isMyOffice = isOffice(room) && room._id === $myOffice?._id
 
+  let leaving: boolean = false
+
   async function leave (): Promise<void> {
-    await leaveMeeting()
-    dispatch('leave')
+    if (leaving) return
+    leaving = true
+    try {
+      await leaveMeeting()
+      dispatch('leave')
+    } finally {
+      leaving = false
+    }
   }
 </script>
 
@@ -29,5 +37,6 @@
   kind={'negative'}
   {size}
   dataId="meeting-leave"
+  loading={leaving}
   on:click={leave}
 />

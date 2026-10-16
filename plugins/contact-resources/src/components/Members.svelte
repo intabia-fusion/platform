@@ -40,8 +40,11 @@
   const client = getClient()
   let loading = true
 
+  let addingMember = false
+
   const createApp = async (ev: MouseEvent): Promise<void> => {
-    if (readonly) return
+    if (readonly || addingMember) return
+    addingMember = true
     showPopup(
       UsersPopup,
       {
@@ -55,6 +58,7 @@
       },
       ev.target as HTMLElement,
       (result) => {
+        addingMember = false
         if (result != null) {
           void client.addCollection(contact.class.Member, space, objectId, _class, 'members', {
             contact: result._id
@@ -80,7 +84,13 @@
       />
       <ViewletSettingButton kind={'tertiary'} bind:viewlet />
       {#if !readonly}
-        <Button id={contact.string.AddMember} icon={IconAdd} kind={'ghost'} on:click={createApp} />
+        <Button
+          id={contact.string.AddMember}
+          icon={IconAdd}
+          kind={'ghost'}
+          loading={addingMember}
+          on:click={createApp}
+        />
       {/if}
     </div>
   </svelte:fragment>

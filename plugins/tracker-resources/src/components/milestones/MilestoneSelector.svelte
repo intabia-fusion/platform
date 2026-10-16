@@ -101,6 +101,7 @@
   $: milestones = getMilestoneInfo(rawMilestones, selectedMilestone)
 
   let milestonePopup: PopupResult | undefined
+  let opening = false
 
   $: popupSpace = typeof space === 'string' ? space : undefined
   const handleMilestoneEditorOpened = async (event: MouseEvent): Promise<void> => {
@@ -108,6 +109,8 @@
     if (!isEditable) {
       return
     }
+    if (opening) return
+    opening = true
 
     milestonePopup = showPopup(
       MilestoneSelectorPopup,
@@ -122,6 +125,7 @@
           onChange?.(evt)
         }
         milestonePopup = undefined
+        opening = false
       }
     )
   }

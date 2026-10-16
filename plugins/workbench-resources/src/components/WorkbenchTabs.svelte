@@ -31,6 +31,7 @@
   let scroller: HTMLElement
   let element: HTMLButtonElement
   let pressed: boolean = false
+  let creatingTab: boolean = false
 
   $: devSize = $deviceInfo.size
   $: mini = checkAdaptiveMatching(devSize, 'md')
@@ -41,6 +42,16 @@
     showPopup(WorkbenchTabs, { popup: true }, element, () => {
       pressed = false
     })
+  }
+
+  async function onCreateTab (): Promise<void> {
+    if (creatingTab) return
+    creatingTab = true
+    try {
+      await createTab()
+    } finally {
+      creatingTab = false
+    }
   }
 </script>
 
@@ -83,7 +94,8 @@
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size={'extra-small'}
       kind={'tertiary'}
-      on:click={createTab}
+      loading={creatingTab}
+      on:click={onCreateTab}
     />
   {/if}
 </div>

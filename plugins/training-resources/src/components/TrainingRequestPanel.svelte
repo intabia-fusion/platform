@@ -105,15 +105,29 @@
       canCreateTrainingAttempt(trainingObject, object, latestOwnAttempt)
   }
 
+  let creatingAttempt = false
+
   async function takeTraining (): Promise<void> {
-    if (trainingObject !== null && object !== null && canTakeTraining) {
+    if (trainingObject === null || object === null || !canTakeTraining || creatingAttempt) {
+      return
+    }
+    creatingAttempt = true
+    try {
       await createTrainingAttempt(trainingObject, object, latestOwnAttempt)
+    } finally {
+      creatingAttempt = false
     }
   }
 
   async function retakeTraining (): Promise<void> {
-    if (trainingObject !== null && object !== null && canRetakeTraining) {
+    if (trainingObject === null || object === null || !canRetakeTraining || creatingAttempt) {
+      return
+    }
+    creatingAttempt = true
+    try {
       await createTrainingAttempt(trainingObject, object, latestOwnAttempt)
+    } finally {
+      creatingAttempt = false
     }
   }
 
@@ -221,13 +235,21 @@
           {/if}
         {/if}
         {#if canTakeTraining}
-          <Button kind="primary" label={training.string.TrainingTake} on:click={takeTraining} />
+          <Button
+            kind="primary"
+            label={training.string.TrainingTake}
+            loading={creatingAttempt}
+            disabled={creatingAttempt}
+            on:click={takeTraining}
+          />
         {/if}
         {#if canRetakeTraining}
           <Button
             icon={training.icon.Retry}
             label={training.string.TrainingRetake}
             kind="primary"
+            loading={creatingAttempt}
+            disabled={creatingAttempt}
             on:click={retakeTraining}
           />
         {/if}

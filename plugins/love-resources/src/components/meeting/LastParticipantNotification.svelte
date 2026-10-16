@@ -21,15 +21,23 @@
   export let onRemove: () => void
   export let notification: Notification
 
+  let leaving: boolean = false
+
   function stayInMeeting (): void {
     onRemove()
   }
 
   async function leave (): Promise<void> {
-    // Use dynamic import to avoid circular dependency
-    const { leaveMeeting } = await import('../../meetings')
-    await leaveMeeting()
-    onRemove()
+    if (leaving) return
+    leaving = true
+    try {
+      // Use dynamic import to avoid circular dependency
+      const { leaveMeeting } = await import('../../meetings')
+      await leaveMeeting()
+      onRemove()
+    } finally {
+      leaving = false
+    }
   }
 
   onMount(async () => {
@@ -44,7 +52,13 @@
   <svelte:fragment slot="buttons">
     <div style="width: auto" />
     <div class="flex-between gap-2">
-      <Button label={love.string.LeaveRoom} stopPropagation={false} kind="negative" on:click={leave} />
+      <Button
+        label={love.string.LeaveRoom}
+        stopPropagation={false}
+        kind="negative"
+        loading={leaving}
+        on:click={leave}
+      />
       <Button label={love.string.StayInRoom} stopPropagation={false} kind="primary" on:click={stayInMeeting} />
     </div>
   </svelte:fragment>

@@ -191,35 +191,43 @@
     return title === ''
   }
 
+  let saving = false
+
   async function saveSchedule (): Promise<void> {
-    if (schedule === undefined) {
-      const _id = generateId<Schedule>()
-      const currentUser = getCurrentEmployee()
-      const data: Data<Schedule> = {
-        owner: currentUser,
-        title,
-        description,
-        meetingDuration,
-        meetingInterval,
-        availability: getStorableAvailability(),
-        timeZone,
-        calendar: _calendar
+    if (saving) return
+    saving = true
+    try {
+      if (schedule === undefined) {
+        const _id = generateId<Schedule>()
+        const currentUser = getCurrentEmployee()
+        const data: Data<Schedule> = {
+          owner: currentUser,
+          title,
+          description,
+          meetingDuration,
+          meetingInterval,
+          availability: getStorableAvailability(),
+          timeZone,
+          calendar: _calendar
+        }
+        await client.createDoc(calendar.class.Schedule, calendar.space.Calendar, data, _id)
+        if (space !== undefined) {
+          await docCreateManager.commit(client, _id, space, {}, 'post')
+        }
+      } else {
+        await client.update(schedule, {
+          title,
+          description,
+          meetingDuration,
+          meetingInterval,
+          availability: getStorableAvailability(),
+          timeZone
+        })
       }
-      await client.createDoc(calendar.class.Schedule, calendar.space.Calendar, data, _id)
-      if (space !== undefined) {
-        await docCreateManager.commit(client, _id, space, {}, 'post')
-      }
-    } else {
-      await client.update(schedule, {
-        title,
-        description,
-        meetingDuration,
-        meetingInterval,
-        availability: getStorableAvailability(),
-        timeZone
-      })
+      dispatch('close')
+    } finally {
+      saving = false
     }
-    dispatch('close')
   }
 
   function showDurationVariants (ev: MouseEvent): void {
@@ -418,6 +426,7 @@
       focusIndex={10104}
       on:click={saveSchedule}
       disabled={title === ''}
+      loading={saving}
     />
   </div>
 </div>

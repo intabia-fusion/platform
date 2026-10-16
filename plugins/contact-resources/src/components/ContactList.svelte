@@ -49,7 +49,11 @@
 
   const dispatch = createEventDispatcher()
 
+  let adding = false
+
   async function addPerson (evt: Event): Promise<void> {
+    if (adding) return
+    adding = true
     showPopup(
       UsersPopup,
       {
@@ -62,7 +66,9 @@
         readonly
       },
       evt.target as HTMLElement,
-      undefined,
+      () => {
+        adding = false
+      },
       (result) => {
         if (result != null) {
           items = result
@@ -82,6 +88,7 @@
   {size}
   {justify}
   showTooltip={{ label, direction: labelDirection }}
+  loading={adding}
   on:click={addPerson}
 >
   <svelte:fragment slot="content">

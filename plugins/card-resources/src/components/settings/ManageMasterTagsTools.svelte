@@ -46,29 +46,37 @@
     )
   }
 
+  let importing = false
+
   async function handleImprot (): Promise<void> {
-    const { importModule } = await import('../../exporter')
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'application/json'
-    input.onchange = async (e: Event) => {
-      const target = e.target as HTMLInputElement
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0]
-        const reader = new FileReader()
-        reader.onload = async (event: ProgressEvent<FileReader>) => {
-          if (event.target?.result !== undefined && typeof event.target.result === 'string') {
-            try {
-              await importModule(event.target.result)
-            } catch (err: any) {
-              console.error('Failed to import module:', err)
+    if (importing) return
+    importing = true
+    try {
+      const { importModule } = await import('../../exporter')
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'application/json'
+      input.onchange = async (e: Event) => {
+        const target = e.target as HTMLInputElement
+        if (target.files && target.files.length > 0) {
+          const file = target.files[0]
+          const reader = new FileReader()
+          reader.onload = async (event: ProgressEvent<FileReader>) => {
+            if (event.target?.result !== undefined && typeof event.target.result === 'string') {
+              try {
+                await importModule(event.target.result)
+              } catch (err: any) {
+                console.error('Failed to import module:', err)
+              }
             }
           }
+          reader.readAsText(file)
         }
-        reader.readAsText(file)
       }
+      input.click()
+    } finally {
+      importing = false
     }
-    input.click()
   }
 </script>
 
@@ -78,6 +86,7 @@
   tooltip={{ label: card.string.Import }}
   kind={'tertiary'}
   size={'extra-small'}
+  loading={importing}
   on:click={handleImprot}
 />
 <ButtonIcon id={'new-master-tag'} icon={IconAdd} kind={'tertiary'} size={'extra-small'} on:click={handleAdd} />

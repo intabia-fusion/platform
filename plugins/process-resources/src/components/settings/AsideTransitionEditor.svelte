@@ -29,9 +29,17 @@
     clearSettingsStore()
   }
 
+  let removing = false
+
   async function remove (): Promise<void> {
-    await client.remove(transition)
-    clearSettingsStore()
+    if (removing) return
+    removing = true
+    try {
+      await client.remove(transition)
+      clearSettingsStore()
+    } finally {
+      removing = false
+    }
   }
 
   function change (e: CustomEvent<Record<string, any>>): void {
@@ -85,7 +93,7 @@
 >
   <svelte:fragment slot="actions">
     {#if !readonly}
-      <ButtonIcon icon={IconDelete} size={'small'} kind={'tertiary'} on:click={remove} />
+      <ButtonIcon icon={IconDelete} size={'small'} kind={'tertiary'} loading={removing} on:click={remove} />
     {/if}
   </svelte:fragment>
   <div class="content clear-mins">

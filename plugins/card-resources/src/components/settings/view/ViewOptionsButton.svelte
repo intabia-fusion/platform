@@ -30,7 +30,7 @@
   let pressed: boolean = false
 
   async function clickHandler (): Promise<void> {
-    if (viewlet === undefined) {
+    if (viewlet === undefined || pressed) {
       return
     }
     pressed = true
@@ -107,7 +107,7 @@
 
 <ButtonIcon
   icon={IconOptions}
-  disabled={viewlet === undefined}
+  disabled={viewlet === undefined || pressed}
   {kind}
   size={'small'}
   hasMenu

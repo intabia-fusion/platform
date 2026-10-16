@@ -60,8 +60,15 @@
     menuOpened = true
   }
 
+  let actionRunning = false
   async function handleInlineActionClicked (ev: MouseEvent, action: Action): Promise<void> {
-    await action.action([], ev)
+    if (actionRunning) return
+    actionRunning = true
+    try {
+      await action.action([], ev)
+    } finally {
+      actionRunning = false
+    }
   }
 </script>
 
@@ -95,6 +102,7 @@
       <button
         class="action"
         class:pressed={menuOpened}
+        disabled={actionRunning}
         on:click|preventDefault|stopPropagation={(ev) => handleInlineActionClicked(ev, action)}
       >
         <Icon icon={action.icon ?? ActionIcon} size="small" />

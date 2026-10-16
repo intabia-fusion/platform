@@ -37,22 +37,30 @@
     }
   })
 
+  let saving = false
+
   async function setInviteSettings (): Promise<void> {
-    const newSettings = {
-      expirationTime: expTime,
-      emailMask: mask,
-      limit,
-      enabled: true
-    }
-    if (existingInviteSettings.length === 0) {
-      await client.createDoc(setting.class.InviteSettings, core.space.Workspace, newSettings)
-    } else {
-      await client.updateDoc(
-        setting.class.InviteSettings,
-        core.space.Workspace,
-        existingInviteSettings[0]._id,
-        newSettings
-      )
+    if (saving) return
+    saving = true
+    try {
+      const newSettings = {
+        expirationTime: expTime,
+        emailMask: mask,
+        limit,
+        enabled: true
+      }
+      if (existingInviteSettings.length === 0) {
+        await client.createDoc(setting.class.InviteSettings, core.space.Workspace, newSettings)
+      } else {
+        await client.updateDoc(
+          setting.class.InviteSettings,
+          core.space.Workspace,
+          existingInviteSettings[0]._id,
+          newSettings
+        )
+      }
+    } finally {
+      saving = false
     }
   }
 </script>
@@ -74,7 +82,13 @@
       </div>
     {/if}
     <div class="mt-2">
-      <Button label={presentation.string.Save} size={'medium'} kind={'primary'} on:click={() => setInviteSettings()} />
+      <Button
+        label={presentation.string.Save}
+        size={'medium'}
+        kind={'primary'}
+        loading={saving}
+        on:click={() => setInviteSettings()}
+      />
     </div>
   </div>
 </div>

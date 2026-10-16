@@ -41,6 +41,7 @@
   let inputFile: HTMLInputElement
   let loading = false
   let isDragging = false
+  let removing = false
   let dbItems: Attachment[] = []
 
   const query = createQuery()
@@ -60,21 +61,26 @@
   }
 
   async function removeItem (item: AttachmentValue, index: number): Promise<void> {
-    if (readonly) return
-    if (draft) {
-      const fileId = (typeof item === 'string' ? item : item?.file) as Ref<Blob>
-      if (fileId != null && uploadedBlobs.has(fileId)) {
-        uploadedBlobs.delete(fileId)
-        savedBlobs.delete(fileId)
-        void deleteFile(fileId)
+    if (readonly || removing) return
+    removing = true
+    try {
+      if (draft) {
+        const fileId = (typeof item === 'string' ? item : item?.file) as Ref<Blob>
+        if (fileId != null && uploadedBlobs.has(fileId)) {
+          uploadedBlobs.delete(fileId)
+          savedBlobs.delete(fileId)
+          void deleteFile(fileId)
+        }
+        const next = [...items]
+        next.splice(index, 1)
+        notifyChange(next)
+      } else {
+        if (typeof item === 'object' && '_id' in item && item._id) {
+          await client.remove(item as Attachment)
+        }
       }
-      const next = [...items]
-      next.splice(index, 1)
-      notifyChange(next)
-    } else {
-      if (typeof item === 'object' && '_id' in item && item._id) {
-        await client.remove(item as Attachment)
-      }
+    } finally {
+      removing = false
     }
   }
 
@@ -238,6 +244,7 @@
             <button
               type="button"
               class="attachments-editor--btn-close"
+              disabled={removing}
               on:click|stopPropagation={() => removeItem(item, index)}
             >
               <Icon icon={IconClose} size="x-small" />

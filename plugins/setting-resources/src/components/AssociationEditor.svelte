@@ -117,27 +117,34 @@
 
   const dispatch = createEventDispatcher()
 
+  let saving = false
+
   async function save (): Promise<void> {
-    if (classBRef === undefined || classARef === undefined) {
+    if (classBRef === undefined || classARef === undefined || saving) {
       return
     }
-    if (association !== undefined && isAssociation(association)) {
-      await client.diffUpdate(association, {
-        nameA,
-        nameB,
-        automationOnly
-      })
-    } else {
-      await client.createDoc(core.class.Association, core.space.Model, {
-        classA: classARef,
-        classB: classBRef,
-        type: mode,
-        nameA,
-        nameB,
-        automationOnly
-      })
-      dispatch('create')
-      dispatch('close')
+    saving = true
+    try {
+      if (association !== undefined && isAssociation(association)) {
+        await client.diffUpdate(association, {
+          nameA,
+          nameB,
+          automationOnly
+        })
+      } else {
+        await client.createDoc(core.class.Association, core.space.Model, {
+          classA: classARef,
+          classB: classBRef,
+          type: mode,
+          nameA,
+          nameB,
+          automationOnly
+        })
+        dispatch('create')
+        dispatch('close')
+      }
+    } finally {
+      saving = false
     }
   }
 
@@ -232,6 +239,6 @@
   </div>
 
   <div class="flex-col-reverse">
-    <Button label={presentation.string.Save} kind={'primary'} size={'medium'} on:click={save} />
+    <Button label={presentation.string.Save} kind={'primary'} size={'medium'} loading={saving} on:click={save} />
   </div>
 </div>

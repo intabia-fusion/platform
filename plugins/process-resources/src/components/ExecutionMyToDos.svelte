@@ -48,10 +48,18 @@
     todos = []
   }
 
+  let checking = false
+
   async function checkTodo (todo: ProcessToDo) {
-    await client.update(todo, {
-      doneOn: new Date().getTime()
-    })
+    if (checking) return
+    checking = true
+    try {
+      await client.update(todo, {
+        doneOn: new Date().getTime()
+      })
+    } finally {
+      checking = false
+    }
   }
 
   function isRequest (todo: ProcessToDo): todo is ApproveRequest {
@@ -63,6 +71,6 @@
   {#if isRequest(todo)}
     <ApproveRequestButtons {todo} card={value.card} />
   {:else}
-    <Button label={getEmbeddedLabel(todo.title)} on:click={() => checkTodo(todo)} />
+    <Button label={getEmbeddedLabel(todo.title)} loading={checking} on:click={() => checkTodo(todo)} />
   {/if}
 {/each}
