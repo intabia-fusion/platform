@@ -93,6 +93,18 @@
   --button-tertiary-active-BackgroundColor: #d1d5de26;
   --button-menu-active-BorderColor: #d9dee6;
 
+  /* Defaults for accents that define no button tokens of their own */
+  --button-accent-LabelColor: var(--global-on-accent-TextColor);
+  --button-accent-IconColor: var(--global-on-accent-TextColor);
+  --button-negative-BackgroundColor: #CB4B42;
+  --button-negative-BorderColor: #d1d5de26;
+  --button-negative-hover-BackgroundColor: #B34139;
+  --button-negative-active-BackgroundColor: #B34139;
+  --button-negative-loading-LabelColor: #ff9187;
+  --button-negative-LabelColor: #FFFFFF;
+  --button-negative-IconColor: #FFFFFF;
+  --button-primary-loading-IconColor: var(--button-accent-IconColor);
+
   /** Editbox **/
   --input-BackgroundColor: #a5bdff0d;
   --input-opaque-BackgroundColor: #1B1D2A;
@@ -196,6 +208,18 @@
   --button-tertiary-hover-BackgroundColor: #1725471a;
   --button-tertiary-active-BackgroundColor: #17254726;
   --button-menu-active-BorderColor: #0f121a;
+
+  /* Defaults for accents that define no button tokens of their own */
+  --button-accent-LabelColor: var(--global-on-accent-TextColor);
+  --button-accent-IconColor: var(--global-on-accent-TextColor);
+  --button-negative-BackgroundColor: #CB4B42;
+  --button-negative-BorderColor: #d1d5de26;
+  --button-negative-hover-BackgroundColor: #B34139;
+  --button-negative-active-BackgroundColor: #B34139;
+  --button-negative-loading-LabelColor: #ff9187;
+  --button-negative-LabelColor: #FFFFFF;
+  --button-negative-IconColor: #FFFFFF;
+  --button-primary-loading-IconColor: var(--button-accent-IconColor);
 
   /** Editbox **/
   --input-BackgroundColor: #1530720d;

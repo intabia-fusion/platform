@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { Theme } from '@hcengineering/theme'
+
   import ThemeSync from './ThemeSync.svelte'
 
   export let theme: string

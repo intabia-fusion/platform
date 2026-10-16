@@ -6,4 +6,4 @@
 - Тип, импортированный как значение в `.svelte`, в vite dev роняет весь модуль (`does not provide an export named`); webpack это глотает. Поиск: `pnpm check:svelte-imports -- --types`.
 - `@mdx-js/react` (docs-аддон) просит peer `@types/react` - внесён в `peerDependencyRules.ignoreMissing`, React-типы не нужны.
 - `compile_all --lint` линтит только пакеты с фазой build; у Storybook её нет, eslint идёт через `_phase:format`.
-- Svelte docgen раскрывает алиасы (`IntlString` -> `string & { __id: true; } & ...`); имена возвращает `argTypesEnhancers` `prettifyTypeNames` (`src/helpers/typeNames.ts`) по бренду типа.
+- Svelte docgen раскрывает алиасы (`IntlString` -> `string & { __id: true; } & ...`); имена возвращает `argTypesEnhancers` `prettifyTypeNames` (`src/helpers/argTypes.ts`) по бренду типа.

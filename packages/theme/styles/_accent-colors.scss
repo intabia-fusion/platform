@@ -137,6 +137,8 @@
   --button-primary-active-BackgroundColor: var(--accent-color-primary-active, var(--accent-color-active, #7c0b61));
   --button-accent-LabelColor: var(--button-primary-LabelColor, #FFFFFF);
   --button-accent-IconColor: var(--button-primary-IconColor, #FFFFFF);
+  /* Two-tone brand: the pink base reads on the purple primary background */
+  --button-primary-loading-IconColor: var(--accent-color-base);
 
   /* Negative/Destructive button colors (provide explicit values for non-huly accents) */
   --button-negative-BackgroundColor: #CB4B42;

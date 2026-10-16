@@ -14,16 +14,22 @@
 //
 
 import '@hcengineering/theme/styles/global.scss'
-import './preview.scss'
-
-import type { Preview } from '@storybook/svelte'
 import { accentColorOptions, AccentColor, ThemeVariant } from '@hcengineering/theme'
+import { Popup, TooltipInstance } from '@hcengineering/ui'
 import registerUiStrings from '@hcengineering/ui/src/lang'
+import type { Preview } from '@storybook/svelte'
+
+import './preview.scss'
 import StoryTheme from '../src/decorators/StoryTheme.svelte'
-import { prettifyTypeNames } from '../src/helpers/typeNames'
+import { hidePassthroughAttributes, organizeProps, prettifyTypeNames } from '../src/helpers/argTypes'
 import { systemTheme } from './theme'
 
 registerUiStrings()
+
+// One popup and tooltip host per preview document, as the workbench mounts them: a docs page shows several stories.
+const hosts = document.body.appendChild(document.createElement('div'))
+new TooltipInstance({ target: hosts }) // eslint-disable-line no-new
+new Popup({ target: hosts }) // eslint-disable-line no-new
 
 const languages = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
 
@@ -81,7 +87,7 @@ const preview: Preview = {
       }
     })
   ],
-  argTypesEnhancers: [prettifyTypeNames],
+  argTypesEnhancers: [prettifyTypeNames, hidePassthroughAttributes, organizeProps],
   tags: ['autodocs']
 }
 

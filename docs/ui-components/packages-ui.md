@@ -12,10 +12,10 @@
 | HeaderButton | ButtonWithDropdown для шапки с проверкой прав | `mainActionId`, `client`, `actions`, `visibleActions`, `loading` |
 | ButtonWithDropdown | Кнопка+стрелка, popup выбора из dropdownItems | `dropdownItems`, `label`, `kind`, `icon`, `dropdownIcon` |
 | ButtonGroup | Кнопки в сегментированной группе с select-режимом | `items`, `selected`, `allowDeselected`, `mode` |
-| ButtonIcon | Кнопка-иконка без текста, modern-стиль | `kind`, `size`, `icon`, `disabled`, `pressed` |
-| ButtonMenu | Кнопка, открывающая dropdown-список items | `items`, `selected`, `kind`, `size`, `label` |
-| ButtonBase | Примитив кнопки, напрямую не используется | `kind`, `size`, `type`, `icon`, `label` |
-| ModernButton | Modern-аналог Button, дефолт для нового UI | `kind`, `size`, `shape`, `icon`, `label` |
+| ButtonIcon | Кнопка-иконка без текста, modern-стиль; заменяется `IconButton` из кита | `kind`, `size`, `icon`, `disabled`, `pressed` |
+| ButtonMenu | Кнопка, открывающая dropdown-список items; заменяется `MenuButton` из кита | `items`, `selected`, `kind`, `size`, `label` |
+| ButtonBase | Примитив кнопки; заменяется `Button` из кита | `kind`, `size`, `type`, `icon`, `label` |
+| ModernButton | Modern-аналог Button; заменяется `Button` из кита | `kind`, `size`, `shape`, `icon`, `label` |
 | SplitButton | Кнопка из двух независимо кликабельных половин | `label`, `secondTitle`, `icon`, `secondIcon`, `action` |
 | CircleButton | Круглая кнопка-иконка для плавающих элементов | `icon`, `size`, `ghost`, `selected`, `primary` |
 | ActionIcon | Inline иконка-кнопка с async action и keys | `label`, `icon`, `size`, `action`, `keys` |
@@ -210,7 +210,7 @@
 
 ## Выбор между похожими
 
-- **Button vs ModernButton vs ButtonBase**: ButtonBase - примитив, не используется напрямую; Button - старый дизайн (legacy kind) для существующего UI; ModernButton - новый дизайн (primary/secondary/tertiary/negative) для нового UI.
+- **Button vs ModernButton vs ButtonIcon vs ButtonMenu vs ButtonBase**: в новом коде - кнопки кита (`@hcengineering/ui/kit`, [ui-kit.md](ui-kit.md)) с тем же видом: `Button` вместо ModernButton и ButtonBase, `IconButton` вместо ButtonIcon, `MenuButton` вместо ButtonMenu. Button из `@hcengineering/ui` - старый дизайн (legacy kind), переводится на кит.
 - **EditBox vs ModernEditbox vs StylishEdit vs TextArea**: EditBox - старый ввод через `format`; ModernEditbox - новый дизайн (`kind`/`size`); StylishEdit - облегченная версия, только error-стейт; TextArea - выделенный multiline legacy-дизайна (`width`/`height`/`wrap`).
 - **Dropdown vs DropdownLabels vs ModernDropdown vs SelectPopup**: Dropdown/DropdownLabels - кнопки-триггеры старого дизайна (ListItem vs DropdownTextItem+multiselect); ModernDropdown - новый дизайн, аналог DropdownLabelsIntl; SelectPopup - не кнопка, а сам попап-контент, вызывается вручную через `showPopup`+`onSelect`.
 - **Popup vs Modal vs Dialog vs ModernDialog**: Popup - хост-фреймворк `showPopup()` (не импортируется напрямую); Dialog - самый старый контейнер, без футера; Modal - контейнер с ok/cancel футером старого дизайна; ModernDialog - текущий стандарт для форм-модалок (submit/cancel, back, loader).

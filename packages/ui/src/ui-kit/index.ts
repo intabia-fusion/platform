@@ -14,4 +14,18 @@
 //
 
 // Entry point of `@hcengineering/ui/kit`: the current base components that replace the legacy ones in ../components.
-export {}
+export { default as Button } from './button/Button.svelte'
+export { default as IconButton } from './button/IconButton.svelte'
+export { default as MenuButton } from './button/MenuButton.svelte'
+export type {
+  ButtonAttributes,
+  ButtonEvents,
+  ButtonKind,
+  ButtonProps,
+  ButtonShape,
+  ButtonSize,
+  ButtonType,
+  IconButtonProps,
+  MenuButtonEvents,
+  MenuButtonProps
+} from './button/types'

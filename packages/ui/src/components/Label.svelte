@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
+  import { languageStore } from '@hcengineering/theme'
 
   export let label: IntlString
   export let params: Record<string, any> = {}
@@ -23,7 +24,8 @@
   let _value: string | undefined
 
   $: if (label !== undefined) {
-    translateCB(label, params ?? {}, $themeStore.language, (r) => {
+    // languageStore fires on a language change only, not on every theme update; '' until the theme is set.
+    translateCB(label, params ?? {}, $languageStore === '' ? undefined : $languageStore, (r) => {
       _value = r
     })
   } else {

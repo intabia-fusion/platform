@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -12,8 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+<script lang="ts" context="module">
+  let instances = 0
+</script>
+
 <script lang="ts">
   import type { ButtonSize } from '../types'
+
+  // Unique per instance: with a shared id every spinner on the page paints with the first one's gradient.
+  const gradientId = `spinner-gradient-${++instances}`
 
   export let size: ButtonSize = 'medium'
   // Color variants:
@@ -30,7 +38,7 @@
 
 <div class="spinner spinner-{size}">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-    <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="0" y1="22" x2="0" y2="2">
+    <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="0" y1="22" x2="0" y2="2">
       <stop offset="0" stop-color={spinnerColor} />
       <stop offset="1" stop-color={spinnerColor} stop-opacity="0" />
     </linearGradient>
@@ -50,7 +58,7 @@
       />
       <path
         d="M12,0.5v1c5.8,0,10.5,4.7,10.5,10.5c0,5.8-4.7,10.5-10.5,10.5v1c6.4,0,11.5-5.1,11.5-11.5C23.5,5.6,18.4,0.5,12,0.5z"
-        fill="url(#a)"
+        fill="url(#{gradientId})"
       />
     </g>
   </svg>

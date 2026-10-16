@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import type { ComponentType } from 'svelte'
+
   import type { MatrixAxis } from './matrix'
 
   export let component: ComponentType
@@ -22,39 +23,49 @@
   export let props: Record<string, unknown> = {}
 </script>
 
-<table class="matrix">
-  <thead>
-    <tr>
-      <th />
-      {#each columns as column}
-        <th>{column.title}</th>
-      {/each}
-    </tr>
-  </thead>
-  <tbody>
-    {#each rows as row}
+<!-- Remount on new axes: a key dropped from a spread would otherwise stay set as undefined. -->
+{#key [rows, columns]}
+  <table class="matrix">
+    <thead>
       <tr>
-        <th>{row.title}</th>
+        <th class="matrix__heading" />
         {#each columns as column}
-          <td><svelte:component this={component} {...props} {...row.props} {...column.props} /></td>
+          <th class="matrix__heading">{column.title}</th>
         {/each}
       </tr>
-    {/each}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {#each rows as row}
+        <tr>
+          <th class="matrix__heading">{row.title}</th>
+          {#each columns as column}
+            <td class="matrix__cell">
+              <svelte:component
+                this={column.component ?? row.component ?? component}
+                {...props}
+                {...row.props}
+                {...column.props}
+              />
+            </td>
+          {/each}
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+{/key}
 
 <style lang="scss">
   .matrix {
     border-collapse: separate;
     border-spacing: var(--spacing-2) var(--spacing-1_5);
 
-    th {
+    &__heading {
       font-weight: 500;
       color: var(--theme-dark-color);
       text-align: left;
       white-space: nowrap;
     }
-    td {
+    &__cell {
       vertical-align: middle;
     }
   }

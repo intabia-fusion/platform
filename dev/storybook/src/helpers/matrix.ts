@@ -13,9 +13,27 @@
 // limitations under the License.
 //
 
-export type MatrixAxis = Array<{ title: string, props: Record<string, unknown> }>
+import type { ComponentType } from 'svelte'
+
+/** A matrix row or column; `component` renders that line with another component, e.g. a legacy counterpart. */
+export interface MatrixLine {
+  title: string
+  props: Record<string, unknown>
+  component?: ComponentType
+}
+
+export type MatrixAxis = MatrixLine[]
 
 /** One matrix axis per value of a single prop: `axis('kind', ['primary', 'secondary'])`. */
 export function axis (prop: string, values: readonly unknown[]): MatrixAxis {
   return values.map((value) => ({ title: String(value), props: { [prop]: value } }))
+}
+
+/** One titled matrix of a variants overview. */
+export interface MatrixSection {
+  title: string
+  component: ComponentType
+  rows: MatrixAxis
+  columns: MatrixAxis
+  props?: Record<string, unknown>
 }

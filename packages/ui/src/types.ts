@@ -329,6 +329,9 @@ export interface LabelAndProps {
   textAlign?: 'left' | 'center' | 'right'
 }
 
+/** A tooltip that carries a label, so it can also name the element it is attached to. */
+export type TooltipWithLabel = LabelAndProps & { label: IntlString }
+
 export interface ListItem {
   _id: string
   label: string
