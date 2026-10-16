@@ -75,7 +75,7 @@
 
   let exporting = false
   let reportFormat: ReportFormat = 'csv'
-  async function exportActions(): Promise<void> {
+  async function exportActions (): Promise<void> {
     exporting = true
     try {
       await downloadReport('admin-actions', reportFormat, { search, action: action === 'all' ? undefined : action })
@@ -86,11 +86,11 @@
     }
   }
 
-  function fmtTime(ms: number): string {
+  function fmtTime (ms: number): string {
     return new Date(ms).toLocaleString()
   }
 
-  function fmtData(data: Record<string, any> | undefined): string {
+  function fmtData (data: Record<string, any> | undefined): string {
     if (data == null) return ''
     return JSON.stringify(data)
   }

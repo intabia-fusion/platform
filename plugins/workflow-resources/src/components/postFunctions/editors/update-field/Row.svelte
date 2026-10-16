@@ -39,7 +39,7 @@
     operation: CollectionOperation
     context: MouseEvent
     transform: MouseEvent
-    editTransform: { fn: WorkflowTransformCall; event: MouseEvent }
+    editTransform: { fn: WorkflowTransformCall, event: MouseEvent }
   }>()
 
   const client = getClient()
@@ -58,7 +58,7 @@
     { id: 'remove', label: presentation.string.Remove }
   ]
 
-  function onOperationSelected(detail: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined): void {
+  function onOperationSelected (detail: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined): void {
     if (detail != null) {
       const val = Array.isArray(detail) ? detail[0] : detail
       if (val === 'set' || val === 'add' || val === 'remove') {

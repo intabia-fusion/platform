@@ -71,7 +71,7 @@
 
   $: effectiveViewMode = isNarrowScreen && userViewMode === 'split' ? 'editor' : userViewMode
 
-  function updateScreenSize(): void {
+  function updateScreenSize (): void {
     if (typeof window !== 'undefined') {
       isNarrowScreen = window.innerWidth < 1100
     }
@@ -140,7 +140,7 @@
   let transitions: WorkflowTransition[] = []
   $: transitions = (workflow?.$lookup?.transitions ?? []) as WorkflowTransition[]
 
-  async function saveName(): Promise<void> {
+  async function saveName (): Promise<void> {
     if (workflow !== undefined) {
       await client.update(workflow, { name: workflow.name.trim() })
     }
@@ -148,7 +148,7 @@
 
   let isDeleteLoading = false
 
-  async function handleRemove(): Promise<void> {
+  async function handleRemove (): Promise<void> {
     if (isDeleteLoading) return
     isDeleteLoading = true
     try {
@@ -171,14 +171,14 @@
     }
   }
 
-  async function handleTaskTypeChange(evt: CustomEvent<Ref<TaskType>>): Promise<void> {
+  async function handleTaskTypeChange (evt: CustomEvent<Ref<TaskType>>): Promise<void> {
     if (workflow === undefined) return
 
     // TODO: implement
     console.log('TODO: change task type', evt.detail)
   }
 
-  function handleViewModeSelect(evt: CustomEvent<TabItem>): void {
+  function handleViewModeSelect (evt: CustomEvent<TabItem>): void {
     if (evt.detail?.id != null) {
       userViewMode = evt.detail.id as WorkflowViewMode
     }
@@ -197,7 +197,7 @@
     }
   ]
 
-  async function handleExportAction(event?: CustomEvent): Promise<void> {
+  async function handleExportAction (event?: CustomEvent): Promise<void> {
     if (event == null || workflow == null) return
     const actionId = event.detail
     if (actionId === 'file') {

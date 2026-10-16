@@ -61,7 +61,7 @@
 
   $: void loadDrawings(file)
 
-  async function loadDrawings(file: Ref<Blob> | undefined): Promise<void> {
+  async function loadDrawings (file: Ref<Blob> | undefined): Promise<void> {
     if (props.drawingAvailable === true) {
       if (props.loadDrawings !== undefined) {
         drawingLoading = true
@@ -96,11 +96,11 @@
     }
   })
 
-  function toggleDrawingEdit(): void {
+  function toggleDrawingEdit (): void {
     props.drawingEditable = !(props.drawingEditable === true)
   }
 
-  function selectCurrentDrawing(ev: MouseEvent): void {
+  function selectCurrentDrawing (ev: MouseEvent): void {
     if (props.drawings === undefined || props.drawings.length === 0) {
       // no current means no history
       return

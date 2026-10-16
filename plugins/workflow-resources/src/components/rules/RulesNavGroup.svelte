@@ -52,14 +52,14 @@
     }
   ]
 
-  function getCategory(ruleClass: Ref<Class<WorkflowRule>>): 'validators' | 'requests' | 'postFunctions' {
+  function getCategory (ruleClass: Ref<Class<WorkflowRule>>): 'validators' | 'requests' | 'postFunctions' {
     if (ruleClass === plugin.class.WorkflowValidator) return 'validators'
     if (ruleClass === plugin.class.WorkflowRequest) return 'requests'
     if (ruleClass === plugin.class.WorkflowPostFunction) return 'postFunctions'
     return 'validators'
   }
 
-  function getConfigs(ruleClass: Ref<Class<WorkflowRule>>, trans: WorkflowTransition): WorkflowRuleConfig[] {
+  function getConfigs (ruleClass: Ref<Class<WorkflowRule>>, trans: WorkflowTransition): WorkflowRuleConfig[] {
     if (ruleClass === plugin.class.WorkflowValidator) return trans.validators ?? []
     if (ruleClass === plugin.class.WorkflowRequest) return trans.requests ?? []
     if (ruleClass === plugin.class.WorkflowPostFunction) return trans.postFunctions ?? []
@@ -70,19 +70,19 @@
   $: count = configs.length
   $: category = getCategory(_class)
 
-  function handleAdd(): void {
+  function handleAdd (): void {
     showPopup(AddRulesPopup, { workflow, transitions, statuses, transition, _class, taskType }, 'center')
   }
 
-  function handleEdit(config: WorkflowRuleConfig): void {
+  function handleEdit (config: WorkflowRuleConfig): void {
     showPopup(EditRulePopup, { workflow, transitions, statuses, transition, taskType, config }, 'center')
   }
 
-  async function remove(configId: string): Promise<void> {
+  async function remove (configId: string): Promise<void> {
     await removeRuleConfig(client, workflow._id, transition._id, category, configId)
   }
 
-  async function handleAction(actionId: 'edit' | 'delete', config: WorkflowRuleConfig): Promise<void> {
+  async function handleAction (actionId: 'edit' | 'delete', config: WorkflowRuleConfig): Promise<void> {
     if (actionId === 'edit') {
       handleEdit(config)
     } else if (actionId === 'delete') {
@@ -90,7 +90,7 @@
     }
   }
 
-  function getRule(ruleId: string): WorkflowRule | undefined {
+  function getRule (ruleId: string): WorkflowRule | undefined {
     return rules.find((r) => r._id === ruleId)
   }
 </script>

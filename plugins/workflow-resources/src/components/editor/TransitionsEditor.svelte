@@ -43,12 +43,12 @@
   export let taskType: TaskType
   export let readonly: boolean
 
-  function addTransition(): void {
+  function addTransition (): void {
     if (readonly) return
     showPopup(AddTransitionPopup, { workflow, statuses, transitions }, 'top')
   }
 
-  function editTransition(_id: Ref<WorkflowTransition>): void {
+  function editTransition (_id: Ref<WorkflowTransition>): void {
     if ($settingsStore.id === _id) {
       clearSettingsStore()
       closePanel()
@@ -70,11 +70,11 @@
     }
   }
 
-  function toTransition(doc: Doc): WorkflowTransition {
+  function toTransition (doc: Doc): WorkflowTransition {
     return doc as WorkflowTransition
   }
 
-  function hasRules(transition: WorkflowTransition): boolean {
+  function hasRules (transition: WorkflowTransition): boolean {
     return (
       (transition.requests?.length ?? 0) > 0 ||
       (transition.validators?.length ?? 0) > 0 ||

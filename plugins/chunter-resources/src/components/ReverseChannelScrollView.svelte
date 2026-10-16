@@ -102,7 +102,7 @@
   let shouldScrollToNew = false
   let isScrollAtBottom = false
 
-  function setupContentObserver(node: HTMLDivElement | undefined | null): void {
+  function setupContentObserver (node: HTMLDivElement | undefined | null): void {
     if (contentResizeObserver !== undefined) {
       contentResizeObserver.disconnect()
       contentResizeObserver = undefined
@@ -184,7 +184,7 @@
   // What is on screen is read once when the view stops reading: when it is left, or frozen (a channel
   // under its thread, one being replaced by the next view and still fading out), and nothing after.
   let isLeft = false
-  function leave(): void {
+  function leave (): void {
     if (isLeft) return
     isLeft = true
     inboxClient.setDocReading(object._id, false, reader)
@@ -210,7 +210,7 @@
   $: void initializeScroll($isLoadingStore || !isReadStateLoaded, separatorDiv, separatorIndex)
   $: void handleMessagesUpdated(messages.length)
 
-  function adjustScrollPosition(selectedMessageId?: Ref<ActivityMessage>): void {
+  function adjustScrollPosition (selectedMessageId?: Ref<ActivityMessage>): void {
     if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized) {
       return
     }
@@ -225,7 +225,7 @@
     }
   }
 
-  function handleJumpToDate(e: CustomEvent<{ date: Timestamp }>): void {
+  function handleJumpToDate (e: CustomEvent<{ date: Timestamp }>): void {
     const date = e.detail.date
     if (date !== undefined) {
       void viewport.jumpToDate(date).then((targetId) => {
@@ -253,17 +253,17 @@
     }
   }
 
-  function isFreeze(): boolean {
+  function isFreeze (): boolean {
     return freeze || isPageHidden
   }
 
-  function scrollToBottom(): void {
+  function scrollToBottom (): void {
     if (scroller != null && scrollDiv != null && !isFreeze()) {
       scrollDiv.scroll({ top: 0, behavior: 'instant' })
     }
   }
 
-  function scrollToSeparator(): void {
+  function scrollToSeparator (): void {
     if (separatorDiv == null || scrollDiv == null || contentDiv == null) {
       return
     }
@@ -283,7 +283,7 @@
     read()
   }
 
-  function scrollToMessage(): void {
+  function scrollToMessage (): void {
     if (selectedMessageId === undefined) return
     if (scrollDiv == null || contentDiv == null) {
       setTimeout(scrollToMessage, 50)
@@ -304,7 +304,7 @@
     read()
   }
 
-  function scrollToStartOfNew(): void {
+  function scrollToStartOfNew (): void {
     if (scrollDiv == null || lastMsgBeforeFreeze === undefined) return
     if (needUpdateTimestamp || $newTimestampStore === undefined) {
       void viewport.syncUnreadMarker(readState)
@@ -336,7 +336,7 @@
     }
   }
 
-  function updateShouldScrollToNew(): void {
+  function updateShouldScrollToNew (): void {
     if (scrollDiv != null && contentDiv != null) {
       const { scrollTop } = scrollDiv
       const offset = 100
@@ -345,7 +345,7 @@
     }
   }
 
-  async function wait(): Promise<void> {
+  async function wait (): Promise<void> {
     // One tick is not enough for messages to be rendered,
     // I think this is due to the fact that we are using a Component, which takes some time to load,
     // because after one tick I see spinners from Component
@@ -353,7 +353,7 @@
     await tick() // wait until the DOM is updated
   }
 
-  async function initializeScroll(
+  async function initializeScroll (
     isLoading: boolean,
     separatorElement?: HTMLDivElement | null,
     separatorIndex?: number
@@ -389,17 +389,17 @@
     }
   }
 
-  function reinitializeScroll(): void {
+  function reinitializeScroll (): void {
     isScrollInitialized = false
     void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
   }
 
-  function read(): void {
+  function read (): void {
     if (isFreeze() || !isScrollInitialized) return
     readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
-  function updateScrollData(): void {
+  function updateScrollData (): void {
     if (scrollDiv == null) return
     const { scrollTop } = scrollDiv
 
@@ -421,7 +421,7 @@
     updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
   }
 
-  function updateDownButtonVisibility(
+  function updateDownButtonVisibility (
     messages: ActivityMessage[],
     scrollDiv?: HTMLDivElement | null,
     isTailLoaded: boolean = $isTailLoadedStore
@@ -442,7 +442,7 @@
     }
   }
 
-  async function handleScrollToLatestMessage(): Promise<void> {
+  async function handleScrollToLatestMessage (): Promise<void> {
     selectedMessageId = undefined
     messageInFocus.set(undefined)
 
@@ -467,7 +467,7 @@
   let forceReadAt = 0
   const forceReadPauseMs = 3000
 
-  async function forceReadState(isReadingTail: boolean, readState?: ReadState, unread = 0): Promise<void> {
+  async function forceReadState (isReadingTail: boolean, readState?: ReadState, unread = 0): Promise<void> {
     if (readState === undefined || !isReadingTail || forceRead || unread === 0) return
     if (Date.now() - forceReadAt < forceReadPauseMs) return
 
@@ -480,20 +480,20 @@
     }
   }
 
-  function shouldLoadMoreUp(): boolean {
+  function shouldLoadMoreUp (): boolean {
     if (scrollDiv == null) return false
     const { scrollHeight, scrollTop, clientHeight } = scrollDiv
 
     return scrollHeight + Math.ceil(scrollTop - clientHeight) <= loadMoreThreshold
   }
 
-  function shouldLoadMoreDown(): boolean {
+  function shouldLoadMoreDown (): boolean {
     if (scrollDiv == null) return false
 
     return Math.abs(scrollDiv.scrollTop) <= loadMoreThreshold
   }
 
-  function loadMore(): void {
+  function loadMore (): void {
     if ($isLoadingMoreStore || scrollDiv == null || !isScrollInitialized) {
       return
     }
@@ -531,7 +531,7 @@
     }
   }
 
-  async function restoreScroll(): Promise<void> {
+  async function restoreScroll (): Promise<void> {
     await wait()
 
     if (scrollDiv == null || scroller == null) return
@@ -547,7 +547,7 @@
     restoreScrollTop = 0
   }
 
-  function scrollToNewMessages(): void {
+  function scrollToNewMessages (): void {
     if (scrollDiv == null || !shouldScrollToNew) {
       read()
       return
@@ -557,7 +557,7 @@
     read()
   }
 
-  async function handleMessagesUpdated(newCount: number): Promise<void> {
+  async function handleMessagesUpdated (newCount: number): Promise<void> {
     if (newCount === messagesCount) {
       return
     }
@@ -586,7 +586,7 @@
   const observedMessages = new Set<string>()
   let readTimeoutId: number | undefined
 
-  function flushReadQueue(): void {
+  function flushReadQueue (): void {
     if (readTimeoutId !== undefined) {
       window.clearTimeout(readTimeoutId)
       readTimeoutId = undefined
@@ -605,7 +605,7 @@
     void readMessages(sorted, notifyContext, readState)
   }
 
-  function handleMessageIntersect(msgId: string): void {
+  function handleMessageIntersect (msgId: string): void {
     if (isFreeze() || !isScrollInitialized) {
       return
     }
@@ -620,10 +620,10 @@
     }, 500)
   }
 
-  function observeMessage(
+  function observeMessage (
     node: HTMLElement,
     message: ActivityMessage
-  ): { update: (newMessage: ActivityMessage) => void; destroy: () => void } {
+  ): { update: (newMessage: ActivityMessage) => void, destroy: () => void } {
     const initObserver = (): void => {
       if (observer !== undefined) return
       if (scrollDiv == null) return
@@ -662,23 +662,23 @@
     }
 
     return {
-      update(newMessage: ActivityMessage) {
+      update (newMessage: ActivityMessage) {
         node.setAttribute('data-msg-id', newMessage._id)
       },
-      destroy() {
+      destroy () {
         observer?.unobserve(node)
       }
     }
   }
 
-  async function handleScroll(): Promise<void> {
+  async function handleScroll (): Promise<void> {
     updateScrollData()
     updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
     updateShouldScrollToNew()
     loadMore()
   }
 
-  function handleResize(): void {
+  function handleResize (): void {
     if (!isScrollInitialized) return
     if (shouldScrollToNew) {
       scrollToBottom()
@@ -724,7 +724,7 @@
 
   $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0 && !isThread
 
-  export function editLastMessage(): void {
+  export function editLastMessage (): void {
     if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) {
       return
     }
@@ -751,7 +751,7 @@
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent): void {
+  function handleKeyDown (e: KeyboardEvent): void {
     const key = e.key
 
     if (key === 'ArrowUp') {

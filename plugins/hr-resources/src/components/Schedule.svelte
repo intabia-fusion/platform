@@ -65,7 +65,7 @@
   let search = ''
   let resultQuery: DocumentQuery<Staff> = {}
 
-  function updateResultQuery(search: string): void {
+  function updateResultQuery (search: string): void {
     resultQuery = search === '' ? {} : { $search: search }
   }
 
@@ -92,7 +92,7 @@
     descendants = descendants
   })
 
-  function inc(val: number): void {
+  function inc (val: number): void {
     switch (mode) {
       case CalendarMode.Month: {
         currentDate.setDate(1)
@@ -107,7 +107,7 @@
     currentDate = currentDate
   }
 
-  function getMonthName(date: Date): string {
+  function getMonthName (date: Date): string {
     return new Intl.DateTimeFormat('default', {
       month: 'long'
     }).format(date)
@@ -121,7 +121,7 @@
     }
   }
 
-  function departmentSelected(selected: Ref<Department>): void {
+  function departmentSelected (selected: Ref<Department>): void {
     department = selected
   }
 
@@ -134,7 +134,7 @@
   let preference: ViewletPreference | undefined
   let loading = false
 
-  function exportTable(evt: Event) {
+  function exportTable (evt: Event) {
     interface ExportPopupItem extends DropdownIntlItem {
       separator: ',' | ';'
     }

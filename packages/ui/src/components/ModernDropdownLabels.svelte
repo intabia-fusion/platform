@@ -83,7 +83,7 @@
     selected = multiselect ? [items[0].id] : items[0].id
   }
 
-  function handleClick(): void {
+  function handleClick (): void {
     if (!opened) {
       opened = true
       popup = showPopup(

@@ -41,7 +41,7 @@
   const dispatch = createEventDispatcher()
   let activeAction: string | undefined = undefined
 
-  async function handleCreateCard(): Promise<void> {
+  async function handleCreateCard (): Promise<void> {
     showPopup(
       CreateCardPopup,
       { type: type._id, space: space?._id, changeType: isBaseTypeWithSubtypes(getClient().getHierarchy(), type._id) },
@@ -56,7 +56,7 @@
     )
   }
 
-  async function getActions(lang: string): Promise<Action[]> {
+  async function getActions (lang: string): Promise<Action[]> {
     const result: Action[] = []
     const typeString = await translate(type.label, {}, lang)
     const createString = await translate(presentation.string.Create, {}, lang)

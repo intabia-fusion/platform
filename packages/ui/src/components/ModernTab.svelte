@@ -39,7 +39,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function handleContextMenu(e: MouseEvent): void {
+  function handleContextMenu (e: MouseEvent): void {
     if (readonly) return
     e.preventDefault()
     e.stopPropagation()

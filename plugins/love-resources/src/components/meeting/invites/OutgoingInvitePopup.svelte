@@ -40,7 +40,7 @@
     dispatch('close')
   }
 
-  async function handleCancel(): Promise<void> {
+  async function handleCancel (): Promise<void> {
     await cancelInvites(undefined, [invite])
     dispatch('close')
   }

@@ -24,7 +24,7 @@
   export let onOpen: (() => void) | undefined = undefined
   export let flush: boolean = false
 
-  function open(): void {
+  function open (): void {
     onOpen?.()
     const loc = getCurrentResolvedLocation()
     loc.path[2] = settingId

@@ -132,7 +132,7 @@
 
   let rangeSelected: string | number | undefined = 'week'
 
-  function toRangeMode(value: string | number | undefined): RangeMode {
+  function toRangeMode (value: string | number | undefined): RangeMode {
     switch (value) {
       case 'week':
       case 'twoWeeks':
@@ -145,7 +145,7 @@
 
   $: rangeMode = toRangeMode(rangeSelected)
 
-  function startOfWeek(date: Date, weekStartsOn: number): Date {
+  function startOfWeek (date: Date, weekStartsOn: number): Date {
     const result = new Date(date)
     result.setHours(0, 0, 0, 0)
     const diff = (result.getDay() - weekStartsOn + 7) % 7
@@ -153,14 +153,14 @@
     return result
   }
 
-  function startOfMonth(date: Date): Date {
+  function startOfMonth (date: Date): Date {
     const result = new Date(date)
     result.setHours(0, 0, 0, 0)
     result.setDate(1)
     return result
   }
 
-  function getPeriodEndMs(periodStart: Date, mode: RangeMode): number {
+  function getPeriodEndMs (periodStart: Date, mode: RangeMode): number {
     const nextPeriodStart = new Date(periodStart)
     if (mode === 'month') {
       nextPeriodStart.setMonth(nextPeriodStart.getMonth() + 1)

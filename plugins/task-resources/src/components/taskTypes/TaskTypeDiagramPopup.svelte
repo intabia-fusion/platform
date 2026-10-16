@@ -29,13 +29,13 @@
   $: focusedTaskType = focusTypeId !== undefined ? taskTypes.find((t) => t._id === focusTypeId) : undefined
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ close: void; fullsize: boolean }>()
+  const dispatch = createEventDispatcher<{ close: void, fullsize: boolean }>()
 
-  function handleClose(): void {
+  function handleClose (): void {
     dispatch('close')
   }
 
-  function handleToggleFullSize(): void {
+  function handleToggleFullSize (): void {
     fullSize = !fullSize
     dispatch('fullsize', fullSize)
   }

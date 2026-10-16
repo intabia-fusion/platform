@@ -37,7 +37,7 @@
   export let forciblyСollapsed: boolean = false
 
   let hovered: boolean = false
-  async function onMenuClick(ev: MouseEvent): Promise<void> {
+  async function onMenuClick (ev: MouseEvent): Promise<void> {
     ev.stopPropagation()
     showPopup(Menu, { actions: await moreActions(ev), ctx: doc._id }, ev.target as HTMLElement, () => {
       hovered = false
@@ -45,7 +45,7 @@
     hovered = true
   }
 
-  function selectDocument(): void {
+  function selectDocument (): void {
     const loc = getDocumentLink(doc)
     navigate(loc)
   }

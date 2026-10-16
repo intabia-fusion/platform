@@ -50,7 +50,7 @@
 
   let extras: Record<ExtraKey, boolean> = readExtras()
 
-  function readExtras(): Record<ExtraKey, boolean> {
+  function readExtras (): Record<ExtraKey, boolean> {
     const stored = localStorage.getItem(storageKey)?.split(',') ?? []
     return {
       planned: stored.includes('planned'),
@@ -59,12 +59,12 @@
     }
   }
 
-  function toggleExtra(key: ExtraKey): void {
+  function toggleExtra (key: ExtraKey): void {
     extras = { ...extras, [key]: !extras[key] }
     localStorage.setItem(storageKey, extraKeys.filter((it) => extras[it]).join(','))
   }
 
-  function showExtras(event: MouseEvent): void {
+  function showExtras (event: MouseEvent): void {
     const value: SelectPopupValueType[] = [
       { id: 'planned', label: time.string.Planned, isSelected: extras.planned },
       { id: 'events', label: time.string.ShowEvents, isSelected: extras.events },

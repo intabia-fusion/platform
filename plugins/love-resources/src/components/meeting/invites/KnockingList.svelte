@@ -51,11 +51,11 @@
     }
   }
 
-  async function handleAccept(invite: UserMeetingInvite): Promise<void> {
+  async function handleAccept (invite: UserMeetingInvite): Promise<void> {
     await responseToInviteRequest(invite, true)
   }
 
-  async function handleReject(invite: UserMeetingInvite): Promise<void> {
+  async function handleReject (invite: UserMeetingInvite): Promise<void> {
     await responseToInviteRequest(invite, false)
   }
 </script>

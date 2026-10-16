@@ -57,18 +57,18 @@
   $: markup = text !== '' ? jsonToMarkup(markdownToMarkup(text, { refUrl: 'ref://', imageUrl: '' })) : EmptyMarkup
   $: canEdit = state === 'done' && me.socialIds.includes(live.createdBy ?? live.modifiedBy)
 
-  function startEdit(evt: MouseEvent): void {
+  function startEdit (evt: MouseEvent): void {
     evt.stopPropagation()
     editMarkup = markup
     editing = true
   }
 
-  function cancelEdit(evt: MouseEvent): void {
+  function cancelEdit (evt: MouseEvent): void {
     evt.stopPropagation()
     editing = false
   }
 
-  async function saveEdit(evt: MouseEvent): Promise<void> {
+  async function saveEdit (evt: MouseEvent): Promise<void> {
     evt.stopPropagation()
     editing = false
     const md = markupToMarkdown(markupToJSON(editMarkup)).trim()

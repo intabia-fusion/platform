@@ -24,7 +24,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function select(level: string): void {
+  function select (level: string): void {
     if (disabled || level === selected) return
     dispatch('select', level)
   }

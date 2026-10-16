@@ -29,7 +29,7 @@
   export let canSave = false
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ update: ScreenProps; close: void }>()
+  const dispatch = createEventDispatcher<{ update: ScreenProps, close: void }>()
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const screensQuery = createQuery()
@@ -66,7 +66,7 @@
     dispatch('update', { screen: selectedScreenId })
   }
 
-  function handleOpenScreen(): void {
+  function handleOpenScreen (): void {
     if (selectedScreenId != null) {
       navigateToScreen(selectedScreenId, true)
       dispatch('close')

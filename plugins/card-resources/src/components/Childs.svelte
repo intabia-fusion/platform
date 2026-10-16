@@ -92,7 +92,7 @@
 
   let listWidth: number
 
-  async function createCard(): Promise<void> {
+  async function createCard (): Promise<void> {
     await createChildCard(object)
   }
 

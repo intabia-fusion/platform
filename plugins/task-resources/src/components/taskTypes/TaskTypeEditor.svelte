@@ -108,7 +108,7 @@
     errorMessage = undefined
   }
 
-  function commitName(value: string): void {
+  function commitName (value: string): void {
     if (taskType === undefined || readonly) return
 
     const trimmed = value.trim()
@@ -128,11 +128,11 @@
     }
   }
 
-  function isSameString(a: string, b: string): boolean {
+  function isSameString (a: string, b: string): boolean {
     return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
   }
 
-  function selectIcon(el: MouseEvent): void {
+  function selectIcon (el: MouseEvent): void {
     if (readonly) {
       return
     }
@@ -151,7 +151,7 @@
     )
   }
 
-  function handleAddStatus(): void {
+  function handleAddStatus (): void {
     if (taskType === undefined || readonly) {
       return
     }
@@ -180,7 +180,7 @@
 
   $: canDelete = !loading && !isDeleting && tasksCounter === 0 && taskTypes.length > 1
 
-  async function handleDelete(): Promise<void> {
+  async function handleDelete (): Promise<void> {
     if (!canDelete || readonly || taskType == null || isDeleting) {
       return
     }
@@ -210,7 +210,7 @@
       isDeleting = false
     }
   }
-  async function showIssuesOfTaskType(): Promise<void> {
+  async function showIssuesOfTaskType (): Promise<void> {
     if (taskType == null) return
     const descriptor = client
       .getModel()
@@ -222,7 +222,7 @@
     }
   }
 
-  function handleExport(): void {
+  function handleExport (): void {
     if (taskType == null) return
     showPopup(ExportTaskTypePopup, { taskType, taskTypes }, 'center')
   }

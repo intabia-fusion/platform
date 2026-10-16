@@ -71,7 +71,7 @@
     }
   ]
 
-  async function handleImportAction(event?: CustomEvent): Promise<void> {
+  async function handleImportAction (event?: CustomEvent): Promise<void> {
     if (event == null || disabled || type === undefined) return
     const actionId = event.detail
     if (actionId === 'file') {
@@ -133,7 +133,7 @@
     }
   }
 
-  async function handleFileInputChange(e: Event): Promise<void> {
+  async function handleFileInputChange (e: Event): Promise<void> {
     const target = e.target as HTMLInputElement
     const file = target?.files?.[0]
     if (file == null || disabled || type === undefined) return
@@ -181,7 +181,7 @@
     }
   }
 
-  function handleTaskTypeSelected(id: string | undefined): void {
+  function handleTaskTypeSelected (id: string | undefined): void {
     const loc = getCurrentResolvedLocation()
     if (id !== undefined) {
       loc.path[5] = 'taskTypes'

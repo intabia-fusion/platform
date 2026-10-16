@@ -60,7 +60,7 @@
     })
   }
 
-  async function onMenuClick(ev: MouseEvent): Promise<void> {
+  async function onMenuClick (ev: MouseEvent): Promise<void> {
     ev.stopPropagation()
     // Read actual popup actions on open as visibility might have been changed
     pressed = true
@@ -70,7 +70,7 @@
     })
   }
 
-  async function onInlineClick(ev: MouseEvent, action: Action): Promise<void> {
+  async function onInlineClick (ev: MouseEvent, action: Action): Promise<void> {
     ev.stopPropagation()
     void action.action([], ev)
   }

@@ -66,7 +66,7 @@
 
   // The store holds everything but Finished, unordered, so a plain find could pick next week's
   // Scheduled meeting. Live ones win; a Scheduled one only inside its start window.
-  function pickRoomMeeting(roomId: Ref<Room>, all: MeetingMinutes[]): MeetingMinutes | undefined {
+  function pickRoomMeeting (roomId: Ref<Room>, all: MeetingMinutes[]): MeetingMinutes | undefined {
     const ofRoom = all.filter((it) => it.roomId === roomId)
     return (
       ofRoom.find((it) => it.status === MeetingStatus.Active) ??
@@ -75,7 +75,7 @@
     )
   }
 
-  async function connect(): Promise<void> {
+  async function connect (): Promise<void> {
     if ($connectingToMeeting) return
     const mm = pickRoomMeeting(object._id, get(meetings))
     if (mm !== undefined) {
@@ -91,7 +91,7 @@
 
   let connectLabel: IntlString | undefined
 
-  async function updateConnecting(object: Room, infos: ParticipantInfo[], isLocalConnecting: boolean): Promise<void> {
+  async function updateConnecting (object: Room, infos: ParticipantInfo[], isLocalConnecting: boolean): Promise<void> {
     connecting = isLocalConnecting || ($currentRoom?._id === object._id && !$lkSessionConnected)
 
     let _connectLabel: IntlString = infos.some(({ room }) => room === object._id)
@@ -112,7 +112,7 @@
 
   $: void updateConnecting(object, $infos, hasPendingJoinInThisSession || $connectingToMeeting)
 
-  function showConnectionButton(
+  function showConnectionButton (
     object: Room,
     connecting: boolean,
     isConnected: boolean,
@@ -139,7 +139,7 @@
 
     return true
   }
-  function getInfo(room: Ref<Room>, info: ParticipantInfo[]): ParticipantInfo[] {
+  function getInfo (room: Ref<Room>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.room === room)
   }
 
@@ -162,11 +162,11 @@
   $: pendingKnock = $outgoingInvitesStore.find((it) => it.from === me && it.room === object._id)
   $: hasOutgoingKnock = pendingKnock !== undefined
 
-  async function knock(): Promise<void> {
+  async function knock (): Promise<void> {
     await sendKnockRequest(object._id)
   }
 
-  async function cancelKnock(): Promise<void> {
+  async function cancelKnock (): Promise<void> {
     if (pendingKnock === undefined) return
     await cancelInvites(undefined, [pendingKnock])
   }

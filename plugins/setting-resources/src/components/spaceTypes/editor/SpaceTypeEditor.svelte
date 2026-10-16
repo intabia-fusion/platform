@@ -44,7 +44,7 @@
     void loadDescriptor()
   }
 
-  async function loadDescriptor(): Promise<void> {
+  async function loadDescriptor (): Promise<void> {
     descriptor = await client.findOne(core.class.SpaceTypeDescriptor, { _id: type.descriptor })
   }
 

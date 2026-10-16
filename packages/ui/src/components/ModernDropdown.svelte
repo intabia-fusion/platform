@@ -80,7 +80,7 @@
 
   $: activeTooltip = tooltip !== undefined ? { timeout: 600, ...tooltip } : undefined
 
-  function getItemId(item: DropdownIntlItem | SelectedItem | undefined): DropdownIntlItem['id'] | undefined {
+  function getItemId (item: DropdownIntlItem | SelectedItem | undefined): DropdownIntlItem['id'] | undefined {
     if (item == null) return undefined
     if (Array.isArray(item)) return item[0]
     if (typeof item === 'object') return item.id
@@ -116,7 +116,7 @@
     }
   }
 
-  function handleSelect(result: DropdownIntlItem['id'] | undefined): void {
+  function handleSelect (result: DropdownIntlItem['id'] | undefined): void {
     if (result != null) {
       const matchedItem = (items ?? []).find((x) => getItemId(x) === result)
       if (allowDeselect && getItemId(selected) === result) {
@@ -133,7 +133,7 @@
     }
   }
 
-  function openPopup(): void {
+  function openPopup (): void {
     if (!opened && !disabled) {
       opened = true
       showPopup(

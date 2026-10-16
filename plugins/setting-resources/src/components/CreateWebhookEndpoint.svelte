@@ -48,7 +48,7 @@
   $: urlValid = (allowHttp ? /^https?:\/\// : /^https:\/\//).test(url.trim())
   $: canSave = !saving && urlValid && events.length > 0
 
-  function pickEvents(event: MouseEvent): void {
+  function pickEvents (event: MouseEvent): void {
     showPopup(
       WebhookEventsPopup,
       { selected: events },
@@ -62,7 +62,7 @@
     )
   }
 
-  async function save(): Promise<void> {
+  async function save (): Promise<void> {
     if (!canSave) return
     saving = true
     error = undefined

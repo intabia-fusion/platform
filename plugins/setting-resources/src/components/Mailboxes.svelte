@@ -28,7 +28,7 @@
   let mailboxes: MailboxInfo[] = []
   let mailboxOptions: MailboxOptions | undefined
 
-  function loadMailboxes(): void {
+  function loadMailboxes (): void {
     getAccountClient()
       .getMailboxes()
       .then((res) => {
@@ -43,7 +43,7 @@
       })
   }
 
-  function loadMailboxOptions(): void {
+  function loadMailboxOptions (): void {
     getAccountClient()
       .getMailboxOptions()
       .then((res) => {
@@ -57,7 +57,7 @@
       })
   }
 
-  function create(): void {
+  function create (): void {
     if (mailboxOptions === undefined) {
       console.warn('Mailbox options not loaded yet')
       return

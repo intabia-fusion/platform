@@ -73,24 +73,24 @@
     { verb: 'POST ', text: concatLink(serviceBase, `/api/v1/webhook/k/${PLACEHOLDER_KEY}/in`) }
   ]
 
-  async function copyText(text: string): Promise<void> {
+  async function copyText (text: string): Promise<void> {
     if (!window.isSecureContext) return
     await copyTextToClipboard(text)
   }
 
-  function toRule(doc: Doc): WebhookIncomingRule {
+  function toRule (doc: Doc): WebhookIncomingRule {
     return doc as WebhookIncomingRule
   }
 
-  async function toggleEnabled(rule: WebhookIncomingRule): Promise<void> {
+  async function toggleEnabled (rule: WebhookIncomingRule): Promise<void> {
     await client.updateDoc(setting.class.WebhookIncomingRule, rule.space, rule._id, { enabled: !rule.enabled })
   }
 
-  function openCreate(): void {
+  function openCreate (): void {
     showPopup(WebhookRuleEditor, { apiKey, rank: makeRank(lastRank, undefined) })
   }
 
-  function openFromTemplate(event: MouseEvent): void {
+  function openFromTemplate (event: MouseEvent): void {
     const items: SelectPopupValueType[] = webhookRuleTemplates.map((t) => ({ id: t.id, text: t.label }))
     showPopup(SelectPopup, { value: items, searchable: true }, eventToHTMLElement(event), (id?: string) => {
       if (id === undefined) return
@@ -100,11 +100,11 @@
     })
   }
 
-  function openEdit(rule: WebhookIncomingRule): void {
+  function openEdit (rule: WebhookIncomingRule): void {
     showPopup(WebhookRuleEditor, { apiKey, existing: rule })
   }
 
-  function remove(rule: WebhookIncomingRule): void {
+  function remove (rule: WebhookIncomingRule): void {
     showPopup(MessageBox, {
       labelStr: rule.name,
       message: settingsRes.string.WebhookRuleDeleteConfirm,

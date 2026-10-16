@@ -84,21 +84,21 @@
 
   let search: string = ''
 
-  async function select(workspace: string): Promise<void> {
+  async function select (workspace: string): Promise<void> {
     const url = locationToUrl({ path: [workbenchId, workspace] })
     window.open(url, '_blank')
   }
 
   // Every workspace operation requires an emailed OTP code; ask before running.
   // runAdminAction surfaces a refusal - these used to fail into the console only.
-  async function otpGuardedOp(ws: string | string[], event: WorkspaceUserOperation, ...params: any[]): Promise<void> {
+  async function otpGuardedOp (ws: string | string[], event: WorkspaceUserOperation, ...params: any[]): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
     await runAdminAction(async () => await performWorkspaceOperationWithOtp(ws, event, code, ...params))
   }
 
   // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
-  async function deleteWorkspace(ws: string): Promise<void> {
+  async function deleteWorkspace (ws: string): Promise<void> {
     const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
     if (res === undefined) return
     await runAdminAction(
@@ -121,7 +121,7 @@
   let sortAsc = false
 
   // Names read best A-Z, every other column starts from the biggest/most recent.
-  function sortBy(rule: SortingRule): void {
+  function sortBy (rule: SortingRule): void {
     if (sortingRule === rule) {
       sortAsc = !sortAsc
       return
@@ -136,7 +136,7 @@
   $: ariaSort = (rule: SortingRule): 'ascending' | 'descending' | 'none' =>
     sortingRule === rule ? (sortAsc ? 'ascending' : 'descending') : 'none'
 
-  function sortOnKey(e: KeyboardEvent, rule: SortingRule): void {
+  function sortOnKey (e: KeyboardEvent, rule: SortingRule): void {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       sortBy(rule)
@@ -230,7 +230,7 @@
   let aiTokensByWs = new Map<string, number>()
   let asrMinutesByWs = new Map<string, number>()
 
-  async function loadBillingUsage(): Promise<void> {
+  async function loadBillingUsage (): Promise<void> {
     const billingClient = getBillingClient()
     if (billingClient === null) return
     try {
@@ -307,7 +307,7 @@
     for (const k of Object.keys(dayRanges)) expandedGroups[k] = true
   }
 
-  function isWorkspaceInactive(it: WorkspaceInfo, stats: WorkspaceStatistics | undefined): boolean {
+  function isWorkspaceInactive (it: WorkspaceInfo, stats: WorkspaceStatistics | undefined): boolean {
     if (stats === undefined) {
       return true
     }
@@ -354,7 +354,7 @@
 
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
 
-  async function fetchStats(time: number): Promise<void> {
+  async function fetchStats (time: number): Promise<void> {
     await adminFetch(endpoint + '/api/v1/overview')
       .then(async (json) => {
         data = await json.json()
@@ -488,7 +488,7 @@
         : filteredRegionRef.region
       : ''
 
-  function fmtTokens(n: number): string {
+  function fmtTokens (n: number): string {
     if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
     if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
     if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k'

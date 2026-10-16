@@ -44,7 +44,7 @@
     )
   }
 
-  function handleRoleSelected(id: string | undefined): void {
+  function handleRoleSelected (id: string | undefined): void {
     const loc = getCurrentResolvedLocation()
     if (id !== undefined) {
       loc.path[5] = 'roles'

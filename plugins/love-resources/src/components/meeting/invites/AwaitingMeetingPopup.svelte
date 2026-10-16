@@ -33,7 +33,7 @@
     dispatch('close')
   }
 
-  function handleCancel(): void {
+  function handleCancel (): void {
     cancelAwaiting(person._id)
     dispatch('close')
   }

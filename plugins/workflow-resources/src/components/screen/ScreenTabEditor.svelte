@@ -55,11 +55,11 @@
     localName = tab.name ?? ''
   }
 
-  function toScreenField(doc: Doc): ScreenField {
+  function toScreenField (doc: Doc): ScreenField {
     return doc as ScreenField
   }
 
-  async function saveTabName(): Promise<void> {
+  async function saveTabName (): Promise<void> {
     if (tab != null) {
       const trimmed = localName.trim()
       if (trimmed.length > 0 && trimmed !== tab.name) {
@@ -72,7 +72,7 @@
     void saveTabName()
   })
 
-  async function removeTab(): Promise<void> {
+  async function removeTab (): Promise<void> {
     if (fields.length > 0) {
       showPopup(MessageBox, {
         label: plugin.string.DeleteScreenTab,
@@ -88,7 +88,7 @@
     }
   }
 
-  async function addField(attribute: Ref<AnyAttribute>): Promise<void> {
+  async function addField (attribute: Ref<AnyAttribute>): Promise<void> {
     if (fields.some((f) => f.attribute === attribute)) return // prevent duplicates
     const attr = availableAttributes.find((it) => it.id === attribute)
     if (attr == null) return
@@ -100,17 +100,17 @@
     })
   }
 
-  async function removeField(field: ScreenField): Promise<void> {
+  async function removeField (field: ScreenField): Promise<void> {
     await removeScreenField(client, field.attachedTo, field._id)
   }
 
-  async function toggleRequired(field: ScreenField): Promise<void> {
+  async function toggleRequired (field: ScreenField): Promise<void> {
     await client.update(field, { required: !field.required })
   }
 
   let labelEl: HTMLElement | undefined
 
-  function openAddFieldPopup(target: HTMLElement | undefined): void {
+  function openAddFieldPopup (target: HTMLElement | undefined): void {
     if (availableAttributes.length === 0 || target == null) return
 
     const popupItems: DropdownIntlItem[] = []

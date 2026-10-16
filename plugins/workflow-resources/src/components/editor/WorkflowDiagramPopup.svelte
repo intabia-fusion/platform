@@ -41,7 +41,7 @@
   const hierarchy = client.getHierarchy()
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ close: void; fullsize: boolean }>()
+  const dispatch = createEventDispatcher<{ close: void, fullsize: boolean }>()
 
   let currentTaskTypeId: Ref<TaskType> | undefined = selectedTaskType
   let currentWorkflow: Workflow | undefined = workflow
@@ -54,23 +54,23 @@
   let initSequence = 0
   let loadSequence = 0
 
-  function handleClose(): void {
+  function handleClose (): void {
     dispatch('close')
   }
 
-  function handleToggleFullSize(): void {
+  function handleToggleFullSize (): void {
     fullSize = !fullSize
     dispatch('fullsize', fullSize)
   }
 
-  function handleTaskTypeChange(newId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null): void {
+  function handleTaskTypeChange (newId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null): void {
     const rawId = Array.isArray(newId) ? newId[0] : newId
     if (rawId != null) {
       currentTaskTypeId = String(rawId) as Ref<TaskType>
     }
   }
 
-  async function initializeProjectWorkflows(): Promise<void> {
+  async function initializeProjectWorkflows (): Promise<void> {
     const seq = ++initSequence
     let initialMap: Record<Ref<TaskType>, Ref<Workflow>> = { ...(workflowsMap ?? {}) }
 
@@ -112,7 +112,7 @@
     }
   }
 
-  async function loadWorkflow(wfId: Ref<Workflow>, taskTypeId?: Ref<TaskType>): Promise<void> {
+  async function loadWorkflow (wfId: Ref<Workflow>, taskTypeId?: Ref<TaskType>): Promise<void> {
     const seq = ++loadSequence
     const wfDoc = await client.findOne<Workflow>(
       workflowPlugin.class.Workflow,

@@ -33,7 +33,7 @@
   let btn: HTMLButtonElement
   let pressed: boolean = false
 
-  function clickHandler() {
+  function clickHandler () {
     pressed = true
     closeTooltip()
     showPopup(ViewletSetting, { viewlet, defaultConfig }, btn, () => {
@@ -41,7 +41,7 @@
     })
   }
 
-  function getDefaultOptions(): ViewOptions {
+  function getDefaultOptions (): ViewOptions {
     if (defaultViewOptions != null) return defaultViewOptions
 
     return viewlet?.viewOptions != null ? getDefaults(viewlet.viewOptions) : defaultOptions

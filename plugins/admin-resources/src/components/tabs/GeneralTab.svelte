@@ -32,7 +32,7 @@
     { id: 'workspaces', label: adminRes.string.ReportWorkspaces },
     { id: 'paid', label: adminRes.string.ReportPaidWorkspaces }
   ]
-  async function runReport(id: ReportId): Promise<void> {
+  async function runReport (id: ReportId): Promise<void> {
     generating = true
     try {
       await downloadReport(id, reportFormat)
@@ -55,7 +55,7 @@
   const statsEndpoint = getMetadata(presentation.metadata.StatsUrl)
   let overview: OverviewStatistics | undefined
 
-  async function loadOverview(): Promise<void> {
+  async function loadOverview (): Promise<void> {
     try {
       const res = await adminFetch(statsEndpoint + '/api/v1/overview')
       overview = await res.json()

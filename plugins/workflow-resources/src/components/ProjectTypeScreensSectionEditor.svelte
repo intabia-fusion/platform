@@ -51,7 +51,7 @@
     { sort: { name: SortingOrder.Ascending } }
   )
 
-  function getClassLabel(targetClass?: Ref<Class<Task>>): IntlString | undefined {
+  function getClassLabel (targetClass?: Ref<Class<Task>>): IntlString | undefined {
     if (targetClass == null) return undefined
     if (targetClass === tracker.class.Issue) return plugin.string.AnyTaskType
     // Task type classes all inherit the "Issue" label, so name them by their task type.

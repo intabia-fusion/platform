@@ -47,7 +47,7 @@
     employee !== undefined &&
     !(hierarchy.hasMixin(employee, contact.mixin.Employee) && hierarchy.as(employee, contact.mixin.Employee).active)
 
-  async function invite(): Promise<void> {
+  async function invite (): Promise<void> {
     if (employee !== undefined) {
       void sendInvites([employee._id])
     } else {
@@ -55,7 +55,7 @@
     }
   }
 
-  function openSelectUsersPopup(): void {
+  function openSelectUsersPopup (): void {
     const skipAccounts = $infos.filter((p) => p.meeting === $currentMeetingMinutes?._id).map((p) => p.person)
     showPopup(
       SelectUsersPopup,

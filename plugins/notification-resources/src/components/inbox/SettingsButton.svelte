@@ -22,7 +22,7 @@
 
   export let items: SettingItem[] = []
 
-  function click(e: MouseEvent): void {
+  function click (e: MouseEvent): void {
     showPopup(SettingsPopup, { items }, eventToHTMLElement(e))
   }
 </script>

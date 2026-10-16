@@ -31,7 +31,7 @@
   // Step for navigation: number of days to shift, or 'month' for a calendar-month step.
   export let step: number | 'month' = 1
 
-  function inc(val: number): void {
+  function inc (val: number): void {
     if (val === 0) {
       currentDate = new Date()
       return
@@ -45,7 +45,7 @@
     currentDate = next
   }
 
-  function getTitle(day: Date, now: Timestamp): IntlString {
+  function getTitle (day: Date, now: Timestamp): IntlString {
     const isCurrentYear = day.getFullYear() === new Date().getFullYear()
     return getEmbeddedLabel(
       day.toLocaleDateString('default', {

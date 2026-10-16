@@ -51,7 +51,7 @@
 
   $: canSave = !!channelName
 
-  async function save(): Promise<void> {
+  async function save (): Promise<void> {
     const myAcc = getCurrentAccount().uuid
     const employee = getCurrentEmployee()
     const space = await client.findOne(contact.class.PersonSpace, { person: employee }, { projection: { _id: 1 } })
@@ -70,7 +70,7 @@
     await openChunterSpace(channelId, chunter.class.Channel)
   }
 
-  function handleCancel(): void {
+  function handleCancel (): void {
     dispatch('close')
   }
 </script>

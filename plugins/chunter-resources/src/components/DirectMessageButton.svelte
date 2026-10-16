@@ -26,7 +26,7 @@
   export let icon: Asset | undefined = undefined
   export let type: 'type-button' | 'type-button-icon' = 'type-button'
 
-  async function openDirect(): Promise<void> {
+  async function openDirect (): Promise<void> {
     await openDirectForPerson(employee, true)
   }
 </script>

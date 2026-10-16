@@ -25,7 +25,7 @@
 
   let metrics: Metrics | undefined
 
-  function update(tick: number): void {
+  function update (tick: number): void {
     metrics = metricsAggregate(uiContext.metrics)
   }
 

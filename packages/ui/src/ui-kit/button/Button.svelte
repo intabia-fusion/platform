@@ -58,7 +58,7 @@
   $: resolvedSize = size ?? 'large'
   $: resolvedShape = shape ?? 'rectangle'
 
-  export function focus(): void {
+  export function focus (): void {
     element?.focus()
   }
 
@@ -76,7 +76,7 @@
 
   let accessibleName: string | undefined
 
-  function translateAccessibleLabel(
+  function translateAccessibleLabel (
     label: IntlString | undefined,
     params: Record<string, any> | undefined,
     language: string | undefined
@@ -100,7 +100,7 @@
   })
   $: if (idx !== -1) focusManager?.updateFocus(idx, focusIndex ?? -1)
 
-  function handleFocus(): void {
+  function handleFocus (): void {
     if (idx !== -1) focusManager?.setFocus(idx)
   }
 

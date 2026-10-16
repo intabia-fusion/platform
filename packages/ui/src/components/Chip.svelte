@@ -29,13 +29,13 @@
 
   let buttonRef: IconButton | undefined
 
-  function handleBackspace(event: KeyboardEvent) {
+  function handleBackspace (event: KeyboardEvent) {
     if (event.key === 'Backspace') {
       dispatch('remove')
     }
   }
 
-  export function focus() {
+  export function focus () {
     buttonRef?.focus()
   }
 </script>

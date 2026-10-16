@@ -30,7 +30,7 @@
 
   let inFlight = false
 
-  async function toggle(): Promise<void> {
+  async function toggle (): Promise<void> {
     const mm = $currentMeetingMinutes
     if (mm === undefined || inFlight) return
 

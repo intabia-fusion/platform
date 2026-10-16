@@ -60,12 +60,12 @@
     })
   })
 
-  async function handleJoin(): Promise<void> {
+  async function handleJoin (): Promise<void> {
     await responseToInviteRequest(invite, true)
     dispatch('close')
   }
 
-  async function handleReject(): Promise<void> {
+  async function handleReject (): Promise<void> {
     await responseToInviteRequest(invite, false)
     dispatch('close')
   }

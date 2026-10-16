@@ -32,11 +32,11 @@
   import { toSlots } from './utils'
 
   // Sidebar widgets are rendered with the widget state; ours carries the person and the day.
-  export let widgetState: { data?: { person?: Ref<Person>; date?: number } } | undefined = undefined
+  export let widgetState: { data?: { person?: Ref<Person>, date?: number } } | undefined = undefined
   export let widget: Widget | undefined = undefined
 
   // closeWidget resolved via getResource - no direct workbench-resources import (package cycle)
-  async function handleClose(): Promise<void> {
+  async function handleClose (): Promise<void> {
     if (widget === undefined) return
     const closeWidget = await getResource(workbench.function.CloseWidget)
     await closeWidget(widget._id)

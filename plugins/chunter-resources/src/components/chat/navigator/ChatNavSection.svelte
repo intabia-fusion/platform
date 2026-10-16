@@ -40,7 +40,7 @@
   export let id: string
   export let _class: Ref<Class<Doc>> = core.class.Doc
   export let header: IntlString
-  export let objects: { doc: Doc; chat?: Chat }[]
+  export let objects: { doc: Doc, chat?: Chat }[]
   export let itemsCount: number
   export let showEmpty: boolean = false
   export let actions: Action[] = []
@@ -75,7 +75,7 @@
     $languageStore
   )
 
-  function getScore(i: ChatNavItemModel): number {
+  function getScore (i: ChatNavItemModel): number {
     const score = (i.chat as WithLookup<Chat>)?.$source?.$score
     if (score != null) return score
 
@@ -106,7 +106,7 @@
 
   const getChatNavItems = reduceCalls(
     async (
-      objects: { doc: Doc; chat?: Chat }[],
+      objects: { doc: Doc, chat?: Chat }[],
       handler: (items: ChatNavItemModel[]) => void,
       lang: string
     ): Promise<void> => {
@@ -151,7 +151,7 @@
     }
   )
 
-  function onShowMore(): void {
+  function onShowMore (): void {
     dispatcher('show-more')
   }
 
@@ -159,7 +159,7 @@
 
   let menuOpened = false
 
-  function handleMenuClicked(ev: MouseEvent): void {
+  function handleMenuClicked (ev: MouseEvent): void {
     menuOpened = true
     showPopup(Menu, { actions, ctx: { _id: id } }, ev.target as HTMLElement, () => {
       menuOpened = false

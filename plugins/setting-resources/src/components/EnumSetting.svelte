@@ -48,7 +48,7 @@
     }
   })
 
-  function create() {
+  function create () {
     showPopup(setting.component.EditEnum, { title: setting.string.CreateEnum }, 'top')
   }
 

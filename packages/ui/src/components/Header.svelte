@@ -69,7 +69,7 @@
     if (closeButton) window.removeEventListener('keydown', _close)
   })
 
-  function _close(ev: KeyboardEvent): void {
+  function _close (ev: KeyboardEvent): void {
     if (closeButton && ev.key === 'Escape' && closeOnEscape) {
       ev.preventDefault()
       ev.stopPropagation()

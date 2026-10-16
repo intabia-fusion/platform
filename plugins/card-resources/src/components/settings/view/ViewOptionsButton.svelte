@@ -30,7 +30,7 @@
   let btn: HTMLButtonElement
   let pressed: boolean = false
 
-  async function clickHandler(): Promise<void> {
+  async function clickHandler (): Promise<void> {
     if (viewlet === undefined) {
       return
     }

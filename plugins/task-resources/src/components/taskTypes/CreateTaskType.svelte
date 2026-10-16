@@ -35,7 +35,7 @@
   export let taskTypes: TaskType[]
   export let taskType: TaskType | undefined
 
-  function defaultTaskType(type: ProjectType): Data<TaskType> {
+  function defaultTaskType (type: ProjectType): Data<TaskType> {
     return {
       name: '',
       parent: type._id,
@@ -73,7 +73,7 @@
   let allowAnyParent: boolean = taskType?.allowAnyParent ?? true
   let allowedAsChildOf: Ref<TaskType>[] = taskType?.allowedAsChildOf ?? []
 
-  function findStatusClass(_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
+  function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
     const attrs = h.getAllAttributes(_class)
     for (const it of attrs.values()) {
@@ -86,7 +86,7 @@
   let taskTypeDescriptor: TaskTypeDescriptor = taskTypeDescriptors[0]
   let errorMessage: IntlString | undefined = undefined
 
-  async function save(): Promise<void> {
+  async function save (): Promise<void> {
     if (type === undefined) return
 
     const trimmedName = name.trim()

@@ -46,7 +46,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function close(): void {
+  function close (): void {
     if (onCancel !== undefined) {
       onCancel()
     } else {
@@ -54,7 +54,7 @@
     }
   }
 
-  function onKeyDown(ev: KeyboardEvent): void {
+  function onKeyDown (ev: KeyboardEvent): void {
     if (ev.key === 'Escape') {
       ev.preventDefault()
       ev.stopPropagation()

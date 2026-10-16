@@ -51,14 +51,14 @@
 
   $: selected = value !== undefined ? items.find((item) => item.id === value) : undefined
 
-  function change(val: Visibility): void {
+  function change (val: Visibility): void {
     if (value !== val) {
       dispatch('change', val)
       value = val
     }
   }
 
-  function openPopup(ev: MouseEvent): void {
+  function openPopup (ev: MouseEvent): void {
     ev.stopPropagation()
     if (!opened) {
       opened = true

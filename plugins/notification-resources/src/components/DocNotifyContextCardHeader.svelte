@@ -37,7 +37,7 @@
 
   $: presenterMixin = hierarchy.classHierarchyMixin(value.objectClass, notification.mixin.NotificationContextPresenter)
 
-  function showMenu(ev: MouseEvent): void {
+  function showMenu (ev: MouseEvent): void {
     ev.stopPropagation()
     ev.preventDefault()
     showPopup(
@@ -54,15 +54,15 @@
     handleActionMenuOpened()
   }
 
-  function handleActionMenuOpened(): void {
+  function handleActionMenuOpened (): void {
     isActionMenuOpened = true
   }
 
-  function handleActionMenuClosed(): void {
+  function handleActionMenuClosed (): void {
     isActionMenuOpened = false
   }
 
-  async function checkContext(): Promise<void> {
+  async function checkContext (): Promise<void> {
     dispatch('clear')
   }
   $: identifier = value.objectIdentifier

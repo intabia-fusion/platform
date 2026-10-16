@@ -46,7 +46,7 @@
     }
   )
 
-  function addRelation(): void {
+  function addRelation (): void {
     showPopup(CreateView, {
       tag: masterTag
     })

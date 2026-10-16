@@ -53,7 +53,7 @@
   $: firstWaveLoaded =
     pinnedLoaded && chatNavGroupModels.every((model) => model.deferred === true || loadedGroups.has(model.id))
 
-  function isGroupActive(model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
+  function isGroupActive (model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
     if (model.deferred === true) return firstWaveLoaded
     if (model.id === 'starred') return pinnedLoaded
     return true
@@ -122,7 +122,7 @@
 
   let pressed: boolean = false
 
-  function handlePenClick(ev: Event): void {
+  function handlePenClick (ev: Event): void {
     pressed = true
     showPopup(Menu, { actions: globalActions }, ev.target as HTMLElement, () => {
       pressed = false

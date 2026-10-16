@@ -39,18 +39,18 @@
   $: progress = duration > 0 ? time / duration : 0
   $: mmss = fmt(time) + ' / ' + fmt(duration)
 
-  function fmt(s: number): string {
+  function fmt (s: number): string {
     if (!Number.isFinite(s)) return '0:00'
     return `${Math.floor(s / 60)}:${`${Math.floor(s % 60)}`.padStart(2, '0')}`
   }
 
-  function toggle(): void {
+  function toggle (): void {
     if (audioEl === undefined) return
     if (paused) void audioEl.play()
     else audioEl.pause()
   }
 
-  function seek(e: MouseEvent): void {
+  function seek (e: MouseEvent): void {
     if (duration <= 0) return
     const el = e.currentTarget as HTMLElement
     const r = el.getBoundingClientRect()
@@ -73,7 +73,7 @@
   })
 
   // Per-bar RMS of the waveform, normalized to [0.1..1].
-  function rms(data: Float32Array, count: number): number[] {
+  function rms (data: Float32Array, count: number): number[] {
     const seg = Math.floor(data.length / count)
     const out: number[] = []
     let max = 0

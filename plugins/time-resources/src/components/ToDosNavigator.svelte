@@ -119,7 +119,7 @@
 
   $: actions = getHeaderMenuActions()
 
-  function getHeaderMenuActions(): Action[] {
+  function getHeaderMenuActions (): Action[] {
     const actions: Action[] = []
     const caldavUrl = getMetadata(calendar.metadata.CalDavServerURL)
 
@@ -137,7 +137,7 @@
     return actions
   }
 
-  function menuButtonClicked(ev: MouseEvent): void {
+  function menuButtonClicked (ev: MouseEvent): void {
     pressed = true
     showPopup(Menu, { actions }, ev.target as HTMLElement, () => {
       pressed = false

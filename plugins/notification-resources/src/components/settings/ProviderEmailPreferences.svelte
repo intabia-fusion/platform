@@ -28,7 +28,7 @@
   export let setting: NotificationProviderSetting | undefined
   export let enabled: boolean
 
-  function configure(): void {
+  function configure (): void {
     showPopup(EmailPreferencesPopup, { provider, setting, enabled })
   }
 </script>

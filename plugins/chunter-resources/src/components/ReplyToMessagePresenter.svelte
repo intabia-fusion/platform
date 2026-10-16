@@ -93,7 +93,7 @@
 
   $: loc = createLocation($location, replyTo, parentMessage)
 
-  function createLocation(loc: Location, message: ChatMessage, parentMsg?: ChatMessage): Location | undefined {
+  function createLocation (loc: Location, message: ChatMessage, parentMsg?: ChatMessage): Location | undefined {
     if (message == null) return undefined
     const newLocation: Location = {
       path: [...loc.path]
@@ -114,7 +114,7 @@
     return newLocation
   }
 
-  function handleClick(e: MouseEvent | KeyboardEvent): void {
+  function handleClick (e: MouseEvent | KeyboardEvent): void {
     if (e.metaKey || e.ctrlKey || loc == null) return
     e.preventDefault()
     e.stopPropagation()
@@ -123,13 +123,13 @@
     navigate(loc)
   }
 
-  function handleClose(e: MouseEvent): void {
+  function handleClose (e: MouseEvent): void {
     e.stopPropagation()
     e.stopPropagation()
     dispatch('delete')
   }
 
-  function handleKeyDown(e: KeyboardEvent): void {
+  function handleKeyDown (e: KeyboardEvent): void {
     if (e.key === 'Enter') {
       e.preventDefault()
       e.stopPropagation()

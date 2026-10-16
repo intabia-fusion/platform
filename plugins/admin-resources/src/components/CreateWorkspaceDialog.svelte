@@ -36,7 +36,7 @@
     regionInfo = r ?? []
   })
 
-  async function create(): Promise<void> {
+  async function create (): Promise<void> {
     if (creating || name.trim().length === 0) return
     creating = true
     failed = false

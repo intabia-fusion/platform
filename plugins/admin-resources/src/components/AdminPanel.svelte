@@ -40,7 +40,7 @@
   let lastUpdated: number | undefined
   let refreshTick = 0
 
-  function refresh(): void {
+  function refresh (): void {
     refreshTick++
     lastUpdated = Date.now()
   }
@@ -80,7 +80,7 @@
   // Tab lives in the URL (/admin/<tab>) so it survives reload and is deep-linkable.
   $: selectedTab = tabItems.some((t) => t.id === $location.path[1]) ? $location.path[1] : 'general'
 
-  function onTabSelect(ev: CustomEvent): void {
+  function onTabSelect (ev: CustomEvent): void {
     if (ev.detail?.id !== undefined) {
       const loc = getCurrentLocation()
       loc.path[1] = ev.detail.id

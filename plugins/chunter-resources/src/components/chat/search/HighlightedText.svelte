@@ -30,7 +30,7 @@
   let expanded = false
   let overflows = false
 
-  function measure(el: Element): void {
+  function measure (el: Element): void {
     overflows = el.getBoundingClientRect().height > COLLAPSED_HEIGHT + 1
   }
 
@@ -39,7 +39,7 @@
   $: matched = matchedTerms(fragments)
   $: highlighted = highlight(markup, matched)
 
-  function highlight(markup: Markup, matched: string[]): Markup | undefined {
+  function highlight (markup: Markup, matched: string[]): Markup | undefined {
     if (isEmptyMarkup(markup)) return undefined
     try {
       return jsonToMarkup(highlightMarkup(markupToJSON(markup), matched))

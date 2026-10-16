@@ -33,7 +33,7 @@
   export let itemParams: Record<string, any> = {}
   export let element: HTMLButtonElement | undefined = undefined
 
-  export function focus(): void {
+  export function focus (): void {
     element?.focus()
   }
 
@@ -47,18 +47,18 @@
   let shownProps: typeof popupProps | undefined
 
   // popupProps is the only dependency: no echo right after opening, no re-render for an equal inline items literal.
-  function syncPopup(props: typeof popupProps): void {
+  function syncPopup (props: typeof popupProps): void {
     if (popup === undefined || deepEqual(props, shownProps)) return
     shownProps = props
     popup.update(props)
   }
 
-  function select(id: Id): void {
+  function select (id: Id): void {
     selected = id
     dispatch('selected', id)
   }
 
-  function open(): void {
+  function open (): void {
     if (popup !== undefined) return
     if (autoSelectSingle && items.length === 1) {
       select(items[0].id)

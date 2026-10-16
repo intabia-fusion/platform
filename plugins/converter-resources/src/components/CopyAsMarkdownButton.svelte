@@ -34,7 +34,7 @@
     }
   ] satisfies DropdownIntlItem[]
 
-  async function handleCopyAll(e: Event): Promise<void> {
+  async function handleCopyAll (e: Event): Promise<void> {
     if (relationshipTableData !== undefined) {
       await copyRelationshipTableAsMarkdown(e, relationshipTableData)
     } else if (_class !== undefined && query !== undefined) {
@@ -50,7 +50,7 @@
     }
   }
 
-  async function onActionSelected(event?: CustomEvent): Promise<void> {
+  async function onActionSelected (event?: CustomEvent): Promise<void> {
     if (event?.detail !== COPY_ALL_ACTION_ID) {
       return
     }

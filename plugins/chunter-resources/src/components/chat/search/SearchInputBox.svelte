@@ -25,7 +25,7 @@
 
   let element: HTMLInputElement | undefined = undefined
 
-  export function focus(): void {
+  export function focus (): void {
     element?.focus()
   }
 

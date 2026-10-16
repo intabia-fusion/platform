@@ -20,7 +20,7 @@
   import notification from '../../plugin'
   import { clearAll, readAll } from '../../actions'
 
-  async function onSelect(id?: 'clear' | 'read'): Promise<void> {
+  async function onSelect (id?: 'clear' | 'read'): Promise<void> {
     if (id == null) return
 
     if (id === 'clear') {

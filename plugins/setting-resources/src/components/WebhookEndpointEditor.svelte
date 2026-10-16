@@ -105,29 +105,29 @@
 
   let revealedSecretIds = new Set<string>()
   let testing = false
-  let testResult: { delivered: boolean; status?: number; error?: string } | undefined
+  let testResult: { delivered: boolean, status?: number, error?: string } | undefined
 
-  async function update(upd: Partial<WebhookEndpoint>): Promise<void> {
+  async function update (upd: Partial<WebhookEndpoint>): Promise<void> {
     if (endpoint === undefined || readonly) return
     await client.updateDoc(setting.class.WebhookEndpoint, endpoint.space, endpoint._id, upd)
   }
 
-  async function commitName(): Promise<void> {
+  async function commitName (): Promise<void> {
     if (endpoint === undefined || title.trim() === (endpoint.name ?? '')) return
     await update({ name: title.trim() })
   }
 
-  async function commitDescription(): Promise<void> {
+  async function commitDescription (): Promise<void> {
     if (endpoint === undefined || description.trim() === (endpoint.description ?? '')) return
     await update({ description: description.trim() })
   }
 
-  async function commitUrl(): Promise<void> {
+  async function commitUrl (): Promise<void> {
     if (endpoint === undefined || !urlValid || url.trim() === endpoint.url) return
     await update({ url: url.trim() })
   }
 
-  async function toggleEnabled(): Promise<void> {
+  async function toggleEnabled (): Promise<void> {
     if (endpoint === undefined) return
     const enabled = !endpoint.enabled
     // Re-enabling clears failureCount - delivery.ts only resets it on a successful delivery, so a manual
@@ -135,7 +135,7 @@
     await update({ enabled, ...(enabled ? { failureCount: 0 } : {}) })
   }
 
-  function pickEvents(event: MouseEvent): void {
+  function pickEvents (event: MouseEvent): void {
     showPopup(
       WebhookEventsPopup,
       { selected: endpoint?.events ?? [] },
@@ -149,7 +149,7 @@
     )
   }
 
-  function pickSpaces(event: MouseEvent): void {
+  function pickSpaces (event: MouseEvent): void {
     showPopup(
       ApiKeySpacesPopup,
       { selectedObjects: endpoint?.spaces ?? [] },
@@ -163,7 +163,7 @@
     )
   }
 
-  async function addSecret(): Promise<void> {
+  async function addSecret (): Promise<void> {
     if (endpoint === undefined || endpoint.secrets.length >= 2) return
     const newSecret: WebhookSecretEntry = {
       id: crypto.randomUUID(),
@@ -175,7 +175,7 @@
     revealedSecretIds = revealedSecretIds
   }
 
-  function revokeSecret(secretId: string): void {
+  function revokeSecret (secretId: string): void {
     if (endpoint === undefined || endpoint.secrets.length <= 1) return
     const current = endpoint
     showPopup(MessageBox, {
@@ -189,26 +189,26 @@
     })
   }
 
-  function toggleReveal(secretId: string): void {
+  function toggleReveal (secretId: string): void {
     if (revealedSecretIds.has(secretId)) revealedSecretIds.delete(secretId)
     else revealedSecretIds.add(secretId)
     revealedSecretIds = revealedSecretIds
   }
 
-  function maskSecret(secret: string): string {
+  function maskSecret (secret: string): string {
     return `${secret.slice(0, 10)}••••••••${secret.slice(-4)}`
   }
 
-  async function copySecret(secret: string): Promise<void> {
+  async function copySecret (secret: string): Promise<void> {
     if (!window.isSecureContext) return
     await copyTextToClipboard(secret)
   }
 
-  function formatDate(timestamp: number): string {
+  function formatDate (timestamp: number): string {
     return new Date(timestamp).toLocaleString(getCurrentLanguage())
   }
 
-  function remove(): void {
+  function remove (): void {
     if (endpoint === undefined) return
     const current = endpoint
     showPopup(MessageBox, {
@@ -223,7 +223,7 @@
     })
   }
 
-  async function sendTest(): Promise<void> {
+  async function sendTest (): Promise<void> {
     if (endpoint === undefined) return
     testing = true
     testResult = undefined

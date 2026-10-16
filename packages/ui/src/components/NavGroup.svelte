@@ -82,7 +82,7 @@
     }
   }
 
-  function toggle(e: MouseEvent): void {
+  function toggle (e: MouseEvent): void {
     e.stopPropagation()
     e.preventDefault()
     if (!empty) {
@@ -95,7 +95,7 @@
     }
   }
 
-  function handleMenuClicked(ev: MouseEvent): void {
+  function handleMenuClicked (ev: MouseEvent): void {
     if (actions.length === 0) return
     ev.stopPropagation()
     ev.preventDefault()
@@ -107,12 +107,12 @@
 
   $: visibleIcon = folderIcon ? (isOpen && !empty ? IconFolderExpanded : IconFolderCollapsed) : icon
 
-  function onHeaderClick(e: MouseEvent): void {
+  function onHeaderClick (e: MouseEvent): void {
     if (headerClickType === 'menu') handleMenuClicked(e)
     else if (headerClickType === 'toggle') toggle(e)
   }
 
-  function onContextClick(e: MouseEvent): void {
+  function onContextClick (e: MouseEvent): void {
     if (contextClickType === 'menu') handleMenuClicked(e)
   }
 </script>

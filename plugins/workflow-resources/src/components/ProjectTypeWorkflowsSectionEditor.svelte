@@ -55,7 +55,7 @@
     { sort: { name: SortingOrder.Ascending } }
   )
 
-  function getTaskTypeName(taskTypeId: Ref<TaskType>): string | undefined {
+  function getTaskTypeName (taskTypeId: Ref<TaskType>): string | undefined {
     return $taskTypeStore.get(taskTypeId)?.name
   }
 
@@ -72,7 +72,7 @@
     }
   ]
 
-  async function handleImportAction(event?: CustomEvent): Promise<void> {
+  async function handleImportAction (event?: CustomEvent): Promise<void> {
     if (event == null || disabled || type === undefined) return
     const actionId = event.detail
     if (actionId === 'file') {
@@ -131,11 +131,11 @@
     }
   }
 
-  async function showFileUnreadable(file: string): Promise<void> {
+  async function showFileUnreadable (file: string): Promise<void> {
     await showWorkflowError(plugin.string.ImportErrorTitle, plugin.string.ImportFileUnreadable, { file })
   }
 
-  async function handleFileInputChange(e: Event): Promise<void> {
+  async function handleFileInputChange (e: Event): Promise<void> {
     const target = e.target as HTMLInputElement
     const file = target?.files?.[0]
     if (file == null || disabled || type === undefined) return

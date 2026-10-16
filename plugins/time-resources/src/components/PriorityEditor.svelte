@@ -56,7 +56,7 @@
     onChange(newPriority)
   }
 
-  function handleClick(event: MouseEvent) {
+  function handleClick (event: MouseEvent) {
     event.stopPropagation()
 
     showPopup(

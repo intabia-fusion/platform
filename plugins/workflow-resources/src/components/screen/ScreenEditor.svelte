@@ -188,7 +188,7 @@
 
   $: void updateDisplayAttributes(screen?.targetClass, $languageStore)
 
-  async function handleClassSelect(
+  async function handleClassSelect (
     event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined>
   ): Promise<void> {
     const id = event.detail
@@ -200,7 +200,7 @@
     }
   }
 
-  async function saveName(): Promise<void> {
+  async function saveName (): Promise<void> {
     if (screen != null) {
       const trimmed = localName.trim()
       if (trimmed !== '' && trimmed !== screen.name) {
@@ -209,7 +209,7 @@
     }
   }
 
-  async function saveDescription(): Promise<void> {
+  async function saveDescription (): Promise<void> {
     if (screen != null) {
       const trimmed = localDescription.trim()
       const val = trimmed.length > 0 ? trimmed : undefined
@@ -226,7 +226,7 @@
 
   let isDeleteLoading = false
 
-  async function handleRemoveScreen(): Promise<void> {
+  async function handleRemoveScreen (): Promise<void> {
     if (screen == null || isDeleteLoading) return
     isDeleteLoading = true
     try {
@@ -259,7 +259,7 @@
     }
   }
 
-  async function addTab(): Promise<void> {
+  async function addTab (): Promise<void> {
     if (screen == null) return
     const tabName = await translate(plugin.string.TabNumbered, { num: tabs.length + 1 }, $languageStore)
     await addScreenTab(client, screen._id, tabName)

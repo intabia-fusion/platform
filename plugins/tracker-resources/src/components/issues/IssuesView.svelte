@@ -56,7 +56,7 @@
 
   let search = ''
   let searchQuery: DocumentQuery<Issue> = { ...query }
-  function updateSearchQuery(search: string): void {
+  function updateSearchQuery (search: string): void {
     searchQuery =
       search === '' ? { ...query } : { ...query, $search: search, $searchIn: ['title', 'identifier', 'content'] }
   }
@@ -118,7 +118,7 @@
     ]
   ] satisfies DropdownIntlItem[]
 
-  function openWorkflowDiagram(): void {
+  function openWorkflowDiagram (): void {
     if (workflowsMap == null) return
     showPopup(
       workflow.component.WorkflowDiagramPopup,
@@ -131,7 +131,7 @@
     )
   }
 
-  function openTaskTypeDiagram(): void {
+  function openTaskTypeDiagram (): void {
     if (currentTaskTypes.length === 0) return
     showPopup(
       TaskTypeDiagramPopup,
@@ -143,7 +143,7 @@
     )
   }
 
-  function handleMenuSelected(event?: CustomEvent<string>): void {
+  function handleMenuSelected (event?: CustomEvent<string>): void {
     const action = event?.detail
     if (action === WORKFLOW_ITEM_ID) {
       openWorkflowDiagram()
@@ -170,7 +170,7 @@
     }
   }
 
-  function filterIssues(docs: Doc[]): Issue[] {
+  function filterIssues (docs: Doc[]): Issue[] {
     const h = getClient().getHierarchy()
     return (docs ?? []).filter(
       (it) =>

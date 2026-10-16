@@ -39,7 +39,7 @@
     }
   ]
 
-  function maximize(): void {
+  function maximize (): void {
     popup = showPopup(RoomModal, { room }, 'full-centered', undefined)
   }
 

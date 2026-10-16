@@ -55,7 +55,7 @@
 
   $: canDelete = !loading && spacesCount === 0
 
-  async function attributeUpdated<T extends keyof SpaceType>(field: T, value: SpaceType[T]): Promise<void> {
+  async function attributeUpdated<T extends keyof SpaceType> (field: T, value: SpaceType[T]): Promise<void> {
     if (disabled || type === undefined || type[field] === value) {
       return
     }
@@ -63,7 +63,7 @@
     await client.update(type, { [field]: value })
   }
 
-  const changeMembers = reduceCalls(async function changeMembers(members: AccountUuid[]): Promise<void> {
+  const changeMembers = reduceCalls(async function changeMembers (members: AccountUuid[]): Promise<void> {
     if (disabled || type === undefined) {
       return
     }
@@ -90,7 +90,7 @@
     await ops.commit()
   })
 
-  async function handleDelete(): Promise<void> {
+  async function handleDelete (): Promise<void> {
     if (!canDelete || disabled || type == null) {
       return
     }

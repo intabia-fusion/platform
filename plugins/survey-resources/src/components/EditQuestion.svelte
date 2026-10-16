@@ -50,11 +50,11 @@
 
   let hovered: boolean = false
 
-  function handleChange(patch: Partial<Question>): void {
+  function handleChange (patch: Partial<Question>): void {
     dispatch('change', patch)
   }
 
-  function flush(): void {
+  function flush (): void {
     if (isNewQuestion) return
 
     const patch: Partial<Question> = {}
@@ -78,7 +78,7 @@
     handleChange({ name: inputName })
   }
 
-  function changeOption(index: number): void {
+  function changeOption (index: number): void {
     if (inputOptions[index]?.trim()?.length === 0) {
       deleteOption(index)
     } else {
@@ -86,7 +86,7 @@
     }
   }
 
-  function addOption(): void {
+  function addOption (): void {
     if (inputNewOption.trim().length === 0) {
       inputNewOption = ''
       return
@@ -96,12 +96,12 @@
     handleChange({ options: inputOptions })
   }
 
-  function deleteOption(index: number): void {
+  function deleteOption (index: number): void {
     inputOptions = inputOptions.filter((val, idx) => idx !== index)
     handleChange({ options: inputOptions })
   }
 
-  function showQuestionParams(ev: MouseEvent): void {
+  function showQuestionParams (ev: MouseEvent): void {
     ev.stopPropagation()
     hovered = true
     showPopup(
@@ -190,7 +190,7 @@
     )
   }
 
-  function showOptionParams(ev: MouseEvent, index: number): void {
+  function showOptionParams (ev: MouseEvent, index: number): void {
     hovered = true
     showPopup(
       SelectPopup,
@@ -226,7 +226,7 @@
   let draggedOverIndex: number | undefined
   const draggableElements: HTMLElement[] = []
 
-  function onOptionDragStart(ev: DragEvent, index: number): void {
+  function onOptionDragStart (ev: DragEvent, index: number): void {
     if (readonly || ev.dataTransfer === null) {
       return
     }
@@ -239,7 +239,7 @@
     )
   }
 
-  function onOptionDragOver(ev: DragEvent, index: number): void {
+  function onOptionDragOver (ev: DragEvent, index: number): void {
     if (draggedIndex === undefined || draggedIndex === draggedOverIndex || draggedIndex + 1 === draggedOverIndex) {
       return
     }
@@ -247,7 +247,7 @@
     draggedOverIndex = index
   }
 
-  function onOptionDragLeave(ev: DragEvent, index: number): void {
+  function onOptionDragLeave (ev: DragEvent, index: number): void {
     if (draggedIndex === undefined) {
       return
     }
@@ -257,7 +257,7 @@
     }
   }
 
-  function onOptionDrop(): void {
+  function onOptionDrop (): void {
     if (draggedIndex === undefined || draggedOverIndex === undefined) {
       return
     }
@@ -273,7 +273,7 @@
     handleChange({ options: inputOptions })
   }
 
-  function onOptionDragEnd(): void {
+  function onOptionDragEnd (): void {
     draggedIndex = undefined
     draggedOverIndex = undefined
   }
@@ -281,7 +281,7 @@
   let isRootDragging = false
   let rootElement: HTMLElement
 
-  function onRootDragStart(ev: DragEvent): void {
+  function onRootDragStart (ev: DragEvent): void {
     if (readonly || ev.dataTransfer === null) {
       return
     }
@@ -295,12 +295,12 @@
     dispatch('dragStart')
   }
 
-  function onRootDragEnd(): void {
+  function onRootDragEnd (): void {
     isRootDragging = false
     dispatch('dragEnd')
   }
 
-  export function focusQuestion(): void {
+  export function focusQuestion (): void {
     inputNameEditBox.focusInput()
   }
 
