@@ -1,0 +1,6 @@
+# Group category sorting (FUSIO-1442)
+
+- Attribute class without `view.mixin.SortFuncs` falls back to `sortNamedCategories` (`plugins/view-resources/src/categorySorting.ts`): name from `name`, `label` or `title` of the referenced doc. Without `title` grouping by parent issue (`attachedTo`) fetched issues every recompute and sorted nothing.
+- `createdBy`/`modifiedBy` are `core.class.TypePersonId`, a `core.class.Type`: without their own `SortFuncs` they were sorted by the raw PersonId string. `personIdSort` (`plugins/contact-resources/src/personIdSort.ts`) resolves names through the contact cache.
+- `Array.prototype.sort` moves `undefined` to the end without calling the comparator, so `null` ends up before `undefined` whatever the comparator returns.
+- Testing code that imports `@hcengineering/contact`: `jest.mock('@hcengineering/contact', () => ({ ...jest.requireActual(...) }))` fails with "Cannot access 'contactId' before initialization" (contact `utils.ts` imports its own index). Feed the real cache through a fake `client.findAll` returning SocialIdentity with `$lookup.attachedTo` instead. Importing `contact-resources/src/utils.ts` in jest is not possible: it pulls `@hcengineering/ui` (`main: src/index.ts`, Svelte).

@@ -4,7 +4,7 @@
 
 ## Где применяется
 
-Группировка в списке (`ListCategories.svelte`) получает набор значений атрибута и вызывает `sortCategories` (`plugins/view-resources/src/utils.ts`). Та ищет у класса значения миксин `view.mixin.SortFuncs` и вызывает его функцию:
+Группировка в списке (`ListCategories.svelte`) получает набор значений атрибута и вызывает `sortCategories` (`plugins/view-resources/src/utils.ts`). Та ищет у класса значения миксин `view.mixin.SortFuncs` и вызывает его функцию. Если миксина нет, `sortNamedCategories` (`plugins/view-resources/src/categorySorting.ts`) сортирует группы по `name`, `label` или `title` документа, строки - по значению, числа и булевы значения не переставляет; пустые группы идут последними. Исполнитель (`contact.class.Person`) сортируется по отображаемому имени (`personSort`), автор и редактор (`core.class.TypePersonId`) - по имени персоны (`personIdSort`, `plugins/contact-resources/src/personIdSort.ts`). Для статусов:
 
 | Класс статуса | Функция | Кто ставит миксин |
 | --- | --- | --- |

@@ -134,6 +134,7 @@ import CollaboratorPresenter from './components/collaborator/CollaboratorPresent
 
 import { get } from 'svelte/store'
 import { canMergePersons, canResendInvitation } from './visibilityTester'
+import { personIdSort } from './personIdSort'
 import contact from './plugin'
 import {
   channelIdentifierProvider,
@@ -471,6 +472,7 @@ export default async (): Promise<Resources> => ({
     }),
     EmployeeSort: employeeSort,
     PersonSort: personSort,
+    PersonIdSort: personIdSort,
     FilterChannelInResult: filterChannelInResult,
     FilterChannelNinResult: filterChannelNinResult,
     FilterChannelHasMessagesResult: filterChannelHasMessagesResult,

@@ -97,6 +97,7 @@ export default mergeIds(contactId, contact, {
     GetContactLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
     EmployeeSort: '' as SortFunc,
     PersonSort: '' as SortFunc,
+    PersonIdSort: '' as SortFunc,
     FilterChannelInResult: '' as FilterFunction,
     FilterChannelNinResult: '' as FilterFunction,
     FilterChannelHasMessagesResult: '' as FilterFunction,

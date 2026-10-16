@@ -18,6 +18,7 @@ import core, { type Class, type Doc, type Ref, type TxOperations } from '@hcengi
 interface NamedDoc extends Doc {
   name?: string
   label?: string
+  title?: string
 }
 
 /**
@@ -57,13 +58,13 @@ export async function sortNamedCategories (
     if (refKeys.length > 0) {
       const modelDocs = client.getModel().findAllSync(attrClass, { _id: { $in: refKeys } })
       for (const d of modelDocs) {
-        nameById.set(d._id, (d as NamedDoc).name ?? (d as NamedDoc).label ?? '')
+        nameById.set(d._id, (d as NamedDoc).name ?? (d as NamedDoc).label ?? (d as NamedDoc).title ?? '')
       }
       const missing = refKeys.filter((k) => !nameById.has(k))
       if (missing.length > 0) {
         const docs = await client.findAll(attrClass, { _id: { $in: missing } })
         for (const d of docs) {
-          nameById.set(d._id, (d as NamedDoc).name ?? (d as NamedDoc).label ?? '')
+          nameById.set(d._id, (d as NamedDoc).name ?? (d as NamedDoc).label ?? (d as NamedDoc).title ?? '')
         }
       }
     }

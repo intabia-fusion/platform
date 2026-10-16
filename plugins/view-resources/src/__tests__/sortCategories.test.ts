@@ -69,6 +69,15 @@ describe('sortNamedCategories', () => {
     expect(res[2]).toBe(empty)
   })
 
+  it('sorts by title when the document has no name or label (parent issues)', async () => {
+    const titled = (id: string, title: string): NamedDoc => ({ _id: docRef(id), title }) as unknown as NamedDoc
+    const { client } = makeClient({
+      runtimeDocs: [titled('i1', 'Zeta'), titled('i2', 'alpha'), titled('i3', 'Beta')]
+    })
+    const res = await sortNamedCategories(client, attrClass, [docRef('i1'), undefined, docRef('i2'), docRef('i3')])
+    expect(res).toEqual([docRef('i2'), docRef('i3'), docRef('i1'), undefined])
+  })
+
   it('reads model-resident classes synchronously without an async query', async () => {
     const { client, findAll } = makeClient({
       modelDocs: [namedDoc('m1', 'Beta'), namedDoc('m2', 'Alpha')]
