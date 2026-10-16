@@ -1014,7 +1014,7 @@
     />
   </div>
   <div id="issue-description">
-    {#key []}
+    {#key objectId}
       <AttachmentStyledBox
         bind:this={descriptionBox}
         focusIndex={2}
