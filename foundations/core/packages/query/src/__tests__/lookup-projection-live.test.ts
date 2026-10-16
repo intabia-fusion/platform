@@ -459,6 +459,63 @@ describe('LiveQuery lookup projection, live', () => {
       await close()
     })
 
+    it('keeps projected documents out of the cache the other queries read from', async () => {
+      const { liveQuery, factory, findAll, close } = await getClient()
+      const tag = 'cache-' + Date.now()
+      const space = await createSpace(factory, tag)
+      const comment = await factory.addCollection(test.class.TestComment, space, space, core.class.Space, 'comments', {
+        message: tag
+      })
+
+      // A projected live query and a projected findAll: the storage cuts their joined documents.
+      const { unsubscribe } = await subscribe(
+        liveQuery,
+        test.class.TestComment,
+        { message: tag },
+        { lookup: { space: core.class.Space }, projection: { '$lookup.space.name': 1 } }
+      )
+      await liveQuery.findAll(
+        test.class.TestComment,
+        { message: tag },
+        { lookup: { space: core.class.Space }, projection: { message: 1, '$lookup.space.name': 1 } }
+      )
+
+      // The cut joins feed no other read: the space and the comment with its join come from the
+      // server, whole.
+      findAll.mockClear()
+      const whole = await liveQuery.findOne(core.class.Space, { _id: space })
+      expect(whole?.description).toBe('initial')
+      const joined = await liveQuery.findOne(
+        test.class.TestComment,
+        { _id: comment },
+        { lookup: { space: core.class.Space } }
+      )
+      expect(joined?.$lookup?.space?.description).toBe('initial')
+      expect(findAll.mock.calls.map((it) => it[0])).toEqual(
+        expect.arrayContaining([core.class.Space, test.class.TestComment])
+      )
+
+      // The base document is whole, so a read that asks for no join takes it from the cache, joins stripped.
+      findAll.mockClear()
+      const bare = await liveQuery.findOne(test.class.TestComment, { _id: comment })
+      expect(bare?.message).toBe(tag)
+      expect(bare).not.toHaveProperty('$lookup')
+      expect(findAll).not.toHaveBeenCalled()
+
+      // An unprojected live query does not take over the projected one's result either.
+      const full = await subscribe(
+        liveQuery,
+        test.class.TestComment,
+        { message: tag },
+        { lookup: { space: core.class.Space } }
+      )
+      expect(full.mock.mock.calls[0][0][0].$lookup?.space?.description).toBe('initial')
+      full.unsubscribe()
+      unsubscribe()
+
+      await close()
+    })
+
     it('hands the projection of a plain findAll and findOne to the storage as it is', async () => {
       const { liveQuery, factory, findAll, close } = await getClient()
       const tag = 'plain-' + Date.now()

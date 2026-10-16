@@ -22,7 +22,7 @@ const LOOKUP = '$lookup.'
 // Needed of every result document to match, sort and patch it.
 const liveQueryFields = ['_class', 'space', 'modifiedOn'] as const
 
-function isLookupKey (key: string): boolean {
+export function isLookupKey (key: string): boolean {
   return key.startsWith(LOOKUP)
 }
 
