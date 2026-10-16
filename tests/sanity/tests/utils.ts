@@ -194,6 +194,16 @@ export async function getSecondPageByInvite (
   }
 }
 
+/**
+ * Clicks `count` times within one task, before the UI re-renders - what a rage click looks like to the
+ * handler. Repeated `locator.click()` waits for the button to be enabled again, so it cannot reproduce it.
+ */
+export async function rageClick (locator: Locator, count = 3): Promise<void> {
+  await locator.evaluate((el, n) => {
+    for (let i = 0; i < n; i++) (el as HTMLElement).click()
+  }, count)
+}
+
 export function expectToContainsOrdered (val: Locator, text: string[], timeout?: number): Promise<void> {
   const origIssuesExp = new RegExp('.*' + text.join('.*') + '.*')
   return expect(val).toHaveText(origIssuesExp, { timeout })

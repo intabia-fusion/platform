@@ -60,8 +60,11 @@
   let description = EmptyMarkup
   let descriptionBox: AttachmentStyledBox
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
+  let saving = false
 
   async function onSave (): Promise<void> {
+    if (saving) return
+    saving = true
     try {
       const applyOp = client.apply()
       await applyOp.createDoc(testManagement.class.TestPlan, space, object, id)
@@ -99,6 +102,8 @@
     } catch (err: any) {
       console.error(err)
       Analytics.handleError(err)
+    } finally {
+      saving = false
     }
   }
 
@@ -153,7 +158,8 @@
         label={testManagement.string.Save}
         size="medium"
         kind="primary"
-        disabled={object?.name.trim().length === 0 || testCases?.length === 0}
+        disabled={object?.name.trim().length === 0 || testCases?.length === 0 || saving}
+        loading={saving}
         on:click={onSave}
       />
     </div>

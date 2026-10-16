@@ -347,12 +347,18 @@
     icon: it.icon
   }))
 
-  function onDelete (): void {
-    if (status === undefined || readonly) return
+  let deleting = false
+  async function onDelete (): Promise<void> {
+    if (status === undefined || readonly || deleting) return
     const estatus = status
     const tt = _taskType
     if (tt === undefined) {
-      void deleteProjectTypeStatus(_type, estatus, closeIfStillOpen)
+      deleting = true
+      try {
+        await deleteProjectTypeStatus(_type, estatus, closeIfStillOpen)
+      } finally {
+        deleting = false
+      }
       return
     }
     showPopup(
@@ -443,6 +449,7 @@
         kind="tertiary"
         disabled={status === undefined || !(canDelete || projectMode) || readonly}
         tooltip={{ label: presentation.string.Delete }}
+        loading={deleting}
         on:click={onDelete}
       />
       <IconButton

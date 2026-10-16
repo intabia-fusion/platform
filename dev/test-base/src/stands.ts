@@ -227,7 +227,8 @@ const ws: StandConfig = {
 }
 
 const qms: StandConfig = {
-  project: 'qms',
+  // Same project as `sanity`: the stands share host ports, so bringing one up takes the other down.
+  project: 'sanity',
   dir: 'qms-tests',
   composeFiles: PURE_PG_COMPOSE,
   env: {

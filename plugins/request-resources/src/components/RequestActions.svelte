@@ -122,17 +122,25 @@
   ]
   let loading = false
 
+  let cancelling = false
+
   async function cancel () {
-    await client.update(value, {
-      status: RequestStatus.Cancelled
-    })
+    if (cancelling) return
+    cancelling = true
+    try {
+      await client.update(value, {
+        status: RequestStatus.Cancelled
+      })
+    } finally {
+      cancelling = false
+    }
   }
 </script>
 
 {#if value.status === RequestStatus.Active}
   {#if value.createdBy !== undefined && account.socialIds.includes(value.createdBy)}
     <div class="mt-2">
-      <Button label={request.string.Cancel} on:click={cancel} />
+      <Button label={request.string.Cancel} loading={cancelling} disabled={cancelling} on:click={cancel} />
     </div>
   {/if}
   <div class="mt-2">

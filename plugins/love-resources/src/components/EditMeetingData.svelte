@@ -51,21 +51,42 @@
   // Check if current user is owner of the meeting
   $: isOwner = meetingDoc?.owners?.includes(currentAccount.uuid) ?? false
 
+  let resetting = false
   async function resetMeeting (meetingDoc: MeetingMinutes): Promise<void> {
     if (meetingDoc.status === MeetingStatus.Active || meetingDoc.status === MeetingStatus.Pending) {
       // Disallow change for active meeting
       return
     }
-    await client.diffUpdate(meetingDoc, { status: MeetingStatus.Scheduled })
+    if (resetting) return
+    resetting = true
+    try {
+      await client.diffUpdate(meetingDoc, { status: MeetingStatus.Scheduled })
+    } finally {
+      resetting = false
+    }
   }
 
+  let opening = false
   async function openMeeting (): Promise<void> {
-    if (meetingDoc === undefined) return
-    await joinMeeting(meetingDoc)
+    if (opening) return
+    opening = true
+    try {
+      if (meetingDoc === undefined) return
+      await joinMeeting(meetingDoc)
+    } finally {
+      opening = false
+    }
   }
 
+  let closing = false
   async function closeMeeting (): Promise<void> {
-    await leaveMeeting()
+    if (closing) return
+    closing = true
+    try {
+      await leaveMeeting()
+    } finally {
+      closing = false
+    }
   }
 </script>
 
@@ -91,11 +112,29 @@
         <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
         {#if isOwner}
           {#if meetingDoc.status === MeetingStatus.Scheduled}
-            <Button kind="primary" label={love.string.StartMeeting} size="x-small" on:click={openMeeting} />
+            <Button
+              kind="primary"
+              label={love.string.StartMeeting}
+              size="x-small"
+              loading={opening}
+              on:click={openMeeting}
+            />
           {:else if meetingDoc.status === MeetingStatus.Active || meetingDoc.status === MeetingStatus.Pending}
-            <Button kind="negative" label={love.string.EndMeeting} size="x-small" on:click={closeMeeting} />
+            <Button
+              kind="negative"
+              label={love.string.EndMeeting}
+              size="x-small"
+              loading={closing}
+              on:click={closeMeeting}
+            />
           {:else if meetingDoc.status === MeetingStatus.Finished}
-            <Button kind="ghost" icon={ui.icon.ArrowUturnRight} size="x-small" on:click={() => resetMeeting(doc)} />
+            <Button
+              kind="ghost"
+              icon={ui.icon.ArrowUturnRight}
+              size="x-small"
+              loading={resetting}
+              on:click={() => resetMeeting(doc)}
+            />
           {/if}
         {/if}
       </div>

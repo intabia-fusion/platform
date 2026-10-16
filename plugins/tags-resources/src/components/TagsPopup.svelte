@@ -80,15 +80,21 @@
   }
 
   async function createTagElementQuick (): Promise<void> {
-    const res = await createTagElement(
-      search,
-      targetClass,
-      findTagCategory(search, categories),
-      undefined,
-      undefined,
-      keyLabel
-    )
-    await onCreateTagElement(res)
+    if (inProcess) return
+    inProcess = true
+    try {
+      const res = await createTagElement(
+        search,
+        targetClass,
+        findTagCategory(search, categories),
+        undefined,
+        undefined,
+        keyLabel
+      )
+      await onCreateTagElement(res)
+    } finally {
+      inProcess = false
+    }
   }
 
   const isSelected = (selected: Ref<TagElement>[], element: TagElement): boolean => {
@@ -236,7 +242,7 @@
       {/each}
       {#if objects.length === 0}
         {#if !hideAdd && search !== ''}
-          <button class="menu-item focus flex-row-center" on:click={createTagElementQuick}>
+          <button class="menu-item focus flex-row-center" disabled={inProcess} on:click={createTagElementQuick}>
             <Label label={tags.string.QuickAddItems} params={{ word: keyLabel, title: search }} />
           </button>
         {/if}

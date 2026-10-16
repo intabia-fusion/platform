@@ -69,6 +69,9 @@
   let name = ''
   let space = plugin.space.Drive
 
+  // Shared guard for the mutually-exclusive recorder control buttons below
+  let busy = false
+
   $: loading = $loadingStore
   $: state = $recorderState
   $: mainStream = $screenStream ?? $camStream
@@ -94,50 +97,56 @@
   }
 
   async function handleCompleteRecording (): Promise<void> {
+    if (busy) return
     if (name.length === 0) return
 
-    const {
-      result,
-      config: { onFileUploaded, target }
-    } = state
-    if (result != null) {
-      if (onFileUploaded !== undefined) {
-        const file = new Blob([], { type: result.type })
-        await onFileUploaded({
-          name,
-          file,
-          uuid: result.uuid as Ref<Blob>,
-          type: result.type,
-          path: undefined,
-          metadata: {
-            width: result.width,
-            height: result.height
-          }
-        })
+    busy = true
+    try {
+      const {
+        result,
+        config: { onFileUploaded, target }
+      } = state
+      if (result != null) {
+        if (onFileUploaded !== undefined) {
+          const file = new Blob([], { type: result.type })
+          await onFileUploaded({
+            name,
+            file,
+            uuid: result.uuid as Ref<Blob>,
+            type: result.type,
+            path: undefined,
+            metadata: {
+              width: result.width,
+              height: result.height
+            }
+          })
+        }
+
+        if (target === undefined) {
+          const client = getClient()
+          const fileId = await createFile(client, space, drive.ids.Root, {
+            title: name,
+            file: result.uuid as Ref<Blob>,
+            size: result.size,
+            type: result.type,
+            lastModified: Date.now(),
+            metadata: {
+              width: result.width,
+              height: result.height
+            }
+          })
+          void openDocFromRef(drive.class.File, fileId)
+        } else {
+          void openDocFromRef(target.objectClass, target.objectId)
+        }
       }
 
-      if (target === undefined) {
-        const client = getClient()
-        const fileId = await createFile(client, space, drive.ids.Root, {
-          title: name,
-          file: result.uuid as Ref<Blob>,
-          size: result.size,
-          type: result.type,
-          lastModified: Date.now(),
-          metadata: {
-            width: result.width,
-            height: result.height
-          }
-        })
-        void openDocFromRef(drive.class.File, fileId)
-      } else {
-        void openDocFromRef(target.objectClass, target.objectId)
-      }
+      await cleanupRecording()
+
+      dispatch('close')
+    } finally {
+      busy = false
     }
-
-    await cleanupRecording()
-
-    dispatch('close')
   }
 
   let messageBox: PopupResult | null = null
@@ -174,6 +183,36 @@
         }
       }
     )
+  }
+
+  async function handleStartRecording (): Promise<void> {
+    if (busy) return
+    busy = true
+    try {
+      await startRecording()
+    } finally {
+      busy = false
+    }
+  }
+
+  async function handlePauseRecording (): Promise<void> {
+    if (busy) return
+    busy = true
+    try {
+      await pauseRecording()
+    } finally {
+      busy = false
+    }
+  }
+
+  async function handleResumeRecording (): Promise<void> {
+    if (busy) return
+    busy = true
+    try {
+      await resumeRecording()
+    } finally {
+      busy = false
+    }
   }
 
   export function canClose (): boolean {
@@ -338,7 +377,8 @@
           iconProps={{ size: 'small' }}
           label={plugin.string.Record}
           disabled={mainStream === null}
-          on:click={startRecording}
+          loading={busy}
+          on:click={handleStartRecording}
         />
 
         <div class="flex-grow" />
@@ -416,6 +456,7 @@
           label={view.string.Save}
           on:click={handleCompleteRecording}
           disabled={name.length === 0 || space == null}
+          loading={busy}
         />
 
         <div class="flex-grow" />
@@ -468,7 +509,8 @@
             icon={plugin.icon.Pause}
             iconProps={{ size: 'small' }}
             label={plugin.string.Pause}
-            on:click={pauseRecording}
+            loading={busy}
+            on:click={handlePauseRecording}
           />
         {:else if state.state === 'paused'}
           <Button
@@ -477,7 +519,8 @@
             icon={ui.icon.PlayFill}
             iconProps={{ size: 'small' }}
             label={plugin.string.Resume}
-            on:click={resumeRecording}
+            loading={busy}
+            on:click={handleResumeRecording}
           />
         {/if}
 

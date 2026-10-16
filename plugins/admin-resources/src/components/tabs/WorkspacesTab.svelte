@@ -77,26 +77,57 @@
 
   let search: string = ''
 
+  let reindexingAll = false
+
   async function select (workspace: string): Promise<void> {
     const url = locationToUrl({ path: [workbenchId, workspace] })
     window.open(url, '_blank')
   }
 
+  // One workspace/event pair in flight at a time - blocks rage-clicking any op button below,
+  // including every button that already went through otpGuardedOp before this guard existed.
+  let pendingOps = new Set<string>()
+  function opKey (ws: string | string[], event: WorkspaceUserOperation): string {
+    return `${Array.isArray(ws) ? ws.join(',') : ws}:${event}`
+  }
+  function opPending (ws: string | string[], event: WorkspaceUserOperation): boolean {
+    return pendingOps.has(opKey(ws, event))
+  }
+
   // Every workspace operation requires an emailed OTP code; ask before running.
   // runAdminAction surfaces a refusal - these used to fail into the console only.
   async function otpGuardedOp (ws: string | string[], event: WorkspaceUserOperation, ...params: any[]): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
-    await runAdminAction(async () => await performWorkspaceOperationWithOtp(ws, event, code, ...params))
+    const key = opKey(ws, event)
+    if (pendingOps.has(key)) return
+    pendingOps.add(key)
+    pendingOps = pendingOps
+    try {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
+      await runAdminAction(async () => await performWorkspaceOperationWithOtp(ws, event, code, ...params))
+    } finally {
+      pendingOps.delete(key)
+      pendingOps = pendingOps
+    }
   }
+
+  let deletingWorkspaces = new Set<string>()
 
   // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
   async function deleteWorkspace (ws: string): Promise<void> {
-    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
-    if (res === undefined) return
-    await runAdminAction(
-      async () => await performWorkspaceOperationWithOtp(ws, res.option ? 'delete-now' : 'delete', res.code)
-    )
+    if (deletingWorkspaces.has(ws)) return
+    deletingWorkspaces.add(ws)
+    deletingWorkspaces = deletingWorkspaces
+    try {
+      const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+      if (res === undefined) return
+      await runAdminAction(
+        async () => await performWorkspaceOperationWithOtp(ws, res.option ? 'delete-now' : 'delete', res.code)
+      )
+    } finally {
+      deletingWorkspaces.delete(ws)
+      deletingWorkspaces = deletingWorkspaces
+    }
   }
 
   enum SortingRule {
@@ -510,11 +541,18 @@
           <Button
             label={adminRes.string.ReindexAll}
             size="small"
+            loading={reindexingAll}
             on:click={() => {
-              void requestAdminOtpCode().then(async (code) => {
-                if (code === undefined) return
-                await getAccountClient().adminReindexAllWorkspaces(code)
-              })
+              if (reindexingAll) return
+              reindexingAll = true
+              void requestAdminOtpCode()
+                .then(async (code) => {
+                  if (code === undefined) return
+                  await getAccountClient().adminReindexAllWorkspaces(code)
+                })
+                .finally(() => {
+                  reindexingAll = false
+                })
             }}
           />
         </div>
@@ -802,6 +840,10 @@
                         label={adminRes.string.MassArchive}
                         labelParams={{ count: activeAll.length }}
                         kind="ghost"
+                        loading={opPending(
+                          activeAll.map((it) => it.uuid),
+                          'archive'
+                        )}
                         on:click={(ev) => {
                           ev.stopPropagation()
                           void otpGuardedOp(
@@ -819,6 +861,10 @@
                         kind="positive"
                         label={adminRes.string.MassMigrate}
                         labelParams={{ count: activeV.length, region: selectedRegionName ?? '' }}
+                        loading={opPending(
+                          activeV.map((it) => it.uuid),
+                          'migrate-to'
+                        )}
                         on:click={(ev) => {
                           ev.stopPropagation()
                           void otpGuardedOp(
@@ -963,6 +1009,7 @@
                             size="small"
                             label={adminRes.string.Archive}
                             kind="ghost"
+                            loading={opPending(workspace.uuid, 'archive')}
                             on:click={() => {
                               void otpGuardedOp(workspace.uuid, 'archive').then(() => {
                                 void loadPage()
@@ -994,6 +1041,7 @@
                             size="small"
                             kind="positive"
                             label={adminRes.string.Migrate}
+                            loading={opPending(workspace.uuid, 'migrate-to')}
                             on:click={() => {
                               void otpGuardedOp(workspace.uuid, 'migrate-to', selectedRegionId).then(() => {
                                 void loadPage()
@@ -1011,6 +1059,7 @@
                               label: adminRes.string.DeletionScheduled,
                               props: { date: new Date(workspace.deleteOn).toLocaleDateString() }
                             }}
+                            loading={opPending(workspace.uuid, 'cancel-delete')}
                             on:click={() => {
                               void otpGuardedOp(workspace.uuid, 'cancel-delete').then(() => {
                                 void loadPage()
@@ -1024,6 +1073,7 @@
                             size="small"
                             kind="dangerous"
                             label={adminRes.string.Delete}
+                            loading={deletingWorkspaces.has(workspace.uuid)}
                             on:click={() => {
                               void deleteWorkspace(workspace.uuid).then(() => {
                                 void loadPage()

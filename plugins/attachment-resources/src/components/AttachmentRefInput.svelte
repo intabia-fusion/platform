@@ -415,6 +415,9 @@
   }
 
   async function onMessage (event: CustomEvent): Promise<void> {
+    // canSubmit (!loading) disables Send only after the next render; while recording an emptied
+    // editor still counts as having an attachment, so repeats sent empty messages.
+    if (sending) return
     sends++
     loading = true
     sending = true

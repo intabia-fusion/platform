@@ -90,11 +90,17 @@
     gridStyle = `grid-template-columns: repeat(${columns}, 1fr); aspect-ratio: ${columns * 1280}/${rows * 720};`
   }
 
+  let leaving = false
+
   async function leaveGuest (): Promise<void> {
+    if (leaving) return
+    leaving = true
     try {
       await liveKitClient.disconnect()
     } catch (err: any) {
       console.error('Failed to disconnect guest', err)
+    } finally {
+      leaving = false
     }
   }
 

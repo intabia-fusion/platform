@@ -96,6 +96,7 @@
   let innerWidth: number
   let isTitlePressed: boolean = false
   let creating: boolean = false
+  let editingDocument: boolean = false
 
   const notificationClient = getResource(notification.function.GetNotificationsClient).then((res) => res())
 
@@ -270,14 +271,20 @@
   }
 
   async function onEditDocument (): Promise<void> {
-    if ($controlledDocument != null && $canCreateNewSnapshot && $isProjectEditable) {
-      try {
-        await createDocumentSnapshotAndEdit(client, $controlledDocument)
-      } catch (err) {
-        await setPlatformStatus(unknownError(err))
+    if (editingDocument) return
+    editingDocument = true
+    try {
+      if ($controlledDocument != null && $canCreateNewSnapshot && $isProjectEditable) {
+        try {
+          await createDocumentSnapshotAndEdit(client, $controlledDocument)
+        } catch (err) {
+          await setPlatformStatus(unknownError(err))
+        }
+      } else {
+        console.warn('Unexpected document state', $documentState)
       }
-    } else {
-      console.warn('Unexpected document state', $documentState)
+    } finally {
+      editingDocument = false
     }
   }
 
@@ -390,7 +397,13 @@
                 on:click={onCreateNewDraft}
               />
             {:else if $canCreateNewSnapshot}
-              <Button label={documentRes.string.EditDocument} kind="regular" on:click={onEditDocument} />
+              <Button
+                label={documentRes.string.EditDocument}
+                kind="regular"
+                loading={editingDocument}
+                disabled={editingDocument}
+                on:click={onEditDocument}
+              />
             {/if}
           {:else if $documentReviewIsActive}
             <Button

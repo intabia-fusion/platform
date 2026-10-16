@@ -151,6 +151,10 @@
   let isUncanceling = false
   let isPackageBusy = false
   let isRetrying = false
+  // True from the first click on Subscribe/ChangePlan until whichever confirmation popup it
+  // opened (free-downgrade, uncancel-then-checkout, or the checkout dialog) has closed - a rage
+  // click would otherwise stack a second popup and risk a second checkout session.
+  let planCheckoutOpen = false
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
   let destroyed = false
@@ -514,14 +518,21 @@
   // Downgrade to the free plan moves no money: keep the plain confirmation box, no seats/period/recurrent.
   async function showFreeDowngradeConfirmation (newPlan: string): Promise<void> {
     const supportEmail = getMetadata(support.metadata.SupportEmail) ?? ''
-    showPopup(MessageBox, {
-      label: plugin.string.ConfirmDowngradeToFree,
-      message: plugin.string.DowngradeToFreeDescription,
-      params: { amount: 0, currency: '', email: supportEmail },
-      action: async () => {
-        await executeUpdate(newPlan, undefined, 'monthly', false)
+    showPopup(
+      MessageBox,
+      {
+        label: plugin.string.ConfirmDowngradeToFree,
+        message: plugin.string.DowngradeToFreeDescription,
+        params: { amount: 0, currency: '', email: supportEmail },
+        action: async () => {
+          await executeUpdate(newPlan, undefined, 'monthly', false)
+        }
+      },
+      undefined,
+      () => {
+        planCheckoutOpen = false
       }
-    })
+    )
   }
 
   // Paid plan purchase/change: the checkout dialog owns seats, period and the recurring-charge
@@ -548,6 +559,7 @@
       },
       undefined,
       (result?: { seats: number, period: BillingPeriod, recurrent: boolean }) => {
+        planCheckoutOpen = false
         if (result == null) return
         // Persist the picks so the plan card reflects what was just confirmed.
         paymentPeriod = result.period
@@ -563,14 +575,18 @@
   }
 
   async function handlePlanChange (newPlan: string, planItem: PlanItem): Promise<void> {
+    if (planCheckoutOpen) return
+
     if (planItem.free === true) {
       if (currentSubscription?.id === undefined || currentPlan === undefined) return
+      planCheckoutOpen = true
       await showFreeDowngradeConfirmation(newPlan)
       return
     }
 
     if (currentSubscription?.id === undefined) {
       // No active subscription, create new one
+      planCheckoutOpen = true
       showPlanCheckout(newPlan, planItem, false)
       return
     }
@@ -582,15 +598,24 @@
 
     // If subscription is canceled, show uncancel confirmation first
     if (isCurrentCanceled) {
-      showPopup(MessageBox, {
-        label: plugin.string.ConfirmUncancel,
-        message: plugin.string.UncancelDescription,
-        action: async () => {
-          // After uncanceling, show the checkout dialog
-          showPlanCheckout(newPlan, planItem, true)
+      planCheckoutOpen = true
+      showPopup(
+        MessageBox,
+        {
+          label: plugin.string.ConfirmUncancel,
+          message: plugin.string.UncancelDescription,
+          action: async () => {
+            // After uncanceling, show the checkout dialog
+            showPlanCheckout(newPlan, planItem, true)
+          }
+        },
+        undefined,
+        (confirmed) => {
+          if (confirmed !== true) planCheckoutOpen = false
         }
-      })
+      )
     } else {
+      planCheckoutOpen = true
       showPlanCheckout(newPlan, planItem, true)
     }
   }
@@ -1475,7 +1500,8 @@
                         isCanceling ||
                         isUncanceling ||
                         isRetrying ||
-                        otherTierCheckoutActive}
+                        otherTierCheckoutActive ||
+                        planCheckoutOpen}
                       showTooltip={otherTierCheckoutActive
                         ? { label: plugin.string.OtherCheckoutActiveTooltip }
                         : undefined}

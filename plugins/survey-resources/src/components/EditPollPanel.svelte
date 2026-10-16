@@ -70,12 +70,19 @@
     })
   }
 
+  let submitting = false
+
   async function submit (): Promise<void> {
-    if (object === undefined) {
+    if (object === undefined || submitting) {
       return
     }
-    requestUpdate = false
-    await getClient().updateDoc(object._class, object.space, object._id, { isCompleted: true })
+    submitting = true
+    try {
+      requestUpdate = false
+      await getClient().updateDoc(object._class, object.space, object._id, { isCompleted: true })
+    } finally {
+      submitting = false
+    }
   }
 
   function handleChange (patch: Partial<Poll>): void {
@@ -127,7 +134,8 @@
           icon={survey.icon.Submit}
           label={survey.string.SurveySubmit}
           kind="primary"
-          disabled={!canSubmit}
+          disabled={!canSubmit || submitting}
+          loading={submitting}
           showTooltip={{ label: canSubmit ? undefined : survey.string.ValidateFail }}
           on:click={submit}
         />

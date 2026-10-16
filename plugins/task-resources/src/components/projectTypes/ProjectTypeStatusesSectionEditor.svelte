@@ -167,16 +167,30 @@
         label: plugin.string.Delete,
         icon: ui.icon.Trash,
         action: async () => {
-          remove(status)
+          await remove(status)
         }
       })
     }
     showPopup(Menu, { actions }, anchor)
   }
 
-  function remove (status: Status): void {
+  // Orphan rows whose add or delete is still loading
+  let busyOrphans = new Set<Ref<Status>>()
+  async function withOrphanBusy (status: Status, op: () => Promise<void>): Promise<void> {
+    if (busyOrphans.has(status._id)) return
+    busyOrphans.add(status._id)
+    busyOrphans = busyOrphans
+    try {
+      await op()
+    } finally {
+      busyOrphans.delete(status._id)
+      busyOrphans = busyOrphans
+    }
+  }
+
+  async function remove (status: Status): Promise<void> {
     if (currentType === undefined) return
-    void deleteProjectTypeStatus(currentType, status, () => {
+    await deleteProjectTypeStatus(currentType, status, () => {
       // Another status may be open for editing: only the deleted one closes
       if ($settingsStore.id === status._id) clearSettingsStore()
       reload()
@@ -391,8 +405,11 @@
                   size="small"
                   label={plugin.string.StatusOrphanAdd}
                   {disabled}
+                  loading={busyOrphans.has(status._id)}
                   on:click={() => {
-                    void addToType(status)
+                    void withOrphanBusy(status, async () => {
+                      await addToType(status)
+                    })
                   }}
                 />
                 <!-- A status of the model is never deleted, the row would stay -->
@@ -402,8 +419,11 @@
                     size="small"
                     label={plugin.string.Delete}
                     {disabled}
+                    loading={busyOrphans.has(status._id)}
                     on:click={() => {
-                      remove(status)
+                      void withOrphanBusy(status, async () => {
+                        await remove(status)
+                      })
                     }}
                   />
                 {/if}
