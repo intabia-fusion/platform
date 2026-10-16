@@ -21,4 +21,4 @@
   export let value: Ref<Person>[]
 </script>
 
-<CombineAvatars _class={contact.mixin.Employee} items={value} limit={5} size={'x-small'} />
+<CombineAvatars _class={contact.class.Person} items={value} limit={5} size={'x-small'} />
