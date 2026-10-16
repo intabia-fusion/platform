@@ -15,11 +15,10 @@
 
 import type { ComponentType } from 'svelte'
 
-/** A matrix row or column; `component` renders that line with another component, e.g. a legacy counterpart. */
+/** A matrix row or column: its title and the props it adds to every cell. */
 export interface MatrixLine {
   title: string
   props: Record<string, unknown>
-  component?: ComponentType
 }
 
 export type MatrixAxis = MatrixLine[]

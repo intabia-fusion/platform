@@ -40,12 +40,7 @@
           <th class="matrix__heading">{row.title}</th>
           {#each columns as column}
             <td class="matrix__cell">
-              <svelte:component
-                this={column.component ?? row.component ?? component}
-                {...props}
-                {...row.props}
-                {...column.props}
-              />
+              <svelte:component this={component} {...props} {...row.props} {...column.props} />
             </td>
           {/each}
         </tr>

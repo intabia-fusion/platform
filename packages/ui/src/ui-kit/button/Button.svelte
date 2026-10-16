@@ -53,7 +53,7 @@
   export let focusIndex: number | undefined = undefined
   export let element: HTMLButtonElement | undefined = undefined
 
-  // Defaults resolve here, not in the declarations: an explicit undefined would replace those.
+  // Defaults resolve here: a declaration default applies only at mount, a prop later set to undefined stays undefined.
   $: resolvedKind = kind ?? 'secondary'
   $: resolvedSize = size ?? 'large'
   $: resolvedShape = shape ?? 'rectangle'

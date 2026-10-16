@@ -23,10 +23,13 @@ import { Button } from '@hcengineering/ui/kit'
 
 - `kind`: `primary` / `secondary` / `tertiary` / `negative`; `size`: `large` (по умолчанию) / `medium` / `small` /
   `extra-small` / `min` (только icon-only); `shape`: `rectangle` / `round`; `type` - нативный, по умолчанию `button`.
-- Текст - всегда `label` (IntlString): готовая строка (имя, дата, число) - `getEmbeddedLabel(text)`, строка с данными -
-  ключ с параметром и `labelParams` (`ui.string.TodayDate`). Default slot - только для разметки (аватары, счётчики):
-  даже пустое выражение в слоте делает кнопку не icon-only. У `MenuButton` подпись выбранного пункта берётся из его
-  `items`: `label={items.find((it) => it.id === selected)?.label}`.
+- Текст кнопки - всегда проп `label` (`IntlString`):
+  - перевод - ключ строки (`ui.string.Save`);
+  - перевод с данными - ключ с параметром и `labelParams` (`label={ui.string.TodayDate} labelParams={{ date }}`);
+  - готовый текст без перевода (имя, дата, число) - `getEmbeddedLabel(text)`;
+  - у `MenuButton` - подпись выбранного пункта из его `items`: `label={items.find((it) => it.id === selected)?.label}`.
+- Default slot - только для разметки (аватары, счётчики). Любое содержимое слота, даже пустое выражение, делает кнопку
+  не icon-only.
 - Без текста и с `icon` кнопка icon-only (квадрат), доступное имя берётся из `tooltip.label`; в коде icon-only - через
   `IconButton`.
 - Иконка `medium` рядом с текстом, `small` у icon-only и кнопки меню; `iconSize` переопределяет.
@@ -46,10 +49,11 @@ import { Button } from '@hcengineering/ui/kit'
 
 - `icon` обязателен; доступное имя обязательно: `tooltip` с `label` или `aria-label`, иначе ошибка типов. `label` и слота
   нет. Остальные пропсы и события - как у `Button`.
-- Подпись берётся из существующих строк (свои строки плагина, `presentation.string`, `view.string`, `ui.string`). Если
-  `tooltip` - компонент без `label`, имя задаётся переведённым `aria-label` (пример - `process-resources` `ErrorPresenter`).
-- Глиф не из иконок (эмодзи) - компонентом-иконкой: `icon={EmojiGlyph}` с `iconProps` (`emoji-resources`), кнопка
-  остаётся квадратной.
+- Подпись - существующая строка (своего плагина, `presentation.string`, `view.string`, `ui.string`); новая - ключом в
+  строках своего плагина во всех локалях. Если `tooltip` - компонент без `label`, имя задаётся переведённым
+  `aria-label` (пример - `ErrorPresenter` в `process-resources`).
+- Глиф, которого нет среди иконок (эмодзи), передаётся компонентом-иконкой: `icon={EmojiGlyph}` с `iconProps`
+  (`emoji-resources`); кнопка остаётся квадратной.
 - Проверка типов - `src/__test__/ui-kit/IconButtonTypes.svelte` (svelte-check; tsc видит импорты `.svelte` как `any`).
 
 ### MenuButton
@@ -104,3 +108,9 @@ pnpm run build-storybook   # статическая сборка в storybook-st
 `./kit` объявлен в `exports` пакета `packages/ui/package.json`. С появлением `exports` резолвятся только
 перечисленные в нём пути, поэтому там же оставлены глубокие импорты `@hcengineering/ui/src/*` (типы, цвета,
 `lang`, `plugin`) и `lang/*.json`. Новая глубокая точка входа в `ui` - сначала строка в `exports`.
+
+## Дальше
+
+- Перевести на кит `Button` из `@hcengineering/ui` (класс `.antiButton`) и удалить глобальные стили `.hulyButton` и
+  `.antiButton` из `packages/theme/styles/button.scss`.
+- Запретить импорт вытесненных компонентов правилом eslint `no-restricted-imports`.

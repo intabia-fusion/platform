@@ -522,7 +522,7 @@ LOVE_MANUAL_TESTS=true pnpm run uitest tests/love/meetings.all.spec.ts -g "works
 - Конфиг `tests/sanity/tests/playwright.config.ts`, `testIdAttribute: 'data-id'`, таймауты test=60s / expect=15s, Desktop Chrome 1440x900.
 - Page objects в `tests/sanity/tests/model/love/`: `office-page.ts`, `meeting-minutes-page.ts`, `index.ts`. Наследуют `CommonPage`, локаторы - стрелочные функции.
 
-Существующие `data-id`: `meeting-name-input`, `meeting-toggle-private`, `meeting-connect`, `meeting-leave`, `room-enter`, `room-{name}`, `busy-badge`, `recording-button`, `transcription-button`, `pending-recording`. Атрибут `data-id` задаётся напрямую, в том числе у кнопок кита. Нейминг: `meeting-*` для панели митинга, `room-*` для элементов комнаты.
+Существующие `data-id`: `meeting-name-input`, `meeting-toggle-private`, `meeting-connect`, `meeting-leave`, `room-enter`, `room-{name}`, `busy-badge`, `recording-button`, `transcription-button`, `pending-recording`. `data-id` задаётся атрибутом напрямую. Нейминг: `meeting-*` для панели митинга, `room-*` для элементов комнаты.
 
 ---
 

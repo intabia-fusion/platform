@@ -114,7 +114,7 @@ call:edit_issue_draft {"title":"Идемпотентная обработка в
 
 ### 4. Настройки уровней - `AILevelCards`
 
-Настройки -> ЮляИИ -> вкладка "Основные". Карточки уровней теперь `Button` из кита (`data-id="btnAiLevel-<level>"`): выбранный - `primary` + `pressed`, при `readonly` (не Owner) все задизейблены. Выбор сохраняется в `AISpaceSettings` и переживает перезагрузку.
+Настройки -> ЮляИИ -> вкладка "Основные". Карточки уровней - `Button` из кита (`data-id="btnAiLevel-<level>"`): выбранный - `primary` + `pressed`, при `readonly` (не Owner) все задизейблены. Выбор сохраняется в `AISpaceSettings` и переживает перезагрузку.
 
 ## Playwright
 

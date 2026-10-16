@@ -3,7 +3,6 @@
 Область: [Аутентификация, авторизация и онбординг](../features/auth-onboarding.md)
 
 - `WorkspaceUserOperation` экспортируется из `@hcengineering/core`, не из `account-client` - импортировать из `core`. - `plugins/admin-resources/src/utils.ts`.
-- Старый `ButtonMenu` отбрасывал falsy `id` при выборе; `MenuButton` из кита пропускает любой id, кроме `undefined` - `packages/ui/src/ui-kit/button/MenuButton.svelte`.
 - У пакета `html2pdf.js` нет типов - для TS нужен собственный `.d.ts` в проекте. - `plugins/admin-resources/src/html2pdf.d.ts`.
 - `WorkspacesPagedQuery` и `AccountsFilter` - независимые копии интерфейса в двух пакетах (без re-export), менять оба синхронно. - `server/account/src/types.ts`, `foundations/core/packages/account-client/src/types.ts`.
 - Таблица `global_account.admin_action` (миграция v35) намеренно без FK на цель действия - лог должен переживать удаление своей цели (person/workspace).

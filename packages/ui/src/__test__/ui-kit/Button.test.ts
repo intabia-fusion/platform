@@ -77,8 +77,10 @@ describe('ui-kit Button', () => {
       expect(button.type).toBe('submit')
     })
 
-    it('treats explicitly undefined kind, size, shape and type as the defaults', () => {
-      const { button } = mount({ kind: undefined, size: undefined, shape: undefined, type: undefined })
+    it('falls back to the defaults when kind, size, shape and type are later set to undefined', async () => {
+      const { button, component } = mount({ kind: 'negative', size: 'small', shape: 'round', type: 'submit' })
+      component.$set({ kind: undefined, size: undefined, shape: undefined, type: undefined })
+      await tick()
       expect(button.type).toBe('button')
       expect([...button.classList]).toEqual(
         expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle'])
