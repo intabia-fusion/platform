@@ -294,30 +294,45 @@
     }
   }
 
+  let togglingMute: boolean = false
+  let togglingCam: boolean = false
+  let leaving: boolean = false
+
   async function toggleMute (): Promise<void> {
+    if (togglingMute) return
+    togglingMute = true
     try {
       await liveKitClient.setMicrophoneEnabled(!micEnabled)
       micEnabled = !micEnabled
     } catch (err) {
       console.error('Failed to toggle microphone', err)
+    } finally {
+      togglingMute = false
     }
   }
 
   async function toggleCam (): Promise<void> {
+    if (togglingCam) return
+    togglingCam = true
     try {
       await liveKitClient.setCameraEnabled(!camEnabled)
       camEnabled = !camEnabled
     } catch (err) {
       console.error('Failed to toggle camera', err)
+    } finally {
+      togglingCam = false
     }
   }
 
   async function leave (): Promise<void> {
+    if (leaving) return
+    leaving = true
     try {
       await liveKitClient.disconnect()
     } catch (err) {
       console.error('Failed to disconnect', err)
     } finally {
+      leaving = false
       // Close popup/panel
       closePanel()
     }
@@ -470,9 +485,15 @@
   {#if $lkSessionConnected}
     <div data-id="guest-connected">
       <div class="controls">
-        <button on:click={toggleMute}>{micEnabled ? love.string.Mute : love.string.UnMute}</button>
-        <button on:click={toggleCam}>{camEnabled ? love.string.StopVideo : love.string.StartVideo}</button>
-        <button class="secondary" data-id="guest-leave" on:click={leave}>{love.string.LeaveRoom}</button>
+        <button on:click={toggleMute} disabled={togglingMute}
+          >{micEnabled ? love.string.Mute : love.string.UnMute}</button
+        >
+        <button on:click={toggleCam} disabled={togglingCam}
+          >{camEnabled ? love.string.StopVideo : love.string.StartVideo}</button
+        >
+        <button class="secondary" data-id="guest-leave" on:click={leave} disabled={leaving}
+          >{love.string.LeaveRoom}</button
+        >
       </div>
       <div class="video-grid" bind:this={videoContainer} aria-live="polite" />
     </div>

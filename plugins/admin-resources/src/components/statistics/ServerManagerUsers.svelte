@@ -12,15 +12,24 @@
 
   // One audited RPC: account queues the event and whichever transactor holds the workspace acts.
   // The panel no longer fans the call out to every transactor from the browser.
+  let forceClosing = new Set<string>()
   function forceClose (wsId: string): void {
-    void requestAdminOtpCode().then(async (code) => {
-      if (code === undefined) return
-      try {
-        await getAccountClient().adminForceCloseWorkspace(wsId as WorkspaceUuid, code)
-      } catch (err) {
-        console.error('Failed to force close the workspace:', err)
-      }
-    })
+    if (forceClosing.has(wsId)) return
+    forceClosing.add(wsId)
+    forceClosing = forceClosing
+    void requestAdminOtpCode()
+      .then(async (code) => {
+        if (code === undefined) return
+        try {
+          await getAccountClient().adminForceCloseWorkspace(wsId as WorkspaceUuid, code)
+        } catch (err) {
+          console.error('Failed to force close the workspace:', err)
+        }
+      })
+      .finally(() => {
+        forceClosing.delete(wsId)
+        forceClosing = forceClosing
+      })
   }
 
   // Resolve session userIds to person name/email, cached across refreshes
@@ -166,6 +175,7 @@
                         label={getEmbeddedLabel('Force close')}
                         size={'small'}
                         kind={'ghost'}
+                        loading={forceClosing.has(act.wsId)}
                         on:click={() => {
                           forceClose(act.wsId)
                         }}

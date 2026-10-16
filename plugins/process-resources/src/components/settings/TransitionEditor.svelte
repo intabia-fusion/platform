@@ -124,15 +124,22 @@
       transitions = res
     })
 
+  let deleting = false
+
   async function handleDelete (): Promise<void> {
-    if (value === undefined) return
-    // to do handle on server trigger
-    await client.remove(value)
-    const loc = getCurrentLocation()
-    loc.path[5] = plugin.component.ProcessEditor
-    loc.path[6] = value.process
-    clearSettingsStore()
-    navigate(loc)
+    if (value === undefined || deleting) return
+    deleting = true
+    try {
+      // to do handle on server trigger
+      await client.remove(value)
+      const loc = getCurrentLocation()
+      loc.path[5] = plugin.component.ProcessEditor
+      loc.path[6] = value.process
+      clearSettingsStore()
+      navigate(loc)
+    } finally {
+      deleting = false
+    }
   }
 
   function edit (): void {
@@ -162,6 +169,7 @@
               tooltip={{ label: view.string.Delete, direction: 'bottom' }}
               size="small"
               kind="secondary"
+              loading={deleting}
               on:click={handleDelete}
             />
           </div>

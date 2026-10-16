@@ -30,13 +30,21 @@
 
   const client = getClient()
 
+  let adding = false
+
   async function addState (): Promise<void> {
-    const rank = makeRank(states.length > 0 ? states[states.length - 1].rank : undefined, undefined)
-    await client.createDoc(plugin.class.State, core.space.Model, {
-      process: process._id,
-      title: await translate(plugin.string.NewState, {}),
-      rank
-    })
+    if (adding) return
+    adding = true
+    try {
+      const rank = makeRank(states.length > 0 ? states[states.length - 1].rank : undefined, undefined)
+      await client.createDoc(plugin.class.State, core.space.Model, {
+        process: process._id,
+        title: await translate(plugin.string.NewState, {}),
+        rank
+      })
+    } finally {
+      adding = false
+    }
   }
 
   function toState (doc: Doc): State {
@@ -56,7 +64,14 @@
     </svelte:fragment>
   </SortableDocList>
   {#if !readonly}
-    <Button kind={'ghost'} width={'100%'} icon={IconAdd} label={plugin.string.AddState} on:click={addState} />
+    <Button
+      kind={'ghost'}
+      width={'100%'}
+      icon={IconAdd}
+      label={plugin.string.AddState}
+      loading={adding}
+      on:click={addState}
+    />
   {/if}
 </div>
 

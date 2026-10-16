@@ -260,10 +260,17 @@
     }
   }
 
+  let addingTab = false
+
   async function addTab (): Promise<void> {
-    if (screen == null) return
-    const tabName = await translate(plugin.string.TabNumbered, { num: tabs.length + 1 }, $languageStore)
-    await addScreenTab(client, screen._id, tabName)
+    if (screen == null || addingTab) return
+    addingTab = true
+    try {
+      const tabName = await translate(plugin.string.TabNumbered, { num: tabs.length + 1 }, $languageStore)
+      await addScreenTab(client, screen._id, tabName)
+    } finally {
+      addingTab = false
+    }
   }
 
   const skipRegular = ['status', 'modifiedOn', 'modifiedBy', 'createdOn', 'createdBy']
@@ -367,6 +374,7 @@
                 kind="secondary"
                 size="small"
                 label={plugin.string.AddTab}
+                loading={addingTab}
                 on:click={() => {
                   void addTab()
                 }}

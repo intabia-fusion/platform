@@ -79,8 +79,15 @@
 
   const client = getClient()
 
+  let removing = false
   async function remove (): Promise<void> {
-    await client.remove(floor)
+    if (removing) return
+    removing = true
+    try {
+      await client.remove(floor)
+    } finally {
+      removing = false
+    }
   }
 
   function renameFloor (): void {
@@ -311,7 +318,7 @@
     {#if configurable && editable}
       {#if rooms.length === 0}
         <div class="mr-2">
-          <ButtonIcon icon={IconDelete} kind={'negative'} size={'small'} on:click={remove} />
+          <ButtonIcon icon={IconDelete} kind={'negative'} size={'small'} loading={removing} on:click={remove} />
         </div>
       {/if}
       <ButtonIcon icon={IconMoreH} kind={'tertiary'} size={'small'} {pressed} on:click={clickMore} />

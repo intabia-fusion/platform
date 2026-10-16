@@ -30,14 +30,18 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
+  let creatingCard = false
+
   async function createCard (): Promise<void> {
-    if (_class === undefined) return
+    if (creatingCard || _class === undefined) return
+    creatingCard = true
     if (isBaseTypeWithSubtypes(hierarchy, _class as Ref<MasterTag>)) {
       showPopup(
         CreateCardPopup,
         { type: _class, space: core.space.Workspace, changeType: true },
         'center',
         async (result) => {
+          creatingCard = false
           if (result != null && result !== '') {
             const loc = getCurrentLocation()
             loc.path[3] = result
@@ -48,27 +52,38 @@
       )
       return
     }
-    const title = await translate(card.string.Card, {})
+    try {
+      const title = await translate(card.string.Card, {})
 
-    const data: Data<Card> = {
-      title,
-      rank: '',
-      content: '' as MarkupBlobRef,
-      parentInfo: [],
-      blobs: {}
+      const data: Data<Card> = {
+        title,
+        rank: '',
+        content: '' as MarkupBlobRef,
+        parentInfo: [],
+        blobs: {}
+      }
+
+      const filledData = fillDefaults(hierarchy, data, _class)
+
+      const _id = await client.createDoc(_class, core.space.Workspace, filledData)
+
+      Analytics.handleEvent(CardEvents.CardCreated)
+
+      const loc = getCurrentLocation()
+      loc.path[3] = _id
+      loc.path.length = 4
+      navigate(loc)
+    } finally {
+      creatingCard = false
     }
-
-    const filledData = fillDefaults(hierarchy, data, _class)
-
-    const _id = await client.createDoc(_class, core.space.Workspace, filledData)
-
-    Analytics.handleEvent(CardEvents.CardCreated)
-
-    const loc = getCurrentLocation()
-    loc.path[3] = _id
-    loc.path.length = 4
-    navigate(loc)
   }
 </script>
 
-<ButtonIcon kind="primary" icon={IconAdd} size="small" dataId={'btnCreateCard'} on:click={createCard} />
+<ButtonIcon
+  kind="primary"
+  icon={IconAdd}
+  size="small"
+  dataId={'btnCreateCard'}
+  loading={creatingCard}
+  on:click={createCard}
+/>

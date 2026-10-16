@@ -164,42 +164,60 @@
     return new Date(ms).toISOString().slice(0, 10)
   }
 
+  let deletingAccounts = new Set<AccountUuid>()
+
   // Account deletion is an irreversible identity purge -> OTP-gated on the server.
   // The dialog checkbox skips the deferral and purges the identity right away.
   async function deleteAccount (uuid: AccountUuid): Promise<void> {
-    // The server refuses an account that still owns a workspace alone. Say so before asking
-    // for a code, otherwise the refusal arrives after the whole OTP dance.
-    const check = await accountClient.canDeleteAccount(uuid).catch(() => undefined)
-    if (check?.canDelete === false) {
-      const blocking = check.ownedWorkspaces.map((ws) => ws.name)
-      showPopup(MessageBox, {
-        label: adminRes.string.Delete,
-        message:
-          blocking.length > 0 ? adminRes.string.OwnedWorkspacesBlockDeletion : adminRes.string.CannotDeleteOwnAccount,
-        params: { workspaces: blocking.join(', ') },
-        canSubmit: false
-      })
-      return
-    }
+    if (deletingAccounts.has(uuid)) return
+    deletingAccounts.add(uuid)
+    deletingAccounts = deletingAccounts
+    try {
+      // The server refuses an account that still owns a workspace alone. Say so before asking
+      // for a code, otherwise the refusal arrives after the whole OTP dance.
+      const check = await accountClient.canDeleteAccount(uuid).catch(() => undefined)
+      if (check?.canDelete === false) {
+        const blocking = check.ownedWorkspaces.map((ws) => ws.name)
+        showPopup(MessageBox, {
+          label: adminRes.string.Delete,
+          message:
+            blocking.length > 0 ? adminRes.string.OwnedWorkspacesBlockDeletion : adminRes.string.CannotDeleteOwnAccount,
+          params: { workspaces: blocking.join(', ') },
+          canSubmit: false
+        })
+        return
+      }
 
-    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
-    if (res === undefined) return
-    await runAdminAction(async () => {
-      await accountClient.deleteAccount(uuid, res.code, res.option)
-      return true
-    })
-    await loadAccounts(accountSearch, accountSkip, accountLimit)
+      const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+      if (res === undefined) return
+      await runAdminAction(async () => {
+        await accountClient.deleteAccount(uuid, res.code, res.option)
+        return true
+      })
+      await loadAccounts(accountSearch, accountSkip, accountLimit)
+    } finally {
+      deletingAccounts.delete(uuid)
+      deletingAccounts = deletingAccounts
+    }
   }
 
   // Unfinished signup has no account row - purge person + social ids instead
   async function deletePerson (uuid: AccountUuid): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
-    await runAdminAction(async () => {
-      await accountClient.adminDeletePerson(uuid, code)
-      return true
-    })
-    await loadAccounts(accountSearch, accountSkip, accountLimit)
+    if (deletingAccounts.has(uuid)) return
+    deletingAccounts.add(uuid)
+    deletingAccounts = deletingAccounts
+    try {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
+      await runAdminAction(async () => {
+        await accountClient.adminDeletePerson(uuid, code)
+        return true
+      })
+      await loadAccounts(accountSearch, accountSkip, accountLimit)
+    } finally {
+      deletingAccounts.delete(uuid)
+      deletingAccounts = deletingAccounts
+    }
   }
 
   async function accountSearchChanged (ev: CustomEvent<string>): Promise<void> {
@@ -429,6 +447,7 @@
                     size={'small'}
                     kind={'dangerous'}
                     label={adminRes.string.Delete}
+                    loading={deletingAccounts.has(account.uuid)}
                     on:click={() => {
                       if (account.hasAccount === false) {
                         void deletePerson(account.uuid)

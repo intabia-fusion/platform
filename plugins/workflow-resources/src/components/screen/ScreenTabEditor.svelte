@@ -72,19 +72,34 @@
     void saveTabName()
   })
 
+  let removingTab = false
+
   async function removeTab (): Promise<void> {
+    if (removingTab) return
+    removingTab = true
     if (fields.length > 0) {
-      showPopup(MessageBox, {
-        label: plugin.string.DeleteScreenTab,
-        message: plugin.string.DeleteScreenTabConfirm,
-        params: { name: tab.name },
-        dangerous: true,
-        action: async () => {
-          await removeScreenTab(client, tab.attachedTo, tab._id)
+      showPopup(
+        MessageBox,
+        {
+          label: plugin.string.DeleteScreenTab,
+          message: plugin.string.DeleteScreenTabConfirm,
+          params: { name: tab.name },
+          dangerous: true,
+          action: async () => {
+            await removeScreenTab(client, tab.attachedTo, tab._id)
+          }
+        },
+        undefined,
+        () => {
+          removingTab = false
         }
-      })
+      )
     } else {
-      await removeScreenTab(client, tab.attachedTo, tab._id)
+      try {
+        await removeScreenTab(client, tab.attachedTo, tab._id)
+      } finally {
+        removingTab = false
+      }
     }
   }
 
@@ -100,8 +115,16 @@
     })
   }
 
+  let removingField: Ref<ScreenField> | undefined = undefined
+
   async function removeField (field: ScreenField): Promise<void> {
-    await removeScreenField(client, field.attachedTo, field._id)
+    if (removingField === field._id) return
+    removingField = field._id
+    try {
+      await removeScreenField(client, field.attachedTo, field._id)
+    } finally {
+      removingField = undefined
+    }
   }
 
   async function toggleRequired (field: ScreenField): Promise<void> {
@@ -196,6 +219,7 @@
           icon={IconDelete}
           kind="tertiary"
           size="small"
+          loading={removingTab}
           on:click={() => {
             void removeTab()
           }}
@@ -245,6 +269,7 @@
                     icon={IconDelete}
                     kind="tertiary"
                     size="small"
+                    loading={removingField === field._id}
                     on:click={() => {
                       void removeField(field)
                     }}

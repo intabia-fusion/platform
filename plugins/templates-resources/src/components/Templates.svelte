@@ -65,25 +65,32 @@
     newTemplate = true
     mode = Mode.Create
   }
+  let savingTemplate = false
+
   async function saveNewTemplate (): Promise<void> {
-    if (!newTemplate) {
+    if (!newTemplate || savingTemplate) {
       return
     }
-    if (mode === Mode.Create) {
-      if (title.trim().length > 0 && space !== undefined) {
-        const ref = await client.createDoc(templatesPlugin.class.MessageTemplate, space, {
+    savingTemplate = true
+    try {
+      if (mode === Mode.Create) {
+        if (title.trim().length > 0 && space !== undefined) {
+          const ref = await client.createDoc(templatesPlugin.class.MessageTemplate, space, {
+            title,
+            message
+          })
+          selected = ref
+        }
+      } else if (selected !== undefined) {
+        await client.updateDoc(templatesPlugin.class.MessageTemplate, templatesPlugin.space.Templates, selected, {
           title,
           message
         })
-        selected = ref
       }
-    } else if (selected !== undefined) {
-      await client.updateDoc(templatesPlugin.class.MessageTemplate, templatesPlugin.space.Templates, selected, {
-        title,
-        message
-      })
+      mode = Mode.View
+    } finally {
+      savingTemplate = false
     }
-    mode = Mode.View
   }
 
   let textEditor: StyledTextEditor
@@ -243,6 +250,7 @@
                   <div class="ml-2">
                     <Button
                       disabled={title.trim().length === 0}
+                      loading={savingTemplate}
                       kind={'primary'}
                       label={templatesPlugin.string.SaveTemplate}
                       on:click={saveNewTemplate}

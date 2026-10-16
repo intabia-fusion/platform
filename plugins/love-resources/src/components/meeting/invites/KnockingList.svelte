@@ -50,12 +50,32 @@
     }
   }
 
+  // Per-invite guard: several knocks can be in the list at once, so the flag
+  // must not block buttons for other invites.
+  let processingIds = new Set<Ref<UserMeetingInvite>>()
+
   async function handleAccept (invite: UserMeetingInvite): Promise<void> {
-    await responseToInviteRequest(invite, true)
+    if (processingIds.has(invite._id)) return
+    processingIds.add(invite._id)
+    processingIds = processingIds
+    try {
+      await responseToInviteRequest(invite, true)
+    } finally {
+      processingIds.delete(invite._id)
+      processingIds = processingIds
+    }
   }
 
   async function handleReject (invite: UserMeetingInvite): Promise<void> {
-    await responseToInviteRequest(invite, false)
+    if (processingIds.has(invite._id)) return
+    processingIds.add(invite._id)
+    processingIds = processingIds
+    try {
+      await responseToInviteRequest(invite, false)
+    } finally {
+      processingIds.delete(invite._id)
+      processingIds = processingIds
+    }
   }
 </script>
 
@@ -83,6 +103,7 @@
               kind={'primary'}
               size={compact ? 'small' : 'medium'}
               dataId="knock-accept"
+              loading={processingIds.has(invite._id)}
               on:click={() => {
                 void handleAccept(invite)
               }}
@@ -92,6 +113,7 @@
               kind={'secondary'}
               size={compact ? 'small' : 'medium'}
               dataId="knock-reject"
+              loading={processingIds.has(invite._id)}
               on:click={() => {
                 void handleReject(invite)
               }}

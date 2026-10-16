@@ -85,6 +85,18 @@
     if (!value.soundAlert) return
     playThrottledSound(plugin.sound.InboxNotification)
   })
+
+  let subscribing = false
+
+  async function enablePush (): Promise<void> {
+    if (subscribing) return
+    subscribing = true
+    try {
+      await subscribePush()
+    } finally {
+      subscribing = false
+    }
+  }
 </script>
 
 <NotificationToast title={notification.title} severity={notification.severity} onClose={onRemove}>
@@ -110,9 +122,10 @@
     {/if}
     <Button
       label={plugin.string.EnablePush}
-      disabled={!pushAvailable()}
+      loading={subscribing}
+      disabled={!pushAvailable() || subscribing}
       showTooltip={!pushAvailable() ? { label: plugin.string.NotificationBlockedInBrowser } : undefined}
-      on:click={subscribePush}
+      on:click={enablePush}
     />
   </svelte:fragment>
 </NotificationToast>

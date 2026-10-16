@@ -26,8 +26,15 @@
   export let icon: Asset | undefined = undefined
   export let type: 'type-button' | 'type-button-icon' = 'type-button'
 
+  let opening = false
   async function openDirect (): Promise<void> {
-    await openDirectForPerson(employee, true)
+    if (opening) return
+    opening = true
+    try {
+      await openDirectForPerson(employee, true)
+    } finally {
+      opening = false
+    }
   }
 </script>
 
@@ -40,6 +47,7 @@
     {type}
     {kind}
     dataId="btnDirectMessage"
+    loading={opening}
     on:click={openDirect}
   />
 </div>

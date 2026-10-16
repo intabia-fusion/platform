@@ -35,6 +35,7 @@
   const query = createQuery()
 
   let doc: Card | undefined = value ?? undefined
+  let choosingIcon = false
 
   $: if (_id !== undefined && value == null) {
     query.query(card.class.Card, { _id }, (res) => {
@@ -46,14 +47,24 @@
   }
 
   async function chooseIcon (): Promise<void> {
-    if (doc === undefined) return
+    if (choosingIcon || doc === undefined) return
+    choosingIcon = true
     const { icon, color } = doc
     const update = async (result: any): Promise<void> => {
       if (result !== undefined && result !== null && doc !== undefined) {
         await client.update(doc, { icon: result.icon, color: result.color })
       }
     }
-    showPopup(IconPicker, { icon, color }, 'top', update, update)
+    showPopup(
+      IconPicker,
+      { icon, color },
+      'top',
+      (result) => {
+        choosingIcon = false
+        void update(result)
+      },
+      update
+    )
   }
 
   $: iconData = getCardIconInfo(doc)
@@ -70,6 +81,7 @@
     icon={iconData.icon}
     iconProps={{ ...iconData.props, size }}
     showTooltip={{ label: view.string.Icon, direction: 'bottom' }}
+    loading={choosingIcon}
     on:click={chooseIcon}
   />
 {:else}

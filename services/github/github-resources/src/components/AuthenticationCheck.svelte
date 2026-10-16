@@ -13,6 +13,17 @@
   $: auth = $githubAuth
 
   $: spaceObj = $githubProjects.get(space as Ref<GithubProject>)
+
+  let authorizing = false
+  async function handleAuthorize (): Promise<void> {
+    if (authorizing) return
+    authorizing = true
+    try {
+      await onAuthorize()
+    } finally {
+      authorizing = false
+    }
+  }
 </script>
 
 {#if spaceObj !== undefined}
@@ -24,8 +35,9 @@
         icon={github.icon.Github}
         kind={'primary'}
         size={'small'}
+        loading={authorizing}
         on:click={() => {
-          void onAuthorize()
+          void handleAuthorize()
         }}
       />
     {/if}

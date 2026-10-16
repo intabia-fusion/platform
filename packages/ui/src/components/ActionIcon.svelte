@@ -30,15 +30,27 @@
   export let invisible: boolean = false
   export let disabled: boolean = false
   export let keys: string[] | undefined = undefined
+
+  let busy = false
+
+  async function handleClick (ev: MouseEvent): Promise<void> {
+    if (busy) return
+    busy = true
+    try {
+      await action(ev)
+    } finally {
+      busy = false
+    }
+  }
 </script>
 
 <button
   class="button {size}"
   use:tooltip={{ label, direction, props: labelProps, keys }}
   tabindex="0"
-  on:click|stopPropagation|preventDefault={action}
+  on:click|stopPropagation|preventDefault={handleClick}
   on:contextmenu
-  {disabled}
+  disabled={disabled || busy}
 >
   <div class="icon {size}" class:invisible>
     <Icon {icon} {size} {iconProps} />

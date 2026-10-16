@@ -27,7 +27,7 @@
   import { getObjectLinkFragment } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import { currentMeetingMinutes, infos, myInfo, meetings } from '../stores'
+  import { currentMeetingMinutes, infos, myInfo, meetings, connectingToMeeting } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import MicrophoneButton from './meeting/controls/MicrophoneButton.svelte'
   import CameraButton from './meeting/controls/CameraButton.svelte'
@@ -66,6 +66,7 @@
   const dispatch = createEventDispatcher()
 
   async function connect (): Promise<void> {
+    if ($connectingToMeeting) return
     if (meeting !== undefined) {
       await createMeeting(room, meeting)
     }
@@ -151,6 +152,7 @@
           kind={'primary'}
           autoFocus
           on:click={connect}
+          loading={$connectingToMeeting}
           dataId={'room-enter'}
         />
       </div>

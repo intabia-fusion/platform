@@ -82,8 +82,19 @@
   let content: Markup = EmptyMarkup
   let copy: string = ''
   let saved = false
+  let sending = false
 
   async function sendMsg (): Promise<void> {
+    if (sending) return
+    sending = true
+    try {
+      await sendMsgInner()
+    } finally {
+      sending = false
+    }
+  }
+
+  async function sendMsgInner (): Promise<void> {
     const templateProvider = (await getResource(templates.function.GetTemplateDataProvider))()
     if (templateProvider === undefined || selectedIntegration === undefined) return
     for (const channel of channels) {
@@ -315,6 +326,7 @@
             size={'small'}
             kind={'primary'}
             disabled={channels.length === 0 || isEmptyMarkup(content)}
+            loading={sending}
             on:click={sendMsg}
           />
         {/if}
