@@ -16,7 +16,7 @@ export class SidebarPage extends CommonPage {
   contentHeaderByTitle = (title: string): Locator =>
     this.content().locator(`.hulyHeader-titleGroup:has-text("${title}")`)
 
-  contentCloseButton = (): Locator => this.content().locator('.hulyHeader-container button.iconOnly').last()
+  contentCloseButton = (): Locator => this.content().locator('.hulyHeader-container #btnHeaderClose')
 
   calendarSidebarButton = (): Locator => this.sidebar().locator('button[id$="Calendar"]')
   officeSidebarButton = (): Locator => this.sidebar().locator('button[id$="Office"]')

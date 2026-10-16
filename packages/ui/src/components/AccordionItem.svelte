@@ -49,7 +49,7 @@
   if (isOpen) collapsed = false
   $: setTreeCollapsed(id, collapsed)
 
-  function handleClick (): void {
+  function handleClick(): void {
     if (disabled) return
     collapsed = !collapsed
   }
@@ -122,7 +122,9 @@
         </span>
       {/if}
     </div>
-    <div class="hulyAccordionItem-header__tools">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="hulyAccordionItem-header__tools" on:click|stopPropagation|preventDefault>
       <slot name="actions" />
     </div>
   </button>

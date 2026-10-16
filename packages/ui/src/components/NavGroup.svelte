@@ -170,7 +170,9 @@
     <div class="flex-grow" />
     {#if $$slots.extra}<slot name="extra" />{/if}
     {#if tools || $$slots.tools}
-      <div class="hulyNavGroup-header__tools">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="hulyNavGroup-header__tools" on:click|stopPropagation|preventDefault>
         {#if tools}
           <Component
             is={tools}
@@ -184,7 +186,9 @@
       </div>
     {/if}
     {#if $$slots.actions}
-      <div class="hulyNavGroup-header__actions">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="hulyNavGroup-header__actions" on:click|stopPropagation|preventDefault>
         <slot name="actions" />
       </div>
     {/if}

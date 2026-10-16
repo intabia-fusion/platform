@@ -284,6 +284,7 @@
         <div class="hulyHotKey-item no-print">Esc</div>
       {/if}
       <IconButton
+        id="btnHeaderClose"
         icon={IconClose}
         kind="tertiary"
         size="small"

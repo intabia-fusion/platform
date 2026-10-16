@@ -199,7 +199,7 @@
         </div>
         {#if onDelete !== undefined}
           <div class="ml-2">
-            <ActionIcon icon={IconDelete} size="small" action={() => onDelete?.()} {disabled} />
+            <ActionIcon icon={IconDelete} size="small" dataId="btnDeleteMixin" action={() => onDelete?.()} {disabled} />
           </div>
         {/if}
       {/if}
@@ -238,7 +238,13 @@
           {#if hierarchy.hasMixin(clazz, settings.mixin.UserMixin)}
             <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />
             {#if onDelete !== undefined}
-              <ActionIcon icon={IconDelete} size="small" action={() => onDelete?.()} {disabled} />
+              <ActionIcon
+                icon={IconDelete}
+                size="small"
+                dataId="btnDeleteMixin"
+                action={() => onDelete?.()}
+                {disabled}
+              />
             {/if}
           {/if}
         </div>

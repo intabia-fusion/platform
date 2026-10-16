@@ -80,10 +80,10 @@ export class ChannelPage extends CommonPage {
     this.page.locator('.antiPopup button.ap-menuItem').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`) })
 
   readonly messageSaveMarker = (): Locator => this.page.locator('.saveMarker')
-  readonly saveMessageTab = (): Locator => this.page.getByRole('button', { name: 'Saved' })
+  readonly saveMessageTab = (): Locator => this.page.getByRole('button', { name: /^Saved(\s|$)/ })
   readonly pinnedMessageButton = (): Locator => this.page.getByRole('button', { name: 'pinned' })
   readonly pinnedMessage = (message: string): Locator => this.page.locator('.antiPopup').getByText(message)
-  readonly closeReplyButton = (): Locator => this.page.locator('.hulyHeader-container > button.iconOnly')
+  readonly closeReplyButton = (): Locator => this.page.locator('.hulyHeader-container #btnHeaderClose')
   readonly openReplyMessage = (): Locator => this.page.getByText('1 reply Last reply less than')
   // `exact`: the name match is a substring one, so any channel in the navigator whose faker name
   // contains "edit" ("Ampeditd7bac...") is a second match and the click dies on strict mode.

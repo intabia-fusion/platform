@@ -90,7 +90,7 @@
   {#if showDate || withoutTime}
     {#if fixed === undefined}
       <div class="min-w-28">
-        <Button {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
+        <Button {kind} {size} {disabled} {focusIndex} data-id="btnDateEditorDate" on:click={dateClick}>
           <span class="overflow-label tertiary-textColor">
             <DateLocalePresenter date={currentDate.getTime()} {timeZone} />
           </span>
@@ -98,7 +98,7 @@
       </div>
     {:else}
       <FixedColumn key={fixed + '-date'} addClass="min-w-28">
-        <Button {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
+        <Button {kind} {size} {disabled} {focusIndex} data-id="btnDateEditorDate" on:click={dateClick}>
           <span class="overflow-label tertiary-textColor">
             <DateLocalePresenter date={currentDate.getTime()} {timeZone} />
           </span>

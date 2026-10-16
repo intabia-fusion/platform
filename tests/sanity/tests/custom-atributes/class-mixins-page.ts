@@ -17,7 +17,7 @@ export class ClassMixinsPage {
   createPopupButton = (): Locator => this.createMixinPopup().getByRole('button', { name: 'Create', exact: true })
   mixinChip = (name: string): Locator => this.page.getByRole('button', { name: `Mixin: ${name}`, exact: true })
   mixinCard = (name: string): Locator => this.page.locator('.mixinItem', { hasText: `Mixin: ${name}` })
-  mixinDeleteButton = (name: string): Locator => this.mixinCard(name).locator('button.button').last()
+  mixinDeleteButton = (name: string): Locator => this.mixinCard(name).locator('[data-id="btnDeleteMixin"]')
   confirmDeleteButton = (): Locator => this.page.getByRole('button', { name: 'Ok', exact: true })
 
   async selectClass (name: string): Promise<void> {

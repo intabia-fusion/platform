@@ -54,7 +54,7 @@ export class PlanningPage extends CalendarPage {
     this.toDosContainer().locator('input[placeholder="Add Action Item, press Enter to save"]')
 
   readonly buttonCardClose = (): Locator =>
-    this.panel().locator('#btnHeaderClose')
+    this.panel().getByRole('button', { name: 'Close', exact: true })
 
   readonly textPanelToDoTitle = (): Locator =>
     this.panel().locator('div.top-content label.editbox-wrapper.ghost.large input')
@@ -67,7 +67,7 @@ export class PlanningPage extends CalendarPage {
 
   readonly textPanelPriority = (): Locator => this.panel().locator('button#priorityButton svg')
   readonly textPanelVisible = (): Locator =>
-    this.panel().locator('div.hulyHeader-titleGroup > button:nth-child(3) > span')
+    this.panel().locator('#visibleButton')
 
   readonly buttonPanelLabelFirst = (): Locator =>
     this.panel().locator('div.hulyHeader-titleGroup > button:nth-child(2)')
@@ -354,7 +354,7 @@ export class PlanningPage extends CalendarPage {
     const row = this.slotRows(popup).nth(rowNumber)
 
     // dateStart
-    await row.locator('div.dateEditor-container:first-child > div.min-w-28:first-child .hulyButton').click()
+    await row.locator('div.dateEditor-container:first-child [data-id="btnDateEditorDate"]').click()
     if (slot.dateStart === 'today') {
       await this.buttonCalendarToday().click()
     } else if (typeof slot.dateStart === 'string') {
@@ -598,7 +598,7 @@ export class PlanningPage extends CalendarPage {
       .nth(rowNumber)
     // dateEnd
     await expect(
-      row.locator('div.dateEditor-container:first-child > div.min-w-28:first-child .hulyButton')
+      row.locator('div.dateEditor-container:first-child [data-id="btnDateEditorDate"]')
     ).toContainText(dateEnd)
   }
 }

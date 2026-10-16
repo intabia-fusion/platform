@@ -75,8 +75,10 @@ import { Button } from '@hcengineering/ui/kit'
 - Классы по БЭМ: блок - имя компонента (`button`), элементы `button__icon`, модификаторы `button--primary`.
   Локальные custom properties компонента - с префиксом `--_` (`--_bg`), токены темы в разметку не попадают.
 - Событие не глушится по умолчанию (`stopPropagation`/`preventDefault` решает вызывающий код). Модификаторы
-  (`on:click|stopPropagation`) на компоненте в Svelte 4 недоступны: кнопка внутри кликабельного родителя (строка,
-  `NavItem`) вызывает `event.stopPropagation()` в своём обработчике.
+  (`on:click|stopPropagation`) на компоненте в Svelte 4 недоступны: кнопка внутри кликабельного родителя (строка
+  списка) вызывает `event.stopPropagation()` в своём обработчике. Исключение - слоты под контролы у кликабельных
+  контейнеров: `tools`/`actions` у `NavGroup`, `actions` у `NavItem`, `actions` у `AccordionItem` глушат клик сами
+  (`stopPropagation` и `preventDefault`), кнопке в них ничего делать не нужно.
 - Компонент приходит вместе с историей Storybook (`dev/storybook/src/ui-kit/<Component>.stories.ts`), тестом
   (`packages/ui/src/__test__`) и строкой в таблице выше.
 
