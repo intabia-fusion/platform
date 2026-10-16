@@ -148,7 +148,6 @@
   }
 
   let templateId: Ref<IssueTemplate> | undefined = draft?.template?.template
-  let appliedTemplateId: Ref<IssueTemplate> | undefined = draft?.template?.template
 
   let template: IssueTemplate | undefined = undefined
   const templateQuery = createQuery()
@@ -314,6 +313,15 @@
     }
     const { _class, _id, space, children, comments, attachments, labels, description, ...templBase } = template
 
+    object = {
+      ...object,
+      description: description ?? EmptyMarkup,
+      ...templBase,
+      template: {
+        template: template._id
+      }
+    }
+
     const allLabels = new Set<Ref<TagElement>>()
     for (const label of labels ?? []) {
       allLabels.add(label)
@@ -346,15 +354,6 @@
       }
     })
 
-    object = {
-      ...object,
-      description: description ?? EmptyMarkup,
-      ...templBase,
-      template: {
-        template: template._id
-      }
-    }
-    appliedTemplateId = templateId
     object.labels =
       labels !== undefined
         ? labels
@@ -369,6 +368,9 @@
       kind = object.kind
     }
     fillDefaults(hierarchy, object, issueClass)
+
+    object.description = description ?? EmptyMarkup
+    descriptionBox?.setContent(object.description)
   }
 
   $: if (template !== undefined) {
@@ -1015,7 +1017,7 @@
     />
   </div>
   <div id="issue-description">
-    {#key [objectId, appliedTemplateId]}
+    {#key [objectId]}
       <AttachmentStyledBox
         bind:this={descriptionBox}
         focusIndex={2}
