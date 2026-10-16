@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
+  import { generateId } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -65,6 +66,7 @@
   export let testid: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
+  const labelId = `nav-group-label-${generateId()}`
 
   $: id = `navGroup-${categoryName}`
   let pressed: boolean = false
@@ -80,7 +82,7 @@
     }
   }
 
-  function toggle (e: MouseEvent): void {
+  function toggle(e: MouseEvent): void {
     e.stopPropagation()
     e.preventDefault()
     if (!empty) {
@@ -93,7 +95,7 @@
     }
   }
 
-  function handleMenuClicked (ev: MouseEvent): void {
+  function handleMenuClicked(ev: MouseEvent): void {
     if (actions.length === 0) return
     ev.stopPropagation()
     ev.preventDefault()
@@ -105,12 +107,12 @@
 
   $: visibleIcon = folderIcon ? (isOpen && !empty ? IconFolderExpanded : IconFolderCollapsed) : icon
 
-  function onHeaderClick (e: MouseEvent): void {
+  function onHeaderClick(e: MouseEvent): void {
     if (headerClickType === 'menu') handleMenuClicked(e)
     else if (headerClickType === 'toggle') toggle(e)
   }
 
-  function onContextClick (e: MouseEvent): void {
+  function onContextClick(e: MouseEvent): void {
     if (contextClickType === 'menu') handleMenuClicked(e)
   }
 </script>
@@ -127,6 +129,7 @@
 >
   <button
     class="hulyNavGroup-header"
+    aria-labelledby={labelId}
     class:isOpen={(isOpen || visible) && !empty}
     class:highlighted
     class:selected
@@ -153,6 +156,7 @@
       {/if}
       <span
         use:tooltip={shouldTooltip ? { label: label ?? getEmbeddedLabel(title ?? ''), direction: 'top' } : undefined}
+        id={labelId}
         class="overflow-label"
       >
         {#if label}<Label {label} />{/if}
