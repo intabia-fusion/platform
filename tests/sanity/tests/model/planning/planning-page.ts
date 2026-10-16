@@ -54,7 +54,7 @@ export class PlanningPage extends CalendarPage {
     this.toDosContainer().locator('input[placeholder="Add Action Item, press Enter to save"]')
 
   readonly buttonCardClose = (): Locator =>
-    this.panel().locator('.hulyHeader-container > .hulyHeader-buttonsGroup > .font-medium-14')
+    this.panel().locator('#btnHeaderClose')
 
   readonly textPanelToDoTitle = (): Locator =>
     this.panel().locator('div.top-content label.editbox-wrapper.ghost.large input')

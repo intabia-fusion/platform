@@ -29,7 +29,7 @@ export class SettingsPage {
     this.qaraRole = page.getByRole('button', { name: 'QARA', exact: true })
     this.qualifiedUserRole = page.getByRole('button', { name: 'Qualified User', exact: true })
     this.createDocumentPermission = page.getByText('Create document', { exact: true })
-    this.addPermissionButton = page.locator('.hulyTableAttr-header > .font-medium-14')
+    this.addPermissionButton = page.locator('#btnEditPermissions')
     this.reviewDocumentPermission = page.getByText('Review document', { exact: true })
     this.approveDocumentPermission = page.getByText('Approve document', { exact: true })
     this.coAuthorDocumentPermission = page.getByText('Co-author document', { exact: true })
@@ -38,7 +38,7 @@ export class SettingsPage {
     this.deleteDocumentCategoryPermission = page.getByText('Delete document category', { exact: true })
     this.updateSpacePermission = page.getByText('Update space', { exact: true })
     this.addRoleUpdatePermissionOwner = page.getByRole('button', { name: 'Update document owner' })
-    this.addUpdateDocumentOwnerPermission = page.locator('.hulyTableAttr-header > .font-medium-14')
+    this.addUpdateDocumentOwnerPermission = page.locator('#btnEditPermissions')
   }
 
   async openProfileMenu (): Promise<void> {

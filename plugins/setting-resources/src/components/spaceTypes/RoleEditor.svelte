@@ -176,6 +176,7 @@
                 <IconSettings size="small" />
                 <span><Label label={settingRes.string.Permissions} /></span>
                 <IconButton
+                  id="btnEditPermissions"
                   tooltip={{ label: settingRes.string.Permissions }}
                   kind="primary"
                   icon={IconEdit}
