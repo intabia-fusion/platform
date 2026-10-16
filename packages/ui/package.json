@@ -3,6 +3,19 @@
   "version": "0.7.0",
   "main": "src/index.ts",
   "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./kit": {
+      "types": "./types/ui-kit/index.d.ts",
+      "default": "./src/ui-kit/index.ts"
+    },
+    "./src/*": "./src/*.ts",
+    "./lang/*.json": "./lang/*.json",
+    "./package.json": "./package.json"
+  },
   "author": "Anticrm Platform Contributors",
   "license": "EPL-2.0",
   "scripts": {

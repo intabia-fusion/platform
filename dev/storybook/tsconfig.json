@@ -1,0 +1,12 @@
+{
+  "extends": "./node_modules/@hcengineering/platform-rig/profiles/ui/tsconfig.json",
+
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "incremental": false,
+    "types": []
+  },
+  "include": ["src/**/*", ".storybook/**/*", "vite.config.mts"],
+  "exclude": ["node_modules", "storybook-static"]
+}

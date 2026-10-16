@@ -7,6 +7,7 @@ packages:
   - dev/doc-import-tool
   - dev/import-tool
   - dev/prod
+  - dev/storybook
   - dev/test-base
   - dev/tool
   - foundations/core/common/scripts
@@ -543,6 +544,7 @@ peerDependencyRules:
     - '@rspack/core'
     - '@types/dom-mediacapture-record'
     - '@types/dom-mediacapture-transform'
+    - '@types/react'
     - electron-builder-squirrel-windows
 
 strictPeerDependencies: true
@@ -559,6 +561,13 @@ catalog:
   '@koa/cors': ^5.0.0
   '@playwright/test': ^1.64.0
   '@smithy/node-http-handler': ^4.12.1
+  '@storybook/addon-a11y': ^8.6.19
+  '@storybook/addon-essentials': ^8.6.19
+  '@storybook/blocks': ^8.6.19
+  '@storybook/manager-api': ^8.6.19
+  '@storybook/svelte': ^8.6.19
+  '@storybook/svelte-vite': ^8.6.19
+  '@storybook/theming': ^8.6.19
   '@stylistic/eslint-plugin': ^3.1.0
   '@sveltejs/vite-plugin-svelte': ^3.1.2
   '@swc/core': ^1.16.2
@@ -721,6 +730,7 @@ catalog:
   slugify: ^1.6.9
   snappy: 7.3.3
   snappyjs: ^0.7.0
+  storybook: ^8.6.19
   style-loader: ^3.3.1
   svelte: ^4.2.20
   svelte-check: ^4.7.6

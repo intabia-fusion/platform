@@ -2,6 +2,8 @@
 
 Справочник публично экспортируемых компонентов `@hcengineering/ui` (`packages/ui/src/components`, по `packages/ui/src/index.ts`). Иконки (`icons/`, `calendar/icons/`, `internal/icons/`, ~90 штук `IconXxx`) в таблицы не включены.
 
+Актуальные базовые компоненты - в ките `@hcengineering/ui/kit` ([ui-kit.md](ui-kit.md)); компонент, у которого есть замена в ките, в новом коде не используется.
+
 ## Buttons & actions
 
 | Component | Purpose | Key props |
