@@ -295,7 +295,7 @@ function getFilterModes (component: AnyComponent): FilterModes | undefined {
   }
   if (component === view.component.StringFilter) {
     return {
-      modes: [view.filter.FilterContains],
+      modes: [view.filter.FilterValueIn, view.filter.FilterValueNin, view.filter.FilterContains],
       mode: view.filter.FilterContains
     }
   }

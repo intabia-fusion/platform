@@ -91,6 +91,7 @@ import DateFilterPresenter from './components/filter/DateFilterPresenter.svelte'
 import FilterBar from './components/filter/FilterBar.svelte'
 import FilterTypePopup from './components/filter/FilterTypePopup.svelte'
 import ObjectFilter from './components/filter/ObjectFilter.svelte'
+import StatusFilter from './components/filter/StatusFilter.svelte'
 import PersonIdFilter from './components/filter/PersonIdFilter.svelte'
 import PersonIdFilterValuePresenter from './components/filter/PersonIdFilterValuePresenter.svelte'
 import StringFilter from './components/filter/StringFilter.svelte'
@@ -289,6 +290,7 @@ export default async (): Promise<Resources> => ({
     ClassPresenter,
     ClassRefPresenter,
     ObjectFilter,
+    StatusFilter,
     DateFilter,
     ValueFilter,
     StringFilter,
