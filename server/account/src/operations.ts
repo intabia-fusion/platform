@@ -105,6 +105,7 @@ import {
   type WorkspaceInfoWithStatus,
   type WorkspaceInviteInfo,
   type WorkspaceLoginInfo,
+  type WorkspaceStatus,
   SubscriptionType
 } from './types'
 import {
@@ -195,6 +196,10 @@ import {
 const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
 const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
+
+function holdsWorkspaceSlot (status: WorkspaceStatus): boolean {
+  return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
+}
 
 /* ============OPERATIONS============= */
 
@@ -684,7 +689,9 @@ export async function createWorkspace (
   }
 
   // Get a list of created workspaces
-  const created = (await db.workspace.find({ createdBy: socialId.personUuid })).length
+  const own = await db.workspace.find({ createdBy: socialId.personUuid })
+  const ownStatuses = await db.workspaceStatus.find({ workspaceUuid: { $in: own.map((it) => it.uuid) } })
+  const created = own.length - ownStatuses.filter((it) => !holdsWorkspaceSlot(it)).length
 
   if (created >= (accountObj.maxWorkspaces ?? workspaceLimitPerUser)) {
     ctx.warn('created-by-limit', { person: socialId.key, workspace: workspaceName })
@@ -1893,7 +1900,7 @@ export async function getUserWorkspaces (
 
   const edition = getMetadata(accountPlugin.metadata.LicenseEdition)
   return (await db.getAccountWorkspaces(account))
-    .filter((ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled))
+    .filter((ws) => holdsWorkspaceSlot(ws.status))
     .map((ws) => ({ ...ws, licenseEdition: edition }))
 }
 
