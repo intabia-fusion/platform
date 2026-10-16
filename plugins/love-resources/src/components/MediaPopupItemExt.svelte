@@ -21,16 +21,26 @@
 
   let leaving = false
   async function handleLeaveClick (): Promise<void> {
+    if (leaving) return
     leaving = true
-    await leaveMeeting()
-    dispatch('close')
+    try {
+      await leaveMeeting()
+      dispatch('close')
+    } finally {
+      leaving = false
+    }
   }
 
   let ending = false
   async function handleEndMeetingClick (): Promise<void> {
+    if (ending) return
     ending = true
-    await leaveMeeting()
-    dispatch('close')
+    try {
+      await leaveMeeting()
+      dispatch('close')
+    } finally {
+      ending = false
+    }
   }
 
   async function stopShare (): Promise<void> {
@@ -86,6 +96,7 @@
               label={view.string.Leave}
               showTooltip={{ label: love.string.LeaveRoom }}
               padding="0 .5rem"
+              loading={leaving}
               on:click={handleLeaveClick}
             />
           {:else if isMyOffice || ending}
@@ -96,6 +107,7 @@
               label={love.string.EndMeeting}
               showTooltip={{ label: love.string.EndMeeting }}
               padding="0 .5rem"
+              loading={ending}
               on:click={handleEndMeetingClick}
             />
           {/if}

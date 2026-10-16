@@ -91,9 +91,16 @@
   )
 
   let listWidth: number
+  let creatingChildCard = false
 
   async function createCard (): Promise<void> {
-    await createChildCard(object)
+    if (creatingChildCard) return
+    creatingChildCard = true
+    try {
+      await createChildCard(object)
+    } finally {
+      creatingChildCard = false
+    }
   }
 
   const selection = listProvider.selection
@@ -110,6 +117,7 @@
           size="small"
           kind="tertiary"
           tooltip={{ label: card.string.CreateChild, direction: 'bottom' }}
+          loading={creatingChildCard}
           on:click={() => {
             void createCard()
           }}

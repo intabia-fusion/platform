@@ -102,8 +102,15 @@
     return false
   }
 
+  let joining = false
   async function join (): Promise<void> {
-    await client.update(object as Space, { $push: { members: acc.uuid } })
+    if (joining) return
+    joining = true
+    try {
+      await client.update(object as Space, { $push: { members: acc.uuid } })
+    } finally {
+      joining = false
+    }
   }
 
   defineSeparators('aside', panelSeparators)
@@ -277,7 +284,7 @@
                   <Label label={chunter.string.JoinChannelText} />
                 </span>
                 <span class="mt-4"> </span>
-                <Button label={view.string.Join} kind="primary" data-id="btnJoin" on:click={join} />
+                <Button label={view.string.Join} kind="primary" data-id="btnJoin" loading={joining} on:click={join} />
               </div>
             </div>
           {:else}

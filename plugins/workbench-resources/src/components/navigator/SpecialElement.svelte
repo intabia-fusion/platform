@@ -27,6 +27,18 @@
   export let disabled: boolean = false
   export let indent: boolean = false
   export let forciblyСollapsed: boolean = false
+
+  let pendingAction: Action | undefined = undefined
+
+  async function runAction (action: Action, evt: Event): Promise<void> {
+    if (pendingAction === action) return
+    pendingAction = action
+    try {
+      await action.action({}, evt)
+    } finally {
+      pendingAction = undefined
+    }
+  }
 </script>
 
 <NavItem
@@ -48,8 +60,9 @@
           kind="tertiary"
           size="extra-small"
           tooltip={{ label: action.label }}
-          on:click={async (evt) => {
-            await action.action({}, evt)
+          loading={pendingAction === action}
+          on:click={(evt) => {
+            void runAction(action, evt)
           }}
         />
       {/if}

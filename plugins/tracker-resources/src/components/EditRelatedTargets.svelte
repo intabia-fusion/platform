@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Space, WithLookup } from '@hcengineering/core'
+  import type { Ref, Space, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
   import type { RelatedIssueTarget } from '@hcengineering/tracker'
@@ -26,6 +26,20 @@
     }
   )
   const client = getClient()
+
+  let removingIds = new Set<Ref<RelatedIssueTarget>>()
+
+  async function removeTarget (target: WithLookup<RelatedIssueTarget>): Promise<void> {
+    if (removingIds.has(target._id)) return
+    removingIds.add(target._id)
+    removingIds = removingIds
+    try {
+      await client.remove(target)
+    } finally {
+      removingIds.delete(target._id)
+      removingIds = removingIds
+    }
+  }
 
   $: showCreate =
     value !== undefined &&
@@ -74,12 +88,7 @@
         </FixedColumn>
         {#if target.rule.kind === 'spaceRule'}
           <div class="flex-grow flex flex-reverse">
-            <Button
-              icon={IconDelete}
-              on:click={() => {
-                void client.remove(target)
-              }}
-            />
+            <Button icon={IconDelete} loading={removingIds.has(target._id)} on:click={() => removeTarget(target)} />
           </div>
         {/if}
       </div>

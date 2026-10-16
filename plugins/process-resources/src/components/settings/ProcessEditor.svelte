@@ -111,19 +111,26 @@
     navigate(loc)
   }
 
+  let deleting = false
+
   async function handleDelete (): Promise<void> {
-    if (value === undefined) return
-    const execution = await client.findOne(process.class.Execution, { process: value?._id })
-    if (execution !== undefined) {
-      showPopup(MessageBox, {
-        label: process.string.DeleteProcess,
-        message: process.string.DeleteProcessConfirm,
-        action: async () => {
-          await deleteProcess()
-        }
-      })
-    } else {
-      await deleteProcess()
+    if (value === undefined || deleting) return
+    deleting = true
+    try {
+      const execution = await client.findOne(process.class.Execution, { process: value?._id })
+      if (execution !== undefined) {
+        showPopup(MessageBox, {
+          label: process.string.DeleteProcess,
+          message: process.string.DeleteProcessConfirm,
+          action: async () => {
+            await deleteProcess()
+          }
+        })
+      } else {
+        await deleteProcess()
+      }
+    } finally {
+      deleting = false
     }
   }
 
@@ -239,6 +246,7 @@
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"
                 kind="secondary"
+                loading={deleting}
                 on:click={handleDelete}
               />
             </div>

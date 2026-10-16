@@ -96,15 +96,23 @@
     await client.diffUpdate(target, update)
   }
 
+  let applying = false
+
   async function apply (): Promise<void> {
-    if (hasBody && proposedNode !== undefined) {
-      if (editor === undefined) return
-      editor.commands.setContent(proposedNode)
+    if (applying) return
+    applying = true
+    try {
+      if (hasBody && proposedNode !== undefined) {
+        if (editor === undefined) return
+        editor.commands.setContent(proposedNode)
+      }
+      if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
+        await applyTitle(value.proposedTitle)
+      }
+      await client.diffUpdate(value, { applied: true })
+    } finally {
+      applying = false
     }
-    if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
-      await applyTitle(value.proposedTitle)
-    }
-    await client.diffUpdate(value, { applied: true })
   }
 
   function openDocument (): void {
@@ -161,7 +169,7 @@
         {#if value.applied === true}
           <Button label={plugin.string.EditApplied} kind="ghost" disabled />
         {:else if canApply}
-          <Button label={plugin.string.ApplyEdit} kind="primary" on:click={apply} />
+          <Button label={plugin.string.ApplyEdit} kind="primary" loading={applying} on:click={apply} />
         {:else}
           <Button label={plugin.string.OpenDocument} kind="primary" on:click={openDocument} />
         {/if}

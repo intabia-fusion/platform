@@ -105,77 +105,85 @@
     return title?.trim().length === 0 && participants.length === 0
   }
 
+  let saving = false
+
   async function saveEvent () {
+    if (saving) return
     let date: number | undefined
     if (startDate != null) date = startDate
     if (date === undefined) return
     if (_calendar === undefined) return
     if (title === '') return
-    const user = myPrimaryId
-    const _id = generateId<Event>()
-    if (rules.length > 0) {
-      await client.addCollection(
-        calendar.class.ReccuringEvent,
-        getCurrentEmployeeSpace(),
-        attachedTo,
-        attachedToClass,
-        'events',
-        {
-          calendar: _calendar,
-          eventId: generateEventId(),
-          date: allDay ? saveUTC(date) : date,
-          dueDate: allDay ? saveUTC(dueDate) : dueDate,
-          externalParticipants,
-          rdate: [],
-          exdate: [],
-          rules,
-          reminders,
-          description,
-          participants,
-          visibility,
-          title,
-          location,
-          blockTime: !allDay,
-          allDay,
-          access: AccessLevel.Owner,
-          originalStartTime: allDay ? saveUTC(date) : date,
-          timeZone,
-          user
-        },
-        _id as Ref<ReccuringEvent>
-      )
-    } else {
-      await client.addCollection(
-        calendar.class.Event,
-        getCurrentEmployeeSpace(),
-        attachedTo,
-        attachedToClass,
-        'events',
-        {
-          calendar: _calendar,
-          eventId: generateEventId(),
-          date: allDay ? saveUTC(date) : date,
-          dueDate: allDay ? saveUTC(dueDate) : dueDate,
-          externalParticipants,
-          description,
-          visibility,
-          participants,
-          reminders,
-          title,
-          location,
-          blockTime: !allDay,
-          allDay,
-          timeZone,
-          access: AccessLevel.Owner,
-          user
-        },
-        _id
-      )
+    saving = true
+    try {
+      const user = myPrimaryId
+      const _id = generateId<Event>()
+      if (rules.length > 0) {
+        await client.addCollection(
+          calendar.class.ReccuringEvent,
+          getCurrentEmployeeSpace(),
+          attachedTo,
+          attachedToClass,
+          'events',
+          {
+            calendar: _calendar,
+            eventId: generateEventId(),
+            date: allDay ? saveUTC(date) : date,
+            dueDate: allDay ? saveUTC(dueDate) : dueDate,
+            externalParticipants,
+            rdate: [],
+            exdate: [],
+            rules,
+            reminders,
+            description,
+            participants,
+            visibility,
+            title,
+            location,
+            blockTime: !allDay,
+            allDay,
+            access: AccessLevel.Owner,
+            originalStartTime: allDay ? saveUTC(date) : date,
+            timeZone,
+            user
+          },
+          _id as Ref<ReccuringEvent>
+        )
+      } else {
+        await client.addCollection(
+          calendar.class.Event,
+          getCurrentEmployeeSpace(),
+          attachedTo,
+          attachedToClass,
+          'events',
+          {
+            calendar: _calendar,
+            eventId: generateEventId(),
+            date: allDay ? saveUTC(date) : date,
+            dueDate: allDay ? saveUTC(dueDate) : dueDate,
+            externalParticipants,
+            description,
+            visibility,
+            participants,
+            reminders,
+            title,
+            location,
+            blockTime: !allDay,
+            allDay,
+            timeZone,
+            access: AccessLevel.Owner,
+            user
+          },
+          _id
+        )
+      }
+      if (space !== undefined) {
+        await docCreateManager.commit(client, _id, space, {}, 'post')
+      }
+      dispatch('close')
+    } finally {
+      saving = false
     }
-    if (space !== undefined) {
-      await docCreateManager.commit(client, _id, space, {}, 'post')
-    }
-    dispatch('close')
   }
 
   async function allDayChangeHandler () {
@@ -276,6 +284,7 @@
       focusIndex={10104}
       on:click={saveEvent}
       disabled={!canSave}
+      loading={saving}
     />
   </div>
 </div>

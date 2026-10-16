@@ -163,16 +163,23 @@
     )
   }
 
+  let addingSecret = false
+
   async function addSecret (): Promise<void> {
-    if (endpoint === undefined || endpoint.secrets.length >= 2) return
-    const newSecret: WebhookSecretEntry = {
-      id: crypto.randomUUID(),
-      secret: generateWebhookSecret(),
-      createdOn: Date.now()
+    if (endpoint === undefined || endpoint.secrets.length >= 2 || addingSecret) return
+    addingSecret = true
+    try {
+      const newSecret: WebhookSecretEntry = {
+        id: crypto.randomUUID(),
+        secret: generateWebhookSecret(),
+        createdOn: Date.now()
+      }
+      await update({ secrets: [...endpoint.secrets, newSecret] })
+      revealedSecretIds.add(newSecret.id)
+      revealedSecretIds = revealedSecretIds
+    } finally {
+      addingSecret = false
     }
-    await update({ secrets: [...endpoint.secrets, newSecret] })
-    revealedSecretIds.add(newSecret.id)
-    revealedSecretIds = revealedSecretIds
   }
 
   function revokeSecret (secretId: string): void {
@@ -389,7 +396,7 @@
                 icon={IconAdd}
                 size="small"
                 data-id="btnAddWebhookSecret"
-                disabled={readonly || endpoint.secrets.length >= 2}
+                disabled={readonly || endpoint.secrets.length >= 2 || addingSecret}
                 on:click={addSecret}
               />
             </div>

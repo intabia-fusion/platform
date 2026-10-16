@@ -117,7 +117,8 @@
     }
   }
 
-  let latestOwnAttempt: TrainingAttempt | null = null
+  // undefined until the query answers: null would read as "no attempts yet" and allow a duplicate seqNumber.
+  let latestOwnAttempt: TrainingAttempt | null | undefined = undefined
   const latestOwnAttemptQuery = createQuery()
   $: {
     if (object === null || request === null || object.owner !== getCurrentEmployeeRef()) {
@@ -147,9 +148,23 @@
     }
   }
 
+  let retaking = false
+
   async function retakeTraining (): Promise<void> {
-    if (trainingObject !== null && request !== null && canRetakeTraining) {
+    if (
+      trainingObject === null ||
+      request === null ||
+      latestOwnAttempt === undefined ||
+      !canRetakeTraining ||
+      retaking
+    ) {
+      return
+    }
+    retaking = true
+    try {
       await createTrainingAttempt(trainingObject, request, latestOwnAttempt)
+    } finally {
+      retaking = false
     }
   }
 </script>
@@ -181,6 +196,8 @@
             icon={training.icon.Retry}
             label={training.string.TrainingRetake}
             kind="primary"
+            loading={retaking}
+            disabled={retaking}
             on:click={retakeTraining}
           />
         {/if}

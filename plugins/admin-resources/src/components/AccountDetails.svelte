@@ -37,41 +37,59 @@
 
   let blockedOn: number | undefined = account.blockedOn
 
+  let blocking = false
+
   async function setBlocked (blocked: boolean): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
-    const ok = await runAdminAction(async () => {
-      await accountClient.adminSetAccountBlocked(account.uuid, blocked, code)
-      return true
-    })
-    if (ok) {
-      blockedOn = blocked ? Date.now() : undefined
+    if (blocking) return
+    blocking = true
+    try {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
+      const ok = await runAdminAction(async () => {
+        await accountClient.adminSetAccountBlocked(account.uuid, blocked, code)
+        return true
+      })
+      if (ok) {
+        blockedOn = blocked ? Date.now() : undefined
+      }
+    } finally {
+      blocking = false
     }
   }
 
+  let deleting = false
+
   // The checkbox in the dialog skips the deferral and purges the identity right away.
   async function deleteAccount (): Promise<void> {
-    const check = await accountClient.canDeleteAccount(account.uuid).catch(() => undefined)
-    if (check?.canDelete === false) {
-      const blocking = check.ownedWorkspaces.map((ws) => ws.name)
-      showPopup(MessageBox, {
-        label: adminRes.string.Delete,
-        message:
-          blocking.length > 0 ? adminRes.string.OwnedWorkspacesBlockDeletion : adminRes.string.CannotDeleteOwnAccount,
-        params: { workspaces: blocking.join(', ') },
-        canSubmit: false
-      })
-      return
-    }
+    if (deleting) return
+    deleting = true
+    try {
+      const check = await accountClient.canDeleteAccount(account.uuid).catch(() => undefined)
+      if (check?.canDelete === false) {
+        const blockedBy = check.ownedWorkspaces.map((ws) => ws.name)
+        showPopup(MessageBox, {
+          label: adminRes.string.Delete,
+          message:
+            blockedBy.length > 0
+              ? adminRes.string.OwnedWorkspacesBlockDeletion
+              : adminRes.string.CannotDeleteOwnAccount,
+          params: { workspaces: blockedBy.join(', ') },
+          canSubmit: false
+        })
+        return
+      }
 
-    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
-    if (res === undefined) return
-    const ok = await runAdminAction(async () => {
-      await accountClient.deleteAccount(account.uuid, res.code, res.option)
-      return true
-    })
-    if (ok) {
-      dispatch('close')
+      const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+      if (res === undefined) return
+      const ok = await runAdminAction(async () => {
+        await accountClient.deleteAccount(account.uuid, res.code, res.option)
+        return true
+      })
+      if (ok) {
+        dispatch('close')
+      }
+    } finally {
+      deleting = false
     }
   }
 
@@ -167,6 +185,7 @@
             <Button
               size="small"
               label={blockedOn != null ? adminRes.string.Unblock : adminRes.string.Block}
+              loading={blocking}
               on:click={() => {
                 void setBlocked(blockedOn == null)
               }}
@@ -176,6 +195,7 @@
               size="small"
               kind="dangerous"
               label={adminRes.string.Delete}
+              loading={deleting}
               on:click={() => {
                 void deleteAccount()
               }}

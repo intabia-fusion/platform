@@ -30,34 +30,42 @@
 
   const client = getClient()
 
+  let adding = false
+
   async function add (): Promise<void> {
-    const initState = generateId<State>()
-    const id = await client.createDoc(process.class.Process, core.space.Model, {
-      name: await translate(process.string.NewProcess, {}),
-      masterTag: masterTag._id,
-      context: {},
-      description: ''
-    })
-    await client.createDoc(
-      process.class.State,
-      core.space.Model,
-      {
+    if (adding) return
+    adding = true
+    try {
+      const initState = generateId<State>()
+      const id = await client.createDoc(process.class.Process, core.space.Model, {
+        name: await translate(process.string.NewProcess, {}),
+        masterTag: masterTag._id,
+        context: {},
+        description: ''
+      })
+      await client.createDoc(
+        process.class.State,
+        core.space.Model,
+        {
+          process: id,
+          rank: makeRank(undefined, undefined),
+          title: await translate(process.string.NewState, {})
+        },
+        initState
+      )
+      await client.createDoc(process.class.Transition, core.space.Model, {
         process: id,
+        from: null,
+        to: initState,
+        trigger: process.trigger.OnExecutionStart,
         rank: makeRank(undefined, undefined),
-        title: await translate(process.string.NewState, {})
-      },
-      initState
-    )
-    await client.createDoc(process.class.Transition, core.space.Model, {
-      process: id,
-      from: null,
-      to: initState,
-      trigger: process.trigger.OnExecutionStart,
-      rank: makeRank(undefined, undefined),
-      actions: [],
-      triggerParams: {}
-    })
-    handleSelect(id)
+        actions: [],
+        triggerParams: {}
+      })
+      handleSelect(id)
+    } finally {
+      adding = false
+    }
   }
 
   let processes: Process[] = []
@@ -126,6 +134,7 @@
       icon={IconAdd}
       size="small"
       data-id="btnAdd"
+      loading={adding}
       tooltip={{ label: process.string.Add }}
       on:click={add}
     />
