@@ -368,9 +368,6 @@
       kind = object.kind
     }
     fillDefaults(hierarchy, object, issueClass)
-
-    object.description = description ?? EmptyMarkup
-    descriptionBox?.setContent(object.description)
   }
 
   $: if (template !== undefined) {
@@ -1017,7 +1014,7 @@
     />
   </div>
   <div id="issue-description">
-    {#key [objectId]}
+    {#key []}
       <AttachmentStyledBox
         bind:this={descriptionBox}
         focusIndex={2}
