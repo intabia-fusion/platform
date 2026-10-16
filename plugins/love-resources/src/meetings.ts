@@ -69,9 +69,15 @@ export function recallActiveMeeting (): Ref<MeetingMinutes> | undefined {
 
 // Every branch reports why: a bare `undefined` left the caller unable to tell "nothing to do"
 // from "you need to knock", so Connect silently did nothing.
-export type CreateMeetingOutcome = { meeting: MeetingMinutes } | { refused: 'invite-sent' | 'room-occupied' }
+export type CreateMeetingOutcome =
+  | { meeting: MeetingMinutes }
+  | { refused: 'invite-sent' | 'room-occupied' | 'not-allowed' }
 
 export async function createMeeting (room: Room, meeting?: MeetingMinutes): Promise<CreateMeetingOutcome> {
+  if (getCurrentAccount().role === AccountRole.Guest || getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
+    return { refused: 'not-allowed' }
+  }
+
   return await withConnectingToMeeting(async () => {
     const me = getCurrentEmployee()
     const currentPerson = await getPersonByPersonRef(me)
@@ -175,6 +181,10 @@ function leaveFromMeetingIfRemoved (mm: MeetingMinutes | undefined): void {
 }
 
 export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
+  if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
+    return
+  }
+
   await withConnectingToMeeting(async () => {
     if (meeting.roomId == null) return
     const room = getRoomById(meeting.roomId)

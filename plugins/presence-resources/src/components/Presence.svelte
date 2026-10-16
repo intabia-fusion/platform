@@ -15,13 +15,19 @@
 
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount } from '@hcengineering/core'
 
   import PresenceContext from './PresenceContext.svelte'
 
   export let object: Doc
   export let presenceId: string | undefined = undefined
+
+  const accountRole = getCurrentAccount().role
+  $: isGuest = accountRole === AccountRole.Guest || accountRole === AccountRole.ReadOnlyGuest
 </script>
 
-{#key object._id}
-  <PresenceContext {object} {presenceId} />
-{/key}
+{#if !isGuest}
+  {#key object._id}
+    <PresenceContext {object} {presenceId} />
+  {/key}
+{/if}
