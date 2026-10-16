@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import view from '@hcengineering/view'
-  import { ButtonMenu, IconMoreV } from '@hcengineering/ui'
+  import { IconMoreV } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import notification from '../../plugin'
   import { clearAll, readAll } from '../../actions'
 
-  async function onSelect (id?: 'clear' | 'read'): Promise<void> {
+  async function onSelect(id?: 'clear' | 'read'): Promise<void> {
     if (id == null) return
 
     if (id === 'clear') {
@@ -32,11 +33,11 @@
   }
 </script>
 
-<ButtonMenu
+<MenuButton
   size="small"
   noSelection
   icon={IconMoreV}
-  dataId="inbox_menu-button"
+  data-id="inbox_menu-button"
   items={[
     {
       id: 'read',

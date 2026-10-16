@@ -14,7 +14,8 @@
 <script lang="ts">
   import { type Person, formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { Label, ModernButton } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   import love from '../../../plugin'
@@ -32,7 +33,7 @@
     dispatch('close')
   }
 
-  function handleCancel (): void {
+  function handleCancel(): void {
     cancelAwaiting(person._id)
     dispatch('close')
   }
@@ -51,7 +52,7 @@
   </div>
 
   <div class="popup-actions">
-    <ModernButton label={love.string.Cancel} kind="secondary" size="medium" on:click={handleCancel} />
+    <Button label={love.string.Cancel} kind="secondary" size="medium" on:click={handleCancel} />
   </div>
 </div>
 

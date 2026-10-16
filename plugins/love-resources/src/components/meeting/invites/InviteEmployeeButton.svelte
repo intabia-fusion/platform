@@ -15,7 +15,8 @@
 -->
 <script lang="ts">
   import type { ButtonBaseSize, IconSize } from '@hcengineering/ui'
-  import { ModernButton, showPopup } from '@hcengineering/ui'
+  import { showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type { Employee } from '@hcengineering/contact'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import contactRes from '@hcengineering/contact-resources/src/plugin'
@@ -46,7 +47,7 @@
     employee !== undefined &&
     !(hierarchy.hasMixin(employee, contact.mixin.Employee) && hierarchy.as(employee, contact.mixin.Employee).active)
 
-  async function invite (): Promise<void> {
+  async function invite(): Promise<void> {
     if (employee !== undefined) {
       void sendInvites([employee._id])
     } else {
@@ -54,7 +55,7 @@
     }
   }
 
-  function openSelectUsersPopup (): void {
+  function openSelectUsersPopup(): void {
     const skipAccounts = $infos.filter((p) => p.meeting === $currentMeetingMinutes?._id).map((p) => p.person)
     showPopup(
       SelectUsersPopup,
@@ -78,12 +79,11 @@
 
 {#if !hidden}
   <div class:button-container={withBackground} data-id="invite-button">
-    <ModernButton
+    <Button
       label={type === 'type-button-icon' ? undefined : love.string.Invite}
       icon={love.icon.Invite}
       {size}
       {iconSize}
-      {type}
       {kind}
       {disabled}
       tooltip={disabled

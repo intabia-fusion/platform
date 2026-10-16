@@ -19,7 +19,8 @@
   import { generateId, getCurrentAccount } from '@hcengineering/core'
   import { getClient, uploadFile } from '@hcengineering/presentation'
   import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
-  import { ButtonIcon, IconClose, IconCheck, IconSend, Label, Spinner } from '@hcengineering/ui'
+  import { IconClose, IconCheck, IconSend, Label, Spinner } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import slugify from 'slugify'
 
@@ -52,7 +53,7 @@
     void begin()
   })
 
-  async function begin (): Promise<void> {
+  async function begin(): Promise<void> {
     try {
       await recorder.start()
     } catch {
@@ -75,7 +76,7 @@
     raf = requestAnimationFrame(tick)
   }
 
-  function stopTimers (): void {
+  function stopTimers(): void {
     if (timer !== undefined) clearInterval(timer)
     if (raf !== undefined) cancelAnimationFrame(raf)
     timer = undefined
@@ -83,7 +84,7 @@
   }
 
   // Stop the mic, upload the blob and create the AudioTranscribe doc. Returns undefined on failure.
-  async function persist (): Promise<AudioTranscribe | undefined> {
+  async function persist(): Promise<AudioTranscribe | undefined> {
     stopTimers()
     let rec
     try {
@@ -134,12 +135,12 @@
     return doc
   }
 
-  async function onAttach (): Promise<void> {
+  async function onAttach(): Promise<void> {
     const doc = await persist()
     if (doc !== undefined) dispatch('close')
   }
 
-  async function onSend (): Promise<void> {
+  async function onSend(): Promise<void> {
     const doc = await persist()
     if (doc === undefined) return
     // Submit right away; the transcript keeps filling in live on the already-sent attachment
@@ -148,7 +149,7 @@
     dispatch('close')
   }
 
-  function onCancel (): void {
+  function onCancel(): void {
     stopTimers()
     recorder.cancel()
     dispatch('close')
@@ -168,7 +169,7 @@
   {#if phase === 'starting'}
     <Spinner size="small" />
     <span class="timer"><Label label={chunter.string.PreparingMic} /></span>
-    <ButtonIcon
+    <IconButton
       icon={IconClose}
       size="small"
       kind="tertiary"
@@ -183,21 +184,21 @@
         <div class="bar" style="height: {Math.max(2, b * 22)}px" />
       {/each}
     </div>
-    <ButtonIcon
+    <IconButton
       icon={IconClose}
       size="small"
       kind="tertiary"
       tooltip={{ label: chunter.string.VoiceCancel }}
       on:click={onCancel}
     />
-    <ButtonIcon
+    <IconButton
       icon={IconCheck}
       size="small"
       kind="secondary"
       tooltip={{ label: chunter.string.VoiceAttach }}
       on:click={onAttach}
     />
-    <ButtonIcon
+    <IconButton
       icon={IconSend}
       size="small"
       kind="primary"

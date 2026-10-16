@@ -22,17 +22,8 @@
   import type { ProjectType, ProjectTypeDescriptor, Task, TaskType, TaskTypeDescriptor } from '@hcengineering/task'
   import { createState, findStatusAttr } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import {
-    Icon,
-    IconError,
-    Modal,
-    ModernEditbox,
-    Label,
-    ButtonMenu,
-    Toggle,
-    IconInfo,
-    ButtonIcon
-  } from '@hcengineering/ui'
+  import { Icon, IconError, Modal, ModernEditbox, Label, Toggle, IconInfo } from '@hcengineering/ui'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
   import task from '../../plugin'
@@ -44,7 +35,7 @@
   export let taskTypes: TaskType[]
   export let taskType: TaskType | undefined
 
-  function defaultTaskType (type: ProjectType): Data<TaskType> {
+  function defaultTaskType(type: ProjectType): Data<TaskType> {
     return {
       name: '',
       parent: type._id,
@@ -82,7 +73,7 @@
   let allowAnyParent: boolean = taskType?.allowAnyParent ?? true
   let allowedAsChildOf: Ref<TaskType>[] = taskType?.allowedAsChildOf ?? []
 
-  function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
+  function findStatusClass(_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
     const attrs = h.getAllAttributes(_class)
     for (const it of attrs.values()) {
@@ -95,7 +86,7 @@
   let taskTypeDescriptor: TaskTypeDescriptor = taskTypeDescriptors[0]
   let errorMessage: IntlString | undefined = undefined
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (type === undefined) return
 
     const trimmedName = name.trim()
@@ -260,7 +251,7 @@
         <span class="label">
           <Label label={task.string.Type} />
         </span>
-        <ButtonMenu
+        <MenuButton
           selected={taskTypeDescriptor._id}
           items={descriptorItems}
           icon={taskTypeDescriptor.icon}
@@ -280,7 +271,7 @@
     <div class="hulyModal-content__settingsSet-line">
       <span class="label label-with-info">
         <Label label={task.string.AllowRootTask} />
-        <ButtonIcon
+        <IconButton
           icon={IconInfo}
           size="extra-small"
           kind="tertiary"
@@ -293,7 +284,7 @@
     <div class="hulyModal-content__settingsSet-line">
       <span class="label label-with-info">
         <Label label={task.string.AllowAnyParentSubtask} />
-        <ButtonIcon
+        <IconButton
           icon={IconInfo}
           size="extra-small"
           kind="tertiary"

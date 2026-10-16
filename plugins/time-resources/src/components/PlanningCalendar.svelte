@@ -11,9 +11,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import {
-    ButtonBase,
-    ButtonIcon,
+  import ui, {
     IconChevronLeft,
     IconChevronRight,
     Label,
@@ -27,6 +25,7 @@
     languageStore,
     getCurrentLocale
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import type { PlannerCalendarMode } from '..'
   import time from '../plugin'
@@ -44,11 +43,11 @@
 
   const q = createQuery()
 
-  function getFrom (date: Date): Timestamp {
+  function getFrom(date: Date): Timestamp {
     return new Date(date).setHours(0, 0, 0, 0)
   }
 
-  function getTo (date: Date, days: number = 3): Timestamp {
+  function getTo(date: Date, days: number = 3): Timestamp {
     return new Date(date).setDate(date.getDate() + days)
   }
 
@@ -115,9 +114,9 @@
 
   // Colleagues' events live in their own PersonSpace and are unreadable here, only their
   // BusySlots are - so the overlay is synthetic: one freeBusy event per merged busy interval.
-  function mkOverlay (
+  function mkOverlay(
     person: Ref<Person>,
-    interval: { date: Timestamp, dueDate: Timestamp },
+    interval: { date: Timestamp; dueDate: Timestamp },
     label: string,
     idx: number
   ): Event {
@@ -145,7 +144,7 @@
     } as unknown as Event
   }
 
-  function busyOverlay (slots: BusySlot[], from: Timestamp, to: Timestamp, employees: IdMap<Employee>): Event[] {
+  function busyOverlay(slots: BusySlot[], from: Timestamp, to: Timestamp, employees: IdMap<Employee>): Event[] {
     const me = getCurrentEmployee()
     const unique = slots.filter(
       (slot, idx, arr) => slot.person !== me && arr.findIndex((it) => it._id === slot._id) === idx
@@ -220,7 +219,7 @@
   // Hiding my own schedule keeps the drag preview, there is nothing to drop onto otherwise.
   $: objects = showMine ? hidePrivateEvents(all, $calendarByIdStore) : all.filter((it) => it._id === dragItemId)
 
-  function inc (val: number): void {
+  function inc(val: number): void {
     if (val === 0) {
       currentDate = new Date()
       dayCalendar.scrollToTime(currentDate)
@@ -230,7 +229,7 @@
     currentDate = currentDate
   }
 
-  function getTitle (day: Date, now: Timestamp): IntlString {
+  function getTitle(day: Date, now: Timestamp): IntlString {
     const today = new Date(now)
     const tomorrow = new Date(new Date(now).setDate(new Date(now).getDate() + 1))
     const yesterday = new Date(new Date(now).setDate(new Date(now).getDate() - 1))
@@ -248,7 +247,7 @@
   }
 
   const dragItemId = 'drag_item' as Ref<WorkSlot>
-  function dragEnter (e: CustomEvent<any>) {
+  function dragEnter(e: CustomEvent<any>) {
     if (dragItem != null) {
       const current = raw.find((p) => p._id === dragItemId)
       if (current !== undefined) {
@@ -286,20 +285,20 @@
       objects = showMine ? hidePrivateEvents(all, $calendarByIdStore) : all.filter((it) => it._id === dragItemId)
     }
   }
-  function dragLeave (event: DragEvent) {
+  function dragLeave(event: DragEvent) {
     const rect = dayCalendar.getCalendarRect()
     if (!rect) return
     if (event.x < rect.left || event.x > rect.right || event.y < rect.top || event.y > rect.bottom) {
       raw = raw.filter((r) => r._id !== dragItemId)
     }
   }
-  function dragOut () {
+  function dragOut() {
     if (dragItemId != null) {
       raw = raw.filter((r) => r._id !== dragItemId)
     }
   }
 
-  function clear (dragItem: ToDo | null) {
+  function clear(dragItem: ToDo | null) {
     if (dragItem === null) {
       raw = raw.filter((p) => p._id !== dragItemId)
       all = getAllEvents(raw, from, to)
@@ -308,7 +307,7 @@
   }
   $: clear(dragItem)
 
-  function showCreateDialog (date: Date, withTime: boolean) {
+  function showCreateDialog(date: Date, withTime: boolean) {
     if (createComponent === undefined) {
       return
     }
@@ -339,7 +338,7 @@
       </div>
     {/if}
     <svelte:fragment slot="actions">
-      <ButtonIcon
+      <IconButton
         icon={contact.icon.Person}
         kind="secondary"
         size="small"
@@ -360,21 +359,22 @@
           localStorage.setItem(extraPersonsKey, JSON.stringify(extraPersons))
         }}
       />
-      <ButtonIcon
+      <IconButton
         icon={IconChevronLeft}
         kind="secondary"
         size="small"
-        dataId="btnPrev"
+        data-id="btnPrev"
+        tooltip={{ label: ui.string.Back }}
         on:click={() => {
           inc(-1)
         }}
       />
       {#key lang}
-        <ButtonBase
+        <Button
           icon={IconSun}
-          label={showLabel ? time.string.TodayColon : undefined}
-          title={showLabel ? getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) : undefined}
-          type={showLabel ? 'type-button' : 'type-button-icon'}
+          label={showLabel ? ui.string.TodayDate : undefined}
+          labelParams={{ date: getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) }}
+          tooltip={!showLabel ? { label: time.string.Today } : undefined}
           kind="secondary"
           size="small"
           inheritFont
@@ -385,11 +385,12 @@
           }}
         />
       {/key}
-      <ButtonIcon
+      <IconButton
         icon={IconChevronRight}
         kind="secondary"
         size="small"
-        dataId="btnNext"
+        data-id="btnNext"
+        tooltip={{ label: ui.string.Next }}
         on:click={() => {
           inc(1)
         }}

@@ -16,7 +16,8 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
-  import { Component, DropdownLabels, Header, IconEdit, ModernButton } from '@hcengineering/ui'
+  import { Component, DropdownLabels, Header, IconEdit } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -50,7 +51,7 @@
     return { id: p._id, label: p.name }
   })
 
-  function changeFloor (event: CustomEvent<Ref<Floor>>) {
+  function changeFloor(event: CustomEvent<Ref<Floor>>) {
     if (event.detail) {
       selectedFloor.set(event.detail)
     }
@@ -73,12 +74,7 @@
     </svelte:fragment>
     <svelte:fragment slot="actions">
       {#if editable}
-        <ModernButton
-          icon={IconEdit}
-          label={lovePlg.string.EditOffice}
-          size="small"
-          on:click={() => dispatch('configure')}
-        />
+        <Button icon={IconEdit} label={lovePlg.string.EditOffice} size="small" on:click={() => dispatch('configure')} />
       {/if}
     </svelte:fragment>
   </Header>

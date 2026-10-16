@@ -15,11 +15,12 @@
   import { createEventDispatcher } from 'svelte'
   import type { Doc, Ref, Status } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { DropdownTextItem } from '@hcengineering/ui'
-  import { ButtonIcon, IconClose, IconMaximize, IconMinimize, Modal, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { IconClose, IconMaximize, IconMinimize, Modal, ModernDropdownLabels } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { statusStore } from '@hcengineering/view-resources'
   import tracker, { type Project } from '@hcengineering/tracker'
   import type { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
@@ -40,7 +41,7 @@
   const hierarchy = client.getHierarchy()
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ close: void, fullsize: boolean }>()
+  const dispatch = createEventDispatcher<{ close: void; fullsize: boolean }>()
 
   let currentTaskTypeId: Ref<TaskType> | undefined = selectedTaskType
   let currentWorkflow: Workflow | undefined = workflow
@@ -53,23 +54,23 @@
   let initSequence = 0
   let loadSequence = 0
 
-  function handleClose (): void {
+  function handleClose(): void {
     dispatch('close')
   }
 
-  function handleToggleFullSize (): void {
+  function handleToggleFullSize(): void {
     fullSize = !fullSize
     dispatch('fullsize', fullSize)
   }
 
-  function handleTaskTypeChange (newId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null): void {
+  function handleTaskTypeChange(newId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null): void {
     const rawId = Array.isArray(newId) ? newId[0] : newId
     if (rawId != null) {
       currentTaskTypeId = String(rawId) as Ref<TaskType>
     }
   }
 
-  async function initializeProjectWorkflows (): Promise<void> {
+  async function initializeProjectWorkflows(): Promise<void> {
     const seq = ++initSequence
     let initialMap: Record<Ref<TaskType>, Ref<Workflow>> = { ...(workflowsMap ?? {}) }
 
@@ -111,7 +112,7 @@
     }
   }
 
-  async function loadWorkflow (wfId: Ref<Workflow>, taskTypeId?: Ref<TaskType>): Promise<void> {
+  async function loadWorkflow(wfId: Ref<Workflow>, taskTypeId?: Ref<TaskType>): Promise<void> {
     const seq = ++loadSequence
     const wfDoc = await client.findOne<Workflow>(
       workflowPlugin.class.Workflow,
@@ -175,13 +176,21 @@
 
 <Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
-    <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={handleClose} />
+    <IconButton
+      icon={IconClose}
+      kind="tertiary"
+      size="small"
+      noPrint
+      tooltip={{ label: presentation.string.Close }}
+      on:click={handleClose}
+    />
     <div class="hulyHeader-divider short no-line no-print" />
-    <ButtonIcon
+    <IconButton
       icon={!fullSize ? IconMaximize : IconMinimize}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: !fullSize ? ui.string.FullSize : ui.string.NormalSize }}
       on:click={handleToggleFullSize}
     />
     <div class="hulyHeader-divider short no-print" />

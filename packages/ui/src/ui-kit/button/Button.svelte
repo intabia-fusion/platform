@@ -159,6 +159,7 @@
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1rem;
+    white-space: nowrap;
     color: var(--_label);
     cursor: pointer;
 
@@ -190,9 +191,6 @@
       color: var(--_icon);
       // The spinner stands in for the icon: icon color unless the kind sets its own.
       --spinner-color: var(--_spinner, var(--_icon));
-    }
-    &__label {
-      white-space: nowrap;
     }
 
     // Kinds

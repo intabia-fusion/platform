@@ -33,9 +33,9 @@
   } from '@hcengineering/presentation'
   import {
     Button,
-    ButtonMenu,
     CheckBox,
     Dialog,
+    type DropdownIntlItem,
     EditBox,
     Expandable,
     IconCopy,
@@ -47,6 +47,7 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import { onDestroy } from 'svelte'
 
@@ -86,7 +87,7 @@
   const readOnly = isBillingAdminUser() && !isAdminUser()
 
   // Destructive member operations require an emailed OTP code
-  function withOtp (action: (otpCode: string) => Promise<void>): void {
+  function withOtp(action: (otpCode: string) => Promise<void>): void {
     showPopup(OtpConfirmDialog, adminOtpProps(), undefined, (res?: OtpConfirmResult) => {
       if (res == null || res.code.length === 0) return
       void runAdminAction(async () => {
@@ -104,7 +105,7 @@
     !readOnly && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))
 
   // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
-  async function deleteWorkspace (): Promise<void> {
+  async function deleteWorkspace(): Promise<void> {
     const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
     if (res === undefined) return
     const ok = await runAdminAction(
@@ -115,7 +116,7 @@
     }
   }
 
-  async function cancelDeletion (): Promise<void> {
+  async function cancelDeletion(): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
     const ok = await runAdminAction(
@@ -127,7 +128,12 @@
   }
 
   const memberRoles = [AccountRole.Guest, AccountRole.User, AccountRole.Maintainer, AccountRole.Owner]
-  const roleItems = memberRoles.map((r) => ({ id: r, label: getEmbeddedLabel(r) }))
+  const roleItems = memberRoles.map((r): DropdownIntlItem<AccountRole> => ({ id: r, label: getEmbeddedLabel(r) }))
+
+  // The account API types member roles as plain strings.
+  function memberRole(member: WorkspaceMemberDetails): AccountRole {
+    return member.role as AccountRole
+  }
 
   let newMemberRole: AccountRole = AccountRole.User
 
@@ -137,11 +143,11 @@
   let selectedNewMember: AccountAggregatedInfo | undefined
   let searchTimer: ReturnType<typeof setTimeout> | undefined
 
-  function memberEmail (a: AccountAggregatedInfo): string {
+  function memberEmail(a: AccountAggregatedInfo): string {
     return a.socialIds.find((s) => s.type === 'email')?.value ?? a.socialIds[0]?.value ?? ''
   }
 
-  function onMemberSearch (): void {
+  function onMemberSearch(): void {
     selectedNewMember = undefined
     clearTimeout(searchTimer)
     const q = memberSearch.trim()
@@ -162,7 +168,7 @@
     }, 300)
   }
 
-  function addSelectedMember (): void {
+  function addSelectedMember(): void {
     const target = selectedNewMember
     if (target === undefined) return
     const email = memberEmail(target)
@@ -178,7 +184,7 @@
 
   // Read-only look at the workspace as one of its members. The server refuses every write from
   // this session, and the code request is what lands in the audit trail.
-  async function impersonate (target: AccountUuid): Promise<void> {
+  async function impersonate(target: AccountUuid): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
     try {
@@ -193,13 +199,13 @@
     }
   }
 
-  function reindex (): void {
+  function reindex(): void {
     withOtp(async (code) => {
       await accountClient.adminReindexWorkspace(workspace.uuid, code)
     })
   }
 
-  function editSubscription (s: Subscription): void {
+  function editSubscription(s: Subscription): void {
     showPopup(
       EditSubscriptionDialog,
       { subscription: s, perSeatPlan: isPerSeatPlan(s.plan), planItem: planConfigItem(s.plan) },
@@ -210,7 +216,7 @@
     )
   }
 
-  function cancelSubscription (s: Subscription): void {
+  function cancelSubscription(s: Subscription): void {
     withOtp(async (code) => {
       await accountClient.adminCancelSubscription(s.id, code)
       if (s.type === 'tier') void awaitFreeFallback()
@@ -219,7 +225,7 @@
 
   // pod-payment creates the free fallback off the queue, after the cancel call returns.
   // Poll 5x1s; giving up is fine (no free plan configured, or free itself was canceled).
-  async function awaitFreeFallback (): Promise<void> {
+  async function awaitFreeFallback(): Promise<void> {
     for (let i = 0; i < 5; i++) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       if (destroyed) return
@@ -231,12 +237,12 @@
     }
   }
 
-  function isPerSeatPlan (plan: string): boolean {
+  function isPerSeatPlan(plan: string): boolean {
     return planConfigItem(plan)?.priceMonthlyPerUser != null
   }
 
   // Plan-config entry backing a subscription — carries price and currency. Absent for manual plans.
-  function planConfigItem (plan: string): any {
+  function planConfigItem(plan: string): any {
     return plans?.config?.plans?.[plan] ?? plans?.config?.packages?.[plan]
   }
 
@@ -253,21 +259,21 @@
   let featureChecked: Record<string, boolean> = {}
   $: resetFeatureChecked(workspace.disabledFeaturesOverride ?? [])
 
-  function resetFeatureChecked (override: string[]): void {
+  function resetFeatureChecked(override: string[]): void {
     featureChecked = Object.fromEntries(featureOptions.map((f) => [f, override.includes(f)]))
   }
   let editingMaxApiKeys = false
   let maxApiKeysValue = ''
 
-  function startEditName (): void {
+  function startEditName(): void {
     nameValue = workspace.name ?? ''
     editingName = true
   }
-  function startEditUrl (): void {
+  function startEditUrl(): void {
     urlValue = workspace.url ?? ''
     editingUrl = true
   }
-  function saveName (): void {
+  function saveName(): void {
     const name = nameValue.trim()
     if (name.length === 0 || name === workspace.name) {
       editingName = false
@@ -279,7 +285,7 @@
     })
     editingName = false
   }
-  function saveUrl (): void {
+  function saveUrl(): void {
     const url = urlValue.trim().toLowerCase()
     if (url.length === 0 || url === workspace.url) {
       editingUrl = false
@@ -292,19 +298,19 @@
     })
     editingUrl = false
   }
-  function saveDisabledFeatures (): void {
+  function saveDisabledFeatures(): void {
     const features = featureOptions.filter((f) => featureChecked[f])
     withOtp(async (code) => {
       await accountClient.adminUpdateWorkspaceDisabledFeatures(workspace.uuid, features, code)
       workspace = { ...workspace, disabledFeaturesOverride: features }
     })
   }
-  function startEditMaxApiKeys (): void {
+  function startEditMaxApiKeys(): void {
     maxApiKeysValue = workspace.maxApiKeys != null ? String(workspace.maxApiKeys) : ''
     editingMaxApiKeys = true
   }
   // Blank value resets to the server default (Workspace.maxApiKeys = null)
-  function saveMaxApiKeys (): void {
+  function saveMaxApiKeys(): void {
     const trimmed = maxApiKeysValue.trim()
     const maxApiKeys = trimmed === '' ? null : Number(trimmed)
     if (maxApiKeys != null && (!Number.isInteger(maxApiKeys) || maxApiKeys < 1)) {
@@ -326,7 +332,7 @@
 
   const ACTIVITY_WEEKS = 12
 
-  async function load (): Promise<void> {
+  async function load(): Promise<void> {
     loading = true
     try {
       const from = Date.now() - ACTIVITY_WEEKS * 7 * 24 * 3600 * 1000
@@ -343,13 +349,13 @@
 
   void load()
 
-  function fmtBytes (bytes: number): string {
+  function fmtBytes(bytes: number): string {
     if (bytes >= 1024 * 1024 * 1024) return `${Math.round((bytes * 100) / 1024 / 1024 / 1024) / 100} GB`
     if (bytes >= 1024 * 1024) return `${Math.round((bytes * 100) / 1024 / 1024) / 100} MB`
     return `${Math.round(bytes / 1024)} KB`
   }
 
-  function fmtDate (ts: number | undefined): string {
+  function fmtDate(ts: number | undefined): string {
     return ts != null && ts > 0 ? new Date(ts).toLocaleString() : '-'
   }
 
@@ -377,7 +383,7 @@
   $: if (perSeat && (seats == null || seats < 1)) seats = 1
   $: existingActive = subscriptions.find((s) => s.type === inferredType && s.status === 'active')
 
-  async function adminCreateSub (): Promise<void> {
+  async function adminCreateSub(): Promise<void> {
     if (selectedPlan.length === 0 || isCreating || plans == null) return
     isCreating = true
 
@@ -632,8 +638,8 @@
                 <td>{m.email ?? '-'}</td>
                 <td>
                   {#if !readOnly}
-                    <ButtonMenu
-                      selected={m.role}
+                    <MenuButton
+                      selected={memberRole(m)}
                       size="small"
                       label={getEmbeddedLabel(m.role)}
                       items={roleItems}
@@ -710,7 +716,7 @@
         {/if}
       </div>
       <div class="ml-2">
-        <ButtonMenu
+        <MenuButton
           selected={newMemberRole}
           size="small"
           label={getEmbeddedLabel(newMemberRole)}
@@ -807,9 +813,9 @@
 
     <div class="flex-row-center mt-3 flex-wrap">
       <span class="mr-2"><Label label={adminRes.string.CreateSubscription} />:</span>
-      <ButtonMenu
+      <MenuButton
         selected={selectedPlan}
-        title={selectedPlan === '' ? '...' : (plans?.labels[selectedPlan] ?? selectedPlan)}
+        label={getEmbeddedLabel(selectedPlan === '' ? '...' : (plans?.labels[selectedPlan] ?? selectedPlan))}
         items={planItems}
         on:selected={(it) => {
           selectedPlan = it.detail

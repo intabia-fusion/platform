@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import IconMembers from '@hcengineering/contact-resources/src/components/icons/Members.svelte'
   import love from '../../../plugin'
   import { showParticipantsInModal } from '../../../stores'
@@ -21,7 +21,8 @@
   $: hasScreenShare = $screenSharingState !== ScreenSharingState.Inactive
 </script>
 
-<ModernButton
+<IconButton
+  iconSize="medium"
   icon={IconMembers}
   tooltip={{
     label: $showParticipantsInModal ? love.string.HideParticipants : love.string.ShowParticipants,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
-<script lang="ts">
+<script lang="ts" generics="Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']">
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -23,14 +23,11 @@
   import Button from './Button.svelte'
   import type { MenuButtonEvents, MenuButtonProps } from './types'
 
-  type $$Props = MenuButtonProps
-  type $$Events = MenuButtonEvents
-  interface $$Slots {
-    default: Record<string, never>
-  }
+  type $$Props = MenuButtonProps<Id>
+  type $$Events = MenuButtonEvents<Id>
 
-  export let items: DropdownIntlItem[]
-  export let selected: DropdownIntlItem['id'] | undefined = undefined
+  export let items: Array<DropdownIntlItem<Id>>
+  export let selected: Id | undefined = undefined
   export let noSelection: boolean = false
   export let autoSelectSingle: boolean = false
   export let itemParams: Record<string, any> = {}
@@ -40,7 +37,7 @@
     element?.focus()
   }
 
-  const dispatch = createEventDispatcher<{ selected: DropdownIntlItem['id'] }>()
+  const dispatch = createEventDispatcher<{ selected: Id }>()
 
   let popup: PopupResult | undefined
 
@@ -56,7 +53,7 @@
     popup.update(props)
   }
 
-  function select(id: DropdownIntlItem['id']): void {
+  function select(id: Id): void {
     selected = id
     dispatch('selected', id)
   }
@@ -69,7 +66,7 @@
     }
     closeTooltip()
     shownProps = popupProps
-    popup = showPopup(ModernPopup, popupProps, element, (result: DropdownIntlItem['id'] | undefined) => {
+    popup = showPopup(ModernPopup, popupProps, element, (result: Id | undefined) => {
       popup = undefined
       if (result !== undefined) select(result)
     })

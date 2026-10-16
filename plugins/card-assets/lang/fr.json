@@ -86,6 +86,7 @@
     "TwoColumns": "Deux colonnes",
     "Grid": "Grille",
     "RichtextProperties": "Champs de texte",
-    "ShowAllVersions": "Toutes les versions"
+    "ShowAllVersions": "Toutes les versions",
+    "TableOfContents": "Table des matières"
   }
 }

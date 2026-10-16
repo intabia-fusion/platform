@@ -23,10 +23,10 @@
     IconAdd,
     IconSettings,
     Label,
-    ModernButton,
     showPopup,
     themeStore
   } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { SortableList, deleteObject } from '@hcengineering/view-resources'
   import setting from '../plugin'
   import ClassAttributes from './ClassAttributes.svelte'
@@ -38,7 +38,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  function getRank (m: Class<Doc>): Rank | undefined {
+  function getRank(m: Class<Doc>): Rank | undefined {
     if (hierarchy.hasMixin(m, setting.mixin.ClassifierOrder)) {
       return hierarchy.as(m, setting.mixin.ClassifierOrder).rank
     }
@@ -60,9 +60,9 @@
       .sort((a, b) => (getRank(a) ?? '').localeCompare(getRank(b) ?? ''))
   })
 
-  async function moveHandler (e: CustomEvent<any>): Promise<void> {
+  async function moveHandler(e: CustomEvent<any>): Promise<void> {
     if (disabled) return
-    const { item, prev, next } = e.detail as { item: Class<Doc>, prev?: Class<Doc>, next?: Class<Doc> }
+    const { item, prev, next } = e.detail as { item: Class<Doc>; prev?: Class<Doc>; next?: Class<Doc> }
     const rank = makeRank(
       prev !== undefined ? getRank(prev) : undefined,
       next !== undefined ? getRank(next) : undefined
@@ -74,11 +74,11 @@
     }
   }
 
-  function createMixin (): void {
+  function createMixin(): void {
     showPopup(CreateMixin, { value: hierarchy.getClass(_class) }, 'top')
   }
 
-  async function deleteMixin (m: Class<Doc>): Promise<void> {
+  async function deleteMixin(m: Class<Doc>): Promise<void> {
     const exist = (await client.findAll(m._id, {}, { limit: 1 })).length > 0
     showPopup(
       MessageBox,
@@ -100,7 +100,7 @@
     <span class="ml-2"><Label label={setting.string.Mixins} /></span>
   </div>
   {#if !disabled}
-    <ModernButton icon={IconAdd} label={setting.string.CreateMixin} size="small" on:click={createMixin} />
+    <Button icon={IconAdd} label={setting.string.CreateMixin} size="small" on:click={createMixin} />
   {/if}
 </div>
 {#if mixins.length > 0}

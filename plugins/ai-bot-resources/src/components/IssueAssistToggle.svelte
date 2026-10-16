@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
 
   import aiBot from '../plugin'
@@ -24,13 +24,13 @@
 </script>
 
 {#if $issueAssistFits}
-  <ModernButton
+  <IconButton
     icon={view.icon.AiStar}
     iconSize="small"
     size="small"
     kind={$issueAssistOpened ? 'primary' : 'tertiary'}
     pressed={$issueAssistOpened}
-    dataId="btnIssueAssist"
+    data-id="btnIssueAssist"
     tooltip={{ label: aiBot.string.AssistIssue, props: { name: $aiBotNameStore } }}
     on:click={() => {
       issueAssistOpened.update((v) => !v)

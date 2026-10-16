@@ -17,7 +17,8 @@
   import core, { IndexKind, Type } from '@hcengineering/core'
   import { TypeIdentifier } from '@hcengineering/model'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox, Label, Toggle, Button, ButtonIcon } from '@hcengineering/ui'
+  import { EditBox, Label, Toggle, Button } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
 
@@ -44,12 +45,12 @@
 
   $: currentSequence = sequences.find((s) => s._id === seq)
 
-  async function resetSequence () {
+  async function resetSequence() {
     if (!editable || currentSequence === undefined) return
     await client.update(currentSequence, { sequence: 0 })
   }
 
-  async function change () {
+  async function change() {
     if (!editable) return
     if (identifiers.has(identifier.toUpperCase())) return
     if (identifier.toUpperCase() === (currentSequence?.prefix?.toUpperCase() ?? '')) return
@@ -66,7 +67,7 @@
     }
   }
 
-  async function changeShowing () {
+  async function changeShowing() {
     if (seq === undefined) return
     const type = TypeIdentifier(seq)
     dispatch('change', { type, index: IndexKind.FullText, extra: { showInPresenter } })
@@ -86,7 +87,7 @@
     on:change={change}
   />
   {#if editable && currentSequence?.sequence && currentSequence.sequence > 0}
-    <ButtonIcon icon={setting.icon.Reset} tooltip={{ label: setting.string.Reset }} on:click={resetSequence} />
+    <IconButton icon={setting.icon.Reset} tooltip={{ label: setting.string.Reset }} on:click={resetSequence} />
   {/if}
   {#if editable && identifiers.has(identifier.toUpperCase())}
     <div class="overflow-label duplicated-identifier">

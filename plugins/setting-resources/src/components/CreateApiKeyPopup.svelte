@@ -18,7 +18,6 @@
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import ui, {
     Button,
-    ButtonIcon,
     Chip,
     IconAdd,
     Label,
@@ -32,6 +31,7 @@
     showPopup,
     type RadioItem
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
   import settingsRes from '../plugin'
@@ -84,12 +84,12 @@
   $: validTtl = Number.isInteger(tokenTtlDays) && tokenTtlDays >= minTokenTtlDays && tokenTtlDays <= maxTokenTtlDays
   $: canSave = !loading && name.trim().length > 0 && validTtl
 
-  function removeOp (op: ApiKeyOperation): void {
+  function removeOp(op: ApiKeyOperation): void {
     ops.delete(op)
     ops = ops
   }
 
-  function pickOps (event: MouseEvent): void {
+  function pickOps(event: MouseEvent): void {
     showPopup(
       ApiKeyOperationsPopup,
       { selected: Array.from(ops) },
@@ -103,15 +103,15 @@
     )
   }
 
-  function addAllOps (): void {
+  function addAllOps(): void {
     ops = new Set(apiKeyOperations)
   }
 
-  function removeSpace (spaceId: Ref<Space>): void {
+  function removeSpace(spaceId: Ref<Space>): void {
     spaces = spaces.filter((id) => id !== spaceId)
   }
 
-  function pickSpaces (event: MouseEvent): void {
+  function pickSpaces(event: MouseEvent): void {
     // Selection commits via the popup's 'update' event (live, like RoleEditor/ArrayEditor's ObjectBoxPopup usage).
     showPopup(
       ApiKeySpacesPopup,
@@ -126,7 +126,7 @@
     )
   }
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     loading = true
     try {
       const result: CreatedApiKey = await getAccountClient().createApiKey({
@@ -179,7 +179,7 @@
         <div class="flex-row-center flex-between">
           <Label label={settingsRes.string.ApiKeyOperations} />
           <div class="flex-row-center flex-gap-1">
-            <ButtonIcon
+            <IconButton
               kind="tertiary"
               size="small"
               icon={IconAdd}
@@ -216,7 +216,7 @@
       <div class="flex-col flex-gap-2">
         <div class="flex-row-center flex-between">
           <Label label={settingsRes.string.ApiKeySpaces} />
-          <ButtonIcon
+          <IconButton
             kind="tertiary"
             size="small"
             icon={IconAdd}

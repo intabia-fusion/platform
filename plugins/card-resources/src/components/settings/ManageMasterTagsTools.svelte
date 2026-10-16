@@ -13,19 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import presentation from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import {
-    ButtonIcon,
-    getCurrentResolvedLocation,
-    IconAdd,
-    IconAttachment,
-    navigate,
-    showPopup
-  } from '@hcengineering/ui'
+  import { getCurrentResolvedLocation, IconAdd, IconAttachment, navigate, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import card from '../../plugin'
   import CreateTag from '../CreateTag.svelte'
 
-  function handleAdd (): void {
+  function handleAdd(): void {
     showPopup(
       CreateTag,
       {
@@ -46,7 +41,7 @@
     )
   }
 
-  async function handleImprot (): Promise<void> {
+  async function handleImprot(): Promise<void> {
     const { importModule } = await import('../../exporter')
     const input = document.createElement('input')
     input.type = 'file'
@@ -72,7 +67,7 @@
   }
 </script>
 
-<ButtonIcon
+<IconButton
   id="new-master-tag"
   icon={IconAttachment}
   tooltip={{ label: card.string.Import }}
@@ -80,4 +75,11 @@
   size="extra-small"
   on:click={handleImprot}
 />
-<ButtonIcon id="new-master-tag" icon={IconAdd} kind="tertiary" size="extra-small" on:click={handleAdd} />
+<IconButton
+  id="new-master-tag"
+  icon={IconAdd}
+  kind="tertiary"
+  size="extra-small"
+  tooltip={{ label: presentation.string.Add }}
+  on:click={handleAdd}
+/>

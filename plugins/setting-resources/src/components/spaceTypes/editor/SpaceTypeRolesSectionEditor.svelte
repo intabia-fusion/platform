@@ -17,7 +17,8 @@
   import { onDestroy } from 'svelte'
   import type { Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
   import core, { SortingOrder } from '@hcengineering/core'
-  import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import { IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createQuery } from '@hcengineering/presentation'
 
   import MembersIcon from '../../icons/Members.svelte'
@@ -43,7 +44,7 @@
     )
   }
 
-  function handleRoleSelected (id: string | undefined): void {
+  function handleRoleSelected(id: string | undefined): void {
     const loc = getCurrentResolvedLocation()
     if (id !== undefined) {
       loc.path[5] = 'roles'
@@ -66,13 +67,13 @@
   <div class="hulyTableAttr-header font-medium-12">
     <MembersIcon size="small" />
     <span><Label label={settingRes.string.Roles} /></span>
-    <ButtonIcon
+    <IconButton
       kind="primary"
       icon={IconAdd}
       size="small"
-      dataId="btnAdd"
+      data-id="btnAdd"
       {disabled}
-      tooltip={disabled ? { label: settingRes.string.OwnerOrMaintainerRequired } : undefined}
+      tooltip={disabled ? { label: settingRes.string.OwnerOrMaintainerRequired } : { label: settingRes.string.Add }}
       on:click={(ev) => {
         $settingsStore = { id: 'createRole', component: CreateRole, props: { type, descriptor } }
       }}

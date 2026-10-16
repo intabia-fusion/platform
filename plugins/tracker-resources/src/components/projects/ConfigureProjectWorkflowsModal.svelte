@@ -53,7 +53,7 @@
 
   $: void updateWorkflowItems(taskTypes, workflows, $languageStore)
 
-  async function updateWorkflowItems (types: TaskType[], allWorkflows: Workflow[], lang: string): Promise<void> {
+  async function updateWorkflowItems(types: TaskType[], allWorkflows: Workflow[], lang: string): Promise<void> {
     const notSelectedLabel = await translate(ui.string.NotSelected, {}, lang)
     const map: Record<Ref<TaskType>, DropdownTextItem[]> = {}
 
@@ -70,7 +70,7 @@
     dropdownItemsMap = map
   }
 
-  function handleWorkflowSelected (
+  function handleWorkflowSelected(
     taskTypeId: Ref<TaskType>,
     selectedId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null
   ): void {
@@ -85,11 +85,11 @@
     localMapping = { ...localMapping }
   }
 
-  function handleSave (): void {
+  function handleSave(): void {
     dispatch('close', localMapping)
   }
 
-  function handleCancel (): void {
+  function handleCancel(): void {
     dispatch('close')
   }
 </script>
@@ -201,7 +201,7 @@
       max-width: 100%;
       min-width: 0;
 
-      :global(.hulyButton) {
+      :global(.button) {
         width: 100%;
         max-width: 100%;
         min-width: 0;

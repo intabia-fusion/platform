@@ -16,15 +16,15 @@
   import type { Doc, Ref } from '@hcengineering/core'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import type { BreadcrumbItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     Breadcrumbs,
     location as locationStore,
     Header,
     Loading,
     languageStore,
-    ButtonIcon,
     IconBack
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { ActivityMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
@@ -105,7 +105,7 @@
   let breadcrumbs: BreadcrumbItem[] = []
   $: breadcrumbs = showHeader ? getBreadcrumbsItems(channel, channelName) : []
 
-  function getBreadcrumbsItems (channel?: Doc, channelName?: string): BreadcrumbItem[] {
+  function getBreadcrumbsItems(channel?: Doc, channelName?: string): BreadcrumbItem[] {
     if (channel === undefined) {
       return []
     }
@@ -127,7 +127,7 @@
     ]
   }
 
-  function handleBreadcrumbSelect (event: CustomEvent<number>): void {
+  function handleBreadcrumbSelect(event: CustomEvent<number>): void {
     const index = event.detail
     const breadcrumb = breadcrumbs[index]
 
@@ -143,10 +143,11 @@
   <Header type={withBackButton ? 'type-component' : 'type-aside'} adaptive="disabled" closeOnEscape={false} on:close>
     <svelte:fragment slot="beforeTitle">
       {#if withBackButton}
-        <ButtonIcon
+        <IconButton
           icon={IconBack}
           kind="tertiary"
           size="small"
+          tooltip={{ label: ui.string.Back }}
           on:click={() => {
             dispatch('close')
           }}

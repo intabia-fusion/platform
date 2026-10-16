@@ -62,7 +62,7 @@ export class PlanningPage extends CalendarPage {
   readonly textPanelToDoDescription = (): Locator => this.panel().locator('div.top-content div.tiptap > p')
   readonly textPanelDueDate = (): Locator =>
     this.panel().locator(
-      'div.slots-content div.flex-row-top.justify-between div.flex-row-center .hulyButton:first-child span'
+      'div.slots-content div.flex-row-top.justify-between div.flex-row-center .button:first-child .button__label'
     )
 
   readonly textPanelPriority = (): Locator => this.panel().locator('button#priorityButton svg')
@@ -401,7 +401,7 @@ export class PlanningPage extends CalendarPage {
     // slot then keeps its default end - a 07:00-13:30 slot instead of 07:00-08:00.
     await expect(async () => {
       if (((await endShown.first().textContent()) ?? '').trim() === wanted) return
-      const endDateButton = endContainer.locator('button.hulyButton')
+      const endDateButton = endContainer.locator('button.button')
       if ((await endDateButton.count()) === 0) {
         await endContainer.locator('div.hulyButton').click()
         await this.fillSelectDatePopup(slot.dateEnd.day, slot.dateEnd.month, slot.dateEnd.year, slot.timeEnd)

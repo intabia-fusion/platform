@@ -15,22 +15,14 @@
   import { onDestroy } from 'svelte'
   import type { Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import {
-    ButtonIcon,
-    ButtonMenu,
-    type DropdownIntlItem,
-    Icon,
-    IconAdd,
-    IconCopy,
-    Label,
-    showPopup
-  } from '@hcengineering/ui'
+  import { type DropdownIntlItem, Icon, IconAdd, IconCopy, Label, showPopup } from '@hcengineering/ui'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowConfig } from '@hcengineering/workflow'
 
   import { navigateToWorkflow } from '../location'
@@ -63,7 +55,7 @@
     { sort: { name: SortingOrder.Ascending } }
   )
 
-  function getTaskTypeName (taskTypeId: Ref<TaskType>): string | undefined {
+  function getTaskTypeName(taskTypeId: Ref<TaskType>): string | undefined {
     return $taskTypeStore.get(taskTypeId)?.name
   }
 
@@ -80,7 +72,7 @@
     }
   ]
 
-  async function handleImportAction (event?: CustomEvent): Promise<void> {
+  async function handleImportAction(event?: CustomEvent): Promise<void> {
     if (event == null || disabled || type === undefined) return
     const actionId = event.detail
     if (actionId === 'file') {
@@ -139,11 +131,11 @@
     }
   }
 
-  async function showFileUnreadable (file: string): Promise<void> {
+  async function showFileUnreadable(file: string): Promise<void> {
     await showWorkflowError(plugin.string.ImportErrorTitle, plugin.string.ImportFileUnreadable, { file })
   }
 
-  async function handleFileInputChange (e: Event): Promise<void> {
+  async function handleFileInputChange(e: Event): Promise<void> {
     const target = e.target as HTMLInputElement
     const file = target?.files?.[0]
     if (file == null || disabled || type === undefined) return
@@ -203,7 +195,7 @@
   <Icon icon={plugin.icon.Workflows} size="small" />
   <span><Label label={plugin.string.Workflows} /></span>
   <div class="header-actions flex-row-center flex-gap-1">
-    <ButtonMenu
+    <MenuButton
       icon={task.icon.Import}
       tooltip={{
         label: disabled ? setting.string.OwnerOrMaintainerRequired : plugin.string.Import,
@@ -211,20 +203,20 @@
       }}
       size="small"
       kind="tertiary"
-      dataId="btnImportWorkflows"
+      data-id="btnImportWorkflows"
       {disabled}
       noSelection
       items={importActions}
       on:selected={handleImportAction}
     />
-    <ButtonIcon
+    <IconButton
       kind="primary"
       icon={IconAdd}
       size="small"
-      dataId="btnAddWorkflow"
+      data-id="btnAddWorkflow"
       disabled={addDisabled}
       loading={isLoading}
-      tooltip={addDisabled ? { label: addDisabledReason } : undefined}
+      tooltip={addDisabledReason !== undefined ? { label: addDisabledReason } : { label: presentation.string.Add }}
       on:click={() => {
         if (disabled) return
         if ($settingsStore.id !== 'createWorkflow') {

@@ -12,10 +12,10 @@
     deviceOptionsStore as deviceInfo,
     showPopup,
     eventToHTMLElement,
-    ButtonBase,
     closeTooltip,
     Icon
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { getEmojiByShortCode, getEmojiSkins, getUnicodeEmojiByShortCode } from '../utils'
   import {
     searchEmoji,
@@ -29,6 +29,7 @@
   } from '../store'
   import type { EmojiWithGroup } from '@hcengineering/emoji'
   import ActionsPopup from './ActionsPopup.svelte'
+  import EmojiGlyph from './EmojiGlyph.svelte'
   import SkinTonePopup from './SkinTonePopup.svelte'
   import EmojiGroup from './EmojiGroup.svelte'
   import emojiPlugin, { isCustomEmoji } from '@hcengineering/emoji'
@@ -72,7 +73,7 @@
     .filter((f) => f !== undefined) as EmojiCategory[]
   $: categoryTabs = searching ? ([...searchCategory, ...emojiTabs] as EmojiCategory[]) : emojiTabs
 
-  function handleScrollToCategory (categoryId: string): void {
+  function handleScrollToCategory(categoryId: string): void {
     if (searching && categoryId !== searchCategory[0].id) $searchEmoji = ''
     if (isMobile) {
       const tempCat = emojiTabs.find((ct) => ct?.id === categoryId)
@@ -90,7 +91,7 @@
     }
   }
 
-  function handleCategoryScrolled (): void {
+  function handleCategoryScrolled(): void {
     if (isMobile) return
     const selectedCategory = emojisCat.find((category) => {
       const labelElement = document.getElementById(category.id)
@@ -126,7 +127,7 @@
     sendEmoji(event.detail)
   }
 
-  function openContextMenu (event: TouchEvent | MouseEvent, _emoji: EmojiWithGroup, remove: boolean): void {
+  function openContextMenu(event: TouchEvent | MouseEvent, _emoji: EmojiWithGroup, remove: boolean): void {
     event.preventDefault()
     const emoji = _emoji
     if (emoji === undefined) return
@@ -150,7 +151,7 @@
       shownContext = false
     })
   }
-  function handleContextMenu (event: MouseEvent, emoji: EmojiWithGroup, remove: boolean): void {
+  function handleContextMenu(event: MouseEvent, emoji: EmojiWithGroup, remove: boolean): void {
     event.preventDefault()
     const skins = getEmojiSkins(emoji)
     if (Array.isArray(skins) || remove) openContextMenu(event, emoji, remove)
@@ -165,7 +166,7 @@
       else window.addEventListener(event, clearTimer)
     })
   }
-  function clampedContextMenu (event: TouchEvent, emoji: EmojiWithGroup, remove: boolean): void {
+  function clampedContextMenu(event: TouchEvent, emoji: EmojiWithGroup, remove: boolean): void {
     const skins = getEmojiSkins(emoji)
     if (timer == null && (Array.isArray(skins) || remove)) {
       touchObserver()
@@ -280,17 +281,16 @@
         else if (result.detail !== '') currentCategory = searchCategory[0]
       }}
     />
-    <ButtonBase
-      type="type-button-icon"
+    <IconButton
+      icon={EmojiGlyph}
+      iconProps={{ emoji: getUnicodeEmojiByShortCode(':hand:', skinTone)?.emoji, fontSize: '1.5rem' }}
       hasMenu
       pressed={shownSTM}
       kind="tertiary"
       size="small"
       tooltip={{ label: emojiPlugin.string.DefaultSkinTone }}
       on:click={showSkinMenu}
-    >
-      <span style:font-size="1.5rem" class="emoji">{getUnicodeEmojiByShortCode(':hand:', skinTone)?.emoji}</span>
-    </ButtonBase>
+    />
   </div>
   <Scroller
     bind:divScroll={scrollElement}

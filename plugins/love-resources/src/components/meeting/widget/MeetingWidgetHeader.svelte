@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { BreadcrumbItem, PopupResult } from '@hcengineering/ui'
-  import { Breadcrumbs, Header, IconMaximize, ButtonIcon, showPopup, ticker1 } from '@hcengineering/ui'
+  import ui, { Breadcrumbs, Header, IconMaximize, showPopup, ticker1 } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { onDestroy } from 'svelte'
 
@@ -38,7 +39,7 @@
     }
   ]
 
-  function maximize (): void {
+  function maximize(): void {
     popup = showPopup(RoomModal, { room }, 'full-centered', undefined)
   }
 
@@ -57,7 +58,14 @@
       <RecordingButton kind="tertiary" size="small" />
       <TranscriptionButton kind="tertiary" size="small" />
       <MeetingOptionsButton {room} meetingMinutes={doc} kind="tertiary" size="small" />
-      <ButtonIcon icon={IconMaximize} kind="tertiary" size="small" noPrint on:click={maximize} />
+      <IconButton
+        icon={IconMaximize}
+        kind="tertiary"
+        size="small"
+        noPrint
+        tooltip={{ label: ui.string.FullSize }}
+        on:click={maximize}
+      />
     {/if}
   </svelte:fragment>
 </Header>

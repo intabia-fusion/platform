@@ -30,7 +30,6 @@
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { AnyComponent, DropdownIntlItem } from '@hcengineering/ui'
   import {
-    ButtonIcon,
     Component,
     DropdownLabelsIntl,
     IconDelete,
@@ -41,6 +40,7 @@
     themeStore,
     Toggle
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { IconPicker } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
   import setting from '../plugin'
@@ -70,7 +70,7 @@
     name = p
   })
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (disabled) {
       return
     }
@@ -109,7 +109,7 @@
     clearSettingsStore()
   }
 
-  function getTypes (): DropdownIntlItem[] {
+  function getTypes(): DropdownIntlItem[] {
     const descendants = hierarchy.getDescendants(core.class.Type)
     const res: DropdownIntlItem[] = []
     for (const descendant of descendants) {
@@ -130,7 +130,7 @@
 
   $: selectedType && selectType(selectedType)
 
-  function selectType (type: Ref<Class<Type<PropertyType>>>): void {
+  function selectType(type: Ref<Class<Type<PropertyType>>>): void {
     if (!hierarchy.hasClass(type)) {
       is = undefined
       return
@@ -157,17 +157,17 @@
     }
   }
 
-  async function remove (): Promise<void> {
+  async function remove(): Promise<void> {
     await showDeleteAttributePopup(attribute, exist, clearSettingsStore)
   }
 
-  async function hide (): Promise<void> {
+  async function hide(): Promise<void> {
     const value = !attribute.hidden
     attribute.hidden = value
     await client.update(attribute, { hidden: value })
   }
 
-  function setIcon (): void {
+  function setIcon(): void {
     showPopup(IconPicker, { icon, showEmoji: false, showColor: false }, 'top', async (res) => {
       if (res !== undefined) {
         icon = res.icon
@@ -179,11 +179,11 @@
     client.getModel().findObject(getAttributePermissionRef(attribute, false)) !== undefined ||
     client.getModel().findObject(getAttributePermissionRef(attribute, true)) !== undefined
 
-  function getAttributePermissionRef (attr: AnyAttribute, forbidden: boolean): Ref<AttributePermission> {
+  function getAttributePermissionRef(attr: AnyAttribute, forbidden: boolean): Ref<AttributePermission> {
     return `${attr._id}_${forbidden ? 'forbidden' : 'allowed'}` as Ref<AttributePermission>
   }
 
-  function changeRestricted (): void {
+  function changeRestricted(): void {
     showPopup(
       MessageBox,
       {
@@ -251,7 +251,7 @@
 >
   <svelte:fragment slot="actions">
     {#if !disabled}
-      <ButtonIcon
+      <IconButton
         icon={attribute.hidden ? view.icon.EyeCrossed : view.icon.Eye}
         tooltip={{ label: attribute.hidden ? view.string.Show : view.string.Hide }}
         size="small"
@@ -260,13 +260,21 @@
         on:click={hide}
       />
       {#if attribute.isCustom}
-        <ButtonIcon icon={IconDelete} size="small" kind="tertiary" {disabled} on:click={remove} />
+        <IconButton
+          icon={IconDelete}
+          size="small"
+          kind="tertiary"
+          {disabled}
+          on:click={remove}
+          tooltip={{ label: setting.string.DeleteAttribute }}
+        />
       {/if}
     {/if}
   </svelte:fragment>
   <div class="hulyModal-content__titleGroup">
     <div class="flex items-center">
-      <ButtonIcon
+      <IconButton
+        tooltip={{ label: view.string.ChooseIcon }}
         icon={icon ?? setting.icon.Enums}
         size="medium"
         iconSize="large"

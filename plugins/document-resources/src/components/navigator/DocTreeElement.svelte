@@ -17,7 +17,8 @@
   import type { Document } from '@hcengineering/document'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { Action, AnySvelteComponent } from '@hcengineering/ui'
-  import { IconMoreH, Menu, navigate, showPopup, NavItem, ButtonIcon } from '@hcengineering/ui'
+  import { IconMoreH, Menu, navigate, showPopup, NavItem } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { getDocumentLink } from '../../utils'
   import view from '@hcengineering/view'
 
@@ -36,14 +37,15 @@
   export let forciblyСollapsed: boolean = false
 
   let hovered: boolean = false
-  async function onMenuClick (ev: MouseEvent): Promise<void> {
+  async function onMenuClick(ev: MouseEvent): Promise<void> {
+    ev.stopPropagation()
     showPopup(Menu, { actions: await moreActions(ev), ctx: doc._id }, ev.target as HTMLElement, () => {
       hovered = false
     })
     hovered = true
   }
 
-  function selectDocument (): void {
+  function selectDocument(): void {
     const loc = getDocumentLink(doc)
     navigate(loc)
   }
@@ -77,22 +79,25 @@
   <svelte:fragment slot="actions">
     {#each actions as action}
       {#if action.icon}
-        <ButtonIcon
+        <IconButton
           icon={action.icon}
           kind="tertiary"
           size="extra-small"
-          dataId={action.label}
+          data-id={action.label}
           tooltip={{ label: action.label, direction: 'top' }}
-          on:click={(evt) => action.action({}, evt)}
+          on:click={(evt) => {
+            evt.stopPropagation()
+            void action.action({}, evt)
+          }}
         />
       {/if}
     {/each}
-    <ButtonIcon
+    <IconButton
       icon={IconMoreH}
       kind="tertiary"
       size="extra-small"
       pressed={hovered}
-      dataId="btnDocMore"
+      data-id="btnDocMore"
       tooltip={{ label: view.string.MoreActions, direction: 'top' }}
       on:click={onMenuClick}
     />

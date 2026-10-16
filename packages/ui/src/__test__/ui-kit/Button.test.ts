@@ -64,19 +64,25 @@ describe('ui-kit Button', () => {
     it('is a native button of type "button" with secondary, large, rectangle defaults', () => {
       const { button } = mount()
       expect(button.type).toBe('button')
-      expect([...button.classList]).toEqual(expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle']))
+      expect([...button.classList]).toEqual(
+        expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle'])
+      )
     })
 
     it('passes kind, size, shape and type through', () => {
       const { button } = mount({ kind: 'negative', size: 'extra-small', shape: 'round', type: 'submit' })
-      expect([...button.classList]).toEqual(expect.arrayContaining(['button--negative', 'button--extra-small', 'button--round']))
+      expect([...button.classList]).toEqual(
+        expect.arrayContaining(['button--negative', 'button--extra-small', 'button--round'])
+      )
       expect(button.type).toBe('submit')
     })
 
     it('treats explicitly undefined kind, size, shape and type as the defaults', () => {
       const { button } = mount({ kind: undefined, size: undefined, shape: undefined, type: undefined })
       expect(button.type).toBe('button')
-      expect([...button.classList]).toEqual(expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle']))
+      expect([...button.classList]).toEqual(
+        expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle'])
+      )
       expect(button.className).not.toContain('undefined')
     })
 

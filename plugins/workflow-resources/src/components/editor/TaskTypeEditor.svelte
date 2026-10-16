@@ -17,7 +17,8 @@
   import type { Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { TaskType } from '@hcengineering/task'
-  import { ButtonMenu, Label } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { IconWithEmoji } from '@hcengineering/presentation'
 
@@ -38,7 +39,7 @@
   $: _selected = items.find((it) => it.id === selected)
 </script>
 
-<ButtonMenu
+<MenuButton
   {selected}
   {items}
   icon={_selected?.icon}

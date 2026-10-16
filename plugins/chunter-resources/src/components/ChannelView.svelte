@@ -16,18 +16,18 @@
   import type { Doc, Ref, Space } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import {
-    Button,
+    Button as LegacyButton,
     defineSeparators,
     getCurrentLocation,
     IconSearch,
     Label,
     location as locationStore,
     deviceOptionsStore as deviceInfo,
-    ModernButton,
     navigate,
     panelSeparators,
     Separator
   } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import type { Channel, ObjectChatPanel } from '@hcengineering/chunter'
@@ -72,7 +72,7 @@
   // A phone has no sidebar to put the thread in, so it takes over this panel instead.
   $: mobileThread = $deviceInfo.isMobile ? threadId : undefined
 
-  function closeThread (): void {
+  function closeThread(): void {
     const loc = getCurrentLocation()
     loc.path.length = 4
     loc.query = { ...loc.query }
@@ -80,7 +80,7 @@
     navigate(loc)
   }
 
-  function isReadonly (object: Doc, readonly: boolean): boolean {
+  function isReadonly(object: Doc, readonly: boolean): boolean {
     return hierarchy.isDerived(object._class, core.class.Space) ? readonly || (object as Space).archived : readonly
   }
   $: showJoinOverlay = shouldShowJoinOverlay(object)
@@ -88,11 +88,11 @@
   $: withAside =
     !embedded && !isThreadOpened && !hierarchy.isDerived(object._class, chunter.class.DirectMessage) && !showJoinOverlay
 
-  function toChannel (object: Doc): Channel {
+  function toChannel(object: Doc): Channel {
     return object as Channel
   }
 
-  function shouldShowJoinOverlay (object: Doc): boolean {
+  function shouldShowJoinOverlay(object: Doc): boolean {
     if (hierarchy.isDerived(object._class, core.class.Space)) {
       const space = object as Space
 
@@ -102,13 +102,13 @@
     return false
   }
 
-  async function join (): Promise<void> {
+  async function join(): Promise<void> {
     await client.update(object as Space, { $push: { members: acc.uuid } })
   }
 
   defineSeparators('aside', panelSeparators)
 
-  async function handleMessageSelect (event: CustomEvent<ActivityMessage>): Promise<void> {
+  async function handleMessageSelect(event: CustomEvent<ActivityMessage>): Promise<void> {
     const message = event.detail
 
     if (isThreadMessage(message)) {
@@ -138,20 +138,20 @@
   $: searchAttachedTo = isDocChat ? object._id : undefined
   $: searchMembersOf = isDocChat ? object.space : (object._id as Ref<Space>)
 
-  function openSearch (initial: string = ''): void {
+  function openSearch(initial: string = ''): void {
     searchQuery = initial
     searchDismissed = false
     searchOpened = true
   }
 
-  function closeSearch (): void {
+  function closeSearch(): void {
     searchQuery = ''
     searchFilters = {}
     searchDismissed = false
     searchOpened = false
   }
 
-  function toggleSearch (): void {
+  function toggleSearch(): void {
     if (searchOpened) {
       closeSearch()
     } else {
@@ -164,7 +164,7 @@
     }
   }
 
-  function handleSearchResult (row: SearchResultRow): void {
+  function handleSearchResult(row: SearchResultRow): void {
     searchDismissed = true
     if (hierarchy.isDerived(row._class, chunter.class.ThreadMessage)) {
       void openSearchResult(row.raw.doc)
@@ -173,7 +173,7 @@
     messageInFocus.set(row._id as Ref<ActivityMessage>)
   }
 
-  function handleKeydown (e: KeyboardEvent): void {
+  function handleKeydown(e: KeyboardEvent): void {
     if (searchAvailable && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
       const target = e.target as HTMLElement | null
       // Leave the browser's own find alone while the user is writing a message.
@@ -251,7 +251,7 @@
       </svelte:fragment>
       <svelte:fragment slot="actions">
         {#if searchAvailable}
-          <Button
+          <LegacyButton
             icon={IconSearch}
             iconProps={{ size: 'small' }}
             kind="icon"
@@ -277,7 +277,7 @@
                   <Label label={chunter.string.JoinChannelText} />
                 </span>
                 <span class="mt-4"> </span>
-                <ModernButton label={view.string.Join} kind="primary" dataId="btnJoin" on:click={join} />
+                <Button label={view.string.Join} kind="primary" data-id="btnJoin" on:click={join} />
               </div>
             </div>
           {:else}

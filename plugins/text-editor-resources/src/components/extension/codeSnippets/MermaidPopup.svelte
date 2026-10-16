@@ -15,7 +15,9 @@
 //
 -->
 <script lang="ts">
-  import { Modal, ButtonIcon, IconClose, IconMaximize, IconMinimize } from '@hcengineering/ui'
+  import ui, { Modal, IconClose, IconMaximize, IconMinimize } from '@hcengineering/ui'
+  import presentation from '@hcengineering/presentation'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   export let svg: string
@@ -26,21 +28,23 @@
 
 <Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
-    <ButtonIcon
+    <IconButton
       icon={IconClose}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: presentation.string.Close }}
       on:click={() => {
         dispatch('close')
       }}
     />
     <div class="hulyHeader-divider short no-line no-print" />
-    <ButtonIcon
+    <IconButton
       icon={!fullSize ? IconMaximize : IconMinimize}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: !fullSize ? ui.string.FullSize : ui.string.NormalSize }}
       on:click={() => {
         fullSize = !fullSize
         dispatch('fullsize', fullSize)

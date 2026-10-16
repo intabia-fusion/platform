@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal, ModernButton } from '@hcengineering/ui'
+  import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import presentation from '@hcengineering/presentation'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
@@ -28,7 +29,7 @@
   let isConnectionEstablished = false
   let connectionError: Error | undefined
 
-  let info: { name: string, username: string, photoId: string } | undefined = undefined
+  let info: { name: string; username: string; photoId: string } | undefined = undefined
   let isLoading = false
 
   const url = getMetadata(telegram.metadata.BotUrl) ?? ''
@@ -38,7 +39,7 @@
     void loadBotInfo()
   })
 
-  async function loadBotInfo (): Promise<void> {
+  async function loadBotInfo(): Promise<void> {
     if (info !== undefined || isLoading) return
     isLoading = true
     try {
@@ -55,7 +56,7 @@
     isLoading = false
   }
 
-  async function handleTestConnection (): Promise<void> {
+  async function handleTestConnection(): Promise<void> {
     isTestingConnection = true
     isConnectionEstablished = false
     connectionError = undefined
@@ -91,7 +92,7 @@
   let isCodeValid = false
   let codeError: IntlString | undefined
 
-  async function handleCode (event: CustomEvent<string>): Promise<void> {
+  async function handleCode(event: CustomEvent<string>): Promise<void> {
     isCodeValid = false
     codeError = undefined
 
@@ -141,7 +142,7 @@
               <Icon icon={TelegramColor} size="x-large" />
             {/if}
             {info.name} (@{info.username})
-            <ModernButton
+            <Button
               label={telegram.string.TestConnection}
               size="small"
               loading={isTestingConnection}

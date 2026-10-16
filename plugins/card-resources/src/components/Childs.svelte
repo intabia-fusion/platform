@@ -16,7 +16,8 @@
   import type { Card } from '@hcengineering/card'
   import type { Doc, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ButtonIcon, IconAdd, Label, resizeObserver, Section } from '@hcengineering/ui'
+  import { IconAdd, Label, resizeObserver, Section } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import type { SelectDirection } from '@hcengineering/view-resources'
@@ -91,7 +92,7 @@
 
   let listWidth: number
 
-  async function createCard (): Promise<void> {
+  async function createCard(): Promise<void> {
     await createChildCard(object)
   }
 
@@ -103,7 +104,7 @@
     <div class="buttons-group xsmall-gap">
       <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind="tertiary" bind:viewlet />
       {#if !$restrictionStore.readonly && !readonly}
-        <ButtonIcon
+        <IconButton
           id="add-child-card"
           icon={IconAdd}
           size="small"

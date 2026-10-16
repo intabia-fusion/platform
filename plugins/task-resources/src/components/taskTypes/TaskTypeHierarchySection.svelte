@@ -18,7 +18,6 @@
   import { getConnectedTaskTypes } from '@hcengineering/task'
   import {
     Button,
-    ButtonIcon,
     Icon,
     IconError,
     IconInfo,
@@ -28,6 +27,7 @@
     Toggle,
     tooltip
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
   import tracker from '@hcengineering/tracker'
 
@@ -49,12 +49,12 @@
 
   $: hasWarning = !isRootTaskType && !allowAnyParent && allowedAsChildOf.length === 0
 
-  async function handleAllowRootChange (val: boolean): Promise<void> {
+  async function handleAllowRootChange(val: boolean): Promise<void> {
     if (readonly) return
     await client.diffUpdate(taskType, { isRootTaskType: val })
   }
 
-  async function handleAllowAnyParentToggle (val: boolean): Promise<void> {
+  async function handleAllowAnyParentToggle(val: boolean): Promise<void> {
     if (readonly) return
     if (val) {
       await client.diffUpdate(taskType, { allowAnyParent: true, allowedAsChildOf: taskTypes.map((t) => t._id) })
@@ -63,7 +63,7 @@
     }
   }
 
-  async function toggleParent (parentId: Ref<TaskType>): Promise<void> {
+  async function toggleParent(parentId: Ref<TaskType>): Promise<void> {
     if (readonly) return
     if (allowAnyParent) {
       const newParents = taskTypes.filter((t) => t._id !== parentId).map((t) => t._id)
@@ -78,13 +78,13 @@
     await client.diffUpdate(taskType, { allowAnyParent: isAll, allowedAsChildOf: newParents })
   }
 
-  async function selectAllParents (): Promise<void> {
+  async function selectAllParents(): Promise<void> {
     if (readonly) return
     const allIds = taskTypes.map((t) => t._id)
     await client.diffUpdate(taskType, { allowAnyParent: true, allowedAsChildOf: allIds })
   }
 
-  async function clearAllParents (): Promise<void> {
+  async function clearAllParents(): Promise<void> {
     if (readonly) return
     await client.diffUpdate(taskType, {
       allowAnyParent: false,
@@ -92,7 +92,7 @@
     })
   }
 
-  function handleShowDiagram (): void {
+  function handleShowDiagram(): void {
     const connectedTypes = getConnectedTaskTypes(taskType, taskTypes)
     showPopup(TaskTypeDiagramPopup, { taskTypes: connectedTypes, focusTypeId: taskType._id }, 'centered')
   }
@@ -116,7 +116,7 @@
           </div>
         {/if}
 
-        <ButtonIcon
+        <IconButton
           icon={task.icon.TypeHierarchy}
           tooltip={{ label: task.string.TaskTypesDiagram, direction: 'bottom' }}
           size="small"

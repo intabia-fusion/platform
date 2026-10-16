@@ -18,7 +18,8 @@
   import type { Class, Doc, Ref } from '@hcengineering/core'
 
   import type { Location } from '@hcengineering/ui'
-  import { IconArrowLeft, ModernButton, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import { IconArrowLeft, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
 
   import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
   import { loveId } from '@hcengineering/love'
@@ -48,7 +49,7 @@
   $: isPrivateMeeting = hasParticipants && meeting === undefined
 
   const client = getClient()
-  async function getPerson (info: ParticipantInfo | undefined): Promise<Person | null> {
+  async function getPerson(info: ParticipantInfo | undefined): Promise<Person | null> {
     if (info === undefined) {
       return null
     }
@@ -65,14 +66,14 @@
 
   const dispatch = createEventDispatcher()
 
-  async function connect (): Promise<void> {
+  async function connect(): Promise<void> {
     if (meeting !== undefined) {
       await createMeeting(room, meeting)
     }
     dispatch('close')
   }
 
-  async function backOrOpen (): Promise<void> {
+  async function backOrOpen(): Promise<void> {
     const meeting = $meetings.find((m) => m._id === meetingId)
     if (meeting !== undefined) {
       const hierarchy = client.getHierarchy()
@@ -85,7 +86,7 @@
     }
   }
 
-  function canGoBack (joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
+  function canGoBack(joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
     if (!joined) return false
     if (location.path[2] !== loveId) return true
     if (meetingMinutesId === undefined) return false
@@ -125,7 +126,7 @@
     {/if}
     <div style="width: auto" />
     {#if canGoBack(joined, $location, meetingId)}
-      <ModernButton
+      <Button
         icon={IconArrowLeft}
         label={love.string.MeetingMinutes}
         kind="primary"
@@ -137,21 +138,21 @@
       <LeaveRoomButton {room} noLabel={false} size="medium" on:leave={() => dispatch('close')} />
     {:else if !isPrivateMeeting}
       <div class="flex flex-row-center gap-2">
-        <ModernButton
+        <Button
           icon={love.icon.MeetingMinutes}
           label={love.string.MeetingMinutes}
           kind="secondary"
           size="medium"
           on:click={backOrOpen}
         />
-        <ModernButton
+        <Button
           icon={love.icon.EnterRoom}
           label={love.string.EnterRoom}
           size="medium"
           kind="primary"
-          autoFocus
+          autofocus
           on:click={connect}
-          dataId="room-enter"
+          data-id="room-enter"
         />
       </div>
     {/if}

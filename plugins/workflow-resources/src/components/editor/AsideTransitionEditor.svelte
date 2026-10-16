@@ -25,13 +25,13 @@
     Label,
     languageStore,
     Modal,
-    ModernButton,
     ModernDropdown,
     ModernDropdownLabels,
     ModernEditbox,
     showPopup,
     Spinner
   } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type { ConflictInfo, Workflow, WorkflowTransition } from '@hcengineering/workflow'
   import { getTransitionConflict, removeTransition, updateTransition } from '@hcengineering/workflow'
 
@@ -116,7 +116,7 @@
         : null
   }
 
-  function getFromStatus (ids: DropdownTextItem['id'][] | undefined): Ref<Status>[] | null {
+  function getFromStatus(ids: DropdownTextItem['id'][] | undefined): Ref<Status>[] | null {
     return ids == null || ids.includes('null') ? null : ((ids ?? []) as Ref<Status>[])
   }
 
@@ -126,7 +126,7 @@
     to: toStatusId as Ref<Status> | undefined
   }
 
-  function isTransitionFlowValid (
+  function isTransitionFlowValid(
     to: Ref<Status> | undefined,
     fromItemIds: Ref<Status>[] | null | undefined,
     isSelfTransition: boolean,
@@ -140,7 +140,7 @@
     return hasTargetStatus && hasSourceStatuses && isNotSelf && hasNoConflicts
   }
 
-  function cloneData (data: Partial<Data<WorkflowTransition>>): Partial<Data<WorkflowTransition>> {
+  function cloneData(data: Partial<Data<WorkflowTransition>>): Partial<Data<WorkflowTransition>> {
     return {
       name: data.name,
       from: data.from ? [...data.from] : data.from,
@@ -148,7 +148,7 @@
     }
   }
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (transition == null || readonly) return
 
     if (savePromise != null) {
@@ -205,7 +205,7 @@
     }
   }
 
-  function handleAutoSave (_: Partial<Data<WorkflowTransition>>): void {
+  function handleAutoSave(_: Partial<Data<WorkflowTransition>>): void {
     if (transition == null || transition._id !== lastLoadedId || readonly) return
 
     if (timer != null) clearTimeout(timer)
@@ -216,13 +216,13 @@
 
   $: handleAutoSave(updatedData)
 
-  async function closeEditor (): Promise<void> {
+  async function closeEditor(): Promise<void> {
     if (timer != null) clearTimeout(timer)
     await save()
     clearSettingsStore()
   }
 
-  async function handleRemove (): Promise<void> {
+  async function handleRemove(): Promise<void> {
     showPopup(MessageBox, {
       label: plugin.string.DeleteWorkflowTransition,
       message: plugin.string.DeleteWorkflowTransitionConfirm,
@@ -364,8 +364,8 @@
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
     <div class="footer-left">
       {#if !readonly}
-        <ModernButton
-          dataId="btnRemoveTransition"
+        <Button
+          data-id="btnRemoveTransition"
           label={presentation.string.Remove}
           size="large"
           kind="secondary"

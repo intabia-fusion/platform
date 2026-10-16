@@ -12,10 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, CheckBox, Component, IconMoreV, Label, showPopup, Spinner } from '@hcengineering/ui'
+  import { CheckBox, Component, IconMoreV, Label, showPopup, Spinner } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { DocNotifyContext } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
   import { Menu } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'
@@ -35,7 +37,7 @@
 
   $: presenterMixin = hierarchy.classHierarchyMixin(value.objectClass, notification.mixin.NotificationContextPresenter)
 
-  function showMenu (ev: MouseEvent): void {
+  function showMenu(ev: MouseEvent): void {
     ev.stopPropagation()
     ev.preventDefault()
     showPopup(
@@ -52,15 +54,15 @@
     handleActionMenuOpened()
   }
 
-  function handleActionMenuOpened (): void {
+  function handleActionMenuOpened(): void {
     isActionMenuOpened = true
   }
 
-  function handleActionMenuClosed (): void {
+  function handleActionMenuClosed(): void {
     isActionMenuOpened = false
   }
 
-  async function checkContext (): Promise<void> {
+  async function checkContext(): Promise<void> {
     dispatch('clear')
   }
   $: identifier = value.objectIdentifier
@@ -95,12 +97,13 @@
         <CheckBox checked={false} kind="todo" size="medium" on:value={checkContext} />
       {/if}
     </div>
-    <ButtonIcon
+    <IconButton
       icon={IconMoreV}
       size="small"
       kind="tertiary"
       inheritColor
       pressed={isActionMenuOpened}
+      tooltip={{ label: view.string.MoreActions }}
       on:click={showMenu}
     />
   </div>

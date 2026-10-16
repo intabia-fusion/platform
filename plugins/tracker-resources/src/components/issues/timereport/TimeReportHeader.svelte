@@ -21,18 +21,17 @@
     areDatesEqual,
     ticker,
     Header,
-    ButtonIcon,
-    ButtonBase,
     IconChevronLeft,
     IconChevronRight,
     getFormattedDate
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
 
   export let currentDate: Date = new Date()
   // Step for navigation: number of days to shift, or 'month' for a calendar-month step.
   export let step: number | 'month' = 1
 
-  function inc (val: number): void {
+  function inc(val: number): void {
     if (val === 0) {
       currentDate = new Date()
       return
@@ -46,7 +45,7 @@
     currentDate = next
   }
 
-  function getTitle (day: Date, now: Timestamp): IntlString {
+  function getTitle(day: Date, now: Timestamp): IntlString {
     const isCurrentYear = day.getFullYear() === new Date().getFullYear()
     return getEmbeddedLabel(
       day.toLocaleDateString('default', {
@@ -68,22 +67,22 @@
 
   <svelte:fragment slot="actions" let:doubleRow>
     <slot />
-    <ButtonIcon
+    <IconButton
       icon={IconChevronLeft}
       kind="secondary"
       size="small"
-      dataId="btnPrev"
+      data-id="btnPrev"
+      tooltip={{ label: ui.string.Back }}
       on:click={() => {
         inc(-1)
       }}
     />
-    <ButtonBase
-      label={!doubleRow ? ui.string.Today : undefined}
-      title={!doubleRow ? getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) : undefined}
-      type={!doubleRow ? 'type-button' : 'type-button-icon'}
+    <Button
+      label={!doubleRow ? ui.string.TodayDate : undefined}
+      labelParams={{ date: getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) }}
       kind="secondary"
       size="small"
-      dataId="btnToday"
+      data-id="btnToday"
       inheritFont
       hasMenu
       disabled={isToday}
@@ -91,11 +90,12 @@
         inc(0)
       }}
     />
-    <ButtonIcon
+    <IconButton
       icon={IconChevronRight}
       kind="secondary"
       size="small"
-      dataId="btnNext"
+      data-id="btnNext"
+      tooltip={{ label: ui.string.Next }}
       on:click={() => {
         inc(1)
       }}

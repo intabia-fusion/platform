@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { State, Transition } from '@hcengineering/process'
-  import { getCurrentLocation, navigate, ButtonIcon, IconDescription, NavItem, Separator } from '@hcengineering/ui'
+  import { getCurrentLocation, navigate, IconDescription, NavItem, Separator } from '@hcengineering/ui'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import process from '../../plugin'
 
@@ -23,7 +23,7 @@
   export let states: State[] = []
   export let transitions: Transition[] = []
 
-  function handleSelect (id: Ref<State | Transition>): void {
+  function handleSelect(id: Ref<State | Transition>): void {
     const loc = getCurrentLocation()
     loc.path[5] = process.component.TransitionEditor
     loc.path[6] = id

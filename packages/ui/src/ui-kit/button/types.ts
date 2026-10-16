@@ -77,9 +77,11 @@ export type IconButtonProps = Omit<ButtonProps, 'label' | 'labelParams' | 'icon'
   icon: IconComponent
 } & ({ tooltip: TooltipWithLabel, 'aria-label'?: string } | { tooltip?: LabelAndProps, 'aria-label': string })
 
-export interface MenuButtonProps extends Omit<ButtonProps, 'hasMenu' | 'pressed'> {
-  items: DropdownIntlItem[]
-  selected?: DropdownIntlItem['id']
+/** `Id` is the item id type, so `selected` and the `selected` event carry it as is. */
+export interface MenuButtonProps<Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']>
+  extends Omit<ButtonProps, 'hasMenu' | 'pressed'> {
+  items: Array<DropdownIntlItem<Id>>
+  selected?: Id
   /** Keeps the selected item unmarked in the list. */
   noSelection?: boolean
   /** A single item is selected right away, without opening the list. */
@@ -88,6 +90,6 @@ export interface MenuButtonProps extends Omit<ButtonProps, 'hasMenu' | 'pressed'
   itemParams?: Record<string, any>
 }
 
-export interface MenuButtonEvents extends ButtonEvents {
-  selected: CustomEvent<DropdownIntlItem['id']>
+export interface MenuButtonEvents<Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']> extends ButtonEvents {
+  selected: CustomEvent<Id>
 }

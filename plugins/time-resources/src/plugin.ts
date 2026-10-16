@@ -24,7 +24,6 @@ export default mergeIds(timeId, time, {
   },
   string: {
     Today: '' as IntlString,
-    TodayColon: '' as IntlString,
     ToDoColon: '' as IntlString,
     Tomorrow: '' as IntlString,
     Yesterday: '' as IntlString,
@@ -65,6 +64,7 @@ export default mergeIds(timeId, time, {
     Occupancy: '' as IntlString,
     ShowEvents: '' as IntlString,
     ShowActivity: '' as IntlString,
+    Settings: '' as IntlString,
     MonthCalendar: '' as IntlString,
     YearCalendar: '' as IntlString
   }

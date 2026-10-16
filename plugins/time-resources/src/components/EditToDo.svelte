@@ -17,11 +17,12 @@
   import calendar from '@hcengineering/calendar-resources/src/plugin'
   import type { Class, Ref, Space, Markup } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import { SpaceSelector, getClient, createQuery } from '@hcengineering/presentation'
+  import presentation, { SpaceSelector, getClient, createQuery } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
   import task from '@hcengineering/task'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { ModernEditbox, CheckBox, Component, IconClose, Label, Modal, Spinner, ButtonIcon } from '@hcengineering/ui'
+  import { ModernEditbox, CheckBox, Component, IconClose, Label, Modal, Spinner } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { ToDo, ToDoPriority } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
@@ -66,44 +67,44 @@
       }
     })
 
-  export function canClose (): boolean {
+  export function canClose(): boolean {
     return true
   }
 
-  async function updateName () {
+  async function updateName() {
     if (object.title !== title) {
       await client.update(object, { title })
     }
   }
 
-  async function updateDescription () {
+  async function updateDescription() {
     if (object.description !== description) {
       await client.update(object, { description })
     }
   }
 
-  async function markDone () {
+  async function markDone() {
     object.doneOn = object.doneOn == null ? Date.now() : null
     await client.update(object, { doneOn: object.doneOn })
   }
 
-  async function dueDateChange (value: Date | null) {
+  async function dueDateChange(value: Date | null) {
     const dueDate = value != null ? value.getTime() : null
     await client.update(object, { dueDate })
     object.dueDate = dueDate
   }
 
-  async function priorityChange (priority: ToDoPriority) {
+  async function priorityChange(priority: ToDoPriority) {
     await client.update(object, { priority })
     object.priority = priority
   }
 
-  async function visibilityChange (visibility: Visibility) {
+  async function visibilityChange(visibility: Visibility) {
     await client.update(object, { visibility })
     object.visibility = visibility
   }
 
-  async function spaceChange (space: Space | null) {
+  async function spaceChange(space: Space | null) {
     const oldSpace = object.attachedSpace ?? undefined
     const newSpace = space?._id ?? undefined
     if (newSpace !== oldSpace) {
@@ -142,7 +143,13 @@
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <ButtonIcon icon={IconClose} kind="tertiary" size="small" on:click={() => dispatch('close')} />
+    <IconButton
+      icon={IconClose}
+      kind="tertiary"
+      size="small"
+      tooltip={{ label: presentation.string.Close }}
+      on:click={() => dispatch('close')}
+    />
   </svelte:fragment>
 
   {#if object}

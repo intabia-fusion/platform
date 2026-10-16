@@ -14,7 +14,7 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { ModernButton } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import love from '../../../plugin'
 
@@ -22,12 +22,12 @@
   export let onClick: (e: MouseEvent, person: Person) => void
 </script>
 
-<ModernButton
+<Button
   label={love.string.WaitingForMeeting}
   kind="primary"
   size="small"
   tooltip={{ label: getEmbeddedLabel(`Waiting for ${person.name} to start the meeting`), direction: 'bottom' }}
-  dataId="awaiting-meeting-trigger"
+  data-id="awaiting-meeting-trigger"
   on:click={(e) => {
     onClick(e, person)
   }}
@@ -37,7 +37,7 @@
       <Avatar name={person.name} size="card" {person} />
     </div>
   </div>
-</ModernButton>
+</Button>
 
 <style lang="scss">
   .avatars-container {

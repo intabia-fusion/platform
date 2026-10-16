@@ -17,7 +17,7 @@
   import { createWorkspace, getAccountDisplayName, getRegionInfo, setLoginInfo } from '@hcengineering/login-resources'
   import { Status, Severity, OK, getEmbeddedLabel } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { ButtonMenu } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import Form from './Form.svelte'
   import onboard from '../plugin'
@@ -34,6 +34,7 @@
 
   let status: Status<any> = OK
   let regions: RegionInfo[] = []
+  $: regionItems = regions.map((it) => ({ id: it.region, label: getEmbeddedLabel(it.name) }))
   let selectedRegion: string = ''
 
   onMount(async () => {
@@ -68,11 +69,11 @@
   <svelte:fragment slot="region-selector">
     {#if regions.length > 1}
       <div class="flex flex-grow flex-reverse">
-        <ButtonMenu
+        <MenuButton
           bind:selected={selectedRegion}
-          autoSelectionIfOne
-          title={regions.find((it) => it.region === selectedRegion)?.name}
-          items={regions.map((it) => ({ id: it.region, label: getEmbeddedLabel(it.name) }))}
+          label={regionItems.find((it) => it.id === selectedRegion)?.label}
+          autoSelectSingle
+          items={regionItems}
           on:selected={(it) => {
             selectedRegion = it.detail
           }}

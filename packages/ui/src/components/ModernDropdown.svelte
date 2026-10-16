@@ -17,6 +17,7 @@
   import { createEventDispatcher } from 'svelte'
   import { deepEqual } from 'fast-equals'
 
+  import Button from '../ui-kit/button/Button.svelte'
   import { getFocusManager } from '../focus'
   import ui from '../plugin'
   import { closePopup, showPopup } from '../popups'
@@ -33,7 +34,6 @@
   import Icon from './Icon.svelte'
   import DropdownIcon from './icons/Dropdown.svelte'
   import Label from './Label.svelte'
-  import ModernButton from './ModernButton.svelte'
   import ModernPopup from './ModernPopup.svelte'
 
   type SelectedItem = DropdownIntlItem['id'] | Array<DropdownIntlItem['id']>
@@ -61,7 +61,6 @@
   export let minW0: boolean = true
   export let focusIndex: number = -1
   export let dataId: string | undefined = undefined
-  export let noFocus: boolean = false
   export let withSearch: boolean = false
   export let searchPlaceholder: IntlString = ui.string.Search
   export let allowDeselect: boolean = false
@@ -81,7 +80,7 @@
 
   $: activeTooltip = tooltip !== undefined ? { timeout: 600, ...tooltip } : undefined
 
-  function getItemId (item: DropdownIntlItem | SelectedItem | undefined): DropdownIntlItem['id'] | undefined {
+  function getItemId(item: DropdownIntlItem | SelectedItem | undefined): DropdownIntlItem['id'] | undefined {
     if (item == null) return undefined
     if (Array.isArray(item)) return item[0]
     if (typeof item === 'object') return item.id
@@ -117,7 +116,7 @@
     }
   }
 
-  function handleSelect (result: DropdownIntlItem['id'] | undefined): void {
+  function handleSelect(result: DropdownIntlItem['id'] | undefined): void {
     if (result != null) {
       const matchedItem = (items ?? []).find((x) => getItemId(x) === result)
       if (allowDeselect && getItemId(selected) === result) {
@@ -134,7 +133,7 @@
     }
   }
 
-  function openPopup (): void {
+  function openPopup(): void {
     if (!opened && !disabled) {
       opened = true
       showPopup(
@@ -181,9 +180,9 @@
   style:min-width={minWidth}
   use:tp={activeTooltip}
 >
-  <ModernButton
+  <Button
     {focusIndex}
-    {dataId}
+    data-id={dataId}
     {icon}
     {iconProps}
     {size}
@@ -192,7 +191,6 @@
     {disabled}
     pressed={opened}
     {loading}
-    {noFocus}
     tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
     on:click={openPopup}
   >
@@ -245,7 +243,7 @@
         </div>
       {/if}
     </div>
-  </ModernButton>
+  </Button>
 </div>
 
 <style lang="scss">
@@ -257,7 +255,7 @@
       flex: 1;
     }
 
-    :global(.hulyButton) {
+    :global(.button) {
       width: 100%;
       display: inline-flex;
       align-items: center;
@@ -301,7 +299,7 @@
   }
 
   .multiselect-wrap {
-    :global(.hulyButton) {
+    :global(.button) {
       height: auto !important;
       min-height: 2.25rem;
       padding-top: 0.25rem !important;

@@ -56,6 +56,8 @@
     "OpenInWindow": "Abrir numa janela",
     "Embeddings": "Incorporações",
     "Transcribing": "Transcrevendo...",
-    "TranscriptionFailed": "Falha na transcrição"
+    "TranscriptionFailed": "Falha na transcrição",
+    "Play": "Reproduzir",
+    "Pause": "Pausar"
   }
 }

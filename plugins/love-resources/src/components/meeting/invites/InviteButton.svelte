@@ -14,7 +14,7 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { ModernButton } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { UserMeetingInvite } from '@hcengineering/love'
   import love from '../../../plugin'
@@ -39,12 +39,12 @@
       : getEmbeddedLabel(`Invited by ${person.name}`)
 </script>
 
-<ModernButton
+<Button
   {label}
   kind="primary"
   size="small"
   tooltip={{ label: tooltipLabel, direction: 'bottom' }}
-  dataId={type === 'incoming' ? 'incoming-invite-trigger' : 'outgoing-invite-trigger'}
+  data-id={type === 'incoming' ? 'incoming-invite-trigger' : 'outgoing-invite-trigger'}
   on:click={(e) => {
     onClick(e, invite, person)
   }}
@@ -54,7 +54,7 @@
       <Avatar name={person.name} size="card" {person} />
     </div>
   </div>
-</ModernButton>
+</Button>
 
 <style lang="scss">
   .avatars-container {

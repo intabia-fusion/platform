@@ -19,7 +19,6 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import ui, {
     Button,
-    ButtonIcon,
     Chip,
     IconAdd,
     Label,
@@ -28,6 +27,7 @@
     eventToHTMLElement,
     showPopup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import settingsRes from '../plugin'
   import { webhookEventNames, webhookEventTypes, type WebhookEventType } from '../webhookEvents'
@@ -48,7 +48,7 @@
   $: urlValid = (allowHttp ? /^https?:\/\// : /^https:\/\//).test(url.trim())
   $: canSave = !saving && urlValid && events.length > 0
 
-  function pickEvents (event: MouseEvent): void {
+  function pickEvents(event: MouseEvent): void {
     showPopup(
       WebhookEventsPopup,
       { selected: events },
@@ -62,7 +62,7 @@
     )
   }
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (!canSave) return
     saving = true
     error = undefined
@@ -115,7 +115,7 @@
       <div class="flex-row-center flex-between">
         <Label label={settingsRes.string.WebhookEventsLabel} />
         <div class="flex-row-center flex-gap-1">
-          <ButtonIcon
+          <IconButton
             kind="tertiary"
             size="small"
             icon={IconAdd}

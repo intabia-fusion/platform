@@ -19,7 +19,8 @@
     type NotificationProvider,
     type NotificationProviderSetting
   } from '@hcengineering/notification'
-  import { ModernButton, showPopup } from '@hcengineering/ui'
+  import { showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
 
   import EmailPreferencesPopup from './EmailPreferencesPopup.svelte'
 
@@ -27,14 +28,14 @@
   export let setting: NotificationProviderSetting | undefined
   export let enabled: boolean
 
-  function configure (): void {
+  function configure(): void {
     showPopup(EmailPreferencesPopup, { provider, setting, enabled })
   }
 </script>
 
 {#if enabled}
   <div class="configure mt-2">
-    <ModernButton label={notification.string.Configure} kind="primary" size="small" on:click={configure} />
+    <Button label={notification.string.Configure} kind="primary" size="small" on:click={configure} />
   </div>
 {/if}
 

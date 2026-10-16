@@ -17,7 +17,8 @@
   import type { Class, Ref, Status } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
-  import ui, { ButtonBase, Label, Modal } from '@hcengineering/ui'
+  import ui, { Label, Modal } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowRule, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
@@ -45,16 +46,16 @@
   $: mode = selectedRule != null ? 'edit' : 'list'
   $: canSave = mode === 'list' ? false : canSave
 
-  function onSelectTransition (event: CustomEvent<Ref<WorkflowTransition>>): void {
+  function onSelectTransition(event: CustomEvent<Ref<WorkflowTransition>>): void {
     const _id = event.detail
     transition = transitions.find((t) => t._id === _id)
   }
 
-  function handleSelectRule (event: CustomEvent<Pick<WorkflowRule, '_id' | '_class'>>): void {
+  function handleSelectRule(event: CustomEvent<Pick<WorkflowRule, '_id' | '_class'>>): void {
     selectedRule = client.getModel().findObject(event.detail._id)
   }
 
-  async function handleSave (): Promise<void> {
+  async function handleSave(): Promise<void> {
     if (editorComponent == null) return
     if (editorComponent.save != null) {
       await editorComponent.save()
@@ -62,7 +63,7 @@
     dispatch('close')
   }
 
-  function handleRuleTypeSelect (ev: CustomEvent<Ref<Class<WorkflowRule>>>): void {
+  function handleRuleTypeSelect(ev: CustomEvent<Ref<Class<WorkflowRule>>>): void {
     selectedRule = undefined
     _class = ev.detail
   }
@@ -126,8 +127,7 @@
   <svelte:fragment slot="buttons">
     <div class="add-rules-popup--back-button">
       {#if selectedRule != null}
-        <ButtonBase
-          type="type-button"
+        <Button
           kind="secondary"
           size="medium"
           label={ui.string.Back}

@@ -20,7 +20,6 @@
   import type { IntlString } from '@hcengineering/platform'
   import type { SpaceTypeEditor } from '@hcengineering/setting'
   import {
-    ButtonIcon,
     Component,
     IconDescription,
     NavItem,
@@ -30,6 +29,8 @@
     defineSeparators,
     secondNavSeparators
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import settingRes from '../../../plugin'
 
   export let type: SpaceType
   export let descriptor: SpaceTypeDescriptor | undefined
@@ -43,7 +44,7 @@
     void loadDescriptor()
   }
 
-  async function loadDescriptor (): Promise<void> {
+  async function loadDescriptor(): Promise<void> {
     descriptor = await client.findOne(core.class.SpaceTypeDescriptor, { _id: type.descriptor })
   }
 
@@ -82,7 +83,13 @@
       <div class="hulyComponent-content__column">
         <div class="hulyComponent-content__navHeader">
           <div class="hulyComponent-content__navHeader-menu">
-            <ButtonIcon kind="tertiary" icon={IconDescription} size="small" inheritColor />
+            <IconButton
+              kind="tertiary"
+              icon={IconDescription}
+              size="small"
+              inheritColor
+              tooltip={{ label: settingRes.string.SpaceTypes }}
+            />
           </div>
         </div>
         {#each navigator as navItem, i (navItem.id)}

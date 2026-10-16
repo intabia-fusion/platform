@@ -11,7 +11,7 @@ import { Button } from '@hcengineering/ui/kit'
 
 ## Компоненты
 
-| Component | Purpose | Key props | Заменяет |
+| Component | Purpose | Key props | Заменил |
 |---|---|---|---|
 | Button | База кнопок: текст, иконка или оба; toggle, кнопка своего попапа, загрузка | `kind`, `size`, `label`, `icon`, `pressed` | ModernButton, ButtonBase |
 | IconButton | Кнопка только с иконкой; доступное имя обязательно по типам | `icon`, `tooltip` / `aria-label`, `kind`, `size` | ButtonIcon |
@@ -23,8 +23,12 @@ import { Button } from '@hcengineering/ui/kit'
 
 - `kind`: `primary` / `secondary` / `tertiary` / `negative`; `size`: `large` (по умолчанию) / `medium` / `small` /
   `extra-small` / `min` (только icon-only); `shape`: `rectangle` / `round`; `type` - нативный, по умолчанию `button`.
-- Текст - `label` (IntlString) или default slot. Без текста и с `icon` кнопка icon-only (квадрат), доступное имя
-  берётся из `tooltip.label`; в коде icon-only - через `IconButton`.
+- Текст - всегда `label` (IntlString): готовая строка (имя, дата, число) - `getEmbeddedLabel(text)`, строка с данными -
+  ключ с параметром и `labelParams` (`ui.string.TodayDate`). Default slot - только для разметки (аватары, счётчики):
+  даже пустое выражение в слоте делает кнопку не icon-only. У `MenuButton` подпись выбранного пункта берётся из его
+  `items`: `label={items.find((it) => it.id === selected)?.label}`.
+- Без текста и с `icon` кнопка icon-only (квадрат), доступное имя берётся из `tooltip.label`; в коде icon-only - через
+  `IconButton`.
 - Иконка `medium` рядом с текстом, `small` у icon-only и кнопки меню; `iconSize` переопределяет.
 - `pressed`: `undefined` - обычная кнопка, `true`/`false` - toggle (`aria-pressed`); с `hasMenu` - открыт ли попап
   (`aria-haspopup`, `aria-expanded`). `hasMenu` - для кнопки, открывающей свой попап; выбор из списка - `MenuButton`.
@@ -42,11 +46,17 @@ import { Button } from '@hcengineering/ui/kit'
 
 - `icon` обязателен; доступное имя обязательно: `tooltip` с `label` или `aria-label`, иначе ошибка типов. `label` и слота
   нет. Остальные пропсы и события - как у `Button`.
+- Подпись берётся из существующих строк (свои строки плагина, `presentation.string`, `view.string`, `ui.string`). Если
+  `tooltip` - компонент без `label`, имя задаётся переведённым `aria-label` (пример - `process-resources` `ErrorPresenter`).
+- Глиф не из иконок (эмодзи) - компонентом-иконкой: `icon={EmojiGlyph}` с `iconProps` (`emoji-resources`), кнопка
+  остаётся квадратной.
 - Проверка типов - `src/__test__/ui-kit/IconButtonTypes.svelte` (svelte-check; tsc видит импорты `.svelte` как `any`).
 
 ### MenuButton
 
-- `items: DropdownIntlItem[]`, `selected` (поддерживает `bind:selected`), событие `selected` с id пункта.
+- `items: DropdownIntlItem<Id>[]`, `selected?: Id` (поддерживает `bind:selected`), событие `selected: CustomEvent<Id>`.
+  Компонент обобщён по типу id (`generics`), поэтому список с типизированными id даёт типизированный выбор:
+  `const items: Array<DropdownIntlItem<Visibility>> = [...]`. Любой id, кроме `undefined`, выбирается (в том числе `0`).
 - `noSelection` - не отмечать выбранный пункт; `autoSelectSingle` - единственный пункт выбирается без попапа;
   `itemParams` - параметры строк пунктов.
 - Попап `ModernPopup` у кнопки; `hasMenu` и `pressed` (`aria-expanded`) ведёт сам. Смена `items` при открытом попапе
@@ -60,7 +70,9 @@ import { Button } from '@hcengineering/ui/kit'
 - Нет пропсов раскладки (`width`, `padding`, `flex`, ...) - размеры и отступы задаёт место использования.
 - Классы по БЭМ: блок - имя компонента (`button`), элементы `button__icon`, модификаторы `button--primary`.
   Локальные custom properties компонента - с префиксом `--_` (`--_bg`), токены темы в разметку не попадают.
-- Событие не глушится по умолчанию (`stopPropagation`/`preventDefault` решает вызывающий код).
+- Событие не глушится по умолчанию (`stopPropagation`/`preventDefault` решает вызывающий код). Модификаторы
+  (`on:click|stopPropagation`) на компоненте в Svelte 4 недоступны: кнопка внутри кликабельного родителя (строка,
+  `NavItem`) вызывает `event.stopPropagation()` в своём обработчике.
 - Компонент приходит вместе с историей Storybook (`dev/storybook/src/ui-kit/<Component>.stories.ts`), тестом
   (`packages/ui/src/__test__`) и строкой в таблице выше.
 
@@ -84,8 +96,6 @@ pnpm run build-storybook   # статическая сборка в storybook-st
   только у пропсов, меняющих вид или поведение. Новый проп кита - строка в `categories` и, если он невизуальный,
   в `withoutControl`; в историях `argTypes` не дублируются.
 - Хосты попапов и тултипов монтируются один раз в `.storybook/preview.ts`.
-- `src/legacy/` (раздел **Legacy (to be removed)**) - сравнение старых компонентов с китом пара к паре; удаляется
-  вместе со старыми компонентами.
 - Проверки: `pnpm svelte-check --to @hcengineering/storybook` (typecheck историй), eslint - через `pnpm format`.
   В `pnpm build` Storybook не входит.
 

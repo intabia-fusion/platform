@@ -16,12 +16,13 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { Scroller, Label, ButtonIcon, IconEdit, showPopup, Menu, SearchInput } from '@hcengineering/ui'
+  import { Scroller, Label, IconEdit, showPopup, Menu, SearchInput } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { SpecialNavModel } from '@hcengineering/workbench'
   import { NavLink } from '@hcengineering/view-resources'
   import { TreeSeparator } from '@hcengineering/workbench-resources'
   import type { Chat } from '@hcengineering/chunter'
-  import { createQuery } from '@hcengineering/presentation'
+  import presentation, { createQuery } from '@hcengineering/presentation'
   import type { Employee } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
 
@@ -52,7 +53,7 @@
   $: firstWaveLoaded =
     pinnedLoaded && chatNavGroupModels.every((model) => model.deferred === true || loadedGroups.has(model.id))
 
-  function isGroupActive (model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
+  function isGroupActive(model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
     if (model.deferred === true) return firstWaveLoaded
     if (model.id === 'starred') return pinnedLoaded
     return true
@@ -121,7 +122,7 @@
 
   let pressed: boolean = false
 
-  function handlePenClick (ev: Event): void {
+  function handlePenClick(ev: Event): void {
     pressed = true
     showPopup(Menu, { actions: globalActions }, ev.target as HTMLElement, () => {
       pressed = false
@@ -139,13 +140,14 @@
   {#if hasAccountRole(getCurrentAccount(), AccountRole.User)}
     <div class="header-actions">
       <SearchInput bind:value={search} collapsed kind="ghost" width="100%" />
-      <ButtonIcon
+      <IconButton
         icon={IconEdit}
         hasMenu
         {pressed}
         size="small"
         kind="tertiary"
         inheritColor
+        tooltip={{ label: presentation.string.Create }}
         on:click={handlePenClick}
       />
     </div>

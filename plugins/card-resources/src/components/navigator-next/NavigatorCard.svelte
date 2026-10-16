@@ -20,7 +20,8 @@
   import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import type { Action } from '@hcengineering/ui'
-  import { IconMoreV, NavItem, ButtonIcon } from '@hcengineering/ui'
+  import { IconMoreV, NavItem } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import preference from '@hcengineering/preference'
@@ -42,7 +43,7 @@
 
   let activeAction: string | undefined = undefined
 
-  function toggleFavoriteCard (): void {
+  function toggleFavoriteCard(): void {
     if (favorite !== undefined) {
       void client.remove(favorite)
     } else {
@@ -81,7 +82,7 @@
     }
   ]
 
-  function getCardTitle (card: Card): string {
+  function getCardTitle(card: Card): string {
     if ((card?.parentInfo?.length ?? 0) === 0) return card.title
     const parent = card.parentInfo[card.parentInfo.length - 1]
     if (parent != null) {
@@ -117,7 +118,7 @@
   <svelte:fragment slot="actions">
     {#each actions as action}
       {#if action.icon}
-        <ButtonIcon
+        <IconButton
           icon={action.icon}
           size="extra-small"
           kind="tertiary"

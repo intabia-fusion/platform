@@ -15,7 +15,7 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { RecordingState } from '@hcengineering/love'
   import type { ButtonBaseSize } from '@hcengineering/ui'
-  import { ModernButton } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { isRecordingAvailable, loveClient } from '../../../utils'
   import love from '../../../plugin'
   import { lkSessionConnected } from '../../../liveKitClient'
@@ -41,7 +41,7 @@
   // spinner for the request alone is enough - and it cannot wedge.
   let inFlight = false
 
-  async function toggle (): Promise<void> {
+  async function toggle(): Promise<void> {
     const mm = $currentMeetingMinutes
     if (mm === undefined || inFlight || isCancelling) return
 
@@ -57,14 +57,15 @@
 </script>
 
 {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && $isRecordingAvailable && $currentMeetingMinutes !== undefined}
-  <ModernButton
+  <IconButton
+    iconSize="medium"
     icon={isVideoRecording ? love.icon.StopRecord : love.icon.Record}
     tooltip={{
       label: isCancelling ? love.string.StoppingRecord : isVideoRecording ? love.string.StopRecord : love.string.Record
     }}
     disabled={!$lkSessionConnected || isCancelling || inFlight}
     loading={isCancelling || inFlight}
-    dataId="recording-button"
+    data-id="recording-button"
     {kind}
     {size}
     on:click={() => {

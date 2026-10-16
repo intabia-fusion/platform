@@ -18,7 +18,8 @@
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import { ClassAttributes } from '@hcengineering/setting-resources'
   import setting from '@hcengineering/setting-resources/src/plugin'
-  import { ButtonIcon, showPopup } from '@hcengineering/ui'
+  import { showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import card from '../../plugin'
   import { createTypePermissions } from '../../utils'
 
@@ -30,11 +31,11 @@
     client.getModel().findObject(getPermissionRef(false)) !== undefined ||
     client.getModel().findObject(getPermissionRef(true)) !== undefined
 
-  function getPermissionRef (forbidden: boolean): Ref<ClassPermission> {
+  function getPermissionRef(forbidden: boolean): Ref<ClassPermission> {
     return `${masterTag._id}_${forbidden ? 'forbidden' : 'allowed'}` as Ref<ClassPermission>
   }
 
-  function changeRestricted (): void {
+  function changeRestricted(): void {
     showPopup(
       MessageBox,
       {
@@ -65,7 +66,7 @@
   showAll
 >
   <div slot="header">
-    <ButtonIcon
+    <IconButton
       kind="secondary"
       icon={card.icon.Lock}
       size="small"

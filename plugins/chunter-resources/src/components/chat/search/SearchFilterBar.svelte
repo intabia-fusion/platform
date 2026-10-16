@@ -31,14 +31,14 @@
     IconCalendar,
     IconClose,
     Label,
-    ModernButton,
     ModernDropdownLabels,
     showPopup,
     themeStore,
     type DropdownTextItem
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import { translate, translateCB, type IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate, translateCB, type IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../plugin'
@@ -56,7 +56,7 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
-  function update (patch: Partial<ChatSearchFilters>): void {
+  function update(patch: Partial<ChatSearchFilters>): void {
     filters = { ...filters, ...patch }
     dispatch('change', filters)
   }
@@ -64,7 +64,7 @@
   const ALL_CLASSES = '$all'
   const THREADS = activity.class.ActivityMessage
 
-  async function toItem (_class: Ref<Class<Doc>>, lang: string): Promise<DropdownTextItem> {
+  async function toItem(_class: Ref<Class<Doc>>, lang: string): Promise<DropdownTextItem> {
     const clazz = client.getHierarchy().getClass(_class)
     return { id: _class, label: await translate(clazz.label, {}, lang), icon: clazz.icon }
   }
@@ -75,7 +75,7 @@
     other: DropdownTextItem[]
   }
 
-  async function buildClassGroups (lang: string): Promise<ClassGroups> {
+  async function buildClassGroups(lang: string): Promise<ClassGroups> {
     const { primary, rest } = splitPrimaryClasses(getActivityDocClasses())
 
     const suggested = await Promise.all(primary.map(async (c) => await toItem(c, lang)))
@@ -100,12 +100,12 @@
     return { all, suggested, other }
   }
 
-  function withSection (items: DropdownTextItem[], label: IntlString): DropdownTextItem[] {
+  function withSection(items: DropdownTextItem[], label: IntlString): DropdownTextItem[] {
     return items.map((item, i) => ({ ...item, separatorLabel: i === 0 ? label : undefined }))
   }
 
   // Picked types move up into their own section, as in the object picker; the open popup follows along.
-  function composeClassItems (groups: ClassGroups | undefined, picked: string[]): DropdownTextItem[] {
+  function composeClassItems(groups: ClassGroups | undefined, picked: string[]): DropdownTextItem[] {
     if (groups === undefined) return []
 
     const isPicked = (item: DropdownTextItem): boolean => picked.includes(`${item.id}`)
@@ -135,7 +135,7 @@
   $: classItems = composeClassItems(classGroups, pickedClasses)
   $: selectedClassItems = classItems.filter((item) => selectedClasses.includes(`${item.id}`))
 
-  function handleClassesSelected (selected: unknown): void {
+  function handleClassesSelected(selected: unknown): void {
     const raw = (Array.isArray(selected) ? selected : [selected]).map((id) => `${id}`)
     const ids = raw.filter((id) => id !== ALL_CLASSES)
     const objectClasses = ids.length > 0 ? (ids as Array<Ref<Class<Doc>>>) : undefined
@@ -145,11 +145,11 @@
     update({ attachedToClasses: objectClasses, attachedTo: kept })
   }
 
-  function placeClasses (classes: Array<Ref<Class<Doc>>> | undefined): Array<Ref<Class<Doc>>> | undefined {
+  function placeClasses(classes: Array<Ref<Class<Doc>>> | undefined): Array<Ref<Class<Doc>>> | undefined {
     return classes?.includes(THREADS) === true ? undefined : classes
   }
 
-  function keepMatchingObjects (
+  function keepMatchingObjects(
     objects: PickedObject[] | undefined,
     objectClasses: Array<Ref<Class<Doc>>> | undefined
   ): PickedObject[] | undefined {
@@ -167,7 +167,7 @@
   let memberRefs: Array<Ref<Person>> | undefined
   $: void loadMembers(space, $employeeRefByAccountUuidStore)
 
-  async function loadMembers (space: Ref<Space> | undefined, byAccount: Map<AccountUuid, Ref<Employee>>): Promise<void> {
+  async function loadMembers(space: Ref<Space> | undefined, byAccount: Map<AccountUuid, Ref<Employee>>): Promise<void> {
     if (space === undefined) {
       memberRefs = undefined
       return
@@ -176,7 +176,7 @@
     memberRefs = found?.members.map((m) => byAccount.get(m)).filter(notEmpty)
   }
 
-  function pickAuthors (ev: MouseEvent): void {
+  function pickAuthors(ev: MouseEvent): void {
     showPopup(
       UsersPopup,
       {
@@ -196,7 +196,7 @@
     )
   }
 
-  function handleAuthorsSelected (selected: Array<Ref<Person>>): void {
+  function handleAuthorsSelected(selected: Array<Ref<Person>>): void {
     if (selected.length === 0) {
       update({ authors: undefined })
       return
@@ -210,7 +210,7 @@
 
   $: objects = filters.attachedTo ?? []
 
-  function openObjects (): void {
+  function openObjects(): void {
     showPopup(
       SearchObjectPopup,
       { selected: objects, classes: placeClasses(filters.attachedToClasses) },
@@ -241,7 +241,7 @@
 
   $: activeOptions = [filters.hasAttachment === true, filters.includeTranscription === true].filter(Boolean).length
 
-  function openOptions (): void {
+  function openOptions(): void {
     showPopup(
       SearchOptionsPopup,
       { filters },
@@ -255,7 +255,7 @@
     )
   }
 
-  function pickDate (): void {
+  function pickDate(): void {
     showPopup(
       RangeDatePopup,
       {
@@ -264,7 +264,7 @@
         label: chunter.string.SearchFilterDate
       },
       undefined,
-      (result: { startDate?: Date | null, endDate?: Date | null } | undefined) => {
+      (result: { startDate?: Date | null; endDate?: Date | null } | undefined) => {
         if (result === undefined) return
         const from = result.startDate ?? undefined
         const to = result.endDate ?? undefined
@@ -281,7 +281,7 @@
     )
   }
 
-  function formatDay (value: number, lang: string): string {
+  function formatDay(value: number, lang: string): string {
     return new Date(value).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
@@ -289,7 +289,7 @@
 
   $: translateCB(chunter.string.SearchFilterDate, {}, $themeStore.language, (r) => (dateLabel = r))
 
-  function formatRange (from: number | undefined, to: number | undefined, lang: string): string {
+  function formatRange(from: number | undefined, to: number | undefined, lang: string): string {
     if (from === undefined && to === undefined) return dateLabel
     if (from === undefined) return `… – ${formatDay(to as number, lang)}`
     if (to === undefined) return `${formatDay(from, lang)} – …`
@@ -303,7 +303,7 @@
 
 {#if compact}
   <div class="compact-bar">
-    <ModernButton
+    <Button
       icon={persons.length === 0 ? contact.icon.Person : undefined}
       kind="tertiary"
       size="small"
@@ -325,7 +325,7 @@
           {/if}
         </span>
       {/if}
-    </ModernButton>
+    </Button>
   </div>
 {:else}
   <div class="filter-bar-host">
@@ -355,7 +355,7 @@
         </svelte:fragment>
       </ModernDropdownLabels>
 
-      <ModernButton
+      <Button
         icon={persons.length === 0 ? contact.icon.Person : undefined}
         label={persons.length === 0 ? chunter.string.SearchFilterAuthor : undefined}
         kind="secondary"
@@ -376,10 +376,10 @@
             {/if}
           </span>
         {/if}
-      </ModernButton>
+      </Button>
 
       <div bind:this={objectsButton}>
-        <ModernButton
+        <Button
           icon={objectsIcon}
           label={objects.length === 0 ? chunter.string.SearchFilterObject : undefined}
           kind="secondary"
@@ -397,23 +397,22 @@
               <FilterButtonContent title={objects[0].title} doc={objects[0].doc} count={objects.length} />
             {/if}
           {/if}
-        </ModernButton>
+        </Button>
       </div>
 
       <div class="filter">
-        <ModernButton
+        <Button
           icon={IconCalendar}
           label={filters.after === undefined && filters.before === undefined
             ? chunter.string.SearchFilterDate
-            : undefined}
-          title={filters.after !== undefined || filters.before !== undefined ? dateText : undefined}
+            : getEmbeddedLabel(dateText)}
           kind="secondary"
           size="small"
           iconSize="small"
           on:click={pickDate}
         />
         {#if filters.after !== undefined || filters.before !== undefined}
-          <ModernButton
+          <IconButton
             icon={IconClose}
             kind="tertiary"
             size="small"
@@ -427,7 +426,7 @@
       </div>
 
       <div bind:this={optionsButton}>
-        <ModernButton
+        <Button
           icon={IconAttachment}
           label={chunter.string.SearchFilterOptions}
           kind="secondary"
@@ -438,7 +437,7 @@
           {#if activeOptions > 0}
             <span class="counter">{activeOptions}</span>
           {/if}
-        </ModernButton>
+        </Button>
       </div>
 
       {#if $$slots.trailing}

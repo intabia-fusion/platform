@@ -30,8 +30,6 @@
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { TabItem } from '@hcengineering/ui'
   import {
-    ButtonIcon,
-    ButtonMenu,
     type DropdownIntlItem,
     EditBox,
     IconCopy,
@@ -45,6 +43,7 @@
     showPopup,
     Switcher
   } from '@hcengineering/ui'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { exportWorkflow, removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 
@@ -72,7 +71,7 @@
 
   $: effectiveViewMode = isNarrowScreen && userViewMode === 'split' ? 'editor' : userViewMode
 
-  function updateScreenSize (): void {
+  function updateScreenSize(): void {
     if (typeof window !== 'undefined') {
       isNarrowScreen = window.innerWidth < 1100
     }
@@ -141,7 +140,7 @@
   let transitions: WorkflowTransition[] = []
   $: transitions = (workflow?.$lookup?.transitions ?? []) as WorkflowTransition[]
 
-  async function saveName (): Promise<void> {
+  async function saveName(): Promise<void> {
     if (workflow !== undefined) {
       await client.update(workflow, { name: workflow.name.trim() })
     }
@@ -149,7 +148,7 @@
 
   let isDeleteLoading = false
 
-  async function handleRemove (): Promise<void> {
+  async function handleRemove(): Promise<void> {
     if (isDeleteLoading) return
     isDeleteLoading = true
     try {
@@ -172,14 +171,14 @@
     }
   }
 
-  async function handleTaskTypeChange (evt: CustomEvent<Ref<TaskType>>): Promise<void> {
+  async function handleTaskTypeChange(evt: CustomEvent<Ref<TaskType>>): Promise<void> {
     if (workflow === undefined) return
 
     // TODO: implement
     console.log('TODO: change task type', evt.detail)
   }
 
-  function handleViewModeSelect (evt: CustomEvent<TabItem>): void {
+  function handleViewModeSelect(evt: CustomEvent<TabItem>): void {
     if (evt.detail?.id != null) {
       userViewMode = evt.detail.id as WorkflowViewMode
     }
@@ -198,7 +197,7 @@
     }
   ]
 
-  async function handleExportAction (event?: CustomEvent): Promise<void> {
+  async function handleExportAction(event?: CustomEvent): Promise<void> {
     if (event == null || workflow == null) return
     const actionId = event.detail
     if (actionId === 'file') {
@@ -283,9 +282,9 @@
                 onlyIcons={true}
                 on:select={handleViewModeSelect}
               />
-              <ButtonMenu
+              <MenuButton
                 icon={task.icon.Export}
-                dataId="btnExportWorkflow"
+                data-id="btnExportWorkflow"
                 tooltip={{ label: plugin.string.Export, direction: 'bottom' }}
                 size="small"
                 kind="secondary"
@@ -293,9 +292,9 @@
                 items={exportActions}
                 on:selected={handleExportAction}
               />
-              <ButtonIcon
+              <IconButton
                 icon={IconDelete}
-                dataId="btnDeleteWorkflow"
+                data-id="btnDeleteWorkflow"
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"
                 kind="secondary"

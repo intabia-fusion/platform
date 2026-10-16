@@ -86,6 +86,7 @@
     "TwoColumns": "Два столбца",
     "Grid": "Сетка",
     "RichtextProperties": "Текстовые поля",
-    "ShowAllVersions": "Показывать все версии"
+    "ShowAllVersions": "Показывать все версии",
+    "TableOfContents": "Содержание"
   }
 }

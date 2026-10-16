@@ -16,13 +16,14 @@
   import {
     ModernPopup,
     IconDelete,
-    ButtonIcon,
     IconMoreV,
     IconMoreV2,
     showPopup,
     eventToHTMLElement,
     ModernEditbox
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../plugin'
@@ -34,7 +35,7 @@
   let opened: number | undefined = undefined
   const elements: HTMLElement[] = []
 
-  function dragswap (ev: MouseEvent, item: string): boolean {
+  function dragswap(ev: MouseEvent, item: string): boolean {
     const s = values.findIndex((p) => p === selected)
     const i = values.findIndex((p) => p === item)
     if (i < s) {
@@ -45,7 +46,7 @@
     return false
   }
 
-  function dragover (ev: MouseEvent, item: string) {
+  function dragover(ev: MouseEvent, item: string) {
     const s = values.findIndex((p) => p === selected)
     const i = values.findIndex((p) => p === item)
     if (dragswap(ev, item)) {
@@ -55,11 +56,11 @@
 
   const dispatch = createEventDispatcher()
 
-  async function remove (target: string) {
+  async function remove(target: string) {
     dispatch('remove', target)
   }
 
-  async function onDrop () {
+  async function onDrop() {
     dispatch('drop')
   }
 
@@ -77,7 +78,7 @@
     }
   ]
 
-  function openPopup (ev: MouseEvent, n: number) {
+  function openPopup(ev: MouseEvent, n: number) {
     if (opened === undefined) {
       opened = n
       showPopup(ModernPopup, { items }, eventToHTMLElement(ev), (result) => {
@@ -102,7 +103,7 @@
     }
   }
 
-  function update (): void {
+  function update(): void {
     dispatch('update', values)
   }
 </script>
@@ -144,7 +145,8 @@
     </div>
     <div class="hulyTableAttr-content__row-label grow" />
     {#if !disableMouseOver}
-      <ButtonIcon
+      <IconButton
+        tooltip={{ label: view.string.MoreActions }}
         kind="tertiary"
         icon={IconMoreV}
         iconProps={{ fill: 'var(--global-tertiary-TextColor)' }}

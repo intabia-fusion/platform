@@ -16,7 +16,6 @@
   import type { MasterTag } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
   import {
-    ButtonIcon,
     Component,
     IconDescription,
     NavItem,
@@ -25,6 +24,7 @@
     defineSeparators,
     secondNavSeparators
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import card from '../../plugin'
 
   export let masterTag: MasterTag
@@ -48,7 +48,13 @@
     <div class="hulyComponent-content__column">
       <div class="hulyComponent-content__navHeader">
         <div class="hulyComponent-content__navHeader-menu">
-          <ButtonIcon kind="tertiary" icon={IconDescription} size="small" inheritColor />
+          <IconButton
+            kind="tertiary"
+            icon={IconDescription}
+            size="small"
+            inheritColor
+            tooltip={{ label: card.string.TableOfContents }}
+          />
         </div>
       </div>
       {#each sections as navItem (navItem.id)}

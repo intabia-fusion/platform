@@ -15,7 +15,8 @@
   import type { Person } from '@hcengineering/contact'
   import { formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { Label, ModernButton, Scroller } from '@hcengineering/ui'
+  import { Label, Scroller } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   import love from '../../../plugin'
@@ -39,7 +40,7 @@
     dispatch('close')
   }
 
-  async function handleCancel (): Promise<void> {
+  async function handleCancel(): Promise<void> {
     await cancelInvites(undefined, [invite])
     dispatch('close')
   }
@@ -66,7 +67,7 @@
   </div>
 
   <div class="popup-actions">
-    <ModernButton label={love.string.Cancel} kind="secondary" size="medium" on:click={handleCancel} />
+    <Button label={love.string.Cancel} kind="secondary" size="medium" on:click={handleCancel} />
   </div>
 </div>
 

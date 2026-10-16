@@ -23,8 +23,6 @@
   import { calculateStatuses, createState } from '@hcengineering/task'
   import {
     Component,
-    ButtonIcon,
-    ButtonMenu,
     IconCopy,
     IconDelete,
     IconSettings,
@@ -33,11 +31,13 @@
     ModernEditbox,
     TextArea,
     closePopup,
+    type DropdownIntlItem,
     fromCodePoint,
     getPlatformColorDef,
     showPopup,
     themeStore
   } from '@hcengineering/ui'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { ColorsPopup, statusStore } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
   import emojiPlugin from '@hcengineering/emoji'
@@ -68,7 +68,7 @@
   // Same id StatesProjectEditor opens us with: a slow rename may finish after another status was
   // opened, and must not close that one.
   const openedId = status?._id ?? '#'
-  function closeIfStillOpen (): void {
+  function closeIfStillOpen(): void {
     if (get(settingsStore).id === openedId) {
       clearSettingsStore()
     }
@@ -113,7 +113,7 @@
     value.trim() !== '' &&
     !selectableStates.some((it) => it.name === value)
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (readonly) return
     if (total > 0 && value.trim() !== status?.name?.trim()) {
       // We should ask for changes approve.
@@ -135,7 +135,7 @@
     }
   }
 
-  async function performSave (): Promise<void> {
+  async function performSave(): Promise<void> {
     if (_taskType === undefined || _class === undefined) return
     if (status === undefined) {
       const _id = await createState(client, _class, {
@@ -218,8 +218,8 @@
     closeIfStillOpen()
   }
 
-  let selected: number = icon === iconWithEmoji ? 1 : 0
-  const items = [
+  let selected: 'color' | 'emoji' = icon === iconWithEmoji ? 'emoji' : 'color'
+  const items: Array<DropdownIntlItem<'color' | 'emoji'>> = [
     {
       id: 'color',
       label: task.string.Color
@@ -240,7 +240,7 @@
     icon: it.icon
   }))
 
-  async function renameStatuses (
+  async function renameStatuses(
     type: ProjectType,
     taskType: TaskType,
     oldStatus: Ref<Status>,
@@ -270,7 +270,7 @@
     }
   }
 
-  function onDelete (): void {
+  function onDelete(): void {
     if (status === undefined || readonly) return
     const estatus = status
     showPopup(
@@ -298,7 +298,7 @@
     )
   }
 
-  function onDuplicate (): void {
+  function onDuplicate(): void {
     if (readonly) return
     let pattern = ''
     let inc = 2
@@ -351,18 +351,20 @@
 >
   <svelte:fragment slot="actions">
     {#if !readonly}
-      <ButtonIcon
+      <IconButton
         icon={IconDelete}
         size="small"
         kind="tertiary"
         disabled={status === undefined || !canDelete || readonly}
+        tooltip={{ label: presentation.string.Delete }}
         on:click={onDelete}
       />
-      <ButtonIcon
+      <IconButton
         icon={IconCopy}
         size="small"
         kind="tertiary"
         disabled={status === undefined || readonly}
+        tooltip={{ label: presentation.string.Copy }}
         on:click={onDuplicate}
       />
     {/if}
@@ -382,7 +384,7 @@
   <div class="hulyModal-content__settingsSet">
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"><Label label={getEmbeddedLabel('Status Category')} /></span>
-      <ButtonMenu
+      <MenuButton
         items={categories}
         selected={category}
         disabled={!allowEditCategory || readonly}
@@ -399,20 +401,18 @@
   <div class="hulyModal-content__settingsSet table">
     <div class="hulyTableAttr-container">
       <div class="hulyTableAttr-header font-medium-12 withButton">
-        <ButtonMenu
+        <MenuButton
           {items}
           {selected}
           icon={IconSettings}
-          label={items[selected].label}
+          label={items.find((it) => it.id === selected)?.label}
           kind="secondary"
           size="small"
           disabled={readonly}
           on:selected={(event) => {
-            if (event.detail) {
-              selected = items.findIndex((it) => it.id === event.detail)
-              if (selected === 1) {
-                icon = undefined
-              }
+            selected = event.detail
+            if (selected === 'emoji') {
+              icon = undefined
             }
           }}
         />
@@ -421,7 +421,7 @@
         {/if}
       </div>
       <div class="hulyTableAttr-content">
-        {#if selected === 0}
+        {#if selected === 'color'}
           <ColorsPopup
             selected={getPlatformColorDef(color ?? 0, $themeStore.dark).name}
             embedded

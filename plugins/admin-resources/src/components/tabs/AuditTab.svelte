@@ -16,7 +16,8 @@
   import type { AdminAction } from '@hcengineering/account-client'
   import { reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, ButtonMenu, Label, SearchEdit } from '@hcengineering/ui'
+  import { Button, Label, SearchEdit } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import adminRes from '../../plugin'
   import { downloadReport, type ReportFormat } from '../../reports'
@@ -74,7 +75,7 @@
 
   let exporting = false
   let reportFormat: ReportFormat = 'csv'
-  async function exportActions (): Promise<void> {
+  async function exportActions(): Promise<void> {
     exporting = true
     try {
       await downloadReport('admin-actions', reportFormat, { search, action: action === 'all' ? undefined : action })
@@ -85,11 +86,11 @@
     }
   }
 
-  function fmtTime (ms: number): string {
+  function fmtTime(ms: number): string {
     return new Date(ms).toLocaleString()
   }
 
-  function fmtData (data: Record<string, any> | undefined): string {
+  function fmtData(data: Record<string, any> | undefined): string {
     if (data == null) return ''
     return JSON.stringify(data)
   }
@@ -122,9 +123,9 @@
   <Button label={adminRes.string.Next} size="small" disabled={skip + limit >= total} on:click={() => (skip += limit)} />
 
   <span class="ml-4 mr-1"><Label label={adminRes.string.Operation} /></span>
-  <ButtonMenu
+  <MenuButton
     selected={action}
-    title={action === 'all' ? undefined : action}
+    label={actionItems.find((it) => it.id === action)?.label}
     items={actionItems}
     on:selected={(it) => {
       skip = 0

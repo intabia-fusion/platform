@@ -26,7 +26,7 @@
   (`NavItem type="type-anchor-link"`) and a `Scroller` stacking `hulyTableAttr-container` sections -
   copied from `spaceTypes/editor/SpaceTypeEditor.svelte`.
 - Sections: `ApiKeysSection.svelte` (rendered twice, `personal` prop), `WebhookEndpointsSection.svelte`.
-  Header is `hulyTableAttr-header` with a primary `ButtonIcon IconAdd`; rows are
+  Header is `hulyTableAttr-header` with a primary `IconButton IconAdd`; rows are
   `hulyTableAttr-content__row`. The request constructor sits in the personal section header, the only
   one every member sees.
 - Endpoint editing moved out of a modal into `WebhookEndpointEditor.svelte`, a drill-in page addressed by

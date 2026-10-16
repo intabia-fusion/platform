@@ -18,10 +18,9 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import platform, { getMetadata } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import {
     AccordionItem,
-    ButtonIcon,
     IconDelete,
     IconEdit,
     IconMoreH,
@@ -33,9 +32,11 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Floor, ParticipantInfo, Room } from '@hcengineering/love'
   import love, { isOffice, Office } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
+  import view from '@hcengineering/view'
   import plugin from '../plugin'
   import { infos } from '../stores'
   import { calculateFloorSize } from '../utils'
@@ -63,13 +64,13 @@
   let floorContainer: HTMLDivElement
   let hovered: number = -1
 
-  function getInfo (room: Ref<Room>, info: ParticipantInfo[]): ParticipantInfo[] {
+  function getInfo(room: Ref<Room>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.room === room)
   }
 
   let roomName: IntlString | undefined = undefined
 
-  function hover (e: CustomEvent<any>, n: number): void {
+  function hover(e: CustomEvent<any>, n: number): void {
     roomName = e.detail.name
     hovered = n
   }
@@ -79,11 +80,11 @@
 
   const client = getClient()
 
-  async function remove (): Promise<void> {
+  async function remove(): Promise<void> {
     await client.remove(floor)
   }
 
-  function renameFloor (): void {
+  function renameFloor(): void {
     showPopup(EditFloorPopup, { id: floor._id }, 'top', () => {
       pressed = false
     })
@@ -125,7 +126,7 @@
     loadUsersStatus()
   })
 
-  async function debugOffices (): Promise<void> {
+  async function debugOffices(): Promise<void> {
     const allRooms = await client.findAll(love.class.Room, {})
     const allOffices = allRooms.filter((r) => isOffice(r))
     const allParticipantInfo = await client.findAll(love.class.ParticipantInfo, {})
@@ -188,7 +189,7 @@
     console.log('[FloorPreview Debug] === END DIAGNOSTICS ===')
   }
 
-  async function clearAiBotAssignments (): Promise<void> {
+  async function clearAiBotAssignments(): Promise<void> {
     console.log('[FloorPreview] Clearing AI bot assignments...')
 
     // Find AI bot employee
@@ -230,7 +231,7 @@
     console.log('[FloorPreview] Done clearing AI bot assignments')
   }
 
-  async function searchAccountsAndPersons (): Promise<void> {
+  async function searchAccountsAndPersons(): Promise<void> {
     console.log('[FloorPreview] Searching accounts and persons...')
 
     const allPersons = await client.findAll(contact.class.Person, {})
@@ -311,10 +312,23 @@
     {#if configurable && editable}
       {#if rooms.length === 0}
         <div class="mr-2">
-          <ButtonIcon icon={IconDelete} kind="negative" size="small" on:click={remove} />
+          <IconButton
+            icon={IconDelete}
+            kind="negative"
+            size="small"
+            tooltip={{ label: presentation.string.Delete }}
+            on:click={remove}
+          />
         </div>
       {/if}
-      <ButtonIcon icon={IconMoreH} kind="tertiary" size="small" {pressed} on:click={clickMore} />
+      <IconButton
+        icon={IconMoreH}
+        kind="tertiary"
+        size="small"
+        {pressed}
+        tooltip={{ label: view.string.MoreActions }}
+        on:click={clickMore}
+      />
     {/if}
   </svelte:fragment>
   <FloorGrid bind:floorContainer {rows} preview on:mouseover={() => (roomName = undefined)}>

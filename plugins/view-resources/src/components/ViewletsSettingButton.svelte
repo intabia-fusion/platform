@@ -16,7 +16,8 @@
   import type { DocumentQuery, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Button, ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { Button, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewOptionsModel } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -42,7 +43,7 @@
   let btn: HTMLButtonElement
   let pressed: boolean = false
 
-  function clickHandler (event: MouseEvent) {
+  function clickHandler(event: MouseEvent) {
     pressed = true
     closeTooltip()
     showPopup(ViewletSetting, { viewlet }, btn, () => {
@@ -107,7 +108,7 @@
         on:click={clickHandler}
       />
     {:else}
-      <ButtonIcon
+      <IconButton
         icon={view.icon.Configure}
         {kind}
         size="small"

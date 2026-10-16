@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import type { Blob as PlatformBlob, Ref } from '@hcengineering/core'
-  import { getFileUrl } from '@hcengineering/presentation'
-  import { ButtonIcon } from '@hcengineering/ui'
+  import presentation, { getFileUrl } from '@hcengineering/presentation'
+  import { IconButton } from '@hcengineering/ui/kit'
   import Play from './icons/Play.svelte'
   import Pause from './icons/Pause.svelte'
   import FileDownload from './icons/FileDownload.svelte'
   import { onMount } from 'svelte'
+  import attachment from '../plugin'
 
   export let file: Ref<PlatformBlob>
   export let name: string
@@ -38,18 +39,18 @@
   $: progress = duration > 0 ? time / duration : 0
   $: mmss = fmt(time) + ' / ' + fmt(duration)
 
-  function fmt (s: number): string {
+  function fmt(s: number): string {
     if (!Number.isFinite(s)) return '0:00'
     return `${Math.floor(s / 60)}:${`${Math.floor(s % 60)}`.padStart(2, '0')}`
   }
 
-  function toggle (): void {
+  function toggle(): void {
     if (audioEl === undefined) return
     if (paused) void audioEl.play()
     else audioEl.pause()
   }
 
-  function seek (e: MouseEvent): void {
+  function seek(e: MouseEvent): void {
     if (duration <= 0) return
     const el = e.currentTarget as HTMLElement
     const r = el.getBoundingClientRect()
@@ -72,7 +73,7 @@
   })
 
   // Per-bar RMS of the waveform, normalized to [0.1..1].
-  function rms (data: Float32Array, count: number): number[] {
+  function rms(data: Float32Array, count: number): number[] {
     const seg = Math.floor(data.length / count)
     const out: number[] = []
     let max = 0
@@ -93,7 +94,13 @@
 <audio bind:this={audioEl} bind:paused bind:currentTime={time} {src} preload="metadata" />
 
 <div class="player">
-  <ButtonIcon icon={paused ? Play : Pause} size="small" kind="primary" on:click={toggle} />
+  <IconButton
+    icon={paused ? Play : Pause}
+    size="small"
+    kind="primary"
+    tooltip={{ label: paused ? attachment.string.Play : attachment.string.Pause }}
+    on:click={toggle}
+  />
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
   <div class="wave" on:click={seek}>
     {#each bars as b, i}
@@ -102,10 +109,11 @@
   </div>
   <span class="timer">{mmss}</span>
   <a class="dl" bind:this={downloadEl} href={src} download={name} on:click|stopPropagation>
-    <ButtonIcon
+    <IconButton
       icon={FileDownload}
       size="small"
       kind="tertiary"
+      tooltip={{ label: presentation.string.Download }}
       on:click={() => {
         downloadEl.click()
       }}

@@ -19,7 +19,6 @@
   import task from '@hcengineering/task'
   import {
     Button,
-    ButtonIcon,
     getColorNumberByText,
     getPlatformColorDef,
     IconError,
@@ -31,6 +30,7 @@
     themeStore,
     resolvePaletteColor
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
@@ -56,7 +56,7 @@
   let currentObjectUrl: string | undefined = undefined
   let renderSequence = 0
 
-  function sanitizeLabel (str: string): string {
+  function sanitizeLabel(str: string): string {
     if (!str) return ''
     return str
       .replace(/"/g, '#quot;')
@@ -64,7 +64,7 @@
       .trim()
   }
 
-  function sanitizeColor (color: string | undefined, fallback: string): string {
+  function sanitizeColor(color: string | undefined, fallback: string): string {
     if (!color) return fallback
     const trimmed = color.trim()
     if (trimmed.includes('gradient') || trimmed.includes('(') || trimmed.includes(',')) {
@@ -75,7 +75,7 @@
     return trimmed
   }
 
-  function generateMermaidCode (
+  function generateMermaidCode(
     statuses: Status[],
     transitions: WorkflowTransition[],
     initialStatuses: string[] = [],
@@ -158,7 +158,7 @@
     return lines.join('\n')
   }
 
-  function getMermaidThemeVariables (isDark: boolean): Record<string, string> {
+  function getMermaidThemeVariables(isDark: boolean): Record<string, string> {
     const fontFamily = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
 
     if (isDark) {
@@ -192,7 +192,7 @@
     }
   }
 
-  function getCustomSvgStyles (isDark: boolean): string {
+  function getCustomSvgStyles(isDark: boolean): string {
     const strokeColor = isDark ? '#94a3b8' : '#242538'
     const textColor = isDark ? '#cbd5e1' : '#1e293b'
 
@@ -216,7 +216,7 @@
     `
   }
 
-  function svgToPng (blobUrl: string, rawSvg: string): Promise<string> {
+  function svgToPng(blobUrl: string, rawSvg: string): Promise<string> {
     return new Promise((resolve) => {
       const img = new Image()
       img.onload = () => {
@@ -270,14 +270,14 @@
     })
   }
 
-  function revokeObjectUrl (): void {
+  function revokeObjectUrl(): void {
     if (currentObjectUrl !== undefined) {
       URL.revokeObjectURL(currentObjectUrl)
       currentObjectUrl = undefined
     }
   }
 
-  async function renderDiagram (): Promise<void> {
+  async function renderDiagram(): Promise<void> {
     const seq = ++renderSequence
     loading = true
     errorMsg = undefined
@@ -360,7 +360,7 @@
     }
   }
 
-  function handleShowPopup (): void {
+  function handleShowPopup(): void {
     if (workflow === undefined) return
     showPopup(WorkflowDiagramPopup, { workflow, statuses, transitions, fullSize: true }, 'centered')
   }
@@ -387,7 +387,7 @@
 <div class="mermaid-wrapper" class:embedded>
   {#if embedded && imageUrl}
     <div class="mermaid-controls">
-      <ButtonIcon
+      <IconButton
         icon={IconSquareExpand}
         tooltip={{ label: plugin.string.Transitions, direction: 'bottom' }}
         size="small"

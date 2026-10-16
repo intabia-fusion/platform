@@ -13,7 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { ButtonBase, DatePopup, showPopup } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import ui, { DatePopup, showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import time from '../plugin'
 
@@ -23,10 +25,10 @@
 
   let opened: boolean = false
 
-  $: buttonTitle = value ? new Date(value).toLocaleDateString() : undefined
-  $: buttonLabel = buttonTitle === undefined ? ui.string.DueDate : undefined
+  $: buttonLabel = value ? getEmbeddedLabel(new Date(value).toLocaleDateString()) : ui.string.DueDate
 
-  function handleClick (e: MouseEvent) {
+  function handleClick(e: MouseEvent) {
+    e.stopPropagation()
     if (!opened) {
       opened = true
       showPopup(
@@ -49,14 +51,12 @@
   }
 </script>
 
-<ButtonBase
+<Button
   kind="secondary"
   size="small"
-  type="type-button"
   icon={time.icon.Calendar}
   iconSize="small"
   id="dueDateButton"
-  title={buttonTitle}
   label={buttonLabel}
   pressed={opened}
   on:click={handleClick}

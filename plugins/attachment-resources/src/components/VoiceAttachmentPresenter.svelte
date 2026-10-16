@@ -15,11 +15,12 @@
 <script lang="ts">
   import attachment, { type Attachment } from '@hcengineering/attachment'
   import { getCurrentAccount, type Markup, type WithLookup } from '@hcengineering/core'
-  import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
   import { EmptyMarkup, jsonToMarkup, markupToJSON } from '@hcengineering/text'
   import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
-  import { Button, ButtonIcon, IconClose, IconEdit, Label, Spinner } from '@hcengineering/ui'
+  import { Button, IconClose, IconEdit, Label, Spinner } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import activity from '@hcengineering/activity'
   import VoicePlayer from './VoicePlayer.svelte'
@@ -56,16 +57,19 @@
   $: markup = text !== '' ? jsonToMarkup(markdownToMarkup(text, { refUrl: 'ref://', imageUrl: '' })) : EmptyMarkup
   $: canEdit = state === 'done' && me.socialIds.includes(live.createdBy ?? live.modifiedBy)
 
-  function startEdit (): void {
+  function startEdit(evt: MouseEvent): void {
+    evt.stopPropagation()
     editMarkup = markup
     editing = true
   }
 
-  function cancelEdit (): void {
+  function cancelEdit(evt: MouseEvent): void {
+    evt.stopPropagation()
     editing = false
   }
 
-  async function saveEdit (): Promise<void> {
+  async function saveEdit(evt: MouseEvent): Promise<void> {
+    evt.stopPropagation()
     editing = false
     const md = markupToMarkdown(markupToJSON(editMarkup)).trim()
     if (md !== text) {
@@ -78,7 +82,16 @@
   <div class="row">
     <div class="player"><VoicePlayer file={value.file} name={value.name} contentType={value.type} /></div>
     {#if removable}
-      <ButtonIcon icon={IconClose} size="small" kind="tertiary" on:click={() => onRemove?.()} />
+      <IconButton
+        icon={IconClose}
+        size="small"
+        kind="tertiary"
+        tooltip={{ label: presentation.string.Remove }}
+        on:click={(e) => {
+          e.stopPropagation()
+          onRemove?.()
+        }}
+      />
     {/if}
   </div>
 
@@ -98,7 +111,13 @@
     <div class="transcript-row">
       <div class="transcript"><MessageViewer message={markup} /></div>
       {#if canEdit}
-        <ButtonIcon icon={IconEdit} size="small" kind="tertiary" on:click={startEdit} />
+        <IconButton
+          icon={IconEdit}
+          size="small"
+          kind="tertiary"
+          tooltip={{ label: presentation.string.Edit }}
+          on:click={startEdit}
+        />
       {/if}
     </div>
   {/if}

@@ -15,10 +15,9 @@
 <script lang="ts">
   import type { AnyAttribute, Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import type { Context, Func, Process, ProcessFunction, SelectedContext } from '@hcengineering/process'
   import {
-    ButtonIcon,
     CheckBox,
     closeTooltip,
     eventToHTMLElement,
@@ -30,6 +29,7 @@
     showPopup,
     Submenu
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import plugin from '../../plugin'
@@ -65,7 +65,7 @@
     }
   }
 
-  function getReduceFunctions (): Ref<ProcessFunction>[] {
+  function getReduceFunctions(): Ref<ProcessFunction>[] {
     const model = client.getModel()
     const h = client.getHierarchy()
     const res: Ref<ProcessFunction>[] = []
@@ -86,7 +86,7 @@
 
   $: functionsLength = contextValue.functions?.length ?? 0
 
-  function getAvailableFunctions (
+  function getAvailableFunctions(
     functions: Func[] | undefined,
     attrClass: Ref<Class<Doc>>,
     category: AttributeCategory
@@ -122,7 +122,7 @@
 
   $: functionButtonIndex = functionsLength + (sourceFunc !== undefined ? 1 : 0)
 
-  function onFallback (): void {
+  function onFallback(): void {
     showPopup(FallbackEditor, { contextValue, attribute }, elements[functionButtonIndex + 1], (res) => {
       if (res != null) {
         if (res.value !== undefined) {
@@ -136,27 +136,27 @@
     })
   }
 
-  function onFunctionSelect (e: Ref<ProcessFunction>): void {
+  function onFunctionSelect(e: Ref<ProcessFunction>): void {
     onFunction(e, {}, addFunction)
   }
 
-  function addFunction (func: Func): void {
+  function addFunction(func: Func): void {
     const arr = contextValue.functions ?? []
     arr.push(func)
     contextValue.functions = arr
     onChange(contextValue)
   }
 
-  function onSourceFunctionSelect (e: Ref<ProcessFunction>): void {
+  function onSourceFunctionSelect(e: Ref<ProcessFunction>): void {
     onFunction(e, contextValue.sourceFunction?.props ?? {}, (res) => (contextValue.sourceFunction = res))
   }
 
-  function onSourceFunctionChange (e: Func): void {
+  function onSourceFunctionChange(e: Func): void {
     contextValue.sourceFunction = e
     onChange(contextValue)
   }
 
-  function onFunction (_func: Ref<ProcessFunction>, props: Record<string, any>, cb: (res: Func) => void) {
+  function onFunction(_func: Ref<ProcessFunction>, props: Record<string, any>, cb: (res: Func) => void) {
     const func = client.getModel().findAllSync(plugin.class.ProcessFunction, { _id: _func })[0]
     if (func.editor === undefined) {
       const res: Func = { func: _func, props: {} }
@@ -187,7 +187,7 @@
     }
   }
 
-  function onFunctionChange (e: Ref<ProcessFunction>, i: number): void {
+  function onFunctionChange(e: Ref<ProcessFunction>, i: number): void {
     onFunction(e, contextValue.functions?.[i]?.props ?? {}, (res) => {
       if (contextValue.functions === undefined) {
         contextValue.functions = []
@@ -197,13 +197,13 @@
     })
   }
 
-  function getFunctionSelect (i: number): (e: Ref<ProcessFunction>) => void {
+  function getFunctionSelect(i: number): (e: Ref<ProcessFunction>) => void {
     return (e: Ref<ProcessFunction>) => {
       onFunctionChange(e, i)
     }
   }
 
-  function getFunctionChange (i: number): (e: Func) => void {
+  function getFunctionChange(i: number): (e: Func) => void {
     return (e: Func) => {
       if (contextValue.functions === undefined) {
         contextValue.functions = []
@@ -214,7 +214,7 @@
     }
   }
 
-  function onFunctionRemove (pos: number): void {
+  function onFunctionRemove(pos: number): void {
     const arr = contextValue.functions ?? []
     if (pos !== -1) {
       arr.splice(pos, 1)
@@ -223,7 +223,7 @@
     onChange(contextValue)
   }
 
-  function onConfigure (e: MouseEvent, func: Func, pos: number): void {
+  function onConfigure(e: MouseEvent, func: Func, pos: number): void {
     const f = getFunction(func.func)
     if (contextValue.functions === undefined || f.editor === undefined) return
     const val = contextValue.functions[pos]
@@ -253,7 +253,7 @@
     )
   }
 
-  function onFallbackChange (): void {
+  function onFallbackChange(): void {
     if (contextValue.fallbackValue === undefined) {
       contextValue.fallbackValue = null
     } else {
@@ -262,7 +262,7 @@
     onChange(contextValue)
   }
 
-  function getFunction (_id: Ref<ProcessFunction>): ProcessFunction {
+  function getFunction(_id: Ref<ProcessFunction>): ProcessFunction {
     return client.getModel().findAllSync(plugin.class.ProcessFunction, { _id })[0]
   }
 </script>
@@ -340,19 +340,21 @@
             </div>
             <div>
               {#if getFunction(f.func).editor}
-                <ButtonIcon
+                <IconButton
                   icon={IconSettings}
                   size="small"
                   kind="tertiary"
+                  tooltip={{ label: plugin.string.Settings }}
                   on:click={(e) => {
                     onConfigure(e, f, i)
                   }}
                 />
               {/if}
-              <ButtonIcon
+              <IconButton
                 icon={IconClose}
                 size="small"
                 kind="tertiary"
+                tooltip={{ label: presentation.string.Remove }}
                 on:click={() => {
                   onFunctionRemove(i)
                 }}

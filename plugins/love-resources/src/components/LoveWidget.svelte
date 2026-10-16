@@ -17,7 +17,9 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
   import love from '@hcengineering/love'
-  import { Breadcrumbs, ButtonIcon, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@hcengineering/ui'
+  import { Breadcrumbs, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import lovePlg from '../plugin'
   import { ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
   import FloorPreview from './FloorPreview.svelte'
   import EditFloorPopup from './EditFloorPopup.svelte'
@@ -33,11 +35,11 @@
     floor = $floors[0]
   }
 
-  function getRooms (rooms: Room[], floor: Ref<Floor>): Room[] {
+  function getRooms(rooms: Room[], floor: Ref<Floor>): Room[] {
     return rooms.filter((p) => p.floor === floor)
   }
 
-  function addFloor (e: MouseEvent): void {
+  function addFloor(e: MouseEvent): void {
     showPopup(EditFloorPopup, {}, eventToHTMLElement(e))
   }
 
@@ -58,7 +60,13 @@
   <Breadcrumbs items={[{ label: love.string.Office }]} currentOnly />
   <svelte:fragment slot="extra">
     {#if editable}
-      <ButtonIcon icon={IconAdd} kind="primary" size="small" on:click={addFloor} />
+      <IconButton
+        icon={IconAdd}
+        kind="primary"
+        size="small"
+        tooltip={{ label: lovePlg.string.AddAFloor }}
+        on:click={addFloor}
+      />
     {/if}
   </svelte:fragment>
 </Header>

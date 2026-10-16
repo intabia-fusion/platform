@@ -17,11 +17,12 @@
   import type { Attachment } from '@hcengineering/attachment'
   import type { Class, Data, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { Icon, Label, resizeObserver, Scroller, Spinner, ButtonIcon, IconAdd } from '@hcengineering/ui'
+  import { Icon, Label, resizeObserver, Scroller, Spinner, IconAdd } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { BuildModelKey } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { Table } from '@hcengineering/view-resources'
-  import { getClient } from '@hcengineering/presentation'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import type { FileUploadCallbackParams } from '@hcengineering/uploader'
   import { uploadFiles } from '@hcengineering/uploader'
   import { createEventDispatcher } from 'svelte'
@@ -55,7 +56,7 @@
   const client = getClient()
   const dispatch = createEventDispatcher()
 
-  async function onFileUploaded ({ uuid, name, file, metadata }: FileUploadCallbackParams): Promise<void> {
+  async function onFileUploaded({ uuid, name, file, metadata }: FileUploadCallbackParams): Promise<void> {
     await createAttachment(
       client,
       uuid,
@@ -68,7 +69,7 @@
     )
   }
 
-  async function fileSelected (): Promise<void> {
+  async function fileSelected(): Promise<void> {
     const list = inputFile.files
     if (list === null || list.length === 0) return
 
@@ -90,11 +91,11 @@
     dispatch('attached')
   }
 
-  function openFile (): void {
+  function openFile(): void {
     inputFile.click()
   }
 
-  function updateContent (evt: CustomEvent): void {
+  function updateContent(evt: CustomEvent): void {
     attachments = evt.detail.length
     dispatch('attachments', evt.detail)
   }
@@ -113,7 +114,13 @@
         {#if loading}
           <Spinner />
         {:else if !readonly}
-          <ButtonIcon icon={IconAdd} kind="tertiary" size="small" on:click={openFile} />
+          <IconButton
+            icon={IconAdd}
+            kind="tertiary"
+            size="small"
+            tooltip={{ label: presentation.string.Add }}
+            on:click={openFile}
+          />
         {/if}
       </div>
     </div>

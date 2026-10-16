@@ -22,8 +22,6 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { TabItem, DropdownIntlItem } from '@hcengineering/ui'
   import {
-    ModernButton,
-    ButtonIcon,
     IconBack,
     IconForward,
     SearchInput,
@@ -37,6 +35,7 @@
     tableToCSV,
     showPopup
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
@@ -66,7 +65,7 @@
   let search = ''
   let resultQuery: DocumentQuery<Staff> = {}
 
-  function updateResultQuery (search: string): void {
+  function updateResultQuery(search: string): void {
     resultQuery = search === '' ? {} : { $search: search }
   }
 
@@ -93,7 +92,7 @@
     descendants = descendants
   })
 
-  function inc (val: number): void {
+  function inc(val: number): void {
     switch (mode) {
       case CalendarMode.Month: {
         currentDate.setDate(1)
@@ -108,7 +107,7 @@
     currentDate = currentDate
   }
 
-  function getMonthName (date: Date): string {
+  function getMonthName(date: Date): string {
     return new Intl.DateTimeFormat('default', {
       month: 'long'
     }).format(date)
@@ -122,7 +121,7 @@
     }
   }
 
-  function departmentSelected (selected: Ref<Department>): void {
+  function departmentSelected(selected: Ref<Department>): void {
     department = selected
   }
 
@@ -135,7 +134,7 @@
   let preference: ViewletPreference | undefined
   let loading = false
 
-  function exportTable (evt: Event) {
+  function exportTable(evt: Event) {
     interface ExportPopupItem extends DropdownIntlItem {
       separator: ',' | ';'
     }
@@ -247,7 +246,7 @@
       </svelte:fragment>
       <svelte:fragment slot="actions">
         {#if mode === CalendarMode.Month && display === 'stats'}
-          <ModernButton
+          <Button
             label={hr.string.Export}
             size="small"
             on:click={(evt) => {
@@ -259,7 +258,7 @@
     </Header>
     <div class="hulyHeader-container clearPadding justify-between flex-gap-4">
       <div class="flex-row-center flex-gap-2">
-        <ButtonIcon
+        <IconButton
           icon={IconBack}
           kind="tertiary"
           size="small"
@@ -267,13 +266,13 @@
             inc(-1)
           }}
         />
-        <ModernButton
+        <Button
           label={calendar.string.Today}
           kind="tertiary"
           size="small"
           on:click={() => (currentDate = new Date())}
         />
-        <ButtonIcon
+        <IconButton
           icon={IconForward}
           kind="tertiary"
           size="small"

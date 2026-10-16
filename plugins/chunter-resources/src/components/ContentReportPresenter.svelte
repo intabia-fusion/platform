@@ -20,7 +20,8 @@
     hasAccountRole
   } from '@hcengineering/core'
   import { MessageViewer, createQuery, getClient } from '@hcengineering/presentation'
-  import { IconError, Label, ModernButton, type Action as UIAction, showPopup } from '@hcengineering/ui'
+  import { IconError, Label, type Action as UIAction, showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import view, { type Action } from '@hcengineering/view'
   import { invokeAction } from '@hcengineering/view-resources'
 
@@ -62,7 +63,7 @@
   // The props name the accounts; the chips want the persons behind them.
   let persons = new Map<AccountUuid, Person>()
   $: void loadPersons([reporter, author].filter((it): it is AccountUuid => it != null))
-  async function loadPersons (accounts: AccountUuid[]): Promise<void> {
+  async function loadPersons(accounts: AccountUuid[]): Promise<void> {
     const found = await client.findAll(contact.class.Person, { personUuid: { $in: accounts } })
     persons = new Map(found.map((p) => [p.personUuid as unknown as AccountUuid, p]))
   }
@@ -93,20 +94,22 @@
     })
   }
 
-  async function open (): Promise<void> {
+  async function open(): Promise<void> {
     await openMessageFromSpecial(message)
   }
 
-  function openChat (): void {
+  function openChat(): void {
     if (chatOpenable) openChannel(props.chat as string, props.chatClass as Ref<Class<Doc>>)
   }
 
-  function remove (): void {
+  function remove(evt: MouseEvent): void {
+    evt.stopPropagation()
     if (message === undefined) return
     showPopup(DeleteMessageConfirmationPopup, { message }, 'center')
   }
 
-  async function kick (evt: Event): Promise<void> {
+  async function kick(evt: Event): Promise<void> {
+    evt.stopPropagation()
     if (author == null || kickAction === undefined) return
     const person = persons.get(author) ?? (await client.findOne(contact.class.Person, { personUuid: author }))
     if (person === undefined) return
@@ -215,7 +218,7 @@
       {#if canModerate && !readonly}
         <div class="report__actions">
           {#if message !== undefined}
-            <ModernButton
+            <Button
               icon={view.icon.Delete}
               label={chunter.string.ContentReportDeleteMessage}
               kind="secondary"
@@ -224,7 +227,7 @@
             />
           {/if}
           {#if kickAction !== undefined && author !== undefined}
-            <ModernButton
+            <Button
               icon={contact.icon.KickUser}
               label={kickAction.label}
               kind="secondary"

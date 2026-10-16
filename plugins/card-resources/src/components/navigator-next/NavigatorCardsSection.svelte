@@ -18,7 +18,8 @@
   import type { Ref, Timestamp } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import ui, { ModernButton } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
 
   import type { CardsNavigatorConfig } from '../../types'
   import NavigatorType from './NavigatorType.svelte'
@@ -43,7 +44,7 @@
 
   let limit = config.limit
 
-  function parseLookbackDuration (input: string): Timestamp {
+  function parseLookbackDuration(input: string): Timestamp {
     if (input.length < 2) throw new Error('Invalid duration format')
 
     const unit = input.slice(-1)
@@ -93,7 +94,7 @@
   $: sortedCards = filteredCards
   $: empty = sortedCards.length === 0
 
-  function filterCards (cards: Card[], favorites: FavoriteCard[]): Card[] {
+  function filterCards(cards: Card[], favorites: FavoriteCard[]): Card[] {
     return cards.filter((it) => !favorites.some((fav) => fav.attachedTo === it._id))
   }
 </script>
@@ -125,7 +126,7 @@
 
       {#if hasMore}
         <div class="show-more">
-          <ModernButton
+          <Button
             label={ui.string.ShowMore}
             kind="tertiary"
             inheritFont

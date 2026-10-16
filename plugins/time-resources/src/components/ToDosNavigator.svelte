@@ -21,13 +21,14 @@
     getPlatformColorDef,
     themeStore,
     deviceOptionsStore as deviceInfo,
-    ButtonIcon,
     showPopup,
     Menu,
     IconMoreV,
     IconLink
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { ToDosMode } from '..'
+  import view from '@hcengineering/view'
   import time from '../plugin'
 
   export let mode: ToDosMode
@@ -118,7 +119,7 @@
 
   $: actions = getHeaderMenuActions()
 
-  function getHeaderMenuActions (): Action[] {
+  function getHeaderMenuActions(): Action[] {
     const actions: Action[] = []
     const caldavUrl = getMetadata(calendar.metadata.CalDavServerURL)
 
@@ -136,7 +137,7 @@
     return actions
   }
 
-  function menuButtonClicked (ev: MouseEvent): void {
+  function menuButtonClicked(ev: MouseEvent): void {
     pressed = true
     showPopup(Menu, { actions }, ev.target as HTMLElement, () => {
       pressed = false
@@ -152,7 +153,15 @@
     <div class="hulyNavPanel-header">
       <Label label={time.string.Planner} />
       {#if actions.length > 0}
-        <ButtonIcon icon={IconMoreV} hasMenu {pressed} kind="tertiary" size="small" on:click={menuButtonClicked} />
+        <IconButton
+          icon={IconMoreV}
+          hasMenu
+          {pressed}
+          kind="tertiary"
+          size="small"
+          tooltip={{ label: view.string.MoreActions }}
+          on:click={menuButtonClicked}
+        />
       {/if}
     </div>
 

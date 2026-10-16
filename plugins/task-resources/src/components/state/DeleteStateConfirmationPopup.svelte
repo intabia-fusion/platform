@@ -5,7 +5,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
-  import { ButtonMenu } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   export let object: Status
   export let taskType: TaskType
@@ -48,7 +48,7 @@
       </div>
       <div class="flex-grow justify-between mt-2">
         <span> A new status should be selected. </span>
-        <ButtonMenu
+        <MenuButton
           {items}
           {selected}
           label={getEmbeddedLabel(selectedState?.name ?? '')}

@@ -17,8 +17,6 @@
   import { onDestroy } from 'svelte'
   import { SortingOrder } from '@hcengineering/core'
   import {
-    ButtonIcon,
-    ButtonMenu,
     IconAdd,
     IconCopy,
     Label,
@@ -27,8 +25,9 @@
     showPopup,
     type DropdownIntlItem
   } from '@hcengineering/ui'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
-  import { createQuery } from '@hcengineering/presentation'
+  import presentation, { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import type { TaskTypeExportConfig } from '@hcengineering/task'
@@ -72,7 +71,7 @@
     }
   ]
 
-  async function handleImportAction (event?: CustomEvent): Promise<void> {
+  async function handleImportAction(event?: CustomEvent): Promise<void> {
     if (event == null || disabled || type === undefined) return
     const actionId = event.detail
     if (actionId === 'file') {
@@ -134,7 +133,7 @@
     }
   }
 
-  async function handleFileInputChange (e: Event): Promise<void> {
+  async function handleFileInputChange(e: Event): Promise<void> {
     const target = e.target as HTMLInputElement
     const file = target?.files?.[0]
     if (file == null || disabled || type === undefined) return
@@ -182,7 +181,7 @@
     }
   }
 
-  function handleTaskTypeSelected (id: string | undefined): void {
+  function handleTaskTypeSelected(id: string | undefined): void {
     const loc = getCurrentResolvedLocation()
     if (id !== undefined) {
       loc.path[5] = 'taskTypes'
@@ -207,7 +206,7 @@
     <IconLayers size="small" />
     <span><Label label={task.string.TaskTypes} /></span>
     <div class="flex-row-center flex-gap-2">
-      <ButtonIcon
+      <IconButton
         icon={task.icon.TypeHierarchy}
         tooltip={{ label: task.string.TaskTypesDiagram, direction: 'bottom' }}
         size="small"
@@ -218,7 +217,7 @@
           showPopup(TaskTypeDiagramPopup, { taskTypes }, 'centered')
         }}
       />
-      <ButtonMenu
+      <MenuButton
         icon={task.icon.Import}
         tooltip={{
           label: disabled ? setting.string.OwnerOrMaintainerRequired : task.string.Import,
@@ -226,19 +225,19 @@
         }}
         size="small"
         kind="tertiary"
-        dataId="btnImportTaskTypes"
+        data-id="btnImportTaskTypes"
         {disabled}
         noSelection
         items={importActions}
         on:selected={handleImportAction}
       />
-      <ButtonIcon
+      <IconButton
         kind="primary"
         icon={IconAdd}
         size="small"
-        dataId="btnAdd"
+        data-id="btnAdd"
         {disabled}
-        tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : undefined}
+        tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : { label: presentation.string.Add }}
         on:click={() => {
           if (disabled) {
             return

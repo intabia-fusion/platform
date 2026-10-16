@@ -17,7 +17,8 @@
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { TagCategory, TagElement } from '@hcengineering/tags'
-  import { ModernButton, getPlatformColorForTextDef, showPopup, themeStore, ScrollerBar } from '@hcengineering/ui'
+  import { getPlatformColorForTextDef, showPopup, themeStore, ScrollerBar } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
   import type { TagElementInfo } from '../utils'
@@ -102,7 +103,7 @@
     dispatch('change', { category, elements: selected })
   }
 
-  function selectTag (evt: Event, category: TagCategory): void {
+  function selectTag(evt: Event, category: TagCategory): void {
     showPopup(
       TagsCategoryPopup,
       {
@@ -135,7 +136,7 @@
 
 {#if visibleCategories.length > 1}
   <div class="hulyHeader-container clearPadding justify-between flex-gap-4">
-    <ModernButton
+    <Button
       label={tags.string.AllCategories}
       kind="tertiary"
       size="small"

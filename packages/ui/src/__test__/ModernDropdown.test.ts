@@ -44,7 +44,7 @@ function mount (props: Partial<ComponentProps<ModernDropdown>> = {}): Mounted {
   const host = document.createElement('div')
   target.appendChild(host)
   const component = new ModernDropdown({ target: host, props: props as ComponentProps<ModernDropdown> })
-  return { component, host, button: host.querySelector('button.hulyButton') as HTMLButtonElement }
+  return { component, host, button: host.querySelector('button.button') as HTMLButtonElement }
 }
 
 function click (el: HTMLElement): void {

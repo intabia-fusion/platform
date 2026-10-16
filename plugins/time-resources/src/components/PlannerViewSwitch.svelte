@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, DropdownLabelsIntl } from '@hcengineering/ui'
+  import { DropdownLabelsIntl } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { PlannerCalendarMode } from '..'
   import time from '../plugin'
 
@@ -29,7 +30,7 @@
   $: localStorage.setItem('planner_calendar_mode', calMode)
 </script>
 
-<ButtonIcon
+<IconButton
   icon={time.icon.All}
   size="small"
   kind="tertiary"

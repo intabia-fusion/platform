@@ -4,7 +4,8 @@
   import type { Process, State, Transition, Trigger } from '@hcengineering/process'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import type { DropdownIntlItem, ListItem } from '@hcengineering/ui'
-  import { ButtonIcon, Component, Dropdown, DropdownLabelsIntl, IconDelete, Label, Modal } from '@hcengineering/ui'
+  import { Component, Dropdown, DropdownLabelsIntl, IconDelete, Label, Modal } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import plugin from '../../plugin'
   import TransitionPresenter from './TransitionPresenter.svelte'
 
@@ -24,17 +25,17 @@
       states = res
     })
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     await client.update(transition, { triggerParams: params, trigger: selectedTrigger })
     clearSettingsStore()
   }
 
-  async function remove (): Promise<void> {
+  async function remove(): Promise<void> {
     await client.remove(transition)
     clearSettingsStore()
   }
 
-  function change (e: CustomEvent<Record<string, any>>): void {
+  function change(e: CustomEvent<Record<string, any>>): void {
     if (e.detail?.params !== undefined) {
       params = e.detail.params
     }
@@ -60,13 +61,13 @@
     process &&
     client.getModel().findAllSync(plugin.class.Transition, { from: null, process: process._id })[0] === undefined
 
-  async function updateFrom (e: CustomEvent<ListItem>): Promise<void> {
+  async function updateFrom(e: CustomEvent<ListItem>): Promise<void> {
     if (transition === undefined) return
     const from = (e.detail?._id as Ref<State>) ?? null
     await client.update(transition, { from })
   }
 
-  async function updateTo (e: CustomEvent<ListItem>): Promise<void> {
+  async function updateTo(e: CustomEvent<ListItem>): Promise<void> {
     if (transition === undefined) return
     const to = e.detail?._id as Ref<State>
     if (to === undefined) return
@@ -85,7 +86,13 @@
 >
   <svelte:fragment slot="actions">
     {#if !readonly}
-      <ButtonIcon icon={IconDelete} size="small" kind="tertiary" on:click={remove} />
+      <IconButton
+        icon={IconDelete}
+        size="small"
+        kind="tertiary"
+        tooltip={{ label: presentation.string.Delete }}
+        on:click={remove}
+      />
     {/if}
   </svelte:fragment>
   <div class="content clear-mins">

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { Room } from '@hcengineering/love'
-  import { IconMaximize, ModernButton, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
+  import { IconMaximize, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
 
   import love from '../../plugin'
   import { myInfo, myOffice } from '../../stores'
@@ -45,7 +46,7 @@
   // If user is in a meeting, they can leave unless it's their office or reception
   $: allowLeave = $myInfo !== undefined && $myInfo.room !== ($myOffice?._id ?? love.ids.Reception)
 
-  function maximize (): void {
+  function maximize(): void {
     showPopup(RoomModal, { room }, 'full-centered')
   }
 </script>
@@ -78,7 +79,8 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       {#if $lkSessionConnected && onFullScreen}
-        <ModernButton
+        <IconButton
+          iconSize="medium"
           icon={$isFullScreen ? love.icon.ExitFullScreen : love.icon.FullScreen}
           tooltip={{
             label: $isFullScreen ? love.string.ExitingFullscreenMode : love.string.FullscreenMode,
@@ -93,7 +95,7 @@
       {/if}
 
       {#if $lkSessionConnected && canMaximize}
-        <ModernButton
+        <IconButton
           icon={IconMaximize}
           tooltip={{
             label: love.string.FullscreenMode,

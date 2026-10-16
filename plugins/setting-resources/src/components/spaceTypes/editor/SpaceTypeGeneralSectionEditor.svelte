@@ -18,17 +18,9 @@
   import type { AccountUuid } from '@hcengineering/core'
   import core, { reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import {
-    ButtonIcon,
-    IconDelete,
-    IconSquareExpand,
-    Label,
-    ModernButton,
-    ModernEditbox,
-    showPopup,
-    TextArea,
-    Toggle
-  } from '@hcengineering/ui'
+  import { IconDelete, IconSquareExpand, Label, ModernEditbox, showPopup, TextArea, Toggle } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
+  import viewRes from '@hcengineering/view-resources/src/plugin'
   import { deleteObjects } from '@hcengineering/view-resources'
 
   import settingRes from '../../../plugin'
@@ -63,7 +55,7 @@
 
   $: canDelete = !loading && spacesCount === 0
 
-  async function attributeUpdated<T extends keyof SpaceType> (field: T, value: SpaceType[T]): Promise<void> {
+  async function attributeUpdated<T extends keyof SpaceType>(field: T, value: SpaceType[T]): Promise<void> {
     if (disabled || type === undefined || type[field] === value) {
       return
     }
@@ -71,7 +63,7 @@
     await client.update(type, { [field]: value })
   }
 
-  const changeMembers = reduceCalls(async function changeMembers (members: AccountUuid[]): Promise<void> {
+  const changeMembers = reduceCalls(async function changeMembers(members: AccountUuid[]): Promise<void> {
     if (disabled || type === undefined) {
       return
     }
@@ -98,7 +90,7 @@
     await ops.commit()
   })
 
-  async function handleDelete (): Promise<void> {
+  async function handleDelete(): Promise<void> {
     if (!canDelete || disabled || type == null) {
       return
     }
@@ -122,7 +114,13 @@
   <div class="hulyComponent-content__column-group">
     <div class="hulyComponent-content__header">
       <div class="flex gap-1">
-        <ButtonIcon icon={dIcon} size="large" kind="secondary" dataId="btnSelectIcon" />
+        <IconButton
+          icon={dIcon}
+          size="large"
+          kind="secondary"
+          data-id="btnSelectIcon"
+          tooltip={{ label: viewRes.string.ChooseIcon }}
+        />
         <ModernEditbox
           kind="ghost"
           size="large"
@@ -135,7 +133,7 @@
         />
       </div>
       <div class="flex-row">
-        <ModernButton
+        <Button
           icon={IconSquareExpand}
           label={settingRes.string.CountSpaces}
           labelParams={{ count: spacesCount }}
@@ -145,12 +143,14 @@
           hasMenu
         />
         {#if canDelete}
-          <ButtonIcon
+          <IconButton
             icon={IconDelete}
             size="small"
             kind="secondary"
             {disabled}
-            tooltip={disabled ? { label: settingRes.string.OwnerOrMaintainerRequired } : undefined}
+            tooltip={disabled
+              ? { label: settingRes.string.OwnerOrMaintainerRequired }
+              : { label: settingRes.string.DeleteSpaceType }}
             on:click={handleDelete}
           />
         {/if}

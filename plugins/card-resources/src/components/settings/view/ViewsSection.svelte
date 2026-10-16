@@ -17,10 +17,11 @@
 
   import type { MasterTag } from '@hcengineering/card'
   import type { WithLookup } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import presentation, { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ButtonIcon, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import { Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view, { type Viewlet } from '@hcengineering/view'
 
   import CreateView from './CreateView.svelte'
@@ -45,7 +46,7 @@
     }
   )
 
-  function addRelation (): void {
+  function addRelation(): void {
     showPopup(CreateView, {
       tag: masterTag
     })
@@ -62,7 +63,14 @@
 <div class="hulyTableAttr-header font-medium-12">
   <Icon icon={setting.icon.Views} size="small" />
   <span><Label label={card.string.Views} /></span>
-  <ButtonIcon kind="primary" icon={IconAdd} size="small" dataId="btnAdd" on:click={addRelation} />
+  <IconButton
+    kind="primary"
+    icon={IconAdd}
+    size="small"
+    data-id="btnAdd"
+    tooltip={{ label: presentation.string.Add }}
+    on:click={addRelation}
+  />
 </div>
 {#if viewlets.length}
   <div class="hulyTableAttr-content task">

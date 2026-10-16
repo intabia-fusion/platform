@@ -281,7 +281,7 @@ export class WorkflowPage {
 
   /** Both the field-required validator and the clear-field post-function pick fields the same way. */
   async selectRuleFields (fields: string[]): Promise<void> {
-    await this.page.locator('div.rule-editor--body button.hulyButton').first().click()
+    await this.page.locator('div.rule-editor--body button.button').first().click()
     for (const field of fields) {
       await this.dropdownRow(field).click()
     }

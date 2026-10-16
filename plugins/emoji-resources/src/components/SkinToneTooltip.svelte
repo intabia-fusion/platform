@@ -4,10 +4,14 @@
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
   import { createEventDispatcher } from 'svelte'
-  import { ButtonBase, closeTooltip } from '@hcengineering/ui'
+  import { closeTooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
 
+  import emojiPlugin from '@hcengineering/emoji'
   import type { Emoji } from '@hcengineering/emoji'
+  import { skinTones } from '../types'
   import { getEmojiSkins } from '../utils'
+  import EmojiGlyph from './EmojiGlyph.svelte'
 
   export let emoji: Emoji.Emoji
   export let selected: number
@@ -24,18 +28,18 @@
 <div class="flex-row-center flex-gap-1">
   {#each skins as skin, index}
     {@const disabled = selected === index}
-    <ButtonBase
-      type="type-button-icon"
+    <IconButton
+      icon={EmojiGlyph}
+      iconProps={{ emoji: skin.emoji, fontSize: '1.5rem' }}
       {disabled}
       kind={disabled ? 'secondary' : 'tertiary'}
       size="small"
+      tooltip={{ label: skinTones.get(index) ?? emojiPlugin.string.DefaultSkinTone }}
       on:click={() => {
         if (disabled) return undefined
         dispatch('update', index)
         closeTooltip()
       }}
-    >
-      <span style:font-size="1.5rem" class="emoji">{skin.emoji}</span>
-    </ButtonBase>
+    />
   {/each}
 </div>

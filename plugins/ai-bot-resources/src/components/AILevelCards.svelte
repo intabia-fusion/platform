@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { AILevelInfo } from '@hcengineering/ai-bot'
-  import { ModernButton } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   export let levels: AILevelInfo[] = []
@@ -23,7 +24,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function select (level: string): void {
+  function select(level: string): void {
     if (disabled || level === selected) return
     dispatch('select', level)
   }
@@ -32,19 +33,19 @@
 <div class="cards">
   {#each levels as info (info.level)}
     {@const active = info.level === selected}
-    <ModernButton
-      title={info.label}
+    <Button
+      label={getEmbeddedLabel(info.label)}
       size="small"
       kind={active ? 'primary' : 'tertiary'}
       pressed={active}
       {disabled}
-      dataId={`btnAiLevel-${info.level}`}
+      data-id={`btnAiLevel-${info.level}`}
       on:click={() => {
         select(info.level)
       }}
     >
       <span class="content-dark-color text-xs">×{info.displayMultiplier ?? info.tokenMultiplier}</span>
-    </ModernButton>
+    </Button>
   {/each}
 </div>
 

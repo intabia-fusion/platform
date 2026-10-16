@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ButtonIcon, handler } from '@hcengineering/ui'
+  import { handler } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
   import { getEditorHandler } from '@hcengineering/text-editor-resources/src/components/editor-context'
 
@@ -23,7 +24,7 @@
 
   $: sortedActions = actions.slice().sort((a, b) => a.order - b.order)
 
-  function handleAction (action: RefAction, evt?: Event): void {
+  function handleAction(action: RefAction, evt?: Event): void {
     if (editorHandler === undefined) {
       console.error('Editor handler is not available')
       return
@@ -34,7 +35,7 @@
 
 <div class="editor-actions">
   {#each sortedActions as action}
-    <ButtonIcon
+    <IconButton
       disabled={action.disabled}
       icon={action.icon}
       iconSize="small"
@@ -42,6 +43,7 @@
       kind="tertiary"
       tooltip={{ label: action.label }}
       on:click={handler(action, (a, evt) => {
+        evt.stopPropagation()
         if (a.disabled !== true) {
           handleAction(a, evt)
         }

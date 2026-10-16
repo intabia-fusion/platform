@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { ButtonMenu, IconMoreV } from '@hcengineering/ui'
+  import { IconMoreV } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
   import type { Action } from '@hcengineering/view'
   import { getResource } from '@hcengineering/platform'
   import { lkSessionConnected } from '../../../liveKitClient'
@@ -21,7 +22,7 @@
 
   $: void loadActions(room, meetingMinutes)
 
-  async function loadActions (_room: Room, _mm: MeetingMinutes | undefined): Promise<void> {
+  async function loadActions(_room: Room, _mm: MeetingMinutes | undefined): Promise<void> {
     const roomActions = await getActions(client, room, love.class.Room)
     let mmActions: Action[] = []
     if (meetingMinutes !== undefined) {
@@ -36,14 +37,14 @@
     icon: action.icon
   }))
 
-  async function handleMenuOption (e: CustomEvent<DropdownIntlItem['id']>): Promise<void> {
+  async function handleMenuOption(e: CustomEvent<DropdownIntlItem['id']>): Promise<void> {
     const action = actions.find((action) => action._id === e.detail)
     if (action !== undefined) {
       await handleAction(action)
     }
   }
 
-  async function handleAction (action: Action): Promise<void> {
+  async function handleAction(action: Action): Promise<void> {
     const fn = await getResource(action.action)
     // Pass the appropriate object based on action target
     if (action.target === love.class.MeetingMinutes && meetingMinutes !== undefined) {
@@ -55,7 +56,7 @@
 </script>
 
 {#if $lkSessionConnected && moreItems.length > 0}
-  <ButtonMenu
+  <MenuButton
     items={moreItems}
     icon={IconMoreV}
     tooltip={{ label: love.string.MoreOptions, direction: 'top' }}

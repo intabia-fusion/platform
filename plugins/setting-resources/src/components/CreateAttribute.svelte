@@ -20,7 +20,6 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
   import {
-    ButtonIcon,
     Component,
     DropdownLabelsIntl,
     IconCopy,
@@ -31,6 +30,8 @@
     showPopup,
     Toggle
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import viewRes from '@hcengineering/view-resources/src/plugin'
   import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
@@ -52,7 +53,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (type === undefined) return
 
     const data: Data<AnyAttribute> = {
@@ -77,7 +78,7 @@
     clearSettingsStore()
   }
 
-  function getTypes (): DropdownIntlItem[] {
+  function getTypes(): DropdownIntlItem[] {
     const descendants = hierarchy.getDescendants(core.class.Type)
     const res: DropdownIntlItem[] = []
     for (const descendant of descendants) {
@@ -97,7 +98,7 @@
 
   $: selectType(selectedType)
 
-  function selectType (type: Ref<Class<Type<PropertyType>>> | undefined): void {
+  function selectType(type: Ref<Class<Type<PropertyType>>> | undefined): void {
     if (type === undefined) return
     const _class = hierarchy.getClass(type)
     const editor = hierarchy.as(_class, view.mixin.ObjectEditor)
@@ -120,7 +121,7 @@
       extra = e.detail?.extra ?? extra
     }
   }
-  function setIcon (): void {
+  function setIcon(): void {
     showPopup(IconPicker, { icon, showEmoji: false, showColor: false }, 'top', async (res) => {
       if (res !== undefined) {
         icon = res.icon
@@ -140,15 +141,22 @@
   }}
 >
   <svelte:fragment slot="actions">
-    <ButtonIcon icon={IconDelete} size="small" kind="tertiary" />
-    <ButtonIcon icon={IconCopy} size="small" kind="tertiary" />
+    <IconButton icon={IconDelete} size="small" kind="tertiary" tooltip={{ label: setting.string.DeleteAttribute }} />
+    <IconButton icon={IconCopy} size="small" kind="tertiary" tooltip={{ label: presentation.string.Copy }} />
   </svelte:fragment>
   <div class="hulyModal-content__titleGroup">
     <div class="hulyChip-item font-medium-12">
       <Label label={setting.string.Custom} />
     </div>
     <div class="flex items-center">
-      <ButtonIcon icon={icon ?? setting.icon.Enums} size="medium" iconSize="large" kind="tertiary" on:click={setIcon} />
+      <IconButton
+        tooltip={{ label: viewRes.string.ChooseIcon }}
+        icon={icon ?? setting.icon.Enums}
+        size="medium"
+        iconSize="large"
+        kind="tertiary"
+        on:click={setIcon}
+      />
       <ModernEditbox bind:value={name} label={core.string.Name} size="large" kind="ghost" autoFocus />
     </div>
   </div>

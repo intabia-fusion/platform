@@ -29,7 +29,6 @@
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import ui, {
     Button,
-    ButtonIcon,
     capitalizeFirstLetter,
     createFocusManager,
     deviceOptionsStore as deviceInfo,
@@ -51,6 +50,7 @@
     themeStore,
     TimeInputBox
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
@@ -62,7 +62,7 @@
 
   const docCreateManager = DocCreateExtensionManager.create(calendar.class.Schedule)
 
-  type EditableAvailability = Record<number, { start: Date, end: Date }[]>
+  type EditableAvailability = Record<number, { start: Date; end: Date }[]>
 
   const manager = createFocusManager()
   const dispatch = createEventDispatcher()
@@ -85,8 +85,8 @@
   let timeZone = schedule?.timeZone ?? getUserTimezone()
   let _calendar = schedule?.calendar
 
-  const durationVariants: { msec: number, text: string }[] = []
-  const intervalVariants: { msec: number, text: string }[] = []
+  const durationVariants: { msec: number; text: string }[] = []
+  const intervalVariants: { msec: number; text: string }[] = []
 
   $: formatMeetingDuration(meetingDuration)
   $: formatMeetingInterval(meetingInterval)
@@ -94,7 +94,7 @@
   $: formatIntervalVariants()
   $: makeEditableAvailability()
 
-  function formatDurationVariants (): void {
+  function formatDurationVariants(): void {
     ;[15, 30, 45, 60, 90, 120].forEach((minutes) => {
       const msec = minutes * 60_000
       formatDuration(msec, $themeStore.language)
@@ -107,7 +107,7 @@
     })
   }
 
-  function formatIntervalVariants (): void {
+  function formatIntervalVariants(): void {
     ;[0, 5, 10, 15, 30, 45, 60].forEach((minutes) => {
       const msec = minutes * 60_000
       formatDuration(msec, $themeStore.language)
@@ -120,7 +120,7 @@
     })
   }
 
-  function defaultAvailability (): { start: Date, end: Date } {
+  function defaultAvailability(): { start: Date; end: Date } {
     const start = new Date()
     start.setHours(9, 0, 0, 0)
     const end = new Date()
@@ -128,7 +128,7 @@
     return { start, end }
   }
 
-  function makeEditableAvailability (): void {
+  function makeEditableAvailability(): void {
     const offset = new Date()
     offset.setHours(0, 0, 0, 0)
     availabilityEditOffset = offset.getTime()
@@ -150,7 +150,7 @@
     }
   }
 
-  function getStorableAvailability (): ScheduleAvailability {
+  function getStorableAvailability(): ScheduleAvailability {
     const result: ScheduleAvailability = {}
     for (let i = 0; i < 7; i++) {
       const periods = availability[i] ?? []
@@ -167,7 +167,7 @@
     return result
   }
 
-  function formatMeetingDuration (duration: number): void {
+  function formatMeetingDuration(duration: number): void {
     formatDuration(duration, $themeStore.language)
       .then((res) => {
         formattedMeetingDuration = res
@@ -177,7 +177,7 @@
       })
   }
 
-  function formatMeetingInterval (duration: number): void {
+  function formatMeetingInterval(duration: number): void {
     formatDuration(duration, $themeStore.language)
       .then((res) => {
         formattedMeetingInterval = res
@@ -187,11 +187,11 @@
       })
   }
 
-  export function canClose (): boolean {
+  export function canClose(): boolean {
     return title === ''
   }
 
-  async function saveSchedule (): Promise<void> {
+  async function saveSchedule(): Promise<void> {
     if (schedule === undefined) {
       const _id = generateId<Schedule>()
       const currentUser = getCurrentEmployee()
@@ -222,7 +222,7 @@
     dispatch('close')
   }
 
-  function showDurationVariants (ev: MouseEvent): void {
+  function showDurationVariants(ev: MouseEvent): void {
     durationVariants.sort((a, b) => a.msec - b.msec)
     showPopup(
       SelectPopup,
@@ -243,7 +243,7 @@
     )
   }
 
-  function showIntervalVariants (ev: MouseEvent): void {
+  function showIntervalVariants(ev: MouseEvent): void {
     intervalVariants.sort((a, b) => a.msec - b.msec)
     showPopup(
       SelectPopup,
@@ -265,7 +265,7 @@
     )
   }
 
-  function getWeekDayNames (): { weekDay: number, dayName: string }[] {
+  function getWeekDayNames(): { weekDay: number; dayName: string }[] {
     const today = new Date()
     const offset = 0 + $deviceInfo.firstDayOfWeek - today.getDay()
     const startDate = today.getTime() + 86_400_000 * offset
@@ -376,7 +376,7 @@
                 {/if}
               </div>
               {#if availability[weekDay].length > 0}
-                <ButtonIcon
+                <IconButton
                   icon={IconDelete}
                   size="small"
                   kind="tertiary"
@@ -386,7 +386,7 @@
                   }}
                 />
               {:else}
-                <ButtonIcon
+                <IconButton
                   icon={IconCircleAdd}
                   size="small"
                   kind="tertiary"

@@ -19,12 +19,12 @@
   import {
     IconAdd,
     IconMoreH,
-    ButtonIcon,
     ScrollerBar,
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
     showPopup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
 
   export let popup: boolean = false
 
@@ -65,7 +65,7 @@
   {:else if selectedTab !== undefined}
     <WorkbenchTabPresenter tab={selectedTab} />
     {#if $tabsStore.length > 1}
-      <ButtonIcon
+      <IconButton
         bind:element
         icon={IconMoreH}
         iconProps={{ fill: 'var(--theme-dark-color)' }}
@@ -78,7 +78,7 @@
     {/if}
   {/if}
   {#if !popup}
-    <ButtonIcon
+    <IconButton
       icon={IconAdd}
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size="extra-small"

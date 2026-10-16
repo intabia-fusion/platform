@@ -1,6 +1,6 @@
 <script lang="ts">
   import love from '../../../plugin'
-  import { ModernButton } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { myInfo, myOffice } from '../../../stores'
   import type { Room } from '@hcengineering/love'
   import { isOffice } from '@hcengineering/love'
@@ -16,18 +16,18 @@
   // Check if this is my office using myOffice store (works even when not in a meeting)
   $: isMyOffice = isOffice(room) && room._id === $myOffice?._id
 
-  async function leave (): Promise<void> {
+  async function leave(): Promise<void> {
     await leaveMeeting()
     dispatch('leave')
   }
 </script>
 
-<ModernButton
+<Button
   icon={love.icon.LeaveRoom}
   label={noLabel ? undefined : isMyOffice ? love.string.EndMeeting : love.string.LeaveRoom}
   tooltip={{ label: isMyOffice ? love.string.EndMeeting : love.string.LeaveRoom, direction: 'top' }}
   kind="negative"
   {size}
-  dataId="meeting-leave"
+  data-id="meeting-leave"
   on:click={leave}
 />

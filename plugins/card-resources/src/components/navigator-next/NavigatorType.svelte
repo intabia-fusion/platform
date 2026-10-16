@@ -16,7 +16,8 @@
 <script lang="ts">
   import view from '@hcengineering/view'
   import type { Action } from '@hcengineering/ui'
-  import { IconAdd, NavGroup, NavItem, ButtonIcon, showPopup, languageStore } from '@hcengineering/ui'
+  import { IconAdd, NavGroup, NavItem, showPopup, languageStore } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import type { CardSpace, MasterTag } from '@hcengineering/card'
@@ -40,7 +41,7 @@
   const dispatch = createEventDispatcher()
   let activeAction: string | undefined = undefined
 
-  async function handleCreateCard (): Promise<void> {
+  async function handleCreateCard(): Promise<void> {
     showPopup(
       CreateCardPopup,
       { type: type._id, space: space?._id, changeType: isBaseTypeWithSubtypes(getClient().getHierarchy(), type._id) },
@@ -55,7 +56,7 @@
     )
   }
 
-  async function getActions (lang: string): Promise<Action[]> {
+  async function getActions(lang: string): Promise<Action[]> {
     const result: Action[] = []
     const typeString = await translate(type.label, {}, lang)
     const createString = await translate(presentation.string.Create, {}, lang)
@@ -125,7 +126,7 @@
     <slot />
     <svelte:fragment slot="actions">
       {#each actions as action}
-        <ButtonIcon
+        <IconButton
           icon={action.icon ?? view.icon.Edit}
           size="extra-small"
           kind="tertiary"

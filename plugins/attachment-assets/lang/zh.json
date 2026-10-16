@@ -56,6 +56,8 @@
     "OpenInWindow": "在新窗口中打开",
     "Embeddings": "嵌入",
     "Transcribing": "转写中...",
-    "TranscriptionFailed": "转写失败"
+    "TranscriptionFailed": "转写失败",
+    "Play": "播放",
+    "Pause": "暂停"
   }
 }

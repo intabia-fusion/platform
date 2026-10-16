@@ -12,9 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import presentation from '@hcengineering/presentation'
   import type { Ref } from '@hcengineering/core'
   import type { TaskType } from '@hcengineering/task'
-  import { ButtonIcon, IconClose, IconMaximize, IconMinimize, Label, Modal } from '@hcengineering/ui'
+  import ui, { IconClose, IconMaximize, IconMinimize, Label, Modal } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   import plugin from '../../plugin'
@@ -27,13 +29,13 @@
   $: focusedTaskType = focusTypeId !== undefined ? taskTypes.find((t) => t._id === focusTypeId) : undefined
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ close: void, fullsize: boolean }>()
+  const dispatch = createEventDispatcher<{ close: void; fullsize: boolean }>()
 
-  function handleClose (): void {
+  function handleClose(): void {
     dispatch('close')
   }
 
-  function handleToggleFullSize (): void {
+  function handleToggleFullSize(): void {
     fullSize = !fullSize
     dispatch('fullsize', fullSize)
   }
@@ -41,13 +43,21 @@
 
 <Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
-    <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={handleClose} />
+    <IconButton
+      icon={IconClose}
+      kind="tertiary"
+      size="small"
+      noPrint
+      tooltip={{ label: presentation.string.Close }}
+      on:click={handleClose}
+    />
     <div class="hulyHeader-divider short no-line no-print" />
-    <ButtonIcon
+    <IconButton
       icon={!fullSize ? IconMaximize : IconMinimize}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: !fullSize ? ui.string.FullSize : ui.string.NormalSize }}
       on:click={handleToggleFullSize}
     />
     <div class="hulyHeader-divider short no-print" />

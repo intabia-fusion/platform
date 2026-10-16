@@ -15,7 +15,8 @@
 <script lang="ts">
   import type { ApiKeyInfo } from '@hcengineering/account-client'
   import type { Ref, Space } from '@hcengineering/core'
-  import { ButtonIcon, Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import { Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import settingsRes from '../plugin'
   import ApiKeyTable from './ApiKeyTable.svelte'
 
@@ -41,13 +42,15 @@
     <div class="usage"><Label label={settingsRes.string.ApiKeysUsage} params={{ used, limit }} /></div>
   {/if}
   <div class="flex-row-center flex-gap-1">
-    <ButtonIcon
+    <IconButton
       kind="primary"
       icon={IconAdd}
       size="small"
-      dataId={personal ? 'btnAddPersonalKey' : 'btnAddIntegrationKey'}
+      data-id={personal ? 'btnAddPersonalKey' : 'btnAddIntegrationKey'}
       disabled={atLimit}
-      tooltip={atLimit ? { label: settingsRes.string.ApiKeyLimitReachedError, props: { limit } } : undefined}
+      tooltip={atLimit
+        ? { label: settingsRes.string.ApiKeyLimitReachedError, props: { limit } }
+        : { label: settingsRes.string.CreateApiKey }}
       on:click={() => {
         onCreate(personal)
       }}

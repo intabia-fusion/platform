@@ -17,11 +17,12 @@
   import type { ChatMessage } from '@hcengineering/chunter'
   import chunter, { chunterId } from '@hcengineering/chunter'
   import type { Location } from '@hcengineering/ui'
-  import { ButtonIcon, IconClose, Label, location, navigate } from '@hcengineering/ui'
+  import { IconClose, Label, location, navigate } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { WithLookup, Ref } from '@hcengineering/core'
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
-  import { createQuery, LiteMessageViewer, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, LiteMessageViewer, getClient } from '@hcengineering/presentation'
   import activity from '@hcengineering/activity'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import type { Person } from '@hcengineering/contact'
@@ -92,7 +93,7 @@
 
   $: loc = createLocation($location, replyTo, parentMessage)
 
-  function createLocation (loc: Location, message: ChatMessage, parentMsg?: ChatMessage): Location | undefined {
+  function createLocation(loc: Location, message: ChatMessage, parentMsg?: ChatMessage): Location | undefined {
     if (message == null) return undefined
     const newLocation: Location = {
       path: [...loc.path]
@@ -113,7 +114,7 @@
     return newLocation
   }
 
-  function handleClick (e: MouseEvent | KeyboardEvent): void {
+  function handleClick(e: MouseEvent | KeyboardEvent): void {
     if (e.metaKey || e.ctrlKey || loc == null) return
     e.preventDefault()
     e.stopPropagation()
@@ -122,12 +123,13 @@
     navigate(loc)
   }
 
-  function handleClose (e: MouseEvent): void {
+  function handleClose(e: MouseEvent): void {
+    e.stopPropagation()
     e.stopPropagation()
     dispatch('delete')
   }
 
-  function handleKeyDown (e: KeyboardEvent): void {
+  function handleKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Enter') {
       e.preventDefault()
       e.stopPropagation()
@@ -173,7 +175,13 @@
   </div>
 
   {#if canClose}
-    <ButtonIcon icon={IconClose} kind="tertiary" size="small" on:click={handleClose} />
+    <IconButton
+      icon={IconClose}
+      kind="tertiary"
+      size="small"
+      tooltip={{ label: presentation.string.Close }}
+      on:click={handleClose}
+    />
   {/if}
 </div>
 

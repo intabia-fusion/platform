@@ -4,9 +4,11 @@
   // Shows several controls (buttons, checkboxes, list) to help choose an accent.
   import type { Asset } from '@hcengineering/platform'
   import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+  import Button from '../../ui-kit/button/Button.svelte'
+  import IconButton from '../../ui-kit/button/IconButton.svelte'
+  import MenuButton from '../../ui-kit/button/MenuButton.svelte'
   import {
-    Button,
-    ButtonMenu,
+    Button as LegacyButton,
     ButtonWithDropdown,
     CheckBox,
     ModernCheckbox,
@@ -24,11 +26,9 @@
   } from '../..'
   import Loading from '../Loading.svelte'
   import ModernToggle from '../ModernToggle.svelte'
-  import ButtonIcon from '../ButtonIcon.svelte'
   import ButtonGroup from '../ButtonGroup.svelte'
   import Toggle from '../Toggle.svelte'
   import MiniToggle from '../MiniToggle.svelte'
-  import ModernButton from '../ModernButton.svelte'
   import SplitButton from '../SplitButton.svelte'
 
   interface AccentOption {
@@ -90,76 +90,76 @@
 
 <div class="ap-content">
   <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="primary" label={LABEL_PRIMARY} />
+    <LegacyButton kind="regular" label={LABEL_REGULAR} />
+    <LegacyButton kind="secondary" label={LABEL_SECONDARY} />
+  </div>
+
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="primary" label={LABEL_LOADING} loading />
+    <LegacyButton kind="primary" label={LABEL_PRESSED} pressed />
+    <LegacyButton kind="primary" label={LABEL_DISABLED} disabled />
+  </div>
+
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="positive" label={LABEL_YES} />
+    <LegacyButton kind="positive" label={LABEL_YES} loading />
+    <LegacyButton kind="positive" pressed label={LABEL_YES} />
+    <LegacyButton kind="positive" pressed disabled label={LABEL_YES} />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="negative" label={LABEL_NO} />
+    <LegacyButton kind="negative" label={LABEL_NO} loading />
+    <LegacyButton kind="negative" pressed label={LABEL_NO} />
+    <LegacyButton kind="negative" pressed disabled label={LABEL_NO} />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="attention" label={LABEL_ATTENTION} />
+    <LegacyButton kind="attention" label={LABEL_ATTENTION} loading />
+    <LegacyButton kind="attention" pressed label={LABEL_ATTENTION} />
+    <LegacyButton kind="attention" disabled label={LABEL_ATTENTION} />
+    <LegacyButton kind="attention" pressed disabled label={LABEL_ATTENTION} />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="dangerous" label={LABEL_DANGEROUS} />
+    <LegacyButton kind="dangerous" label={LABEL_DANGEROUS} loading />
+    <LegacyButton kind="dangerous" pressed label={LABEL_DANGEROUS} />
+    <LegacyButton kind="dangerous" disabled label={LABEL_DANGEROUS} />
+    <LegacyButton kind="dangerous" pressed disabled label={LABEL_DANGEROUS} />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="contrast" label={LABEL_CONTRAST} />
+    <LegacyButton kind="contrast" label={LABEL_CONTRAST} loading />
+    <LegacyButton kind="contrast" pressed label={LABEL_CONTRAST} />
+    <LegacyButton kind="contrast" disabled label={LABEL_CONTRAST} />
+    <LegacyButton kind="contrast" pressed disabled label={LABEL_CONTRAST} />
+  </div>
+
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="ghost" label={LABEL_GHOST} />
+    <LegacyButton kind="ghost" label={LABEL_GHOST} loading />
+    <LegacyButton kind="link" label={LABEL_LINK} />
+    <LegacyButton kind="link" label={LABEL_LINK} loading />
+    <LegacyButton kind="link-bordered" label={LABEL_LINK} />
+    <LegacyButton kind="link-bordered" label={LABEL_LINK} loading />
+  </div>
+  <div class="flex flex-row-center p-1 gap-2">
+    <LegacyButton kind="no-border" label={getEmbeddedLabel('No border')} />
+    <LegacyButton kind="no-border" label={getEmbeddedLabel('No border')} loading />
+    <LegacyButton kind="stepper" label={getEmbeddedLabel('Stepper')} />
+    <LegacyButton kind="stepper" label={getEmbeddedLabel('Stepper')} />
+  </div>
+
+  <div class="flex flex-row-center p-1 gap-2">
     <Button kind="primary" label={LABEL_PRIMARY} />
-    <Button kind="regular" label={LABEL_REGULAR} />
     <Button kind="secondary" label={LABEL_SECONDARY} />
+    <Button kind="tertiary" label={LABEL_TERTIARY} />
+    <Button kind="negative" label={LABEL_NEGATIVE} />
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="primary" label={LABEL_LOADING} loading />
-    <Button kind="primary" label={LABEL_PRESSED} pressed />
-    <Button kind="primary" label={LABEL_DISABLED} disabled />
-  </div>
-
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="positive" label={LABEL_YES} />
-    <Button kind="positive" label={LABEL_YES} loading />
-    <Button kind="positive" pressed label={LABEL_YES} />
-    <Button kind="positive" pressed disabled label={LABEL_YES} />
-  </div>
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="negative" label={LABEL_NO} />
-    <Button kind="negative" label={LABEL_NO} loading />
-    <Button kind="negative" pressed label={LABEL_NO} />
-    <Button kind="negative" pressed disabled label={LABEL_NO} />
-  </div>
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="attention" label={LABEL_ATTENTION} />
-    <Button kind="attention" label={LABEL_ATTENTION} loading />
-    <Button kind="attention" pressed label={LABEL_ATTENTION} />
-    <Button kind="attention" disabled label={LABEL_ATTENTION} />
-    <Button kind="attention" pressed disabled label={LABEL_ATTENTION} />
-  </div>
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="dangerous" label={LABEL_DANGEROUS} />
-    <Button kind="dangerous" label={LABEL_DANGEROUS} loading />
-    <Button kind="dangerous" pressed label={LABEL_DANGEROUS} />
-    <Button kind="dangerous" disabled label={LABEL_DANGEROUS} />
-    <Button kind="dangerous" pressed disabled label={LABEL_DANGEROUS} />
-  </div>
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="contrast" label={LABEL_CONTRAST} />
-    <Button kind="contrast" label={LABEL_CONTRAST} loading />
-    <Button kind="contrast" pressed label={LABEL_CONTRAST} />
-    <Button kind="contrast" disabled label={LABEL_CONTRAST} />
-    <Button kind="contrast" pressed disabled label={LABEL_CONTRAST} />
-  </div>
-
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="ghost" label={LABEL_GHOST} />
-    <Button kind="ghost" label={LABEL_GHOST} loading />
-    <Button kind="link" label={LABEL_LINK} />
-    <Button kind="link" label={LABEL_LINK} loading />
-    <Button kind="link-bordered" label={LABEL_LINK} />
-    <Button kind="link-bordered" label={LABEL_LINK} loading />
-  </div>
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="no-border" label={getEmbeddedLabel('No border')} />
-    <Button kind="no-border" label={getEmbeddedLabel('No border')} loading />
-    <Button kind="stepper" label={getEmbeddedLabel('Stepper')} />
-    <Button kind="stepper" label={getEmbeddedLabel('Stepper')} />
-  </div>
-
-  <div class="flex flex-row-center p-1 gap-2">
-    <ModernButton kind="primary" label={LABEL_PRIMARY} />
-    <ModernButton kind="secondary" label={LABEL_SECONDARY} />
-    <ModernButton kind="tertiary" label={LABEL_TERTIARY} />
-    <ModernButton kind="negative" label={LABEL_NEGATIVE} />
-  </div>
-
-  <div class="flex flex-row-center p-1 gap-2">
-    <Button kind="primary" label={LABEL_PRIMARY} />
-    <ButtonMenu label={LABEL_PRIMARY} items={menuItems} />
+    <LegacyButton kind="primary" label={LABEL_PRIMARY} />
+    <MenuButton label={LABEL_PRIMARY} items={menuItems} />
     <ButtonWithDropdown
       {dropdownItems}
       label={LABEL_PRIMARY}
@@ -176,14 +176,44 @@
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">
-    <ButtonIcon kind="primary" icon={IconCheckmark} size="small" />
-    <ButtonIcon kind="primary" pressed icon={IconCheckmark} size="small" />\
-    <ButtonIcon kind="secondary" icon={IconCheckmark} size="small" />
-    <ButtonIcon kind="secondary" pressed icon={IconCheckmark} size="small" />
-    <ButtonIcon kind="tertiary" icon={IconCheckmark} size="small" noPrint />
-    <ButtonIcon kind="tertiary" pressed icon={IconCheckmark} size="small" />
-    <ButtonIcon kind="negative" icon={IconCheckmark} size="small" />
-    <ButtonIcon kind="negative" pressed icon={IconCheckmark} size="small" />
+    <IconButton kind="primary" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="primary"
+      pressed
+      icon={IconCheckmark}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />\
+    <IconButton kind="secondary" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="secondary"
+      pressed
+      icon={IconCheckmark}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
+    <IconButton
+      kind="tertiary"
+      icon={IconCheckmark}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+      noPrint
+    />
+    <IconButton
+      kind="tertiary"
+      pressed
+      icon={IconCheckmark}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
+    <IconButton kind="negative" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="negative"
+      pressed
+      icon={IconCheckmark}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
     <ButtonGroup
       items={[
         { id: 'b1', icon: IconActivity },
@@ -192,7 +222,7 @@
     />
   </div>
   <div class="flex flex-row-center p-1 gap-2">
-    <ButtonIcon kind="primary" icon={IconClose} size="min" />
+    <IconButton kind="primary" icon={IconClose} size="min" tooltip={{ label: getEmbeddedLabel('Close') }} />
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">

@@ -12,10 +12,6 @@
 | HeaderButton | ButtonWithDropdown для шапки с проверкой прав | `mainActionId`, `client`, `actions`, `visibleActions`, `loading` |
 | ButtonWithDropdown | Кнопка+стрелка, popup выбора из dropdownItems | `dropdownItems`, `label`, `kind`, `icon`, `dropdownIcon` |
 | ButtonGroup | Кнопки в сегментированной группе с select-режимом | `items`, `selected`, `allowDeselected`, `mode` |
-| ButtonIcon | Кнопка-иконка без текста, modern-стиль; заменяется `IconButton` из кита | `kind`, `size`, `icon`, `disabled`, `pressed` |
-| ButtonMenu | Кнопка, открывающая dropdown-список items; заменяется `MenuButton` из кита | `items`, `selected`, `kind`, `size`, `label` |
-| ButtonBase | Примитив кнопки; заменяется `Button` из кита | `kind`, `size`, `type`, `icon`, `label` |
-| ModernButton | Modern-аналог Button; заменяется `Button` из кита | `kind`, `size`, `shape`, `icon`, `label` |
 | SplitButton | Кнопка из двух независимо кликабельных половин | `label`, `secondTitle`, `icon`, `secondIcon`, `action` |
 | CircleButton | Круглая кнопка-иконка для плавающих элементов | `icon`, `size`, `ghost`, `selected`, `primary` |
 | ActionIcon | Inline иконка-кнопка с async action и keys | `label`, `icon`, `size`, `action`, `keys` |
@@ -73,7 +69,7 @@
 | DropdownLabelsIntl | Как DropdownLabels, но items - DropdownIntlItem | `items`, `selected`, `multiselect`, `label`, `kind` |
 | DropdownLabelsPopupIntl | Контент DropdownLabelsIntl, поиск через translate() | `items`, `selected`, `multiselect`, `withSearch`, `searchPlaceholder` |
 | DropdownRecord | Дропдаун поверх Record<key, IntlString> (не массив) | `items`, `selected`, `kind`, `size`, `width` |
-| ModernDropdown | Modern-аналог DropdownLabelsIntl на ModernButton | `items`, `selected`, `multiselect`, `kind`, `size` |
+| ModernDropdown | Modern-аналог DropdownLabelsIntl на `Button` из кита | `items`, `selected`, `multiselect`, `kind`, `size` |
 | ModernDropdownLabels | Modern-аналог DropdownLabels (DropdownTextItem[]) | `items`, `selected`, `multiselect`, `enableSearch`, `showContent` |
 | ModernPopupLabels | Modern-контент для DropdownTextItem[] | `items`, `selected`, `multiselect`, `enableSearch`, `placeholder` |
 | ModernPopup | Modern-контент для DropdownIntlItem[] | `items`, `selected`, `multiselect`, `withSearch`, `searchPlaceholder` |
@@ -210,7 +206,7 @@
 
 ## Выбор между похожими
 
-- **Button vs ModernButton vs ButtonIcon vs ButtonMenu vs ButtonBase**: в новом коде - кнопки кита (`@hcengineering/ui/kit`, [ui-kit.md](ui-kit.md)) с тем же видом: `Button` вместо ModernButton и ButtonBase, `IconButton` вместо ButtonIcon, `MenuButton` вместо ButtonMenu. Button из `@hcengineering/ui` - старый дизайн (legacy kind), переводится на кит.
+- **Button из `@hcengineering/ui` vs кнопки кита**: в новом коде - кнопки кита (`@hcengineering/ui/kit`, [ui-kit.md](ui-kit.md)): `Button`, `IconButton`, `MenuButton`. Button из `@hcengineering/ui` - старый дизайн (legacy kind), переводится на кит.
 - **EditBox vs ModernEditbox vs StylishEdit vs TextArea**: EditBox - старый ввод через `format`; ModernEditbox - новый дизайн (`kind`/`size`); StylishEdit - облегченная версия, только error-стейт; TextArea - выделенный multiline legacy-дизайна (`width`/`height`/`wrap`).
 - **Dropdown vs DropdownLabels vs ModernDropdown vs SelectPopup**: Dropdown/DropdownLabels - кнопки-триггеры старого дизайна (ListItem vs DropdownTextItem+multiselect); ModernDropdown - новый дизайн, аналог DropdownLabelsIntl; SelectPopup - не кнопка, а сам попап-контент, вызывается вручную через `showPopup`+`onSelect`.
 - **Popup vs Modal vs Dialog vs ModernDialog**: Popup - хост-фреймворк `showPopup()` (не импортируется напрямую); Dialog - самый старый контейнер, без футера; Modal - контейнер с ok/cancel футером старого дизайна; ModernDialog - текущий стандарт для форм-модалок (submit/cancel, back, loader).

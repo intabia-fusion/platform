@@ -15,20 +15,10 @@
 <script lang="ts">
   import type { AccountAggregatedInfo, AccountsFilter, AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
-  import {
-    Button,
-    ButtonMenu,
-    CheckBox,
-    IconCopy,
-    IconDetails,
-    IconStop,
-    Label,
-    SearchEdit,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
+  import { Button, CheckBox, IconCopy, IconDetails, IconStop, Label, SearchEdit, showPopup } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import adminRes from '../../plugin'
   import AccountDetails from '../AccountDetails.svelte'
@@ -53,7 +43,7 @@
   let sortAsc = false
 
   // Names and emails read A-Z, every other column starts from the biggest/most recent.
-  function sortBy (key: AccountsSortKey): void {
+  function sortBy(key: AccountsSortKey): void {
     if (sortKey === key) {
       sortAsc = !sortAsc
       return
@@ -67,7 +57,7 @@
   $: ariaSort = (key: AccountsSortKey): 'ascending' | 'descending' | 'none' =>
     sortKey === key ? (sortAsc ? 'ascending' : 'descending') : 'none'
 
-  function sortOnKey (e: KeyboardEvent, key: AccountsSortKey): void {
+  function sortOnKey(e: KeyboardEvent, key: AccountsSortKey): void {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       sortBy(key)
@@ -78,7 +68,6 @@
   let pendingOnly = false
   let blockedOnly = false
   let inactiveDays: number | undefined
-  // ButtonMenu drops falsy ids (`if (result)`), so ids must be non-empty strings
   const inactiveItems = [
     { id: 'any', label: adminRes.string.AnyActivity },
     ...[1, 5, 7, 14].map((d) => ({ id: String(d), label: getEmbeddedLabel(`${d}d+`) }))
@@ -91,14 +80,7 @@
     inactiveDays
   }
 
-  let inactiveTitle = ''
-  $: if (inactiveDays === undefined) {
-    void translate(adminRes.string.AnyActivity, {}, $themeStore.language).then((t) => {
-      inactiveTitle = t
-    })
-  } else {
-    inactiveTitle = `${inactiveDays}d+`
-  }
+  $: inactiveSelected = inactiveDays === undefined ? 'any' : String(inactiveDays)
 
   const loadAccounts = reduceCalls(async (search?: string, skip?: number, limit?: number): Promise<void> => {
     accounts = await accountClient.listAccounts(search, skip, limit, sortKey, filter, sortAsc ? 'asc' : 'desc')
@@ -114,7 +96,7 @@
 
   let exporting = false
   let reportFormat: ReportFormat = 'csv'
-  async function exportAccounts (): Promise<void> {
+  async function exportAccounts(): Promise<void> {
     exporting = true
     try {
       await downloadReport('accounts', reportFormat, { search: accountSearch, filter })
@@ -134,14 +116,14 @@
     ['Year', 365],
     ['Older', Infinity]
   ]
-  function bucketOf (lastVisit: number | undefined): string {
+  function bucketOf(lastVisit: number | undefined): string {
     if (lastVisit == null || lastVisit === 0) return 'Never'
     const days = (Date.now() - lastVisit) / (24 * 3600 * 1000)
     return dayRanges.find(([, max]) => days <= max)?.[0] ?? 'Older'
   }
   $: groups =
     sortKey === 'lastVisit'
-      ? accounts.reduce<Array<{ label: string | null, items: AccountAggregatedInfo[] }>>((res, a) => {
+      ? accounts.reduce<Array<{ label: string | null; items: AccountAggregatedInfo[] }>>((res, a) => {
           const label = bucketOf(a.lastVisit)
           const last = res[res.length - 1]
           if (last?.label === label) {
@@ -153,20 +135,20 @@
         }, [])
       : [{ label: null, items: accounts }]
 
-  function lastVisitDays (lastVisit: number | undefined): string {
+  function lastVisitDays(lastVisit: number | undefined): string {
     if (lastVisit == null || lastVisit === 0) return '-'
     const days = Math.floor((Date.now() - lastVisit) / (24 * 3600 * 1000))
     return `${days}d`
   }
 
-  function fmtDay (ms: number | undefined): string {
+  function fmtDay(ms: number | undefined): string {
     if (ms == null || ms === 0) return '-'
     return new Date(ms).toISOString().slice(0, 10)
   }
 
   // Account deletion is an irreversible identity purge -> OTP-gated on the server.
   // The dialog checkbox skips the deferral and purges the identity right away.
-  async function deleteAccount (uuid: AccountUuid): Promise<void> {
+  async function deleteAccount(uuid: AccountUuid): Promise<void> {
     // The server refuses an account that still owns a workspace alone. Say so before asking
     // for a code, otherwise the refusal arrives after the whole OTP dance.
     const check = await accountClient.canDeleteAccount(uuid).catch(() => undefined)
@@ -192,7 +174,7 @@
   }
 
   // Unfinished signup has no account row - purge person + social ids instead
-  async function deletePerson (uuid: AccountUuid): Promise<void> {
+  async function deletePerson(uuid: AccountUuid): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
     await runAdminAction(async () => {
@@ -202,12 +184,12 @@
     await loadAccounts(accountSearch, accountSkip, accountLimit)
   }
 
-  async function accountSearchChanged (ev: CustomEvent<string>): Promise<void> {
+  async function accountSearchChanged(ev: CustomEvent<string>): Promise<void> {
     accountSkip = 0
     await loadAccounts(ev.detail, accountSkip, accountLimit)
   }
 
-  function primaryEmail (account: AccountAggregatedInfo): string {
+  function primaryEmail(account: AccountAggregatedInfo): string {
     return account.primaryEmail ?? account.socialIds[0]?.value ?? '-'
   }
 </script>
@@ -264,9 +246,9 @@
   </div>
 
   <span class="mr-1"><Label label={adminRes.string.InactiveOver} /></span>
-  <ButtonMenu
-    selected={inactiveDays === undefined ? 'any' : String(inactiveDays)}
-    title={inactiveTitle}
+  <MenuButton
+    selected={inactiveSelected}
+    label={inactiveItems.find((it) => it.id === inactiveSelected)?.label}
     items={inactiveItems}
     on:selected={(it) => {
       inactiveDays = it.detail === 'any' ? undefined : Number(it.detail)

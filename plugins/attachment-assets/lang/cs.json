@@ -56,6 +56,8 @@
     "OpenInWindow": "Otevřít v okně",
     "Embeddings": "Vnoření",
     "Transcribing": "Přepis...",
-    "TranscriptionFailed": "Přepis selhal"
+    "TranscriptionFailed": "Přepis selhal",
+    "Play": "Přehrát",
+    "Pause": "Pozastavit"
   }
 }

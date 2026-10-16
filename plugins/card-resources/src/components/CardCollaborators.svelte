@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import presentation from '@hcengineering/presentation'
   import type { Employee, Person } from '@hcengineering/contact'
-  import { ButtonIcon, IconDelete, ModernButton, Scroller } from '@hcengineering/ui'
+  import { IconDelete, Scroller } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import { employeeByIdStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
   import type { Ref } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
@@ -32,7 +34,7 @@
 
 <div class="root">
   <div class="item" style:padding="var(--spacing-1_5)" class:withoutBorder={employees.length === 0}>
-    <ModernButton
+    <Button
       label={card.string.AddCollaborators}
       icon={IconAddMember}
       iconSize="small"
@@ -48,9 +50,10 @@
           <UserDetails person={employee} showStatus />
           {#if !disableRemoveFor.includes(employee._id)}
             <div class="item__action">
-              <ButtonIcon
+              <IconButton
                 icon={IconDelete}
                 size="small"
+                tooltip={{ label: presentation.string.Remove }}
                 on:click={() => {
                   dispatch('remove', employee._id)
                 }}

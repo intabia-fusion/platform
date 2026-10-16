@@ -22,7 +22,6 @@
   import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
     Scroller,
-    ButtonIcon,
     IconDescription,
     Label,
     getLocation,
@@ -35,6 +34,7 @@
     NavItem,
     NavGroup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { showMenu } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
 
@@ -46,10 +46,10 @@
   export let ofClass: Ref<Class<Obj>> | undefined = undefined
   export let attributeMapper:
     | {
-      component: AnySvelteComponent
-      label: IntlString
-      props: Record<string, any>
-    }
+        component: AnySvelteComponent
+        label: IntlString
+        props: Record<string, any>
+      }
     | undefined = undefined
   export let withoutHeader = false
   export let useOfClassAttributes = true
@@ -81,7 +81,7 @@
   })
 
   // Generated targetClass mixins carry neither UserMixin nor Editable.
-  function isGeneratedTargetClass (cls: Class<Doc>): boolean {
+  function isGeneratedTargetClass(cls: Class<Doc>): boolean {
     if (cls.kind !== ClassifierKind.MIXIN) return false
     if (hierarchy.hasMixin(cls, setting.mixin.UserMixin)) return false
     return !(hierarchy.hasMixin(cls, setting.mixin.Editable) && hierarchy.as(cls, setting.mixin.Editable).value)
@@ -89,7 +89,7 @@
 
   // Flat list: filterDescendants gives editable roots; expand each root into
   // its editable descendants (classes and mixins, incl. user-created ones).
-  function collectEditable (
+  function collectEditable(
     roots: Ref<Class<Doc>>[],
     pluginConfigs: Map<string, PluginConfiguration>
   ): Ref<Class<Doc>>[] {
@@ -125,7 +125,7 @@
     pluginConfigs = new Map(res.map((it) => [it.pluginId, it]))
   })
 
-  function pluginOf (cl: Ref<Class<Doc>>): string {
+  function pluginOf(cl: Ref<Class<Doc>>): string {
     for (const anc of [cl, ...hierarchy.getAncestors(cl)]) {
       const idx = anc.indexOf(':')
       if (idx > 0) return anc.substring(0, idx)
@@ -140,7 +140,7 @@
     classes: Ref<Class<Doc>>[]
   }
 
-  function groupClasses (classes: Ref<Class<Doc>>[], pluginConfigs: Map<string, PluginConfiguration>): ClassGroup[] {
+  function groupClasses(classes: Ref<Class<Doc>>[], pluginConfigs: Map<string, PluginConfiguration>): ClassGroup[] {
     const groups = new Map<string, ClassGroup>()
     for (const cl of classes) {
       const plugin = pluginOf(cl)
@@ -174,7 +174,13 @@
     <div class="hulyComponent-content__column">
       <div class="hulyComponent-content__navHeader divide">
         <div class="hulyComponent-content__navHeader-menu">
-          <ButtonIcon kind="tertiary" icon={IconDescription} size="small" inheritColor />
+          <IconButton
+            kind="tertiary"
+            icon={IconDescription}
+            size="small"
+            inheritColor
+            tooltip={{ label: setting.string.ClassSetting }}
+          />
         </div>
         <div class="hulyComponent-content__navHeader-hint paragraph-regular-14">
           <Label label={setting.string.ClassSettingHint} />

@@ -31,7 +31,6 @@
   import { themeStore } from '@hcengineering/theme'
   import {
     Button,
-    ButtonIcon,
     DropdownLabels,
     DropdownLabelsIntl,
     DropdownLabelsPopup,
@@ -46,6 +45,7 @@
     type DropdownIntlItem,
     type DropdownTextItem
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { jsonToMarkup } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
   import settingsRes from '../plugin'
@@ -89,7 +89,7 @@
   // Only granted operations are offered - an unrestricted key is granted every operation.
   const grantedOps = apiKey.unrestricted === true ? [...apiKeyOperations] : apiKey.ops
 
-  function conditionsFromRule (rule: WebhookRuleCondition[]): ConditionDraft[] {
+  function conditionsFromRule(rule: WebhookRuleCondition[]): ConditionDraft[] {
     return rule.map((c) => ({
       path: c.path,
       op: c.op,
@@ -135,7 +135,7 @@
     )
   ]
 
-  function parseSample (text: string): { parsed: unknown, error: string | undefined } {
+  function parseSample(text: string): { parsed: unknown; error: string | undefined } {
     const trimmed = text.trim()
     if (trimmed === '') return { parsed: undefined, error: undefined }
     try {
@@ -168,19 +168,19 @@
   $: sendSnippet =
     sampleParsed !== undefined ? renderWebhookSnippet(sendTool, rulesUrl, PLACEHOLDER_KEY, sampleParsed) : ''
 
-  async function copyText (text: string): Promise<void> {
+  async function copyText(text: string): Promise<void> {
     if (!window.isSecureContext) return
     await copyTextToClipboard(text)
   }
 
   // Paths relative to the forEach array's first element, for the `where` picker.
-  function elementRelativePaths (paths: WebhookSamplePath[], forEach: string): WebhookSamplePath[] {
+  function elementRelativePaths(paths: WebhookSamplePath[], forEach: string): WebhookSamplePath[] {
     const prefix = `${forEach}.0.`
     return paths.filter((p) => p.path.startsWith(prefix)).map((p) => ({ ...p, path: p.path.slice(prefix.length) }))
   }
   $: whereSamplePaths = forEachPath.trim() !== '' ? elementRelativePaths(samplePaths, forEachPath.trim()) : []
 
-  function fillFields (rule: WebhookRuleTemplateRule, op: ApiKeyOperation): void {
+  function fillFields(rule: WebhookRuleTemplateRule, op: ApiKeyOperation): void {
     fieldRows = Object.entries(rule.fields[op] ?? {}).map(([key, template]) => ({ key, template }))
     filledAction = op
   }
@@ -189,7 +189,7 @@
   // the rule itself is overwritten from a template only when the user picks another source.
   let appliedSource: string | number = sourceSelected
 
-  function onSourceChange (id: string | number): void {
+  function onSourceChange(id: string | number): void {
     const [templateId, ruleName] = String(id).split(':')
     const tmpl = webhookRuleTemplates.find((t) => t.id === templateId)
     selectedTemplate = tmpl
@@ -227,7 +227,7 @@
 
   // Same kind can carry several operations (issue:update/comment/time_report all target an Issue) -
   // only a kind change invalidates the target already picked.
-  function onActionChange (next: ApiKeyOperation | undefined): void {
+  function onActionChange(next: ApiKeyOperation | undefined): void {
     if (next === undefined) {
       target = undefined
       return
@@ -239,7 +239,7 @@
   }
   $: onActionChange(action)
 
-  function pickTarget (event: MouseEvent): void {
+  function pickTarget(event: MouseEvent): void {
     if (action === undefined) return
     const kind = targetKind(action)
     showPopup(
@@ -264,33 +264,33 @@
     )
   }
 
-  function addCondition (): void {
+  function addCondition(): void {
     conditions = [...conditions, { path: '', op: 'eq', value: '' }]
   }
 
-  function removeCondition (index: number): void {
+  function removeCondition(index: number): void {
     conditions = conditions.filter((_, i) => i !== index)
   }
 
-  function addWhereCondition (): void {
+  function addWhereCondition(): void {
     whereConditions = [...whereConditions, { path: '', op: 'eq', value: '' }]
   }
 
-  function removeWhereCondition (index: number): void {
+  function removeWhereCondition(index: number): void {
     whereConditions = whereConditions.filter((_, i) => i !== index)
   }
 
-  function addSuggestedField (key: string): void {
+  function addSuggestedField(key: string): void {
     fieldRows = [...fieldRows, { key, template: '' }]
   }
 
-  function removeField (index: number): void {
+  function removeField(index: number): void {
     fieldRows = fieldRows.filter((_, i) => i !== index)
   }
 
   // `{{path}}` is relative to the forEach element (or the root without one), `{{$.path}}` always
   // reaches the root.
-  function fieldInsertText (path: string): string {
+  function fieldInsertText(path: string): string {
     const fe = forEachPath.trim()
     if (fe === '') return `{{${path}}}`
     if (path === fe) return '{{}}'
@@ -300,7 +300,7 @@
   }
 
   // Current value first (even if it fell out of a freshly pasted sample), then the sample's paths.
-  function pathItems (paths: WebhookSamplePath[], current: string): DropdownTextItem[] {
+  function pathItems(paths: WebhookSamplePath[], current: string): DropdownTextItem[] {
     const items = paths.map((p): DropdownTextItem => ({ id: p.path, label: `${p.path} - ${p.preview}` }))
     if (current.trim() !== '' && !paths.some((p) => p.path === current)) {
       items.unshift({ id: current, label: current })
@@ -309,14 +309,14 @@
   }
 
   // Element-relative paths (inside the current forEach) sorted first.
-  function fieldPickerItems (paths: WebhookSamplePath[], forEach: string): DropdownTextItem[] {
+  function fieldPickerItems(paths: WebhookSamplePath[], forEach: string): DropdownTextItem[] {
     const fe = forEach.trim()
     const isRelative = (p: WebhookSamplePath): boolean => fe !== '' && (p.path === fe || p.path.startsWith(`${fe}.`))
     const sorted = [...paths].sort((a, b) => Number(isRelative(b)) - Number(isRelative(a)))
     return sorted.map((p): DropdownTextItem => ({ id: p.path, label: `${p.path} - ${p.preview}` }))
   }
 
-  function pickFieldValue (event: MouseEvent, index: number): void {
+  function pickFieldValue(event: MouseEvent, index: number): void {
     if (samplePaths.length === 0) return
     showPopup(
       DropdownLabelsPopup,
@@ -330,7 +330,7 @@
     )
   }
 
-  function toCondition (c: ConditionDraft): WebhookRuleCondition {
+  function toCondition(c: ConditionDraft): WebhookRuleCondition {
     if (c.op === 'exists') return { path: c.path.trim(), op: c.op }
     if (c.op === 'in') {
       return {
@@ -387,7 +387,7 @@
   $: canSave =
     !saving && name.trim().length > 0 && action !== undefined && target !== undefined && matchValid && whereValid
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (!canSave || action === undefined || target === undefined) return
     saving = true
     error = undefined
@@ -546,7 +546,8 @@
       <div class="fieldBlock">
         <div class="flex-row-center flex-between">
           <Label label={settingsRes.string.WebhookRuleConditions} />
-          <ButtonIcon
+          <IconButton
+            tooltip={{ label: settingsRes.string.Add }}
             kind="tertiary"
             size="small"
             icon={IconAdd}
@@ -579,7 +580,8 @@
                 size="small"
               />
             {/if}
-            <ButtonIcon
+            <IconButton
+              tooltip={{ label: settingsRes.string.Delete }}
               kind="tertiary"
               size="small"
               icon={IconDelete}
@@ -615,7 +617,8 @@
         <div class="fieldBlock">
           <div class="flex-row-center flex-between">
             <Label label={settingsRes.string.WebhookRuleWhere} />
-            <ButtonIcon
+            <IconButton
+              tooltip={{ label: settingsRes.string.Add }}
               kind="tertiary"
               size="small"
               icon={IconAdd}
@@ -648,7 +651,8 @@
                   size="small"
                 />
               {/if}
-              <ButtonIcon
+              <IconButton
+                tooltip={{ label: settingsRes.string.Delete }}
                 kind="tertiary"
                 size="small"
                 icon={IconDelete}
@@ -691,7 +695,8 @@
                   pickFieldValue(e, i)
                 }}
               />
-              <ButtonIcon
+              <IconButton
+                tooltip={{ label: settingsRes.string.Delete }}
                 kind="tertiary"
                 size="small"
                 icon={IconDelete}

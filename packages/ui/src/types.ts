@@ -355,8 +355,8 @@ export interface DropdownTextItem {
   separatorLabel?: IntlString
 }
 
-export interface DropdownIntlItem {
-  id: string | number
+export interface DropdownIntlItem<Id extends string | number = string | number> {
+  id: Id
   label: IntlString
   icon?: IconComponent
   iconProps?: Record<string, any>

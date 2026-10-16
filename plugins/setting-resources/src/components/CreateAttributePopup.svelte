@@ -19,7 +19,9 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, Card } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Component, DropdownLabelsIntl, ModernEditbox, Label, showPopup, ButtonIcon, Toggle } from '@hcengineering/ui'
+  import { Component, DropdownLabelsIntl, ModernEditbox, Label, showPopup, Toggle } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import viewRes from '@hcengineering/view-resources/src/plugin'
   import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import setting from '../plugin'
   import view from '@hcengineering/view'
@@ -44,7 +46,7 @@
 
   const dispatch = createEventDispatcher()
 
-  async function save (): Promise<void> {
+  async function save(): Promise<void> {
     if (type === undefined) return
 
     const data: Data<AnyAttribute> = {
@@ -68,7 +70,7 @@
     dispatch('close')
   }
 
-  function getTypes (): DropdownIntlItem[] {
+  function getTypes(): DropdownIntlItem[] {
     const descendants = hierarchy.getDescendants(core.class.Type)
     const res: DropdownIntlItem[] = []
     for (const descendant of descendants) {
@@ -87,7 +89,7 @@
 
   $: selectType(selectedType)
 
-  function selectType (type: Ref<Class<Type<PropertyType>>> | undefined): void {
+  function selectType(type: Ref<Class<Type<PropertyType>>> | undefined): void {
     if (type === undefined) return
     const _class = hierarchy.getClass(type)
     const editor = hierarchy.as(_class, view.mixin.ObjectEditor)
@@ -111,7 +113,7 @@
     }
   }
 
-  function setIcon (): void {
+  function setIcon(): void {
     showPopup(IconPicker, { icon, showEmoji: false, showColor: false }, 'top', async (res) => {
       if (res !== undefined) {
         icon = res.icon
@@ -130,7 +132,8 @@
   <div class="hulyModal-container">
     <div class="hulyModal-content__titleGroup">
       <div class="flex items-center">
-        <ButtonIcon
+        <IconButton
+          tooltip={{ label: viewRes.string.ChooseIcon }}
           icon={icon ?? setting.icon.Enums}
           size="medium"
           iconSize="large"

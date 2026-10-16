@@ -16,9 +16,10 @@
   import type { MasterTag, Role, Tag } from '@hcengineering/card'
   import contact from '@hcengineering/contact'
   import core from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { ButtonIcon, getCurrentResolvedLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import { getCurrentResolvedLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import card from '../../plugin'
   import RolesPopup from './RolesPopup.svelte'
 
@@ -34,7 +35,7 @@
     roles = res
   })
 
-  function addRole (): void {
+  function addRole(): void {
     showPopup(
       RolesPopup,
       {
@@ -73,7 +74,14 @@
 <div class="hulyTableAttr-header font-medium-12">
   <Icon icon={contact.icon.User} size="small" />
   <span><Label label={core.string.Roles} /></span>
-  <ButtonIcon kind="primary" icon={IconAdd} size="small" dataId="btnAdd" on:click={addRole} />
+  <IconButton
+    kind="primary"
+    icon={IconAdd}
+    size="small"
+    data-id="btnAdd"
+    tooltip={{ label: presentation.string.Add }}
+    on:click={addRole}
+  />
 </div>
 <div class="hulyTableAttr-content task">
   {#each roles as role}

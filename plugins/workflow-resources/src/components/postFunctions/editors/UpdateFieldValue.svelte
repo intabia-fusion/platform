@@ -18,7 +18,8 @@
   import presentation, { getAttributeEditor, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import type { AnySvelteComponent, DropdownTextItem } from '@hcengineering/ui'
-  import { eventToHTMLElement, languageStore, ModernButton, showPopup } from '@hcengineering/ui'
+  import { eventToHTMLElement, languageStore, showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import type {
     CollectionOperation,
     UpdateFieldValueConfig,
@@ -132,7 +133,7 @@
       .filter(notEmpty)
   )
 
-  function getRowAvailableItems (
+  function getRowAvailableItems(
     currentRow: FieldRow,
     used: Set<Ref<AnyAttribute>>,
     items: DropdownTextItem[]
@@ -143,7 +144,7 @@
     return items.filter((item) => item.id === currentAttrId || !used.has(item.id as Ref<AnyAttribute>))
   }
 
-  function createRow (
+  function createRow(
     fieldKey = '',
     value: unknown = { type: 'const', value: '' },
     mixin?: Ref<Class<Mixin<Doc>>>,
@@ -158,7 +159,7 @@
     }
   }
 
-  function initRows (): FieldRow[] {
+  function initRows(): FieldRow[] {
     const props = config?.props
     if (props?.fields != null && (props?.fields?.length ?? 0) > 0) {
       return props.fields.map((it) => createRow(it.fieldKey, it.value, it.mixin, it.operation))
@@ -166,15 +167,15 @@
     return [createRow()]
   }
 
-  function addRow (): void {
+  function addRow(): void {
     rows = [...rows, createRow()]
   }
 
-  function removeRow (rowId: string): void {
+  function removeRow(rowId: string): void {
     rows = rows.length > 1 ? rows.filter((r) => r.id !== rowId) : [createRow()]
   }
 
-  async function loadRowEditor (rowId: string, key: string, mixin?: Ref<Class<Mixin<Doc>>>): Promise<void> {
+  async function loadRowEditor(rowId: string, key: string, mixin?: Ref<Class<Mixin<Doc>>>): Promise<void> {
     if (key === '') return
 
     const targetClass = mixin ?? taskType?.targetClass
@@ -206,7 +207,7 @@
     }
   }
 
-  async function onSelectField (rowId: string, fieldId: string): Promise<void> {
+  async function onSelectField(rowId: string, fieldId: string): Promise<void> {
     if (fieldId === '') return
     const attr = displayAttributes.find((it) => it.id === fieldId)
     if (attr == null) return
@@ -227,7 +228,7 @@
     }
   }
 
-  function onRowOperationChange (rowId: string, op: CollectionOperation): void {
+  function onRowOperationChange(rowId: string, op: CollectionOperation): void {
     const row = rows.find((r) => r.id === rowId)
     if (row != null) {
       row.operation = op
@@ -235,7 +236,7 @@
     }
   }
 
-  function onRowValueChange (rowId: string, val: WorkflowFieldValue): void {
+  function onRowValueChange(rowId: string, val: WorkflowFieldValue): void {
     const row = rows.find((r) => r.id === rowId)
     if (row != null) {
       const functions = val.functions ?? row.value?.functions
@@ -247,7 +248,7 @@
     }
   }
 
-  function selectContext (rowId: string, e: MouseEvent): void {
+  function selectContext(rowId: string, e: MouseEvent): void {
     const row = rows.find((r) => r.id === rowId)
     if (row?.attribute == null) return
     const options = getContextOptions(client, taskType, row.attribute)
@@ -267,7 +268,7 @@
     )
   }
 
-  function selectTransform (rowId: string, e: MouseEvent): void {
+  function selectTransform(rowId: string, e: MouseEvent): void {
     const row = rows.find((r) => r.id === rowId)
     if (row?.attribute == null) return
     const options = getTransformOptions(client, row.attribute)
@@ -298,7 +299,7 @@
     )
   }
 
-  function appendTransform (rowId: string, transformCall: WorkflowTransformCall): void {
+  function appendTransform(rowId: string, transformCall: WorkflowTransformCall): void {
     const row = rows.find((r) => r.id === rowId)
     if (row?.value?.type == null) return
 
@@ -310,7 +311,7 @@
     rows = [...rows]
   }
 
-  function editTransform (rowId: string, transformCall: WorkflowTransformCall, e: MouseEvent): void {
+  function editTransform(rowId: string, transformCall: WorkflowTransformCall, e: MouseEvent): void {
     const funcRef = transformCall?.func
     if (funcRef == null) return
     const fnDoc = client.getModel().getObject<WorkflowValueFunction>(funcRef)
@@ -323,7 +324,7 @@
     })
   }
 
-  function updateTransformPropsInRow (
+  function updateTransformPropsInRow(
     rowId: string,
     transformCall: WorkflowTransformCall,
     newProps: Record<string, any>
@@ -384,7 +385,7 @@
   {/each}
 
   <div class="update-field-value__add-row">
-    <ModernButton label={presentation.string.Add} kind="secondary" size="small" on:click={addRow} />
+    <Button label={presentation.string.Add} kind="secondary" size="small" on:click={addRow} />
   </div>
 </div>
 

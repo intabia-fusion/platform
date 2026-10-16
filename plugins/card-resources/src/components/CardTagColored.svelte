@@ -12,10 +12,12 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
+  import presentation from '@hcengineering/presentation'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ColorDefinition } from '@hcengineering/ui'
-  import { getPlatformColorDef, themeStore, tooltip, Label, IconClose, ButtonIcon } from '@hcengineering/ui'
+  import { getPlatformColorDef, themeStore, tooltip, Label, IconClose } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   export let labelIntl: IntlString | undefined = undefined
@@ -25,7 +27,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function getTagStyle (color: ColorDefinition): string {
+  function getTagStyle(color: ColorDefinition): string {
     return `
     background: ${color.color + '33'};
     border: 1px solid ${color.color + '66'};
@@ -54,7 +56,17 @@
   </span>
 
   {#if removable}
-    <ButtonIcon icon={IconClose} size="min" iconSize="x-small" kind="tertiary" on:click={() => dispatch('remove')} />
+    <IconButton
+      icon={IconClose}
+      size="min"
+      iconSize="x-small"
+      kind="tertiary"
+      tooltip={{ label: presentation.string.Remove }}
+      on:click={(e) => {
+        e.stopPropagation()
+        dispatch('remove')
+      }}
+    />
   {/if}
 </div>
 

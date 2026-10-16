@@ -15,7 +15,8 @@
   import type { Person } from '@hcengineering/contact'
   import { formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
-  import { Label, ModernButton } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../../../plugin'
@@ -59,12 +60,12 @@
     })
   })
 
-  async function handleJoin (): Promise<void> {
+  async function handleJoin(): Promise<void> {
     await responseToInviteRequest(invite, true)
     dispatch('close')
   }
 
-  async function handleReject (): Promise<void> {
+  async function handleReject(): Promise<void> {
     await responseToInviteRequest(invite, false)
     dispatch('close')
   }
@@ -94,10 +95,10 @@
 
   <div class="popup-actions">
     <div data-id="invite-join">
-      <ModernButton label={love.string.Join} kind="primary" size="medium" on:click={handleJoin} />
+      <Button label={love.string.Join} kind="primary" size="medium" on:click={handleJoin} />
     </div>
     <div data-id="invite-reject">
-      <ModernButton label={love.string.Reject} kind="secondary" size="medium" on:click={handleReject} />
+      <Button label={love.string.Reject} kind="secondary" size="medium" on:click={handleReject} />
     </div>
   </div>
 </div>

@@ -24,9 +24,8 @@
     Ref
   } from '@hcengineering/core'
   import core, { notEmpty } from '@hcengineering/core'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import {
-    ButtonIcon,
     Icon,
     IconDelete,
     IconEdit,
@@ -38,6 +37,7 @@
     navigate,
     showPopup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { ObjectBoxPopup } from '@hcengineering/view-resources'
 
   import type { MasterTag, Role } from '@hcengineering/card'
@@ -85,7 +85,7 @@
   $: permissions =
     role?.permissions !== undefined ? allPermissions.filter((p) => role?.permissions?.includes(p._id)) : []
 
-  function handleEditPermissions (evt: Event): void {
+  function handleEditPermissions(evt: Event): void {
     if (role === undefined || readonly) {
       return
     }
@@ -122,7 +122,7 @@
     )
   }
 
-  async function handleDeleteRole (): Promise<void> {
+  async function handleDeleteRole(): Promise<void> {
     showPopup(
       MessageBox,
       {
@@ -138,7 +138,7 @@
 
   const masterTag = getCurrentLocation().path[4] as Ref<MasterTag>
 
-  async function performDeleteRole (): Promise<void> {
+  async function performDeleteRole(): Promise<void> {
     if (role === undefined) {
       return
     }
@@ -186,15 +186,15 @@
     navigate(loc)
   }
 
-  function isAttributePermission (permission: Permission): permission is AttributePermission {
+  function isAttributePermission(permission: Permission): permission is AttributePermission {
     return permission._class === core.class.AttributePermission
   }
 
-  function isClassPermission (permission: Permission): permission is ClassPermission {
+  function isClassPermission(permission: Permission): permission is ClassPermission {
     return permission._class === core.class.ClassPermission
   }
 
-  function getAttributePermissionLabel (permission: Permission): IntlString | undefined {
+  function getAttributePermissionLabel(permission: Permission): IntlString | undefined {
     const isAttribute = isAttributePermission(permission)
     if (isAttribute) {
       const attr = client.getModel().findObject(permission.attribute) as AnyAttribute
@@ -214,19 +214,21 @@
         <div class="hulyComponent-content gap">
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6 gap-2">
-              <ButtonIcon
+              <IconButton
                 icon={IconDelete}
                 size="large"
                 kind="secondary"
                 disabled={readonly || !role.types.includes(masterTag)}
+                tooltip={{ label: presentation.string.Delete }}
                 on:click={handleDeleteRole}
               />
-              <ButtonIcon
+              <IconButton
                 icon={contact.icon.Person}
                 size="large"
                 iconProps={{ size: 'small' }}
                 kind="secondary"
                 disabled={readonly}
+                tooltip={{ label: contact.string.Person }}
               />
               <div class="name" class:editable={!readonly}>
                 <AttributeEditor
@@ -243,10 +245,11 @@
               <div class="hulyTableAttr-header font-medium-12">
                 <IconSettings size="small" />
                 <span><Label label={settingRes.string.Permissions} /></span>
-                <ButtonIcon
+                <IconButton
                   kind="primary"
                   icon={IconEdit}
                   size="small"
+                  tooltip={{ label: presentation.string.Edit }}
                   on:click={handleEditPermissions}
                   disabled={readonly}
                 />

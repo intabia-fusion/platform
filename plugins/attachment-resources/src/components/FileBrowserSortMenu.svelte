@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { Label, Menu, showPopup, ModernButton, IconOptions } from '@hcengineering/ui'
+  import { Label, Menu, showPopup, IconOptions } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { FileBrowserSortMode } from '..'
   import attachment from '../plugin'
 
@@ -71,7 +72,7 @@
   }
 </script>
 
-<ModernButton
+<Button
   icon={IconOptions}
   iconSize="small"
   label={sortModeToString(selectedSort)}

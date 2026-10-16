@@ -16,7 +16,8 @@
 <script lang="ts">
   import { metricsAggregate, type Metrics } from '@hcengineering/core'
   import presentation, { uiContext } from '@hcengineering/presentation'
-  import { Breadcrumb, ButtonIcon, Header, IconClose, IconSettings, ticker } from '@hcengineering/ui'
+  import { Breadcrumb, Header, IconClose, IconSettings, ticker } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { MetricsInfo } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
@@ -24,7 +25,7 @@
 
   let metrics: Metrics | undefined
 
-  function update (tick: number): void {
+  function update(tick: number): void {
     metrics = metricsAggregate(uiContext.metrics)
   }
 
@@ -34,7 +35,7 @@
 <div class="hulyComponent">
   <Header type="type-panel" freezeBefore>
     <svelte:fragment slot="beforeTitle">
-      <ButtonIcon
+      <IconButton
         icon={IconClose}
         kind="secondary"
         size="small"

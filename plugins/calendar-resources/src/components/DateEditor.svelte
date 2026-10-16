@@ -15,7 +15,6 @@
 <script lang="ts">
   import type { ButtonBaseKind, ButtonBaseSize } from '@hcengineering/ui'
   import ui, {
-    ButtonBase,
     DatePopup,
     SimpleDatePopup,
     TimeInputBox,
@@ -24,6 +23,7 @@
     getUserTimezone,
     showPopup
   } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import DateLocalePresenter from './DateLocalePresenter.svelte'
@@ -45,7 +45,7 @@
   $: currentDate = new Date(date)
   let tib: TimeInputBox
 
-  function timeClick (e: MouseEvent & { currentTarget: EventTarget & HTMLElement }): void {
+  function timeClick(e: MouseEvent & { currentTarget: EventTarget & HTMLElement }): void {
     if (disabled) {
       return
     }
@@ -64,7 +64,7 @@
     } else tib.focused(e.offsetX <= e.currentTarget.clientWidth / 2 ? 'hour' : 'min')
   }
 
-  function dateClick (e: MouseEvent): void {
+  function dateClick(e: MouseEvent): void {
     if (disabled) {
       return
     }
@@ -90,19 +90,19 @@
   {#if showDate || withoutTime}
     {#if fixed === undefined}
       <div class="min-w-28">
-        <ButtonBase type="type-button" {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
+        <Button {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
           <span class="overflow-label tertiary-textColor">
             <DateLocalePresenter date={currentDate.getTime()} {timeZone} />
           </span>
-        </ButtonBase>
+        </Button>
       </div>
     {:else}
       <FixedColumn key={fixed + '-date'} addClass="min-w-28">
-        <ButtonBase type="type-button" {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
+        <Button {kind} {size} {disabled} {focusIndex} on:click={dateClick}>
           <span class="overflow-label tertiary-textColor">
             <DateLocalePresenter date={currentDate.getTime()} {timeZone} />
           </span>
-        </ButtonBase>
+        </Button>
       </FixedColumn>
     {/if}
   {/if}

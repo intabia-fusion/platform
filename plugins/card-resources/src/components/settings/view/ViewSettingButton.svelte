@@ -15,7 +15,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { ButtonIcon, closeTooltip, showPopup } from '@hcengineering/ui'
+  import { closeTooltip, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
 
@@ -33,7 +34,7 @@
   let btn: HTMLButtonElement
   let pressed: boolean = false
 
-  function clickHandler (): void {
+  function clickHandler(): void {
     pressed = true
     closeTooltip()
     showPopup(
@@ -54,14 +55,14 @@
   {#if viewlet?.viewOptions !== undefined}
     <ViewOptionsButton {viewlet} {kind} />
   {/if}
-  <ButtonIcon
+  <IconButton
     icon={view.icon.Configure}
     {disabled}
     {kind}
     size="small"
     {pressed}
     tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
-    dataId="btn-viewSetting"
+    data-id="btn-viewSetting"
     bind:element={btn}
     on:click={clickHandler}
   />

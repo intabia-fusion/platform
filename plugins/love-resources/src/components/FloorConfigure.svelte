@@ -18,16 +18,8 @@
   import type { Floor, Room } from '@hcengineering/love'
   import { GRID_WIDTH, getFreeSpace } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import {
-    ButtonIcon,
-    DropdownLabels,
-    Header,
-    IconAdd,
-    ModernButton,
-    Scroller,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import { DropdownLabels, Header, IconAdd, Scroller, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import lovePlg from '../plugin'
   import { ensureOfficeDetailsLoaded, floors, lockedRoom, selectedFloor } from '../stores'
@@ -65,8 +57,8 @@
   const roomsConf: RoomConfigure[] = []
   let block: boolean = false
   let lockedID: number = -1
-  let locked: { room: Room, size: DOMRect, map: boolean[][], side?: RoomSide } | undefined = undefined
-  let dragged: { x: number, y: number, offsetX: number, offsetY: number } | undefined = undefined
+  let locked: { room: Room; size: DOMRect; map: boolean[][]; side?: RoomSide } | undefined = undefined
+  let dragged: { x: number; y: number; offsetX: number; offsetY: number } | undefined = undefined
   let dragRoom: RoomConfigure
   let dragShadow: boolean = false
   let oldX: number = -1
@@ -75,7 +67,7 @@
   let cursor: string = ''
   $: document.body.style.cursor = cursor
 
-  async function updateRoom (id: Ref<Room>): Promise<void> {
+  async function updateRoom(id: Ref<Room>): Promise<void> {
     if (locked !== undefined && resizeInitParams !== undefined) {
       const room = rooms.find((r) => r._id === id)
       if (room === undefined) {
@@ -100,7 +92,7 @@
     }
   }
 
-  function addRoom (e: MouseEvent): void {
+  function addRoom(e: MouseEvent): void {
     showPopup(AddRoomPopup, { floor }, eventToHTMLElement(e))
   }
 
@@ -112,7 +104,7 @@
     else if (roomsConf[lockedID]) roomsConf[lockedID].setShadowColor(r, g, b, a)
   }
 
-  function startDragRoom (room: Room, size: DOMRect, n: number): void {
+  function startDragRoom(room: Room, size: DOMRect, n: number): void {
     if (room === undefined || size === undefined) return
     const map: boolean[][] = getFreeSpace(rooms, room, true)
     locked = { room, size, map }
@@ -122,7 +114,7 @@
     window.addEventListener('mouseup', docMouseUp)
   }
 
-  function dragMouseMove (e: MouseEvent): void {
+  function dragMouseMove(e: MouseEvent): void {
     if ($lockedRoom === '' || block || dragged === undefined || locked === undefined) return
     block = true
     if (!dragShadow && dragged && dragRoom) {
@@ -157,7 +149,7 @@
     block = false
   }
 
-  function startResizeRoom (room: Room, size: DOMRect, side: RoomSide, n: number): void {
+  function startResizeRoom(room: Room, size: DOMRect, side: RoomSide, n: number): void {
     if (room === undefined || size === undefined || side === undefined) return
     const map: boolean[][] = getFreeSpace(rooms, room)
     locked = { room, size, map, side }
@@ -166,7 +158,7 @@
     window.addEventListener('mouseup', docMouseUp)
   }
 
-  function resizeMouseMove (e: MouseEvent): void {
+  function resizeMouseMove(e: MouseEvent): void {
     if ($lockedRoom === '' || locked?.room === undefined || locked.side === undefined || block) return
     block = true
     const error: RoomSide = { top: false, bottom: false, left: false, right: false }
@@ -276,7 +268,7 @@
     block = false
   }
 
-  function docMouseUp (e: MouseEvent): void {
+  function docMouseUp(e: MouseEvent): void {
     if (locked) void updateRoom(locked.room._id)
     if (dragged !== undefined) {
       divScroll.removeEventListener('mousemove', dragMouseMove)
@@ -293,7 +285,7 @@
   }
   $: rows = calculateFloorSize(rooms) + 2
 
-  function changeFloor (event: CustomEvent<Ref<Floor>>) {
+  function changeFloor(event: CustomEvent<Ref<Floor>>) {
     if (event.detail) {
       selectedFloor.set(event.detail)
     }
@@ -319,9 +311,9 @@
       on:selected={changeFloor}
     />
     <svelte:fragment slot="actions">
-      <ButtonIcon icon={IconAdd} size="small" on:click={addRoom} />
+      <IconButton icon={IconAdd} size="small" tooltip={{ label: lovePlg.string.AddRoom }} on:click={addRoom} />
       <div class="hulyHeader-divider short" />
-      <ModernButton
+      <Button
         label={lovePlg.string.FinalizeEditing}
         kind="primary"
         size="small"

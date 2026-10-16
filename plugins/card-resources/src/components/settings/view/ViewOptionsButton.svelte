@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonIcon, showPopup, closeTooltip, IconOptions } from '@hcengineering/ui'
+  import { showPopup, closeTooltip, IconOptions } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { OrderOption, ViewOptionsModel, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { ViewOptions as ViewOptionsEditor } from '@hcengineering/view-resources'
@@ -29,7 +30,7 @@
   let btn: HTMLButtonElement
   let pressed: boolean = false
 
-  async function clickHandler (): Promise<void> {
+  async function clickHandler(): Promise<void> {
     if (viewlet === undefined) {
       return
     }
@@ -105,7 +106,7 @@
   }
 </script>
 
-<ButtonIcon
+<IconButton
   icon={IconOptions}
   disabled={viewlet === undefined}
   {kind}
@@ -113,7 +114,7 @@
   hasMenu
   {pressed}
   tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
-  dataId="btn-viewOptions"
+  data-id="btn-viewOptions"
   bind:element={btn}
   on:click={clickHandler}
 />

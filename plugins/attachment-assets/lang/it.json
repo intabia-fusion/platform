@@ -56,6 +56,8 @@
     "OpenInWindow": "Apri in una nuova finestra",
     "Embeddings": "Incorporamenti",
     "Transcribing": "Trascrizione...",
-    "TranscriptionFailed": "Trascrizione non riuscita"
+    "TranscriptionFailed": "Trascrizione non riuscita",
+    "Play": "Riproduci",
+    "Pause": "Pausa"
   }
 }

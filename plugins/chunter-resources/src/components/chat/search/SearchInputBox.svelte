@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { deviceOptionsStore, IconClose, IconSearch, ModernButton, ModernEditbox } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore, IconClose, IconSearch, ModernEditbox } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   export let value: string = ''
@@ -24,7 +25,7 @@
 
   let element: HTMLInputElement | undefined = undefined
 
-  export function focus (): void {
+  export function focus(): void {
     element?.focus()
   }
 
@@ -46,11 +47,13 @@
     <svelte:fragment slot="after">
       <slot name="filter" />
       {#if value !== ''}
-        <ModernButton
+        <IconButton
+          iconSize="medium"
           icon={IconClose}
           kind="tertiary"
           size="small"
           shape="round"
+          tooltip={{ label: ui.string.Clear }}
           on:click={() => {
             value = ''
             dispatch('clear')

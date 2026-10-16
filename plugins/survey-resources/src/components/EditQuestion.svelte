@@ -17,16 +17,8 @@
 <script lang="ts">
   import type { Question } from '@hcengineering/survey'
   import { QuestionKind } from '@hcengineering/survey'
-  import {
-    ButtonIcon,
-    EditBox,
-    Icon,
-    IconDelete,
-    SelectPopup,
-    eventToHTMLElement,
-    showPopup,
-    tooltip
-  } from '@hcengineering/ui'
+  import { EditBox, Icon, IconDelete, SelectPopup, eventToHTMLElement, showPopup, tooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import survey from '../plugin'
@@ -58,11 +50,11 @@
 
   let hovered: boolean = false
 
-  function handleChange (patch: Partial<Question>): void {
+  function handleChange(patch: Partial<Question>): void {
     dispatch('change', patch)
   }
 
-  function flush (): void {
+  function flush(): void {
     if (isNewQuestion) return
 
     const patch: Partial<Question> = {}
@@ -86,7 +78,7 @@
     handleChange({ name: inputName })
   }
 
-  function changeOption (index: number): void {
+  function changeOption(index: number): void {
     if (inputOptions[index]?.trim()?.length === 0) {
       deleteOption(index)
     } else {
@@ -94,7 +86,7 @@
     }
   }
 
-  function addOption (): void {
+  function addOption(): void {
     if (inputNewOption.trim().length === 0) {
       inputNewOption = ''
       return
@@ -104,12 +96,13 @@
     handleChange({ options: inputOptions })
   }
 
-  function deleteOption (index: number): void {
+  function deleteOption(index: number): void {
     inputOptions = inputOptions.filter((val, idx) => idx !== index)
     handleChange({ options: inputOptions })
   }
 
-  function showQuestionParams (ev: MouseEvent): void {
+  function showQuestionParams(ev: MouseEvent): void {
+    ev.stopPropagation()
     hovered = true
     showPopup(
       SelectPopup,
@@ -197,7 +190,7 @@
     )
   }
 
-  function showOptionParams (ev: MouseEvent, index: number): void {
+  function showOptionParams(ev: MouseEvent, index: number): void {
     hovered = true
     showPopup(
       SelectPopup,
@@ -233,7 +226,7 @@
   let draggedOverIndex: number | undefined
   const draggableElements: HTMLElement[] = []
 
-  function onOptionDragStart (ev: DragEvent, index: number): void {
+  function onOptionDragStart(ev: DragEvent, index: number): void {
     if (readonly || ev.dataTransfer === null) {
       return
     }
@@ -246,7 +239,7 @@
     )
   }
 
-  function onOptionDragOver (ev: DragEvent, index: number): void {
+  function onOptionDragOver(ev: DragEvent, index: number): void {
     if (draggedIndex === undefined || draggedIndex === draggedOverIndex || draggedIndex + 1 === draggedOverIndex) {
       return
     }
@@ -254,7 +247,7 @@
     draggedOverIndex = index
   }
 
-  function onOptionDragLeave (ev: DragEvent, index: number): void {
+  function onOptionDragLeave(ev: DragEvent, index: number): void {
     if (draggedIndex === undefined) {
       return
     }
@@ -264,7 +257,7 @@
     }
   }
 
-  function onOptionDrop (): void {
+  function onOptionDrop(): void {
     if (draggedIndex === undefined || draggedOverIndex === undefined) {
       return
     }
@@ -280,7 +273,7 @@
     handleChange({ options: inputOptions })
   }
 
-  function onOptionDragEnd (): void {
+  function onOptionDragEnd(): void {
     draggedIndex = undefined
     draggedOverIndex = undefined
   }
@@ -288,7 +281,7 @@
   let isRootDragging = false
   let rootElement: HTMLElement
 
-  function onRootDragStart (ev: DragEvent): void {
+  function onRootDragStart(ev: DragEvent): void {
     if (readonly || ev.dataTransfer === null) {
       return
     }
@@ -302,12 +295,12 @@
     dispatch('dragStart')
   }
 
-  function onRootDragEnd (): void {
+  function onRootDragEnd(): void {
     isRootDragging = false
     dispatch('dragEnd')
   }
 
-  export function focusQuestion (): void {
+  export function focusQuestion(): void {
     inputNameEditBox.focusInput()
   }
 
@@ -332,7 +325,7 @@
   <div class="flex-row-center flex-gap-3 text-base pr-2" on:click={focusQuestion}>
     {#if isNewQuestion}
       <div class="self-start">
-        <ButtonIcon size="small" disabled icon={questionIcon} />
+        <IconButton size="small" disabled icon={questionIcon} tooltip={{ label: survey.string.Question }} />
       </div>
     {:else}
       <div
@@ -342,7 +335,13 @@
         on:dragstart={onRootDragStart}
         on:dragend={onRootDragEnd}
       >
-        <ButtonIcon size="small" disabled={readonly} icon={questionIcon} on:click={showQuestionParams} />
+        <IconButton
+          size="small"
+          disabled={readonly}
+          icon={questionIcon}
+          tooltip={{ label: survey.string.Settings }}
+          on:click={showQuestionParams}
+        />
       </div>
     {/if}
     <EditBox
@@ -395,12 +394,13 @@
           }}
           on:dragend={onOptionDragEnd}
         >
-          <ButtonIcon
+          <IconButton
             disabled={readonly}
             icon={questionIcon}
             iconSize="x-small"
             kind="tertiary"
             size="extra-small"
+            tooltip={{ label: survey.string.Settings }}
             on:click={(ev) => {
               showOptionParams(ev, index)
             }}
@@ -429,7 +429,14 @@
         on:drop={onOptionDrop}
         class:dragged-over={draggedOverIndex === inputOptions.length && draggedIndex !== inputOptions.length - 1}
       >
-        <ButtonIcon disabled icon={survey.icon.Question} iconSize="x-small" kind="tertiary" size="extra-small" />
+        <IconButton
+          disabled
+          icon={survey.icon.Question}
+          iconSize="x-small"
+          kind="tertiary"
+          size="extra-small"
+          tooltip={{ label: survey.string.Question }}
+        />
         <EditBox
           placeholder={survey.string.QuestionPlaceholderOption}
           bind:value={inputNewOption}

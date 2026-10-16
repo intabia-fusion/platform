@@ -16,11 +16,10 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     Component,
     IconMenuOpen,
     IconMenuClose,
-    ButtonIcon,
     Header,
     Separator,
     getLocation,
@@ -30,6 +29,7 @@
     twoPanelsSeparators,
     resizeObserver
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import { mergeQueries } from '@hcengineering/core'
   import ClassHeader from './ClassHeader.svelte'
@@ -71,7 +71,7 @@
     )
   }
 
-  function onSelected (e: CustomEvent<any>): void {
+  function onSelected(e: CustomEvent<any>): void {
     dispatch('select', e.detail)
     if (syncWithLocationQuery) return
     parentQuery = { [parentKey]: e.detail }
@@ -155,11 +155,12 @@
   <div class="hulyComponent-content__column">
     <Header adaptive="disabled">
       <svelte:fragment slot="beforeTitle">
-        <ButtonIcon
+        <IconButton
           icon={visibleNavigator ? IconMenuClose : IconMenuOpen}
           kind="tertiary"
           size="small"
           pressed={!visibleNavigator}
+          tooltip={{ label: visibleNavigator ? ui.string.HideNavigator : ui.string.ShowNavigator }}
           on:click={toggleNavigator}
         />
       </svelte:fragment>

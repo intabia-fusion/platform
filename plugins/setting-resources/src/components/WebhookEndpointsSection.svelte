@@ -15,7 +15,8 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { WebhookEndpoint } from '@hcengineering/setting'
-  import { ButtonIcon, Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import { Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import settingsRes from '../plugin'
 
   export let endpoints: WebhookEndpoint[]
@@ -27,7 +28,14 @@
 <div class="hulyTableAttr-header font-medium-12">
   <Icon icon={settingsRes.icon.Setting} size="small" />
   <span><Label label={settingsRes.string.WebhookAccess} /></span>
-  <ButtonIcon kind="primary" icon={IconAdd} size="small" dataId="btnAddWebhook" on:click={onCreate} />
+  <IconButton
+    kind="primary"
+    icon={IconAdd}
+    size="small"
+    data-id="btnAddWebhook"
+    on:click={onCreate}
+    tooltip={{ label: settingsRes.string.AddWebhook }}
+  />
 </div>
 {#if loading}
   <Loading />

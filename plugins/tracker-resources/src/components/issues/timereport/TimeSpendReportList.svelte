@@ -23,7 +23,6 @@
   import type { Person } from '@hcengineering/contact'
   import {
     Button,
-    ButtonIcon,
     DropdownLabelsIntl,
     Icon,
     IconAdd,
@@ -34,6 +33,7 @@
     deviceOptionsStore as deviceInfo,
     showPopup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
@@ -132,7 +132,7 @@
 
   let rangeSelected: string | number | undefined = 'week'
 
-  function toRangeMode (value: string | number | undefined): RangeMode {
+  function toRangeMode(value: string | number | undefined): RangeMode {
     switch (value) {
       case 'week':
       case 'twoWeeks':
@@ -145,7 +145,7 @@
 
   $: rangeMode = toRangeMode(rangeSelected)
 
-  function startOfWeek (date: Date, weekStartsOn: number): Date {
+  function startOfWeek(date: Date, weekStartsOn: number): Date {
     const result = new Date(date)
     result.setHours(0, 0, 0, 0)
     const diff = (result.getDay() - weekStartsOn + 7) % 7
@@ -153,14 +153,14 @@
     return result
   }
 
-  function startOfMonth (date: Date): Date {
+  function startOfMonth(date: Date): Date {
     const result = new Date(date)
     result.setHours(0, 0, 0, 0)
     result.setDate(1)
     return result
   }
 
-  function getPeriodEndMs (periodStart: Date, mode: RangeMode): number {
+  function getPeriodEndMs(periodStart: Date, mode: RangeMode): number {
     const nextPeriodStart = new Date(periodStart)
     if (mode === 'month') {
       nextPeriodStart.setMonth(nextPeriodStart.getMonth() + 1)
@@ -259,10 +259,11 @@
           </Button>
         {:else}
           <div class="dayCellAdd">
-            <ButtonIcon
+            <IconButton
               icon={IconAdd}
               size="extra-small"
               kind="tertiary"
+              tooltip={{ label: tracker.string.TimeSpendReportAdd }}
               on:click={() => {
                 showPopup(PersonReportsPopup, { person, ld: dayFrom, rd: dayTo })
               }}
@@ -274,10 +275,11 @@
       <div class="dayCell" style:overflow="auto" style:height="{height}rem" class:p-1={true}>
         {#if dayReports.length === 0 && dayIssues.length === 0}
           <div class="dayCellAdd dayCellAdd--center">
-            <ButtonIcon
+            <IconButton
               icon={IconAdd}
               size="extra-small"
               kind="tertiary"
+              tooltip={{ label: tracker.string.TimeSpendReportAdd }}
               on:click={() => {
                 showPopup(PersonReportsPopup, { person, ld: dayFrom, rd: dayTo })
               }}

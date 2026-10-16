@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher } from 'svelte'
+  import IconButton from '../../ui-kit/button/IconButton.svelte'
+  import ui from '../../plugin'
   import { capitalizeFirstLetter } from '../../utils'
-  import ButtonIcon from '../ButtonIcon.svelte'
   import IconChevronLeft from '../icons/ChevronLeft.svelte'
   import IconChevronRight from '../icons/ChevronRight.svelte'
   import { deviceOptionsStore as deviceInfo, languageStore } from '../..'
@@ -88,21 +89,23 @@
       <slot name="header" />
       {#if !hideNavigator}
         <div class="flex-row-center flex-no-shrink gap-2 tertiary-textColor">
-          <ButtonIcon
+          <IconButton
             icon={IconChevronLeft}
             kind="tertiary"
             size="extra-small"
             inheritColor
+            tooltip={{ label: ui.string.PreviousMonth }}
             on:click={() => {
               viewDate.setDate(1)
               changeMonth(-1)
             }}
           />
-          <ButtonIcon
+          <IconButton
             icon={IconChevronRight}
             kind="tertiary"
             size="extra-small"
             inheritColor
+            tooltip={{ label: ui.string.NextMonth }}
             on:click={() => {
               viewDate.setDate(1)
               changeMonth(1)

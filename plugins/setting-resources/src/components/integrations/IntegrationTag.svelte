@@ -15,7 +15,8 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ColorDefinition } from '@hcengineering/ui'
-  import { getPlatformColorDef, themeStore, tooltip, Label, IconClose, ButtonIcon } from '@hcengineering/ui'
+  import ui, { getPlatformColorDef, themeStore, tooltip, Label, IconClose } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
   export let labelIntl: IntlString | undefined = undefined
@@ -25,11 +26,11 @@
 
   const dispatch = createEventDispatcher()
 
-  function getColorDefinition (color: number | undefined): ColorDefinition {
+  function getColorDefinition(color: number | undefined): ColorDefinition {
     return getPlatformColorDef(color ?? 0, $themeStore.dark)
   }
 
-  function getTagStyle (color: ColorDefinition): string {
+  function getTagStyle(color: ColorDefinition): string {
     return `
     background: ${color.color + '33'};
     border: 1px solid ${color.color + '66'};
@@ -58,7 +59,17 @@
   </span>
 
   {#if removable}
-    <ButtonIcon icon={IconClose} size="min" iconSize="x-small" kind="tertiary" on:click={() => dispatch('remove')} />
+    <IconButton
+      tooltip={{ label: ui.string.Remove }}
+      icon={IconClose}
+      size="min"
+      iconSize="x-small"
+      kind="tertiary"
+      on:click={(e) => {
+        e.stopPropagation()
+        dispatch('remove')
+      }}
+    />
   {/if}
 </div>
 

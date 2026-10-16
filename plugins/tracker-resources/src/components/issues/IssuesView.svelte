@@ -20,7 +20,8 @@
   import type { Issue, Project } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
-  import { BlankView, ButtonMenu, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
+  import { BlankView, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -55,7 +56,7 @@
 
   let search = ''
   let searchQuery: DocumentQuery<Issue> = { ...query }
-  function updateSearchQuery (search: string): void {
+  function updateSearchQuery(search: string): void {
     searchQuery =
       search === '' ? { ...query } : { ...query, $search: search, $searchIn: ['title', 'identifier', 'content'] }
   }
@@ -117,7 +118,7 @@
     ]
   ] satisfies DropdownIntlItem[]
 
-  function openWorkflowDiagram (): void {
+  function openWorkflowDiagram(): void {
     if (workflowsMap == null) return
     showPopup(
       workflow.component.WorkflowDiagramPopup,
@@ -130,7 +131,7 @@
     )
   }
 
-  function openTaskTypeDiagram (): void {
+  function openTaskTypeDiagram(): void {
     if (currentTaskTypes.length === 0) return
     showPopup(
       TaskTypeDiagramPopup,
@@ -142,7 +143,7 @@
     )
   }
 
-  function handleMenuSelected (event?: CustomEvent<string>): void {
+  function handleMenuSelected(event?: CustomEvent<string>): void {
     const action = event?.detail
     if (action === WORKFLOW_ITEM_ID) {
       openWorkflowDiagram()
@@ -169,7 +170,7 @@
     }
   }
 
-  function filterIssues (docs: Doc[]): Issue[] {
+  function filterIssues(docs: Doc[]): Issue[] {
     const h = getClient().getHierarchy()
     return (docs ?? []).filter(
       (it) =>
@@ -208,7 +209,7 @@
 
   <svelte:fragment slot="actions">
     {#if menuItems.length > 0}
-      <ButtonMenu
+      <MenuButton
         icon={IconMoreH}
         kind="secondary"
         size="small"

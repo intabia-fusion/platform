@@ -30,7 +30,8 @@
   } from '@hcengineering/test-management'
   import testManagement, { TestRunStatus, TestManagementEvents } from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
-  import { EditBox, ModernButton, Label, navigate } from '@hcengineering/ui'
+  import { EditBox, Label, navigate } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import { IntlString } from '@hcengineering/platform'
   import type { Attachment } from '@hcengineering/attachment'
@@ -93,7 +94,7 @@
   let description = EmptyMarkup
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
 
-  async function onSave (): Promise<void> {
+  async function onSave(): Promise<void> {
     try {
       const applyOp = client.apply()
       await applyOp.createDoc(testManagement.class.TestRun, space, object, id)
@@ -194,7 +195,7 @@
       <div id="test-cases-selector">
         <TestCaseSelector bind:objects={testCases} />
       </div>
-      <ModernButton
+      <Button
         label={testManagement.string.Save}
         size="medium"
         kind="primary"

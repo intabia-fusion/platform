@@ -25,7 +25,8 @@
     MessageBox
   } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { ButtonIcon, IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
+  import { IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { TreeElement } from '@hcengineering/view-resources'
   import ScheduleEditor from './ScheduleEditor.svelte'
@@ -52,7 +53,7 @@
     }
   )
 
-  async function getScheduleListActions (): Promise<Action[]> {
+  async function getScheduleListActions(): Promise<Action[]> {
     return [
       {
         icon: IconAdd,
@@ -65,7 +66,7 @@
     ]
   }
 
-  function deleteSchedule (schedule: Schedule): void {
+  function deleteSchedule(schedule: Schedule): void {
     showPopup(
       MessageBox,
       {
@@ -84,7 +85,7 @@
     )
   }
 
-  function shareLink (schedule: Schedule): void {
+  function shareLink(schedule: Schedule): void {
     const ws = getCurrentWorkspaceUrl()
     const link = `${scheduleUrl}/${ws}/${schedule._id}`
     showPopup(
@@ -128,21 +129,23 @@
           }}
         >
           <svelte:fragment slot="actions">
-            <ButtonIcon
+            <IconButton
               icon={IconLink}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: calendar.string.ScheduleShareLink, direction: 'top' }}
-              on:click={() => {
+              on:click={(e) => {
+                e.stopPropagation()
                 shareLink(schedule)
               }}
             />
-            <ButtonIcon
+            <IconButton
               icon={IconDelete}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: view.string.Delete, direction: 'top' }}
-              on:click={() => {
+              on:click={(e) => {
+                e.stopPropagation()
                 deleteSchedule(schedule)
               }}
             />

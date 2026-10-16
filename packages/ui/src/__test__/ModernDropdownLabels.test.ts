@@ -179,7 +179,7 @@ describe('ModernDropdownLabels', () => {
     expect(withoutArrow.host.querySelector('.dropdown-arrow-icon')).toBeNull()
   })
 
-  it('renders a ButtonIcon instead of ModernButton when showContent is off', () => {
+  it('renders an IconButton instead of a Button when showContent is off', () => {
     const withIcon = mount({ items: ITEMS, showContent: false, icon: 'ui:icon:Check' as Asset })
     expect(withIcon.host.querySelector('.content')).toBeNull()
     expect(withIcon.host.querySelector('button')).not.toBeNull()

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { ButtonBaseKind, SelectPopupValueType } from '@hcengineering/ui'
-  import { ButtonBase, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import { ToDoPriority } from '@hcengineering/time'
   import { defaultToDoPriorities, todoPriorities } from '../utils'
@@ -42,7 +43,7 @@
   $: selected = selectPopupPriorities.find((item) => item.id === value)
   $: selectedLabel = selected?.label === time.string.NoPriority ? time.string.SetPriority : selected?.label
 
-  $: icon = selected?.id === ToDoPriority.NoPriority ? time.icon.Flag : selected?.icon
+  $: icon = selected?.id === ToDoPriority.NoPriority || selected?.icon === undefined ? time.icon.Flag : selected.icon
   $: iconProps = selected?.iconProps
 
   const handlePriorityUpdate = async (newPriority: ToDoPriority) => {
@@ -55,7 +56,7 @@
     onChange(newPriority)
   }
 
-  function handleClick (event: MouseEvent) {
+  function handleClick(event: MouseEvent) {
     event.stopPropagation()
 
     showPopup(
@@ -71,13 +72,12 @@
   }
 </script>
 
-<ButtonBase
+<IconButton
   id="priorityButton"
-  type="type-button-icon"
   size="small"
   {kind}
   {icon}
   {iconProps}
-  tooltip={{ label: selectedLabel, direction: 'bottom' }}
+  tooltip={{ label: selectedLabel ?? time.string.SetPriority, direction: 'bottom' }}
   on:click={handleClick}
 />

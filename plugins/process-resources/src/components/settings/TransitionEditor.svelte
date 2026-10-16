@@ -21,7 +21,6 @@
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import {
     Button,
-    ButtonIcon,
     DropdownLabelsPopupIntl,
     getCurrentLocation,
     getEventPositionElement,
@@ -32,6 +31,7 @@
     Scroller,
     showPopup
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import plugin from '../../plugin'
@@ -73,7 +73,7 @@
     ])
   })
 
-  function getTitle (transition: Transition): string {
+  function getTitle(transition: Transition): string {
     const to = client.getModel().findAllSync(plugin.class.State, { _id: transition.to })[0]
     if (transition.from == null) {
       return `⦳ → ${to.title}`
@@ -84,7 +84,7 @@
 
   const client = getClient()
 
-  function addAction (e: MouseEvent): void {
+  function addAction(e: MouseEvent): void {
     const items: DropdownIntlItem[] = client
       .getModel()
       .findAllSync(plugin.class.Method, {})
@@ -104,7 +104,7 @@
     })
   }
 
-  function editAction (step: Step<Doc>): void {
+  function editAction(step: Step<Doc>): void {
     if (value === undefined) return
     $settingsStore = { id: value._id, component: AsideStepEditor, props: { process, step, _id: value._id } }
   }
@@ -124,7 +124,7 @@
       transitions = res
     })
 
-  async function handleDelete (): Promise<void> {
+  async function handleDelete(): Promise<void> {
     if (value === undefined) return
     // to do handle on server trigger
     await client.remove(value)
@@ -135,11 +135,11 @@
     navigate(loc)
   }
 
-  function edit (): void {
+  function edit(): void {
     $settingsStore = { id: _id, component: AsideTransitionEditor, props: { process, transition: value } }
   }
 
-  async function moveHadler (): Promise<void> {
+  async function moveHadler(): Promise<void> {
     if (value === undefined) return
     await client.update(value, { actions: value.actions })
   }
@@ -157,7 +157,7 @@
         <div class="hulyComponent-content gap">
           <div class="header flex-between">
             <TransitionPresenter transition={value} />
-            <ButtonIcon
+            <IconButton
               icon={IconDelete}
               tooltip={{ label: view.string.Delete, direction: 'bottom' }}
               size="small"

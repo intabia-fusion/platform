@@ -20,7 +20,7 @@
   import love from '../../../plugin'
   import view from '@hcengineering/view'
   import type { ButtonBaseSize } from '@hcengineering/ui'
-  import { ModernButton } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
 
   export let size: ButtonBaseSize = 'large'
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
@@ -30,7 +30,7 @@
 
   let inFlight = false
 
-  async function toggle (): Promise<void> {
+  async function toggle(): Promise<void> {
     const mm = $currentMeetingMinutes
     if (mm === undefined || inFlight) return
 
@@ -50,13 +50,14 @@
 </script>
 
 {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && isTranscriptionAllowed() && $lkSessionConnected && $currentMeetingMinutes !== undefined}
-  <ModernButton
+  <IconButton
+    iconSize="medium"
     icon={view.icon.Feather}
     iconProps={isTranscribing ? { fill: 'var(--button-negative-BackgroundColor)' } : {}}
     tooltip={{ label: isTranscribing ? love.string.StopTranscription : love.string.StartTranscription }}
     disabled={inFlight}
     loading={inFlight}
-    dataId="transcription-button"
+    data-id="transcription-button"
     {kind}
     {size}
     on:click={() => {

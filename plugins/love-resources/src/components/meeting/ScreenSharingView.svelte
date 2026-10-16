@@ -9,7 +9,9 @@
     RemoteTrackPublication
   } from 'livekit-client'
   import { RoomEvent, Track } from 'livekit-client'
-  import { IconScale, IconScaleFull, ButtonIcon } from '@hcengineering/ui'
+  import { IconScale, IconScaleFull } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import love from '../../plugin'
 
   export let hasActiveTrack: boolean = false
   export let showLocalTrack: boolean = true
@@ -34,7 +36,7 @@
   let showControls = false
   let hideTimeout: ReturnType<typeof setTimeout> | undefined
 
-  function showControlsWithTimeout (): void {
+  function showControlsWithTimeout(): void {
     showControls = true
     clearTimeout(hideTimeout)
     hideTimeout = setTimeout(() => {
@@ -42,39 +44,39 @@
     }, 2000)
   }
 
-  function handleMouseEnter (): void {
+  function handleMouseEnter(): void {
     showControlsWithTimeout()
   }
 
-  function handleMouseLeave (): void {
+  function handleMouseLeave(): void {
     showControls = false
     clearTimeout(hideTimeout)
   }
 
-  function zoomIn (): void {
+  function zoomIn(): void {
     scale = Math.min(MAX_SCALE, scale + SCALE_STEP)
     clampPan()
   }
 
-  function zoomOut (): void {
+  function zoomOut(): void {
     scale = Math.max(MIN_SCALE, scale - SCALE_STEP)
     clampPan()
   }
 
-  function clampPan (): void {
+  function clampPan(): void {
     if (scale <= 1) {
       panX = 0
       panY = 0
     }
   }
 
-  function resetZoom (): void {
+  function resetZoom(): void {
     scale = 1
     panX = 0
     panY = 0
   }
 
-  function handleMouseDown (e: MouseEvent): void {
+  function handleMouseDown(e: MouseEvent): void {
     if (scale > 1) {
       isDragging = true
       startX = e.clientX - panX
@@ -82,7 +84,7 @@
     }
   }
 
-  function handleMouseMove (e: MouseEvent): void {
+  function handleMouseMove(e: MouseEvent): void {
     if (isDragging && scale > 1) {
       panX = e.clientX - startX
       panY = e.clientY - startY
@@ -91,12 +93,12 @@
     showControlsWithTimeout()
   }
 
-  function handleMouseUp (): void {
+  function handleMouseUp(): void {
     isDragging = false
     clampPan()
   }
 
-  function handleWheel (e: WheelEvent): void {
+  function handleWheel(e: WheelEvent): void {
     e.preventDefault()
     const rect = container.getBoundingClientRect()
     const mouseX = e.clientX - rect.left - rect.width / 2
@@ -112,7 +114,7 @@
     }
   }
 
-  function trySetActiveTrack (track: Track | undefined): boolean {
+  function trySetActiveTrack(track: Track | undefined): boolean {
     if (track === undefined) return false
     if (track.kind !== Track.Kind.Video || track.source !== Track.Source.ScreenShare) return false
 
@@ -124,7 +126,7 @@
     return true
   }
 
-  function clearActiveTrack (track: Track | undefined): void {
+  function clearActiveTrack(track: Track | undefined): void {
     if (track === activeTrack) {
       hasActiveTrack = false
       activeTrack?.detach()
@@ -137,7 +139,7 @@
     }, 50)
   }
 
-  function scanForScreenShare (): void {
+  function scanForScreenShare(): void {
     for (const participant of lk.remoteParticipants.values()) {
       for (const publication of participant.trackPublications.values()) {
         if (trySetActiveTrack(publication.track)) return
@@ -150,7 +152,7 @@
     }
   }
 
-  function onTrackSubscribed (
+  function onTrackSubscribed(
     track: RemoteTrack,
     publication: RemoteTrackPublication,
     participant: RemoteParticipant
@@ -158,7 +160,7 @@
     trySetActiveTrack(track)
   }
 
-  function onTrackUnsubscribed (
+  function onTrackUnsubscribed(
     track: RemoteTrack,
     publication: RemoteTrackPublication,
     participant: RemoteParticipant
@@ -166,11 +168,11 @@
     clearActiveTrack(track)
   }
 
-  function onLocalTrackPublished (publication: LocalTrackPublication, participant: LocalParticipant): void {
+  function onLocalTrackPublished(publication: LocalTrackPublication, participant: LocalParticipant): void {
     trySetActiveTrack(publication.track)
   }
 
-  function onLocalTrackUnpublished (publication: LocalTrackPublication, participant: LocalParticipant): void {
+  function onLocalTrackUnpublished(publication: LocalTrackPublication, participant: LocalParticipant): void {
     clearActiveTrack(publication.track)
   }
 
@@ -218,10 +220,28 @@
   />
   {#if hasActiveTrack}
     <div class="zoom-controls" class:visible={showControls}>
-      <ButtonIcon icon={IconScale} size="small" on:click={zoomOut} disabled={scale <= MIN_SCALE} />
+      <IconButton
+        icon={IconScale}
+        size="small"
+        tooltip={{ label: love.string.ZoomOut }}
+        on:click={zoomOut}
+        disabled={scale <= MIN_SCALE}
+      />
       <span class="zoom-level">{Math.round(scale * 100)}%</span>
-      <ButtonIcon icon={IconScale} size="small" on:click={zoomIn} disabled={scale >= MAX_SCALE} />
-      <ButtonIcon icon={IconScaleFull} size="small" on:click={resetZoom} disabled={scale === 1} />
+      <IconButton
+        icon={IconScale}
+        size="small"
+        tooltip={{ label: love.string.ZoomIn }}
+        on:click={zoomIn}
+        disabled={scale >= MAX_SCALE}
+      />
+      <IconButton
+        icon={IconScaleFull}
+        size="small"
+        tooltip={{ label: love.string.ResetZoom }}
+        on:click={resetZoom}
+        disabled={scale === 1}
+      />
     </div>
   {/if}
 </div>

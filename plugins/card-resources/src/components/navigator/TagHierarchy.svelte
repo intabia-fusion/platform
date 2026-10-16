@@ -18,7 +18,8 @@
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { IconWithEmoji, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { ButtonIcon, NavItem, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { NavItem, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import card from '../../plugin'
 
@@ -35,7 +36,7 @@
   const dispatch = createEventDispatcher()
   let descendants = new Map<Ref<Class<Doc>>, MasterTag[]>()
 
-  function getDescendants (_class: Ref<MasterTag>): MasterTag[] {
+  function getDescendants(_class: Ref<MasterTag>): MasterTag[] {
     const hierarchy = client.getHierarchy()
     const result: MasterTag[] = []
     const desc = hierarchy.getDescendants(_class)
@@ -53,7 +54,7 @@
     return result.sort((a, b) => a.label.localeCompare(b.label))
   }
 
-  function fillDescendants (classes: MasterTag[], _excludedClasses: Ref<MasterTag>[]): void {
+  function fillDescendants(classes: MasterTag[], _excludedClasses: Ref<MasterTag>[]): void {
     for (const cl of classes) {
       descendants.set(cl._id, getDescendants(cl._id))
     }
@@ -62,7 +63,7 @@
 
   $: fillDescendants(allClasses, excludedClasses)
 
-  function select (clazz: Ref<Class<Doc>>, space: Ref<Space>): void {
+  function select(clazz: Ref<Class<Doc>>, space: Ref<Space>): void {
     const loc = getCurrentLocation()
     loc.path[3] = space
     loc.path[4] = clazz
@@ -92,7 +93,7 @@
     <svelte:fragment slot="actions">
       {#if getItemActions !== undefined}
         {#each getItemActions(clazz._id) as action}
-          <ButtonIcon
+          <IconButton
             icon={action.icon ?? view.icon.Edit}
             size="extra-small"
             kind="tertiary"

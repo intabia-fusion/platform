@@ -14,15 +14,9 @@
 -->
 <script lang="ts">
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import {
-    ButtonIcon,
-    Icon,
-    IconDelete,
-    IconMoreV,
-    ModernPopup,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import { Icon, IconDelete, IconMoreV, ModernPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import setting from '@hcengineering/setting'
   import type { MailboxInfo } from '@hcengineering/account-client'
   import { getClient, MessageBox } from '@hcengineering/presentation'
@@ -38,7 +32,7 @@
 
   let opened = false
 
-  function deleteMailboxAction (): void {
+  function deleteMailboxAction(): void {
     showPopup(
       MessageBox,
       {
@@ -61,7 +55,7 @@
     )
   }
 
-  async function deleteMailbox (): Promise<void> {
+  async function deleteMailbox(): Promise<void> {
     await getAccountClient().deleteMailbox(mailbox.mailbox)
     const client = getClient()
     const currentUser = getCurrentEmployee()
@@ -126,7 +120,8 @@
     <Icon icon={setting.icon.Mailbox} size="small" />
     <span style="user-select: text">{mailbox.mailbox}</span>
     <div class="buttons-group tertiary-textColor">
-      <ButtonIcon
+      <IconButton
+        tooltip={{ label: view.string.MoreActions }}
         kind="tertiary"
         icon={IconMoreV}
         size="small"
@@ -153,12 +148,13 @@
             type="type-link"
           >
             <svelte:fragment slot="actions">
-              <ButtonIcon
+              <IconButton
                 icon={IconDelete}
                 size="extra-small"
                 kind="tertiary"
                 tooltip={{ label: setting.string.Delete, direction: 'top' }}
-                on:click={() => {
+                on:click={(e) => {
+                  e.stopPropagation()
                   deleteAlias(alias)
                 }}
               />
@@ -187,12 +183,13 @@
             type="type-link"
           >
             <svelte:fragment slot="actions">
-              <ButtonIcon
+              <IconButton
                 icon={IconDelete}
                 size="extra-small"
                 kind="tertiary"
                 tooltip={{ label: setting.string.Delete, direction: 'top' }}
-                on:click={() => {
+                on:click={(e) => {
+                  e.stopPropagation()
                   deletePassword(app)
                 }}
               />

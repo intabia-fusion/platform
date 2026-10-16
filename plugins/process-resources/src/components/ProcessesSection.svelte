@@ -20,16 +20,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Process, State } from '@hcengineering/process'
   import { makeRank } from '@hcengineering/rank'
-  import {
-    ButtonIcon,
-    getCurrentLocation,
-    Icon,
-    IconAdd,
-    IconFile,
-    Label,
-    navigate,
-    showPopup
-  } from '@hcengineering/ui'
+  import { getCurrentLocation, Icon, IconAdd, IconFile, Label, navigate, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { getRequiredSlots, importProcess } from '../exporter'
   import process from '../plugin'
   import ImportSlotsPopup from './settings/ImportSlotsPopup.svelte'
@@ -38,7 +30,7 @@
 
   const client = getClient()
 
-  async function add (): Promise<void> {
+  async function add(): Promise<void> {
     const initState = generateId<State>()
     const id = await client.createDoc(process.class.Process, core.space.Model, {
       name: await translate(process.string.NewProcess, {}),
@@ -82,14 +74,14 @@
     }
   )
 
-  function handleSelect (id: Ref<Process>): void {
+  function handleSelect(id: Ref<Process>): void {
     const loc = getCurrentLocation()
     loc.path[5] = process.component.ProcessEditor
     loc.path[6] = id
     navigate(loc, true)
   }
 
-  function handleImport (): void {
+  function handleImport(): void {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
@@ -122,14 +114,21 @@
   <Icon icon={process.icon.Process} size="small" />
   <span><Label label={process.string.Processes} /></span>
   <div class="flex-row-center flex-gap-1">
-    <ButtonIcon
+    <IconButton
       kind="primary"
       icon={IconFile}
       size="small"
       tooltip={{ label: process.string.Import, direction: 'bottom' }}
       on:click={handleImport}
     />
-    <ButtonIcon kind="primary" icon={IconAdd} size="small" dataId="btnAdd" on:click={add} />
+    <IconButton
+      kind="primary"
+      icon={IconAdd}
+      size="small"
+      data-id="btnAdd"
+      tooltip={{ label: process.string.Add }}
+      on:click={add}
+    />
   </div>
 </div>
 {#if processes.length}

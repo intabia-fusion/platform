@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ModernButton, Popup, TooltipInstance } from '@hcengineering/ui'
+  import { Popup, TooltipInstance } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
 
   import love from '../../plugin'
   import { myInfo, myOffice } from '../../stores'
@@ -43,7 +44,8 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       {#if $lkSessionConnected && onFullScreen}
-        <ModernButton
+        <IconButton
+          iconSize="medium"
           icon={$isFullScreen ? love.icon.ExitFullScreen : love.icon.FullScreen}
           tooltip={{
             label: $isFullScreen ? love.string.ExitingFullscreenMode : love.string.FullscreenMode,
@@ -57,7 +59,7 @@
         />
       {/if}
 
-      <ModernButton
+      <Button
         icon={love.icon.LeaveRoom}
         label={love.string.LeaveRoom}
         tooltip={{ label: love.string.LeaveRoom, direction: 'top' }}

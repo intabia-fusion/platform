@@ -3,13 +3,16 @@
   // © 2025 Hardcore Engineering, Inc. All Rights Reserved.
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
   import type { ExtendedEmoji, Emoji } from '@hcengineering/emoji'
   import emojiPlugin from '@hcengineering/emoji'
   import { getEmojiByHexcode, getEmojiSkins } from '../utils'
   import EmojiButton from './EmojiButton.svelte'
+  import EmojiGlyph from './EmojiGlyph.svelte'
   import { getSkinTone, unicodeEmojiStore } from '../store'
-  import { Label, IconDelete, closeTooltip, ButtonBase } from '@hcengineering/ui'
+  import { Label, IconDelete, closeTooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import SkinToneTooltip from './SkinToneTooltip.svelte'
 
   export let emoji: ExtendedEmoji
@@ -53,8 +56,8 @@
     return equal && noTone
       ? (e as Emoji.Emoji)
       : getEmojiSkins(e)?.find((skin) =>
-        equal ? skin.tone === a : Array.isArray(skin.tone) && skin.tone[0] === a && skin.tone[1] === b
-      )
+          equal ? skin.tone === a : Array.isArray(skin.tone) && skin.tone[0] === a && skin.tone[1] === b
+        )
   }
   const getEmojiStringByTone = (e: ExtendedEmoji, [a, b]: number[]): string | undefined => {
     return getEmojiByTone(e, [a, b])?.emoji
@@ -79,16 +82,16 @@
             }}
           />
           {#if index === 0}
-            <ButtonBase
-              type="type-button-icon"
+            <IconButton
+              icon={EmojiGlyph}
+              iconProps={{ emoji: getEmojiStringByTone(emoji, combinedTones), fontSize: '2.5rem' }}
               kind="tertiary"
               size="large"
+              tooltip={{ label: getEmbeddedLabel('label' in emoji ? emoji.label : emoji.shortcode) }}
               on:click={() => {
                 dispatch('close', getEmojiByTone(emoji, combinedTones))
               }}
-            >
-              <span style:font-size="2.5rem" class="emoji">{getEmojiStringByTone(emoji, combinedTones)}</span>
-            </ButtonBase>
+            />
           {/if}
         {/each}
       </div>

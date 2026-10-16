@@ -1,11 +1,13 @@
 <script lang="ts">
   import emojiPlugin from '@hcengineering/emoji'
-  import { ModernButton, showPopup } from '@hcengineering/ui'
+  import { showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import love from '../../../plugin'
   import { lk } from '../../../utils'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'
 
-  function addReaction (event: MouseEvent): void {
+  function addReaction(event: MouseEvent): void {
     showPopup(
       emojiPlugin.component.EmojiPopup,
       {},
@@ -20,4 +22,11 @@
   }
 </script>
 
-<ModernButton icon={emojiPlugin.icon.Emoji} kind="secondary" {size} on:click={addReaction} />
+<IconButton
+  iconSize="medium"
+  icon={emojiPlugin.icon.Emoji}
+  kind="secondary"
+  {size}
+  tooltip={{ label: love.string.AddReaction }}
+  on:click={addReaction}
+/>

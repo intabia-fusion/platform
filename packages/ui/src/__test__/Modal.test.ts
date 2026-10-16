@@ -121,7 +121,7 @@ describe('Modal', () => {
   it('the OK button carries okKind/okLabel/okLoading and is disabled unless canSave', async () => {
     const { root, component } = mount({ okKind: 'negative', okLabel: 'ui:string:Save' as IntlString, canSave: false })
     const [ok] = footerButtons(root)
-    expect(ok.classList.contains('negative')).toBe(true)
+    expect(ok.classList.contains('button--negative')).toBe(true)
     expect(ok.textContent).toContain('ui:string:Save')
     expect(ok.disabled).toBe(true)
 

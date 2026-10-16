@@ -17,7 +17,8 @@
   import type { TaskType, TaskTypeDependencyItem } from '@hcengineering/task'
   import { exportTaskTypeConfig, getConnectedTaskTypesWithDependencies } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import ui, { ButtonBase, IconCopy, IconInfo, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
+  import ui, { IconCopy, IconInfo, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import { Severity, Status, getEmbeddedLabel, setPlatformStatus } from '@hcengineering/platform'
 
@@ -77,7 +78,7 @@
   })
 
   // The shared list is key-agnostic and reports string ids; every row here is keyed by a task type ref.
-  function toggleRelated (rowId: string): void {
+  function toggleRelated(rowId: string): void {
     const id = rowId as Ref<TaskType>
     if (selectedRelatedIds.has(id)) {
       selectedRelatedIds.delete(id)
@@ -87,15 +88,15 @@
     selectedRelatedIds = new Set(selectedRelatedIds)
   }
 
-  function selectAll (): void {
+  function selectAll(): void {
     selectedRelatedIds = new Set<Ref<TaskType>>((relatedItems ?? []).map((it) => it.taskType._id))
   }
 
-  function deselectAll (): void {
+  function deselectAll(): void {
     selectedRelatedIds = new Set()
   }
 
-  async function handleExport (): Promise<void> {
+  async function handleExport(): Promise<void> {
     if (isExporting) return
     isExporting = true
     try {
@@ -136,7 +137,7 @@
 
   // Resolve refs to relations, dropping anything not present in the dialog: showing a raw
   // Ref<TaskType> in the UI is worse than omitting the relation.
-  function toRelations (ids: Ref<TaskType>[], types: Map<Ref<TaskType>, TaskType>): TaskTypeRelation[] {
+  function toRelations(ids: Ref<TaskType>[], types: Map<Ref<TaskType>, TaskType>): TaskTypeRelation[] {
     return ids
       .map((id) => {
         const name = types.get(id)?.name
@@ -145,7 +146,7 @@
       .filter((r): r is TaskTypeRelation => r !== undefined)
   }
 
-  function groupReasons (reasons: TaskTypeDependencyItem['reasons']): GroupedReasons {
+  function groupReasons(reasons: TaskTypeDependencyItem['reasons']): GroupedReasons {
     const parentOf: Ref<TaskType>[] = []
     const childOf: Ref<TaskType>[] = []
     const seenParentIds = new Set<Ref<TaskType>>()
@@ -169,14 +170,14 @@
     return { parentOf, childOf, universalChild }
   }
 
-  function handleModeSelected (val: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined): void {
+  function handleModeSelected(val: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined): void {
     if (isExporting || isCopying) return
     const v = Array.isArray(val) ? val[0] : val
     if (v == null) return
     exportMode = v === 'single' ? 'single' : 'hierarchy'
   }
 
-  async function handleCopyToClipboard (): Promise<void> {
+  async function handleCopyToClipboard(): Promise<void> {
     if (isExporting || isCopying) return
     isCopying = true
     try {
@@ -205,7 +206,7 @@
     }
   }
 
-  function handleClose (): void {
+  function handleClose(): void {
     dispatch('close')
   }
 </script>
@@ -295,10 +296,9 @@
   </div>
 
   <div slot="afterContent" class="export-footer">
-    <ButtonBase type="type-button" kind="secondary" size="medium" label={ui.string.Cancel} on:click={handleClose} />
+    <Button kind="secondary" size="medium" label={ui.string.Cancel} on:click={handleClose} />
     <div class="export-actions">
-      <ButtonBase
-        type="type-button"
+      <Button
         kind="primary"
         size="medium"
         icon={IconCopy}
@@ -307,8 +307,7 @@
         disabled={selectedCount === 0 || isExporting || isCopying}
         on:click={handleCopyToClipboard}
       />
-      <ButtonBase
-        type="type-button"
+      <Button
         kind="primary"
         size="medium"
         icon={IconDownload}

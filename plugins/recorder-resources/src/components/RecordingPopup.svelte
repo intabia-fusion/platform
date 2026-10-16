@@ -25,13 +25,13 @@
     IconUpOutline,
     Label,
     Modal,
-    ModernButton,
     SelectPopup,
     SplitButton,
     eventToHTMLElement,
     resizeObserver,
     showPopup
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
@@ -96,7 +96,7 @@
     video.srcObject = $canvasStream
   }
 
-  async function updateName (screenShareEnabled: boolean): Promise<void> {
+  async function updateName(screenShareEnabled: boolean): Promise<void> {
     name =
       (await formatRecordingName(
         screenShareEnabled ? plugin.string.ScreenRecordingName : plugin.string.CameraRecordingName,
@@ -104,7 +104,7 @@
       )) + '.mp4'
   }
 
-  async function handleCompleteRecording (): Promise<void> {
+  async function handleCompleteRecording(): Promise<void> {
     if (name.length === 0) return
 
     const {
@@ -153,7 +153,7 @@
 
   let messageBox: PopupResult | null = null
 
-  async function handleCancelRecording (): Promise<void> {
+  async function handleCancelRecording(): Promise<void> {
     if (canClosePopup()) {
       await cancelRecording()
 
@@ -187,15 +187,15 @@
     )
   }
 
-  export function canClose (): boolean {
+  export function canClose(): boolean {
     return false
   }
 
-  function canClosePopup (): boolean {
+  function canClosePopup(): boolean {
     return state.state === 'idle' || state.state === 'ready'
   }
 
-  async function handleCamSetting (e: MouseEvent): Promise<void> {
+  async function handleCamSetting(e: MouseEvent): Promise<void> {
     const mediaDevices = await getMediaDevices(false, true)
     const devices = mediaDevices.devices.filter((d) => d.kind === 'videoinput')
 
@@ -216,7 +216,7 @@
     })
   }
 
-  async function handleMicSetting (e: MouseEvent): Promise<void> {
+  async function handleMicSetting(e: MouseEvent): Promise<void> {
     const mediaDevices = await getMediaDevices(true, false)
     const devices = mediaDevices.devices.filter((d) => d.kind === 'audioinput')
 
@@ -237,11 +237,11 @@
     })
   }
 
-  async function handleShareSettings (e: MouseEvent): Promise<void> {
+  async function handleShareSettings(e: MouseEvent): Promise<void> {
     showPopup(ShareSettingsPopup, {}, eventToHTMLElement(e))
   }
 
-  function handleSettingsClick (e: MouseEvent): void {
+  function handleSettingsClick(e: MouseEvent): void {
     showPopup(SettingsPopup, { value: [] }, eventToHTMLElement(e))
   }
 
@@ -255,7 +255,7 @@
 
   $: updateContainerSize(rootWidth, rootHeight, $canvasWidth, $canvasHeight)
 
-  function updateContainerSize (rootWidth: number, rootHeight: number, canvasWidth: number, canvasHeight: number): void {
+  function updateContainerSize(rootWidth: number, rootHeight: number, canvasWidth: number, canvasHeight: number): void {
     const scaleFactorX = rootWidth / canvasWidth
     const scaleFactorY = rootHeight / canvasHeight
 
@@ -264,13 +264,13 @@
     containerHeight = Math.floor(canvasHeight * containerScaleFactor)
   }
 
-  function handleContainerResize (element: Element): void {
+  function handleContainerResize(element: Element): void {
     const { width, height } = element.getBoundingClientRect()
     rootWidth = width
     rootHeight = height
   }
 
-  function handleKeyDown (e: KeyboardEvent): void {
+  function handleKeyDown(e: KeyboardEvent): void {
     if (state?.state === 'stopping') return
     if (messageBox !== null) return
 
@@ -342,25 +342,25 @@
     <div class="hulyModal-footer px-2">
       {#if state.state === 'ready'}
         <!-- Recording not started -->
-        <ModernButton
+        <Button
           size="small"
           kind={mainStream === null ? 'secondary' : 'negative'}
           icon={plugin.icon.Record}
           iconProps={{ size: 'small' }}
           label={plugin.string.Record}
           disabled={mainStream === null}
-          noFocus
           on:click={startRecording}
         />
 
         <div class="flex-grow" />
 
-        <ModernButton
+        <IconButton
+          iconSize="medium"
           size="small"
           kind="secondary"
           icon={IconSettings}
           iconProps={{ size: 'small' }}
-          noFocus
+          tooltip={{ label: plugin.string.Settings }}
           on:click={handleSettingsClick}
         />
 
@@ -421,11 +421,10 @@
           noFocus
         />
       {:else if state.state === 'stopped'}
-        <ModernButton
+        <Button
           size="small"
           kind="primary"
           label={view.string.Save}
-          noFocus
           on:click={handleCompleteRecording}
           disabled={name.length === 0 || space == null}
         />
@@ -450,7 +449,7 @@
         <!-- Stop Button -->
         {#if state.state === 'stopping'}
           <!-- Recording is stopping -->
-          <ModernButton
+          <Button
             size="small"
             kind="negative"
             icon={IconStop}
@@ -458,41 +457,37 @@
             label={plugin.string.Stop}
             disabled
             loading
-            noFocus
             on:click={stopRecording}
           />
         {:else if state.state === 'recording'}
           <!-- Recording in progress -->
-          <ModernButton
+          <Button
             size="small"
             kind="negative"
             icon={IconStop}
             iconProps={{ size: 'small' }}
             label={plugin.string.Stop}
-            noFocus
             on:click={stopRecording}
           />
         {/if}
 
         <!-- Pause Button -->
         {#if state.state === 'recording'}
-          <ModernButton
+          <Button
             size="small"
             kind="secondary"
             icon={IconPause}
             iconProps={{ size: 'small' }}
             label={plugin.string.Pause}
-            noFocus
             on:click={pauseRecording}
           />
         {:else if state.state === 'paused'}
-          <ModernButton
+          <Button
             size="small"
             kind="secondary"
             icon={IconPlay}
             iconProps={{ size: 'small' }}
             label={plugin.string.Resume}
-            noFocus
             on:click={resumeRecording}
           />
         {/if}

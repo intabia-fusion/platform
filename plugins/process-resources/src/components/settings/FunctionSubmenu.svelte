@@ -16,7 +16,8 @@
   import type { AnyAttribute, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Context, Func, Process, ProcessFunction } from '@hcengineering/process'
-  import { ButtonIcon, eventToHTMLElement, IconSettings, Label, showPopup } from '@hcengineering/ui'
+  import { eventToHTMLElement, IconSettings, Label, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import plugin from '../../plugin'
 
   export let attribute: AnyAttribute
@@ -27,11 +28,11 @@
 
   const client = getClient()
 
-  function getFunction (_id: Ref<ProcessFunction>): ProcessFunction {
+  function getFunction(_id: Ref<ProcessFunction>): ProcessFunction {
     return client.getModel().findAllSync(plugin.class.ProcessFunction, { _id })[0]
   }
 
-  function onConfigure (e: MouseEvent): void {
+  function onConfigure(e: MouseEvent): void {
     const f = getFunction(func.func)
     if (f.editor === undefined) return
     showPopup(
@@ -60,6 +61,12 @@
     <Label label={getFunction(func.func).label} />
   </span>
   {#if getFunction(func.func).editor}
-    <ButtonIcon icon={IconSettings} size="small" kind="tertiary" on:click={onConfigure} />
+    <IconButton
+      icon={IconSettings}
+      size="small"
+      kind="tertiary"
+      tooltip={{ label: plugin.string.Settings }}
+      on:click={onConfigure}
+    />
   {/if}
 </div>

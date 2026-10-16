@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import presentation from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { ButtonIcon, Icon, IconAdd, IconDelete, Label } from '@hcengineering/ui'
+  import { Icon, IconAdd, IconDelete, Label } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
@@ -34,7 +36,7 @@
   const dispatch = createEventDispatcher()
 
   // Function to add a new view configuration
-  function addViewConfig (): void {
+  function addViewConfig(): void {
     // Create a new ViewConfig with default empty values and unique ID
     const newViewConfig: MasterDetailConfig = {
       class: tag._id,
@@ -47,19 +49,19 @@
     dispatch('change', viewConfigs)
   }
 
-  function updateViewClass (index: number, value: Ref<Class<Doc>>): void {
+  function updateViewClass(index: number, value: Ref<Class<Doc>>): void {
     viewConfigs[index].class = value
     viewConfigs = [...viewConfigs] // Trigger reactivity
     dispatch('change', viewConfigs)
   }
 
-  function updateViewConfig (index: number, value: Ref<ViewletDescriptor>): void {
+  function updateViewConfig(index: number, value: Ref<ViewletDescriptor>): void {
     viewConfigs[index].view = value
     viewConfigs = [...viewConfigs] // Trigger reactivity
     dispatch('change', viewConfigs)
   }
 
-  function removeViewConfig (index: number): void {
+  function removeViewConfig(index: number): void {
     viewConfigs = viewConfigs.filter((_, i) => i !== index)
     dispatch('change', viewConfigs)
   }
@@ -69,7 +71,14 @@
   <div class="hulyTableAttr-header font-medium-12">
     <Icon icon={sectionIcon} size="small" />
     <span><Label label={card.string.MasterDetailViews} /></span>
-    <ButtonIcon kind="primary" icon={IconAdd} size="small" dataId="btnAddViewConfig" on:click={addViewConfig} />
+    <IconButton
+      kind="primary"
+      icon={IconAdd}
+      size="small"
+      data-id="btnAddViewConfig"
+      tooltip={{ label: presentation.string.Add }}
+      on:click={addViewConfig}
+    />
   </div>
 
   {#if viewConfigs.length > 0}
@@ -97,11 +106,12 @@
               }}
             />
           </div>
-          <ButtonIcon
+          <IconButton
             kind="tertiary"
             icon={IconDelete}
             size="small"
             disabled={viewConfigs.length === 1}
+            tooltip={{ label: presentation.string.Delete }}
             on:click={() => {
               removeViewConfig(index)
             }}

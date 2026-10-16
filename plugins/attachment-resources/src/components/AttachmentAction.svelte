@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IconSize } from '@hcengineering/ui'
-  import { type AnySvelteComponent, ButtonIcon } from '@hcengineering/ui'
+  import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { ComponentType } from 'svelte'
 
@@ -26,21 +26,21 @@
   export let opened: boolean = false
   export let dataId: string | undefined = undefined
 
-  function onClick (ev: MouseEvent): void {
+  function onClick(ev: MouseEvent): void {
     ev.stopPropagation()
     ev.preventDefault()
     void action(ev)
   }
 </script>
 
-<ButtonIcon
+<IconButton
   {icon}
   {iconProps}
   iconSize={size}
   size="small"
   kind="tertiary"
   pressed={opened}
-  {dataId}
+  data-id={dataId}
   tooltip={{ label }}
   on:click={onClick}
 />

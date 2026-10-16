@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy, afterUpdate } from 'svelte'
+  import IconButton from '../ui-kit/button/IconButton.svelte'
+  import ui from '../plugin'
   import type { HeaderAdaptive } from '..'
   import {
     IconMaximize,
     IconMinimize,
     IconClose,
-    ButtonIcon,
     deviceOptionsStore as deviceInfo,
     resizeObserver,
     popupstore
@@ -68,7 +69,7 @@
     if (closeButton) window.removeEventListener('keydown', _close)
   })
 
-  function _close (ev: KeyboardEvent): void {
+  function _close(ev: KeyboardEvent): void {
     if (closeButton && ev.key === 'Escape' && closeOnEscape) {
       ev.preventDefault()
       ev.stopPropagation()
@@ -102,11 +103,12 @@
   {#if _doubleRow}
     <div class="hulyHeader-row">
       {#if allowFullsize}
-        <ButtonIcon
+        <IconButton
           icon={$deviceInfo.navigator.visible ? IconMaximize : IconMinimize}
           kind="tertiary"
           size="small"
           noPrint
+          tooltip={{ label: $deviceInfo.navigator.visible ? ui.string.HideNavigator : ui.string.ShowNavigator }}
           on:click={() => ($deviceInfo.navigator.visible = !$deviceInfo.navigator.visible)}
         />
         <div class="hulyHeader-divider no-print" />
@@ -157,7 +159,14 @@
         {#if closeOnEscape}
           <div class="hulyHotKey-item no-print">Esc</div>
         {/if}
-        <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={() => dispatch('close')} />
+        <IconButton
+          icon={IconClose}
+          kind="tertiary"
+          size="small"
+          noPrint
+          tooltip={{ label: ui.string.Close }}
+          on:click={() => dispatch('close')}
+        />
       {/if}
     </div>
     <!-- <div class="hulyHeader-row__divider" /> -->
@@ -192,11 +201,12 @@
     </div>
   {:else}
     {#if allowFullsize}
-      <ButtonIcon
+      <IconButton
         icon={$deviceInfo.navigator.visible ? IconMaximize : IconMinimize}
         kind="tertiary"
         size="small"
         noPrint
+        tooltip={{ label: $deviceInfo.navigator.visible ? ui.string.HideNavigator : ui.string.ShowNavigator }}
         on:click={() => ($deviceInfo.navigator.visible = !$deviceInfo.navigator.visible)}
       />
       <div class="hulyHeader-divider no-print" />
@@ -272,7 +282,14 @@
       {#if closeOnEscape}
         <div class="hulyHotKey-item no-print">Esc</div>
       {/if}
-      <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={() => dispatch('close')} />
+      <IconButton
+        icon={IconClose}
+        kind="tertiary"
+        size="small"
+        noPrint
+        tooltip={{ label: ui.string.Close }}
+        on:click={() => dispatch('close')}
+      />
     {/if}
   {/if}
 </div>

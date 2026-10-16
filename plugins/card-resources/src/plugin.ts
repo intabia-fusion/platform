@@ -179,6 +179,7 @@ export default mergeIds(cardId, card, {
     BaseType: '' as IntlString,
     BaseTypeDescription: '' as IntlString,
     TwoColumns: '' as IntlString,
-    LayoutAuto: '' as IntlString
+    LayoutAuto: '' as IntlString,
+    TableOfContents: '' as IntlString
   }
 })

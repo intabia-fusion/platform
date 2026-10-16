@@ -8,7 +8,8 @@
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonMenu, IconCopy, IconMoreH, type DropdownIntlItem } from '@hcengineering/ui'
+  import { IconCopy, IconMoreH, type DropdownIntlItem } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { viewletContextStore } from '@hcengineering/view-resources'
   import { copyAsMarkdownTableFromResource, copyRelationshipTableAsMarkdown } from '../markdown/copyActions'
@@ -33,7 +34,7 @@
     }
   ] satisfies DropdownIntlItem[]
 
-  async function handleCopyAll (e: Event): Promise<void> {
+  async function handleCopyAll(e: Event): Promise<void> {
     if (relationshipTableData !== undefined) {
       await copyRelationshipTableAsMarkdown(e, relationshipTableData)
     } else if (_class !== undefined && query !== undefined) {
@@ -49,7 +50,7 @@
     }
   }
 
-  async function onActionSelected (event?: CustomEvent): Promise<void> {
+  async function onActionSelected(event?: CustomEvent): Promise<void> {
     if (event?.detail !== COPY_ALL_ACTION_ID) {
       return
     }
@@ -59,5 +60,5 @@
 </script>
 
 {#if hasData}
-  <ButtonMenu size="small" noSelection icon={IconMoreH} items={actions} on:selected={onActionSelected} />
+  <MenuButton size="small" noSelection icon={IconMoreH} items={actions} on:selected={onActionSelected} />
 {/if}

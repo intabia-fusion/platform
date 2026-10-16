@@ -21,7 +21,6 @@
   import type { Ref } from '@hcengineering/core'
   import Header from '../../Header.svelte'
   import {
-    ButtonIcon,
     daysInMonth,
     DropdownLabels,
     DropdownLabelsIntl,
@@ -30,6 +29,7 @@
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import time from '../../../plugin'
 
   export let spaces: Array<Ref<Project>> = []
@@ -50,7 +50,7 @@
 
   let extras: Record<ExtraKey, boolean> = readExtras()
 
-  function readExtras (): Record<ExtraKey, boolean> {
+  function readExtras(): Record<ExtraKey, boolean> {
     const stored = localStorage.getItem(storageKey)?.split(',') ?? []
     return {
       planned: stored.includes('planned'),
@@ -59,12 +59,12 @@
     }
   }
 
-  function toggleExtra (key: ExtraKey): void {
+  function toggleExtra(key: ExtraKey): void {
     extras = { ...extras, [key]: !extras[key] }
     localStorage.setItem(storageKey, extraKeys.filter((it) => extras[it]).join(','))
   }
 
-  function showExtras (event: MouseEvent): void {
+  function showExtras(event: MouseEvent): void {
     const value: SelectPopupValueType[] = [
       { id: 'planned', label: time.string.Planned, isSelected: extras.planned },
       { id: 'events', label: time.string.ShowEvents, isSelected: extras.events },
@@ -105,7 +105,13 @@
   {/if}
   <DropdownLabelsIntl items={modeItems} bind:selected={mode} kind="regular" size="medium" />
   {#if mode === 'week' || mode === 'month'}
-    <ButtonIcon icon={IconSettings} size="small" kind="tertiary" on:click={showExtras} />
+    <IconButton
+      icon={IconSettings}
+      size="small"
+      kind="tertiary"
+      tooltip={{ label: time.string.Settings }}
+      on:click={showExtras}
+    />
   {/if}
   <div class="hulyHeader-divider short" />
 </Header>

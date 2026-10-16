@@ -17,18 +17,18 @@
   import type { BlobMetadata } from '@hcengineering/core'
   import { SortingOrder, type Blob, type Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import {
+  import ui, {
     Button,
     Modal,
     IconHistory,
     IconScribble,
     showPopup,
     tooltip,
-    ButtonIcon,
     IconMaximize,
     IconMinimize,
     IconClose
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import ActionContext from './ActionContext.svelte'
@@ -61,7 +61,7 @@
 
   $: void loadDrawings(file)
 
-  async function loadDrawings (file: Ref<Blob> | undefined): Promise<void> {
+  async function loadDrawings(file: Ref<Blob> | undefined): Promise<void> {
     if (props.drawingAvailable === true) {
       if (props.loadDrawings !== undefined) {
         drawingLoading = true
@@ -96,11 +96,11 @@
     }
   })
 
-  function toggleDrawingEdit (): void {
+  function toggleDrawingEdit(): void {
     props.drawingEditable = !(props.drawingEditable === true)
   }
 
-  function selectCurrentDrawing (ev: MouseEvent): void {
+  function selectCurrentDrawing(ev: MouseEvent): void {
     if (props.drawings === undefined || props.drawings.length === 0) {
       // no current means no history
       return
@@ -143,21 +143,23 @@
   }}
 >
   <svelte:fragment slot="beforeTitle">
-    <ButtonIcon
+    <IconButton
       icon={IconClose}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: presentation.string.Close }}
       on:click={() => {
         dispatch('close')
       }}
     />
     <div class="hulyHeader-divider short no-line no-print" />
-    <ButtonIcon
+    <IconButton
       icon={!fullSize ? IconMaximize : IconMinimize}
       kind="tertiary"
       size="small"
       noPrint
+      tooltip={{ label: !fullSize ? ui.string.FullSize : ui.string.NormalSize }}
       on:click={() => {
         fullSize = !fullSize
         dispatch('fullsize', fullSize)

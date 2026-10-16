@@ -18,20 +18,20 @@
   import { createQuery } from '@hcengineering/presentation'
   import {
     Breadcrumb,
-    ButtonIcon,
     Header,
     IconAdd,
     IconMoreH,
     IconTableOfContents,
     Label,
-    ModernButton,
     Scroller,
     Separator,
     defineSeparators,
     twoPanelsSeparators,
     showPopup
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import { showMenu } from '@hcengineering/view-resources'
+  import view from '@hcengineering/view'
   import setting from '../plugin'
   import EnumValues from './EnumValues.svelte'
 
@@ -48,7 +48,7 @@
     }
   })
 
-  function create () {
+  function create() {
     showPopup(setting.component.EditEnum, { title: setting.string.CreateEnum }, 'top')
   }
 
@@ -59,14 +59,20 @@
   <Header adaptive="disabled">
     <Breadcrumb icon={setting.icon.Enums} label={setting.string.Enums} size="large" isCurrent />
     <svelte:fragment slot="actions">
-      <ModernButton kind="primary" icon={IconAdd} label={setting.string.CreateEnum} size="small" on:click={create} />
+      <Button kind="primary" icon={IconAdd} label={setting.string.CreateEnum} size="small" on:click={create} />
     </svelte:fragment>
   </Header>
   <div class="hulyComponent-content__container columns">
     <div class="hulyComponent-content__column">
       <div class="hulyComponent-content__navHeader">
         <div class="hulyComponent-content__navHeader-menu">
-          <ButtonIcon kind="tertiary" icon={IconTableOfContents} size="small" inheritColor />
+          <IconButton
+            kind="tertiary"
+            icon={IconTableOfContents}
+            size="small"
+            inheritColor
+            tooltip={{ label: setting.string.Enums }}
+          />
         </div>
         <div class="hulyComponent-content__navHeader-hint paragraph-regular-14">
           <Label label={setting.string.EnumsSettingHint} />
@@ -88,12 +94,14 @@
                 <Label label={setting.string.EnumsCount} params={{ count: value.enumValues.length }} />
               </span>
             </div>
-            <ButtonIcon
+            <IconButton
+              tooltip={{ label: view.string.MoreActions }}
               kind="tertiary"
               icon={IconMoreH}
               size="small"
               pressed={hovered === i}
               on:click={(ev) => {
+                ev.stopPropagation()
                 hovered = i
                 showMenu(ev, { object: value }, () => {
                   hovered = null

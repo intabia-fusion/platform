@@ -17,7 +17,8 @@
   import { reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, { type OverviewStatistics } from '@hcengineering/presentation'
-  import { Button, ButtonMenu, Label, themeStore } from '@hcengineering/ui'
+  import { Button, type DropdownIntlItem, Label, themeStore } from '@hcengineering/ui'
+  import { MenuButton } from '@hcengineering/ui/kit'
 
   import adminRes from '../../plugin'
   import RegistrationsChart from '../RegistrationsChart.svelte'
@@ -26,12 +27,12 @@
 
   let generating = false
   let reportFormat: ReportFormat = 'csv'
-  const reportItems = [
+  const reportItems: Array<DropdownIntlItem<ReportId>> = [
     { id: 'accounts', label: adminRes.string.ReportAccounts },
     { id: 'workspaces', label: adminRes.string.ReportWorkspaces },
     { id: 'paid', label: adminRes.string.ReportPaidWorkspaces }
   ]
-  async function runReport (id: ReportId): Promise<void> {
+  async function runReport(id: ReportId): Promise<void> {
     generating = true
     try {
       await downloadReport(id, reportFormat)
@@ -54,7 +55,7 @@
   const statsEndpoint = getMetadata(presentation.metadata.StatsUrl)
   let overview: OverviewStatistics | undefined
 
-  async function loadOverview (): Promise<void> {
+  async function loadOverview(): Promise<void> {
     try {
       const res = await adminFetch(statsEndpoint + '/api/v1/overview')
       overview = await res.json()
@@ -84,7 +85,7 @@
 <div class="p-3">
   <div class="flex-row-center mb-2">
     <span class="fs-title mr-4"><Label label={adminRes.string.Reports} /></span>
-    <ButtonMenu
+    <MenuButton
       label={adminRes.string.CreateReport}
       kind="primary"
       size="small"

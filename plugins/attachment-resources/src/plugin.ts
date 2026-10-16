@@ -39,7 +39,9 @@ export default mergeIds(attachmentId, attachment, {
     FileBrowserSortBiggest: '' as IntlString,
     AddAttachmentToSaved: '' as IntlString,
     RemoveAttachmentFromSaved: '' as IntlString,
-    Pinned: '' as IntlString
+    Pinned: '' as IntlString,
+    Play: '' as IntlString,
+    Pause: '' as IntlString
   },
   actionImpl: {
     AddAttachmentToSaved: '' as ViewAction,

@@ -16,6 +16,8 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
+  import Button from '../ui-kit/button/Button.svelte'
+  import IconButton from '../ui-kit/button/IconButton.svelte'
   import { getFocusManager } from '../focus'
   import ui from '../plugin'
   import { showPopup, type PopupResult } from '../popups'
@@ -27,11 +29,9 @@
     IconSize,
     TooltipAlignment
   } from '../types'
-  import ButtonIcon from './ButtonIcon.svelte'
   import Icon from './Icon.svelte'
   import DropdownIcon from './icons/Dropdown.svelte'
   import Label from './Label.svelte'
-  import ModernButton from './ModernButton.svelte'
   import ModernPopupLabels from './ModernPopupLabels.svelte'
 
   export let icon: IconComponent | undefined = undefined
@@ -83,7 +83,7 @@
     selected = multiselect ? [items[0].id] : items[0].id
   }
 
-  function handleClick (): void {
+  function handleClick(): void {
     if (!opened) {
       opened = true
       popup = showPopup(
@@ -126,7 +126,7 @@
   style:width={computedWidth}
 >
   {#if showContent}
-    <ModernButton
+    <Button
       {focusIndex}
       {icon}
       {size}
@@ -134,7 +134,7 @@
       {kind}
       {disabled}
       pressed={opened}
-      {dataId}
+      data-id={dataId}
       {loading}
       tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
       on:click={handleClick}
@@ -184,9 +184,9 @@
           </div>
         {/if}
       </div>
-    </ModernButton>
+    </Button>
   {:else if icon}
-    <ButtonIcon
+    <IconButton
       {focusIndex}
       {icon}
       {size}
@@ -194,9 +194,9 @@
       {kind}
       {disabled}
       pressed={opened}
-      {dataId}
+      data-id={dataId}
       {loading}
-      tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
+      tooltip={{ label: label ?? ui.string.DropdownDefaultLabel, direction: labelDirection }}
       on:click={handleClick}
     />
   {/if}
@@ -208,7 +208,7 @@
     min-width: 0;
 
     &:not(.icon-only) {
-      :global(.hulyButton) {
+      :global(.button) {
         width: 100%;
         display: inline-flex;
         align-items: center;
@@ -261,7 +261,7 @@
   }
 
   .multiselect-wrap {
-    :global(.hulyButton) {
+    :global(.button) {
       height: auto !important;
       min-height: 2.25rem;
       padding-top: 0.25rem !important;

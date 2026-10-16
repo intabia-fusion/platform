@@ -17,13 +17,14 @@
   import { SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
-  import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
+  import { Icon, IconAdd, Label } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Screen } from '@hcengineering/workflow'
 
   import { navigateToScreen } from '../location'
@@ -50,7 +51,7 @@
     { sort: { name: SortingOrder.Ascending } }
   )
 
-  function getClassLabel (targetClass?: Ref<Class<Task>>): IntlString | undefined {
+  function getClassLabel(targetClass?: Ref<Class<Task>>): IntlString | undefined {
     if (targetClass == null) return undefined
     if (targetClass === tracker.class.Issue) return plugin.string.AnyTaskType
     // Task type classes all inherit the "Issue" label, so name them by their task type.
@@ -67,14 +68,14 @@
 <div class="hulyTableAttr-header font-medium-12">
   <Icon icon={plugin.icon.Screens} size="small" />
   <span><Label label={plugin.string.Screens} /></span>
-  <ButtonIcon
+  <IconButton
     kind="primary"
     icon={IconAdd}
     size="small"
-    dataId="btnAddScreen"
+    data-id="btnAddScreen"
     {disabled}
     loading={isLoading}
-    tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : undefined}
+    tooltip={disabled ? { label: setting.string.OwnerOrMaintainerRequired } : { label: presentation.string.Add }}
     on:click={() => {
       if (disabled) return
       if ($settingsStore.id !== 'createScreen') {

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { DraftController, draftsStore, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { ButtonIcon, IconMinimize, IconSend, ModernButton, ModernEditbox } from '@hcengineering/ui'
+  import { IconMinimize, IconSend, ModernEditbox } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import type { Card, MasterTag } from '@hcengineering/card'
@@ -53,7 +54,7 @@
   let description: Markup = EmptyMarkup
   let initialized = false
 
-  function initializeFromDraft (draft: CardDraft): void {
+  function initializeFromDraft(draft: CardDraft): void {
     title = draft.title
     description = draft.description
     if (draft.type !== undefined) {
@@ -95,7 +96,7 @@
           .find((it) => hierarchy.isDerived(type, it._id))
       : undefined
 
-  async function okAction (): Promise<void> {
+  async function okAction(): Promise<void> {
     if (space === undefined || type == null) return
 
     try {
@@ -128,14 +129,14 @@
     }
   }
 
-  function clear (): void {
+  function clear(): void {
     title = ''
     description = EmptyMarkup
     _id = generateId<Card>()
     draftController.remove()
   }
 
-  function expand (): void {
+  function expand(): void {
     const prevExpanded = isExpanded
     isExpanded = true
     if (!prevExpanded) {
@@ -159,7 +160,7 @@
 <div class="create-card rounded-form">
   {#if isExpanded}
     <div class="corner-container">
-      <ButtonIcon
+      <IconButton
         icon={IconMinimize}
         size="extra-small"
         on:click={() => (isExpanded = false)}
@@ -218,7 +219,7 @@
               <div class="right-divider" />
               <EditorActions actions={[attachAction]} />
             </div>
-            <ModernButton
+            <Button
               label={card.string.Post}
               icon={IconSend}
               iconSize="small"
@@ -226,7 +227,10 @@
               kind="primary"
               disabled={applyDisabled}
               loading={creating}
-              on:click={okAction}
+              on:click={(e) => {
+                e.stopPropagation()
+                void okAction()
+              }}
             />
           </div>
         {/if}

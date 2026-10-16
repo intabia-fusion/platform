@@ -18,7 +18,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { TagReference } from '@hcengineering/tags'
   import tags from '@hcengineering/tags'
-  import { ButtonBase, ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import { ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import tagsPlugin from '../plugin'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'
@@ -41,7 +42,8 @@
     items = result
   })
 
-  async function click (evt: MouseEvent): Promise<void> {
+  async function click(evt: MouseEvent): Promise<void> {
+    evt.stopPropagation()
     pressed = true
     showPopup(
       TagsEditorPopup,
@@ -59,7 +61,7 @@
     )
   }
 
-  async function removeTag (tag: TagReference): Promise<void> {
+  async function removeTag(tag: TagReference): Promise<void> {
     if (tag !== undefined) await client.remove(tag)
   }
 
@@ -74,13 +76,13 @@
 </script>
 
 {#if type === 'type-button-only'}
-  <ButtonBase
+  <IconButton
     icon={TagIcon}
-    type="type-button-icon"
     kind="secondary"
     size="small"
     {pressed}
     hasMenu
+    tooltip={{ label: tags.string.Tags }}
     {...buttonParams}
     on:click={click}
   />
