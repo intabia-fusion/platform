@@ -25,7 +25,7 @@
   import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
-  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, type Ref } from '@hcengineering/core'
   import { getCurrentAccount } from '@hcengineering/core'
   import ParticipantsPreview from './ParticipantsPreview.svelte'
   import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
@@ -75,7 +75,16 @@
 
   $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
 
-  function showConnectionButton (object: MeetingMinutes, connecting: boolean, isConnected: boolean): boolean {
+  function showConnectionButton (
+    object: MeetingMinutes,
+    connecting: boolean,
+    isConnected: boolean,
+    role?: AccountRole
+  ): boolean {
+    if (role === AccountRole.Guest || role === AccountRole.ReadOnlyGuest) {
+      return false
+    }
+
     if (object.status === MeetingStatus.Finished) {
       return false
     }
@@ -124,7 +133,7 @@
           data-id="meeting-toggle-private"
         />
       {/if}
-      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected)}
+      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
         <Button
           label={connectLabel}
           size="large"

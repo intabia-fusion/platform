@@ -564,7 +564,7 @@ export class NotificationClientImpl implements NotificationClient {
 
   async readDoc (_id: Ref<Doc>): Promise<void> {
     const me = getCurrentAccount()
-    if (me.role === AccountRole.ReadOnlyGuest) return
+    if (me.role === AccountRole.Guest || me.role === AccountRole.ReadOnlyGuest) return
 
     const client = getClient()
     const op = client.apply(undefined, 'readDoc', true)
@@ -575,7 +575,7 @@ export class NotificationClientImpl implements NotificationClient {
 
   async readNotificationsWithoutMessage (_id: Ref<Doc>, op?: TxOperations): Promise<void> {
     const me = getCurrentAccount()
-    if (me.role === AccountRole.ReadOnlyGuest) return
+    if (me.role === AccountRole.Guest || me.role === AccountRole.ReadOnlyGuest) return
 
     const client = getClient()
     const docNotifyContext = await this.getContextByDoc(_id)

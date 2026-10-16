@@ -118,8 +118,13 @@
     isConnected: boolean,
     info: ParticipantInfo[],
     myOffice?: Room,
-    currentRoom?: Room
+    currentRoom?: Room,
+    role?: AccountRole
   ): boolean {
+    if (role === AccountRole.Guest || role === AccountRole.ReadOnlyGuest) {
+      return false
+    }
+
     if (isOffice(object)) {
       // Do not show connect button in own office
       if (object._id === myOffice?._id) return false
@@ -181,7 +186,7 @@
         <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
       </div>
 
-      {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
+      {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom, getCurrentAccount().role) && connectLabel != null}
         <div data-id="meeting-connect">
           <Button label={connectLabel} size="large" kind="primary" on:click={connect} loading={connecting} />
         </div>
