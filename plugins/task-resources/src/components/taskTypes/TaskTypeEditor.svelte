@@ -27,6 +27,11 @@
   import task, { calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
     Icon,
+    IconDescription,
+    NavItem,
+    Separator,
+    defineSeparators,
+    secondNavSeparators,
     IconAdd,
     IconDelete,
     IconError,
@@ -42,6 +47,7 @@
   } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
+  import setting from '@hcengineering/setting'
   import workflow from '@hcengineering/workflow'
 
   import TaskTypeTiedWorkflows from './TaskTypeTiedWorkflows.svelte'
@@ -49,6 +55,7 @@
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
+  import AddExistingStatusPopup from '../state/AddExistingStatusPopup.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import TaskTypeHierarchySection from './TaskTypeHierarchySection.svelte'
 
@@ -151,6 +158,21 @@
     )
   }
 
+  // Same anchor navigation as the project type editor (SpaceTypeEditor), in the order of the page
+  const navigator: Array<{ id: string, label: IntlString }> = [
+    { id: 'general', label: setting.string.General },
+    { id: 'statuses', label: plugin.string.ProcessStates },
+    { id: 'hierarchy', label: plugin.string.HierarchyRelations },
+    { id: 'properties', label: setting.string.Properties }
+  ]
+  const sectionRefs: Record<string, HTMLElement | undefined> = {}
+  defineSeparators('taskTypeEditor', secondNavSeparators)
+
+  function handleAddExistingStatus (): void {
+    if (taskType === undefined || readonly) return
+    showPopup(AddExistingStatusPopup, { type: spaceType, taskType }, 'top')
+  }
+
   function handleAddStatus (): void {
     if (taskType === undefined || readonly) {
       return
@@ -234,10 +256,33 @@
 
 {#if taskType !== undefined}
   <div class="hulyComponent-content__container columns">
+    <div class="hulyComponent-content__column">
+      <div class="hulyComponent-content__navHeader">
+        <div class="hulyComponent-content__navHeader-menu">
+          <IconButton
+            kind="tertiary"
+            icon={IconDescription}
+            size="small"
+            inheritColor
+            tooltip={{ label: task.string.TaskType }}
+          />
+        </div>
+      </div>
+      {#each navigator as navItem (navItem.id)}
+        <NavItem
+          type="type-anchor-link"
+          label={navItem.label}
+          on:click={() => {
+            sectionRefs[navItem.id]?.scrollIntoView()
+          }}
+        />
+      {/each}
+    </div>
+    <Separator name="taskTypeEditor" index={0} color="transparent" />
     <div class="hulyComponent-content__column content">
       <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
         <div class="hulyComponent-content gap">
-          <div class="hulyComponent-content__column-group mt-4">
+          <div id="general" bind:this={sectionRefs.general} class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6">
               <div class="flex-row-center gap-1-5">
                 {#if !readonly}
@@ -315,34 +360,29 @@
             </div>
           </div>
 
-          <TaskTypeHierarchySection {taskType} {taskTypes} {readonly} />
-
-          <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-            <ToggleWithLabel
-              label={plugin.string.ShowParentTasks}
-              on={taskType.showParentTasks ?? false}
-              disabled={readonly}
-              on:change={(evt) => {
-                if (taskType === undefined) {
-                  return
-                }
-                void client.diffUpdate(taskType, { showParentTasks: evt.detail })
-              }}
-            />
-          </div>
-
-          <div class="hulyTableAttr-container">
+          <div id="statuses" bind:this={sectionRefs.statuses} class="hulyTableAttr-container">
             <div class="hulyTableAttr-header font-medium-12">
               <Icon icon={task.icon.ManageTemplates} size="small" />
               <span><Label label={plugin.string.ProcessStates} /></span>
-              <IconButton
-                kind="primary"
-                icon={IconAdd}
-                size="small"
-                tooltip={{ label: presentation.string.Add }}
-                on:click={handleAddStatus}
-                disabled={readonly}
-              />
+              <div class="flex-row-center flex-gap-2">
+                <IconButton
+                  kind="secondary"
+                  icon={task.icon.Import}
+                  size="small"
+                  data-id="btnAddExistingStatus"
+                  tooltip={{ label: plugin.string.AddStatusExisting }}
+                  on:click={handleAddExistingStatus}
+                  disabled={readonly}
+                />
+                <IconButton
+                  kind="primary"
+                  icon={IconAdd}
+                  size="small"
+                  tooltip={{ label: presentation.string.Add }}
+                  on:click={handleAddStatus}
+                  disabled={readonly}
+                />
+              </div>
             </div>
             <StatesProjectEditor
               {taskType}
@@ -396,7 +436,27 @@
             />
           </div>
 
-          <ClassAttributes _class={taskType.targetClass} showHierarchy showMixins disabled={readonly} />
+          <div id="hierarchy" bind:this={sectionRefs.hierarchy}>
+            <TaskTypeHierarchySection {taskType} {taskTypes} {readonly} />
+          </div>
+
+          <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+            <ToggleWithLabel
+              label={plugin.string.ShowParentTasks}
+              on={taskType.showParentTasks ?? false}
+              disabled={readonly}
+              on:change={(evt) => {
+                if (taskType === undefined) {
+                  return
+                }
+                void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+              }}
+            />
+          </div>
+
+          <div id="properties" bind:this={sectionRefs.properties}>
+            <ClassAttributes _class={taskType.targetClass} showHierarchy showMixins disabled={readonly} />
+          </div>
         </div>
       </Scroller>
     </div>

@@ -1,0 +1,754 @@
+{
+  "workspace": "whoosh-local",
+  "createdAt": "2026-10-15T15:32:01.357Z",
+  "groups": [
+    {
+      "key": "tracker:attribute:IssueStatus|backlog",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Backlog",
+      "categoriesDiffer": true,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75ada95bfe5b698de6b377",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75ada95bfe5b698de6b377",
+          "name": "Backlog",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1786097065122,
+          "system": true,
+          "taskTypes": [
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Подзадача (6a75ada85bfe5b698de6b371)",
+            "Epic (6a75adab5bfe5b698de6b38e)",
+            "Odyssey (6a75adad5bfe5b698de6b39c)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)",
+            "Request (6a75b1b8e1d133917d7eebb4)",
+            "Sub-task: Business Documentation (6a75b1e0e1d133917d7eeca4)",
+            "Sub-task: Design (6a75b1eee1d133917d7eed2b)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 178,
+            "workflow:class:WorkflowTransition": 21,
+            "workflow:class:Workflow": 9,
+            "tracker:class:Project": 1,
+            "activity:class:DocUpdateMessage": 147
+          },
+          "merge": false
+        },
+        {
+          "_id": "tracker:status:Backlog",
+          "name": "Backlog",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:UnStarted",
+          "createdOn": 1792078320829,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {
+            "tracker:class:IssueTaskType": 1,
+            "workflow:class:WorkflowTransition": 1,
+            "workflow:class:Workflow": 1,
+            "tracker:class:Project": 2,
+            "activity:class:DocUpdateMessage": 1
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|closed",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Closed",
+      "categoriesDiffer": true,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6ab3ca9e83ce7ed577ad77b0",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a97fd6c6c999c90e4504259",
+          "name": "Closed",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Lost",
+          "createdOn": 1788345708284,
+          "system": false,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 1
+          },
+          "merge": false
+        },
+        {
+          "_id": "6ab3ca9e83ce7ed577ad77b0",
+          "name": "Closed",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1790167710164,
+          "system": false,
+          "taskTypes": [
+            "Epic (6a75adab5bfe5b698de6b38e)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 22,
+            "workflow:class:WorkflowTransition": 3,
+            "activity:class:DocUpdateMessage": 22
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-closed",
+          "name": "Closed",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1790854779479,
+          "system": false,
+          "taskTypes": [
+            "Odyssey (6a75adad5bfe5b698de6b39c)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 1
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|code review",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Code Review",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75b1aee1d133917d7eeb4e",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75b1aee1d133917d7eeb4e",
+          "name": "Code Review",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1786098094240,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)",
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)",
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 30,
+            "workflow:class:WorkflowTransition": 16,
+            "activity:class:DocUpdateMessage": 20
+          },
+          "merge": false
+        },
+        {
+          "_id": "6ace029ade3e08b5d0a3c670",
+          "name": "Code Review",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1791885978346,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 3
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|done",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Done",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6ab3caa883ce7ed577ad77e9",
+      "target": "",
+      "members": [
+        {
+          "_id": "6ab3caa883ce7ed577ad77e9",
+          "name": "Done",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1790167720232,
+          "system": false,
+          "taskTypes": [
+            "Epic (6a75adab5bfe5b698de6b38e)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 21,
+            "workflow:class:WorkflowTransition": 2,
+            "activity:class:DocUpdateMessage": 21
+          },
+          "merge": false
+        },
+        {
+          "_id": "6acdec39de3e08b5d0a3b75a",
+          "name": "Done",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1791880249850,
+          "system": false,
+          "taskTypes": [
+            "Odyssey (6a75adad5bfe5b698de6b39c)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 1
+          },
+          "merge": false
+        },
+        {
+          "_id": "6acdef5bde3e08b5d0a3b90b",
+          "name": "Done",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1791881051092,
+          "system": false,
+          "taskTypes": [
+            "Request (6a75b1b8e1d133917d7eebb4)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {},
+          "merge": false
+        },
+        {
+          "_id": "tracker:status:Done",
+          "name": "Done",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Won",
+          "createdOn": 1792078320829,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 1
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|need merge",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Need Merge",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75adb45bfe5b698de6b3d6",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75adb45bfe5b698de6b3d6",
+          "name": "Need Merge",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1786097076163,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)",
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)",
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 7,
+            "workflow:class:WorkflowTransition": 13,
+            "activity:class:DocUpdateMessage": 6
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-need-merge",
+          "name": "Need Merge",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790855917688,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 3
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|on hold",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "On hold",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "status-on-hold",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a97fd236c999c90e4504247",
+          "name": "On hold",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1788345635120,
+          "system": false,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 3
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-on-hold",
+          "name": "On hold",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790854475103,
+          "system": false,
+          "taskTypes": [
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Подзадача (6a75ada85bfe5b698de6b371)",
+            "Odyssey (6a75adad5bfe5b698de6b39c)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)",
+            "Request (6a75b1b8e1d133917d7eebb4)",
+            "Sub-task: Business Documentation (6a75b1e0e1d133917d7eeca4)",
+            "Sub-task: Design (6a75b1eee1d133917d7eed2b)",
+            "Test-cases (6a75b2f4e1d133917d7ef6b1)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 37
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|qa approve",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "QA Approve",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a8d448782060af3d85d7d05",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a8d448782060af3d85d7d05",
+          "name": "QA Approve",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1787643015007,
+          "system": true,
+          "taskTypes": [
+            "Test-cases (6a75b2f4e1d133917d7ef6b1)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 1,
+            "workflow:class:WorkflowTransition": 5,
+            "activity:class:DocUpdateMessage": 1
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-qa-approve",
+          "name": "QA Approve",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790854582726,
+          "system": false,
+          "taskTypes": [
+            "Sub-task: Business Documentation (6a75b1e0e1d133917d7eeca4)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 2
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|ready to release",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Ready to Release",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75b1b5e1d133917d7eeb98",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75b1b5e1d133917d7eeb98",
+          "name": "Ready to Release",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1786098101423,
+          "system": false,
+          "taskTypes": [
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 16,
+            "workflow:class:WorkflowTransition": 6,
+            "activity:class:DocUpdateMessage": 15
+          },
+          "merge": false
+        },
+        {
+          "_id": "6a97fd0d6c999c90e450423f",
+          "name": "Ready to Release",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1788345613926,
+          "system": false,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 3
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-ready-to-release",
+          "name": "Ready to Release",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790855917688,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 2
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|ready to test",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Ready to test",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75ae8a93f21e2429b1da1c",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75ae8a93f21e2429b1da1c",
+          "name": "Ready to test",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1786097290242,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)",
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)",
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 9,
+            "workflow:class:WorkflowTransition": 15,
+            "activity:class:DocUpdateMessage": 11
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-ready-to-test",
+          "name": "Ready to test",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790855917688,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 4
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|test",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Test",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6a75b283e1d133917d7ef283",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a75b283e1d133917d7ef283",
+          "name": "Test",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1786098307278,
+          "system": true,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)",
+            "История (6a75ada65bfe5b698de6b35a)",
+            "Ошибка (6a75adb25bfe5b698de6b3c0)",
+            "Tech Story (6a75b1a6e1d133917d7eeb07)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)",
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 6,
+            "workflow:class:WorkflowTransition": 22,
+            "activity:class:DocUpdateMessage": 8
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-test",
+          "name": "Test",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:Active",
+          "createdOn": 1790855917688,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 6
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|to do",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "To Do",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "6ab3cab783ce7ed577ad7820",
+      "target": "",
+      "members": [
+        {
+          "_id": "6a7d9de59dd131cddd0c20f1",
+          "name": "To Do",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1786617317444,
+          "system": true,
+          "taskTypes": [
+            "Task (6a7d9de59dd131cddd0c20ea)"
+          ],
+          "projectTypes": [
+            "TestProject_Type (6a7d9de39dd131cddd0c20dc)"
+          ],
+          "documents": {
+            "6a7d9de59dd131cddd0c20ec": 4,
+            "activity:class:DocUpdateMessage": 2
+          },
+          "merge": false
+        },
+        {
+          "_id": "6ab3cab783ce7ed577ad7820",
+          "name": "To Do",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1790167735412,
+          "system": false,
+          "taskTypes": [
+            "Epic (6a75adab5bfe5b698de6b38e)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "tracker:class:Issue": 6,
+            "workflow:class:WorkflowTransition": 3,
+            "activity:class:DocUpdateMessage": 7
+          },
+          "merge": false
+        },
+        {
+          "_id": "6acdeccade3e08b5d0a3b84d",
+          "name": "To do",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1791880394238,
+          "system": false,
+          "taskTypes": [
+            "История (6a75ada65bfe5b698de6b35a)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 5
+          },
+          "merge": false
+        },
+        {
+          "_id": "status-to-do",
+          "name": "To Do",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1790854779479,
+          "system": false,
+          "taskTypes": [
+            "Подзадача (6a75ada85bfe5b698de6b371)",
+            "Odyssey (6a75adad5bfe5b698de6b39c)"
+          ],
+          "projectTypes": [
+            "Internal Service Team_Type (6a75ada45bfe5b698de6b347)"
+          ],
+          "documents": {
+            "workflow:class:WorkflowTransition": 7
+          },
+          "merge": false
+        }
+      ]
+    },
+    {
+      "key": "tracker:attribute:IssueStatus|todo",
+      "ofAttribute": "tracker:attribute:IssueStatus",
+      "name": "Todo",
+      "categoriesDiffer": false,
+      "taskTypesWithDuplicates": [],
+      "suggestedTarget": "tracker:status:Todo",
+      "target": "",
+      "members": [
+        {
+          "_id": "6ad0c210fdbafb8529cb115f",
+          "name": "Todo",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1792066077212,
+          "system": false,
+          "taskTypes": [],
+          "projectTypes": [],
+          "documents": {},
+          "merge": false
+        },
+        {
+          "_id": "6ad0c212fdbafb8529cb1161",
+          "name": "Todo",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1792066078551,
+          "system": false,
+          "taskTypes": [],
+          "projectTypes": [],
+          "documents": {},
+          "merge": false
+        },
+        {
+          "_id": "6ad0c215fdbafb8529cb1163",
+          "name": "Todo",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1792066082185,
+          "system": false,
+          "taskTypes": [
+            "Classic Issue (tracker:taskTypes:Issue)"
+          ],
+          "projectTypes": [
+            "Classic project (tracker:ids:ClassingProjectType)"
+          ],
+          "documents": {},
+          "merge": false
+        },
+        {
+          "_id": "tracker:status:Todo",
+          "name": "Todo",
+          "ofAttribute": "tracker:attribute:IssueStatus",
+          "category": "task:statusCategory:ToDo",
+          "createdOn": 1792078320829,
+          "system": true,
+          "taskTypes": [],
+          "projectTypes": [],
+          "documents": {},
+          "merge": false
+        }
+      ]
+    }
+  ]
+}

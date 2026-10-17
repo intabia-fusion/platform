@@ -17,20 +17,33 @@
 <script lang="ts">
   import type { IdMap, Ref, Status, StatusCategory } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
   import { IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { Project, ProjectType, TaskType } from '@hcengineering/task'
-  import task from '@hcengineering/task'
+  import task, {
+    getSingleQueryKind,
+    getSingleStatusTaskType,
+    getStatusIconPosition,
+    getTaskTypeStatusIconPosition
+  } from '@hcengineering/task'
   import type { ColorDefinition, IconSize } from '@hcengineering/ui'
-  import { Icon, getColorNumberByText, getPlatformColorDef, themeStore, resolvePaletteColor } from '@hcengineering/ui'
+  import {
+    Icon,
+    getColorNumberByText,
+    getPlatformColorDef,
+    themeStore,
+    resolvePaletteColor,
+    tooltip
+  } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { getCategoryValues, getStatusIconScope, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { selectedTypeStore, typeStore } from '../..'
+  import { selectedTypeStore, taskTypeStore, typeStore } from '../..'
   import IconBacklog from '../icons/IconBacklog.svelte'
   import IconCanceled from '../icons/IconCanceled.svelte'
   import IconCompleted from '../icons/IconCompleted.svelte'
   import IconStarted from '../icons/IconStarted.svelte'
+  import IconStartedRing from '../icons/IconStartedRing.svelte'
   import IconUnstarted from '../icons/IconUnstarted.svelte'
 
   export let value: Status | undefined
@@ -48,6 +61,8 @@
   export let taskType: Ref<TaskType> | undefined = undefined
   export let size: IconSize = 'small'
   export let kind: 'table-attrs' | undefined = undefined
+  // Shown in parentheses after the name, tells apart statuses of one name shown together
+  export let nameSuffix: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -102,13 +117,27 @@
     [task.statusCategory.Lost]: IconCanceled
   }
 
-  $: sameCategory = (type?.statuses ?? []).filter(
-    (it) =>
-      $statusStore.byId.get(it._id)?.category === value?.category &&
-      (taskType === undefined || it.taskType === taskType)
-  )
+  // Lists and kanbans mixing task types show the project-wide position as a ring
+  const iconScope = getStatusIconScope()
+  const categoryValues = getCategoryValues()
 
-  $: index = sameCategory.findIndex((it) => it._id === value?._id) + 1
+  $: scopeStatusIds = ($categoryValues ?? []).filter((it): it is Ref<Status> => typeof it === 'string')
+  $: scopeTaskType =
+    iconScope === undefined
+      ? taskType
+      : (getSingleQueryKind($iconScope?.kind) ?? getSingleStatusTaskType(type, $taskTypeStore, scopeStatusIds))
+  $: taskTypePosition =
+    value !== undefined && scopeTaskType !== undefined
+      ? getTaskTypeStatusIconPosition($taskTypeStore.get(scopeTaskType), $statusStore.byId, value._id)
+      : undefined
+  $: projectMode = taskTypePosition === undefined
+  $: position =
+    taskTypePosition ??
+    (value !== undefined ? getStatusIconPosition(type, $taskTypeStore, $statusStore.byId, value._id) : undefined)
+  $: index = position?.index ?? 0
+  $: count = position?.count ?? 1
+  $: activeIcon = projectMode ? IconStartedRing : IconStarted
+
   $: emojiIcon = projectState?.icon === view.ids.IconWithEmoji
   $: icon = emojiIcon ? IconWithEmoji : projectState?.icon
   $: iconProps = emojiIcon ? { icon: projectState?.color ?? value?.color ?? category?.color } : { fill: colorIndex }
@@ -135,11 +164,11 @@
         <Icon {icon} {size} {iconProps} />
       {:else if category?._id === task.statusCategory.Active}
         <Icon
-          icon={categoryIcons[category._id]}
+          icon={activeIcon}
           {size}
           iconProps={{
             index,
-            count: sameCategory.length + 1,
+            count,
             ...iconProps
           }}
         />
@@ -156,6 +185,7 @@
     <div
       id="{value.category}:{value.name}"
       class="flex-presenter"
+      style:min-width="0"
       class:inline-presenter={inline}
       class:flex-no-shrink={!shouldShowName || shrink === 0}
       class:fs-bold={accent}
@@ -172,11 +202,11 @@
             <Icon {icon} {size} iconProps={{ icon: projectState?.color ?? value?.color ?? category?.color }} />
           {:else if category?._id === task.statusCategory.Active}
             <Icon
-              icon={categoryIcons[category._id]}
+              icon={activeIcon}
               {size}
               iconProps={{
                 index,
-                count: sameCategory.length + 1,
+                count,
                 ...iconProps
               }}
             />
@@ -186,8 +216,15 @@
         </div>
       {/if}
       {#if shouldShowName}
-        <span class="overflow-label label" class:nowrap={oneLine} class:no-underline={noUnderline || disabled}>
-          {value.name}
+        <span
+          class="overflow-label label"
+          class:nowrap={oneLine}
+          class:no-underline={noUnderline || disabled}
+          use:tooltip={nameSuffix !== undefined
+            ? { label: getEmbeddedLabel(`${value.name} (${nameSuffix})`) }
+            : undefined}
+        >
+          {value.name}{nameSuffix !== undefined ? ` (${nameSuffix})` : ''}
         </span>
       {/if}
     </div>

@@ -31,6 +31,7 @@ import { type IntlString, type Resources } from '@hcengineering/platform'
 import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import task, {
   getOrderedTaskTypes,
+  getProjectStatusRank,
   makeRank,
   getStatusCategoryOrder,
   statusOrderComparator,
@@ -77,6 +78,7 @@ import ProjectTypeGeneralSectionEditor from './components/projectTypes/ProjectTy
 import ProjectTypeSelector from './components/projectTypes/ProjectTypeSelector.svelte'
 import ProjectTypeSettingsLink from './components/projectTypes/ProjectTypeSettingsLink.svelte'
 import ProjectTypeTasksTypeSectionEditor from './components/projectTypes/ProjectTypeTasksTypeSectionEditor.svelte'
+import ProjectTypeStatusesSectionEditor from './components/projectTypes/ProjectTypeStatusesSectionEditor.svelte'
 import TaskTypeEditor from './components/taskTypes/TaskTypeEditor.svelte'
 import TaskTypeDiagramPopup from './components/taskTypes/TaskTypeDiagramPopup.svelte'
 
@@ -84,6 +86,7 @@ export { default as AssigneePresenter } from './components/AssigneePresenter.sve
 export { default as TypeSelector } from './components/TypeSelector.svelte'
 export { default as StatusCategoryIcon } from './components/state/StatusCategoryIcon.svelte'
 export * from './utils'
+export * from './statusMergeApi'
 export {
   StatePresenter,
   StateRefPresenter,
@@ -148,6 +151,7 @@ export default async (): Promise<Resources> => ({
     CreateProjectType,
     ProjectTypeGeneralSectionEditor,
     ProjectTypeTasksTypeSectionEditor,
+    ProjectTypeStatusesSectionEditor,
     ProjectTypeAutomationsSectionEditor,
     TaskTypeEditor,
     TaskTypeDiagramPopup
@@ -316,7 +320,14 @@ async function statusSort (
   const taskTypes = get(taskTypeStore)
 
   if (type !== undefined) {
-    value.sort(statusOrderComparator(getStatusCategoryOrder(), getOrderedTaskTypes(type, taskTypes), statuses))
+    value.sort(
+      statusOrderComparator(
+        getStatusCategoryOrder(),
+        getOrderedTaskTypes(type, taskTypes),
+        statuses,
+        getProjectStatusRank([type], taskTypes)
+      )
+    )
   } else {
     const res = new Map<Ref<Status>, Rank>()
     let prevRank: Rank | undefined

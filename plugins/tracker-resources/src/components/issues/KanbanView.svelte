@@ -78,6 +78,8 @@
     ListPresenter,
     ListSelectionProvider,
     noCategory,
+    provideCategoryValues,
+    provideStatusIconScope,
     openDoc,
     setGroupByValues,
     showMenu,
@@ -332,6 +334,10 @@
   $: listProvider.update(tasks)
 
   let categories: CategoryType[] = []
+  const categoryValues = provideCategoryValues()
+  $: categoryValues.set(categories)
+  const statusIconScope = provideStatusIconScope()
+  $: statusIconScope.set(resultQuery)
   let loadCategories = true
 
   const queryId = generateId()
@@ -767,11 +773,8 @@
       {@const color = accentColors.get(`${index}${$themeStore.dark}${groupByKey}`)}
       {@const headerBGColor = color?.background ?? defaultBackground($themeStore.dark)}
       <div style:background={headerBGColor} class="header flex-between">
-        <div class="flex-row-center gap-1">
-          <span
-            class="clear-mins fs-bold overflow-label pointer-events-none"
-            style:color={color?.title ?? 'var(--theme-caption-color)'}
-          >
+        <div class="flex-row-center gap-1" style="min-width: 0">
+          <span class="clear-mins fs-bold overflow-label" style:color={color?.title ?? 'var(--theme-caption-color)'}>
             {#if groupByKey === noCategory}
               <Label label={view.string.NoGrouping} />
             {:else if headerComponent}

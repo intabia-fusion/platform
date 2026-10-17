@@ -15,16 +15,26 @@
 <script lang="ts">
   import type { Attribute, Class, Ref, Status, StatusCategory } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import type { Asset } from '@hcengineering/platform'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import presentation, { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, TaskType } from '@hcengineering/task'
-  import { calculateStatuses, createState } from '@hcengineering/task'
+  import {
+    calculateStatuses,
+    createStatusAtomic,
+    getProjectTypeStates,
+    canRenameStatusInPlace,
+    getStatusNameBlock,
+    resolveStatusReuse
+  } from '@hcengineering/task'
   import {
     Component,
+    Button,
     IconCopy,
+    Icon,
     IconDelete,
+    IconError,
     IconSettings,
     Label,
     Modal,
@@ -44,12 +54,16 @@
   import { get } from 'svelte/store'
   import { taskTypeStore, typeStore } from '../..'
   import task from '../../plugin'
+  import { confirmStatusMerge } from '../../statusMergeFlow'
+  import { deleteProjectTypeStatus } from '../../statusDelete'
   import ApproveStatusRenamePopup from './ApproveStatusRenamePopup.svelte'
   import DeleteStateConfirmationPopup from './DeleteStateConfirmationPopup.svelte'
+  import StatusUsageTables from './StatusUsageTables.svelte'
 
   export let status: Status | undefined = undefined
   export let _class: Ref<Class<Status>> | undefined = status?._class
-  export let taskType: TaskType
+  // Absent: project type mode, the status belongs to the whole project type
+  export let taskType: TaskType | undefined = undefined
   export let type: ProjectType
   export let ofAttribute: Ref<Attribute<Status>>
   export let category: Ref<StatusCategory> | undefined = status?.category
@@ -62,6 +76,8 @@
   export let canDelete: boolean = true
   export let selectableStates: Status[] = []
   export let readonly: boolean = true
+  // Rename applies to every task type of the project type that uses the status (project type settings section)
+  export let applyToAllTaskTypes: boolean = false
 
   value = status?.name ?? valuePattern ?? ''
 
@@ -78,7 +94,8 @@
 
   let description: string | undefined
 
-  $: _taskType = $taskTypeStore.get(taskType._id) as TaskType
+  $: projectMode = taskType === undefined
+  $: _taskType = taskType !== undefined ? ($taskTypeStore.get(taskType._id) as TaskType) : undefined
   $: _typeId = type._id
   $: _type = $typeStore.get(_typeId) as ProjectType
   $: projectStatus = _type.statuses.find((s) => s._id === status?._id)
@@ -90,6 +107,15 @@
     description = finalDescription
   }
 
+  $: affectedTaskTypes =
+    (applyToAllTaskTypes || projectMode) && status !== undefined
+      ? [...$taskTypeStore.values()].filter(
+          (tt) => tt.parent === _typeId && tt.statuses.includes(status?._id as Ref<Status>)
+        )
+      : _taskType !== undefined
+        ? [_taskType]
+        : []
+
   let total: number = 0
 
   const query = createQuery()
@@ -97,7 +123,7 @@
   $: if (status?._id !== undefined) {
     query.query(
       task.class.Task,
-      { status: status?._id, kind: _taskType._id },
+      { status: status?._id, kind: { $in: projectMode ? _type.tasks : affectedTaskTypes.map((it) => it._id) } },
       (res) => {
         total = res.total
       },
@@ -108,14 +134,69 @@
     total = 0
   }
 
+  $: projectStatuses = getProjectTypeStates(_typeId, $typeStore, $statusStore.byId)
+  $: nameChanged = status?.name.trim() !== value.trim()
+  $: reuse = resolveStatusReuse(projectStatuses, { ofAttribute, name: value, category }, status?._id)
+  $: existingCategory =
+    reuse.action === 'create'
+      ? undefined
+      : client.getModel().findAllSync(core.class.StatusCategory, { _id: reuse.status.category })[0]?.label
+  let existingCategoryName = ''
+  $: if (existingCategory !== undefined) {
+    void translate(existingCategory, {}, $themeStore.language).then((res) => {
+      existingCategoryName = res
+    })
+  }
+  $: reuseHint =
+    reuse.action === 'reuse' && status?.name.trim() !== value.trim() && value.trim() !== '' && nameError === undefined
+  $: usageStatusId = reuse.action === 'reuse' && reuseHint ? (reuse.status._id as Ref<Status>) : status?._id
+  $: nameError = getNameError(nameChanged, value, reuse, affectedTaskTypes, total, existingCategoryName)
+
+  // The error text and its parameters: it names the status that blocks the new name
+  function getNameError (
+    changed: boolean,
+    name: string,
+    found: typeof reuse,
+    taskTypes: TaskType[],
+    tasks: number,
+    foundCategory: string
+  ): { label: IntlString, params: Record<string, any>, mergeWith?: Status } | undefined {
+    if (!changed || name.trim() === '' || found.action === 'create') return undefined
+    const params = { name: found.status.name, category: foundCategory }
+    const block = getStatusNameBlock(found, taskTypes, tasks)
+    if (block === 'conflict') return { label: task.string.StatusNameCategoryConflict, params }
+    if (block === 'exists') return { label: task.string.StatusNameAlreadyExists, params }
+    if (block === 'duplicateWithTasks') {
+      return { label: task.string.StatusNameExistsMerge, params, mergeWith: found.status as Status }
+    }
+    return undefined
+  }
+
+  function mergeWithExisting (existing: Status): void {
+    if (status === undefined) return
+    // The target is known, so only the confirmation step is shown
+    confirmStatusMerge(
+      _type,
+      [status],
+      existing,
+      [...$taskTypeStore.values()].filter((tt) => tt.parent === _typeId),
+      clearSettingsStore
+    )
+  }
+
+  // The Status itself is renamed when only this project type can see it and no other status has the name:
+  // no new Status, no task updates
+  $: renameInPlace =
+    status !== undefined && nameChanged && canRenameStatusInPlace(status, reuse, _typeId, $typeStore.values())
+
   $: needUpdate =
-    (status?.name.trim() !== value.trim() || description !== finalDescription || color !== finalColor) &&
+    (nameChanged || description !== finalDescription || color !== finalColor) &&
     value.trim() !== '' &&
-    !selectableStates.some((it) => it.name === value)
+    nameError === undefined
 
   async function save (): Promise<void> {
     if (readonly) return
-    if (total > 0 && value.trim() !== status?.name?.trim()) {
+    if (total > 0 && value.trim() !== status?.name?.trim() && !renameInPlace) {
       // We should ask for changes approve.
       showPopup(
         ApproveStatusRenamePopup,
@@ -135,78 +216,87 @@
     }
   }
 
+  let saveError: string | undefined
+
   async function performSave (): Promise<void> {
-    if (_taskType === undefined || _class === undefined) return
+    saveError = undefined
+    try {
+      await performSaveUnsafe()
+    } catch (err: any) {
+      saveError = err?.message ?? String(err)
+    }
+  }
+
+  async function performSaveUnsafe (): Promise<void> {
+    if ((_taskType === undefined && !projectMode) || _class === undefined) return
     if (status === undefined) {
-      const _id = await createState(client, _class, {
-        ofAttribute,
-        name: value.trim(),
-        category,
-        color,
-        description
-      })
-
-      const states = _taskType.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined)
-      const lastIndex = states.findLastIndex((p) => p.category === category)
-      const statuses = [..._taskType.statuses.slice(0, lastIndex + 1), _id, ..._taskType.statuses.slice(lastIndex + 1)]
-
-      _type.statuses.push({
-        _id,
-        color,
-        icon,
-        taskType: _taskType._id
-      })
-
-      await client.update(_type, {
-        statuses: calculateStatuses(_type, $taskTypeStore, [{ taskTypeId: _taskType._id, statuses }])
-      })
-      await client.update(_taskType, {
-        statuses
-      })
-      _taskType.statuses = statuses
+      const placeNew = (list: Array<Ref<Status>>, id: Ref<Status>): Array<Ref<Status>> => {
+        const states = list.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined)
+        const lastIndex = states.findLastIndex((p) => p.category === category)
+        return [...list.slice(0, lastIndex + 1), id, ...list.slice(lastIndex + 1)]
+      }
+      const { id: _id } = await createStatusAtomic(
+        client,
+        _typeId,
+        _class,
+        { ofAttribute, name: value.trim(), category, color, description },
+        _taskType !== undefined ? [{ taskType: _taskType._id, place: placeNew }] : [],
+        icon
+      )
+      if (_taskType !== undefined) _taskType.statuses = placeNew(_taskType.statuses, _id)
       status = await client.findOne(_class, { _id })
-    } else if (needUpdate) {
-      const _id = await createState(client, _class, {
-        ofAttribute,
-        name: value.trim(),
-        category,
-        color,
-        description
-      })
-      const index = _taskType.statuses.indexOf(status._id)
-      let statuses = [..._taskType.statuses.slice(0, index), _id, ..._taskType.statuses.slice(index + 1)]
-      statuses = statuses.filter((it, idx, arr) => arr.indexOf(it) === idx)
-      let found = false
-      for (const status of _type.statuses) {
-        if (status._id === _id) {
-          status.color = color
-          status.icon = icon // Fix me
-          status.description = description
-          found = true
-        }
+    } else if (needUpdate && (!nameChanged || renameInPlace)) {
+      // Name, color, icon or description changed in place: a new Status would duplicate this one
+      const id = status._id
+      if (renameInPlace) {
+        await client.update(status, { name: value.trim() })
       }
-      if (!found) {
-        _type.statuses.push({
-          _id,
-          color,
-          icon,
-          taskType: _taskType._id
-        })
-      }
-      await client.update(_taskType, {
-        statuses
-      })
-      _taskType.statuses = statuses
+      const entries = _type.statuses.some((it) => it._id === id)
+        ? _type.statuses.map((it) => (it._id === id ? { ...it, color, icon, description } : it))
+        : [
+            ..._type.statuses,
+            { _id: id, color, icon, description, ...(_taskType !== undefined ? { taskType: _taskType._id } : {}) }
+          ]
       await client.update(_type, {
-        statuses: calculateStatuses(_type, $taskTypeStore, [{ taskTypeId: _taskType._id, statuses }])
+        statuses: calculateStatuses({ statuses: entries, tasks: _type.tasks }, $taskTypeStore, [])
       })
-      if (status._id !== _id) {
-        const oldStatus = status._id
-        await renameStatuses(_type, _taskType, oldStatus, _id)
+    } else if (needUpdate) {
+      const oldStatus = status._id
+      const targets =
+        applyToAllTaskTypes || projectMode ? affectedTaskTypes : _taskType !== undefined ? [_taskType] : []
+      const replaceOld = (list: Array<Ref<Status>>, id: Ref<Status>): Array<Ref<Status>> =>
+        list.map((it) => (it === oldStatus ? id : it))
+      const { id: _id } = await createStatusAtomic(
+        client,
+        _typeId,
+        _class,
+        { ofAttribute, name: value.trim(), category, color, description },
+        targets.map((tt) => ({ taskType: tt._id, place: replaceOld })),
+        icon
+      )
+      for (const tt of targets) {
+        tt.statuses = replaceOld(tt.statuses, _id).filter((it, idx, arr) => arr.indexOf(it) === idx)
+        await renameStatuses(_type, tt, oldStatus, _id)
+      }
+      if (targets.length === 0) {
+        // No task type to swap in: the entry of the old status is replaced in the project type itself
+        const current = await client.findOne(task.class.ProjectType, { _id: _typeId })
+        if (current !== undefined) {
+          await client.update(current, {
+            statuses: current.statuses.filter((it) => it._id !== oldStatus),
+            ...(current.statusOrder !== undefined
+              ? { statusOrder: current.statusOrder.map((it) => (it === oldStatus ? _id : it)) }
+              : {})
+          })
+        }
       }
       status = await client.findOne(_class, { _id })
     }
 
+    if (_taskType === undefined) {
+      closeIfStillOpen()
+      return
+    }
     const sameCategory = _taskType.statuses
       .map((it) => $statusStore.byId.get(it))
       .filter((it) => it !== undefined)
@@ -230,9 +320,12 @@
     }
   ]
 
+  $: categoryIds = _taskType?.statusCategories ?? [
+    ...new Set([...$taskTypeStore.values()].filter((it) => it.parent === _typeId).flatMap((it) => it.statusCategories))
+  ]
   $: allCategories = getClient()
     .getModel()
-    .findAllSync(core.class.StatusCategory, { _id: { $in: _taskType.statusCategories } })
+    .findAllSync(core.class.StatusCategory, { _id: { $in: categoryIds } })
 
   $: categories = allCategories.map((it) => ({
     id: it._id,
@@ -273,22 +366,28 @@
   function onDelete (): void {
     if (status === undefined || readonly) return
     const estatus = status
+    const tt = _taskType
+    if (tt === undefined) {
+      void deleteProjectTypeStatus(_type, estatus, closeIfStillOpen)
+      return
+    }
     showPopup(
       DeleteStateConfirmationPopup,
       {
         object: estatus,
         selectableStates,
-        taskType: _taskType,
-        deleteAction: async (newStatus: Status) => {
-          const statuses = _taskType.statuses.filter((it) => it !== estatus._id)
+        taskType: tt,
+        deleteAction: async (newStatus?: Status) => {
+          if (newStatus === undefined) return
+          const statuses = tt.statuses.filter((it) => it !== estatus._id)
           await client.update(_type, {
-            statuses: calculateStatuses(_type, $taskTypeStore, [{ taskTypeId: _taskType._id, statuses }])
+            statuses: calculateStatuses(_type, $taskTypeStore, [{ taskTypeId: tt._id, statuses }])
           })
-          await client.update(_taskType, {
+          await client.update(tt, {
             statuses
           })
 
-          await renameStatuses(_type, _taskType, estatus._id, newStatus._id)
+          await renameStatuses(_type, tt, estatus._id, newStatus._id)
 
           closePopup()
           closeIfStillOpen()
@@ -340,7 +439,7 @@
 </script>
 
 <Modal
-  label={task.string.StatusPopupTitle}
+  label={status === undefined ? task.string.StatusCreateTitle : task.string.StatusPopupTitle}
   type="type-aside"
   okLabel={status === undefined ? presentation.string.Create : presentation.string.Save}
   okAction={save}
@@ -355,7 +454,7 @@
         icon={IconDelete}
         size="small"
         kind="tertiary"
-        disabled={status === undefined || !canDelete || readonly}
+        disabled={status === undefined || !(canDelete || projectMode) || readonly}
         tooltip={{ label: presentation.string.Delete }}
         on:click={onDelete}
       />
@@ -371,6 +470,32 @@
   </svelte:fragment>
   <div class="hulyModal-content__titleGroup">
     <ModernEditbox bind:value label={task.string.StatusName} size="large" kind="ghost" disabled={readonly} />
+    {#if saveError !== undefined}
+      <div class="name-error">
+        <div class="name-error-text">
+          <Icon icon={IconError} size="small" />
+          <span><Label label={task.string.StatusSaveFailed} params={{ reason: saveError }} /></span>
+        </div>
+      </div>
+    {/if}
+    {#if nameError !== undefined}
+      <div class="name-error">
+        <div class="name-error-text">
+          <Icon icon={IconError} size="small" />
+          <span><Label label={nameError.label} params={nameError.params} /></span>
+        </div>
+        {#if nameError.mergeWith !== undefined && !readonly}
+          <Button
+            kind="regular"
+            size="small"
+            label={task.string.MergeStatuses}
+            on:click={() => {
+              if (nameError?.mergeWith !== undefined) mergeWithExisting(nameError.mergeWith)
+            }}
+          />
+        {/if}
+      </div>
+    {/if}
     <TextArea
       placeholder={task.string.Description}
       width="100%"
@@ -383,7 +508,7 @@
   </div>
   <div class="hulyModal-content__settingsSet">
     <div class="hulyModal-content__settingsSet-line">
-      <span class="label"><Label label={getEmbeddedLabel('Status Category')} /></span>
+      <span class="label"><Label label={task.string.StatusCategory} /></span>
       <MenuButton
         items={categories}
         selected={category}
@@ -451,4 +576,36 @@
       </div>
     </div>
   </div>
+  {#if reuseHint}
+    <div class="reuse-hint"><Label label={task.string.StatusReuseHint} /></div>
+  {/if}
+  {#if usageStatusId !== undefined}
+    <StatusUsageTables type={_type} statusId={usageStatusId} />
+  {/if}
 </Modal>
+
+<style lang="scss">
+  .name-error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+    margin: var(--spacing-2) var(--spacing-2) var(--spacing-2);
+    font-size: 0.8125rem;
+    color: var(--global-error-TextColor);
+  }
+  .reuse-hint {
+    margin: var(--spacing-1) var(--spacing-2);
+    font-size: 0.8125rem;
+    color: var(--global-secondary-TextColor);
+  }
+  .name-error-text {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+
+    :global(svg) {
+      flex-shrink: 0;
+    }
+  }
+</style>

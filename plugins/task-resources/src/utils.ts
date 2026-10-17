@@ -4,12 +4,14 @@ import {
   type Doc,
   type DocumentQuery,
   type Hierarchy,
+  type IdMap,
   type Ref,
   type Space,
+  type Status,
   type TxOperations
 } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
-import { type Task } from '@hcengineering/task'
+import { getStatusNameSuffixes, type Project, type ProjectType, type Task, type TaskType } from '@hcengineering/task'
 import {
   type CategoryOption,
   type ViewOptionModel,
@@ -18,6 +20,8 @@ import {
   type Viewlet
 } from '@hcengineering/view'
 import { getCategories, getCategorySpaces, concatCategories } from '@hcengineering/view-resources'
+import { clearSettingsStore } from '@hcengineering/setting-resources'
+import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
 
 /**
  * @public
@@ -81,4 +85,58 @@ export async function getTaskKanbanResultQuery (
     result = f(viewOptionsStore[queryOption.key] ?? queryOption.defaultValue, result)
   }
   return result
+}
+
+/**
+ * Opens the settings of a task type inside the project type settings.
+ * @public
+ */
+export function openTaskTypeSettings (id: Ref<TaskType> | undefined): void {
+  const loc = getCurrentResolvedLocation()
+  if (id !== undefined) {
+    loc.path[5] = 'taskTypes'
+    loc.path[6] = id
+    loc.path.length = 7
+  } else {
+    loc.path.length = 5
+  }
+
+  clearSettingsStore()
+  navigate(loc)
+}
+
+/**
+ * Opens a workflow inside the project type settings.
+ * @public
+ */
+export function openWorkflowSettings (id: string): void {
+  const loc = getCurrentResolvedLocation()
+  loc.path[5] = 'workflows'
+  loc.path[6] = id
+  loc.path.length = 7
+
+  clearSettingsStore()
+  navigate(loc)
+}
+
+let suffixCache: { key: unknown[], value: Map<Ref<Status>, string> } | undefined
+
+/**
+ * Name suffixes of the statuses among `values` (group values of one list), computed once per list state:
+ * every header of the list calls this with the same inputs.
+ * @public
+ */
+export function getSuffixes (
+  values: CategoryType[],
+  statuses: IdMap<Status>,
+  types: IdMap<ProjectType>,
+  projects: IdMap<Project>,
+  taskTypes: IdMap<TaskType>
+): Map<Ref<Status>, string> {
+  const key = [values, statuses, types, projects, taskTypes]
+  if (suffixCache?.key.every((it, i) => it === key[i]) === true) return suffixCache?.value ?? new Map()
+  const shown = values.map((it) => statuses.get(it as Ref<Status>)).filter((it): it is Status => it !== undefined)
+  const value = getStatusNameSuffixes(shown, types.values(), projects.values(), taskTypes.values())
+  suffixCache = { key, value }
+  return value
 }

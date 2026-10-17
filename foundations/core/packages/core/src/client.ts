@@ -42,7 +42,7 @@ import type {
   TxResult,
   WithLookup
 } from './storage'
-import { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
+import { type Tx, type TxCUD, type TxWorkspaceEvent, WorkspaceEvent } from './tx'
 import { platformNow, platformNowDiff, toFindResult } from './utils'
 
 /**
@@ -205,6 +205,9 @@ class ClientImpl implements Client, BackupClient {
             this.model.addTxes(this.ctx, [t], true)
           } else {
             this.appliedModelTransactions.delete(t._id)
+            // The server rewrites modifiedOn; keep the local doc in sync for compare-and-set on it
+            const doc = this.model.findObject((t as TxCUD<Doc>).objectId)
+            if (doc !== undefined) doc.modifiedOn = t.modifiedOn
           }
         }
       } catch (err) {

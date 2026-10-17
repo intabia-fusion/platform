@@ -121,6 +121,7 @@
     "Reconnecting": "Yeniden bağlanıyor...",
     "RateLimit": "İstek limiti",
     "RateLimitValue": "{limit} üzerinden {remaining} kaldı, {seconds}s içinde sıfırlanır",
+    "RateLimitUsage": "Sınırdaki istekler: {current} / {limit}",
     "Sent": "Gönderilen",
     "Received": "Alınan",
     "TrafficValue": "{count} mesaj, {kb} KB",

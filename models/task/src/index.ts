@@ -197,6 +197,9 @@ export class TProjectType extends TSpaceType implements ProjectType {
   @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('Project statuses'))
   statuses!: ProjectStatus[]
 
+  @Prop(ArrOf(TypeRef(core.class.Status)), getEmbeddedLabel('Status order'))
+  statusOrder?: Ref<Status>[]
+
   @Prop(TypeRef(core.class.Class), getEmbeddedLabel('Target Class'))
   declare targetClass: Ref<Class<Project>>
 
@@ -519,6 +522,11 @@ export function createModel (builder: Builder): void {
         id: 'taskTypes',
         label: setting.string.TaskTypes,
         component: task.component.ProjectTypeTasksTypeSectionEditor
+      },
+      {
+        id: 'statuses',
+        label: task.string.Statuses,
+        component: task.component.ProjectTypeStatusesSectionEditor
       },
       {
         id: 'screens',

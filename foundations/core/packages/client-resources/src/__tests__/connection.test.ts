@@ -22,6 +22,7 @@ import core, {
   TxCreateDoc,
   type Doc
 } from '@hcengineering/core'
+import { addEventListener, removeEventListener } from '@hcengineering/platform'
 import { connect } from '../connection'
 
 // Mock CloseEvent for Node.js environment (used in MockWebSocket)
@@ -434,6 +435,35 @@ describe('connect function', () => {
       expect(result).toHaveLength(0)
     } finally {
       delete (globalThis as any).window
+    }
+  })
+
+  it('reports the latest server rateLimit in connection stats', async () => {
+    const mockWs = new MockWebSocket('ws://localhost:3333')
+    mockWebSockets.push(mockWs)
+    const client: any = connect(
+      'ws://localhost:3333',
+      jest.fn(),
+      'test-workspace' as WorkspaceUuid,
+      'u' as PersonUuid,
+      {
+        socketFactory: (url: string) => mockWs
+      }
+    )
+    connections.push(client)
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    const stats = jest.fn()
+    addEventListener('connection-stats', stats)
+    try {
+      client.handleMsg(1, { id: 9999, rateLimit: { remaining: 1188, limit: 1500, current: 312, reset: 0 } })
+      await client.reportStats()
+      expect(stats).toHaveBeenLastCalledWith(
+        'connection-stats',
+        expect.objectContaining({ rateCurrent: 312, rateMax: 1500 })
+      )
+    } finally {
+      removeEventListener('connection-stats', stats)
     }
   })
 })

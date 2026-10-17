@@ -19,15 +19,21 @@
   import { createQuery } from '@hcengineering/presentation'
   import { settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
+  import { getStatusCategoryOrder } from '@hcengineering/task'
   import { IconMoreV2, IconOpenedArrow, Label } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import task from '../../plugin'
 
-  export let taskType: TaskType
+  // Absent: the statuses of the whole project type, reordered inside a category only
+  export let taskType: TaskType | undefined = undefined
   export let type: ProjectType
   export let states: Status[] = []
   export let readonly: boolean = true
+  // Categories to list in project type mode
+  export let categoryIds: Array<Ref<StatusCategory>> = []
+
+  $: projectMode = taskType === undefined
 
   const dispatch = createEventDispatcher()
 
@@ -42,6 +48,7 @@
     const sourceState = states[s]
     const sourceCategory = sourceState.category
 
+    if (projectMode && sourceCategory !== targetCategory) return false
     if (sourceCategory === targetCategory) {
       if (i < s) {
         return ev.offsetY < elements[i].offsetHeight / 2
@@ -88,7 +95,12 @@
 
     const state = $statusStore.byId.get(dragState)
 
-    if (state !== undefined && state.category !== targetCategory) {
+    if (projectMode) {
+      // The drag has already put the status in place, so the displayed order is the new one
+      if (state?.category === targetCategory) {
+        dispatch('move', { stateID: dragState, order: [...groups.values()].flat().map((it) => it._id) })
+      }
+    } else if (state !== undefined && state.category !== targetCategory) {
       const newStates = states.filter((s) => s._id !== dragState)
       newStates.splice(to, 0, state)
 
@@ -109,8 +121,9 @@
   let categoriesMap: IdMap<StatusCategory> = new Map()
   let groups = new Map<Ref<StatusCategory>, Status[]>()
   const query = createQuery()
-  $: query.query(core.class.StatusCategory, { _id: { $in: taskType.statusCategories } }, (res) => {
-    categories = res
+  $: query.query(core.class.StatusCategory, { _id: { $in: taskType?.statusCategories ?? categoryIds } }, (res) => {
+    const order = getStatusCategoryOrder()
+    categories = taskType === undefined ? res.sort((a, b) => order.indexOf(a._id) - order.indexOf(b._id)) : res
     categoriesMap = toIdMap(res)
   })
 
@@ -130,7 +143,7 @@
   }
 
   $: taskTypeStates = states
-    .filter((it) => taskType.statuses.includes(it._id))
+    .filter((it) => taskType === undefined || taskType.statuses.includes(it._id))
     .filter((it, idx, arr) => arr.findIndex((qt) => qt._id === it._id) === idx)
 
   $: groups = group(categories, taskTypeStates)
@@ -155,6 +168,10 @@
   const handleSelect = (_status: Status): void => {
     if (opened === undefined || opened !== _status._id) {
       opened = _status._id
+      if (taskType === undefined) {
+        dispatch('select', _status)
+        return
+      }
       const icons: Asset[] = []
       const category = _status.category !== undefined ? categoriesMap.get(_status.category) : undefined
       const projectStatus = getProjectStatus(type, _status)
@@ -218,6 +235,9 @@
           on:click={() => {
             handleSelect(state)
           }}
+          on:contextmenu|preventDefault|stopPropagation={(ev) => {
+            if (projectMode) dispatch('rowmenu', { event: ev, state })
+          }}
           on:dragover|preventDefault={(ev) => {
             dragover(ev, i + prevIndex, cat._id)
           }}
@@ -239,11 +259,16 @@
             _class={state._class}
             objectId={state._id}
             value={state}
-            props={{ projectType: type._id, taskType: taskType._id, kind: 'table-attrs', size: 'medium' }}
+            props={{ projectType: type._id, taskType: taskType?._id, kind: 'table-attrs', size: 'medium' }}
           />
-          <div class="hulyTableAttr-content__row-arrow">
-            <IconOpenedArrow size="small" />
+          <div class="flex-row-center ml-auto">
+            <slot name="end" {state} />
           </div>
+          {#if !projectMode}
+            <div class="hulyTableAttr-content__row-arrow">
+              <IconOpenedArrow size="small" />
+            </div>
+          {/if}
         </button>
       {/each}
     </div>

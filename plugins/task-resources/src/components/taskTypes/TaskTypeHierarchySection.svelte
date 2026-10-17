@@ -13,83 +13,133 @@
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
+  import { translate, translateCB } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import { getConnectedTaskTypes } from '@hcengineering/task'
   import {
     Button,
     Icon,
+    IconAdd,
     IconError,
     IconInfo,
     Label,
-    ModernCheckbox,
+    languageStore,
+    SelectPopup,
     showPopup,
+    themeStore,
     Toggle,
     tooltip
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
-  import tracker from '@hcengineering/tracker'
 
   import task from '../../plugin'
-  import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import { addParentTo, getAncestorLevels, getChildTypes, getParentTypes, removeParentFrom } from '../../hierarchy'
+  import { openTaskTypeSettings } from '../../utils'
+  import TaskTypeChip from './TaskTypeChip.svelte'
   import TaskTypeDiagramPopup from './TaskTypeDiagramPopup.svelte'
+  import TaskTypeHierarchyHelp from './TaskTypeHierarchyHelp.svelte'
 
   export let taskType: TaskType
   export let taskTypes: TaskType[] = []
   export let readonly: boolean = false
 
   const client = getClient()
+  const anyId = 'any'
 
   $: isRootTaskType = taskType.isRootTaskType !== false
   $: allowAnyParent = taskType.allowAnyParent === true
   $: allowedAsChildOf = taskType.allowedAsChildOf ?? []
 
-  $: sortedTaskTypes = [...taskTypes].sort((a, b) => a.name.localeCompare(b.name))
+  $: parents = getParentTypes(taskType, taskTypes)
+  $: ancestorLevels = getAncestorLevels(taskType, taskTypes)
+  $: children = getChildTypes(taskType, taskTypes)
 
   $: hasWarning = !isRootTaskType && !allowAnyParent && allowedAsChildOf.length === 0
+
+  // First type that has explicit parents makes the best example for the help
+  $: exampleType = taskTypes.find((t) => t.allowAnyParent !== true && (t.allowedAsChildOf ?? []).length > 0)
+  // The tooltip is a component, so the button is named separately.
+  let helpName = ''
+  $: translateCB(task.string.HierarchyRelations, {}, $languageStore === '' ? undefined : $languageStore, (text) => {
+    helpName = text
+  })
+  $: helpProps = {
+    child: exampleType?.name ?? taskType.name,
+    parents: getParentTypes(exampleType ?? taskType, taskTypes)
+      .map((t) => t.name)
+      .join(', ')
+  }
 
   async function handleAllowRootChange (val: boolean): Promise<void> {
     if (readonly) return
     await client.diffUpdate(taskType, { isRootTaskType: val })
   }
 
-  async function handleAllowAnyParentToggle (val: boolean): Promise<void> {
+  async function removeParent (parentId: Ref<TaskType>): Promise<void> {
     if (readonly) return
-    if (val) {
-      await client.diffUpdate(taskType, { allowAnyParent: true, allowedAsChildOf: taskTypes.map((t) => t._id) })
-    } else {
-      await client.diffUpdate(taskType, { allowAnyParent: false, allowedAsChildOf: taskTypes.map((t) => t._id) })
-    }
+    await client.diffUpdate(taskType, removeParentFrom(taskType, parentId, taskTypes))
   }
 
-  async function toggleParent (parentId: Ref<TaskType>): Promise<void> {
+  async function removeChild (child: TaskType): Promise<void> {
     if (readonly) return
-    if (allowAnyParent) {
-      const newParents = taskTypes.filter((t) => t._id !== parentId).map((t) => t._id)
-      await client.diffUpdate(taskType, { allowAnyParent: false, allowedAsChildOf: newParents })
+    await client.diffUpdate(child, removeParentFrom(child, taskType._id, taskTypes))
+  }
+
+  async function clearAnyParent (): Promise<void> {
+    if (readonly) return
+    await client.diffUpdate(taskType, { allowAnyParent: false, allowedAsChildOf: [] })
+  }
+
+  async function addParent (id: Ref<TaskType> | typeof anyId): Promise<void> {
+    if (readonly) return
+    if (id === anyId) {
+      await client.diffUpdate(taskType, { allowAnyParent: true, allowedAsChildOf: taskTypes.map((t) => t._id) })
       return
     }
-
-    const isSelected = allowedAsChildOf.includes(parentId)
-    const newParents = isSelected ? allowedAsChildOf.filter((id) => id !== parentId) : [...allowedAsChildOf, parentId]
-
-    const isAll = newParents.length === taskTypes.length
-    await client.diffUpdate(taskType, { allowAnyParent: isAll, allowedAsChildOf: newParents })
+    await client.diffUpdate(taskType, addParentTo(taskType, id, taskTypes))
   }
 
-  async function selectAllParents (): Promise<void> {
-    if (readonly) return
-    const allIds = taskTypes.map((t) => t._id)
-    await client.diffUpdate(taskType, { allowAnyParent: true, allowedAsChildOf: allIds })
-  }
-
-  async function clearAllParents (): Promise<void> {
-    if (readonly) return
-    await client.diffUpdate(taskType, {
-      allowAnyParent: false,
-      allowedAsChildOf: []
+  async function openTypesPopup (
+    evt: MouseEvent,
+    available: TaskType[],
+    withAny: boolean,
+    onPick: (id: Ref<TaskType> | typeof anyId) => void
+  ): Promise<void> {
+    const selfMark = await translate(task.string.SameTypeNesting, {}, $themeStore.language)
+    const value = [
+      ...(withAny ? [{ id: anyId, label: task.string.AllowAnyParent }] : []),
+      ...[...available]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((t) => ({ id: t._id, text: t._id === taskType._id ? `${t.name} (${selfMark})` : t.name }))
+    ]
+    showPopup(SelectPopup, { value, searchable: true }, evt.currentTarget as HTMLElement, (id: string | undefined) => {
+      if (id !== undefined) onPick(id as Ref<TaskType> | typeof anyId)
     })
+  }
+
+  async function handleAdd (evt: MouseEvent): Promise<void> {
+    await openTypesPopup(
+      evt,
+      taskTypes.filter((t) => !allowedAsChildOf.includes(t._id)),
+      true,
+      (id) => {
+        void addParent(id)
+      }
+    )
+  }
+
+  async function handleAddChild (evt: MouseEvent): Promise<void> {
+    await openTypesPopup(
+      evt,
+      taskTypes.filter((t) => !children.some((c) => c._id === t._id)),
+      false,
+      (id) => {
+        const child = taskTypes.find((t) => t._id === id)
+        if (child !== undefined) void client.diffUpdate(child, addParentTo(child, taskType._id, taskTypes))
+      }
+    )
   }
 
   function handleShowDiagram (): void {
@@ -99,9 +149,7 @@
 </script>
 
 <div class="hierarchy-section flex-column gap-3 w-full">
-  <!-- Single Unified Hierarchy Card -->
   <div class="hulyTableAttr-container w-full">
-    <!-- Header of the Card -->
     <div class="hulyTableAttr-header font-medium-12">
       <div class="header-left flex-row-center gap-1-5">
         <Icon icon={setting.icon.Clazz} size="small" />
@@ -109,25 +157,24 @@
       </div>
 
       <div class="header-right flex-row-center gap-2">
-        {#if hasWarning}
-          <div class="header-error-badge" use:tooltip={{ label: task.string.HierarchyWarningNoParentAndNoRoot }}>
-            <Icon icon={IconError} size="small" />
-            <span class="error-text"><Label label={task.string.HierarchyWarningShort} /></span>
-          </div>
-        {/if}
-
         <IconButton
-          icon={task.icon.TypeHierarchy}
-          tooltip={{ label: task.string.TaskTypesDiagram, direction: 'bottom' }}
+          icon={IconInfo}
           size="small"
           kind="tertiary"
+          tooltip={{ component: TaskTypeHierarchyHelp, props: helpProps, direction: 'bottom' }}
+          aria-label={helpName}
+        />
+        <Button
+          icon={task.icon.TypeHierarchy}
+          label={task.string.HierarchyShowSchema}
+          size="small"
+          kind="ghost"
           on:click={handleShowDiagram}
         />
       </div>
     </div>
 
     <div class="hulyTableAttr-content flex-column w-full">
-      <!-- 1. Allow Root Task Toggle Row -->
       <div class="root-toggle-row w-full">
         <div class="title-wrapper">
           <span class="font-medium-14 title-text">
@@ -148,77 +195,110 @@
         </div>
       </div>
 
-      <!-- 2. Parents Section Header with Action Buttons -->
-      <div class="parents-subheader w-full">
-        <span class="subheader-title font-medium-13">
-          <Icon icon={tracker.icon.Subissue} size="small" />
-          <Label label={task.string.AllowedParentTaskTypes} />
+      <div class="chain">
+        <span class="chain-title font-medium-13">
+          <Label label={task.string.HierarchyParentsOf} params={{ name: taskType.name }} />
         </span>
-        {#if !readonly && taskTypes.length > 0}
-          <div class="actions-group">
-            <Button kind="ghost" size="small" on:click={selectAllParents}>
-              <Label slot="content" label={task.string.SelectAll} />
-            </Button>
-            <span class="actions-divider">•</span>
-            <Button kind="ghost" size="small" on:click={clearAllParents}>
-              <Label slot="content" label={task.string.ClearAll} />
-            </Button>
+
+        {#each ancestorLevels as level}
+          <div class="chain-row">
+            {#if level.any}
+              <TaskTypeChip label={task.string.AllowAnyParent} kind="muted" />
+            {:else}
+              {#each level.types as t (t._id)}
+                <TaskTypeChip
+                  value={t}
+                  kind="muted"
+                  clickable
+                  on:open={() => {
+                    openTaskTypeSettings(t._id)
+                  }}
+                />
+              {/each}
+            {/if}
+          </div>
+          <div class="connector" />
+        {/each}
+
+        <div class="chain-row">
+          <div class="group" class:empty={!allowAnyParent && parents.length === 0}>
+            {#if allowAnyParent}
+              <TaskTypeChip label={task.string.AllowAnyParent} removable={!readonly} on:remove={clearAnyParent} />
+            {:else}
+              {#each parents as t (t._id)}
+                <TaskTypeChip
+                  value={t}
+                  mark={t._id === taskType._id ? task.string.SameTypeNesting : undefined}
+                  clickable={t._id !== taskType._id}
+                  removable={!readonly}
+                  on:open={() => {
+                    openTaskTypeSettings(t._id)
+                  }}
+                  on:remove={() => removeParent(t._id)}
+                />
+              {/each}
+            {/if}
+            {#if (!readonly && !allowAnyParent) || hasWarning}
+              <div class="side">
+                {#if !readonly && !allowAnyParent}
+                  <IconButton
+                    icon={IconAdd}
+                    size="small"
+                    kind="secondary"
+                    tooltip={{ label: task.string.HierarchyAddParent }}
+                    on:click={handleAdd}
+                  />
+                {/if}
+                {#if hasWarning}
+                  <div
+                    class="header-error-badge"
+                    use:tooltip={{ label: task.string.HierarchyWarningNoParentAndNoRoot }}
+                  >
+                    <Icon icon={IconError} size="small" />
+                    <span class="error-text"><Label label={task.string.HierarchyWarningShort} /></span>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        </div>
+        <div class="connector" />
+
+        <div class="chain-row">
+          <TaskTypeChip value={taskType} kind="current" mark={task.string.SameTypeNesting} />
+        </div>
+
+        {#if children.length > 0 || !readonly}
+          <div class="connector" />
+          <div class="chain-row">
+            <div class="group" class:empty={children.length === 0}>
+              {#each children as t (t._id)}
+                <TaskTypeChip
+                  value={t}
+                  kind="muted"
+                  clickable={t._id !== taskType._id}
+                  removable={!readonly}
+                  on:open={() => {
+                    openTaskTypeSettings(t._id)
+                  }}
+                  on:remove={() => removeChild(t)}
+                />
+              {/each}
+              {#if !readonly}
+                <div class="side">
+                  <IconButton
+                    icon={IconAdd}
+                    size="small"
+                    kind="secondary"
+                    tooltip={{ label: task.string.HierarchyAddChild }}
+                    on:click={handleAddChild}
+                  />
+                </div>
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
-
-      <!-- 3. Master "Any task type" Row -->
-      <button
-        type="button"
-        class="task-type-row master-row w-full"
-        class:checked-row={allowAnyParent}
-        disabled={readonly}
-        on:click={() => {
-          void handleAllowAnyParentToggle(!allowAnyParent)
-        }}
-      >
-        <span class="checkbox-slot">
-          <ModernCheckbox checked={allowAnyParent} disabled={readonly} />
-        </span>
-        <span class="label-wrapper flex-row-center gap-1-5">
-          <span class="font-medium-14 label-text">
-            <Label label={task.string.AllowAnyParent} />
-          </span>
-          <span class="info-slot" use:tooltip={{ label: task.string.AllowAnyParentTooltip }}>
-            <IconInfo size="small" />
-          </span>
-        </span>
-      </button>
-
-      <!-- 4. Task Types Rows -->
-      {#each sortedTaskTypes as candidate (candidate._id)}
-        {@const isParent = allowAnyParent || allowedAsChildOf.includes(candidate._id)}
-        {@const isSelf = candidate._id === taskType._id}
-        <button
-          type="button"
-          class="task-type-row w-full"
-          class:checked-row={isParent}
-          disabled={readonly}
-          on:click={() => {
-            void toggleParent(candidate._id)
-          }}
-        >
-          <span class="checkbox-slot">
-            <ModernCheckbox checked={isParent} disabled={readonly} />
-          </span>
-          <span class="icon-slot">
-            <TaskTypeIcon value={candidate} size="small" />
-          </span>
-          <span class="font-medium-14 label-text">
-            {candidate.name}
-          </span>
-          {#if isSelf}
-            <span class="self-pill font-normal-11">
-              <Label label={task.string.SameTypeNesting} />
-            </span>
-          {/if}
-        </button>
-      {/each}
     </div>
   </div>
 </div>
@@ -282,132 +362,77 @@
     }
   }
 
-  .parents-subheader {
+  .chain {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
     padding: var(--spacing-2) var(--spacing-2_5);
-    background: var(--theme-table-row-color);
-    border-bottom: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
 
-    .subheader-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-transform: uppercase;
+    .chain-title {
+      margin-bottom: 0.5rem;
       color: var(--global-secondary-TextColor);
-    }
-
-    .actions-group {
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-
-      .actions-divider {
-        color: var(--global-secondary-TextColor);
-        font-size: 0.75rem;
-        user-select: none;
-      }
     }
   }
 
-  .task-type-row {
+  .chain-row {
+    display: flex;
     width: 100%;
-    cursor: pointer;
-    border: none;
-    border-bottom: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.08));
-    text-align: left;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+  }
+
+  // Chips are centered on the axis; the side block (add button, warning) hangs outside the group
+  .group {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    max-width: calc(100% - 4rem);
+
+    &.empty {
+      max-width: 100%;
+    }
+  }
+
+  .side {
+    position: absolute;
+    left: calc(100% + 0.5rem);
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    padding: var(--spacing-1_5) var(--spacing-2_5);
-    min-height: 2.375rem;
-    box-sizing: border-box;
-    transition: background-color 0.15s ease-in-out;
+    gap: 0.375rem;
 
-    &:hover:not(:disabled) {
-      background: var(
-        --global-ui-hover-BackgroundColor,
-        var(--global-surface-01-hover-BackgroundColor, rgba(0, 0, 0, 0.04))
-      );
+    .empty > & {
+      position: static;
+      transform: none;
     }
+  }
 
-    &:last-child {
-      border-bottom: none;
-    }
+  // Downward arrow: parent -> child
+  .connector {
+    position: relative;
+    height: 2rem;
+    width: 0;
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0.25rem 0;
+    border-left: 2px solid var(--global-secondary-TextColor);
 
-    .checkbox-slot {
-      display: flex;
-      align-items: center;
-      margin-right: 0.75rem;
-      flex-shrink: 0;
-      pointer-events: none;
-    }
-
-    .icon-slot {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.25rem;
-      height: 1.25rem;
-      margin-right: 0.75rem;
-      flex-shrink: 0;
-      overflow: hidden;
-      color: var(--global-primary-TextColor);
-
-      :global(svg) {
-        width: 1rem;
-        height: 1rem;
-      }
-    }
-
-    .label-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-    }
-
-    .label-text {
-      color: var(--theme-text-primary, var(--global-primary-TextColor));
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.25rem;
-    }
-
-    .info-slot {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px;
-      height: 14px;
-      color: var(--button-primary-loading-LabelColor);
-      cursor: help;
-      transition: color 0.15s ease-in-out;
-      flex-shrink: 0;
-
-      &:hover {
-        color: var(--global-primary-LinkColor, #3566e2);
-      }
-    }
-
-    .self-pill {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 0.625rem;
-      padding: 0.0625rem 0.4375rem;
-      background: transparent;
-      border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.12));
-      color: var(--theme-text-secondary, var(--global-secondary-TextColor));
-      border-radius: 4px;
-      font-size: 0.6875rem;
-      line-height: 1.2;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-      flex-shrink: 0;
+    &::after {
+      content: '';
+      position: absolute;
+      left: -6px;
+      bottom: -1px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid var(--global-secondary-TextColor);
     }
   }
 
