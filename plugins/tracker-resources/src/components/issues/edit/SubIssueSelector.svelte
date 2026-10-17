@@ -213,7 +213,9 @@
   $padding: 0.375rem 0.75rem;
   $border: 1px solid var(--button-border-color);
 
+  // Shrinks in a narrow column: the parent title gets cut, the sub-issues counter stays whole
   .root {
+    min-width: 0;
     max-width: fit-content;
     line-height: 150%;
     border: $border;
@@ -222,6 +224,10 @@
 
     .item {
       position: relative;
+
+      &:not(:first-child) {
+        flex-shrink: 0;
+      }
 
       &:not(:first-child)::before {
         position: absolute;

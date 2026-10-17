@@ -31,7 +31,8 @@
     reduceCalls
   } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Button, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
+  import { Button as LegacyButton, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { AttributeCategory } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
@@ -281,32 +282,35 @@
     <svelte:fragment slot="utils">
       <ComponentExtensions
         extension={view.extensions.EditDocTitleExtension}
-        props={{ size: 'medium', kind: 'ghost', _id, _class, value: object, readonly }}
+        props={{ _id, _class, value: object, readonly }}
       />
       {#if !embedded && object}
-        <Button
-          icon={view.icon.DetailsFilled}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          dataId="btnOpenInSidebar"
-          showTooltip={{ label: view.string.OpenInSidebar }}
+        <IconButton
+          size="small"
+          icon={view.icon.Sidebar}
+          iconSize="medium"
+          kind="ghost"
+          data-id="btnOpenInSidebar"
+          tooltip={{ label: view.string.OpenInSidebar }}
           on:click={() => {
             void openDocInSidebar(object)
           }}
         />
       {/if}
       {#if !readonly}
-        <Button
+        <IconButton
+          size="small"
+          tooltip={{ label: view.string.MoreActions }}
           icon={IconMoreH}
           iconProps={{ size: 'medium' }}
-          kind="icon"
-          dataId="btnMoreActions"
+          kind="ghost"
+          data-id="btnMoreActions"
           on:click={(e) => {
             showMenu(e, { object, excludedActions: [view.action.Open] })
           }}
         />
       {/if}
-      <Button
+      <LegacyButton
         icon={IconMixin}
         iconProps={{ size: 'medium' }}
         kind="icon"

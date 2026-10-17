@@ -19,6 +19,7 @@ import { get } from 'svelte/store'
 import { tick, type ComponentProps } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { closeTooltip, tooltipstore } from '../../tooltips'
 import Button from '../../ui-kit/button/Button.svelte'
 import ButtonWithContent from './ButtonWithContent.svelte'
 
@@ -68,6 +69,14 @@ describe('ui-kit Button', () => {
         expect.arrayContaining(['button--secondary', 'button--large', 'button--rectangle'])
       )
     })
+
+    it.each(['primary', 'brand', 'secondary', 'tertiary', 'ghost', 'positive', 'negative'] as const)(
+      'renders the %s kind',
+      (kind) => {
+        const { button } = mount({ kind })
+        expect(button.classList.contains(`button--${kind}`)).toBe(true)
+      }
+    )
 
     it('passes kind, size, shape and type through', () => {
       const { button } = mount({ kind: 'negative', size: 'extra-small', shape: 'round', type: 'submit' })
@@ -139,6 +148,33 @@ describe('ui-kit Button', () => {
     })
   })
 
+  describe('tooltip', () => {
+    afterEach(() => {
+      closeTooltip()
+      vi.useRealTimers()
+    })
+
+    it('shows after 500 ms by default', () => {
+      vi.useFakeTimers()
+      const { button } = mount({ icon: ICON, tooltip: { label: getEmbeddedLabel('Settings') } })
+      button.dispatchEvent(new MouseEvent('mousemove'))
+
+      vi.advanceTimersByTime(499)
+      expect(get(tooltipstore).label).toBeUndefined()
+      vi.advanceTimersByTime(1)
+      expect(get(tooltipstore).label).toBeDefined()
+    })
+
+    it('keeps a timeout given by the caller', () => {
+      vi.useFakeTimers()
+      const { button } = mount({ icon: ICON, tooltip: { label: getEmbeddedLabel('Settings'), timeout: 100 } })
+      button.dispatchEvent(new MouseEvent('mousemove'))
+
+      vi.advanceTimersByTime(100)
+      expect(get(tooltipstore).label).toBeDefined()
+    })
+  })
+
   describe('accessible name', () => {
     it('names an icon-only button after its tooltip', async () => {
       const { button } = mount({ icon: ICON, tooltip: { label: getEmbeddedLabel('Settings') } })
@@ -173,18 +209,14 @@ describe('ui-kit Button', () => {
   })
 
   describe('state', () => {
-    it('is no toggle unless pressed is set, then reports aria-pressed', async () => {
-      const { button, component } = mount({ pressed: undefined })
+    it('shows pressed as a look only, without aria-pressed', async () => {
+      const { button, component } = mount({ pressed: false })
       expect(button.hasAttribute('aria-pressed')).toBe(false)
-
-      component.$set({ pressed: false })
-      await tick()
-      expect(button.getAttribute('aria-pressed')).toBe('false')
       expect(button.classList.contains('button--pressed')).toBe(false)
 
       component.$set({ pressed: true })
       await tick()
-      expect(button.getAttribute('aria-pressed')).toBe('true')
+      expect(button.hasAttribute('aria-pressed')).toBe(false)
       expect(button.classList.contains('button--pressed')).toBe(true)
     })
 
@@ -197,6 +229,28 @@ describe('ui-kit Button', () => {
       component.$set({ pressed: true })
       await tick()
       expect(button.getAttribute('aria-expanded')).toBe('true')
+    })
+
+    it('is a toggle with selected, reported through aria-pressed', async () => {
+      const { button, component } = mount({ selected: undefined })
+      expect(button.hasAttribute('aria-pressed')).toBe(false)
+
+      component.$set({ selected: false })
+      await tick()
+      expect(button.getAttribute('aria-pressed')).toBe('false')
+      expect(button.classList.contains('button--selected')).toBe(false)
+
+      component.$set({ selected: true })
+      await tick()
+      expect(button.getAttribute('aria-pressed')).toBe('true')
+      expect(button.classList.contains('button--selected')).toBe(true)
+    })
+
+    it('keeps selected and pressed apart', async () => {
+      const { button } = mount({ selected: false, pressed: true })
+      expect(button.getAttribute('aria-pressed')).toBe('false')
+      expect(button.classList.contains('button--pressed')).toBe(true)
+      expect(button.classList.contains('button--selected')).toBe(false)
     })
 
     it('shows a spinner instead of the icon and blocks clicks while loading', async () => {

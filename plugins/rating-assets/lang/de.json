@@ -6,7 +6,10 @@
     "Level": "Level",
     "MonthOps": "{month}: {ops} Vorgänge",
     "MonthNoOps": "{month}, keine Vorgänge",
-    "AddStar": "Stern hinzufügen",
-    "AddStarAria": "Stern-Reaktion hinzufügen"
+    "AddStar": "Mit Stern markieren",
+    "AddStarAria": "Stern-Reaktion hinzufügen",
+    "RemoveStar": "Stern entfernen",
+    "AddReaction": "Reaktion hinzufügen",
+    "Reactions": "Reaktionen"
   }
 }

@@ -6,7 +6,10 @@
     "Level": "Seviye",
     "MonthOps": "{month}: {ops} işlem",
     "MonthNoOps": "{month}, işlem yok",
-    "AddStar": "Yıldız ekle",
-    "AddStarAria": "Yıldız tepkisi ekle"
+    "AddStar": "Yıldızla",
+    "AddStarAria": "Yıldız tepkisi ekle",
+    "RemoveStar": "Yıldızı kaldır",
+    "AddReaction": "Tepki ekle",
+    "Reactions": "Tepkiler"
   }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { IconLink } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import tracker from '../../../plugin'
   import CopyToClipboardButton from './CopyToClipboardButton.svelte'
@@ -23,12 +24,7 @@
 </script>
 
 {#if issueUrl}
-  <CopyToClipboardButton
-    icon={view.icon.CopyLink}
-    title={tracker.string.CopyIssueUrl}
-    text={issueUrl}
-    dataId="btnCopyIssueUrl"
-  />
+  <CopyToClipboardButton icon={IconLink} title={tracker.string.CopyIssueUrl} text={issueUrl} dataId="btnCopyIssueUrl" />
 {/if}
 
 {#if issueId}

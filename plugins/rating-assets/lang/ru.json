@@ -6,7 +6,10 @@
     "Level": "Уровень",
     "MonthOps": "{month}: {ops} операций",
     "MonthNoOps": "{month}, операций нет",
-    "AddStar": "Добавить звезду",
-    "AddStarAria": "Добавить реакцию со звездой"
+    "AddStar": "Поставить звезду",
+    "AddStarAria": "Добавить реакцию со звездой",
+    "RemoveStar": "Убрать звезду",
+    "AddReaction": "Добавить реакцию",
+    "Reactions": "Реакции"
   }
 }

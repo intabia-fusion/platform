@@ -5,6 +5,8 @@ import WorkbenchExtension from './components/WorkbenchExtension.svelte'
 import { getCustomEmoji, getEmojiByEmoticon, getEmojiByShortCode, parseTextWithEmojis } from './utils'
 
 export { default as EmojiPresenter } from './components/EmojiPresenter.svelte'
+export { EmojiPopup }
+export { getFrequentlyEmojis } from './store'
 
 export * from './utils'
 

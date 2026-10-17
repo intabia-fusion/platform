@@ -18,7 +18,16 @@ import type { AriaAttributes } from 'svelte/elements'
 
 import type { DropdownIntlItem, IconComponent, IconSize, LabelAndProps, TooltipWithLabel } from '../../types'
 
-export type ButtonKind = 'primary' | 'secondary' | 'tertiary' | 'negative'
+/**
+ * - `primary` - fill of the main accent;
+ * - `brand` - fill of the brand base accent: the second accent in Intabia, the accent itself elsewhere;
+ * - `secondary` - neutral fill;
+ * - `tertiary` - transparent, accent-colored text and icon;
+ * - `ghost` - transparent, neutral text and icon;
+ * - `positive` - green fill for a confirming action;
+ * - `negative` - red fill for a destructive action.
+ */
+export type ButtonKind = 'primary' | 'brand' | 'secondary' | 'tertiary' | 'ghost' | 'positive' | 'negative'
 
 /** `min` is for icon-only buttons. */
 export type ButtonSize = 'large' | 'medium' | 'small' | 'extra-small' | 'min'
@@ -50,8 +59,13 @@ export interface ButtonProps extends ButtonAttributes {
   iconProps?: Record<string, any>
   loading?: boolean
   disabled?: boolean
-  /** Toggle state: `undefined` for a plain button, `true`/`false` for a toggle (`aria-pressed`). */
+  /** Neutral gray pressed look (an open popup, a hovered row); with `hasMenu` it is reported as `aria-expanded`. */
   pressed?: boolean
+  /**
+   * Toggle that is on or off (`aria-pressed`): `undefined` for a plain button. On is tinted with the accent in
+   * `secondary`, `tertiary`, `ghost`.
+   */
+  selected?: boolean
   /** Opens a popup; `pressed` then means the popup is open (`aria-expanded`). */
   hasMenu?: boolean
   /** Icon and label take the surrounding text color. */
@@ -60,7 +74,7 @@ export interface ButtonProps extends ButtonAttributes {
   noPrint?: boolean
   /** `true` by default: the click does not reach the containers around the button; `false` lets it bubble. */
   stopPropagation?: boolean
-  /** Also names an icon-only button for assistive technology unless `aria-label` is given. */
+  /** Shows after 500 ms unless `timeout` is set; also names an icon-only button unless `aria-label` is given. */
   tooltip?: LabelAndProps
   autofocus?: boolean
   focusIndex?: number
@@ -81,7 +95,7 @@ export type IconButtonProps = Omit<ButtonProps, 'label' | 'labelParams' | 'icon'
 
 /** `Id` is the item id type, so `selected` and the `selected` event carry it as is. */
 export interface MenuButtonProps<Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']>
-  extends Omit<ButtonProps, 'hasMenu' | 'pressed'> {
+  extends Omit<ButtonProps, 'hasMenu' | 'pressed' | 'selected'> {
   items: Array<DropdownIntlItem<Id>>
   selected?: Id
   /** Keeps the selected item unmarked in the list. */

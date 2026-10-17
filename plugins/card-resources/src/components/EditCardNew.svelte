@@ -231,7 +231,7 @@
     <svelte:fragment slot="pre-utils">
       <ComponentExtensions
         extension={view.extensions.EditDocTitleExtension}
-        props={{ size: 'medium', kind: 'ghost', _id, _class: doc._class, value: doc, readonly }}
+        props={{ _id, _class: doc._class, value: doc, readonly }}
       />
       <slot name="pre-utils" />
     </svelte:fragment>

@@ -355,6 +355,8 @@
         var(--global-popover-ShadowSpread) var(--global-popover-ShadowColor);
 
       :global(.mobile-theme) & {
+        // Otherwise the 25.5rem minimum outgrows a phone screen
+        min-width: 0;
         max-width: 100%;
         max-height: 100%;
       }

@@ -7,6 +7,9 @@
     "MonthOps": "{month}: {ops} operazioni",
     "MonthNoOps": "{month}, nessuna operazione",
     "AddStar": "Aggiungi stella",
-    "AddStarAria": "Aggiungi reazione stella"
+    "AddStarAria": "Aggiungi reazione stella",
+    "RemoveStar": "Rimuovi stella",
+    "AddReaction": "Aggiungi reazione",
+    "Reactions": "Reazioni"
   }
 }

@@ -22,13 +22,17 @@
   export let models: readonly BreadcrumbsModel[]
   export let disabled: boolean = false
   export let maxWidth: string | undefined = undefined
+  // Longer chains keep the first and the last item (only the last when 1) and fold the rest into "..."
+  export let maxItems: number = 3
 
-  $: trimmed = models.length > 3
-  $: narrowModel = trimmed ? [models[0], models[models.length - 1]] : models
+  $: trimmed = models.length > maxItems
+  $: keepFirst = maxItems > 1
+  $: narrowModel = trimmed ? (keepFirst ? [models[0], models[models.length - 1]] : [models[models.length - 1]]) : models
+  $: hidden = trimmed ? (keepFirst ? models.slice(1, -1) : models.slice(0, -1)) : []
 
   const handleMenuOpened = (event: MouseTargetEvent) => {
     event.preventDefault()
-    const items = models.slice(1, -1).map((m, i) => {
+    const items = hidden.map((m, i) => {
       if (hasComponent(m)) {
         const { component, props } = m
         return { id: i, component, props }
@@ -41,10 +45,16 @@
   }
 </script>
 
+{#if trimmed && !keepFirst}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="title" on:click={handleMenuOpened}>...</div>
+  <div class="title disabled">/</div>
+{/if}
 {#each narrowModel as model, i}
   {#if hasComponent(model)}
     {@const { component, props } = model}
-    <div class="title inline-flex min-w-6" style:max-width={maxWidth}>
+    <div class="title inline-flex min-w-6 crumb" style:max-width={maxWidth}>
       {#if typeof component === 'string'}
         <Component is={component} props={{ ...props, maxWidth }} />
       {:else}
@@ -58,10 +68,17 @@
     </NavLink>
   {/if}
   <div class="title disabled">/</div>
-  {#if trimmed && i === 0}
+  {#if trimmed && keepFirst && i === 0}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="title" on:click={handleMenuOpened}>...</div>
     <div class="title disabled">/</div>
   {/if}
 {/each}
+
+<style lang="scss">
+  // A shrunk item clips its text instead of running into the next one.
+  .crumb {
+    overflow: hidden;
+  }
+</style>

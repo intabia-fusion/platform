@@ -6,7 +6,10 @@
     "Level": "等级",
     "MonthOps": "{month}月：{ops} 操作",
     "MonthNoOps": "{month}月，无操作",
-    "AddStar": "添加星标",
-    "AddStarAria": "添加星标反应"
+    "AddStar": "加星标",
+    "AddStarAria": "添加星标反应",
+    "RemoveStar": "取消星标",
+    "AddReaction": "添加回应",
+    "Reactions": "回应"
   }
 }

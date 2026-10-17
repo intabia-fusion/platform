@@ -40,6 +40,7 @@ import core, { defineCollaborators, TDoc, TTypedSpace } from '@hcengineering/mod
 import { createPublicLinkAction } from '@hcengineering/model-guest'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import presentation from '@hcengineering/model-presentation'
+import print from '@hcengineering/model-print'
 import tracker from '@hcengineering/model-tracker'
 import view, { actionTemplates, createAction } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
@@ -302,54 +303,66 @@ function defineDocument (builder: Builder): void {
 
   // Actions
 
-  createAction(builder, {
-    ...actionTemplates.open,
-    actionProps: {
-      component: document.component.EditDoc
+  createAction(
+    builder,
+    {
+      ...actionTemplates.open,
+      actionProps: {
+        component: document.component.EditDoc
+      },
+      target: document.class.Document,
+      context: {
+        mode: ['browser', 'context'],
+        group: 'create'
+      },
+      override: [view.action.Open]
     },
-    target: document.class.Document,
-    context: {
-      mode: ['browser', 'context'],
-      group: 'create'
-    },
-    override: [view.action.Open]
-  })
+    document.action.OpenDocument
+  )
 
-  createAction(builder, {
-    action: view.actionImpl.CopyDocumentMarkdown,
-    actionProps: {
-      contentClass: document.class.Document,
-      contentField: 'content'
-    },
-    label: view.string.CopyDocumentMarkdown,
-    icon: view.icon.Print,
-    input: 'focus',
-    category: document.category.Document,
-    target: document.class.Document,
-    query: {},
-    context: {
-      mode: ['context', 'browser'],
-      application: document.app.Documents,
-      group: 'tools'
-    }
-  })
-
-  createAction(builder, {
-    ...actionTemplates.move,
-    action: view.actionImpl.ShowPopup,
-    actionProps: {
-      component: document.component.Move,
-      element: 'top',
-      fillProps: {
-        _object: 'value'
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.CopyDocumentMarkdown,
+      actionProps: {
+        contentClass: document.class.Document,
+        contentField: 'content'
+      },
+      label: view.string.CopyDocumentMarkdown,
+      icon: view.icon.Print,
+      input: 'focus',
+      category: document.category.Document,
+      target: document.class.Document,
+      query: {},
+      context: {
+        mode: ['context', 'browser'],
+        application: document.app.Documents,
+        group: 'tools'
       }
     },
-    target: document.class.Document,
-    context: {
-      mode: ['browser', 'context'],
-      group: 'tools'
-    }
-  })
+    document.action.CopyMarkdown
+  )
+
+  createAction(
+    builder,
+    {
+      ...actionTemplates.move,
+      action: view.actionImpl.ShowPopup,
+      actionProps: {
+        component: document.component.Move,
+        element: 'top',
+        fillProps: {
+          _object: 'value'
+        }
+      },
+      target: document.class.Document,
+      context: {
+        mode: ['browser', 'context'],
+        group: 'tools'
+      }
+    },
+    document.action.Move
+  )
 
   createAction(
     builder,
@@ -407,19 +420,24 @@ function defineDocument (builder: Builder): void {
     document.action.UnlockContent
   )
 
-  createAction(builder, {
-    action: view.actionImpl.OpenInSidebar,
-    label: view.string.OpenInSidebar,
-    icon: view.icon.DetailsFilled,
-    input: 'focus',
-    category: document.category.Document,
-    target: document.class.Document,
-    context: {
-      mode: ['context', 'browser'],
-      application: document.app.Documents,
-      group: 'create'
-    }
-  })
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.OpenInSidebar,
+      label: view.string.OpenInSidebar,
+      icon: view.icon.Sidebar,
+      input: 'focus',
+      category: document.category.Document,
+      target: document.class.Document,
+      context: {
+        mode: ['context', 'browser'],
+        application: document.app.Documents,
+        group: 'create',
+        order: 2
+      }
+    },
+    document.action.OpenInSidebar
+  )
 
   // Notifications
 
@@ -432,7 +450,26 @@ function defineDocument (builder: Builder): void {
   })
 
   builder.mixin(document.class.Document, core.class.Class, view.mixin.IgnoreActions, {
-    actions: [view.action.Open, view.action.OpenInNewTab, tracker.action.NewRelatedIssue]
+    actions: [view.action.Open, tracker.action.NewRelatedIssue]
+  })
+
+  // Open, sub-document, lock and move, share, then Delete
+  builder.mixin(document.class.Document, core.class.Class, view.mixin.ActionMenu, {
+    layout: {
+      create: [document.action.OpenDocument, view.action.OpenInNewTab, document.action.OpenInSidebar],
+      // A sub-document is the most frequent action here, so it goes right after opening
+      edit: [document.action.CreateChildDocument],
+      copy: [document.action.LockContent, document.action.UnlockContent, document.action.Move],
+      tools: [
+        {
+          label: presentation.string.Copy,
+          icon: view.icon.Copy,
+          items: [view.action.CopyLink, document.action.CopyMarkdown]
+        },
+        document.action.PublicLink,
+        print.action.Print
+      ]
+    }
   })
 
   builder.createDoc(

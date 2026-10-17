@@ -17,6 +17,7 @@ import RatingRing from './components/RatingRing.svelte'
 import RatingWidget from './components/RatingWidget.svelte'
 import DocReactionPresenter from './components/DocReactionPresenter.svelte'
 import RatingActivities from './components/RatingActivities.svelte'
+import { addEmojiAction, toggleStarAction } from './reactions'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -25,5 +26,9 @@ export default async (): Promise<Resources> => ({
     RatingWidget,
     DocReactionPresenter,
     RatingActivities
+  },
+  actionImpl: {
+    AddReaction: addEmojiAction,
+    ToggleStar: toggleStarAction
   }
 })

@@ -18,8 +18,10 @@
   import { getClient, isDisabled } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
   import { Menu } from '@hcengineering/ui'
-  import type { Action as ViewAction, ViewContextType } from '@hcengineering/view'
+  import view from '@hcengineering/view'
+  import type { ActionMenuLayout, Action as ViewAction, ViewContextType } from '@hcengineering/view'
   import { actionGroupOrder, getActions, invokeAction } from '../actions'
+  import ActionsSubmenu from './ActionsSubmenu.svelte'
 
   export let object: Doc | Doc[]
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
@@ -28,11 +30,21 @@
   export let includedActions: string[] = []
   export let mode: ViewContextType | undefined = undefined
   export let overrides = new Map<Ref<ViewAction>, (object: Doc | Doc[], ev?: Event) => void>()
+  // Overrides the layout of the object's class (view.mixin.ActionMenu)
+  export let layout: ActionMenuLayout = {}
+  // Adds the header buttons of a narrow panel as the first group
+  export let withHeaderActions = false
 
   let resActions = actions
   let loaded = false
 
-  void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
+  const client = getClient()
+  void Promise.all([
+    getActions(client, object, baseMenuClass, mode),
+    withHeaderActions ? getActions(client, object, baseMenuClass, 'header') : []
+  ]).then(([contextActions, headerActions]) => {
+    const headerIds = new Set(headerActions.map((a) => a._id))
+    const result = [...headerActions, ...contextActions]
     const filtered = result.filter((a) => {
       if (isDisabled(a.feature)) {
         return false
@@ -54,10 +66,11 @@
     })
 
     const newActions: Action[] = filtered.map((a) => ({
+      id: a._id,
       label: a.label,
       icon: a.icon as Asset,
       inline: a.inline,
-      group: a.context.group ?? 'other',
+      group: headerIds.has(a._id) ? 'header' : (a.context.group ?? 'other'),
       order: a.context.order,
       action: async (_: any, evt: Event) => {
         if (overrides?.has(a._id)) {
@@ -70,9 +83,9 @@
       props: { ...a.actionProps, value: object }
     }))
 
-    resActions = [...newActions, ...actions].sort((a, b) => {
-      const groupA = (actionGroupOrder as any)[a.group ?? 'other']
-      const groupB = (actionGroupOrder as any)[b.group ?? 'other']
+    const sorted = [...newActions, ...actions].sort((a, b) => {
+      const groupA = groupOrder(a.group)
+      const groupB = groupOrder(b.group)
 
       if (groupA !== groupB) {
         return groupA - groupB
@@ -83,10 +96,58 @@
 
       return orderA - orderB
     })
+    resActions = arrange(sorted, newActions, Object.keys(layout).length > 0 ? layout : classLayout())
     if (resActions.length > 0) {
       loaded = true
     }
   })
+
+  function groupOrder (group: string | undefined): number {
+    if (group === 'header') return 0
+    return (actionGroupOrder as any)[group ?? 'other'] ?? actionGroupOrder.other
+  }
+
+  function classLayout (): ActionMenuLayout {
+    const _class = baseMenuClass ?? (Array.isArray(object) ? object[0]?._class : object._class)
+    if (_class === undefined) return {}
+    return client.getHierarchy().classHierarchyMixin(_class, view.mixin.ActionMenu)?.layout ?? {}
+  }
+
+  function arrange (sorted: Action[], viewActions: Action[], layout: ActionMenuLayout): Action[] {
+    const placed = new Map<string, Action[]>()
+    const used = new Set<Action>()
+    const find = (id: string): Action | undefined => viewActions.find((it) => it.id === id)
+    for (const [group, items] of Object.entries(layout)) {
+      const list: Action[] = []
+      for (const item of items ?? []) {
+        const sub = (typeof item === 'string' ? [item] : item.items)
+          .map(find)
+          .filter((it): it is Action => it !== undefined)
+        sub.forEach((it) => used.add(it))
+        if (typeof item === 'string' || sub.length === 1) {
+          list.push(...sub.map((it) => ({ ...it, group })))
+        } else if (sub.length > 1) {
+          list.push({
+            label: item.label,
+            icon: item.icon,
+            group,
+            action: async () => {},
+            component: ActionsSubmenu,
+            props: { actions: sub }
+          })
+        }
+      }
+      placed.set(group, list)
+    }
+    const rest = sorted.filter((it) => !used.has(it))
+    const groups = [...new Set([...placed.keys(), ...rest.map((it) => it.group ?? 'other')])].sort(
+      (a, b) => groupOrder(a) - groupOrder(b)
+    )
+    return groups.flatMap((group) => [
+      ...(placed.get(group) ?? []),
+      ...rest.filter((it) => (it.group ?? 'other') === group)
+    ])
+  }
 </script>
 
 {#if loaded}

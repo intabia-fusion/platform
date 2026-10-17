@@ -75,7 +75,7 @@
 | `TSurvey` | опрос: `name` (fulltext), `prompt`, `questions?` | `models/survey/src/types.ts` |
 | `TPoll` | голосование, attached к `TSurvey`, `isCompleted` | `models/survey/src/types.ts` |
 | `DocRating` | агрегированный рейтинг документа | `plugins/rating/src/index.ts` |
-| `DocReaction` / `ReactionKind` | реакция (Emoji=0/Star=1/RateValue=3, 0..10) | `plugins/rating/src/index.ts` |
+| `DocReaction` / `ReactionKind` | реакция (Emoji=0/Star=1/RateValue=3, 0..10); в активити не попадает (`activity.mixin.IgnoreActivity`) | `plugins/rating/src/index.ts`, `models/rating/src/index.ts` |
 | `TPersonRating` | персональная статистика (months/days/hours, starsEarned, rageOperations) | `models/rating/src/index.ts` |
 | `TQuestion<QuestionData>` | вопрос: `rank`, `title`, `owner: Ref<Employee>`, `releasedOn/By` | `models/questions/src/doc-types/base.ts` |
 | `TSingleChoiceQuestion`/`TMultipleChoiceQuestion`/`TOrderingQuestion` | три готовых типа вопросов | `models/questions/src/doc-types/questions/{SingleChoice,MultipleChoice,Ordering}.ts` |
@@ -140,7 +140,7 @@
 - **Реакции трех типов.** Emoji(0)/Star(1)/RateValue(3, 0..10). - `ReactionKind`, `plugins/rating/src/index.ts`.
 - **Персональный рейтинг со статистикой.** months/days/hours, starsEarned, rageOperations. - `TPersonRating`, `models/rating/src/index.ts`.
 - **Серверная защита от прямых правок и дублей.** - `RatingMiddleware`, `server-plugins/rating/src/index.ts`.
-- **Виджет и редактор заголовка.** - `RatingWidget`/`RatingEditor`, `models/rating/src/index.ts`.
+- **Сводка реакций в заголовке.** `RatingEditor` в шапке документа - одна кнопка: звезда (жёлтая, если моя, «подпрыгивает», когда её ставят), число звёзд и до трёх самых частых эмодзи; пока открыт попап, кнопка нажата. По клику `ReactionsPopup` - панель быстрых реакций: круглая кнопка звезды без подписи (Star / Unstar в подсказке, при наведении поворот и искры), затем до шести эмодзи (уже поставленные на документе, потом частые из `getFrequentlyEmojis`, потом набор по умолчанию) со счётчиками и «+» к полному `EmojiPopup`; после выбора панель закрывается. Для узкой панели - действия Star и «Добавить реакцию» в режиме `header`. Логика - `plugins/rating-resources/src/reactions.ts`. - `RatingEditor`, `ReactionsPopup`, `StarMark`, `models/rating/src/index.ts`, `models/rating/src/actions.ts`.
 - **Отдельный под-калькулятор рейтинга.** Слушает Kafka-очередь транзакций воркспейса, пишет агрегаты в Postgres. - `@hcengineering/pod-rating`, `services/rating/src/manager.ts`, `services/rating/src/calculator.ts`.
 
 ### Questions

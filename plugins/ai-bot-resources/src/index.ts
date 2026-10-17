@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import type { Doc } from '@hcengineering/core'
 import { type Resources } from '@hcengineering/platform'
 import AIPersonalDataSettings from './components/AIPersonalDataSettings.svelte'
 import AISpaceSettingsEditor from './components/AISpaceSettingsEditor.svelte'
@@ -23,6 +24,7 @@ import IssueAssistToggle from './components/IssueAssistToggle.svelte'
 import EditProposalPresenter from './components/EditProposalPresenter.svelte'
 import TaskProposalPresenter from './components/TaskProposalPresenter.svelte'
 import ThreadContextActions from './components/ThreadContextActions.svelte'
+import { discussWithAI } from './discuss'
 
 export * from './requests'
 export * from './utils'
@@ -39,5 +41,11 @@ export default async (): Promise<Resources> => ({
     EditProposalPresenter,
     TaskProposalPresenter,
     ThreadContextActions
+  },
+  actionImpl: {
+    DiscussWithAI: async (doc: Doc | Doc[]): Promise<void> => {
+      const target = Array.isArray(doc) ? doc[0] : doc
+      if (target != null) await discussWithAI(target)
+    }
   }
 })

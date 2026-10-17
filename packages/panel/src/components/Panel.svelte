@@ -23,6 +23,8 @@
   import type { Doc } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'
   import { Component, deviceOptionsStore as deviceInfo, Panel, Scroller, resizeObserver } from '@hcengineering/ui'
+
+  import MaxWidthToggle from './MaxWidthToggle.svelte'
   import type { ButtonItem, HeaderAdaptive } from '@hcengineering/ui'
   import { getResource } from '@hcengineering/platform'
   import presence from '@hcengineering/presence'
@@ -44,6 +46,8 @@
   export let allowClose: boolean = true
   export let embedded: boolean = false
   export let useMaxWidth: boolean | undefined = undefined
+  // Header button, or a button in the content's right gutter
+  export let maxWidthToggle: 'header' | 'gutter' = 'header'
   export let sideContentSpace: number = 0
   export let isFullSize: boolean = false
   export let contentClasses: string | undefined = undefined
@@ -133,6 +137,7 @@
   {embedded}
   {floatAside}
   bind:useMaxWidth
+  showMaxWidthButton={maxWidthToggle === 'header'}
   {isFullSize}
   {customAside}
   {printHeader}
@@ -290,6 +295,7 @@
         }
       }}
     >
+      {#if useMaxWidth !== undefined && maxWidthToggle === 'gutter'}<MaxWidthToggle bind:value={useMaxWidth} />{/if}
       <div
         class={contentClasses ?? 'popupPanel-body__main-content py-8'}
         class:max={useMaxWidth}

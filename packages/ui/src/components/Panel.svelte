@@ -20,7 +20,6 @@
     Separator,
     defineSeparators,
     resizeObserver,
-    Button,
     ButtonGroup,
     Scroller,
     panelSeparators,
@@ -32,6 +31,7 @@
   import IconMinWidth from './icons/MinWidth.svelte'
   import IconScale from './icons/Scale.svelte'
   import IconScaleFull from './icons/ScaleFull.svelte'
+  import IconButton from '../ui-kit/button/IconButton.svelte'
 
   import plugin from '../plugin'
 
@@ -45,6 +45,7 @@
   export let allowClose: boolean = true
   export let embedded: boolean = false
   export let useMaxWidth: boolean | undefined = undefined
+  export let showMaxWidthButton: boolean = true
   export let customAside: ButtonItem[] | undefined = undefined
   export let selectedAside: string | boolean = customAside ? customAside[0].id : isAside
   export let printHeader = true
@@ -184,12 +185,14 @@
   >
     <svelte:fragment slot="beforeTitle">
       {#if allowClose}
-        <Button
+        <IconButton
           id="btnPClose"
           focusIndex={10001}
           icon={IconClose}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
+          kind="ghost"
+          size="small"
+          iconSize="medium"
+          tooltip={{ label: plugin.string.Close }}
           noPrint
           on:click={() => {
             dispatch('close')
@@ -212,14 +215,15 @@
       <slot name="presence" />
       <slot name="pre-utils" />
       <slot name="utils" />
-      {#if useMaxWidth !== undefined}
-        <Button
+      {#if useMaxWidth !== undefined && showMaxWidthButton}
+        <IconButton
           focusIndex={10009}
           icon={useMaxWidth ? IconMaxWidth : IconMinWidth}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
+          kind="ghost"
+          size="small"
+          iconSize="medium"
           selected={useMaxWidth}
-          showTooltip={{ label: plugin.string.UseMaxWidth, direction: 'bottom' }}
+          tooltip={{ label: plugin.string.UseMaxWidth, direction: 'bottom' }}
           on:click={() => {
             useMaxWidth = !useMaxWidth
             dispatch('maxWidth', useMaxWidth)
@@ -227,13 +231,14 @@
         />
       {/if}
       {#if isFullSize}
-        <Button
+        <IconButton
           focusIndex={100010}
           icon={fullSize ? IconScale : IconScaleFull}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
+          kind="ghost"
+          size="small"
+          iconSize="medium"
           selected={fullSize}
-          showTooltip={{ label: plugin.string.FullSize, direction: 'bottom' }}
+          tooltip={{ label: plugin.string.FullSize, direction: 'bottom' }}
           on:click={() => {
             fullSize = !fullSize
             dispatch('fullsize')
@@ -241,6 +246,8 @@
         />
       {/if}
       {#if $$slots.aside && isAside}
+        <!-- Sets the aside toggles apart from the document actions -->
+        <div class="aside-divider" />
         {#if customAside}
           <ButtonGroup
             items={customAside}
@@ -249,14 +256,16 @@
             on:select={handleSelectAside}
           />
         {:else}
-          <Button
+          <IconButton
             id="btnPAside"
             focusIndex={10008}
             icon={IconDetails}
-            iconProps={{ size: 'medium', filled: asideShown }}
-            kind="icon"
+            iconProps={{ filled: asideShown }}
+            kind="ghost"
+            size="small"
+            iconSize="medium"
             selected={asideShown}
-            showTooltip={{ label: plugin.string.Sidebar, direction: 'bottom' }}
+            tooltip={{ label: plugin.string.Properties, direction: 'bottom' }}
             on:click={handleAside}
           />
         {/if}
@@ -329,3 +338,13 @@
     <slot name="page-footer" />
   </div>
 </div>
+
+<style lang="scss">
+  .aside-divider {
+    flex-shrink: 0;
+    width: 1px;
+    height: 1.25rem;
+    margin: 0 var(--spacing-0_5);
+    background-color: var(--global-ui-BorderColor);
+  }
+</style>

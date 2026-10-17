@@ -39,7 +39,6 @@
   import TimePresenter from '../timereport/TimePresenter.svelte'
 
   export let issue: Issue
-  export let showAllMixins: boolean = false
   export let readonly = false
 
   // Both reported-time editors below read the same reports, so they share one query.
@@ -89,7 +88,7 @@
     )
   }
 
-  $: mixins = getDocMixins(issue, showAllMixins)
+  $: mixins = getDocMixins(issue, true)
 
   function getMixinKeys (mixin: Ref<Mixin<Doc>>): KeyedAttribute[] {
     const mixinClass = hierarchy.getClass(mixin)
@@ -117,7 +116,8 @@
   $: hasSubtasks = (issue.subIssues ?? 0) > 0
   $: estimationTotal = floorFractionDigits((issue.estimation ?? 0) + (treeInfo?.totalEstimation ?? 0), 3)
   $: reportedTotal = floorFractionDigits((issue.reportedTime ?? 0) + (treeInfo?.totalReportedTime ?? 0), 3)
-  $: remainingTotal = floorFractionDigits(estimationTotal - reportedTotal, 3)
+  // Overrun shows as zero, like the server's remainingTime; a negative value would render empty
+  $: remainingTotal = Math.max(0, floorFractionDigits(estimationTotal - reportedTotal, 3))
 
   function updateEstimation (val: number | undefined): void {
     if (val === undefined) return

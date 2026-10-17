@@ -113,7 +113,10 @@ const ratingPlugin = plugin(ratingId, {
     // Shown when the Rating widget has no items to display (empty state)
     RatingWidgetEmpty: '' as IntlString,
     AddStar: '' as IntlString,
-    AddStarAria: '' as IntlString
+    AddStarAria: '' as IntlString,
+    RemoveStar: '' as IntlString,
+    AddReaction: '' as IntlString,
+    Reactions: '' as IntlString
   },
   component: {
     RatingRing: '' as AnyComponent,

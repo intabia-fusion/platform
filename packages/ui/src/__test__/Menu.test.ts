@@ -115,6 +115,27 @@ describe('Menu', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('opens a link action in a new tab on a modifier click instead of running it', () => {
+    const act = vi.fn(async () => {})
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const { buttons } = mount({ actions: [action({ action: act, link: '/somewhere' })] })
+    buttons[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, metaKey: true }))
+    expect(open).toHaveBeenCalledWith('/somewhere', '_blank')
+    expect(act).not.toHaveBeenCalled()
+    open.mockRestore()
+  })
+
+  it('shows an arrow only on an action that opens another page', () => {
+    const { buttons } = mount({
+      actions: [
+        action({ icon: undefined, link: '/somewhere', opensPage: true }),
+        action({ icon: undefined, link: '/elsewhere' })
+      ]
+    })
+    expect(buttons[0].querySelectorAll('.icon').length).toBe(1)
+    expect(buttons[1].querySelectorAll('.icon').length).toBe(0)
+  })
+
   it('inserts a separator between actions from different groups', () => {
     const { host } = mount({
       actions: [action({ group: 'a' }), action({ group: 'a' }), action({ group: 'b' })]

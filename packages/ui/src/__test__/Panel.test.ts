@@ -63,35 +63,35 @@ describe('Panel', () => {
     expect(mount().host.querySelector('#btnPClose')).not.toBeNull()
     const absent = mount({ useMaxWidth: undefined })
     // No max-width toggle button rendered at all: only the close button is present.
-    expect(absent.host.querySelectorAll('button.antiButton').length).toBe(1)
+    expect(absent.host.querySelectorAll('button.button').length).toBe(1)
 
     const { host, component } = mount({ useMaxWidth: false })
     const onMaxWidth = vi.fn()
     component.$on('maxWidth', onMaxWidth)
-    const buttons = host.querySelectorAll('button.antiButton')
+    const buttons = host.querySelectorAll('button.button')
     const toggle = buttons[buttons.length - 1] as HTMLButtonElement
-    expect(toggle.classList.contains('selected')).toBe(false)
+    expect(toggle.classList.contains('button--selected')).toBe(false)
 
     toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await tick()
     expect(onMaxWidth).toHaveBeenLastCalledWith(expect.objectContaining({ detail: true }))
-    expect(toggle.classList.contains('selected')).toBe(true)
+    expect(toggle.classList.contains('button--selected')).toBe(true)
   })
 
   it('renders the fullsize toggle only when isFullSize is true, and toggles + dispatches fullsize', async () => {
-    expect(mount({ isFullSize: false }).host.querySelectorAll('button.antiButton').length).toBe(1)
+    expect(mount({ isFullSize: false }).host.querySelectorAll('button.button').length).toBe(1)
 
     const { host, component } = mount({ isFullSize: true })
     const onFullsize = vi.fn()
     component.$on('fullsize', onFullsize)
-    const buttons = host.querySelectorAll('button.antiButton')
+    const buttons = host.querySelectorAll('button.button')
     const toggle = buttons[buttons.length - 1] as HTMLButtonElement
-    expect(toggle.classList.contains('selected')).toBe(false)
+    expect(toggle.classList.contains('button--selected')).toBe(false)
 
     toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await tick()
     expect(onFullsize).toHaveBeenCalledTimes(1)
-    expect(toggle.classList.contains('selected')).toBe(true)
+    expect(toggle.classList.contains('button--selected')).toBe(true)
   })
 
   // floatAside:true is required: Panel re-derives panelWidth every mount from the (always-0 in

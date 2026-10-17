@@ -6,7 +6,10 @@
     "Level": "Level",
     "MonthOps": "{month}: {ops} ops",
     "MonthNoOps": "{month}, No ops",
-    "AddStar": "Add star",
-    "AddStarAria": "Add star reaction"
+    "AddStar": "Star",
+    "AddStarAria": "Add star reaction",
+    "RemoveStar": "Unstar",
+    "AddReaction": "Add reaction",
+    "Reactions": "Reactions"
   }
 }

@@ -57,7 +57,7 @@ import preference, { TPreference } from '@hcengineering/model-preference'
 import tracker from '@hcengineering/tracker'
 import presentation from '@hcengineering/model-presentation'
 import setting from '@hcengineering/setting'
-import view from '@hcengineering/model-view'
+import view, { createAction } from '@hcengineering/model-view'
 
 import aiBot from './plugin'
 
@@ -292,6 +292,20 @@ export function createModel (builder: Builder): void {
     extension: view.extensions.EditDocTitleExtension,
     component: aiBot.component.DiscussWithAI
   })
+  // The same, for the menu of a panel too narrow for the header button.
+  createAction(
+    builder,
+    {
+      action: aiBot.actionImpl.DiscussWithAI,
+      label: aiBot.string.DiscussWithAI,
+      icon: view.icon.AiStar,
+      input: 'focus',
+      category: view.category.General,
+      target: core.class.Doc,
+      context: { mode: ['header'], order: 1 }
+    },
+    aiBot.action.DiscussWithAI
+  )
 
   // "New context" button in the thread header; renders only for AI context roots.
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {

@@ -88,6 +88,8 @@ import {
   type ObjectIcon,
   type ObjectIdentifier,
   type ObjectPanel,
+  type ActionMenu,
+  type ActionMenuLayout,
   type ObjectPanelFooter,
   type SidebarObjectPreview,
   type ObjectPresenter,
@@ -438,6 +440,11 @@ export class TObjectPanel extends TClass implements ObjectPanel {
   component!: AnyComponent
 }
 
+@Mixin(view.mixin.ActionMenu, core.class.Class)
+export class TActionMenu extends TClass implements ActionMenu {
+  layout!: ActionMenuLayout
+}
+
 @Mixin(view.mixin.SidebarObjectPreview, core.class.Class)
 export class TSidebarObjectPreview extends TClass implements SidebarObjectPreview {
   component!: AnyComponent
@@ -497,7 +504,7 @@ export const actionTemplates = template({
   openInNewTab: {
     action: view.actionImpl.OpenInNewTab,
     label: view.string.OpenInNewTab,
-    icon: view.icon.Open,
+    icon: view.icon.OpenInNewTab,
     input: 'focus',
     category: view.category.General
   }
@@ -515,6 +522,7 @@ export function createModel (builder: Builder): void {
   builder.createModel(
     TLinkProvider,
     TObjectPanel,
+    TActionMenu,
     TSidebarObjectPreview,
     TFilterMode,
     TClassFilters,
@@ -1396,7 +1404,7 @@ export function createModel (builder: Builder): void {
       ...actionTemplates.open,
       target: core.class.Doc,
       category: view.category.Editor,
-      context: { mode: ['browser', 'context'], group: 'edit' }
+      context: { mode: ['browser', 'context'], group: 'create', order: 1 }
     },
     view.action.Open
   )
@@ -1407,7 +1415,7 @@ export function createModel (builder: Builder): void {
       ...actionTemplates.openInNewTab,
       target: core.class.Doc,
       category: view.category.Editor,
-      context: { mode: ['browser', 'context'], group: 'edit' }
+      context: { mode: ['browser', 'context'], group: 'create', order: 3 }
     },
     view.action.OpenInNewTab
   )

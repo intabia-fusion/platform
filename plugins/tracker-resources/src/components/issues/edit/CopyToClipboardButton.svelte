@@ -13,21 +13,69 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset, IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { Button } from '@hcengineering/ui'
+  import { IconCheck, type IconComponent } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
+  import { onDestroy } from 'svelte'
 
-  export let icon: Asset
+  export let icon: IconComponent
   export let title: IntlString
   export let text: string
   export let dataId: string | undefined = undefined
+
+  let copied = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  async function copy (): Promise<void> {
+    try {
+      await copyTextToClipboard(text)
+    } catch {
+      // No check when the browser refuses clipboard access
+      return
+    }
+    copied = true
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      copied = false
+    }, 1500)
+  }
+
+  onDestroy(() => {
+    clearTimeout(timer)
+  })
 </script>
 
-<Button
-  {icon}
-  iconProps={{ size: 'medium' }}
-  kind="icon"
-  showTooltip={{ label: title, direction: 'bottom' }}
-  {dataId}
-  on:click={() => copyTextToClipboard(text)}
-/>
+<!-- A quiet confirmation: the icon turns into a check for a moment, the tooltip says it is copied -->
+<span class="copy-button" class:copied>
+  <IconButton
+    size="small"
+    icon={copied ? IconCheck : icon}
+    iconSize="medium"
+    kind="ghost"
+    tooltip={{ label: copied ? view.string.Copied : title, direction: 'bottom' }}
+    data-id={dataId}
+    on:click={copy}
+  />
+</span>
+
+<style lang="scss">
+  .copy-button {
+    display: contents;
+  }
+  .copied :global(.button__icon) {
+    animation: copied-pop 0.2s ease-out;
+  }
+  @keyframes copied-pop {
+    from {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .copied :global(.button__icon) {
+      animation: none;
+    }
+  }
+</style>

@@ -27,20 +27,20 @@
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { Issue } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
-  import type { AnyComponent } from '@hcengineering/ui'
+  import type { Action, AnyComponent, Location } from '@hcengineering/ui'
   import {
-    Button,
     Component,
     EditBox,
     FocusHandler,
-    IconMixin,
     IconMoreH,
     Label,
     createFocusManager,
     getCurrentResolvedLocation,
+    locationToUrl,
     navigate,
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import {
     DocNavLink,
@@ -80,10 +80,7 @@
 
   let issue: WithLookup<Issue> | undefined
   let title = ''
-  let innerWidth: number
   let descriptionBox: AttachmentStyleBoxCollabEditor
-  let showAllMixins: boolean = getShowAllMixins()
-  $: saveShowAllMixins(showAllMixins)
 
   const inboxClient = NotificationClientImpl.getClient()
 
@@ -150,9 +147,76 @@
     }
   }
 
+  // Rare actions live in the menu, the header keeps only frequent ones.
   function showContextMenu (ev: MouseEvent): void {
-    if (issue !== undefined) {
-      showMenu(ev, { object: issue, excludedActions: [view.action.Open] })
+    if (issue === undefined) return
+    const panelActions: Action[] = [
+      {
+        label: tracker.string.TaskTypeSettings,
+        icon: setting.icon.Setting,
+        group: 'other',
+        link: locationToUrl(classSettingLocation()),
+        opensPage: true,
+        action: async () => {
+          navigate(classSettingLocation())
+        }
+      }
+    ]
+    showMenu(ev, {
+      object: issue,
+      withHeaderActions: mobileAdaptive,
+      excludedActions: [view.action.Open],
+      actions: panelActions
+    })
+  }
+
+  function classSettingLocation (): Location {
+    const loc = getCurrentResolvedLocation()
+    loc.path[2] = settingId
+    if (projectType?._id != null && issue?.kind != null) {
+      loc.path[3] = 'spaceTypes'
+      loc.path[4] = projectType?._id
+      loc.path[5] = 'taskTypes'
+      loc.path[6] = issue?.kind
+      loc.path.length = 7
+    } else {
+      loc.path.length = 3
+    }
+    loc.fragment = undefined
+    return loc
+  }
+
+  $: showOpenInSidebar = !embedded && issue !== undefined && !mobileAdaptive
+  // The title sheds parts only when it does not fit: the parent chain folds, the project hides, then the chain hides.
+  let titleRoom = Infinity
+  // Natural title width at each level but the last
+  let titleWidths = [0, 0, 0]
+  $: titleLevel = fittingLevel(titleWidths, titleRoom)
+  $: if (_id !== undefined) titleWidths = [0, 0, 0]
+
+  // The first level that fits; an unmeasured level (0) counts as fitting until it is measured.
+  function fittingLevel (widths: number[], room: number): number {
+    const level = widths.findIndex((width) => width <= room)
+    return level === -1 ? widths.length : level
+  }
+
+  // Measures the room the header gives the title and the natural width of its content.
+  function watchTitle (node: HTMLElement): { destroy: () => void } {
+    const room = node.parentElement ?? node
+    const content = node.firstElementChild as HTMLElement
+    const observer = new ResizeObserver(() => {
+      titleRoom = room.clientWidth
+      if (titleLevel < titleWidths.length) {
+        titleWidths[titleLevel] = content.offsetWidth
+        titleWidths = titleWidths
+      }
+    })
+    observer.observe(room)
+    observer.observe(content)
+    return {
+      destroy: () => {
+        observer.disconnect()
+      }
     }
   }
 
@@ -200,15 +264,6 @@
     Analytics.handleEvent(TrackerEvents.IssueParentUnset, { issue: issue.identifier ?? issue._id })
   }
 
-  function getShowAllMixins (): boolean {
-    const showAllMixins = localStorage.getItem('issue.showAllMixins')
-    return showAllMixins === null ? true : showAllMixins === 'true'
-  }
-
-  function saveShowAllMixins (showAllMixins: boolean): void {
-    localStorage.setItem('issue.showAllMixins', showAllMixins.toString())
-  }
-
   // Mobile header has room for two buttons only: context menu and the properties aside.
   $: mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
 </script>
@@ -234,41 +289,49 @@
     printAside={true}
     adaptive="default"
     useMaxWidth={mobileAdaptive ? undefined : true}
+    maxWidthToggle="gutter"
     bind:content
-    bind:innerWidth
     on:open
     on:close={() => dispatch('close')}
     on:select
   >
     <svelte:fragment slot="title">
-      {#if !embedded && issue.space}
-        <ProjectPresenter value={issue.space} openIssues={true} />
-        <span class="breadcrumb-separator">›</span>
-      {/if}
-      {#if !embedded && issue.attachedTo !== tracker.ids.NoParent}
-        <ParentsNavigator element={issue} />
-      {/if}
-      {#if embedded}
-        <DocNavLink noUnderline object={issue}>
-          <div class="title">{issue.identifier}</div>
-        </DocNavLink>
-      {:else}
-        <div class="title not-active">{issue.identifier}</div>
-      {/if}
+      <!-- Clips instead of running under the header buttons when space is short -->
+      <div class="issue-title" use:watchTitle>
+        <div class="issue-title__content">
+          {#if !embedded && !mobileAdaptive && titleLevel < 2 && issue.space}
+            <ProjectPresenter value={issue.space} openIssues={true} />
+            <span class="breadcrumb-separator">›</span>
+          {/if}
+          {#if !embedded && !mobileAdaptive && titleLevel < 3 && issue.attachedTo !== tracker.ids.NoParent}
+            <ParentsNavigator element={issue} maxItems={titleLevel > 0 ? 1 : Infinity} />
+          {/if}
+          {#if embedded}
+            <DocNavLink noUnderline object={issue}>
+              <div class="title">{issue.identifier}</div>
+            </DocNavLink>
+          {:else}
+            <div class="title not-active overflow-label">{issue.identifier}</div>
+          {/if}
 
-      {#if (projectType?.tasks.length ?? 0) > 1 && taskType !== undefined}
-        ({taskType.name})
-      {/if}
-      <ComponentExtensions
-        extension={tracker.extensions.EditIssueTitle}
-        props={{ size: 'medium', kind: 'ghost', space: issue.space, value: issue, readonly }}
-      />
+          {#if !mobileAdaptive && (projectType?.tasks.length ?? 0) > 1 && taskType !== undefined}
+            ({taskType.name})
+          {/if}
+          <ComponentExtensions
+            extension={tracker.extensions.EditIssueTitle}
+            props={{ size: 'medium', kind: 'ghost', space: issue.space, value: issue, readonly }}
+          />
+        </div>
+      </div>
     </svelte:fragment>
     <svelte:fragment slot="pre-utils">
-      <ComponentExtensions
-        extension={view.extensions.EditDocTitleExtension}
-        props={{ size: 'medium', kind: 'ghost', _id, _class: currentClass, value: issue, readonly }}
-      />
+      <!-- A narrow header has no room for them: the menu gets them as header actions -->
+      {#if !mobileAdaptive}
+        <ComponentExtensions
+          extension={view.extensions.EditDocTitleExtension}
+          props={{ _id: issue._id, _class: currentClass, value: issue, readonly }}
+        />
+      {/if}
       <ComponentExtensions
         extension={tracker.extensions.EditIssueHeader}
         props={{ size: 'medium', kind: 'ghost', space: issue.space, readonly, value: issue }}
@@ -279,13 +342,17 @@
     </svelte:fragment>
 
     <svelte:fragment slot="utils">
-      {#if !embedded && issue && !mobileAdaptive}
-        <Button
-          icon={view.icon.DetailsFilled}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          dataId="btnOpenInSidebar"
-          showTooltip={{ label: view.string.OpenInSidebar }}
+      {#if !readonly && !mobileAdaptive}
+        <CopyToClipboard issueUrl={generateIssueShortLink(issue.identifier)} />
+      {/if}
+      {#if showOpenInSidebar}
+        <IconButton
+          size="small"
+          icon={view.icon.Sidebar}
+          iconSize="medium"
+          kind="ghost"
+          data-id="btnOpenInSidebar"
+          tooltip={{ label: view.string.OpenInSidebar }}
           on:click={() => {
             if (issue !== undefined) {
               void openDocInSidebar(issue)
@@ -294,51 +361,14 @@
         />
       {/if}
       {#if !readonly}
-        <Button
+        <IconButton
+          size="small"
+          tooltip={{ label: view.string.MoreActions }}
           icon={IconMoreH}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          dataId="btnMoreActions"
+          iconSize="medium"
+          kind="ghost"
+          data-id="btnMoreActions"
           on:click={showContextMenu}
-        />
-        {#if !mobileAdaptive}
-          <CopyToClipboard issueUrl={generateIssueShortLink(issue.identifier)} />
-          <Button
-            icon={setting.icon.Setting}
-            kind="icon"
-            iconProps={{ size: 'medium' }}
-            showTooltip={{ label: setting.string.ClassSetting }}
-            dataId="btnClassSetting"
-            on:click={(ev) => {
-              ev.stopPropagation()
-              const loc = getCurrentResolvedLocation()
-              loc.path[2] = settingId
-              if (projectType?._id != null && issue?.kind != null) {
-                loc.path[3] = 'spaceTypes'
-                loc.path[4] = projectType?._id
-                loc.path[5] = 'taskTypes'
-                loc.path[6] = issue?.kind
-                loc.path.length = 7
-              } else {
-                loc.path.length = 3
-              }
-              loc.fragment = undefined
-              navigate(loc)
-            }}
-          />
-        {/if}
-      {/if}
-      {#if !mobileAdaptive}
-        <Button
-          icon={IconMixin}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          selected={showAllMixins}
-          showTooltip={{ label: tracker.string.AdditionalProperties }}
-          dataId="btnMixin"
-          on:click={() => {
-            showAllMixins = !showAllMixins
-          }}
         />
       {/if}
     </svelte:fragment>
@@ -348,12 +378,13 @@
         <SubIssueSelector {issue} />
         {#if !readonly}
           <div class="ml-2">
-            <Button
+            <IconButton
+              size="small"
               icon={tracker.icon.UnsetParent}
               iconProps={{ size: 'medium' }}
               kind="ghost"
-              showTooltip={{ label: tracker.string.UnsetParentIssue }}
-              dataId="btnUnsetParent"
+              tooltip={{ label: tracker.string.UnsetParentIssue }}
+              data-id="btnUnsetParent"
               on:click={() => {
                 void unsetParentIssue()
               }}
@@ -413,7 +444,7 @@
     <svelte:fragment slot="custom-attributes">
       {#if issue !== undefined}
         <div class="space-divider" />
-        <ControlPanel {issue} {showAllMixins} {readonly} />
+        <ControlPanel {issue} {readonly} />
       {/if}
 
       <div class="popupPanel-body__aside-grid">
@@ -425,6 +456,21 @@
 {/if}
 
 <style lang="scss">
+  .issue-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0_5);
+    min-width: 0;
+    overflow: hidden;
+
+    // Keeps its natural width so an overflow is measurable and folds the chain instead
+    &__content {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: var(--spacing-0_5);
+    }
+  }
   .breadcrumb-separator {
     margin: 0 0.5rem;
     color: var(--theme-caption-color);
