@@ -191,6 +191,19 @@ export class CommonPage {
     }
   }
 
+  // Picks an item of an open menu's submenu, retrying the hover that opens it until the item shows.
+  async selectFromSubmenu (submenu: string, item: string): Promise<void> {
+    const parent = this.page.locator('button.antiPopup-submenu', { hasText: new RegExp(`^\\s*${submenu}\\s*$`) })
+    const target = this.popupSpanLabel(item)
+    await retry(async () => {
+      if (await target.isVisible()) return
+      await parent.hover()
+      await parent.click()
+      await expect(target).toBeVisible({ timeout: 3000 })
+    })
+    await target.click()
+  }
+
   async checkDropdownHasNo (page: Page, item: string): Promise<void> {
     await expect(this.selectPopupSpanLines(item)).not.toBeVisible()
   }

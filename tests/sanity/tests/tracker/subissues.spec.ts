@@ -137,7 +137,7 @@ test.describe('Tracker sub-issues tests', () => {
     await issuesPage.createNewIssue(parentIssue)
     await issuesPage.searchIssueByName(parentIssue.title)
     await issuesPage.openIssueByName(parentIssue.title)
-    await issuesDetailsPage.moreActionOnIssue('Add sub-issue...')
+    await issuesDetailsPage.moreActionOnIssue('Add sub-issue')
     await issuesPage.selectTemplate(templateName)
     await expect(issuesPage.buttonPopupCreateNewIssueTemplate()).toHaveText(templateName)
     await issuesPage.fillNewIssueForm(subIssue)

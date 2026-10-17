@@ -21,6 +21,7 @@ import tracker from '@hcengineering/tracker'
 import { createIssue, getProjectContext } from '../API/TrackerApi'
 import { expect, type SharedWorkspace, test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
+import { CommonPage } from '../model/common-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { loginByToken, PlatformURI } from '../utils'
 import { waitStable } from '../retry'
@@ -234,13 +235,14 @@ test.describe('Renderer memory does not grow with repeated actions', () => {
     const [identifier] = await createIssues(shared, 1)
     await loginByToken(page, shared.token, shared.ws, issuesApp)
     const issueLink = page.locator(`a[href$="/${identifier}"]`).first()
+    const menu = new CommonPage(page)
 
     // Chromium kept every ClipboardItem write in a persistent root, and with it the whole page
     // that wrote it, across reloads.
     await soak(page, 'copy + reload', async () => {
       await expect(issueLink).toBeVisible()
       await issueLink.click({ button: 'right' })
-      await page.locator('div.popup button', { hasText: 'Copy issue ID to clipboard' }).click()
+      await menu.selectFromSubmenu('Copy', 'Copy issue ID')
       await expect
         .poll(async () => await page.evaluate(async () => await navigator.clipboard.readText()))
         .toBe(identifier)
