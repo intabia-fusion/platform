@@ -523,6 +523,7 @@ excludeLinksFromLockfile: false
 linkWorkspacePackages: true
 
 minimumReleaseAgeExclude:
+  - '@intabia-fusion/yama'
   - '@typescript-eslint/eslint-plugin@8.70.0'
   - '@typescript-eslint/parser@8.70.0'
   - '@typescript-eslint/project-service@8.70.0'

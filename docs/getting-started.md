@@ -178,7 +178,7 @@ node ./common/scripts/bump.js --publish <version>  # bump and publish
 
 - [../AGENTS.md](../AGENTS.md) - "Build & Validation": scoped check after edits, license headers, sanity tests.
 - [memory/typescript7-migration.md](memory/typescript7-migration.md) - tsc7 compile path.
-- [memory/fast-build-tooling.md](memory/fast-build-tooling.md), [memory/fast_build_cache_external_deps.md](memory/fast_build_cache_external_deps.md) - platform-rig/bin internals and cache gaps.
+- [memory/fast-build-tooling.md](memory/fast-build-tooling.md), [memory/fast_build_cache_external_deps.md](memory/fast_build_cache_external_deps.md) - build tooling internals (`@intabia-fusion/yama`) and cache gaps.
 - [memory/dependency-upgrade-tooling.md](memory/dependency-upgrade-tooling.md) - `common/scripts/outdated*.js`, version pins.
 - [memory/go-docker-build.md](memory/go-docker-build.md) - `foundations/stream` Go build, base image pins.
 - [memory/eslint8_upgrade_fix_patterns.md](memory/eslint8_upgrade_fix_patterns.md) - `@typescript-eslint` quirks.

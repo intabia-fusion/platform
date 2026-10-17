@@ -5,7 +5,7 @@
 `pnpm docker:build` can report "from cache" and ship an image whose `bundle.js` still has the old code after a `pnpm patch` (or any change resolved only through the lockfile/external `node_modules`)
 - without a rebuild of the packages that actually changed.
 
-`foundations/utils/packages/platform-rig/bin/libs/cache.js` (`calculatePackageHash`) keys each phase on the package's own `src/`/`tests/`/config files plus workspace dependency hashes. Nothing about the root `node_modules` or `pnpm-lock.yaml` enters the key (`collectFileSignatures` explicitly skips `node_modules`), so a change to only an external package leaves every phase looking valid:
+`@intabia-fusion/yama`, `src/build/libs/cache.ts` (`calculatePackageHash`) keys each phase on the package's own `src/`/`tests/`/config files plus workspace dependency hashes. Nothing about the root `node_modules` or `pnpm-lock.yaml` enters the key (`collectFileSignatures` explicitly skips `node_modules`), so a change to only an external package leaves every phase looking valid:
 
 - `pnpm patch` / `common/pnpm-patches/*.patch`
 - a version bump resolved through the lockfile
@@ -27,4 +27,4 @@ A green build log is not evidence the change is in the image.
 ## Связанные документы
 
 - [../getting-started.md](../getting-started.md) - build commands.
-- [fast-build-tooling.md](fast-build-tooling.md) - platform-rig/bin internals.
+- [fast-build-tooling.md](fast-build-tooling.md) - build tooling (`@intabia-fusion/yama`) internals.

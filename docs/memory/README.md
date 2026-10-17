@@ -91,7 +91,7 @@
 - [ci-deploy-stands.md](ci-deploy-stands.md) - ci_deploy.sh и стенды selfhost
 - [dependency-upgrade-tooling.md](dependency-upgrade-tooling.md) - Dependency upgrade tooling
 - [eslint8_upgrade_fix_patterns.md](eslint8_upgrade_fix_patterns.md) - @typescript-eslint 6->8 fix patterns
-- [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (platform-rig/bin)
+- [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (`@intabia-fusion/yama`)
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
 - [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules and the no-duplicates fixer bug
