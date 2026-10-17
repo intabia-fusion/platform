@@ -33,6 +33,10 @@ export interface VisibleGroupsInput {
   categories: CategoryType[]
   swimLanes: SwimLane[]
   collapsed: Set<string>
+  // Lanes that have reached the viewport; the rest wait. Undefined - every lane.
+  seenLanes?: Set<string>
+  // stateKey of collapsed columns: they show no cards.
+  collapsedColumns?: Set<string>
   cellLimits: Map<string, number>
   swimLaneMode: boolean
   // Lanes not built yet: the board shows columns for a moment, they must not query.
@@ -54,8 +58,9 @@ export function collectVisibleGroups (input: VisibleGroupsInput): Map<string, Ar
   const result = (): Map<string, Array<Ref<Doc>>> =>
     new Map(Array.from(groups, ([key, ids]) => [key, Array.from(ids).sort()]))
   const values = (category: CategoryType): Item[] => input.getGroupByValues(input.groupByDocs, category) ?? []
+  const categories = input.categories.filter((category) => input.collapsedColumns?.has(stateKey(category)) !== true)
   if (!input.swimLaneMode) {
-    for (const category of input.categories) {
+    for (const category of categories) {
       const key = cellKey('', category)
       const docs = values(category).slice(0, input.cellLimits.get(key) ?? COLUMN_LIMIT)
       groups.set(key, new Set(docs.map((doc) => doc._id)))
@@ -66,10 +71,11 @@ export function collectVisibleGroups (input: VisibleGroupsInput): Map<string, Ar
   if (input.categories.every((category) => values(category).length === 0)) return new Map()
   // A collapsed lane still loads its header document, without cards.
   for (const lane of input.swimLanes) {
+    if (input.seenLanes !== undefined && !input.seenLanes.has(lane._id)) continue
     const id = input.getSwimLaneDocId?.(lane)
     groups.set(lane._id, new Set(id !== undefined ? [id] : []))
   }
-  for (const category of input.categories) {
+  for (const category of categories) {
     const perLane = new Map<string, number>()
     for (const doc of values(category)) {
       const laneId = input.getSwimLaneOfDoc?.(doc)

@@ -31,8 +31,18 @@
   <svelte:fragment slot="card" let:object let:dragged>
     <span data-test="card-body" data-dragged={dragged ? 'true' : 'false'}>{object._id}</span>
   </svelte:fragment>
-  <svelte:fragment slot="header" let:state let:count>
-    <span data-test="column-header" data-count={count}>{typeof state === 'object' ? state.name : state}</span>
+  <svelte:fragment slot="header" let:state let:count let:collapsed let:blocked let:toggle let:members let:merge>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <span
+      data-test="column-header"
+      data-count={count}
+      data-collapsed={collapsed ? 'true' : 'false'}
+      data-blocked={blocked ? 'true' : 'false'}
+      data-members={members.join(',')}
+      on:click={toggle}>{typeof state === 'object' ? state.name : state}</span
+    >
+    <button data-test="merge" data-state={state} on:click={() => merge(prompt() ?? '')} />
   </svelte:fragment>
   <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:laneDoc let:docsLoaded let:collapsed>
     <span

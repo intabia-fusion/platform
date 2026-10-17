@@ -55,6 +55,15 @@ function laneInput (
 }
 
 describe('collectVisibleGroups', () => {
+  it('queries only the lanes that reached the viewport', () => {
+    const groups = collectVisibleGroups(
+      laneInput({ todo: [card('a', 'L1'), card('b', 'L2')] }, [swimLane('L1'), swimLane('L2')], {
+        seenLanes: new Set(['L2'])
+      })
+    )
+    expect(Array.from(groups)).toEqual([['L2', ['b', 'parent-L2']]])
+  })
+
   it('loads the header document of a lane collapsed from the start, without its cards', () => {
     const groups = collectVisibleGroups(
       laneInput({ todo: [card('a', 'L1'), card('b', 'L2')] }, [swimLane('L1'), swimLane('L2')], {
@@ -106,6 +115,38 @@ describe('collectVisibleGroups', () => {
     const shifted = collectVisibleGroups(input(groupByDocs, { categories, cellLimits }))
     expect(shifted.get(cellKey('', 'done'))).toHaveLength(15)
     expect(shifted.get(cellKey('', 'review'))).toHaveLength(COLUMN_LIMIT)
+  })
+
+  it('skips collapsed columns in both layouts', () => {
+    const groupByDocs = { todo: [card('a', 'L1')], done: [card('b', 'L1')] }
+    const collapsedColumns = new Set(['done'])
+    const columns = collectVisibleGroups(input(groupByDocs, { collapsedColumns }))
+    expect(Array.from(columns.keys())).toEqual([cellKey('', 'todo')])
+    // The lane keeps its header document and the cards of open columns only.
+    const lanes = collectVisibleGroups(laneInput(groupByDocs, [swimLane('L1')], { collapsedColumns }))
+    expect(lanes.get('L1')).toEqual(['a', 'parent-L1'])
+  })
+
+  it('combines lazy lanes, collapsed lanes and collapsed columns', () => {
+    const groupByDocs = { todo: [card('a', 'L1'), card('b', 'L2'), card('c', 'L3')], done: [card('d', 'L1')] }
+    const groups = collectVisibleGroups(
+      laneInput(groupByDocs, [swimLane('L1'), swimLane('L2'), swimLane('L3')], {
+        seenLanes: new Set(['L1', 'L2']),
+        collapsed: new Set(['L2']),
+        collapsedColumns: new Set(['done'])
+      })
+    )
+    expect(Array.from(groups)).toEqual([
+      ['L1', ['a', 'parent-L1']],
+      ['L2', ['parent-L2']]
+    ])
+  })
+
+  it('queries nothing for lanes before any of them is seen', () => {
+    const groups = collectVisibleGroups(
+      laneInput({ todo: [card('a', 'L1')] }, [swimLane('L1')], { seenLanes: new Set() })
+    )
+    expect(groups.size).toBe(0)
   })
 
   it('does not query while the lanes are pending or have no cards yet', () => {

@@ -17,10 +17,11 @@ import type { Ref } from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { registerSwimLaneControls, swimLaneControlStore } from '../swimlane'
+import { columnControlStore, registerColumnControls, registerSwimLaneControls, swimLaneControlStore } from '../swimlane'
 import type { Item, SwimLane } from '../types'
 import { fakeClient, fakeQueries, type FakeCall } from './fakePresentation'
 import Harness from './KanbanHarness.svelte'
+import { intersect } from './setup'
 
 vi.mock('@hcengineering/presentation', async () => await import('./fakePresentation'))
 
@@ -251,6 +252,465 @@ describe('Kanban legacy layout', () => {
   })
 })
 
+describe('Kanban column collapse', () => {
+  const header = (state: string): HTMLElement => one('[data-test="column-header"]', column(state))
+
+  const stacked = (state: string): HTMLElement => one(`[data-id="kanban-collapsed-column"][data-state="${state}"]`)
+  const columnOrder = (): string[] =>
+    Array.from(one('.kanban-content').children).map((el) =>
+      el.matches('[data-id="kanban-collapsed-stack"]') ? 'stack' : ((el as HTMLElement).dataset.state ?? '')
+    )
+
+  it('moves a collapsed column to a stack at the end, without cards or a query, and remembers it', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 2, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    expect(parent.querySelector('[data-id="kanban-collapsed-stack"]')).toBeNull()
+
+    header('todo').click()
+    await settle()
+    expect(columnOrder()).toEqual(['doing', 'done', 'stack'])
+    expect(one('[data-test="column-header"]', stacked('todo')).dataset.collapsed).toBe('true')
+    expect(cardEls(one('[data-id="kanban-collapsed-stack"]'))).toHaveLength(0)
+    expect(live().map(ids)).toEqual([['d00'], ['x00', 'x01']])
+
+    mounted.forEach((c) => {
+      c.$destroy()
+    })
+    mounted = []
+    parent.innerHTML = ''
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    expect(columnOrder()).toEqual(['doing', 'done', 'stack'])
+
+    one('[data-test="column-header"]', stacked('todo')).click()
+    await settle()
+    expect(columnOrder()).toEqual(['todo', 'doing', 'done'])
+  })
+
+  it('shows the dragged card in the collapsed column under the cursor until the cursor leaves it', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    header('done').click()
+    await settle()
+    const stack = one('[data-id="kanban-collapsed-stack"]')
+    const preview = (): string[] => q('[data-test="card-body"]', stacked('done')).map((e) => e.textContent ?? '')
+    const leave = (relatedTarget: Element): void => {
+      stacked('done').dispatchEvent(new MouseEvent('dragleave', { bubbles: true, relatedTarget }))
+    }
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    expect(stack.classList.contains('dragging')).toBe(false)
+    fire(stacked('done'), 'dragover')
+    await settle()
+    expect(stack.classList.contains('dragging')).toBe(true)
+    expect(stacked('done').classList.contains('drag-over')).toBe(true)
+    expect(preview()).toEqual(['t00'])
+
+    // Moving onto the header inside the column is not leaving it.
+    leave(one('[data-test="column-header"]', stacked('done')))
+    await settle()
+    expect(preview()).toEqual(['t00'])
+    leave(stack)
+    await settle()
+    expect(preview()).toEqual([])
+    expect(stacked('done').classList.contains('drag-over')).toBe(false)
+  })
+
+  it('keeps collapsed columns per grouping', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    header('done').click()
+    await settle()
+    mounted.forEach((c) => {
+      c.$destroy()
+    })
+    mounted = []
+    parent.innerHTML = ''
+
+    await mount(legacyProps(groups, { controlKey: 'viewlet', groupByKey: 'assignee' }))
+    expect(columnOrder()).toEqual(['todo', 'done'])
+  })
+
+  it('keeps a collapsed column collapsed when the drop moves nothing', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet', getUpdateProps: () => undefined }))
+    await flush()
+    header('done').click()
+    await settle()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(stacked('done'), 'dragover')
+    fire(stacked('done'), 'drop')
+    await settle()
+
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(columnOrder()).toEqual(['todo', 'stack'])
+  })
+
+  it('a card dropped on a collapsed column in swim lane mode moves there and the column stays collapsed', async () => {
+    const groups = board({ todo: [card('a1', 'todo', 'A')], done: [card('a2', 'done', 'A')] })
+    await mount(swimProps(groups, [lane('A')], { controlKey: 'viewlet' }))
+    await flush()
+    one('[data-test="column-header"]', one('[data-id="kanban-column-header"][data-state="done"]')).click()
+    await settle()
+
+    fire(cardEl('a1'), 'dragstart')
+    await settle()
+    fire(stacked('done'), 'dragover')
+    fire(stacked('done'), 'drop')
+    fire(one('.kanban-container'), 'drop')
+    await settle()
+
+    expect(fakeClient.update).toHaveBeenCalledTimes(1)
+    expect((fakeClient.update.mock.calls[0] as [Card, { status: string }])[1].status).toBe('done')
+    expect(stacked('done')).not.toBeNull()
+  })
+
+  it('a card dropped on a collapsed column moves there and the column stays collapsed', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    header('done').click()
+    await settle()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    expect(stacked('done').classList.contains('drop-allowed')).toBe(true)
+    fire(stacked('done'), 'dragover')
+    await settle()
+    // The card shows where it would land, as in a live column.
+    expect(q('[data-test="card-body"]', stacked('done')).map((e) => e.textContent)).toEqual(['t00'])
+    fire(stacked('done'), 'drop')
+    await settle()
+
+    expect(fakeClient.update).toHaveBeenCalledTimes(1)
+    expect((fakeClient.update.mock.calls[0] as [Card, { status: string }])[1].status).toBe('done')
+    expect(columnOrder()).toEqual(['todo', 'stack'])
+  })
+
+  it('greys out the columns a dragged card cannot move to, except the one it left, and keeps their cards', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { getAvailableCategories: async () => ['doing'] }))
+    await flush()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    await settle()
+    expect(header('done').dataset.blocked).toBe('true')
+    expect(column('done').classList.contains('drop-disabled')).toBe(true)
+    expect(cardIds(column('done'))).toEqual(['x00'])
+    expect(column('todo').classList.contains('drop-disabled')).toBe(false)
+    expect(column('doing').classList.contains('drop-disabled')).toBe(false)
+
+    fire(cardEl('t00'), 'dragend')
+    await settle()
+    expect(column('done').classList.contains('drop-disabled')).toBe(false)
+  })
+})
+
+describe('Kanban merged columns', () => {
+  const mergeInto = async (column: string, other: string): Promise<void> => {
+    const spy = vi.spyOn(window, 'prompt').mockReturnValue(other)
+    one(`[data-test="merge"][data-state="${column}"]`).click()
+    spy.mockRestore()
+    await settle()
+  }
+
+  it('shows the cards of several statuses in one column and remembers it', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+
+    await mergeInto('todo', 'done')
+    await flush()
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo', 'doing'])
+    expect(one('[data-test="column-header"]', column('todo')).dataset.members).toEqual('todo,done')
+    expect(cardIds(column('todo'))).toEqual(['t00', 't01', 'x00'])
+    expect(localStorage.getItem('kanban-column-merged-viewlet-status')).toBe('[["todo","done"]]')
+
+    await mergeInto('todo', 'done')
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo', 'doing', 'done'])
+  })
+
+  it('counts the cards of a lane once when the board opens with merged statuses', async () => {
+    localStorage.setItem('kanban-column-merged-viewlet-status', '[["doing","done"]]')
+    const groups = board({
+      todo: [card('a1', 'todo', 'A')],
+      doing: [card('a2', 'doing', 'A')],
+      done: [card('a3', 'done', 'A'), card('a4', 'done', 'A')]
+    })
+    await mount(swimProps(groups, [lane('A')], { controlKey: 'viewlet' }))
+    await flush()
+    expect(one('[data-test="lane-header"][data-lane="A"]').dataset.count).toBe('4')
+  })
+
+  it('keeps the rest of a collapsed group in the stack when its first column leaves', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('doing', 'done')
+    one('[data-test="column-header"]', column('doing')).click()
+    await settle()
+
+    await mergeInto('todo', 'doing')
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo'])
+    expect(one('[data-test="column-header"]', column('todo')).dataset.members).toBe('todo,doing')
+    expect(q('[data-id="kanban-collapsed-column"]').map((e) => e.dataset.state)).toEqual(['done'])
+  })
+
+  it('tells the view options whether there is something to reset', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    expect(get(columnControlStore).get('viewlet')?.merged).toBe(false)
+    await mergeInto('todo', 'done')
+    expect(get(columnControlStore).get('viewlet')?.merged).toBe(true)
+    get(columnControlStore).get('viewlet')?.resetMerge()
+    await settle()
+    expect(get(columnControlStore).get('viewlet')?.merged).toBe(false)
+  })
+
+  it('takes a collapsed column out of the stack when it is merged', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    one('[data-test="column-header"]', column('todo')).click()
+    await settle()
+
+    // The open column takes in a collapsed one placed before it, and stays open where it is.
+    await mergeInto('done', 'todo')
+    await flush()
+    expect(parent.querySelector('[data-id="kanban-collapsed-stack"]')).toBeNull()
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['done'])
+    expect(cardIds(column('done'))).toEqual(['t00', 'x00'])
+  })
+
+  it('merges columns by group and resets merging from the view options', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    const groupOf: Record<string, string> = { todo: 'open', doing: 'open', done: 'closed' }
+    await mount(legacyProps(groups, { controlKey: 'viewlet', getCategoryGroup: (state: string) => groupOf[state] }))
+    await flush()
+
+    get(columnControlStore).get('viewlet')?.mergeByGroup()
+    await settle()
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo', 'done'])
+    expect(one('[data-test="column-header"]', column('todo')).dataset.members).toEqual('todo,doing')
+
+    get(columnControlStore).get('viewlet')?.resetMerge()
+    await settle()
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo', 'doing', 'done'])
+    expect(localStorage.getItem('kanban-column-merged-viewlet-status')).toBe('[]')
+  })
+
+  it('counts a merged column as one and shows more of it as one', async () => {
+    const groups = board({ todo: cards('t', 8, 'todo'), done: cards('x', 6, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('todo', 'done')
+
+    expect(one('[data-test="column-header"]', column('todo')).dataset.count).toBe('14')
+    const merged = live().find((c) => ids(c).includes('t00')) as FakeCall
+    expect(ids(merged)).toEqual([...groups.todo.map((c) => c._id), 'x00', 'x01'])
+    await flush()
+    expect(cardIds(column('todo'))).toHaveLength(10)
+
+    one('[data-id="btn-kanban-show-more"]', column('todo')).click()
+    await settle()
+    await flush()
+    expect(cardIds(column('todo'))).toHaveLength(14)
+  })
+
+  it('merges columns in swim lane mode into one cell per lane', async () => {
+    const groups = board({
+      todo: [card('a1', 'todo', 'A')],
+      doing: [card('a3', 'doing', 'A')],
+      done: [card('a2', 'done', 'A'), card('b1', 'done', 'B')]
+    })
+    await mount(swimProps(groups, [lane('A'), lane('B')], { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('todo', 'done')
+    await flush()
+
+    expect(q('[data-id="kanban-swimlane-cell"][data-swimlane-id="A"]').map((e) => e.dataset.state)).toEqual([
+      'todo',
+      'doing'
+    ])
+    expect(cardIds(cell('A', 'todo'))).toEqual(['a1', 'a2'])
+    expect(cardIds(cell('B', 'todo'))).toEqual(['b1'])
+    expect(ids(live().find((c) => ids(c).includes('hdr-A')) as FakeCall)).toEqual(['a1', 'a2', 'a3', 'hdr-A'])
+  })
+
+  it('keeps the dragged card in its merged cell while it is shown elsewhere', async () => {
+    const groups = board({ todo: [card('a1', 'todo', 'A')], doing: [], done: [card('a2', 'done', 'A')] })
+    await mount(swimProps(groups, [lane('A')], { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('todo', 'done')
+    await flush()
+
+    fire(cardEl('a2'), 'dragstart')
+    await settle()
+    fire(cell('A', 'doing'), 'dragover')
+    await settle()
+    expect(cardIds(cell('A', 'todo'))).toEqual(['a1', 'a2'])
+    expect(cardIds(cell('A', 'doing'))).toEqual(['a2'])
+  })
+
+  it('keeps the column widths and cards of blocked and merged lane cells during a drag', async () => {
+    const groups = board({ todo: [card('a1', 'todo', 'A')], doing: [], done: [card('a2', 'done', 'A')], review: [] })
+    await mount(
+      swimProps(groups, [lane('A')], {
+        controlKey: 'viewlet',
+        getAvailableCategories: async () => ['todo', 'doing', 'done']
+      })
+    )
+    await flush()
+    await mergeInto('doing', 'done')
+    const grid = one('.swimlane-grid')
+    const widths = grid.style.gridTemplateColumns
+
+    fire(cardEl('a1'), 'dragstart')
+    await settle()
+    fire(cell('A', 'todo'), 'dragover')
+    await settle()
+    expect(grid.style.gridTemplateColumns).toBe(widths)
+    expect(cell('A', 'doing').classList.contains('drop-disabled')).toBe(true)
+    expect(cardIds(cell('A', 'doing'))).toEqual(['a2'])
+    expect(cell('A', 'review').classList.contains('drop-disabled')).toBe(true)
+  })
+
+  it('collapses a merged column into the stack with all its statuses and opens it back', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('todo', 'done')
+    one('[data-test="column-header"]', column('todo')).click()
+    await settle()
+
+    const stackedHeader = one(
+      '[data-test="column-header"]',
+      one('[data-id="kanban-collapsed-column"][data-state="todo"]')
+    )
+    expect(stackedHeader.dataset.members).toBe('todo,done')
+    expect(q('[data-id="kanban-collapsed-column"]')).toHaveLength(1)
+    stackedHeader.click()
+    await settle()
+    expect(q('[data-id="kanban-column"]').map((e) => e.dataset.state)).toEqual(['todo', 'doing'])
+  })
+
+  it('greys out a merged column during a drag, unless the card left it', async () => {
+    const groups = board({
+      todo: cards('t', 1, 'todo'),
+      doing: cards('d', 1, 'doing'),
+      done: cards('x', 1, 'done'),
+      review: cards('r', 1, 'review')
+    })
+    await mount(
+      legacyProps(groups, {
+        controlKey: 'viewlet',
+        getAvailableCategories: async () => ['todo', 'doing', 'done']
+      })
+    )
+    await flush()
+    await mergeInto('doing', 'done')
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('todo'), 'dragover')
+    await settle()
+    expect(column('doing').classList.contains('drop-disabled')).toBe(true)
+    expect(cardIds(column('doing'))).toEqual(['d00', 'x00'])
+    expect(column('review').classList.contains('drop-disabled')).toBe(true)
+    fire(cardEl('t00'), 'dragend')
+    await settle()
+
+    fire(cardEl('x00'), 'dragstart')
+    await settle()
+    fire(column('todo'), 'dragover')
+    await settle()
+    expect(column('doing').classList.contains('drop-disabled')).toBe(false)
+  })
+
+  it('moves the keyboard focus through a merged column and past a collapsed one', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    const component = await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    const seen: Array<string | undefined> = []
+    component.$on('obj-focus', (e: CustomEvent) => seen.push(e.detail?._id))
+
+    one('[data-test="column-header"]', column('doing')).click()
+    await settle()
+    component.select(1, groups.todo[0], 'horizontal')
+    await mergeInto('todo', 'done')
+    component.select(1, groups.todo[0], 'vertical')
+
+    expect(seen).toEqual(['x00', 'x00'])
+  })
+
+  it('merges nothing by group without a group function and keeps single statuses apart', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    const component = await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    get(columnControlStore).get('viewlet')?.mergeByGroup()
+    await settle()
+    expect(q('[data-id="kanban-column"]')).toHaveLength(3)
+
+    component.$set({ getCategoryGroup: (state: string) => (state === 'done' ? 'closed' : state) } as any)
+    await settle()
+    get(columnControlStore).get('viewlet')?.mergeByGroup()
+    await settle()
+    expect(q('[data-id="kanban-column"]')).toHaveLength(3)
+    expect(localStorage.getItem('kanban-column-merged-viewlet-status')).toBe('[]')
+  })
+
+  it('drops its column controls on destroy, but not those of a newer board', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo') })
+    const component = await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    expect(get(columnControlStore).has('viewlet')).toBe(true)
+    component.$destroy()
+    mounted = mounted.filter((c) => c !== component)
+    expect(get(columnControlStore).has('viewlet')).toBe(false)
+
+    const older = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), merged: false }
+    const newer = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), merged: false }
+    const dropOlder = registerColumnControls('k', older)
+    const dropNewer = registerColumnControls('k', newer)
+    dropOlder()
+    expect(get(columnControlStore).get('k')).toBe(newer)
+    dropNewer()
+    expect(get(columnControlStore).has('k')).toBe(false)
+  })
+
+  it('takes no drop, but lets a card out with its own status', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('doing', 'done')
+    await flush()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    fire(column('doing'), 'drop')
+    await settle()
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    fire(cardEl('t00'), 'dragend')
+    await settle()
+
+    fire(cardEl('x00'), 'dragstart')
+    await settle()
+    fire(column('todo'), 'dragover')
+    fire(column('todo'), 'drop')
+    await settle()
+    expect(fakeClient.update).toHaveBeenCalledTimes(1)
+    expect((fakeClient.update.mock.calls[0] as [Card, { status: string }])[1].status).toBe('todo')
+  })
+})
+
 describe('Kanban legacy drag', () => {
   async function dragBoard (extra: Record<string, unknown> = {}): Promise<Record<string, Card[]>> {
     const groups = board({ todo: cards('t', 12, 'todo'), doing: cards('d', 12, 'doing'), done: cards('x', 2, 'done') })
@@ -355,6 +815,8 @@ describe('Kanban legacy drag', () => {
     await dragBoard({ onMoveCommit, getAvailableCategories: async () => ['todo', 'doing'] })
 
     fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('todo'), 'dragover')
     await settle()
     expect(column('done').classList.contains('drop-disabled')).toBe(true)
     expect(column('doing').classList.contains('drop-allowed')).toBe(true)
@@ -501,6 +963,40 @@ describe('Kanban swim lanes', () => {
     expect(loaded()).toBe('false')
     await flush()
     expect(loaded()).toBe('true')
+  })
+
+  it('queries a lane only once it reaches the viewport and keeps it after', async () => {
+    localStorage.setItem('#platform.lazy.loading', 'true')
+    const groups = board({ todo: [card('a1', 'todo', 'A'), card('b1', 'todo', 'B')], done: [] })
+    await mount(swimProps(groups, lanes))
+    expect(fakeQueries.calls).toHaveLength(0)
+
+    intersect(laneBlock('B'))
+    await settle()
+    expect(live().map(ids)).toEqual([['b1', 'hdr-B']])
+
+    intersect(laneBlock('A'))
+    await settle()
+    expect(live().map(ids)).toEqual([
+      ['b1', 'hdr-B'],
+      ['a1', 'hdr-A']
+    ])
+  })
+
+  it('waits for lanes of a new grouping to reach the viewport, even with the same id', async () => {
+    localStorage.setItem('#platform.lazy.loading', 'true')
+    const groups = board({ todo: [card('a1', 'todo', 'A')], done: [] })
+    const component = await mount(swimProps(groups, [lane('A')]))
+    intersect(laneBlock('A'))
+    await settle()
+    expect(live().map(ids)).toEqual([['a1', 'hdr-A']])
+
+    component.$set({ swimLaneKey: 'other' })
+    await settle()
+    expect(live()).toEqual([])
+    intersect(laneBlock('A'))
+    await settle()
+    expect(live().map(ids)).toEqual([['a1', 'hdr-A']])
   })
 
   it('hides lanes beyond 20 until show more lanes is pressed', async () => {

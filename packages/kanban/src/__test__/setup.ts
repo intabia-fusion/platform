@@ -41,14 +41,25 @@ if ((globalThis as any).ResizeObserver === undefined) {
 }
 
 // jsdom stops at the layout boundary: these exist in every browser and in none of its tests.
-if ((globalThis as any).IntersectionObserver === undefined) {
-  ;(globalThis as any).IntersectionObserver = class {
-    observe (): void {}
-    unobserve (): void {}
-    disconnect (): void {}
-    takeRecords (): [] {
-      return []
-    }
+// The observer never fires by itself; `intersect` makes an element enter the viewport.
+const observed = new Map<Element, IntersectionObserver>()
+export function intersect (el: Element): void {
+  const observer: any = observed.get(el)
+  observer?.callback([{ target: el, isIntersecting: true }], observer)
+}
+;(globalThis as any).IntersectionObserver = class {
+  constructor (private readonly callback: IntersectionObserverCallback) {}
+  observe (el: Element): void {
+    observed.set(el, this as unknown as IntersectionObserver)
+  }
+
+  unobserve (el: Element): void {
+    observed.delete(el)
+  }
+
+  disconnect (): void {}
+  takeRecords (): [] {
+    return []
   }
 }
 if (typeof Element.prototype.scrollIntoView !== 'function') {
