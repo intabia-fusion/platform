@@ -1,0 +1,25 @@
+{
+  "hashFiles": ["common/scripts/version.txt"],
+  "bundle": {
+    "standardScript": "common/scripts/esbuild.js",
+    "modelVersionFile": "common/scripts/version.txt",
+    "modelPackage": "models/all",
+    "escapeNonLatin1": true,
+    "external": ["snappy"]
+  },
+  "docker": {
+    "namespace": "intabiafusion"
+  },
+  "lint": {
+    "pluginsPackage": "@hcengineering/platform-rig"
+  },
+  "coverage": {
+    "serverDirs": ["foundations/net/", "foundations/server/", "pods/", "server/", "server-plugins/", "services/"],
+    "testContainersPackage": "@hcengineering/test-containers",
+    "standProfilesDir": "api-tests/coverage"
+  },
+  "deps": {
+    "scope": "@hcengineering/",
+    "eslintDepsSource": "@hcengineering/platform-rig"
+  }
+}

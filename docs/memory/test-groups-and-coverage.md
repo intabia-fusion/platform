@@ -60,7 +60,7 @@ svelte 5.
 
 `platform-rig`, `presentation`, `ai-bot-resources`, `attachment-resources`, `billing-resources`,
 `calendar-resources`, `recorder-resources` have a `jest.config.js` and test files but neither a
-`test` nor a `_phase:test` script, so `compile_all --test` skips them entirely. `pnpm jest` and
+`test` nor a `_phase:test` script, so `compile_all --test` (yama `src/build/compile-all.ts`) skips them entirely. `pnpm jest` and
 `pnpm coverage` do run them, which is why their suite counts differ (444 vs 405).
 
 ## Two bugs the split surfaced

@@ -5,5 +5,5 @@
 - `lib/` workspace-пакетов (`analytics`, `platform`, `core`) - CommonJS; vite конвертирует CJS только в node_modules ("Analytics is not exported"). Плагин `workspaceSources` (`platform-rig/profiles/ui/vite.mjs`) ведёт bare-импорт на исходники: поле `svelte`, иначе TS-`main`.
 - Тип, импортированный как значение в `.svelte`, в vite dev роняет весь модуль (`does not provide an export named`); webpack это глотает. Поиск: `pnpm check:svelte-imports -- --types`.
 - `@mdx-js/react` (docs-аддон) просит peer `@types/react` - внесён в `peerDependencyRules.ignoreMissing`, React-типы не нужны.
-- `compile_all --lint` линтит только пакеты с фазой build; у Storybook её нет, eslint идёт через `_phase:format`.
+- `compile_all --lint` (yama `src/build/compile-all.ts`) линтит только пакеты с фазой build; у Storybook её нет, eslint идёт через `_phase:format`.
 - Svelte docgen раскрывает алиасы (`IntlString` -> `string & { __id: true; } & ...`); имена возвращает `argTypesEnhancers` `prettifyTypeNames` (`src/helpers/argTypes.ts`) по бренду типа.

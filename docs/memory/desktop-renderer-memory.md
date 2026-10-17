@@ -10,7 +10,7 @@ Measured 2026-10-10 on a local production build (`desktop`, `pnpm run package`),
 
 - esbuild `charset: 'ascii'` escapes strings and identifiers but leaves chars inside regex literals (linkify TLD list, mermaid box-drawing classes, KaTeX, markdown-it). One such char keeps the whole script UTF-16. `EscapeNonLatin1Plugin` in `desktop/webpack.config.js` escapes the rest through `ReplaceSource`, so the source map survives.
 - `charset: 'ascii'` alone measured worse than `utf8` (bigger file, still UTF-16). Check `web_cache/Script_resources` in a memory dump, not file size.
-- The helpers live in `common/scripts/escape-non-latin1.js`: `EscapeNonLatin1Plugin` for webpack (desktop, `dev/prod`), `escapeNonLatin1File` for esbuild output (`common/scripts/esbuild.js` and `runEsbuildDirect` in `platform-rig/bin/phases/bundle-phase.js` - `pnpm bundle` builds server bundles in-process there, not through `esbuild.js`).
+- The helpers live in `common/scripts/escape-non-latin1.js`: `EscapeNonLatin1Plugin` for webpack (desktop, `dev/prod`), `escapeNonLatin1File` for esbuild output (`common/scripts/esbuild.js` and `runEsbuildDirect` in `@intabia-fusion/yama` (`src/build/phases/bundle.ts`) - `pnpm bundle` builds server bundles in-process there, not through `esbuild.js`).
 - Node/V8 keeps module source in the heap the same way: a 16M-char file with one `—` in a comment costs +35.6 MB instead of +19.4 MB. `pods/server` bundle: 41.5 MB -> 22.0 MB per process.
 - The bundle phase cache hashes only `common/scripts/version.txt` from `common/scripts`, so a change there needs `--force` to rebuild bundles.
 

@@ -21,7 +21,7 @@ Production channel is not read from `dev/prod/public/*.json` at all: the helm ch
 
 ## electron-builder's package-manager detection
 
-electron-builder 26 detects the package manager itself: `packageManager` field -> lock file next to the package -> environment. A pnpm workspace package has no lock file of its own (one lockfile lives at the repo root), so `desktop-package/package.json` pins its own `"packageManager": "pnpm@..."` to make electron-builder resolve pnpm directly instead of guessing. It must be kept in sync with the root `package.json`'s `packageManager` field - currently out of sync (root `pnpm@12.4.1`, `desktop-package` `pnpm@12.3.4`).
+electron-builder 26 detects the package manager itself: `packageManager` field -> lock file next to the package -> environment. A pnpm workspace package has no lock file of its own (one lockfile lives at the repo root), so `desktop-package/package.json` pins its own `"packageManager": "pnpm@..."` to make electron-builder resolve pnpm directly instead of guessing. It must be kept in sync with the root `package.json`'s `packageManager` field.
 
 ## Versions and deliberate exclusions
 
