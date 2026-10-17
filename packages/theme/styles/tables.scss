@@ -24,16 +24,17 @@
     color: var(--global-secondary-TextColor);
     
     &.withButton {
-      padding: var(--spacing-2);
+      padgding: var(--spacing-2);
     }
     &:not(.withButton) {
       padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-2_5);
 
-      span {
+      & > span {
         margin-left: var(--spacing-1_5);
       }
     }
-    span {
+    // Only the header's own caption: spans inside buttons and badges keep their layout.
+    & > span {
       flex-grow: 1;
     }
     .icon {

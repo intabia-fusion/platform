@@ -438,8 +438,6 @@
 
     .error-text {
       color: var(--global-negative-TextColor, #ef4444);
-      margin-left: 0 !important;
-      flex-grow: 0 !important;
     }
   }
 </style>
