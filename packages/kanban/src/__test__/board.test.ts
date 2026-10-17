@@ -15,7 +15,18 @@
 
 import type { Doc, Ref } from '@hcengineering/core'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { type DragState, insertIndex, laneCellValues, loadCollapsed, neighbourRanks, saveCollapsed } from '../board'
+import {
+  buildColumns,
+  type DragState,
+  insertIndex,
+  laneCellValues,
+  loadCollapsed,
+  loadMerged,
+  neighbourRanks,
+  saveCollapsed,
+  saveMerged,
+  toggleMerge
+} from '../board'
 import type { Item } from '../types'
 
 const card = (id: string, lane = 'L1', rank = id): Item => ({ _id: id as Ref<Item>, lane, rank }) as unknown as Item
@@ -202,5 +213,118 @@ describe('collapsed lanes storage', () => {
   it('returns an empty set for broken JSON', () => {
     localStorage.setItem('kanban-swimlane-collapsed-board', '{oops')
     expect(loadCollapsed('board')).toEqual(new Set())
+  })
+})
+
+describe('collapsed columns storage', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('keeps columns and lanes under separate keys', () => {
+    saveCollapsed('board', new Set(['done']), 'column')
+    saveCollapsed('board', new Set(['L1']))
+    expect(localStorage.getItem('kanban-column-collapsed-board')).toBe('["done"]')
+    expect(loadCollapsed('board', 'column')).toEqual(new Set(['done']))
+    expect(loadCollapsed('board')).toEqual(new Set(['L1']))
+  })
+})
+
+describe('column merge', () => {
+  it('keeps a merged group where the column it was merged into is', () => {
+    const columns = buildColumns(['a', 'b', 'c', 'd'], [['d', 'b']])
+    expect(columns).toEqual([
+      { state: 'a', members: ['a'] },
+      { state: 'c', members: ['c'] },
+      { state: 'd', members: ['b', 'd'] }
+    ])
+  })
+
+  it('ignores members that are not on the board', () => {
+    expect(buildColumns(['a', 'b'], [['x', 'b']])).toEqual([
+      { state: 'a', members: ['a'] },
+      { state: 'b', members: ['b'] }
+    ])
+  })
+
+  it('adds a column to a group and takes a member out', () => {
+    let groups = toggleMerge([], 'a', 'b')
+    expect(groups).toEqual([['a', 'b']])
+    groups = toggleMerge(groups, 'a', 'c')
+    expect(groups).toEqual([['a', 'b', 'c']])
+    groups = toggleMerge(groups, 'a', 'b')
+    expect(groups).toEqual([['a', 'c']])
+    expect(toggleMerge([['a', 'b']], 'a', 'b')).toEqual([])
+  })
+
+  it('takes only the picked status from another group', () => {
+    // The popup checks just the picked status, so the board must not pull in its neighbours.
+    expect(toggleMerge([['c', 'd', 'e']], 'a', 'd')).toEqual([
+      ['c', 'e'],
+      ['a', 'd']
+    ])
+    expect(toggleMerge([['c', 'd']], 'a', 'd')).toEqual([['a', 'd']])
+  })
+
+  it('moves the place of a group to the next member when its first one is gone', () => {
+    expect(buildColumns(['a', 'b', 'c'], [['x', 'c', 'a']])).toEqual([
+      { state: 'b', members: ['b'] },
+      { state: 'c', members: ['a', 'c'] }
+    ])
+  })
+
+  it('keeps every column when there are no groups', () => {
+    expect(buildColumns(['a', 'b'], []).map((c) => c.members)).toEqual([['a'], ['b']])
+    expect(buildColumns([], [['a', 'b']])).toEqual([])
+  })
+
+  it('keeps object categories as they are', () => {
+    const a = { name: 'a' } as any
+    const b = { name: 'b' } as any
+    const [column] = buildColumns([a, b], [['a', 'b']])
+    expect(column.state).toBe(a)
+    expect(column.members[1]).toBe(b)
+  })
+
+  it('dissolves a group of two when its other member leaves for another column', () => {
+    expect(toggleMerge([['c', 'd']], 'a', 'd')).toEqual([['a', 'd']])
+    expect(
+      toggleMerge(
+        [
+          ['a', 'b'],
+          ['c', 'd']
+        ],
+        'a',
+        'd'
+      )
+    ).toEqual([['a', 'b', 'd']])
+  })
+
+  it('removes a group that has nothing left to merge', () => {
+    expect(
+      toggleMerge(
+        [
+          ['a', 'b'],
+          ['c', 'd']
+        ],
+        'a',
+        'b'
+      )
+    ).toEqual([['c', 'd']])
+  })
+
+  it('round-trips through localStorage and drops malformed data', () => {
+    localStorage.clear()
+    saveMerged('k', [['a', 'b']])
+    expect(loadMerged('k')).toEqual([['a', 'b']])
+    localStorage.setItem('kanban-column-merged-k', '[["a", 1], "x", ["c", "d"]]')
+    expect(loadMerged('k')).toEqual([['c', 'd']])
+    expect(loadMerged(undefined)).toEqual([])
+    localStorage.setItem('kanban-column-merged-k', '{"a": 1}')
+    expect(loadMerged('k')).toEqual([])
+    localStorage.setItem('kanban-column-merged-k', '{oops')
+    expect(loadMerged('k')).toEqual([])
+    saveMerged(undefined, [['a', 'b']])
+    expect(localStorage.getItem('kanban-column-merged-undefined')).toBeNull()
   })
 })

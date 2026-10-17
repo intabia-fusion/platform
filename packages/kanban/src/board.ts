@@ -15,6 +15,7 @@
 
 import type { CategoryType, Doc, Rank, Ref } from '@hcengineering/core'
 import type { Item } from './types'
+import { stateKey } from './visibleGroups'
 
 export interface DragState {
   card: Item | undefined
@@ -70,12 +71,14 @@ export function neighbourRanks (
   return [without[idx - 1]?.rank, without[idx]?.rank]
 }
 
-const collapsedKey = (key: string): string => `kanban-swimlane-collapsed-${key}`
+export type CollapseScope = 'swimlane' | 'column'
 
-export function loadCollapsed (key: string | undefined): Set<string> {
+const collapsedKey = (key: string, scope: CollapseScope): string => `kanban-${scope}-collapsed-${key}`
+
+export function loadCollapsed (key: string | undefined, scope: CollapseScope = 'swimlane'): Set<string> {
   if (key === undefined || typeof localStorage === 'undefined') return new Set()
   try {
-    const raw = localStorage.getItem(collapsedKey(key))
+    const raw = localStorage.getItem(collapsedKey(key, scope))
     if (raw == null) return new Set()
     const arr: string[] = JSON.parse(raw)
     return new Set(arr)
@@ -84,10 +87,75 @@ export function loadCollapsed (key: string | undefined): Set<string> {
   }
 }
 
-export function saveCollapsed (key: string | undefined, set: Set<string>): void {
+export function saveCollapsed (key: string | undefined, set: Set<string>, scope: CollapseScope = 'swimlane'): void {
   if (key === undefined || typeof localStorage === 'undefined') return
   try {
-    localStorage.setItem(collapsedKey(key), JSON.stringify([...set]))
+    localStorage.setItem(collapsedKey(key, scope), JSON.stringify([...set]))
+  } catch {
+    // ignore
+  }
+}
+
+// A board column: one category, or several merged into one by the user (a view setting only).
+export interface BoardColumn {
+  state: CategoryType
+  members: CategoryType[]
+}
+
+// A merged group stays where its first member (the column it was merged into) is.
+export function buildColumns (categories: CategoryType[], groups: string[][]): BoardColumn[] {
+  const keys = new Set(categories.map((c) => stateKey(c)))
+  const leadOf = new Map<string, string[]>()
+  const merged = new Set<string>()
+  for (const group of groups) {
+    const present = group.filter((key) => keys.has(key))
+    leadOf.set(present[0], present)
+    for (const key of present) merged.add(key)
+  }
+  const columns: BoardColumn[] = []
+  for (const state of categories) {
+    const key = stateKey(state)
+    const group = leadOf.get(key)
+    if (group !== undefined) columns.push({ state, members: categories.filter((c) => group.includes(stateKey(c))) })
+    else if (!merged.has(key)) columns.push({ state, members: [state] })
+  }
+  return columns
+}
+
+// Adds `other` to the column of `column`, or takes it out when it is already there.
+// `other` leaves its previous group alone: the rest of that group stays merged.
+export function toggleMerge (groups: string[][], column: string, other: string): string[][] {
+  const without = (group: string[] | undefined): string[][] => {
+    const left = (group ?? []).filter((key) => key !== other)
+    return left.length > 1 ? [left] : []
+  }
+  const own = groups.find((g) => g.includes(column))
+  if (own?.includes(other) === true) {
+    return [...groups.filter((g) => g !== own), ...without(own)]
+  }
+  const theirs = groups.find((g) => g.includes(other))
+  const rest = groups.filter((g) => g !== own && g !== theirs)
+  return [...rest, ...without(theirs), [...(own ?? [column]), other]]
+}
+
+const mergedKey = (key: string): string => `kanban-column-merged-${key}`
+
+export function loadMerged (key: string | undefined): string[][] {
+  if (key === undefined || typeof localStorage === 'undefined') return []
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(mergedKey(key)) ?? '[]')
+    return Array.isArray(raw)
+      ? raw.filter((g): g is string[] => Array.isArray(g) && g.every((k) => typeof k === 'string'))
+      : []
+  } catch {
+    return []
+  }
+}
+
+export function saveMerged (key: string | undefined, groups: string[][]): void {
+  if (key === undefined || typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(mergedKey(key), JSON.stringify(groups))
   } catch {
     // ignore
   }
