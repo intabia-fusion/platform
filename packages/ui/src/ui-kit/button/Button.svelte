@@ -44,6 +44,7 @@
   export let loading: boolean = false
   export let disabled: boolean = false
   export let pressed: boolean | undefined = undefined
+  export let selected: boolean | undefined = undefined
   export let hasMenu: boolean = false
   export let inheritColor: boolean = false
   export let inheritFont: boolean = false
@@ -60,6 +61,8 @@
   $: resolvedShape = shape ?? 'rectangle'
   $: resolvedStopPropagation = stopPropagation ?? true
   $: resolvedType = type ?? 'button'
+  // A hint shows after a short pause, so moving the pointer across a toolbar does not flash tooltips.
+  $: tooltipOptions = tooltip !== undefined ? { timeout: 500, ...tooltip } : undefined
 
   export function focus (): void {
     element?.focus()
@@ -124,6 +127,7 @@
   class:button--icon-only={iconOnly}
   class:button--menu={hasMenu}
   class:button--pressed={pressed === true}
+  class:button--selected={selected === true}
   class:button--loading={loading}
   class:button--inherit-color={inheritColor}
   class:button--inherit-font={inheritFont}
@@ -131,11 +135,11 @@
   type={resolvedType}
   disabled={disabled || loading}
   aria-busy={loading || undefined}
-  aria-pressed={hasMenu ? undefined : pressed}
+  aria-pressed={selected}
   aria-haspopup={hasMenu ? 'true' : undefined}
   aria-expanded={hasMenu ? pressed === true : undefined}
   aria-label={accessibleName}
-  use:tooltipAction={tooltip}
+  use:tooltipAction={tooltipOptions}
   on:focus={handleFocus}
   on:focus
   on:blur
@@ -215,6 +219,16 @@
       --_loading-label: var(--button-primary-loading-LabelColor);
       --_spinner: var(--button-primary-loading-IconColor);
     }
+    &--brand {
+      --_border: var(--button-brand-BorderColor, transparent);
+      --_bg: var(--button-brand-BackgroundColor);
+      --_bg-hover: var(--button-brand-hover-BackgroundColor);
+      --_bg-active: var(--button-brand-active-BackgroundColor);
+      --_disabled-bg: var(--button-disabled-BackgroundColor);
+      --_icon: var(--button-accent-IconColor);
+      --_label: var(--button-accent-LabelColor);
+      --_loading-label: var(--button-primary-loading-LabelColor);
+    }
     &--secondary {
       --_border: var(--button-secondary-BorderColor, transparent);
       --_bg: var(--button-secondary-BackgroundColor);
@@ -234,6 +248,31 @@
       --_icon: var(--button-tertiary-icon-IconColor, var(--button-tertiary-IconColor, var(--button-subtle-IconColor)));
       --_label: var(--button-tertiary-LabelColor, var(--button-subtle-LabelColor));
       --_loading-label: var(--button-disabled-LabelColor);
+    }
+    &--ghost {
+      --_border: transparent;
+      --_bg: transparent;
+      --_bg-hover: var(--button-tertiary-hover-BackgroundColor);
+      --_bg-active: var(--button-tertiary-active-BackgroundColor);
+      --_disabled-bg: transparent;
+      // Gray at rest like the legacy icon buttons, dark on hover so the target reads
+      --_icon: var(--global-secondary-TextColor);
+      --_label: var(--global-primary-TextColor);
+      --_loading-label: var(--button-disabled-LabelColor);
+
+      &:not(:disabled):is(:hover, :active, .button--pressed) {
+        --_icon: var(--global-primary-IconColor);
+      }
+    }
+    &--positive {
+      --_border: var(--button-positive-BorderColor, transparent);
+      --_bg: var(--button-positive-BackgroundColor);
+      --_bg-hover: var(--button-positive-hover-BackgroundColor);
+      --_bg-active: var(--button-positive-active-BackgroundColor);
+      --_disabled-bg: var(--button-disabled-BackgroundColor);
+      --_icon: var(--button-positive-IconColor);
+      --_label: var(--button-positive-LabelColor);
+      --_loading-label: var(--button-positive-loading-LabelColor);
     }
     &--negative {
       --_border: var(--button-negative-BorderColor, transparent);
@@ -289,6 +328,16 @@
     }
 
     // States: after kinds, so they override the kind tokens
+    // A toggle that is on reads as on, unlike the gray pressed of an open menu; filled kinds keep their fill.
+    &--selected:not(:disabled):is(.button--secondary, .button--tertiary, .button--ghost) {
+      --_icon: var(--button-selected-IconColor);
+      --_label: var(--button-selected-LabelColor);
+      background-color: var(--button-selected-BackgroundColor);
+
+      &:hover {
+        background-color: var(--button-selected-hover-BackgroundColor);
+      }
+    }
     &--loading {
       --_label: var(--_loading-label);
       background-color: var(--_bg-active);

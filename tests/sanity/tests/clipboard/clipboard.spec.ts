@@ -19,6 +19,7 @@ import { type Page } from '@playwright/test'
 import { createIssue, getProjectContext } from '../API/TrackerApi'
 import { expect, type SharedWorkspace, test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
+import { CommonPage } from '../model/common-page'
 import { loginByToken, PlatformURI } from '../utils'
 
 // Safari needs ClipboardItem to keep the user gesture; Chromium keeps every ClipboardItem write,
@@ -78,13 +79,14 @@ test.describe('Copy to clipboard', () => {
     const identifier = await createIssueIdentifier(shared)
     await loginByToken(page, shared.token, shared.ws, issuesApp)
     const issueLink = page.locator(`a[href$="/${identifier}"]`).first()
+    const menu = new CommonPage(page)
 
     await issueLink.click({ button: 'right' })
-    await page.locator('div.popup button', { hasText: 'Copy issue ID to clipboard' }).click()
+    await menu.selectFromSubmenu('Copy', 'Copy issue ID')
     await expect.poll(async () => await readClipboard(page)).toBe(identifier)
 
     await issueLink.click({ button: 'right' })
-    await page.locator('div.popup button', { hasText: 'Copy issue URL to clipboard' }).click()
+    await menu.selectFromSubmenu('Copy', 'Copy issue URL')
     await expect
       .poll(async () => await readClipboard(page))
       .toBe(`${PlatformURI}/workbench/${shared.ws.workspaceUrl}/tracker/${identifier}`)

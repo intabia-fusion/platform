@@ -14,51 +14,22 @@
 -->
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
-  import { Button, type ButtonKind, type ButtonSize } from '@hcengineering/ui'
-  import { getClient } from '@hcengineering/presentation'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
-  import chunter from '@hcengineering/chunter'
-  import { getResource, translate } from '@hcengineering/platform'
 
+  import { discussWithAI } from '../discuss'
   import plugin from '../plugin'
-  import { openOrStartObjectConversation } from '../conversation'
 
   // Header extension passes the edited object as `value`.
   export let value: Doc
-  export let kind: ButtonKind = 'icon'
-  export let size: ButtonSize = 'medium'
-
-  const client = getClient()
-
-  async function discuss (): Promise<void> {
-    const label = await getObjectLabel(value)
-    const firstMessage = await translate(plugin.string.DiscussFirstMessage, { label })
-    const started = await openOrStartObjectConversation(
-      { objectId: value._id, objectClass: value._class, label },
-      firstMessage
-    )
-    if (started === undefined) return
-    // Reuse chunter's sidebar thread view — no custom chat UI.
-    const openThread = await getResource(chunter.function.OpenThreadInSidebar)
-    await openThread(started.messageId, undefined, started.direct)
-  }
-
-  // Platform's own providers: the identifier when the class has one (FUSIO-123), else the title.
-  async function getObjectLabel (doc: Doc): Promise<string> {
-    const named =
-      (await getDocIdentifier(client, doc._id, doc._class, doc)) ??
-      (await getDocTitle(client, doc._id, doc._class, doc))
-    return named ?? (await translate(client.getHierarchy().getClass(doc._class).label, {}))
-  }
 </script>
 
-<Button
+<IconButton
   icon={view.icon.AiStar}
-  iconProps={{ size }}
-  {kind}
-  {size}
-  dataId="btnDiscussWithAI"
-  showTooltip={{ label: plugin.string.DiscussWithAI }}
-  on:click={discuss}
+  kind="ghost"
+  size="small"
+  iconSize="medium"
+  data-id="btnDiscussWithAI"
+  tooltip={{ label: plugin.string.DiscussWithAI }}
+  on:click={() => discussWithAI(value)}
 />

@@ -11,6 +11,7 @@
 
   import { updateIssueRelation } from '../issues'
   import tracker from '../plugin'
+  import CreateIssue from './CreateIssue.svelte'
 
   export let value: Issue
 
@@ -105,6 +106,11 @@
     )
   }
 
+  function newRelatedIssue (): void {
+    closePopup('popup')
+    showPopup(CreateIssue, { relatedTo: value, space: value.space }, 'top')
+  }
+
   const removeRelationAction: Action[] = [
     {
       action: removeRelation,
@@ -114,6 +120,14 @@
     }
   ]
   $: actions = [
+    {
+      action: async () => {
+        newRelatedIssue()
+      },
+      icon: tracker.icon.NewIssue,
+      label: tracker.string.NewRelatedIssue,
+      group: '0'
+    },
     {
       action: makeAddAction('blockedBy', tracker.string.BlockedBySearchPlaceholder),
       icon: tracker.icon.Issue,

@@ -7,6 +7,9 @@
     "MonthOps": "{month} : {ops} opérations",
     "MonthNoOps": "{month}, aucune opération",
     "AddStar": "Ajouter une étoile",
-    "AddStarAria": "Ajouter une réaction étoile"
+    "AddStarAria": "Ajouter une réaction étoile",
+    "RemoveStar": "Retirer l'étoile",
+    "AddReaction": "Ajouter une réaction",
+    "Reactions": "Réactions"
   }
 }

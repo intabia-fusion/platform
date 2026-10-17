@@ -6,7 +6,10 @@
     "Level": "Úroveň",
     "MonthOps": "{month}: {ops} operací",
     "MonthNoOps": "{month}, žádné operace",
-    "AddStar": "Přidat hvězdu",
-    "AddStarAria": "Přidat reakci hvězdy"
+    "AddStar": "Označit hvězdičkou",
+    "AddStarAria": "Přidat reakci hvězdy",
+    "RemoveStar": "Odebrat hvězdičku",
+    "AddReaction": "Přidat reakci",
+    "Reactions": "Reakce"
   }
 }

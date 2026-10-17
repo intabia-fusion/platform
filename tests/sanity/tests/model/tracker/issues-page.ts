@@ -638,11 +638,15 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   // Retried whole: the submenu opens on hover alone, and a nudge landing before the menu listens
-  // leaves the caller filling a popup that is not there.
+  // leaves the caller filling a popup that is not there. Attribute editors sit in the Change submenu.
   async openSubmenuOnIssue (issueName: string, action: string): Promise<void> {
     await expect(async () => {
-      await this.page.keyboard.press('Escape')
+      // Each Escape closes one level of a half-opened menu
+      for (let i = 0; i < 3 && (await this.page.locator('div.popup').count()) > 0; i++) {
+        await this.page.keyboard.press('Escape')
+      }
       await this.issueByName(issueName).click({ button: 'right' })
+      await this.openSubmenu('Change')
       await this.openSubmenu(action)
       await expect(this.page.locator('div.selectPopup')).toBeVisible({ timeout: 3000 })
     }).toPass({ intervals: retryIntervals, timeout: 20000 })

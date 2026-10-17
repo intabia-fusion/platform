@@ -11,6 +11,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import core from '@hcengineering/core'
+import emoji from '@hcengineering/emoji'
 import { type Builder } from '@hcengineering/model'
+import view, { type Action } from '@hcengineering/view'
 
-export function createActions (builder: Builder): void {}
+import rating from './plugin'
+
+export function createActions (builder: Builder): void {
+  builder.createDoc<Action>(
+    view.class.Action,
+    core.space.Model,
+    {
+      action: rating.actionImpl.ToggleStar,
+      label: rating.string.AddStar,
+      icon: rating.icon.Rating,
+      input: 'focus',
+      category: view.category.General,
+      target: core.class.Doc,
+      context: { mode: ['header'], order: 2 }
+    },
+    rating.action.ToggleStar
+  )
+  builder.createDoc<Action>(
+    view.class.Action,
+    core.space.Model,
+    {
+      action: rating.actionImpl.AddReaction,
+      label: rating.string.AddReaction,
+      icon: emoji.icon.EmojiAdd,
+      input: 'focus',
+      category: view.category.General,
+      target: core.class.Doc,
+      context: { mode: ['header'], order: 3 }
+    },
+    rating.action.AddReaction
+  )
+}

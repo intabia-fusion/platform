@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import activity from '@hcengineering/activity'
 import core, { type AccountUuid, type PersonId } from '@hcengineering/core'
 import { type Builder, Model } from '@hcengineering/model'
 import { TAttachedDoc, TDoc } from '@hcengineering/model-core'
@@ -81,7 +82,6 @@ export function createModel (builder: Builder): void {
     extension: view.extensions.EditDocTitleExtension,
     component: rating.component.RatingEditor
   })
-
   builder.createDoc(
     workbench.class.Widget,
     core.space.Model,
@@ -96,6 +96,7 @@ export function createModel (builder: Builder): void {
   builder.mixin(rating.class.DocReaction, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: rating.component.DocReactionPresenter
   })
+  builder.mixin(rating.class.DocReaction, core.class.Class, activity.mixin.IgnoreActivity, {})
 }
 
 export default rating

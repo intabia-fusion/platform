@@ -92,6 +92,11 @@
   --button-tertiary-hover-BackgroundColor: #d1d5de1a;
   --button-tertiary-active-BackgroundColor: #d1d5de26;
   --button-menu-active-BorderColor: #d9dee6;
+  /* Toggle that is on: a tint of the accent; a dark surface needs more of it and a lighter text */
+  --button-selected-BackgroundColor: color-mix(in srgb, var(--button-primary-BackgroundColor) 28%, transparent);
+  --button-selected-hover-BackgroundColor: color-mix(in srgb, var(--button-primary-BackgroundColor) 36%, transparent);
+  --button-selected-LabelColor: color-mix(in srgb, var(--button-primary-BackgroundColor) 45%, white);
+  --button-selected-IconColor: var(--button-selected-LabelColor);
 
   /* Defaults for accents that define no button tokens of their own */
   --button-accent-LabelColor: var(--global-on-accent-TextColor);
@@ -103,7 +108,17 @@
   --button-negative-loading-LabelColor: #ff9187;
   --button-negative-LabelColor: #FFFFFF;
   --button-negative-IconColor: #FFFFFF;
+  --button-positive-BackgroundColor: #05A05C;
+  --button-positive-BorderColor: #d1d5de26;
+  --button-positive-hover-BackgroundColor: #019253;
+  --button-positive-active-BackgroundColor: #04874E;
+  --button-positive-loading-LabelColor: #8ce0b5;
+  --button-positive-LabelColor: #FFFFFF;
+  --button-positive-IconColor: #FFFFFF;
   --button-primary-loading-IconColor: var(--button-accent-IconColor);
+  --button-brand-BackgroundColor: var(--accent-color-base, var(--button-primary-BackgroundColor));
+  --button-brand-hover-BackgroundColor: var(--accent-color-hover, var(--button-primary-hover-BackgroundColor));
+  --button-brand-active-BackgroundColor: var(--accent-color-active, var(--button-primary-active-BackgroundColor));
 
   /** Editbox **/
   --input-BackgroundColor: #a5bdff0d;
@@ -208,6 +223,11 @@
   --button-tertiary-hover-BackgroundColor: #1725471a;
   --button-tertiary-active-BackgroundColor: #17254726;
   --button-menu-active-BorderColor: #0f121a;
+  /* Toggle that is on: a tint of the accent with accent-colored content */
+  --button-selected-BackgroundColor: color-mix(in srgb, var(--button-primary-BackgroundColor) 10%, transparent);
+  --button-selected-hover-BackgroundColor: color-mix(in srgb, var(--button-primary-BackgroundColor) 16%, transparent);
+  --button-selected-LabelColor: var(--button-tertiary-LabelColor, var(--global-accent-TextColor));
+  --button-selected-IconColor: var(--button-selected-LabelColor);
 
   /* Defaults for accents that define no button tokens of their own */
   --button-accent-LabelColor: var(--global-on-accent-TextColor);
@@ -219,7 +239,17 @@
   --button-negative-loading-LabelColor: #ff9187;
   --button-negative-LabelColor: #FFFFFF;
   --button-negative-IconColor: #FFFFFF;
+  --button-positive-BackgroundColor: #05A05C;
+  --button-positive-BorderColor: #d1d5de26;
+  --button-positive-hover-BackgroundColor: #019253;
+  --button-positive-active-BackgroundColor: #04874E;
+  --button-positive-loading-LabelColor: #8ce0b5;
+  --button-positive-LabelColor: #FFFFFF;
+  --button-positive-IconColor: #FFFFFF;
   --button-primary-loading-IconColor: var(--button-accent-IconColor);
+  --button-brand-BackgroundColor: var(--accent-color-base, var(--button-primary-BackgroundColor));
+  --button-brand-hover-BackgroundColor: var(--accent-color-hover, var(--button-primary-hover-BackgroundColor));
+  --button-brand-active-BackgroundColor: var(--accent-color-active, var(--button-primary-active-BackgroundColor));
 
   /** Editbox **/
   --input-BackgroundColor: #1530720d;

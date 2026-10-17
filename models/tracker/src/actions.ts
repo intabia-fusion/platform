@@ -16,6 +16,7 @@
 import contact from '@hcengineering/contact'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
 import view, { actionTemplates, createAction } from '@hcengineering/model-view'
 import workbench, { createNavigateAction } from '@hcengineering/model-workbench'
@@ -42,7 +43,56 @@ function createGotoSpecialAction (
     query
   })
 }
+
+function defineIssueMenu (builder: Builder): void {
+  builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.ActionMenu, {
+    layout: {
+      create: [tracker.action.OpenIssue, view.action.OpenInNewTab, view.action.OpenInSidebar],
+      edit: [
+        {
+          label: presentation.string.Change,
+          icon: view.icon.Edit,
+          items: [
+            tracker.action.SetStatus,
+            tracker.action.SetPriority,
+            tracker.action.SetAssignee,
+            tracker.action.SetComponent,
+            tracker.action.SetMilestone,
+            tracker.action.SetLabels,
+            tracker.action.SetDueDate,
+            tracker.action.ChangeTaskType
+          ]
+        },
+        tracker.action.TimeSpendReportAdd
+      ],
+      associate: [
+        tracker.action.NewSubIssue,
+        {
+          label: tracker.string.Parent,
+          icon: tracker.icon.Parent,
+          items: [tracker.action.SetParent, tracker.action.UnsetParent]
+        },
+        tracker.action.Relations
+      ],
+      tools: [
+        {
+          label: presentation.string.Copy,
+          icon: view.icon.Copy,
+          items: [
+            tracker.action.CopyIssueId,
+            tracker.action.CopyIssueTitle,
+            tracker.action.CopyIssueLink,
+            tracker.action.CopyIssueMarkdown
+          ]
+        }
+      ],
+      remove: [tracker.action.MoveToProject, tracker.action.Duplicate]
+    }
+  })
+}
+
 export function createActions (builder: Builder, issuesId: string, componentsId: string, myIssuesId: string): void {
+  defineIssueMenu(builder)
   createGotoSpecialAction(builder, issuesId, 'keyG->keyE', tracker.string.GotoIssues)
   createGotoSpecialAction(builder, issuesId, 'keyG->keyA', tracker.string.GotoActive, { mode: 'active' })
   createGotoSpecialAction(builder, issuesId, 'keyG->keyB', tracker.string.GotoBacklog, { mode: 'backlog' })
@@ -349,37 +399,46 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
     }
   })
 
-  createAction(builder, {
-    action: view.actionImpl.CopyDocumentMarkdown,
-    actionProps: {
-      contentClass: tracker.class.Issue,
-      contentField: 'description'
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.CopyDocumentMarkdown,
+      actionProps: {
+        contentClass: tracker.class.Issue,
+        contentField: 'description'
+      },
+      label: view.string.CopyDocumentMarkdown,
+      icon: view.icon.Print,
+      input: 'focus',
+      category: tracker.category.Tracker,
+      target: tracker.class.Issue,
+      query: {},
+      context: {
+        mode: ['context', 'browser'],
+        application: tracker.app.Tracker,
+        group: 'copy'
+      }
     },
-    label: view.string.CopyDocumentMarkdown,
-    icon: view.icon.Print,
-    input: 'focus',
-    category: tracker.category.Tracker,
-    target: tracker.class.Issue,
-    query: {},
-    context: {
-      mode: ['context', 'browser'],
-      application: tracker.app.Tracker,
-      group: 'tools'
-    }
-  })
+    tracker.action.CopyIssueMarkdown
+  )
 
-  createAction(builder, {
-    ...actionTemplates.open,
-    actionProps: {
-      component: tracker.component.EditIssue
+  createAction(
+    builder,
+    {
+      ...actionTemplates.open,
+      actionProps: {
+        component: tracker.component.EditIssue
+      },
+      target: tracker.class.Issue,
+      context: {
+        mode: ['browser', 'context'],
+        group: 'create',
+        order: 1
+      },
+      override: [view.action.Open]
     },
-    target: tracker.class.Issue,
-    context: {
-      mode: ['browser', 'context'],
-      group: 'create'
-    },
-    override: [view.action.Open]
-  })
+    tracker.action.OpenIssue
+  )
 
   createAction(builder, {
     ...actionTemplates.open,
@@ -389,31 +448,36 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
     target: tracker.class.IssueTemplate,
     context: {
       mode: ['browser', 'context'],
-      group: 'create'
+      group: 'create',
+      order: 1
     },
     override: [view.action.Open]
   })
 
-  createAction(builder, {
-    action: view.actionImpl.ShowPopup,
-    actionProps: {
-      component: tracker.component.TimeSpendReportPopup,
-      fillProps: {
-        _object: 'issue'
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.ShowPopup,
+      actionProps: {
+        component: tracker.component.TimeSpendReportPopup,
+        fillProps: {
+          _object: 'issue'
+        }
+      },
+      label: tracker.string.TimeSpendReportAdd,
+      icon: tracker.icon.TimeReport,
+      input: 'focus',
+      keyBinding: ['keyT'],
+      category: tracker.category.Tracker,
+      target: tracker.class.Issue,
+      context: {
+        mode: ['context', 'browser'],
+        application: tracker.app.Tracker,
+        group: 'tools'
       }
     },
-    label: tracker.string.TimeSpendReportAdd,
-    icon: tracker.icon.TimeReport,
-    input: 'focus',
-    keyBinding: ['keyT'],
-    category: tracker.category.Tracker,
-    target: tracker.class.Issue,
-    context: {
-      mode: ['context', 'browser'],
-      application: tracker.app.Tracker,
-      group: 'edit'
-    }
-  })
+    tracker.action.TimeSpendReportAdd
+  )
 
   createAction(
     builder,
@@ -669,7 +733,7 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
       context: {
         mode: ['context', 'browser'],
         application: tracker.app.Tracker,
-        group: 'associate'
+        group: 'tools'
       },
       override: [task.action.Move]
     },
@@ -710,7 +774,9 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
         mode: ['context', 'browser'],
         application: tracker.app.Tracker,
         group: 'associate'
-      }
+      },
+      // The relations submenu already has "New related issue"
+      override: [tracker.action.NewRelatedIssue]
     },
     tracker.action.Relations
   )
@@ -734,7 +800,7 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
       context: {
         mode: ['context', 'browser'],
         application: tracker.app.Tracker,
-        group: 'associate'
+        group: 'tools'
       }
     },
     tracker.action.Duplicate
@@ -812,11 +878,11 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
     {
       action: view.actionImpl.OpenInSidebar,
       label: view.string.OpenInSidebar,
-      icon: view.icon.DetailsFilled,
+      icon: view.icon.Sidebar,
       input: 'focus',
       category: view.category.Editor,
       target: tracker.class.Issue,
-      context: { mode: ['context', 'browser'], group: 'create' }
+      context: { mode: ['context', 'browser'], group: 'create', order: 2 }
     },
     view.action.OpenInSidebar
   )

@@ -13,7 +13,16 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
 import aiBot, { aiBotId } from '@hcengineering/ai-bot'
+import type { Doc, Ref } from '@hcengineering/core'
+import { mergeIds } from '@hcengineering/platform'
+import type { Action, ViewAction } from '@hcengineering/view'
 
-export default mergeIds(aiBotId, aiBot, {})
+export default mergeIds(aiBotId, aiBot, {
+  action: {
+    DiscussWithAI: '' as Ref<Action<Doc, any>>
+  },
+  actionImpl: {
+    DiscussWithAI: '' as ViewAction
+  }
+})

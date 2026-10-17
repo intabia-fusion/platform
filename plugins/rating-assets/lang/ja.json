@@ -6,7 +6,10 @@
     "Level": "レベル",
     "MonthOps": "{month}月: {ops} 操作",
     "MonthNoOps": "{month}月、操作なし",
-    "AddStar": "スターを追加",
-    "AddStarAria": "スターの反応を追加"
+    "AddStar": "スターを付ける",
+    "AddStarAria": "スターの反応を追加",
+    "RemoveStar": "スターを外す",
+    "AddReaction": "リアクションを追加",
+    "Reactions": "リアクション"
   }
 }

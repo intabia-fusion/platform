@@ -20,6 +20,7 @@
 
   export let element: Doc | AttachedDoc
   export let maxWidth: string | undefined = undefined
+  export let maxItems: number | undefined = undefined
 
   const client = getClient()
 
@@ -77,4 +78,4 @@
   })
 </script>
 
-<DocsNavigator elements={parents} {maxWidth} />
+<DocsNavigator elements={parents} {maxWidth} {maxItems} />

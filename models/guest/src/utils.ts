@@ -22,7 +22,8 @@ export function createPublicLinkAction (builder: Builder, _class: Ref<Class<Doc>
       category: guest.category.Guest,
       target: _class,
       context: {
-        mode: ['context', 'browser']
+        mode: ['context', 'browser'],
+        group: 'tools'
       }
     },
     _id

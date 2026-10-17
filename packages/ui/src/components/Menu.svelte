@@ -20,6 +20,8 @@
   import { closePopup, showPopup } from '../popups'
   import type { Action } from '../types'
   import Icon from './Icon.svelte'
+  import IconArrowUpRight from './icons/ArrowUpRight.svelte'
+  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
   import MouseSpeedTracker from './MouseSpeedTracker.svelte'
   import { resizeObserver } from '../resize'
@@ -65,7 +67,8 @@
     }
     if (ev.key === 'ArrowRight') {
       dispatch('update', 'right')
-      showActionPopup(actions[n], activeElement)
+      // No focused item after a submenu closes with ArrowLeft
+      if (n >= 0) showActionPopup(actions[n], activeElement)
       ev.preventDefault()
       ev.stopPropagation()
     }
@@ -141,17 +144,23 @@
           <span class="ap-menuItem separator" />
         {/if}
         {#if action.link}
-          <a class="stealth" href={action.link}>
+          <!-- A column stretches the item inside its side margins, w-full would push it past them -->
+          <a class="stealth flex-col" href={action.link}>
             <!-- svelte-ignore a11y-mouse-events-have-key-events -->
             <button
               bind:this={btns[i]}
-              class="ap-menuItem flex-row-center withIcon w-full"
+              class="ap-menuItem flex-row-center withIcon"
               class:hover={btns[i] === activeElement}
               on:mousemove={() => {
                 if (btns[i] !== activeElement) focusTarget(action, btns[i])
               }}
               on:click|preventDefault|stopPropagation={(evt) => {
                 if (!action.inline) dispatch('close')
+                // The button swallows the anchor's own modifier click, so open the new tab here
+                if ((evt.metaKey || evt.ctrlKey) && action.link !== undefined) {
+                  window.open(action.link, '_blank')
+                  return
+                }
                 void action.action(ctx, evt)
               }}
             >
@@ -161,6 +170,9 @@
               <span class="overflow-label pr-4 flex-grow"
                 ><Label label={action.label} params={action.labelParams ?? {}} /></span
               >
+              {#if action.opensPage === true}
+                <div class="icon"><Icon icon={IconArrowUpRight} size="small" /></div>
+              {/if}
             </button>
           </a>
         {:else if action.component !== undefined && !action.isSubmenuRightClicking}
@@ -212,6 +224,9 @@
             <span class="overflow-label pr-4 flex-grow"
               ><Label label={action.label} params={action.labelParams ?? {}} /></span
             >
+            {#if action.checked === true}
+              <div class="icon"><Icon icon={IconCheck} size="small" /></div>
+            {/if}
           </button>
         {/if}
       {/each}

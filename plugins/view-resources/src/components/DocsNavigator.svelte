@@ -21,6 +21,7 @@
 
   export let elements: readonly Doc[]
   export let maxWidth: string | undefined = undefined
+  export let maxItems: number | undefined = undefined
 
   const client = getClient()
 
@@ -56,6 +57,6 @@
 
 {#await getBreadcrumbsModels(elements) then models}
   {#if models.length > 0}
-    <Breadcrumbs {models} disabled={$restrictionStore.disableNavigation} {maxWidth} />
+    <Breadcrumbs {models} disabled={$restrictionStore.disableNavigation} {maxWidth} maxItems={maxItems ?? 3} />
   {/if}
 {/await}

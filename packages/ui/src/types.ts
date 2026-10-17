@@ -92,6 +92,10 @@ export interface Action {
   action: (props: any, ev: Event) => Promise<void>
   inline?: boolean
   link?: string
+  // Shows a check mark: the action toggles a setting that is on
+  checked?: boolean
+  // Shows an arrow: the action opens another page
+  opensPage?: boolean
 
   // Submenu component
   component?: AnyComponent | AnySvelteComponent

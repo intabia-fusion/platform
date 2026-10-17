@@ -638,7 +638,17 @@ export interface Action<T extends Doc = Doc, P = Record<string, any>> extends Do
  *  popup - for popup based actions, like Close of Popup.
  *  input - for input based actions, some actions should be available for input controls.
  */
-export type ViewContextType = 'context' | 'workbench' | 'browser' | 'editor' | 'panel' | 'popup' | 'input' | 'none'
+// header: header buttons that a narrow panel moves into its menu
+export type ViewContextType =
+  | 'context'
+  | 'workbench'
+  | 'browser'
+  | 'editor'
+  | 'panel'
+  | 'popup'
+  | 'input'
+  | 'header'
+  | 'none'
 
 /**
  * @public
@@ -896,6 +906,30 @@ export interface LinkProvider extends Class<Doc> {
 export interface LinkIdProvider extends Class<Doc> {
   encode: Resource<(doc: Doc) => Promise<string>>
   decode: Resource<(id: string) => Promise<Ref<Doc> | undefined>>
+}
+
+/**
+ * A submenu of the context menu.
+ * @public
+ */
+export interface ActionMenuSubmenu {
+  label: IntlString
+  icon?: Asset
+  items: Array<Ref<Action>>
+}
+
+/**
+ * Item order and submenus per group by action id; unlisted actions follow in their own group.
+ * @public
+ */
+export type ActionMenuLayout = Partial<Record<ActionGroup, Array<Ref<Action> | ActionMenuSubmenu>>>
+
+/**
+ * Context menu layout for documents of a class, wherever the menu is opened.
+ * @public
+ */
+export interface ActionMenu extends Class<Doc> {
+  layout: ActionMenuLayout
 }
 
 /**

@@ -215,6 +215,7 @@ export default mergeIds(trackerId, tracker, {
     MoveIssues: '' as IntlString,
     MoveIssuesDescription: '' as IntlString,
     ChangeTaskType: '' as IntlString,
+    TaskTypeSettings: '' as IntlString,
     NewTaskType: '' as IntlString,
     SelectNewStatus: '' as IntlString,
     LostAttributesHint: '' as IntlString,

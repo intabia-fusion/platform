@@ -41,9 +41,10 @@
 
   import type { ButtonItem } from '@hcengineering/ui'
   import {
-    Button,
     Component,
     FocusHandler,
+    IconCheck,
+    IconLink,
     IconMoreH,
     Label,
     TimeSince,
@@ -52,6 +53,7 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import {
     ClassAttributeBar,
@@ -238,24 +240,22 @@
   ] satisfies ButtonItem[]
   let selectedAside: string | boolean = false
 
-  $: actions = [
-    {
-      icon: view.icon.CopyId,
-      label: isCopied ? document.string.DocumentUrlCopied : document.string.CopyDocumentUrl,
-      action: () => {
-        if (doc !== undefined) {
-          void copyTextToClipboard(getDocumentUrl(doc))
-          isCopied = true
+  $: copyLinkLabel = isCopied ? document.string.DocumentUrlCopied : document.string.CopyDocumentUrl
 
-          clearTimeout(copyTimeout)
-
-          copyTimeout = setTimeout(() => {
-            isCopied = false
-          }, 2000)
-        }
-      }
+  async function copyLink (): Promise<void> {
+    if (doc === undefined) return
+    try {
+      await copyTextToClipboard(getDocumentUrl(doc))
+    } catch {
+      // No check when the browser refuses clipboard access
+      return
     }
-  ]
+    isCopied = true
+    clearTimeout(copyTimeout)
+    copyTimeout = setTimeout(() => {
+      isCopied = false
+    }, 1500)
+  }
 
   let editor: DocumentEditor
   let content: HTMLElement
@@ -320,6 +320,7 @@
     isCustomAttr={false}
     isSub={false}
     bind:useMaxWidth
+    maxWidthToggle="gutter"
     {sideContentSpace}
     printHeader={false}
     {embedded}
@@ -342,9 +343,8 @@
             icon={document.icon.Lock}
             iconProps={{ size: 'x-small' }}
             label={document.string.Locked}
-            kind="link-bordered"
+            kind="secondary"
             size="small"
-            noFocus
             on:click={async () => {
               if (doc !== undefined) {
                 await unlockContent(doc)
@@ -359,16 +359,31 @@
       {#if doc}
         <ComponentExtensions
           extension={view.extensions.EditDocTitleExtension}
-          props={{ size: 'medium', kind: 'ghost', _id: doc._id, _class: doc._class, value: doc, readonly }}
+          props={{ _id: doc._id, _class: doc._class, value: doc, readonly }}
         />
       {/if}
+      <!-- Same order as the issue header: link, sidebar, then the menu -->
+      {#if !$restrictionStore.disableActions}
+        <span class="copy-button" class:copied={isCopied}>
+          <IconButton
+            size="small"
+            icon={isCopied ? IconCheck : IconLink}
+            iconSize="medium"
+            kind="ghost"
+            data-id="btnCopyDocumentUrl"
+            tooltip={{ label: copyLinkLabel, direction: 'bottom' }}
+            on:click={copyLink}
+          />
+        </span>
+      {/if}
       {#if !embedded && doc}
-        <Button
-          icon={view.icon.DetailsFilled}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          dataId="btnOpenInSidebar"
-          showTooltip={{ label: view.string.OpenInSidebar, direction: 'bottom' }}
+        <IconButton
+          size="small"
+          icon={view.icon.Sidebar}
+          iconSize="medium"
+          kind="ghost"
+          data-id="btnOpenInSidebar"
+          tooltip={{ label: view.string.OpenInSidebar, direction: 'bottom' }}
           on:click={() => {
             if (doc !== undefined) {
               void openDocInSidebar(doc)
@@ -377,33 +392,24 @@
         />
       {/if}
       {#if !$restrictionStore.disableActions}
-        <Button
+        <IconButton
+          size="small"
           id="btn-doc-title-open-more"
           icon={IconMoreH}
-          iconProps={{ size: 'medium' }}
-          kind="icon"
-          showTooltip={{ label: view.string.MoreActions, direction: 'bottom' }}
+          iconSize="medium"
+          kind="ghost"
+          tooltip={{ label: view.string.MoreActions, direction: 'bottom' }}
           on:click={showContextMenu}
         />
-        {#each actions as action}
-          <Button
-            icon={action.icon}
-            iconProps={{ size: 'medium' }}
-            kind="ghost"
-            showTooltip={{ label: action.label, direction: 'bottom' }}
-            on:click={action.action}
-          />
-        {/each}
       {/if}
     </svelte:fragment>
 
     <div class="container">
       <div class="title flex-row-center">
         <div class="icon">
-          <Button
-            size="x-large"
+          <IconButton
+            size="medium"
             kind="ghost"
-            noFocus
             icon={doc.icon === view.ids.IconWithEmoji ? IconWithEmoji : (doc.icon ?? document.icon.Document)}
             iconProps={doc.icon === view.ids.IconWithEmoji
               ? { icon: doc.color, size: 'large' }
@@ -412,7 +418,7 @@
                   fill: getPaletteColorDef(doc.color, $themeStore.dark)?.icon ?? 'currentColor'
                 }}
             disabled={readonly}
-            showTooltip={{ label: document.string.Icon, direction: 'bottom' }}
+            tooltip={{ label: document.string.Icon, direction: 'bottom' }}
             on:click={chooseIcon}
           />
         </div>
@@ -517,6 +523,25 @@
 {/if}
 
 <style lang="scss">
+  // A quiet confirmation of the copied link, same as in the issue header
+  .copy-button {
+    display: contents;
+  }
+  .copied :global(.button__icon) {
+    animation: copied-pop 0.2s ease-out;
+  }
+  @keyframes copied-pop {
+    from {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .copied :global(.button__icon) {
+      animation: none;
+    }
+  }
+
   .container {
     display: flex;
     flex-direction: column;

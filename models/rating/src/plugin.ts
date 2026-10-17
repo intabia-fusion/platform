@@ -13,12 +13,21 @@
 // limitations under the License.
 //
 
-import {} from '@hcengineering/core'
+import type { Doc, Ref } from '@hcengineering/core'
 import { mergeIds } from '@hcengineering/platform'
 import rating, { ratingId } from '@hcengineering/rating'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
+import type { Action, ViewAction } from '@hcengineering/view'
 
 export default mergeIds(ratingId, rating, {
+  action: {
+    AddReaction: '' as Ref<Action<Doc, any>>,
+    ToggleStar: '' as Ref<Action<Doc, any>>
+  },
+  actionImpl: {
+    AddReaction: '' as ViewAction,
+    ToggleStar: '' as ViewAction
+  },
   component: {
     RatingEditor: '' as AnyComponent
   }

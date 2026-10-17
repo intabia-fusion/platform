@@ -58,6 +58,8 @@ loadMetadata(view.icon, {
   Leave: `${icons}#leave`,
   Copy: `${icons}#copy`,
   DetailsFilled: `${icons}#details-filled`,
+  OpenInNewTab: `${icons}#open-in-new-tab`,
+  Sidebar: `${icons}#sidebar`,
   Translate: `${icons}#translate`,
   Undo: `${icons}#undo`,
   Video: `${icons}#video`,
