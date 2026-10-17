@@ -474,7 +474,13 @@ export class ModelDb extends MemDb {
     }
     for (const doc of created) {
       // Skip what a later tx of the same batch removed or replaced.
-      if (this.objectById.get(doc._id) === doc) this.indexByClass(doc)
+      if (this.objectById.get(doc._id) !== doc) continue
+      try {
+        this.indexByClass(doc)
+      } catch (err: any) {
+        // A doc of an unknown class must not stop indexing the rest of the batch.
+        ctx.warn('failed to index model document, skipping', { _id: doc._id, _class: doc._class, err })
+      }
     }
   }
 

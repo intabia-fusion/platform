@@ -323,15 +323,10 @@ describe('ModelMiddleware model cache', () => {
   it('should not register a middleware whose init failed', async () => {
     const harness = createHarness()
     const adapter = (harness.pipelineContext.adapterManager as any).getAdapter(DOMAIN_TX, true)
-    // A tx of an undeclared class makes modelDb.addTxes throw at the end of init.
-    adapter.getModel = async (): Promise<Tx[]> => [
-      factory.createTxCreateDoc(
-        'test:class:Undeclared' as Ref<Class<Doc>>,
-        core.space.Model,
-        {},
-        'test:doc:broken' as Ref<Doc>
-      )
-    ]
+    // init fails while fetching the model, before the middleware could be registered.
+    adapter.getModel = async (): Promise<Tx[]> => {
+      throw new Error('model fetch failed')
+    }
 
     await expect(
       ModelMiddleware.doCreate(harness.ctx, harness.pipelineContext, makeNextMiddleware(harness), genCoreModel())
