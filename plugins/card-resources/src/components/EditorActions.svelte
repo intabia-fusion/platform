@@ -43,7 +43,6 @@
       kind="tertiary"
       tooltip={{ label: action.label }}
       on:click={handler(action, (a, evt) => {
-        evt.stopPropagation()
         if (a.disabled !== true) {
           handleAction(a, evt)
         }

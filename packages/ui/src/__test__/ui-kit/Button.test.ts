@@ -227,7 +227,7 @@ describe('ui-kit Button', () => {
   })
 
   describe('events', () => {
-    it('forwards click as a MouseEvent and leaves propagation and default to the caller', () => {
+    it('forwards click as a MouseEvent and keeps it from the containers around', () => {
       const { button, component } = mount()
       const onClick = vi.fn<(event: MouseEvent) => void>()
       const onParent = vi.fn()
@@ -237,7 +237,32 @@ describe('ui-kit Button', () => {
       const event = click(button)
       expect(onClick).toHaveBeenCalledTimes(1)
       expect(onClick.mock.calls[0][0]).toBeInstanceOf(MouseEvent)
+      expect(onParent).not.toHaveBeenCalled()
+      expect(event.defaultPrevented).toBe(true)
+    })
+
+    it('lets the click bubble with stopPropagation false, also after an update to undefined', async () => {
+      const { button, component } = mount({ stopPropagation: false })
+      const onParent = vi.fn()
+      target.addEventListener('click', onParent)
+
+      const event = click(button)
       expect(onParent).toHaveBeenCalledTimes(1)
+      expect(event.defaultPrevented).toBe(false)
+
+      component.$set({ stopPropagation: undefined })
+      await tick()
+      click(button)
+      expect(onParent).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not prevent the default of a submit button', () => {
+      const { button } = mount({ type: 'submit' })
+      const onParent = vi.fn()
+      target.addEventListener('click', onParent)
+
+      const event = click(button)
+      expect(onParent).not.toHaveBeenCalled()
       expect(event.defaultPrevented).toBe(false)
     })
 

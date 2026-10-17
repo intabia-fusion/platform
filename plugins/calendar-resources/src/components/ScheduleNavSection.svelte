@@ -134,8 +134,7 @@
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: calendar.string.ScheduleShareLink, direction: 'top' }}
-              on:click={(e) => {
-                e.stopPropagation()
+              on:click={() => {
                 shareLink(schedule)
               }}
             />
@@ -144,8 +143,7 @@
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: view.string.Delete, direction: 'top' }}
-              on:click={(e) => {
-                e.stopPropagation()
+              on:click={() => {
                 deleteSchedule(schedule)
               }}
             />

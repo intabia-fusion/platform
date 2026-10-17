@@ -37,10 +37,6 @@
     kind="tertiary"
     tooltip={{ component: ErrorTooltip, props: { value } }}
     aria-label={name}
-    on:click={(e) => {
-      // The presenter sits in clickable table rows.
-      e.stopPropagation()
-    }}
     on:click
   />
 {/if}

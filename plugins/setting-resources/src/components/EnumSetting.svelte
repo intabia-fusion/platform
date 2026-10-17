@@ -101,7 +101,6 @@
               size="small"
               pressed={hovered === i}
               on:click={(ev) => {
-                ev.stopPropagation()
                 hovered = i
                 showMenu(ev, { object: value }, () => {
                   hovered = null

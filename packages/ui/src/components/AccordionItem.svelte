@@ -122,9 +122,7 @@
         </span>
       {/if}
     </div>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="hulyAccordionItem-header__tools" on:click|stopPropagation|preventDefault>
+    <div class="hulyAccordionItem-header__tools">
       <slot name="actions" />
     </div>
   </button>

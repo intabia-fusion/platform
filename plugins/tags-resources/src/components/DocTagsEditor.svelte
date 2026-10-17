@@ -43,7 +43,6 @@
   })
 
   async function click (evt: MouseEvent): Promise<void> {
-    evt.stopPropagation()
     pressed = true
     showPopup(
       TagsEditorPopup,

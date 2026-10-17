@@ -143,7 +143,7 @@
                 <span class="rule-card--name"><Label label={rule.label} /></span>
               {/if}
             </div>
-            <div class="rule-card--actions" on:click|stopPropagation>
+            <div class="rule-card--actions">
               <MenuButton
                 items={actionItems}
                 icon={IconMoreV}

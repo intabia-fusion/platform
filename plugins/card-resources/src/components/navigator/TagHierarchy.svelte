@@ -99,8 +99,6 @@
             kind="tertiary"
             tooltip={{ label: action.label }}
             on:click={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
               void action.action(action.props, e)
             }}
           />

@@ -38,7 +38,6 @@
 
   let hovered: boolean = false
   async function onMenuClick (ev: MouseEvent): Promise<void> {
-    ev.stopPropagation()
     showPopup(Menu, { actions: await moreActions(ev), ctx: doc._id }, ev.target as HTMLElement, () => {
       hovered = false
     })
@@ -86,7 +85,6 @@
           data-id={action.label}
           tooltip={{ label: action.label, direction: 'top' }}
           on:click={(evt) => {
-            evt.stopPropagation()
             void action.action({}, evt)
           }}
         />

@@ -57,8 +57,7 @@
   $: markup = text !== '' ? jsonToMarkup(markdownToMarkup(text, { refUrl: 'ref://', imageUrl: '' })) : EmptyMarkup
   $: canEdit = state === 'done' && me.socialIds.includes(live.createdBy ?? live.modifiedBy)
 
-  function startEdit (evt: MouseEvent): void {
-    evt.stopPropagation()
+  function startEdit (): void {
     editMarkup = markup
     editing = true
   }
@@ -87,8 +86,7 @@
         size="small"
         kind="tertiary"
         tooltip={{ label: presentation.string.Remove }}
-        on:click={(e) => {
-          e.stopPropagation()
+        on:click={() => {
           onRemove?.()
         }}
       />

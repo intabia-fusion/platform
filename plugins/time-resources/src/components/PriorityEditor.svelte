@@ -57,8 +57,6 @@
   }
 
   function handleClick (event: MouseEvent) {
-    event.stopPropagation()
-
     showPopup(
       SelectPopup,
       {

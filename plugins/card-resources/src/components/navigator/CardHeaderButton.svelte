@@ -87,7 +87,6 @@
       ]
 
   function addButtonClicked (ev: MouseEvent): void {
-    ev.stopPropagation()
     pressed = true
     showPopup(Menu, { actions: globalActions }, ev.target as HTMLElement, () => {
       pressed = false

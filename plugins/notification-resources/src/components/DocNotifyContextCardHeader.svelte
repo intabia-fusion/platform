@@ -38,8 +38,6 @@
   $: presenterMixin = hierarchy.classHierarchyMixin(value.objectClass, notification.mixin.NotificationContextPresenter)
 
   function showMenu (ev: MouseEvent): void {
-    ev.stopPropagation()
-    ev.preventDefault()
     showPopup(
       Menu,
       {

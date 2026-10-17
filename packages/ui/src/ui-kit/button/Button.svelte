@@ -48,6 +48,7 @@
   export let inheritColor: boolean = false
   export let inheritFont: boolean = false
   export let noPrint: boolean = false
+  export let stopPropagation: boolean | undefined = undefined
   export let tooltip: LabelAndProps | undefined = undefined
   export let autofocus: boolean = false
   export let focusIndex: number | undefined = undefined
@@ -57,6 +58,8 @@
   $: resolvedKind = kind ?? 'secondary'
   $: resolvedSize = size ?? 'large'
   $: resolvedShape = shape ?? 'rectangle'
+  $: resolvedStopPropagation = stopPropagation ?? true
+  $: resolvedType = type ?? 'button'
 
   export function focus (): void {
     element?.focus()
@@ -100,6 +103,12 @@
   })
   $: if (idx !== -1) focusManager?.updateFocus(idx, focusIndex ?? -1)
 
+  function handleClick (event: MouseEvent): void {
+    if (!resolvedStopPropagation) return
+    event.stopPropagation()
+    if (resolvedType === 'button') event.preventDefault()
+  }
+
   function handleFocus (): void {
     if (idx !== -1) focusManager?.setFocus(idx)
   }
@@ -119,7 +128,7 @@
   class:button--inherit-color={inheritColor}
   class:button--inherit-font={inheritFont}
   class:button--no-print={noPrint}
-  type={type ?? 'button'}
+  type={resolvedType}
   disabled={disabled || loading}
   aria-busy={loading || undefined}
   aria-pressed={hasMenu ? undefined : pressed}
@@ -130,6 +139,7 @@
   on:focus={handleFocus}
   on:focus
   on:blur
+  on:click={handleClick}
   on:click
   on:keydown
   {...$$restProps}

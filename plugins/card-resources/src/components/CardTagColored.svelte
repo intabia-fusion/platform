@@ -62,8 +62,7 @@
       iconSize="x-small"
       kind="tertiary"
       tooltip={{ label: presentation.string.Remove }}
-      on:click={(e) => {
-        e.stopPropagation()
+      on:click={() => {
         dispatch('remove')
       }}
     />

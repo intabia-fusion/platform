@@ -78,7 +78,7 @@ const categories: Record<string, readonly string[]> = {
   state: ['disabled', 'loading', 'pressed', 'hasMenu'],
   menu: ['items', 'selected', 'noSelection', 'autoSelectSingle', 'itemParams'],
   'accessibility & focus': ['tooltip', 'autofocus', 'focusIndex'],
-  native: ['type', 'id', 'name', 'value', 'form', 'noPrint', 'element'],
+  native: ['type', 'id', 'name', 'value', 'form', 'noPrint', 'stopPropagation', 'element'],
   methods: ['focus']
 }
 const categoryOf = new Map(
@@ -104,6 +104,7 @@ const withoutControl = new Set([
   'value',
   'form',
   'noPrint',
+  'stopPropagation',
   'element',
   'focus'
 ])

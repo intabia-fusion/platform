@@ -70,8 +70,7 @@
           kind="tertiary"
           size="extra-small"
           inheritFont
-          on:click={(e) => {
-            e.stopPropagation()
+          on:click={() => {
             expanded = !expanded
           }}
         />

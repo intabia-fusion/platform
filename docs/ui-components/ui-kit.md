@@ -38,8 +38,10 @@ import { Button } from '@hcengineering/ui/kit'
 - `loading` блокирует кнопку и заменяет иконку спиннером цвета иконки; у primary - `--button-primary-loading-IconColor`
   (в акценте Intabia розовый `--accent-color-base` на фиолетовом фоне).
 - `inheritColor` - иконка и текст берут цвет окружения; `inheritFont`, `noPrint`.
-- События `click`, `keydown`, `focus`, `blur` типизированы (`ButtonEvents`) и не глушатся. `id`, `name`, `value`,
-  `form`, `aria-*`, `data-*` уходят на `<button>`.
+- События `click`, `keydown`, `focus`, `blur` типизированы (`ButtonEvents`). Клик по умолчанию не уходит дальше кнопки
+  (`stopPropagation`, у `type="button"` ещё `preventDefault`): кликабельный родитель (строка, ссылка, карточка) на него
+  не реагирует. `stopPropagation={false}` отпускает клик дальше. `id`, `name`, `value`, `form`, `aria-*`, `data-*`
+  уходят на `<button>`.
 - Явный `undefined` в `kind`, `size`, `shape`, `type` - значение по умолчанию.
 - Токены: `--button-{primary,secondary,tertiary,negative}-*`, `--button-accent-*`, `--button-subtle-*`,
   `--button-disabled-*`, размеры `--global-*-Size`, скругления `--*-BorderRadius`, отступы `--spacing-*`, фокус
@@ -74,11 +76,8 @@ import { Button } from '@hcengineering/ui/kit'
 - Нет пропсов раскладки (`width`, `padding`, `flex`, ...) - размеры и отступы задаёт место использования.
 - Классы по БЭМ: блок - имя компонента (`button`), элементы `button__icon`, модификаторы `button--primary`.
   Локальные custom properties компонента - с префиксом `--_` (`--_bg`), токены темы в разметку не попадают.
-- Событие не глушится по умолчанию (`stopPropagation`/`preventDefault` решает вызывающий код). Модификаторы
-  (`on:click|stopPropagation`) на компоненте в Svelte 4 недоступны: кнопка внутри кликабельного родителя (строка
-  списка) вызывает `event.stopPropagation()` в своём обработчике. Исключение - слоты под контролы у кликабельных
-  контейнеров: `tools`/`actions` у `NavGroup`, `actions` у `NavItem`, `actions` у `AccordionItem` глушат клик сами
-  (`stopPropagation` и `preventDefault`), кнопке в них ничего делать не нужно.
+- Кнопка глушит клик сама, обработчику `event.stopPropagation()` не нужен. Если родителю нужен клик (закрыть,
+  выбрать строку), у кнопки `stopPropagation={false}`.
 - Компонент приходит вместе с историей Storybook (`dev/storybook/src/ui-kit/<Component>.stories.ts`), тестом
   (`packages/ui/src/__test__`) и строкой в таблице выше.
 

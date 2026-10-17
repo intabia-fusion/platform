@@ -65,8 +65,7 @@
       size="min"
       iconSize="x-small"
       kind="tertiary"
-      on:click={(e) => {
-        e.stopPropagation()
+      on:click={() => {
         dispatch('remove')
       }}
     />

@@ -58,6 +58,8 @@ export interface ButtonProps extends ButtonAttributes {
   inheritColor?: boolean
   inheritFont?: boolean
   noPrint?: boolean
+  /** `true` by default: the click does not reach the containers around the button; `false` lets it bubble. */
+  stopPropagation?: boolean
   /** Also names an icon-only button for assistive technology unless `aria-label` is given. */
   tooltip?: LabelAndProps
   autofocus?: boolean

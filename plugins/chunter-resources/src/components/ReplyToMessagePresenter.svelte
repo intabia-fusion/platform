@@ -123,9 +123,7 @@
     navigate(loc)
   }
 
-  function handleClose (e: MouseEvent): void {
-    e.stopPropagation()
-    e.stopPropagation()
+  function handleClose (): void {
     dispatch('delete')
   }
 

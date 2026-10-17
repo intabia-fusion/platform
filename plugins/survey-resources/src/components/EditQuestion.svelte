@@ -102,7 +102,6 @@
   }
 
   function showQuestionParams (ev: MouseEvent): void {
-    ev.stopPropagation()
     hovered = true
     showPopup(
       SelectPopup,

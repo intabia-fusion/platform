@@ -27,8 +27,7 @@
 
   $: buttonLabel = value ? getEmbeddedLabel(new Date(value).toLocaleDateString()) : ui.string.DueDate
 
-  function handleClick (e: MouseEvent) {
-    e.stopPropagation()
+  function handleClick () {
     if (!opened) {
       opened = true
       showPopup(

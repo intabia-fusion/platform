@@ -61,7 +61,6 @@
   }
 
   async function onMenuClick (ev: MouseEvent): Promise<void> {
-    ev.stopPropagation()
     // Read actual popup actions on open as visibility might have been changed
     pressed = true
     popupMenuActions = await actions().then((res) => res.filter((action) => action.inline !== true))
@@ -129,7 +128,6 @@
           kind="tertiary"
           tooltip={{ label: popupMenuActions[0].label, direction: 'top' }}
           on:click={async (ev) => {
-            ev.stopPropagation()
             void popupMenuActions[0].action(_id, ev)
           }}
         />
@@ -198,7 +196,6 @@
           kind="tertiary"
           tooltip={{ label: popupMenuActions[0].label, direction: 'top' }}
           on:click={async (ev) => {
-            ev.stopPropagation()
             void popupMenuActions[0].action(_id, ev)
           }}
         />

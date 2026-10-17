@@ -227,8 +227,7 @@
               kind="primary"
               disabled={applyDisabled}
               loading={creating}
-              on:click={(e) => {
-                e.stopPropagation()
+              on:click={() => {
                 void okAction()
               }}
             />

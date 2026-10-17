@@ -131,9 +131,7 @@
             kind="tertiary"
             inheritFont
             size="extra-small"
-            on:click={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
+            on:click={() => {
               limit += config.limit
             }}
           />

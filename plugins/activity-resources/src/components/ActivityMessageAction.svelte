@@ -27,8 +27,6 @@
   export let dataId: string | undefined = undefined
 
   function onClick (ev: MouseEvent): void {
-    ev.stopPropagation()
-    ev.preventDefault()
     void action(ev)
   }
 </script>

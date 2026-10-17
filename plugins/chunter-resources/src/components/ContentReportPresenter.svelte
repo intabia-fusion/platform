@@ -102,14 +102,12 @@
     if (chatOpenable) openChannel(props.chat as string, props.chatClass as Ref<Class<Doc>>)
   }
 
-  function remove (evt: MouseEvent): void {
-    evt.stopPropagation()
+  function remove (): void {
     if (message === undefined) return
     showPopup(DeleteMessageConfirmationPopup, { message }, 'center')
   }
 
   async function kick (evt: Event): Promise<void> {
-    evt.stopPropagation()
     if (author == null || kickAction === undefined) return
     const person = persons.get(author) ?? (await client.findOne(contact.class.Person, { personUuid: author }))
     if (person === undefined) return
