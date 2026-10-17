@@ -16,11 +16,36 @@
 import { type MigrateUpdate, type MigrationClient, type MigrationDocumentQuery } from '@hcengineering/model'
 import notification, { DOMAIN_DOC_NOTIFY, type ReadPosition, type ReadState } from '@hcengineering/notification'
 import { type ActivityMessage } from '@hcengineering/activity'
-import { type AccountUuid, generateId, type Ref, SortingOrder } from '@hcengineering/core'
+import core, { type AccountUuid, type Doc, generateId, type Ref, SortingOrder, type Space } from '@hcengineering/core'
 import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 
 import { DOMAIN_READ_STATE } from '../index'
 import { type DocNotifyContextOld } from './types'
+
+export async function newReadState (client: MigrationClient, doc: Doc): Promise<ReadState> {
+  const [latest] = await client.find<ActivityMessage>(
+    DOMAIN_ACTIVITY,
+    { attachedTo: doc._id },
+    { sort: { createdOn: SortingOrder.Descending }, limit: 1, projection: { _id: 1, createdOn: 1, modifiedOn: 1 } }
+  )
+  const now = Date.now()
+  const space = client.hierarchy.isDerived(doc._class, core.class.Space) ? (doc._id as Ref<Space>) : doc.space
+  return {
+    _id: generateId(),
+    _class: notification.class.ReadState,
+    space,
+    attachedTo: doc._id,
+    attachedToClass: doc._class,
+    collection: 'readStates',
+    ...(latest != null
+      ? { latestMessageId: latest._id, latestMessageTimestamp: latest.createdOn ?? latest.modifiedOn }
+      : { latestMessageTimestamp: 0 }),
+    modifiedOn: now,
+    modifiedBy: core.account.System,
+    createdOn: now,
+    createdBy: core.account.System
+  }
+}
 
 export async function initReadStatesLatestMessages (client: MigrationClient): Promise<void> {
   const iterator = await client.traverse<ReadState>(DOMAIN_READ_STATE, {

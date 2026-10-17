@@ -20,6 +20,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Chat, DirectMessage } from '@hcengineering/chunter'
   import type { Employee } from '@hcengineering/contact'
+  import notification from '@hcengineering/notification'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import chunter from '../../../plugin'
@@ -51,6 +52,10 @@
   }
 
   const client = getClient()
+
+  function lastMessageTime (chat: WithLookup<Chat> | undefined): number {
+    return chat?.$lookup?.readState?.latestMessageTimestamp ?? 0
+  }
   const hierarchy = client.getHierarchy()
   const objectsQueryByClass = new Map<Ref<Class<Doc>>, { query: LiveQuery, limit?: number }>()
 
@@ -125,12 +130,9 @@
         {
           total: true,
           limit,
-          lookup: {
-            attachedTo: _class
-          },
-          sort: {
-            '$lookup.attachedTo.modifiedOn': SortingOrder.Descending
-          }
+          lookup: { attachedTo: _class, readState: notification.class.ReadState },
+          projection: { '$lookup.readState.latestMessageTimestamp': 1 },
+          sort: { '$lookup.readState.latestMessageTimestamp': SortingOrder.Descending }
         }
       )
     }
@@ -184,9 +186,13 @@
     ): Promise<void> => {
       const result: Section[] = []
       if (!model.wrap) {
+        // Every class comes sorted on its own; one section of them all is sorted again.
+        const objects = Array.from(objectsByClass.values())
+          .flatMap((it) => it.docs)
+          .sort((a, b) => lastMessageTime(b.chat) - lastMessageTime(a.chat))
         result.push({
           id: model.id,
-          objects: Array.from(objectsByClass.values()).flatMap((it) => it.docs),
+          objects,
           label: model.label ?? chunter.string.Channels,
           count: Array.from(objectsByClass.values()).reduce((sum, it) => sum + it.total, 0)
         })
@@ -281,7 +287,6 @@
       header={section.label}
       actions={model.actionsFn()}
       createAction={model.createAction}
-      sortFn={model.sortFn}
       showEmpty={model.showEmpty}
       itemsCount={section.count}
       on:show-more={() => {

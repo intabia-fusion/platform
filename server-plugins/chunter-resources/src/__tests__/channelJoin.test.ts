@@ -114,6 +114,7 @@ describe('OnChannelJoin', () => {
       attachedTo: CHANNEL,
       attachedToClass: chunter.class.Channel,
       collection: 'readStates',
+      latestMessageTimestamp: 0,
       [ALICE]: { messageId: expect.any(String), timestamp: JOINED_AT - 1 }
     })
   })

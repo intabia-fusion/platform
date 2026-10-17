@@ -116,6 +116,11 @@ const chatSchema: Schema = {
     type: 'bool',
     notNull: true,
     index: true
+  },
+  readState: {
+    type: 'text',
+    notNull: false,
+    index: false
   }
 }
 
@@ -432,7 +437,7 @@ const docReadStateSchema: Schema = {
   },
   latestMessageTimestamp: {
     type: 'bigint',
-    notNull: false,
+    notNull: true,
     index: false
   }
 }

@@ -146,6 +146,13 @@ export type Projection<T extends Doc> = {
   [P in keyof T]?: 0 | 1
 }
 
+/**
+ * @public
+ * `$lookup.<path>.<field>: 1` keeps that field of the joined document, `0` drops it.
+ * `number`, not `0 | 1`: a computed key (`{ [key]: 1 }`) infers `number`.
+ */
+export type LookupProjection = Partial<Record<`$lookup.${string}`, number>>
+
 export type AssociationQuery = [Ref<Association>, 1 | -1] | [Ref<Association>, 1 | -1, AssociationQuery[]]
 
 /**
@@ -156,7 +163,7 @@ export type FindOptions<T extends Doc> = {
   limit?: number
   sort?: SortingQuery<T>
   lookup?: Lookup<T>
-  projection?: Projection<T>
+  projection?: Projection<T> & LookupProjection
   associations?: AssociationQuery[]
 
   // If specified total will be returned

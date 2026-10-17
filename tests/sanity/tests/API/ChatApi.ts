@@ -37,6 +37,7 @@ import { LocalUrl, loginByToken } from '../utils'
 const chatMessageClass = 'chunter:class:ChatMessage' as Ref<Class<Doc>>
 const chatClass = 'chunter:class:Chat' as Ref<Class<Doc>>
 const threadMessageClass = 'chunter:class:ThreadMessage' as Ref<Class<Doc>>
+const directMessageClass = 'chunter:class:DirectMessage' as Ref<Class<Doc>>
 const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
 const reactionClass = 'activity:class:Reaction' as Ref<Class<Doc>>
 const personClass = 'contact:class:Person' as Ref<Class<Doc>>
@@ -91,6 +92,26 @@ export class ChatMember {
       owners: [this.account]
     } as any)
     return await this.findChannel(name)
+  }
+
+  /** The document the chat UI creates for a direct with `members`; an existing one is reused. */
+  async createDirect (members: AccountUuid[]): Promise<ChannelDoc> {
+    const accounts = [this.account, ...members]
+    const existing = (await this.client.findAll(directMessageClass, { members: { $all: accounts } } as any)).find(
+      (it) => (it as ChannelDoc).members.length === accounts.length
+    )
+    if (existing !== undefined) return existing as ChannelDoc
+    const id = await this.client.createDoc(directMessageClass, spaceSpace, {
+      name: '',
+      description: '',
+      private: true,
+      archived: false,
+      members: accounts,
+      type: accounts.length > 2 ? 'group' : 'person'
+    } as any)
+    const direct = await this.client.findOne(directMessageClass, { _id: id } as any)
+    if (direct === undefined) throw new Error('Direct not found after creation')
+    return direct as ChannelDoc
   }
 
   /** Both members and collaborators come from `members`, the same update the details panel sends. */

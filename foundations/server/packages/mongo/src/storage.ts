@@ -243,8 +243,9 @@ abstract class MongoAdapterBase implements DbAdapter {
     }
     if (options?.projection !== undefined) {
       const projection: Projection<T> = {}
-      for (const key in options.projection ?? []) {
-        projection[key] = options.projection[key]
+      const source: Projection<T> = options.projection
+      for (const key in source) {
+        projection[key] = source[key]
       }
       cursor = cursor.project(projection)
     }
@@ -703,9 +704,10 @@ abstract class MongoAdapterBase implements DbAdapter {
     }
     if (options?.projection !== undefined) {
       const projection: Projection<T> = {}
-      for (const key in options.projection) {
+      const source: Projection<T> = options.projection
+      for (const key in source) {
         const ckey = this.checkMixinKey<T>(key, clazz) as keyof T
-        projection[ckey] = options.projection[key]
+        projection[ckey] = source[key]
       }
       for (const step of steps) {
         // We also need to add lookup if original field are in projection.
@@ -1063,10 +1065,11 @@ abstract class MongoAdapterBase implements DbAdapter {
       return undefined
     }
     const projection: Projection<T> = {}
+    const source: Projection<T> = options.projection ?? {}
     let count = 0
-    for (const key in options.projection ?? []) {
+    for (const key in source) {
       const ckey = this.checkMixinKey<T>(key, _class) as keyof T
-      projection[ckey] = options.projection[key]
+      projection[ckey] = source[key]
       count++
     }
     if (options.sort != null) {

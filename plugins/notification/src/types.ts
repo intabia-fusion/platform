@@ -447,7 +447,7 @@ export interface DocNotificationSetting extends Preference {
 
 export interface ReadState extends AttachedDoc {
   latestMessageId?: Ref<ActivityMessage>
-  latestMessageTimestamp?: Timestamp
+  latestMessageTimestamp: Timestamp
   [key: AccountUuid]: ReadPosition
 }
 
