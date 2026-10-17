@@ -1,0 +1,132 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 78b55bd060827ead829884f8c3026c42197089c1..d5d78be0dc1d2a374f9fa0b7a6cef91f7707a08b 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -881,6 +881,7 @@ class Mark {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+@@ -1473,6 +1474,7 @@ class Extension {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+@@ -4817,6 +4819,15 @@ class Editor extends EventEmitter {
+      */
+     destroy() {
+         this.emit('destroy');
++        this.extensionManager.extensions.forEach(extension => {
++            let current = extension;
++            while (current.parent) {
++                if (current.parent.child === current) {
++                    current.parent.child = null;
++                }
++                current = current.parent;
++            }
++        });
+         if (this.view) {
+             // Cleanup our reference to prevent circular references which caused memory leaks
+             // @ts-ignore
+@@ -5088,6 +5099,7 @@ class Node {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+diff --git a/dist/index.js b/dist/index.js
+index 407d2e0afbf2cbceb6d879f853cde1ee3a441fe2..5c1e2161f8b97ae3102b8c4adbbf1fadc24990ca 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -879,6 +879,7 @@ class Mark {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+@@ -1471,6 +1472,7 @@ class Extension {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+@@ -4815,6 +4817,15 @@ class Editor extends EventEmitter {
+      */
+     destroy() {
+         this.emit('destroy');
++        this.extensionManager.extensions.forEach(extension => {
++            let current = extension;
++            while (current.parent) {
++                if (current.parent.child === current) {
++                    current.parent.child = null;
++                }
++                current = current.parent;
++            }
++        });
+         if (this.view) {
+             // Cleanup our reference to prevent circular references which caused memory leaks
+             // @ts-ignore
+@@ -5086,6 +5097,7 @@ class Node {
+         extension.name = this.name;
+         // Set the parent to be our parent
+         extension.parent = this.parent;
++        this.child = null;
+         return extension;
+     }
+     extend(extendedConfig = {}) {
+diff --git a/dist/index.umd.js b/dist/index.umd.js
+index c067941ae4ffcce5fdf6401886c23aa154c55567..a9807e87aee0077dc7669319c9866e7cde0841c3 100644
+--- a/dist/index.umd.js
++++ b/dist/index.umd.js
+@@ -877,6 +877,7 @@
+           extension.name = this.name;
+           // Set the parent to be our parent
+           extension.parent = this.parent;
++          this.child = null;
+           return extension;
+       }
+       extend(extendedConfig = {}) {
+@@ -1469,6 +1470,7 @@
+           extension.name = this.name;
+           // Set the parent to be our parent
+           extension.parent = this.parent;
++          this.child = null;
+           return extension;
+       }
+       extend(extendedConfig = {}) {
+@@ -4813,6 +4815,15 @@ img.ProseMirror-separator {
+        */
+       destroy() {
+           this.emit('destroy');
++          this.extensionManager.extensions.forEach(extension => {
++              let current = extension;
++              while (current.parent) {
++                  if (current.parent.child === current) {
++                      current.parent.child = null;
++                  }
++                  current = current.parent;
++              }
++          });
+           if (this.view) {
+               // Cleanup our reference to prevent circular references which caused memory leaks
+               // @ts-ignore
+@@ -5084,6 +5095,7 @@ img.ProseMirror-separator {
+           extension.name = this.name;
+           // Set the parent to be our parent
+           extension.parent = this.parent;
++          this.child = null;
+           return extension;
+       }
+       extend(extendedConfig = {}) {

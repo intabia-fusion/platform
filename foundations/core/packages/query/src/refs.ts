@@ -88,6 +88,22 @@ export class Refs {
           }
         }
       }
+      // A plain _id query may take the copy a list loaded with a lookup, e.g. a link per kanban card.
+      if (options?.lookup === undefined && options?.associations === undefined) {
+        for (const des of desc) {
+          for (const [key, docs] of this.documentRefs) {
+            const doc = key.startsWith(des + ':') ? docs.get(query._id)?.doc : undefined
+            if (doc === undefined || matchQuery([doc], query, _class, this.getHierarchy()).length === 0) {
+              continue
+            }
+            const { $lookup, $associations, ...clean } = this.getHierarchy().clone(doc)
+            if (this.getHierarchy().isMixin(_class)) {
+              return toFindResult([this.getHierarchy().as(clean, _class)] as T[], 1)
+            }
+            return toFindResult([clean] as T[], 1)
+          }
+        }
+      }
     }
     if (
       options?.limit === 1 &&

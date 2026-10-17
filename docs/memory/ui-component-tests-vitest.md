@@ -88,3 +88,12 @@ it is handed - easy to get backwards when writing a test.
   so drive it with a `change` event on the input, not a click.
 - `Like.svelte`'s `vote()` flips `voted` unconditionally and always increments `value` - a second
   click un-votes but still increments. Pinned as current behaviour, not obviously desired.
+
+## Kanban (packages/kanban, 2026-10-16)
+
+`Kanban.test.ts` mounts `KanbanHarness.svelte` (fills the card/header/swimLaneHeader slots, exposes slot args as `data-*`) over a fake `@hcengineering/presentation` (`fakePresentation.ts`: records every `query()`, tests answer by hand).
+
+- `Lazy` wraps every card slot and shows a zero-width space until an IntersectionObserver fires, which the setup stub never does. Set `localStorage['#platform.lazy.loading'] = 'false'` after `localStorage.clear()`.
+- A script-made `Event('dragstart')` has `dataTransfer === undefined`, but `forceWrapperDragImage` checks `=== null`: define `dataTransfer: null` on the event. `offsetY` is read-only on jsdom events: `Object.defineProperty` it to steer before/after-target in `cardDragOver`.
+- A drag left open schedules `requestAnimationFrame(autoScrollTick)`; end it with `dragend` on `.kanban-container` before `$destroy`, otherwise the frame throws in a later test. Destroying the board mid-drag throws the same way in the app: `onDestroy` never calls `stopAutoScroll`, and `scrollerEl` becomes `null` while the guard checks `=== undefined` (Kanban.svelte `autoScrollTick`). Pinned in the "throws from the auto-scroll frame" test.
+- `Button` renders a `Label` without a strings loader: `NoLoaderForStrings` trace on stderr, harmless (hidden by `--silent`).

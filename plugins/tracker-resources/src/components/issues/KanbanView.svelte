@@ -24,6 +24,7 @@
     FindOptions,
     Lookup,
     Ref,
+    Status,
     WithLookup
   } from '@hcengineering/core'
   import { generateId, getObjectValue, groupByArray, mergeQueries } from '@hcengineering/core'
@@ -32,7 +33,6 @@
   import { employeeByIdStore } from '@hcengineering/contact-resources'
   import type { Employee } from '@hcengineering/contact'
   import { getName } from '@hcengineering/contact'
-  import { defaultPriorities, issuePriorities } from '../../types'
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
@@ -46,9 +46,9 @@
     typeStore,
     updateTaskKanbanCategories
   } from '@hcengineering/task-resources'
-  import type { Component as TrackerComponent, Issue, Project } from '@hcengineering/tracker'
+  import type { Issue, Project } from '@hcengineering/tracker'
   import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
-  import type { BlankViewProps, ColorDefinition } from '@hcengineering/ui'
+  import type { BlankViewProps, ColorDefinition, SelectPopupValueType } from '@hcengineering/ui'
   import {
     Button,
     Component,
@@ -56,6 +56,11 @@
     getPlatformAvatarColorForTextDef,
     getPlatformColorDef,
     IconAdd,
+    IconChevronDown,
+    IconChevronLeft,
+    IconMixin,
+    SelectPopup,
+    eventToHTMLElement,
     Label,
     BlankView,
     Loading,
@@ -91,7 +96,13 @@
   import tracker from '../../plugin'
   import { componentStore } from '../../component'
   import { activeProjects, IssuePriorityColor, sortSwimLaneValues } from '../../utils'
-  import { orderSwimLanes } from '../../swimLanes'
+  import {
+    buildSwimLanes,
+    normalizeSwimValue,
+    sortSwimLanes,
+    swimLaneUpdateProps,
+    UNASSIGNED_SWIM
+  } from '../../swimLanes'
   import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
   import AssigneeEditor from './AssigneeEditor.svelte'
@@ -338,6 +349,54 @@
 
   let headerComponent: AttributeModel | undefined
 
+  function statusCategory (state: CategoryType): string | undefined {
+    return $statusStore.byId.get(state as Ref<Status>)?.category
+  }
+
+  // A merged header lists the first statuses; the chevron shows the rest.
+  const MERGED_NAMES = 2
+  let expandedHeaders = new Set<string>()
+
+  function toggleHeaderNames (key: string): void {
+    if (!expandedHeaders.delete(key)) expandedHeaders.add(key)
+    expandedHeaders = new Set(expandedHeaders)
+  }
+
+  // Merging columns is a view setting of the board: a click adds a column or takes it out.
+  function showMergePopup (
+    ev: MouseEvent,
+    state: CategoryType,
+    members: CategoryType[],
+    merge: (other: CategoryType) => void
+  ): void {
+    const presenter = headerComponent?.presenter
+    if (presenter === undefined) return
+    const others = categories.filter((c) => c !== state)
+    const selected = new Set(members)
+    const items = (): SelectPopupValueType[] =>
+      others.map((c, i) => ({
+        id: i,
+        component: presenter,
+        props: { value: c, space, size: 'small', kind: 'list-header', display: 'kanban' },
+        isSelected: selected.has(c)
+      }))
+    // onSelect keeps the popup open, so several columns are picked in one go.
+    const popup = showPopup(
+      SelectPopup,
+      {
+        value: items(),
+        onSelect: (id: SelectPopupValueType['id']) => {
+          if (typeof id !== 'number') return
+          const other = others[id]
+          if (!selected.delete(other)) selected.add(other)
+          merge(other)
+          popup.update({ value: items() })
+        }
+      },
+      eventToHTMLElement(ev)
+    )
+  }
+
   const updateCategories = reduceCalls(async function (
     key: IssuesGrouping,
     space: Ref<Project> | undefined,
@@ -389,10 +448,6 @@
   }
 
   // SwimLane support (generic by attribute name).
-  const UNASSIGNED_SWIM = '__swim_unassigned__'
-  // Fields that must not be changed via drag (project immutable).
-  const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space'])
-
   let swimLanes: SwimLane[] = []
   // The field the lanes were built for: old lanes under a new field query {attachedTo: 3} and a
   // drop on them writes it.
@@ -413,59 +468,9 @@
     })
   }
 
-  function normalizeSwimValue (
-    field: string,
-    v: unknown
-  ): { key: string, value: unknown, empty: boolean, title?: string } {
-    if (v == null) return { key: UNASSIGNED_SWIM, value: null, empty: true }
-    if (field === 'attachedTo' && v === tracker.ids.NoParent) {
-      return { key: UNASSIGNED_SWIM, value: tracker.ids.NoParent, empty: true }
-    }
-    // Components with the same label may exist in different projects — group
-    // them under one swimlane keyed by the (case-folded, trimmed) label so the
-    // user sees a single "Chat" lane instead of one per project.
-    if (field === 'component') {
-      const c = $componentStore.get(v as Ref<TrackerComponent>)
-      if (c !== undefined) {
-        const label = c.label
-        return { key: 'component:' + label.toLowerCase().trim(), value: v, empty: false, title: label }
-      }
-    }
-    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      return { key: String(v), value: v, empty: false }
-    }
-    return { key: JSON.stringify(v), value: v, empty: false }
-  }
-
+  // A wrapper keeps the store and the label out of the reactive deps: their change does not re-sort the lanes.
   function buildGenericLanes (field: string, tasks: DocWithRank[]): SwimLane[] {
-    if (field === 'none' || field === '') return []
-    const seen = new Map<string, { value: unknown, empty: boolean, title?: string }>()
-    for (const t of tasks) {
-      const raw = getObjectValue(field, t)
-      const n = normalizeSwimValue(field, raw)
-      if (!seen.has(n.key)) seen.set(n.key, { value: n.value, empty: n.empty, title: n.title })
-    }
-    // Priority has a fixed ordered set; preseed to keep empty lanes too.
-    if (field === 'priority') {
-      for (const p of defaultPriorities) {
-        const k = String(p)
-        if (!seen.has(k)) seen.set(k, { value: p, empty: false })
-      }
-    }
-    const lanes: SwimLane[] = []
-    let unassigned: SwimLane | undefined
-    for (const [key, { value, empty, title }] of seen) {
-      const lane: SwimLane = {
-        _id: key,
-        title: empty ? emptyLabel : (title ?? ''),
-        value,
-        icon: field === 'priority' && !empty ? issuePriorities[value as IssuePriority]?.icon : undefined
-      }
-      if (empty) unassigned = lane
-      else lanes.push(lane)
-    }
-    if (unassigned !== undefined) lanes.unshift(unassigned)
-    return lanes
+    return buildSwimLanes(field, tasks, $componentStore, emptyLabel)
   }
 
   // Order of the lanes without a sort function for the field: components by label, employees by name,
@@ -484,19 +489,11 @@
   let laneOrderSeq = 0
   async function orderLanes (field: string, lanes: SwimLane[]): Promise<void> {
     const seq = ++laneOrderSeq
-    const unassigned = lanes.filter((it) => it._id === UNASSIGNED_SWIM)
-    const rest = lanes.filter((it) => it._id !== UNASSIGNED_SWIM)
-    const sorted =
-      rest.length > 1
-        ? await sortSwimLaneValues(
-          client,
-          _class,
-          space,
-          field,
-          rest.map((it) => it.value),
-          viewlet.descriptor
-        )
-        : undefined
+    const ordered = await sortSwimLanes(
+      lanes,
+      async (values) => await sortSwimLaneValues(client, _class, space, field, values, viewlet.descriptor),
+      laneFallbackKey
+    )
     const presenter =
       field === 'none' || field === ''
         ? undefined
@@ -504,7 +501,7 @@
     if (seq !== laneOrderSeq) return
     swimLanesBy = field
     swimLanePresenter = presenter
-    swimLanes = [...unassigned, ...orderSwimLanes(rest, sorted, laneFallbackKey)]
+    swimLanes = ordered
   }
 
   $: void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
@@ -512,38 +509,16 @@
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
     if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
     const raw = getObjectValue(swimLanesBy, doc)
-    return normalizeSwimValue(swimLanesBy, raw).key
+    return normalizeSwimValue(swimLanesBy, raw, $componentStore).key
   }
 
-  function getSwimLaneQuery (swimLane: SwimLane): DocumentQuery<any> {
-    if (swimLanesBy === 'none' || swimLanesBy === '') return {}
-    return { [swimLanesBy]: swimLane.value }
+  // Parent issues of the lanes are loaded by the board query, not by a header query per lane.
+  function getSwimLaneDocId (swimLane: SwimLane): Ref<Doc> | undefined {
+    return swimLanesBy === 'attachedTo' && swimLane._id !== UNASSIGNED_SWIM ? (swimLane.value as Ref<Doc>) : undefined
   }
 
   function getSwimLaneUpdateProps (doc: Doc, swimLane: SwimLane): DocumentUpdate<Item> | undefined {
-    if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
-    if (IMMUTABLE_SWIM_FIELDS.has(swimLanesBy)) return undefined
-    let value: unknown = swimLane.value
-    // Components are aggregated by label across projects; pick the ref that
-    // belongs to the dropped issue's project, or skip the update entirely if
-    // this lane has no matching component for the issue's project.
-    if (swimLanesBy === 'component') {
-      const docSpace = (doc as any).space
-      const lane = $componentStore.filter(
-        (c) =>
-          c.label.toLowerCase().trim() ===
-            ($componentStore.get(swimLane.value as Ref<TrackerComponent>)?.label ?? '').toLowerCase().trim() &&
-          c.space === docSpace
-      )
-      const match = lane.length > 0 ? lane[0]._id : undefined
-      if (match === undefined) return undefined
-      value = match
-    }
-    const update: DocumentUpdate<Item> = { [swimLanesBy]: value }
-    if (swimLanesBy === 'attachedTo') {
-      ;(update as any).attachedToClass = tracker.class.Issue
-    }
-    return update
+    return swimLaneUpdateProps(swimLanesBy, doc, swimLane, $componentStore)
   }
 
   let swimLaneAccents = new Map<string, ColorDefinition>()
@@ -727,9 +702,10 @@
     {swimLanes}
     swimLaneKey={swimLaneBy !== 'none' ? swimLaneBy : undefined}
     {getSwimLaneOfDoc}
-    {getSwimLaneQuery}
+    {getSwimLaneDocId}
     {getSwimLaneUpdateProps}
     {getSwimLaneHeaderStyle}
+    getCategoryGroup={groupByKey === 'status' ? statusCategory : undefined}
     compact={compactMode}
     storageKey={swimLaneStorageKey}
     controlKey={viewlet?._id != null ? String(viewlet._id) : undefined}
@@ -742,14 +718,17 @@
       showMenu(evt.detail.evt, { object: evt.detail.objects, baseMenuClass })
     }}
   >
-    <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:toggle>
+    <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:laneDoc let:docsLoaded let:toggle>
       <div class="swimlane-header-inner">
         {#if swimLane._id === UNASSIGNED_SWIM || swimLanePresenter === undefined}
           <span class="swimlane-title">{swimLane.title || emptyLabel}</span>
+        {:else if swimLanesBy === 'attachedTo' && laneDoc === undefined && !docsLoaded}
+          <span class="swimlane-title" />
         {:else}
           <svelte:component
             this={swimLanePresenter.presenter}
             value={swimLane.value}
+            object={laneDoc}
             kind="list-header"
             size="small"
             {space}
@@ -763,47 +742,98 @@
         <span class="swimlane-count">{count}</span>
       </div>
     </svelte:fragment>
-    <svelte:fragment slot="header" let:state let:count let:index>
+    <svelte:fragment slot="header" let:state let:count let:index let:collapsed let:toggle let:members let:merge>
       {@const color = accentColors.get(`${index}${$themeStore.dark}${groupByKey}`)}
       {@const headerBGColor = color?.background ?? defaultBackground($themeStore.dark)}
-      <div style:background={headerBGColor} class="header flex-between">
-        <div class="flex-row-center gap-1">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div
+        style:background={headerBGColor}
+        class="header flex-between"
+        class:merged={members.length > 1}
+        class:collapsed
+        on:click={() => {
+          if (collapsed) toggle()
+        }}
+      >
+        <div class="flex-row-center gap-1 flex-grow clear-mins">
           <span
-            class="clear-mins fs-bold overflow-label pointer-events-none"
+            class="clear-mins fs-bold"
+            class:pointer-events-none={members.length === 1}
+            class:overflow-label={members.length === 1}
+            class:merged-names={members.length > 1}
             style:color={color?.title ?? 'var(--theme-caption-color)'}
           >
             {#if groupByKey === noCategory}
               <Label label={view.string.NoGrouping} />
             {:else if headerComponent}
-              <svelte:component
-                this={headerComponent.presenter}
-                value={state}
-                {space}
-                size="small"
-                kind="list-header"
-                display="kanban"
-                colorInherit={!$themeStore.dark}
-                accent
-                on:accent-color={(ev) => {
-                  setAccentColor(index, ev)
-                }}
-              />
+              {#each expandedHeaders.has(String(state)) ? members : members.slice(0, MERGED_NAMES) as member, mi}
+                <div class="pointer-events-none">
+                  <svelte:component
+                    this={headerComponent.presenter}
+                    value={member}
+                    {space}
+                    size="small"
+                    kind="list-header"
+                    display="kanban"
+                    colorInherit={!$themeStore.dark}
+                    accent
+                    on:accent-color={(ev) => {
+                      if (mi === 0) setAccentColor(index, ev)
+                    }}
+                  />
+                </div>
+              {/each}
             {/if}
           </span>
-          <span class="counter ml-1">
-            {count}
-          </span>
+          {#if members.length > MERGED_NAMES}
+            <div class="count-col">
+              <span class="counter">{count}</span>
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <div
+                class="more-members"
+                class:expanded={expandedHeaders.has(String(state))}
+                on:click|stopPropagation={() => {
+                  toggleHeaderNames(String(state))
+                }}
+              >
+                <IconChevronDown size="small" />
+                {#if !expandedHeaders.has(String(state))}<span>+{members.length - MERGED_NAMES}</span>{/if}
+              </div>
+            </div>
+          {:else}
+            <span class="counter ml-1">
+              {count}
+            </span>
+          {/if}
         </div>
-        <div class="tools gap-1">
-          <Button
-            icon={IconAdd}
-            kind="ghost"
-            showTooltip={{ label: tracker.string.AddIssueTooltip, direction: 'left' }}
-            on:click={() => {
-              showPopup(CreateIssue, { space: currentSpace, [groupByKey]: state }, 'top')
-            }}
-          />
-        </div>
+        {#if !collapsed}
+          <div class="tools flex-row-center flex-no-shrink gap-1">
+            <Button
+              icon={IconChevronLeft}
+              kind="ghost"
+              showTooltip={{ label: tracker.string.CollapseColumn, direction: 'left' }}
+              on:click={toggle}
+            />
+            <Button
+              icon={IconMixin}
+              kind="ghost"
+              showTooltip={{ label: tracker.string.MergeColumns, direction: 'left' }}
+              on:click={(ev) => {
+                showMergePopup(ev, state, members, merge)
+              }}
+            />
+            <Button
+              icon={IconAdd}
+              kind="ghost"
+              showTooltip={{ label: tracker.string.AddIssueTooltip, direction: 'left' }}
+              on:click={() => {
+                showPopup(CreateIssue, { space: currentSpace, [groupByKey]: state }, 'top')
+              }}
+            />
+          </div>
+        {/if}
       </div>
     </svelte:fragment>
     <svelte:fragment slot="card" let:object>
@@ -983,20 +1013,74 @@
   }
   .header {
     margin: 0 0.75rem 0.5rem;
-    padding: 0 0.5rem 0 1.25rem;
+    // Headers of a row stretch to the tallest one; their content stays at the top.
+    align-items: flex-start;
+    padding: 0.375rem 0.5rem 0 1.25rem;
     height: 2.5rem;
     min-height: 2.5rem;
+    position: relative;
     border: 1px solid var(--theme-divider-color);
     border-radius: 0.25rem;
 
     .counter {
       color: var(--theme-dark-color);
     }
+    // Shown over the header on hover: hidden buttons must not take the names' width.
     .tools {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      border-radius: 0.25rem;
+      background: inherit;
       opacity: 0;
+      pointer-events: none;
     }
     &:hover .tools {
       opacity: 1;
+      pointer-events: auto;
+    }
+    &.collapsed {
+      margin: 0;
+      cursor: pointer;
+    }
+    // A merged column names every status: the header grows instead of clipping them.
+    &.merged {
+      height: auto;
+      padding-bottom: 0.375rem;
+
+      & > div {
+        align-items: flex-start;
+      }
+    }
+    .merged-names {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .count-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: 0.25rem;
+    }
+    .more-members {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      width: fit-content;
+      padding: 0 0.25rem;
+      border-radius: 0.25rem;
+      font-weight: 400;
+      color: var(--theme-dark-color);
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--theme-button-hovered);
+      }
+      &.expanded :global(svg) {
+        transform: rotate(180deg);
+      }
     }
   }
   .tracker-card {

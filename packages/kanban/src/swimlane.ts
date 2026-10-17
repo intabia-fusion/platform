@@ -34,3 +34,26 @@ export function registerSwimLaneControls (key: string, controls: SwimLaneControl
     })
   }
 }
+
+// Column merge actions of the board shown for a viewlet, for the issues view "..." menu.
+export interface ColumnControls {
+  resetMerge: () => void
+  mergeByGroup: () => void
+  // Some columns are merged now, so there is something to reset.
+  merged: boolean
+}
+
+export const columnControlStore = writable<Map<string, ColumnControls>>(new Map())
+
+export function registerColumnControls (key: string, controls: ColumnControls): () => void {
+  columnControlStore.update((m) => {
+    m.set(key, controls)
+    return m
+  })
+  return () => {
+    columnControlStore.update((m) => {
+      if (m.get(key) === controls) m.delete(key)
+      return m
+    })
+  }
+}
