@@ -192,6 +192,7 @@ class ClientImpl implements Client, BackupClient {
     const result = await this.conn.tx(tx)
     // The connection notifies local tx handlers (live queries) without awaiting them.
     // Give them a turn before the caller issues the next tx, or their updates are coalesced.
+    // One microtask only: the synchronous part of the handlers runs, their awaits may still be pending.
     await Promise.resolve()
     return result
   }

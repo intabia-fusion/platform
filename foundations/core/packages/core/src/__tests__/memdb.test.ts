@@ -775,6 +775,31 @@ describe('memdb', () => {
     )
   })
 
+  it('addTxes should warn and keep indexing when a created doc has an unknown class', async () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of txes) hierarchy.tx(tx)
+    const model = new ModelDb(hierarchy)
+    for (const tx of txes) await model.tx(tx)
+    const ctx = { warn: jest.fn(), info: jest.fn() } as any
+
+    const unknownTx = createDoc('test:class:Unknown' as Ref<Class<Doc>>, {} as any)
+    const spaceTx = createDoc(core.class.Space, {
+      name: 'Y',
+      description: '',
+      private: false,
+      members: [],
+      archived: false
+    })
+    model.addTxes(ctx, [unknownTx, spaceTx], false)
+
+    expect(ctx.warn).toHaveBeenCalledWith(
+      'failed to index model document, skipping',
+      expect.objectContaining({ _id: unknownTx.objectId })
+    )
+    const spaces = model.findAllSync(core.class.Space, { _id: spaceTx.objectId as Ref<Space> })
+    expect(spaces).toHaveLength(1)
+  })
+
   it('addTxes should warn and continue when applying a transaction to the hierarchy fails', async () => {
     const hierarchy = new Hierarchy()
     for (const tx of txes) hierarchy.tx(tx)
