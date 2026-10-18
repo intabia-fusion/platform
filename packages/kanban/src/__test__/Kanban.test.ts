@@ -417,6 +417,30 @@ describe('Kanban column collapse', () => {
     expect(columnOrder()).toEqual(['todo', 'stack'])
   })
 
+  it('puts a card back when the drag ends after it hovered a collapsed column', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), done: cards('x', 2, 'done') })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    header('done').click()
+    await settle()
+    const count = (): string | undefined => one('[data-test="column-header"]', stacked('done')).dataset.count
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(stacked('done'), 'dragover')
+    await settle()
+    // The preview moved the card into the array of the stacked column, which is not drawn.
+    expect(count()).toBe('3')
+    expect(cardIds(column('todo'))).toEqual(['t01'])
+
+    fire(one('.kanban-container'), 'dragend')
+    await settle()
+
+    expect(count()).toBe('2')
+    expect(cardIds(column('todo'))).toEqual(['t00', 't01'])
+    expect(fakeClient.update).not.toHaveBeenCalled()
+  })
+
   it('greys out the columns a dragged card cannot move to, except the one it left, and keeps their cards', async () => {
     const groups = board({ todo: cards('t', 2, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
     await mount(legacyProps(groups, { getAvailableCategories: async () => ['doing'] }))
@@ -819,6 +843,32 @@ describe('Kanban merged columns', () => {
     expect(fakeClient.update).not.toHaveBeenCalled()
     expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
   })
+
+  it('puts a card back when its drop on a merged column is refused', async () => {
+    const groups = board({
+      todo: cards('t', 3, 'todo'),
+      doing: cards('d', 1, 'doing'),
+      done: cards('x', 1, 'done'),
+      review: cards('r', 1, 'review')
+    })
+    await mount(legacyProps(groups, { controlKey: 'viewlet' }))
+    await flush()
+    await mergeInto('doing', 'done')
+    await flush()
+
+    fire(cardEl('t01'), 'dragstart')
+    await settle()
+    fire(column('review'), 'dragover')
+    await settle()
+    expect(cardIds(column('review'))).toEqual(['r00', 't01'])
+    fire(column('doing'), 'drop')
+    await settle()
+
+    expect(cardIds(column('todo'))).toEqual(['t00', 't01', 't02'])
+    expect(cardIds(column('review'))).toEqual(['r00'])
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
 })
 
 describe('Kanban legacy drag', () => {
@@ -845,7 +895,7 @@ describe('Kanban legacy drag', () => {
     expect(one('[data-id="kanban-column"][data-state="done"]').classList.contains('drop-allowed')).toBe(true)
   })
 
-  it('re-queries the changed columns after dragend', async () => {
+  it('re-queries the changed columns after the drop', async () => {
     await dragBoard()
     const before = fakeQueries.calls.length
 
@@ -853,7 +903,7 @@ describe('Kanban legacy drag', () => {
     await settle()
     fire(column('doing'), 'dragover')
     expect(fakeQueries.calls).toHaveLength(before)
-    fire(cardEl('t00'), 'dragend')
+    fire(column('doing'), 'drop')
     await settle()
 
     // The card left todo (first 10 shift by one) and joined the end of doing (beyond its first 10).
@@ -939,6 +989,119 @@ describe('Kanban legacy drag', () => {
     expect(onMoveCommit).not.toHaveBeenCalled()
   })
 
+  it('puts the card back where it stood when the drag ends without a drop', async () => {
+    const groups = await dragBoard()
+    const todo = groups.todo.map((c) => c._id)
+    const before = fakeQueries.calls.length
+
+    fire(cardEl('t05'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    await settle()
+    expect(groups.doing.map((c) => c._id)).toContain('t05')
+
+    fire(one('.kanban-container'), 'dragend')
+    await settle()
+
+    expect(groups.todo.map((c) => c._id)).toEqual(todo)
+    expect(groups.doing.map((c) => c._id)).not.toContain('t05')
+    expect(cardIds(column('todo'))).toEqual(todo.slice(0, 10))
+    expect(fakeQueries.calls).toHaveLength(before)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it('puts a card back when the drag that reordered it ends without a drop', async () => {
+    const groups = await dragBoard()
+    const todo = groups.todo.map((c) => c._id)
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(cardEl('t03'), 'dragover', 5)
+    await settle()
+    expect(groups.todo.findIndex((c) => c._id === 't00')).toBe(3)
+
+    fire(one('.kanban-container'), 'dragend')
+    await settle()
+
+    expect(groups.todo.map((c) => c._id)).toEqual(todo)
+  })
+
+  it('does not rewrite the board when the drag ends where it began', async () => {
+    const setGroupByValues = vi.fn((g: Record<string, Item[]>, c: string, items: Item[]) => {
+      g[c] = items
+    })
+    await dragBoard({ setGroupByValues })
+
+    fire(cardEl('t01'), 'dragstart')
+    await settle()
+    fire(column('todo'), 'dragover')
+    fire(one('.kanban-container'), 'dragend')
+    await settle()
+
+    expect(setGroupByValues).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['column', () => column('doing')],
+    ['card', () => cardEl('d03')]
+  ])('keeps a card where its drop on a %s put it when the drag end comes later', async (_target, dropOn) => {
+    const groups = await dragBoard()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    fire(cardEl('d03'), 'dragover', 5)
+    fire(dropOn(), 'drop')
+    await settle()
+    window.dispatchEvent(new MouseEvent('mousemove'))
+    await settle()
+
+    expect(groups.todo.map((c) => c._id)).not.toContain('t00')
+    expect(groups.doing.map((c) => c._id)).toContain('t00')
+  })
+
+  it('ends the drag on the first mouse move when its dragend never reaches the board', async () => {
+    const groups = board({
+      todo: cards('t', 2, 'todo'),
+      doing: cards('d', 1, 'doing'),
+      done: cards('x', 1, 'done'),
+      review: cards('r', 1, 'review')
+    })
+    await mount(
+      legacyProps(groups, { controlKey: 'viewlet', getAvailableCategories: async () => ['todo', 'doing', 'done'] })
+    )
+    await flush()
+    one('[data-test="column-header"]', column('done')).click()
+    await settle()
+    const stack = one('[data-id="kanban-collapsed-stack"]')
+    const source = cardEl('t00')
+    const moveMouse = (): void => {
+      window.dispatchEvent(new MouseEvent('mousemove'))
+    }
+
+    fire(source, 'dragstart')
+    await settle()
+    // Firefox sends a mouse move right after dragstart, before the drag is under way.
+    moveMouse()
+    await settle()
+    expect(column('doing').classList.contains('drop-allowed')).toBe(true)
+
+    fire(column('doing'), 'dragover')
+    await settle()
+    expect(source.isConnected).toBe(false)
+    expect(column('review').classList.contains('drop-disabled')).toBe(true)
+    expect(stack.classList.contains('dragging')).toBe(true)
+
+    moveMouse()
+    await settle()
+
+    expect(q('.drop-allowed, .drop-disabled').map((e) => e.dataset.state)).toEqual([])
+    expect(stack.classList.contains('dragging')).toBe(false)
+    expect(cardIds(column('todo'))).toEqual(['t00', 't01'])
+    expect(cardIds(column('doing'))).toEqual(['d00'])
+  })
+
   it('stops the auto-scroll frame when the board is destroyed mid-drag', async () => {
     await dragBoard()
     const errors: string[] = []
@@ -958,6 +1121,30 @@ describe('Kanban legacy drag', () => {
     window.removeEventListener('error', onError)
 
     expect(errors).toEqual([])
+  })
+
+  it('removes its window listener when the drag ends and when the board is destroyed', async () => {
+    await dragBoard()
+    const add = vi.spyOn(window, 'addEventListener')
+    const remove = vi.spyOn(window, 'removeEventListener')
+    const mouseCalls = (spy: typeof add): unknown[][] => spy.mock.calls.filter(([type]) => type === 'mousemove')
+
+    fire(cardEl('t00'), 'dragstart')
+    fire(column('doing'), 'dragover')
+    fire(one('.kanban-container'), 'dragend')
+    await settle()
+    fire(cardEl('t01'), 'dragstart')
+    fire(column('doing'), 'dragover')
+    await settle()
+    mounted.forEach((c) => {
+      c.$destroy()
+    })
+    mounted = []
+
+    expect(mouseCalls(add)).toHaveLength(2)
+    expect(mouseCalls(remove)).toEqual(mouseCalls(add))
+    add.mockRestore()
+    remove.mockRestore()
   })
 
   it('marks the dragged card and renders it before its docs load', async () => {
@@ -1275,6 +1462,85 @@ describe('Kanban swim lanes', () => {
       const [target, update] = fakeClient.diffUpdate.mock.calls[0] as [Card, { rank: string }]
       expect(target._id).toBe('a1')
       expect(update.rank > groups.todo[1].rank).toBe(true)
+    })
+
+    it('shows a card where the data puts it after a drop whose dragend never reached the board', async () => {
+      const groups = board({
+        todo: [card('a1', 'todo', 'A'), card('a2', 'todo', 'A'), card('b1', 'todo', 'B')],
+        done: [card('b2', 'done', 'B')]
+      })
+      const component = await mount(swimProps(groups, lanes))
+      await flush()
+      const source = cardEl('a1')
+
+      fire(source, 'dragstart')
+      await settle()
+      fire(cell('B', 'todo'), 'dragover')
+      await settle()
+      // The card left its cell, so its dragend would go to a node that is no longer in the board.
+      expect(source.isConnected).toBe(false)
+      fire(cardEl('b1'), 'drop')
+      await settle()
+      expect(fakeClient.update).toHaveBeenCalledTimes(1)
+      window.dispatchEvent(new MouseEvent('mousemove'))
+      await settle()
+
+      const moved = { ...groups.todo[0], status: 'done' } as unknown as Card
+      docs.set('a1', moved)
+      const next = board({ todo: [groups.todo[1], groups.todo[2]], done: [moved, groups.done[0]] })
+      component.$set({ groupByDocs: next, objects: Object.values(next).flat() })
+      await settle()
+      await flush()
+
+      expect(cardIds(cell('A', 'done'))).toEqual(['a1'])
+      expect(cardIds(cell('B', 'todo'))).toEqual(['b1'])
+    })
+
+    it('leaves the board data alone when a drag ends without a drop', async () => {
+      const groups = board({
+        todo: [card('a1', 'todo', 'A'), card('a2', 'todo', 'A'), card('b1', 'todo', 'B')],
+        done: [card('b2', 'done', 'B')]
+      })
+      const component = await mount(swimProps(groups, lanes))
+      await flush()
+
+      fire(cardEl('a2'), 'dragstart')
+      await settle()
+      // a1 leaves todo while a2 is dragged, so a2 changes its index there.
+      const next = board({ todo: [groups.todo[1], groups.todo[2]], done: [groups.todo[0], groups.done[0]] })
+      component.$set({ groupByDocs: next })
+      await settle()
+      fire(one('.kanban-container'), 'dragend')
+      await settle()
+
+      expect(next.todo.map((c) => c._id)).toEqual(['a2', 'b1'])
+    })
+
+    it('sends the lane update of a card drop even when the drag ends while the first update is pending', async () => {
+      await dragBoard()
+      let finish = (): void => {}
+      fakeClient.diffUpdate.mockImplementationOnce(
+        async () =>
+          await new Promise((resolve) => {
+            finish = () => {
+              resolve({})
+            }
+          })
+      )
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('B', 'todo'), 'dragover')
+      await settle()
+      fire(cardEl('b1'), 'drop')
+      window.dispatchEvent(new MouseEvent('mousemove'))
+      finish()
+      await settle()
+
+      expect(fakeClient.update).toHaveBeenCalledTimes(1)
+      const [target, update] = fakeClient.update.mock.calls[0] as [Card | undefined, { lane: string }]
+      expect(target?._id).toBe('a1')
+      expect(update.lane).toBe('B')
     })
   })
 })

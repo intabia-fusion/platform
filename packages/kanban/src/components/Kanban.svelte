@@ -410,6 +410,7 @@
       query.unsubscribe()
     })
     stopAutoScroll()
+    window.removeEventListener('mousemove', onDragEnd, true)
   })
 
   let visibleGroups = new Map<string, Array<Ref<Doc>>>()
@@ -539,6 +540,7 @@
       // its new column/rank until the live-query roundtrip lands; the actual
       // card data stays under live-query control.
       onMoveCommit?.(movedCard._id, merged as Record<string, unknown>)
+      dragCardToRestore = undefined
     }
     // Restore focus on the just-moved card so keyboard navigation continues
     // from there, mirroring the mouse-hover focus path.
@@ -565,6 +567,9 @@
   let dragCardAvailableCategories: CategoryType[] | undefined
   // Where the card stood in its category, to put it back there in the legacy layout.
   let dragCardInitialIndex = -1
+  // The legacy preview moves the card inside groupByDocs. Cleared once an update is sent,
+  // so that a drag which sends none puts the card back.
+  let dragCardToRestore: Item | undefined
   let dragCardInitialSwimLane: SwimLane | undefined
   let dragCardCurrentSwimLane: SwimLane | undefined
   // Insertion index of dragCard within target lane cell (swimlane mode). Undefined = append at end.
@@ -604,6 +609,9 @@
 
   function handleDragMove (e: DragEvent): void {
     if (!isDragging) return
+    // A card that unmounts mid-drag loses its dragend. A native drag sends no mouse events,
+    // so the first mousemove ends it. Not armed at dragstart: Firefox sends one right after.
+    if (!dragMoved) window.addEventListener('mousemove', onDragEnd, true)
     dragMoved = true
     lastDragX = e.clientX
     lastDragY = e.clientY
@@ -622,6 +630,7 @@
     if (dragCard === undefined) {
       return
     }
+    dragCardToRestore = undefined
     await client.update(dragCard, updateValue)
   }
 
@@ -634,6 +643,16 @@
         setGroupByValues(groupByDocs, cat, a)
       }
     }
+  }
+
+  function putBack (card: Item): void {
+    removeFromCategories(card)
+    const own = getGroupByValues(groupByDocs, dragCardInitialState) ?? []
+    own.splice(dragCardInitialIndex === -1 ? own.length : dragCardInitialIndex, 0, card)
+    setGroupByValues(groupByDocs, dragCardInitialState, own)
+    dragCardState = dragCardInitialState
+    dragCardTargetIndex = undefined
+    groupByDocs = groupByDocs
   }
 
   function panelDragOver (event: Event | undefined, state: CategoryType, swimLane?: SwimLane): void {
@@ -651,13 +670,7 @@
         members.length > 1 &&
         members.includes(dragCardInitialState)
       ) {
-        removeFromCategories(dragCard)
-        const own = getGroupByValues(groupByDocs, dragCardInitialState) ?? []
-        own.splice(dragCardInitialIndex === -1 ? own.length : dragCardInitialIndex, 0, dragCard)
-        setGroupByValues(groupByDocs, dragCardInitialState, own)
-        dragCardState = dragCardInitialState
-        dragCardTargetIndex = undefined
-        groupByDocs = groupByDocs
+        putBack(dragCard)
         return
       }
 
@@ -834,19 +847,22 @@
       const overlay: Record<string, unknown> = { ...(updates ?? {}), ...(swimUpdates ?? {}) }
       if (Object.keys(overlay).length > 0) {
         onMoveCommit?.(dragCard._id, overlay)
+        dragCardToRestore = undefined
       }
       // Restore focus on the just-moved card so keyboard navigation continues
       // from there, mirroring the mouse-hover focus path.
       dispatch('obj-focus', { ...dragCard, ...overlay })
+      // The drag can end while an update is pending, and that clears dragCard.
+      const movedCard = dragCard
       try {
         if (updates !== undefined && Object.keys(updates).length > 0) {
-          await client.diffUpdate(dragCard, updates)
+          await client.diffUpdate(movedCard, updates)
         }
         if (swimUpdates !== undefined && Object.keys(swimUpdates).length > 0) {
-          await client.update(dragCard, swimUpdates)
+          await client.update(movedCard, swimUpdates)
         }
       } catch (err) {
-        onMoveRollback?.(dragCard._id)
+        onMoveRollback?.(movedCard._id)
       }
     }
     isDragging = false
@@ -860,6 +876,7 @@
     dragCardInitialSwimLane = swimLane
     dragCardCurrentSwimLane = swimLane
     dragCard = object
+    dragCardToRestore = swimLaneMode ? undefined : object
     dragMoved = false
     dragOverCollapsed = undefined
     isDragging = true
@@ -871,10 +888,17 @@
   }
 
   function onDragEnd (): void {
+    const card = dragCardToRestore
+    dragCardToRestore = undefined
+    if (card !== undefined) {
+      const own = getGroupByValues(groupByDocs, dragCardInitialState) ?? []
+      if (own[dragCardInitialIndex]?._id !== card._id) putBack(card)
+    }
     isDragging = false
     dragCard = undefined
     dragCardAvailableCategories = undefined
     stopAutoScroll()
+    window.removeEventListener('mousemove', onDragEnd, true)
   }
   // eslint-disable-next-line
   let dragged: boolean = false

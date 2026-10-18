@@ -17,11 +17,111 @@ import { expect, type Locator } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
 import { retryIntervals, waitStable } from '../../retry'
 
-const DROP_ZONE = '[data-id="kanban-column"], [data-id="kanban-swimlane-cell"]'
+const DROP_ZONE = '[data-id="kanban-column"], [data-id="kanban-swimlane-cell"], [data-id="kanban-collapsed-column"]'
+
+// Where the held card passes on its way to the drop target; `check` runs while it is there.
+export interface Waypoint {
+  over: Locator
+  check?: () => Promise<void>
+  // A column that refuses the card takes no pointer events, so a dragover anywhere has to do.
+  refusing?: boolean
+}
 
 export class KanbanBoardPage extends CommonTrackerPage {
   column (state: string): Locator {
     return this.page.locator(`[data-id="kanban-column"][data-state="${state}"]`)
+  }
+
+  collapsedStack (): Locator {
+    return this.page.locator('[data-id="kanban-collapsed-stack"]')
+  }
+
+  collapsedColumn (state: string): Locator {
+    return this.page.locator(`[data-id="kanban-collapsed-column"][data-state="${state}"]`)
+  }
+
+  // A column header wherever it is drawn: the column, the swim lane header row or the stack.
+  columnHeader (state: string): Locator {
+    return this.page
+      .locator(
+        [
+          `[data-id="kanban-column"][data-state="${state}"]`,
+          `[data-id="kanban-column-header"][data-state="${state}"]`,
+          `[data-id="kanban-collapsed-column"][data-state="${state}"]`
+        ].join(', ')
+      )
+      .locator('.header')
+      .first()
+  }
+
+  // The open columns by data-state in board order, then "stack" if some are collapsed.
+  async boardLayout (): Promise<string[]> {
+    return await this.page
+      .locator('[data-id="kanban-column"], [data-id="kanban-collapsed-stack"]')
+      .evaluateAll((els) => els.map((el) => el.getAttribute('data-state') ?? 'stack'))
+  }
+
+  async cardIdsIn (container: Locator): Promise<string[]> {
+    return await container
+      .locator('[data-id="kanban-card"]')
+      .evaluateAll((els) => els.map((el) => el.getAttribute('data-card-id') ?? ''))
+  }
+
+  // The tools show on hover and have no data-id: collapse, merge, add issue, in that order.
+  private async clickHeaderTool (state: string, index: number): Promise<void> {
+    const header = this.columnHeader(state)
+    await header.hover()
+    await header.locator('.tools button').nth(index).click()
+  }
+
+  async collapseColumn (state: string): Promise<void> {
+    await this.clickHeaderTool(state, 0)
+  }
+
+  async expandColumn (state: string): Promise<void> {
+    await this.collapsedColumn(state).locator('.header').click()
+  }
+
+  // A click adds the status to the column or takes it out; the popup stays open for more.
+  async mergeColumns (into: string, ...names: string[]): Promise<void> {
+    await this.clickHeaderTool(into, 1)
+    const popup = this.page.locator('.selectPopup')
+    for (const name of names) {
+      await popup
+        .locator('button.menu-item')
+        .filter({ hasText: new RegExp(`^\\s*${name}\\s*$`) })
+        .click()
+    }
+    await this.page.keyboard.press('Escape')
+    await expect(popup).toHaveCount(0)
+  }
+
+  // The navigator has buttons with the same label, but only this one opens a popup.
+  moreActionsButton (): Locator {
+    return this.page.locator('button[aria-label="More actions"][aria-haspopup="true"]')
+  }
+
+  moreActionsItem (label: string): Locator {
+    return this.page.locator('.hulyPopup-row', { hasText: label })
+  }
+
+  async openMoreActions (): Promise<void> {
+    await this.moreActionsButton().click()
+    // Always listed, so an item missing next to it is missing from a menu that has rendered.
+    await this.moreActionsItem('Export to CSV').waitFor({ state: 'visible' })
+  }
+
+  // Board entries in localStorage for collapsed or merged columns, as key -> parsed value.
+  async storedColumns (kind: 'collapsed' | 'merged'): Promise<Record<string, unknown>> {
+    return await this.page.evaluate(
+      (prefix) =>
+        Object.fromEntries(
+          Object.entries(localStorage)
+            .filter(([key]) => key.startsWith(prefix))
+            .map(([key, value]) => [key, JSON.parse(value)])
+        ),
+      `kanban-column-${kind}-`
+    )
   }
 
   swimLane (laneId: string): Locator {
@@ -36,15 +136,26 @@ export class KanbanBoardPage extends CommonTrackerPage {
     return this.page.locator(`[data-id="kanban-swimlane-cell"][data-swimlane-id="${laneId}"][data-state="${state}"]`)
   }
 
+  async swimLaneCount (laneId: string): Promise<number> {
+    const text = await this.swimLaneHeader(laneId).locator('.swimlane-count').first().innerText()
+    const count = Number.parseInt(text.trim(), 10)
+    if (Number.isNaN(count)) throw new Error(`lane ${laneId} shows "${text}" instead of a count`)
+    return count
+  }
+
   card (cardId: string): Locator {
     return this.page.locator(`[data-id="kanban-card"][data-card-id="${cardId}"]`)
+  }
+
+  cardInColumn (cardId: string, state: string): Locator {
+    return this.column(state).locator(`[data-id="kanban-card"][data-card-id="${cardId}"]`)
   }
 
   async expectCardInColumn (cardId: string, state: string): Promise<void> {
     // Past the column's limit the card is simply not in the DOM, and the assertion then reports it
     // as missing - other specs leave hundreds of issues in the shared project.
     await this.revealCard(cardId)
-    await expect(this.column(state).locator(`[data-id="kanban-card"][data-card-id="${cardId}"]`)).toBeVisible()
+    await expect(this.cardInColumn(cardId, state)).toBeVisible()
   }
 
   async expectCardInSwimLaneCell (cardId: string, laneId: string, state: string): Promise<void> {
@@ -69,11 +180,12 @@ export class KanbanBoardPage extends CommonTrackerPage {
 
   async dragCardToColumn (cardId: string, targetState: string): Promise<void> {
     // Works in both legacy column and swim-lane modes by picking whichever drop target exists.
-    const legacy = this.column(targetState)
-    const target =
-      (await legacy.count()) > 0
-        ? legacy
-        : this.page.locator(`[data-id="kanban-swimlane-cell"][data-state="${targetState}"]`).first()
+    // A collapsed column sits in the stack in either mode.
+    let target = this.column(targetState)
+    if ((await target.count()) === 0) target = this.collapsedColumn(targetState)
+    if ((await target.count()) === 0) {
+      target = this.page.locator(`[data-id="kanban-swimlane-cell"][data-state="${targetState}"]`).first()
+    }
     // Cards past the cell's initial limit are not rendered, and issues other specs create in the
     // same project push ours out - `scrollIntoViewIfNeeded` then waits for a node that is not there.
     await this.revealCard(cardId)
@@ -85,6 +197,64 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.revealCard(cardId)
     await this.ensureVisible(this.card(cardId))
     await this.dragPointer(this.card(cardId), this.swimLaneCell(laneId, targetState))
+  }
+
+  // Holds the card over each waypoint in turn, e.g. a cell of another lane, before the drop.
+  async dragCardVia (cardId: string, via: Waypoint[], target: Locator): Promise<void> {
+    await this.revealCard(cardId)
+    await this.ensureVisible(this.card(cardId))
+    await this.dragPointer(this.card(cardId), target, via)
+  }
+
+  // A refusing target takes no pointer events, so the release lands on the board itself.
+  async dropCardOnRefusing (cardId: string, target: Locator, whileHeld: () => Promise<void>): Promise<void> {
+    await this.revealCard(cardId)
+    await this.ensureVisible(this.card(cardId))
+    await this.grabCard(this.card(cardId))
+    try {
+      await this.hoverHeld(target, false)
+      await whileHeld()
+    } finally {
+      await this.page.mouse.up()
+    }
+  }
+
+  // Grabs the card and carries it over the waypoints; the caller lets go.
+  async holdCardVia (cardId: string, via: Waypoint[]): Promise<void> {
+    await this.revealCard(cardId)
+    await this.ensureVisible(this.card(cardId))
+    await this.grabCard(this.card(cardId))
+    await this.carryOver(via)
+  }
+
+  // A browser sends no mouse events during a native drag: the page learns the drag is over
+  // from the first move after it. A user always makes one, a test must do it itself.
+  private async moveOn (from: { x: number, y: number }): Promise<void> {
+    await this.page.mouse.move(from.x + 4, from.y + 4)
+  }
+
+  async releaseOver (over: Locator): Promise<void> {
+    const at = await this.visiblePointOf(over)
+    await this.page.mouse.up()
+    await this.moveOn(at)
+  }
+
+  // Straight up out of the board, so no other column is crossed, then lets go and moves on.
+  async releaseAboveBoard (from: Locator): Promise<void> {
+    const board = await this.page.locator('.kanban-container').first().boundingBox()
+    if (board === null) throw new Error('The board has no bounding box')
+    const at = { x: (await this.visiblePointOf(from)).x, y: Math.max(board.y - 40, 1) }
+    await this.page.mouse.move(at.x, at.y, { steps: 10 })
+    await this.page.mouse.up()
+    await this.moveOn(at)
+  }
+
+  // Playwright takes Escape during a drag as a cancel of the drag: the page gets no key event.
+  async cancelDrag (over: Locator): Promise<void> {
+    const at = await this.visiblePointOf(over)
+    await this.page.keyboard.press('Escape')
+    await this.page.mouse.up()
+    await this.moveOn(at)
   }
 
   /** Through the DOM: `scrollIntoViewIfNeeded` waits for a stable element, and the board keeps
@@ -167,16 +337,74 @@ export class KanbanBoardPage extends CommonTrackerPage {
   }
 
   /**
+   * Brings the held card over `over` and nudges until a dragover has reached it, so a later
+   * check cannot pass for a card that never arrived. A refusing target takes no pointer
+   * events, so `reach: false` asks for a dragover anywhere.
+   */
+  private async hoverHeld (over: Locator, reach: boolean = true): Promise<void> {
+    await over.evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'nearest' })
+    })
+    const wanted = await over.evaluate((el, zone) => {
+      const cell = el.closest(zone)
+      return cell === null
+        ? null
+        : `${cell.getAttribute('data-swimlane-id') ?? ''}|${cell.getAttribute('data-state') ?? ''}`
+    }, DROP_ZONE)
+    await this.page.evaluate((zone) => {
+      const w = window as any
+      document.removeEventListener('dragover', w.__hoverHandler, true)
+      w.__hoverOvers = 0
+      w.__hoverCell = null
+      w.__hoverHandler = (e: Event): void => {
+        const cell = (e.target as HTMLElement)?.closest?.(zone)
+        w.__hoverOvers++
+        w.__hoverCell =
+          cell == null
+            ? 'outside'
+            : `${cell.getAttribute('data-swimlane-id') ?? ''}|${cell.getAttribute('data-state') ?? ''}`
+      }
+      document.addEventListener('dragover', w.__hoverHandler, true)
+    }, DROP_ZONE)
+    try {
+      await expect(async () => {
+        const { x, y } = await this.visiblePointOf(over)
+        await this.page.mouse.move(x, y, { steps: 10 })
+        await this.page.mouse.move(x + 2, y + 2)
+        await this.page.mouse.move(x, y)
+        const seen = await this.page.evaluate(() => {
+          const w = window as any
+          return { cell: w.__hoverCell as string | null, overs: w.__hoverOvers as number }
+        })
+        expect(seen.overs).toBeGreaterThan(0)
+        if (reach && wanted !== null) expect(seen.cell).toBe(wanted)
+      }).toPass({ intervals: retryIntervals, timeout: 10000 })
+    } finally {
+      await this.page.evaluate(() => {
+        document.removeEventListener('dragover', (window as any).__hoverHandler, true)
+      })
+    }
+  }
+
+  private async carryOver (via: Waypoint[]): Promise<void> {
+    for (const { over, check, refusing } of via) {
+      await this.hoverHeld(over, refusing !== true)
+      await check?.()
+    }
+  }
+
+  /**
    * dragTo() moves in one hop; a single dragover often isn't enough to register the drop, ending it
    * with no status change and no error. Walk in steps, jiggling so dragover fires repeatedly.
    */
-  private async dragPointer (source: Locator, target: Locator): Promise<void> {
+  private async dragPointer (source: Locator, target: Locator, via: Waypoint[] = []): Promise<void> {
     // Bounded wait for the drop target: a card can page out of a column while other tests modify
     // issues, and evaluate/boundingBox below would block until timeout, leaving the retry no turn.
     await target.waitFor({ state: 'attached', timeout: 5000 })
     let released = false
     await this.grabCard(source)
     try {
+      await this.carryOver(via)
       // The board scrolls horizontally and does not fit five columns, so bring the target into view
       // only after the card is grabbed: hovering the source scrolls it back and a box measured
       // before that points outside the viewport. Scroll through the DOM - scrollIntoViewIfNeeded
