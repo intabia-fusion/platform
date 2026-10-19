@@ -1068,12 +1068,12 @@
       max-height: min(20rem, 40vh);
       overflow-y: auto;
     }
+    // Sits on the second row, below the hover tools that cover the first one.
     .count-col {
       display: flex;
-      flex-direction: column;
       align-items: center;
       gap: 0.25rem;
-      margin-left: 0.25rem;
+      margin: 1.875rem 0 0 0.25rem;
     }
     .more-members {
       display: flex;
