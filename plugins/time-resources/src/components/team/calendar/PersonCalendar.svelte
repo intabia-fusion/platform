@@ -1,5 +1,5 @@
 <!--
-// Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,7 +20,6 @@
   import {
     Label,
     Scroller,
-    Separator,
     areDatesEqual,
     daysInMonth,
     deviceOptionsStore as deviceInfo,
@@ -29,6 +28,7 @@
     isWeekend,
     resizeObserver
   } from '@hcengineering/ui'
+  import { onDestroy } from 'svelte'
 
   export let headerHeightRem = 4.375
   const minColWidthRem = 2.5
@@ -66,38 +66,59 @@
   let containerWidth: number = window.outerWidth
   $: containerWidthRem = containerWidth / $deviceInfo.fontSize
 
-  let rowHeights: number[] = []
+  let rowHeights: Record<Ref<Person>, number> = {}
   let appliedRowHeight = rowHeightRem
+  let stopRowResize: (() => void) | undefined
+  let resizingRow: number | null = null
 
   $: if (appliedRowHeight !== rowHeightRem) {
     appliedRowHeight = rowHeightRem
-    rowHeights = persons.map(() => rowHeightRem)
-  } else if (rowHeights.length !== persons.length) {
-    rowHeights = persons.map((_, i) => rowHeights[i] ?? rowHeightRem)
+    rowHeights = {}
   }
 
   const startRowResize = (event: PointerEvent, index: number): void => {
+    if (event.button !== 0) return
     event.preventDefault()
-    if (rowHeights.length !== persons.length) {
-      rowHeights = persons.map((_, i) => rowHeights[i] ?? rowHeightRem)
-    }
+    stopRowResize?.()
+
+    const key = persons[index]
     const fontSize = $deviceInfo.fontSize
     const min = rowHeightRem / 2
     const max = rowHeightRem * 9
     const startY = event.clientY
-    const startHeight = rowHeights[index] ?? rowHeightRem
+    const startHeight = rowHeights[key] ?? rowHeightRem
+
+    const body = document.body
+    body.style.userSelect = 'none'
+    body.style.webkitUserSelect = 'none'
+    body.style.pointerEvents = 'none'
+    body.style.cursor = 'row-resize'
+    resizingRow = index
 
     const move = (ev: PointerEvent): void => {
       const height = Math.min(Math.max(startHeight + (ev.clientY - startY) / fontSize, min), max)
-      rowHeights = rowHeights.map((it, i) => (i === index ? height : it))
+      rowHeights = { ...rowHeights, [key]: height }
     }
     const up = (): void => {
       document.removeEventListener('pointermove', move)
       document.removeEventListener('pointerup', up)
+      document.removeEventListener('pointercancel', up)
+      body.style.userSelect = ''
+      body.style.webkitUserSelect = ''
+      body.style.pointerEvents = ''
+      body.style.cursor = ''
+      resizingRow = null
+      stopRowResize = undefined
     }
     document.addEventListener('pointermove', move)
     document.addEventListener('pointerup', up)
+    document.addEventListener('pointercancel', up)
+    stopRowResize = up
   }
+
+  onDestroy(() => {
+    stopRowResize?.()
+  })
 
   $: sideDays = Math.round((maxDays - 1) / 2)
   $: values = [
@@ -139,22 +160,21 @@
       <!-- Resource Content -->
       <div class="timeline-resource-content">
         {#each persons as person, rowIndex}
-          <div class="timeline-row" style={getRowStyle(rowHeights[rowIndex] ?? rowHeightRem)}>
+          <div class="timeline-row" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-resource-cell flex-row-center">
               <div><PersonPresenter value={person} /></div>
             </div>
           </div>
           <div
             class="timeline-row-resize"
+            class:resizing={resizingRow === rowIndex}
             role="separator"
             aria-orientation="horizontal"
             on:pointerdown|capture={(event) => {
               event.stopPropagation()
               startRowResize(event, rowIndex)
             }}
-          >
-            <Separator name={'person-calendar-rows'} direction="vertical" index={-1} separatorSize={0} />
-          </div>
+          />
         {/each}
       </div>
 
@@ -186,7 +206,7 @@
       <!-- Grid Content -->
       <div class="timeline-grid-content timeline-grid-bg">
         {#each persons as person, rowIndex}
-          <div class="timeline-row flex" style={getRowStyle(rowHeights[rowIndex] ?? rowHeightRem)}>
+          <div class="timeline-row flex" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-events" />
 
             {#each values as value, i}
@@ -207,7 +227,7 @@
                     {today}
                     {weekend}
                     {person}
-                    height={rowHeights[rowIndex] ?? rowHeightRem}
+                    height={rowHeights[person] ?? rowHeightRem}
                     width={columnWidthRem}
                   />
                 </div>
@@ -216,15 +236,14 @@
           </div>
           <div
             class="timeline-row-resize"
+            class:resizing={resizingRow === rowIndex}
             role="separator"
             aria-orientation="horizontal"
             on:pointerdown|capture={(event) => {
               event.stopPropagation()
               startRowResize(event, rowIndex)
             }}
-          >
-            <Separator name={'person-calendar-rows'} direction="vertical" index={-1} separatorSize={0} />
-          </div>
+          />
         {/each}
       </div>
     {/key}
@@ -330,16 +349,34 @@
 
   .timeline-row-resize {
     position: relative;
-    z-index: 2;
     height: 0;
+    cursor: row-resize;
+    touch-action: none;
 
-    &::before {
+    &::before,
+    &::after {
       position: absolute;
-      top: -4px;
       left: 0;
       width: 100%;
-      height: 8px;
       content: '';
+    }
+
+    &::before {
+      top: -4px;
+      height: 8px;
+    }
+
+    &::after {
+      top: -1px;
+      height: 2px;
+      background-color: var(--primary-button-default);
+      transform: scaleY(0);
+      transition: transform 0.1s ease-in-out;
+    }
+
+    &.resizing::after,
+    &:hover::after {
+      transform: scaleY(1);
     }
   }
 
