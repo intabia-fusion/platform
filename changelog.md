@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.60] - 2026-10-19
+
+* 🚀 FEATURES: · FUSIO-1580: Statuses update ([#589](https://github.com/hcengineering/platform/issues/589))
+* 🐛 BUG FIXES: · FUSIO-1540: Hide call button and refine Guest role logic ([#585](https://github.com/hcengineering/platform/issues/585))
+
 ## [0.8.59] - 2026-10-19
 
 * 🚀 FEATURES: · fusio-1591: Reorder & group actions ([#593](https://github.com/hcengineering/platform/issues/593)) · FUSIO-1442: Improve group sorting ([#544](https://github.com/hcengineering/platform/issues/544))
