@@ -252,10 +252,10 @@
         '—'})
       {#if !readOnly}
         {#if editingMaxWorkspaces}
-          <div class="ml-2 edit-inline"><EditBox bind:value={maxWorkspacesValue} kind={'editbox'} autoFocus /></div>
-          <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveMaxWorkspaces} />
+          <div class="ml-2 edit-inline"><EditBox bind:value={maxWorkspacesValue} kind="editbox" autoFocus /></div>
+          <Button size="small" kind="ghost" label={adminRes.string.Save} on:click={saveMaxWorkspaces} />
         {:else}
-          <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditMaxWorkspaces} />
+          <Button size="small" kind="ghost" label={adminRes.string.Edit} on:click={startEditMaxWorkspaces} />
         {/if}
       {/if}
     </div>
