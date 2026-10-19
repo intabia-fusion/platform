@@ -193,11 +193,12 @@ import {
 // Destructure params to avoid passing extra fields to the DB layer (SQL injection risk). Never
 // pass "params" directly to any DB function.
 
-const workspaceLimitPerUser =
+export const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
 const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
 
-function holdsWorkspaceSlot (status: WorkspaceStatus): boolean {
+export function holdsWorkspaceSlot (status: WorkspaceStatus | undefined): boolean {
+  if (status === undefined) return true
   return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
 }
 

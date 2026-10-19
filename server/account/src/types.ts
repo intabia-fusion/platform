@@ -844,6 +844,8 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   // False for an unfinished signup: person + social ids exist, but no account row yet
   hasAccount?: boolean
   blockedOn?: number
+  createdWorkspaces?: number
+  workspaceLimit?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'

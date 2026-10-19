@@ -17,7 +17,7 @@
   import type { SocialIdType } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
-  import { Button, Dialog, IconCopy, IconDetails, IconStop, Label, Loading, showPopup } from '@hcengineering/ui'
+  import { Button, Dialog, EditBox, IconCopy, IconDetails, IconStop, Label, Loading, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import adminRes from '../plugin'
@@ -109,6 +109,32 @@
       return
     }
     showPopup(WorkspaceDetails, { workspace })
+  }
+
+  let editingMaxWorkspaces = false
+  let maxWorkspacesValue = ''
+
+  function startEditMaxWorkspaces (): void {
+    maxWorkspacesValue = account.maxWorkspaces != null ? String(account.maxWorkspaces) : ''
+    editingMaxWorkspaces = true
+  }
+
+  // Blank value drops the override and the platform limit applies
+  async function saveMaxWorkspaces (): Promise<void> {
+    const trimmed = maxWorkspacesValue.trim()
+    const maxWorkspaces = trimmed === '' ? null : Number(trimmed)
+    if (maxWorkspaces != null && (!Number.isInteger(maxWorkspaces) || maxWorkspaces < 1)) {
+      editingMaxWorkspaces = false
+      return
+    }
+    const code = await requestAdminOtpCode()
+    if (code === undefined) return
+    const ok = await runAdminAction(async () => {
+      const res = await accountClient.adminUpdateAccountWorkspaceLimit(account.uuid, maxWorkspaces, code)
+      account = { ...account, maxWorkspaces, workspaceLimit: res.workspaceLimit }
+      return true
+    })
+    if (ok) editingMaxWorkspaces = false
   }
 
   const ACTIVITY_WEEKS = 12
@@ -209,7 +235,20 @@
       </div>
     </div>
 
-    <div class="fs-title mt-3 mb-1"><Label label={adminRes.string.Workspaces} /> ({account.workspaces.length})</div>
+    <div class="fs-title mt-3 mb-1 flex-row-center">
+      <Label label={adminRes.string.Workspaces} />
+      ({account.createdWorkspaces ?? account.workspaces.length} / {account.workspaceLimit ??
+        account.maxWorkspaces ??
+        '—'})
+      {#if !readOnly}
+        {#if editingMaxWorkspaces}
+          <div class="ml-2 edit-inline"><EditBox bind:value={maxWorkspacesValue} kind={'editbox'} autoFocus /></div>
+          <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveMaxWorkspaces} />
+        {:else}
+          <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditMaxWorkspaces} />
+        {/if}
+      {/if}
+    </div>
     {#if account.workspaces.length > 0}
       <div class="scroll-list">
         <table class="info-table">
@@ -328,5 +367,8 @@
   .scroll-list {
     max-height: 14rem;
     overflow-y: auto;
+  }
+  .edit-inline {
+    width: 5rem;
   }
 </style>

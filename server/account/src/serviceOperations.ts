@@ -50,7 +50,7 @@ import { isHumanAdminLogin, requireAdminOp, requireAdminSession, verifyAdminOtpL
 import { deletionDeadline, getDeletionReadonlyDays } from './deletion'
 
 import { accountPlugin } from './plugin'
-import { getWorkspaceOwnerEmails } from './operations'
+import { getWorkspaceOwnerEmails, holdsWorkspaceSlot, workspaceLimitPerUser } from './operations'
 import {
   type ApiKeyCheck,
   type ApiKeySecret,
@@ -920,6 +920,29 @@ export async function adminUpdateApiKeyLimit (
   await logAdminAction(ctx, db, token, 'set_api_key_limit', params.workspace, String(params.maxApiKeys))
 }
 
+/** Same scheme as the API-key limit: `maxWorkspaces: null` drops the override, the platform env value applies. */
+export async function adminUpdateAccountWorkspaceLimit (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { accountUuid: AccountUuid, maxWorkspaces: number | null, otpCode: string }
+): Promise<{ workspaceLimit: number }> {
+  await requireAdminOp(ctx, db, token, 'set_workspace_limit', params.otpCode, params.accountUuid)
+  if (params.maxWorkspaces != null && (!Number.isInteger(params.maxWorkspaces) || params.maxWorkspaces < 1)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const account = await db.account.findOne({ uuid: params.accountUuid })
+  if (account == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+  }
+  const workspaceLimit = params.maxWorkspaces ?? workspaceLimitPerUser
+  await db.account.update({ uuid: params.accountUuid }, { maxWorkspaces: workspaceLimit })
+  ctx.info('admin: account workspace limit updated', { account: params.accountUuid, workspaceLimit })
+  await logAdminAction(ctx, db, token, 'set_workspace_limit', params.accountUuid, String(params.maxWorkspaces))
+  return { workspaceLimit }
+}
+
 export async function adminUpdateWorkspaceUrl (
   ctx: MeasureContext,
   db: AccountDB,
@@ -988,6 +1011,17 @@ export async function listAccounts (
   const { skip, limit, search, sort, filter, order } = params
 
   const accounts = await db.listAccounts(search, skip, limit, sort, filter, order)
+  if (accounts.length > 0) {
+    const created = await db.workspace.find({ createdBy: { $in: accounts.map((it) => it.uuid) } })
+    const statuses = await db.workspaceStatus.find({ workspaceUuid: { $in: created.map((it) => it.uuid) } })
+    const statusByWorkspace = new Map(statuses.map((it) => [it.workspaceUuid, it]))
+    for (const account of accounts) {
+      account.createdWorkspaces = created.filter(
+        (it) => it.createdBy === account.uuid && holdsWorkspaceSlot(statusByWorkspace.get(it.uuid))
+      ).length
+      account.workspaceLimit = account.maxWorkspaces ?? workspaceLimitPerUser
+    }
+  }
   if (extra?.service === undefined) {
     // Reading other people's emails and activity is PII access: record who looked at what.
     await logAdminAction(ctx, db, token, 'read_accounts', undefined, search, { filter, count: accounts.length })
@@ -2897,6 +2931,7 @@ export type AccountServiceMethods =
   | 'adminReleaseSocialId'
   | 'adminDeletePerson'
   | 'adminSetAccountBlocked'
+  | 'adminUpdateAccountWorkspaceLimit'
   | 'listAdminActions'
   | 'performWorkspaceOperation'
   | 'updateWorkspaceRoleBySocialKey'
@@ -2987,6 +3022,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     adminReleaseSocialId: wrap(adminReleaseSocialId),
     adminDeletePerson: wrap(adminDeletePerson),
     adminSetAccountBlocked: wrap(adminSetAccountBlocked),
+    adminUpdateAccountWorkspaceLimit: wrap(adminUpdateAccountWorkspaceLimit),
     listAdminActions: wrap(listAdminActions),
     performWorkspaceOperation: wrap(performWorkspaceOperation),
     updateWorkspaceRoleBySocialKey: wrap(updateWorkspaceRoleBySocialKey),
