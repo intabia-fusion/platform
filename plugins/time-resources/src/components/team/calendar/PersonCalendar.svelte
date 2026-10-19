@@ -1,4 +1,5 @@
 <!--
+// Copyright © 2023 Hardcore Engineering Inc.
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
