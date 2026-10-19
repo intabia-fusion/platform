@@ -2,6 +2,18 @@
 
 Changelog.
 
+## [0.8.59] - 2026-10-19
+
+* 🚀 FEATURES: · fusio-1591: Reorder & group actions ([#593](https://github.com/hcengineering/platform/issues/593)) · FUSIO-1442: Improve group sorting ([#544](https://github.com/hcengineering/platform/issues/544))
+* 🐛 BUG FIXES: · FUSIO-1577: Fix memory leak and optimize kanban queries ([#579](https://github.com/hcengineering/platform/issues/579)) · FUSIO-1257: Fix issue template description not applied after attaching an image ([#584](https://github.com/hcengineering/platform/issues/584)) · FUSIO-1551: Fix creator avatar of issues created via webhook ([#583](https://github.com/hcengineering/platform/issues/583)) · qfix: Improve memdb indexByClass ([#594](https://github.com/hcengineering/platform/issues/594)) · Fix build ([#592](https://github.com/hcengineering/platform/issues/592))
+* 🧩 OTHER: · Move to yama ([#590](https://github.com/hcengineering/platform/issues/590)) · Start refactoring of ui components ([#586](https://github.com/hcengineering/platform/issues/586))
+
+## [0.8.58] - 2026-10-16
+
+* 🚀 FEATURES: · fusio-1566: Show toast for workflow errors ([#574](https://github.com/hcengineering/platform/issues/574)) · FUSIO-1560: Reply on double click only on empty space of a message ([#578](https://github.com/hcengineering/platform/issues/578)) · FUSIO-1562: Open issues from the chat navigator on the issue page ([#570](https://github.com/hcengineering/platform/issues/570))
+* 🐛 BUG FIXES: · FUSIO-1552: Fix storage issues ([#563](https://github.com/hcengineering/platform/issues/563)) · FUSIO-1565: Improve live query in UI ([#572](https://github.com/hcengineering/platform/issues/572)) · FUSIO-116: Fix fatal error in the desktop version ([#571](https://github.com/hcengineering/platform/issues/571)) · FUSIO-1548: Fix camera-in-use modal styles ([#577](https://github.com/hcengineering/platform/issues/577)) · FUSIO-1567: Ignore field order when matching imported screens ([#575](https://github.com/hcengineering/platform/issues/575)) · qfix: Windows build ([#573](https://github.com/hcengineering/platform/issues/573))
+* 🧩 OTHER: · Flacky fixes ([#517](https://github.com/hcengineering/platform/issues/517))
+
 ## [0.8.57] - 2026-10-14
 
 * 🚀 FEATURES: · fusio-1553: support status category in validators ([#567](https://github.com/hcengineering/platform/issues/567))
