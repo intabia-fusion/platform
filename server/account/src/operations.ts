@@ -199,7 +199,6 @@ const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt
 
 export function holdsWorkspaceSlot (status: WorkspaceStatus | undefined): boolean {
   if (status === undefined) return true
-
   return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
 }
 
