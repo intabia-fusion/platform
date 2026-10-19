@@ -39,7 +39,7 @@ import {
   type PlanLimits,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
 
 const GUEST_ROLES = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest])
@@ -241,7 +241,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     const allowed = this.readOnlyAllowedClasses()
     for (const tx of txes) {
       if (!this.isReadOnlyAllowed(ctx, tx, allowed)) {
-        throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        throw forbiddenError(ForbiddenKind.SeatLimit)
       }
     }
     return await this.provideTx(ctx, txes)

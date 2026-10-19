@@ -60,7 +60,7 @@ import {
   type ServerFindOptions,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import platform, { PlatformError, Severity, Status, ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import contact, { type Person, type SocialIdentityRef } from '@hcengineering/contact'
 import { isOwner, isSystem } from './utils'
 
@@ -480,10 +480,13 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         const members = attrs.members ?? []
         // Allow if creator is in owners list, or if no owners and creator is a member (e.g. DM)
         if (owners.length > 0 && !owners.includes(account.uuid)) {
-          throw new Error('Only owners can create private spaces')
+          throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can create private spaces')
         }
         if (owners.length === 0 && !members.includes(account.uuid)) {
-          throw new Error('Cannot create private space without being a member or owner')
+          throw forbiddenError(
+            ForbiddenKind.SpaceOwnerOnly,
+            'Cannot create private space without being a member or owner'
+          )
         }
       }
       return
@@ -508,14 +511,17 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           ops.$push?.owners !== undefined ||
           ops.$pull?.owners !== undefined
         if (hasSensitiveUpdate && account.role !== AccountRole.Admin) {
-          throw new Error('Only admins can change private/owners on spaces without owners')
+          throw forbiddenError(
+            ForbiddenKind.SpaceOwnerOnly,
+            'Only admins can change private/owners on spaces without owners'
+          )
         }
         // Allow regular updates (e.g. $push/$pull members, name, description, etc.) for space members
         return
       }
 
       if (tx._class === core.class.TxRemoveDoc && account.role !== AccountRole.Admin) {
-        throw new Error('Only admins can delete private spaces without owners')
+        throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only admins can delete private spaces without owners')
       }
       return
     }
@@ -528,7 +534,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       const ops = updateTx.operations
 
       if (ops.private !== undefined && !isOwner) {
-        throw new Error('Only owners can change space privacy')
+        throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can change space privacy')
       }
 
       // Only owners can change owners
@@ -536,7 +542,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         ops.owners !== undefined || ops.$push?.owners !== undefined || ops.$pull?.owners !== undefined
 
       if (hasOwnersUpdate && !isOwner) {
-        throw new Error('Only owners can change space owners')
+        throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can change space owners')
       }
 
       // Prevent leaving a space without any owner: an empty owners list makes the space
@@ -563,7 +569,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           }
         }
         if (nextOwners.size === 0) {
-          throw new Error('Space must keep at least one owner')
+          throw forbiddenError(ForbiddenKind.LastSpaceOwner, 'Space must keep at least one owner')
         }
       }
 
@@ -595,7 +601,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           const onlyPullSelf = pulledSelfOnly && ops.members === undefined && ops.$push?.members === undefined
 
           if (!onlyPushSelfToAutoJoin && !onlyPullSelf) {
-            throw new Error('Only owners can change members of private spaces')
+            throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can change members of private spaces')
           }
         }
       }
@@ -604,7 +610,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     // Only owners can delete private spaces
     if (tx._class === core.class.TxRemoveDoc) {
       if (space.private && !isOwner) {
-        throw new Error('Only owners can delete private spaces')
+        throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can delete private spaces')
       }
     }
   }
@@ -621,7 +627,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (guestRoles.has(account.role)) return
     if (this.isApiKeyGranted(ctx, this.spacesMap.get(cudTx.objectSpace))) return
     if (!this.canWriteSpace(cudTx.objectSpace, account.uuid)) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      throw forbiddenError(ForbiddenKind.NotSpaceMember)
     }
   }
 

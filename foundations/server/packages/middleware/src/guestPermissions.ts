@@ -23,7 +23,7 @@ import core, {
   TxProcessor,
   type TxUpdateDoc
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import contact, { type Channel, type Person } from '@hcengineering/contact'
 
 export class GuestPermissionsMiddleware extends BaseMiddleware implements Middleware {
@@ -47,7 +47,7 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
     }
 
     if (account.role === AccountRole.DocGuest || account.role === AccountRole.ReadOnlyGuest) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      throw forbiddenError(ForbiddenKind.WorkspaceRole)
     }
 
     for (const tx of txes) {
@@ -72,10 +72,10 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
       const isSpace = h.isDerived(cudTx.objectClass, core.class.Space)
       if (isSpace) {
         if (await this.isForbiddenSpaceTx(ctx, cudTx as TxCUD<Space>, account)) {
-          throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+          throw forbiddenError(ForbiddenKind.WorkspaceRole)
         }
       } else if (ctx.contextData.isTriggerCtx !== true && (await this.isForbiddenTx(ctx, cudTx, account))) {
-        throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        throw forbiddenError(ForbiddenKind.WorkspaceRole)
       }
     }
   }
@@ -93,7 +93,7 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
 
     const { account } = ctx.contextData
     if (await this.isForbiddenUserContactTx(ctx, tx as TxCUD<Doc>, account)) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      throw forbiddenError(ForbiddenKind.WorkspaceRole)
     }
   }
 

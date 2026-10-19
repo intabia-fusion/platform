@@ -32,7 +32,7 @@ import core, {
   systemAccountUuid,
   TxFactory
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import notification, { PushSubscription, ReadState } from '@hcengineering/notification'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
@@ -278,7 +278,7 @@ export class NotificationMiddleware extends BaseMiddleware {
   }
 
   private throwForbidden (): void {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    throw forbiddenError(ForbiddenKind.ReadState)
   }
 
   async close (): Promise<void> {

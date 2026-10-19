@@ -24,7 +24,7 @@ import core, {
   type TxApplyIf,
   type TxCUD
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError, type PlatformError } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -32,11 +32,9 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 
-// PlatformError builds `.message` from the status code; overwrite it so the reason reaches logs too.
+// The reason doubles as the error message so it reaches logs too.
 function forbidden (reason: string): PlatformError {
-  const err = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, { reason }))
-  err.message = reason
-  return err
+  return forbiddenError(ForbiddenKind.ApiKey, reason, { reason })
 }
 
 /** Writes carried by an API key token: allowed at all, through which route, into which spaces.

@@ -174,6 +174,10 @@
     "MeetingRoomNum": "Sala de reuniones {number}",
     "VoiceRoomNum": "Sala de voz {number}",
     "JoinRequestTitle": "Solicitud para unirse",
-    "JoinRequestBody": "{name} quiere unirse a la reunión"
+    "JoinRequestBody": "{name} quiere unirse a la reunión",
+    "CloseRoomNotMember": "No eres miembro de esta reunión. Al cerrarla, perderás el acceso a su contenido. ¿Añadirte como miembro?",
+    "JoinAndCloseRoom": "Unirse y cerrar",
+    "PrivateMeetingJoinHeader": "Esta reunión es privada",
+    "PrivateMeetingJoinText": "Solo los miembros pueden ver y editar su contenido. Únete a la reunión para obtener acceso."
   }
 }

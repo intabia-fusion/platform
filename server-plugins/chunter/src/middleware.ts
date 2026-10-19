@@ -26,7 +26,7 @@ import core, {
 } from '@hcengineering/core'
 import chunter, { Chat, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import contact, { PersonSpace } from '@hcengineering/contact'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
@@ -278,7 +278,7 @@ export class ChunterMiddleware extends BaseMiddleware {
   }
 
   private throwForbidden (): void {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    throw forbiddenError(ForbiddenKind.DirectMessage)
   }
 }
 

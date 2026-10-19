@@ -24,7 +24,7 @@ import core, {
   type TxApplyIf,
   type TxCUD
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -59,11 +59,7 @@ export class PluginConfigurationMiddleware extends BaseMiddleware implements Mid
       if (TxProcessor.isExtendsCUD(tx._class)) {
         const cud = tx as TxCUD<Doc>
         if (cud.objectClass === core.class.PluginConfiguration && ctx.contextData.account.role !== AccountRole.Owner) {
-          throw new PlatformError(
-            new Status(Severity.ERROR, platform.status.Forbidden, {
-              account: account.uuid
-            })
-          )
+          throw forbiddenError(ForbiddenKind.WorkspaceOwnerOnly, undefined, { account: account.uuid })
         }
       }
     }

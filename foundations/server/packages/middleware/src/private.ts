@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -33,7 +34,7 @@ import core, {
   systemAccountUuid,
   toFindResult
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -78,7 +79,7 @@ export class PrivateMiddleware extends BaseMiddleware implements Middleware {
           account.uuid !== systemAccountUuid &&
           account.role !== AccountRole.Owner
         ) {
-          throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+          throw forbiddenError(ForbiddenKind.ForeignPrivateWrite)
         }
         const modifiedByAccount = ctx.contextData.socialStringsToUsers.get(tx.modifiedBy)?.accountUuid
         const target = [account.uuid, systemAccountUuid]

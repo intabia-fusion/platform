@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,8 +15,9 @@
 -->
 <script lang="ts">
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
+  import { EditBox, Label } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import type { MeetingMinutes, PendingRecording, ParticipantInfo } from '@hcengineering/love'
   import { MeetingStatus } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
@@ -30,7 +32,7 @@
   import ParticipantsPreview from './ParticipantsPreview.svelte'
   import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
   import { openWidgetTab } from '@hcengineering/workbench-resources'
-  import { videoVisible } from '../utils'
+  import { setMeetingPrivate, videoVisible } from '../utils'
 
   export let object: MeetingMinutes
   export let readonly: boolean = false
@@ -53,15 +55,31 @@
   }
 
   async function togglePrivate (): Promise<void> {
-    await client.diffUpdate(object, { private: !object.private })
+    await setMeetingPrivate(object, !object.private)
   }
 
   // Check if current user is owner of the meeting
   $: isOwner = object.owners?.includes(currentAccount.uuid) ?? false
 
+  // Content of a private space is readable only by members, even for the workspace owner.
+  $: isOutsider = object.private && !object.members.includes(currentAccount.uuid)
+
+  const contentKeys = ['descriptionRef', 'summary', 'attachments', 'recordings', 'transcription', 'messages', 'todos']
+  let mounted = false
+  $: if (mounted) {
+    dispatch('open', {
+      ignoreKeys: isOutsider ? ['name', ...contentKeys] : ['name'],
+      activityOptions: { enabled: !isOutsider, showInput: !isOutsider }
+    })
+  }
+
   onMount(() => {
-    dispatch('open', { ignoreKeys: ['name'] })
+    mounted = true
   })
+
+  async function join (): Promise<void> {
+    await client.update(object, { $push: { members: currentAccount.uuid } })
+  }
 
   // Check if pending join is for THIS session (same browser tab)
   $: currentSessionId = getMetadata(presentation.metadata.SessionId)
@@ -170,6 +188,14 @@
       <ParticipantsPreview info={roomInfos} />
     </div>
   {/if}
+  {#if isOutsider}
+    <div class="joinOverlay">
+      <div class="header"><Label label={love.string.PrivateMeetingJoinHeader} /></div>
+      <span><Label label={love.string.PrivateMeetingJoinText} /></span>
+      <span class="mt-4" />
+      <Button label={view.string.Join} kind="primary" on:click={join} data-id="meeting-join" />
+    </div>
+  {/if}
   {#if pendingRecordings.length > 0}
     <div class="pending-recordings">
       {#each pendingRecordings as recording}
@@ -189,6 +215,20 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+  }
+  .joinOverlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    text-align: center;
+    max-width: 35rem;
+    margin-top: 2rem;
+  }
+  .header {
+    font-weight: 600;
+    margin: 1rem;
+    color: var(--theme-caption-color);
   }
   .pending-recordings {
     display: flex;

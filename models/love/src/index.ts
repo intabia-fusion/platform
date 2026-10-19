@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -310,6 +311,9 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
 
   @Prop(ArrOf(TypeAccountUuid()), core.string.Members, { editor: love.component.MeetingAccessAttributeEditor })
   declare members: AccountUuid[]
+
+  @Prop(TypeBoolean(), core.string.Private, { editor: love.component.MeetingPrivateEditor })
+  declare private: boolean
 }
 
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)

@@ -174,6 +174,10 @@
     "MeetingRoomNum": "Zasedací místnost {number}",
     "VoiceRoomNum": "Hlasová místnost {number}",
     "JoinRequestTitle": "Žádost o připojení",
-    "JoinRequestBody": "{name} se chce připojit k setkání"
+    "JoinRequestBody": "{name} se chce připojit k setkání",
+    "CloseRoomNotMember": "Nejste členem této schůzky. Po jejím uzavření ztratíte přístup k jejímu obsahu. Přidat vás mezi členy?",
+    "JoinAndCloseRoom": "Připojit se a uzavřít",
+    "PrivateMeetingJoinHeader": "Tato schůzka je soukromá",
+    "PrivateMeetingJoinText": "Obsah vidí a upravují pouze členové. Připojte se ke schůzce, abyste získali přístup."
   }
 }

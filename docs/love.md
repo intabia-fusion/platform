@@ -111,7 +111,7 @@
 | `$push: { members: я }` в `autoJoin` space | я не в `owners` | OK |
 | Любые изменения space с `owners.size === 0` | - | OK (legacy) |
 
-Системный аккаунт и `AccountRole.Owner` обходят проверки. Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
+Системный аккаунт и `AccountRole.Owner` обходят проверки изменения самого space. Документы внутри закрытого space Owner без членства не читает и не пишет (`checkWriteAccess`, фильтр `addSecurity`). Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
 
 `ensurePerson` атомарен (`ON CONFLICT DO NOTHING` + откат orphan-person); Mongo как backend AccountDB не поддерживается. `OnEmployeeCreate` сериализует создание `PersonSpace` через `control.withScope`, поэтому дублей при параллельной регистрации нет.
 
