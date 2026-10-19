@@ -204,7 +204,8 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.contacts = page.locator('[id="app-contact\\:string\\:Contacts"]')
     this.createTeamspace = page.getByRole('button', { name: 'Create teamspace' })
     this.employee = page.getByRole('button', { name: 'Employee' })
-    this.employeeDropdown = page.locator('button[data-id="btnMoreActions"]')
+    // Activity messages of the card render hidden buttons with the same data-id
+    this.employeeDropdown = page.locator('.popupPanel > .hulyHeader-container button[data-id="btnMoreActions"]')
     this.kickEmployee = page.getByRole('button', { name: 'Kick employee' })
     this.confirmKickEmployee = page.getByRole('button', { name: 'Ok' })
     this.openTeam = page.getByText('Team', { exact: true })
