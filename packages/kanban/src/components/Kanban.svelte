@@ -21,15 +21,38 @@
     DocumentQuery,
     DocumentUpdate,
     FindOptions,
+    IdMap,
     Ref,
     Space
   } from '@hcengineering/core'
-  import { type Rank, RateLimiter } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { type Rank, toIdMap } from '@hcengineering/core'
+  import { createQuery, getClient, type LiveQuery } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import { IconChevronDown, IconChevronRight, Scroller, themeStore, defaultBackground } from '@hcengineering/ui'
+  import ui, {
+    Button,
+    IconChevronDown,
+    IconChevronRight,
+    IconMoreH,
+    Scroller,
+    lazyObserver,
+    themeStore,
+    defaultBackground
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import type { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
+  import {
+    buildColumns,
+    insertIndex,
+    laneCellValues,
+    loadCollapsed,
+    loadMerged,
+    neighbourRanks,
+    saveCollapsed,
+    saveMerged,
+    toggleMerge
+  } from '../board'
+  import { type LaneDocs, mergeLaneDocs, planLaneQueries } from '../laneQueries'
+  import { cellKey, collectVisibleGroups, COLUMN_LIMIT, stateKey, SWIM_CELL_LIMIT } from '../visibleGroups'
   import KanbanRow from './KanbanRow.svelte'
 
   export let categories: CategoryType[] = []
@@ -64,7 +87,8 @@
   export let swimLaneKey: string | undefined = undefined
   export let getSwimLaneUpdateProps: ((doc: Doc, swimLane: SwimLane) => DocumentUpdate<Item> | undefined) | undefined =
     undefined
-  export let getSwimLaneQuery: ((swimLane: SwimLane) => DocumentQuery<DocWithRank>) | undefined = undefined
+  // Document a lane header shows (e.g. the parent issue); loaded by the board query and passed to the header slot.
+  export let getSwimLaneDocId: ((swimLane: SwimLane) => Ref<Doc> | undefined) | undefined = undefined
   export let getSwimLaneOfDoc: ((doc: Doc) => string | undefined) | undefined = undefined
   export let storageKey: string | undefined = undefined
   export let controlKey: string | undefined = undefined
@@ -72,8 +96,10 @@
     | ((swimLane: SwimLane) => { background?: string, color?: string } | undefined)
     | undefined = undefined
   export let compact: boolean = false
+  // The group a category belongs to (e.g. the category of a status), for merging columns by it.
+  export let getCategoryGroup: ((state: CategoryType) => string | undefined) | undefined = undefined
 
-  import { registerSwimLaneControls } from '../swimlane'
+  import { registerColumnControls, registerSwimLaneControls } from '../swimlane'
 
   let unregisterControls: (() => void) | undefined
 
@@ -92,39 +118,194 @@
       unregisterControls()
       unregisterControls = undefined
     }
+    unregisterColumnControls?.()
   })
 
   const dispatch = createEventDispatcher()
 
-  const limiter = new RateLimiter(10)
+  const SWIM_CELL_LIMIT_STEP = 10
+  const SWIM_LANE_PAGE = 20
+  const COLUMN_LIMIT_STEP = 20
+
+  // Per-cell card limit, keyed by cellKey; a cell absent here shows its initial limit.
+  let cellLimits = new Map<string, number>()
+  let laneLimit = SWIM_LANE_PAGE
+  $: shownSwimLanes = swimLanes.slice(0, laneLimit)
+  // A lane queries its cards and header only once it nears the viewport; it keeps them after.
+  // Lanes of another grouping start unseen: their blocks are keyed by the grouping, so they observe again.
+  let seenLanes = new Set<string>()
+  let seenLanesKey = swimLaneKey
+  $: if (swimLaneKey !== seenLanesKey) {
+    seenLanesKey = swimLaneKey
+    seenLanes = new Set()
+  }
+
+  function markLaneSeen (id: string, visible: boolean, unsubscribe?: () => void): void {
+    if (!visible) return
+    unsubscribe?.()
+    if (!seenLanes.has(id)) seenLanes = new Set(seenLanes).add(id)
+  }
+
+  function cellLimit (limits: Map<string, number>, key: string, initial: number): number {
+    return limits.get(key) ?? initial
+  }
+
+  function showMore (key: string, initial: number, step: number): void {
+    cellLimits.set(key, cellLimit(cellLimits, key, initial) + step)
+    cellLimits = cellLimits
+  }
 
   $: swimLaneMode = swimLanes.length > 0 && swimLaneKey !== undefined
 
   // Collapse state persisted in localStorage.
   let collapsed = new Set<string>()
 
-  function loadCollapsed (key: string | undefined): Set<string> {
-    if (key === undefined || typeof localStorage === 'undefined') return new Set()
-    try {
-      const raw = localStorage.getItem(`kanban-swimlane-collapsed-${key}`)
-      if (raw == null) return new Set()
-      const arr: string[] = JSON.parse(raw)
-      return new Set(arr)
-    } catch {
-      return new Set()
-    }
-  }
-
-  function saveCollapsed (key: string | undefined, set: Set<string>): void {
-    if (key === undefined || typeof localStorage === 'undefined') return
-    try {
-      localStorage.setItem(`kanban-swimlane-collapsed-${key}`, JSON.stringify([...set]))
-    } catch {
-      // ignore
-    }
-  }
-
   $: collapsed = loadCollapsed(storageKey)
+
+  $: columnStorageKey = controlKey !== undefined ? `${controlKey}-${String(groupByKey)}` : undefined
+  let collapsedColumns = new Set<string>()
+  $: collapsedColumns = loadCollapsed(columnStorageKey, 'column')
+
+  function toggleColumn (state: CategoryType): void {
+    const key = stateKey(state)
+    if (collapsedColumns.has(key)) collapsedColumns.delete(key)
+    else collapsedColumns.add(key)
+    collapsedColumns = new Set(collapsedColumns)
+    saveCollapsed(columnStorageKey, collapsedColumns, 'column')
+  }
+
+  // Merged columns are a view setting: their cards come from several categories.
+  let mergeGroups: string[][] = []
+  $: mergeGroups = loadMerged(columnStorageKey)
+  $: membersOf = new Map(buildColumns(categories, mergeGroups).map((c) => [stateKey(c.state), c.members]))
+
+  function mergeColumn (state: CategoryType, other: CategoryType): void {
+    const otherKey = stateKey(other)
+    // Collapse is stored under the first column of a group: the rest of the group keeps it when `other` leaves.
+    const rest = (membersOf.get(otherKey) ?? []).filter((m) => stateKey(m) !== otherKey)
+    mergeGroups = toggleMerge(mergeGroups, stateKey(state), otherKey)
+    saveMerged(columnStorageKey, mergeGroups)
+    // A collapsed column joins the open one, it does not pull it into the stack.
+    if (!collapsedColumns.delete(otherKey)) return
+    const heir = buildColumns(categories, mergeGroups).find((c) => rest.length > 0 && c.members.includes(rest[0]))
+    if (heir !== undefined) collapsedColumns.add(stateKey(heir.state))
+    collapsedColumns = new Set(collapsedColumns)
+    saveCollapsed(columnStorageKey, collapsedColumns, 'column')
+  }
+
+  function mergeWith (state: CategoryType): (other: CategoryType) => void {
+    return (other) => {
+      mergeColumn(state, other)
+    }
+  }
+
+  // Stored groups may belong to other boards: a viewlet is shared by all projects.
+  function otherBoardsGroups (): string[][] {
+    const keys = new Set(categories.map((state) => stateKey(state)))
+    return mergeGroups.filter((group) => !group.some((key) => keys.has(key)))
+  }
+
+  // Replaces the merged columns with one column per group of `getCategoryGroup`.
+  function mergeByGroup (): void {
+    if (getCategoryGroup === undefined) return
+    const byGroup = new Map<string, string[]>()
+    for (const state of categories) {
+      const group = getCategoryGroup(state)
+      if (group !== undefined) byGroup.set(group, [...(byGroup.get(group) ?? []), stateKey(state)])
+    }
+    const groups = Array.from(byGroup.values()).filter((keys) => keys.length > 1)
+    // The group is drawn at its first status, whose collapse would hide an open column of the group.
+    for (const keys of groups) {
+      if (keys.some((key) => membersOf.has(key) && !collapsedColumns.has(key))) collapsedColumns.delete(keys[0])
+    }
+    collapsedColumns = new Set(collapsedColumns)
+    saveCollapsed(columnStorageKey, collapsedColumns, 'column')
+    mergeGroups = [...otherBoardsGroups(), ...groups]
+    saveMerged(columnStorageKey, mergeGroups)
+  }
+
+  function resetMerge (): void {
+    mergeGroups = otherBoardsGroups()
+    saveMerged(columnStorageKey, mergeGroups)
+  }
+
+  let unregisterColumnControls: (() => void) | undefined
+  $: {
+    unregisterColumnControls?.()
+    unregisterColumnControls =
+      controlKey !== undefined
+        ? registerColumnControls(controlKey, {
+            resetMerge,
+            mergeByGroup,
+            merged: Array.from(membersOf.values()).some((members) => members.length > 1)
+          })
+        : undefined
+  }
+
+  function isMerged (state: CategoryType, members: Map<string, CategoryType[]>): boolean {
+    return (members.get(stateKey(state))?.length ?? 1) > 1
+  }
+
+  // Where a category is drawn: its own column, the stack of collapsed ones, or nowhere (merged into another column).
+  function columnPlace (
+    state: CategoryType,
+    collapsedKeys: Set<string>,
+    members: Map<string, CategoryType[]>
+  ): 'open' | 'stack' | 'hidden' {
+    if (!members.has(stateKey(state))) return 'hidden'
+    return collapsedKeys.has(stateKey(state)) ? 'stack' : 'open'
+  }
+
+  function columnValues (
+    _groupByDocs: typeof groupByDocs,
+    state: CategoryType,
+    members: Map<string, CategoryType[]>
+  ): Item[] {
+    return (members.get(stateKey(state)) ?? [state]).flatMap((m) => getGroupByValues(_groupByDocs, m) ?? [])
+  }
+
+  // The category a card of a merged column really has.
+  function cardState (object: Item, column: CategoryType): CategoryType {
+    return (
+      (membersOf.get(stateKey(column)) ?? [column]).find((m) =>
+        getGroupByValues(groupByDocs, m)?.some((it) => it._id === object._id)
+      ) ?? column
+    )
+  }
+
+  // No drop: outside the workflow, or a merged column. The column the card left is never blocked.
+  function isBlocked (
+    state: CategoryType,
+    dragging: boolean,
+    available: CategoryType[] | undefined,
+    from: CategoryType | undefined,
+    members: Map<string, CategoryType[]>
+  ): boolean {
+    if (!dragging) return false
+    const own = members.get(stateKey(state)) ?? [state]
+    if (from !== undefined && own.includes(from)) return false
+    return own.length > 1 || (available !== undefined && !available.includes(state))
+  }
+
+  // The stack widens only once the drag is under way: Chrome cancels a drag whose dragstart reflows the board.
+  let dragMoved = false
+  $: dragUnderway = isDragging && dragMoved
+
+  // Collapsed columns leave their place and gather in one column at the end of the board.
+  $: hasCollapsed = categories.some((state) => columnPlace(state, collapsedColumns, membersOf) === 'stack')
+
+  $: gridColumns = categories
+    .filter((state) => columnPlace(state, collapsedColumns, membersOf) === 'open')
+    .map(() => 'var(--kanban-col-width)')
+    .join(' ')
+
+  // The collapsed column under the dragged card shows the card, as a live column does.
+  let dragOverCollapsed: string | undefined
+
+  function leaveCollapsed (event: DragEvent): void {
+    const item = event.currentTarget as HTMLElement
+    if (!item.contains(event.relatedTarget as Node | null)) dragOverCollapsed = undefined
+  }
 
   function toggleSwimLane (id: string): void {
     if (collapsed.has(id)) collapsed.delete(id)
@@ -151,41 +332,116 @@
     _dragCard: Item | undefined,
     _dragCardCurrentSwimLane: SwimLane | undefined,
     _dragCardState: CategoryType | undefined,
-    _dragCardTargetIndex: number | undefined
+    _dragCardTargetIndex: number | undefined,
+    _members: Map<string, CategoryType[]> = membersOf
   ): Item[] {
-    const raw = getGroupByValues(_groupByDocs, category) ?? []
-    const ofDoc = getSwimLaneOfDoc
-    const inThisLane =
-      _dragCard !== undefined && _dragCardCurrentSwimLane?._id === swimLane._id && _dragCardState === category
-    const isOriginal =
-      _dragCard !== undefined && dragCardInitialSwimLane?._id === swimLane._id && dragCardInitialState === category
-    if (inThisLane && isOriginal && _dragCardTargetIndex === undefined) {
-      // Card stays at its original position in the original cell — no filtering of dragCard.
-      return ofDoc === undefined ? raw : raw.filter((doc) => doc._id === _dragCard?._id || ofDoc(doc) === swimLane._id)
-    }
-    const arr = raw.filter((doc) => doc._id !== _dragCard?._id)
-    const filtered = ofDoc === undefined ? arr : arr.filter((doc) => ofDoc(doc) === swimLane._id)
-    if (inThisLane && _dragCard !== undefined) {
-      const idx = _dragCardTargetIndex
-      if (idx !== undefined && idx >= 0 && idx <= filtered.length) {
-        return [...filtered.slice(0, idx), _dragCard, ...filtered.slice(idx)]
-      }
-      return [...filtered, _dragCard]
-    }
-    return filtered
+    // A merged column takes no drop, so its dragged card keeps its place there.
+    const merged = isMerged(category, _members)
+    return laneCellValues(columnValues(_groupByDocs, category, _members), swimLane._id, category, getSwimLaneOfDoc, {
+      card: merged ? undefined : _dragCard,
+      initialLane: dragCardInitialSwimLane?._id,
+      initialState: dragCardInitialState,
+      lane: _dragCardCurrentSwimLane?._id,
+      state: _dragCardState,
+      targetIndex: _dragCardTargetIndex
+    })
   }
 
   // Legacy (non-swimlane) cell values. Returns raw cell content unchanged during
   // drag — drag preview is shown via a CSS drop-zone highlight on the target
   // column, not by relocating the card in the DOM. This avoids a Svelte reactivity
   // cascade across every column on every dragover and keeps drag interaction smooth.
-  function getLegacyCategoryValues (category: CategoryType, _groupByDocs: typeof groupByDocs): Item[] {
-    return getGroupByValues(_groupByDocs, category) ?? []
+  function getLegacyCategoryValues (
+    category: CategoryType,
+    _groupByDocs: typeof groupByDocs,
+    _members: Map<string, CategoryType[]> = membersOf
+  ): Item[] {
+    return columnValues(_groupByDocs, category, _members)
+  }
+
+  // One live query per lane (per column in the legacy layout), so a change re-runs only that lane.
+  // Its size is statuses x cell limit + 1, independent of the board size.
+  const laneQueries = new Map<string, LaneDocs & { query: LiveQuery }>()
+  let loadedDocs: IdMap<DocWithRank> = new Map()
+  // Lanes whose query has answered; a dropped lane leaves, so it waits for its header doc again.
+  let loadedKeys = new Set<string>()
+  let lastOptionsKey = ''
+
+  function syncLaneQueries (groups: Map<string, Array<Ref<Doc>>>, _options: typeof options): void {
+    const optionsKey = JSON.stringify(_options)
+    if (optionsKey !== lastOptionsKey) {
+      lastOptionsKey = optionsKey
+      laneQueries.forEach(({ query }) => {
+        query.unsubscribe()
+      })
+      laneQueries.clear()
+      loadedKeys = new Set()
+    }
+    const plan = planLaneQueries(new Map(Array.from(laneQueries, ([key, { ids }]) => [key, ids])), groups)
+    for (const key of plan.drop) {
+      laneQueries.get(key)?.query.unsubscribe()
+      laneQueries.delete(key)
+      loadedKeys.delete(key)
+    }
+    if (plan.drop.length > 0) loadedKeys = loadedKeys
+    for (const [key, ids] of plan.run) {
+      const entry = laneQueries.get(key) ?? { query: createQuery(true), ids, docs: new Map(), pending: true }
+      laneQueries.set(key, entry)
+      entry.ids = ids
+      entry.pending = true
+      entry.query.query(
+        _class,
+        { _id: { $in: ids as Array<Ref<DocWithRank>> } },
+        (res) => {
+          entry.docs = toIdMap(res)
+          entry.pending = false
+          loadedKeys = new Set(loadedKeys).add(key)
+          loadedDocs = mergeLaneDocs(laneQueries.values(), loadedDocs)
+        },
+        { ..._options, limit: ids.length }
+      )
+    }
+    // Docs of dropped queries stay in loadedDocs until the next result, so cards do not blink.
+    if (laneQueries.size === 0) loadedDocs = new Map()
+  }
+
+  onDestroy(() => {
+    laneQueries.forEach(({ query }) => {
+      query.unsubscribe()
+    })
+    stopAutoScroll()
+    window.removeEventListener('mousemove', onDragEnd, true)
+  })
+
+  let visibleGroups = new Map<string, Array<Ref<Doc>>>()
+  $: visibleGroups = collectVisibleGroups({
+    groupByDocs,
+    categories: categories.filter((state) => membersOf.has(stateKey(state))),
+    swimLanes: shownSwimLanes,
+    collapsed,
+    seenLanes,
+    collapsedColumns,
+    cellLimits,
+    swimLaneMode,
+    lanesPending: swimLaneKey !== undefined && swimLanes.length === 0,
+    dragging: isDragging,
+    previous: visibleGroups,
+    getSwimLaneOfDoc,
+    getSwimLaneDocId,
+    getGroupByValues: (docs, state) => columnValues(docs, state, membersOf)
+  })
+  $: syncLaneQueries(visibleGroups, options)
+
+  function getLaneDoc (swimLane: SwimLane, docs: IdMap<DocWithRank>): DocWithRank | undefined {
+    const id = getSwimLaneDocId?.(swimLane)
+    return id !== undefined ? docs.get(id as Ref<DocWithRank>) : undefined
   }
 
   function countSwimLane (swimLane: SwimLane): number {
     let total = 0
     for (const cat of categories) {
+      // A merged status is counted by the first column of its group.
+      if (!membersOf.has(stateKey(cat))) continue
       total += getSwimLaneCategoryValues(
         swimLane,
         cat,
@@ -204,7 +460,9 @@
       return
     }
 
-    const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
+    const canDrop =
+      (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
+      !isMerged(state, membersOf)
 
     if (!canDrop) {
       dragCard = undefined
@@ -246,23 +504,16 @@
           state,
           dragCardTargetIndex
         )
-        const idx = visible.findIndex((p) => p._id === dragCard?._id)
-        if (idx !== -1) {
-          prevRank = visible[idx - 1]?.rank
-          nextRank = visible[idx + 1]?.rank
-        } else if (dragCardTargetIndex !== undefined) {
-          const without = visible.filter((p) => p._id !== dragCard?._id)
-          prevRank = without[dragCardTargetIndex - 1]?.rank
-          nextRank = without[dragCardTargetIndex]?.rank
+        // A card gone from its own cell during the drag keeps its rank.
+        if (visible.some((p) => p._id === dragCard?._id)) {
+          ;[prevRank, nextRank] = neighbourRanks(visible, dragCard._id, undefined)
         }
       } else {
-        const arr = getGroupByValues(groupByDocs, state) ?? []
-        const filtered = arr.filter((d) => d._id !== dragCard?._id)
-        const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
-        const fallback = originalIdx === -1 ? filtered.length : originalIdx
-        const idx = dragCardTargetIndex ?? fallback
-        prevRank = filtered[idx - 1]?.rank
-        nextRank = filtered[idx]?.rank
+        ;[prevRank, nextRank] = neighbourRanks(
+          getGroupByValues(groupByDocs, state) ?? [],
+          dragCard._id,
+          dragCardTargetIndex
+        )
       }
       if (prevRank !== undefined || nextRank !== undefined) {
         const newRank = makeRank(prevRank, nextRank)
@@ -289,6 +540,7 @@
       // its new column/rank until the live-query roundtrip lands; the actual
       // card data stays under live-query control.
       onMoveCommit?.(movedCard._id, merged as Record<string, unknown>)
+      dragCardToRestore = undefined
     }
     // Restore focus on the just-moved card so keyboard navigation continues
     // from there, mirroring the mouse-hover focus path.
@@ -313,6 +565,11 @@
   let dragCardInitialState: CategoryType
   let dragCardState: CategoryType | undefined
   let dragCardAvailableCategories: CategoryType[] | undefined
+  // Where the card stood in its category, to put it back there in the legacy layout.
+  let dragCardInitialIndex = -1
+  // The legacy preview moves the card inside groupByDocs. Cleared once an update is sent,
+  // so that a drag which sends none puts the card back.
+  let dragCardToRestore: Item | undefined
   let dragCardInitialSwimLane: SwimLane | undefined
   let dragCardCurrentSwimLane: SwimLane | undefined
   // Insertion index of dragCard within target lane cell (swimlane mode). Undefined = append at end.
@@ -330,7 +587,8 @@
 
   function autoScrollTick (): void {
     autoScrollRaf = undefined
-    if (!isDragging || scrollerEl === undefined) return
+    // bind:divScroll sets null once the Scroller is destroyed.
+    if (!isDragging || scrollerEl == null) return
     const r = scrollerEl.getBoundingClientRect()
     let dx = 0
     let dy = 0
@@ -351,6 +609,10 @@
 
   function handleDragMove (e: DragEvent): void {
     if (!isDragging) return
+    // A card that unmounts mid-drag loses its dragend. A native drag sends no mouse events,
+    // so the first mousemove ends it. Not armed at dragstart: Firefox sends one right after.
+    if (!dragMoved) window.addEventListener('mousemove', onDragEnd, true)
+    dragMoved = true
     lastDragX = e.clientX
     lastDragY = e.clientY
     if (autoScrollRaf === undefined) autoScrollRaf = requestAnimationFrame(autoScrollTick)
@@ -368,7 +630,29 @@
     if (dragCard === undefined) {
       return
     }
+    dragCardToRestore = undefined
     await client.update(dragCard, updateValue)
+  }
+
+  function removeFromCategories (card: Item): void {
+    for (const cat of categories) {
+      const a = getGroupByValues(groupByDocs, cat) ?? []
+      const i = a.findIndex((p) => p._id === card._id)
+      if (i !== -1) {
+        a.splice(i, 1)
+        setGroupByValues(groupByDocs, cat, a)
+      }
+    }
+  }
+
+  function putBack (card: Item): void {
+    removeFromCategories(card)
+    const own = getGroupByValues(groupByDocs, dragCardInitialState) ?? []
+    own.splice(dragCardInitialIndex === -1 ? own.length : dragCardInitialIndex, 0, card)
+    setGroupByValues(groupByDocs, dragCardInitialState, own)
+    dragCardState = dragCardInitialState
+    dragCardTargetIndex = undefined
+    groupByDocs = groupByDocs
   }
 
   function panelDragOver (event: Event | undefined, state: CategoryType, swimLane?: SwimLane): void {
@@ -378,7 +662,21 @@
     const swimLaneChanged = swimLane !== undefined && dragCardCurrentSwimLane?._id !== swimLane._id
 
     if (dragCardState !== state || swimLaneChanged) {
-      const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
+      // A merged column takes no drop, so a card brought back to it is put where it stood.
+      const members = membersOf.get(stateKey(state)) ?? [state]
+      if (
+        !swimLaneMode &&
+        dragCardState !== dragCardInitialState &&
+        members.length > 1 &&
+        members.includes(dragCardInitialState)
+      ) {
+        putBack(dragCard)
+        return
+      }
+
+      const canDrop =
+        (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
+        !isMerged(state, membersOf)
 
       if (!canDrop) {
         return
@@ -395,14 +693,7 @@
           // mutation so Svelte renders it in its new column on the next tick.
           // Strip dragCard from EVERY category first to prevent duplicate-key
           // errors if a transient parent rebuild re-injected it elsewhere.
-          for (const cat of categories) {
-            const a = getGroupByValues(groupByDocs, cat) ?? []
-            const i = a.findIndex((p) => p._id === dragCard?._id)
-            if (i !== -1) {
-              a.splice(i, 1)
-              setGroupByValues(groupByDocs, cat, a)
-            }
-          }
+          removeFromCategories(dragCard)
           const arr = getGroupByValues(groupByDocs, state) ?? []
           arr.push(dragCard)
           setGroupByValues(groupByDocs, state, arr)
@@ -434,7 +725,11 @@
   }
 
   function cardDragOver (evt: CardDragEvent, object: Item, state: CategoryType): void {
-    if (dragCardAvailableCategories !== undefined && !dragCardAvailableCategories.includes(state)) {
+    // A merged column takes no drop; a reorder there would put the card in two categories.
+    if (
+      (dragCardAvailableCategories !== undefined && !dragCardAvailableCategories.includes(state)) ||
+      isMerged(state, membersOf)
+    ) {
       return
     }
     if (swimLaneMode) {
@@ -449,11 +744,7 @@
       const insertAfter = dragswap(evt, targetIdx, dragIdx)
       if (!insertAfter) return
       const desired = dragIdx === -1 || dragIdx > targetIdx ? targetIdx : targetIdx + 1
-      const without = visible.filter((p) => p._id !== dragCard?._id)
-      let mapped = desired
-      if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
-      if (mapped < 0) mapped = 0
-      if (mapped > without.length) mapped = without.length
+      const mapped = insertIndex(desired, dragIdx, visible.length)
       if (dragCardTargetIndex !== mapped) {
         dragCardTargetIndex = mapped
         groupByDocs = groupByDocs
@@ -476,11 +767,7 @@
         return evt.offsetY < h / 2
       })()
       const desired = beforeTarget ? targetIdx : targetIdx + 1
-      const withoutLen = arr.length - (dragIdx !== -1 ? 1 : 0)
-      let mapped = desired
-      if (dragIdx !== -1 && dragIdx < desired) mapped = desired - 1
-      if (mapped < 0) mapped = 0
-      if (mapped > withoutLen) mapped = withoutLen
+      const mapped = insertIndex(desired, dragIdx, arr.length)
       // Reorder dragCard inside the column array so Svelte can render the
       // preview without any imperative DOM placeholder. Strip ALL occurrences
       // of dragCard before insertion to defend against any transient parent
@@ -498,7 +785,9 @@
 
   async function cardDrop (evt: CardDragEvent, object: Item, state: CategoryType, swimLane?: SwimLane): Promise<void> {
     if (dragCard !== undefined) {
-      const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
+      const canDrop =
+        (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
+        !isMerged(state, membersOf)
       if (!canDrop) {
         dragCard = undefined
         dragCardAvailableCategories = undefined
@@ -528,19 +817,15 @@
             state,
             dragCardTargetIndex
           )
-          const idx = visible.findIndex((p) => p._id === dragCard?._id)
-          if (idx !== -1) {
-            prevRank = visible[idx - 1]?.rank
-            nextRank = visible[idx + 1]?.rank
+          if (visible.some((p) => p._id === dragCard?._id)) {
+            ;[prevRank, nextRank] = neighbourRanks(visible, dragCard._id, undefined)
           }
         } else {
-          const arr = getGroupByValues(groupByDocs, state) ?? []
-          const filtered = arr.filter((d) => d._id !== dragCard?._id)
-          const originalIdx = arr.findIndex((d) => d._id === dragCard?._id)
-          const fallback = originalIdx === -1 ? filtered.length : originalIdx
-          const idx = dragCardTargetIndex ?? fallback
-          prevRank = filtered[idx - 1]?.rank
-          nextRank = filtered[idx]?.rank
+          ;[prevRank, nextRank] = neighbourRanks(
+            getGroupByValues(groupByDocs, state) ?? [],
+            dragCard._id,
+            dragCardTargetIndex
+          )
         }
         if (prevRank !== undefined || nextRank !== undefined) {
           const newRank = makeRank(prevRank, nextRank)
@@ -562,19 +847,22 @@
       const overlay: Record<string, unknown> = { ...(updates ?? {}), ...(swimUpdates ?? {}) }
       if (Object.keys(overlay).length > 0) {
         onMoveCommit?.(dragCard._id, overlay)
+        dragCardToRestore = undefined
       }
       // Restore focus on the just-moved card so keyboard navigation continues
       // from there, mirroring the mouse-hover focus path.
       dispatch('obj-focus', { ...dragCard, ...overlay })
+      // The drag can end while an update is pending, and that clears dragCard.
+      const movedCard = dragCard
       try {
         if (updates !== undefined && Object.keys(updates).length > 0) {
-          await client.diffUpdate(dragCard, updates)
+          await client.diffUpdate(movedCard, updates)
         }
         if (swimUpdates !== undefined && Object.keys(swimUpdates).length > 0) {
-          await client.update(dragCard, swimUpdates)
+          await client.update(movedCard, swimUpdates)
         }
       } catch (err) {
-        onMoveRollback?.(dragCard._id)
+        onMoveRollback?.(movedCard._id)
       }
     }
     isDragging = false
@@ -582,11 +870,15 @@
 
   async function onDragStart (object: Item, state: CategoryType, swimLane?: SwimLane): Promise<void> {
     dragCardInitialState = state
+    dragCardInitialIndex = (getGroupByValues(groupByDocs, state) ?? []).findIndex((p) => p._id === object._id)
     dragCardState = state
     dragCardInitialRank = object.rank
     dragCardInitialSwimLane = swimLane
     dragCardCurrentSwimLane = swimLane
     dragCard = object
+    dragCardToRestore = swimLaneMode ? undefined : object
+    dragMoved = false
+    dragOverCollapsed = undefined
     isDragging = true
     dragCardTargetIndex = undefined
     const available = await getAvailableCategories?.(object)
@@ -596,10 +888,17 @@
   }
 
   function onDragEnd (): void {
+    const card = dragCardToRestore
+    dragCardToRestore = undefined
+    if (card !== undefined) {
+      const own = getGroupByValues(groupByDocs, dragCardInitialState) ?? []
+      if (own[dragCardInitialIndex]?._id !== card._id) putBack(card)
+    }
     isDragging = false
     dragCard = undefined
     dragCardAvailableCategories = undefined
     stopAutoScroll()
+    window.removeEventListener('mousemove', onDragEnd, true)
   }
   // eslint-disable-next-line
   let dragged: boolean = false
@@ -631,7 +930,7 @@
   function getState (doc: Item): number {
     let pos = 0
     for (const st of categories) {
-      const stateObjs = getGroupByValues(groupByDocs, st) ?? []
+      const stateObjs = membersOf.has(stateKey(st)) ? columnValues(groupByDocs, st, membersOf) : []
       if (stateObjs.findIndex((it) => it._id === doc._id) !== -1) {
         return pos
       }
@@ -648,10 +947,11 @@
   }
 
   function visibleSwimLanes (): SwimLane[] {
-    return swimLanes.filter((s) => !collapsed.has(s._id))
+    return shownSwimLanes.filter((s) => !collapsed.has(s._id))
   }
 
   function getCellObjects (st: CategoryType, lane?: SwimLane): Item[] {
+    if (columnPlace(st, collapsedColumns, membersOf) !== 'open') return []
     if (swimLaneMode && lane !== undefined) {
       return getSwimLaneCategoryValues(
         lane,
@@ -663,7 +963,7 @@
         dragCardTargetIndex
       )
     }
-    return getGroupByValues(groupByDocs, st) ?? []
+    return columnValues(groupByDocs, st, membersOf)
   }
 
   export function select (offset: 1 | -1 | 0, of?: Doc, dir?: 'vertical' | 'horizontal'): void {
@@ -798,9 +1098,6 @@
   export function check (docs: Doc[], value: boolean): void {
     dispatch('check', { docs, value })
   }
-  function stateKey (state: CategoryType): string {
-    return String(typeof state === 'object' ? state.name : state)
-  }
   const showMenu = async (evt: MouseEvent, object: Item): Promise<void> => {
     selection = objects.findIndex((p) => p._id === object._id)
     if (!checkedSet.has(object._id)) {
@@ -821,214 +1118,410 @@
 >
   {#if swimLaneMode}
     <Scroller horizontal bind:divScroll={scrollerEl}>
-      <div class="kanban-swimlane-root">
-        <!-- sticky column headers row -->
-        <div
-          class="swimlane-header-row"
-          style:--kanban-col-count={categories.length}
-          style:--swimlane-row-bg={defaultBackground($themeStore.dark)}
-        >
-          {#each categories as state, si (typeof state === 'object' ? state.name : state)}
-            {@const stateObjects = getGroupByValues(groupByDocs, state)}
+      <div class="kanban-swimlane-wrap">
+        <div class="kanban-swimlane-root">
+          <!-- sticky column headers row -->
+          <div
+            class="swimlane-header-row"
+            style:grid-template-columns={gridColumns}
+            style:--swimlane-row-bg={defaultBackground($themeStore.dark)}
+          >
+            {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+              {@const stateObjects = columnValues(groupByDocs, state, membersOf)}
+              {@const blocked = isBlocked(
+                state,
+                dragUnderway,
+                dragCardAvailableCategories,
+                dragCardInitialState,
+                membersOf
+              )}
+              {#if columnPlace(state, collapsedColumns, membersOf) === 'open'}
+                <div
+                  class="swimlane-col-header"
+                  data-id="kanban-column-header"
+                  data-state={stateKey(state)}
+                  class:drop-allowed={isDragging &&
+                    (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+                  class:drop-disabled={blocked}
+                >
+                  {#if $$slots.header !== undefined}
+                    {#key si}
+                      <slot
+                        name="header"
+                        state={toAny(state)}
+                        count={stateObjects.length}
+                        index={si}
+                        collapsed={false}
+                        {blocked}
+                        toggle={() => {
+                          toggleColumn(state)
+                        }}
+                        members={membersOf.get(stateKey(state)) ?? [state]}
+                        merge={mergeWith(state)}
+                      />
+                    {/key}
+                  {/if}
+                </div>
+              {/if}
+            {/each}
+          </div>
+
+          {#each shownSwimLanes as swimLane (`${swimLaneKey}:${swimLane._id}`)}
+            {@const isCollapsed = collapsed.has(swimLane._id)}
+            {@const laneCount = countSwimLane(swimLane)}
+            {@const laneStyle = getSwimLaneHeaderStyle?.(swimLane)}
             <div
-              class="swimlane-col-header"
-              class:drop-allowed={isDragging &&
-                (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
-              class:drop-disabled={isDragging &&
-                dragCardAvailableCategories !== undefined &&
-                !dragCardAvailableCategories.includes(state)}
+              class="swimlane-block"
+              data-id="kanban-swimlane"
+              data-swimlane-id={swimLane._id}
+              use:lazyObserver={(visible, unsubscribe) => {
+                markLaneSeen(swimLane._id, visible, unsubscribe)
+              }}
             >
-              {#if $$slots.header !== undefined}
-                {#key si}
-                  <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
-                {/key}
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <div
+                class="swimlane-header"
+                data-id="kanban-swimlane-header"
+                data-swimlane-collapsed={isCollapsed ? 'true' : 'false'}
+                style:--swimlane-header-bg={laneStyle?.background ?? defaultBackground($themeStore.dark)}
+                style:color={laneStyle?.color ?? 'var(--theme-caption-color)'}
+                style:--swimlane-title-color={laneStyle?.color}
+                on:click={() => {
+                  toggleSwimLane(swimLane._id)
+                }}
+              >
+                <div class="swimlane-toggle">
+                  <svelte:component this={isCollapsed ? IconChevronRight : IconChevronDown} size="small" />
+                </div>
+                {#if $$slots.swimLaneHeader !== undefined}
+                  <slot
+                    name="swimLaneHeader"
+                    {swimLane}
+                    count={laneCount}
+                    collapsed={isCollapsed}
+                    laneDoc={getLaneDoc(swimLane, loadedDocs)}
+                    docsLoaded={loadedKeys.has(swimLane._id)}
+                    toggle={() => {
+                      toggleSwimLane(swimLane._id)
+                    }}
+                  />
+                {:else}
+                  <span class="swimlane-title">{swimLane.title}</span>
+                  <span class="swimlane-count">{laneCount}</span>
+                {/if}
+              </div>
+
+              {#if !isCollapsed}
+                <div class="swimlane-grid" style:grid-template-columns={gridColumns}>
+                  {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+                    {@const blocked = isBlocked(
+                      state,
+                      dragUnderway,
+                      dragCardAvailableCategories,
+                      dragCardInitialState,
+                      membersOf
+                    )}
+                    {#if columnPlace(state, collapsedColumns, membersOf) === 'open'}
+                      {@const laneStateObjects = getSwimLaneCategoryValues(
+                        swimLane,
+                        state,
+                        groupByDocs,
+                        dragCard,
+                        dragCardCurrentSwimLane,
+                        dragCardState,
+                        dragCardTargetIndex,
+                        membersOf
+                      )}
+                      <!-- svelte-ignore a11y-no-static-element-interactions -->
+                      <div
+                        class="swimlane-cell"
+                        class:drop-target={isDragging}
+                        class:drop-allowed={isDragging &&
+                          (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+                        class:drop-disabled={blocked}
+                        data-id="kanban-swimlane-cell"
+                        data-swimlane-id={swimLane._id}
+                        data-state={stateKey(state)}
+                        on:dragover={(event) => {
+                          panelDragOver(event, state, swimLane)
+                        }}
+                        on:drop={() => {
+                          void move(state, swimLane).then(() => {
+                            isDragging = false
+                          })
+                        }}
+                      >
+                        <slot name="beforeCard" {state} {swimLane} />
+                        <KanbanRow
+                          bind:this={swimRowBindings[swimCellKey(swimLane._id, si)]}
+                          on:obj-focus
+                          stateObjects={laneStateObjects}
+                          {isDragging}
+                          {dragCard}
+                          {objects}
+                          {selection}
+                          {checkedSet}
+                          {state}
+                          loaded={loadedDocs}
+                          limit={cellLimit(cellLimits, cellKey(swimLane._id, state), SWIM_CELL_LIMIT)}
+                          onShowMore={() => {
+                            showMore(cellKey(swimLane._id, state), SWIM_CELL_LIMIT, SWIM_CELL_LIMIT_STEP)
+                          }}
+                          cardDragOver={(evt, obj) => {
+                            cardDragOver(evt, obj, state)
+                          }}
+                          cardDrop={(evt, obj) => {
+                            void cardDrop(evt, obj, state, swimLane)
+                          }}
+                          onDragStart={(obj, st) => {
+                            void onDragStart(obj, cardState(obj, st), swimLane)
+                          }}
+                          {showMenu}
+                        >
+                          <svelte:fragment slot="card" let:object let:dragged>
+                            <slot name="card" {object} {dragged} {swimLane} />
+                          </svelte:fragment>
+                        </KanbanRow>
+
+                        <slot name="afterCard" {state} {swimLane} />
+                      </div>
+                    {/if}
+                  {/each}
+                </div>
               {/if}
             </div>
           {/each}
-        </div>
-
-        {#each swimLanes as swimLane (swimLane._id)}
-          {@const isCollapsed = collapsed.has(swimLane._id)}
-          {@const laneCount = countSwimLane(swimLane)}
-          {@const laneStyle = getSwimLaneHeaderStyle?.(swimLane)}
-          <div class="swimlane-block" data-id="kanban-swimlane" data-swimlane-id={swimLane._id}>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div
-              class="swimlane-header"
-              data-id="kanban-swimlane-header"
-              data-swimlane-collapsed={isCollapsed ? 'true' : 'false'}
-              style:--swimlane-header-bg={laneStyle?.background ?? defaultBackground($themeStore.dark)}
-              style:color={laneStyle?.color ?? 'var(--theme-caption-color)'}
-              style:--swimlane-title-color={laneStyle?.color}
-              on:click={() => {
-                toggleSwimLane(swimLane._id)
-              }}
-            >
-              <div class="swimlane-toggle">
-                <svelte:component this={isCollapsed ? IconChevronRight : IconChevronDown} size="small" />
-              </div>
-              {#if $$slots.swimLaneHeader !== undefined}
-                <slot
-                  name="swimLaneHeader"
-                  {swimLane}
-                  count={laneCount}
-                  collapsed={isCollapsed}
-                  toggle={() => {
-                    toggleSwimLane(swimLane._id)
-                  }}
-                />
-              {:else}
-                <span class="swimlane-title">{swimLane.title}</span>
-                <span class="swimlane-count">{laneCount}</span>
-              {/if}
+          {#if swimLanes.length > laneLimit}
+            <div class="p-2 flex-center">
+              <span class="mr-2">{laneLimit} / {swimLanes.length}</span>
+              <Button
+                size="small"
+                icon={IconMoreH}
+                label={ui.string.ShowMore}
+                dataId="btn-kanban-show-more-lanes"
+                on:click={() => {
+                  laneLimit += SWIM_LANE_PAGE
+                }}
+              />
             </div>
-
-            {#if !isCollapsed}
-              <div class="swimlane-grid" style:--kanban-col-count={categories.length}>
-                {#each categories as state, si (typeof state === 'object' ? state.name : state)}
-                  {@const laneStateObjects = getSwimLaneCategoryValues(
-                    swimLane,
+          {/if}
+        </div>
+        {#if hasCollapsed}
+          <div class="collapsed-stack" class:dragging={dragUnderway} data-id="kanban-collapsed-stack">
+            <div class="collapsed-stack-items">
+              {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+                {#if columnPlace(state, collapsedColumns, membersOf) === 'stack'}
+                  {@const blocked = isBlocked(
                     state,
-                    groupByDocs,
-                    dragCard,
-                    dragCardCurrentSwimLane,
-                    dragCardState,
-                    dragCardTargetIndex
+                    dragUnderway,
+                    dragCardAvailableCategories,
+                    dragCardInitialState,
+                    membersOf
                   )}
                   <!-- svelte-ignore a11y-no-static-element-interactions -->
                   <div
-                    class="swimlane-cell"
-                    class:drop-target={isDragging}
-                    class:drop-allowed={isDragging &&
-                      (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
-                    class:drop-disabled={isDragging &&
-                      dragCardAvailableCategories !== undefined &&
-                      !dragCardAvailableCategories.includes(state)}
-                    data-id="kanban-swimlane-cell"
-                    data-swimlane-id={swimLane._id}
+                    class="collapsed-item"
+                    data-id="kanban-collapsed-column"
                     data-state={stateKey(state)}
+                    class:drop-allowed={isDragging && !blocked}
+                    class:drop-disabled={blocked}
+                    class:drag-over={isDragging && dragOverCollapsed === stateKey(state)}
                     on:dragover={(event) => {
-                      panelDragOver(event, state, swimLane)
+                      dragOverCollapsed = stateKey(state)
+                      // The stack has no lanes, so the card keeps its lane.
+                      panelDragOver(event, state, dragCardInitialSwimLane)
+                    }}
+                    on:dragleave={(event) => {
+                      leaveCollapsed(event)
                     }}
                     on:drop={() => {
-                      void move(state, swimLane).then(() => {
+                      dragOverCollapsed = undefined
+                      void move(state, dragCardInitialSwimLane).then(() => {
                         isDragging = false
                       })
                     }}
                   >
-                    <slot name="beforeCard" {state} {swimLane} />
-                    <KanbanRow
-                      bind:this={swimRowBindings[swimCellKey(swimLane._id, si)]}
-                      on:obj-focus
-                      stateObjects={laneStateObjects}
-                      {isDragging}
-                      {dragCard}
-                      {objects}
-                      {selection}
-                      {checkedSet}
-                      {state}
-                      {limiter}
-                      cardDragOver={(evt, obj) => {
-                        cardDragOver(evt, obj, state)
-                      }}
-                      cardDrop={(evt, obj) => {
-                        void cardDrop(evt, obj, state, swimLane)
-                      }}
-                      onDragStart={(obj, st) => {
-                        void onDragStart(obj, st, swimLane)
-                      }}
-                      {showMenu}
-                      {_class}
-                      {query}
-                      {options}
-                      {groupByKey}
-                      swimLaneQuery={getSwimLaneQuery?.(swimLane)}
-                      initialLimit={3}
-                      limitStep={10}
-                    >
-                      <svelte:fragment slot="card" let:object let:dragged>
-                        <slot name="card" {object} {dragged} {swimLane} />
-                      </svelte:fragment>
-                    </KanbanRow>
-
-                    <slot name="afterCard" {state} {swimLane} />
+                    {#if $$slots.header !== undefined}
+                      <slot
+                        name="header"
+                        state={toAny(state)}
+                        count={columnValues(groupByDocs, state, membersOf).length}
+                        index={si}
+                        collapsed={true}
+                        {blocked}
+                        toggle={() => {
+                          toggleColumn(state)
+                        }}
+                        members={membersOf.get(stateKey(state)) ?? [state]}
+                        merge={mergeWith(state)}
+                      />
+                    {/if}
+                    {#if isDragging && dragCard !== undefined && dragOverCollapsed === stateKey(state)}
+                      <div class="collapsed-drop-card">
+                        <slot
+                          name="card"
+                          object={toAny(loadedDocs.get(dragCard._id) ?? dragCard)}
+                          dragged={true}
+                          swimLane={dragCardCurrentSwimLane}
+                        />
+                      </div>
+                    {/if}
                   </div>
-                {/each}
-              </div>
-            {/if}
+                {/if}
+              {/each}
+            </div>
           </div>
-        {/each}
+        {/if}
       </div>
     </Scroller>
   {:else}
     <Scroller horizontal contentDirection="horizontal" align="stretch" noStretch={false} bind:divScroll={scrollerEl}>
       <div class="kanban-content">
         {#each categories as state, si (typeof state === 'object' ? state.name : state)}
-          {@const stateObjects = getLegacyCategoryValues(state, groupByDocs)}
+          {@const stateObjects = getLegacyCategoryValues(state, groupByDocs, membersOf)}
+          {@const blocked = isBlocked(
+            state,
+            dragUnderway,
+            dragCardAvailableCategories,
+            dragCardInitialState,
+            membersOf
+          )}
 
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
-          <div
-            class="panel-container"
-            class:drop-allowed={isDragging &&
-              (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
-            class:drop-disabled={isDragging &&
-              dragCardAvailableCategories !== undefined &&
-              !dragCardAvailableCategories.includes(state)}
-            data-id="kanban-column"
-            data-state={stateKey(state)}
-            bind:this={stateRefs[si]}
-            on:dragover={(event) => {
-              panelDragOver(event, state)
-            }}
-            on:drop={() => {
-              void move(state).then(() => {
-                isDragging = false
-              })
-            }}
-          >
-            {#if $$slots.header !== undefined}
-              {#key si}
-                <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
-              {/key}
-            {/if}
-            <Scroller padding=".25rem .5rem" on:dragover on:drop>
-              <slot name="beforeCard" {state} />
-              <KanbanRow
-                bind:this={stateRows[si]}
-                on:obj-focus
-                {stateObjects}
-                {isDragging}
-                {dragCard}
-                {objects}
-                {selection}
-                {checkedSet}
-                {state}
-                {limiter}
-                initialLimit={10}
-                limitStep={20}
-                cardDragOver={(evt, obj) => {
-                  cardDragOver(evt, obj, state)
-                }}
-                cardDrop={(evt, obj) => {
-                  void cardDrop(evt, obj, state)
-                }}
-                {onDragStart}
-                {showMenu}
-                {_class}
-                {query}
-                {options}
-                {groupByKey}
-              >
-                <svelte:fragment slot="card" let:object let:dragged>
-                  <slot name="card" {object} {dragged} />
-                </svelte:fragment>
-              </KanbanRow>
+          {#if columnPlace(state, collapsedColumns, membersOf) === 'open'}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+              class="panel-container"
+              class:drop-allowed={isDragging &&
+                (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+              class:drop-disabled={blocked}
+              data-id="kanban-column"
+              data-state={stateKey(state)}
+              bind:this={stateRefs[si]}
+              on:dragover={(event) => {
+                panelDragOver(event, state)
+              }}
+              on:drop={() => {
+                void move(state).then(() => {
+                  isDragging = false
+                })
+              }}
+            >
+              {#if $$slots.header !== undefined}
+                {#key si}
+                  <slot
+                    name="header"
+                    state={toAny(state)}
+                    count={stateObjects.length}
+                    index={si}
+                    collapsed={false}
+                    {blocked}
+                    toggle={() => {
+                      toggleColumn(state)
+                    }}
+                    members={membersOf.get(stateKey(state)) ?? [state]}
+                    merge={mergeWith(state)}
+                  />
+                {/key}
+              {/if}
+              <Scroller padding=".25rem .5rem" on:dragover on:drop>
+                <slot name="beforeCard" {state} />
+                <KanbanRow
+                  bind:this={stateRows[si]}
+                  on:obj-focus
+                  {stateObjects}
+                  {isDragging}
+                  {dragCard}
+                  {objects}
+                  {selection}
+                  {checkedSet}
+                  {state}
+                  loaded={loadedDocs}
+                  limit={cellLimit(cellLimits, cellKey('', state), COLUMN_LIMIT)}
+                  onShowMore={() => {
+                    showMore(cellKey('', state), COLUMN_LIMIT, COLUMN_LIMIT_STEP)
+                  }}
+                  cardDragOver={(evt, obj) => {
+                    cardDragOver(evt, obj, state)
+                  }}
+                  cardDrop={(evt, obj) => {
+                    void cardDrop(evt, obj, state)
+                  }}
+                  onDragStart={(obj, st) => {
+                    void onDragStart(obj, cardState(obj, st))
+                  }}
+                  {showMenu}
+                >
+                  <svelte:fragment slot="card" let:object let:dragged>
+                    <slot name="card" {object} {dragged} />
+                  </svelte:fragment>
+                </KanbanRow>
 
-              <slot name="afterCard" {state} />
-            </Scroller>
-          </div>
+                <slot name="afterCard" {state} />
+              </Scroller>
+            </div>
+          {/if}
         {/each}
+        {#if hasCollapsed}
+          <div class="collapsed-stack" class:dragging={dragUnderway} data-id="kanban-collapsed-stack">
+            <div class="collapsed-stack-items">
+              {#each categories as state, si (typeof state === 'object' ? state.name : state)}
+                {#if columnPlace(state, collapsedColumns, membersOf) === 'stack'}
+                  {@const blocked = isBlocked(
+                    state,
+                    dragUnderway,
+                    dragCardAvailableCategories,
+                    dragCardInitialState,
+                    membersOf
+                  )}
+                  <!-- svelte-ignore a11y-no-static-element-interactions -->
+                  <div
+                    class="collapsed-item"
+                    data-id="kanban-collapsed-column"
+                    data-state={stateKey(state)}
+                    class:drop-allowed={isDragging && !blocked}
+                    class:drop-disabled={blocked}
+                    class:drag-over={isDragging && dragOverCollapsed === stateKey(state)}
+                    on:dragover={(event) => {
+                      dragOverCollapsed = stateKey(state)
+                      panelDragOver(event, state)
+                    }}
+                    on:dragleave={(event) => {
+                      leaveCollapsed(event)
+                    }}
+                    on:drop={() => {
+                      dragOverCollapsed = undefined
+                      void move(state, dragCardCurrentSwimLane).then(() => {
+                        isDragging = false
+                      })
+                    }}
+                  >
+                    {#if $$slots.header !== undefined}
+                      <slot
+                        name="header"
+                        state={toAny(state)}
+                        count={getLegacyCategoryValues(state, groupByDocs, membersOf).length}
+                        index={si}
+                        collapsed={true}
+                        {blocked}
+                        toggle={() => {
+                          toggleColumn(state)
+                        }}
+                        members={membersOf.get(stateKey(state)) ?? [state]}
+                        merge={mergeWith(state)}
+                      />
+                    {/if}
+                    {#if isDragging && dragCard !== undefined && dragOverCollapsed === stateKey(state)}
+                      <div class="collapsed-drop-card">
+                        <slot name="card" object={toAny(loadedDocs.get(dragCard._id) ?? dragCard)} dragged={true} />
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
+              {/each}
+            </div>
+          </div>
+        {/if}
         <slot name="afterPanel" />
       </div>
     </Scroller>
@@ -1054,6 +1547,7 @@
     min-height: 0;
 
     --kanban-col-width: 20rem;
+    --kanban-col-stack: 14rem;
     --kanban-col-gap: 0.5rem;
 
     &.compact {
@@ -1063,6 +1557,10 @@
   }
   .kanban-content {
     display: flex;
+
+    .collapsed-stack {
+      overflow-y: auto;
+    }
     padding: 1.5rem 1.5rem 0.5rem;
     min-width: 0;
     height: 100%;
@@ -1081,28 +1579,42 @@
   }
 
   // SwimLane layout
+  // The stack of collapsed columns sits beside the lanes and scrolls with them.
+  .kanban-swimlane-wrap {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+
+    // Full height keeps the dashed borders down to the last lane; the stack scrolls with the board.
+    .collapsed-stack-items {
+      margin-top: 1rem;
+    }
+  }
   .kanban-swimlane-root {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
     padding: 0 1.5rem 0.5rem;
     width: max-content;
-    min-width: 100%;
   }
   .swimlane-header-row {
     position: sticky;
     top: 0;
     z-index: 5;
     display: grid;
-    grid-template-columns: repeat(var(--kanban-col-count), var(--kanban-col-width));
     gap: var(--kanban-col-gap);
     padding: 1rem 0 0.5rem;
     background: var(--swimlane-row-bg);
     border-bottom: 1px solid var(--theme-divider-color);
   }
+  // Headers of one row share the height of the tallest one, e.g. a merged column.
   .swimlane-col-header {
+    display: flex;
+    flex-direction: column;
     width: var(--kanban-col-width);
 
     :global(> *) {
+      flex-grow: 1;
       margin: 0 !important;
     }
   }
@@ -1138,7 +1650,6 @@
   }
   .swimlane-grid {
     display: grid;
-    grid-template-columns: repeat(var(--kanban-col-count), var(--kanban-col-width));
     gap: var(--kanban-col-gap);
     padding: 0.5rem 0;
   }
@@ -1173,6 +1684,58 @@
       filter: grayscale(0.6);
       pointer-events: none;
       cursor: not-allowed;
+    }
+  }
+  .collapsed-stack {
+    flex-shrink: 0;
+    transition:
+      width 0.15s ease,
+      min-width 0.15s ease;
+
+    // Wider than the dragged card, so the highlighted target shows beside it.
+    &.dragging {
+      width: calc(var(--kanban-col-width) + 6rem);
+      min-width: calc(var(--kanban-col-width) + 6rem);
+    }
+    width: var(--kanban-col-stack);
+    min-width: var(--kanban-col-stack);
+    padding: 0 0.25rem;
+    border-left: 1px dashed color-mix(in srgb, var(--theme-dark-color) 50%, transparent);
+    border-right: 1px dashed color-mix(in srgb, var(--theme-dark-color) 50%, transparent);
+  }
+  .collapsed-stack-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .collapsed-item {
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    transition:
+      opacity 0.15s ease,
+      filter 0.15s ease;
+
+    .collapsed-drop-card {
+      margin: 0.25rem;
+      border: 1px solid var(--theme-kanban-card-border);
+      border-radius: 0.25rem;
+      background-color: var(--accent-bg-color, var(--theme-bg-accent-color));
+      pointer-events: none;
+    }
+
+    &.drag-over {
+      border: 2px solid var(--primary-button-default);
+      background-color: var(--theme-drop-zone-bg-color, var(--theme-button-hovered));
+    }
+
+    &.drop-allowed {
+      border: 1px dashed var(--theme-divider-color);
+      background-color: var(--theme-drop-zone-bg-color, var(--theme-button-hovered));
+    }
+    &.drop-disabled {
+      opacity: 0.45;
+      filter: grayscale(0.6);
+      pointer-events: none;
     }
   }
   .swimlane-title {

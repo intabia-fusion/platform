@@ -13,22 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type {
-    CategoryType,
-    Class,
-    Doc,
-    DocumentQuery,
-    FindOptions,
-    IdMap,
-    RateLimiter,
-    Ref,
-    Space
-  } from '@hcengineering/core'
-  import { toIdMap } from '@hcengineering/core'
+  import type { CategoryType, Doc, IdMap, Ref } from '@hcengineering/core'
   import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import type { CardDragEvent, DocWithRank, Item } from '../types'
-  import { createQuery } from '@hcengineering/presentation'
 
   export let stateObjects: Item[]
   export let isDragging: boolean
@@ -38,15 +26,10 @@
   export let checkedSet: Set<Ref<Doc>>
   export let state: CategoryType
 
-  export let _class: Ref<Class<DocWithRank>>
-  export let space: Ref<Space> | undefined = undefined
-  export let query: DocumentQuery<DocWithRank> = {}
-  export let options: FindOptions<DocWithRank> | undefined = undefined
-  export let groupByKey: any
-  export let limiter: RateLimiter
-  export let swimLaneQuery: DocumentQuery<DocWithRank> | undefined = undefined
-  export let initialLimit: number = 50
-  export let limitStep: number = 20
+  // Documents loaded by the board-wide query; the cell only renders the first `limit` of its stateObjects.
+  export let loaded: IdMap<DocWithRank>
+  export let limit: number
+  export let onShowMore: () => void
 
   export let cardDragOver: (evt: CardDragEvent, object: Item) => void
   export let cardDrop: (evt: CardDragEvent, object: Item) => void
@@ -61,71 +44,20 @@
 
   const stateRefs: HTMLElement[] = []
 
-  $: stateRefs.length = stateObjects.length
+  $: stateRefs.length = visibleObjects.length
   export function scroll (item: Item): void {
-    const pos = stateObjects.findIndex((it) => it._id === item._id)
+    const pos = visibleObjects.findIndex((it) => it._id === item._id)
     if (pos >= 0) {
       stateRefs[pos]?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
     }
   }
 
-  let limit = initialLimit
-  let previousInitialLimit = initialLimit
-
-  $: if (initialLimit !== previousInitialLimit) {
-    if (limit === previousInitialLimit) {
-      limit = initialLimit
-    } else {
-      limit = Math.max(limit, initialLimit)
-    }
-    previousInitialLimit = initialLimit
+  function getObject (_id: Ref<DocWithRank>, loaded: IdMap<DocWithRank>): DocWithRank | undefined {
+    return loaded.get(_id) ?? (_id === dragCard?._id ? dragCard : undefined)
   }
 
-  let limitedObjects: IdMap<DocWithRank> = new Map()
-
-  const docQuery = createQuery()
-
-  // Avoid re-running docQuery.query on every reactive tick: rebuild the query
-  // only when its real inputs change. dragCard reordering re-runs the parent
-  // reactivity chain — without this guard we'd fire a server query per swap.
-  let queryKey = ''
-  let lastQueryKey = ''
-  $: queryKey = JSON.stringify({
-    q: query,
-    sl: swimLaneQuery ?? null,
-    gk: groupByKey,
-    s: typeof state === 'object' ? (state.name ?? state.values.flatMap((x) => x._id)) : state,
-    o: options,
-    l: limit
-  })
-
-  $: if (queryKey !== lastQueryKey) {
-    lastQueryKey = queryKey
-    const groupQuery = {
-      ...query,
-      ...(swimLaneQuery ?? {}),
-      [groupByKey]:
-        typeof state === 'object'
-          ? state.name !== undefined
-            ? { $in: state.values.flatMap((x) => x._id) }
-            : undefined
-          : state
-    }
-    docQuery.query(
-      _class,
-      groupQuery,
-      (res) => {
-        limitedObjects = toIdMap(res)
-      },
-      { ...options, limit }
-    )
-  }
-
-  function getObject (_id: Ref<DocWithRank>, limitedObjects: IdMap<DocWithRank>): DocWithRank | undefined {
-    return limitedObjects.get(_id) ?? (_id === dragCard?._id ? dragCard : undefined)
-  }
-
-  $: hasMoreToShow = stateObjects.some((o) => !limitedObjects.has(o._id) && o._id !== dragCard?._id)
+  $: visibleObjects = stateObjects.filter((o, i) => i < limit || o._id === dragCard?._id)
+  $: hasMoreToShow = stateObjects.some((o, i) => i >= limit && o._id !== dragCard?._id)
 
   // Force native HTML5 drag image to be the whole card wrapper instead of the
   // narrow inner element (e.g. an anchor in the title) the user may have
@@ -138,9 +70,9 @@
   }
 </script>
 
-{#each stateObjects as objectRef, i (objectRef._id)}
+{#each visibleObjects as objectRef, i (objectRef._id)}
   {@const dragged = isDragging && objectRef._id === dragCard?._id}
-  {@const object = getObject(objectRef._id, limitedObjects)}
+  {@const object = getObject(objectRef._id, loaded)}
   {#if object !== undefined}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
@@ -183,18 +115,16 @@
     </div>
   {/if}
 {/each}
-{#if stateObjects.length > limit && hasMoreToShow}
+{#if hasMoreToShow}
   <div class="p-1 flex-no-shrink clear-mins" data-id="kanban-show-more">
     <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
-      <span class="caption-color">{limitedObjects.size}</span> <span>/</span><span>{stateObjects.length}</span>
+      <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
       <Button
         size="small"
         icon={IconMoreH}
         label={ui.string.ShowMore}
         dataId="btn-kanban-show-more"
-        on:click={() => {
-          limit = limit + limitStep
-        }}
+        on:click={onShowMore}
       />
     </div>
   </div>

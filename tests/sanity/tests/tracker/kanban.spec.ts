@@ -14,7 +14,7 @@
 //
 
 import { expect, test } from '../fixtures'
-import tracker, { type Issue } from '@hcengineering/tracker'
+import tracker, { IssuePriority, type Issue } from '@hcengineering/tracker'
 import { type Ref, type TxOperations } from '@hcengineering/core'
 import {
   connectTracker,
@@ -27,18 +27,25 @@ import {
 } from '../API/TrackerApi'
 import { KanbanBoardPage } from '../model/tracker/kanban-board-page'
 import { PlatformSetting, PlatformURI, generateId } from '../utils'
-import { retryIntervals } from '../retry'
+import { retryIntervals, waitStable } from '../retry'
 import { ViewletSelectors, setViewGroup } from './tracker.utils'
 
-async function openTrackerBoard (page: import('@playwright/test').Page, projectId: string): Promise<void> {
+async function openTrackerBoard (
+  page: import('@playwright/test').Page,
+  projectId: string,
+  keepStorage: boolean = false
+): Promise<void> {
   const projectPath = encodeURIComponent(projectId)
   await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${projectPath}/issues`))?.finished()
   // Reset any persisted swim lane collapse state so cells are always rendered.
-  await page.evaluate(() => {
-    for (const k of Object.keys(localStorage)) {
-      if (k.startsWith('kanban-swimlane-collapsed-')) localStorage.removeItem(k)
-    }
-  })
+  // Collapsed and merged columns go too; a reload that checks they survive keeps the storage.
+  if (!keepStorage) {
+    await page.evaluate(() => {
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith('kanban-swimlane-collapsed-') || k.startsWith('kanban-column-')) localStorage.removeItem(k)
+      }
+    })
+  }
   await page.locator('label[data-id="tab-all"]').click()
   await page.locator(ViewletSelectors.Board).click()
   // Wait for the board to render either as legacy columns or swimlane.
@@ -113,6 +120,9 @@ test.describe('Kanban board', () => {
   let client: TxOperations
   let ctx: ProjectContext
   const titlePrefix = `kanban-spec-${generateId()}-`
+
+  const statusOf = async (id: Ref<Issue>): Promise<string | undefined> =>
+    (await client.findOne(tracker.class.Issue, { _id: id }))?.status
 
   test.beforeAll(async () => {
     const conn = await connectTracker()
@@ -883,5 +893,448 @@ test.describe('Kanban board', () => {
         await expect(errors, `${viewlet} -> ${group}`).toHaveCount(0)
       }
     }
+  })
+
+  test.describe('Collapsed and merged columns', () => {
+    let swimLanesOn = false
+
+    test.beforeEach(() => {
+      swimLanesOn = false
+    })
+
+    // Back to the legacy layout also after a failure; a broken page may not answer.
+    test.afterEach(async ({ page }) => {
+      if (!swimLanesOn) return
+      try {
+        await page.keyboard.press('Escape')
+        await new KanbanBoardPage(page).setSwimLane('None')
+      } catch {
+        // ignore
+      }
+    })
+
+    test('collapse a column into the stack, keep it across a reload and open it back', async ({ page }) => {
+      const doneCard = await createIssue(client, ctx, { title: `${titlePrefix}collapse-done`, status: 'Done' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const done = ctx.statuses.get('Done') as string
+      const open = await board.boardLayout()
+      await board.expectCardInColumn(doneCard, done)
+      const count = await board.columnHeader(done).locator('.counter').innerText()
+
+      await board.collapseColumn(done)
+      // The column leaves its place; the stack ends the board and has no cards or tools.
+      await expect.poll(async () => await board.boardLayout()).toEqual([...open.filter((s) => s !== done), 'stack'])
+      await expect(board.collapsedColumn(done)).toBeVisible()
+      await expect(board.card(doneCard)).toHaveCount(0)
+      await expect(board.collapsedColumn(done).locator('.tools')).toHaveCount(0)
+      await expect(board.collapsedColumn(done).locator('.counter')).toHaveText(count)
+      // Kept per viewlet and grouping.
+      const stored = await board.storedColumns('collapsed')
+      expect(Object.keys(stored)).toEqual([expect.stringMatching(/^kanban-column-collapsed-.+-status$/)])
+      expect(Object.values(stored)).toEqual([[done]])
+
+      await openTrackerBoard(page, ctx.project._id, true)
+      await expect(board.collapsedColumn(done)).toBeVisible()
+      await expect(board.column(done)).toHaveCount(0)
+
+      await board.expandColumn(done)
+      await expect.poll(async () => await board.boardLayout()).toEqual(open)
+      await board.expectCardInColumn(doneCard, done)
+    })
+
+    test('a card dropped on a stacked column gets its status and the column stays stacked', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}stack-drop`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+      const done = ctx.statuses.get('Done') as string
+      await board.expectCardInColumn(cardId, backlog)
+      await board.collapseColumn(done)
+      const stacked = board.collapsedColumn(done)
+      await expect(stacked).toBeVisible()
+      const counter = stacked.locator('.counter')
+      const before = Number(await counter.innerText())
+
+      await dragUntilStatus(client, cardId, done, async () => {
+        const preview = async (): Promise<void> => {
+          // Over the stack the card shows where it would land, as in an open column.
+          await expect(board.collapsedStack()).toHaveClass(/dragging/, { timeout: 2000 })
+          await expect(stacked).toHaveClass(/drop-allowed/, { timeout: 2000 })
+          await expect(stacked).toHaveClass(/drag-over/, { timeout: 2000 })
+          await expect(stacked.locator('.collapsed-drop-card')).toBeVisible({ timeout: 2000 })
+        }
+        await board.dragCardVia(cardId, [{ over: stacked, check: preview }], stacked)
+      })
+
+      await expect(stacked).toBeVisible()
+      await expect(board.column(done)).toHaveCount(0)
+      await expect(board.card(cardId)).toHaveCount(0)
+      await expect(counter).toHaveText(String(before + 1))
+    })
+
+    test('swim lanes: a card dropped on a stacked column keeps its own lane', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, {
+        title: `${titlePrefix}stack-lane`,
+        status: 'Backlog',
+        priority: IssuePriority.Low
+      })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+      const done = ctx.statuses.get('Done') as string
+      const ownLane = String(IssuePriority.Low)
+      const otherLane = String(IssuePriority.High)
+      swimLanesOn = true
+      await board.setSwimLane('Priority')
+      await board.collapseColumn(done)
+      const stacked = board.collapsedColumn(done)
+      await expect(stacked).toBeVisible()
+      await board.expectCardInSwimLaneCell(cardId, ownLane, backlog)
+
+      await dragUntilStatus(client, cardId, done, async () => {
+        const inOtherLane = async (): Promise<void> => {
+          // The card follows the pointer into the other lane, where a drop would put it.
+          await expect(board.swimLaneCell(otherLane, backlog).locator(`[data-card-id="${cardId}"]`)).toBeVisible({
+            timeout: 2000
+          })
+        }
+        await board.dragCardVia(cardId, [{ over: board.swimLaneCell(otherLane, backlog), check: inOtherLane }], stacked)
+      })
+
+      expect((await client.findOne(tracker.class.Issue, { _id: cardId }))?.priority).toBe(IssuePriority.Low)
+    })
+
+    test('merge Canceled into Done: one column with the cards of both, kept across a reload', async ({ page }) => {
+      const doneCard = await createIssue(client, ctx, { title: `${titlePrefix}merge-done`, status: 'Done' })
+      const canceledCard = await createIssue(client, ctx, {
+        title: `${titlePrefix}merge-canceled`,
+        status: 'Cancelled'
+      })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const done = ctx.statuses.get('Done') as string
+      const canceled = ctx.statuses.get('Cancelled') as string
+
+      await board.mergeColumns(done, 'Canceled')
+      const header = board.columnHeader(done)
+      await expect(board.column(canceled)).toHaveCount(0)
+      await expect(header).toHaveClass(/merged/)
+      await expect(header.locator('.merged-names')).toContainText('Done')
+      await expect(header.locator('.merged-names')).toContainText('Canceled')
+      await board.expectCardInColumn(doneCard, done)
+      await board.expectCardInColumn(canceledCard, done)
+
+      await openTrackerBoard(page, ctx.project._id, true)
+      await expect(board.column(canceled)).toHaveCount(0)
+      await expect(board.columnHeader(done)).toHaveClass(/merged/)
+      await board.expectCardInColumn(canceledCard, done)
+
+      // The header names two statuses, the chevron shows the rest.
+      await board.mergeColumns(done, 'In Progress')
+      const more = board.columnHeader(done).locator('.more-members')
+      await expect(more).toContainText('+1')
+      await more.click()
+      for (const name of ['In Progress', 'Done', 'Canceled']) {
+        await expect(board.columnHeader(done).locator('.merged-names')).toContainText(name)
+      }
+
+      // Picking a status again takes it out of the column.
+      await board.mergeColumns(done, 'Canceled', 'In Progress')
+      await expect(board.column(canceled)).toBeVisible()
+      await expect(board.columnHeader(done)).not.toHaveClass(/merged/)
+      await board.expectCardInColumn(canceledCard, canceled)
+    })
+
+    test('a merged column takes no drop from another status', async ({ page }) => {
+      const doneCard = await createIssue(client, ctx, { title: `${titlePrefix}refuse-done`, status: 'Done' })
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}refuse-backlog`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+      const done = ctx.statuses.get('Done') as string
+      await board.mergeColumns(done, 'Canceled')
+      await board.expectCardInColumn(doneCard, done)
+      await board.expectCardInColumn(cardId, backlog)
+      const merged = board.column(done)
+      const width = (await merged.boundingBox())?.width
+      expect(width ?? 0).toBeGreaterThan(0)
+
+      await board.dropCardOnRefusing(cardId, merged, async () => {
+        await expect(merged).toHaveClass(/drop-disabled/)
+        // Greyed out, it keeps its width and its cards.
+        expect((await merged.boundingBox())?.width).toBe(width)
+        await expect(board.card(doneCard)).toBeVisible()
+      })
+
+      await expect(merged).not.toHaveClass(/drop-disabled/)
+      // The drop reaches the server within ~100ms: a quiet second shows none was sent.
+      expect(await waitStable(async () => await statusOf(cardId), { stableFor: 1000, interval: 100 })).toBe(backlog)
+    })
+
+    test('a card leaves a merged column with the status of the column it is dropped on', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}leave-merged`, status: 'Cancelled' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+      const done = ctx.statuses.get('Done') as string
+      await board.mergeColumns(done, 'Canceled')
+      await board.expectCardInColumn(cardId, done)
+
+      await dragUntilStatus(client, cardId, backlog, async () => {
+        await board.dragCardToColumn(cardId, backlog)
+      })
+      await board.expectCardInColumn(cardId, backlog)
+    })
+
+    test('a card dragged out of a merged column and back stays there once, with its status', async ({ page }) => {
+      const doneCard = await createIssue(client, ctx, { title: `${titlePrefix}back-done`, status: 'Done' })
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}back-canceled`, status: 'Cancelled' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const backlog = ctx.statuses.get('Backlog') as string
+      const done = ctx.statuses.get('Done') as string
+      const canceled = ctx.statuses.get('Cancelled') as string
+      await board.mergeColumns(done, 'Canceled')
+      await board.expectCardInColumn(doneCard, done)
+      await board.expectCardInColumn(cardId, done)
+      const merged = board.column(done)
+      const inBacklog = board.column(backlog)
+      const everywhere = page.locator(`[data-card-id="${cardId}"]`)
+      const placed = await board.cardIdsIn(merged)
+
+      await board.dragCardVia(
+        cardId,
+        [
+          {
+            over: board.card(doneCard),
+            // Hovering a card of another status in its own column used to add the dragged card
+            // to the board data a second time.
+            check: async () => {
+              await expect(everywhere).toHaveCount(1)
+            }
+          },
+          {
+            over: inBacklog,
+            // The card follows the pointer out, so the way back is really walked.
+            check: async () => {
+              await expect(inBacklog.locator(`[data-card-id="${cardId}"]`)).toBeVisible({ timeout: 2000 })
+              await expect(merged.locator(`[data-card-id="${cardId}"]`)).toHaveCount(0)
+            }
+          }
+        ],
+        merged
+      )
+
+      expect(await waitStable(async () => await statusOf(cardId), { stableFor: 1000, interval: 100 })).toBe(canceled)
+      // Back where it stood, not left in the column it passed.
+      await expect(everywhere).toHaveCount(1)
+      await expect(merged.locator(`[data-card-id="${cardId}"]`)).toHaveCount(1)
+      await expect(inBacklog.locator(`[data-card-id="${cardId}"]`)).toHaveCount(0)
+      await expect.poll(async () => await board.cardIdsIn(merged)).toEqual(placed)
+    })
+
+    test('reset merged columns shows only when this board has a merged column and keeps other boards groups', async ({
+      page
+    }) => {
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const done = ctx.statuses.get('Done') as string
+      const canceled = ctx.statuses.get('Cancelled') as string
+      const states = await board.boardLayout()
+      // The viewlet is shared by all projects: its key also holds the groups of other boards.
+      const foreign = ['foreign-status-done', 'foreign-status-canceled']
+      const merged = async (): Promise<unknown> => Object.values(await board.storedColumns('merged'))[0]
+
+      // A real merge first: it writes the key the board really uses.
+      await board.mergeColumns(done, 'Canceled')
+      const [key] = Object.keys(await board.storedColumns('merged'))
+      expect(key).toBeDefined()
+      await page.evaluate(
+        ([k, groups]) => {
+          localStorage.setItem(k, groups)
+        },
+        [key, JSON.stringify([foreign])]
+      )
+      await openTrackerBoard(page, ctx.project._id, true)
+
+      // Only another board's group is stored: nothing is merged here, nothing to reset.
+      await expect(board.column(canceled)).toBeVisible()
+      await board.openMoreActions()
+      await expect(board.moreActionsItem('Merge columns by category')).toBeVisible()
+      await expect(board.moreActionsItem('Reset merged columns')).toHaveCount(0)
+      await page.keyboard.press('Escape')
+
+      await board.mergeColumns(done, 'Canceled')
+      expect(await merged()).toEqual([foreign, [done, canceled]])
+      await board.openMoreActions()
+      await board.moreActionsItem('Reset merged columns').click()
+      await expect(board.column(canceled)).toBeVisible()
+      await expect.poll(merged).toEqual([foreign])
+
+      // Merging by category replaces this board's groups only.
+      const statuses = await client.findAll(tracker.class.IssueStatus, {})
+      const byCategory = new Map<string, string[]>()
+      for (const id of states) {
+        const category = statuses.find((status) => status._id === id)?.category
+        if (category !== undefined) byCategory.set(category, [...(byCategory.get(category) ?? []), id])
+      }
+      await board.mergeColumns(done, 'Canceled')
+      await board.openMoreActions()
+      await board.moreActionsItem('Merge columns by category').click()
+      await expect.poll(merged).toEqual([foreign, ...Array.from(byCategory.values()).filter((ids) => ids.length > 1)])
+    })
+
+    test('swim lane count does not count a merged status twice', async ({ page }) => {
+      const lane = String(IssuePriority.Medium)
+      await createIssue(client, ctx, {
+        title: `${titlePrefix}count-done`,
+        status: 'Done',
+        priority: IssuePriority.Medium
+      })
+      const canceledCard = await createIssue(client, ctx, {
+        title: `${titlePrefix}count-canceled`,
+        status: 'Cancelled',
+        priority: IssuePriority.Medium
+      })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const done = ctx.statuses.get('Done') as string
+      const canceled = ctx.statuses.get('Cancelled') as string
+      swimLanesOn = true
+      await board.setSwimLane('Priority')
+      await board.expectCardInSwimLaneCell(canceledCard, lane, canceled)
+      const before = await waitStable(async () => await board.swimLaneCount(lane), { stableFor: 500, interval: 100 })
+      expect(before).toBeGreaterThanOrEqual(2)
+
+      await board.mergeColumns(done, 'Canceled')
+      await expect(board.columnHeader(done)).toHaveClass(/merged/)
+      await expect.poll(async () => await board.swimLaneCount(lane)).toBe(before)
+
+      // Reopened with the merge stored, the lane is counted afresh.
+      await openTrackerBoard(page, ctx.project._id, true)
+      await expect(board.columnHeader(done)).toHaveClass(/merged/)
+      await expect(board.swimLane(lane)).toBeVisible()
+      const reopened = await waitStable(async () => await board.swimLaneCount(lane), { stableFor: 500, interval: 100 })
+      expect(reopened).toBe(before)
+    })
+  })
+
+  // Legacy layout: a drag that sends no update must leave the card where it stood.
+  // Each release is followed by a small mouse move, as a user's would be.
+  test.describe('Drag that ends without a drop', () => {
+    // Not expectCardInColumn: it reloads a board that lost the card, which hides the defect.
+    const expectBackInBacklog = async (board: KanbanBoardPage, cardId: Ref<Issue>): Promise<void> => {
+      const backlog = ctx.statuses.get('Backlog') as string
+      await expect(board.cardInColumn(cardId, backlog)).toBeVisible()
+      await expect(board.page.locator(`[data-card-id="${cardId}"]`)).toHaveCount(1)
+      await expect(board.page.locator('.dragged')).toHaveCount(0)
+      // The drop reaches the server within ~100ms: a quiet second shows none was sent.
+      expect(await waitStable(async () => await statusOf(cardId), { stableFor: 1000, interval: 100 })).toBe(backlog)
+    }
+
+    test('a card released on a column that refuses it goes back to its own column', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}ends-refused`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const inProgress = ctx.statuses.get('In Progress') as string
+      const done = ctx.statuses.get('Done') as string
+      await board.mergeColumns(done, 'Canceled')
+      await board.expectCardInColumn(cardId, ctx.statuses.get('Backlog') as string)
+      const merged = board.column(done)
+
+      await board.holdCardVia(cardId, [
+        {
+          over: board.column(inProgress),
+          // The card is drawn in the column it passes, where a drop would put it.
+          check: async () => {
+            await expect(board.cardInColumn(cardId, inProgress)).toBeVisible({ timeout: 2000 })
+          }
+        },
+        {
+          over: merged,
+          refusing: true,
+          check: async () => {
+            await expect(merged).toHaveClass(/drop-disabled/)
+          }
+        }
+      ])
+      await board.releaseOver(merged)
+
+      await expect(board.cardInColumn(cardId, inProgress)).toHaveCount(0)
+      await expectBackInBacklog(board, cardId)
+    })
+
+    test('a card released outside the board goes back to its column', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}ends-outside`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const inProgress = ctx.statuses.get('In Progress') as string
+      await board.expectCardInColumn(cardId, ctx.statuses.get('Backlog') as string)
+
+      await board.holdCardVia(cardId, [
+        {
+          over: board.column(inProgress),
+          check: async () => {
+            await expect(board.cardInColumn(cardId, inProgress)).toBeVisible({ timeout: 2000 })
+          }
+        }
+      ])
+      await board.releaseAboveBoard(board.column(inProgress))
+
+      await expect(board.cardInColumn(cardId, inProgress)).toHaveCount(0)
+      await expectBackInBacklog(board, cardId)
+    })
+
+    test('a card hovered over the stack and released outside the board stays in its column', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}ends-stack`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const done = ctx.statuses.get('Done') as string
+      await board.expectCardInColumn(cardId, ctx.statuses.get('Backlog') as string)
+      await board.collapseColumn(done)
+      const stacked = board.collapsedColumn(done)
+      await expect(stacked).toBeVisible()
+      const counter = stacked.locator('.counter')
+      const before = await counter.innerText()
+
+      await board.holdCardVia(cardId, [
+        {
+          over: stacked,
+          check: async () => {
+            await expect(board.collapsedStack()).toHaveClass(/dragging/, { timeout: 2000 })
+            await expect(stacked).toHaveClass(/drop-allowed/, { timeout: 2000 })
+            await expect(stacked.locator('.collapsed-drop-card')).toBeVisible({ timeout: 2000 })
+          }
+        }
+      ])
+      await board.releaseAboveBoard(stacked)
+
+      await expectBackInBacklog(board, cardId)
+      await expect(counter).toHaveText(before)
+      await expect(board.collapsedStack()).not.toHaveClass(/dragging/)
+      await expect(stacked).not.toHaveClass(/drop-allowed/)
+    })
+
+    test('a drag cancelled with Escape puts the card back', async ({ page }) => {
+      const cardId = await createIssue(client, ctx, { title: `${titlePrefix}ends-escape`, status: 'Backlog' })
+      await openTrackerBoard(page, ctx.project._id)
+      const board = new KanbanBoardPage(page)
+      const inProgress = ctx.statuses.get('In Progress') as string
+      await board.expectCardInColumn(cardId, ctx.statuses.get('Backlog') as string)
+
+      await board.holdCardVia(cardId, [
+        {
+          over: board.column(inProgress),
+          check: async () => {
+            await expect(board.cardInColumn(cardId, inProgress)).toBeVisible({ timeout: 2000 })
+          }
+        }
+      ])
+      await board.cancelDrag(board.column(inProgress))
+
+      await expect(board.cardInColumn(cardId, inProgress)).toHaveCount(0)
+      await expectBackInBacklog(board, cardId)
+    })
   })
 })

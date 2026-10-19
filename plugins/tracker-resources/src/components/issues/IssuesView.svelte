@@ -20,7 +20,16 @@
   import type { Issue, Project } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
-  import { BlankView, type DropdownIntlItem, IconMoreH, showPopup, themeStore } from '@hcengineering/ui'
+  import {
+    BlankView,
+    type DropdownIntlItem,
+    IconMixin,
+    IconMoreH,
+    IconUndo,
+    showPopup,
+    themeStore
+  } from '@hcengineering/ui'
+  import { columnControlStore } from '@hcengineering/kanban'
   import { MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -89,6 +98,11 @@
   const WORKFLOW_ITEM_ID = 'workflow'
   const TASK_TYPES_ITEM_ID = 'task-types'
   const EXPORT_CSV_ITEM_ID = 'export-scv'
+  const MERGE_BY_CATEGORY_ITEM_ID = 'merge-columns-by-category'
+  const RESET_MERGE_ITEM_ID = 'reset-merged-columns'
+
+  // Column merging of the board shown for this viewlet; only a kanban registers it.
+  $: columnControls = viewlet != null ? $columnControlStore.get(viewlet._id) : undefined
 
   $: menuItems = [
     ...(hasWorkflow
@@ -115,7 +129,13 @@
         label: tracker.string.ExportToCSV,
         icon: tracker.icon.Export
       }
-    ]
+    ],
+    ...(columnControls !== undefined && viewOptions?.groupBy?.[0] === 'status'
+      ? [{ id: MERGE_BY_CATEGORY_ITEM_ID, label: tracker.string.MergeColumnsByCategory, icon: IconMixin }]
+      : []),
+    ...(columnControls?.merged === true
+      ? [{ id: RESET_MERGE_ITEM_ID, label: tracker.string.ResetMergedColumns, icon: IconUndo }]
+      : [])
   ] satisfies DropdownIntlItem[]
 
   function openWorkflowDiagram (): void {
@@ -151,6 +171,10 @@
       openTaskTypeDiagram()
     } else if (action === EXPORT_CSV_ITEM_ID) {
       void exportIssuesToCSV(resultQuery)
+    } else if (action === MERGE_BY_CATEGORY_ITEM_ID) {
+      columnControls?.mergeByGroup()
+    } else if (action === RESET_MERGE_ITEM_ID) {
+      columnControls?.resetMerge()
     }
   }
 
