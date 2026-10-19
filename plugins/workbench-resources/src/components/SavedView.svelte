@@ -17,19 +17,22 @@
     navigate,
     showPopup
   } from '@hcengineering/ui'
-  import type { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
+  import type { Filter, FilteredView, FilteredViewPreference, ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
     EditBoxPopup,
+    SortableList,
     TreeItem,
     TreeNode,
     activeViewlet,
+    applySavedViewOrder,
     filterStore,
     getViewOptions,
     makeViewletKey,
     selectedFilterStore,
     setActiveViewletId,
     setFilters,
+    setSavedViewOrder,
     setViewOptions,
     viewOptionStore
   } from '@hcengineering/view-resources'
@@ -45,11 +48,18 @@
   const myAcc = getCurrentAccount()
 
   const filteredViewsQuery = createQuery()
-  let availableFilteredViews: FilteredView[] = []
+  const savedViewOrderQuery = createQuery()
+  let allMyFilteredViews: FilteredView[] = []
+  let savedViewOrder: Ref<FilteredView>[] = []
+  let savedViewOrderPreference: FilteredViewPreference | undefined
   let myFilteredViews: FilteredView[] = []
+  let availableFilteredViews: FilteredView[] = []
+
+  $: myFilteredViews = applySavedViewOrder(allMyFilteredViews, savedViewOrder)
+
   $: if (alias !== undefined) {
     filteredViewsQuery.query<FilteredView>(view.class.FilteredView, { attachedTo: alias }, (result) => {
-      myFilteredViews = result.filter((p) => p.users.includes(myAcc.uuid))
+      allMyFilteredViews = result.filter((p) => p.users.includes(myAcc.uuid))
       availableFilteredViews = result.filter((p) => p.sharable && !p.users.includes(myAcc.uuid))
 
       const location = getLocation()
@@ -60,8 +70,20 @@
         }
       }
     })
+    savedViewOrderQuery.query<FilteredViewPreference>(
+      view.class.FilteredViewPreference,
+      { attachedTo: alias },
+      (result) => {
+        savedViewOrderPreference = result[0]
+        savedViewOrder = savedViewOrderPreference?.views ?? []
+      }
+    )
   } else {
     filteredViewsQuery.unsubscribe()
+    savedViewOrderQuery.unsubscribe()
+    allMyFilteredViews = []
+    savedViewOrder = []
+    savedViewOrderPreference = undefined
     myFilteredViews = []
     availableFilteredViews = []
   }
@@ -178,6 +200,37 @@
     setFilters(JSON.parse(fv.filters))
   }
 
+  let saveChain: Promise<void> = Promise.resolve()
+
+  function moveFilteredView (
+    event: CustomEvent<{
+      item: FilteredView
+      prev: FilteredView | undefined
+      next: FilteredView | undefined
+      items: FilteredView[]
+    }>
+  ): void {
+    if (alias === undefined) return
+    const targetAlias = alias
+    const preference = savedViewOrderPreference
+    const previous = savedViewOrder
+    // Only visible views are persisted, so a hidden view (Hide action) loses its position
+    // and returns to the end of the list when the user adds it back.
+    const order = event.detail.items.map((it) => it._id)
+    savedViewOrder = order
+
+    saveChain = saveChain.then(async () => {
+      try {
+        await setSavedViewOrder(targetAlias, order, preference)
+      } catch (err: any) {
+        if (savedViewOrder === order) {
+          savedViewOrder = previous
+        }
+        console.error('Failed to save filtered views order', err)
+      }
+    })
+  }
+
   const clearSelection = (): void => {
     selectedFilterStore.set(undefined)
     selectedId = undefined
@@ -279,17 +332,21 @@
     empty={myFilteredViews.length === 0}
     visible={selectedId !== undefined}
   >
-    {#each myFilteredViews as fv}
-      <TreeItem
-        _id={fv._id}
-        title={fv.name}
-        selected={selectedId === fv._id}
-        on:click={async () => {
-          await load(fv)
-        }}
-        actions={async (ov) => await viewAction(fv, ov)}
-      />
-    {/each}
+    <div class="saved-views-list">
+      <SortableList items={myFilteredViews} on:move={moveFilteredView}>
+        <svelte:fragment slot="object" let:value>
+          <TreeItem
+            _id={value._id}
+            title={value.name}
+            selected={selectedId === value._id}
+            on:click={async () => {
+              await load(value)
+            }}
+            actions={async (ov) => await viewAction(value, ov)}
+          />
+        </svelte:fragment>
+      </SortableList>
+    </div>
 
     <svelte:fragment slot="visible">
       {#if visibleFilter}
@@ -299,3 +356,19 @@
     </svelte:fragment>
   </TreeNode>
 {/if}
+
+<style lang="scss">
+  .saved-views-list {
+    min-width: 0;
+  }
+
+  .saved-views-list :global(.item) {
+    display: flex;
+    min-width: 0;
+  }
+
+  .saved-views-list :global(.item > button) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+</style>

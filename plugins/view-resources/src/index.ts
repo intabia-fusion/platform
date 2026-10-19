@@ -208,6 +208,7 @@ export * from './selection'
 export * from './status'
 export * from './utils'
 export * from './permissions'
+export * from './savedViews'
 export {
   buildCategoryReferenceLookups,
   buildModel,

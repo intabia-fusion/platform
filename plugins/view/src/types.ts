@@ -124,6 +124,15 @@ export interface FilteredView extends Doc {
 }
 
 /**
+ * Per-user order of saved views shown in the "Filtered views" block.
+ * @public
+ */
+export interface FilteredViewPreference extends Preference {
+  attachedTo: string
+  views: Ref<FilteredView>[]
+}
+
+/**
  * @public
  */
 export interface ClassFilters extends Class<Doc> {

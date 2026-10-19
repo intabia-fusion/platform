@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -38,6 +39,7 @@ import {
   CustomObjectLinkProvider,
   FilterMode,
   FilteredView,
+  FilteredViewPreference,
   Groupping,
   IgnoreActions,
   InlineAttributEditor,
@@ -142,6 +144,7 @@ const view = plugin(viewId, {
     LinkPresenter: '' as Ref<Class<LinkPresenter>>,
     FilterMode: '' as Ref<Class<FilterMode>>,
     FilteredView: '' as Ref<Class<FilteredView>>,
+    FilteredViewPreference: '' as Ref<Class<FilteredViewPreference>>,
     AttrPresenter: '' as Ref<Class<AttrPresenter>>,
     AttrApplier: '' as Ref<Class<AttrApplier>>
   },
