@@ -16,7 +16,7 @@
   import type { Doc, Ref, Status } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
   import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import type { TaskType } from '@hcengineering/task'
+  import { getProjectTypeStates, type TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { DropdownTextItem } from '@hcengineering/ui'
   import ui, { IconClose, IconMaximize, IconMinimize, Modal, ModernDropdownLabels } from '@hcengineering/ui'
@@ -135,9 +135,7 @@
     if (taskType?.statuses && taskType.statuses.length > 0) {
       currentStatuses = taskType.statuses.map((sId) => $statusStore.byId.get(sId)).filter((s): s is Status => s != null)
     } else {
-      const projectType = $typeStore.get(wfDoc.projectType)
-      currentStatuses =
-        projectType?.statuses?.map((s) => $statusStore.byId.get(s._id)).filter((s): s is Status => s != null) ?? []
+      currentStatuses = getProjectTypeStates(wfDoc.projectType, $typeStore, $statusStore.byId, true)
     }
   }
 

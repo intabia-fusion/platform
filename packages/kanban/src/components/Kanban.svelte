@@ -199,21 +199,44 @@
     }
   }
 
+  // Statuses of each `getCategoryGroup` group that holds more than one of them.
+  let categoryGroups: string[][] = []
+  $: categoryGroups = getCategoryGroups(categories, getCategoryGroup)
+
+  function getCategoryGroups (states: CategoryType[], groupOf: typeof getCategoryGroup): string[][] {
+    if (groupOf === undefined) return []
+    const byGroup = new Map<string, string[]>()
+    for (const state of states) {
+      const group = groupOf(state)
+      if (group !== undefined) byGroup.set(group, [...(byGroup.get(group) ?? []), stateKey(state)])
+    }
+    return Array.from(byGroup.values()).filter((keys) => keys.length > 1)
+  }
+
+  function groupsSignature (groups: string[][]): string {
+    return JSON.stringify(groups.map((keys) => JSON.stringify([...keys].sort())).sort())
+  }
+
+  // Merging by category is offered only when it would change this board.
+  $: canMergeByGroup =
+    categoryGroups.length > 0 &&
+    groupsSignature(mergeGroups.filter((group) => !isOtherBoardGroup(categories, group))) !==
+      groupsSignature(categoryGroups)
+
+  function isOtherBoardGroup (states: CategoryType[], group: string[]): boolean {
+    const keys = new Set(states.map((state) => stateKey(state)))
+    return !group.some((key) => keys.has(key))
+  }
+
   // Stored groups may belong to other boards: a viewlet is shared by all projects.
   function otherBoardsGroups (): string[][] {
-    const keys = new Set(categories.map((state) => stateKey(state)))
-    return mergeGroups.filter((group) => !group.some((key) => keys.has(key)))
+    return mergeGroups.filter((group) => isOtherBoardGroup(categories, group))
   }
 
   // Replaces the merged columns with one column per group of `getCategoryGroup`.
   function mergeByGroup (): void {
     if (getCategoryGroup === undefined) return
-    const byGroup = new Map<string, string[]>()
-    for (const state of categories) {
-      const group = getCategoryGroup(state)
-      if (group !== undefined) byGroup.set(group, [...(byGroup.get(group) ?? []), stateKey(state)])
-    }
-    const groups = Array.from(byGroup.values()).filter((keys) => keys.length > 1)
+    const groups = categoryGroups
     // The group is drawn at its first status, whose collapse would hide an open column of the group.
     for (const keys of groups) {
       if (keys.some((key) => membersOf.has(key) && !collapsedColumns.has(key))) collapsedColumns.delete(keys[0])
@@ -237,6 +260,7 @@
         ? registerColumnControls(controlKey, {
             resetMerge,
             mergeByGroup,
+            canMergeByGroup,
             merged: Array.from(membersOf.values()).some((members) => members.length > 1)
           })
         : undefined
@@ -579,6 +603,7 @@
 
   // Auto-scroll on edge during drag.
   let scrollerEl: HTMLElement | undefined
+  let headerRowHeight = 0
   let autoScrollRaf: number | undefined
   let lastDragX = 0
   let lastDragY = 0
@@ -1119,10 +1144,14 @@
   {#if swimLaneMode}
     <Scroller horizontal bind:divScroll={scrollerEl}>
       <div class="kanban-swimlane-wrap">
-        <div class="kanban-swimlane-root">
+        <div
+          class="kanban-swimlane-root"
+          style:--swimlane-row-height={headerRowHeight > 0 ? `${headerRowHeight}px` : undefined}
+        >
           <!-- sticky column headers row -->
           <div
             class="swimlane-header-row"
+            bind:offsetHeight={headerRowHeight}
             style:grid-template-columns={gridColumns}
             style:--swimlane-row-bg={defaultBackground($themeStore.dark)}
           >
@@ -1635,7 +1664,7 @@
     border-bottom: 1px solid var(--theme-divider-color);
     user-select: none;
     position: sticky;
-    top: 4rem;
+    top: var(--swimlane-row-height, 4rem);
     left: 0;
     z-index: 4;
     width: max-content;

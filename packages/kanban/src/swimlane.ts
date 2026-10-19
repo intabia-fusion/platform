@@ -39,6 +39,8 @@ export function registerSwimLaneControls (key: string, controls: SwimLaneControl
 export interface ColumnControls {
   resetMerge: () => void
   mergeByGroup: () => void
+  // Merging by category would change the board: some category holds several statuses not merged yet.
+  canMergeByGroup: boolean
   // Some columns are merged now, so there is something to reset.
   merged: boolean
 }

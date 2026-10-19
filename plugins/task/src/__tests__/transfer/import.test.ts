@@ -78,6 +78,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockImplementation(async (doc: any, update: any) => {
         updatedDocs.push({ doc, update })
         return doc
@@ -134,9 +140,9 @@ describe('Import transfer helpers (import.ts)', () => {
 
     // Verify projectType was updated
     expect(updatedDocs.length).toBeGreaterThan(0)
-    const ptUpdate = updatedDocs.find((u) => u.doc._id === projectType1)
+    const ptUpdate = updatedDocs.find((u) => u.doc._id === projectType1 && u.update.$push?.tasks !== undefined)
     expect(ptUpdate).toBeDefined()
-    expect(ptUpdate.update.tasks).toContain(result.importedTaskTypes[0]._id)
+    expect(ptUpdate.update.$push.tasks).toBe(result.importedTaskTypes[0]._id)
   })
 
   it('respects selective inclusion via selectedTypeIds', async () => {
@@ -165,6 +171,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -226,6 +238,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -293,6 +311,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -353,6 +377,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -441,6 +471,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -517,6 +553,12 @@ describe('Import transfer helpers (import.ts)', () => {
           createdMixins.push({ targetId, mixinClass, data })
           return true
         }),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -631,6 +673,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -692,6 +740,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockImplementation(async (doc: any, update: any) => {
         updatedDocs.push({ doc, update })
         return doc
@@ -769,6 +823,12 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockResolvedValue(true)
     } as any
 
@@ -828,9 +888,20 @@ describe('Import transfer helpers (import.ts)', () => {
         return doc._id
       }),
       createMixin: jest.fn().mockResolvedValue(true),
+      apply: () => ({
+        match: () => {},
+        createDoc: async (...args: any[]) => await mockClient.createDoc(...args),
+        update: async (...args: any[]) => await mockClient.update(...args),
+        commit: async () => ({ result: true })
+      }),
       update: jest.fn().mockImplementation(async (doc: any, update: any) => {
         if (doc._id === projectType1) {
-          updatedProjectType = { ...doc, ...update }
+          updatedProjectType = updatedProjectType ?? { ...doc }
+          const { $push, ...rest } = update
+          Object.assign(updatedProjectType, rest)
+          for (const [key, value] of Object.entries($push ?? {})) {
+            updatedProjectType[key] = [...updatedProjectType[key], value]
+          }
         }
         return doc
       })

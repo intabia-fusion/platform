@@ -46,16 +46,16 @@ import { translateCB, type IntlString } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
 import { createQuery, getAttributePresenterClass, getClient } from '@hcengineering/presentation'
 import task, {
-  getOrderedTaskTypes,
+  getProjectStatusRank,
+  getStatusOrderTaskTypes,
   makeRank,
-  sortTaskTypesByName,
   statusOrderComparator,
   type ProjectType
 } from '@hcengineering/task'
 import {
-  selectedTaskTypeStore,
   activeProjects as taskActiveProjects,
   taskTypeStore,
+  typeStore,
   typesOfJoinedProjectsStore
 } from '@hcengineering/task-resources'
 import {
@@ -203,31 +203,25 @@ export async function issueStatusSort (
     )
     type = _space?.$lookup?.type
   }
-  const joinedProjectsTypes = get(typesOfJoinedProjectsStore) ?? []
   const taskTypes = get(taskTypeStore)
-  const joinedTaskTypes = Array.from(taskTypes.values()).filter(
-    (taskType) =>
-      (joinedProjectsTypes.length === 0 || joinedProjectsTypes.includes(taskType.parent)) &&
-      taskType.ofClass === tracker.class.Issue
-  )
-  const taskTypeId = get(selectedTaskTypeStore) ?? (joinedTaskTypes.length === 1 ? joinedTaskTypes[0]?._id : undefined)
-  const taskType = taskTypeId !== undefined ? taskTypes.get(taskTypeId) : undefined
-
   const statuses = get(statusStore).byId
 
   const isKanban = viewletDescriptorId === tracker.viewlet.Kanban
   const order = isKanban ? listIssueKanbanStatusOrder : listIssueStatusOrder
 
-  // Task types in the order the settings screen shows them: the selected one first, then the project's own
-  // types, then the types of every joined project (views without a project). Inside a category a status is
-  // placed by its task type and then by its position in that task type.
-  const orderedTaskTypes = [
-    ...(taskType != null ? [taskType] : []),
-    ...getOrderedTaskTypes(type, taskTypes),
-    ...sortTaskTypesByName(joinedTaskTypes)
-  ].filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
+  // One order per project type (the one the icon uses): the project's type, or, in views without a project,
+  // the types of the joined projects (all types when none is known), by name.
+  const joinedProjectsTypes = get(typesOfJoinedProjectsStore) ?? []
+  const allTypes = Array.from(get(typeStore).values())
+  const orderedTypes =
+    type !== undefined
+      ? [type]
+      : joinedProjectsTypes.length === 0
+        ? allTypes
+        : allTypes.filter((it) => joinedProjectsTypes.includes(it._id))
+  const orderedTaskTypes = getStatusOrderTaskTypes(orderedTypes, taskTypes)
 
-  value.sort(statusOrderComparator(order, orderedTaskTypes, statuses))
+  value.sort(statusOrderComparator(order, orderedTaskTypes, statuses, getProjectStatusRank(orderedTypes, taskTypes)))
   return value
 }
 

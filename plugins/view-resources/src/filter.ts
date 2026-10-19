@@ -255,6 +255,8 @@ export function buildFilterKey (
 
   const isCollection = hierarchy.isDerived(attribute.type._class, core.class.Collection)
   const targetClass = isCollection ? (attribute.type as Collection<AttachedDoc>).of : attribute.type._class
+  // Attributes made outside Fusion can name a type class absent from the model
+  if (!hierarchy.hasClass(targetClass)) return undefined
   const clazz = hierarchy.getClass(targetClass)
   const filter = hierarchy.as(clazz, view.mixin.AttributeFilter)
 

@@ -130,7 +130,7 @@
         icon: tracker.icon.Export
       }
     ],
-    ...(columnControls !== undefined && viewOptions?.groupBy?.[0] === 'status'
+    ...(columnControls?.canMergeByGroup === true && viewOptions?.groupBy?.[0] === 'status'
       ? [{ id: MERGE_BY_CATEGORY_ITEM_ID, label: tracker.string.MergeColumnsByCategory, icon: IconMixin }]
       : []),
     ...(columnControls?.merged === true

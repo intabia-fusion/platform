@@ -41,7 +41,10 @@
   ): Status[] {
     if (type === undefined) return []
 
-    let res = type.statuses.map((p) => statusStore.get(p._id)).filter((p) => p !== undefined)
+    let res = type.statuses
+      .filter((p) => p.taskType !== undefined)
+      .map((p) => statusStore.get(p._id))
+      .filter((p) => p !== undefined)
     if (taskType !== undefined) {
       res = res.filter((p) => taskType.statuses.includes(p._id))
     }

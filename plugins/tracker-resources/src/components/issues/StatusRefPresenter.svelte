@@ -15,9 +15,15 @@
 <script lang="ts">
   import type { Ref, Status } from '@hcengineering/core'
   import type { Project } from '@hcengineering/tracker'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { getCategoryValues, statusStore } from '@hcengineering/view-resources'
   import StatusPresenter from './StatusPresenter.svelte'
-  import { selectedTaskTypeStore } from '@hcengineering/task-resources'
+  import {
+    activeProjects,
+    getSuffixes,
+    selectedTaskTypeStore,
+    taskTypeStore,
+    typeStore
+  } from '@hcengineering/task-resources'
 
   export let value: Ref<Status> | undefined
   export let space: Ref<Project>
@@ -26,7 +32,16 @@
   export let colorInherit: boolean = false
   export let accent: boolean = false
 
+  // Group values of the list or kanban this header belongs to
+  const categoryValues = getCategoryValues()
+
   $: statusValue = value ? $statusStore.byId.get(value) : undefined
+  $: nameSuffix =
+    kind === 'list-header' && categoryValues !== undefined && statusValue !== undefined
+      ? getSuffixes($categoryValues ?? [], $statusStore.byId, $typeStore, $activeProjects, $taskTypeStore).get(
+          statusValue._id
+        )
+      : undefined
 </script>
 
 <StatusPresenter
@@ -36,6 +51,7 @@
   {kind}
   {colorInherit}
   {accent}
+  {nameSuffix}
   on:accent-color
   taskType={$selectedTaskTypeStore}
 />

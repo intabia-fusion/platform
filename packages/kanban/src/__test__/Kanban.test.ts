@@ -17,7 +17,13 @@ import type { Ref } from '@hcengineering/core'
 import { makeRank } from '@hcengineering/rank'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { columnControlStore, registerColumnControls, registerSwimLaneControls, swimLaneControlStore } from '../swimlane'
+import {
+  columnControlStore,
+  registerColumnControls,
+  registerSwimLaneControls,
+  swimLaneControlStore,
+  type ColumnControls
+} from '../swimlane'
 import type { Item, SwimLane } from '../types'
 import { fakeClient, fakeQueries, type FakeCall } from './fakePresentation'
 import Harness from './KanbanHarness.svelte'
@@ -523,6 +529,49 @@ describe('Kanban merged columns', () => {
     expect(get(columnControlStore).get('viewlet')?.merged).toBe(false)
   })
 
+  describe('canMergeByGroup', () => {
+    const three = (): Record<string, Card[]> =>
+      board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
+    const controls = (): ColumnControls | undefined => get(columnControlStore).get('viewlet')
+
+    it('is true for a category with several statuses until they are merged', async () => {
+      const groupOf: Record<string, string> = { todo: 'open', doing: 'open', done: 'closed' }
+      await mount(legacyProps(three(), { controlKey: 'viewlet', getCategoryGroup: (state: string) => groupOf[state] }))
+      expect(controls()?.canMergeByGroup).toBe(true)
+
+      controls()?.mergeByGroup()
+      await settle()
+      expect(controls()?.canMergeByGroup).toBe(false)
+
+      controls()?.resetMerge()
+      await settle()
+      expect(controls()?.canMergeByGroup).toBe(true)
+    })
+
+    it('is false when every category holds one status', async () => {
+      await mount(legacyProps(three(), { controlKey: 'viewlet', getCategoryGroup: (state: string) => state }))
+      expect(controls()?.canMergeByGroup).toBe(false)
+    })
+
+    it('is false without a group function', async () => {
+      await mount(legacyProps(three(), { controlKey: 'viewlet' }))
+      expect(controls()?.canMergeByGroup).toBe(false)
+    })
+
+    it('ignores the merged columns of another board', async () => {
+      localStorage.setItem('kanban-column-merged-viewlet-status', '[["p1-done","p1-canceled"]]')
+      const groupOf: Record<string, string> = { todo: 'open', doing: 'open', done: 'closed' }
+      await mount(legacyProps(three(), { controlKey: 'viewlet', getCategoryGroup: (state: string) => groupOf[state] }))
+      expect(controls()?.canMergeByGroup).toBe(true)
+    })
+
+    it('stays false for single statuses when another board has merged columns', async () => {
+      localStorage.setItem('kanban-column-merged-viewlet-status', '[["p1-done","p1-canceled"]]')
+      await mount(legacyProps(three(), { controlKey: 'viewlet', getCategoryGroup: (state: string) => state }))
+      expect(controls()?.canMergeByGroup).toBe(false)
+    })
+  })
+
   it('leaves the merged columns of another board under the same key alone', async () => {
     localStorage.setItem('kanban-column-merged-viewlet-status', '[["p1-done","p1-canceled"]]')
     const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing'), done: cards('x', 1, 'done') })
@@ -772,8 +821,8 @@ describe('Kanban merged columns', () => {
     mounted = mounted.filter((c) => c !== component)
     expect(get(columnControlStore).has('viewlet')).toBe(false)
 
-    const older = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), merged: false }
-    const newer = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), merged: false }
+    const older = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), canMergeByGroup: false, merged: false }
+    const newer = { resetMerge: vi.fn(), mergeByGroup: vi.fn(), canMergeByGroup: false, merged: false }
     const dropOlder = registerColumnControls('k', older)
     const dropNewer = registerColumnControls('k', newer)
     dropOlder()

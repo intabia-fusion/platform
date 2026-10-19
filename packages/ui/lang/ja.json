@@ -124,6 +124,7 @@
     "Reconnecting": "再接続中...",
     "RateLimit": "レート制限",
     "RateLimitValue": "{limit}中{remaining}残り、{seconds}秒でリセット",
+    "RateLimitUsage": "制限内のリクエスト: {current} / {limit}",
     "Sent": "送信",
     "Received": "受信",
     "TrafficValue": "{count}件, {kb} KB",

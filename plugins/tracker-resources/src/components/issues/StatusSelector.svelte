@@ -81,9 +81,8 @@
     const type = types.get(typeId)
     if (type === undefined) return []
     let vals = type.statuses
-    if (taskType !== undefined) {
-      vals = vals.filter((it) => it.taskType === taskType)
-    }
+    // An entry without a task type is a status no issue can have
+    vals = vals.filter((it) => (taskType !== undefined ? it.taskType === taskType : it.taskType !== undefined))
     let res = vals
       .filter((it, idx, arr) => arr.findIndex((q) => q._id === it._id) === idx)
       .map((p) => statuses.get(p._id))

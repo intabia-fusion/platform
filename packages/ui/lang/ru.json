@@ -124,6 +124,7 @@
     "Reconnecting": "Переподключение...",
     "RateLimit": "Лимит запросов",
     "RateLimitValue": "осталось {remaining} из {limit}, сброс через {seconds}с",
+    "RateLimitUsage": "Запросов в лимите: {current} / {limit}",
     "Sent": "Отправлено",
     "Received": "Получено",
     "TrafficValue": "{count} сообщ., {kb} КБ",

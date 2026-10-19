@@ -31,13 +31,14 @@ import {
   SpaceTypeDescriptor,
   TypedSpace
 } from '@hcengineering/core'
-import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
+import type { Asset, IntlString, Plugin, Resource, StatusCode } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { AnyComponent, ComponentExtensionId } from '@hcengineering/ui'
 import { Action, IconProps, ViewletDescriptor } from '@hcengineering/view'
 
 export * from './transfer'
 export * from './utils'
+export * from './statusMerge'
 export type { Rank } from '@hcengineering/rank'
 
 /** @public */
@@ -76,7 +77,8 @@ export interface KanbanCard extends Class<Doc> {
 
 export interface ProjectStatus extends IconProps {
   _id: Ref<Status>
-  taskType: Ref<TaskType>
+  // Absent: the status belongs to the project type but no task type uses it
+  taskType?: Ref<TaskType>
   description?: string
 }
 
@@ -167,6 +169,9 @@ export interface ProjectType extends SpaceType {
   // All statuses per project has same color.
   statuses: ProjectStatus[]
 
+  // Order of statuses inside a category; absent: the merged task type order
+  statusOrder?: Ref<Status>[]
+
   // A mixin for project
   targetClass: Ref<Class<Project>>
 
@@ -244,7 +249,12 @@ const task = plugin(taskId, {
     TaskType: '' as IntlString,
     ProjectType: '' as IntlString,
     Identifier: '' as IntlString,
-    TaskTypesDiagram: '' as IntlString
+    TaskTypesDiagram: '' as IntlString,
+    Statuses: '' as IntlString
+  },
+  status: {
+    StatusExistsInOtherCategory: '' as StatusCode<{ name: string }>,
+    StatusesChangedConcurrently: '' as StatusCode
   },
   class: {
     ProjectTypeDescriptor: '' as Ref<Class<ProjectTypeDescriptor>>,

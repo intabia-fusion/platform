@@ -16,15 +16,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { SortingOrder } from '@hcengineering/core'
-  import {
-    IconAdd,
-    IconCopy,
-    Label,
-    getCurrentResolvedLocation,
-    navigate,
-    showPopup,
-    type DropdownIntlItem
-  } from '@hcengineering/ui'
+  import { IconAdd, IconCopy, Label, showPopup, type DropdownIntlItem } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
@@ -39,6 +31,7 @@
   import TaskTypeDiagramPopup from '../taskTypes/TaskTypeDiagramPopup.svelte'
   import ImportTaskTypePopup from '../taskTypes/ImportTaskTypePopup.svelte'
   import task from '../../plugin'
+  import { openTaskTypeSettings } from '../../utils'
 
   export let type: ProjectType | undefined
   export let descriptor: ProjectTypeDescriptor | undefined
@@ -181,20 +174,6 @@
     }
   }
 
-  function handleTaskTypeSelected (id: string | undefined): void {
-    const loc = getCurrentResolvedLocation()
-    if (id !== undefined) {
-      loc.path[5] = 'taskTypes'
-      loc.path[6] = id
-      loc.path.length = 7
-    } else {
-      loc.path.length = 5
-    }
-
-    clearSettingsStore()
-    navigate(loc)
-  }
-
   onDestroy(() => {
     clearSettingsStore()
   })
@@ -253,7 +232,7 @@
         <button
           class="hulyTableAttr-content__row"
           on:click|stopPropagation={() => {
-            handleTaskTypeSelected(taskType._id)
+            openTaskTypeSettings(taskType._id)
           }}
         >
           <div class="hulyTableAttr-content__row-icon-wrapper">

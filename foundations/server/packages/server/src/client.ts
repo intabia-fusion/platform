@@ -211,7 +211,9 @@ export class ClientSession implements Session {
       ctx.socialStringsToUsers,
       this.serviceName,
       this.permissionsGrantCached,
-      this.apiKeyCached
+      this.apiKeyCached,
+      undefined,
+      this.token.extra?.readonly === 'true'
     )
     ctx.ctx.contextData = contextData
   }

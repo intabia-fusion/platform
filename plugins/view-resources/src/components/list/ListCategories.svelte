@@ -49,9 +49,12 @@
     fixedWidthStore,
     getAdditionalHeader,
     getCategories,
+    getCategoryValues,
     getGroupByValues,
     getPresenter,
-    groupBy
+    groupBy,
+    provideCategoryValues,
+    provideStatusIconScope
   } from '../../utils'
   import { CategoryQuery, noCategory } from '../../viewOptions'
   import ListCategory from './ListCategory.svelte'
@@ -100,6 +103,13 @@
   // Set together with categories and the header: old categories under a new key query {_id: 0}.
   let groupByKey: string = viewOptions.groupBy[level] ?? noCategory
   let categories: CategoryType[] = []
+  // Nested levels add to the outer values, or rows inside would not see the outer groups
+  const outerCategoryValues = level === 0 ? undefined : getCategoryValues()
+  const categoryValues = provideCategoryValues()
+  $: categoryValues.set([...($outerCategoryValues ?? []), ...categories])
+  // The query is the same on every level, so only the top level provides it
+  const statusIconScope = level === 0 ? provideStatusIconScope() : undefined
+  $: statusIconScope?.set(resultQuery)
   $: void updateCategories(_class, space, docs, requestedGroupByKey, viewOptions, viewOptionsConfig)
 
   $: groupByDocs = groupBy(docs, groupByKey, categories)
