@@ -17,7 +17,17 @@
   import type { SocialIdType } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
-  import { Button, Dialog, EditBox, IconCopy, IconDetails, IconStop, Label, Loading, showPopup } from '@hcengineering/ui'
+  import {
+    Button,
+    Dialog,
+    EditBox,
+    IconCopy,
+    IconDetails,
+    IconStop,
+    Label,
+    Loading,
+    showPopup
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import adminRes from '../plugin'
