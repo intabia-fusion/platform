@@ -19,7 +19,6 @@
   import { Button, showPopup, closeTooltip } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { ViewOptionsModel } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { getDefaults, getViewOptions, viewOptionStore } from '../viewOptions'
