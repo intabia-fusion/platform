@@ -931,9 +931,7 @@ export async function adminUpdateAccountWorkspaceLimit (
   await requireAdminOp(ctx, db, token, 'set_workspace_limit', params.otpCode, params.accountUuid)
   if (
     params.maxWorkspaces != null &&
-    (!Number.isInteger(params.maxWorkspaces) ||
-      params.maxWorkspaces < 1 ||
-      params.maxWorkspaces > maxWorkspacesLimit)
+    (!Number.isInteger(params.maxWorkspaces) || params.maxWorkspaces < 1 || params.maxWorkspaces > maxWorkspacesLimit)
   ) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }

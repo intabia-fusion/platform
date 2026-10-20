@@ -46,9 +46,7 @@ describe('workspace creation limit', () => {
 
   const record = jest.spyOn(utils, 'createWorkspaceRecord')
   const endpoint = jest.spyOn(utils, 'getEndpoint').mockReturnValue('https://test.example')
-  const collaboratorEndpoint = jest
-    .spyOn(utils, 'getCollaboratorEndpoint')
-    .mockReturnValue('https://test.example')
+  const collaboratorEndpoint = jest.spyOn(utils, 'getCollaboratorEndpoint').mockReturnValue('https://test.example')
 
   function ws (uuid: WorkspaceUuid): Partial<Workspace> & { uuid: WorkspaceUuid } {
     return { uuid, name: `WS ${uuid}`, url: `ws-${uuid}`, createdBy: person }
@@ -63,7 +61,11 @@ describe('workspace creation limit', () => {
   }
 
   function makeDb (
-    opts: { workspaces?: Array<Partial<Workspace> & { uuid: WorkspaceUuid }>, statuses?: Partial<WorkspaceStatus>[], maxWorkspaces?: number | null } = {}
+    opts: {
+      workspaces?: Array<Partial<Workspace> & { uuid: WorkspaceUuid }>
+      statuses?: Partial<WorkspaceStatus>[]
+      maxWorkspaces?: number | null
+    } = {}
   ): AccountDB {
     return {
       socialId: {
@@ -119,7 +121,11 @@ describe('workspace creation limit', () => {
   })
 
   test('a live workspace takes the only slot', async () => {
-    const db = makeDb({ maxWorkspaces: 1, workspaces: [ws('11111111-1111-4111-8111-111111111111' as WorkspaceUuid)], statuses: [status('11111111-1111-4111-8111-111111111111' as WorkspaceUuid, 'active')] })
+    const db = makeDb({
+      maxWorkspaces: 1,
+      workspaces: [ws('11111111-1111-4111-8111-111111111111' as WorkspaceUuid)],
+      statuses: [status('11111111-1111-4111-8111-111111111111' as WorkspaceUuid, 'active')]
+    })
 
     await expect(createWorkspace(mockCtx, db, null, token, { workspaceName: 'second' })).rejects.toThrow(
       new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceLimitReached, { workspace: 'second' }))
@@ -186,18 +192,21 @@ describe('workspace creation limit', () => {
     expect(result).toEqual({ workspaceLimit: workspaceLimitPerUser })
   })
 
-  test.each([0, -1, 1.5, maxWorkspacesLimit + 1])('adminUpdateAccountWorkspaceLimit rejects %s', async (maxWorkspaces) => {
-    const db = makeDb()
+  test.each([0, -1, 1.5, maxWorkspacesLimit + 1])(
+    'adminUpdateAccountWorkspaceLimit rejects %s',
+    async (maxWorkspaces) => {
+      const db = makeDb()
 
-    await expect(
-      adminUpdateAccountWorkspaceLimit(mockCtx, db, null, adminToken, {
-        accountUuid: person,
-        maxWorkspaces,
-        otpCode: '000000'
-      })
-    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
-    expect(db.account.update).not.toHaveBeenCalled()
-  })
+      await expect(
+        adminUpdateAccountWorkspaceLimit(mockCtx, db, null, adminToken, {
+          accountUuid: person,
+          maxWorkspaces,
+          otpCode: '000000'
+        })
+      ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+      expect(db.account.update).not.toHaveBeenCalled()
+    }
+  )
 
   test('adminUpdateAccountWorkspaceLimit rejects an unknown account', async () => {
     const db = makeDb()
