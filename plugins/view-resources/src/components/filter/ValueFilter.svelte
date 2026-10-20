@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,8 +16,9 @@
 <script lang="ts">
   import type { Class, Doc, FindResult, Ref, Space } from '@hcengineering/core'
   import core, { getObjectValue, SortingOrder, type WithLookup } from '@hcengineering/core'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import { getClient } from '@hcengineering/presentation'
   import ui, {
+    Button,
     deviceOptionsStore,
     EditWithIcon,
     Icon,
@@ -27,10 +29,12 @@
     resizeObserver
   } from '@hcengineering/ui'
   import type { Filter, ViewOptions } from '@hcengineering/view'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '../../filter'
   import view from '../../plugin'
   import { getPresenter } from '../../utils'
+
+  const dispatch = createEventDispatcher()
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
@@ -38,50 +42,74 @@
   export let onChange: (e: Filter) => void
   export let viewOptions: ViewOptions | undefined = undefined
 
-  filter.modes = [view.filter.FilterValueIn, view.filter.FilterValueNin]
-  filter.mode = filter.mode === undefined ? filter.modes[0] : filter.mode
-
-  $: isSearchable = [core.class.TypeNumber, core.class.EnumOf].includes(filter.key.attribute.type._class)
-
   const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  const isStringType = hierarchy.isDerived(filter.key.attribute.type._class, core.class.TypeString)
+
+  filter.modes = isStringType
+    ? [view.filter.FilterValueIn, view.filter.FilterValueNin, view.filter.FilterContains]
+    : [view.filter.FilterValueIn, view.filter.FilterValueNin]
+  if (filter.mode === undefined || !filter.modes.includes(filter.mode)) {
+    filter.mode = isStringType ? view.filter.FilterContains : view.filter.FilterValueIn
+  }
+
+  $: isSearchable =
+    isStringType || [core.class.TypeNumber, core.class.EnumOf].includes(filter.key.attribute.type._class)
+
   const key = { key: filter.key.key }
   const promise = getPresenter(client, filter.key._class, key, key)
 
   let values = new Set<any>()
   let sortedValues: any[] = []
-  let selectedValues: Set<any> = new Set<any>(filter.value.map((p) => p[0]))
+  let selectedValues = new Set<any>(filter.mode === view.filter.FilterContains ? [] : filter.value.map((p) => p[0]))
   const realValues = new Map<any, Set<any>>()
+  // Real values of selected items, kept apart from realValues: a later search re-query clears those
+  const selectedReal = new Map<any, Set<any>>(
+    filter.mode === view.filter.FilterContains
+      ? []
+      : filter.value.map((p) => [p[0], new Set<any>(p[1] ?? [])] as [any, Set<any>])
+  )
 
   let objectsPromise: Promise<FindResult<Doc>> | undefined
-
   let filterUpdateTimeout: any | undefined
+  let searchTimeout: any | undefined
+  let searchSeq = 0
 
-  async function getValues (search: string): Promise<void> {
-    if (objectsPromise) {
+  let search: string =
+    filter.mode === view.filter.FilterContains && typeof filter.value[0] === 'string' ? filter.value[0] : ''
+
+  async function getValues (searchText: string): Promise<void> {
+    const seq = ++searchSeq
+    if (objectsPromise != null) {
       await objectsPromise
     }
+    if (seq !== searchSeq) return
+
     values.clear()
     realValues.clear()
     let prefix = ''
-    const hierarchy = client.getHierarchy()
     const attr = hierarchy.getAttribute(filter.key._class, filter.key.key)
     if (hierarchy.isMixin(attr.attributeOf)) {
       prefix = attr.attributeOf + '.'
     }
-    const resultQuery =
-      isSearchable && search !== ''
-        ? {
-            [prefix + filter.key.key]: { $like: '%' + search + '%' }
-          }
-        : {}
+    const valueKey = prefix + filter.key.key
 
-    async function doQuery (limit: number | undefined, sortedValues: any[] | undefined): Promise<boolean> {
+    async function doQuery (limit: number | undefined, exclude: any[] | undefined): Promise<boolean> {
+      const valueQuery: Record<string, any> = {}
+
+      if (isSearchable && searchText !== '') {
+        valueQuery.$like = '%' + searchText + '%'
+      }
+
+      if (exclude !== undefined) {
+        valueQuery.$nin = exclude
+      }
       const p = client.findAll(
         _class,
         {
-          ...resultQuery,
-          ...(space !== undefined ? { space } : {}),
-          ...(sortedValues !== undefined ? { [prefix + filter.key.key]: { $nin: sortedValues } } : {})
+          ...(Object.keys(valueQuery).length > 0 ? { [valueKey]: valueQuery } : {}),
+          ...(space !== undefined ? { space } : {})
         },
         {
           sort: { modifiedOn: SortingOrder.Descending },
@@ -94,8 +122,7 @@
         objectsPromise = p
       }
       const res: WithLookup<Doc>[] = await p
-      // We need to filter archived in case it is required
-
+      if (seq !== searchSeq) return false
       for (const object of res) {
         let asDoc = object
         if (hierarchy.isMixin(filter.key._class)) {
@@ -104,21 +131,33 @@
         const realValue = getObjectValue(filter.key.key, asDoc)
         const value = getValue(realValue)
         values.add(value)
-        realValues.set(value, (realValues.get(value) ?? new Set()).add(realValue))
+        const real = realValues.get(value) ?? new Set<any>()
+        real.add(realValue)
+        realValues.set(value, real)
       }
-      for (const object of filter.value.map((p) => p[0])) {
-        values.add(object)
-      }
-      return res.length >= (limit ?? 0)
+      return limit !== undefined && res.length >= limit
     }
+
     const hasMore = await doQuery(1000, undefined)
+    if (seq !== searchSeq) return
+
+    for (const p of filter.value) {
+      if (!Array.isArray(p)) continue
+      values.add(p[0])
+      const real = realValues.get(p[0]) ?? new Set<any>()
+      for (const saved of p[1] ?? []) {
+        real.add(saved)
+      }
+      realValues.set(p[0], real)
+    }
     values = values
     sortedValues = sortFilterValues([...values.keys()], (v) => isSelected(v, selectedValues))
     objectsPromise = undefined
 
-    // Check if we have all possible values, in case of enumeration
-    if (hasMore) {
-      await doQuery(undefined, Array.from(values))
+    if (hasMore && !isStringType) {
+      const exclude = [...realValues.values()].flatMap((it) => [...it]).filter((it) => it != null)
+      await doQuery(undefined, exclude)
+      if (seq !== searchSeq) return
       sortedValues = sortFilterValues([...values.keys()], (v) => isSelected(v, selectedValues))
       objectsPromise = undefined
     }
@@ -127,44 +166,81 @@
   function getValue (obj: any): any {
     if (typeof obj === 'string') {
       const trim = obj.trim()
-      return trim.length > 0 ? trim.toUpperCase() : undefined
-    } else {
-      return obj ?? undefined
+      if (trim.length === 0) return null
+
+      return isStringType ? trim : trim.toUpperCase()
     }
+    return obj ?? null
   }
 
-  function isSelected (value: any, values: Set<any>): boolean {
-    return values.has(value)
+  function isSelected (value: any, vals: Set<any>): boolean {
+    return vals.has(value)
   }
 
   function handleFilterToggle (value: any): void {
+    if (filter.mode === view.filter.FilterContains) {
+      filter.mode = view.filter.FilterValueIn
+      filter.value = []
+      selectedValues = new Set()
+      selectedReal.clear()
+      search = ''
+    }
     if (isSelected(value, selectedValues)) {
       selectedValues.delete(value)
+      selectedReal.delete(value)
     } else {
       selectedValues.add(value)
+      selectedReal.set(value, new Set(realValues.get(value)))
     }
     selectedValues = selectedValues
 
     updateFilter(selectedValues)
   }
 
-  function updateFilter (newValues: Set<any>) {
+  function updateFilter (newValues: Set<any>): void {
     clearTimeout(filterUpdateTimeout)
 
     filterUpdateTimeout = setTimeout(() => {
       filter.value = [...newValues.values()].map((v) => {
-        return [v, [...(realValues.get(v) ?? [])]]
+        // A re-query that finished in time may have found more raw variants than the click-time snapshot
+        const realVals = new Set([...(selectedReal.get(v) ?? []), ...(realValues.get(v) ?? [])])
+        return v === null ? [null, [null, ...realVals]] : [v, [...realVals]]
       })
 
       onChange(filter)
     }, FILTER_DEBOUNCE_MS)
   }
 
-  let search: string = ''
+  function onKeyDown (event: KeyboardEvent): void {
+    if (event.key === 'Enter' && isStringType && filter.mode === view.filter.FilterContains && search !== '') {
+      event.preventDefault()
+      event.stopPropagation()
+      save()
+    }
+  }
 
-  const dispatch = createEventDispatcher()
+  function save (): void {
+    if (filter.mode !== view.filter.FilterContains || search == null || search === '') return
+    filter.value = [search]
+    onChange(filter)
+    dispatch('close')
+  }
 
-  $: void getValues(search)
+  $: scheduleSearch(search)
+
+  function scheduleSearch (searchText: string): void {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(
+      () => {
+        void getValues(searchText)
+      },
+      searchText === '' ? 0 : FILTER_DEBOUNCE_MS
+    )
+  }
+
+  onDestroy(() => {
+    clearTimeout(searchTimeout)
+  })
 </script>
 
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
@@ -176,11 +252,15 @@
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
         bind:value={search}
-        placeholder={presentation.string.Search}
+        placeholder={filter.key.label}
+        on:keydown={onKeyDown}
       />
     </div>
   {:else}
     <div class="menu-space" />
+  {/if}
+  {#if isStringType && filter.mode === view.filter.FilterContains && search !== ''}
+    <Button shape="filter" label={view.string.Apply} on:click={save} />
   {/if}
   <div class="scroll">
     <div class="box">
@@ -196,7 +276,7 @@
                 handleFilterToggle(value)
               }}
             >
-              {#if value !== undefined}
+              {#if value != null}
                 <div class="clear-mins flex-grow">
                   <svelte:component
                     this={attribute.presenter}

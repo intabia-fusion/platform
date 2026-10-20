@@ -68,11 +68,13 @@ export async function objectNinResult (filter: Filter): Promise<ObjQueryType<any
 }
 
 export async function valueInResult (filter: Filter): Promise<ObjQueryType<any>> {
-  return { $in: filter.value.map((p) => p[1]).flat() }
+  const values = filter.value.map((p) => p[1]).flat()
+  return values.length > 0 ? { $in: values } : {}
 }
 
 export async function valueNinResult (filter: Filter): Promise<ObjQueryType<any>> {
-  return { $nin: filter.value.map((p) => p[1]).flat() }
+  const values = filter.value.map((p) => p[1]).flat()
+  return values.length > 0 ? { $nin: values } : {}
 }
 
 export async function beforeResult (filter: Filter): Promise<ObjQueryType<any>> {
@@ -297,7 +299,7 @@ function getFilterModes (component: AnyComponent): FilterModes | undefined {
   }
   if (component === view.component.StringFilter) {
     return {
-      modes: [view.filter.FilterContains],
+      modes: [view.filter.FilterValueIn, view.filter.FilterValueNin, view.filter.FilterContains],
       mode: view.filter.FilterContains
     }
   }

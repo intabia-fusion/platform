@@ -96,9 +96,6 @@
         typeStatuses.filter((p): p is Status => p !== undefined),
         statusStore
       )
-      if (search !== '') {
-        values = values.filter((p) => p?.name.includes(search))
-      }
     } else {
       let statuses: Status[] = []
       const projectTypesNeeded = joinedSpacesTypes
@@ -147,6 +144,13 @@
           }
         )
       }
+    }
+
+    if (search !== '') {
+      const query = search.toLowerCase()
+      values = values.filter(
+        (value) => value == null || value.name.toLowerCase().includes(query) || filter.value.includes(value._id)
+      )
     }
     values = sortFilterValues(values, (v) => isSelected(v, filter.value))
     objectsPromise = undefined

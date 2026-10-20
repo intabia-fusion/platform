@@ -5,7 +5,7 @@ import { retryIntervals } from '../retry'
 
 export class SettingsPage extends CommonPage {
   profileButton = (): Locator => this.page.locator('#profile-button')
-  settingsButton = (): Locator => this.page.locator('button:has-text("Settings")')
+  settingsButton = (): Locator => this.page.locator('button:has-text("Settings")').first()
   spaceTypesHeader = (): Locator => this.page.locator('button.hulyNavGroup-header', { hasText: 'Space types' })
   newSpaceTypeButton = (): Locator => this.page.locator('#new-space-type')
   popupSelectSpaceTypeButton = (): Locator =>

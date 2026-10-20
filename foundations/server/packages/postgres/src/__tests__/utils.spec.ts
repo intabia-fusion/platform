@@ -50,6 +50,12 @@ describe('utils - inferType', () => {
     expect(inferType([null, 'text'])).toBe('::text[]')
   })
 
+  it('should use the first non-null element when the array starts with nullish values', () => {
+    expect(inferType([null, undefined, 'text'])).toBe('::text[]')
+    expect(inferType([undefined, 1])).toBe('::numeric[]')
+    expect(inferType([null, null])).toBe('::jsonb')
+  })
+
   it('should handle arrays with all null elements', () => {
     expect(inferType([null, null])).toBe('::jsonb')
   })

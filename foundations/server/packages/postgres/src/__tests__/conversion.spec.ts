@@ -227,6 +227,42 @@ describe('number comparison on jsonb fields', () => {
     expect(translate("task.data#>>'{number}'", { $in: [1, 2] }).values).toEqual([['1', '2']])
     expect(translate('task."modifiedOn"', { $gt: 9 }).sql).toEqual('task."modifiedOn" > $1::numeric')
   })
+
+  // Not selected sends null (and possibly undefined) as the only value: an empty ANY() array made
+  // Postgres fail with "op ANY/ALL (array) requires array on right side".
+  it('matches null and missing values for $in with nullish values only', () => {
+    expect(translate("task.data#>>'{title}'", { $in: [null] })).toEqual({
+      sql: "task.data#>>'{title}' IS NULL",
+      values: []
+    })
+    expect(translate("task.data#>>'{title}'", { $in: [null, undefined] })).toEqual({
+      sql: "task.data#>>'{title}' IS NULL",
+      values: []
+    })
+    expect(translate("task.data#>>'{title}'", { $nin: [null] })).toEqual({
+      sql: "task.data#>>'{title}' IS NOT NULL",
+      values: []
+    })
+  })
+
+  it('keeps non-null values next to nullish ones in $in/$nin', () => {
+    expect(translate("task.data#>>'{title}'", { $in: [null, 'a'] })).toEqual({
+      sql: "(task.data#>>'{title}' = ANY($1::text[]) OR task.data#>>'{title}' IS NULL)",
+      values: [['a']]
+    })
+    expect(translate("task.data#>>'{title}'", { $in: [null, undefined, 'a'] })).toEqual({
+      sql: "(task.data#>>'{title}' = ANY($1::text[]) OR task.data#>>'{title}' IS NULL)",
+      values: [['a']]
+    })
+    expect(translate("task.data#>>'{title}'", { $nin: [null, 'a'] })).toEqual({
+      sql: "(task.data#>>'{title}' != ALL($1::text[]) AND task.data#>>'{title}' IS NOT NULL)",
+      values: [['a']]
+    })
+    expect(translate("task.data#>>'{title}'", { $nin: [null, undefined, 'a'] })).toEqual({
+      sql: "(task.data#>>'{title}' != ALL($1::text[]) AND task.data#>>'{title}' IS NOT NULL)",
+      values: [['a']]
+    })
+  })
 })
 
 describe('mistyped values for real columns', () => {

@@ -328,13 +328,13 @@ export function inferType (val: any): string {
     return '::boolean'
   }
   if (Array.isArray(val)) {
-    const type = inferType(val[0] ?? val[1])
-    if (type === '::jsonb') {
+    const sample = val.find((it) => it != null)
+    if (sample === undefined) return '::jsonb'
+    const type = inferType(sample)
+    if (type === '::jsonb' || type === '') {
       return '::jsonb'
     }
-    if (type !== '') {
-      return type + '[]'
-    }
+    return type + '[]'
   }
   if (typeof val === 'object') {
     if (val instanceof Date) {

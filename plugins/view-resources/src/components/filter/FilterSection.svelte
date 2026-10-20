@@ -20,7 +20,7 @@
   import type { AnyComponent } from '@hcengineering/ui'
   import { Component, eventToHTMLElement, Icon, IconClose, Label, showPopup, themeStore } from '@hcengineering/ui'
   import type { Filter, FilterMode } from '@hcengineering/view'
-  import { createEventDispatcher, onDestroy } from 'svelte'
+  import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import view from '../../plugin'
   import ModeSelector from './ModeSelector.svelte'
 
@@ -29,6 +29,9 @@
 
   let currentFilter = filter.nested ? filter.nested : filter
   $: currentFilter = filter.nested ? filter.nested : filter
+
+  let sectionEl: HTMLElement | undefined
+  let valueButtonEl: HTMLButtonElement | undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -92,20 +95,44 @@
 
   function clickHandler (e: MouseEvent, nested: boolean) {
     const curr = nested && filter.nested ? filter.nested : filter
-    showPopup(ModeSelector, { filter: curr }, eventToHTMLElement(e), (res) => {
+    const target = eventToHTMLElement(e)
+    showPopup(ModeSelector, { filter: curr }, target, (res) => {
       if (res) {
+        const typeFilterChanged = (res === view.filter.FilterContains) !== (curr.mode === view.filter.FilterContains)
+        if (typeFilterChanged) {
+          curr.value = []
+        }
         if (nested && filter.nested) {
           filter.nested.mode = res
         } else {
           filter.mode = res
         }
         dispatch('change')
+        if (typeFilterChanged) {
+          setTimeout(async () => {
+            await tick()
+            if (valueButtonEl != null) {
+              valueButtonEl.click()
+            } else {
+              showPopup(
+                curr.key.component,
+                {
+                  _class: curr.key._class,
+                  filter: curr,
+                  space,
+                  onChange
+                },
+                sectionEl ?? target
+              )
+            }
+          }, 0)
+        }
       }
     })
   }
 </script>
 
-<div class="filter-section">
+<div class="filter-section" bind:this={sectionEl}>
   <button class="filter-button left-round">
     <span><Label label={filter.key.label} /></span>
   </button>
@@ -145,6 +172,7 @@
     {#if !(mode?.disableValueSelector ?? false)}
       <button
         class="filter-button hoverable"
+        bind:this={valueButtonEl}
         on:click={(e) => {
           showPopup(
             currentFilter.key.component,
