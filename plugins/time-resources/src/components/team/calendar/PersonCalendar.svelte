@@ -20,6 +20,7 @@
   import type { Ref } from '@hcengineering/core'
   import {
     Label,
+    RowResizeHandle,
     Scroller,
     areDatesEqual,
     daysInMonth,
@@ -29,7 +30,6 @@
     isWeekend,
     resizeObserver
   } from '@hcengineering/ui'
-  import { onDestroy } from 'svelte'
 
   export let headerHeightRem = 4.375
   const minColWidthRem = 2.5
@@ -69,57 +69,15 @@
 
   let rowHeights: Record<Ref<Person>, number> = {}
   let appliedRowHeight = rowHeightRem
-  let stopRowResize: (() => void) | undefined
-  let resizingRow: number | null = null
 
   $: if (appliedRowHeight !== rowHeightRem) {
     appliedRowHeight = rowHeightRem
     rowHeights = {}
   }
 
-  const startRowResize = (event: PointerEvent, index: number): void => {
-    if (event.button !== 0) return
-    event.preventDefault()
-    stopRowResize?.()
-
-    const key = persons[index]
-    const fontSize = $deviceInfo.fontSize
-    const min = rowHeightRem / 2
-    const max = rowHeightRem * 9
-    const startY = event.clientY
-    const startHeight = rowHeights[key] ?? rowHeightRem
-
-    const body = document.body
-    body.style.userSelect = 'none'
-    body.style.webkitUserSelect = 'none'
-    body.style.pointerEvents = 'none'
-    body.style.cursor = 'row-resize'
-    resizingRow = index
-
-    const move = (ev: PointerEvent): void => {
-      const height = Math.min(Math.max(startHeight + (ev.clientY - startY) / fontSize, min), max)
-      rowHeights = { ...rowHeights, [key]: height }
-    }
-    const up = (): void => {
-      document.removeEventListener('pointermove', move)
-      document.removeEventListener('pointerup', up)
-      document.removeEventListener('pointercancel', up)
-      body.style.userSelect = ''
-      body.style.webkitUserSelect = ''
-      body.style.pointerEvents = ''
-      body.style.cursor = ''
-      resizingRow = null
-      stopRowResize = undefined
-    }
-    document.addEventListener('pointermove', move)
-    document.addEventListener('pointerup', up)
-    document.addEventListener('pointercancel', up)
-    stopRowResize = up
+  function applyRowHeight (person: Ref<Person>, height: number): void {
+    rowHeights = { ...rowHeights, [person]: height }
   }
-
-  onDestroy(() => {
-    stopRowResize?.()
-  })
 
   $: sideDays = Math.round((maxDays - 1) / 2)
   $: values = [
@@ -160,20 +118,18 @@
 
       <!-- Resource Content -->
       <div class="timeline-resource-content">
-        {#each persons as person, rowIndex}
+        {#each persons as person}
           <div class="timeline-row" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-resource-cell flex-row-center">
               <div><PersonPresenter value={person} /></div>
             </div>
           </div>
-          <div
-            class="timeline-row-resize"
-            class:resizing={resizingRow === rowIndex}
-            role="separator"
-            aria-orientation="horizontal"
-            on:pointerdown|capture={(event) => {
-              event.stopPropagation()
-              startRowResize(event, rowIndex)
+          <RowResizeHandle
+            height={rowHeights[person] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(person, event.detail)
             }}
           />
         {/each}
@@ -206,7 +162,7 @@
 
       <!-- Grid Content -->
       <div class="timeline-grid-content timeline-grid-bg">
-        {#each persons as person, rowIndex}
+        {#each persons as person}
           <div class="timeline-row flex" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-events" />
 
@@ -235,14 +191,12 @@
               </div>
             {/each}
           </div>
-          <div
-            class="timeline-row-resize"
-            class:resizing={resizingRow === rowIndex}
-            role="separator"
-            aria-orientation="horizontal"
-            on:pointerdown|capture={(event) => {
-              event.stopPropagation()
-              startRowResize(event, rowIndex)
+          <RowResizeHandle
+            height={rowHeights[person] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(person, event.detail)
             }}
           />
         {/each}
@@ -346,39 +300,6 @@
   .timeline-row {
     position: relative;
     border-bottom: $timeline-border;
-  }
-
-  .timeline-row-resize {
-    position: relative;
-    height: 0;
-    cursor: row-resize;
-    touch-action: none;
-
-    &::before,
-    &::after {
-      position: absolute;
-      left: 0;
-      width: 100%;
-      content: '';
-    }
-
-    &::before {
-      top: -4px;
-      height: 8px;
-    }
-
-    &::after {
-      top: -1px;
-      height: 2px;
-      background-color: var(--primary-button-default);
-      transform: scaleY(0);
-      transition: transform 0.1s ease-in-out;
-    }
-
-    &.resizing::after,
-    &:hover::after {
-      transform: scaleY(1);
-    }
   }
 
   .timeline-events {
