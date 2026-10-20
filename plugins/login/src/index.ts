@@ -1,5 +1,6 @@
 //
 // Copyright © 2020-2024 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -45,6 +46,48 @@ export const pages = [
 ] as const
 
 export type Pages = (typeof pages)[number]
+
+export interface PasswordValidations {
+  MinLength: number
+  MinSpecialChars: number
+  MinDigits: number
+  MinUpperChars: number
+  MinLowerChars: number
+}
+
+export type PasswordStrictness = 'very_strict' | 'strict' | 'normal' | 'none'
+
+export const passwordRequirements: Record<PasswordStrictness, PasswordValidations> = {
+  very_strict: {
+    MinDigits: 4,
+    MinLength: 32,
+    MinLowerChars: 4,
+    MinSpecialChars: 4,
+    MinUpperChars: 4
+  },
+  strict: {
+    MinDigits: 2,
+    MinLength: 16,
+    MinLowerChars: 2,
+    MinSpecialChars: 2,
+    MinUpperChars: 2
+  },
+  normal: {
+    MinDigits: 1,
+    MinLength: 8,
+    MinLowerChars: 1,
+    MinSpecialChars: 1,
+    MinUpperChars: 1
+  },
+  none: {
+    MinDigits: 0,
+    MinLength: 0,
+    MinLowerChars: 0,
+    MinSpecialChars: 0,
+    MinUpperChars: 0
+  }
+}
+
 export default plugin(loginId, {
   metadata: {
     AccountsUrl: '' as Asset,
@@ -56,13 +99,7 @@ export default plugin(loginId, {
     HideLocalLogin: '' as Metadata<boolean>,
     LoginTheme: '' as Metadata<string>,
     TransactorOverride: '' as Metadata<string>,
-    PasswordValidations: '' as Metadata<{
-      MinLength: number
-      MinSpecialChars: number
-      MinDigits: number
-      MinUpperChars: number
-      MinLowerChars: number
-    }>,
+    PasswordValidations: '' as Metadata<PasswordValidations>,
     DesktopUpdatesUrl: '' as Metadata<string>,
     DesktopUpdatesChannel: '' as Metadata<string[][]>,
     Copyright: '' as Metadata<string>,
