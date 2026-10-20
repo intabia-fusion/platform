@@ -138,10 +138,8 @@
     }
   }
 
-  const getStyles = (
-    element: Element | null,
-    dropStyles: string[] = ['min-width', 'max-width', 'width']
-  ): Map<string, string> => {
+  const getStyles = (element: Element | null): Map<string, string> => {
+    const axis = direction === 'horizontal' ? 'width' : 'height'
     const result = new Map<string, string>()
     const style = element != null ? element.getAttribute('style') : null
     if (style !== null) {
@@ -150,7 +148,10 @@
         .split(';')
         .filter((f) => f !== '')
         .forEach((st) => result.set(st.split(':')[0], st.split(':')[1]))
-      dropStyles.forEach((key) => result.delete(key))
+      // Ось зависит от direction: старый размер этой оси в самом элементе выиграл бы у нового.
+      result.delete(`min-${axis}`)
+      result.delete(`max-${axis}`)
+      result.delete(axis)
     }
     return result
   }

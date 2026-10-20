@@ -19,6 +19,7 @@
   import type { Ref } from '@hcengineering/core'
   import {
     Label,
+    RowResizeHandle,
     Scroller,
     areDatesEqual,
     daysInMonth,
@@ -55,8 +56,8 @@
     return `width: ${columnWidthRem}rem;`
   }
 
-  export function getRowStyle (): string {
-    return `height: ${rowHeightRem}rem;`
+  export function getRowStyle (height: number = rowHeightRem): string {
+    return `height: ${height}rem;`
   }
 
   export function getHeaderStyle (): string {
@@ -68,6 +69,20 @@
 
   let containerWidth: number = window.outerWidth
   $: containerWidthRem = containerWidth / $deviceInfo.fontSize
+
+  let rowHeights: Record<string, number> = {}
+  let appliedRowHeight = rowHeightRem
+
+  const getRowKey = (person: Ref<Person> | null, index: number): string => person ?? `#${index}`
+
+  $: if (appliedRowHeight !== rowHeightRem) {
+    appliedRowHeight = rowHeightRem
+    rowHeights = {}
+  }
+
+  function applyRowHeight (key: string, height: number): void {
+    rowHeights = { ...rowHeights, [key]: height }
+  }
 
   // For 'end' anchor: days go backward from currentDate. For 'start' anchor: days go forward from startDate.
   $: values =
@@ -118,8 +133,8 @@
 
       <!-- Resource Content -->
       <div class="timeline-resource-content">
-        {#each persons as person}
-          <div class="timeline-row" style={getRowStyle()}>
+        {#each persons as person, rowIndex}
+          <div class="timeline-row" style={getRowStyle(rowHeights[getRowKey(person, rowIndex)] ?? rowHeightRem)}>
             <div class="timeline-resource-cell flex-row-center" class:compact={personInfoInline}>
               <div class="flex {personInfoInline ? 'flex-row-center gap-2' : 'flex-col'}">
                 {#if person != null}
@@ -131,6 +146,14 @@
               </div>
             </div>
           </div>
+          <RowResizeHandle
+            height={rowHeights[getRowKey(person, rowIndex)] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(getRowKey(person, rowIndex), event.detail)
+            }}
+          />
         {/each}
       </div>
 
@@ -161,15 +184,14 @@
 
       <!-- Grid Content -->
       <div class="timeline-grid-content timeline-grid-bg">
-        {#each persons as person}
-          <div class="timeline-row flex" style={getRowStyle()}>
+        {#each persons as person, rowIndex}
+          <div class="timeline-row flex" style={getRowStyle(rowHeights[getRowKey(person, rowIndex)] ?? rowHeightRem)}>
             <div class="timeline-events" />
 
-            {#each values as value, i}
+            {#each values as value}
               {@const day = resolveDay(value)}
               {@const today = areDatesEqual(todayDate, day)}
               {@const weekend = isWeekend(day)}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
               <div
                 class="timeline-cell"
                 class:timeline-cell--today={today}
@@ -177,11 +199,27 @@
                 style={getCellStyle()}
               >
                 <div class:timeline-cell-today-marker={today && highlightToday}>
-                  <slot name="day" {day} {today} {weekend} {person} height={rowHeightRem} width={columnWidthRem} />
+                  <slot
+                    name="day"
+                    {day}
+                    {today}
+                    {weekend}
+                    {person}
+                    height={rowHeights[getRowKey(person, rowIndex)] ?? rowHeightRem}
+                    width={columnWidthRem}
+                  />
                 </div>
               </div>
             {/each}
           </div>
+          <RowResizeHandle
+            height={rowHeights[getRowKey(person, rowIndex)] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(getRowKey(person, rowIndex), event.detail)
+            }}
+          />
         {/each}
       </div>
     {/key}

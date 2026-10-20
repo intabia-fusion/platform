@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,6 +20,7 @@
   import type { Ref } from '@hcengineering/core'
   import {
     Label,
+    RowResizeHandle,
     Scroller,
     areDatesEqual,
     daysInMonth,
@@ -51,8 +53,8 @@
     return `width: ${columnWidthRem}rem;`
   }
 
-  export function getRowStyle (): string {
-    return `height: ${rowHeightRem}rem;`
+  export function getRowStyle (height: number = rowHeightRem): string {
+    return `height: ${height}rem;`
   }
 
   export function getHeaderStyle (): string {
@@ -64,6 +66,18 @@
 
   let containerWidth: number = window.outerWidth
   $: containerWidthRem = containerWidth / $deviceInfo.fontSize
+
+  let rowHeights: Record<Ref<Person>, number> = {}
+  let appliedRowHeight = rowHeightRem
+
+  $: if (appliedRowHeight !== rowHeightRem) {
+    appliedRowHeight = rowHeightRem
+    rowHeights = {}
+  }
+
+  function applyRowHeight (person: Ref<Person>, height: number): void {
+    rowHeights = { ...rowHeights, [person]: height }
+  }
 
   $: sideDays = Math.round((maxDays - 1) / 2)
   $: values = [
@@ -105,11 +119,19 @@
       <!-- Resource Content -->
       <div class="timeline-resource-content">
         {#each persons as person}
-          <div class="timeline-row" style={getRowStyle()}>
+          <div class="timeline-row" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-resource-cell flex-row-center">
               <div><PersonPresenter value={person} /></div>
             </div>
           </div>
+          <RowResizeHandle
+            height={rowHeights[person] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(person, event.detail)
+            }}
+          />
         {/each}
       </div>
 
@@ -141,7 +163,7 @@
       <!-- Grid Content -->
       <div class="timeline-grid-content timeline-grid-bg">
         {#each persons as person}
-          <div class="timeline-row flex" style={getRowStyle()}>
+          <div class="timeline-row flex" style={getRowStyle(rowHeights[person] ?? rowHeightRem)}>
             <div class="timeline-events" />
 
             {#each values as value, i}
@@ -156,11 +178,27 @@
                 style={getCellStyle()}
               >
                 <div class:timeline-cell-today-marker={today && highlightToday}>
-                  <slot name="day" {day} {today} {weekend} {person} height={rowHeightRem} width={columnWidthRem} />
+                  <slot
+                    name="day"
+                    {day}
+                    {today}
+                    {weekend}
+                    {person}
+                    height={rowHeights[person] ?? rowHeightRem}
+                    width={columnWidthRem}
+                  />
                 </div>
               </div>
             {/each}
           </div>
+          <RowResizeHandle
+            height={rowHeights[person] ?? rowHeightRem}
+            min={rowHeightRem / 2}
+            max={rowHeightRem * 9}
+            on:resize={(event) => {
+              applyRowHeight(person, event.detail)
+            }}
+          />
         {/each}
       </div>
     {/key}
