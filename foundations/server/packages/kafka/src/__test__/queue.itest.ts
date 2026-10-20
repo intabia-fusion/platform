@@ -1,5 +1,6 @@
 import { generateId, MeasureMetricsContext, type WorkspaceUuid } from '@hcengineering/core'
 import { kafkaBrokers } from '@hcengineering/test-containers'
+import { Kafka } from 'kafkajs'
 import { createPlatformQueue, parseQueueConfig } from '..'
 
 jest.setTimeout(60000) // Reduced for faster tests
@@ -539,6 +540,46 @@ describe('queue', () => {
       await queue.shutdown()
       await queue.deleteTopics([topic])
       await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  })
+
+  it.each([true, false])('deleteGroupOnClose=%s controls whether the group outlives the consumer', async (del) => {
+    const genId = generateId()
+    const topic = 'group-del-' + genId
+    const groupId = 'grp-' + genId
+    const queue = createPlatformQueue(parseQueueConfig(`${brokers};-queue_testing-` + genId, 'test-' + genId, ''))
+    const admin = new Kafka({ brokers: [brokers] }).admin()
+    await admin.connect()
+    const groups = async (): Promise<string[]> =>
+      (await admin.listGroups()).groups.map((g) => g.groupId).filter((g) => g.endsWith('-' + groupId))
+    try {
+      await queue.createTopic(topic, 1)
+      let got = 0
+      const handle = queue.createConsumer<string>(
+        testCtx,
+        topic,
+        groupId,
+        async () => {
+          got++
+        },
+        { fromBegining: true, deleteGroupOnClose: del }
+      )
+      await queue.getProducer<string>(testCtx, topic).send(testCtx, genId as any as WorkspaceUuid, ['m'])
+      await new Promise<void>((resolve) => {
+        const check = setInterval(() => {
+          if (got > 0) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 100)
+      })
+      expect(await groups()).toHaveLength(1)
+
+      await handle.close()
+      expect(await groups()).toHaveLength(del ? 0 : 1)
+    } finally {
+      await admin.disconnect()
+      await queue.shutdown()
     }
   })
 })

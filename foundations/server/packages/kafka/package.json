@@ -34,7 +34,8 @@
     "eslint-plugin-svelte": "catalog:",
     "eslint-config-standard": "catalog:",
     "@stylistic/eslint-plugin": "catalog:",
-    "@hcengineering/test-containers": "workspace:^0.7.0"
+    "@hcengineering/test-containers": "workspace:^0.7.0",
+    "@testcontainers/redpanda": "catalog:"
   },
   "dependencies": {
     "@hcengineering/core": "workspace:^0.7.24",
