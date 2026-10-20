@@ -1584,10 +1584,14 @@
       --kanban-col-gap: 0.375rem;
     }
   }
+  // Row 1 holds the column headers: they share the height of the tallest one, as in the swimlane header row.
   .kanban-content {
-    display: flex;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: auto minmax(0, 1fr);
 
     .collapsed-stack {
+      grid-row: span 2;
       overflow-y: auto;
     }
     padding: 1.5rem 1.5rem 0.5rem;
@@ -1596,11 +1600,11 @@
   }
 
   .panel-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
     width: var(--kanban-col-width);
     min-width: var(--kanban-col-width);
-    height: 100%;
     min-height: 0;
     background-color: transparent;
     border: 1px solid transparent;

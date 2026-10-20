@@ -57,7 +57,7 @@
     getPlatformColorDef,
     IconAdd,
     IconChevronDown,
-    IconChevronLeft,
+    IconChevronRight,
     IconMixin,
     SelectPopup,
     eventToHTMLElement,
@@ -763,38 +763,37 @@
         }}
       >
         <div class="flex-row-center gap-1 flex-grow clear-mins">
-          <span
-            class="clear-mins fs-bold"
-            class:pointer-events-none={members.length === 1}
-            class:overflow-label={members.length === 1}
-            class:merged-names={members.length > 1}
-            style:color={color?.title ?? 'var(--theme-caption-color)'}
-          >
-            {#if groupByKey === noCategory}
-              <Label label={view.string.NoGrouping} />
-            {:else if headerComponent}
-              {#each expandedHeaders.has(String(state)) ? members : members.slice(0, MERGED_NAMES) as member, mi}
-                <div class="pointer-events-none">
-                  <svelte:component
-                    this={headerComponent.presenter}
-                    value={member}
-                    {space}
-                    size="small"
-                    kind="list-header"
-                    display="kanban"
-                    colorInherit={!$themeStore.dark}
-                    accent
-                    on:accent-color={(ev) => {
-                      if (mi === 0) setAccentColor(index, ev)
-                    }}
-                  />
-                </div>
-              {/each}
-            {/if}
-          </span>
-          {#if members.length > MERGED_NAMES}
-            <div class="count-col">
-              <span class="counter">{count}</span>
+          <div class="names">
+            <span
+              class="clear-mins fs-bold"
+              class:pointer-events-none={members.length === 1}
+              class:overflow-label={members.length === 1}
+              class:merged-names={members.length > 1}
+              style:color={color?.title ?? 'var(--theme-caption-color)'}
+            >
+              {#if groupByKey === noCategory}
+                <Label label={view.string.NoGrouping} />
+              {:else if headerComponent}
+                {#each expandedHeaders.has(String(state)) ? members : members.slice(0, MERGED_NAMES) as member, mi}
+                  <div class="pointer-events-none">
+                    <svelte:component
+                      this={headerComponent.presenter}
+                      value={member}
+                      {space}
+                      size="small"
+                      kind="list-header"
+                      display="kanban"
+                      colorInherit={!$themeStore.dark}
+                      accent
+                      on:accent-color={(ev) => {
+                        if (mi === 0) setAccentColor(index, ev)
+                      }}
+                    />
+                  </div>
+                {/each}
+              {/if}
+            </span>
+            {#if members.length > MERGED_NAMES}
               <!-- svelte-ignore a11y-click-events-have-key-events -->
               <!-- svelte-ignore a11y-no-static-element-interactions -->
               <div
@@ -807,17 +806,16 @@
                 <IconChevronDown size="small" />
                 {#if !expandedHeaders.has(String(state))}<span>+{members.length - MERGED_NAMES}</span>{/if}
               </div>
-            </div>
-          {:else}
-            <span class="counter ml-1">
-              {count}
-            </span>
-          {/if}
+            {/if}
+          </div>
+          <span class="counter ml-1">
+            {count}
+          </span>
         </div>
         {#if !collapsed}
           <div class="tools flex-row-center flex-no-shrink gap-1">
             <Button
-              icon={IconChevronLeft}
+              icon={IconChevronRight}
               kind="ghost"
               showTooltip={{ label: tracker.string.CollapseColumn, direction: 'left' }}
               on:click={toggle}
@@ -1022,7 +1020,6 @@
     // Headers of a row stretch to the tallest one; their content stays at the top.
     align-items: flex-start;
     padding: 0.375rem 0.5rem 0 1.25rem;
-    height: 2.5rem;
     min-height: 2.5rem;
     position: relative;
     border: 1px solid var(--theme-divider-color);
@@ -1051,7 +1048,6 @@
     }
     // A merged column names every status: the header grows instead of clipping them.
     &.merged {
-      height: auto;
       // In the column's flex layout the header would shrink and the names spill over the cards.
       flex-shrink: 0;
       padding-bottom: 0.375rem;
@@ -1068,12 +1064,12 @@
       max-height: min(20rem, 40vh);
       overflow-y: auto;
     }
-    // Sits on the second row, below the hover tools that cover the first one.
-    .count-col {
+    // The toggle stays below the names, also when the expanded list scrolls.
+    .names {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 0.25rem;
-      margin: 1.875rem 0 0 0.25rem;
+      min-width: 0;
     }
     .more-members {
       display: flex;
