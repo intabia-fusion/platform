@@ -146,7 +146,7 @@
   category={tracker.completion.IssueCategory}
   multiSelect={false}
   allowDeselect={true}
-  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
+  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.FindIssue}
   create={undefined}
   {ignoreObjects}
   shadows={true}
