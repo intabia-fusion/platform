@@ -195,11 +195,26 @@ import {
 
 export const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
+
+// Account.maxWorkspaces lives in a SMALLINT column: a larger value is a failed INSERT, not a clamp.
+export const maxWorkspacesLimit = 32767
+
 const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
 
+/** A workspace its owner still sees in the switcher: creating, or neither deleting nor disabled. */
+export function isWorkspaceVisible (status: WorkspaceStatus): boolean {
+  return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
+}
+
+/**
+ * Whether a created workspace still counts against its owner's limit. Only one on its way out frees
+ * the slot: `isDisabled` is also set on live workspaces (the login check rejects `isDisabled` +
+ * active), and those exist - they are closed, not gone. Hiding them from the switcher is a
+ * different question, see `isWorkspaceVisible`.
+ */
 export function holdsWorkspaceSlot (status: WorkspaceStatus | undefined): boolean {
   if (status === undefined) return true
-  return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
+  return !isDeletingMode(status.mode)
 }
 
 /* ============OPERATIONS============= */
@@ -1901,7 +1916,7 @@ export async function getUserWorkspaces (
 
   const edition = getMetadata(accountPlugin.metadata.LicenseEdition)
   return (await db.getAccountWorkspaces(account))
-    .filter((ws) => holdsWorkspaceSlot(ws.status))
+    .filter((ws) => isWorkspaceVisible(ws.status))
     .map((ws) => ({ ...ws, licenseEdition: edition }))
 }
 

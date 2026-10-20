@@ -66,7 +66,7 @@ export interface Account {
   locale?: string
   hash?: Buffer | null
   salt?: Buffer | null
-  maxWorkspaces?: number
+  maxWorkspaces?: number | null
   failedLoginAttempts?: number // Number of consecutive failed login attempts
   deleteOn?: Timestamp // Deferred deletion: when the identity gets purged for good
   blockedOn?: Timestamp // Admin block: no login, no workspace access

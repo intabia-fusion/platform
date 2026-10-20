@@ -124,6 +124,9 @@
   let editingMaxWorkspaces = false
   let maxWorkspacesValue = ''
 
+  // The override lives in a SMALLINT column: anything larger is a 500 after the OTP is already spent.
+  const MAX_WORKSPACE_LIMIT = 32767
+
   function startEditMaxWorkspaces (): void {
     maxWorkspacesValue = account.maxWorkspaces != null ? String(account.maxWorkspaces) : ''
     editingMaxWorkspaces = true
@@ -132,11 +135,10 @@
   // Blank value drops the override and the platform limit applies
   async function saveMaxWorkspaces (): Promise<void> {
     const trimmed = maxWorkspacesValue.trim()
+    // Digits only: Number() would take '0x10' as 16 and store something the admin never typed.
+    // Invalid input keeps the editor open instead of looking like a successful save.
+    if (trimmed !== '' && (!/^[1-9]\d*$/.test(trimmed) || Number(trimmed) > MAX_WORKSPACE_LIMIT)) return
     const maxWorkspaces = trimmed === '' ? null : Number(trimmed)
-    if (maxWorkspaces != null && (!Number.isInteger(maxWorkspaces) || maxWorkspaces < 1)) {
-      editingMaxWorkspaces = false
-      return
-    }
     const code = await requestAdminOtpCode()
     if (code === undefined) return
     const ok = await runAdminAction(async () => {

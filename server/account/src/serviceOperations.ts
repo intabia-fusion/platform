@@ -50,7 +50,7 @@ import { isHumanAdminLogin, requireAdminOp, requireAdminSession, verifyAdminOtpL
 import { deletionDeadline, getDeletionReadonlyDays } from './deletion'
 
 import { accountPlugin } from './plugin'
-import { getWorkspaceOwnerEmails, holdsWorkspaceSlot, workspaceLimitPerUser } from './operations'
+import { getWorkspaceOwnerEmails, holdsWorkspaceSlot, maxWorkspacesLimit, workspaceLimitPerUser } from './operations'
 import {
   type ApiKeyCheck,
   type ApiKeySecret,
@@ -929,15 +929,20 @@ export async function adminUpdateAccountWorkspaceLimit (
   params: { accountUuid: AccountUuid, maxWorkspaces: number | null, otpCode: string }
 ): Promise<{ workspaceLimit: number }> {
   await requireAdminOp(ctx, db, token, 'set_workspace_limit', params.otpCode, params.accountUuid)
-  if (params.maxWorkspaces != null && (!Number.isInteger(params.maxWorkspaces) || params.maxWorkspaces < 1)) {
+  if (
+    params.maxWorkspaces != null &&
+    (!Number.isInteger(params.maxWorkspaces) ||
+      params.maxWorkspaces < 1 ||
+      params.maxWorkspaces > maxWorkspacesLimit)
+  ) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
   const account = await db.account.findOne({ uuid: params.accountUuid })
   if (account == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
   }
+  await db.account.update({ uuid: params.accountUuid }, { maxWorkspaces: params.maxWorkspaces })
   const workspaceLimit = params.maxWorkspaces ?? workspaceLimitPerUser
-  await db.account.update({ uuid: params.accountUuid }, { maxWorkspaces: workspaceLimit })
   ctx.info('admin: account workspace limit updated', { account: params.accountUuid, workspaceLimit })
   await logAdminAction(ctx, db, token, 'set_workspace_limit', params.accountUuid, String(params.maxWorkspaces))
   return { workspaceLimit }
@@ -1011,22 +1016,36 @@ export async function listAccounts (
   const { skip, limit, search, sort, filter, order } = params
 
   const accounts = await db.listAccounts(search, skip, limit, sort, filter, order)
-  if (accounts.length > 0) {
-    const created = await db.workspace.find({ createdBy: { $in: accounts.map((it) => it.uuid) } })
-    const statuses = await db.workspaceStatus.find({ workspaceUuid: { $in: created.map((it) => it.uuid) } })
-    const statusByWorkspace = new Map(statuses.map((it) => [it.workspaceUuid, it]))
-    for (const account of accounts) {
-      account.createdWorkspaces = created.filter(
-        (it) => it.createdBy === account.uuid && holdsWorkspaceSlot(statusByWorkspace.get(it.uuid))
-      ).length
-      account.workspaceLimit = account.maxWorkspaces ?? workspaceLimitPerUser
-    }
-  }
+
   if (extra?.service === undefined) {
     // Reading other people's emails and activity is PII access: record who looked at what.
     await logAdminAction(ctx, db, token, 'read_accounts', undefined, search, { filter, count: accounts.length })
+    // The slot counts only feed the admin UI. Service callers (`extra.service`) never render them,
+    // and the two extra queries are per page, so they are not worth paying for there.
+    await fillWorkspaceSlots(db, accounts)
   }
   return accounts
+}
+
+/** Fill `createdWorkspaces`/`workspaceLimit` for one page of accounts - the numbers the limit editor shows. */
+async function fillWorkspaceSlots (db: AccountDB, accounts: AccountAggregatedInfo[]): Promise<void> {
+  if (accounts.length === 0) return
+
+  const created = await db.workspace.find({ createdBy: { $in: accounts.map((it) => it.uuid) } })
+  const statusByWorkspace = new Map<WorkspaceUuid, WorkspaceStatus>()
+  if (created.length > 0) {
+    const statuses = await db.workspaceStatus.find({ workspaceUuid: { $in: created.map((it) => it.uuid) } })
+    for (const status of statuses) {
+      statusByWorkspace.set(status.workspaceUuid, status)
+    }
+  }
+
+  for (const account of accounts) {
+    account.createdWorkspaces = created.filter(
+      (it): boolean => it.createdBy === account.uuid && holdsWorkspaceSlot(statusByWorkspace.get(it.uuid))
+    ).length
+    account.workspaceLimit = account.maxWorkspaces ?? workspaceLimitPerUser
+  }
 }
 
 export async function performWorkspaceOperation (
