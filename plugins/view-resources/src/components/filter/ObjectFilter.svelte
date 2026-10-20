@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,7 +28,8 @@
     Label,
     Loading,
     resizeObserver,
-    themeStore
+    themeStore,
+    type AnySvelteComponent
   } from '@hcengineering/ui'
   import type { Filter, GrouppingManager } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -39,6 +41,8 @@
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined
   export let onChange: (e: Filter) => void
+  export let popupClass: string = ''
+  export let itemPresenter: AnySvelteComponent | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -210,7 +214,7 @@
   $: if (targetClass !== undefined) void getValues(search)
 </script>
 
-<div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
+<div class="selectPopup {popupClass}" use:resizeObserver={() => dispatch('changeContent')}>
   {#if clazz.filteringKey}
     <div class="header">
       <EditWithIcon
@@ -242,7 +246,11 @@
                 <div class="flex-row-center">
                   {#if value}
                     {#key value._id}
-                      <svelte:component this={attribute.presenter} {value} {...attribute.props} disabled oneLine />
+                      {#if itemPresenter !== undefined}
+                        <svelte:component this={itemPresenter} {value} />
+                      {:else}
+                        <svelte:component this={attribute.presenter} {value} {...attribute.props} disabled oneLine />
+                      {/if}
                     {/key}
                   {:else}
                     <Label label={ui.string.NotSelected} />

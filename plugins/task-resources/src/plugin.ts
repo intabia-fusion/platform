@@ -244,7 +244,8 @@ export default mergeIds(taskId, task, {
     ProjectTypeTasksTypeSectionEditor: '' as AnyComponent,
     ProjectTypeStatusesSectionEditor: '' as AnyComponent,
     ProjectTypeAutomationsSectionEditor: '' as AnyComponent,
-    TaskTypeEditor: '' as AnyComponent
+    TaskTypeEditor: '' as AnyComponent,
+    TaskTypeFilter: '' as AnyComponent
   },
   function: {
     GetAllStates: '' as GetAllValuesFunc,

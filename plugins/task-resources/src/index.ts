@@ -81,6 +81,7 @@ import ProjectTypeTasksTypeSectionEditor from './components/projectTypes/Project
 import ProjectTypeStatusesSectionEditor from './components/projectTypes/ProjectTypeStatusesSectionEditor.svelte'
 import TaskTypeEditor from './components/taskTypes/TaskTypeEditor.svelte'
 import TaskTypeDiagramPopup from './components/taskTypes/TaskTypeDiagramPopup.svelte'
+import TaskTypeFilter from './components/taskTypes/TaskTypeFilter.svelte'
 
 export { default as AssigneePresenter } from './components/AssigneePresenter.svelte'
 export { default as TypeSelector } from './components/TypeSelector.svelte'
@@ -154,7 +155,8 @@ export default async (): Promise<Resources> => ({
     ProjectTypeStatusesSectionEditor,
     ProjectTypeAutomationsSectionEditor,
     TaskTypeEditor,
-    TaskTypeDiagramPopup
+    TaskTypeDiagramPopup,
+    TaskTypeFilter
   },
   actionImpl: {
     EditStatuses: editStatuses,

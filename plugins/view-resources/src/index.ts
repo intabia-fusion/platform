@@ -256,6 +256,7 @@ export {
   Menu,
   NumberEditor,
   NumberPresenter,
+  ObjectFilter,
   ObjectIcon,
   ObjectMention,
   SortableDocList,
