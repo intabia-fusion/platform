@@ -30,7 +30,7 @@
   import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import ui, { Button, Label, Spinner } from '@hcengineering/ui'
+  import ui, { Button, Spinner } from '@hcengineering/ui'
   import type {
     AttributeModel,
     BuildModelKey,
@@ -627,7 +627,6 @@
         }}
       >
         <svelte:fragment slot="content">
-          <span class="mr-1"><Label label={ui.string.ShowMore} /></span>
           {#if isLoadingMoreTop}
             <Spinner size="small" />
           {/if}
