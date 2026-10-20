@@ -105,6 +105,7 @@ import {
   type WorkspaceInfoWithStatus,
   type WorkspaceInviteInfo,
   type WorkspaceLoginInfo,
+  type WorkspaceStatus,
   SubscriptionType
 } from './types'
 import {
@@ -192,9 +193,29 @@ import {
 // Destructure params to avoid passing extra fields to the DB layer (SQL injection risk). Never
 // pass "params" directly to any DB function.
 
-const workspaceLimitPerUser =
+export const workspaceLimitPerUser =
   process.env.WORKSPACE_LIMIT_PER_USER != null ? parseInt(process.env.WORKSPACE_LIMIT_PER_USER) : 10
+
+// Account.maxWorkspaces lives in a SMALLINT column: a larger value is a failed INSERT, not a clamp.
+export const maxWorkspacesLimit = 32767
+
 const SUPPORTED_LANGUAGES = ['en', 'ru', 'cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'tr', 'zh']
+
+/** A workspace its owner still sees in the switcher: creating, or neither deleting nor disabled. */
+export function isWorkspaceVisible (status: WorkspaceStatus): boolean {
+  return isWorkspaceCreating(status.mode) || !(isDeletingMode(status.mode) || status.isDisabled)
+}
+
+/**
+ * Whether a created workspace still counts against its owner's limit. Only one on its way out frees
+ * the slot: `isDisabled` is also set on live workspaces (the login check rejects `isDisabled` +
+ * active), and those exist - they are closed, not gone. Hiding them from the switcher is a
+ * different question, see `isWorkspaceVisible`.
+ */
+export function holdsWorkspaceSlot (status: WorkspaceStatus | undefined): boolean {
+  if (status === undefined) return true
+  return !isDeletingMode(status.mode)
+}
 
 /* ============OPERATIONS============= */
 
@@ -684,7 +705,9 @@ export async function createWorkspace (
   }
 
   // Get a list of created workspaces
-  const created = (await db.workspace.find({ createdBy: socialId.personUuid })).length
+  const own = await db.workspace.find({ createdBy: socialId.personUuid })
+  const ownStatuses = await db.workspaceStatus.find({ workspaceUuid: { $in: own.map((it) => it.uuid) } })
+  const created = own.length - ownStatuses.filter((it) => !holdsWorkspaceSlot(it)).length
 
   if (created >= (accountObj.maxWorkspaces ?? workspaceLimitPerUser)) {
     ctx.warn('created-by-limit', { person: socialId.key, workspace: workspaceName })
@@ -1893,7 +1916,7 @@ export async function getUserWorkspaces (
 
   const edition = getMetadata(accountPlugin.metadata.LicenseEdition)
   return (await db.getAccountWorkspaces(account))
-    .filter((ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled))
+    .filter((ws) => isWorkspaceVisible(ws.status))
     .map((ws) => ({ ...ws, licenseEdition: edition }))
 }
 

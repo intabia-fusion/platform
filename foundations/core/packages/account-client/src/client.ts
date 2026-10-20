@@ -283,6 +283,11 @@ export interface AccountClient {
   adminReleaseSocialId: (personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string) => Promise<void>
   adminDeletePerson: (personUuid: PersonUuid, otpCode: string) => Promise<void>
   adminSetAccountBlocked: (accountUuid: AccountUuid, blocked: boolean, otpCode: string) => Promise<void>
+  adminUpdateAccountWorkspaceLimit: (
+    accountUuid: AccountUuid,
+    maxWorkspaces: number | null,
+    otpCode: string
+  ) => Promise<{ workspaceLimit: number }>
   listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   performWorkspaceOperation: (
     workspaceId: string | string[],
@@ -1250,6 +1255,17 @@ class AccountClientImpl implements AccountClient {
 
   async adminSetAccountBlocked (accountUuid: AccountUuid, blocked: boolean, otpCode: string): Promise<void> {
     await this.rpc({ method: 'adminSetAccountBlocked' as const, params: { accountUuid, blocked, otpCode } })
+  }
+
+  async adminUpdateAccountWorkspaceLimit (
+    accountUuid: AccountUuid,
+    maxWorkspaces: number | null,
+    otpCode: string
+  ): Promise<{ workspaceLimit: number }> {
+    return await this.rpc({
+      method: 'adminUpdateAccountWorkspaceLimit' as const,
+      params: { accountUuid, maxWorkspaces, otpCode }
+    })
   }
 
   async listAdminActions (query: AdminActionsQuery): Promise<AdminActionsResult> {

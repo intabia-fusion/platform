@@ -66,7 +66,7 @@ export interface Account {
   locale?: string
   hash?: Buffer | null
   salt?: Buffer | null
-  maxWorkspaces?: number
+  maxWorkspaces?: number | null
   failedLoginAttempts?: number // Number of consecutive failed login attempts
   deleteOn?: Timestamp // Deferred deletion: when the identity gets purged for good
   blockedOn?: Timestamp // Admin block: no login, no workspace access
@@ -844,6 +844,8 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   // False for an unfinished signup: person + social ids exist, but no account row yet
   hasAccount?: boolean
   blockedOn?: number
+  createdWorkspaces?: number
+  workspaceLimit?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
