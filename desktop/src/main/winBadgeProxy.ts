@@ -3,24 +3,42 @@ import { BrowserWindow, NativeImage } from 'electron'
 /**
  * Обёртка над BrowserWindow для electron-windows-badge.
  *
- * Плагин вызывает setOverlayIcon на 'show'/'close' без проверки isDestroyed —
- * это даёт "Cannot read properties of null (reading 'setOverlayIcon')".
+ * Плагин держит ссылку на окно и обращается к нему уже после уничтожения: для отрисовки бейджа он
+ * вызывает win.webContents.executeJavaScript, а это бросает "Object has been destroyed" прямо в
+ * ipcMain-обработчике — падает весь главный процесс. Proxy здесь не работает: нативные геттеры
+ * Electron не принимают в качестве this ничего, кроме самого объекта.
  *
- * Proxy перехватывает setOverlayIcon и делает no-op, если окно destroyed.
- * Всё остальное идёт напрямую в реальное окно.
+ * Поэтому отдаём узкий объект ровно с тем, что плагин использует, и каждую операцию проверяем
+ * по живому окну.
  */
-export function createSafeWindow (window: BrowserWindow): BrowserWindow {
-  return new Proxy(window, {
-    get (target, prop, receiver) {
-      if (prop === 'setOverlayIcon') {
-        return (icon: NativeImage | null, description: string): void => {
-          if (!target.isDestroyed()) {
-            target.setOverlayIcon(icon, description)
-          }
-        }
+interface BadgeWindow {
+  id: number
+  isDestroyed: () => boolean
+  on: (event: 'closed' | 'show', listener: () => void) => void
+  setOverlayIcon: (icon: NativeImage | null, description: string) => void
+  webContents: { executeJavaScript: (code: string) => Promise<unknown> }
+}
+
+export function createSafeWindow (window: BrowserWindow): BadgeWindow {
+  const isAlive = (): boolean => !window.isDestroyed() && !window.webContents.isDestroyed()
+
+  return {
+    id: window.id,
+    isDestroyed: () => !isAlive(),
+    on: (event, listener) => {
+      if (!isAlive()) return
+
+      if (event === 'closed') {
+        window.on('closed', listener)
+      } else {
+        window.on('show', listener)
       }
-      const value = Reflect.get(target, prop, receiver)
-      return typeof value === 'function' ? value.bind(target) : value
+    },
+    setOverlayIcon: (icon, description) => {
+      if (isAlive()) window.setOverlayIcon(icon, description)
+    },
+    webContents: {
+      executeJavaScript: async (code) => (isAlive() ? await window.webContents.executeJavaScript(code) : undefined)
     }
-  }) as BrowserWindow
+  }
 }
