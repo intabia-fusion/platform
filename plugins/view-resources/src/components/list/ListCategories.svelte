@@ -627,7 +627,6 @@
         }}
       >
         <svelte:fragment slot="content">
-          <span class="mr-1"><Label label={ui.string.ShowMore} /></span>
           {#if isLoadingMoreTop}
             <Spinner size="small" />
           {/if}
