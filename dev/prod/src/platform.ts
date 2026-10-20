@@ -39,7 +39,7 @@ import { hrId } from '@hcengineering/hr'
 import { imageCropperId } from '@hcengineering/image-cropper'
 import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
-import login, { loginId } from '@hcengineering/login'
+import login, { loginId, passwordRequirements, type PasswordStrictness } from '@hcengineering/login'
 import love, { loveId } from '@hcengineering/love'
 import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
@@ -185,7 +185,7 @@ export interface Config {
   DISABLE_SIGNUP?: string
   HIDE_LOCAL_LOGIN?: string
   LINK_PREVIEW_URL?: string
-  PASSWORD_STRICTNESS?: 'very_strict' | 'strict' | 'normal' | 'none'
+  PASSWORD_STRICTNESS?: PasswordStrictness
   // Could be defined for dev environment
   FRONT_URL?: string
   PREVIEW_URL?: string
@@ -258,37 +258,6 @@ const configs: Record<string, string> = {
   'dev-server-test': '/config-test.json',
   'dev-worker': '/config-worker.json',
   'dev-worker-local': '/config-worker-local.json'
-}
-
-const PASSWORD_REQUIREMENTS: Record<NonNullable<Config['PASSWORD_STRICTNESS']>, Record<string, number>> = {
-  very_strict: {
-    MinDigits: 4,
-    MinLength: 32,
-    MinLowerChars: 4,
-    MinSpecialChars: 4,
-    MinUpperChars: 4
-  },
-  strict: {
-    MinDigits: 2,
-    MinLength: 16,
-    MinLowerChars: 2,
-    MinSpecialChars: 2,
-    MinUpperChars: 2
-  },
-  normal: {
-    MinDigits: 1,
-    MinLength: 8,
-    MinLowerChars: 1,
-    MinSpecialChars: 1,
-    MinUpperChars: 1
-  },
-  none: {
-    MinDigits: 0,
-    MinLength: 0,
-    MinLowerChars: 0,
-    MinSpecialChars: 0,
-    MinUpperChars: 0
-  }
 }
 
 import presentationStrings from '@hcengineering/presentation/src/lang'
@@ -529,7 +498,7 @@ export async function configurePlatform() {
   setMetadata(login.metadata.UsageUrl, config.USAGE_URL)
   setMetadata(login.metadata.SupportUrl, config.SUPPORT_URL)
 
-  setMetadata(login.metadata.PasswordValidations, PASSWORD_REQUIREMENTS[config.PASSWORD_STRICTNESS ?? 'none'])
+  setMetadata(login.metadata.PasswordValidations, passwordRequirements[config.PASSWORD_STRICTNESS ?? 'none'])
 
   setMetadata(presentation.metadata.UploadURL, config.UPLOAD_URL)
   setMetadata(presentation.metadata.DatalakeUrl, config.DATALAKE_URL)

@@ -37,7 +37,7 @@ Localized rule descriptions live next to it: `string.PasswordMinLength`, `Passwo
 
 ### Source
 
-`dev/prod/src/platform.ts` - `PASSWORD_REQUIREMENTS` map, four presets:
+`plugins/login/src/index.ts` - `passwordRequirements` map, four presets (shared by web and desktop):
 
 | Preset       | MinLength | MinDigits | MinSpecial | MinUpper | MinLower |
 |--------------|-----------|-----------|------------|----------|----------|
@@ -46,24 +46,27 @@ Localized rule descriptions live next to it: `string.PasswordMinLength`, `Passwo
 | `normal`     | 8         | 1         | 1          | 1        | 1        |
 | `none`       | 0         | 0         | 0          | 0        | 0        |
 
-Applied at boot in `dev/prod/src/platform.ts`:
+Applied at boot in `dev/prod/src/platform.ts` (web) and `desktop/src/ui/platform.ts` (desktop):
 ```ts
-setMetadata(login.metadata.PasswordValidations, PASSWORD_REQUIREMENTS[config.PASSWORD_STRICTNESS ?? 'none'])
+setMetadata(login.metadata.PasswordValidations, passwordRequirements[config.PASSWORD_STRICTNESS ?? 'none'])
 ```
+
+Desktop takes `PASSWORD_STRICTNESS` from the front server config (`desktop/src/ui/preload.ts`, merged into the combined config). Desktop used to never set the metadata (reported on 0.8.33), so signup on desktop skipped all rules regardless of the server preset.
 
 ### Where to set the param
 
-Field `PASSWORD_STRICTNESS` in the front config JSON (served by front pod on `GET /config.json`): `dev/prod/public/config.json` (local dev stand), `dev/prod/public/config-test.json` (test stand), `pods/front/dist/config-test.json` (built front pod). Desktop client config has the same field in `desktop/src/ui/types.ts`.
+- Web dev-server: field in `dev/prod/public/config.json` / `config-test.json`. Read over HTTP at page load, a tab reload is enough.
+- Front pod (docker, prod stands, and the server desktop connects to): env `PASSWORD_STRICTNESS` (`pods/front/src/__start.ts`), served in `GET /config.json` (`server/front/src/index.ts`). Needs a container recreate.
+- Desktop has no own value: it reads the field from the front pod it connects to (locally `http://localhost:8087`).
 
-All of the above are currently set to `"none"` - no enforcement. To enable, change the value to `"normal" | "strict" | "very_strict"` in the config JSON the front pod serves.
+Locally the default is `none`: the JSON files set it explicitly, `dev/docker-compose.yaml` leaves the env unset. `tests/docker-compose.persona.yaml` sets `normal`. To enable, set `"normal" | "strict" | "very_strict"`.
 
 ### Custom values (not preset)
 
-To pick exact min-counts outside the four presets, edit `PASSWORD_REQUIREMENTS` in `dev/prod/src/platform.ts`. There is no env / runtime override for individual `Min*` fields.
+To pick exact min-counts outside the four presets, edit `passwordRequirements` in `plugins/login/src/index.ts`. There is no env / runtime override for individual `Min*` fields.
 
 ## Gaps
 
-- No env var pipeline: `PASSWORD_STRICTNESS` is only read from the static config JSON, not from container env - the `/config.json` handler in `server/front/src/index.ts` never reads `process.env.PASSWORD_STRICTNESS`. To make it env-configurable, extend that handler to read the env var and include it in the served `data`.
 - Server has no enforcement - a modified client or direct API call bypasses all rules. For real policy, add validation in `server/account/src/operations.ts` on the signup / changePassword / restorePassword paths.
 - No password history, no rotation, no breach (HIBP) check, no min-entropy / zxcvbn-style scoring.
 
