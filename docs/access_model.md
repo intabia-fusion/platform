@@ -62,7 +62,7 @@
 
 ## 5. Причина отказа на клиенте
 
-Сервер отдаёт `Forbidden` с `params.kind` (`ForbiddenKind`, `foundations/core/packages/platform/src/status.ts`). `ReadOnlyAccessMiddleware` по `kind` выбирает текст уведомления: модалка про повышение роли показывается только для `WorkspaceRole`, остальные причины дают уведомление "Нет доступа". Повторы одного `kind` схлопываются в одно уведомление. Каждый отказ пишется событием аналитики `PermissionDenied` с полями `kind`, `txClass`, `objectClass`, `objectSpace`, `role`.
+Сервер отдаёт `Forbidden` с `params.kind` (`ForbiddenKind`, `foundations/core/packages/platform/src/status.ts`). `ReadOnlyAccessMiddleware` по `kind` выбирает текст уведомления: модалка про повышение роли показывается только для `WorkspaceRole`, остальные причины дают уведомление "Нет доступа". Повторы одного `kind` схлопываются в одно уведомление. Каждый отказ пишется событием аналитики `PermissionDenied` с полями `kind`, `txClass`, `objectClass`, `objectId`, `objectSpace`, `role`.
 
 Через этот путь идут только транзакции. Отказы RPC аккаунт-сервиса (роли участников, приглашения) обрабатываются отдельно.
 

@@ -45,6 +45,7 @@ jest.mock('../components/ForbiddenNotification.svelte', () => ({}))
 const tx = {
   _class: core.class.TxUpdateDoc,
   objectClass: core.class.Space,
+  objectId: 'space1',
   objectSpace: core.space.Space
 } as unknown as TxCUD<Doc>
 
@@ -83,6 +84,7 @@ describe('ReadOnlyAccessMiddleware forbidden handling', () => {
       kind,
       txClass: core.class.TxUpdateDoc,
       objectClass: core.class.Space,
+      objectId: 'space1',
       objectSpace: core.space.Space,
       role: AccountRole.User
     })

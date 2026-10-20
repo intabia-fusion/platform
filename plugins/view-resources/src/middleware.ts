@@ -425,6 +425,7 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
           kind: kind ?? 'unknown',
           txClass: tx._class,
           objectClass: (tx as TxCUD<Doc>).objectClass,
+          objectId: (tx as TxCUD<Doc>).objectId,
           objectSpace: (tx as TxCUD<Doc>).objectSpace,
           role: getCurrentAccount()?.role
         })
