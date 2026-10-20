@@ -22,6 +22,7 @@ jest.mock('../version', () => ({
 import core, {
   type Client,
   createClient,
+  generateId,
   Hierarchy,
   MeasureMetricsContext,
   ModelDb,
@@ -365,6 +366,257 @@ describe('postgres operations', () => {
     )
     expect((r4[0].$lookup?.attachedTo as TaskComment)?._id).toEqual(commentId)
     expect(((r4[0].$lookup?.attachedTo as any)?.$lookup.attachedTo as Task)?._id).toEqual(docId)
+  })
+
+  it('lookup projection keeps only the listed fields of the joined doc', async () => {
+    const docId = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+      name: 'projected',
+      description: 'not selected',
+      rate: 7
+    })
+    const first = await operations.addCollection(
+      taskPlugin.class.TaskComment,
+      '' as Ref<Space>,
+      docId,
+      taskPlugin.class.Task,
+      'tasks',
+      { message: 'first', date: new Date() }
+    )
+    const second = await operations.addCollection(
+      taskPlugin.class.TaskComment,
+      '' as Ref<Space>,
+      docId,
+      taskPlugin.class.Task,
+      'tasks',
+      { message: 'second', date: new Date() }
+    )
+
+    // A direct join: the base document stays whole, the joined one shrinks to `name`.
+    const comments = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { attachedTo: docId },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { '$lookup.attachedTo.name': 1 },
+        sort: { '$lookup.attachedTo.modifiedOn': SortingOrder.Descending, modifiedOn: SortingOrder.Ascending }
+      }
+    )
+    expect(comments.map((it) => it._id)).toEqual([first, second])
+    expect(comments[0].message).toEqual('first')
+    const task = comments[0].$lookup?.attachedTo as Task
+    expect(task._id).toEqual(docId)
+    expect(task.name).toEqual('projected')
+    // `_class` and `space` always come: the security middleware drops a joined doc without them.
+    expect(task._class).toEqual(taskPlugin.class.Task)
+    expect(task.space).toBeDefined()
+    expect(task.description).toBeUndefined()
+    expect(task.rate).toBeUndefined()
+
+    // A reverse join: every comment comes back with `message` only.
+    const tasks = await client.findAll<Task>(
+      taskPlugin.class.Task,
+      { _id: docId },
+      {
+        lookup: { _id: { comment: taskPlugin.class.TaskComment } },
+        projection: { '$lookup.comment.message': 1 }
+      }
+    )
+    expect(tasks[0].rate).toEqual(7)
+    const projected = (tasks[0].$lookup as any).comment as TaskComment[]
+    expect(projected.map((it) => it.message).sort()).toEqual(['first', 'second'])
+    expect(projected.every((it) => it.date === undefined)).toBe(true)
+    expect(projected.every((it) => it.space !== undefined)).toBe(true)
+
+    // A filter on a join field that the projection leaves out still applies: WHERE reads the
+    // joined table, not the SELECT list.
+    const filtered = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { attachedTo: docId, '$lookup.attachedTo.rate': 7 } as any,
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { '$lookup.attachedTo.name': 1 }
+      }
+    )
+    expect(filtered).toHaveLength(2)
+    expect((filtered[0].$lookup?.attachedTo as Task).rate).toBeUndefined()
+    const none = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { attachedTo: docId, '$lookup.attachedTo.rate': 8 } as any,
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { '$lookup.attachedTo.name': 1 }
+      }
+    )
+    expect(none).toHaveLength(0)
+
+    // A nested direct lookup: each level keeps its own fields.
+    const reply = await operations.addCollection(
+      taskPlugin.class.TaskComment,
+      '' as Ref<Space>,
+      first,
+      taskPlugin.class.TaskComment,
+      'comments',
+      { message: 'reply', date: new Date() }
+    )
+    const nested = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { _id: reply },
+      {
+        lookup: { attachedTo: [taskPlugin.class.TaskComment, { attachedTo: taskPlugin.class.Task } as any] },
+        projection: { '$lookup.attachedTo.message': 1, '$lookup.attachedTo.$lookup.attachedTo.name': 1 }
+      }
+    )
+    const parent = nested[0].$lookup?.attachedTo as any
+    expect(parent.message).toEqual('first')
+    expect(parent.date).toBeUndefined()
+    expect(parent.$lookup.attachedTo.name).toEqual('projected')
+    expect(parent.$lookup.attachedTo.description).toBeUndefined()
+  })
+
+  it('exclusion projection drops the listed fields of the base doc and of the joins', async () => {
+    const docId = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+      name: 'kept',
+      description: 'dropped',
+      rate: 3
+    })
+    await operations.addCollection(
+      taskPlugin.class.TaskComment,
+      '' as Ref<Space>,
+      docId,
+      taskPlugin.class.Task,
+      'tasks',
+      { message: 'kept too', date: new Date() }
+    )
+
+    // Base document: a jsonb key and a column excluded, every other column still there.
+    const [task] = await client.findAll<Task>(
+      taskPlugin.class.Task,
+      { _id: docId },
+      { projection: { description: 0, modifiedBy: 0 } }
+    )
+    expect(task.name).toEqual('kept')
+    expect(task.rate).toEqual(3)
+    expect(task.description).toBeUndefined()
+    expect(task.modifiedBy).toBeUndefined()
+    expect(typeof task.modifiedOn).toBe('number')
+    expect(task.space).toBeDefined()
+
+    // Direct join: the same, independently of the base mode.
+    const [comment] = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { attachedTo: docId },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { message: 1, '$lookup.attachedTo.description': 0, '$lookup.attachedTo.modifiedBy': 0 }
+      }
+    )
+    expect(comment.message).toEqual('kept too')
+    expect(comment.date).toBeUndefined()
+    const joined = comment.$lookup?.attachedTo as Task
+    expect(joined.name).toEqual('kept')
+    expect(joined.rate).toEqual(3)
+    expect(joined.description).toBeUndefined()
+    expect(joined.modifiedBy).toBeUndefined()
+    expect(typeof joined.modifiedOn).toBe('number')
+
+    // Reverse join.
+    const [withComments] = await client.findAll<Task>(
+      taskPlugin.class.Task,
+      { _id: docId },
+      {
+        lookup: { _id: { comment: taskPlugin.class.TaskComment } },
+        projection: { '$lookup.comment.date': 0 }
+      }
+    )
+    expect(withComments.description).toEqual('dropped')
+    const [projected] = (withComments.$lookup as any).comment as TaskComment[]
+    expect(projected.message).toEqual('kept too')
+    expect(projected.date).toBeUndefined()
+    expect(typeof projected.modifiedOn).toBe('number')
+  })
+
+  it('sorts by a projected lookup field and keeps the rest of the join out', async () => {
+    const low = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+      name: 'low',
+      description: 'not selected',
+      rate: 1
+    })
+    const high = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+      name: 'high',
+      description: 'not selected',
+      rate: 9
+    })
+    const tag = `sorted-${Date.now()}`
+    for (const task of [low, high]) {
+      await operations.addCollection(
+        taskPlugin.class.TaskComment,
+        '' as Ref<Space>,
+        task,
+        taskPlugin.class.Task,
+        'tasks',
+        {
+          message: tag,
+          date: new Date()
+        }
+      )
+    }
+
+    // ORDER BY reads the joined table; the SELECT list of the join holds `name` only.
+    const comments = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { message: tag },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { '$lookup.attachedTo.name': 1 },
+        sort: { '$lookup.attachedTo.rate': SortingOrder.Descending }
+      }
+    )
+    expect(comments.map((it) => it.attachedTo)).toEqual([high, low])
+    for (const comment of comments) {
+      const task = comment.$lookup?.attachedTo as Task
+      expect(task.name).toBeDefined()
+      expect(task.rate).toBeUndefined()
+      expect(task.description).toBeUndefined()
+    }
+
+    const ascending = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { message: tag },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        projection: { '$lookup.attachedTo.name': 1 },
+        sort: { '$lookup.attachedTo.rate': SortingOrder.Ascending }
+      }
+    )
+    expect(ascending.map((it) => it.attachedTo)).toEqual([low, high])
+
+    // A comment whose task is gone has no joined row: it sorts last in both directions.
+    const orphan = await operations.addCollection(
+      taskPlugin.class.TaskComment,
+      '' as Ref<Space>,
+      generateId(),
+      taskPlugin.class.Task,
+      'tasks',
+      { message: tag, date: new Date() }
+    )
+    const withOrphan = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { message: tag },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        sort: { '$lookup.attachedTo.rate': SortingOrder.Descending }
+      }
+    )
+    expect(withOrphan.map((it) => it._id)).toEqual([...comments.map((it) => it._id), orphan])
+    const withOrphanAsc = await client.findAll<TaskComment>(
+      taskPlugin.class.TaskComment,
+      { message: tag },
+      {
+        lookup: { attachedTo: taskPlugin.class.Task },
+        sort: { '$lookup.attachedTo.rate': SortingOrder.Ascending }
+      }
+    )
+    expect(withOrphanAsc.map((it) => it._id)).toEqual([orphan, ...ascending.map((it) => it._id)])
   })
 
   it('nested lookup on model docs does not mutate ModelDb instances', async () => {

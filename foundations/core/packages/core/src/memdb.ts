@@ -149,20 +149,17 @@ export abstract class MemDb extends TxProcessor implements Storage {
       const refId = getObjectValue(tkey, doc)
       if (refId == null) continue
 
-      if (Array.isArray(value)) {
-        const [_class, nested] = value
-        const objects = await this.findAll(_class, { _id: refId })
-        ;(result as any)[key] = objects[0]
-        const nestedResult = {}
-        const parent = (result as any)[key]
-        await this.getLookupValue(_class, parent, nested, nestedResult)
-        Object.assign(parent, {
-          $lookup: nestedResult
-        })
-      } else {
-        const objects = await this.findAll(value, { _id: refId })
-        ;(result as any)[key] = objects[0]
+      // An array of references joins every one, as the server does.
+      const [lookupClass, nested] = Array.isArray(value) ? value : [value, undefined]
+      const objects = await this.findAll(lookupClass, Array.isArray(refId) ? { _id: { $in: refId } } : { _id: refId })
+      if (nested !== undefined) {
+        for (const parent of objects) {
+          const nestedResult = {}
+          await this.getLookupValue(lookupClass, parent, nested, nestedResult)
+          Object.assign(parent, { $lookup: nestedResult })
+        }
       }
+      ;(result as any)[key] = Array.isArray(refId) ? objects : objects[0]
     }
   }
 

@@ -92,7 +92,7 @@ export async function createTables (
         )
       ).map((it) => it.table_name)
     )
-  if (cached === undefined) {
+  if (cached == null) {
     loadedTables.set(url, tables)
   }
   console.log('load-table', platformNowDiff(t))
@@ -160,7 +160,7 @@ async function getTableSchema (
   for (const [domain, schema] of Object.entries(schemas)) {
     const declared = declaredSchemas[domain]
     if (declared !== undefined) {
-      const missing = Object.keys(declared).filter((key) => schema[key] === undefined)
+      const missing = Object.keys(declared).filter((key) => schema[key] == null)
       if (missing.length > 0) {
         ctx.error('table is missing declared columns, their values are stored in data jsonb without indexes', {
           domain,
@@ -450,7 +450,7 @@ export function decodeArray (value: string): string[] {
 }
 
 export function convertArrayParams (parameters?: ParameterOrJSON<any>[]): any[] | undefined {
-  if (parameters === undefined) return undefined
+  if (parameters == null) return undefined
   return parameters.map((param) => {
     if (Array.isArray(param)) {
       if (param.length === 0) return '{}'
@@ -466,7 +466,7 @@ export function convertArrayParams (parameters?: ParameterOrJSON<any>[]): any[] 
 }
 
 export function filterProjection<T extends Doc> (data: any, projection: Projection<T> | undefined): any {
-  if (projection === undefined) {
+  if (projection == null) {
     return data
   }
 
@@ -539,6 +539,52 @@ function assignColumns (doc: DBDoc, target: Record<string, any>, schema: Schema)
     }
     target[key] = value
   }
+}
+
+// Only zeros exclude; a mix is read as inclusion with the zeros ignored, as in Mongo.
+export function isExclusionProjection (projection: Record<string, any>): boolean {
+  const values = Object.values(projection)
+  return values.length > 0 && values.every((v) => v === 0)
+}
+
+export interface LookupFieldSet {
+  fields: Set<string>
+  exclude: boolean
+}
+
+// Per join path: `attachedTo`, `attachedTo.space`.
+export type LookupFields = Map<string, LookupFieldSet>
+
+// `$lookup.<path>.<field>` keys per join path, the rest is the base projection; lookup keys alone leave the base whole.
+export function splitProjection<T extends Doc> (
+  projection: Projection<T> | undefined
+): { base: Projection<T> | undefined, lookup: LookupFields | undefined } {
+  if (projection == null) return { base: undefined, lookup: undefined }
+  let base: Projection<T> | undefined
+  const byPath = new Map<string, Record<string, any>>()
+  for (const key in projection) {
+    const value = (projection as any)[key]
+    if (key.startsWith('$lookup')) {
+      const arr = key.split('.').filter((p) => p !== '$lookup')
+      const field = arr.pop()
+      if (field == null || field === '' || arr.length === 0) continue
+      const path = arr.join('.')
+      const fields = byPath.get(path) ?? {}
+      fields[field] = value
+      byPath.set(path, fields)
+    } else {
+      base ??= {}
+      ;(base as any)[key] = value
+    }
+  }
+  if (byPath.size === 0) return { base, lookup: undefined }
+  const lookup: LookupFields = new Map()
+  for (const [path, values] of byPath) {
+    const exclude = isExclusionProjection(values)
+    const fields = new Set(Object.keys(values).filter((field) => exclude || values[field] !== 0))
+    lookup.set(path, { fields, exclude })
+  }
+  return { base, lookup }
 }
 
 export function parseDocWithProjection<T extends Doc> (

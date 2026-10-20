@@ -396,7 +396,8 @@ describe('NotificationMiddleware', () => {
             attributes: expect.objectContaining({
               attachedTo: 'doc-1',
               attachedToClass: 'SomeDocClass',
-              collection: 'readStates'
+              collection: 'readStates',
+              latestMessageTimestamp: 0
             })
           })
         ])

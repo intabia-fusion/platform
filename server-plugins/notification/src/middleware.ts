@@ -173,7 +173,8 @@ export class NotificationMiddleware extends BaseMiddleware {
         const ttx = factory.createTxCreateDoc(notification.class.ReadState, message.space, {
           attachedTo,
           attachedToClass,
-          collection: 'readStates'
+          collection: 'readStates',
+          latestMessageTimestamp: 0
         })
         // The flag goes on the session data itself, as in TriggersMiddleware: a copy made with
         // Object.create gets its own lazily created `broadcast`, and the new state never reaches clients.

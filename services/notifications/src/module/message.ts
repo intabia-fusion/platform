@@ -349,7 +349,7 @@ function trackLatestMessage (
   force = false
 ): void {
   if (readState === undefined) return
-  if (!force && timestamp <= (readState.latestMessageTimestamp ?? 0)) return
+  if (!force && timestamp <= readState.latestMessageTimestamp) return
   result.updateReadStateTx.push(
     client.txFactory.createTxUpdateDoc(readState._class, readState.space, readState._id, {
       // The id column is not nullable: an empty chat keeps the old id and a zero timestamp.

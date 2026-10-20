@@ -24,10 +24,12 @@ import core, {
   type Space,
   DOMAIN_TX,
   DOMAIN_SPACE,
+  DOMAIN_MODEL,
   type AccountUuid,
   DOMAIN_COLLABORATOR,
   type Collaborator,
-  type TxUpdateDoc
+  type TxUpdateDoc,
+  notEmpty
 } from '@hcengineering/core'
 import {
   tryMigrate,
@@ -40,7 +42,7 @@ import {
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
 import { getAllAccounts } from '@hcengineering/contact'
-import { DOMAIN_DOC_NOTIFY } from '@hcengineering/model-notification'
+import { DOMAIN_DOC_NOTIFY, newReadState } from '@hcengineering/model-notification'
 import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
 
 import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
@@ -48,7 +50,7 @@ import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
 import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
-import notification, { type DocNotifyContext } from '@hcengineering/notification'
+import notification, { type DocNotifyContext, DOMAIN_READ_STATE, type ReadState } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 export const DOMAIN_NOTIFICATION = 'notification' as Domain
@@ -145,7 +147,8 @@ async function createDefaultReadStates (tx: TxOperations): Promise<void> {
     await tx.createDoc(notification.class.ReadState, _id, {
       attachedTo: _id,
       attachedToClass: channel._class,
-      collection: 'readStates'
+      collection: 'readStates',
+      latestMessageTimestamp: 0
     })
   }
 }
@@ -415,6 +418,187 @@ export async function unhideAutoHiddenDirects (client: MigrationClient): Promise
   client.logger.log('unhidden auto-hidden directs', { count: toUnhide.length, hidden: hiddenDirects.size })
 }
 
+const BATCH = 500
+
+interface ChatRefs extends Doc {
+  attachedTo: Ref<Doc>
+  attachedToClass: Ref<Class<Doc>>
+}
+
+interface DocRef {
+  domain: Domain
+  id: Ref<Doc>
+}
+
+const refKey = (ref: DocRef): string => `${ref.domain}:${ref.id}`
+
+// A failed step starts over on every upgrade: one bad document is logged and skipped instead.
+async function attempt<T> (
+  client: MigrationClient,
+  what: string,
+  data: object,
+  fn: () => Promise<T>
+): Promise<T | undefined> {
+  try {
+    return await fn()
+  } catch (err: any) {
+    client.logger.error(what, { ...data, err })
+    return undefined
+  }
+}
+
+// A write resolves to nothing, so its outcome is whether it threw.
+async function written (
+  client: MigrationClient,
+  what: string,
+  data: object,
+  fn: () => Promise<unknown>
+): Promise<boolean> {
+  try {
+    await fn()
+    return true
+  } catch (err: any) {
+    client.logger.error(what, { ...data, err })
+    return false
+  }
+}
+
+// A batch write fails as a whole on one bad row: then the rows go one by one, each on its own.
+async function createEach<T extends Doc> (client: MigrationClient, domain: Domain, docs: T[]): Promise<number> {
+  if (docs.length === 0) return 0
+  if (
+    await written(client, 'batch create failed, retrying one by one', { domain }, () => client.create(domain, docs))
+  ) {
+    return docs.length
+  }
+  let done = 0
+  for (const doc of docs) {
+    if (await written(client, 'create failed', { domain, _id: doc._id }, () => client.create(domain, doc))) done++
+  }
+  return done
+}
+
+async function updateEach<T extends Doc> (
+  client: MigrationClient,
+  domain: Domain,
+  updates: { filter: MigrationDocumentQuery<T>, update: MigrateUpdate<T> }[]
+): Promise<number> {
+  if (updates.length === 0) return 0
+  if (
+    await written(client, 'bulk update failed, retrying one by one', { domain }, () => client.bulk(domain, updates))
+  ) {
+    return updates.length
+  }
+  let done = 0
+  for (const { filter, update } of updates) {
+    if (await written(client, 'update failed', { domain, filter }, () => client.update(domain, filter, update))) done++
+  }
+  return done
+}
+
+// A document is its domain and id: an id repeats across domains, a class may change.
+async function findReadStates (client: MigrationClient, refs: DocRef[]): Promise<Map<string, Ref<ReadState>>> {
+  const { hierarchy } = client
+  const states = await client.find<ReadState>(
+    DOMAIN_READ_STATE,
+    { attachedTo: { $in: Array.from(new Set(refs.map((it) => it.id))) } },
+    { projection: { _id: 1, attachedTo: 1, attachedToClass: 1 } }
+  )
+  const res = new Map<string, Ref<ReadState>>()
+  for (const it of states) {
+    const domain = hierarchy.findDomain(it.attachedToClass)
+    if (domain != null) res.set(refKey({ domain, id: it.attachedTo }), it._id)
+  }
+  return res
+}
+
+// A model class is read from the model, not from a table.
+async function findDocs (client: MigrationClient, domain: Domain, ids: Ref<Doc>[]): Promise<Doc[]> {
+  if (domain === DOMAIN_MODEL) return await client.model.findAll(core.class.Doc, { _id: { $in: ids } })
+  return await client.find<Doc>(domain, { _id: { $in: ids } })
+}
+
+// False when a state did not land: the caller reads the states back, a row the index refused has one already.
+async function makeMissingReadStates (
+  client: MigrationClient,
+  refs: DocRef[],
+  states: Map<string, Ref<ReadState>>,
+  failed: { count: number }
+): Promise<boolean> {
+  const byDomain = new Map<Domain, Set<Ref<Doc>>>()
+  for (const ref of refs) {
+    if (states.has(refKey(ref))) continue
+    byDomain.set(ref.domain, (byDomain.get(ref.domain) ?? new Set()).add(ref.id))
+  }
+  let complete = true
+  for (const [domain, ids] of byDomain) {
+    const docs = await findDocs(client, domain, Array.from(ids))
+    const newStates: ReadState[] = []
+    for (const doc of docs) {
+      const state = await attempt(client, 'read state skipped', { domain, _id: doc._id }, () =>
+        newReadState(client, doc)
+      )
+      if (state != null) newStates.push(state)
+      else failed.count++
+    }
+    // The map takes only what landed: a chat must not point at a row that was not written.
+    const created = await createEach(client, DOMAIN_READ_STATE, newStates)
+    if (created === newStates.length) {
+      for (const it of newStates) states.set(refKey({ domain, id: it.attachedTo }), it._id)
+    } else {
+      complete = false
+    }
+  }
+  return complete
+}
+
+export async function fillChatReadStates (client: MigrationClient): Promise<void> {
+  const { hierarchy } = client
+  const iterator = await client.traverse<ChatRefs>(
+    DOMAIN_CHUNTER_DOC,
+    { readState: { $exists: false } },
+    { projection: { _id: 1, attachedTo: 1, attachedToClass: 1 } }
+  )
+  const counters = { done: 0, orphans: 0, failed: 0 }
+  // States not made, apart from updates not landed
+  const failed = { count: 0 }
+  try {
+    while (true) {
+      const chats = (await iterator.next(BATCH)) ?? []
+      if (chats.length === 0) break
+
+      await attempt(client, 'chat read state refs: batch skipped', { from: chats[0]._id }, async () => {
+        const refOf = (chat: ChatRefs): DocRef | undefined => {
+          const domain = hierarchy.findDomain(chat.attachedToClass)
+          return domain != null ? { domain, id: chat.attachedTo } : undefined
+        }
+        const refs = chats.map(refOf).filter(notEmpty)
+        let states = await findReadStates(client, refs)
+        if (!(await makeMissingReadStates(client, refs, states, failed))) {
+          states = await findReadStates(client, refs)
+        }
+
+        const updates = []
+        for (const chat of chats) {
+          const ref = refOf(chat)
+          const readState = ref != null ? states.get(refKey(ref)) : undefined
+          if (readState == null) {
+            counters.orphans++
+            continue
+          }
+          updates.push({ filter: { _id: chat._id }, update: { readState } })
+        }
+        const updated = await updateEach(client, DOMAIN_CHUNTER_DOC, updates)
+        counters.done += updated
+        counters.failed += updates.length - updated
+      })
+      client.logger.log('chat read state refs', { ...counters, failed: counters.failed + failed.count })
+    }
+  } finally {
+    await iterator.close()
+  }
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -509,6 +693,11 @@ export const chunterOperation: MigrateOperation = {
         state: 'unhide-auto-hidden-directs-v1',
         mode: 'upgrade',
         func: unhideAutoHiddenDirects
+      },
+      {
+        state: 'chat-read-state-refs-v2',
+        mode: 'upgrade',
+        func: fillChatReadStates
       }
     ])
   },

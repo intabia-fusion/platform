@@ -112,12 +112,16 @@ import {
   inferType,
   isDataField,
   isOwner,
+  isExclusionProjection,
   type JoinProps,
+  type LookupFields,
+  type LookupFieldSet,
   NumericTypes,
   parseDoc,
   parseDocWithProjection,
   parseUpdate,
   simpleEscape,
+  splitProjection,
   toWithLookup
 } from './utils'
 
@@ -227,6 +231,7 @@ const DB_QUERY_DURATION = 'db.query.duration'
 // with ICU support and folds case for all scripts, unlike the database LC_CTYPE
 // which only handles ASCII when the database was created with LC_CTYPE=C.
 const SEARCH_COLLATION = '"und-x-icu"'
+const ALWAYS_PROJECTED = new Set(['_id', '_class', 'space'])
 
 // Declared type of a real column of the domain, undefined for jsonb fields and dotted paths.
 function columnTypeOf (domain: string, key: string): DataType | undefined {
@@ -344,7 +349,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     const result: DBDoc[] = await this.mgr.retry(undefined, this.mgrId, (client) =>
       client.execute(finalSql, vars.getValues())
     )
-    return result.map((p) => parseDocWithProjection(p, domain, options?.projection))
+    return result.map((p) => parseDocWithProjection<T>(p, domain, options?.projection))
   }
 
   buildRawOrder<T extends Doc>(domain: string, sort: SortingQuery<T>): string {
@@ -505,9 +510,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
           const joins = this.buildJoins<T>(_class, options)
           // Add workspace name as $1
 
-          const projection = this.localizeProjection(_class, options?.projection ?? undefined)
+          const { base: projection, lookup: lookupProjection } = splitProjection(
+            this.localizeProjection(_class, options?.projection ?? undefined)
+          )
 
-          const select = `SELECT ${this.getProjection(vars, domain, projection, joins)} FROM ${domain}`
+          const select = `SELECT ${this.getProjection(vars, domain, projection, joins, lookupProjection)} FROM ${domain}`
 
           if (joins.length > 0) {
             sqlChunks.push(this.buildJoinString(vars, joins))
@@ -721,10 +728,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
       else if (join.path !== '') simpleJoins.push(join)
     }
 
-    // By the domain: domainSchemas has no class keys, and the default schema leaves numeric columns strings.
-    const schema = getSchema(domain)
     for (const row of rows) {
-      const doc = toWithLookup<T>(parseDoc(row, schema))
+      // By the domain: domainSchemas has no class keys, and the default schema leaves numeric columns strings.
+      const doc = toWithLookup<T>(parseDocWithProjection<T>(row, domain, projection))
 
       const lookup = doc.$lookup as Record<string, any>
 
@@ -1115,10 +1121,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
           res.push(reverseOrder)
           continue
         }
+        // A missing joined row is no value: it goes last whichever way the join field sorts
+        const nulls = key.startsWith('$lookup') ? (val === 1 ? ' NULLS FIRST' : ' NULLS LAST') : ''
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
           const sqlKey = this.getKey(_class, baseDomain, key, joins)
           const dir = val === 1 ? 'ASC' : 'DESC'
-          res.push(`${numericOrderKey(sqlKey, columnTypeOf(baseDomain, key), this.dbFlavor)} ${dir}`)
+          res.push(`${numericOrderKey(sqlKey, columnTypeOf(baseDomain, key), this.dbFlavor)} ${dir}${nulls}`)
         } else if (attr?.type._class === core.class.TypeIdentifier) {
           res.push(
             `regexp_replace(COALESCE(${this.getKey(_class, baseDomain, key, joins)}, ''), '-?\\d+$', '') ${val === 1 ? 'ASC' : 'DESC'}`
@@ -1136,7 +1144,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
             )
           }
         } else {
-          res.push(`${this.getKey(_class, baseDomain, key, joins)} ${val === 1 ? 'ASC' : 'DESC'}`)
+          res.push(`${this.getKey(_class, baseDomain, key, joins)} ${val === 1 ? 'ASC' : 'DESC'}${nulls}`)
         }
       } else {
         // todo handle custom sorting
@@ -1599,19 +1607,72 @@ abstract class PostgresAdapterBase implements DbAdapter {
     return `FROM ${join.table} AS ${join.toAlias} WHERE ${join.toAlias}."${join.toField}" = ${join.fromAlias}${join.fromAlias !== '' ? '.' : ''}${join.fromField} AND ${join.toAlias}."workspaceId" = ${wsId}${classsesQuery}`
   }
 
-  private getReverseProjection (vars: ValuesVariables, join: JoinProps): string[] {
-    return [`(SELECT jsonb_agg(${join.toAlias}.*) ${this.getReverseFrom(vars, join)}) AS ${join.toAlias}`]
+  // `_id` and `_class` always and first; the jsonb keys to keep when including, to drop when excluding.
+  // `_id` first: parseLookupColumns tells the joins apart by it; `_class` and `space` are what
+  // the security middleware filters a joined document by, without them it is dropped.
+  private projectedColumns (
+    table: string,
+    fields: Set<string>,
+    exclude: boolean
+  ): { columns: string[], dataKeys: string[] } {
+    const dataKeys = new Set<string>()
+    const named = new Set<string>()
+    for (const field of fields) {
+      if (ALWAYS_PROJECTED.has(field)) continue
+      if (!isDataField(table, field)) {
+        named.add(field)
+      } else if (!field.includes('.')) {
+        dataKeys.add(field)
+      } else if (!exclude) {
+        // A nested jsonb path is kept by its top key whole; an exclusion of one is not cut out.
+        dataKeys.add(field.split('.')[0])
+      }
+    }
+    const columns = exclude
+      ? getDocFieldsByDomains(table).filter((key) => ALWAYS_PROJECTED.has(key) || !named.has(key))
+      : [...ALWAYS_PROJECTED, ...named]
+    return { columns, dataKeys: Array.from(dataKeys) }
   }
 
-  private getProjectionsAliases (vars: ValuesVariables, join: JoinProps): string[] {
+  private projectedData (alias: string, dataKeys: string[], exclude: boolean): string | undefined {
+    if (exclude) {
+      if (dataKeys.length === 0) return `${alias}."data"`
+      return `(${alias}."data" - ARRAY[${dataKeys.map((key) => `'${key}'`).join(', ')}]::text[])`
+    }
+    if (dataKeys.length === 0) return
+    return `jsonb_build_object(${dataKeys.map((key) => `'${key}', ${alias}."data"->'${key}'`).join(', ')})`
+  }
+
+  private getReverseProjection (vars: ValuesVariables, join: JoinProps, fields?: LookupFieldSet): string[] {
+    let row = `${join.toAlias}.*`
+    if (fields !== undefined) {
+      // Same shape as a row: columns at the top, jsonb keys under `data`.
+      const { columns, dataKeys } = this.projectedColumns(join.table, fields.fields, fields.exclude)
+      const pairs = columns.map((key) => `'${key}', ${join.toAlias}."${key}"`)
+      const data = this.projectedData(join.toAlias, dataKeys, fields.exclude)
+      if (data !== undefined) pairs.push(`'data', ${data}`)
+      row = `jsonb_build_object(${pairs.join(', ')})`
+    }
+    return [`(SELECT jsonb_agg(${row}) ${this.getReverseFrom(vars, join)}) AS ${join.toAlias}`]
+  }
+
+  private getProjectionsAliases (vars: ValuesVariables, join: JoinProps, fields?: LookupFieldSet): string[] {
     if (join.table === DOMAIN_MODEL) return []
     if (join.path === '') return []
-    if (join.isReverse) return this.getReverseProjection(vars, join)
-    const fields = getDocFieldsByDomains(join.table)
+    if (join.isReverse) return this.getReverseProjection(vars, join, fields)
     const res: string[] = []
-    for (const key of [...fields, 'data']) {
+    if (fields === undefined) {
+      for (const key of [...getDocFieldsByDomains(join.table), 'data']) {
+        res.push(`${join.toAlias}."${key}" as "${join.toAlias}_${key}"`)
+      }
+      return res
+    }
+    const { columns, dataKeys } = this.projectedColumns(join.table, fields.fields, fields.exclude)
+    for (const key of columns) {
       res.push(`${join.toAlias}."${key}" as "${join.toAlias}_${key}"`)
     }
+    const data = this.projectedData(join.toAlias, dataKeys, fields.exclude)
+    if (data !== undefined) res.push(`${data} as "${join.toAlias}_data"`)
     return res
   }
 
@@ -1628,13 +1689,23 @@ abstract class PostgresAdapterBase implements DbAdapter {
     vars: ValuesVariables,
     baseDomain: string,
     projection: Projection<T> | undefined,
-    joins: JoinProps[]
+    joins: JoinProps[],
+    lookupProjection?: LookupFields
   ): string | '*' {
     if (projection === undefined && joins.length === 0) return `${baseDomain}.*`
     const res: string[] = []
     let dataAdded = false
     if (projection === undefined) {
       res.push(`${baseDomain}.*`)
+    } else if (isExclusionProjection(projection)) {
+      // Every column but the excluded ones; the excluded jsonb keys go in filterProjection.
+      const excluded = new Set(Object.keys(projection).map((key) => escape(key)))
+      for (const key of getDocFieldsByDomains(baseDomain)) {
+        if (key === '_id' || key === '_class' || !excluded.has(key)) {
+          res.push(`${baseDomain}."${key}" AS "${key}"`)
+        }
+      }
+      res.push(`${baseDomain}.data as data`)
     } else {
       if (projection._id === undefined) {
         res.push(`${baseDomain}."_id" AS "_id"`)
@@ -1643,6 +1714,8 @@ abstract class PostgresAdapterBase implements DbAdapter {
         res.push(`${baseDomain}."_class" AS "_class"`)
       }
       for (const _key in projection) {
+        // A `0` among `1`s is read as inclusion: the key is left out.
+        if ((projection as any)[_key] === 0) continue
         const key = escape(_key)
         if (isDataField(baseDomain, key)) {
           if (!dataAdded) {
@@ -1655,7 +1728,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       }
     }
     for (const join of joins) {
-      res.push(...this.getProjectionsAliases(vars, join))
+      res.push(...this.getProjectionsAliases(vars, join, lookupProjection?.get(join.path)))
     }
     return res.join(', ')
   }

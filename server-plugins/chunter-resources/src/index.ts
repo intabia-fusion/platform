@@ -23,6 +23,7 @@ import core, {
   DocumentQuery,
   FindOptions,
   FindResult,
+  Domain,
   Hierarchy,
   Ref,
   Timestamp,
@@ -430,15 +431,74 @@ async function OnUserStatus (txes: TxCUD<UserStatus>[], control: TriggerControl)
   return []
 }
 
+async function createReadStateTx (control: TriggerControl, collaborator: Collaborator): Promise<TxCreateDoc<ReadState>> {
+  const [latest] = await control.findAll(
+    control.ctx,
+    activity.class.ActivityMessage,
+    { attachedTo: collaborator.attachedTo },
+    { sort: { createdOn: SortingOrder.Descending }, limit: 1, projection: { _id: 1, createdOn: 1, modifiedOn: 1 } }
+  )
+  const isSpace = control.hierarchy.isDerived(collaborator.attachedToClass, core.class.Space)
+  return control.txFactory.createTxCreateDoc(
+    notification.class.ReadState,
+    isSpace ? (collaborator.attachedTo as Ref<Space>) : collaborator.space,
+    {
+      attachedTo: collaborator.attachedTo,
+      attachedToClass: collaborator.attachedToClass,
+      collection: 'readStates',
+      ...(latest != null
+        ? { latestMessageId: latest._id, latestMessageTimestamp: latest.createdOn ?? latest.modifiedOn }
+        : { latestMessageTimestamp: 0 })
+    }
+  )
+}
+
+// Applied at once so the batch's chats can point at it; the loser of a race takes the winner's state.
+async function makeReadState (control: TriggerControl, collaborator: Collaborator): Promise<Ref<ReadState> | undefined> {
+  const { attachedTo, attachedToClass } = collaborator
+  control.ctx.warn('read state made for a document without one', { attachedTo, attachedToClass })
+  const tx = await createReadStateTx(control, collaborator)
+  try {
+    await control.apply(control.ctx, [tx])
+    return tx.objectId
+  } catch (err: any) {
+    const [existing] = await control.findAll(control.ctx, notification.class.ReadState, { attachedTo, attachedToClass })
+    if (existing !== undefined) return existing._id
+    control.ctx.error('read state could not be made, the chat gets none', { attachedTo, attachedToClass, err })
+    return undefined
+  }
+}
+
 async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
   const spaces = await getPersonSpaces(control)
-  for (const tx of txes) {
-    const collaborator = TxProcessor.createDoc2Doc(tx)
+  const { hierarchy } = control
+
+  const collaborators = txes
+    .map((tx) => TxProcessor.createDoc2Doc(tx))
+    .filter((it) => control.hierarchy.classHierarchyMixin(it.attachedToClass, activity.mixin.ActivityDoc) != null)
+  if (collaborators.length === 0) return res
+
+  const refKey = (domain: Domain, id: Ref<Doc>): string => `${domain}:${id}`
+  const readStates = await control.findAll(control.ctx, notification.class.ReadState, {
+    attachedTo: { $in: Array.from(new Set(collaborators.map((it) => it.attachedTo))) }
+  })
+  const readStateByDoc = new Map<string, Ref<ReadState>>()
+  for (const it of readStates) {
+    const domain = hierarchy.findDomain(it.attachedToClass)
+    if (domain !== undefined) readStateByDoc.set(refKey(domain, it.attachedTo), it._id)
+  }
+
+  for (const collaborator of collaborators) {
     const space = spaces.find((s) => s.account === collaborator.collaborator)
     if (space == null) continue
-    if (control.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
-      continue
+    const domain = hierarchy.findDomain(collaborator.attachedToClass)
+    if (domain == null) continue
+    const key = refKey(domain, collaborator.attachedTo)
+    let readState = readStateByDoc.get(key)
+    if (readState === undefined) {
+      readState = await makeReadState(control, collaborator)
+      if (readState !== undefined) readStateByDoc.set(key, readState)
     }
 
     const createTx = control.txFactory.createTxCreateDoc(chunter.class.Chat, space._id, {
@@ -447,7 +507,8 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
       account: collaborator.collaborator,
       pinned: false,
       hidden: false,
-      collection: 'chats'
+      collection: 'chats',
+      ...(readState !== undefined ? { readState } : {})
     })
     res.push(
       control.txFactory.createTxCollectionCUD(
@@ -517,6 +578,7 @@ export async function OnChannelJoin (txes: TxUpdateDoc<Channel>[], control: Trig
           attachedTo: tx.objectId,
           attachedToClass: tx.objectClass,
           collection: 'readStates',
+          latestMessageTimestamp: 0,
           ...operations
         })
       )

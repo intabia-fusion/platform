@@ -141,9 +141,13 @@ describe('shipped migrations', () => {
       const ofNumber = sqlFiles.filter((f) => f.startsWith(n))
       const hasPg = ofNumber.some((f) => f.endsWith('.pg.sql') || !f.endsWith('.crdb.sql'))
       const hasCrdb = ofNumber.some((f) => f.endsWith('.crdb.sql'))
-      // Cockroach-only splits of what Postgres does in one file: 0006-0009 of 0001-0005, 0012-0013 of 0011.
+      // Cockroach-only splits of what Postgres does in one file: 0006-0009 of 0001-0005, 0012-0013
+      // of 0011, 0016 of 0014.
       expect({ n, hasCrdb }).toEqual({ n, hasCrdb: true })
-      expect({ n, hasPg }).toEqual({ n, hasPg: !['0006', '0007', '0008', '0009', '0012', '0013'].includes(n) })
+      expect({ n, hasPg }).toEqual({
+        n,
+        hasPg: !['0006', '0007', '0008', '0009', '0012', '0013', '0016'].includes(n)
+      })
     }
   })
 })

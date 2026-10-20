@@ -10,6 +10,7 @@ import {
   type Ref,
   type Timestamp
 } from '@hcengineering/core'
+import { isLookupKey } from './projection'
 import type { Query, QueryId } from './types'
 
 export interface DocumentRef {
@@ -27,10 +28,16 @@ export class Refs {
   constructor (readonly getHierarchy: () => Hierarchy) {}
 
   public updateDocuments (q: Query, docs: Doc[], clean: boolean = false): void {
-    if (q.options?.projection !== undefined) {
+    const projection = q.options?.projection
+    // A projection of the joins alone leaves the base document whole: it serves the reads that ask
+    // for no lookup, its cut joins stripped on the way out. A projection of the base keeps nothing.
+    const lookupOnly = projection != null && Object.keys(projection).every(isLookupKey)
+    if (projection != null && !lookupOnly) {
       return
     }
-    const params = ':' + JSON.stringify(q.options?.lookup ?? {}) + ':' + JSON.stringify(q.options?.associations ?? {})
+    const params = lookupOnly
+      ? ':{}:{}'
+      : ':' + JSON.stringify(q.options?.lookup ?? {}) + ':' + JSON.stringify(q.options?.associations ?? {})
     for (const d of docs) {
       const classKey = Hierarchy.mixinOrClass(d) + params
 
@@ -84,7 +91,7 @@ export class Refs {
         if (doc !== undefined) {
           const q = matchQuery([doc], query, _class, this.getHierarchy())
           if (q.length > 0) {
-            return toFindResult(this.getHierarchy().clone([doc]), 1)
+            return toFindResult([this.serve(doc, options)], 1)
           }
         }
       }
@@ -119,7 +126,7 @@ export class Refs {
 
         const q = matchQuery(_docs, query, _class, this.getHierarchy())
         if (q.length > 0) {
-          return toFindResult(this.getHierarchy().clone([q[0]]), 1)
+          return toFindResult([this.serve(q[0], options)], 1)
         }
       }
       if (options.lookup === undefined && options.associations === undefined) {
@@ -145,5 +152,14 @@ export class Refs {
       }
     }
     return null
+  }
+
+  // A clone for the reader; without the joins when it asked for none, as a lookup-only projected
+  // query keeps its whole base document here with its cut joins.
+  private serve<T extends Doc>(doc: Doc, options?: FindOptions<T>): T {
+    const cloned = this.getHierarchy().clone(doc)
+    if (options?.lookup != null || options?.associations != null) return cloned
+    const { $lookup, $associations, ...clean } = cloned
+    return clean as T
   }
 }
