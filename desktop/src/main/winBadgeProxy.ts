@@ -38,8 +38,7 @@ export function createSafeWindow (window: BrowserWindow): BadgeWindow {
       if (isAlive()) window.setOverlayIcon(icon, description)
     },
     webContents: {
-      executeJavaScript: async (code) =>
-        isAlive() ? await window.webContents.executeJavaScript(code) : undefined
+      executeJavaScript: async (code) => (isAlive() ? await window.webContents.executeJavaScript(code) : undefined)
     }
   }
 }
