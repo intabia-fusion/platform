@@ -380,6 +380,9 @@ export async function adminSetAccountBlocked (
   const action = blocked ? 'block_account' : 'unblock_account'
   const { account: actor } = await requireAdminOp(ctx, db, token, action, otpCode, accountUuid)
 
+  if (typeof accountUuid !== 'string' || accountUuid === '') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
   if (accountUuid === actor) {
     // Blocking yourself would lock the admin panel along with the account.
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
@@ -930,8 +933,12 @@ export async function adminUpdateAccountWorkspaceLimit (
 ): Promise<{ workspaceLimit: number }> {
   await requireAdminOp(ctx, db, token, 'set_workspace_limit', params.otpCode, params.accountUuid)
   if (
-    params.maxWorkspaces != null &&
-    (!Number.isInteger(params.maxWorkspaces) || params.maxWorkspaces < 1 || params.maxWorkspaces > maxWorkspacesLimit)
+    typeof params.accountUuid !== 'string' ||
+    params.accountUuid === '' ||
+    (params.maxWorkspaces != null &&
+      (!Number.isInteger(params.maxWorkspaces) ||
+        params.maxWorkspaces < 1 ||
+        params.maxWorkspaces > maxWorkspacesLimit))
   ) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }

@@ -429,10 +429,11 @@ implements DbCollection<T> {
     const [updateClause, updateValues] = this.buildUpdateClause(ops)
     const [whereClause, whereValues] = this.buildWhereClause(query, updateValues.length)
 
-    sqlChunks.push(updateClause)
-    if (whereClause !== '') {
-      sqlChunks.push(whereClause)
+    // An all-undefined query would silently turn into a table-wide UPDATE.
+    if (whereClause === '') {
+      throw new Error(`Refusing to update ${this.getTableName()} without a filter`)
     }
+    sqlChunks.push(updateClause, whereClause)
 
     const finalSql = sqlChunks.join(' ')
     await this.unsafe(finalSql, [...updateValues, ...whereValues], client)
@@ -442,9 +443,10 @@ implements DbCollection<T> {
     const sqlChunks: string[] = [`DELETE FROM ${this.getTableName()}`]
     const [whereClause, whereValues] = this.buildWhereClause(query)
 
-    if (whereClause !== '') {
-      sqlChunks.push(whereClause)
+    if (whereClause === '') {
+      throw new Error(`Refusing to delete from ${this.getTableName()} without a filter`)
     }
+    sqlChunks.push(whereClause)
 
     const finalSql = sqlChunks.join(' ')
     await this.unsafe(finalSql, whereValues, client)

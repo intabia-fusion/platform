@@ -208,6 +208,22 @@ describe('workspace creation limit', () => {
     }
   )
 
+  test.each([undefined, '', { $ne: 'x' }])(
+    'adminUpdateAccountWorkspaceLimit rejects accountUuid %p',
+    async (accountUuid) => {
+      const db = makeDb()
+
+      await expect(
+        adminUpdateAccountWorkspaceLimit(mockCtx, db, null, adminToken, {
+          accountUuid: accountUuid as unknown as AccountUuid,
+          maxWorkspaces: 12,
+          otpCode: '000000'
+        })
+      ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+      expect(db.account.update).not.toHaveBeenCalled()
+    }
+  )
+
   test('adminUpdateAccountWorkspaceLimit rejects an unknown account', async () => {
     const db = makeDb()
     ;(db.account.findOne as jest.Mock).mockResolvedValue(null)

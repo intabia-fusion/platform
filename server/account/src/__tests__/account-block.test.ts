@@ -107,6 +107,19 @@ describe('adminSetAccountBlocked', () => {
     ).rejects.toBeInstanceOf(PlatformError)
   })
 
+  it.each([undefined, '', { $ne: 'x' }])('refuses accountUuid %p', async (accountUuid) => {
+    const { db, row } = fakeDb({ uuid: target })
+
+    await expect(
+      adminSetAccountBlocked(ctx, db, null, 'token', {
+        accountUuid: accountUuid as unknown as AccountUuid,
+        blocked: true,
+        otpCode: '1'
+      })
+    ).rejects.toBeInstanceOf(PlatformError)
+    expect(row.blockedOn).toBeUndefined()
+  })
+
   it('refuses an unknown account', async () => {
     const { db } = fakeDb(null)
 

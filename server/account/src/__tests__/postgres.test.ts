@@ -190,6 +190,13 @@ describe('PostgresDbCollection', () => {
         [1, 'ws1']
       )
     })
+
+    it('refuses a query whose values are all undefined', async () => {
+      await expect(collection.update({ uuid: undefined }, { mode: 'creating' as const })).rejects.toThrow(
+        'without a filter'
+      )
+      expect(mockClient.unsafe).not.toHaveBeenCalled()
+    })
   })
 
   describe('deleteMany', () => {
@@ -199,6 +206,11 @@ describe('PostgresDbCollection', () => {
       expect(mockClient.unsafe).toHaveBeenCalledWith('DELETE FROM global_account.workspace WHERE "mode" = $1', [
         'deleted'
       ])
+    })
+
+    it('refuses an empty query', async () => {
+      await expect(collection.deleteMany({})).rejects.toThrow('without a filter')
+      expect(mockClient.unsafe).not.toHaveBeenCalled()
     })
   })
 
