@@ -512,7 +512,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           ops.$pull?.owners !== undefined
         if (hasSensitiveUpdate && account.role !== AccountRole.Admin) {
           throw forbiddenError(
-            ForbiddenKind.SpaceOwnerOnly,
+            ForbiddenKind.SystemOnly,
             'Only admins can change private/owners on spaces without owners'
           )
         }
@@ -521,7 +521,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       }
 
       if (tx._class === core.class.TxRemoveDoc && account.role !== AccountRole.Admin) {
-        throw forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only admins can delete private spaces without owners')
+        throw forbiddenError(ForbiddenKind.SystemOnly, 'Only admins can delete private spaces without owners')
       }
       return
     }

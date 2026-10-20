@@ -463,7 +463,7 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
     if (account.primarySocialId === core.account.System) return
 
     if (h.isDerived(cudTx.objectClass, contact.class.PersonSpace)) {
-      this.throwForbidden(ForbiddenKind.SpaceOwnerOnly)
+      this.throwForbidden(ForbiddenKind.SystemOnly)
     }
   }
 

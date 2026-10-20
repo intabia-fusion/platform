@@ -32,7 +32,8 @@
   import ParticipantsPreview from './ParticipantsPreview.svelte'
   import PendingRecordingPresenter from './PendingRecordingPresenter.svelte'
   import { openWidgetTab } from '@hcengineering/workbench-resources'
-  import { setMeetingPrivate, videoVisible } from '../utils'
+  import { setMeetingPrivate } from '../meetingPrivacy'
+  import { videoVisible } from '../utils'
 
   export let object: MeetingMinutes
   export let readonly: boolean = false

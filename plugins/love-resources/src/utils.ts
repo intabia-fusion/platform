@@ -38,7 +38,6 @@ import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
   getClient,
-  MessageBox,
   type ObjectSearchResult
 } from '@hcengineering/presentation'
 import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
@@ -66,6 +65,7 @@ import { $myPreferences, currentMeetingMinutes } from './stores'
 import { getLiveKitClient } from './liveKitClient'
 import { getLoveClient } from './loveClient'
 import { readRecordAvailable } from './recordAvailable'
+import { setMeetingPrivate } from './meetingPrivacy'
 
 export const liveKitClient = getLiveKitClient()
 export const lk: LKRoom = liveKitClient.liveKitRoom
@@ -404,29 +404,6 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {
   if (mm === undefined) return
   await setMeetingPrivate(mm, !mm.private)
-}
-
-/** Closing a meeting you are not a member of hides its content from you, so offer to join. False if cancelled. */
-export async function setMeetingPrivate (mm: MeetingMinutes, value: boolean): Promise<boolean> {
-  const client = getClient()
-  const me = getCurrentAccount().uuid
-  if (!value || mm.members.includes(me)) {
-    await client.update(mm, { private: value })
-    return true
-  }
-  const confirmed = await new Promise<boolean>((resolve) => {
-    showPopup(
-      MessageBox,
-      { label: love.string.CloseRoom, message: love.string.CloseRoomNotMember, okLabel: love.string.JoinAndCloseRoom },
-      undefined,
-      (result?: boolean) => {
-        resolve(result === true)
-      }
-    )
-  })
-  if (!confirmed) return false
-  await client.update(mm, { private: true, $push: { members: me } })
-  return true
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {

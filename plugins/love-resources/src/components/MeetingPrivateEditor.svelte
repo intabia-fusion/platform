@@ -18,7 +18,7 @@
   import type { MeetingMinutes } from '@hcengineering/love'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { BooleanEditor } from '@hcengineering/view-resources'
-  import { setMeetingPrivate } from '../utils'
+  import { setMeetingPrivate } from '../meetingPrivacy'
 
   export let object: MeetingMinutes
   export let value: boolean | undefined
@@ -30,14 +30,16 @@
 
   const me = getCurrentAccount()
 
-  // Mirrors checkSpacePermissions: only organizers and the workspace owner may change privacy.
+  // Organizers and the workspace owner. Stricter than checkSpacePermissions, which lets anyone close a meeting without owners.
   $: canChange = me.role === AccountRole.Owner || (object.owners ?? []).includes(me.uuid)
 
   let reset = 0
 
   async function change (val: boolean): Promise<void> {
     if (val === object.private) return
-    if (!(await setMeetingPrivate(object, val))) reset++
+    await setMeetingPrivate(object, val)
+    // Remount from object.private: cancel and server refusal (swallowed by the client middleware) leave it unchanged.
+    reset++
   }
 </script>
 
