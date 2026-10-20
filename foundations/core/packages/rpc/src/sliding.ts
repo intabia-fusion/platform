@@ -1,5 +1,8 @@
 import type { RateLimitInfo } from './rpc'
 
+// Callers key by client address or a hash of a presented key, so the keys come from outside.
+const MAX_TRACKED_KEYS = 10000
+
 export class SlidingWindowRateLimitter {
   private readonly rateLimits = new Map<
     string,
@@ -9,6 +12,8 @@ export class SlidingWindowRateLimitter {
       resetTime: number
     }
   >()
+
+  private lastSweep = 0
 
   constructor (
     readonly rateLimitMax: number,
@@ -25,6 +30,9 @@ export class SlidingWindowRateLimitter {
 
     let rateLimit = this.rateLimits.get(groupId)
     if (rateLimit == null) {
+      if (this.rateLimits.size > MAX_TRACKED_KEYS && now - this.lastSweep >= this.rateLimitWindow) {
+        this.dropIdleKeys(now, windowStart)
+      }
       rateLimit = { requests: [], resetTime: now + this.rateLimitWindow, rejectedRequests: 0 }
       this.rateLimits.set(groupId, rateLimit)
     }
@@ -64,6 +72,17 @@ export class SlidingWindowRateLimitter {
       current: rateLimit.requests.length,
       limit: this.rateLimitMax,
       reset: rateLimit.resetTime
+    }
+  }
+
+  // A key whose requests all left the window holds no state: the next call rebuilds it as new.
+  // At most once per window, so a flood of new keys cannot turn every call into a full scan.
+  private dropIdleKeys (now: number, windowStart: number): void {
+    this.lastSweep = now
+    for (const [key, limit] of this.rateLimits) {
+      if (limit.requests.every((time) => time <= windowStart)) {
+        this.rateLimits.delete(key)
+      }
     }
   }
 

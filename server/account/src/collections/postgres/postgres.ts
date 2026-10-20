@@ -38,6 +38,8 @@ import type {
   AccountDB,
   Account,
   OTP,
+  OtpIssue,
+  OtpPurpose,
   WorkspaceInvite,
   AccountEvent,
   SocialId,
@@ -588,7 +590,7 @@ export class PostgresAccountDB implements AccountDB {
     this.socialId = new PostgresDbCollection<SocialId, '_id'>('social_id', client, {
       ns,
       idKey: '_id',
-      timestampFields: ['createdOn', 'verifiedOn'],
+      timestampFields: ['createdOn', 'verifiedOn', 'loginOtpMissedOn'],
       withRetryClient
     })
     this.workspaceStatus = new PostgresDbCollection<WorkspaceStatus>('workspace_status', client, {
@@ -1713,16 +1715,75 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
-  async consumeOtp (socialId: PersonId, code: string): Promise<boolean> {
+  async withOtpIssue<T>(socialId: PersonId, purpose: OtpPurpose, fn: (issue: OtpIssue) => Promise<T>): Promise<T> {
+    return await this.withRetry(async (rTx) => {
+      // Social id first, then its codes: bumpOtpAttempts takes them in that order too, so no deadlock.
+      const [row] = await this.socialId.unsafe(
+        `SELECT * FROM ${this.socialId.getTableName()} WHERE _id = $1 FOR UPDATE`,
+        [socialId],
+        rTx
+      )
+      if (row === undefined) {
+        throw new Error(`Social id ${socialId} not found`)
+      }
+      const [newest] = await this.otp.find({ socialId, purpose }, { createdOn: 'descending' }, 1, rTx)
+      return await fn({
+        socialId: this.socialId.convertToObj(row),
+        newest,
+        replace: async (otp) => {
+          await this.otp.deleteMany({ socialId, purpose }, rTx)
+          await this.otp.insertOne(otp, rTx)
+        }
+      })
+    })
+  }
+
+  async consumeOtp (socialId: PersonId, purpose: OtpPurpose, code: string): Promise<boolean> {
     // Atomic: delete the row only if it exists and is unexpired; RETURNING tells us if we won.
     return await this.withRetry(async (rTx) => {
       const res: any = await rTx.unsafe(
         `DELETE FROM ${this.otp.getTableName()}
-         WHERE social_id = $1 AND code = $2 AND expires_on > $3
+         WHERE social_id = $1 AND purpose = $2 AND code = $3 AND expires_on > $4
          RETURNING code`,
-        [socialId, code, Date.now()]
+        [socialId, purpose, code, Date.now()]
       )
       return res.length > 0
+    })
+  }
+
+  async bumpOtpAttempts (
+    socialId: PersonId,
+    purpose: OtpPurpose,
+    guess: string,
+    maxAttempts: number,
+    missDecayMs: number
+  ): Promise<OTP[]> {
+    // Parallel guesses queue on the row lock and each reads its own counter.
+    return await this.withRetry(async (rTx) => {
+      const ts = Date.now()
+      if (purpose === 'login') {
+        // The social id is updated below; locking it before the codes keeps the order of withOtpIssue.
+        await rTx.unsafe(`SELECT 1 FROM ${this.socialId.getTableName()} WHERE _id = $1 FOR UPDATE`, [socialId])
+      }
+      const res: any = await rTx.unsafe(
+        `UPDATE ${this.otp.getTableName()} SET attempts = attempts + 1
+         WHERE social_id = $1 AND purpose = $2 AND expires_on > $3
+         RETURNING *`,
+        [socialId, purpose, ts]
+      )
+      const live: OTP[] = res.map((row: any) => this.otp.convertToObj(row))
+      // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
+      const open = live.filter((otp) => otp.attempts <= maxAttempts)
+      if (purpose === 'login' && open.length > 0 && open.every((otp) => otp.code !== guess)) {
+        await rTx.unsafe(
+          `UPDATE ${this.socialId.getTableName()}
+           SET login_otp_misses = CASE WHEN login_otp_missed_on < $3 THEN 1 ELSE login_otp_misses + 1 END,
+               login_otp_missed_on = $2
+           WHERE _id = $1`,
+          [socialId, ts, ts - missDecayMs]
+        )
+      }
+      return live
     })
   }
 

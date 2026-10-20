@@ -7,6 +7,8 @@ export * from './utils'
 
 export interface PublicLink extends Doc {
   attachedTo: Ref<Doc>
+  // Unset on links created before it was recorded.
+  attachedToClass?: Ref<Class<Doc>>
   url: string
   location: Location
   restrictions: Restrictions

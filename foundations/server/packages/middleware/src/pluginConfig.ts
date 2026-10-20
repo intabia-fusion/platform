@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,7 +31,7 @@ import {
   type TxMiddlewareResult,
   type PipelineContext
 } from '@hcengineering/server-core'
-import { aiBotAccountEmail } from './identity'
+import { isAiBotAccount } from './identity'
 
 /**
  * @public
@@ -50,7 +51,7 @@ export class PluginConfigurationMiddleware extends BaseMiddleware implements Mid
 
   tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const account = ctx.contextData.account
-    if (account.uuid === systemAccountUuid || account.fullSocialIds.some((it) => it.value === aiBotAccountEmail)) {
+    if (account.uuid === systemAccountUuid || isAiBotAccount(account)) {
       // We pass for system accounts and services.
       return this.provideTx(ctx, txes)
     }

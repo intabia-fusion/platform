@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,9 +43,9 @@ import {
   type WorkspaceStats,
   type WorkspaceStatsByType
 } from './client'
-import { NotFoundError } from './error'
+import { InvalidNameError, NotFoundError } from './error'
 
-export { DatalakeClient, type WorkspaceStats, type WorkspaceStatsByType }
+export { DatalakeClient, InvalidNameError, type WorkspaceStats, type WorkspaceStatsByType }
 
 /**
  * @public
@@ -307,6 +308,10 @@ async function withRetry<T> (
     try {
       return await op()
     } catch (err: any) {
+      // the same name is refused every time
+      if (err instanceof InvalidNameError) {
+        throw err
+      }
       error = err
       ctx.error('error', { err })
       if (retries !== 0 && delay > 0) {

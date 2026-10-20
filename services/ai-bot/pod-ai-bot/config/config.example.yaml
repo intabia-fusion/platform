@@ -10,7 +10,6 @@ accounts:
 bot:
   firstName: "Julia"  # First name of the AI bot
   lastName: "AI"  # Last name of the AI bot
-  password: "password"  # Password for the bot account (default: password)
   avatar:
     path: "./avatar.png"  # Path to avatar image (default: ./assets/avatar.png)
     name: "ai_bot_avatar_v1"  # Avatar name (default: ai_bot_avatar)

@@ -79,6 +79,10 @@ export interface DbAdapter extends LowLevelStorage {
 
   helper?: () => DomainHelperOperations
 
+  // Set by an adapter whose findAll limits a DocGuest to its link (addDocGuestSecurity).
+  // A guest gets nothing from the others.
+  docGuestSecurity?: boolean
+
   reserveContext?: (id: string) => () => void
   close: () => Promise<void>
   findAll: <T extends Doc>(

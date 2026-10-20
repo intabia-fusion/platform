@@ -21,7 +21,7 @@
   import type { SocialId, Timestamp } from '@hcengineering/core'
   import { buildSocialIdString, getCurrentAccount, setCurrentAccount } from '@hcengineering/core'
   import type { Status } from '@hcengineering/platform'
-  import { OK, PlatformError, Severity, unknownError } from '@hcengineering/platform'
+  import platform, { OK, PlatformError, Severity, unknownError } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
 
   import AddSocialId from './AddSocialId.svelte'
@@ -66,7 +66,10 @@
       retryOn = otpInfo.retryOn
       canResend = false
     } catch (err: any) {
-      Analytics.handleError(err)
+      // The wait after wrong codes is an answer for the form to show, not an error to report.
+      if (!(err instanceof PlatformError && err.status.code === platform.status.TooManyOtpAttempts)) {
+        Analytics.handleError(err)
+      }
       if (err instanceof PlatformError) {
         status = err.status
       } else {

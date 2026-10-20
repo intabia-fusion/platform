@@ -14,7 +14,7 @@
 import type { Class, Client, Doc, Ref } from '@hcengineering/core'
 import type { Location } from '@hcengineering/ui'
 import { Analytics } from '@hcengineering/analytics'
-import guest, { type PublicLink, createPublicLink } from '@hcengineering/guest'
+import guest, { type PublicLink, createPublicLink, getPublicLinkSpace } from '@hcengineering/guest'
 import view from '@hcengineering/view'
 import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
 import { getMetadata } from '@hcengineering/platform'
@@ -45,8 +45,10 @@ async function sleep (ms: number): Promise<void> {
  * Returns the link if it exists or after creating it; the link's url may be set asynchronously by the server.
  */
 export async function ensurePublicLink (client: Client, doc: Doc): Promise<PublicLink | undefined> {
+  // A link left in the previous space of a moved document is revoked: do not hand it out.
+  const query = { attachedTo: doc._id, space: getPublicLinkSpace(client.getHierarchy(), doc) }
   const readLink = async (): Promise<PublicLink | undefined> => {
-    const current = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id })
+    const current = await client.findOne(guest.class.PublicLink, query)
     return current?.url !== undefined && current.url !== '' ? current : undefined
   }
 
@@ -55,7 +57,7 @@ export async function ensurePublicLink (client: Client, doc: Doc): Promise<Publi
     return existing
   }
 
-  const created = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id })
+  const created = await client.findOne(guest.class.PublicLink, query)
   if (created === undefined) {
     const location = await getObjectLocation(client, doc)
     await createPublicLink(client as any, doc, location)

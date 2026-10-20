@@ -9,7 +9,7 @@
   import type { Blob, Ref } from '@hcengineering/core'
   import presentation, { PDFViewer, createQuery, getClient } from '@hcengineering/presentation'
   import type { PublicLink } from '@hcengineering/guest'
-  import guest, { createPublicLink } from '@hcengineering/guest'
+  import guest, { createPublicLink, getPublicLinkSpace } from '@hcengineering/guest'
   import view from '@hcengineering/view'
   import type { Location } from '@hcengineering/ui'
   import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
@@ -29,6 +29,8 @@
   let title = ''
 
   $: objId = object?._id
+  // A link left in the previous space of a moved document is revoked: do not print it.
+  $: objSpace = object !== undefined ? getPublicLinkSpace(client.getHierarchy(), object) : undefined
 
   const linkQuery = createQuery()
   $: {
@@ -38,7 +40,7 @@
     isLinkLoading = true
     linkQuery.query(
       guest.class.PublicLink,
-      { attachedTo: objId },
+      { attachedTo: objId, space: objSpace },
       (res) => {
         link = res[0]
         isLinkLoading = false

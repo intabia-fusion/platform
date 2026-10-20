@@ -1,5 +1,6 @@
 //
 // Copyright © 2024-2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,6 +16,7 @@
 
 import {
   type AccountUuid,
+  aiBotAccountEmail,
   type Blob,
   buildSocialIdString,
   type Class,
@@ -36,7 +38,6 @@ export type * from './rest'
 
 export const aiBotId = 'ai-bot' as Plugin
 
-export const aiBotAccountEmail = 'huly.ai.bot@hc.engineering'
 export const aiBotEmailSocialKey = buildSocialIdString({
   type: SocialIdType.EMAIL,
   value: aiBotAccountEmail

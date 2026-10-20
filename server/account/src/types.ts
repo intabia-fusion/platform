@@ -57,6 +57,8 @@ export interface SocialId extends SocialIdBase {
   personUuid: PersonUuid
   createdOn?: Timestamp
   verifiedOn?: Timestamp
+  loginOtpMisses?: number // Wrong guesses at sign in codes in a row; a confirmed sign in resets it
+  loginOtpMissedOn?: Timestamp // When the last of them was made
 }
 
 export interface Account {
@@ -162,11 +164,26 @@ export interface Workspace {
   language?: string
 }
 
+/** A sign in code, or a code that confirms an action of the signed in person (leave, delete). */
+export type OtpPurpose = 'login' | 'operation'
+
 export interface OTP {
   socialId: PersonId
+  purpose: OtpPurpose
   code: string
   expiresOn: Timestamp
   createdOn: Timestamp
+  attempts: number
+}
+
+/** What issuing a code sees and may do while it holds the lock of the social id. */
+export interface OtpIssue {
+  /** The social id as it is under the lock: its counters are current. */
+  socialId: SocialId
+  /** The newest code of the purpose as it is under the lock. */
+  newest: OTP | undefined
+  /** Replaces the codes of the purpose with this one, in the same transaction. */
+  replace: (otp: Omit<OTP, 'attempts'>) => Promise<void>
 }
 
 export interface WorkspaceInvite {
@@ -644,9 +661,21 @@ export interface AccountDB {
   getWorkspaceActivityStats: (workspace: WorkspaceUuid, from: Timestamp) => Promise<WorkspaceActivityPoint[]>
   getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
   getAccountActivityStats: (account: AccountUuid, from: Timestamp) => Promise<AccountActivityStats>
-  // Atomically consume an OTP: deletes the (socialId, code) row if it exists and is unexpired,
-  // returns true only if THIS call deleted it. Prevents one code confirming two concurrent ops.
-  consumeOtp: (socialId: PersonId, code: string) => Promise<boolean>
+  // Atomically consume an OTP: deletes the (socialId, purpose, code) row if it exists and is
+  // unexpired, returns true only if THIS call deleted it. Prevents one code confirming two ops.
+  consumeOtp: (socialId: PersonId, purpose: OtpPurpose, code: string) => Promise<boolean>
+  // Runs `fn` under the row lock of the social id, so issues of codes for it queue and each sees
+  // what the previous wrote. `fn` runs again on a transaction retry: it must only read `issue`.
+  withOtpIssue: <T>(socialId: PersonId, purpose: OtpPurpose, fn: (issue: OtpIssue) => Promise<T>) => Promise<T>
+  // Counts a guess on every unexpired code of the social id and purpose, atomically. A wrong
+  // guess at a login code that still takes guesses also counts as a miss (loginOtpMisses).
+  bumpOtpAttempts: (
+    socialId: PersonId,
+    purpose: OtpPurpose,
+    guess: string,
+    maxAttempts: number,
+    missDecayMs: number
+  ) => Promise<OTP[]>
   generatePersonUuid: () => Promise<PersonUuid>
   ensurePerson: (
     socialType: SocialIdType,

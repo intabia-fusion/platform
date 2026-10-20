@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,7 +25,7 @@ import { cacheControl } from '../const'
 import { type Datalake, wrapETag } from '../datalake'
 import { getBufferSha256, getFileSha256 } from '../hash'
 import { type LimitsState } from '../limits'
-import { type RequestWithAuth } from '../middleware'
+import { type RequestWithAuth, isServiceToken } from '../middleware'
 import { type TemporaryDir } from '../tempdir'
 
 const safeInlineTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp']
@@ -262,8 +263,7 @@ export async function handleUploadFormData (
   const workspace = req.params.workspace as WorkspaceUuid
 
   // Block user uploads when workspace disk or payment limit is exhausted (service tokens bypass).
-  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
-  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+  if (!isServiceToken((req as RequestWithAuth).token) && limitsState?.isExhausted(workspace) === true) {
     res.status(413).json({ message: 'Resource limit exceeded' })
     return
   }

@@ -160,11 +160,16 @@ export async function listWorkspaces (
 ): Promise<WorkspaceInfoWithStatus[]> {
   const { region, mode, visited } = params
   const isDisabled = params.isDisabled === undefined ? false : params.isDisabled
-  const { extra } = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decodeTokenVerbose(ctx, token)
 
   if (
     // 'love' polls recently visited workspaces to find meetings left hanging after a restart.
-    !['tool', 'backup', 'admin', 'github', 'workspace', 'love', 'billing'].includes(extra?.service) &&
+    !verifyAllowedServices(
+      ['tool', 'backup', 'admin', 'github', 'workspace', 'love', 'billing'],
+      extra,
+      false,
+      account
+    ) &&
     extra?.admin !== 'true' &&
     extra?.billingAdmin !== 'true'
   ) {
@@ -2054,7 +2059,10 @@ export async function findFullSocialIdBySocialKey (
   params: { socialKey: string }
 ): Promise<SocialId | null> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['telegram-bot', 'gmail', 'tool', 'workspace', 'google-calendar', 'notifications'], extra)
+  verifyAllowedServices(
+    ['telegram-bot', 'gmail', 'tool', 'workspace', 'google-calendar', 'notifications', 'aibot'],
+    extra
+  )
 
   const { socialKey } = params
 

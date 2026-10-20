@@ -16,6 +16,7 @@
 import { MeasureMetricsContext, type WorkspaceIds, type WorkspaceUuid } from '@hcengineering/core'
 import { Readable } from 'stream'
 import { DatalakeService } from '..'
+import { InvalidNameError } from '../error'
 
 describe('DatalakeService.put', () => {
   const ctx = new MeasureMetricsContext('test', {})
@@ -56,4 +57,39 @@ describe('DatalakeService.put', () => {
     await service().put(ctx, wsIds, 'blob', Buffer.from('hello'), 'text/plain')
     expect(uploadedSizes).toEqual([5, 5])
   })
+})
+
+describe('DatalakeService with a name that leads away from the blob', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+  const wsIds: WorkspaceIds = { uuid: 'ws' as WorkspaceUuid, url: 'ws' }
+
+  const service = (): DatalakeService =>
+    new DatalakeService({ kind: 'datalake', name: 'datalake', endpoint: 'http://datalake' }, { retryInterval: 0 })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  // the same name is refused every time, so there is nothing to retry or to log five times
+  it.each(['', '.', '..', ['.'] as unknown as string])(
+    'refuses %j at once, without a request or retries',
+    async (name) => {
+      const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('data'))
+      const error = jest.spyOn(ctx, 'error')
+      const datalake = service()
+
+      await expect(datalake.stat(ctx, wsIds, name)).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.get(ctx, wsIds, name)).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.read(ctx, wsIds, name)).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.partial(ctx, wsIds, name, 0)).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.remove(ctx, wsIds, [name])).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.getUrl(ctx, wsIds, name)).rejects.toBeInstanceOf(InvalidNameError)
+      await expect(datalake.put(ctx, wsIds, name, Buffer.from('data'), 'text/plain')).rejects.toBeInstanceOf(
+        InvalidNameError
+      )
+
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(error).not.toHaveBeenCalled()
+    }
+  )
 })

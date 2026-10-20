@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { aiBotAccountEmail } from '@hcengineering/core'
 import { getMigrations } from '../collections/postgres/migrations'
 
 const ns = 'global_account'
@@ -150,5 +151,92 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v51 needs_rei
     expect(ddl).not.toMatch(/DEFAULT/i)
     expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
     expect(ddl).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+  })
+})
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v53 otp attempts [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddl = migrations.find(([id]) => id === 'account_db_v53_otp_attempts')?.[1] ?? ''
+
+  it('registers the migration once, after the v52 data fix', () => {
+    expect(ids.filter((id) => id === 'account_db_v53_otp_attempts')).toHaveLength(1)
+    expect(ids.indexOf('account_db_v53_otp_attempts')).toBeGreaterThan(
+      ids.indexOf('account_db_v52_anonymous_account_read_only')
+    )
+  })
+
+  it('adds a not-null counter that starts at zero, alone in its batch', () => {
+    expect(ddl).toContain(
+      `ADD COLUMN IF NOT EXISTS attempts ${flavor === 'cockroach' ? 'INT4' : 'INTEGER'} NOT NULL DEFAULT 0`
+    )
+    expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
+    expect(ddl).toContain(`${ns}.otp`)
+    expect(ddl).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+  })
+})
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v54 otp purpose [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddl = migrations.find(([id]) => id === 'account_db_v54_otp_purpose')?.[1] ?? ''
+
+  it('registers the migration once, after v53', () => {
+    expect(ids.filter((id) => id === 'account_db_v54_otp_purpose')).toHaveLength(1)
+    expect(ids.indexOf('account_db_v54_otp_purpose')).toBeGreaterThan(ids.indexOf('account_db_v53_otp_attempts'))
+  })
+
+  it('adds a not-null purpose that defaults to login, alone in its batch and without a backfill', () => {
+    expect(ddl).toContain(
+      `ADD COLUMN IF NOT EXISTS purpose ${flavor === 'cockroach' ? 'STRING' : 'TEXT'} NOT NULL DEFAULT 'login'`
+    )
+    expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
+    expect(ddl).toContain(`${ns}.otp`)
+    expect(ddl).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+  })
+})
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v55 login otp misses [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddl = migrations.find(([id]) => id === 'account_db_v55_social_id_login_otp_misses')?.[1] ?? ''
+
+  it('registers the migration once, after v54', () => {
+    expect(ids.filter((id) => id === 'account_db_v55_social_id_login_otp_misses')).toHaveLength(1)
+    expect(ids.indexOf('account_db_v55_social_id_login_otp_misses')).toBeGreaterThan(
+      ids.indexOf('account_db_v54_otp_purpose')
+    )
+  })
+
+  it('adds a counter and a timestamp that start at zero, on one table, without a backfill', () => {
+    expect(ddl).toContain(
+      `ADD COLUMN IF NOT EXISTS login_otp_misses ${flavor === 'cockroach' ? 'INT4' : 'INTEGER'} NOT NULL DEFAULT 0`
+    )
+    expect(ddl).toContain(
+      `ADD COLUMN IF NOT EXISTS login_otp_missed_on ${flavor === 'cockroach' ? 'INT8' : 'BIGINT'} NOT NULL DEFAULT 0`
+    )
+    expect(ddl.match(/ALTER TABLE/g)).toHaveLength(1)
+    expect(ddl).toContain(`${ns}.social_id`)
+    expect(ddl).not.toMatch(/UPDATE |INSERT INTO|DELETE FROM/i)
+  })
+})
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v56 ai bot credentials reset [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const ddl = migrations.find(([id]) => id === 'account_db_v56_ai_bot_credentials_reset')?.[1] ?? ''
+
+  it('registers the migration once, after v55', () => {
+    expect(ids.filter((id) => id === 'account_db_v56_ai_bot_credentials_reset')).toHaveLength(1)
+    expect(ids.indexOf('account_db_v56_ai_bot_credentials_reset')).toBeGreaterThan(
+      ids.indexOf('account_db_v55_social_id_login_otp_misses')
+    )
+  })
+
+  it('only deletes, and matches the bot email social id by type and value', () => {
+    expect(ddl.match(/DELETE FROM/g)).toHaveLength(3)
+    expect(ddl).toContain(`${ns}.account_passwords`)
+    expect(ddl).toContain(`type = 'email' AND value = '${aiBotAccountEmail}'`)
+    expect(ddl).not.toMatch(/ALTER TABLE|CREATE |DROP |UPDATE |INSERT INTO/i)
   })
 })

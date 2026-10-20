@@ -15,6 +15,7 @@
 import core, {
   AccountRole,
   type AccountUuid,
+  aiBotAccountEmail,
   type Class,
   type DomainParams,
   type DomainResult,
@@ -40,7 +41,6 @@ import {
 } from '@hcengineering/server-core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
-import { aiBotAccountEmail } from './identity'
 
 const GUEST_ROLES = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest])
 

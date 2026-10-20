@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,7 +18,7 @@ import { type MeasureContext, type WorkspaceUuid, concatLink } from '@hcengineer
 import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 import { Readable } from 'stream'
 
-import { DatalakeError, NetworkError, NotFoundError } from './error'
+import { DatalakeError, InvalidNameError, NetworkError, NotFoundError } from './error'
 import { unwrapETag } from './utils'
 
 /** Objects below this size, or of unknown size, go in one request read fully into memory. */
@@ -110,19 +111,19 @@ export class DatalakeClient {
   }
 
   getObjectUrl (ctx: MeasureContext, workspace: WorkspaceUuid, objectName: string): string {
-    const path = `/blob/${workspace}/${encodeURIComponent(objectName)}`
+    const path = `/blob/${objectPath(workspace, objectName)}`
     return concatLink(this.endpoint, path)
   }
 
   async getWorkspaceStats (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<WorkspaceStats> {
-    const path = `/stats/${workspace}`
+    const path = `/stats/${workspacePath(workspace)}`
     const url = new URL(concatLink(this.endpoint, path))
     const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })
     return (await response.json()) as WorkspaceStats
   }
 
   async getWorkspaceStatsByType (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<WorkspaceStatsByType[]> {
-    const path = `/stats/${workspace}/by-type`
+    const path = `/stats/${workspacePath(workspace)}/by-type`
     const url = new URL(concatLink(this.endpoint, path))
     const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })
     return (await response.json()) as WorkspaceStatsByType[]
@@ -135,7 +136,7 @@ export class DatalakeClient {
     limit: number = 100,
     prefix?: string
   ): Promise<ListObjectOutput> {
-    const path = `/blob/${workspace}`
+    const path = `/blob/${workspacePath(workspace)}`
     const url = new URL(concatLink(this.endpoint, path))
     url.searchParams.append('limit', String(limit))
     if (cursor !== undefined) {
@@ -290,8 +291,9 @@ export class DatalakeClient {
     stream: Readable | Buffer | string,
     params: UploadObjectParams
   ): Promise<ObjectMetadata> {
-    const path = `/upload/form-data/${workspace}`
+    const path = `/upload/form-data/${workspacePath(workspace)}`
     const url = concatLink(this.endpoint, path)
+    checkSegment('object name', objectName)
 
     const buffer = await toBuffer(stream)
     const file = new File([new Uint8Array(buffer)], objectName, {
@@ -367,7 +369,7 @@ export class DatalakeClient {
       secretAccessKey: string
     }
   ): Promise<void> {
-    const path = `/upload/s3/${workspace}/${encodeURIComponent(objectName)}`
+    const path = `/upload/s3/${objectPath(workspace, objectName)}`
     const url = concatLink(this.endpoint, path)
 
     await fetchSafe(ctx, url, {
@@ -381,7 +383,7 @@ export class DatalakeClient {
   }
 
   async getS3UploadParams (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<R2UploadParams> {
-    const path = `/upload/s3/${workspace}`
+    const path = `/upload/s3/${workspacePath(workspace)}`
     const url = concatLink(this.endpoint, path)
 
     const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })
@@ -397,7 +399,7 @@ export class DatalakeClient {
       filename: string
     }
   ): Promise<void> {
-    const path = `/upload/s3/${workspace}/${encodeURIComponent(objectName)}`
+    const path = `/upload/s3/${objectPath(workspace, objectName)}`
     const url = concatLink(this.endpoint, path)
 
     await fetchSafe(ctx, url, {
@@ -418,7 +420,7 @@ export class DatalakeClient {
     objectName: string,
     params: UploadObjectParams
   ): Promise<MultipartUpload> {
-    const path = `/upload/multipart/${workspace}/${encodeURIComponent(objectName)}`
+    const path = `/upload/multipart/${objectPath(workspace, objectName)}`
     const url = concatLink(this.endpoint, path)
 
     try {
@@ -444,7 +446,7 @@ export class DatalakeClient {
     partNumber: number,
     data: Readable | Buffer | string
   ): Promise<MultipartUploadPart> {
-    const path = `/upload/multipart/${workspace}/${encodeURIComponent(objectName)}/part`
+    const path = `/upload/multipart/${objectPath(workspace, objectName)}/part`
     const url = new URL(concatLink(this.endpoint, path))
     url.searchParams.set('uploadId', multipart.uploadId)
     url.searchParams.set('partNumber', partNumber.toString())
@@ -471,7 +473,7 @@ export class DatalakeClient {
     multipart: MultipartUpload,
     parts: MultipartUploadPart[]
   ): Promise<ObjectMetadata> {
-    const path = `/upload/multipart/${workspace}/${encodeURIComponent(objectName)}/complete`
+    const path = `/upload/multipart/${objectPath(workspace, objectName)}/complete`
     const url = new URL(concatLink(this.endpoint, path))
     url.searchParams.set('uploadId', multipart.uploadId)
 
@@ -497,7 +499,7 @@ export class DatalakeClient {
     objectName: string,
     multipart: MultipartUpload
   ): Promise<void> {
-    const path = `/upload/multipart/${workspace}/${encodeURIComponent(objectName)}/abort`
+    const path = `/upload/multipart/${objectPath(workspace, objectName)}/abort`
     const url = new URL(concatLink(this.endpoint, path))
     url.searchParams.set('uploadId', multipart.uploadId)
 
@@ -508,6 +510,23 @@ export class DatalakeClient {
       throw new DatalakeError('Failed to abort multipart upload')
     }
   }
+}
+
+// fetch resolves "." and ".." in a url path and encodeURIComponent leaves them alone: as a
+// workspace or a name they lead away from the blob, to the blob listing or to its parent
+function checkSegment (what: 'workspace' | 'object name', value: string): string {
+  if (typeof value !== 'string' || value === '' || value === '.' || value === '..') {
+    throw new InvalidNameError(`Invalid ${what}`)
+  }
+  return value
+}
+
+function workspacePath (workspace: string): string {
+  return encodeURIComponent(checkSegment('workspace', workspace))
+}
+
+function objectPath (workspace: string, objectName: string): string {
+  return `${workspacePath(workspace)}/${encodeURIComponent(checkSegment('object name', objectName))}`
 }
 
 async function toBuffer (data: Buffer | string | Readable): Promise<Buffer> {
@@ -531,7 +550,8 @@ async function retryStage<T> (op: () => Promise<T>): Promise<T> {
   return await withRetry(op, {
     maxRetries: 5,
     // 404 is permanent for these endpoints; retrying only adds delay.
-    isRetryable: (err) => !(err instanceof NotFoundError) && (err as any)?.name !== 'NotFoundError',
+    isRetryable: (err) =>
+      !(err instanceof NotFoundError) && !(err instanceof InvalidNameError) && (err as any)?.name !== 'NotFoundError',
     delayStrategy: DelayStrategyFactory.exponentialBackoff({
       initialDelayMs: 200,
       maxDelayMs: 5000,

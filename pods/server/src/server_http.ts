@@ -14,11 +14,6 @@
 // limitations under the License.
 //
 
-import {
-  getClient as getAccountClientRaw,
-  isWorkspaceLoginInfo,
-  type AccountClient
-} from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
 import {
   type Class,
@@ -29,21 +24,11 @@ import {
   systemAccountUuid,
   type MeasureContext,
   type Tx,
-  type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { PlatformError, Status, UNAUTHORIZED, unknownStatus } from '@hcengineering/platform'
+import { Status, UNAUTHORIZED, unknownStatus } from '@hcengineering/platform'
 import { RPCHandler, type Response } from '@hcengineering/rpc'
-import {
-  doSessionOp,
-  getFile,
-  getFileRange,
-  getStatistics,
-  processRequest,
-  wipeStatistics,
-  type BlobResponse,
-  type WebsocketData
-} from '@hcengineering/server'
+import { doSessionOp, getStatistics, processRequest, wipeStatistics, type WebsocketData } from '@hcengineering/server'
 import {
   LOGGING_ENABLED,
   pingConst,
@@ -55,38 +40,16 @@ import {
 import { decodeToken, hasAdminSession, isHumanAdmin, type Token } from '@hcengineering/server-token'
 import 'bufferutil'
 import cors from 'cors'
-import express, { type Response as ExpressResponse, type NextFunction, type Request } from 'express'
+import express from 'express'
 import http, { type IncomingMessage } from 'http'
 import morgan from 'morgan'
 import os from 'os'
 import { compress } from 'snappy'
-import { Transform } from 'stream'
 import { setImmediate } from 'timers/promises'
 import 'utf-8-validate'
 import { WebSocketServer, type RawData, type WebSocket } from 'ws'
 import { registerRPC } from './rpc'
 import { retrieveJson } from './utils'
-
-const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB limit
-
-const KEEP_ALIVE_TIMEOUT = 5 // seconds
-const KEEP_ALIVE_MAX = 1000
-const KEEP_ALIVE_HEADERS = {
-  Connection: 'keep-alive',
-  'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
-}
-
-export type RequestHandler = (req: Request, res: ExpressResponse, next?: NextFunction) => Promise<void>
-
-const catchError = (fn: RequestHandler) => (req: Request, res: ExpressResponse, next: NextFunction) => {
-  void (async () => {
-    try {
-      await fn(req, res, next)
-    } catch (err: unknown) {
-      next(err)
-    }
-  })()
-}
 
 // Management endpoints take the token from the Authorization header only: a token in the query
 // string leaks into proxy access logs and browser history. The system account covers unattended
@@ -127,24 +90,6 @@ export function startHttpServer (
   accountsUrl: string,
   externalStorage: StorageAdapter
 ): () => Promise<void> {
-  function getAccountClient (token?: string): AccountClient {
-    return getAccountClientRaw(accountsUrl, token)
-  }
-
-  async function getWorkspaceIds (token: string): Promise<WorkspaceIds> {
-    const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
-
-    if (!isWorkspaceLoginInfo(wsLoginInfo)) {
-      throw new Error('Invalid workspace login info by token')
-    }
-
-    return {
-      uuid: wsLoginInfo.workspace,
-      dataId: wsLoginInfo.workspaceDataId,
-      url: wsLoginInfo.workspaceUrl
-    }
-  }
-
   if (LOGGING_ENABLED) {
     ctx.info('starting server on', {
       port,
@@ -356,143 +301,6 @@ export function startHttpServer (
       res.end()
     }
   })
-
-  app.put(
-    '/api/v1/blob',
-    catchError(async (req, res) => {
-      let received = 0
-      try {
-        const authHeader = req.headers.authorization
-        if (authHeader === undefined) {
-          res.status(401).end(JSON.stringify({ error: 'Unauthorized' }))
-          return
-        }
-
-        const token = authHeader.split(' ')[1]
-        const wsIds = await getWorkspaceIds(token)
-
-        if (wsIds.uuid == null) {
-          res.status(403).end(JSON.stringify({ error: 'No workspace found' }))
-          return
-        }
-
-        const name = req.query.name as string
-        const contentType = req.query.contentType as string
-        const size = parseInt((req.query.size as string) ?? '-1')
-
-        if (size > MAX_FILE_SIZE) {
-          res.writeHead(413, { 'Content-Type': 'application/json', ...KEEP_ALIVE_HEADERS })
-          res.end(JSON.stringify({ error: 'File too large' }))
-          return
-        }
-        if (Number.isNaN(size)) {
-          ctx.error('/api/v1/blob put error', {
-            message: 'invalid NaN file size',
-            name,
-            workspace: wsIds.uuid
-          })
-          res.writeHead(404, { ...KEEP_ALIVE_HEADERS })
-          res.end()
-          return
-        }
-        // The declared size is not trusted: count what is actually read.
-        const body = new Transform({
-          transform (chunk: Buffer, encoding, callback) {
-            received += chunk.length
-            callback(received > MAX_FILE_SIZE ? new Error('File too large') : null, chunk)
-          }
-        })
-        req.on('error', (err) => body.destroy(err))
-        await ctx.with(
-          'storage upload',
-          {},
-          async (ctx) => {
-            await externalStorage.put(
-              ctx,
-              wsIds,
-              name,
-              size === 0 ? '' : req.pipe(body),
-              contentType,
-              size !== -1 ? size : undefined
-            )
-            res.writeHead(200, {
-              ...KEEP_ALIVE_HEADERS,
-              'Cache-Control': 'no-cache'
-            })
-            res.end(JSON.stringify({ success: true }))
-          },
-          { contentType, workspace: wsIds.uuid }
-        )
-      } catch (err: any) {
-        if (received > MAX_FILE_SIZE) {
-          // The rest of the body is left unread, so the connection cannot be reused.
-          res.writeHead(413, { 'Content-Type': 'application/json', Connection: 'close' })
-          res.end(JSON.stringify({ error: 'File too large' }))
-          return
-        }
-        Analytics.handleError(err)
-        ctx.error('/api/v1/blob put error', { err })
-        res.writeHead(200, {
-          ...KEEP_ALIVE_HEADERS,
-          'content-type': 'application/json'
-        })
-        res.end(JSON.stringify({ error: err.message }))
-      }
-    })
-  )
-
-  app.get(
-    '/api/v1/blob',
-    catchError(async (req, res) => {
-      try {
-        const authHeader = req.headers.authorization
-        if (authHeader === undefined) {
-          res.status(401).send({ error: 'Unauthorized' })
-          return
-        }
-
-        const token = authHeader.split(' ')[1]
-        const wsIds = await getWorkspaceIds(token)
-
-        if (wsIds.uuid == null) {
-          res.status(403).send({ error: 'No workspace found' })
-          return
-        }
-
-        const name = req.query.name as string
-
-        const range = req.headers.range
-        if (range !== undefined) {
-          ctx
-            .with('file-range', {}, (ctx) => getFileRange(ctx, range, externalStorage, wsIds, name, wrapRes(res)), {
-              workspace: wsIds.uuid
-            })
-            .catch((err) => {
-              Analytics.handleError(err)
-              ctx.error('/api/v1/blob get error', { err })
-              res.writeHead(404, {})
-              res.end()
-            })
-        } else {
-          void getFile(ctx, externalStorage, wsIds, name, wrapRes(res)).catch((err) => {
-            Analytics.handleError(err)
-            ctx.error('/api/v1/blob get error', { err })
-            res.writeHead(404, {})
-            res.end()
-          })
-        }
-      } catch (err: any) {
-        Analytics.handleError(err)
-        ctx.error('/api/v1/blob get error', { err })
-        // An unreachable account service says nothing about the token; 401 would send the client to log in again.
-        if (err instanceof PlatformError && err.status.code === platform.status.ServiceUnavailable) {
-          res.status(503).send({ error: 'Service unavailable' })
-          return
-        }
-        res.status(401).send({ error: 'Unauthorized' })
-      }
-    })
-  )
 
   registerRPC(app, sessions, ctx, accountsUrl, externalStorage)
 
@@ -831,16 +639,4 @@ function createWebsocketClientSocket (
     }
   }
   return cs
-}
-function wrapRes (res: ExpressResponse): BlobResponse {
-  return {
-    aborted: false,
-    cork: (cb) => {
-      cb()
-    },
-    end: () => res.end(),
-    pipeFrom: (readable) => readable.pipe(res),
-    status: (code) => res.status(code),
-    writeHead: (code, header) => res.writeHead(code, header)
-  }
 }

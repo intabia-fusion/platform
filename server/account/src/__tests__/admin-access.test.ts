@@ -13,7 +13,13 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid, SocialIdType, systemAccountUuid } from '@hcengineering/core'
+import {
+  type MeasureContext,
+  type WorkspaceUuid,
+  readOnlyGuestAccountUuid,
+  SocialIdType,
+  systemAccountUuid
+} from '@hcengineering/core'
 import platform, { PlatformError, Status, Severity } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
@@ -71,7 +77,6 @@ const REGULAR = { account: 'acc', workspace: 'ws', extra: {} }
 function limiterDb (rest: object = {}): AccountDB {
   return {
     adminAction: { find: jest.fn().mockResolvedValue([]) },
-    otp: { deleteMany: jest.fn() },
     ...rest
   } as unknown as AccountDB
 }
@@ -102,6 +107,36 @@ describe('billing read-only admin - read access', () => {
     await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).resolves.toEqual([])
 
     setToken(REGULAR)
+    await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).rejects.toThrow(forbidden)
+  })
+
+  test('listWorkspaces: the github pod passes, a GitHub image guest token with its name does not', async () => {
+    getWorkspacesSpy.mockResolvedValue([])
+    const db = {} as unknown as AccountDB
+
+    setToken({ account: systemAccountUuid, extra: { service: 'github' } })
+    await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).resolves.toEqual([])
+
+    setToken({
+      account: 'guest-acc',
+      workspace: 'ws',
+      extra: { service: 'github', linkId: 'guest-acc', guest: 'true' }
+    })
+    await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).rejects.toThrow(forbidden)
+  })
+
+  test('listWorkspaces: the love pod passes, an old love guest link does not', async () => {
+    getWorkspacesSpy.mockResolvedValue([])
+    const db = {} as unknown as AccountDB
+
+    setToken({ account: systemAccountUuid, extra: { service: 'love' } })
+    await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).resolves.toEqual([])
+
+    setToken({
+      account: readOnlyGuestAccountUuid,
+      workspace: 'ws',
+      extra: { service: 'love', meetingId: 'meeting-1', workspaceUrl: 'ws-url' }
+    })
     await expect(listWorkspaces(mockCtx, db, mockBranding, mockToken, {})).rejects.toThrow(forbidden)
   })
 
@@ -281,7 +316,7 @@ describe('admin session freshness', () => {
     logSpy.mockRestore()
   })
 
-  test('a burst of wrong codes drops the outstanding OTP', async () => {
+  test('a burst of wrong codes is refused and the outstanding OTP stays', async () => {
     const failures = Array.from({ length: 5 }, () => ({
       actor: 'admin-acc',
       action: 'otp_failed',
@@ -292,6 +327,7 @@ describe('admin session freshness', () => {
       adminAction: { find: jest.fn().mockResolvedValue(failures) },
       otp: { deleteMany }
     } as unknown as AccountDB
+    // The caller's email resolves, so the row could be deleted if the gate tried.
     const sidSpy = jest.spyOn(utils, 'getCallerEmailSocialId').mockResolvedValue({ _id: 'sid' } as any)
     const verifySpy = jest.spyOn(utils, 'verifyOperationOtp').mockResolvedValue(undefined)
 
@@ -305,7 +341,8 @@ describe('admin session freshness', () => {
       })
     ).rejects.toThrow(forbidden)
 
-    expect(deleteMany).toHaveBeenCalledWith({ socialId: 'sid' })
+    // Deleting the row would let the next request issue a new code at once and reset the failure budget.
+    expect(deleteMany).not.toHaveBeenCalled()
     expect(verifySpy).not.toHaveBeenCalled()
     sidSpy.mockRestore()
     verifySpy.mockRestore()

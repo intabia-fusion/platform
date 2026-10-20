@@ -92,6 +92,10 @@ export interface SessionData {
   readOnly?: boolean
   // The member has no seat and SeatLimitsMiddleware refuses its tx; set on domain requests only.
   seatReadOnly?: boolean
+  // DocGuest: the PublicLink from its token (extra.linkId), filled per request while it exists.
+  // attachedTo is the shared document; ids are the rows read by id, per domain: the document,
+  // its space and the persons its fields name. An id is a key within its domain only.
+  guestLink?: { _id: Ref<Doc>, attachedTo?: Ref<Doc>, ids?: Record<string, Ref<Doc>[]> }
 
   asyncRequests?: ((ctx: MeasureContext, id?: string) => Promise<void>)[]
 }

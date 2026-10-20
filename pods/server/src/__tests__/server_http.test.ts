@@ -13,29 +13,19 @@
 // limitations under the License.
 //
 
-import {
-  MeasureMetricsContext,
-  systemAccountUuid,
-  toFindResult,
-  type PersonUuid,
-  type WorkspaceUuid
-} from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { MeasureMetricsContext, systemAccountUuid, toFindResult, type WorkspaceUuid } from '@hcengineering/core'
+import { createDummyStorageAdapter } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createServer, type AddressInfo } from 'net'
-import { type Readable } from 'stream'
 import { startHttpServer } from '../server_http'
 
 const accountClient = {
-  getLoginInfoByToken: jest.fn(),
   ensurePerson: jest.fn()
 }
-const isWorkspaceLoginInfo = jest.fn()
 
 jest.mock('@hcengineering/account-client', () => ({
   ...jest.requireActual('@hcengineering/account-client'),
-  getClient: () => accountClient,
-  isWorkspaceLoginInfo: (info: any) => isWorkspaceLoginInfo(info)
+  getClient: () => accountClient
 }))
 
 async function freePort (): Promise<number> {
@@ -50,24 +40,9 @@ async function freePort (): Promise<number> {
   return port
 }
 
-async function drain (stream: Readable): Promise<number> {
-  let size = 0
-  for await (const chunk of stream) {
-    size += chunk.length
-  }
-  return size
-}
-
 describe('http handlers', () => {
   const workspace = '123e4567-e89b-12d3-a456-426614174001' as WorkspaceUuid
-  const userToken = generateToken('123e4567-e89b-12d3-a456-426614174000' as PersonUuid, workspace)
   const ctx = new MeasureMetricsContext('test', {})
-  const storage = {
-    stat: jest.fn(async () => undefined),
-    put: jest.fn(async (ctx: any, wsIds: any, name: string, data: Readable | string) => {
-      if (typeof data !== 'string') await drain(data)
-    })
-  }
   const sessions = {
     closeWorkspaces: async () => {},
     scheduleMaintenance: jest.fn(),
@@ -79,7 +54,7 @@ describe('http handlers', () => {
 
   beforeAll(async () => {
     port = await freePort()
-    shutdown = startHttpServer(ctx, sessions as any, port, '', storage as any)
+    shutdown = startHttpServer(ctx, sessions as any, port, '', createDummyStorageAdapter())
   })
 
   afterAll(async () => {
@@ -88,75 +63,10 @@ describe('http handlers', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    isWorkspaceLoginInfo.mockImplementation(jest.requireActual('@hcengineering/account-client').isWorkspaceLoginInfo)
-    accountClient.getLoginInfoByToken.mockResolvedValue({ workspace, workspaceDataId: undefined, workspaceUrl: 'ws' })
   })
 
   const url = (path: string): string => `http://localhost:${port}${path}`
   const auth = (token: string): Record<string, string> => ({ Authorization: `Bearer ${token}` })
-
-  describe('GET /api/v1/blob', () => {
-    it('answers 401 when the token is rejected by the account service', async () => {
-      accountClient.getLoginInfoByToken.mockRejectedValue(new Error('Unauthorized'))
-      const res = await fetch(url('/api/v1/blob?name=b1'), {
-        headers: auth(userToken),
-        signal: AbortSignal.timeout(2000)
-      })
-      expect(res.status).toBe(401)
-    })
-
-    it('answers 503 when the account service is unavailable', async () => {
-      accountClient.getLoginInfoByToken.mockRejectedValue(
-        new PlatformError(new Status(Severity.ERROR, platform.status.ServiceUnavailable, {}))
-      )
-      const res = await fetch(url('/api/v1/blob?name=b1'), {
-        headers: auth(userToken),
-        signal: AbortSignal.timeout(2000)
-      })
-      expect(res.status).toBe(503)
-    })
-
-    it('does not read the blob when no workspace is found', async () => {
-      accountClient.getLoginInfoByToken.mockResolvedValue({})
-      isWorkspaceLoginInfo.mockReturnValue(true)
-      const res = await fetch(url('/api/v1/blob?name=b1'), { headers: auth(userToken) })
-      expect(res.status).toBe(403)
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      expect(storage.stat).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('PUT /api/v1/blob', () => {
-    const tooLarge = 100 * 1024 * 1024 + 1
-
-    it('rejects a body over the limit sent without a size', async () => {
-      const res = await fetch(url('/api/v1/blob?name=b1&contentType=application/octet-stream'), {
-        method: 'PUT',
-        headers: auth(userToken),
-        body: Buffer.alloc(tooLarge)
-      })
-      expect(res.status).toBe(413)
-    })
-
-    it('rejects a body over the limit with an understated size', async () => {
-      const res = await fetch(url('/api/v1/blob?name=b1&contentType=application/octet-stream&size=10'), {
-        method: 'PUT',
-        headers: auth(userToken),
-        body: Buffer.alloc(tooLarge)
-      })
-      expect(res.status).toBe(413)
-    })
-
-    it('stores a body within the limit', async () => {
-      const res = await fetch(url('/api/v1/blob?name=b1&contentType=text/plain'), {
-        method: 'PUT',
-        headers: auth(userToken),
-        body: 'hello'
-      })
-      expect(res.status).toBe(200)
-      expect(await res.json()).toEqual({ success: true })
-    })
-  })
 
   describe('PUT /api/v1/manage', () => {
     it('answers 400 to a maintenance request with an unreadable body', async () => {

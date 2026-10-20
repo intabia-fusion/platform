@@ -145,6 +145,8 @@ import {
   getWorkspaceRole,
   getWorkspaceRoles,
   getWorkspacesInfoWithStatusByIds,
+  ensureNotAiBot,
+  ensureNotAiBotAccount,
   ensureNotBlocked,
   GUEST_ACCOUNT,
   isAccountPasswordLocked,
@@ -157,6 +159,7 @@ import {
   parseEnvInt,
   recordFailedLoginAttempt,
   resetFailedLoginAttempts,
+  resetLoginOtpMisses,
   sanitizeEmail,
   selectWorkspace,
   sendEmail,
@@ -241,6 +244,7 @@ export async function login (
   const normalizedEmail = cleanEmail(email)
 
   try {
+    ensureNotAiBot(normalizedEmail)
     const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
@@ -282,6 +286,7 @@ export async function login (
 
     // Successful login - reset failed attempts counter
     await resetFailedLoginAttempts(db, existingAccount.uuid)
+    await resetLoginOtpMisses(db, existingAccount.uuid)
 
     const isConfirmed = emailSocialId.verifiedOn != null
 
@@ -325,6 +330,7 @@ export async function loginOtp (
 
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
+  ensureNotAiBot(normalizedEmail)
   const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
   if (emailSocialId == null) {
@@ -362,6 +368,12 @@ export async function signUp (
   if (getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true && !isSystemToken(token)) {
     ctx.error('Password sign up is not allowed', { email })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  // The bot registers itself with the system token; open password sign up must not let
+  // anyone else take its email first.
+  if (!isSystemToken(token)) {
+    ensureNotAiBot(email)
   }
 
   const { account, socialId } = await signUpByEmail(ctx, db, branding, email, password, firstName, lastName ?? '')
@@ -415,6 +427,7 @@ export async function signUpOtp (
 
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
+  ensureNotAiBot(normalizedEmail)
   const normalizedPhone = phone !== undefined && phone !== '' ? normalizePhone(phone) : ''
   // A phone is never verified, so claiming exclusive ownership of it would block re-signup forever.
   const personData = normalizedPhone !== '' ? { phoneHint: normalizedPhone } : {}
@@ -498,13 +511,14 @@ export async function validateOtp (
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
   try {
+    ensureNotAiBot(normalizedEmail)
     let emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 
-    const isValid = await isOtpValid(db, emailSocialId._id, code)
+    const isValid = await isOtpValid(db, emailSocialId._id, code, 'login')
 
     if (!isValid) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
@@ -524,7 +538,7 @@ export async function validateOtp (
       }
     }
 
-    await db.otp.deleteMany({ socialId: emailSocialId._id })
+    await db.otp.deleteMany({ socialId: emailSocialId._id, purpose: 'login' })
 
     const targetAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
     ensureNotBlocked(targetAccount)
@@ -613,6 +627,7 @@ export async function validateOtp (
     }
 
     await resetFailedLoginAttempts(db, emailSocialId.personUuid as AccountUuid)
+    await resetLoginOtpMisses(db, emailSocialId.personUuid)
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'otp' }
@@ -1397,6 +1412,7 @@ export async function checkAutoJoin (
     ctx.error('First name is required for auto-join', { firstName })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+  ensureNotAiBot(normalizedEmail)
 
   const { account } = await signUpByEmail(
     ctx,
@@ -1443,6 +1459,9 @@ export async function signUpJoin (
   }
 
   const workspaceJoinInfo = await getWorkspaceJoinInfo(ctx, db, email, inviteId, workspaceUrl)
+  if (!isSystemToken(token)) {
+    ensureNotAiBot(email)
+  }
   ctx.info('Signing up and joining a workspace using invite', {
     email,
     normalizedEmail: workspaceJoinInfo.email,
@@ -1561,6 +1580,7 @@ export async function requestPasswordReset (
   }
 
   const normalizedEmail = cleanEmail(email)
+  ensureNotAiBot(normalizedEmail)
 
   ctx.info('Requesting password reset', { email, normalizedEmail })
 
@@ -1635,6 +1655,7 @@ export async function restorePassword (
     ctx.error('Email not provided for restoration', { account, extra })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
+  ensureNotAiBot(email)
 
   const emailSocialId = await getEmailSocialId(db, email)
 
@@ -1646,6 +1667,10 @@ export async function restorePassword (
   }
 
   await setPassword(ctx, db, branding, account, password)
+  // The emailed link proves the owner. Without this, someone else's wrong passwords and codes would
+  // leave login refused as locked right after the reset.
+  await resetFailedLoginAttempts(db, account)
+  await resetLoginOtpMisses(db, account)
 
   if (emailSocialId.verifiedOn == null) {
     await db.socialId.update({ key: emailSocialId.key }, { verifiedOn: Date.now() })
@@ -2502,6 +2527,11 @@ export async function ensurePerson (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  // Merged into a user, a person holding the bot email would be taken for the bot.
+  if (socialType === SocialIdType.EMAIL && account !== systemAccountUuid) {
+    ensureNotAiBot(normalizedValue)
+  }
+
   return await db.ensurePerson(socialType, normalizedValue, trimmedFirst, trimmedLast)
 }
 
@@ -2552,6 +2582,8 @@ async function createMailbox (
   if (normalizedName.length < opts.minNameLength || normalizedName.length > opts.maxNameLength) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.MailboxError, { reason: 'name-rules-violated' }))
   }
+  // A mailbox becomes a confirmed email social id, so it must not be the bot's address.
+  ensureNotAiBot(mailbox)
 
   if ((await db.mailbox.findOne({ mailbox })) !== null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.MailboxError, { reason: 'mailbox-exists' }))
@@ -2672,6 +2704,8 @@ async function addEmailSocialId (
   }
 
   const normalizedEmail = normalizeValue(email)
+  // Before the bot registers, this would hand its email to the caller.
+  ensureNotAiBot(normalizedEmail)
   const existing = await db.socialId.findOne({ type: SocialIdType.EMAIL, value: normalizedEmail })
 
   // Social id resolution: none exists - create and verify; unverified - verify; verified for this
@@ -3187,7 +3221,10 @@ export async function getSubscriptions (
   let targetWorkspace: WorkspaceUuid | null
 
   // Service and admin (incl. read-only billing) tokens can query any workspace/all workspaces
-  const isService = extra?.service !== undefined || extra?.admin === 'true' || extra?.billingAdmin === 'true'
+  const isService =
+    verifyAllowedServices(['transactor', 'payment', 'billing', 'tool'], extra, false) ||
+    extra?.admin === 'true' ||
+    extra?.billingAdmin === 'true'
 
   if (isService) {
     // Honor an explicit workspaceUuid; otherwise scope to the token's own workspace so an admin
@@ -3247,7 +3284,7 @@ export async function getSubscriptionById (
   const { subscriptionId } = params
 
   // Check if this is a service token
-  const isService = extra?.service !== undefined
+  const isService = verifyAllowedServices(['payment'], extra, false)
 
   // Fetch the subscription first
   const subscription = await db.subscription.findOne({ id: subscriptionId })
@@ -3615,6 +3652,7 @@ export async function createApiKey (
   const { workspace, account } = personal
     ? await verifyApiKeyMember(ctx, db, token)
     : await verifyApiKeyOwner(ctx, db, token)
+  await ensureNotAiBotAccount(db, account)
   const { name, expiresOn } = params
   // Unrestricted carries the user's own rights, so no operation list - spaces still narrow it.
   const ops: ApiKeyOperation[] = unrestricted ? [] : params.ops
@@ -3829,6 +3867,8 @@ export async function loginWithApiKey (
   if (socialId == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Unauthorized, {}))
   }
+  // A key made under the bot account before sign in was closed would still yield its token.
+  await ensureNotAiBotAccount(db, socialId.personUuid as AccountUuid)
 
   const now = Date.now()
   // Same one-write-per-minute throttle as verifyApiKey's lastUsed.

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { PersonUuid, WorkspaceUuid } from '@hcengineering/core'
+import { readOnlyGuestAccountUuid, systemAccountUuid, type PersonUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 import { extractToken, readToken } from '@hcengineering/server-client'
 import { withAuthorization, withWorkspace, RequestWithAuth } from '../middleware'
@@ -171,6 +171,76 @@ describe('middleware', () => {
       expect(req.token).toBeDefined()
       expect(req.token?.workspace).toBe(workspaceUuid)
       expect(next).toHaveBeenCalled()
+    })
+  })
+
+  describe('withAuthorization token filter', () => {
+    const res: Partial<Response> = {}
+    let req: Partial<RequestWithAuth>
+    let next: jest.Mock
+
+    beforeEach(() => {
+      req = { params: {}, headers: {} }
+      next = jest.fn()
+    })
+
+    function authorize (token: string): void {
+      req.headers = { authorization: `Bearer ${token}` }
+      withAuthorization(req as RequestWithAuth, res as Response, next as NextFunction)
+    }
+
+    function expectRefused (): void {
+      expect(next).toHaveBeenCalledTimes(1)
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'Unauthorized', status: 401 }))
+      expect(req.token).toBeUndefined()
+    }
+
+    function expectAccepted (): void {
+      expect(next).toHaveBeenCalledTimes(1)
+      expect(next).toHaveBeenCalledWith()
+      expect(req.token).toBeDefined()
+    }
+
+    it('refuses an old love guest link: read-only guest account, service name, no guest flag, no exp', () => {
+      authorize(
+        generateToken(readOnlyGuestAccountUuid, workspaceUuid, {
+          service: 'love',
+          meetingId: 'meeting',
+          workspaceUrl: 'ws'
+        })
+      )
+
+      expectRefused()
+    })
+
+    it('refuses the read-only guest account without any extra', () => {
+      authorize(generateToken(readOnlyGuestAccountUuid, workspaceUuid, {}))
+
+      expectRefused()
+    })
+
+    it('refuses a token with the guest flag', () => {
+      authorize(generateToken(accountUuid, workspaceUuid, { guest: 'true', service: 'love' }))
+
+      expectRefused()
+    })
+
+    it('refuses a token with the readonly flag', () => {
+      authorize(generateToken(accountUuid, workspaceUuid, { readonly: 'true' }))
+
+      expectRefused()
+    })
+
+    it('accepts a service token', () => {
+      authorize(generateToken(systemAccountUuid, workspaceUuid, { service: 'stream' }))
+
+      expectAccepted()
+    })
+
+    it('accepts a member token', () => {
+      authorize(generateToken(accountUuid, workspaceUuid, {}))
+
+      expectAccepted()
     })
   })
 })

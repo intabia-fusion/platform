@@ -70,7 +70,6 @@
     "express": "catalog:",
     "cors": "catalog:",
     "morgan": "catalog:",
-    "node-poppler": "^8.0.4",
     "lru-cache": "catalog:",
     "heic-decode": "^2.1.0",
     "bmp-ts": "^1.0.9"

@@ -233,6 +233,8 @@ services:
       - BILLING_EMAILS=billing
       - STATS_URL=http://stats:4901
       - WORKSPACE_LIMIT_PER_USER=100
+      # Stand tests log in and sign up from one address, far above the per-client default.
+      - AUTH_RATE_LIMIT=100000
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -534,7 +536,6 @@ services:
       - PORT=4011
       - FIRST_NAME=Jolie
       - LAST_NAME=AI
-      - PASSWORD=password
       - AVATAR_PATH=./avatar.png
       - AVATAR_CONTENT_TYPE=image/png
       - STATS_URL=http://stats:4901

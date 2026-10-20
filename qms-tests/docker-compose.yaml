@@ -196,6 +196,8 @@ services:
       # Dev/testing only: signUp with a password and no email code. NEVER set in prod.
       - ALLOW_SKIP_OTP_PASSWORD_SIGNUP=true
       - WORKSPACE_LIMIT_PER_USER=100
+      # Stand tests log in and sign up from one address, far above the per-client default.
+      - AUTH_RATE_LIMIT=100000
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}

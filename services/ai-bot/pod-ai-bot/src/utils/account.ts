@@ -1,5 +1,6 @@
 //
 // Copyright © 2024-2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,8 +24,9 @@ import {
 } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 import { getAccountClient, withRetry } from '@hcengineering/server-client'
-import { aiBotAccountEmail, aiBotEmailSocialKey } from '@hcengineering/ai-bot'
-import { MeasureContext, PersonUuid, systemAccountUuid } from '@hcengineering/core'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
+import { aiBotAccountEmail, MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { randomBytes } from 'crypto'
 
 import config from '../config'
 import { wait } from './common'
@@ -120,35 +122,32 @@ export async function tryAssignToWorkspace (workspace: WorkspaceUuid, ctx: Measu
   return false
 }
 
-async function confirmAccount (uuid: PersonUuid): Promise<void> {
-  const token = generateToken(uuid, undefined, { service: 'aibot', confirmEmail: aiBotAccountEmail })
-  const client = getAccountClient(token)
-  try {
-    await client.confirm()
-  } catch (error: any) {
-    // ignore
-  }
-}
-
 let account: AccountUuid | undefined
 
 export async function getAccountUuid (ctx?: MeasureContext): Promise<AccountUuid | undefined> {
   if (account !== undefined) return account
 
-  const token = generateToken(systemAccountUuid, undefined, { service: 'aibot', confirmEmail: aiBotAccountEmail })
+  const token = generateToken(systemAccountUuid, undefined, { service: 'aibot' })
   const accountClient = getAccountClient(token)
-  const personUuid = await accountClient.findPersonBySocialKey(aiBotEmailSocialKey)
+  const socialId = await accountClient.findFullSocialIdBySocialKey(aiBotEmailSocialKey)
 
-  if (personUuid !== undefined) {
-    await confirmAccount(personUuid)
-    account = personUuid as AccountUuid
+  if (socialId != null) {
+    // signUp confirms the bot email, so an unconfirmed id is not the bot's to adopt.
+    if (socialId.verifiedOn == null) {
+      ctx?.error('Bot email is held by an unconfirmed social id, remove it in account to start the bot', {
+        person: socialId.personUuid
+      })
+      return undefined
+    }
+    account = socialId.personUuid as AccountUuid
     return account
   }
 
-  const result = await accountClient.signUp(aiBotAccountEmail, config.Password, config.FirstName, config.LastName)
+  // The bot signs in with service tokens, so its password is random and never kept.
+  const password = randomBytes(32).toString('hex')
+  const result = await accountClient.signUp(aiBotAccountEmail, password, config.FirstName, config.LastName)
 
   if (result !== undefined) {
-    await confirmAccount(result.account)
     account = result.account
     return account
   }

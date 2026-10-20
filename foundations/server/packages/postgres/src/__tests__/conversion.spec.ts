@@ -1,7 +1,10 @@
 import core, {
   AccountRole,
   type AccountUuid,
+  type Doc,
+  DOMAIN_MODEL_TX,
   DOMAIN_SPACE,
+  DOMAIN_TX,
   Hierarchy,
   MeasureMetricsContext,
   ModelDb,
@@ -457,5 +460,91 @@ describe('addSecurity - SQL injection prevention', () => {
       'sec._id = ANY('
     )
     expect(personal).not.toContainEqual(keySpaces)
+  })
+})
+
+describe('addSecurity - DocGuest', () => {
+  const makeVars = (values: any[]): any => ({
+    add (value: any, type: string = ''): string {
+      values.push(value)
+      return `$${values.length}${type}`
+    }
+  })
+  const docGuest = (guestLink?: SessionData['guestLink']): SessionData =>
+    ({
+      account: {
+        uuid: 'guest' as AccountUuid,
+        role: AccountRole.DocGuest,
+        primarySocialId: '' as PersonId,
+        socialIds: [],
+        fullSocialIds: []
+      },
+      isTriggerCtx: false,
+      guestLink
+    }) as unknown as SessionData
+
+  // Ids of the scope per domain, as the middleware leaves them in the session.
+  const ids = (it: Record<string, string[]>): Record<string, Array<Ref<Doc>>> =>
+    it as unknown as Record<string, Array<Ref<Doc>>>
+
+  it('reads nothing when the token names no link', () => {
+    const { adapter } = createTestContext()
+    expect(adapter.addSecurity(core.class.Doc, makeVars([]), {}, false, 'task', docGuest())).toBe('AND FALSE')
+  })
+
+  it('reads only the link row once the link is deleted', () => {
+    const { adapter } = createTestContext()
+    const values: any[] = []
+    const link = { _id: 'link1' as Ref<Doc> }
+    expect(adapter.addSecurity(core.class.Doc, makeVars(values), {}, false, 'task', docGuest(link))).toBe(
+      'AND task._id = $1::text'
+    )
+    expect(values).toEqual(['link1'])
+  })
+
+  it('skips the attachedTo match for a table without that column', () => {
+    const { adapter } = createTestContext()
+    const link = { _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc>, ids: ids({ space: ['space1'] }) }
+    expect(adapter.addSecurity(core.class.Space, makeVars([]), {}, false, DOMAIN_SPACE, docGuest(link))).toBe(
+      'AND (space._id = ANY($1::text[]))'
+    )
+  })
+
+  it('adds the space and the persons the shared document names, and nothing else', () => {
+    const { adapter } = createTestContext()
+    const values: any[] = []
+    const scope = ids({ task: ['doc1'], space: ['space1'], contact: ['person1'] })
+    const link = { _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc>, ids: scope }
+    adapter.addSecurity(core.class.Doc, makeVars(values), {}, false, 'contact', docGuest(link))
+    expect(values[0]).toEqual(['person1'])
+  })
+
+  it('reads nothing by id in a domain without ids when the table has no attachedTo column', () => {
+    const { adapter } = createTestContext()
+    const link = { _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc>, ids: ids({ task: ['doc1'] }) }
+    expect(adapter.addSecurity(core.class.Space, makeVars([]), {}, false, DOMAIN_SPACE, docGuest(link))).toBe(
+      'AND FALSE'
+    )
+  })
+
+  it('reads no transaction, though its attachedTo holds the parent of the shared document', () => {
+    const { adapter } = createTestContext()
+    const link = { _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc>, ids: ids({ task: ['doc1'] }) }
+    for (const domain of [DOMAIN_TX, DOMAIN_MODEL_TX]) {
+      expect(adapter.addSecurity(core.class.Tx, makeVars([]), {}, false, domain, docGuest(link))).toBe('AND FALSE')
+    }
+  })
+
+  it('matches the domain of an id by the name of its table', () => {
+    const { adapter } = createTestContext()
+    const values: any[] = []
+    const link = { _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc>, ids: ids({ 'test-task': ['d'] }) }
+    adapter.addSecurity(core.class.Doc, makeVars(values), {}, false, 'test_task', docGuest(link))
+    expect(values[0]).toEqual(['d'])
+  })
+
+  it('tells the middleware that its findAll filters a DocGuest by the link', () => {
+    const { adapter } = createTestContext()
+    expect(adapter.docGuestSecurity).toBe(true)
   })
 })
