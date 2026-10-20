@@ -30,7 +30,7 @@
   import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import ui, { Button, Label, Spinner } from '@hcengineering/ui'
+  import ui, { Button, Spinner } from '@hcengineering/ui'
   import type {
     AttributeModel,
     BuildModelKey,
