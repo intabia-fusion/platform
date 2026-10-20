@@ -737,13 +737,16 @@ test.describe('Kanban board', () => {
         await board.revealCard(cardId)
         // After projection refresh, cards must land in their priority lane — not
         // the unassigned bucket. Lane id is the priority enum value as string.
-        const lane = await page
-          .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
-          .first()
-          .getAttribute('data-swimlane-id')
-        expect(lane, `iteration ${i}: card must be in some priority lane, not unassigned`).not.toBe(
-          '__swim_unassigned__'
-        )
+        // Polled: until the query with the priority projection answers, every card sits unassigned.
+        const laneOf = async (): Promise<string | null> =>
+          await page
+            .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
+            .first()
+            .getAttribute('data-swimlane-id')
+        await expect
+          .poll(laneOf, { message: `iteration ${i}: card must be in some priority lane, not unassigned` })
+          .not.toBe('__swim_unassigned__')
+        const lane = await laneOf()
         expect(lane).not.toBeNull()
         if (lane !== null) {
           await board.expectCardInSwimLaneCell(cardId, lane, backlog)
@@ -920,7 +923,12 @@ test.describe('Kanban board', () => {
       const done = ctx.statuses.get('Done') as string
       const open = await board.boardLayout()
       await board.expectCardInColumn(doneCard, done)
-      const count = await board.columnHeader(done).locator('.counter').innerText()
+      // Other specs add Done issues to this project meanwhile: a count read before collapsing goes stale.
+      const doneCount = async (): Promise<string> =>
+        String(
+          (await client.findAll(tracker.class.Issue, { space: ctx.project._id, status: ctx.statuses.get('Done') }))
+            .length
+        )
 
       await board.collapseColumn(done)
       // The column leaves its place; the stack ends the board and has no cards or tools.
@@ -928,7 +936,8 @@ test.describe('Kanban board', () => {
       await expect(board.collapsedColumn(done)).toBeVisible()
       await expect(board.card(doneCard)).toHaveCount(0)
       await expect(board.collapsedColumn(done).locator('.tools')).toHaveCount(0)
-      await expect(board.collapsedColumn(done).locator('.counter')).toHaveText(count)
+      const stackCounter = board.collapsedColumn(done).locator('.counter')
+      await expect.poll(async () => (await stackCounter.innerText()) === (await doneCount())).toBe(true)
       // Kept per viewlet and grouping.
       const stored = await board.storedColumns('collapsed')
       expect(Object.keys(stored)).toEqual([expect.stringMatching(/^kanban-column-collapsed-.+-status$/)])
