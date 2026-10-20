@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -63,6 +64,12 @@
   let sortedValues: any[] = []
   let selectedValues = new Set<any>(filter.mode === view.filter.FilterContains ? [] : filter.value.map((p) => p[0]))
   const realValues = new Map<any, Set<any>>()
+  // Real values of selected items, kept apart from realValues: a later search re-query clears those
+  const selectedReal = new Map<any, Set<any>>(
+    filter.mode === view.filter.FilterContains
+      ? []
+      : filter.value.map((p) => [p[0], new Set<any>(p[1] ?? [])] as [any, Set<any>])
+  )
 
   let objectsPromise: Promise<FindResult<Doc>> | undefined
   let filterUpdateTimeout: any | undefined
@@ -175,12 +182,15 @@
       filter.mode = view.filter.FilterValueIn
       filter.value = []
       selectedValues = new Set()
+      selectedReal.clear()
       search = ''
     }
     if (isSelected(value, selectedValues)) {
       selectedValues.delete(value)
+      selectedReal.delete(value)
     } else {
       selectedValues.add(value)
+      selectedReal.set(value, new Set(realValues.get(value)))
     }
     selectedValues = selectedValues
 
@@ -192,8 +202,9 @@
 
     filterUpdateTimeout = setTimeout(() => {
       filter.value = [...newValues.values()].map((v) => {
-        const realVals = realValues.get(v)
-        return v === null ? [null, [null, ...(realVals ?? [])]] : [v, [...(realVals ?? [])]]
+        // A re-query that finished in time may have found more raw variants than the click-time snapshot
+        const realVals = new Set([...(selectedReal.get(v) ?? []), ...(realValues.get(v) ?? [])])
+        return v === null ? [null, [null, ...realVals]] : [v, [...realVals]]
       })
 
       onChange(filter)
