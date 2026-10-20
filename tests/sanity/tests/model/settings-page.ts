@@ -172,6 +172,8 @@ export class SettingsPage extends CommonPage {
     await this.statusNameInput().fill(newName)
     if (color !== undefined) await this.selectColorButton(color).click()
     await this.asideFooterButton('Save').click()
+    // The save closes the panel when it finishes, also one reopened for the same status meanwhile.
+    await expect(this.statusNameInput()).toBeHidden()
   }
 
   async changeIcon (): Promise<void> {

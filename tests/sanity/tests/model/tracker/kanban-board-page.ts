@@ -295,8 +295,13 @@ export class KanbanBoardPage extends CommonTrackerPage {
     const centre = { x: (left + right) / 2, y: (top + bottom) / 2 }
     const free = await target.evaluate(
       (el, { rect, zone }) => {
+        // A held card within 60px of the board's side scrolls it (EDGE_PX in Kanban.svelte), and the
+        // scroll goes on with the pointer at rest: a waypoint there drags the drop target off screen.
+        const board = el.closest('.kanban-container')?.getBoundingClientRect()
+        const nearSide = (x: number): boolean => board !== undefined && (x - board.left < 64 || board.right - x < 64)
         for (const y of [rect.cy, rect.top + 6, rect.bottom - 6, (rect.top + rect.cy) / 2]) {
           for (const x of [rect.left + 3, rect.right - 3, rect.left + 6, rect.right - 6, rect.cx]) {
+            if (nearSide(x)) continue
             const node = document.elementFromPoint(x, y)
             if (node === null) continue
             if (node.closest('[data-id="kanban-card"]') !== null) continue
