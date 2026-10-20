@@ -22,7 +22,8 @@ import { addNotification, NotificationSeverity, type PopupResult } from '@hcengi
 import { getMetadata, translate } from '@hcengineering/platform'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import { derived, get, writable, type Writable } from 'svelte/store'
-import { createMeeting, joinOrCreateMeetingByInvite } from './meetings'
+import { createMeeting, currentMeeting, joinOrCreateMeetingByInvite } from './meetings'
+import { lkSessionConnected } from './liveKitClient'
 import { currentMeetingMinutes, infos, meetings as meetingsStore } from './stores'
 import KnockResolutionToast from './components/meeting/invites/KnockResolutionToast.svelte'
 
@@ -159,8 +160,10 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
 
   closeInvitesPopup()
 
-  // Check if we're in a meeting
-  const meetingId = meeting ?? get(currentMeetingMinutes)?._id
+  // Check if we're in a meeting. `currentMeetingMinutes` follows my ParticipantInfo, which the
+  // LiveKit webhook writes a second or so after connecting: an invite sent meanwhile went out
+  // without a meeting, and its accept moved the call into my office.
+  const meetingId = meeting ?? get(currentMeetingMinutes)?._id ?? (get(lkSessionConnected) ? currentMeeting : undefined)
 
   const mySpace = getCurrentEmployeeSpace()
 
@@ -177,9 +180,9 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
   // drops.
   if (meetingId !== undefined) {
     const meetingDoc =
-      meeting !== undefined
-        ? await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
-        : get(currentMeetingMinutes)
+      meetingId === get(currentMeetingMinutes)?._id
+        ? get(currentMeetingMinutes)
+        : await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
     if (meetingDoc?.private === true) {
       const myAccount = getCurrentAccount().uuid
       if (!(meetingDoc.owners ?? []).includes(myAccount)) {
