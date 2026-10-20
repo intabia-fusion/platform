@@ -234,6 +234,10 @@ export function issueConfig (
       displayProps: { key: key + 'estimation', fixed: 'left', dividerBefore: true, optional: true }
     },
     {
+      key: 'createdOn',
+      displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true }
+    },
+    {
       key: 'modifiedOn',
       presenter: tracker.component.ModificationDatePresenter,
       displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true }

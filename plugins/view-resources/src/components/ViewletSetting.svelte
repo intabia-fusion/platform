@@ -37,17 +37,29 @@
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
   import ViewletClassSettings from './ViewletClassSettings.svelte'
 
+  interface Config {
+    value: string | BuildModelKey | undefined
+    type: 'divider' | 'attribute'
+  }
+
+  interface AttributeConfig extends Config {
+    type: 'attribute'
+    enabled: boolean
+    label: IntlString
+    _class: Ref<Class<Doc>>
+    icon: Asset | undefined
+    order?: number
+  }
+
   export let viewlet: Viewlet
   export let defaultConfig: (BuildModelKey | string)[] | undefined = undefined
 
-  const dispatch = createEventDispatcher()
-
   let preferences: ViewletPreference[] = []
-  const preferenceQuery = createQuery()
-
   let selected = viewlet._id
-
   let viewlets: Viewlet[] = []
+
+  const dispatch = createEventDispatcher()
+  const preferenceQuery = createQuery()
 
   $: void client
     .findAll(view.class.Viewlet, {
@@ -83,20 +95,6 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   let loading = true
-
-  interface Config {
-    value: string | BuildModelKey | undefined
-    type: 'divider' | 'attribute'
-  }
-
-  interface AttributeConfig extends Config {
-    type: 'attribute'
-    enabled: boolean
-    label: IntlString
-    _class: Ref<Class<Doc>>
-    icon: Asset | undefined
-    order?: number
-  }
 
   function getObjectConfig (_class: Ref<Class<Doc>>, param: string): AttributeConfig {
     const clazz = hierarchy.getClass(_class)
@@ -620,8 +618,11 @@
       if (attr.isCustom !== true) return
       if (attr.hidden === true || attr.label === undefined) return
       if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return
+
       const key = useMixinProxy ? `${attr.attributeOf}.${attr.name}` : attr.name
+
       if (seen.has(key)) return
+
       seen.add(key)
       result.push({ key, label: attr.label, enabled: enabled.has(key) })
     }
@@ -629,8 +630,10 @@
     for (const [, attr] of hierarchy.getAllAttributes(selectedViewlet.attachTo)) {
       addAttr(attr, false)
     }
+
     for (const d of hierarchy.getDescendants(selectedViewlet.attachTo)) {
       if (!hierarchy.isMixin(d)) continue
+
       hierarchy.getOwnAttributes(d).forEach((attr) => {
         addAttr(attr, true)
       })
@@ -639,13 +642,17 @@
     // getConfig/addAssociations coverage so every custom attribute lands in this section.
     const ancestors = new Set(hierarchy.getAncestors(selectedViewlet.attachTo))
     const parent = hierarchy.getParentClass(selectedViewlet.attachTo)
+
     for (const p of hierarchy.getDescendants(parent)) {
       const cls = hierarchy.getClass(p)
+
       if (!hierarchy.isMixin(p) || cls.extends === undefined || !ancestors.has(cls.extends)) continue
+
       hierarchy.getOwnAttributes(p).forEach((attr) => {
         addAttr(attr, true)
       })
     }
+
     return result
   }
 
