@@ -68,6 +68,7 @@ import {
   type Filter,
   type FilterMode,
   type FilteredView,
+  type FilteredViewPreference,
   type GetAllValuesFunc,
   type Groupping,
   type GrouppingManagerResource,
@@ -141,6 +142,12 @@ export class TFilteredView extends TDoc implements FilteredView {
   users!: AccountUuid[]
   attachedTo!: string
   sharable?: boolean
+}
+
+@Model(view.class.FilteredViewPreference, preference.class.Preference)
+export class TFilteredViewPreference extends TPreference implements FilteredViewPreference {
+  declare attachedTo: string
+  views!: Ref<FilteredView>[]
 }
 
 @Model(view.class.FilterMode, core.class.Doc, DOMAIN_MODEL)
@@ -560,6 +567,7 @@ export function createModel (builder: Builder): void {
     TArrayEditor,
     TInlineAttributEditor,
     TFilteredView,
+    TFilteredViewPreference,
     TAllValuesFunc,
     TAggregation,
     TGroupping,
