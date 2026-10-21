@@ -58,6 +58,10 @@
 ### Митинги, гости, invite/knock, присутствие, транскрипция, запись
 Полностью описаны и проверены в `../love.md`, разделы 4-9 (жизненный цикл, подключение, присутствие, invite/knock, гости, запись/транскрипция) и §10 (исправленные дефекты D1-D27). Не дублируется здесь.
 
+- **Транскрипция встречи в реальном времени.** Включается per-room (`Room.startWithTranscription`, тоггл в `RoomTranscriptionSettings.svelte`) или вручную во время звонка - кнопка-перо `TranscriptionButton.svelte` в `ControlBar.svelte`; итоговый текст виден в `TranscriptionTab.svelte` виджета встречи и как `MeetingMinutesTranscriptionPresenter`/`MeetingMinutesTranscriptionStatePresenter` (`MeetingMinutes.transcription`/`transcriptionState`, саммари - `MeetingMinutes.summary`). Realtime VAD и нарезка чанков - `services/ai-bot/love-agent/src/stream/` (`stt.ts`, `audio-analysis.ts`); pluggable STT-провайдеры и REST `/summarize` - `services/ai-bot/pod-ai-bot/src/transcription/` (`createTranscriptionProvider`, `providers/{deepgram,openai,server}.ts`). Протокол подключения и security - `../love.md`, разделы 4-9.
+- **Запись встречи по умолчанию и её отключение.** Отдельный тоггл `RoomTranscriptionSettings.svelte`, переключает `Room.startWithRecording`; по умолчанию запись выключена (`false`), значение при создании комнаты берётся из настройки офиса воркспейса `OfficeSettings.defaultStartWithRecording` (тоже по умолчанию `false`), бэкфил старых комнат - `models/love/src/migration.ts`. Во время звонка кнопка `RecordingButton.svelte` в нижней панели звонка (красная, когда запись идёт) включает/выключает запись для конкретной встречи независимо от настройки комнаты; состояние и ссылки на готовые записи - `MeetingMinutesRecordingStatePresenter.svelte`/`PendingRecordingPresenter.svelte`. - `plugins/love-resources/src/components/{RoomTranscriptionSettings.svelte,meeting/controls/RecordingButton.svelte,MeetingMinutesRecordingStatePresenter.svelte,PendingRecordingPresenter.svelte,AddRoomPopup.svelte}`, `models/love/src/migration.ts`.
+- **Создание встречи из Планировщика и гостевой join по ссылке.** `createMeeting()` (`plugins/love-resources/src/utils.ts`) на создании календарного `Event` с выбранной комнатой офиса вешает миксин `MeetingEventLink` (`room`, `meetingId`) на событие, создаёт `MeetingMinutes` со `status: Scheduled` и пишет гостевую ссылку в `event.location` (`getMeetingGuestLink`, `login.function.GetInviteLink`); `OnEventUpdate` синкает `meetingScheduledDate`/участников при сдвиге события, пока митинг `Scheduled`. Переход по ссылке - `GuestMeetingApp.svelte` (`/guestInfo`, `/guestJoin`, `services/love/src/guests.ts`), до старта встречи показывает обратный отсчёт. Подробно - `../love.md`, §2.5 и §8.
+
 ### Телеметрия звонков (FUSIO-261, после `love.md`)
 - **Trace ID звонка.** `MeetingMinutes.traceId` генерируется при первом `getRoomToken()` и персистится на документе; все последующие HTTP-запросы клиента (`/getToken`, `/startRecord`, `/finishMeeting`, `/liveSessions`, `/language`, `/guestToken`, `/kickParticipant`) несут заголовок `traceparent` (W3C trace context) и `x-participant-id`. - `newCallTraceId()`, `callTraceParent()`, `plugins/love/src/tracing.ts`; `LoveClient.buildHeaders()`, `plugins/love-resources/src/loveClient.ts`.
 - **Проброс trace в очередь.** `services/love/src/main.ts` читает `traceId` встречи и прокидывает `traceparent` в `ctx.with(...)` при обработке webhook-сообщения очереди, плюс атрибуты `meeting.id`/`participant.id` на HTTP-спан через middleware.
@@ -92,6 +96,33 @@
 ### Recorder и Media (независимые от митинга)
 - **Экранный рекордер воркспейса.** Записывает экран через `MediaRecorder`, чанкует и заливает в Drive; не связан с LiveKit Egress встречи. - `class Recorder`, `plugins/recorder-resources/src/recorder.ts`; `models/recorder/src/plugin.ts` (merge `WorkbenchExtension`).
 - **Выбор микрофона/камеры.** `toggleCamState`/`toggleMicState`, `WorkbenchExtension` для попапа устройств. - `plugins/media-resources/src/utils.ts`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | скрины hulia-live-transcription*.png - апстримный Huly UI (Hulia, английский интерфейс); en liveTranscriptionViewAll - тоже апстримный, в ru на этом месте уже снят new-transcription.png |
+| Запись встречи по умолчанию и её отключение | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | см. выше - те же устаревшие скрины используются и для записи |
+| Создание встречи из Планировщика и гостевой join по ссылке | communication/invite-link | - | no-en | 0.8.60 | |
+| Trace ID звонка | - | - | internal | - | |
+| Проброс trace в очередь | - | - | internal | - | |
+| Аналитика сервиса | - | - | internal | - | |
+| Атомарная резервация записи | - | - | internal | - | |
+| `updateMetadata` не бросает исключений | - | - | internal | - | |
+| `finishMeeting` идемпотентен | - | - | internal | - | |
+| Авто-старт записи по `QueueMeetingEvent.started` обёрнут в try/catch | - | - | internal | - | |
+| Пресет записи | - | - | internal | - | |
+| Захват и кодек демонстрации экрана | - | - | internal | - | |
+| Свой шаблон записи | - | - | internal | - | |
+| Плеер начинает с оригинала | - | - | internal | - | |
+| Разделение стартовых и по-требованию запросов | - | - | internal | - | |
+| Аналогично для участников воркспейса | - | - | internal | - | |
+| Имена дефолтных комнат переведены | - | - | plan | - | |
+| Отдельные заголовок/текст для knock vs invite | - | - | plan | - | |
+| Invite и knock звонят на телефон | - | - | plan | - | |
+| TTL invite не менялся | - | - | internal | - | |
+| Экранный рекордер воркспейса | - | - | plan | - | |
+| Выбор микрофона/камеры | communication/virtual-office | communication/virtual-office | ok | 0.8.60 | (стр. не использует скриншоты; апстримные видео/iframe и ошибки про запись на Диск/право редактирования офиса/подпись кнопки исправлены) |
 
 ## Куда смотреть, если нужно...
 

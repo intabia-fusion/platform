@@ -57,6 +57,8 @@
 - **Ночной свип истёкших триалов** с провизингом free вместо истёкшего триала. - `expireTrials`, `services/payment/pod-payment/src/trialExpiry.ts`.
 - **Инвариант "одна активная tier-подписка".** Любой upsert `type=tier`+`active` переводит прочие active/trialing tier-записи воркспейса в `Canceled` (`REPLACED`). - `server/account/src/serviceOperations.ts`.
 - **Отмена при удалении воркспейса.** См. сценарий 6 выше. - `cancelWorkspaceSubscriptions`, `server/account/src/serviceOperations.ts`.
+- **Email-напоминания перед списанием/окончанием подписки.** За 5 дней до: окончания триала, даты очередного рекуррентного платежа, окончания разового пакета без автопродления, окончания подписки после отмены - письмо с датой, тарифом и ссылкой на управление подпиской. - `notifyUpcoming`, `packages/billing-mail/src/notifications.ts`, `templates/upcoming.ts`; вызовы - `notifyUpcomingExpiry`, `services/payment/pod-tbank-subscriptions/src/scheduler.ts`, и `services/payment/pod-payment/src/trialExpiry.ts`.
+- **Письма о результате оплаты и об окончании доступа.** Квитанция при успешном платеже, письмо с причиной отказа при неудачном списании (ссылка на оплату) и письмо о переходе на free/окончании доступа после истечения триала, грейс-периода или отмены. - `notifyPaymentSucceeded`/`notifyPaymentFailed`/`notifyExpired`, `packages/billing-mail/src/notifications.ts`.
 
 ### T-Bank интеграция
 - **Клиент T-Bank API** (Init/Charge/Cancel/RemoveCard/GetState/CheckOrder) на native fetch, без внешних зависимостей; единый контракт ошибок (HTTP 200+Success:false -> объект, транспорт/5xx -> throw). - `services/payment/pod-tbank-subscriptions/src/tbank.ts`. Детали протокола - `docs/memory/tbank_api_spec.md`.
@@ -78,8 +80,33 @@
 - **AI-калькулятор и таблица моделей по уровням.** - `ModelsTab.svelte`, `CalculatorTab.svelte`.
 - **Админ-вкладки**: список клиентов/воркспейсов (`ClientsTab.svelte`, в `billing-resources`), просроченные подписки объединённые (`past_due`+`readonly`) в `PaymentsTab.svelte` (`plugins/admin-resources/src/components/tabs/`).
 
-### Известное: не биллинг
-- **"My cards"** - навигатор канбан-карт, не платёжные карты. - `plugins/card-resources/src/components/navigator/MyCards.svelte`, `id: 'my-cards'` в `models/card/src/index.ts`.
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Три типа подписки | - | - | plan | - | |
+| Триал при заведении воркспейса | tariffs/tariff-plans, tariffs/tariff-change | - | stale | 0.8.60 | скрины active-tariff.png и result.png устарели (показывают полосу «Всего токенов», которой больше нет; у Бизнеса в списке возможностей не хватает «Корпоративный домен») |
+| Прората смены сидов/пакета без возврата | tariffs/tariff-change | - | partial | 0.8.60 | описана только прората при смене мест, прората пакетов (доп. хранилище) не упомянута |
+| Предпросмотр смены плана | - | - | internal | - | |
+| Ночной свип истёкших триалов | - | - | internal | - | |
+| Инвариант "одна активная tier-подписка" | - | - | internal | - | |
+| Отмена при удалении воркспейса | - | - | internal | - | |
+| Email-напоминания перед списанием/окончанием подписки | tariffs/notification-letters | - | no-en | 0.8.60 | |
+| Письма о результате оплаты и об окончании доступа | tariffs/tariff-change | - | partial | 0.8.60 | нет писем об отказе платежа и об окончании доступа |
+| Клиент T-Bank API | - | - | internal | - | |
+| Вебхуки через очередь | - | - | internal | - | |
+| Планировщик рекуррентных списаний | - | - | internal | - | |
+| Mock-режим для dev/тестов | - | - | internal | - | |
+| Ledger платёжных операций | - | - | internal | - | |
+| Двух-пул AI-токены | - | - | plan | - | |
+| Seat-лимит с приоритетом ролей | - | - | plan | - | |
+| Fail-open лимитов | - | - | internal | - | |
+| Пороговые уведомления пулов AI-провайдеров | - | - | internal | - | |
+| Учёт хранилища по типам файлов | - | - | plan | - | |
+| Настройки Billing | tariffs/tariff-plans, tariffs/tariff-change, tariffs/using-resources | - | partial | 0.8.60 | ReadOnlyBanner (read-only плашка при просрочке/отмене) не описан |
+| Индикаторы использования ресурсов | tariffs/using-resources | - | stale | 0.8.60 | скрин resurces.png устарел: надпись «нажмите на иконку», полосы «Время встреч/Всего токенов/Участники», которых в попапе больше нет (сейчас — хранилище и отдельно токены ИИ за месяц) |
+| AI-калькулятор и таблица моделей по уровням | - | - | off | - | не документируем |
+| Админ-вкладки | - | - | internal | - | |
 
 ## Куда смотреть, если нужно...
 

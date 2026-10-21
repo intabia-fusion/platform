@@ -57,6 +57,7 @@
 
 ### Contact
 
+- **Навигация и создание контактов (Сотрудники/Гости/Люди/Компании).** Приложение «Контакты» делит навигатор на спецразделы: Сотрудники (`role != GUEST`), Гости (`role = GUEST`), Люди (`Person` без миксина `Employee`, видимость - `PersonsSpecialVisibleIf`), Компании (видимость - `CompaniesSpecialVisibleIf`); создание гостя/персоны/компании - отдельные диалоги (создание сотрудника и его seat-лимиты - см. ниже). - `contact.app.Contacts`, `models/contact/src/index.ts:435-530`; `CreateGuest.svelte`/`CreatePerson.svelte`/`CreateOrganization.svelte`, `plugins/contact-resources/src/components/`.
 - **Race-safe создание Person/Employee при логине.** `ensureEmployeeForPerson` параллелит поиск персоны/соц-идентичностей в один round-trip и использует `TxApplyIf`, чтобы конкурентные вызовы не создавали дубликаты Person/SocialIdentity/Employee. - `ensureEmployeeForPerson`, `plugins/contact/src/utils.ts`.
 - **Клиентский кэш персон.** Синхронные геттеры персон/соц-идентичностей по `PersonId`/`Ref<Person>` с подгрузкой в фоне. - `ContactCache`, `plugins/contact/src/cache.ts`; обёртки `plugins/contact/src/utils.ts`.
 - **Мерж дублирующихся персон.** См. сценарий 5. - `MergePersons.svelte`, `plugins/contact-resources/src/components/MergePersons.svelte`.
@@ -70,6 +71,7 @@
 
 ### Lead
 
+- **Приложение «Сделки» (бета) с персональным разделом «Мои сделки».** Lead - отдельное приложение воркбенча (в названии - пометка «бета»); спецразделы навигации: «Мои сделки» (личный фильтр assigned/created/subscribed у текущего пользователя), «Заказчики» (Customer), «Воронки» (Funnel). - `lead.app.Lead`, `models/lead/src/index.ts:79-144`.
 - **Воронка с 8 стадиями по умолчанию.** Backlog, Incoming, Negotiation, Offer preparing, Make a decision, Contract conclusion, Won, Lost. - `defaultLeadStatuses`, `models/lead/src/spaceType.ts`.
 - **Lead как задача, привязанная к Customer.** `TLead extends TTask`, `attachedTo: Ref<Customer>` read-only после создания. - `models/lead/src/types.ts`.
 - **Customer - миксин на любом Contact.** Любую персону/организацию можно пометить `Customer` (website/industry/labels/leads). - `models/lead/src/types.ts`.
@@ -82,6 +84,28 @@
 - Presenter соц-идентичности. - `SocialIdentityPresenter.svelte`.
 - Скрытие запрещённых каналов связи по региону (`hide-ru-banned-channels`, FUSIO-927) - см. выше.
 - Race-safe `ensureEmployeeForPerson` + автосинхронизация таймзоны - PR "Parallelize login handshake queries" (#462) и "Stability fixes" (#444), FUSIO-1344.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Навигация и создание контактов (Сотрудники/Гости/Люди/Компании) | people-contacts/managing-contacts | people-contacts/managing-contacts | ok | 0.8.60 | исправлено: удаление контакта сотрудника (только «Исключить», не удаление), apstream LocalVideo/iframe в en убраны, неподтверждённый раздел про кастомные поля закомментирован как в ru |
+| Race-safe создание Person/Employee при логине | - | - | internal | - | |
+| Клиентский кэш персон | - | - | internal | - | |
+| Мерж дублирующихся персон | people-contacts/employees | people-contacts/employees | ok | 0.8.60 | исправлено: en - удалён раздел GitHub collaborators (github выключен на проде), «person» заменён на «guest» (contact.persons выключен) |
+| Фильтры по каналам связи | - | - | off | - | не документируем |
+| Личное пространство (PersonSpace) | - | - | internal | - | |
+| Автоперевод сообщений | - | - | off | - | не документируем |
+| Автосинхронизация таймзоны браузера | - | - | internal | - | |
+| Скрытие отдельных каналов по региону | - | - | off | - | не документируем |
+| Правка чужих сотрудников | - | - | off | - | не документируем |
+| Seat-лимиты при создании Employee | - | - | off | - | не документируем |
+| Приложение «Сделки» (бета) с персональным разделом «Мои сделки» | additional-modules/leads | additional-modules/leads | off | - | выключено в продукте |
+| Воронка с 8 стадиями по умолчанию | additional-modules/leads | additional-modules/leads | off | - | выключено в продукте |
+| Lead как задача, привязанная к Customer | additional-modules/leads | additional-modules/leads | off | - | выключено в продукте |
+| Customer - миксин на любом Contact | additional-modules/leads | additional-modules/leads | off | - | выключено в продукте |
+| Представления воронки | additional-modules/leads | additional-modules/leads | off | - | выключено в продукте |
+| Запрет создания новой воронки | - | - | off | - | не документируем |
 
 ## Куда смотреть, если нужно...
 

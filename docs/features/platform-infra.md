@@ -72,7 +72,7 @@
 - **Виджеты сайдбара (Fixed/Flexible/Configurable).** Панель `WidgetsBar.svelte` + попап `AddWidgetsPopup.svelte` управляют включением через `WidgetPreference`. - `models/workbench/src/index.ts`, `plugins/workbench-resources/src/components/sidebar/widgets/`.
 - **Три состояния вкладки виджета** (preview/kept/pinned), детерминированные id по объекту. - `plugins/workbench-resources/src/sidebar.ts`, см. `docs/memory/sidebar-widget-tabs.md`.
 - **Вкладки воркбенча на аккаунт** (`WorkbenchTab`) с pin/unpin/close. - `WorkbenchTabs.svelte`, `WorkbenchTabPresenter.svelte`, actions `PinTab`/`UnpinTab`/`CloseTab`/`CloseCurrentTab` (`models/workbench/src/index.ts`).
-- **Переключатель приложений и меню выбора воркспейса.** - `AppSwitcher.svelte`, `SelectWorkspaceMenu.svelte`, `plugins/workbench-resources/src/components/`.
+- **Видимость приложений и меню выбора воркспейса.** `AppSwitcher.svelte` импортирован в `Workbench.svelte`, но нигде не рендерится - мёртвый код. Реальный путь переключения видимости приложений (скрыть/показать через `HiddenApplication`, `hideApplication`/`showApplication`) - категория настроек "Настройки бокового меню" (`SidebarMenuSettings.svelte`, группа `settings-account`, `setting.ids.SidebarMenuSettings`). Клик по логотипу воркспейса открывает `SelectWorkspaceMenu` для перехода между воркспейсами, в которых состоит пользователь. - `SidebarMenuSettings.svelte`, `SelectWorkspaceMenu.svelte`, `plugins/workbench-resources/src/utils.ts` (`hideApplication`/`showApplication`), `models/workbench/src/index.ts` (`THiddenApplication`), `models/setting/src/index.ts` (категория `sidebarMenu`).
 - **"Client statistics" (ServerManager).** Попап агрегированной клиентской статистики сессии, доступен из настроек/действий. - `models/workbench/src/index.ts`, `ServerManager.svelte`.
 - **Расширенный Help & Support.** Help Center, Keyboard Shortcuts, Contact Support, Open Platform Guide. - `HelpAndSupport.svelte`, строки в `plugins/workbench-resources/src/plugin.ts`.
 - **Intabia-акцентные темы.** `intabia` (#cf13a2), `intabia2` (#6b3ad3) в списке акцентов. - `Themes.svelte`.
@@ -84,7 +84,8 @@
 - **Раздел по умолчанию.** Без выбранной категории (`/setting`) открывается первая категория с компонентом (`openFirstCategory`, переход с `replace`); на десктопе повторный клик по выбранной категории её не снимает. На узком экране (плавающий навигатор) показывается список. - `plugins/setting-resources/src/components/Settings.svelte`.
 - **Управление типами спейсов и ролями.** `ManageSpaceTypes.svelte` + `SpaceTypeEditor.svelte` + `RoleEditor.svelte` (секции general/properties/roles). - `plugins/setting-resources/src/components/spaceTypes/`.
 - **Открытие созданного типа.** `CreateSpaceType` после создания открывает новый тип (`spaceTypes/<id>`); `handleTypeCreated` дополнительных форм (`CreateProjectType`, `CreateDocumentSpaceType`) возвращает id созданного типа. - `plugins/setting-resources/src/components/spaceTypes/CreateSpaceType.svelte`.
-- **Редактор классов (Classes).** Просмотр/скрытие атрибутов, кастомные миксины, порядок классификаторов. - `ClassSetting.svelte`, actions `HideAttribute`/`ShowAttribute`/`CreateMixin`/`DeleteMixin`.
+- **Редактор классов (Classes).** Просмотр/скрытие атрибутов (типы свойства с `ObjectEditor`: `TypeString`/`TypeHyperlink`/`TypeBoolean`/`TypeDate`/`TypeMarkup`/`TypeNumber`/`TypeIdentifier`/`RefTo`/`EnumOf`/`ArrOf` - UI "Текст/URL/Чекбокс/Дата/Разметка/Число/Id/Ссылка/Выбор/Множественный выбор"), кастомные миксины, порядок классификаторов. `Editable`-миксином со значением `true` помечены `core.class.Contact`/`Member`, `core.class.Space`/`SpaceType` (все спейсы: проекты, каналы, тимспейсы, диски), `task.class.Task`/`Project`, `tracker.class.Issue` (у `card.class.Card` `Editable=false`); из них отключены на проде: нет (lead/recruit/controlled-documents/inventory тоже `Editable=true`, но эти модули выключены - см. "Отключение фич"). - `ClassSetting.svelte`, `CreateAttributePopup.svelte`, actions `HideAttribute`/`ShowAttribute`/`CreateMixin`/`DeleteMixin`, `models/setting/src/index.ts:555-597` (ObjectEditor mixins), `:644-649` (Space/SpaceType Editable).
+- **Перечисления (Enum).** Отдельная категория настроек "Справочники" (`setting.string.Enums`) со списком всех `core.class.Enum` воркспейса, создание через попап `EditEnum`; второй путь - создать новое перечисление прямо из свойства типа "Множественный выбор" в редакторе класса. - `EnumSetting.svelte`, `EditEnum.svelte`, `EnumValues.svelte`, `typeEditors/EnumTypeEditor.svelte`, `plugins/setting-resources/src/components/`; категория - `setting.ids.EnumSetting`, `models/setting/src/index.ts`.
 - **Удаление кастомного атрибута.** Кнопка в панели `EditAttribute` и пункт меню `ClassAttributesList` ведут в один `MessageBox` - `showDeleteAttributePopup` (`plugins/setting-resources/src/utils.ts`). Под текстом рендерятся компоненты всех `setting.class.AttributeUsageProvider` из модели (`AttributeUsages.svelte`): плагин, который ссылается на атрибуты, регистрирует свой список зависимостей, не создавая зависимости setting-resources от себя. Сейчас провайдер один - workflow (экраны и правила переходов).
 - **Самостоятельное удаление воркспейса/аккаунта.** Кнопка в Danger Zone (только владелец), диалог подтверждения с озвученными grace/readonly-периодами (`getDeletionPolicy`), guard на единственного владельца в `Profile.svelte`. - `General.svelte`, `Profile.svelte` (`isLastOwner`, `deleteAccount`), подробности - `docs/memory/deferred-deletion.md`.
 - **OTP-подтверждение чувствительных операций.** Общий `OtpConfirmDialog` (запрос кода на email). - `plugins/setting-resources/src/utils.ts`, `packages/presentation/src/components/OtpConfirmDialog.svelte`.
@@ -125,6 +126,50 @@
 - **Глобальное отключение через env фронта.** Список ключей (auto-translate, github, mailboxes, export, integration, backup, invites, documents, calendar, inventory, survey, lead, products, telegram, recruit, training, testManagement, process, cards, hide-ru-banned-channels) - полный перечень и семантика в `docs/disableFeatures.md`.
 - **Скрытие категорий настроек по `feature`.** `SettingsCategory.feature` + `isDisabled()` в `Settings.svelte`. - `plugins/setting/src/index.ts`.
 - **Переопределение на уровне воркспейса.** Админ может точечно вернуть отключённую глобально фичу конкретному воркспейсу (`disabledFeaturesOverride`), правится в admin-панели (`WorkspaceDetails.svelte`), учитывается в `connect.ts`. - `server/account/src/types.ts`, `plugins/admin-resources/src/components/WorkspaceDetails.svelte`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | partial | 0.8.60 | страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
+| Три состояния вкладки виджета | - | - | plan | - | отложено |
+| Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
+| Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | no-en | 0.8.60 | |
+| "Client statistics" (ServerManager) | - | - | plan | - | отложено |
+| Расширенный Help & Support | advanced-settings/main-menu | - | no-en | 0.8.60 | |
+| Intabia-акцентные темы | - | - | plan | - | отложено |
+| Категории настроек аккаунта и воркспейса | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | partial | 0.8.60 | частично выключено на проде: integrations, mailboxes, export - категории Settings > Integrations и Settings > Mailboxes скрыты целиком, Settings > Export скрыта (CSV-экспорт из тулбара и экспорт в другой workspace доступны отдельно); ru workspace-setup:85 называет выключенные модули «Бета-версия», в коде «Ознакомительная версия» (ConfigBeta) - страница не правлена, вне зоны этой сверки |
+| Интеграции | - | - | off | - | выключено на проде: integrations (категория Settings > Integrations скрыта целиком; API-ключи и вебхуки - отдельная категория без `feature`, не затронута, расхождений с кодом не найдено) |
+| Раздел по умолчанию | - | - | plan | - | отложено |
+| Управление типами спейсов и ролями | advanced-settings/space-types, advanced-settings/roles | advanced-settings/space-types, advanced-settings/roles | ok | 0.8.60 | |
+| Открытие созданного типа | advanced-settings/space-types | advanced-settings/space-types | partial | 0.8.60 | страница не говорит явно, что после создания типа пространства происходит автоматический переход в созданный тип - это только подразумевается |
+| Редактор классов (Classes) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
+| Перечисления (Enum) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
+| Удаление кастомного атрибута | advanced-settings/classes-enums | advanced-settings/classes-enums | partial | 0.8.60 | не описан запрос подтверждения (MessageBox) с указанием затронутых workflow/экранов при удалении атрибута, используемого в правилах перехода |
+| Самостоятельное удаление воркспейса/аккаунта | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | partial | 0.8.60 | не описаны OTP-подтверждение по коду, grace/readonly-периоды после удаления и guard на единственного владельца - страницы упоминают только сам факт удаления |
+| OTP-подтверждение чувствительных операций | - | - | plan | - | отложено |
+| Server-пакет `server-setting` | - | - | internal | - | |
+| Базовый тип `Preference`/`SpacePreference` | - | - | internal | - | |
+| Desktop-уведомления | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Тема и акцентный цвет | - | - | plan | - | отложено |
+| Экспорт в файл (Drive) | - | - | off | - | выключено на проде: export |
+| Быстрый CSV-экспорт текущей выборки | - | - | plan | - | отложено |
+| Экспорт документов в другой воркспейс | - | - | plan | - | отложено |
+| Периодический бэкап с арендой | - | - | internal | - | |
+| Контроль ревизии индекса | - | - | internal | - | |
+| Чистка бэкапов удалённых воркспейсов | - | - | internal | - | |
+| UI снапшотов бэкапа | getting-started/self-host | getting-started/self-host | partial | 0.8.60 | ru и en одинаково упоминают только вскользь, в контексте миграции на self-host (десктоп-приложение, пункт `Резервное копирование`/`Backup`) - список файлов снапшота, размеры и скачивание конкретного файла не описаны ни на одном языке |
+| Восстановление account-домена | - | - | internal | - | |
+| Одноэкземплярный запуск + отдельный DEV_INSTANCE | - | - | internal | - | |
+| Персистентная сессия с патчем cookie SameSite | - | - | internal | - | |
+| Трей, автозапуск, сохранение геометрии окна | - | - | plan | - | отложено |
+| Пайплайн загрузок | - | - | internal | - | |
+| Скриншаринг и бейдж непрочитанных | - | - | plan | - | отложено |
+| Автообновление (electron-updater) с диалогом на русском | - | - | plan | - | отложено |
+| macOS-подпись и нотаризация | - | - | internal | - | |
+| Глобальное отключение через env фронта | - | - | internal | - | |
+| Скрытие категорий настроек по `feature` | - | - | internal | - | |
+| Переопределение на уровне воркспейса | - | - | internal | - | |
 
 ## Куда смотреть, если нужно...
 

@@ -547,9 +547,11 @@ export class WorkspaceImporter {
     return projectId
   }
 
+  // Sub-issues carry their own numbers too: missing them leaves the sequence behind and new issues reuse taken ids.
   private getMaxImportIssueNumber (project: ImportProject): number {
-    const maxIssueNumber = Math.max(...project.docs.map((doc) => doc.number ?? 0))
-    return maxIssueNumber
+    const maxOf = (docs: ImportDoc[]): number =>
+      Math.max(0, ...docs.map((doc) => Math.max((doc as ImportIssue).number ?? 0, maxOf(doc.subdocs))))
+    return maxOf(project.docs)
   }
 
   async createIssue (

@@ -1,0 +1,10 @@
+class: tracker:class:Project
+title: Мобильное приложение
+identifier: APP
+emoji: 📱
+private: false
+autoJoin: true
+description: |
+  Разработка мобильного приложения компании «Демо» для iOS и Android: каталог товаров,
+  личный кабинет, push-уведомления и оплата.
+defaultIssueStatus: Todo

@@ -1,0 +1,132 @@
+# Layout/text that generate-demo-data (dev/tool/src/demoData.ts) fills in after importing
+# tests/demo-ws, since the Unified Format importer has no columns for it: tracker
+# components/milestones/labels/due dates, chat, personal todos, calendar events.
+# Not a Unified Format space file - kept as a sibling to tests/demo-ws so the importer
+# (which treats every *.yaml inside that folder as a space) never sees it.
+# Message/reply `author` is 1-based, matching --accounts in order (1=lead, 2=developer,
+# 3=designer, 4=tester).
+
+components:
+  - key: ios
+    label: iOS
+  - key: android
+    label: Android
+
+milestones:
+  - key: release10
+    label: "Релиз 1.0"
+    offsetDays: 14
+  - key: release11
+    label: "Релиз 1.1"
+    offsetDays: 45
+
+issueComponents:
+  APP-1: ios
+  APP-3: ios
+  APP-16: ios
+  APP-17: ios
+  APP-10: ios
+  APP-2: android
+  APP-8: android
+  APP-13: android
+
+issueMilestones:
+  APP-1: release10
+  APP-3: release10
+  APP-6: release10
+  APP-7: release10
+  APP-9: release10
+  APP-18: release10
+  APP-19: release10
+  APP-4: release11
+  APP-10: release11
+  APP-11: release11
+  APP-14: release11
+
+tags:
+  - key: bug
+    title: "баг"
+    color: 0
+  - key: ux
+    title: "UX"
+    color: 1
+  - key: urgent
+    title: "срочно"
+    color: 2
+
+issueLabels:
+  APP-7: [bug]
+  APP-8: [bug]
+  APP-4: [ux]
+  APP-9: [ux]
+  APP-6: [urgent]
+  APP-3: [urgent]
+
+issueDueDates:
+  APP-6: -1
+  APP-14: 0
+  APP-3: 3
+  APP-8: 3
+
+workSlotIssues: [APP-3, APP-6, APP-9, APP-17, APP-18, MKT-1]
+
+channels:
+  - name: "разработка"
+    topic: "Разработка мобильного приложения «Демо»"
+    description: "Обсуждение задач мобильного приложения"
+    messages:
+      - author: 1
+        text: "Доброе утро! Синхронизация в 10:00, обсудим APP-6 и дату релиза 1.0."
+      - author: 2
+        text: "Подключил SDK платёжного провайдера, тестовая оплата проходит, разбираюсь с 3D-Secure."
+      - author: 4
+        text: "Нашёл критичный краш на Android 12 при открытии профиля без аватарки, завёл APP-7, приоритет Urgent."
+        replies:
+          - author: 2
+            text: "Поправил, аватарка по умолчанию добавлена. Олег, перепроверишь?"
+          - author: 4
+            text: "Проверил на Pixel 6 и Samsung A53, больше не падает, закрываю APP-7."
+      - author: 3
+        text: "Макет карточки товара согласован, начинаю вёрстку сегодня."
+      - author: 1
+        text: "Отлично! На следующей синхронизации покажешь на телефоне и планшете."
+      - author: 4
+        text: "Ещё баг: корзина не сохраняется после полного перезапуска, похоже на регрессию. Завёл APP-8."
+  - name: "маркетинг"
+    topic: "Маркетинг и продвижение"
+    description: "Продвижение приложения «Демо»"
+    messages:
+      - author: 1
+        text: "Запустили тестовую рекламную кампанию в соцсетях на небольшой бюджет, смотрим отклик неделю."
+      - author: 3
+        text: "Обновила лендинг - новые скриншоты и отзывы, см. MKT-4."
+      - author: 1
+        text: "Отлично, публикуй на продакшене."
+      - author: 3
+        text: "Опубликовано!"
+      - author: 1
+        text: "Пресс-релиз о запуске приложения возьму на себя, черновик будет к пятнице."
+      - author: 4
+        text: "Подключение платёжного провайдера немного задерживается из-за бага на их стороне, может повлиять на анонс."
+      - author: 1
+        text: "Хорошо, учтём при планировании даты. Партнёрство с блогерами пока откладываем."
+
+personalTodos:
+  - ["Подготовить повестку планёрки", "Согласовать бюджет на рекламную кампанию"]
+  - ["Обновить зависимости в мобильном проекте", "Код-ревью задач команды"]
+  - ["Подготовить макеты для App Store", "Собрать библиотеку иконок"]
+  - ["Прогнать регрессионный набор тестов", "Обновить тест-кейсы оплаты"]
+
+events:
+  - title: "Демо релиза"
+    day: 2
+    hourOffset: 6
+    durationMinutes: 60
+  - title: "Планёрка"
+    day: nextMonday
+    hourOffset: 1
+    durationMinutes: 30
+    recurring:
+      freq: WEEKLY
+      interval: 1
+      count: 52

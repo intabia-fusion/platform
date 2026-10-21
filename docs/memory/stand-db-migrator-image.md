@@ -1,0 +1,6 @@
+# Stand: stale docker images
+
+- The sanity stand migrates the DB with the `intabiafusion/db-migrator:latest` container, while `tool create-workspace` waits for `EXPECTED_SCHEMA_VERSION` from `foundations/server/packages/postgres/src/version.ts` (19 on 2026-10-21).
+- An image built before the latest migrations sets an older version (17) and every `create-workspace` blocks for `CHECK_VERSION_TIMEOUT` = 300s with `Waiting for database schema migrations to be applied currentVersion=17 expectedVersion=19` in `tests/sanity/logs/prepare/*create-workspace*.log`; the workspace created after the timeout is broken (later `configure` hangs).
+- Fix: `cd services/db-migrator && pnpm bundle && pnpm docker:build`, then recreate the stand. One-off unblock of a running stand: `DB_URL=postgresql://postgres:postgres@localhost:6433/postgres node services/db-migrator/lib/index.js`.
+- Pod images older than `common/scripts/version.txt` (e.g. transactor on 0.8.12, workspaces created by the local tool on 0.8.14) answer every REST call with 403 (`Model version mismatch` in the transactor log, `{"mode":"upgrading"}` on `/api/v1/account/<ws>`); `generate-*` tool commands then fail with `Forbidden` in `createRestTxOperations`. Fix: `pnpm docker`, then recreate the stand.

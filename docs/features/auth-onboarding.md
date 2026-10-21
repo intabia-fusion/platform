@@ -108,7 +108,7 @@
 ### Авторизация
 - **7 ролей и их "сила".** `AccountRole`, `roleOrder`, `getRolePower()` - `foundations/core/packages/core/src/classes.ts`, `server/account/src/utils.ts`.
 - **Permission-модель класс/атрибут.** `definePermissions()` - `models/core/src/permissions.ts`.
-- **Роли участника и назначаемые роли.** `Member`, `assignableRoles` (`Guest/User/Maintainer/Owner`), `updateWorkspaceRole` - `utils.ts`.
+- **Роли участника и назначаемые роли.** `Member`, `assignableRoles` (`Guest/User/Maintainer/Owner`), `updateWorkspaceRole` - `utils.ts`; UI - категория настроек воркспейса «Участники» (`setting.ids.Members`, `models/setting/src/index.ts:369-381`) со списком сотрудников, поиском по имени и выпадающим списком роли на каждой строке (включая перевод владения через выбор роли Owner у другого участника) - `plugins/setting-resources/src/components/Members.svelte`.
 - **Временный грант в токене.** `PermissionsGrant` (обязательные nbf/exp) - `token.ts`.
 - **Точечные workspace-права.** `batchAssignWorkspacePermission`/`batchRevokeWorkspacePermission`/`hasWorkspacePermission`/`getWorkspacePermissions` - `operations.ts`.
 - **Password aging на воркспейс.** `updatePasswordAgingRule`/`checkPasswordAging` - `utils.ts`.
@@ -134,6 +134,45 @@
 - **Бесплатные лимиты self-host.** `parseFreePlanLimits`/`getFreePlanLimits` - `server/account/src/freeLimits.ts`.
 - **Мультирегиональность через env-конфиг.** `loadRegionConfig`/`resolveEndpoints`/`getRegionsFromConfig` - `server/account/src/region-config.ts`. См. `docs/region_config.md`.
 - **Presence-трекинг.** `server/account-service/src/presence.ts`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Пароль с блокировкой после N попыток | - | - | plan | - | отложено |
+| Email OTP логин/регистрация | - | - | plan | - | отложено |
+| Согласие на обработку ПДн и правила | - | - | plan | - | отложено |
+| Регистрация паролем (deprecated, только dev без mail-сервиса) | - | - | internal | - | |
+| Восстановление и смена пароля | - | - | plan | - | отложено |
+| OAuth Google/GitHub/OpenID Connect | - | - | plan | - | отложено |
+| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия») |
+| Привязка social identity | people-contacts/managing-account | - | no-en | 0.8.60 | исправлено: текст про удаление аккаунта (отложенное удаление + отмена входом) и про возврат в пространство (по новому приглашению, не только от владельца) |
+| Подписанный JSON-токен без refresh-механики | - | - | internal | - | |
+| LRU-кэш верифицированных токенов | - | - | internal | - | |
+| Exchange legacy гостевого токена | - | - | internal | - | |
+| Admin-сессия по OTP-штампу | - | - | internal | - | |
+| 7 ролей и их "сила" | - | - | plan | - | отложено |
+| Permission-модель класс/атрибут | - | - | internal | - | |
+| Роли участника и назначаемые роли | advanced-settings/roles | advanced-settings/roles | ok | 0.8.60 | исправлено: добавлены «Гость»/«Только чтение», убран несуществующий пункт «Глобальные администраторы» и мёртвый комментарий о нём, убран раздел «Назначение ролей» (описывал Controlled Documents/Products/Trainings/TraceX - все выключены на проде) |
+| Временный грант в токене | - | - | internal | - | |
+| Точечные workspace-права | - | - | plan | - | отложено |
+| Password aging на воркспейс | - | - | plan | - | отложено |
+| Админ-операции и имперсонация | - | - | internal | - | |
+| Admin-OTP | - | - | internal | - | |
+| OTP-подтверждение для деструктивных операций | - | - | plan | - | отложено |
+| Read-only гость на воркспейс | - | - | plan | - | отложено |
+| Переключатель гостевой регистрации | - | - | plan | - | отложено |
+| Публичные ссылки | - | - | plan | - | отложено |
+| Отложенное удаление с readonly-окном и sweep | - | - | plan | - | отложено |
+| Гвард "единственный owner" | - | - | plan | - | отложено |
+| Отмена удаления | - | - | plan | - | отложено |
+| Немедленное удаление и блокировка админом | - | - | internal | - | |
+| Аренда бэкапа перед удалением | - | - | internal | - | |
+| Единый admin-гейт | - | - | internal | - | |
+| Self-host лицензия | - | - | plan | - | отложено |
+| Бесплатные лимиты self-host | - | - | plan | - | отложено |
+| Мультирегиональность через env-конфиг | - | - | internal | - | |
+| Presence-трекинг | - | - | plan | - | отложено |
 
 ## Куда смотреть, если нужно...
 

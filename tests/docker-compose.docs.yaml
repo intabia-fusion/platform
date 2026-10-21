@@ -1,0 +1,31 @@
+# Docs stand (./prepare-pg.sh --docs): the sanity stack with the production look - Intabia branding
+# and themes, Russian by default, prod DISABLED_FEATURES - so documentation screenshots show only
+# what users have. Values follow docker-compose.persona.yaml; keep DISABLED_FEATURES in sync with
+# docs/features/README.md ("Выключено на проде").
+services:
+  front0:
+    volumes:
+      - ./branding-persona.json:/app/dist/branding-test.json
+    environment:
+      - LANGUAGES=en,ru,es,pt,zh,fr,it
+      - LOGIN_THEME=intabia
+      - ACCENT_THEME=accent-intabia
+      - DISABLED_FEATURES=mail,auto-translate,github,integrations,documents,inventory,survey,lead,products,recruit,training,process,gmail,mailboxes,export,contact.persons,contact.companies,tracker.issueImport,card,testManagement,telegram,hr,contact:ids:OrganizationNotificationGroup,setting:ids:SettingNotificationGroup,hide-ru-banned-channels
+  account:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  workspace:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  transactor0:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  activity:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  notifications:
+    volumes:
+      - ./branding-persona.json:/var/cfg/branding.json
+  aibot:
+    environment:
+      - FIRST_NAME=Юля

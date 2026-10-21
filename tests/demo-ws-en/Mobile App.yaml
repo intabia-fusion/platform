@@ -1,0 +1,10 @@
+class: tracker:class:Project
+title: Mobile App
+identifier: APP
+emoji: 📱
+private: false
+autoJoin: true
+description: |
+  Demo's mobile app for iOS and Android: product catalog, account area, push
+  notifications and payments.
+defaultIssueStatus: Todo

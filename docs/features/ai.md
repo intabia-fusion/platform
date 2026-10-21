@@ -91,6 +91,7 @@
 - **Окно контекста ветки + промпт объекта.** С outline при переполнении. - `buildThreadContext`, `workspace/threadContext.ts`; `buildDocPromptText`, `workspace/docPrompt.ts`.
 - **Цикл "модель<->инструменты" с лимитом итераций.** - `runToolCalls`, `MAX_TOOL_ITERATIONS=8`, `llms/toolLoop.ts`; бюджеты `toolBudgets`, `utils/budget.ts`.
 - **`AIRequest` как документ жизненного цикла запроса.** Статус/итерация/токены на весь запрос. - `createAIRequest`/`updateAIRequest`, `workspace/workspaceClient.ts`.
+- **Транскрипция встречи в реальном времени.** Юля AI пишет реплики в `MeetingMinutes` по мере звучания прямо во время звонка (видно в разделе "Активность"), с выбором языка; вкл/выкл по умолчанию на комнату или для конкретной встречи - настройки комнаты/встречи вне этого документа, см. `office-meetings.md`. - потоковый ASR, `services/ai-bot/love-agent/src/stream/stt.ts`, `agent.ts`; запись реплики - `AIControl.processLoveTranscript`, `services/ai-bot/pod-ai-bot/src/controller.ts` (см. сценарий 4 выше).
 
 ### LLM/ASR-провайдеры и модели
 - **OpenAI-провайдер.** chat.completions + tool-calls. - `OpenAIProvider`, `llms/openai.ts`.
@@ -112,6 +113,48 @@
 - **Сверка биллинга Deepgram.** По страницам, group by workspace+day. - `updateDeepgramBilling`, `billing.ts`.
 - **Покупка/пополнение токенов.** Два пула: тарифное окно + купленный баланс. - `applyPurchase`, `billing.ts`; модель пулов - `../memory/ai_token_topups.md`.
 - **Публикация каталога моделей в биллинг + self-heal.** - `pushModelRegistry`, `billing.ts`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| "Обсудить с ассистентом" в шапке объекта | - | - | plan | - | |
+| Ассистент в диалоге создания задачи | - | - | plan | - | |
+| Issue-draft разговор | - | - | plan | - | |
+| "Новый контекст" | - | - | plan | - | |
+| Предложение правки как diff | - | - | plan | - | |
+| Предложение задачи с подзадачами | - | - | plan | - | |
+| Экспорт разговора в markdown | - | - | plan | - | |
+| Личная память пользователя | - | - | plan | - | |
+| Настройки AI уровня workspace/space | - | - | plan | - | |
+| Индикатор "печатает" + отмена запроса | - | - | plan | - | |
+| Приветствие новому активному сотруднику в Direct | - | - | plan | - | |
+| Роутинг упомянутых/direct сообщений | - | - | internal | - | |
+| Голосовые из чата в STT-очередь | - | - | plan | - | |
+| Ручная сводка сообщения/встречи | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | скрины hulia-live-transcription*.png устарели (апстримный Huly UI), см. office-meetings.md |
+| Перевод с сохранением структуры | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Компакция контекста | - | - | internal | - | |
+| Окно контекста ветки + промпт объекта | - | - | internal | - | |
+| Цикл "модель<->инструменты" с лимитом итераций | - | - | internal | - | |
+| `AIRequest` как документ жизненного цикла запроса | - | - | internal | - | |
+| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | исправлено: выбор языка транскрибации (это настройка комнаты, не контрол в меню встречи); скрины hulia-live-transcription*.png устарели (апстримный Huly UI), см. office-meetings.md |
+| OpenAI-провайдер | - | - | internal | - | |
+| Счётчик токенов tiktoken | - | - | internal | - | |
+| GigaChat-провайдер | - | - | internal | - | |
+| "Server"/clisr-провайдер | - | - | internal | - | |
+| Mock-провайдер для тестов | - | - | internal | - | |
+| Реестр моделей уровень->провайдер | - | - | internal | - | |
+| Мультипровайдерный yaml-реестр | - | - | internal | - | |
+| Реестр ASR-провайдеров с fallback | - | - | internal | - | |
+| In-memory `LimitsState` | - | - | internal | - | |
+| Месячное окно биллинга | - | - | internal | - | |
+| Гейт по лимиту токенов перед LLM | - | - | plan | - | |
+| Глобальный пул-лимит на (provider, model) | - | - | internal | - | |
+| Биллинг токенов | tariffs/using-resources | - | stale | 0.8.60 | скрин resurces.png устарел (см. billing.md «Индикаторы использования ресурсов») |
+| Биллинг длительности транскрипции | tariffs/using-resources | - | stale | 0.8.60 | скрин resurces.png устарел (см. billing.md «Индикаторы использования ресурсов») |
+| Сверка биллинга Deepgram | - | - | internal | - | |
+| Покупка/пополнение токенов | - | - | plan | - | |
+| Публикация каталога моделей в биллинг + self-heal | - | - | internal | - | |
 
 ## Куда смотреть, если нужно...
 

@@ -101,9 +101,13 @@
 - **Вставка картинок из буфера и drop.** Файлы и base64-картинки из вставленного HTML (Google Docs, Word) загружаются через `attachFile`, в ydoc base64 не попадает; в редакторе без `attachFile` такая вставка отклоняется с ошибкой. FUSIO-1468, подробности - `docs/memory/editor-image-paste.md`. - `plugins/text-editor-resources/src/components/extension/shortcuts/imageUpload.ts`.
 - **Упоминания по `@`.** `ReferenceExtension` + `Suggestion` + попап списка людей. Попап (`MentionPopup`) ищет по категориям `ObjectSearchCategory` с контекстом `mention` только по заголовку и идентификатору и с вхождением в любом месте слова: `searchFor(..., { searchIn: ['title', 'identifier'], infix: true })` -> `searchFulltext` с тем же `searchIn` и запросом `*слово*` (совпадения с начала слова выше); спотлайт ищет и по тексту, только с начала слова. - `plugins/text-editor-resources/src/components/extension/reference.ts`, `plugins/text-editor-resources/src/components/extension/suggestion.ts`, `plugins/text-editor-resources/src/components/MentionPopup.svelte`, `packages/presentation/src/search.ts`.
 - **Доска рисования с undo.** Узел текста, открывающий попап-редактор с отдельным undo/redo. - `plugins/text-editor-resources/src/components/extension/drawingBoard.ts`.
+- **Mermaid-диаграммы.** Code-block с языком `mermaid`: при вводе кода (через `/` → «Диаграмма») диаграмма рендерится live ниже редактора кода, код можно свернуть, оставив только картинку; первый клик выделяет диаграмму, повторный клик по выделенной открывает полноразмерный просмотр (`MermaidPopup`, только SVG, без редактирования), Delete удаляет диаграмму целиком. - `plugins/text-editor-resources/src/components/extension/codeSnippets/mermaid.ts`, `MermaidPopup.svelte`; подключение - `plugins/text-editor-resources/src/kits/editor-kit.ts`.
+- **Вставка эмодзи.** Автоконвертация shortcode/эмотиконов (`:smile:`, `:)`) в emoji-узел при наборе текста и вставке (`EmojiExtension`); отдельная кнопка с попапом выбора эмодзи в тулбаре ref-инпутов (сообщения/комментарии). - `plugins/text-editor-resources/src/components/extension/emoji.ts`, `plugins/text-editor-resources/src/components/editor/actions.ts`.
 - **Таблицы в тексте: refresh/diff/original data.** Таблица может обновляться из источника, показывать diff и исходные данные отдельными попапами. - `plugins/text-editor-resources/src/components/extension/table/actions/{refreshTable,showTableDiff,seeOriginalTableData}.ts`.
 - **Совместная осведомлённость.** Курсоры/имена/цвета участников через awareness Hocuspocus. - `plugins/text-editor/src/types.ts`.
 - **Reconnect grace для нестабильного WS.** После сна вкладки WS часто закрывается с кодом 1006 - ошибка пользователю показывается только через 5с, если не переподключилось. - `plugins/text-editor-resources/src/provider/utils.ts`.
+- **Заметки на выделенном тексте.** Tiptap-марка `note` (не узел, не тред): выделение текста + кнопка "Заметка" в плавающей панели (`ConfigureNote`) открывает попап с текстом заметки и выбором из 9 цветовых вариантов (`NoteKind`); после отмеченного текста рисуется виджет-маркер `[]` (decoration), клик по нему показывает содержимое (`DisplayNotePopup`), повторное выделение и клик по значку - редактирование/удаление. - `NoteBaseExtension`/`NoteKind`, `foundations/core/packages/text/src/marks/noteBase.ts`; `NoteExtension`, `ConfigureNotePopup.svelte`/`DisplayNotePopup.svelte`, `plugins/text-editor-resources/src/components/extension/note.ts`; действие в тулбаре - `models/text-editor/src/index.ts:441`.
+- **Встроенные комментарии к выделенному тексту.** Кнопка "Comment" в тулбаре редактора (`CreateInlineComment`) создаёт тред-комментарий, привязанный к выделению в тексте документа/описания задачи; выделение подсвечивается декорацией, открытый тред показывает `InlineCommentThread` с ответами. Отдельный механизм от QMS-меток (`QMSInlineCommentMark`, см. "Как работает" §6). - `InlineCommentCollaborationExtension`, `plugins/text-editor-resources/src/components/extension/inlineComment.ts`; подключение - `plugins/text-editor-resources/src/kits/editor-kit.ts`; кнопка - `models/text-editor/src/index.ts:458`; UI треда - `plugins/chunter-resources/src/components/inline-comment/InlineCommentThread.svelte`.
 
 ### Controlled Documents (QMS)
 - **Версионирование major/minor.** Общий `seqNumber` на все версии одного логического документа. - `plugins/controlled-documents/src/types.ts`.
@@ -113,6 +117,10 @@
 - **Reason & Impact (change control).** Отдельная сущность `ChangeControl`, привязанная к версии документа, попадает в History. - `plugins/controlled-documents/src/types.ts`.
 - **PDF/печать.** Серверная генерация PDF: действие `Print` создаёт public link на документ и вызывает `printToPDF()`, которая обращается к `services/print/pod-print` - сервис рендерит страницу headless Chrome (Puppeteer) и возвращает PDF, опционально подписывает через `signPDF`. Печатная вёрстка (шапка/футер, `@media print`) - `plugins/controlled-documents-resources/src/components/print/DocumentPrintTitlePage.svelte`, `plugins/controlled-documents-resources/src/components/document/EditDocContent.svelte`; сервис печати - `services/print/pod-print/src/print.ts`, клиентский вызов - `plugins/print/src/utils.ts`.
 - **Интеграция с тренингами.** При переходе документа в Effective создаётся заявка на тренинг сотрудников (`DocumentTraining` миксин). - `plugins/controlled-documents/src/types.ts`, `server-plugins/controlled-documents-resources/src/index.ts`.
+- **Автор и владелец документа.** `author` (подписант, попадает в PDF-экспорт) и `owner` (отвечает за документ весь ЖЦ) - разные поля; смена владельца через попап `ChangeOwnerPopup` (право ограничено ролью, проверка `canChangeDocumentOwner`/`isDocOwner`). - `plugins/controlled-documents/src/types.ts`, `plugins/controlled-documents-resources/src/components/document/popups/ChangeOwnerPopup.svelte`, `plugins/controlled-documents-resources/src/utils.ts`.
+- **Фильтрация документов в Library.** `ClassFilters` на `documents.class.Document`: prefix, title, state, space, template, владелец/автор (`EmployeeFilter`), category, modifiedOn, labels, major/minor; набор видимых фильтров сужается `GetVisibleFilters`. Сохранение отфильтрованного списка как приватного/публичного вида - общий платформенный механизм `savedViews`. - `models/controlled-documents/src/index.ts`, `plugins/view-resources/src/{filter,savedViews}.ts`.
+- **Создание документа из шаблона (мастер).** UI-мастер в 4 шага: пространство+родитель → шаблон → название/описание/обоснование → команда (Co-Authors/Reviewers/Approvers) → `Create Draft`; один и тот же мастер создаёт документы и в "Общей документации" (категория Quality Documents), и в пространстве продукта ("Техническая документация"). - `plugins/controlled-documents-resources/src/docutils.ts` (`createControlledDocFromTemplate`), nav-группы `GeneralDocumentation`/`TechnicalDocumentation` - `models/controlled-documents/src/index.ts`.
+- **Шаблоны и категории документов.** `DocumentTemplates`/`Categories` - создание переиспользуемых шаблонов (префикс, авто-нумерация через `sequence`/`docPrefix`) и категорий для группировки документов. - `plugins/controlled-documents-resources/src/components/DocumentTemplates.svelte`, `plugins/controlled-documents-resources/src/components/Categories.svelte`, `plugins/controlled-documents/src/types.ts` (`DocumentTemplate`).
 - **Экспорт в другой workspace.** Отдельный от markdown-экспорта механизм (`export`/`export-resources` пакеты) - копирование документов/пространства целиком между инстансами. - `models/controlled-documents/src/index.ts` (`ExportProjectDocuments`, `ExportDocumentsFromSpace`).
 
 ### Markdown / Converter
@@ -122,6 +130,42 @@
 
 ### Diff view
 - **Unified/split-просмотр диффов.** Общий переиспользуемый пакет; в QMS не используется (см. "Как работает" п.5) - применяется в GitHub PR review и подсветке кода в редакторе. - `plugins/diffview/src/index.ts`, `plugins/diffview-resources/src/parser.ts` (`diff2html`).
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Шапка и меню документа | knowledge-management/documents | knowledge-management/documents | partial | 0.8.60 | не описана структура шапки/меню открытого документа (ИИ, реакции, копирование ссылки, боковая панель «История») |
+| Основной текст в поиске | - | - | internal | - | |
+| Иерархия документов в teamspace | knowledge-management/documents | knowledge-management/documents | partial | 0.8.60 | не описан drag&drop для изменения порядка/вложенности документов в дереве и блокировка документа при одновременном редактировании (`lockedBy`) |
+| История версий и восстановление содержимого | - | - | off | - | не документируем |
+| Rich text на tiptap | knowledge-management/documents, controlled-documents/editing-formatting | knowledge-management/documents, controlled-documents/editing-formatting | partial | 0.8.60 | частично выключено на проде: documents - в Controlled Documents недоступен, в обычных документах (wiki/teamspace) работает |
+| Вставка картинок из буфера и drop | - | - | off | - | не документируем |
+| Упоминания по `@` | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
+| Доска рисования с undo | knowledge-management/drawing-board | knowledge-management/drawing-board | ok | 0.8.60 | |
+| Mermaid-диаграммы | knowledge-management/mermaid-diagrams | knowledge-management/mermaid-diagrams | ok | 0.8.60 | |
+| Вставка эмодзи | - | - | off | - | не документируем |
+| Заметки на выделенном тексте | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
+| Таблицы в тексте: refresh/diff/original data | - | - | off | - | не документируем |
+| Совместная осведомлённость | knowledge-management/collaborative-editing | knowledge-management/collaborative-editing | ok | 0.8.60 | |
+| Reconnect grace для нестабильного WS | - | - | internal | - | |
+| Версионирование major/minor | controlled-documents/document-versions | controlled-documents/document-versions | off | - | выключено на проде: documents |
+| Три роли пространства | - | - | off | - | не документируем |
+| Пространство "Default Documents" | - | - | off | - | не документируем |
+| Вложения: перенос между версиями + мягкое удаление | - | - | off | - | не документируем |
+| Reason & Impact (change control) | controlled-documents/document-settings, controlled-documents/document-versions | controlled-documents/document-settings, controlled-documents/document-versions | off | - | выключено на проде: documents |
+| PDF/печать | controlled-documents/editing-formatting | controlled-documents/editing-formatting | off | - | выключено на проде: documents |
+| Интеграция с тренингами | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: documents |
+| Автор и владелец документа | controlled-documents/ownership-authorship | controlled-documents/ownership-authorship | off | - | выключено на проде: documents |
+| Фильтрация документов в Library | controlled-documents/document-filtering | controlled-documents/document-filtering | off | - | выключено на проде: documents |
+| Создание документа из шаблона (мастер) | controlled-documents/quality-documents, controlled-documents/technical-documentation | controlled-documents/quality-documents, controlled-documents/technical-documentation | off | - | выключено на проде: documents |
+| Шаблоны и категории документов | controlled-documents/templates | controlled-documents/templates | off | - | выключено на проде: documents |
+| Экспорт в другой workspace | - | - | off | - | не документируем |
+| "Copy Document as Markdown" | - | - | off | - | не документируем |
+| Копирование таблиц как Markdown | - | - | off | - | не документируем |
+| `MarkdownValueFormatter` | - | - | internal | - | |
+| Unified/split-просмотр диффов | - | - | off | - | не документируем |
+| Встроенные комментарии к выделенному тексту | communication/inline-comments | communication/inline-comments | ok | 0.8.60 | |
 
 ## Куда смотреть, если нужно...
 

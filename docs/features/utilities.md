@@ -131,8 +131,8 @@
 
 ### Survey
 - **Документ-опрос.** `name` (fulltext), `prompt`, `questions?: Question[]`. - `TSurvey`, `models/survey/src/types.ts`.
-- **Голосование (Poll).** Attached-документ к опросу, `isCompleted`. - `TPoll`, `models/survey/src/types.ts`.
-- **Приложение "Surveys" с дефолтным спейсом.** - `models/survey/src/index.ts`, `createDefaultSpace(..., {name:'Surveys'})`, `models/survey/src/migration.ts`.
+- **Голосование (Poll).** Attached-документ к опросу, `isCompleted`; таблица опросов (`survey.viewlet.TablePoll`, скрывает `name`/`survey`/`questions`) и действие "Удалить опрос" (`survey.action.DeletePoll`, доступно на любом количестве выбранных). - `TPoll`, `models/survey/src/types.ts`; `models/survey/src/index.ts`.
+- **Приложение "Surveys" с дефолтным спейсом.** Единственный спецраздел навигатора - `SpecialView` над `survey.class.Survey` (label `survey.string.Surveys`, в ru "Анкеты"). - `models/survey/src/index.ts`, `createDefaultSpace(..., {name:'Surveys'})`, `models/survey/src/migration.ts`.
 - Серверной части нет.
 
 ### Rating
@@ -168,6 +168,61 @@
 - **Подпись PDF после генерации.** Использует сервис `sign` (см. `docs/memory/qms-tests-integration.md`). - `plugins/print-resources/src/printUtils.ts` (импорт `signPDF` из `@hcengineering/sign`).
 - **Просмотр DOCX превью через конвертацию в HTML.** - `convertToHTML`, `plugins/print/src/utils.ts`; `convertToHtml` (mammoth), `services/print/pod-print/src/convert.ts`; `DOCXViewer.svelte`.
 - **Действие "Print to PDF" на любом документе.** - `models/print/src/index.ts`, видимость через `CanPrint`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Кастомные эмодзи организации | - | - | plan | - | |
+| Пикер с категориями и поиском | - | - | plan | - | |
+| Тональность кожи | - | - | plan | - | |
+| Разбор текста с эмодзи | - | - | internal | - | |
+| Эмодзи в настройках воркспейса | - | - | plan | - | |
+| Бордер выбранной кнопки эмодзи | - | - | internal | - | |
+| Цветные метки с привязкой к классу | task-tracking/labels | task-tracking/labels | partial | 0.8.60 | страница только про метки Трекера; привязка к классу/категории (`TagCategory`/`targetClass`) не упоминается - описаны лишь название, описание и цвет метки |
+| Привязка к документу с весом знания | - | - | plan | - | |
+| Категории меток | - | - | plan | - | |
+| Фильтры по меткам | task-tracking/labels | task-tracking/labels | partial | 0.8.60 | описан только включающий фильтр (выбрать метки); противоположный режим «не равен»/«is not» (`FilterTagsNin`, `view.string.FilterIsNot`) не упомянут |
+| Серверная синхронизация при создании/удалении ссылки на метку | - | - | internal | - | |
+| Каскадное удаление ссылок при удалении метки | - | - | internal | - | |
+| Аналитика создания/удаления меток | - | - | internal | - | |
+| (FUSIO-812) Ограничение длины названия/описания | - | - | plan | - | |
+| (FUSIO-675/813/777) UI и презентация меток | task-tracking/labels | task-tracking/labels | ok | 0.8.60 | |
+| Шаблоны сообщений с плейсхолдерами | advanced-settings/text-templates | advanced-settings/text-templates | ok | 0.8.60 | |
+| Вычисляемые поля `${...}` | advanced-settings/text-templates | advanced-settings/text-templates | ok | 0.8.60 | |
+| Копирование/перемещение/групповое редактирование | - | - | plan | - | |
+| Публичный спейс "Public templates" по умолчанию | advanced-settings/text-templates | advanced-settings/text-templates | ok | 0.8.60 | |
+| Значки достижений | - | - | off | - | не документируем |
+| Показ в профиле | - | - | off | - | не документируем |
+| Документ-опрос | additional-modules/surveys | additional-modules/surveys | off | - | выключено на проде: survey |
+| Голосование (Poll) | additional-modules/surveys | additional-modules/surveys | off | - | выключено на проде: survey |
+| Приложение "Surveys" с дефолтным спейсом | additional-modules/surveys | additional-modules/surveys | off | - | выключено на проде: survey |
+| Рейтинг документа | - | - | off | - | не документируем |
+| Реакции трех типов | - | - | off | - | не документируем |
+| Персональный рейтинг со статистикой | - | - | off | - | не документируем |
+| Серверная защита от прямых правок и дублей | - | - | internal | - | |
+| Сводка реакций в заголовке | - | - | off | - | не документируем |
+| Отдельный под-калькулятор рейтинга | - | - | internal | - | |
+| Вопрос/оценка/ответ с рангом и владельцем | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Три готовых типа вопросов | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Расширяемый миксин кастомного типа | - | - | internal | - | |
+| Типы Rank/Percentage | - | - | off | - | не документируем |
+| Оценка ответа и расчет проходного балла | - | - | internal | - | |
+| Потребитель - модуль training | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Иерархия каталога Категория -> Продукт -> Вариант | - | - | off | - | не документируем |
+| Создание подкатегории | - | - | off | - | не документируем |
+| Ссылка на продукт в activity-фиде | - | - | off | - | не документируем |
+| QMS-продукт как внешний спейс controlled-documents | controlled-documents/products | controlled-documents/products | off | - | выключено на проде: products |
+| Версии с семантическим версионированием | controlled-documents/products | controlled-documents/products | off | - | выключено на проде: products |
+| Связка версии с change control документом | controlled-documents/products | controlled-documents/products | off | - | выключено на проде: products |
+| Роли продукта | - | advanced-settings/roles | off | - | выключено на проде: products |
+| Удаление версии продукта | - | - | off | - | не документируем |
+| Поиск продукта в глобальном поиске | - | - | off | - | не документируем |
+| Печать документа в PDF | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
+| Массовая печать | - | - | off | - | не документируем |
+| Подпись PDF после генерации | - | - | off | - | не документируем |
+| Просмотр DOCX превью через конвертацию в HTML | - | - | off | - | не документируем |
+| Действие "Print to PDF" на любом документе | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
 
 ## Куда смотреть, если нужно...
 

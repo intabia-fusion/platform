@@ -109,6 +109,7 @@ import { changeConfiguration } from './configuration'
 
 import { performCalendarAccountMigrations } from './calendar'
 import { generatePlannerData } from './plannerData'
+import { generateDemoData } from './demoData'
 import {
   ensureGlobalPersonsForLocalAccounts,
   filterMergedAccountsInMembers,
@@ -125,7 +126,7 @@ import { createRestClient } from '@hcengineering/api-client'
 import { sendTransactorEvent } from '@hcengineering/server-tool'
 import { existsSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { dirname, join, resolve } from 'path'
 import { restoreMarkupRefs } from './markup'
 import { restoreGithubIntegrations } from './restoreGithub'
 
@@ -1234,6 +1235,29 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       await generatePlannerData({
         workspace,
         platformUrl: opt.url,
+        accountEmails: opt.accounts
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0),
+        password: opt.password
+      })
+    })
+
+  program
+    .command('generate-demo-data <workspace>')
+    .description(
+      'import tests/demo-ws (Unified Format) and fill in components/milestones/labels/due dates, chat and ' +
+        'planner data, for stable user-documentation screenshots'
+    )
+    .option('--dir <dir>', 'Unified Format directory', resolve(__dirname, '../../../tests/demo-ws'))
+    .option('--accounts <emails>', 'comma-separated login emails, need exactly 4', 'demo1,demo2,demo3,demo4')
+    .option('--password <password>', 'password for the accounts', '1234')
+    .option('--url <url>', 'platform base url', process.env.PLATFORM_URL ?? 'http://localhost:8083')
+    .action(async (workspace: string, opt: { dir: string, accounts: string, password: string, url: string }) => {
+      await generateDemoData({
+        workspace,
+        platformUrl: opt.url,
+        dir: opt.dir,
         accountEmails: opt.accounts
           .split(',')
           .map((s) => s.trim())

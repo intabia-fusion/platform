@@ -100,6 +100,39 @@
 - **WorkspacesNotification.** Кросс-воркспейс unread по аккаунту (TTL 300с), генерирует account-service, доставка по online-TX-шине, store `workspacesNotificationStore`. - `server/account-service/src/presence.ts`, `plugins/workbench-resources/src/workbench.ts`.
 - **Исключение из activity.** `services/activity/src/worker.ts` пропускает pulse-классы при генерации activity-сообщений.
 
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| CRUD ToDo | task-tracking/creating-action-items | task-tracking/creating-action-items | ok | 0.8.60 | |
+| ToDo к чужим сущностям | task-tracking/creating-action-items, knowledge-management/documents-action-items | task-tracking/creating-action-items, knowledge-management/documents-action-items | partial | 0.8.60 | описано только назначение активности из документа; из описания задачи (Issue)/лида/кандидата (`time.mixin.ItemPresenter`) не показано |
+| Приложение "Планировщик" | task-tracking/creating-action-items | task-tracking/creating-action-items | partial | 0.8.60 | не описаны три панели приложения (навигатор/план/календарь) и переключение режимов вида |
+| Drag/drop ToDo | task-tracking/scheduling-action-items | task-tracking/scheduling-action-items | ok | 0.8.60 | |
+| Переназначение/закрытие ToDo при работе с Issue (FUSIO-38) | task-tracking/scheduling-action-items | task-tracking/scheduling-action-items | ok | 0.8.60 | |
+| Миграция слотов | - | - | internal | - | |
+| Группировка занятости по людям | team-resources/team-planner | team-resources/team-planner | ok | 0.8.60 | |
+| Режимы вида | team-resources/team-planner | team-resources/team-planner | ok | 0.8.60 | |
+| Годовая сетка занятости | - | - | plan | - | |
+| PersonDayWidget | - | - | plan | - | |
+| Демо-данные | - | - | internal | - | |
+| Recurrence RFC5545 | team-resources/create-event | - | partial | 0.8.60 | не раскрыты варианты повторения (DAILY/WEEKLY/MONTHLY/YEARLY), только общая строка «Повтор события» |
+| Удаление вхождения серии | - | - | plan | - | |
+| Бронируемое расписание | - | - | plan | - | |
+| Google Calendar | integrations/google-calendar | integrations/google-calendar | off | - | выключено в продукте |
+| CalDAV | - | - | off | - | выключено в продукте |
+| Настройки | integrations/google-calendar | integrations/google-calendar | off | - | выключено в продукте |
+| HULY -> Default | - | - | internal | - | |
+| BusySlot | team-resources/team-planner | team-resources/team-planner | ok | 0.8.60 | |
+| busySlotData / getBusyIntervals | - | - | internal | - | |
+| Server-триггер синка | - | - | internal | - | |
+| Миграция бэкфила | - | - | internal | - | |
+| DayCalendar | team-resources/team-planner | team-resources/team-planner | partial | 0.8.60 | не описана read-only подложка занятости коллег (тонкие полосы на пересечениях) в дневном календаре |
+| layout.ts | - | - | internal | - | |
+| DocumentPresence | knowledge-management/collaborative-editing | knowledge-management/collaborative-editing | partial | 0.8.60 | страница не разделяет presence (кто сейчас смотрит документ, TTL 10с) и awareness-курсоры совместного редактирования - описан только клик по иконке участника для перехода к курсору |
+| TypingIndicator | - | - | internal | - | |
+| WorkspacesNotification | - | - | internal | - | |
+| Исключение из activity | - | - | internal | - | |
+
 ## Куда смотреть, если нужно...
 
 - Добавить поле в ToDo -> `models/time/src/index.ts` (класс `TToDo`) + `plugins/time/src/index.ts` (интерфейс `ToDo`).
