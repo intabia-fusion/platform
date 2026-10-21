@@ -121,3 +121,21 @@ export function createRetryableFunction<T extends (...args: any[]) => Promise<an
     return await (withRetry(() => fn(...args), options, operationName) as Promise<ReturnType<T>>)
   }) as T
 }
+
+/**
+ * Resolves with `fallback` when `promise` has not settled within `ms`. The promise itself is not
+ * cancelled, the caller just stops waiting for it.
+ */
+export async function withDeadline<T> (promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const deadline = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      resolve(fallback)
+    }, ms)
+  })
+
+  return await Promise.race([promise, deadline]).finally(() => {
+    clearTimeout(timer)
+  })
+}

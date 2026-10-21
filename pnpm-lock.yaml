@@ -23849,6 +23849,9 @@ importers:
 
   plugins/login:
     dependencies:
+      '@hcengineering/account-client':
+        specifier: workspace:^0.7.21
+        version: link:../../foundations/core/packages/account-client
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -23859,9 +23862,6 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
     devDependencies:
-      '@hcengineering/account-client':
-        specifier: workspace:^0.7.21
-        version: link:../../foundations/core/packages/account-client
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
@@ -23989,6 +23989,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../setting

@@ -18,7 +18,8 @@ import account, {
   initRegionConfig,
   generateShortId,
   isServiceToken,
-  sweepScheduledDeletions
+  sweepScheduledDeletions,
+  parsePasswordStrictness
 } from '@hcengineering/account'
 import accountCs from '@hcengineering/account/lang/cs.json'
 import accountDe from '@hcengineering/account/lang/de.json'
@@ -192,6 +193,13 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
   setMetadata(account.metadata.AllowSkipOtpPasswordSignUp, process.env.ALLOW_SKIP_OTP_PASSWORD_SIGNUP === 'true')
+  const passwordStrictness = parsePasswordStrictness(process.env.PASSWORD_STRICTNESS)
+  if (process.env.PASSWORD_STRICTNESS !== undefined && process.env.PASSWORD_STRICTNESS !== passwordStrictness) {
+    measureCtx.warn('Unknown PASSWORD_STRICTNESS, password policy is disabled', {
+      value: process.env.PASSWORD_STRICTNESS
+    })
+  }
+  setMetadata(account.metadata.PasswordStrictness, passwordStrictness)
   // Self-host edition: account is the single LICENSE_KEY holder. Verify once at startup; payment pods
   // fetch the result via getLicenseInfo (no key of their own). maxUsers=0 on dev (no baked key) ->
   // no clamp; community (no/invalid key) -> 15; licensed -> key's maxUsers. Payment allowed on dev,

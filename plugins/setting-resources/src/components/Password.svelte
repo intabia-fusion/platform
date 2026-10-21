@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import login from '@hcengineering/login'
+  import login, { type PasswordValidationError } from '@hcengineering/login'
   import { getResource } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
@@ -28,6 +28,7 @@
   let label = presentation.string.Save
   let saved = false
   let error = false
+  let validationError: PasswordValidationError | undefined
 
   $: disabled =
     password.length === 0 || oldPassword.length === 0 || oldPassword === password || password !== password2 || saved
@@ -36,6 +37,14 @@
     label = setting.string.Saving
     saved = true
     try {
+      const validatePassword = await getResource(login.function.ValidatePassword)
+      validationError = await validatePassword(password)
+      if (validationError !== undefined) {
+        label = presentation.string.Save
+        saved = false
+        return
+      }
+
       const changePassword = await getResource(login.function.ChangePassword)
       await changePassword(oldPassword, password)
       label = setting.string.Saved
@@ -51,6 +60,7 @@
     saved = false
     label = presentation.string.Save
     error = false
+    validationError = undefined
   }
   $: updateSaved(oldPassword, password, password2)
 </script>
@@ -61,7 +71,12 @@
   </Header>
   <div class="flex-row-stretch flex-grow p-10">
     <div class="flex-grow flex-col">
-      {#if error}
+      {#if validationError !== undefined}
+        <div class="flex-row-center gap-2">
+          <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
+          <Label label={validationError.label} params={validationError.params} />
+        </div>
+      {:else if error}
         <div class="flex-row-center gap-2">
           <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
           <Label label={plugin.string.FailedToSave} />

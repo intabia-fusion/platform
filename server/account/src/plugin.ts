@@ -1,4 +1,5 @@
 import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
+import type { PasswordStrictness } from '@hcengineering/account-client'
 import {
   type PlatformQueueProducer,
   type QueueSubscriptionMessage,
@@ -48,6 +49,7 @@ export const accountPlugin = plugin(accountId, {
     AllowReadonlyGuests: '' as Metadata<boolean>,
     // Dev/testing only: signUp with a password and no email code (ALLOW_SKIP_OTP_PASSWORD_SIGNUP). Never set in prod.
     AllowSkipOtpPasswordSignUp: '' as Metadata<boolean>,
+    PasswordStrictness: '' as Metadata<PasswordStrictness>,
     // Free fallback limits (defaults, FREE_PLAN_LIMITS env overrides). Always present — applied to every
     // tier subscription on read; an unpaid workspace runs on these instead of full read-only. Not persisted.
     FreePlanLimits: '' as Metadata<TierLimits>,

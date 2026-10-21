@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,52 +14,65 @@
 // limitations under the License.
 //
 
-import { getMetadata } from '@hcengineering/platform'
+import { type PasswordRule, getPasswordViolations, measurePassword, passwordRules } from '@hcengineering/account-client'
+import type { PasswordValidationError } from '@hcengineering/login'
+import platform, { type IntlString, getMetadata, Severity, Status } from '@hcengineering/platform'
 
 import login from './plugin'
 import type { Field } from './types'
 
+const passwordRuleStrings: Record<PasswordRule, IntlString<{ count: number }>> = {
+  MinLength: login.string.PasswordMinLength,
+  MinSpecialChars: login.string.PasswordMinSpecialChars,
+  MinDigits: login.string.PasswordMinDigits,
+  MinUpperChars: login.string.PasswordMinUpperChars,
+  MinLowerChars: login.string.PasswordMinLowerChars
+}
+
 /**
- * Generates password validation rules based on metadata.
- *
- * @returns {Field['rules']} An array of password validation rules.
+ * Builds the form rules from the policy the account service served. Thresholds come as data
+ * (`login.metadata.PasswordValidations`) and the counting itself from `@hcengineering/account-client`,
+ * so the form and the server-side check cannot disagree. No metadata means `none`: every rule passes.
  */
 export function getPasswordValidationRules (): Field['rules'] {
-  const passwordValidations = getMetadata(login.metadata.PasswordValidations)
+  const validations = getMetadata(login.metadata.PasswordValidations)
 
-  const passwordValidationRules: Field['rules'] = [
-    {
-      rule: (value: string) => value.length >= (passwordValidations?.MinLength ?? 0),
-      notMatch: false,
-      ruleDescr: login.string.PasswordMinLength,
-      ruleDescrParams: { count: passwordValidations?.MinLength }
-    },
-    {
-      rule: (value: string) =>
-        (value.match(/[^a-zA-Z0-9]/g)?.length ?? 0) >= (passwordValidations?.MinSpecialChars ?? 0),
-      notMatch: false,
-      ruleDescr: login.string.PasswordMinSpecialChars,
-      ruleDescrParams: { count: passwordValidations?.MinSpecialChars }
-    },
-    {
-      rule: (value: string) => (value.match(/[0-9]/g)?.length ?? 0) >= (passwordValidations?.MinDigits ?? 0),
-      notMatch: false,
-      ruleDescr: login.string.PasswordMinDigits,
-      ruleDescrParams: { count: passwordValidations?.MinDigits }
-    },
-    {
-      rule: (value: string) => (value.match(/[A-Z]/g)?.length ?? 0) >= (passwordValidations?.MinUpperChars ?? 0),
-      notMatch: false,
-      ruleDescr: login.string.PasswordMinUpperChars,
-      ruleDescrParams: { count: passwordValidations?.MinUpperChars }
-    },
-    {
-      rule: (value: string) => (value.match(/[a-z]/g)?.length ?? 0) >= (passwordValidations?.MinLowerChars ?? 0),
-      notMatch: false,
-      ruleDescr: login.string.PasswordMinLowerChars,
-      ruleDescrParams: { count: passwordValidations?.MinLowerChars }
-    }
-  ]
+  return passwordRules.map((rule) => ({
+    rule: (value: string) => measurePassword(value)[rule] >= (validations?.[rule] ?? 0),
+    notMatch: false,
+    ruleDescr: passwordRuleStrings[rule],
+    ruleDescrParams: { count: validations?.[rule] ?? 0 }
+  }))
+}
 
-  return passwordValidationRules
+/**
+ * First rule the password does not satisfy, already resolved to its translated message. Used by
+ * screens that do not use `Form` (the settings page) to show the same hint the login form shows.
+ */
+export function getPasswordValidationError (password: string): PasswordValidationError | undefined {
+  const [violation] = getPasswordViolations(password, getMetadata(login.metadata.PasswordValidations))
+  if (violation === undefined) {
+    return undefined
+  }
+
+  return { label: passwordRuleStrings[violation.rule], params: { count: violation.count } }
+}
+
+/**
+ * Turns a server-side `PasswordPolicyViolation` into the same per-rule message the form shows.
+ * Only reachable when the cached policy is stale or the client is not the login UI.
+ */
+export function mapPasswordPolicyStatus (status: Status<any>): Status<any> {
+  if (status.code !== platform.status.PasswordPolicyViolation) {
+    return status
+  }
+
+  const rule = status.params?.rule as PasswordRule | undefined
+  const ruleDescr = rule !== undefined ? passwordRuleStrings[rule] : undefined
+
+  if (ruleDescr === undefined) {
+    return status
+  }
+
+  return new Status(Severity.INFO, ruleDescr, { count: status.params?.count })
 }
