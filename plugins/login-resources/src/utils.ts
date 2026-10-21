@@ -64,6 +64,7 @@ import { logIn, workbenchId } from '@hcengineering/workbench'
 import { LoginEvents } from './analytics'
 import { type Pages } from './index'
 import login from './plugin'
+import { mapPasswordPolicyStatus } from './validations'
 
 /**
  * Constructs an account client.
@@ -148,7 +149,7 @@ export async function signUp (
       Analytics.handleEvent(LoginEvents.SignUpEmail, { email, ok: false })
       await handleStatusError('Sign up error', err.status)
 
-      return [err.status, null]
+      return [mapPasswordPolicyStatus(err.status), null]
     } else {
       Analytics.handleEvent(LoginEvents.SignUpEmail, { email, ok: false })
       Analytics.handleError(err)
@@ -694,7 +695,7 @@ export async function signUpJoin (
       Analytics.handleEvent('Signup Join', { email, ok: false })
       await handleStatusError('Sign up join error', err.status)
 
-      return [err.status, null]
+      return [mapPasswordPolicyStatus(err.status), null]
     } else {
       Analytics.handleEvent('Signup Join', { email, ok: false })
       Analytics.handleError(err)
@@ -828,7 +829,7 @@ export async function restorePassword (token: string, password: string): Promise
     if (err instanceof PlatformError) {
       await handleStatusError('Restore password error', err.status)
 
-      return [err.status, null]
+      return [mapPasswordPolicyStatus(err.status), null]
     } else {
       Analytics.handleError(err)
 
@@ -842,7 +843,8 @@ async function handleStatusError (message: string, err: Status): Promise<void> {
     err.code === platform.status.InvalidPassword ||
     err.code === platform.status.AccountNotFound ||
     err.code === platform.status.InvalidOtp ||
-    err.code === platform.status.TooManyOtpAttempts
+    err.code === platform.status.TooManyOtpAttempts ||
+    err.code === platform.status.PasswordPolicyViolation
   ) {
     // No need to send to analytics
     return

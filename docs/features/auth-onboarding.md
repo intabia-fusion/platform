@@ -94,7 +94,7 @@
 - **Email OTP логин/регистрация.** `loginOtp`/`validateOtp`/`signUpOtp` - `server/account/src/operations.ts`.
 - **Согласие на обработку ПДн и правила.** Вызов регистрации (`signUpOtp`, `signUp`, `signUpJoin`, OAuth) считается согласием; сервер согласие не проверяет и не хранит. Клиент собирает его чекбоксами `ConsentCheckboxes.svelte` в `SignupForm.svelte`/`AuthLikeForm.svelte`, отправка (кнопка и Enter) блокируется в `performAction()` `Form.svelte` по `proceedDisabled`.
 - **Регистрация паролем (deprecated, только dev без mail-сервиса).** `signUp()`, флаг `hasSignUp` в `getMethods()` - `operations.ts`.
-- **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword` - `operations.ts`. Политика сложности пароля - только клиентская валидация, см. `docs/password_policy.md`.
+- **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword`/`getPasswordPolicy` - `operations.ts`. Политика сложности пароля принадлежит account-сервису (`PASSWORD_STRICTNESS`), проверяется на сервере при записи и отдаётся клиенту через `getPasswordPolicy`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.
 - **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`.
 - **Привязка social identity.** `addEmailSocialId`/`addHulyAssistantSocialId`/`refreshHulyAssistantToken`/`releaseSocialId` - `operations.ts`.

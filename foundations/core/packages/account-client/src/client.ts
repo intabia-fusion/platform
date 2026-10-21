@@ -89,6 +89,7 @@ import type {
   DeletionPolicy
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
+import type { PasswordPolicy } from './password'
 
 /** @public */
 export interface AccountClient {
@@ -165,6 +166,7 @@ export interface AccountClient {
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
   getLicenseInfo: () => Promise<LicenseInfo>
+  getPasswordPolicy: () => Promise<PasswordPolicy>
   createWorkspace: (name: string, region?: string, language?: string) => Promise<WorkspaceLoginInfo>
   signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
@@ -841,6 +843,15 @@ class AccountClientImpl implements AccountClient {
   async getLicenseInfo (): Promise<LicenseInfo> {
     const request = {
       method: 'getLicenseInfo' as const,
+      params: {}
+    }
+
+    return await this.rpc(request)
+  }
+
+  async getPasswordPolicy (): Promise<PasswordPolicy> {
+    const request = {
+      method: 'getPasswordPolicy' as const,
       params: {}
     }
 

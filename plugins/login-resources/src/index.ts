@@ -18,6 +18,8 @@ import { type IntlString } from '@hcengineering/platform'
 import InviteLink from './components/InviteLink.svelte'
 import LoginApp from './components/LoginApp.svelte'
 import LoginOtpForm from './components/LoginOtpForm.svelte'
+import { ensurePasswordValidations } from './password'
+import { getPasswordValidationError } from './validations'
 import {
   changePassword,
   fetchWorkspace,
@@ -59,7 +61,11 @@ export default async () => ({
     GetWorkspacePermissions: getWorkspacePermissions,
     SendInvite: sendInvite,
     ResendInvite: resendInvite,
-    GetInviteLink: getInviteLink
+    GetInviteLink: getInviteLink,
+    ValidatePassword: async (password: string) => {
+      await ensurePasswordValidations()
+      return getPasswordValidationError(password)
+    }
   }
 })
 

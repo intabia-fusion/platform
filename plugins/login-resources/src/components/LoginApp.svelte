@@ -46,6 +46,7 @@
   import { goTo, restoreSession } from '../utils'
   import login from '../plugin'
   import LoginAppBase from './LoginAppBase.svelte'
+  import { ensurePasswordValidations } from '../password'
 
   // Resolve static asset URLs at runtime to avoid requiring image module declarations
   // (prevents TypeScript / diagnostics errors when module types are missing)
@@ -56,6 +57,7 @@
 
   export let page: Pages = 'signup'
 
+  const passwordPolicyReady = ensurePasswordValidations()
   const signUpDisabled = getMetadata(login.metadata.DisableSignUp) ?? false
   const localLoginHidden = getMetadata(login.metadata.HideLocalLogin) ?? false
   const useOTP = getMetadata(presentation.metadata.UseOTP) === true
@@ -134,13 +136,17 @@
         <LoginForm {navigateUrl} {signUpDisabled} {useOTP} />
       {/if}
     {:else if page === 'signup'}
-      <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
+      {#await passwordPolicyReady then _}
+        <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
+      {/await}
     {:else if page === 'createWorkspace'}
       <CreateWorkspaceForm />
     {:else if page === 'password'}
       <PasswordRequest {signUpDisabled} />
     {:else if page === 'recovery'}
-      <PasswordRestore />
+      {#await passwordPolicyReady then _}
+        <PasswordRestore />
+      {/await}
     {:else if page === 'selectWorkspace'}
       <SelectWorkspace {navigateUrl} />
     {:else if page === 'downloads'}
@@ -160,7 +166,9 @@
     {:else if page === 'auth'}
       <Auth />
     {:else if page === 'changePassword'}
-      <ChangePassword />
+      {#await passwordPolicyReady then _}
+        <ChangePassword />
+      {/await}
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="extra-form-content">
