@@ -64,12 +64,20 @@ export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
 
     const state = await inboxClient.getReadState(doc.objectId)
     if (state != null) {
-      await ops.update(state, {
-        [me.uuid]: {
-          messageId: generateId<ActivityMessage>(),
-          timestamp: Date.now()
+      await ops.updateCollection(
+        state._class,
+        state.space,
+        state._id,
+        state.attachedTo,
+        state.attachedToClass,
+        'readStates',
+        {
+          [me.uuid]: {
+            messageId: generateId<ActivityMessage>(),
+            timestamp: Date.now()
+          }
         }
-      })
+      )
     }
   } finally {
     await ops.commit()
@@ -87,12 +95,20 @@ export async function removeDocNotifyContext (context?: DocNotifyContext): Promi
 
   const state = await inboxClient.getReadState(context.objectId)
   if (state != null) {
-    await ops.update(state, {
-      [me.uuid]: {
-        messageId: generateId<ActivityMessage>(),
-        timestamp: Date.now()
+    await ops.updateCollection(
+      state._class,
+      state.space,
+      state._id,
+      state.attachedTo,
+      state.attachedToClass,
+      'readStates',
+      {
+        [me.uuid]: {
+          messageId: generateId<ActivityMessage>(),
+          timestamp: Date.now()
+        }
       }
-    })
+    )
   }
   await ops.commit()
 }

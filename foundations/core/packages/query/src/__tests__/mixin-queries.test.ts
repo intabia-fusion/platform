@@ -213,7 +213,9 @@ describe('mixin queries', () => {
       modifiedOn: 0,
       operations: { [key]: 'x' }
     }
-    expect(await (liveQuery as any).matchQuery(query, tx, new Map())).toBe(true)
-    expect(await (liveQuery as any).matchQuery(query, { ...tx, operations: { [key]: 'y' } }, new Map())).toBe(false)
+    // The cache of a tx batch, as `tx` hands it down.
+    const cache = (): any => ({ docs: new Map(), found: new Map() })
+    expect(await (liveQuery as any).matchQuery(query, tx, cache())).toBe(true)
+    expect(await (liveQuery as any).matchQuery(query, { ...tx, operations: { [key]: 'y' } }, cache())).toBe(false)
   })
 })

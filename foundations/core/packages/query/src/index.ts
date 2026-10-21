@@ -57,6 +57,8 @@ import core, {
   generateId,
   getObjectValue,
   matchQuery,
+  resultSort,
+  setObjectValue,
   platformNow,
   RateLimiter,
   reduceCalls,
@@ -89,6 +91,12 @@ export interface RefreshConnectStats {
   activeDocs: number
   droppedByClass: Map<string, { count: number, docs: number }>
   activeByClass: Map<string, { count: number, docs: number }>
+}
+
+// What a batch of txes has asked the server already: documents by key, and the answers of requests.
+class TxCache {
+  readonly docs = new Map<string, Doc>()
+  readonly found = new Map<string, Doc[]>()
 }
 
 /**
@@ -563,7 +571,7 @@ export class LiveQuery implements WithTx, Client {
   }
 
   private async getDocFromCache (
-    docCache: Map<string, Doc>,
+    docCache: TxCache,
     _id: Ref<Doc>,
     _class: Ref<Class<Doc>>,
     space: Ref<Space>,
@@ -582,11 +590,11 @@ export class LiveQuery implements WithTx, Client {
     options.showArchived = showArchived
     const docIdKey = _id + JSON.stringify(options ?? {}) + q._class
 
-    const current = docCache.get(docIdKey) ?? (await this.client.findOne<Doc>(q._class, { _id, space }, options))
+    const current = docCache.docs.get(docIdKey) ?? (await this.client.findOne<Doc>(q._class, { _id, space }, options))
     if (current !== undefined) {
-      docCache.set(docIdKey, current)
+      docCache.docs.set(docIdKey, current)
     } else {
-      docCache.delete(docIdKey)
+      docCache.docs.delete(docIdKey)
     }
     return current
   }
@@ -598,12 +606,7 @@ export class LiveQuery implements WithTx, Client {
     return doc
   }
 
-  private async getCurrentDoc (
-    q: Query,
-    _id: Ref<Doc>,
-    space: Ref<Space>,
-    docCache: Map<string, Doc>
-  ): Promise<boolean> {
+  private async getCurrentDoc (q: Query, _id: Ref<Doc>, space: Ref<Space>, docCache: TxCache): Promise<boolean> {
     let current = await this.getDocFromCache(docCache, _id, q._class, space, q)
     if (q.result instanceof Promise) {
       q.result = await q.result
@@ -665,7 +668,7 @@ export class LiveQuery implements WithTx, Client {
     return false
   }
 
-  protected async txMixin (tx: TxMixin<Doc, Doc>, docCache: Map<string, Doc>): Promise<TxResult> {
+  protected async txMixin (tx: TxMixin<Doc, Doc>, docCache: TxCache): Promise<TxResult> {
     const hierarchy = this.client.getHierarchy()
 
     for (const queries of this.queries.entries()) {
@@ -719,14 +722,14 @@ export class LiveQuery implements WithTx, Client {
             await this.handleDocAddLookup(q, doc)
           }
         }
-        await this.handleDocUpdateLookup(q, tx)
+        await this.handleDocUpdateLookup(q, tx, docCache)
         await this.handleDocUpdateRelation(q, tx)
       }
     }
     return {}
   }
 
-  async txUpdateDoc (tx: TxUpdateDoc<Doc>, docCache: Map<string, Doc>): Promise<TxResult> {
+  async txUpdateDoc (tx: TxUpdateDoc<Doc>, docCache: TxCache): Promise<TxResult> {
     for (const queries of this.queries.entries()) {
       const isTx = this.client.getHierarchy().isDerived(queries[0], core.class.Tx)
       for (const q of queries[1].values()) {
@@ -745,7 +748,7 @@ export class LiveQuery implements WithTx, Client {
     return {}
   }
 
-  private async handleDocUpdate (q: Query, tx: TxUpdateDoc<Doc>, docCache: Map<string, Doc>): Promise<void> {
+  private async handleDocUpdate (q: Query, tx: TxUpdateDoc<Doc>, docCache: TxCache): Promise<void> {
     if (q.result instanceof Promise) {
       q.result = await q.result
     }
@@ -802,7 +805,7 @@ export class LiveQuery implements WithTx, Client {
       await this.refresh(q)
       return
     }
-    await this.handleDocUpdateLookup(q, tx)
+    await this.handleDocUpdateLookup(q, tx, docCache)
     await this.handleDocUpdateRelation(q, tx)
   }
 
@@ -851,14 +854,17 @@ export class LiveQuery implements WithTx, Client {
     }
   }
 
-  private async handleDocUpdateLookup (q: Query, tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): Promise<void> {
+  private async handleDocUpdateLookup (
+    q: Query,
+    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>,
+    docCache: TxCache
+  ): Promise<void> {
     if (q.options?.lookup === undefined) return
     const lookup = q.options.lookup
     if (q.result instanceof Promise) {
       q.result = await q.result
     }
-    let needCallback = false
-    needCallback = await this.processLookupUpdateDoc(q.result, lookup, tx, q.options?.projection)
+    const needCallback = await this.processLookupUpdateDoc(q.result, lookup, tx, q.options?.projection)
 
     if (needCallback) {
       if (q.options?.sort !== undefined) {
@@ -866,9 +872,126 @@ export class LiveQuery implements WithTx, Client {
       }
       await this.callback(q, true)
     }
+    await this.handleLookupWindowEntry(q, lookup, tx, docCache)
   }
 
-  // Patched whatever the tx touches; the callback only for a projected field or a changed membership.
+  // A window (`limit`) sorted by a joined field: a change of that field on a document the window
+  // does not hold may bring one of its documents in. The server is asked for them only when the new
+  // value passes the edge of the window and the tx itself fails no `$lookup.` filter of the query.
+  private async handleLookupWindowEntry (
+    q: Query,
+    lookup: Lookup<Doc>,
+    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>,
+    docCache: TxCache
+  ): Promise<void> {
+    const { limit, sort } = q.options ?? {}
+    if (limit == null || sort == null) return
+    if (q.result instanceof Promise) {
+      q.result = await q.result
+    }
+    if (q.result.length < limit) return
+    const [sortKey] = Object.keys(sort)
+    const docs = q.result.getDocs()
+    for (const [objWay, key, reverseKey] of this.touchedLookupWays([sortKey], lookup, tx)) {
+      // A reference of the document itself is the one the server can be asked by.
+      if (objWay !== '' || reverseKey !== undefined) continue
+      // A document of the window that joins it was patched in place and sorted already.
+      if (docs.some((doc) => this.joins(doc, key, tx.objectId))) continue
+      if (!this.mayEnterWindow(q, docs[docs.length - 1], sortKey, key, tx)) continue
+      if (!this.mayMatchLookupFilters(q, key, tx)) continue
+      for (const doc of await this.findByJoined(q, key, tx.objectId, docCache)) {
+        if (this.match(q, doc)) {
+          await this.handleDocAdd(q, doc, false, docCache, true)
+        }
+      }
+    }
+  }
+
+  private joins (doc: Doc, key: string, id: Ref<Doc>): boolean {
+    const value = (doc as any)[key]
+    return Array.isArray(value) ? value.includes(id) : value === id
+  }
+
+  // The window is sorted: a value the tx sets that stays beyond its last document cannot enter.
+  // Judged by the sort of the window itself, on a probe: its last document with that value. A value
+  // the tx does not name (an operator, a mixin) may enter.
+  private mayEnterWindow (
+    q: Query,
+    last: Doc,
+    sortKey: string,
+    key: string,
+    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>
+  ): boolean {
+    if (tx._class !== core.class.TxUpdateDoc || q.options?.sort === undefined) return true
+    const value = ((tx as TxUpdateDoc<Doc>).operations as any)[sortKey.slice(`$lookup.${key}.`.length)]
+    if (value === undefined) return true
+    const probe = clone(last)
+    setObjectValue(sortKey, probe, value)
+    const pair = [last, probe]
+    resultSort(pair, q.options.sort, q._class, this.getHierarchy(), this.client.getModel())
+    return pair[0] === probe
+  }
+
+  // The tx names what it can of the joined document: its class, space and parent, the fields it sets.
+  // A `$lookup.` filter of the query that fails on a named field rules the document out without a
+  // request; one on a field the tx does not name may pass.
+  private mayMatchLookupFilters (q: Query, key: string, tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>): boolean {
+    const known = {
+      _id: tx.objectId,
+      _class: tx.objectClass,
+      space: tx.objectSpace,
+      attachedTo: tx.attachedTo,
+      attachedToClass: tx.attachedToClass,
+      collection: tx.collection
+    } as unknown as Doc
+    if (tx._class === core.class.TxUpdateDoc) {
+      for (const [field, value] of Object.entries((tx as TxUpdateDoc<Doc>).operations)) {
+        if (!field.startsWith('$')) (known as any)[field] = value
+      }
+    }
+    const prefix = `$lookup.${key}.`
+    for (const [queryKey, value] of Object.entries(q.query)) {
+      if (!queryKey.startsWith(prefix)) continue
+      const field = queryKey.slice(prefix.length)
+      if (getObjectValue(field, known) === undefined) continue
+      if (findProperty([known], field, value).length === 0) return false
+    }
+    return true
+  }
+
+  // The documents of the query that join the given one, with its lookups and projection: one request
+  // per batch for every window that asks the same.
+  private async findByJoined (q: Query, key: string, id: Ref<Doc>, docCache: TxCache): Promise<Doc[]> {
+    const query = { ...q.query, [key]: id }
+    const { lookup, projection, associations, showArchived } = q.options ?? {}
+    const options = { lookup, projection, associations, showArchived }
+    const cacheKey = q._class + JSON.stringify(query) + JSON.stringify(options)
+    let found = docCache.found.get(cacheKey)
+    if (found === undefined) {
+      found = await this.client.findAll(q._class, query, options)
+      docCache.found.set(cacheKey, found)
+    }
+    return found
+  }
+
+  // The lookup ways of the tx's class whose joined fields, among the `$lookup.` keys given, the tx touches.
+  private touchedLookupWays (
+    keys: string[],
+    lookup: Lookup<Doc>,
+    tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>
+  ): Array<[string, string, string?]> {
+    const lookupKeys = keys.filter((key) => key.includes('$lookup.'))
+    if (lookupKeys.length === 0) return []
+    const res: Array<[string, string, string?]> = []
+    for (const way of this.getLookupWays(lookup, tx.objectClass)) {
+      const [objWay, key] = way
+      const prefix = `${objWay === '' ? '' : objWay + '.'}$lookup.${key}.`
+      const fields = new Set(lookupKeys.filter((it) => it.startsWith(prefix)).map((it) => it.slice(prefix.length)))
+      if (fields.size > 0 && txTouchesProjected({ fields, exclude: false }, tx)) res.push(way)
+    }
+    return res
+  }
+
   private async processLookupUpdateDoc (
     docs: ResultArray,
     lookup: Lookup<Doc>,
@@ -972,7 +1095,7 @@ export class LiveQuery implements WithTx, Client {
   }
 
   // Check if query is partially matched.
-  private async matchQuery (q: Query, tx: TxUpdateDoc<Doc>, docCache: Map<string, Doc>): Promise<boolean> {
+  private async matchQuery (q: Query, tx: TxUpdateDoc<Doc>, docCache: TxCache): Promise<boolean> {
     const doc: Doc = {
       _id: tx.objectId,
       _class: tx.objectClass,
@@ -1129,7 +1252,7 @@ export class LiveQuery implements WithTx, Client {
     ;(doc as WithLookup<Doc>).$lookup = result
   }
 
-  protected async txCreateDoc (tx: TxCreateDoc<Doc>, docCache: Map<string, Doc>): Promise<TxResult> {
+  protected async txCreateDoc (tx: TxCreateDoc<Doc>, docCache: TxCache): Promise<TxResult> {
     const docTx = TxProcessor.createDoc2Doc(tx)
     for (const queries of this.queries.entries()) {
       const doc = this.client.getHierarchy().isDerived(queries[0], core.class.Tx) ? tx : docTx
@@ -1145,7 +1268,14 @@ export class LiveQuery implements WithTx, Client {
     return {}
   }
 
-  private async handleDocAdd (q: Query, doc: Doc, handleLookup = true, docCache: Map<string, Doc>): Promise<void> {
+  // `counted`: the document matched the query before and is in `total`; only its place in the window is new.
+  private async handleDocAdd (
+    q: Query,
+    doc: Doc,
+    handleLookup = true,
+    docCache: TxCache,
+    counted = false
+  ): Promise<void> {
     let needPush = true
     if (q.result instanceof Promise) {
       q.result = await q.result
@@ -1184,7 +1314,8 @@ export class LiveQuery implements WithTx, Client {
       }
 
       const stored = q.result.push(doc)
-      if (q.options?.total === true) {
+      const total = q.options?.total === true && !counted
+      if (total) {
         q.total++
       }
 
@@ -1203,7 +1334,7 @@ export class LiveQuery implements WithTx, Client {
         if (kept) {
           this.refs.updateDocuments(q, [stored])
         }
-        if (kept || q.options?.total === true) {
+        if (kept || total) {
           await this.callback(q, true)
         }
       } else {
@@ -1377,7 +1508,7 @@ export class LiveQuery implements WithTx, Client {
     return needCallback
   }
 
-  protected async txRemoveDoc (tx: TxRemoveDoc<Doc>, docCache: Map<string, Doc>): Promise<TxResult> {
+  protected async txRemoveDoc (tx: TxRemoveDoc<Doc>, docCache: TxCache): Promise<TxResult> {
     for (const queries of this.queries.entries()) {
       const isTx = this.client.getHierarchy().isDerived(queries[0], core.class.Tx)
       for (const q of queries[1].values()) {
@@ -1509,7 +1640,7 @@ export class LiveQuery implements WithTx, Client {
     return result
   }
 
-  async _tx (tx: Tx, docCache: Map<string, Doc>): Promise<TxResult> {
+  async _tx (tx: Tx, docCache: TxCache): Promise<TxResult> {
     switch (tx._class) {
       case core.class.TxCreateDoc:
         return await this.txCreateDoc(tx as TxCreateDoc<Doc>, docCache)
@@ -1527,7 +1658,7 @@ export class LiveQuery implements WithTx, Client {
 
   async tx (...txes: Tx[]): Promise<TxResult[]> {
     const result: TxResult[] = []
-    const docCache = new Map<string, Doc>()
+    const docCache = new TxCache()
     for (const tx of txes) {
       if (tx._class === core.class.TxWorkspaceEvent) {
         const evt = tx as TxWorkspaceEvent

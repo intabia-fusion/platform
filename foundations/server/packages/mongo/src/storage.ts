@@ -245,6 +245,8 @@ abstract class MongoAdapterBase implements DbAdapter {
       const projection: Projection<T> = {}
       const source: Projection<T> = options.projection
       for (const key in source) {
+        // A projection of a join is a Postgres feature; Mongo rejects such a field name.
+        if (key.startsWith('$lookup.')) continue
         projection[key] = source[key]
       }
       cursor = cursor.project(projection)
@@ -706,6 +708,7 @@ abstract class MongoAdapterBase implements DbAdapter {
       const projection: Projection<T> = {}
       const source: Projection<T> = options.projection
       for (const key in source) {
+        if (key.startsWith('$lookup.')) continue
         const ckey = this.checkMixinKey<T>(key, clazz) as keyof T
         projection[ckey] = source[key]
       }

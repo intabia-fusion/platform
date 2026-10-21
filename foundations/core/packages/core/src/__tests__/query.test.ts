@@ -16,8 +16,8 @@
 import type { Doc } from '../classes'
 import core from '../component'
 import { Hierarchy } from '../hierarchy'
-import { findProperty, matchQuery } from '../query'
-import { searchTargets } from '../storage'
+import { findProperty, matchQuery, resultSort } from '../query'
+import { searchTargets, SortingOrder } from '../storage'
 import { genMinModel } from './minmodel'
 
 describe('findProperty', () => {
@@ -63,5 +63,51 @@ describe('searchTargets', () => {
     expect(searchTargets(null)).toBeUndefined()
     expect(searchTargets(['title', 'all'])).toBeUndefined()
     expect(searchTargets(['title', 'content'])).toEqual(['title', 'content'])
+  })
+})
+
+describe('resultSort', () => {
+  const hierarchy = new Hierarchy()
+  const docs = (): any[] => [
+    { _id: 'none', _class: core.class.Space, modifiedOn: 1 },
+    { _id: 'old', _class: core.class.Space, modifiedOn: 1, $lookup: { readState: { latestMessageTimestamp: 10 } } },
+    { _id: 'new', _class: core.class.Space, modifiedOn: 2, $lookup: { readState: { latestMessageTimestamp: 20 } } }
+  ]
+  const ids = (result: any[]): string[] => result.map((it) => it._id)
+
+  it('puts a missing joined value last in DESC and first in ASC, as the server orders NULL of a join', () => {
+    const desc = docs()
+    resultSort(
+      desc,
+      { '$lookup.readState.latestMessageTimestamp': SortingOrder.Descending } as any,
+      core.class.Space,
+      hierarchy,
+      {} as any
+    )
+    expect(ids(desc)).toEqual(['new', 'old', 'none'])
+
+    const asc = docs()
+    resultSort(
+      asc,
+      { '$lookup.readState.latestMessageTimestamp': SortingOrder.Ascending } as any,
+      core.class.Space,
+      hierarchy,
+      {} as any
+    )
+    expect(ids(asc)).toEqual(['none', 'old', 'new'])
+  })
+
+  it('puts a missing plain value first in DESC and last in ASC, as Postgres orders NULL by default', () => {
+    const items = (): any[] => [
+      { _id: 'b', _class: core.class.Space, modifiedOn: 1, name: 'b' },
+      { _id: 'none', _class: core.class.Space, modifiedOn: 1 },
+      { _id: 'a', _class: core.class.Space, modifiedOn: 1, name: 'a' }
+    ]
+    const desc = items()
+    resultSort(desc, { name: SortingOrder.Descending } as any, core.class.Space, hierarchy, {} as any)
+    expect(ids(desc)).toEqual(['none', 'b', 'a'])
+    const asc = items()
+    resultSort(asc, { name: SortingOrder.Ascending } as any, core.class.Space, hierarchy, {} as any)
+    expect(ids(asc)).toEqual(['a', 'b', 'none'])
   })
 })

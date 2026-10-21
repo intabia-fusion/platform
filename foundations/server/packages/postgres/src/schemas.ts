@@ -120,7 +120,7 @@ const chatSchema: Schema = {
   readState: {
     type: 'text',
     notNull: false,
-    index: false
+    index: true
   }
 }
 
