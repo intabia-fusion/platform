@@ -172,7 +172,7 @@
 | filter/FilterSave.svelte | Сохранить фильтры как отдельный вид | viewOptions, _class | internal |
 | filter/ModeSelector.svelte | Селектор режима фильтра | filter | internal |
 | filter/ArrayFilter.svelte | Фильтр по значению ArrOf-атрибута | _class, filter, onChange | view.component.ArrayFilter |
-| filter/ObjectFilter.svelte | Фильтр по ссылке на документ | filter, space, onChange | view.component.ObjectFilter |
+| filter/ObjectFilter.svelte | Фильтр по ссылке на документ | filter, space, onChange, popupClass, itemPresenter | view.component.ObjectFilter |
 | filter/ValueFilter.svelte | Фильтр по списку значений bool/number/enum | _class, filter, onChange, viewOptions | view.component.ValueFilter |
 | filter/StringFilter.svelte | Фильтр по строковому атрибуту | filter, onChange | view.component.StringFilter |
 | filter/StringFilterPresenter.svelte | Презентер выбранных строковых значений | value | view.component.StringFilterPresenter |

@@ -379,6 +379,10 @@ export function createModel (builder: Builder): void {
     presenter: task.component.TaskTypePresenter
   })
 
+  builder.mixin(task.class.TaskType, core.class.Class, view.mixin.AttributeFilter, {
+    component: task.component.TaskTypeFilter
+  })
+
   builder.mixin(task.class.ProjectType, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: task.component.ProjectTypePresenter
   })
