@@ -13,25 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { FindOptions } from '@hcengineering/core'
-  import core, { SortingOrder } from '@hcengineering/core'
-  import { ObjectPopup, getClient } from '@hcengineering/presentation'
+  import { SortingOrder } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/task'
   import type { Issue } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../../../plugin'
-  import IssueStatusIcon from '../IssueStatusIcon.svelte'
+  import IssueSelectPopup from '../../IssueSelectPopup.svelte'
 
   export let issue: Issue
 
   const client = getClient()
   const dispatch = createEventDispatcher()
-  const options: FindOptions<Issue> = {
-    lookup: {
-      status: [tracker.class.IssueStatus, { category: core.class.StatusCategory }]
-    },
-    sort: { modifiedOn: SortingOrder.Descending }
-  }
 
   // Exclude self, ancestors (would create a cycle) and direct children
   $: ignoreObjects = [
@@ -56,35 +49,10 @@
   }
 </script>
 
-<ObjectPopup
-  _class={tracker.class.Issue}
-  {options}
-  category={tracker.completion.IssueCategory}
-  multiSelect={false}
-  allowDeselect={false}
-  placeholder={tracker.string.AddExistingSubIssue}
-  create={undefined}
+<IssueSelectPopup
   {ignoreObjects}
-  shadows={true}
-  width="large"
-  searchMode="spotlight"
+  placeholder={tracker.string.AddExistingSubIssue}
+  allowDeselect={false}
   on:update
   on:close={onClose}
->
-  <svelte:fragment slot="item" let:item={subIssue}>
-    <div class="flex-center clear-mins w-full h-9">
-      {#if subIssue?.$lookup?.status}
-        <div class="icon mr-4 h-8">
-          <IssueStatusIcon
-            value={subIssue.$lookup.status}
-            taskType={subIssue.kind}
-            space={subIssue.space}
-            size="small"
-          />
-        </div>
-      {/if}
-      <span class="overflow-label flex-no-shrink mr-3">{subIssue.identifier}</span>
-      <span class="overflow-label w-full content-color">{subIssue.title}</span>
-    </div>
-  </svelte:fragment>
-</ObjectPopup>
+/>
