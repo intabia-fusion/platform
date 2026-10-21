@@ -79,7 +79,7 @@
     : readonly
 </script>
 
-<div class="hulyComponent-content hulyComponent-content__container noShrink">
+<div class="hulyComponent-content hulyComponent-content__container noShrink withoutMaxWidth">
   {#if chatViewport !== undefined && channel !== undefined}
     <ReverseChannelScrollView
       bind:selectedMessageId
