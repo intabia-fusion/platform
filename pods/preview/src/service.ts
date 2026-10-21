@@ -66,7 +66,7 @@ export function createPreviewService (
     imageProvider,
     new DocProvider(storage, tempDir, config.LibreOfficeTimeout, config.PdfTimeout),
     new PdfProvider(storage, tempDir, config.PdfTimeout),
-    new VideoProvider(storage, tempDir, config.Video.timeout),
+    new VideoProvider(storage, tempDir, config.Video.timeout, config.Video.headTailSize),
     new OctetStreamProvider(storage, tempDir),
     new FallbackProvider(imageProvider)
   ]
@@ -123,7 +123,10 @@ class PreviewServiceImpl implements PreviewService {
       const metadata = await ctx.with(
         'metadata',
         { contentType: stat.contentType },
-        (ctx) => this.limited(ctx, provider, blobKey, () => provider.metadata(ctx, workspace, name, stat.contentType)),
+        (ctx) =>
+          this.limited(ctx, provider, blobKey, () =>
+            provider.metadata(ctx, workspace, name, stat.contentType, stat.size)
+          ),
         { workspace }
       )
       this.metadataCache.set(blobKey, metadata)
@@ -153,7 +156,9 @@ class PreviewServiceImpl implements PreviewService {
               'thumbnail',
               { contentType: stat.contentType },
               (ctx) =>
-                this.limited(ctx, provider, blobKey, () => provider.image(ctx, workspace, name, stat.contentType)),
+                this.limited(ctx, provider, blobKey, () =>
+                  provider.image(ctx, workspace, name, stat.contentType, stat.size)
+                ),
               { workspace }
             )
           })
@@ -178,8 +183,9 @@ class PreviewServiceImpl implements PreviewService {
 
     const stat = await this.storage.stat(ctx, wsId, name)
     if (stat !== undefined) {
-      // providers copy the blob to the temp dir, so refuse before any of them starts
-      if (stat.size > this.maxBlobSize) {
+      // providers copy the blob to the temp dir, so refuse before any of them starts;
+      // a video reads only its head and tail
+      if (stat.size > this.maxBlobSize && !(this.findProvider(ctx, stat.contentType) instanceof VideoProvider)) {
         throw new BadRequestError('Blob is too large for preview')
       }
       return stat

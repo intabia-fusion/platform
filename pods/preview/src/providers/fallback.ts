@@ -24,16 +24,23 @@ export class FallbackProvider implements PreviewProvider {
     return true
   }
 
-  async image (ctx: MeasureContext, workspace: WorkspaceUuid, name: string, contentType: string): Promise<PreviewFile> {
-    return await this.target.image(ctx, workspace, name, contentType)
+  async image (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    name: string,
+    contentType: string,
+    size: number
+  ): Promise<PreviewFile> {
+    return await this.target.image(ctx, workspace, name, contentType, size)
   }
 
   async metadata (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     name: string,
-    contentType: string
+    contentType: string,
+    size: number
   ): Promise<PreviewMetadata> {
-    return await this.target.metadata(ctx, workspace, name, contentType)
+    return await this.target.metadata(ctx, workspace, name, contentType, size)
   }
 }

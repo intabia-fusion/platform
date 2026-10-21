@@ -127,6 +127,8 @@
     "DeleteAccountConfirm": "A conta será marcada para exclusão e removida definitivamente em {days} dias. Entrando antes disso, você poderá cancelar. Continuar?",
     "DeleteAccountBlockedAdmin": "Uma conta de administrador não pode ser eliminada aqui.",
     "DeleteAccountBlocked": "É o único proprietário de: {workspaces}. Elimine primeiro esses espaços de trabalho ou transfira-os.",
-    "CodeSent": "Um código de confirmação foi enviado para seu e-mail."
+    "CodeSent": "Um código de confirmação foi enviado para seu e-mail.",
+    "LoginLinkCaption": "Iniciar sessão na sua conta",
+    "LoginLinkInvalid": "Esta ligação de início de sessão expirou ou já foi utilizada"
   }
 }

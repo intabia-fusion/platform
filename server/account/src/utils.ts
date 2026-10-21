@@ -46,7 +46,7 @@ import {
   type QueueWorkspaceLimitsMessage
 } from '@hcengineering/server-core'
 import { getDBClient, getDBFlavor, setDBExtraOptions } from '@hcengineering/postgres'
-import { pbkdf2Sync, randomBytes } from 'crypto'
+import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
@@ -569,8 +569,8 @@ export function getSignUpLinkTtlMs (): number {
 /** Which letter carries the code: sign in, admin panel action, or a person's own destructive action. */
 export type OtpKind = 'login' | 'admin' | 'operation'
 
-// The wait for a new login code stops doubling here.
-const OTP_MAX_RETRY_DELAY_MS = 60 * 60 * 1000
+// Once a streak of wrong guesses at login codes reaches the cap, no new code is issued for this long.
+const OTP_MISS_WAIT_MS = 60 * 60 * 1000
 // A streak of wrong guesses at login codes starts over once the last of them is this old.
 const OTP_MISS_DECAY_MS = 24 * 60 * 60 * 1000
 
@@ -584,25 +584,148 @@ function getOtpWait (
   ts: number,
   retryDelayMs: number
 ): OtpInfo | undefined {
-  // Every 5 wrong guesses at login codes double the wait for the next one. They are counted on the
-  // social id: the code row expires and is replaced long before the wait is over.
-  const doublings = purpose === 'login' ? Math.floor((socialId.loginOtpMisses ?? 0) / OTP_MAX_ATTEMPTS) : 0
-  const rowRetryOn = otpData !== undefined && otpData.expiresOn > ts ? otpData.createdOn + retryDelayMs : 0
-  const missRetryOn =
-    doublings > 0
-      ? (socialId.loginOtpMissedOn ?? 0) + Math.min(retryDelayMs * 2 ** doublings, OTP_MAX_RETRY_DELAY_MS)
+  // Wrong guesses at login codes are counted on the social id: the code row expires and is replaced
+  // long before the wait is over. Every miss past the cap starts the wait anew.
+  const missRetry =
+    purpose === 'login' && (socialId.loginOtpMisses ?? 0) >= OTP_MAX_ATTEMPTS
+      ? (socialId.loginOtpMissedOn ?? 0) + OTP_MISS_WAIT_MS
       : 0
-  const retryOn = Math.max(rowRetryOn, missRetryOn)
+  const rowRetryOn = otpData !== undefined && otpData.expiresOn > ts ? otpData.createdOn + retryDelayMs : 0
+  const retryOn = Math.max(rowRetryOn, missRetry)
   if (retryOn <= ts) {
     return undefined
   }
   // With wrong guesses holding the wait and no code left to type, "sent" leads the form nowhere.
   const typeable = otpData !== undefined && otpData.expiresOn > ts && otpData.attempts < OTP_MAX_ATTEMPTS
-  if (missRetryOn > ts && !typeable) {
+  if (missRetry > ts && !typeable) {
     const minutes = Math.ceil((retryOn - ts) / 60000)
     throw new PlatformError(new Status(Severity.ERROR, platform.status.TooManyOtpAttempts, { retryOn, minutes }))
   }
   return { sent: true, retryOn }
+}
+
+// Next moment a "no account" letter may go to an address. There is no db row to throttle on, so
+// it is kept in memory; a restart forgets it, which at worst allows one extra letter per address.
+const NO_ACCOUNT_MAIL_MAX_ENTRIES = 10000
+const noAccountMails = new Map<string, number>()
+
+/**
+ * Answers a request that names an address without an account the way a real one is answered, and
+ * tells the address owner how to sign up. Within the retry delay it only answers.
+ */
+export async function sendNoAccountEmail (
+  ctx: MeasureContext,
+  branding: Branding | null,
+  email: string,
+  kind: 'login' | 'recovery'
+): Promise<OtpInfo> {
+  const ts = Date.now()
+  const key = `${kind}:${email}`
+  const known = noAccountMails.get(key)
+  if (known !== undefined && known > ts) {
+    return { sent: true, retryOn: known }
+  }
+
+  const retryOn = ts + getOtpRetryDelayMs()
+  noAccountMails.delete(key)
+  if (noAccountMails.size >= NO_ACCOUNT_MAIL_MAX_ENTRIES) {
+    noAccountMails.delete(noAccountMails.keys().next().value as string)
+  }
+  noAccountMails.set(key, retryOn)
+
+  const lang = branding?.defaultLanguage
+  const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
+  const params = { app, link: concatLink(getFrontUrl(branding), '/login/signup') }
+  const text = await translate(accountPlugin.string.NoAccountText, params, lang)
+  const html = await translate(accountPlugin.string.NoAccountHTML, params, lang)
+  const subject = await translate(accountPlugin.string.NoAccountSubject, params, lang)
+
+  try {
+    await getMetadata(accountPlugin.metadata.MailQueue)?.send(
+      ctx,
+      '' as WorkspaceUuid,
+      [{ type: 'email', data: { text, html, subject, to: email } }],
+      email
+    )
+  } catch (err) {
+    // Nothing was mailed: let the next request try again.
+    noAccountMails.delete(key)
+    throw err
+  }
+  return { sent: true, retryOn }
+}
+
+const hashLinkToken = (token: string): string => createHash('sha256').update(token).digest('hex')
+
+/**
+ * When the wrong guess just made started a lock of the code sign in, mails the owner a one-time
+ * link that signs in without a code. `before` is the social id as it was before the guess.
+ * Never throws: the guess is answered the same whether the letter went out.
+ */
+export async function notifyLoginLock (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  before: SocialId
+): Promise<void> {
+  try {
+    const after = await db.socialId.findOne({ _id: before._id })
+    if (after?.type !== SocialIdType.EMAIL) return
+    const countedMiss =
+      (after.loginOtpMisses ?? 0) !== (before.loginOtpMisses ?? 0) ||
+      (after.loginOtpMissedOn ?? 0) !== (before.loginOtpMissedOn ?? 0)
+    const wasLocked =
+      (before.loginOtpMisses ?? 0) >= OTP_MAX_ATTEMPTS &&
+      (before.loginOtpMissedOn ?? 0) + OTP_MISS_WAIT_MS > (after.loginOtpMissedOn ?? 0)
+    if (!countedMiss || wasLocked || (after.loginOtpMisses ?? 0) < OTP_MAX_ATTEMPTS) return
+    if ((await db.account.findOne({ uuid: after.personUuid as AccountUuid })) == null) return
+
+    const ts = Date.now()
+    const token = randomBytes(32).toString('hex')
+    // A live link means this lock was already mailed (parallel guesses start it together).
+    const issued = await db.withOtpIssue<boolean>(after._id, 'login-link', async (issue) => {
+      if (issue.newest !== undefined && issue.newest.expiresOn > ts) return false
+      await issue.replace({
+        socialId: after._id,
+        purpose: 'login-link',
+        code: hashLinkToken(token),
+        expiresOn: ts + OTP_MISS_WAIT_MS,
+        createdOn: ts
+      })
+      return true
+    })
+    if (!issued) return
+
+    const lang = branding?.defaultLanguage
+    const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
+    const params = { app, link: concatLink(getFrontUrl(branding), `/login/loginLink#token=${token}`) }
+    const text = await translate(accountPlugin.string.LoginLockText, params, lang)
+    const html = await translate(accountPlugin.string.LoginLockHTML, params, lang)
+    const subject = await translate(accountPlugin.string.LoginLockSubject, params, lang)
+    try {
+      await getMetadata(accountPlugin.metadata.MailQueue)?.send(
+        ctx,
+        '' as WorkspaceUuid,
+        [{ type: 'email', data: { text, html, subject, to: after.value } }],
+        after.value
+      )
+    } catch (err) {
+      // Nothing was mailed: drop the link so that the next lock can try again.
+      await db.otp.deleteMany({ socialId: after._id, purpose: 'login-link' })
+      throw err
+    }
+  } catch (err: any) {
+    ctx.error('Failed to send the login lock letter', { err })
+  }
+}
+
+/** Consumes a link token; undefined when it is unknown, used, expired or replaced. */
+export async function consumeLoginLink (db: AccountDB, token: string): Promise<SocialId | undefined> {
+  const code = hashLinkToken(token)
+  const row = await db.otp.findOne({ purpose: 'login-link', code })
+  if (row == null || row.expiresOn <= Date.now()) return undefined
+  if (!(await db.consumeOtp(row.socialId, 'login-link', code))) return undefined
+  return (await db.socialId.findOne({ _id: row.socialId })) ?? undefined
 }
 
 export async function sendOtp (

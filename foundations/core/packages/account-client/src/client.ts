@@ -104,6 +104,7 @@ export interface AccountClient {
   ) => Promise<WorkspaceLoginInfo>
   validateOtp: (email: string, code: string, password?: string, action?: 'verify') => Promise<LoginInfo>
   loginOtp: (email: string) => Promise<OtpInfo>
+  loginByLink: (token: string) => Promise<LoginInfo>
   getLoginInfoByToken: (data?: LoginInfoRequestData) => Promise<LoginInfoByToken>
   getLoginWithWorkspaceInfo: () => Promise<LoginInfoWithWorkspaces>
   restorePassword: (password: string) => Promise<LoginInfo>
@@ -549,6 +550,15 @@ class AccountClientImpl implements AccountClient {
     const request = {
       method: 'validateOtp' as const,
       params: { email, code, password, action }
+    }
+
+    return await this.rpc(request)
+  }
+
+  async loginByLink (token: string): Promise<LoginInfo> {
+    const request = {
+      method: 'loginByLink' as const,
+      params: { token }
     }
 
     return await this.rpc(request)

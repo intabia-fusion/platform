@@ -17,8 +17,11 @@ import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import { type StorageAdapter } from '@hcengineering/server-core'
 
 import { createWriteStream } from 'fs'
+import { open } from 'fs/promises'
 import { type Readable } from 'stream'
 import { pipeline } from 'stream/promises'
+
+import { ToolError } from '../error'
 
 // One deadline for the whole copy: a slow storage would keep the slot of the caller for good.
 export async function copyBlob (
@@ -58,5 +61,74 @@ export async function copyBlob (
     await pipeline(stream, createWriteStream(file), { signal })
   } catch (err: any) {
     throw signal.aborted ? timedOut() : err
+  }
+}
+
+// The same blob is slow again on the next request, so it is refused for one timeout.
+export class BlobReadTimeout extends ToolError {
+  constructor (timeout: number) {
+    super(`Blob read timed out after ${timeout} ms`, timeout)
+    this.name = 'BlobReadTimeout'
+  }
+}
+
+// Writes the first and the last piece bytes of the blob at their real offsets into one sparse file
+// of the full size: an mp4 keeps its moov atom at the end, the first frame is at the start.
+// A blob of two pieces or less is read whole. One deadline for all the reads.
+export async function readHeadTail (
+  ctx: MeasureContext,
+  storage: StorageAdapter,
+  workspace: WorkspaceUuid,
+  name: string,
+  file: string,
+  size: number,
+  piece: number,
+  timeout: number
+): Promise<void> {
+  const ranges =
+    size <= piece * 2
+      ? [{ offset: 0, length: size }]
+      : [
+          { offset: 0, length: piece },
+          { offset: size - piece, length: piece }
+        ]
+
+  const handle = await open(file, 'w')
+  try {
+    await handle.truncate(size)
+  } finally {
+    await handle.close()
+  }
+
+  const signal = AbortSignal.timeout(timeout)
+  const timedOut = (): Error => new BlobReadTimeout(timeout)
+  const aborted = new Promise<never>((_resolve, reject) => {
+    signal.addEventListener(
+      'abort',
+      () => {
+        reject(timedOut())
+      },
+      { once: true }
+    )
+  })
+  // nobody awaits it when every read is done in time
+  aborted.catch(() => undefined)
+
+  for (const { offset, length } of ranges.filter((it) => it.length > 0)) {
+    const opening = storage.partial(ctx, { uuid: workspace } as any, name, offset, length)
+    // a body that opens after the deadline has no reader left
+    void opening.then(
+      (late) => {
+        if (signal.aborted) late.destroy()
+      },
+      () => undefined
+    )
+
+    const stream = await Promise.race([opening, aborted])
+    try {
+      await pipeline(stream, createWriteStream(file, { flags: 'r+', start: offset }), { signal })
+    } catch (err: any) {
+      throw signal.aborted ? timedOut() : err
+    }
   }
 }

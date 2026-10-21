@@ -40,11 +40,10 @@ test.describe('login test', () => {
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
   })
 
-  test('login with code for an unknown user shows an error instead of the code screen', async ({ page }) => {
-    await loginPage.loginWithCode(`unknown-${Date.now()}@test.local`)
-    await loginPage.checkIfErrorMessageIsShown('wrong-credentials')
-    await expect(new OtpPage(page).title()).toBeHidden()
-    await expect(loginPage.inputEmail()).toBeVisible()
+  test('login with code for an unknown user shows the code screen like for a known one', async ({ page }) => {
+    const unknown = `unknown-${Date.now()}@test.local`
+    await loginPage.loginWithCode(unknown)
+    await new OtpPage(page).checkIfCodeScreenIsShown(unknown)
   })
 
   test('check if user is able to go to to recovery, then login and then signup', async ({ page }) => {

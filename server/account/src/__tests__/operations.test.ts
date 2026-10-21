@@ -1533,14 +1533,17 @@ describe('account operations', () => {
         expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
       })
 
-      test('should fail for an unknown email', async () => {
+      test('should answer an unknown email like a known one and send the sign up letter', async () => {
+        const info = { sent: true, retryOn: Date.now() + 60000 }
         jest.spyOn(utils, 'cleanEmail').mockReturnValue(mockEmail)
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
         jest.spyOn(utils, 'sendOtp')
+        jest.spyOn(utils, 'sendNoAccountEmail').mockResolvedValue(info)
 
-        await expect(loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })).rejects.toThrow(
-          new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
-        )
+        const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+
+        expect(result).toEqual(info)
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'login')
         expect(utils.sendOtp).not.toHaveBeenCalled()
       })
 
@@ -2642,26 +2645,8 @@ describe('account operations', () => {
         })
       })
 
-      test('should fail if email not found', async () => {
-        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
-
-        await expect(
-          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail
-          })
-        ).rejects.toThrow(
-          new PlatformError(
-            new Status(Severity.ERROR, platform.status.SocialIdNotFound, {
-              value: mockEmail,
-              type: SocialIdType.EMAIL
-            })
-          )
-        )
-
-        expect(global.fetch).not.toHaveBeenCalled()
-      })
-
-      test('should fail if account not found', async () => {
+      test('should send the sign up letter for an unknown email or a person without an account', async () => {
+        jest.spyOn(utils, 'sendNoAccountEmail').mockResolvedValue({ sent: true, retryOn: 1 })
         const mockSocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockAccountId,
@@ -2670,21 +2655,19 @@ describe('account operations', () => {
           key: `email:${mockEmail}`
         }
 
+        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+        await expect(
+          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+        ).resolves.toBeUndefined()
+
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
-
         await expect(
-          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail
-          })
-        ).rejects.toThrow(
-          new PlatformError(
-            new Status(Severity.ERROR, platform.status.AccountNotFound, {
-              account: mockAccountId
-            })
-          )
-        )
+          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+        ).resolves.toBeUndefined()
 
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledTimes(2)
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'recovery')
         expect(global.fetch).not.toHaveBeenCalled()
       })
     })

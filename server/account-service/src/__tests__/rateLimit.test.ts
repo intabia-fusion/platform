@@ -122,7 +122,7 @@ describe('authRateLimit budgets', () => {
     for (let i = 0; i < times; i++) authRateLimit(method, {}, ip)
   }
 
-  it.each(['login', 'loginOtp', 'signUpOtp', 'validateOtp', 'join', 'requestPasswordReset'])(
+  it.each(['login', 'loginOtp', 'signUpOtp', 'validateOtp', 'loginByLink', 'join', 'requestPasswordReset'])(
     'blocks a burst of %s',
     (method) => {
       expect(authRateLimit(method, {}, '1.2.3.4')).toBeUndefined()

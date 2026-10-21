@@ -18,7 +18,13 @@
   import { subscriptionStore, resetSubscriptionStore } from '../stores/subscription'
   import { location, PaletteColorIndexes, Progress, tooltip } from '@hcengineering/ui'
   import { addEventListener, getMetadata, removeEventListener } from '@hcengineering/platform'
-  import core, { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from '@hcengineering/core'
+  import core, {
+    AccountRole,
+    getCurrentAccount,
+    type Tx,
+    type TxWorkspaceEvent,
+    WorkspaceEvent
+  } from '@hcengineering/core'
   import presentation, { addTxListener, removeTxListener } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
   import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
@@ -47,7 +53,8 @@
     // Endpoint keys by workspace UUID; the URL segment is the slug, so read the resolved UUID.
     const wsUuid = getMetadata(presentation.metadata.WorkspaceUuid)
     const client = getBillingClient()
-    if (wsUuid === undefined || client === null) return
+    // pod-billing answers token windows to the workspace owner only (401 for the rest)
+    if (wsUuid === undefined || client === null || getCurrentAccount().role !== AccountRole.Owner) return
     try {
       windows = await client.getWorkspaceTokenWindows(wsUuid)
     } catch (err) {

@@ -102,6 +102,8 @@ export default mergeIds(loginId, login, {
     Continue: '' as IntlString,
     CheckingLink: '' as IntlString,
     InvalidLink: '' as IntlString,
+    LoginLinkCaption: '' as IntlString,
+    LoginLinkInvalid: '' as IntlString,
     ConfirmationFailed: '' as IntlString,
     AlreadyRegistered: '' as IntlString,
     RegistrationComplete: '' as IntlString,

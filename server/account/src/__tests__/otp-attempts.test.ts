@@ -17,7 +17,7 @@ import { type MeasureContext, type PersonId, type PersonUuid, SocialIdType } fro
 import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
 import { decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
 
-import { login, loginOtp, restorePassword, validateOtp } from '../operations'
+import { login, loginByLink, loginOtp, requestPasswordReset, restorePassword, validateOtp } from '../operations'
 import { accountPlugin } from '../plugin'
 import { type AccountDB, type OTP, type OtpIssue, type OtpPurpose, type SocialId } from '../types'
 import * as utils from '../utils'
@@ -202,8 +202,16 @@ describe('otp attempts', () => {
       await expect(validate(wrongCode())).rejects.toThrow(invalidOtp)
     }
   }
+  // The lock letter and its link row are not what most tests look at: drop them with the 5th miss.
+  const dropLockLetter = (): void => {
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].purpose === 'login-link') rows.splice(i, 1)
+    }
+    mailSend.mockClear()
+  }
   const exhaust = async (): Promise<void> => {
     await miss(5)
+    dropLockLetter()
   }
   // What sendOtp refuses with while the wrong guesses hold the wait.
   const refusal = async (): Promise<any> =>
@@ -223,11 +231,12 @@ describe('otp attempts', () => {
       if (key === accountPlugin.metadata.OtpRetryDelaySec) return 60
       if (key === accountPlugin.metadata.OtpTimeToLiveSec) return ttlSec
       if (key === accountPlugin.metadata.MailQueue) return { send: mailSend }
+      if (key === accountPlugin.metadata.FrontURL) return 'https://front.example.com'
       return undefined
     })
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid })
     ;(generateToken as jest.Mock).mockReturnValue('mocked-token')
-    jest.spyOn(utils, 'getEmailSocialId').mockImplementation(async () => sid)
+    jest.spyOn(utils, 'getEmailSocialId').mockImplementation(async () => ({ ...sid }))
     jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
   })
 
@@ -255,6 +264,7 @@ describe('otp attempts', () => {
     for (let i = 0; i < count; i++) {
       await expect(kinds[kind].use(wrongCode())).rejects.toThrow(invalidOtp)
     }
+    dropLockLetter()
   }
 
   describe.each(kindNames)('%s code (validateOtp, verifyOperationOtp)', (kind) => {
@@ -376,7 +386,6 @@ describe('otp attempts', () => {
         mailSend.mockClear()
       })
 
-      // Five wrong guesses double the wait: 60 s x 2.
       test('a request inside the wait sends no mail, generates no code and revives nothing', async () => {
         now += 10 * 1000
         const spies = spyOnIssue()
@@ -392,8 +401,8 @@ describe('otp attempts', () => {
         expect(await utils.isOtpValid(db, sid._id, dead, 'login')).toBe(false)
       })
 
-      test('a request after the doubled wait replaces the dead code with a fresh one', async () => {
-        now += 120 * 1000
+      test('a request after the wait replaces the dead code with a fresh one', async () => {
+        now += 60 * 60 * 1000
 
         const fresh = await issue()
 
@@ -464,10 +473,10 @@ describe('otp attempts', () => {
     })
   })
 
-  // Every 5 wrong guesses at login codes double the wait for the next one, up to an hour. Counting
+  // 5 wrong guesses at login codes hold the next code for an hour, every further miss starts it anew. Counting
   // them all, not only the codes that ran out, keeps four guesses per code from slipping under.
-  describe('growing wait after wrong login guesses', () => {
-    const hour = 60 * 60 * 1000
+  describe('wait after wrong login guesses', () => {
+    const wait = 60 * 60 * 1000
 
     // Issues a code, makes `count` wrong guesses at it, and checks that the next code is refused
     // until `waitMs` after the last of them.
@@ -486,58 +495,32 @@ describe('otp attempts', () => {
       now += 1000
     }
 
-    test('every 5 wrong guesses double the wait: 60 s x 2^(n / 5), up to one hour', async () => {
-      // 5 x 6 wrong guesses would wait 64 minutes.
-      for (let step = 1; step <= 9; step++) {
-        await missAndWait(5, Math.min(60 * 1000 * 2 ** step, hour))
-      }
+    test('5 wrong guesses refuse a new code for an hour, then it is issued', async () => {
+      await missAndWait(5, wait)
 
       await issue()
     })
 
-    test('four wrong guesses at each code and a new code every minute do not slip under the count', async () => {
-      // 4, 8, 12, 16 wrong guesses: the waits are 60, 120, 240, 480 s. The code left from the round
-      // is still typeable, so the answer stays sent, but no new code goes out.
-      for (const wait of [60, 120, 240, 480]) {
-        await issue()
-        await miss(4)
-        const missedAt = now
-        mailSend.mockClear()
-        now = missedAt + wait * 1000 - 1000
-
-        await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({
-          sent: true,
-          retryOn: missedAt + wait * 1000
-        })
-        expect(mailSend).not.toHaveBeenCalled()
-        now += 1000
-      }
-
-      await issue()
-    })
-
-    // To keep the code login of someone closed: 6 codes and 30 wrong guesses to get to the hour,
-    // then one code and one wrong guess an hour.
-    test('once at the hour, one code and one wrong guess an hour keep it there', async () => {
-      for (let step = 1; step <= 6; step++) {
-        await missAndWait(5, Math.min(60 * 1000 * 2 ** step, hour))
-      }
-
+    test('a miss after the wait starts another hour, without doubling', async () => {
       for (let i = 0; i < 3; i++) {
-        await issue()
-        await miss(1)
-        const missedAt = now
-        mailSend.mockClear()
-        now = missedAt + hour - 1000
-
-        expect((await refusal()).status.params.retryOn).toBe(missedAt + hour)
-        expect(mailSend).not.toHaveBeenCalled()
-        now += 1000
+        await missAndWait(5, wait)
       }
     })
 
-    // A code past its cap refuses every guess unchecked, so more guesses at it gain nothing and must
-    // not lengthen the wait: 30 of them would otherwise give the victim an hour.
+    test('misses at several codes add up to the cap', async () => {
+      await issue()
+      await miss(4)
+      now += 61 * 1000
+      await issue()
+      await miss(1)
+      const missedAt = now
+      mailSend.mockClear()
+
+      // The second code can still be typed, so the answer stays sent, but no new code goes out.
+      await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn: missedAt + wait })
+      expect(mailSend).not.toHaveBeenCalled()
+    })
+
     test('guesses past the cap of one code do not grow the count', async () => {
       await issue()
       await miss(5)
@@ -546,7 +529,7 @@ describe('otp attempts', () => {
 
       await miss(25)
 
-      expect((await refusal()).status.params.retryOn).toBe(missedAt + 120 * 1000)
+      expect((await refusal()).status.params.retryOn).toBe(missedAt + wait)
     })
 
     test('the wait outlives the exhausted code and the cleaning of its row', async () => {
@@ -559,21 +542,19 @@ describe('otp attempts', () => {
       rows.length = 0
       mailSend.mockClear()
 
-      expect((await refusal()).status.params.retryOn).toBe(missedAt + 120 * 1000)
+      expect((await refusal()).status.params.retryOn).toBe(missedAt + wait)
 
       expect(mailSend).not.toHaveBeenCalled()
-      now += 59 * 1000
+      now += wait - 61 * 1000
       await issue()
     })
 
-    // After each prelude the next 5 wrong guesses are the first 5 again: they wait 120 s, not longer.
+    // After each prelude the next 5 wrong guesses are the first 5 again.
     const fromScratch: Array<[string, () => Promise<void>]> = [
       [
         'a right code puts the wait back to the start',
         async () => {
-          for (let step = 1; step <= 2; step++) {
-            await missAndWait(5, 60 * 1000 * 2 ** step)
-          }
+          await missAndWait(5, wait)
           await validate(await issue())
         }
       ],
@@ -583,14 +564,6 @@ describe('otp attempts', () => {
           const code = await issue()
           await miss(4)
           await validate(code)
-        }
-      ],
-      [
-        'a streak that has been quiet for a day starts over',
-        async () => {
-          await missAndWait(5, 120 * 1000)
-          await missAndWait(5, 240 * 1000)
-          now += 25 * hour
         }
       ],
       [
@@ -624,7 +597,7 @@ describe('otp attempts', () => {
     test.each(fromScratch)('%s', async (_name, prelude) => {
       await prelude()
 
-      await missAndWait(5, 120 * 1000)
+      await missAndWait(5, wait)
     })
 
     describe('what the refused request gets', () => {
@@ -637,21 +610,22 @@ describe('otp attempts', () => {
         const refused = await refusal()
 
         expect(refused.status.severity).toBe(Severity.ERROR)
-        expect(refused.status.params).toEqual({ retryOn: missedAt + 120 * 1000, minutes: 2 })
+        expect(refused.status.params).toEqual({ retryOn: missedAt + wait, minutes: 60 })
         now += 60 * 1000
-        expect((await refusal()).status.params).toEqual({ retryOn: missedAt + 120 * 1000, minutes: 1 })
+        expect((await refusal()).status.params).toEqual({ retryOn: missedAt + wait, minutes: 59 })
       })
 
       test('a code that can still be typed keeps the answer sent', async () => {
         await issue()
         await exhaust()
-        now += 120 * 1000
+        now += wait
         const live = await issue()
         await miss(1)
+        dropLockLetter()
         const missedAt = now
         now += 10 * 1000
 
-        await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn: missedAt + 120 * 1000 })
+        await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn: missedAt + wait })
 
         expect(rows.map((r) => r.code)).toEqual([live])
       })
@@ -665,6 +639,93 @@ describe('otp attempts', () => {
           status: { code: platform.status.TooManyOtpAttempts }
         })
       })
+    })
+  })
+
+  // An unknown address is answered like a known one and gets a sign up letter, at most one per delay.
+  describe('an address without an account', () => {
+    const unknown = (): string => `nobody-${Math.random()}@example.com`
+    const lettersTo = (to: string): any[] => mailSend.mock.calls.filter((c) => c[2][0].data.to === to)
+
+    beforeEach(() => {
+      jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+    })
+
+    test('loginOtp answers sent and mails the sign up link once per delay', async () => {
+      const to = unknown()
+
+      const first = await loginOtp(ctx, db, null, 'token', { email: to })
+      await loginOtp(ctx, db, null, 'token', { email: to })
+
+      expect(first).toEqual({ sent: true, retryOn: now + 60 * 1000 })
+      expect(lettersTo(to)).toHaveLength(1)
+      expect(lettersTo(to)[0][2][0].data.text).toContain('https://front.example.com/login/signup')
+
+      now += 61 * 1000
+      await loginOtp(ctx, db, null, 'token', { email: to })
+      expect(lettersTo(to)).toHaveLength(2)
+    })
+
+    test('requestPasswordReset mails the same letter once per delay', async () => {
+      const to = unknown()
+
+      await requestPasswordReset(ctx, db, null, 'token', { email: to })
+      await requestPasswordReset(ctx, db, null, 'token', { email: to })
+
+      expect(lettersTo(to)).toHaveLength(1)
+    })
+  })
+
+  // The 5th miss closes the code sign in for an hour and mails the owner a one-time link.
+  describe('the lock letter and the sign in link', () => {
+    const hour = 60 * 60 * 1000
+    const letters = (): any[] =>
+      mailSend.mock.calls.filter((c) => (c[2][0].data.text as string).includes('/login/loginLink#token='))
+    const tokenOf = (letter: any): string => /loginLink#token=([0-9a-f]+)/.exec(letter[2][0].data.text)?.[1] as string
+    const byLink = async (token: string): Promise<any> => await loginByLink(ctx, db, null, 'token', { token })
+    const lock = async (): Promise<string> => {
+      await issue()
+      await miss(5)
+      return tokenOf(letters()[letters().length - 1])
+    }
+
+    test('only the miss that starts the lock mails a letter, the link lives as long as the lock', async () => {
+      await issue()
+      await miss(4)
+      now += 61 * 1000
+      await issue()
+      expect(letters()).toHaveLength(0)
+
+      await miss(1)
+      expect(letters()).toHaveLength(1)
+      const link = rows.find((r) => r.purpose === 'login-link') as OTP
+      expect(link.expiresOn - link.createdOn).toBe(hour)
+      expect(link.code).not.toBe(tokenOf(letters()[0]))
+
+      // The second code still takes guesses inside the lock: its misses mail nothing.
+      await miss(2)
+      expect(letters()).toHaveLength(1)
+    })
+
+    test('the link signs in once and ends the lock', async () => {
+      const token = await lock()
+
+      await expect(byLink(token)).resolves.toMatchObject({ account: personUuid, socialId: sid._id })
+      expect(sid.loginOtpMisses).toBe(0)
+      expect(rows.some((r) => r.purpose === 'login-link')).toBe(false)
+      await expect(byLink(token)).rejects.toThrow(invalidOtp)
+    })
+
+    test('an expired, a replaced and an unknown link fail alike', async () => {
+      const first = await lock()
+      now += hour + 1000
+
+      await expect(byLink(first)).rejects.toThrow(invalidOtp)
+      const second = await lock()
+      expect(second).not.toBe(first)
+      await expect(byLink(first)).rejects.toThrow(invalidOtp)
+      await expect(byLink('ab'.repeat(32))).rejects.toThrow(invalidOtp)
+      await expect(byLink(second)).resolves.toMatchObject({ account: personUuid })
     })
   })
 
@@ -752,13 +813,13 @@ describe('otp attempts', () => {
     test('at the end of a wait held by wrong guesses too, and the new code keeps its full budget', async () => {
       await issue()
       await exhaust()
-      now += 120 * 1000
+      now += 60 * 60 * 1000
       mailSend.mockClear()
 
       await Promise.all(Array.from({ length: 6 }, async () => await utils.sendOtp(ctx, db, null, sid)))
-      await miss(5)
+      await exhaust()
+      mailSend.mockClear()
 
-      expect(mailSend).toHaveBeenCalledTimes(1)
       expect(rows).toHaveLength(1)
       // 5 guesses used it up, not 5 per request.
       expect(rows[0].attempts).toBe(5)

@@ -33,7 +33,15 @@ export const authLimiter = new SlidingWindowRateLimitter(
 )
 
 // join checks a password through login and requestPasswordReset sends mail.
-const authMethods = new Set(['login', 'loginOtp', 'signUpOtp', 'validateOtp', 'join', 'requestPasswordReset'])
+const authMethods = new Set([
+  'login',
+  'loginOtp',
+  'signUpOtp',
+  'validateOtp',
+  'loginByLink',
+  'join',
+  'requestPasswordReset'
+])
 
 // Proxies in front of the service that append to x-forwarded-for; 0 = use the socket address.
 const trustedProxyHops = parseEnvInt(process.env.TRUSTED_PROXY_HOPS, 1)

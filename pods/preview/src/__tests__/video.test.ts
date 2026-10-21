@@ -32,6 +32,7 @@ const spawnMock = spawn as unknown as jest.Mock
 
 const WS = 'ws-1' as WorkspaceUuid
 const TIMEOUT = 5000
+const PIECE = 1024
 const PLAYLIST = '#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nhttp://attacker.example/seg.ts\n#EXT-X-ENDLIST\n'
 
 // frame is what ends up in the output file; null leaves no file, as for a clip
@@ -259,7 +260,7 @@ describe('VideoProvider', () => {
   beforeEach(() => {
     tempDir = new TemporaryDir(ctx, 'preview-test-')
     get = jest.fn(async () => Readable.from([Buffer.from(PLAYLIST)]))
-    provider = new VideoProvider({ get, getUrl } as unknown as StorageAdapter, tempDir, TIMEOUT)
+    provider = new VideoProvider({ partial: get, getUrl } as unknown as StorageAdapter, tempDir, TIMEOUT, PIECE)
   })
 
   afterEach(async () => {
@@ -276,10 +277,10 @@ describe('VideoProvider', () => {
       return fakeFfmpeg(args, 0)
     })
 
-    const result = await provider.image(ctx, WS, 'x.m3u8', 'video/mp4')
+    const result = await provider.image(ctx, WS, 'x.m3u8', 'video/mp4', PLAYLIST.length)
 
     const [, args] = spawnMock.mock.calls[0] as [string, string[]]
-    expect(get).toHaveBeenCalledWith(expect.anything(), { uuid: WS }, 'x.m3u8')
+    expect(get).toHaveBeenCalledWith(expect.anything(), { uuid: WS }, 'x.m3u8', 0, PLAYLIST.length)
     expect(getUrl).not.toHaveBeenCalled()
     expect(input.startsWith(tempDir.path)).toBe(true)
     // the blob name must not leak into the local name: ffmpeg picks hls by the .m3u8 extension
@@ -291,6 +292,27 @@ describe('VideoProvider', () => {
     expect(result.filePath.endsWith('.png')).toBe(true)
   })
 
+  it('writes the head and the tail of a big blob at their offsets into a file of the full size', async () => {
+    const source = Buffer.from('0123456789')
+    get.mockImplementation(async (_c: unknown, _w: unknown, _n: string, offset: number, length: number) =>
+      Readable.from([source.subarray(offset, offset + length)])
+    )
+    let content = Buffer.alloc(0)
+    spawnMock.mockImplementation((_cmd: string, args: string[]) => {
+      content = readFileSync(inputOf(args))
+      return fakeFfmpeg(args, 0)
+    })
+    const small = new VideoProvider({ partial: get } as unknown as StorageAdapter, tempDir, TIMEOUT, 3)
+
+    await small.image(ctx, WS, 'video.mp4', 'video/mp4', source.length)
+
+    expect(get.mock.calls.map(([, , , offset, length]) => [offset, length])).toEqual([
+      [0, 3],
+      [7, 3]
+    ])
+    expect(content).toEqual(Buffer.concat([Buffer.from('012'), Buffer.alloc(4), Buffer.from('789')]))
+  })
+
   it('removes the local copy of the blob once ffmpeg is done', async () => {
     let input = ''
     spawnMock.mockImplementation((_cmd: string, args: string[]) => {
@@ -298,7 +320,7 @@ describe('VideoProvider', () => {
       return fakeFfmpeg(args, 0)
     })
 
-    await provider.image(ctx, WS, 'video.mp4', 'video/mp4')
+    await provider.image(ctx, WS, 'video.mp4', 'video/mp4', PLAYLIST.length)
 
     expect(input).not.toBe('')
     expect(existsSync(input)).toBe(false)
@@ -329,7 +351,7 @@ describe('VideoProvider', () => {
   ])('removes the local copy of the blob when %s', async (_what, message, setup) => {
     setup()
 
-    await expect(provider.image(ctx, WS, 'video.mp4', 'video/mp4')).rejects.toThrow(message)
+    await expect(provider.image(ctx, WS, 'video.mp4', 'video/mp4', PLAYLIST.length)).rejects.toThrow(message)
 
     expect(readdirSync(tempDir.path)).toEqual([])
   })
@@ -339,7 +361,7 @@ describe('VideoProvider', () => {
       fakeFfmpeg(args, 0, '', seekOf(args) === '00:00:00' ? 'frame' : null)
     )
 
-    const result = await provider.image(ctx, WS, 'short.mp4', 'video/mp4')
+    const result = await provider.image(ctx, WS, 'short.mp4', 'video/mp4', PLAYLIST.length)
 
     expect(readFileSync(result.filePath, 'utf8')).toBe('frame')
     expect(spawnMock).toHaveBeenCalledTimes(2)
@@ -352,9 +374,11 @@ describe('VideoProvider', () => {
     async (method) => {
       const proc = hungFfmpeg()
       spawnMock.mockImplementation(() => proc)
-      const hurried = new VideoProvider({ get, getUrl } as unknown as StorageAdapter, tempDir, 50)
+      const hurried = new VideoProvider({ partial: get, getUrl } as unknown as StorageAdapter, tempDir, 50, PIECE)
 
-      await expect(hurried[method](ctx, WS, 'video.mp4', 'video/mp4')).rejects.toThrow('ffmpeg timed out')
+      await expect(hurried[method](ctx, WS, 'video.mp4', 'video/mp4', PLAYLIST.length)).rejects.toThrow(
+        'ffmpeg timed out'
+      )
 
       expect(proc.kill).toHaveBeenCalledWith('SIGKILL')
       expect(readdirSync(tempDir.path)).toEqual([])

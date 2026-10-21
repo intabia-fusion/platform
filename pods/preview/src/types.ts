@@ -37,8 +37,15 @@ export interface PreviewProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     name: string,
-    contentType: string
+    contentType: string,
+    size: number
   ) => Promise<PreviewMetadata>
 
-  image: (ctx: MeasureContext, workspace: WorkspaceUuid, name: string, contentType: string) => Promise<PreviewFile>
+  image: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    name: string,
+    contentType: string,
+    size: number
+  ) => Promise<PreviewFile>
 }

@@ -27,6 +27,7 @@ export interface CacheConfig {
 export interface VideoConfig {
   concurrency: number // video copies and ffmpeg runs at once, apart from the shared slots
   timeout: number // milliseconds, one ffmpeg run
+  headTailSize: number // bytes, read from the start and from the end of a video
 }
 
 export interface Config {
@@ -68,6 +69,12 @@ const config: Config = (() => {
     throw Error('VIDEO_CONCURRENCY must be a positive number')
   }
 
+  // megabytes, like MAX_BLOB_SIZE
+  const headTailSize = parseInt(process.env.VIDEO_HEAD_TAIL_SIZE ?? '5') * 1024 * 1024
+  if (!(headTailSize > 0)) {
+    throw Error('VIDEO_HEAD_TAIL_SIZE must be a positive number of megabytes')
+  }
+
   const params: Partial<Config> = {
     Port: parseInt(process.env.PORT ?? '4040'),
     Secret: process.env.SECRET,
@@ -79,7 +86,7 @@ const config: Config = (() => {
       gcInterval: parseInt(process.env.CACHE_GC_INTERVAL ?? '300') * 1000
     },
     MaxBlobSize: maxBlobSize,
-    Video: { concurrency: videoConcurrency, timeout: ffmpegTimeout },
+    Video: { concurrency: videoConcurrency, timeout: ffmpegTimeout, headTailSize },
     LibreOfficeTimeout: libreOfficeTimeout,
     PdfTimeout: pdfTimeout
   }

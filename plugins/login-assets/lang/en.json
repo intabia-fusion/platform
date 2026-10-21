@@ -127,6 +127,8 @@
     "CancelWorkspaceDeletion": "Cancel deletion",
     "AccountDeletionScheduled": "Account scheduled for deletion",
     "AccountDeletionScheduledDesc": "Your account will be deleted on {date}. Cancel the deletion to keep it. Workspaces you scheduled stay scheduled - restore each of them separately.",
-    "CancelAccountDeletion": "Cancel deletion"
+    "CancelAccountDeletion": "Cancel deletion",
+    "LoginLinkCaption": "Sign in to your account",
+    "LoginLinkInvalid": "This sign-in link has expired or has already been used"
   }
 }

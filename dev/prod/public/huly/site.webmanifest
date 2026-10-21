@@ -2,9 +2,9 @@
   "name": "huly",
   "display": "standalone",
   "icons": [
-    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
-    { "src": "/icon-1024.png", "type": "image/png", "sizes": "1024x1024" }
+    { "src": "/huly/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/huly/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/huly/icon-1024.png", "type": "image/png", "sizes": "1024x1024" }
   ],
   "start_url": "/",
   "scope": "/"

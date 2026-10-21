@@ -165,7 +165,8 @@ export interface Workspace {
 }
 
 /** A sign in code, or a code that confirms an action of the signed in person (leave, delete). */
-export type OtpPurpose = 'login' | 'operation'
+// 'login-link' rows hold the sha256 of a one-time sign in link token in `code`; no code lookup matches them.
+export type OtpPurpose = 'login' | 'operation' | 'login-link'
 
 export interface OTP {
   socialId: PersonId
