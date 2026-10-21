@@ -641,10 +641,15 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (guestRoles.has(account.role)) return
     if (this.isApiKeyGranted(ctx, this.spacesMap.get(cudTx.objectSpace))) return
     if (!this.canWriteSpace(cudTx.objectSpace, account.uuid)) {
-      const message = this.spacesMap.has(cudTx.objectSpace)
-        ? 'Only space members can write to a private space'
-        : 'The space does not exist'
-      throw this.forbiddenTx(ctx, ForbiddenKind.NotSpaceMember, message, cudTx)
+      if (!this.spacesMap.has(cudTx.objectSpace)) {
+        throw this.forbiddenTx(ctx, ForbiddenKind.UnknownSpace, 'The space does not exist', cudTx)
+      }
+      throw this.forbiddenTx(
+        ctx,
+        ForbiddenKind.NotSpaceMember,
+        'Only space members can write to a private space',
+        cudTx
+      )
     }
   }
 

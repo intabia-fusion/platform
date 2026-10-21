@@ -162,6 +162,7 @@ export function unknownError (err: unknown, extra?: Record<string, any>): Status
  */
 export enum ForbiddenKind {
   NotSpaceMember = 'not-space-member',
+  UnknownSpace = 'unknown-space',
   SpaceOwnerOnly = 'space-owner-only',
   SystemOnly = 'system-only',
   LastSpaceOwner = 'last-space-owner',

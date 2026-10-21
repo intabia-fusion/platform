@@ -30,9 +30,9 @@
 - Обход фильтра есть у системного аккаунта, триггеров сервера, `Admin` и `DocGuest`. Где ограничено чтение `DocGuest`, не проверял.
 - Коллабораторы документа видят его без членства в space (`getClassCollaborators`).
 
-**Запись содержимого** (`SpaceSecurityMiddleware.checkWriteAccess`, `spaceSecurity.ts:589`):
+**Запись содержимого** (`SpaceSecurityMiddleware.checkWriteAccess`, `spaceSecurity.ts:609`):
 - В открытый space пишет любой, в закрытый - только участник (`canWriteSpace`, `spaceSecurity.ts:109`).
-- Отказ: `ForbiddenKind.NotSpaceMember`.
+- Отказ: `ForbiddenKind.NotSpaceMember`; если space нет в кэше сервера (удалён, неверный `objectSpace`) - `ForbiddenKind.UnknownSpace`, клиент показывает общее "Нет доступа".
 
 **Изменение самого space** (`checkSpacePermissions`, `spaceSecurity.ts:431`):
 

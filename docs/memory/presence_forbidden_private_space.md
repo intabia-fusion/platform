@@ -9,14 +9,15 @@
   `space` = id встречи (`MeetingMinutes.space === _id`). Виджет чата тут ни при чём.
 - Отказывает `SpaceSecurityMiddleware.checkWriteAccess`: для документов внутри space Owner не обходит проверку.
   Чтение тоже фильтруется (обход только для домена Space), поэтому после закрытия у Owner пропадает Activity.
-- Сервер `Forbidden` не логирует (`sessionManager.ts`), причину нашли по WS-кадрам в Playwright.
+- Отказ сервер пишет в лог как `failed to tx` (`foundations/server/packages/server/src/client.ts`), но до этой ветки
+  в нём не было причины: `Forbidden` с пустыми params. Причину нашли по WS-кадрам в Playwright.
 
 ## Решение
 
 - Presence = "видит содержимое": `PresenceContext` не пишет presence в закрытый space, где пользователь не в `members`.
   Общий guard, поэтому действует и в закрытых каналах чата.
-- Сервер передаёт причину отказа: `forbiddenError(ForbiddenKind.X, message?)` (`platform/src/status.ts`) кладёт `kind`
-  в params `Forbidden`. `message` остаётся только на сервере, тесты сверяют по нему.
+- Сервер передаёт причину отказа: `BaseMiddleware.forbiddenTx` (`server/packages/core/src/base.ts`) кладёт в params
+  `Forbidden` `kind`, `message`, `account`, `objectId`, `space`. Клиент получает только status, поэтому всё в params.
 - `ReadOnlyAccessMiddleware` (`view-resources/src/middleware.ts`) по `kind` выбирает текст уведомления и пишет событие
   аналитики `PermissionDenied` (`kind`, классы tx/объекта, space, роль). Модалка про повышение роли - только `WorkspaceRole`.
 - Встречи: см. `docs/features/office-meetings.md`, п. 8 (экран "Присоединиться", подтверждение закрытия).
