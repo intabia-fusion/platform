@@ -39,6 +39,7 @@ import platform, {
 import presentation, {
   decodeTokenPayload,
   loadServerConfig,
+  MessageBox,
   purgeClient,
   refreshClient,
   releaseVersion,
@@ -53,6 +54,7 @@ import {
   locationStorageKeyId,
   navigate,
   setMetadataLocalStorage,
+  showPopup,
   themeStore
 } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
@@ -643,7 +645,39 @@ export async function connect (title: string): Promise<Client | undefined> {
     await broadcastEvent(plugin.event.NotifyConnection, me)
   })
   console.log(metricsToString((ctx as MeasureMetricsContext).metrics, 'connect', 50))
+  void notifyPasswordAging(wsUrl, token)
   return newClient
+}
+
+async function notifyPasswordAging (wsUrl: string, token: string): Promise<void> {
+  const key = `password_aging_notice_${wsUrl}`
+  try {
+    if (typeof sessionStorage === 'undefined' || sessionStorage.getItem(key) !== null) return
+    sessionStorage.setItem(key, '1')
+  } catch (err) {
+    return
+  }
+
+  let valid = true
+  try {
+    valid = await getAccountClient(getMetadata(login.metadata.AccountsUrl), token).checkPasswordAging()
+  } catch (err) {
+    return
+  }
+  if (valid) return
+
+  showPopup(
+    MessageBox,
+    {
+      label: login.string.ChangePassword,
+      message: login.string.PasswordExpiredDesc,
+      okLabel: login.string.ChangePassword,
+      action: async () => {
+        navigate({ path: [loginId, 'changePassword'] })
+      }
+    },
+    'top'
+  )
 }
 
 async function getGlobalPerson (): Promise<GlobalPerson | undefined> {

@@ -882,7 +882,9 @@ export class TSessionManager implements SessionManager {
         if (wsInfo.passwordAgingRule != null && wsInfo.passwordAgingRule > 0) {
           const isPasswordAgingOk = await this.checkPasswordAging(ctx, rawToken)
           if (!isPasswordAgingOk) {
-            return { error: new Status(Severity.ERROR, platform.status.PasswordExpired, {}), terminate: true }
+            ctx.warn('Password is older than the workspace aging rule, reminding on the client', {
+              workspace: token.workspace
+            })
           }
         }
 
