@@ -135,7 +135,7 @@
   {docQuery}
   {selected}
   {ignoreObjects}
-  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.FindIssue}
+  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
   {width}
   on:update
   on:close={onClose}

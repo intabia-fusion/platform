@@ -54,16 +54,14 @@
   on:close
 >
   <svelte:fragment slot="item" let:item={issue}>
-    <slot name="item" {issue}>
-      <div class="flex-center clear-mins w-full h-9">
-        {#if issue?.$lookup?.status}
-          <div class="icon mr-4 h-8">
-            <IssueStatusIcon value={issue.$lookup.status} taskType={issue.kind} space={issue.space} size="small" />
-          </div>
-        {/if}
-        <span class="overflow-label flex-no-shrink mr-3">{issue.identifier}</span>
-        <span class="overflow-label w-full content-color">{issue.title}</span>
-      </div>
-    </slot>
+    <div class="flex-center clear-mins w-full h-9">
+      {#if issue?.$lookup?.status}
+        <div class="icon mr-4 h-8">
+          <IssueStatusIcon value={issue.$lookup.status} taskType={issue.kind} space={issue.space} size="small" />
+        </div>
+      {/if}
+      <span class="overflow-label flex-no-shrink mr-3">{issue.identifier}</span>
+      <span class="overflow-label w-full content-color">{issue.title}</span>
+    </div>
   </svelte:fragment>
 </ObjectPopup>
