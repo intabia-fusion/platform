@@ -24,7 +24,7 @@ import {
   TxProcessor,
   type SessionData
 } from '@hcengineering/core'
-import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -64,7 +64,12 @@ export class ConfigurationMiddleware extends BaseMiddleware implements Middlewar
           // nothing here: cross-workspace changes go through the audited account RPCs.
           const account = ctx.contextData.account
           if (account.role !== AccountRole.Owner) {
-            throw forbiddenError(ForbiddenKind.WorkspaceOwnerOnly)
+            throw this.forbiddenTx(
+              ctx,
+              ForbiddenKind.WorkspaceOwnerOnly,
+              'Only workspace owners can change configuration',
+              txCUD
+            )
           }
         }
       }

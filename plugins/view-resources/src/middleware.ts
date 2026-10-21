@@ -420,9 +420,11 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
       }
       if (err instanceof PlatformError && err.status.code === platform.status.Forbidden) {
         const kind: ForbiddenKind | undefined = err.status.params?.kind
+        console.warn(err.message)
         // Refusals come from many flows, some of them background ones; track each to find them.
         Analytics.handleEvent('PermissionDenied', {
           kind: kind ?? 'unknown',
+          message: err.status.params?.message,
           txClass: tx._class,
           objectClass: (tx as TxCUD<Doc>).objectClass,
           objectId: (tx as TxCUD<Doc>).objectId,

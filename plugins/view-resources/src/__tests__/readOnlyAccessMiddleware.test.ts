@@ -53,6 +53,8 @@ describe('ReadOnlyAccessMiddleware forbidden handling', () => {
   const mw = ReadOnlyAccessMiddleware.create({} as any)
   const handleEvent = jest.spyOn(Analytics, 'handleEvent').mockImplementation(() => {})
 
+  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
   beforeEach(() => {
     jest.clearAllMocks()
     setCurrentAccount({ uuid: 'user1', role: AccountRole.User } as unknown as Account)
@@ -88,6 +90,18 @@ describe('ReadOnlyAccessMiddleware forbidden handling', () => {
       objectSpace: core.space.Space,
       role: AccountRole.User
     })
+  })
+
+  it('passes the server reason to the console and analytics', async () => {
+    nextTx.mockRejectedValue(forbiddenError(ForbiddenKind.SpaceOwnerOnly, 'Only owners can change space privacy'))
+
+    await mw.tx(tx)
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Only owners can change space privacy'))
+    expect(handleEvent).toHaveBeenCalledWith(
+      'PermissionDenied',
+      expect.objectContaining({ message: 'Only owners can change space privacy' })
+    )
   })
 
   it('falls back to the default text for Forbidden without a kind', async () => {

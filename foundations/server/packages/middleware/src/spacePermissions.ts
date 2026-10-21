@@ -36,7 +36,7 @@ import core, {
   type AccountUuid,
   matchQuery
 } from '@hcengineering/core'
-import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import { type Middleware, type TxMiddlewareResult, type PipelineContext } from '@hcengineering/server-core'
 import contact from '@hcengineering/contact'
 import { BaseMiddleware } from '@hcengineering/server-core'
@@ -235,10 +235,6 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
     }
 
     return true
-  }
-
-  private throwForbidden (kind: ForbiddenKind): void {
-    throw forbiddenError(kind)
   }
 
   // /**
@@ -463,7 +459,7 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
     if (account.primarySocialId === core.account.System) return
 
     if (h.isDerived(cudTx.objectClass, contact.class.PersonSpace)) {
-      this.throwForbidden(ForbiddenKind.SystemOnly)
+      throw this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, 'Personal spaces can only be changed by the system', cudTx)
     }
   }
 
@@ -479,7 +475,7 @@ export class SpacePermissionsMiddleware extends BaseMiddleware implements Middle
     // NOTE: move this checking logic later to be defined in some server plugins?
     // so they can contribute checks into the middleware for their custom permissions?
     if (!this.checkPermission(ctx, targetSpaceId as Ref<TypedSpace>, cudTx, isSpace)) {
-      this.throwForbidden(ForbiddenKind.SpaceRole)
+      throw this.forbiddenTx(ctx, ForbiddenKind.SpaceRole, 'The space role does not grant this permission', cudTx)
     }
   }
 }

@@ -32,7 +32,7 @@ import core, {
   systemAccountUuid,
   TxFactory
 } from '@hcengineering/core'
-import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import notification, { PushSubscription, ReadState } from '@hcengineering/notification'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import pulse, { WorkspacesNotification } from '@hcengineering/pulse'
@@ -109,7 +109,7 @@ export class NotificationMiddleware extends BaseMiddleware {
       tx.objectClass === notification.class.AppPushNotification ||
       tx.objectClass === notification.class.PushSubscription
     ) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Notification documents cannot be mixed in by users')
     }
   }
 
@@ -118,24 +118,30 @@ export class NotificationMiddleware extends BaseMiddleware {
     const account = ctx.contextData.account.uuid
 
     if (tx._class === core.class.TxCreateDoc) {
-      if ((tx as TxCreateDoc<PushSubscription>).attributes.user !== account) this.throwForbidden()
+      if ((tx as TxCreateDoc<PushSubscription>).attributes.user !== account) {
+        this.throwForbidden(ctx, tx, 'Cannot create a push subscription for another account')
+      }
       return
     }
 
     if (tx._class === core.class.TxUpdateDoc) {
       const user = (tx as TxUpdateDoc<PushSubscription>).operations.user
-      if (user !== undefined && user !== account) this.throwForbidden()
+      if (user !== undefined && user !== account) {
+        this.throwForbidden(ctx, tx, 'Cannot reassign a push subscription to another account')
+      }
     }
 
     const current = (await this.findAll(ctx, notification.class.PushSubscription, { _id: tx.objectId as any }))[0]
-    if (current !== undefined && current.user !== account) this.throwForbidden()
+    if (current !== undefined && current.user !== account) {
+      this.throwForbidden(ctx, tx, "Cannot change another account's push subscription")
+    }
   }
 
   private handleDocNotifyContext (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): void {
     if (tx.objectClass === notification.class.DocNotifyContext) {
       if (tx._class === core.class.TxCreateDoc || tx._class === core.class.TxUpdateDoc) {
         if (!this.isSystemAccess(ctx)) {
-          this.throwForbidden()
+          this.throwForbidden(ctx, tx, 'Notification contexts are managed by the system')
         }
       }
     }
@@ -145,7 +151,7 @@ export class NotificationMiddleware extends BaseMiddleware {
     if (tx.objectClass === notification.class.AppPushNotification) {
       if (tx._class === core.class.TxCreateDoc || tx._class === core.class.TxUpdateDoc) {
         if (!this.isSystemAccess(ctx)) {
-          this.throwForbidden()
+          this.throwForbidden(ctx, tx, 'Push notifications are created by the system')
         }
       }
     }
@@ -157,7 +163,7 @@ export class NotificationMiddleware extends BaseMiddleware {
 
     if (tx._class === core.class.TxCreateDoc && tx.objectClass === notification.class.ReadState) {
       if (!this.isSystemAccess(ctx)) {
-        this.throwForbidden()
+        this.throwForbidden(ctx, tx, 'Read states are created by the system')
       }
       const createTx = tx as TxCreateDoc<ReadState>
       const state = TxProcessor.createDoc2Doc(createTx)
@@ -204,7 +210,7 @@ export class NotificationMiddleware extends BaseMiddleware {
         updateTx.operations[account.uuid]?.timestamp == null ||
         updateTx.operations[account.uuid]?.messageId == null
       ) {
-        this.throwForbidden()
+        this.throwForbidden(ctx, tx, 'Only your own read position can be updated')
       }
 
       const state = await this.getState(ctx, updateTx.objectId)
@@ -223,7 +229,7 @@ export class NotificationMiddleware extends BaseMiddleware {
       }
     } else if (tx._class === core.class.TxRemoveDoc && tx.objectClass === notification.class.ReadState) {
       if (!this.isSystemAccess(ctx)) {
-        this.throwForbidden()
+        this.throwForbidden(ctx, tx, 'Read states are removed by the system')
       }
       this.activeStates.delete(tx.objectId as Ref<ReadState>)
     }
@@ -277,8 +283,8 @@ export class NotificationMiddleware extends BaseMiddleware {
     return undefined
   }
 
-  private throwForbidden (): void {
-    throw forbiddenError(ForbiddenKind.ReadState)
+  private throwForbidden (ctx: MeasureContext<SessionData>, tx: Tx, message: string): void {
+    throw this.forbiddenTx(ctx, ForbiddenKind.ReadState, message, tx)
   }
 
   async close (): Promise<void> {

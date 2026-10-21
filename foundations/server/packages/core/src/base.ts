@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import {
+import core, {
   type DomainResult,
   toFindResult,
   type Class,
@@ -32,8 +33,11 @@ import {
   type SearchResult,
   type SessionData,
   type Timestamp,
-  type Tx
+  type Tx,
+  type TxCUD,
+  TxProcessor
 } from '@hcengineering/core'
+import { type ForbiddenKind, type PlatformError, forbiddenError } from '@hcengineering/platform'
 import type { Middleware, PipelineContext, TxMiddlewareResult } from './types'
 
 export const emptyFindResult = Promise.resolve(toFindResult([]))
@@ -135,6 +139,24 @@ export abstract class BaseMiddleware implements Middleware {
 
   provideBroadcast (ctx: MeasureContext<SessionData>): Promise<void> {
     return this.nextHandleBroadcast?.handleBroadcast(ctx) ?? emptyBroadcastResult
+  }
+
+  /** Forbidden error naming who was refused and where: only its params reach the client. */
+  protected forbiddenTx (
+    ctx: MeasureContext<SessionData>,
+    kind: ForbiddenKind,
+    message: string,
+    tx?: Tx
+  ): PlatformError {
+    const params: Record<string, any> = { account: ctx.contextData.account.uuid }
+    if (tx !== undefined && TxProcessor.isExtendsCUD(tx._class)) {
+      const cud = tx as TxCUD<Doc>
+      params.objectId = cud.objectId
+      params.space = this.context.hierarchy.isDerived(cud.objectClass, core.class.Space)
+        ? cud.objectId
+        : cud.objectSpace
+    }
+    return forbiddenError(kind, message, params)
   }
 
   protected provideTx (ctx: MeasureContext<SessionData>, tx: Tx[]): Promise<TxMiddlewareResult> {

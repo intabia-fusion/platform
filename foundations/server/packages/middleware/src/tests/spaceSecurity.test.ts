@@ -1618,7 +1618,14 @@ describe('SpaceSecurityMiddleware', () => {
 
       await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change space privacy')
       await expect(mw.tx(ctx, [updateTx])).rejects.toMatchObject({
-        status: { params: { kind: ForbiddenKind.SpaceOwnerOnly } }
+        status: {
+          params: {
+            kind: ForbiddenKind.SpaceOwnerOnly,
+            message: 'Only owners can change space privacy',
+            account: 'user2',
+            space: 'space1'
+          }
+        }
       })
     })
 
@@ -2260,7 +2267,7 @@ describe('SpaceSecurityMiddleware', () => {
       const createTx = docTx('private1')
 
       await expect(mw.tx(ctx, [createTx])).rejects.toMatchObject({
-        status: { params: { kind: ForbiddenKind.NotSpaceMember } }
+        status: { params: { kind: ForbiddenKind.NotSpaceMember, account: 'outsider', space: 'private1' } }
       })
       expect(nextMiddleware.tx).not.toHaveBeenCalled()
     })

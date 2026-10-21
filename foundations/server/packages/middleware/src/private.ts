@@ -34,7 +34,7 @@ import core, {
   systemAccountUuid,
   toFindResult
 } from '@hcengineering/core'
-import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -79,7 +79,12 @@ export class PrivateMiddleware extends BaseMiddleware implements Middleware {
           account.uuid !== systemAccountUuid &&
           account.role !== AccountRole.Owner
         ) {
-          throw forbiddenError(ForbiddenKind.ForeignPrivateWrite)
+          throw this.forbiddenTx(
+            ctx,
+            ForbiddenKind.ForeignPrivateWrite,
+            "Cannot write another account's private data",
+            tx
+          )
         }
         const modifiedByAccount = ctx.contextData.socialStringsToUsers.get(tx.modifiedBy)?.accountUuid
         const target = [account.uuid, systemAccountUuid]

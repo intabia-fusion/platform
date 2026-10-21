@@ -23,7 +23,7 @@ import core, {
   TxProcessor,
   type TxUpdateDoc
 } from '@hcengineering/core'
-import { ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import contact, { type Channel, type Person } from '@hcengineering/contact'
 
 export class GuestPermissionsMiddleware extends BaseMiddleware implements Middleware {
@@ -47,7 +47,7 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
     }
 
     if (account.role === AccountRole.DocGuest || account.role === AccountRole.ReadOnlyGuest) {
-      throw forbiddenError(ForbiddenKind.WorkspaceRole)
+      throw this.forbiddenTx(ctx, ForbiddenKind.WorkspaceRole, `${account.role} role is read-only`)
     }
 
     for (const tx of txes) {
@@ -72,10 +72,20 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
       const isSpace = h.isDerived(cudTx.objectClass, core.class.Space)
       if (isSpace) {
         if (await this.isForbiddenSpaceTx(ctx, cudTx as TxCUD<Space>, account)) {
-          throw forbiddenError(ForbiddenKind.WorkspaceRole)
+          throw this.forbiddenTx(
+            ctx,
+            ForbiddenKind.WorkspaceRole,
+            'Guest role is not allowed to modify the space. Required role: User or higher',
+            cudTx
+          )
         }
       } else if (ctx.contextData.isTriggerCtx !== true && (await this.isForbiddenTx(ctx, cudTx, account))) {
-        throw forbiddenError(ForbiddenKind.WorkspaceRole)
+        throw this.forbiddenTx(
+          ctx,
+          ForbiddenKind.WorkspaceRole,
+          `Guest role is not allowed to modify ${cudTx.objectClass}. Required role: User or higher`,
+          cudTx
+        )
       }
     }
   }
@@ -93,7 +103,12 @@ export class GuestPermissionsMiddleware extends BaseMiddleware implements Middle
 
     const { account } = ctx.contextData
     if (await this.isForbiddenUserContactTx(ctx, tx as TxCUD<Doc>, account)) {
-      throw forbiddenError(ForbiddenKind.WorkspaceRole)
+      throw this.forbiddenTx(
+        ctx,
+        ForbiddenKind.WorkspaceRole,
+        'Only Maintainer or higher can edit contact details of other employees or unknown persons',
+        tx
+      )
     }
   }
 

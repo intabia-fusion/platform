@@ -176,11 +176,12 @@ export enum ForbiddenKind {
 }
 
 /**
- * Forbidden error carrying its kind; `message` (if any) replaces the generic one in logs and tests.
+ * Forbidden error carrying its kind. `message` also goes into params: only the status reaches the client.
  * @public
  */
 export function forbiddenError (kind: ForbiddenKind, message?: string, params: Record<string, any> = {}): PlatformError {
-  const err = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, { ...params, kind }))
+  const statusParams = message === undefined ? { ...params, kind } : { ...params, kind, message }
+  const err = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, statusParams))
   if (message !== undefined) err.message = message
   return err
 }
