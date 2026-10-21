@@ -203,7 +203,8 @@ export class StorageExtension implements Extension {
       // Check whether we still have changes after the previous save
       const noUpdates = this.hasNoUpdates(documentName, connectionId)
       if (!noUpdates) {
-        await this.performStoreDocument(documentName, document, context)
+        const author = this.updates.get(documentName)?.context ?? context
+        await this.performStoreDocument(documentName, document, author)
       }
     }
 
@@ -267,6 +268,9 @@ export class StorageExtension implements Extension {
         if (updatedAt < timestamp) {
           updates.collaborators.delete(connectionId)
         }
+      }
+      if (updates.collaborators.size === 0) {
+        this.updates.delete(documentName)
       }
     }
   }
