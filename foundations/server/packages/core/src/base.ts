@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import core, {
+import {
   type DomainResult,
   toFindResult,
   type Class,
@@ -37,6 +37,8 @@ import core, {
   type TxCUD,
   TxProcessor
 } from '@hcengineering/core'
+// Kept apart: merged into the import above, the bundle wraps it in __toESM and Proxy mocks of core lose named exports.
+import core from '@hcengineering/core'
 import { type ForbiddenKind, type PlatformError, forbiddenError } from '@hcengineering/platform'
 import type { Middleware, PipelineContext, TxMiddlewareResult } from './types'
 
