@@ -28,13 +28,13 @@ import {
   type UsageStatus,
   type WorkspaceUuid,
   RateLimiter,
+  aiBotAccountEmail,
   SocialIdType,
   buildSocialIdString,
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid
 } from '@hcengineering/core'
-import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 

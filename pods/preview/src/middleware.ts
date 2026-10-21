@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,7 @@ import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
 import { extractToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, type RequestHandler, type ErrorRequestHandler } from 'express'
-import { HttpError } from './error'
+import { BadRequestError, HttpError, ToolError } from './error'
 
 export interface KeepAliveOptions {
   timeout: number
@@ -66,6 +67,23 @@ export const withAuthorization = (req: RequestWithAuth, res: Response, next: Nex
   }
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+// The storage client puts the workspace into the url as it is: fetch turns "./<uuid>" into
+// the same blob under another key. A name of "." or ".." is resolved the same way.
+export const withBlob = (req: Request, _res: Response, next: NextFunction): void => {
+  const { workspace, name } = req.params
+  if (!UUID.test(workspace)) {
+    next(new BadRequestError('Invalid workspace'))
+    return
+  }
+  if (name === '.' || name === '..') {
+    next(new BadRequestError('Invalid blob name'))
+    return
+  }
+  next()
+}
+
 export interface ErrorHandlerOptions {
   ctx: MeasureContext
 }
@@ -74,6 +92,12 @@ export const errorHandler = (options: ErrorHandlerOptions): ErrorRequestHandler 
   const { ctx } = options
 
   return (err: any, req: Request, res: Response, _next: NextFunction): void => {
+    // logged once where the tool failed: a refusal serves the same error again and again
+    if (err instanceof ToolError) {
+      res.status(500).json({ message: 'Internal Server Error' })
+      return
+    }
+
     ctx.error(err.message, { code: err.code, message: err.message })
 
     if (err instanceof HttpError) {
@@ -83,6 +107,6 @@ export const errorHandler = (options: ErrorHandlerOptions): ErrorRequestHandler 
 
     Analytics.handleError(err)
 
-    res.status(500).json({ message: err.message ?? 'Internal Server Error' })
+    res.status(500).json({ message: 'Internal Server Error' })
   }
 }

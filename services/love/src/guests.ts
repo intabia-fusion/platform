@@ -16,6 +16,20 @@ import { Request, Response } from 'express'
 import { createToken, decodeMeetingToken, extractToken, getRoomName } from './utils'
 import { getAccountClient } from '@hcengineering/server-client'
 import { combineName } from '@hcengineering/contact'
+import { createHmac } from 'crypto'
+
+// Guest links go to anyone. A key derived from the LiveKit secret never equals SECRET,
+// so a link is no platform token even when both secrets are configured the same.
+const guestTokenSecret = createHmac('sha256', config.ApiSecret).update('love-guest-token').digest('hex')
+
+function decodeGuestToken (token: string): Token {
+  try {
+    return decodeToken(token, true, guestTokenSecret)
+  } catch {
+    // Legacy links signed with the raw LiveKit secret carry no exp: drop this once they are retired.
+    return decodeToken(token, true, config.ApiSecret)
+  }
+}
 
 export class GuestManager {
   constructor (
@@ -82,8 +96,8 @@ export class GuestManager {
     const guestToken = generateToken(
       readOnlyGuestAccountUuid,
       wsLoginInfo.workspace,
-      { meetingId, workspaceUrl },
-      config.ApiSecret
+      { meetingId, workspaceUrl, guest: 'true' },
+      guestTokenSecret
     )
 
     const shortId = await this.createShortLink(guestToken, wsLoginInfo.workspace)
@@ -106,7 +120,7 @@ export class GuestManager {
     try {
       let decoded: Token
       try {
-        decoded = decodeToken(guestToken, true, config.ApiSecret)
+        decoded = decodeGuestToken(guestToken)
       } catch (err) {
         res.status(401).send({ error: 'Invalid or expired token' })
         return
@@ -171,7 +185,7 @@ export class GuestManager {
       // Validate guest token and extract meeting + workspace
       let decoded: Token
       try {
-        decoded = decodeToken(guestToken, true, config.ApiSecret)
+        decoded = decodeGuestToken(guestToken)
       } catch (err) {
         res.status(401).send({ error: 'Invalid or expired token' })
         return

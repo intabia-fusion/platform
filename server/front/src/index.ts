@@ -64,6 +64,11 @@ async function storageUpload (
   return { uuid, etag: resp.etag }
 }
 
+// The datalake client refuses these as a blob name; answer before storage, not with a 500
+function isBlobName (name: unknown): name is string {
+  return typeof name === 'string' && name !== '' && name !== '.' && name !== '..'
+}
+
 function getRange (range: string, size: number): [number, number] {
   const [startStr, endStr] = range.replace(/bytes=/, '').split('-')
 
@@ -505,7 +510,7 @@ export function start (
           }
 
           const uuid = req.params.file ?? req.query.file
-          if (uuid === undefined) {
+          if (!isBlobName(uuid)) {
             res.status(404).send()
             return
           }
@@ -663,9 +668,9 @@ export function start (
         res.status(403).send()
         return
       }
-      const uuid = req.query.file as string
-      if (uuid === '') {
-        res.status(500).send()
+      const uuid = req.query.file
+      if (!isBlobName(uuid)) {
+        res.status(400).send()
         return
       }
 

@@ -22,7 +22,8 @@ jest.mock('@hcengineering/guest', () => ({
       PublicLink: 'guest:class:PublicLink'
     }
   },
-  createPublicLink: jest.fn()
+  createPublicLink: jest.fn(),
+  getPublicLinkSpace: jest.fn((_hierarchy: unknown, doc: { space: string }) => doc.space)
 }))
 
 jest.mock('@hcengineering/view-resources', () => ({
@@ -77,6 +78,7 @@ describe('printUtils', () => {
 
   it('ensurePublicLink returns existing link with url', async () => {
     const client = {
+      getHierarchy: jest.fn().mockReturnValue({}),
       findOne: jest.fn().mockResolvedValue({ _id: 'l1', url: 'https://public/link' })
     } as any
 
@@ -85,6 +87,35 @@ describe('printUtils', () => {
 
     expect(result?.url).toBe('https://public/link')
     expect(createPublicLink).not.toHaveBeenCalled()
+  })
+
+  it('ensurePublicLink makes a new link when the old one stayed in the previous space of the document', async () => {
+    jest.useFakeTimers()
+    try {
+      const doc = { ...buildDoc('doc-1'), space: 'space-b' as any }
+      const stale = { _id: 'old', url: 'https://public/old', space: 'space-a', attachedTo: 'doc-1' }
+      const fresh = { _id: 'new', url: 'https://public/new', space: 'space-b', attachedTo: 'doc-1' }
+      let created = false
+      ;(createPublicLink as jest.Mock).mockImplementation(async () => {
+        created = true
+      })
+      const client = {
+        getHierarchy: jest.fn().mockReturnValue({ classHierarchyMixin: jest.fn().mockReturnValue(undefined) }),
+        // The link of space-a is still there, and only a query without the space finds it.
+        findOne: jest.fn(async (_class, query) => {
+          if (query.space === undefined) return stale
+          return created && query.space === 'space-b' ? fresh : undefined
+        })
+      } as any
+
+      const promise = ensurePublicLink(client, doc)
+      await jest.advanceTimersByTimeAsync(300)
+
+      expect((await promise)?.url).toBe('https://public/new')
+      expect(createPublicLink).toHaveBeenCalledTimes(1)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('printAll waits for async public link url and then prints', async () => {
@@ -166,6 +197,7 @@ describe('printUtils', () => {
   it('printAll catches print service error and adds doc context', async () => {
     const doc = buildDoc('doc-4')
     const client = {
+      getHierarchy: jest.fn().mockReturnValue({}),
       findOne: jest.fn().mockResolvedValue({ _id: 'l4', url: 'https://public/fail' })
     } as any
     ;(printToPDF as jest.Mock).mockRejectedValue(new Error('Print service failed'))
@@ -187,6 +219,7 @@ describe('printUtils', () => {
   it('printAll signs pdf when signed=true', async () => {
     const doc = buildDoc('doc-5')
     const client = {
+      getHierarchy: jest.fn().mockReturnValue({}),
       findOne: jest.fn().mockResolvedValue({ _id: 'l5', url: 'https://public/sign' })
     } as any
 

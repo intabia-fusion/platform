@@ -222,6 +222,8 @@ services:
       # Dev/testing only: signUp with a password and no email code. NEVER set in prod.
       - ALLOW_SKIP_OTP_PASSWORD_SIGNUP=true
       - WORKSPACE_LIMIT_PER_USER=10000
+      # Stand tests log in and sign up from one address, far above the per-client default.
+      - AUTH_RATE_LIMIT=100000
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
       - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_PG_URL}
@@ -695,7 +697,6 @@ services:
       - MODE=all
       - FIRST_NAME=Julia
       - LAST_NAME=AI
-      - PASSWORD=password
       - AVATAR_PATH=./avatar.png
       - AVATAR_CONTENT_TYPE=image/png
       - PORT=4010

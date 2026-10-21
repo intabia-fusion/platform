@@ -20,7 +20,13 @@ import TimeLeft from '../components/TimeLeft.svelte'
 import ui from '../plugin'
 
 const NOW = new Date('2026-01-15T12:00:00Z').getTime()
-const DAY_MS = 1000 * 60 * 60 * 24
+const HOUR_MS = 1000 * 60 * 60
+const DAY_MS = HOUR_MS * 24
+
+// What a countdown of `ms` reads as minutes and seconds, whatever the zone of the machine.
+function utcMinSec (ms: number): string {
+  return new Date(ms).toLocaleString('default', { minute: 'numeric', second: 'numeric', timeZone: 'UTC' })
+}
 
 let target: HTMLElement
 
@@ -42,23 +48,55 @@ describe('TimeLeft', () => {
   afterEach(() => {
     target.remove()
     vi.useRealTimers()
+    vi.unstubAllEnvs()
   })
 
-  it('renders minute:second under an hour, and adds the hour digit with showHours', () => {
-    const plain = mount({ time: NOW + 65000 })
-    const expectedPlain = new Date(65000).toLocaleString('default', { minute: 'numeric', second: 'numeric' })
-    expect(plain.host.textContent?.trim()).toBe(expectedPlain)
-    plain.component.$destroy()
+  it('renders minute:second under an hour', () => {
+    const { host, component } = mount({ time: NOW + 65000 })
 
-    const withHours = mount({ time: NOW + 2 * 3600 * 1000 + 65000, showHours: true })
-    const expectedWithHours = new Date(2 * 3600 * 1000 + 65000).toLocaleString('default', {
-      minute: 'numeric',
-      second: 'numeric',
-      timeZone: 'UTC',
-      hour: 'numeric'
-    })
-    expect(withHours.host.textContent?.trim()).toBe(expectedWithHours)
-    withHours.component.$destroy()
+    expect(host.textContent?.trim()).toBe(utcMinSec(65000))
+    component.$destroy()
+  })
+
+  it('keeps the minutes of the countdown in a zone with a half-hour offset', () => {
+    // 59:59 left; read in UTC+5:30 the same instant has minute 29.
+    vi.stubEnv('TZ', 'Asia/Kolkata')
+    const { host, component } = mount({ time: NOW + (59 * 60 + 59) * 1000 })
+
+    expect(host.textContent?.trim()).toBe(utcMinSec((59 * 60 + 59) * 1000))
+    component.$destroy()
+  })
+
+  it('adds the hours once an hour or more is left, without showHours', () => {
+    const over = mount({ time: NOW + HOUR_MS + 5 * 60 * 1000 + 3000 })
+    expect(over.host.textContent?.trim()).toMatch(/^0?1:05:03$/)
+    over.component.$destroy()
+
+    const exactly = mount({ time: NOW + HOUR_MS })
+    expect(exactly.host.textContent?.trim()).toMatch(/^0?1:00:00$/)
+    exactly.component.$destroy()
+
+    const under = mount({ time: NOW + HOUR_MS - 1000 })
+    expect(under.host.textContent?.trim()).toBe(utcMinSec(HOUR_MS - 1000))
+    under.component.$destroy()
+  })
+
+  it('counts the hours in a zone with a half-hour offset too', () => {
+    vi.stubEnv('TZ', 'Asia/Kolkata')
+    const { host, component } = mount({ time: NOW + 2 * HOUR_MS + 61 * 1000 })
+
+    expect(host.textContent?.trim()).toMatch(/^0?2:01:01$/)
+    component.$destroy()
+  })
+
+  it('shows the hours of showHours on a 24-hour clock, and also under an hour', () => {
+    const long = mount({ time: NOW + 13 * HOUR_MS + 65000, showHours: true })
+    expect(long.host.textContent?.trim()).toBe('13:01:05')
+    long.component.$destroy()
+
+    const short = mount({ time: NOW + 65000, showHours: true })
+    expect(short.host.textContent?.trim()).toMatch(/^0?0:01:05$/)
+    short.component.$destroy()
   })
 
   it('switches to the Days label at a day, but not just under it', () => {
@@ -100,8 +138,7 @@ describe('TimeLeft', () => {
     component.restart(NOW + 65000)
     expect(clearSpy).toHaveBeenCalledTimes(1)
     await tick()
-    const expected = new Date(65000).toLocaleString('default', { minute: 'numeric', second: 'numeric' })
-    expect(host.textContent?.trim()).toBe(expected)
+    expect(host.textContent?.trim()).toBe(utcMinSec(65000))
 
     component.$destroy()
     expect(clearSpy).toHaveBeenCalledTimes(2)

@@ -19,6 +19,8 @@ import core, {
   type AccountUuid,
   type Class,
   type Doc,
+  DOMAIN_MODEL,
+  type Domain,
   generateId,
   Hierarchy,
   type MeasureContext,
@@ -2452,6 +2454,483 @@ describe('SpaceSecurityMiddleware', () => {
 
         await expect(mw.tx(ctx, [createTx])).resolves.not.toThrow()
       }
+    })
+  })
+
+  describe('DocGuest (public link)', () => {
+    const linkClass = 'guest:class:PublicLink'
+    const docGuest = (guestLink?: SessionData['guestLink']): SessionData =>
+      createSessionData(createAccount('guest1', AccountRole.DocGuest), { guestLink })
+
+    // As createPublicLink makes it: with the class, in the space of the document.
+    const link = {
+      _id: 'link1',
+      _class: linkClass,
+      space: 'space1',
+      attachedTo: 'doc1',
+      attachedToClass: 'test:class:Doc'
+    } as unknown as Doc
+
+    // The link row says which document it shares; the main query returns the doc with its lookups.
+    function mockNext (link: Doc | undefined, lookup: Record<string, any>): void {
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx: any, _class: string) => {
+        if (_class === linkClass) return toFindResult(link !== undefined ? [link] : [])
+        if (_class === contact.class.SocialIdentity || _class === contact.class.Person) return toFindResult([])
+        const doc = { _id: 'child1', _class: 'test:class:Doc', space: 'space1', attachedTo: 'doc1', $lookup: lookup }
+        return toFindResult([doc] as any[])
+      })
+    }
+
+    const lookupOptions = { lookup: { attachedTo: 'test:class:Doc' } }
+
+    // One findAll as the guest of linkRow, over rows that carry lookupData.
+    async function runGuest (
+      linkRow: Doc | undefined,
+      lookupData: Record<string, any>,
+      query: any = {},
+      options: any = lookupOptions,
+      _class: string = 'test:class:Doc'
+    ): Promise<any> {
+      const mw = await createMiddleware([createSpace('private2', ['user1'], { private: true })])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      mockNext(linkRow, lookupData)
+      return await mw.findAll(ctx, _class as any, query, options)
+    }
+
+    beforeEach(() => {
+      jest.spyOn(hierarchy, 'hasClass').mockReturnValue(true)
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => _class === from)
+      jest.spyOn(hierarchy, 'getAllAttributes').mockReturnValue(new Map())
+      // GitHub keeps a DocSyncInfo under the id of its task, in a domain of its own.
+      const domains: Record<string, string> = {
+        [linkClass]: 'guest',
+        [contact.class.Person]: 'contact',
+        [core.class.Space]: 'space',
+        'github:class:DocSyncInfo': 'github_sync',
+        'test:class:ModelDoc': 'model'
+      }
+      jest.spyOn(hierarchy, 'findDomain').mockImplementation((_class) => (domains[_class] ?? 'task') as Domain)
+      // The adapter of the domain filters by the link, like the postgres one does.
+      pipelineContext.adapterManager = { getAdapter: () => ({ docGuestSecurity: true }) } as any
+    })
+
+    const lookup = (): Record<string, any> => ({
+      attachedTo: { _id: 'doc1', _class: 'test:class:Doc', space: 'space1' },
+      other: { _id: 'secret1', _class: 'test:class:Doc', space: 'private2' },
+      list: [
+        { _id: 'child2', _class: 'test:class:Doc', space: 'space1', attachedTo: 'doc1' },
+        { _id: 'secret2', _class: 'test:class:Doc', space: 'private2', attachedTo: 'secret1' }
+      ],
+      status: { _id: 'status1', _class: 'test:class:Status', space: core.space.Model }
+    })
+
+    it('reads the document its link shares and what is attached to it, nothing of other spaces', async () => {
+      const mw = await createMiddleware([createSpace('private2', ['user1'], { private: true })])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      mockNext(link, lookup())
+
+      const result = await mw.findAll(ctx, 'test:class:Doc' as any, {}, lookupOptions as any)
+
+      // The link is read without session data, like init.
+      const internal = expect.objectContaining({ contextData: undefined })
+      expect(nextMiddleware.findAll).toHaveBeenCalledWith(internal, linkClass, { _id: 'link1' }, { limit: 1 })
+      expect(ctx.contextData.guestLink?.attachedTo).toBe('doc1')
+      const res = result[0].$lookup as any
+      expect(res.attachedTo._id).toBe('doc1')
+      expect(res.list.map((it: Doc) => it._id)).toEqual(['child2'])
+      expect(res.status._id).toBe('status1')
+      expect(res.other).toBeUndefined()
+    })
+
+    it('revokes a link whose document is gone', async () => {
+      const mw = await createMiddleware([])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(
+        async (_ctx: any, _class: string) => toFindResult(_class === linkClass ? [link] : []) as any
+      )
+
+      await mw.findAll(ctx, 'test:class:Doc' as any, {})
+
+      expect(ctx.contextData.guestLink).toBeUndefined()
+    })
+
+    it('does not look the link up for a model class, which has no link scope', async () => {
+      await runGuest(link, {}, {}, {}, 'test:class:ModelDoc')
+
+      const classes = (nextMiddleware.findAll as jest.Mock).mock.calls.map((it) => it[1])
+      expect(classes).toEqual(['test:class:ModelDoc'])
+    })
+
+    it('still looks the link up for a model class with a lookup, which joins other rows', async () => {
+      await runGuest(link, {}, {}, lookupOptions, 'test:class:ModelDoc')
+
+      const classes = (nextMiddleware.findAll as jest.Mock).mock.calls.map((it) => it[1])
+      expect(classes).toContain(linkClass)
+    })
+
+    it('does not take a joined row of another domain for the shared document', async () => {
+      const sync = { _id: 'doc1', _class: 'github:class:DocSyncInfo', space: 'github-space' }
+
+      const result = await runGuest(link, {
+        attachedTo: { _id: 'doc1', _class: 'test:class:Doc', space: 'space1' },
+        sync
+      })
+
+      const res = result[0].$lookup as any
+      expect(res.attachedTo._id).toBe('doc1')
+      expect(res.sync).toBeUndefined()
+    })
+
+    it('does not join associations, which skip the database filter', async () => {
+      await runGuest(link, {}, { _id: 'doc1' as Ref<Doc> }, { associations: [['assoc1', 1]] })
+
+      const call = (nextMiddleware.findAll as jest.Mock).mock.calls.at(-1)
+      expect(call?.[1]).toBe('test:class:Doc')
+      expect(call?.[3]?.associations).toBeUndefined()
+    })
+
+    it('filters nested lookups by the same scope', async () => {
+      const nested = {
+        attachedTo: {
+          _id: 'doc1',
+          _class: 'test:class:Doc',
+          space: 'space1',
+          $lookup: {
+            secret: { _id: 'secret1', _class: 'test:class:Doc', space: 'private2' },
+            list: [
+              { _id: 'child2', _class: 'test:class:Doc', space: 'space1', attachedTo: 'doc1' },
+              { _id: 'secret2', _class: 'test:class:Doc', space: 'private2' }
+            ]
+          }
+        }
+      }
+
+      const result = await runGuest(link, nested)
+
+      const inner = (result[0].$lookup as any).attachedTo.$lookup
+      expect(inner.secret).toBeUndefined()
+      expect(inner.list.map((it: Doc) => it._id)).toEqual(['child2'])
+    })
+
+    it('sees only its own link in a reverse lookup, not the other links to the document', async () => {
+      // Each link to the document carries its own token in url.
+      const result = await runGuest(
+        link,
+        { links: [link, { ...link, _id: 'link2' }] },
+        {},
+        {
+          lookup: { _id: { links: linkClass } }
+        }
+      )
+
+      expect((result[0].$lookup as any).links.map((it: Doc) => it._id)).toEqual(['link1'])
+    })
+
+    it('gets no fulltext results', async () => {
+      const mw = await createMiddleware([createSpace('public1', [], { private: false })])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      ;(nextMiddleware.searchFulltext as jest.Mock).mockResolvedValue({ docs: [{ id: 'doc9' }] })
+
+      const result = await mw.searchFulltext(ctx, { query: 'secret' }, { limit: 10 })
+
+      expect(result.docs).toEqual([])
+      expect(nextMiddleware.searchFulltext).not.toHaveBeenCalled()
+    })
+
+    const task = { _id: 'doc1', _class: 'test:class:Task', space: 'space1', createdBy: 'sid1', modifiedBy: 'sid1' }
+
+    // Only the ids in `persons` are persons; any other id is some other document.
+    function mockShared (linkSpace: string, shared: Record<string, any>, persons: string[], main: any[] = []): void {
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => _class === from)
+      const assignee = { name: 'assignee', type: { _class: core.class.RefTo, to: contact.class.Person } }
+      jest.spyOn(hierarchy, 'getAllAttributes').mockReturnValue(new Map([['assignee', assignee]]) as any)
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx: any, _class: string, query: any) => {
+        if (_class === linkClass) {
+          return toFindResult([{ ...link, space: linkSpace, attachedToClass: 'test:class:Task' }] as any[])
+        }
+        if (_class === 'test:class:Task') return toFindResult([shared] as any[])
+        if (_class === contact.class.SocialIdentity) {
+          return toFindResult([{ _id: 'sid1', attachedTo: 'person2' }] as any[])
+        }
+        if (_class === contact.class.Person) {
+          const found = (query._id.$in as string[]).filter((id) => persons.includes(id))
+          const person = (id: string): any => ({ _id: id, _class: contact.class.Person, space: contact.space.Contacts })
+          return toFindResult(found.map(person))
+        }
+        return toFindResult(main)
+      })
+    }
+
+    it('reads the space and the persons the shared document names, not other persons', async () => {
+      const mw = await createMiddleware([])
+      const person = (id: string): any => ({ _id: id, _class: contact.class.Person, space: contact.space.Contacts })
+      const $lookup = { assignee: person('person1'), author: person('person2'), stranger: person('person9') }
+      mockShared('space1', { ...task, assignee: 'person1' }, ['person1'], [{ ...task, $lookup }])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+
+      const result = await mw.findAll(ctx, 'test:class:Doc' as any, {}, {
+        lookup: { assignee: contact.class.Person }
+      } as any)
+
+      const res = result[0].$lookup as any
+      expect(res.assignee._id).toBe('person1')
+      expect(res.author._id).toBe('person2')
+      expect(res.stranger).toBeUndefined()
+    })
+
+    // Every way a link stops reaching its document: only the deleted link row matches.
+    it.each([
+      [
+        'its link is deleted',
+        () => {
+          mockNext(undefined, lookup())
+        }
+      ],
+      [
+        'its link has no attachedToClass',
+        // Such a link sits in core.space.Workspace: every member reads its url.
+        () => {
+          mockNext({ ...link, space: core.space.Workspace, attachedToClass: undefined } as any, lookup())
+        }
+      ],
+      [
+        'its class is not in the model',
+        () => {
+          jest.spyOn(hierarchy, 'hasClass').mockReturnValue(false)
+          mockNext(link, lookup())
+        }
+      ],
+      [
+        'the document moved out of the space of its link',
+        () => {
+          const child = { _id: 'child1', _class: 'test:class:Doc', space: 'spaceB', $lookup: lookup() }
+          mockShared('spaceA', { ...task, space: 'spaceB' }, [], [child])
+        }
+      ]
+    ])('is refused everything once %s', async (_name, arrange) => {
+      const mw = await createMiddleware([])
+      arrange()
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc>, attachedTo: 'doc1' as Ref<Doc> })
+
+      const result = await mw.findAll(ctx, 'test:class:Doc' as any, {}, {
+        lookup: { attachedTo: 'test:class:Doc' }
+      } as any)
+
+      expect(ctx.contextData.guestLink?.attachedTo).toBeUndefined()
+      const res = result[0].$lookup as any
+      expect(res.attachedTo).toBeUndefined()
+      expect(res.list).toEqual([])
+    })
+
+    describe('document with a recorded class', () => {
+      it('keeps ids per domain, and a Ref<Person> value only when it is a person', async () => {
+        const mw = await createMiddleware([])
+        // The writer of the document put the id of a private document into the field.
+        mockShared('space1', { ...task, assignee: ['person1', 'secret1'] }, ['person1'])
+        ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+
+        await mw.findAll(ctx, 'test:class:Doc' as any, {})
+
+        // An id is a key within its domain only.
+        expect(ctx.contextData.guestLink?.attachedTo).toBe('doc1')
+        expect(ctx.contextData.guestLink?.ids).toEqual({
+          task: ['doc1'],
+          space: ['space1'],
+          contact: ['person1', 'person2']
+        })
+      })
+
+      it('puts the link of a shared space in that space', async () => {
+        const mw = await createMiddleware([])
+        const space = { _id: 'space9', _class: core.class.Space, space: core.space.Space }
+        mockShared('space9', space, [])
+        ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+
+        await mw.findAll(ctx, 'test:class:Doc' as any, {})
+
+        expect(ctx.contextData.guestLink?.attachedTo).toBe('doc1')
+
+        // A link filed under core.space.Space would be read by every member of the workspace.
+        mockShared(core.space.Space, space, [])
+        ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+
+        await mw.findAll(ctx, 'test:class:Doc' as any, {})
+
+        expect(ctx.contextData.guestLink).toBeUndefined()
+      })
+
+      it('looks persons and identities up without the guest filter, and sets the scope once', async () => {
+        const mw = await createMiddleware([])
+        mockShared('space1', { ...task, assignee: 'person1' }, ['person1'])
+        const answer = (nextMiddleware.findAll as jest.Mock).getMockImplementation() as (...args: any[]) => Promise<any>
+        const lookups: Array<{ _class: string, contextData: unknown, ids: unknown }> = []
+        ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (c: any, _class: string, ...rest: any[]) => {
+          if (_class === contact.class.Person || _class === contact.class.SocialIdentity) {
+            lookups.push({ _class, contextData: c.contextData, ids: ctx.contextData.guestLink?.ids })
+          }
+          return await answer(c, _class, ...rest)
+        })
+        ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+
+        await mw.findAll(ctx, 'test:class:Doc' as any, {})
+
+        expect(lookups.map((it) => it._class).sort()).toEqual(
+          [contact.class.Person, contact.class.SocialIdentity].sort()
+        )
+        for (const it of lookups) {
+          // No session data: the database filters nothing, so the scope needs no widening.
+          expect(it.contextData).toBeUndefined()
+          expect(it.ids).toBeUndefined()
+        }
+        expect(ctx.contextData.guestLink?.ids?.contact).toEqual(['person1', 'person2'])
+      })
+    })
+
+    describe('adapters', () => {
+      const presence = [{ _id: 'status1', _class: 'test:class:Presence', space: core.space.Workspace }]
+
+      it.each([
+        ['does not filter by the link', () => ({ getAdapter: jest.fn(() => ({})) })],
+        ['is missing', () => undefined]
+      ])('reads nothing while the adapter manager %s', async (_name, makeManager) => {
+        const mw = await createMiddleware([])
+        const manager = makeManager()
+        pipelineContext.adapterManager = manager as any
+        ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult(presence as any[]))
+
+        // A revoked link leaves the guest without a link scope, and it still gets nothing.
+        for (const guestLink of [{ _id: 'link1' as Ref<Doc> }, undefined]) {
+          ctx.contextData = docGuest(guestLink)
+          const result = await mw.findAll(ctx, 'test:class:Presence' as any, {})
+          expect(result).toHaveLength(0)
+        }
+        if (manager !== undefined) expect(manager.getAdapter).toHaveBeenCalledWith('task', false)
+        expect(nextMiddleware.findAll).not.toHaveBeenCalled()
+      })
+
+      it('reads a domain whose adapter filters by the link', async () => {
+        const mw = await createMiddleware([])
+        ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult(presence as any[]))
+        ctx.contextData = docGuest(undefined)
+
+        const result = await mw.findAll(ctx, 'test:class:Presence' as any, {})
+
+        expect(result).toHaveLength(1)
+      })
+
+      it('reads the model without asking an adapter, there is none', async () => {
+        const mw = await createMiddleware([])
+        const getAdapter = jest.fn(() => ({}))
+        pipelineContext.adapterManager = { getAdapter } as any
+        jest.spyOn(hierarchy, 'findDomain').mockReturnValue(DOMAIN_MODEL)
+        ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+        mockNext(link, {})
+
+        const result = await mw.findAll(ctx, 'test:class:Status' as any, {})
+
+        expect(result).toHaveLength(1)
+        expect(getAdapter).not.toHaveBeenCalled()
+      })
+    })
+
+    it('answers a $lookup key in the query with nothing, whatever the joined rows hold', async () => {
+      const mw = await createMiddleware([])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      mockNext(link, {})
+      // Whether the document is in the answer would reveal the parent title letter by letter.
+      // The adapter drops characters it does not keep, so the second key is a lookup key too.
+      for (const key of ['$lookup.attachedTo.title', '\n$lo"okup.attachedTo.title']) {
+        const query = { _id: 'doc1', [key]: { $like: 'a%' } } as any
+
+        const result = await mw.findAll(ctx, 'test:class:Doc' as any, query, {
+          lookup: { attachedTo: 'test:class:Doc' }
+        } as any)
+
+        expect(result).toHaveLength(0)
+        expect(result.total).toBe(0)
+      }
+      expect(nextMiddleware.findAll).not.toHaveBeenCalled()
+    })
+
+    it('drops $lookup keys from the sort and keeps the others', async () => {
+      const mw = await createMiddleware([])
+      ctx.contextData = docGuest({ _id: 'link1' as Ref<Doc> })
+      mockNext(link, {})
+      const sort = { '$lookup.attachedTo.title': 1, '\t$lo"okup.attachedTo.title': 1, modifiedOn: -1 }
+
+      await mw.findAll(ctx, 'test:class:Doc' as any, {}, { lookup: { attachedTo: 'test:class:Doc' }, sort } as any)
+
+      const call = (nextMiddleware.findAll as jest.Mock).mock.calls.at(-1)
+      expect(call?.[3]?.sort).toEqual({ modifiedOn: -1 })
+    })
+
+    it('leaves $lookup keys of a member alone', async () => {
+      const mw = await createMiddleware([])
+      ctx.contextData = createSessionData(createAccount('user1'))
+      const query = { '$lookup.attachedTo.title': 'a' } as any
+      const sort = { '$lookup.attachedTo.title': 1 }
+
+      await mw.findAll(ctx, 'test:class:Doc' as any, query, { lookup: { attachedTo: 'test:class:Doc' }, sort } as any)
+
+      const call = (nextMiddleware.findAll as jest.Mock).mock.calls.at(-1)
+      expect(call?.[2]).toEqual(query)
+      expect(call?.[3]?.sort).toEqual(sort)
+    })
+  })
+
+  describe('PublicLink writes', () => {
+    const linkClass = 'guest:class:PublicLink' as Ref<Class<Doc>>
+    const createLink = (space: string, attrs: Record<string, any>): TxCreateDoc<Doc> =>
+      txFactory.createTxCreateDoc(linkClass, space as Ref<Space>, { url: '', ...attrs } as any, 'link1' as Ref<Doc>)
+
+    async function setup (visible: boolean): Promise<SpaceSecurityMiddleware> {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1'], { private: true }),
+        createSpace(core.space.Workspace, [], { _class: core.class.SystemSpace })
+      ])
+      jest.spyOn(hierarchy, 'hasClass').mockReturnValue(true)
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => _class === from)
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () =>
+        toFindResult((visible ? [{ _id: 'doc1', _class: 'test:class:Task', space: 'space1' }] : []) as any[])
+      )
+      ctx.contextData = createSessionData(createAccount('user1'))
+      return mw
+    }
+
+    it('creates a link to a document the author sees, in that document space', async () => {
+      const mw = await setup(true)
+      await expect(
+        mw.tx(ctx, [createLink('space1', { attachedTo: 'doc1', attachedToClass: 'test:class:Task' })])
+      ).resolves.not.toThrow()
+    })
+
+    it('refuses a link to a document the author does not see', async () => {
+      const mw = await setup(false)
+      await expect(
+        mw.tx(ctx, [createLink('space1', { attachedTo: 'doc1', attachedToClass: 'test:class:Task' })])
+      ).rejects.toThrow()
+    })
+
+    it('refuses a link outside the document space or without its class', async () => {
+      const mw = await setup(true)
+      const intoWorkspace = createLink(core.space.Workspace, { attachedTo: 'doc1', attachedToClass: 'test:class:Task' })
+      await expect(mw.tx(ctx, [intoWorkspace])).rejects.toThrow()
+      await expect(mw.tx(ctx, [createLink('space1', { attachedTo: 'doc1' })])).rejects.toThrow()
+    })
+
+    it('lets only the system account re-point a link', async () => {
+      const mw = await setup(true)
+      const repoint = txFactory.createTxUpdateDoc(
+        linkClass,
+        'space1' as Ref<Space>,
+        'link1' as Ref<Doc>,
+        {
+          attachedTo: 'doc2'
+        } as any
+      )
+      await expect(mw.tx(ctx, [repoint])).rejects.toThrow()
+      ctx.contextData = createSessionData(createAccount(systemAccountUuid))
+      await expect(mw.tx(ctx, [repoint])).resolves.not.toThrow()
     })
   })
 })

@@ -53,6 +53,7 @@ describe('createApiKey email notification', () => {
     getWorkspaceMembers: jest.fn().mockResolvedValue([{ person: owner, role: AccountRole.Owner }]),
     socialId: {
       find: jest.fn().mockResolvedValue([{ value: 'owner@example.com', createdOn: 1, verifiedOn: 1 }]),
+      findOne: jest.fn().mockResolvedValue(null),
       insertOne: jest.fn().mockResolvedValue('huly-social-id'),
       update: jest.fn()
     },

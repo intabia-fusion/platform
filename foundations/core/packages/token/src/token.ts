@@ -87,7 +87,9 @@ export function generateToken (
   }
 
   const service = getMetadata(serverPlugin.metadata.Service)
-  if (service !== undefined) {
+  // Guest tokens go to outsiders (public links, image URLs): with the pod name in them
+  // they would pass service checks.
+  if (service !== undefined && extra?.guest !== 'true') {
     extra = { service, ...extra }
   }
 

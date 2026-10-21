@@ -1,6 +1,7 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 // Copyright © 2026 TraceX SAS.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -58,6 +59,7 @@ import {
   cleanExpiredOtp,
   getWorkspaces,
   verifyAllowedServices,
+  isServiceToken,
   getPersonName,
   getInviteEmail,
   getFrontUrl,
@@ -896,8 +898,11 @@ describe('account utils', () => {
         otp: {
           findOne: jest.fn(),
           find: jest.fn(),
-          insertOne: jest.fn()
+          insertOne: jest.fn(),
+          deleteMany: jest.fn()
         },
+        bumpOtpAttempts: jest.fn(),
+        withOtpIssue: jest.fn(),
         shortLink: {
           insertOne: jest.fn()
         }
@@ -952,6 +957,23 @@ describe('account utils', () => {
       const socialIdId = '333444555' as PersonId
 
       describe('sendOtp', () => {
+        // The lock is the db's job; here the issue reads and writes through the otp mocks.
+        beforeEach(() => {
+          ;(mockDb.withOtpIssue as jest.Mock).mockImplementation(async (id, purpose, fn) => {
+            const newest = (
+              (await mockDb.otp.find({ socialId: id, purpose }, { createdOn: 'descending' }, 1)) as any[]
+            )[0]
+            return await fn({
+              socialId: { _id: id },
+              newest,
+              replace: async (otp: any) => {
+                await mockDb.otp.deleteMany({ socialId: otp.socialId, purpose: otp.purpose })
+                await mockDb.otp.insertOne(otp)
+              }
+            })
+          })
+        })
+
         const mockSocialId = {
           _id: socialIdId,
           personUuid: '123456-uuid' as PersonUuid,
@@ -976,6 +998,7 @@ describe('account utils', () => {
             retryOn: mockOtpData.createdOn + 30000
           })
           expect(mockDb.otp.insertOne).not.toHaveBeenCalled()
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 
         test('should generate and send new OTP if expired', async () => {
@@ -988,8 +1011,10 @@ describe('account utils', () => {
             sent: true,
             retryOn: expect.any(Number)
           })
+          expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
           expect(mockDb.otp.insertOne).toHaveBeenCalledWith({
             socialId: mockSocialId._id,
+            purpose: 'login',
             code: expect.any(String),
             expiresOn: expect.any(Number),
             createdOn: expect.any(Number)
@@ -1089,31 +1114,51 @@ describe('account utils', () => {
         })
       })
       describe('isOtpValid', () => {
-        test('should return true for valid non-expired OTP', async () => {
-          const mockOtpData = {
-            expiresOn: Date.now() + 60000
-          }
-          ;(mockDb.otp.findOne as jest.Mock).mockResolvedValue(mockOtpData)
+        test('should return true for the right code', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 1 }])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456')
+          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
           expect(result).toBe(true)
+          expect(mockDb.bumpOtpAttempts).toHaveBeenCalledWith(socialIdId, 'login', '123456', 5, 24 * 60 * 60 * 1000)
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 
-        test('should return false for expired OTP', async () => {
-          const mockOtpData = {
-            expiresOn: Date.now() - 1000
-          }
-          ;(mockDb.otp.findOne as jest.Mock).mockResolvedValue(mockOtpData)
+        test('should return false for a wrong code', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '654321', attempts: 2 }])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456')
+          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
           expect(result).toBe(false)
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 
-        test('should return false for non-existent OTP', async () => {
-          ;(mockDb.otp.findOne as jest.Mock).mockResolvedValue(null)
+        test('should return false when there is no live code', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456')
+          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
           expect(result).toBe(false)
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
+        })
+
+        test('should accept the right code on the last allowed attempt', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 5 }])
+
+          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(true)
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
+        })
+
+        test('should keep the code on the last allowed miss', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '654321', attempts: 5 }])
+
+          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(false)
+          // The row stays until it expires: sendOtp throttles new codes by its createdOn.
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
+        })
+
+        test('should refuse the right code once the budget is spent', async () => {
+          ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 6 }])
+
+          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(false)
+          expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
       })
     })
@@ -1942,6 +1987,36 @@ describe('account utils', () => {
       expect(() => {
         verifyAllowedServices(services, extra)
       }).toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+    })
+
+    test('should reject a guest token that carries an allowed service', () => {
+      // Public links and GitHub image tokens already handed out carry the pod name and never expire.
+      const publicLink = { service: 'transactor', linkId: 'link-1', guest: 'true' }
+      const githubImage = { service: 'github', linkId: 'link-2', guest: 'true' }
+
+      expect(verifyAllowedServices(['transactor', 'tool'], publicLink, false)).toBe(false)
+      expect(() => verifyAllowedServices(['github', 'tool'], githubImage)).toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
+    })
+  })
+
+  describe('isServiceToken', () => {
+    test('a guest token is never a service token', () => {
+      expect(isServiceToken({ service: 'love' })).toBe(true)
+      expect(isServiceToken({ service: 'transactor', guest: 'true' })).toBe(false)
+      expect(isServiceToken({})).toBe(false)
+      expect(isServiceToken(undefined)).toBe(false)
+    })
+
+    test('an old love guest link is not a service token', () => {
+      // Read-only guest account, no guest flag. When LIVEKIT_API_SECRET == SECRET,
+      // anyone resolving the short link gets a token the platform accepts.
+      const loveLink = { service: 'love', meetingId: 'meeting-1', workspaceUrl: 'ws-url' }
+
+      expect(isServiceToken(loveLink, systemAccountUuid)).toBe(true)
+      expect(isServiceToken(loveLink, readOnlyGuestAccountUuid)).toBe(false)
+      expect(verifyAllowedServices(['love'], loveLink, false, readOnlyGuestAccountUuid)).toBe(false)
     })
   })
 

@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 
 import account, {
@@ -16,6 +17,7 @@ import account, {
   parseFreePlanLimits,
   initRegionConfig,
   generateShortId,
+  isServiceToken,
   sweepScheduledDeletions
 } from '@hcengineering/account'
 import accountCs from '@hcengineering/account/lang/cs.json'
@@ -61,7 +63,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { handlePresenceBatch } from './presence'
-import { apiKeyLoginRateLimit } from './rateLimit'
+import { apiKeyLoginRateLimit, authRateLimit } from './rateLimit'
 export * from './migration/utils'
 export type * from './migration/types'
 
@@ -481,7 +483,12 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     const token = extractToken(ctx.request.headers)
 
     const request = ctx.request.body as any
-    const method = methods[request.method as AccountMethods]
+    // The limiters compare the name as a string, but ["login"] still finds its handler as a
+    // key and "constructor" a prototype property.
+    const method =
+      typeof request.method === 'string' && Object.hasOwn(methods, request.method)
+        ? methods[request.method as AccountMethods]
+        : undefined
     if (method === undefined) {
       const response = {
         id: request.id,
@@ -489,12 +496,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       }
 
       const body = JSON.stringify(response)
-      ctx.res.writeHead(404, KEEP_ALIVE_HEADERS)
+      ctx.res.writeHead(400, KEEP_ALIVE_HEADERS)
       ctx.res.end(body)
       return
     }
 
-    const rateLimit = apiKeyLoginRateLimit(request.method, ctx.request.headers, ctx.request.ip)
+    const rateLimit =
+      apiKeyLoginRateLimit(request.method, ctx.request.headers, ctx.request.ip) ??
+      authRateLimit(request.method, ctx.request.headers, ctx.request.ip)
     if (rateLimit !== undefined) {
       // Same shape the transactor answers a rate limit with, so clients handle both alike.
       ctx.res.writeHead(429, {
@@ -572,7 +581,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     try {
       const decoded = decodeToken(token)
-      if (decoded.extra?.service === undefined) {
+      if (!isServiceToken(decoded.extra, decoded.account)) {
         ctx.res.writeHead(403, KEEP_ALIVE_HEADERS)
         ctx.res.end(JSON.stringify({ error: 'Forbidden: service token required' }))
         return

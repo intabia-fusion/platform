@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { readOnlyGuestAccountUuid } from '@hcengineering/core'
+import { aiBotAccountEmail, readOnlyGuestAccountUuid } from '@hcengineering/core'
 import { type DBFlavor } from '../../types'
 
 // Type definitions for different database flavors.
@@ -119,7 +119,11 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV49Migration(ns),
     getV50Migration(ns),
     getV51Migration(ns, flavor),
-    getV52Migration(ns)
+    getV52Migration(ns),
+    getV53Migration(ns, flavor),
+    getV54Migration(ns, flavor),
+    getV55Migration(ns, flavor),
+    getV56Migration(ns)
   ]
 }
 
@@ -1325,6 +1329,63 @@ function getV52Migration (ns: string): [string, string] {
     UPDATE ${ns}.workspace_members
     SET role = 'READONLYGUEST'
     WHERE account_uuid = '${readOnlyGuestAccountUuid}' AND role <> 'READONLYGUEST';
+    `
+  ]
+}
+
+function getV53Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v53_otp_attempts',
+    /* Guesses made against the code. The default covers codes already issued: no backfill. */
+    `
+    ALTER TABLE ${ns}.otp ADD COLUMN IF NOT EXISTS attempts ${types.int4} NOT NULL DEFAULT 0;
+    `
+  ]
+}
+
+function getV54Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v54_otp_purpose',
+    /* Tells a sign in code from a code that confirms an action (leave, delete). Codes already
+       issued count as sign in codes: no backfill. */
+    `
+    ALTER TABLE ${ns}.otp ADD COLUMN IF NOT EXISTS purpose ${types.string} NOT NULL DEFAULT 'login';
+    `
+  ]
+}
+
+function getV55Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v55_social_id_login_otp_misses',
+    /* Wrong guesses at sign in codes in a row, and when the last one was made. Not on the otp row:
+       a new code replaces it. The defaults cover existing rows: no backfill. */
+    `
+    ALTER TABLE ${ns}.social_id
+    ADD COLUMN IF NOT EXISTS login_otp_misses ${types.int4} NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS login_otp_missed_on ${types.int8} NOT NULL DEFAULT 0;
+    `
+  ]
+}
+
+function getV56Migration (ns: string): [string, string] {
+  const botSocialIds = `SELECT _id FROM ${ns}.social_id WHERE type = 'email' AND value = '${aiBotAccountEmail}'`
+  return [
+    'account_db_v56_ai_bot_credentials_reset',
+    /* The bot holds no password, code or key: the service signs its own token. Whatever the row
+       carried before sign in was closed (the old shared password, one set by a squatter) is dropped.
+       'webhook' is apiKeyKind. DML only: no DDL in the same batch. */
+    `
+    DELETE FROM ${ns}.account_passwords
+    WHERE account_uuid IN (SELECT person_uuid FROM ${ns}.social_id WHERE type = 'email' AND value = '${aiBotAccountEmail}');
+
+    DELETE FROM ${ns}.integration_secrets
+    WHERE kind = 'webhook' AND social_id IN (${botSocialIds});
+
+    DELETE FROM ${ns}.otp
+    WHERE social_id IN (${botSocialIds});
     `
   ]
 }

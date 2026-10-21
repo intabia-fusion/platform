@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,5 +32,13 @@ export class NotFoundError extends DatalakeError {
   constructor (message = 'Not Found') {
     super(message)
     this.name = 'NotFoundError'
+  }
+}
+
+/** The workspace or the object name cannot be a segment of a blob url. */
+export class InvalidNameError extends DatalakeError {
+  constructor (message: string) {
+    super(message)
+    this.name = 'InvalidNameError'
   }
 }

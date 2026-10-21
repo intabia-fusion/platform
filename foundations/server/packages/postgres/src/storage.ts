@@ -153,6 +153,9 @@ async function * createCursorGenerator (
   }
 }
 
+// GUEST_DOMAIN of models/guest (PublicLink only); this package cannot import the model.
+const publicLinkDomain = 'guest'
+
 class ValuesVariables {
   index: number = 1
   values: any[] = []
@@ -239,6 +242,8 @@ function columnTypeOf (domain: string, key: string): DataType | undefined {
 }
 
 abstract class PostgresAdapterBase implements DbAdapter {
+  readonly docGuestSecurity = true
+
   protected readonly _helper: DBCollectionHelper
   protected readonly tableFields = new Map<string, string[]>()
 
@@ -669,8 +674,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if (sessionContext !== undefined && sessionContext.isTriggerCtx !== true) {
       if (sessionContext.account?.role !== AccountRole.Admin && sessionContext.account !== undefined) {
         const acc = sessionContext.account
-        if (acc.role === AccountRole.DocGuest || acc.uuid === systemAccountUuid) {
+        if (acc.uuid === systemAccountUuid) {
           return
+        }
+        if (acc.role === AccountRole.DocGuest) {
+          return this.addDocGuestSecurity(vars, domain, sessionContext.guestLink)
         }
         if (query.space === acc.uuid) return // TODO: was it for private spaces? If so, need to fix it as they are not identified by acc.uuid now
         if (domain === DOMAIN_SPACE && isOwner(acc)) {
@@ -706,6 +714,29 @@ abstract class PostgresAdapterBase implements DbAdapter {
         return `AND (${res}${collabRes})`
       }
     }
+  }
+
+  // A public link shares one document: the link itself, the document, the rows attached to it and
+  // the space and persons the document names (ids, see SpaceSecurityMiddleware).
+  private addDocGuestSecurity (vars: ValuesVariables, domain: string, link: SessionData['guestLink']): string {
+    if (link === undefined) return 'AND FALSE'
+    const { attachedTo, ids } = link
+    // Every link to the document carries its own token in url: a guest keeps to its own link.
+    if (attachedTo === undefined || ids === undefined || domain === publicLinkDomain) {
+      return `AND ${domain}._id = ${vars.add(link._id, '::text')}`
+    }
+    // TxCUD.attachedTo holds the parent: the attachedTo rule would give out deleted comments.
+    if (domain === translateDomain(DOMAIN_TX) || domain === translateDomain(DOMAIN_MODEL_TX)) return 'AND FALSE'
+    // An id is a key within its domain only (GitHub keeps DocSyncInfo under its task's id).
+    const here = Object.entries(ids)
+      .filter(([key]) => translateDomain(key) === domain)
+      .flatMap(([, it]) => it)
+    const rules: string[] = []
+    if (here.length > 0) rules.push(`${domain}._id = ANY(${vars.add(here, '::text[]')})`)
+    if (getSchema(domain).attachedTo !== undefined) {
+      rules.push(`${domain}."attachedTo" = ${vars.add(attachedTo, '::text')}`)
+    }
+    return rules.length > 0 ? `AND (${rules.join(' OR ')})` : 'AND FALSE'
   }
 
   private async parseLookup<T extends Doc>(

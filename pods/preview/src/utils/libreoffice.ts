@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,14 +16,35 @@
 
 import { type MeasureContext } from '@hcengineering/core'
 
-import { spawn } from 'child_process'
+import { type ChildProcess, spawn } from 'child_process'
 import { access, mkdtemp, rm } from 'fs/promises'
 import { dirname, join } from 'path'
 import { tmpdir } from 'os'
 
+import { ToolError } from '../error'
 import { replaceExt } from './utils'
 
-export async function docToPdf (ctx: MeasureContext, docFile: string): Promise<string> {
+// LibreOffice itself failed on the document, so it fails the same way again
+export class LibreOfficeError extends ToolError {
+  constructor (message: string, retryAfter?: number) {
+    super(message, retryAfter)
+    this.name = 'LibreOfficeError'
+  }
+}
+
+// the process was started detached, so -pid is its group and reaches everything it started
+function killGroup (proc: ChildProcess): void {
+  if (proc.pid !== undefined) {
+    try {
+      process.kill(-proc.pid, 'SIGKILL')
+    } catch {
+      // the group is gone already
+    }
+  }
+  proc.kill('SIGKILL')
+}
+
+export async function docToPdf (ctx: MeasureContext, docFile: string, timeout: number): Promise<string> {
   const pdfDir = dirname(docFile)
   const pdfFile = replaceExt(docFile, '.pdf')
 
@@ -50,7 +72,8 @@ export async function docToPdf (ctx: MeasureContext, docFile: string): Promise<s
         env: {
           SAL_DISABLE_JAVA: '1',
           HOME: process.env.HOME ?? profileDir
-        }
+        },
+        detached: true
       }
     )
 
@@ -59,6 +82,15 @@ export async function docToPdf (ctx: MeasureContext, docFile: string): Promise<s
     await new Promise<void>((resolve, reject) => {
       let stdout = ''
       let stderr = ''
+      let timedOut = false
+
+      // a hung conversion would keep its slot and the copy of the document for good
+      const timer = setTimeout(() => {
+        timedOut = true
+        killGroup(proc)
+        ctx.error('LibreOffice timed out', { timeout, docFile, pdfFile })
+        reject(new LibreOfficeError(`LibreOffice timed out after ${timeout} ms`, timeout))
+      }, timeout)
 
       proc.stdout.on('data', (data) => {
         stdout += data.toString()
@@ -68,28 +100,41 @@ export async function docToPdf (ctx: MeasureContext, docFile: string): Promise<s
         stderr += data.toString()
       })
 
-      proc.on('close', (code) => {
+      proc.on('close', (code, signal) => {
+        clearTimeout(timer)
+        if (timedOut) {
+          return
+        }
         if (code !== 0) {
-          ctx.error('LibreOffice failed', { code, stdout, stderr, docFile, pdfFile })
-          reject(new Error(`LibreOffice exited with code ${code}`))
+          ctx.error('LibreOffice failed', { code, signal, stdout, stderr, docFile, pdfFile })
+          // a signal is not the document's doing: the load may be to blame
+          reject(
+            signal != null
+              ? new LibreOfficeError(`LibreOffice was killed by ${signal}`, timeout)
+              : new LibreOfficeError(`LibreOffice exited with code ${code}`)
+          )
         } else {
           resolve()
         }
       })
 
       proc.on('error', (err) => {
+        clearTimeout(timer)
         ctx.error('LibreOffice failed', { stdout, stderr, docFile, pdfFile })
         reject(new Error(`Failed to start LibreOffice: ${err.message}`))
       })
     })
   } finally {
-    await rm(profileDir, { recursive: true })
+    // a failed cleanup must not hide why the conversion failed
+    await rm(profileDir, { recursive: true, force: true }).catch((err) => {
+      ctx.warn('failed to remove LibreOffice profile', { profileDir, error: err instanceof Error ? err.message : err })
+    })
   }
 
   try {
     await access(pdfFile)
   } catch (err: any) {
-    throw new Error(`Failed to create PDF: ${err.message}`)
+    throw new LibreOfficeError(`Failed to create PDF: ${err.message}`)
   }
 
   return pdfFile

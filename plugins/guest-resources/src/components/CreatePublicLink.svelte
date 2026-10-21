@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Doc, Timestamp } from '@hcengineering/core'
   import type { PublicLink } from '@hcengineering/guest'
-  import { createPublicLink } from '@hcengineering/guest'
+  import { createPublicLink, getPublicLinkSpace } from '@hcengineering/guest'
   import presentaion, {
     Card,
     MessageBox,
@@ -50,9 +50,10 @@
     await generate(value)
   }
 
+  // A link left in the previous space of a moved document is revoked: do not show it.
   query.query(
     guest.class.PublicLink,
-    { attachedTo: value._id },
+    { attachedTo: value._id, space: getPublicLinkSpace(client.getHierarchy(), value) },
     (res) => {
       link = res[0]
       void checkNeedGenerate(value, loading, link)

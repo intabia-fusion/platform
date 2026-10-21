@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -125,6 +126,17 @@ describe('generateToken', () => {
       account: '123e4567-e89b-12d3-a456-426614174000',
       workspace: '123e4567-e89b-12d3-a456-426614174001'
     })
+  })
+
+  it('does not stamp the pod service on a guest token', () => {
+    setMetadata(plugin.metadata.Service, 'transactor')
+    const token = generateToken(
+      '123e4567-e89b-12d3-a456-426614174000' as PersonUuid,
+      '123e4567-e89b-12d3-a456-426614174001' as WorkspaceUuid,
+      { linkId: 'link-1', guest: 'true' },
+      'secret'
+    )
+    expect(decodeTokenPayload(token).extra).toEqual({ linkId: 'link-1', guest: 'true' })
   })
 })
 

@@ -33,7 +33,6 @@ accounts:
 bot:
   firstName: Julia
   lastName: AI
-  password: password
   avatar:
     path: ./avatar.png
     contentType: image/png

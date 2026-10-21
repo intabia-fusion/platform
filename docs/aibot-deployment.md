@@ -136,7 +136,7 @@ asr:                         # зеркалит llm:
 | `QUEUE_CONFIG` | Kafka/redpanda |
 | `STORAGE_CONFIG`, `CHUNK_STORAGE_CONFIG` | хранилище (blob + аудио-чанки). Обязательно (нет неявного MINIO_*) |
 | `STATS_URL`, `BILLING_URL`, `LOVE_ENDPOINT` | сервисы |
-| `FIRST_NAME`, `LAST_NAME`, `PASSWORD`, `AVATAR_*` | идентичность бота |
+| `FIRST_NAME`, `LAST_NAME`, `AVATAR_*` | идентичность бота; пароль при первом `signUp` случайный и выбрасывается, бот работает на сервисных токенах |
 | `MAX_CONTENT_TOKENS`, `MAX_HISTORY_RECORDS` | лимиты контекста |
 | `CONFIG_PATH` / `CONFIG_YAML` | yaml-реестр (путь / base64) |
 

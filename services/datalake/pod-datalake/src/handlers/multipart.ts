@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,7 @@ import { type Request, type Response } from 'express'
 import { cacheControl } from '../const'
 import { Datalake } from '../datalake'
 import { type LimitsState } from '../limits'
-import { type RequestWithAuth } from '../middleware'
+import { type RequestWithAuth, isServiceToken } from '../middleware'
 import { type TemporaryDir } from '../tempdir'
 
 export interface MultipartUpload {
@@ -46,8 +47,7 @@ export async function handleMultipartUploadStart (
   const workspace = req.params.workspace as WorkspaceUuid
 
   // Block user multipart uploads when disk or payment limit is exhausted (service tokens bypass).
-  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
-  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+  if (!isServiceToken((req as RequestWithAuth).token) && limitsState?.isExhausted(workspace) === true) {
     res.status(413).json({ message: 'Resource limit exceeded' })
     return
   }
@@ -117,8 +117,7 @@ export async function handleMultipartUploadComplete (
   const { name } = req.params
   const workspace = req.params.workspace as WorkspaceUuid
 
-  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
-  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+  if (!isServiceToken((req as RequestWithAuth).token) && limitsState?.isExhausted(workspace) === true) {
     res.status(413).json({ message: 'Resource limit exceeded' })
     return
   }

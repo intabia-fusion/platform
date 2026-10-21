@@ -16,18 +16,17 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { StorageAdapter } from '@hcengineering/server-core'
 
-import { createWriteStream } from 'fs'
-import { pipeline } from 'stream/promises'
-
 import { getImageMetadata } from '../metadata'
 import { TemporaryDir } from '../tempdir'
 import { type PreviewFile, type PreviewMetadata, type PreviewProvider } from '../types'
+import { copyBlob } from '../utils/blob'
 import { pdfToImage } from '../utils'
 
 export class PdfProvider implements PreviewProvider {
   constructor (
     private readonly storage: StorageAdapter,
-    private readonly tempDir: TemporaryDir
+    private readonly tempDir: TemporaryDir,
+    private readonly timeout: number
   ) {}
 
   supports (contentType: string): boolean {
@@ -40,13 +39,12 @@ export class PdfProvider implements PreviewProvider {
     let pngFile = baseName + '.png'
 
     try {
-      await ctx.with('blob-read', {}, async (ctx) => {
-        const stream = await this.storage.get(ctx, { uuid: workspace } as any, name)
-        await pipeline(stream, createWriteStream(pdfFile))
+      await ctx.with('blob-read', {}, (ctx) => {
+        return copyBlob(ctx, this.storage, workspace, name, pdfFile, this.timeout)
       })
 
       pngFile = await ctx.with('pdf-to-png', {}, () => {
-        return pdfToImage(ctx, pdfFile)
+        return pdfToImage(ctx, pdfFile, this.timeout)
       })
     } catch (err: any) {
       // remove temporary png file in case of error

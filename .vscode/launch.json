@@ -779,7 +779,6 @@
         "LAST_NAME": "AI",
         "API_TOKEN": "api-secret",
         "MODE": "queue",
-        "PASSWORD": "password",
         "AVATAR_PATH": "./assets/avatar.png",
         "AVATAR_CONTENT_TYPE": "image/png",
         "STORAGE_CONFIG": "datalake|http://localhost:4030",

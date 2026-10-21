@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -2120,6 +2121,41 @@ describe('TSessionManager', () => {
       sessionManager.handleTick()
 
       expect(mockWorkspace.softShutdown).toBe(300) // Reset to workspaceSoftShutdownTicks
+    })
+
+    it('counts a user session as a workspace visit, but not a public-link guest', () => {
+      const workspaceWithSession = (uuid: string, extra: Record<string, string>): any => ({
+        wsId: { uuid, url: uuid },
+        sessions: new Map([
+          [
+            'session-1',
+            {
+              session: {
+                getUser: jest.fn().mockReturnValue('person-1'),
+                token: { account: 'person-1', workspace: uuid, extra },
+                current: { find: 0, tx: 0 },
+                mins5: { find: 0, tx: 0 }
+              }
+            }
+          ]
+        ]),
+        tickHandlers: new Map(),
+        maintenance: false,
+        softShutdown: 300,
+        workspaceInitCompleted: true,
+        closing: undefined,
+        tickHash: 0
+      })
+      sessionManager.workspaces.set('ws-user' as WorkspaceUuid, workspaceWithSession('ws-user', {}))
+      sessionManager.workspaces.set(
+        'ws-guest' as WorkspaceUuid,
+        workspaceWithSession('ws-guest', { linkId: 'link-1', guest: 'true' })
+      )
+      const updateLastVisit = jest.spyOn(sessionManager, 'updateLastVisit').mockResolvedValue(undefined)
+
+      sessionManager.handleTick()
+
+      expect(updateLastVisit).toHaveBeenCalledWith(expect.anything(), ['ws-user'])
     })
   })
 

@@ -4,7 +4,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { metricsAggregate, type MeasureContext, type Metrics } from '@hcengineering/core'
+import { metricsAggregate, readOnlyGuestAccountUuid, type MeasureContext, type Metrics } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import { RPCHandler } from '@hcengineering/rpc'
 import {
@@ -96,6 +96,11 @@ const extractAuthorizationToken = (headers: IncomingHttpHeaders): string | undef
 // factor. Tokens come from the Authorization header only - a query string token ends up in proxy logs.
 const isStatsAdmin = (payload: Token): boolean =>
   payload.extra?.service === 'tool' || (isHumanAdmin(payload) && hasAdminSession(payload))
+
+// Guest links minted by a pod used to carry its name; old love guest links
+// are told apart only by the read-only guest account.
+export const isServiceReporter = (payload: Token): boolean =>
+  payload.extra?.service != null && payload.extra?.guest !== 'true' && payload.account !== readOnlyGuestAccountUuid
 
 /**
  * @public
@@ -252,7 +257,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
     try {
       const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
-      const service = payload.extra?.service != null
+      const service = isServiceReporter(payload)
       const serviceName = (req.query.name as string) ?? ''
       if (service) {
         const contentType = req.headers['content-type']
@@ -309,7 +314,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
       const payload = decodeToken(token)
       const serviceName = (req.query.name as string) ?? ''
-      const existing = payload.extra?.service != null ? statistics.get(serviceName) : undefined
+      const existing = isServiceReporter(payload) ? statistics.get(serviceName) : undefined
       if (existing !== undefined) {
         existing.lastUpdate = Date.now()
       }

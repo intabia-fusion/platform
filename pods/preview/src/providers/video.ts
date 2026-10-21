@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,38 +14,47 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import { StorageAdapter } from '@hcengineering/server-core'
-import { generateToken } from '@hcengineering/server-token'
+
+import { rm } from 'fs/promises'
 
 import { getImageMetadata } from '../metadata'
 import { TemporaryDir } from '../tempdir'
 import { type PreviewFile, type PreviewMetadata, type PreviewProvider } from '../types'
+import { copyBlob } from '../utils/blob'
 import { extractThumbnail } from '../utils/ffmpeg'
 
 export class VideoProvider implements PreviewProvider {
-  private readonly token: string
   constructor (
     private readonly storage: StorageAdapter,
-    private readonly tempDir: TemporaryDir
-  ) {
-    this.token = generateToken(systemAccountUuid)
-  }
+    private readonly tempDir: TemporaryDir,
+    private readonly timeout: number
+  ) {}
 
   supports (mimeType: string): boolean {
     return mimeType.startsWith('video/')
   }
 
   async image (ctx: MeasureContext, workspace: WorkspaceUuid, name: string, contentType: string): Promise<PreviewFile> {
+    const videoFile = this.tempDir.tmpFile()
     const pngFile = this.tempDir.tmpFile() + '.png'
-    const url = await this.storage.getUrl(ctx, { uuid: workspace } as any, name)
 
     try {
-      await extractThumbnail(url, pngFile, this.token)
+      await ctx.with('blob-read', {}, (ctx) => {
+        return copyBlob(ctx, this.storage, workspace, name, videoFile, this.timeout)
+      })
+
+      await extractThumbnail(videoFile, pngFile, this.timeout)
     } catch (err: any) {
       // remove temporary png file in case of error
       this.tempDir.rm(pngFile)
       throw err
+    } finally {
+      // remove now instead of waiting for the tempDir cleanup: a video can be large
+      await rm(videoFile, { force: true }).catch(() => {
+        this.tempDir.rm(videoFile)
+      })
     }
 
     return { mimeType: 'image/png', filePath: pngFile }

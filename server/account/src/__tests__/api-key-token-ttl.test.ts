@@ -145,12 +145,17 @@ describe('api key token ttl', () => {
       }
     }
 
+    // Only the key's own social id is found: any other lookup (the bot email) finds nothing.
+    function keySocialId (): void {
+      ;(mockDb.socialId.findOne as jest.Mock).mockImplementation(async (query: { _id?: string }) =>
+        query._id === 'soc-1' ? { personUuid: '33333333-3333-4333-8333-333333333333' as PersonUuid } : null
+      )
+    }
+
     test('issued token exp matches the key-configured ttl', async () => {
       const tokenTtlMs = 3 * 24 * 60 * 60 * 1000 // 3 days, mid-range custom value
       ;(mockDb.integrationSecret.findOne as jest.Mock).mockResolvedValue(secretRow({ tokenTtlMs }))
-      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({
-        personUuid: '33333333-3333-4333-8333-333333333333' as PersonUuid
-      })
+      keySocialId()
 
       const before = Date.now()
       await loginWithApiKey(mockCtx, mockDb, null, 'caller-token', { key: 'fus_ws_secret' })
@@ -168,9 +173,7 @@ describe('api key token ttl', () => {
 
     test('falls back to defaultApiKeyTokenTtlMs for legacy secrets missing the field', async () => {
       ;(mockDb.integrationSecret.findOne as jest.Mock).mockResolvedValue(secretRow({ tokenTtlMs: undefined }))
-      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({
-        personUuid: '33333333-3333-4333-8333-333333333333' as PersonUuid
-      })
+      keySocialId()
 
       const before = Date.now()
       await loginWithApiKey(mockCtx, mockDb, null, 'caller-token', { key: 'fus_ws_secret' })

@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import core, {
+import {
   Branding,
   Doc,
   Hierarchy,
@@ -26,7 +27,7 @@ import core, {
   concatLink,
   generateId
 } from '@hcengineering/core'
-import guest, { PublicLink, guestAccount, guestId } from '@hcengineering/guest'
+import guest, { PublicLink, getPublicLinkSpace, guestAccount, guestId } from '@hcengineering/guest'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
@@ -74,7 +75,9 @@ export async function getPublicLink (
   revokable: boolean = true,
   branding: Branding | null
 ): Promise<string> {
-  const current = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id })
+  // A link left in the previous space of a moved document is revoked: do not hand it out.
+  const space = getPublicLinkSpace(client.getHierarchy(), doc)
+  const current = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id, space })
   if (current !== undefined) {
     if (!revokable && current.revokable) {
       await client.update(current, { revokable: false })
@@ -86,9 +89,10 @@ export async function getPublicLink (
   const fragment = getDocFragment(doc, client)
   await client.createDoc(
     guest.class.PublicLink,
-    core.space.Workspace,
+    space,
     {
       attachedTo: doc._id,
+      attachedToClass: doc._class,
       location: {
         path: [],
         fragment

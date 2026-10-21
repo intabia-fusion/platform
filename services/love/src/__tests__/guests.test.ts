@@ -13,12 +13,14 @@
 // limitations under the License.
 //
 
-import { Ref, WorkspaceUuid } from '@hcengineering/core'
+import { readOnlyGuestAccountUuid, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { MeetingMinutes, MeetingStatus } from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
+import config from '../config'
 import { GuestManager } from '../guests'
 import { WorkspaceClient } from '../workspaceClient'
 import { decodeToken, generateToken } from '@hcengineering/server-token'
+import { createHmac } from 'crypto'
 import { createMockContext } from './test-helpers'
 
 jest.mock('../workspaceClient')
@@ -240,5 +242,47 @@ describe('GuestManager.createGuestToken', () => {
     const result = await manager.createGuestToken(meetingId, loginInfo)
 
     expect(result).toBe('raw-jwt-token')
+  })
+})
+
+describe('GuestManager guest token keys', () => {
+  const actual = jest.requireActual('@hcengineering/server-token')
+  const wsUuid = '123e4567-e89b-12d3-a456-426614174001' as WorkspaceUuid
+  const derivedKey = createHmac('sha256', config.ApiSecret).update('love-guest-token').digest('hex')
+  let manager: GuestManager
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(generateToken as jest.Mock).mockImplementation(actual.generateToken)
+    ;(decodeToken as jest.Mock).mockImplementation(actual.decodeToken)
+    const wsClient = createMockWsClient()
+    const meeting = { _id: meetingId, status: MeetingStatus.Active } as unknown as MeetingMinutes
+    wsClient.findMeetingById.mockResolvedValue(meeting)
+    ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
+    // No short link: createGuestToken hands back the token itself.
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as any
+    manager = new GuestManager(createMockContext(), createMockRoomClient() as any)
+  })
+
+  it('signs a new guest link with the derived key, which the raw LiveKit secret does not verify', async () => {
+    const token = await manager.createGuestToken(meetingId, { workspace: wsUuid, workspaceUrl: 'ws-url' } as any)
+
+    const payload = actual.decodeToken(token, true, derivedKey)
+    expect(payload.extra).toEqual({ meetingId, workspaceUrl: 'ws-url', guest: 'true' })
+    expect(() => actual.decodeToken(token, true, config.ApiSecret)).toThrow()
+
+    const res = createMockRes()
+    await manager.handleGuestInfo(createMockReq({ token }), res)
+    expect(res.status).toHaveBeenCalledWith(200)
+  })
+
+  it('still accepts a legacy link signed with the raw LiveKit secret', async () => {
+    const legacyExtra = { meetingId, workspaceUrl: 'ws-url' }
+    const legacy = actual.generateToken(readOnlyGuestAccountUuid, wsUuid, legacyExtra, config.ApiSecret)
+    const res = createMockRes()
+
+    await manager.handleGuestInfo(createMockReq({ token: legacy }), res)
+
+    expect(res.status).toHaveBeenCalledWith(200)
   })
 })

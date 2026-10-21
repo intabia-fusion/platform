@@ -28,7 +28,8 @@
   let displayTime = time
   let notified = false
   let intervalId: any | undefined = undefined
-  const dayMs = 1000 * 60 * 60 * 24
+  const hourMs = 1000 * 60 * 60
+  const dayMs = hourMs * 24
 
   function applyTimer (time: number): void {
     if (intervalId !== undefined) {
@@ -60,10 +61,11 @@
   })
 
   function getDisplayTime (time: number): string {
-    const options: Intl.DateTimeFormatOptions = { minute: 'numeric', second: 'numeric' }
-    if (showHours) {
-      options.timeZone = 'UTC'
+    // The value is a duration: a local zone would shift its minutes (+5:30 reads 59:59 as 29:59).
+    const options: Intl.DateTimeFormatOptions = { minute: 'numeric', second: 'numeric', timeZone: 'UTC' }
+    if (showHours || time >= hourMs) {
       options.hour = 'numeric'
+      options.hourCycle = 'h23'
     }
 
     return new Date(time).toLocaleString('default', options)

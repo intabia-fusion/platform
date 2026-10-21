@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import { systemAccountUuid } from '@hcengineering/core'
+import { readOnlyGuestAccountUuid, systemAccountUuid } from '@hcengineering/core'
 import { extractToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, RequestHandler } from 'express'
@@ -52,10 +53,20 @@ export const withAdminAuthorization = (req: RequestWithAuth, res: Response, next
   }
 }
 
+// Guest links used to carry the pod name in `service`. Old love ones have no guest flag,
+// only the read-only guest account.
+export const isServiceToken = (token?: Token): boolean =>
+  token?.extra?.service !== undefined && token.extra.guest !== 'true' && token.account !== readOnlyGuestAccountUuid
+
 export const withAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
     const token = extractToken(req.headers)
-    if (token == null || token.extra?.guest === 'true' || token.extra?.readonly === 'true') {
+    if (
+      token == null ||
+      token.extra?.guest === 'true' ||
+      token.extra?.readonly === 'true' ||
+      token.account === readOnlyGuestAccountUuid
+    ) {
       throw new ApiError(401, 'Unauthorized')
     }
     req.token = token
