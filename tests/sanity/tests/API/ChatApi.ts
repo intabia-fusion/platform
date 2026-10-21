@@ -128,6 +128,21 @@ export class ChatMember {
     return await this.send(channel, [{ type: 'text', text }])
   }
 
+  /** A message in the chat of a document that is not a channel: a comment, in the document's space. */
+  async sendComment (doc: Pick<Doc, '_id' | '_class' | 'space'>, text: string): Promise<Ref<Doc>> {
+    const id = generateId<AttachedDoc>()
+    await this.client.addCollection(
+      chatMessageClass,
+      doc.space,
+      doc._id,
+      doc._class,
+      'comments',
+      { message: paragraph([{ type: 'text', text }]) } as any,
+      id
+    )
+    return id
+  }
+
   async sendMention (channel: ChannelDoc, person: { _id: Ref<Doc>, name: string }, text: string): Promise<Ref<Doc>> {
     return await this.send(channel, [
       { type: 'reference', attrs: { id: person._id, label: person.name, objectclass: personClass } },

@@ -624,12 +624,20 @@ export class NotificationClientImpl implements NotificationClient {
     const me = getCurrentAccount()
     const state = await this.getReadState(attachedTo)
     if (state != null) {
-      await (op ?? getClient()).update(state, {
-        [me.uuid]: {
-          messageId: generateId<ActivityMessage>(),
-          timestamp: Date.now()
+      await (op ?? getClient()).updateCollection(
+        state._class,
+        state.space,
+        state._id,
+        state.attachedTo,
+        state.attachedToClass,
+        'readStates',
+        {
+          [me.uuid]: {
+            messageId: generateId<ActivityMessage>(),
+            timestamp: Date.now()
+          }
         }
-      })
+      )
       return true
     }
     return false

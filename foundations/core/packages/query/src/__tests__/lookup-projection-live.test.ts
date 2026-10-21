@@ -25,7 +25,7 @@ import core, {
 import { LiveQuery } from '..'
 import { lookupFields, touchedAttributes, txTouchesProjected, withLiveQueryFields } from '../projection'
 import { connect } from './connection'
-import { test, type TestMixin } from './minmodel'
+import { test, type AttachedComment, type TestMixin } from './minmodel'
 
 // A live query sorted or filtered through `$lookup.` keys with a projection of the join: the order
 // follows a change of the joined document, a changed reference fetches the new document with the
@@ -258,6 +258,102 @@ describe('LiveQuery lookup projection, live', () => {
       await factory.updateDoc(test.class.TestComment, mid, later, { message: tag })
       const result = await waitForNextCall(mock, before)
       expect(result.map((it: Doc) => it._id)).toEqual([first, later, second])
+
+      await close()
+    })
+
+    it('brings a document into a full window when its joined sort field passes the edge, by one request', async () => {
+      const { liveQuery, factory, findAll, close } = await getClient()
+      const tag = 'window-' + Date.now()
+      const space = await createSpace(factory, 'space')
+      const project = await createProject(factory, 'project')
+      // Replies to comments make the window, sorted by the message of the comment they answer.
+      const comment = async (
+        message: string,
+        on: Ref<Space> = space,
+        onClass = core.class.Space
+      ): Promise<Ref<AttachedComment>> =>
+        await factory.addCollection(test.class.TestComment, space, on, onClass, 'comments', { message })
+      const reply = async (to: Ref<AttachedComment>): Promise<Ref<AttachedComment>> =>
+        await factory.addCollection(test.class.TestComment, space, to, test.class.TestComment, 'replies', {
+          message: tag
+        })
+      const retitle = async (
+        of: Ref<AttachedComment>,
+        message: string,
+        on: Ref<Space> = space,
+        onClass = core.class.Space
+      ): Promise<void> => {
+        await factory.updateCollection(test.class.TestComment, space, of, on, onClass, 'comments', { message })
+      }
+      const low = await comment('a-low')
+      const high = await comment('b-high')
+      const foreign = await comment('c-foreign', project, test.class.TestProject)
+      const one = await reply(low)
+      const two = await reply(high)
+      await reply(foreign)
+      // The requests for the replies of a comment: what a window asks the server when one may enter.
+      const asked = (of: Ref<AttachedComment>): number =>
+        findAll.mock.calls.filter((it) => it[1].attachedTo === of).length
+
+      const query = { message: tag, '$lookup.attachedTo.attachedToClass': { $in: [core.class.Space] } }
+      const options = {
+        lookup: { attachedTo: test.class.TestComment },
+        projection: { '$lookup.attachedTo.message': 1 },
+        sort: { '$lookup.attachedTo.message': SortingOrder.Descending },
+        limit: 1
+      }
+      const { mock } = await subscribe(liveQuery, test.class.TestComment, query, options)
+      expect(mock.mock.calls[0][0].map((it: Doc) => it._id)).toEqual([two])
+
+      // The comment of the reply outside the window now sorts first: its replies are asked for once,
+      // the matching one comes in, the window keeps its size.
+      let before = mock.mock.calls.length
+      await retitle(low, 'z-low')
+      let result = await waitForNextCall(mock, before)
+      expect(result.map((it: Doc) => it._id)).toEqual([one])
+      expect(asked(low)).toBe(1)
+
+      // A comment on another class, told by the tx: no reply of it can match, no request.
+      before = mock.mock.calls.length
+      await retitle(foreign, 'zz-foreign', project, test.class.TestProject)
+      await settle()
+      expect(asked(foreign)).toBe(0)
+      expect(mock.mock.calls.length).toBe(before)
+
+      // The same by a tx that does not name the parent: asked, and the answer matches nothing.
+      await factory.updateDoc(test.class.TestComment, space, foreign, { message: 'zzz-foreign' })
+      await settle()
+      expect(asked(foreign)).toBe(1)
+      expect(mock.mock.calls.length).toBe(before)
+
+      // A value that stays beyond the edge of the window cannot bring a reply in: no request.
+      await retitle(high, 'a-high')
+      await settle()
+      expect(asked(high)).toBe(0)
+      expect(mock.mock.calls.length).toBe(before)
+
+      // Two windows of the same query and joins, sorted apart: one request serves both.
+      const twin = await subscribe(liveQuery, test.class.TestComment, query, {
+        ...options,
+        sort: { ...options.sort, _id: SortingOrder.Ascending }
+      })
+      expect(twin.mock.mock.calls[0][0].map((it: Doc) => it._id)).toEqual([one])
+      before = mock.mock.calls.length
+      const twinBefore = twin.mock.mock.calls.length
+      await retitle(high, 'zz-high')
+      result = await waitForNextCall(mock, before)
+      expect(result.map((it: Doc) => it._id)).toEqual([two])
+      result = await waitForNextCall(twin.mock, twinBefore)
+      expect(result.map((it: Doc) => it._id)).toEqual([two])
+      expect(asked(high)).toBe(1)
+
+      // The joined document of the window itself is patched in place, without a request.
+      before = mock.mock.calls.length
+      await retitle(high, 'zzz-high')
+      result = await waitForNextCall(mock, before)
+      expect(result[0].$lookup?.attachedTo?.message).toBe('zzz-high')
+      expect(asked(high)).toBe(1)
 
       await close()
     })

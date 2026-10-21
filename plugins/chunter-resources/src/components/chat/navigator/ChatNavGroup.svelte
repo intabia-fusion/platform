@@ -119,7 +119,8 @@
           attachedToClass: { $in: hierarchy.getDescendants(_class) },
           ...searchQuery,
           ...(isSpace ? { '$lookup.attachedTo.archived': false } : {}),
-          '$lookup.attachedTo._id': { $exists: true }
+          '$lookup.attachedTo._id': { $exists: true },
+          '$lookup.readState.attachedToClass': { $in: hierarchy.getDescendants(_class) }
         },
         (res) => {
           const docs: { doc: Doc, chat: Chat }[] = res.map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
@@ -131,7 +132,7 @@
           total: true,
           limit,
           lookup: { attachedTo: _class, readState: notification.class.ReadState },
-          projection: { '$lookup.readState.latestMessageTimestamp': 1 },
+          projection: { '$lookup.readState.latestMessageTimestamp': 1, '$lookup.readState.attachedToClass': 1 },
           sort: { '$lookup.readState.latestMessageTimestamp': SortingOrder.Descending }
         }
       )

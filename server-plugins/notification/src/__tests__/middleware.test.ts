@@ -14,6 +14,8 @@
 //
 
 import {
+  type Class,
+  type Doc,
   type MeasureContext,
   type SessionData,
   type TxCreateDoc,
@@ -567,6 +569,100 @@ describe('NotificationMiddleware', () => {
       await middleware.tx(mockMeasureContext, [tx1, tx2])
 
       expect(mockNext.tx).toHaveBeenCalledWith(mockMeasureContext, [tx2])
+    })
+  })
+
+  describe('ReadState document', () => {
+    const state: ReadState = {
+      _id: 'readstate-1' as Ref<ReadState>,
+      _class: notification.class.ReadState,
+      space: 'space-1' as Ref<Space>,
+      attachedTo: 'doc-1' as Ref<Doc>,
+      attachedToClass: 'chunter:class:Channel' as Ref<Class<Doc>>,
+      collection: 'readStates',
+      modifiedBy: 'socialId-1' as PersonId,
+      modifiedOn: 1,
+      latestMessageTimestamp: 0
+    } as any
+
+    const updateTx = (): TxUpdateDoc<ReadState> => ({
+      _id: 'tx-1' as Ref<TxUpdateDoc<ReadState>>,
+      _class: core.class.TxUpdateDoc,
+      objectClass: notification.class.ReadState,
+      objectId: state._id,
+      objectSpace: state.space,
+      space: core.space.Tx,
+      modifiedBy: 'socialId-1' as PersonId,
+      modifiedOn: 1,
+      operations: { latestMessageTimestamp: 5 }
+    })
+
+    const asSystem = (): void => {
+      mockMeasureContext.contextData.account.uuid = systemAccountUuid
+    }
+
+    beforeEach(async () => {
+      middleware = (await NotificationMiddleware.create(
+        mockMeasureContext,
+        mockPipelineContext,
+        mockNext
+      )) as NotificationMiddleware
+      mockNext.findAll.mockResolvedValue(toFindResult([state]))
+    })
+
+    it('names the document on a system update that lacks it, as a tx of the collection', async () => {
+      asSystem()
+      const tx = updateTx()
+
+      await middleware.tx(mockMeasureContext, [tx])
+
+      expect(tx).toMatchObject({
+        attachedTo: 'doc-1',
+        attachedToClass: 'chunter:class:Channel',
+        collection: 'readStates'
+      })
+    })
+
+    it('names the document on a user update too, from the state it has read', async () => {
+      const tx: TxUpdateDoc<ReadState> = {
+        ...updateTx(),
+        operations: { [userAccountUuid]: { messageId: 'msg-1' as Ref<ActivityMessage>, timestamp: 200 } }
+      }
+
+      await middleware.tx(mockMeasureContext, [tx])
+
+      expect(tx).toMatchObject({
+        attachedTo: 'doc-1',
+        attachedToClass: 'chunter:class:Channel',
+        collection: 'readStates'
+      })
+      expect(mockNext.findAll).toHaveBeenCalledTimes(1)
+    })
+
+    it('leaves the document of a tx that names it already', async () => {
+      asSystem()
+      const tx: TxUpdateDoc<ReadState> = {
+        ...updateTx(),
+        attachedTo: 'doc-2' as Ref<Doc>,
+        attachedToClass: 'chunter:class:DirectMessage' as Ref<Class<Doc>>,
+        collection: 'readStates'
+      }
+
+      await middleware.tx(mockMeasureContext, [tx])
+
+      expect(tx).toMatchObject({ attachedTo: 'doc-2', attachedToClass: 'chunter:class:DirectMessage' })
+      expect(mockNext.findAll).not.toHaveBeenCalled()
+    })
+
+    it('leaves a system update of an unknown state as it is', async () => {
+      asSystem()
+      mockNext.findAll.mockResolvedValue(toFindResult([]))
+      const tx = updateTx()
+
+      await middleware.tx(mockMeasureContext, [tx])
+
+      expect(tx.attachedTo).toBeUndefined()
+      expect(mockNext.tx).toHaveBeenCalledWith(mockMeasureContext, [tx])
     })
   })
 

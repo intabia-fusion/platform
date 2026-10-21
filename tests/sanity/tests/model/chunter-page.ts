@@ -78,8 +78,10 @@ export class ChunterPage extends CommonPage {
   }
 
   // The titles of a navigator section, top to bottom; the section id is the class of its documents.
+  // An item with a description (an issue: identifier, then title) keeps its whole text in the wide label.
   async sectionTitles (sectionId: string): Promise<string[]> {
-    return await this.page.locator(`[data-testid="section-${sectionId}"] .hulyNavItem-label`).allTextContents()
+    const label = '.hulyNavItem-wideLabel, .hulyNavItem-label:not(.hulyNavItem-wideLabel .hulyNavItem-label)'
+    return await this.page.locator(`[data-testid="section-${sectionId}"] :is(${label})`).allTextContents()
   }
 
   async createDirectChat ({ firstName, lastName }: SignUpData): Promise<void> {

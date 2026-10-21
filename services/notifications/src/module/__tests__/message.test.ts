@@ -167,6 +167,12 @@ describe('message module', () => {
           _class: core.class.TxCreateDoc,
           space,
           attributes: payload
+        })),
+        createTxCollectionCUD: jest.fn().mockImplementation((cls, id, space, collection, tx) => ({
+          ...tx,
+          attachedTo: id,
+          attachedToClass: cls,
+          collection
         }))
       },
       hierarchy: {
@@ -340,13 +346,15 @@ describe('message module', () => {
       expect(mockGetCollaboratorAccounts).not.toHaveBeenCalled()
     })
 
-    it('moves ReadState.latestMessage* forward for a newer message', async () => {
+    it('moves ReadState.latestMessage* forward for a newer message, by the collection', async () => {
       mockCache.getDoc.mockResolvedValue(mockDoc)
       mockCache.getDocSpace.mockResolvedValue(mockSpace)
       mockCache.getDocReadState.mockResolvedValue({
         _id: 'rs-1',
         _class: 'ReadState',
         space: 'space-1',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
         latestMessageId: 'msg-0',
         latestMessageTimestamp: 50
       })
@@ -354,8 +362,13 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-      expect(result.updateReadStateTx.map((it) => it.operations)).toEqual([
-        { latestMessageId: 'msg-1', latestMessageTimestamp: 100 }
+      expect(result.updateReadStateTx).toEqual([
+        expect.objectContaining({
+          operations: { latestMessageId: 'msg-1', latestMessageTimestamp: 100 },
+          attachedTo: 'doc-1',
+          attachedToClass: 'DocClass',
+          collection: 'readStates'
+        })
       ])
     })
 

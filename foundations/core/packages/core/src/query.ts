@@ -83,7 +83,7 @@ export function resultSort<T extends Doc> (
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, a, _enum) : getValue(key, a, _class, hierarchy)
       const bValue =
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, b, _enum) : getValue(key, b, _class, hierarchy)
-      const result = getSortingResult(aValue, bValue, sortOptions[key])
+      const result = getSortingResult(aValue, bValue, sortOptions[key], key.startsWith('$lookup.'))
       if (result !== 0) return result
     }
     return 0
@@ -114,16 +114,23 @@ function mapSortingValue (order: SortingOrder | SortingRules<any>, val: any): an
   }
 }
 
-function getSortingResult (aValue: any, bValue: any, order: SortingOrder | SortingRules<any>): number {
+// A missing value goes where the server puts NULL: a `$lookup` key orders it as the smallest value
+// (`NULLS LAST` in DESC), a plain column as Postgres does by default (first in DESC, last in ASC).
+function getSortingResult (
+  aValue: any,
+  bValue: any,
+  order: SortingOrder | SortingRules<any>,
+  lookupKey = false
+): number {
   let res = 0
+  const orderOrder = typeof order === 'object' ? order.order : order
+  const missing = lookupKey ? -orderOrder : orderOrder
   if (typeof aValue === 'undefined') {
-    return typeof bValue === 'undefined' ? 0 : -1
+    return typeof bValue === 'undefined' ? 0 : missing
   }
   if (typeof bValue === 'undefined') {
-    return 1
+    return -missing
   }
-
-  const orderOrder = typeof order === 'object' ? order.order : order
 
   if (Array.isArray(aValue) && Array.isArray(bValue)) {
     res =

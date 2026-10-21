@@ -350,12 +350,20 @@ function trackLatestMessage (
 ): void {
   if (readState === undefined) return
   if (!force && timestamp <= readState.latestMessageTimestamp) return
+  const update = client.txFactory.createTxUpdateDoc(readState._class, readState.space, readState._id, {
+    // The id column is not nullable: an empty chat keeps the old id and a zero timestamp.
+    ...(messageId !== undefined ? { latestMessageId: messageId } : {}),
+    latestMessageTimestamp: timestamp
+  })
+  // By the collection: a subscriber without the state reads its document off the tx.
   result.updateReadStateTx.push(
-    client.txFactory.createTxUpdateDoc(readState._class, readState.space, readState._id, {
-      // The id column is not nullable: an empty chat keeps the old id and a zero timestamp.
-      ...(messageId !== undefined ? { latestMessageId: messageId } : {}),
-      latestMessageTimestamp: timestamp
-    })
+    client.txFactory.createTxCollectionCUD(
+      readState.attachedToClass,
+      readState.attachedTo,
+      readState.space,
+      'readStates',
+      update
+    ) as TxUpdateDoc<ReadState>
   )
 }
 
