@@ -24,7 +24,7 @@
   import ParentNamesPresenter from '../ParentNamesPresenter.svelte'
   import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
-  import SetParentIssueActionPopup from '../../SetParentIssueActionPopup.svelte'
+  import IssueSelectPopup from '../../IssueSelectPopup.svelte'
 
   export let person: Ref<Employee> | null
   export let ld: number
@@ -40,7 +40,7 @@
   }
 
   function addReport (): void {
-    showPopup(SetParentIssueActionPopup, { value: [] }, 'top', (issue: Issue | null | undefined) => {
+    showPopup(IssueSelectPopup, { allowDeselect: false }, 'top', (issue: Issue | null | undefined) => {
       if (issue == null) return
       // Keep picked day but apply current time-of-day so records read naturally later.
       const now = new Date()
