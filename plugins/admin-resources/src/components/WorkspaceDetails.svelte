@@ -104,26 +104,43 @@
   $: canDelete =
     !readOnly && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))
 
+  let deletingWorkspace = false
+
   // The checkbox in the dialog skips the deferral; without it the workspace gets the usual deadline.
   async function deleteWorkspace (): Promise<void> {
-    const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
-    if (res === undefined) return
-    const ok = await runAdminAction(
-      async () => await performWorkspaceOperationWithOtp(workspace.uuid, res.option ? 'delete-now' : 'delete', res.code)
-    )
-    if (ok) {
-      await load()
+    if (deletingWorkspace) return
+    deletingWorkspace = true
+    try {
+      const res = await requestAdminOtpConfirm(adminRes.string.DeleteNow)
+      if (res === undefined) return
+      const ok = await runAdminAction(
+        async () =>
+          await performWorkspaceOperationWithOtp(workspace.uuid, res.option ? 'delete-now' : 'delete', res.code)
+      )
+      if (ok) {
+        await load()
+      }
+    } finally {
+      deletingWorkspace = false
     }
   }
 
+  let cancelingDeletion = false
+
   async function cancelDeletion (): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
-    const ok = await runAdminAction(
-      async () => await performWorkspaceOperationWithOtp(workspace.uuid, 'cancel-delete', code)
-    )
-    if (ok) {
-      await load()
+    if (cancelingDeletion) return
+    cancelingDeletion = true
+    try {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
+      const ok = await runAdminAction(
+        async () => await performWorkspaceOperationWithOtp(workspace.uuid, 'cancel-delete', code)
+      )
+      if (ok) {
+        await load()
+      }
+    } finally {
+      cancelingDeletion = false
     }
   }
 
@@ -184,10 +201,14 @@
 
   // Read-only look at the workspace as one of its members. The server refuses every write from
   // this session, and the code request is what lands in the audit trail.
+  let impersonating = false
+
   async function impersonate (target: AccountUuid): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
+    if (impersonating) return
+    impersonating = true
     try {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
       const info = await accountClient.adminImpersonate(workspace.uuid, target, code)
       setMetadata(presentation.metadata.Token, info.token)
       setMetadata(presentation.metadata.WorkspaceUuid, info.workspace)
@@ -196,6 +217,8 @@
       navigate({ path: [workbenchId, info.workspaceUrl ?? workspace.url ?? ''] })
     } catch (err) {
       console.error('Failed to open an impersonation session:', err)
+    } finally {
+      impersonating = false
     }
   }
 
@@ -473,6 +496,7 @@
           <Button
             size="small"
             label={adminRes.string.CancelDeletion}
+            loading={cancelingDeletion}
             on:click={() => {
               void cancelDeletion()
             }}
@@ -485,6 +509,7 @@
           size="small"
           kind="dangerous"
           label={adminRes.string.Delete}
+          loading={deletingWorkspace}
           on:click={() => {
             void deleteWorkspace()
           }}
@@ -665,6 +690,7 @@
                       kind="ghost"
                       label={adminRes.string.Impersonate}
                       showTooltip={{ label: adminRes.string.ImpersonateHint }}
+                      loading={impersonating}
                       on:click={() => {
                         void impersonate(m.account)
                       }}

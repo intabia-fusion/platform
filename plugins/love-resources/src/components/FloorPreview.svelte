@@ -80,8 +80,15 @@
 
   const client = getClient()
 
+  let removing = false
   async function remove (): Promise<void> {
-    await client.remove(floor)
+    if (removing) return
+    removing = true
+    try {
+      await client.remove(floor)
+    } finally {
+      removing = false
+    }
   }
 
   function renameFloor (): void {
@@ -316,6 +323,7 @@
             icon={IconDelete}
             kind="negative"
             size="small"
+            loading={removing}
             tooltip={{ label: presentation.string.Delete }}
             on:click={remove}
           />

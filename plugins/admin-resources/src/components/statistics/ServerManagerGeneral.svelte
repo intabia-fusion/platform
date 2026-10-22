@@ -44,14 +44,22 @@
   }))
   $: endpoint = selectedTransactor.replace(/^ws/, 'http').replace(/\/$/, '')
 
+  let settingMaintenance = false
+
   // Maintenance is a global broadcast: an audited, OTP-gated account RPC, not a raw endpoint.
   async function setMaintenance (timeoutMinutes: number, message: string | undefined): Promise<void> {
-    const code = await requestAdminOtpCode()
-    if (code === undefined) return
+    if (settingMaintenance) return
+    settingMaintenance = true
     try {
-      await getAccountClient().adminSetMaintenance(timeoutMinutes, message, code)
-    } catch (err) {
-      console.error('Failed to set maintenance warning:', err)
+      const code = await requestAdminOtpCode()
+      if (code === undefined) return
+      try {
+        await getAccountClient().adminSetMaintenance(timeoutMinutes, message, code)
+      } catch (err) {
+        console.error('Failed to set maintenance warning:', err)
+      }
+    } finally {
+      settingMaintenance = false
     }
   }
 
@@ -70,24 +78,45 @@
   $: void fetchProfiling($ticker)
   $: if (endpoint !== '') void fetchProfiling(0)
 
-  async function downloadProfile (): Promise<void> {
-    const link = document.createElement('a')
-    link.style.display = 'none'
-    link.setAttribute('target', '_blank')
-    const json = await (
-      await adminFetch(endpoint + '/api/v1/manage?operation=profile-stop', {
+  let startingProfile = false
+  async function startProfiling (): Promise<void> {
+    if (startingProfile) return
+    startingProfile = true
+    try {
+      await adminFetch(endpoint + '/api/v1/manage?operation=profile-start', {
         method: 'PUT'
       })
-    ).json()
-    link.setAttribute(
-      'href',
-      'data:application/json;charset=utf-8,%EF%BB%BF' + encodeURIComponent(JSON.stringify(json))
-    )
-    link.setAttribute('download', `profile-${Date.now()}.cpuprofile`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    await fetchProfiling(0)
+      await fetchProfiling(0)
+    } finally {
+      startingProfile = false
+    }
+  }
+
+  let downloadingProfile = false
+  async function downloadProfile (): Promise<void> {
+    if (downloadingProfile) return
+    downloadingProfile = true
+    try {
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      link.setAttribute('target', '_blank')
+      const json = await (
+        await adminFetch(endpoint + '/api/v1/manage?operation=profile-stop', {
+          method: 'PUT'
+        })
+      ).json()
+      link.setAttribute(
+        'href',
+        'data:application/json;charset=utf-8,%EF%BB%BF' + encodeURIComponent(JSON.stringify(json))
+      )
+      link.setAttribute('download', `profile-${Date.now()}.cpuprofile`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      await fetchProfiling(0)
+    } finally {
+      downloadingProfile = false
+    }
   }
 </script>
 
@@ -102,6 +131,7 @@
       <Button
         icon={IconArrowRight}
         label={getEmbeddedLabel('Set maintenance warning')}
+        loading={settingMaintenance}
         on:click={() => {
           void setMaintenance(warningTimeout, maintenanceMessage)
         }}
@@ -115,6 +145,7 @@
     <Button
       icon={IconArrowLeft}
       label={getEmbeddedLabel('Clear warning')}
+      loading={settingMaintenance}
       on:click={() => {
         void setMaintenance(-1, undefined)
       }}
@@ -129,16 +160,12 @@
       {#if !profiling}
         <Button
           label={getEmbeddedLabel('Profile server')}
-          disabled={endpoint === ''}
-          on:click={() => {
-            void adminFetch(endpoint + '/api/v1/manage?operation=profile-start', {
-              method: 'PUT'
-            })
-            void fetchProfiling(0)
-          }}
+          disabled={endpoint === '' || startingProfile}
+          loading={startingProfile}
+          on:click={startProfiling}
         />
       {:else}
-        <Button label={getEmbeddedLabel('Profile Stop')} on:click={downloadProfile} />
+        <Button label={getEmbeddedLabel('Profile Stop')} loading={downloadingProfile} on:click={downloadProfile} />
       {/if}
     </div>
   </div>

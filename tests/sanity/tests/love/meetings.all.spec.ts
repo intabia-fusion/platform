@@ -35,6 +35,7 @@ import { registerMeetingsTests } from './meetings.tests'
 import { registerMigrationTests } from './meetings.migration.tests'
 import { registerPrivacyTests } from './meetings.privacy.tests'
 import { registerPrivateSummaryTests } from './meetings.private-summary.tests'
+import { registerRageClickTests } from './meetings.rage-click.tests'
 import { registerRecordingTests } from './meetings.recording.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
 import { registerScheduledConnectTests } from './meetings.scheduled-connect.tests'
@@ -83,4 +84,5 @@ test.describe('love (meetings) — suite', () => {
   registerTransactorRestartTests()
   registerRecordingTests()
   registerMultiTabTests()
+  registerRageClickTests()
 })

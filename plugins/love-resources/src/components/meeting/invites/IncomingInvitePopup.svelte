@@ -60,14 +60,28 @@
     })
   })
 
+  let responding: boolean = false
+
   async function handleJoin (): Promise<void> {
-    await responseToInviteRequest(invite, true)
-    dispatch('close')
+    if (responding) return
+    responding = true
+    try {
+      await responseToInviteRequest(invite, true)
+      dispatch('close')
+    } finally {
+      responding = false
+    }
   }
 
   async function handleReject (): Promise<void> {
-    await responseToInviteRequest(invite, false)
-    dispatch('close')
+    if (responding) return
+    responding = true
+    try {
+      await responseToInviteRequest(invite, false)
+      dispatch('close')
+    } finally {
+      responding = false
+    }
   }
 </script>
 
@@ -95,10 +109,10 @@
 
   <div class="popup-actions">
     <div data-id="invite-join">
-      <Button label={love.string.Join} kind="primary" size="medium" on:click={handleJoin} />
+      <Button label={love.string.Join} kind="primary" size="medium" loading={responding} on:click={handleJoin} />
     </div>
     <div data-id="invite-reject">
-      <Button label={love.string.Reject} kind="secondary" size="medium" on:click={handleReject} />
+      <Button label={love.string.Reject} kind="secondary" size="medium" loading={responding} on:click={handleReject} />
     </div>
   </div>
 </div>

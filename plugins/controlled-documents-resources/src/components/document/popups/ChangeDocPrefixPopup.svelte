@@ -62,15 +62,22 @@
   $: isSame = object.docPrefix === prefix
   $: canSubmit = isFilled && isUnique && !isSame
 
+  let submitting = false
+
   async function handleSubmit (): Promise<void> {
-    if (!canSubmit) {
+    if (!canSubmit || submitting) {
       return
     }
 
-    await client.updateMixin(object._id, documents.class.Document, object.space, documents.mixin.DocumentTemplate, {
-      docPrefix: prefix
-    })
-    dispatch('close')
+    submitting = true
+    try {
+      await client.updateMixin(object._id, documents.class.Document, object.space, documents.mixin.DocumentTemplate, {
+        docPrefix: prefix
+      })
+      dispatch('close')
+    } finally {
+      submitting = false
+    }
   }
 </script>
 
@@ -99,7 +106,13 @@
 
     <div class="flex justify-end items-center flex-gap-2 pr-6 pl-6 pt-4 pb-4">
       <Button kind="regular" label={presentation.string.Cancel} on:click={() => dispatch('close')} />
-      <Button kind="primary" disabled={!canSubmit} label={presentation.string.Change} on:click={handleSubmit} />
+      <Button
+        kind="primary"
+        disabled={!canSubmit || submitting}
+        loading={submitting}
+        label={presentation.string.Change}
+        on:click={handleSubmit}
+      />
     </div>
   </div>
 {/if}

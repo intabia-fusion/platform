@@ -1,0 +1,32 @@
+# Детектор async-кнопок без прогресса
+
+`pnpm check-async-buttons [paths...] [--guarded] [--json]` (`common/scripts/check-async-buttons.js`, self-test: `--self-test`).
+
+- Разобранные безопасные случаи - `common/scripts/async-buttons-reviewed.json` (`file`, `id`, `handler`, `reason`). `id` = sha1 от всего текста обработчика (пробелы схлопнуты), без имени компонента - переименование кнопки (ui-kit #586: `ButtonIcon` -> `IconButton`, `ModernButton` -> `Button` из `@hcengineering/ui/kit`) отметки не снимает; правка обработчика снимает и требует повторного разбора; одинаковые обработчики в одном файле делят `id`. Записи, которые больше не совпадают, печатаются как `reviewed entry no longer matches`.
+
+- Разметка - `svelte.preprocess` + `svelte.parse` (svelte берётся через `createRequire` из `packages/ui`, в `common/scripts` его нет); `<script>` и `<style>` заменяются пробелами, офсеты сохраняются. Сам script - TS AST (`typescript` 6).
+- Async = `async`/`Promise<>` у функции, `.then/.catch/.finally`, вызов `getClient()`-клиента (кроме `getHierarchy/getModel/apply`), вызов локальной async-функции или экспорта из относительного `.ts`. Вложенные колбэки (результат `showPopup`, `setTimeout`) не считаются кликом.
+- Защищено = `loading` не `false`, или `disabled` ссылается на переменную, которую пишет обработчик (с раскрытием `$: x = ...` на 1 уровень). `{...spread}` считается защищённым.
+- Не видит: обработчики из props, импорты из workspace-пакетов (`@hcengineering/*`), Promise от других объектов (`client` не из `getClient()`, `accountClient` и т.п.).
+- На 2026-10-16: 311 находок в 2621 файле - 139 исправлено, 172 в reviewed. `Card` `okAction` сам ставит `loading`, кнопки футера Card не в счёте.
+- `leaveMeeting()` (`plugins/love-resources/src/meetings.ts`) без guard на повторный вход намеренно: `joinMeeting` делает `await leaveMeeting()` и сразу ставит `currentMeeting`, ранний return дал бы гонку с незавершённым disconnect. Защита - локальные флаги в кнопках.
+- `MessageBox` (presentation) вызывает `action` до `dispatch('close', true)`: попап, открытый внутри action, успевает появиться до close-колбэка.
+
+## Playwright rage-click тесты (`tests/sanity/tests/rage-click/`, `love/rage-click.spec.ts`)
+
+- `rageClick` (`tests/sanity/tests/utils.ts`) - N раз `el.click()` в одном таске; повторный `locator.click()` ждёт re-enable и rage click не воспроизводит. `el.click()` на обёртке не доходит до вложенной `<button>` (`IncomingInvitePopup`: `data-id` на `<div>`) - целиться в `[data-id=...] button`. Попап, позиционируемый по координатам события (`ConnectProject`), после синтетического клика уезжает в (0,0).
+- Синхронный rage click строже реального: настоящий второй клик попадает в overlay уже открытого модального попапа. Поэтому `DocPopup` (ветка `create.component` без `await` перед `showPopup`) открывал 3 попапа только в тесте; исправлено сбросом флага в onClose.
+- Идемпотентный итог (diff-update, remove, toggle на stale-значении) различим только на проводе: `tx-frames.ts` - `enableJsonProtocol` (localStorage `client:metadata:UseBinaryProtocol=false`; сжатие применяется только к входящим кадрам) + `trackTxFrames` (`framesent`, `method === 'tx'`). Транзакции из `apply()` приходят одной `TxApplyIf` с вложенными `txes`.
+- Стенд `tests/docker-compose.yaml`: нет пода `services/process` (Execution не продвигается дальше `currentState: null`), нет сервиса `export` (`/exportSync` 404), не задан `recorder.metadata.StreamUrl` (кнопки записи не рендерятся), один регион (Migrate не рендерится).
+- ai-bot тесты расходуют общий бюджет токенов стенда: после серии прогонов aibot отвечает 402 `global token budget...reached`.
+- Имена сущностей в общих таблицах держать короткими (`generateId(6)`, без `testInfo.testId`): имя в ~100 символов расширяет первую колонку, и клик старых тестов в центр `div.firstCell` (`vacancies.spec.ts`, `applications.spec.ts`) уходит мимо ссылки - панель не открывается, падает уже следующий шаг.
+- Не доводить в тесте GitHub Connect до выбора проекта: `assignRepository` (`ConnectProject.svelte`) вызывает `updateProjectType` и добавляет статусы PullRequest в тип проекта, общий с `Default` -> `tracker/filter.spec.ts` "Status filter" ловит лишний "Review in progress".
+- Отдельный spec в `love/` идёт в параллельном воркере с `meetings.all.spec.ts` на тех же пользователях `meetings-ws`; тесты встреч регистрировать через `register*Tests()` в `meetings.all.spec.ts`.
+- Роль в Settings > Trainings (`AccountArrayEditor`) сохраняется через 500ms после изменения: навигация раньше теряет её.
+- `latestOwnAttempt` в `TrainingAttemptPanel`/`TrainingRequestPanel` до ответа query был `null` = "попыток нет": под нагрузкой Retry/Take появлялись раньше времени и создавали попытку с `seqNumber: 1` повторно. Теперь "не загружено" отделено (`undefined` / `latestOwnAttemptLoaded`). Столбец "Attempt" в My requests (`IncomingRequestAttemptsPresenter`) - `seqNumber` последней попытки, а не их число.
+- `ActionButton` (view-resources) сбрасывает `isBeingInvoked` в `finally`: исключение из action оставляло кнопку disabled навсегда.
+- Admin "Profile server"/"Profile Stop": `profiling` стартует с `false`, кнопка Start видна до ответа `/api/v1/profiling` - читать состояние после этого ответа.
+- `spaceSecurity.handleBroadcast`: объекты публичного space с непустым `members` рассылаются только участникам, а читать их может любой. autoJoin-space `training:space:Trainings` создаёт миграция; уже существующих сотрудников она не добавляет (autoJoin срабатывает только при создании или активации сотрудника). На стенде user1 - owner, но не member, поэтому живых обновлений тренингов (Release, попытки) не получает, видны только после reload. В тесте user1 добавляется в space через REST (`joinTrainingsSpace`).
+- В Members-попапе (`DocPopup`) класс `selection` - подсветка клавиатурой (`ListView`), выбранный элемент отмечен `.check svg`.
+- QMS rage-тесты (`qms-tests/sanity/tests/rage-click/documents.spec.ts`) считают tx на проводе: в History снапшоты "Draft revision" и повторы update не видны. Info-панель на новом документе уже открыта, клик по `button[id$="info"]` её закрывает. Префикс шаблона строится из первых букв слов названия, занятый префикс блокирует создание.
+- Не проверено в QMS: Cancel из `RequestActions` (request-resources) - в Approvals документа его нет, там "Validation workflow". Transfer - space, созданный через `fillDocumentSpaceForm`, не виден ни в Transfer, ни в "New document" (у AJ нет CreateDocument в нём, причина не найдена).

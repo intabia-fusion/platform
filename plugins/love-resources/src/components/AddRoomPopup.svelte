@@ -45,64 +45,78 @@
     }
   ] as const
 
+  let creatingRoom = false
   async function createRoom (value: TypeIds): Promise<void> {
-    const val = items.find((i) => i.id === value)
-    if (val === undefined) return
-    const client = getClient()
-    const floorRooms = $rooms.filter((r) => r.floor === floor)
-    const pos = getFreePosition(floorRooms, 2, 1)
-    const _id = generateId<Room>()
+    if (creatingRoom) return
+    creatingRoom = true
+    try {
+      const val = items.find((i) => i.id === value)
+      if (val === undefined) return
+      const client = getClient()
+      const floorRooms = $rooms.filter((r) => r.floor === floor)
+      const pos = getFreePosition(floorRooms, 2, 1)
+      const _id = generateId<Room>()
 
-    // Get workspace settings for Video rooms
-    let defaultTranscription = false
-    let defaultRecording = false
-    let defaultPrivate = false
-    if (val.type === RoomType.Video && val._class !== love.class.Office) {
-      const officeSettings = await client.findAll<OfficeSettings>(setting.class.OfficeSettings, {})
-      if (officeSettings !== undefined && officeSettings.length > 0) {
-        defaultTranscription = officeSettings[0].defaultStartWithTranscription ?? false
-        defaultRecording = officeSettings[0].defaultStartWithRecording ?? false
-        defaultPrivate = officeSettings[0].defaultStartPrivate ?? false
+      // Get workspace settings for Video rooms
+      let defaultTranscription = false
+      let defaultRecording = false
+      let defaultPrivate = false
+      if (val.type === RoomType.Video && val._class !== love.class.Office) {
+        const officeSettings = await client.findAll<OfficeSettings>(setting.class.OfficeSettings, {})
+        if (officeSettings !== undefined && officeSettings.length > 0) {
+          defaultTranscription = officeSettings[0].defaultStartWithTranscription ?? false
+          defaultRecording = officeSettings[0].defaultStartWithRecording ?? false
+          defaultPrivate = officeSettings[0].defaultStartPrivate ?? false
+        }
       }
+      const data: Data<Room> = {
+        floor,
+        name: val._class === love.class.Office ? '' : await translate(val.label, {}),
+        x: pos.x,
+        y: pos.y,
+        width: 2,
+        height: 1,
+        type: val.type,
+        language: 'en',
+        startWithTranscription: defaultTranscription,
+        startWithRecording: defaultRecording,
+        startPrivate: val._class === love.class.Office ? true : defaultPrivate,
+        description: null
+      }
+      if (val._class === love.class.Office) {
+        ;(data as Data<Office>).person = null
+      }
+      await client.createDoc(val._class, core.space.Workspace, data, _id)
+      dispatch('close')
+    } finally {
+      creatingRoom = false
     }
-    const data: Data<Room> = {
-      floor,
-      name: val._class === love.class.Office ? '' : await translate(val.label, {}),
-      x: pos.x,
-      y: pos.y,
-      width: 2,
-      height: 1,
-      type: val.type,
-      language: 'en',
-      startWithTranscription: defaultTranscription,
-      startWithRecording: defaultRecording,
-      startPrivate: val._class === love.class.Office ? true : defaultPrivate,
-      description: null
-    }
-    if (val._class === love.class.Office) {
-      ;(data as Data<Office>).person = null
-    }
-    await client.createDoc(val._class, core.space.Workspace, data, _id)
-    dispatch('close')
   }
 
+  let creatingFloor = false
   async function createFloor (): Promise<void> {
-    const client = getClient()
-    const name = await translate(love.string.Floor, {})
-    const _id = await client.createDoc(love.class.Floor, core.space.Workspace, { name })
-    selectedFloor.set(_id)
-    dispatch('close')
+    if (creatingFloor) return
+    creatingFloor = true
+    try {
+      const client = getClient()
+      const name = await translate(love.string.Floor, {})
+      const _id = await client.createDoc(love.class.Floor, core.space.Workspace, { name })
+      selectedFloor.set(_id)
+      dispatch('close')
+    } finally {
+      creatingFloor = false
+    }
   }
 </script>
 
 <div class="antiPopup p-4 flex-gap-2">
   {#each items as item}
     <div>
-      <Button label={item.label} on:click={() => createRoom(item.id)} />
+      <Button label={item.label} on:click={() => createRoom(item.id)} loading={creatingRoom} />
     </div>
   {/each}
   <div>
-    <Button label={love.string.Floor} on:click={createFloor} />
+    <Button label={love.string.Floor} on:click={createFloor} loading={creatingFloor} />
   </div>
 </div>
 

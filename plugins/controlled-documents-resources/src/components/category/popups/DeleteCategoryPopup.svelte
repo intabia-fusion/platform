@@ -26,17 +26,23 @@
   export let object: DocumentCategory
 
   let canDelete = false
+  let deleting = false
 
   const client = getClient()
   const dispatch = createEventDispatcher()
 
   const handleDelete = async (): Promise<void> => {
-    if (!canDelete) {
+    if (!canDelete || deleting) {
       return
     }
 
-    await client.remove(object)
-    dispatch('close', object)
+    deleting = true
+    try {
+      await client.remove(object)
+      dispatch('close', object)
+    } finally {
+      deleting = false
+    }
   }
 
   $: void checkDeletePosibility(object)
@@ -66,7 +72,13 @@
 
     <div class="flex justify-end items-center flex-gap-2 p-6">
       <Button kind="regular" label={presentation.string.Cancel} on:click={() => dispatch('close')} />
-      <Button kind="dangerous" disabled={!canDelete} label={presentation.string.Delete} on:click={handleDelete} />
+      <Button
+        kind="dangerous"
+        disabled={!canDelete || deleting}
+        loading={deleting}
+        label={presentation.string.Delete}
+        on:click={handleDelete}
+      />
     </div>
   </div>
 {/if}

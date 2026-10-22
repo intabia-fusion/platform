@@ -148,10 +148,13 @@
   }
   const manager = createFocusManager()
 
+  let creating = false
+
   async function onCreate (): Promise<void> {
-    if (create === undefined) {
+    if (create === undefined || creating) {
       return
     }
+    creating = true
     const handler = async (res: Ref<Doc> | undefined) => {
       if (res != null) {
         // We expect reference to new object.
@@ -164,13 +167,26 @@
     }
     const c = create
     if (c.component !== undefined) {
-      showPopup(c.component, c.props ?? {}, 'top', handler)
-    } else if (c.func !== undefined) {
-      const impl = await getResource(c.func)
-      if (impl !== undefined) {
-        const newObjectId = await impl(c.props)
-        await handler(newObjectId)
+      // showPopup returns at once: stay busy until the create dialog closes.
+      showPopup(c.component, c.props ?? {}, 'top', async (res) => {
+        try {
+          await handler(res)
+        } finally {
+          creating = false
+        }
+      })
+      return
+    }
+    try {
+      if (c.func !== undefined) {
+        const impl = await getResource(c.func)
+        if (impl !== undefined) {
+          const newObjectId = await impl(c.props)
+          await handler(newObjectId)
+        }
       }
+    } finally {
+      creating = false
     }
   }
   function toAny (obj: any): any {
@@ -258,7 +274,8 @@
             showTooltip={{ label: create.label }}
             dataId="btnAdd"
             on:click={onCreate}
-            disabled={readonly || loading}
+            disabled={readonly || loading || creating}
+            loading={creating}
           />
         </div>
       {/if}

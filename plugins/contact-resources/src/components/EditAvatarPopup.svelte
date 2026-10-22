@@ -39,10 +39,17 @@
     e.target.value = null
   }
 
-  async function onCrop () {
-    const res = await cropper.crop()
+  let cropping = false
 
-    dispatch('close', res)
+  async function onCrop () {
+    if (cropping) return
+    cropping = true
+    try {
+      const res = await cropper.crop()
+      dispatch('close', res)
+    } finally {
+      cropping = false
+    }
   }
 
   async function remove () {
@@ -69,7 +76,14 @@
       <Cropper bind:this={cropper} bind:ready image={file} {lessCrop} />
     </div>
     <div class="footer">
-      <Button label={presentation.string.Save} kind="primary" size="large" disabled={!ready} on:click={onCrop} />
+      <Button
+        label={presentation.string.Save}
+        kind="primary"
+        size="large"
+        disabled={!ready || cropping}
+        loading={cropping}
+        on:click={onCrop}
+      />
       <div class="mx-3 clear-mins">
         <Button label={presentation.string.Change} size="large" on:click={selectAnother} />
       </div>

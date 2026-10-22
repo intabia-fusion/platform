@@ -63,8 +63,11 @@
     on:click={async (event) => {
       if (action !== null) {
         isBeingInvoked = true
-        await invokeAction(object, event, action)
-        isBeingInvoked = false
+        try {
+          await invokeAction(object, event, action)
+        } finally {
+          isBeingInvoked = false
+        }
       }
     }}
   />

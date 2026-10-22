@@ -79,62 +79,69 @@
     return title?.trim().length === 0 && participants.length === 0
   }
 
+  let saving = false
+
   async function saveEvent () {
-    if (readOnly) {
+    if (readOnly || saving) {
       return
     }
-    const update: DocumentUpdate<Event> = {}
-    if (object.title !== title) {
-      update.title = title.trim()
-    }
-    if (object.description !== description) {
-      update.description = description.trim()
-    }
-    if (object.visibility !== visibility) {
-      update.visibility = visibility
-    }
-    if (object.calendar !== _calendar) {
-      update.calendar = _calendar
-    }
-    if (object.location !== location) {
-      update.location = location
-    }
-    if (object.timeZone !== timeZone) {
-      update.timeZone = timeZone
-    }
-    if (allDay !== object.allDay) {
-      update.date = allDay ? saveUTC(startDate) : startDate
-      update.dueDate = allDay ? saveUTC(dueDate) : dueDate
-      update.allDay = allDay
-    } else {
-      if (object.date !== startDate) {
+    saving = true
+    try {
+      const update: DocumentUpdate<Event> = {}
+      if (object.title !== title) {
+        update.title = title.trim()
+      }
+      if (object.description !== description) {
+        update.description = description.trim()
+      }
+      if (object.visibility !== visibility) {
+        update.visibility = visibility
+      }
+      if (object.calendar !== _calendar) {
+        update.calendar = _calendar
+      }
+      if (object.location !== location) {
+        update.location = location
+      }
+      if (object.timeZone !== timeZone) {
+        update.timeZone = timeZone
+      }
+      if (allDay !== object.allDay) {
         update.date = allDay ? saveUTC(startDate) : startDate
-      }
-      if (object.dueDate !== dueDate) {
         update.dueDate = allDay ? saveUTC(dueDate) : dueDate
-      }
-    }
-    if (!deepEqual(object.participants, participants)) {
-      update.participants = participants
-    }
-    if (!deepEqual(object.externalParticipants, externalParticipants)) {
-      update.externalParticipants = externalParticipants
-    }
-    if (!deepEqual(object.reminders, reminders)) {
-      update.reminders = reminders
-    }
-    if (rules !== (object as ReccuringEvent).rules) {
-      ;(update as DocumentUpdate<ReccuringEvent>).rules = rules
-    }
-
-    if (Object.keys(update).length > 0) {
-      if (object._class === calendar.class.ReccuringInstance) {
-        await updateReccuringInstance(update, object as ReccuringInstance)
+        update.allDay = allDay
       } else {
-        await client.update(object, update)
+        if (object.date !== startDate) {
+          update.date = allDay ? saveUTC(startDate) : startDate
+        }
+        if (object.dueDate !== dueDate) {
+          update.dueDate = allDay ? saveUTC(dueDate) : dueDate
+        }
       }
+      if (!deepEqual(object.participants, participants)) {
+        update.participants = participants
+      }
+      if (!deepEqual(object.externalParticipants, externalParticipants)) {
+        update.externalParticipants = externalParticipants
+      }
+      if (!deepEqual(object.reminders, reminders)) {
+        update.reminders = reminders
+      }
+      if (rules !== (object as ReccuringEvent).rules) {
+        ;(update as DocumentUpdate<ReccuringEvent>).rules = rules
+      }
+
+      if (Object.keys(update).length > 0) {
+        if (object._class === calendar.class.ReccuringInstance) {
+          await updateReccuringInstance(update, object as ReccuringInstance)
+        } else {
+          await client.update(object, update)
+        }
+      }
+      dispatch('close')
+    } finally {
+      saving = false
     }
-    dispatch('close')
   }
 
   async function allDayChangeHandler () {
@@ -246,6 +253,7 @@
       label={presentation.string.Save}
       focusIndex={10011}
       disabled={readOnly}
+      loading={saving}
       on:click={saveEvent}
     />
   </div>

@@ -56,6 +56,7 @@
 
     if (readonly && !wasReadonly && popupResult !== undefined) {
       popupResult.close()
+      popupResult = undefined
     }
   }
 
@@ -72,6 +73,7 @@
   const dispatch = createEventDispatcher()
 
   async function addPerson (evt: Event): Promise<void> {
+    if (popupResult !== undefined) return
     const popupProps: any = {
       _class,
       label,
@@ -97,11 +99,19 @@
       popupProps.sort = sort
     }
 
-    popupResult = showPopup(UsersPopup, popupProps, evt.target as HTMLElement, undefined, (result) => {
-      if (result == null || readonly) return
-      items = filter(result)
-      dispatch('update', items)
-    })
+    popupResult = showPopup(
+      UsersPopup,
+      popupProps,
+      evt.target as HTMLElement,
+      () => {
+        popupResult = undefined
+      },
+      (result) => {
+        if (result == null || readonly) return
+        items = filter(result)
+        dispatch('update', items)
+      }
+    )
   }
 </script>
 
@@ -114,6 +124,7 @@
   {size}
   {justify}
   showTooltip={label ? { label, direction: labelDirection } : undefined}
+  loading={popupResult !== undefined}
   on:click={addPerson}
 >
   <svelte:fragment slot="content">

@@ -52,8 +52,15 @@
     await client.diffUpdate(object, { name: newName })
   }
 
+  let togglingPrivate = false
   async function togglePrivate (): Promise<void> {
-    await client.diffUpdate(object, { private: !object.private })
+    if (togglingPrivate) return
+    togglingPrivate = true
+    try {
+      await client.diffUpdate(object, { private: !object.private })
+    } finally {
+      togglingPrivate = false
+    }
   }
 
   // Check if current user is owner of the meeting
@@ -71,6 +78,17 @@
   async function connect (): Promise<void> {
     if ($connectingToMeeting) return
     await joinMeeting(object)
+  }
+
+  let leavingRoom = false
+  async function handleLeaveRoom (): Promise<void> {
+    if (leavingRoom) return
+    leavingRoom = true
+    try {
+      await leaveMeeting()
+    } finally {
+      leavingRoom = false
+    }
   }
 
   $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
@@ -131,6 +149,7 @@
           kind={object.private ? 'secondary' : 'primary'}
           on:click={togglePrivate}
           data-id="meeting-toggle-private"
+          loading={togglingPrivate}
         />
       {/if}
       {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
@@ -157,9 +176,8 @@
           label={love.string.LeaveRoom}
           size="large"
           kind="negative"
-          on:click={() => {
-            void leaveMeeting()
-          }}
+          on:click={handleLeaveRoom}
+          loading={leavingRoom}
           data-id="meeting-leave"
         />
       {/if}

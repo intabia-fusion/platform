@@ -76,11 +76,18 @@
       }
     )
   }
+  let resolving = false
   async function changeResolution (): Promise<void> {
-    if (value.isResolved) {
-      await getClient().update(value, { isResolved: false, resolvedBy: null })
-    } else {
-      await getClient().update(value, { isResolved: true, resolvedBy: getCurrentAccount().primarySocialId })
+    if (resolving) return
+    resolving = true
+    try {
+      if (value.isResolved) {
+        await getClient().update(value, { isResolved: false, resolvedBy: null })
+      } else {
+        await getClient().update(value, { isResolved: true, resolvedBy: getCurrentAccount().primarySocialId })
+      }
+    } finally {
+      resolving = false
     }
   }
 
@@ -147,6 +154,7 @@
                 label={value.isResolved
                   ? getEmbeddedLabel('Unresolve conversation')
                   : getEmbeddedLabel('Resolve conversation')}
+                loading={resolving}
                 on:click={changeResolution}
               />
             {/if}

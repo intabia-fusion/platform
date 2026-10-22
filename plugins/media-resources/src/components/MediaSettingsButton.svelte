@@ -28,6 +28,7 @@
   let pressed = false
 
   async function openPopup (): Promise<void> {
+    if (pressed) return
     pressed = true
     showPopup(MediaPopup, {}, anchor, () => {
       pressed = false
@@ -36,7 +37,7 @@
 </script>
 
 {#if active}
-  <button class="options-button" class:pressed {disabled} on:click={openPopup}>
+  <button class="options-button" class:pressed disabled={disabled || pressed} on:click={openPopup}>
     <IconMoreH size="small" />
   </button>
 {:else}

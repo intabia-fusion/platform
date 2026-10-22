@@ -41,6 +41,9 @@
   // 'starting' while getUserMedia/permission resolves, so the user waits for the go-ahead instead
   // of talking into a mic that isn't capturing yet (losing the first words).
   let phase: Phase = 'starting'
+  // Guards persist(): recorder.stop() is async, so a second click before phase flips to
+  // 'saving' would stop+upload+attach the recording twice.
+  let processing = false
   let elapsed = 0
   let timer: any
   let raf: number | undefined
@@ -85,54 +88,60 @@
 
   // Stop the mic, upload the blob and create the AudioTranscribe doc. Returns undefined on failure.
   async function persist (): Promise<AudioTranscribe | undefined> {
-    stopTimers()
-    let rec
+    if (processing) return undefined
+    processing = true
     try {
-      rec = await recorder.stop()
-    } catch {
-      dispatch('close')
-      return undefined
+      stopTimers()
+      let rec
+      try {
+        rec = await recorder.stop()
+      } catch {
+        dispatch('close')
+        return undefined
+      }
+      phase = 'saving'
+      const id = generateId<AudioTranscribe>()
+      const ext = rec.type.includes('ogg') ? 'ogg' : 'webm'
+      const author = slugify(await getCurrentEmployeeName(), { lower: false }) || 'voice'
+      const name = `${author}-${Date.now()}.${ext}`
+      const file = new File([rec.blob], name, { type: rec.type })
+      const { uuid, metadata } = await uploadFile(file)
+      const data = {
+        name,
+        file: uuid,
+        type: rec.type,
+        size: file.size,
+        lastModified: Date.now(),
+        metadata,
+        state: 'pending' as const,
+        durationSec: Math.round(rec.durationSec)
+      }
+      await client.addCollection<Doc, AudioTranscribe>(
+        aiBot.class.AudioTranscribe,
+        space,
+        objectId,
+        objectClass,
+        'attachments',
+        data,
+        id
+      )
+      const doc = {
+        _id: id,
+        _class: aiBot.class.AudioTranscribe,
+        space,
+        attachedTo: objectId,
+        attachedToClass: objectClass,
+        collection: 'attachments',
+        modifiedOn: Date.now(),
+        modifiedBy: getCurrentAccount().primarySocialId,
+        ...data
+      } as unknown as AudioTranscribe
+      // Attach right away (shows as 'transcribing…' in the input) instead of blocking on the worker.
+      dispatch('audio', doc)
+      return doc
+    } finally {
+      processing = false
     }
-    phase = 'saving'
-    const id = generateId<AudioTranscribe>()
-    const ext = rec.type.includes('ogg') ? 'ogg' : 'webm'
-    const author = slugify(await getCurrentEmployeeName(), { lower: false }) || 'voice'
-    const name = `${author}-${Date.now()}.${ext}`
-    const file = new File([rec.blob], name, { type: rec.type })
-    const { uuid, metadata } = await uploadFile(file)
-    const data = {
-      name,
-      file: uuid,
-      type: rec.type,
-      size: file.size,
-      lastModified: Date.now(),
-      metadata,
-      state: 'pending' as const,
-      durationSec: Math.round(rec.durationSec)
-    }
-    await client.addCollection<Doc, AudioTranscribe>(
-      aiBot.class.AudioTranscribe,
-      space,
-      objectId,
-      objectClass,
-      'attachments',
-      data,
-      id
-    )
-    const doc = {
-      _id: id,
-      _class: aiBot.class.AudioTranscribe,
-      space,
-      attachedTo: objectId,
-      attachedToClass: objectClass,
-      collection: 'attachments',
-      modifiedOn: Date.now(),
-      modifiedBy: getCurrentAccount().primarySocialId,
-      ...data
-    } as unknown as AudioTranscribe
-    // Attach right away (shows as 'transcribing…' in the input) instead of blocking on the worker.
-    dispatch('audio', doc)
-    return doc
   }
 
   async function onAttach (): Promise<void> {
@@ -196,6 +205,7 @@
       size="small"
       kind="secondary"
       tooltip={{ label: chunter.string.VoiceAttach }}
+      loading={processing}
       on:click={onAttach}
     />
     <IconButton
@@ -203,6 +213,7 @@
       size="small"
       kind="primary"
       tooltip={{ label: chunter.string.VoiceSend }}
+      loading={processing}
       on:click={onSend}
     />
   {:else}

@@ -26,7 +26,11 @@
 
   const client = getClient()
 
+  // One flag for both: approve and reject on the same request must not run together.
+  let processing = false
+
   async function changeApprovalRequestState (ev: MouseEvent, isRejection: boolean): Promise<void> {
+    if (processing) return
     showPopup(SignatureDialog, { isRejection }, eventToHTMLElement(ev), async (res) => {
       if (!res) return
 
@@ -36,11 +40,16 @@
         return
       }
 
-      await client.update(todo, {
-        doneOn: new Date().getTime(),
-        approved: !isRejection,
-        reason: isRejection ? rejectionNote : undefined
-      })
+      processing = true
+      try {
+        await client.update(todo, {
+          doneOn: new Date().getTime(),
+          approved: !isRejection,
+          reason: isRejection ? rejectionNote : undefined
+        })
+      } finally {
+        processing = false
+      }
     })
   }
 </script>
@@ -48,6 +57,12 @@
 <Button
   label={todo.actionType === 'review' ? process.string.Review : process.string.Approve}
   kind="positive"
+  loading={processing}
   on:click={(ev) => changeApprovalRequestState(ev, false)}
 />
-<Button label={process.string.Reject} kind="negative" on:click={(ev) => changeApprovalRequestState(ev, true)} />
+<Button
+  label={process.string.Reject}
+  kind="negative"
+  loading={processing}
+  on:click={(ev) => changeApprovalRequestState(ev, true)}
+/>
