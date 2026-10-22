@@ -511,8 +511,10 @@
     }
   }
 
-  $: if (_space !== undefined) {
-    void updateCurrentProjectPref(_space)
+  // Not raw `_space`: a draft or a restored location can hold a project absent from this workspace.
+  $: currentProjectId = currentProject?._id
+  $: if (currentProjectId !== undefined) {
+    void updateCurrentProjectPref(currentProjectId)
   }
 
   /** What the last successful create produced; the dropdown actions work on it. */
