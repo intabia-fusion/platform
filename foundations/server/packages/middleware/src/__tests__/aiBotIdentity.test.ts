@@ -28,7 +28,7 @@ import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcenginee
 import { IdentityMiddleware, isAiBotAccount } from '../identity'
 import { PluginConfigurationMiddleware } from '../pluginConfig'
 
-const anyContext = {} as unknown as PipelineContext
+const anyContext = { hierarchy: { isDerived: () => false } } as unknown as PipelineContext
 const VICTIM = 'victim-social' as PersonId
 const VICTIM_ACCOUNT = 'victim-account' as AccountUuid
 const CALLER = 'caller-account' as AccountUuid

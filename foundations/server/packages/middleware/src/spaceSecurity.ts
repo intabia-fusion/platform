@@ -60,7 +60,7 @@ import {
   type ServerFindOptions,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import platform, { PlatformError, Severity, Status, ForbiddenKind, forbiddenError } from '@hcengineering/platform'
+import { type PlatformError, ForbiddenKind } from '@hcengineering/platform'
 import contact, { type Person, type SocialIdentityRef } from '@hcengineering/contact'
 import { isOwner, isSystem } from './utils'
 
@@ -685,20 +685,26 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const h = this.context.hierarchy
     if (!h.isDerived(tx.objectClass, publicLinkClass) || derived || ctx.contextData.isTriggerCtx === true) return
     if (isSystem(ctx.contextData.account, ctx)) return
-    const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    const forbidden = (message: string): PlatformError => this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, message, tx)
     if (tx._class === core.class.TxUpdateDoc) {
       const ops = (tx as TxUpdateDoc<Doc>).operations as Record<string, any>
-      if (['attachedTo', 'attachedToClass', 'space'].some((key) => touchesField(ops, key))) throw forbidden
+      if (['attachedTo', 'attachedToClass', 'space'].some((key) => touchesField(ops, key))) {
+        throw forbidden('Only the server can re-point or move a public link')
+      }
       return
     }
     if (tx._class !== core.class.TxCreateDoc) return
     const { attachedTo, attachedToClass } = (tx as TxCreateDoc<Doc>).attributes as any
-    if (attachedTo == null || attachedToClass == null || !h.hasClass(attachedToClass)) throw forbidden
+    if (attachedTo == null || attachedToClass == null || !h.hasClass(attachedToClass)) {
+      throw forbidden('A public link must name an existing document')
+    }
     const doc = (
       await this.next?.findAll(ctx, attachedToClass as Ref<Class<Doc>>, { _id: attachedTo }, { limit: 1 })
     )?.[0]
-    if (doc === undefined) throw forbidden
-    if (tx.objectSpace !== this.getPublicLinkSpace(doc)) throw forbidden
+    if (doc === undefined) throw forbidden('A public link can only be created for a readable document')
+    if (tx.objectSpace !== this.getPublicLinkSpace(doc)) {
+      throw forbidden('A public link must be created in the space of its document')
+    }
   }
 
   // Same rule as getPublicLinkSpace in the guest plugin, which this package cannot import.

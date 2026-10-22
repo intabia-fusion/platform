@@ -33,7 +33,7 @@ import core, {
   TxProcessor,
   type TxUpdateDoc
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import platform, { ForbiddenKind, forbiddenError, PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   SessionDataImpl,
@@ -54,8 +54,6 @@ import task, {
 } from '@hcengineering/task'
 import { checkMergeParams, checkUsageParams, countStatusUsage, mergeStatuses } from './statusMergeOps'
 
-const forbidden = (): PlatformError<any> => new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-
 const badRequest = (message: string): PlatformError<any> =>
   new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, { message }))
 
@@ -68,9 +66,13 @@ function assertCanWrite (data: SessionData): void {
   // As ApiKeyPermissionsMiddleware: the merge is raw CUD and reaches the model space
   const key = data.apiKey
   if (key !== undefined && (!key.canWrite || (key.opsOnly && data.opsApi !== true) || key.spaces.length > 0)) {
-    throw forbidden()
+    throw forbiddenError(ForbiddenKind.ApiKey, 'The API key may not merge statuses', { account: data.account.uuid })
   }
-  if (data.seatReadOnly === true) throw forbidden()
+  if (data.seatReadOnly === true) {
+    throw forbiddenError(ForbiddenKind.SeatLimit, 'No seat on the plan: the account is read-only', {
+      account: data.account.uuid
+    })
+  }
 }
 
 interface SystemContext {
@@ -93,7 +95,11 @@ export class TaskMiddleware extends BaseMiddleware {
     }
 
     const data = (ctx as MeasureContext<SessionData>).contextData
-    if (!hasAccountRole(data.account, AccountRole.Maintainer)) throw forbidden()
+    if (!hasAccountRole(data.account, AccountRole.Maintainer)) {
+      throw forbiddenError(ForbiddenKind.WorkspaceRole, 'Only Maintainer or higher can merge or count statuses', {
+        account: data.account.uuid
+      })
+    }
 
     if (domain === statusUsageDomain) {
       const reason = checkUsageParams(params)
