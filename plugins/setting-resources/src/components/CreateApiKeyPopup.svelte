@@ -61,7 +61,7 @@
   let pickableSpaces: Space[] = []
   const spacesQuery = createQuery()
   spacesQuery.query(core.class.Space, {}, (res) => {
-    pickableSpaces = res.filter((s) => isApiKeyPickableSpace(hierarchy, s))
+    pickableSpaces = res.filter((s) => isApiKeyPickableSpace(hierarchy, s) && !s.private)
   })
   $: spaceNames = new Map<Ref<Space>, string>(pickableSpaces.map((s) => [s._id, s.name]))
 
@@ -112,6 +112,8 @@
   }
 
   function pickSpaces (event: MouseEvent): void {
+    console.log(spaces, pickableSpaces)
+
     // Selection commits via the popup's 'update' event (live, like RoleEditor/ArrayEditor's ObjectBoxPopup usage).
     showPopup(
       ApiKeySpacesPopup,

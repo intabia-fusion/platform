@@ -24,7 +24,7 @@
   const hierarchy = getClient().getHierarchy()
 
   function isPickable (doc: Doc): boolean {
-    return isApiKeyPickableSpace(hierarchy, doc)
+    return isApiKeyPickableSpace(hierarchy, doc) && !(doc as Space).private
   }
 </script>
 
