@@ -90,13 +90,7 @@ describe('PlatformStorageAdapter.saveDocumentToPlatform', () => {
     client: any,
     getMarkup: { prev: () => Record<string, string>, curr: () => Record<string, string> }
   ): Promise<Record<string, string>> =>
-    await new PlatformStorageAdapter({} as any).saveDocumentToPlatform(
-      mockCtx,
-      client,
-      context,
-      'doc-name',
-      getMarkup
-    )
+    await new PlatformStorageAdapter({} as any).saveDocumentToPlatform(mockCtx, client, context, 'doc-name', getMarkup)
 
   beforeEach(() => {
     jest.clearAllMocks()
