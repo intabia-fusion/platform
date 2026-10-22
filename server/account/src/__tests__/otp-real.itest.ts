@@ -78,7 +78,7 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     })
   }
   const bump = async (purpose: 'login' | 'operation', guess: string, decayMs = day): Promise<void> => {
-    await accountDb.bumpOtpAttempts(social._id, purpose, guess, OTP_MAX_ATTEMPTS, decayMs)
+    await accountDb.bumpOtpAttempts(social._id, purpose, guess, OTP_MAX_ATTEMPTS, { decayMs, lockMs: 60 * 60 * 1000 })
   }
   const reread = async (row: SocialId = social): Promise<SocialId> =>
     (await accountDb.socialId.findOne({ _id: row._id })) as SocialId
@@ -213,6 +213,19 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
 
       await new Promise((resolve) => setTimeout(resolve, 700))
       await bump('login', '999999', 500)
+
+      expect((await reread()).loginOtpMisses).toBe(1)
+    })
+
+    it('after the lock is over one wrong guess starts the streak at 1, not past the cap', async () => {
+      await insertCode('login', '111111')
+      for (let i = 0; i < OTP_MAX_ATTEMPTS; i++) await bump('login', '999999')
+      expect((await reread()).loginOtpMisses).toBe(OTP_MAX_ATTEMPTS)
+      await accountDb.otp.deleteMany({ socialId: social._id })
+      await insertCode('login', '222222')
+      await letWaitPass()
+
+      await bump('login', '999999')
 
       expect((await reread()).loginOtpMisses).toBe(1)
     })
@@ -354,7 +367,10 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
       for (let round = 0; round < 15; round++) {
         await Promise.all([
           ...Array.from({ length: 6 }, async () => {
-            await accountDb.bumpOtpAttempts(social._id, 'login', '999999', OTP_MAX_ATTEMPTS, day)
+            await accountDb.bumpOtpAttempts(social._id, 'login', '999999', OTP_MAX_ATTEMPTS, {
+              decayMs: day,
+              lockMs: 60 * 60 * 1000
+            })
           }),
           ...Array.from({ length: 6 }, async () => {
             await sendOtp(ctx, accountDb, null, social).catch((err) => {

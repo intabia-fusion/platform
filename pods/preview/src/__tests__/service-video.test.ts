@@ -262,7 +262,7 @@ describe('PreviewService with video', () => {
       await expect(service.metadata(ctx, WS, 'bad')).rejects.toThrow('moov atom')
 
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(1)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(readdirSync(tempDir.path)).toEqual([])
     })
 
@@ -316,13 +316,13 @@ describe('PreviewService with video', () => {
       expect(error).toBeInstanceOf(FfmpegError)
       expect(error.message).toContain('Output file is empty')
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
 
       await expect(service.thumbnail(ctx, WS, 'empty', { ...PARAMS, width: 128 })).rejects.toBeInstanceOf(FfmpegError)
       await expect(service.metadata(ctx, WS, 'empty')).rejects.toBeInstanceOf(FfmpegError)
 
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(readdirSync(tempDir.path)).toEqual([])
     })
   })
@@ -564,11 +564,15 @@ describe('PreviewService with video', () => {
       await settle()
       expect(runs).toHaveLength(1)
 
-      runs[0].finish(1, 'Invalid data found when processing input')
+      // every frame position of the failed video is tried before its slot is freed
+      for (let i = 0; i < 4; i++) {
+        await until(() => runs.length === i + 1)
+        runs[i].finish(1, 'Invalid data found when processing input')
+      }
       await expect(failed).rejects.toThrow('ffmpeg exited with code 1')
-      await until(() => runs.length === 2)
+      await until(() => runs.length === 5)
 
-      runs[1].finish(0)
+      runs[4].finish(0)
       await expect(next).resolves.toBeDefined()
     })
   })

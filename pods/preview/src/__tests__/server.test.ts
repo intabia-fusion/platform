@@ -171,7 +171,8 @@ describe('preview routes', () => {
         expect(response.status).toBe(500)
       }
 
-      expect(spawnMock).toHaveBeenCalledTimes(1)
+      // one request tries every frame position, the refusal turns the next ones away
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(handleError).not.toHaveBeenCalled()
     })
   })

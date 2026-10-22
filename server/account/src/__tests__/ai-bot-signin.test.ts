@@ -82,7 +82,7 @@ const ctx = { error: jest.fn(), info: jest.fn(), warn: jest.fn() } as unknown as
 const db = {
   account: { findOne: jest.fn(), update: jest.fn() },
   person: { findOne: jest.fn(), insertOne: jest.fn(), update: jest.fn() },
-  socialId: { findOne: jest.fn(), insertOne: jest.fn(), update: jest.fn() },
+  socialId: { findOne: jest.fn(), find: jest.fn().mockResolvedValue([]), insertOne: jest.fn(), update: jest.fn() },
   otp: { deleteMany: jest.fn() },
   mailbox: { findOne: jest.fn(), find: jest.fn(), insertOne: jest.fn() },
   mailboxSecret: { insertOne: jest.fn() },

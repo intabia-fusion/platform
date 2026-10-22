@@ -24,7 +24,7 @@
     "AccountAlreadyConfirmed": "Účet již byl potvrzen",
     "WorkspaceAlreadyExists": "Pracovní prostor již existuje",
     "InvalidOtp": "Neplatný kód",
-    "TooManyOtpAttempts": "Příliš mnoho neúspěšných pokusů. Zkuste to znovu za {minutes, plural, one {# minutu} few {# minuty} other {# minut}}.",
+    "TooManyOtpAttempts": "Příliš mnoho neúspěšných pokusů. Zkuste to znovu za {minutes, plural, one {# minutu} few {# minuty} other {# minut}}. Pokud pro tuto adresu existuje účet, poslali jsme na ni e-mail s odkazem pro přihlášení.",
     "PasswordLoginLocked": "Přihlášení heslem je zablokováno z důvodu příliš mnoha neúspěšných pokusů. Pomocí metody přihlášení OTP odemkněte svůj účet.",
     "AccountBlocked": "Váš účet byl zablokován administrátorem.",
     "WorkspaceReadOnly": "Tento pracovní prostor je nyní jen pro čtení.",

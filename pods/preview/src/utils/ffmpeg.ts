@@ -23,8 +23,14 @@ import { ToolError } from '../error'
 const INPUT_FORMATS = 'mov,mp4,matroska,webm,avi,mpeg,mpegts,ogg,flv,asf'
 // the reason is at the end of the output, and a corrupt stream can print without end
 const MAX_OUTPUT = 4096
-// a clip shorter than the seek time has no frame there: ffmpeg exits 0 and writes nothing
-const FIRST_FRAME = '00:00:00'
+// tried in turn: a short clip has no frame at 1 s (exit 0, no file), a seek into the zeroed middle
+// of a head-and-tail copy fails to decode; the 5th frame lies in the head
+const FRAME_POSITIONS: string[][] = [
+  ['-ss', '00:00:01'],
+  ['-ss', '00:00:00.5'],
+  ['-vf', 'select=gte(n\\,4)'],
+  ['-ss', '00:00:00']
+]
 
 // ffmpeg itself failed on the blob, so it fails the same way again
 export class FfmpegError extends ToolError {
@@ -34,21 +40,24 @@ export class FfmpegError extends ToolError {
   }
 }
 
-export async function extractThumbnail (
-  file: string,
-  path: string,
-  timeout: number,
-  timestamp = '00:00:01'
-): Promise<void> {
-  await runFfmpeg(file, path, timeout, timestamp)
-  if (await hasFrame(path)) {
-    return
+export async function extractThumbnail (file: string, path: string, timeout: number): Promise<void> {
+  let failure = new FfmpegError('ffmpeg ran at no frame position')
+  for (const position of FRAME_POSITIONS) {
+    try {
+      const output = await runFfmpeg(file, path, timeout, position)
+      if (await hasFrame(path)) {
+        return
+      }
+      failure = new FfmpegError(`ffmpeg wrote no frame: ${output}`)
+    } catch (err: any) {
+      // a timeout, a signal or a spawn failure would cost the same on the next position
+      if (!(err instanceof FfmpegError) || err.retryAfter !== undefined) {
+        throw err
+      }
+      failure = err
+    }
   }
-
-  const output = await runFfmpeg(file, path, timeout, FIRST_FRAME)
-  if (!(await hasFrame(path))) {
-    throw new FfmpegError(`ffmpeg wrote no frame: ${output}`)
-  }
+  throw failure
 }
 
 async function hasFrame (path: string): Promise<boolean> {
@@ -63,7 +72,7 @@ async function hasFrame (path: string): Promise<boolean> {
 }
 
 // resolves with the end of the ffmpeg output
-async function runFfmpeg (file: string, path: string, timeout: number, timestamp: string): Promise<string> {
+async function runFfmpeg (file: string, path: string, timeout: number, position: string[]): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const args = [
       // the blob is untrusted: anything it references may only be a local file
@@ -73,8 +82,7 @@ async function runFfmpeg (file: string, path: string, timeout: number, timestamp
       INPUT_FORMATS,
       '-i',
       file,
-      '-ss',
-      timestamp,
+      ...position,
       '-frames:v',
       '1',
       '-q:v',

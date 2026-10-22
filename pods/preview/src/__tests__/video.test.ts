@@ -54,8 +54,10 @@ function fakeFfmpeg (
   return proc
 }
 
-function seekOf (args: string[]): string {
-  return args[args.indexOf('-ss') + 1]
+// the frame position ffmpeg was given: the -ss value or the -vf value
+function positionOf (args: string[]): string {
+  const flag = args.includes('-ss') ? '-ss' : '-vf'
+  return args[args.indexOf(flag) + 1]
 }
 
 interface FakeProcess extends Omit<ChildProcess, 'kill'> {
@@ -135,13 +137,41 @@ describe('extractThumbnail', () => {
     }
   })
 
-  it('rejects with the ffmpeg output when ffmpeg fails, and does not try again', async () => {
-    spawnMock.mockImplementation((_cmd: string, args: string[]) => fakeFfmpeg(args, 183, 'moov atom not found'))
-
-    await expect(extractThumbnail('/tmp/preview/blob', out, TIMEOUT)).rejects.toThrow(
-      'ffmpeg exited with code 183: moov atom not found'
+  it('rejects with the ffmpeg output of the last run when ffmpeg fails at every position', async () => {
+    spawnMock.mockImplementation((_cmd: string, args: string[]) =>
+      fakeFfmpeg(args, 183, `moov atom not found at ${positionOf(args)}`)
     )
 
+    const error = await extractThumbnail('/tmp/preview/blob', out, TIMEOUT).catch((err) => err)
+
+    expect(error).toBeInstanceOf(FfmpegError)
+    expect(error.message).toBe('ffmpeg exited with code 183: moov atom not found at 00:00:00')
+    expect(spawnMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('takes the 5th frame when ffmpeg fails to decode at 1 s and 0.5 s', async () => {
+    // a zeroed middle of a big video: the seek lands in it
+    spawnMock.mockImplementation((_cmd: string, args: string[]) =>
+      positionOf(args) === 'select=gte(n\\,4)' ? fakeFfmpeg(args, 0) : fakeFfmpeg(args, 69, 'decode error')
+    )
+
+    await extractThumbnail('/tmp/preview/blob', out, TIMEOUT)
+
+    expect(spawnMock.mock.calls.map(([, args]) => positionOf(args))).toEqual([
+      '00:00:01',
+      '00:00:00.5',
+      'select=gte(n\\,4)'
+    ])
+    expect(readFileSync(out, 'utf8')).toBe('frame')
+  })
+
+  it('throws a timeout at once, without trying other positions', async () => {
+    spawnMock.mockImplementation(() => hungFfmpeg())
+
+    const error = await extractThumbnail('/tmp/preview/blob', out, 50).catch((err) => err)
+
+    expect(error).toBeInstanceOf(FfmpegError)
+    expect(error.retryAfter).toBe(50)
     expect(spawnMock).toHaveBeenCalledTimes(1)
   })
 
@@ -203,24 +233,29 @@ describe('extractThumbnail', () => {
     it('takes the first frame when there is none at 1 s', async () => {
       // a clip shorter than 1 s: ffmpeg exits 0 and writes nothing
       spawnMock.mockImplementation((_cmd: string, args: string[]) =>
-        fakeFfmpeg(args, 0, '', seekOf(args) === '00:00:00' ? 'frame' : null)
+        fakeFfmpeg(args, 0, '', positionOf(args) === '00:00:00' ? 'frame' : null)
       )
 
       await extractThumbnail('/tmp/preview/blob', out, TIMEOUT)
 
-      expect(spawnMock).toHaveBeenCalledTimes(2)
-      expect(spawnMock.mock.calls.map(([, args]) => seekOf(args))).toEqual(['00:00:01', '00:00:00'])
+      expect(spawnMock).toHaveBeenCalledTimes(4)
+      expect(spawnMock.mock.calls.map(([, args]) => positionOf(args))).toEqual([
+        '00:00:01',
+        '00:00:00.5',
+        'select=gte(n\\,4)',
+        '00:00:00'
+      ])
       expect(readFileSync(out, 'utf8')).toBe('frame')
     })
 
     it('counts an empty output file as no frame', async () => {
       spawnMock.mockImplementation((_cmd: string, args: string[]) =>
-        fakeFfmpeg(args, 0, '', seekOf(args) === '00:00:00' ? 'frame' : '')
+        fakeFfmpeg(args, 0, '', positionOf(args) === '00:00:00' ? 'frame' : '')
       )
 
       await extractThumbnail('/tmp/preview/blob', out, TIMEOUT)
 
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(statSync(out).size).toBeGreaterThan(0)
     })
 
@@ -234,10 +269,10 @@ describe('extractThumbnail', () => {
       expect(error).toBeInstanceOf(FfmpegError)
       expect(error.message).toContain('no frame')
       expect(error.message).toContain('Output file is empty')
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
     })
 
-    it('gives the second run the timeout as well', async () => {
+    it('gives the later runs the timeout as well', async () => {
       const proc = hungFfmpeg()
       spawnMock
         .mockImplementationOnce((_cmd: string, args: string[]) => fakeFfmpeg(args, 0, '', null))
@@ -358,13 +393,13 @@ describe('VideoProvider', () => {
 
   it('gives a clip shorter than 1 s a preview from its first frame, with one copy of the blob', async () => {
     spawnMock.mockImplementation((_cmd: string, args: string[]) =>
-      fakeFfmpeg(args, 0, '', seekOf(args) === '00:00:00' ? 'frame' : null)
+      fakeFfmpeg(args, 0, '', positionOf(args) === '00:00:00' ? 'frame' : null)
     )
 
     const result = await provider.image(ctx, WS, 'short.mp4', 'video/mp4', PLAYLIST.length)
 
     expect(readFileSync(result.filePath, 'utf8')).toBe('frame')
-    expect(spawnMock).toHaveBeenCalledTimes(2)
+    expect(spawnMock).toHaveBeenCalledTimes(4)
     expect(get).toHaveBeenCalledTimes(1)
     expect(readdirSync(tempDir.path)).toEqual([basename(result.filePath)])
   })

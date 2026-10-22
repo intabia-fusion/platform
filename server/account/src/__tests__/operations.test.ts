@@ -128,7 +128,8 @@ describe('account operations', () => {
       findOne: jest.fn()
     },
     socialId: {
-      findOne: jest.fn()
+      findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([])
     },
     generatePersonUuid: jest.fn().mockResolvedValue('generated-person-uuid')
   } as unknown as AccountDB
@@ -491,7 +492,7 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
-        find: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         insertOne: jest.fn(),
         update: jest.fn()
       },
@@ -1356,9 +1357,10 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
-        find: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         update: jest.fn()
       },
+      otp: { deleteMany: jest.fn() },
       shortLink: {
         deleteMany: jest.fn()
       }
@@ -1399,6 +1401,7 @@ describe('account operations', () => {
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
+        ;(mockDb.socialId.find as jest.Mock).mockResolvedValueOnce([mockSocialId])
 
         const result = await login(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
@@ -1416,6 +1419,7 @@ describe('account operations', () => {
           { personUuid: mockAccountId, loginOtpMisses: { $gt: 0 } },
           { loginOtpMisses: 0, loginOtpMissedOn: 0 }
         )
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: 'social-id', purpose: 'login-link' })
       })
 
       test('should not return token if no social ids are confirmed', async () => {
@@ -2537,6 +2541,7 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         update: jest.fn()
       }
     } as unknown as AccountDB

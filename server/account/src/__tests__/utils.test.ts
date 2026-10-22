@@ -1119,7 +1119,10 @@ describe('account utils', () => {
 
           const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
           expect(result).toBe(true)
-          expect(mockDb.bumpOtpAttempts).toHaveBeenCalledWith(socialIdId, 'login', '123456', 5, 24 * 60 * 60 * 1000)
+          expect(mockDb.bumpOtpAttempts).toHaveBeenCalledWith(socialIdId, 'login', '123456', 5, {
+            decayMs: 24 * 60 * 60 * 1000,
+            lockMs: 60 * 60 * 1000
+          })
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 

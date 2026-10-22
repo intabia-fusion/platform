@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { OK, Severity, Status } from '@hcengineering/platform'
+  import platform, { OK, Severity, Status } from '@hcengineering/platform'
   import { getCurrentLocation, navigate } from '@hcengineering/ui'
 
   import login from '../plugin'
@@ -44,9 +44,15 @@
       }
       status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
       const [loginStatus, result] = await doLoginByLink(token)
-      if (result == null) {
+      // Only InvalidOtp means a dead link; a rate limit, a network error or a blocked account
+      // is shown as is, and the link stays usable for another click.
+      if (result == null && loginStatus.code === platform.status.InvalidOtp) {
         failed = true
         status = OK
+        return
+      }
+      if (result == null) {
+        status = loginStatus
         return
       }
       status = loginStatus

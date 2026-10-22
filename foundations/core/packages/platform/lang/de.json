@@ -24,7 +24,7 @@
     "AccountAlreadyConfirmed": "Konto wurde bereits bestätigt",
     "WorkspaceAlreadyExists": "Arbeitsbereich existiert bereits",
     "InvalidOtp": "Ungültiger Code",
-    "TooManyOtpAttempts": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es in {minutes, plural, one {# Minute} other {# Minuten}} erneut.",
+    "TooManyOtpAttempts": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es in {minutes, plural, one {# Minute} other {# Minuten}} erneut. Falls für diese Adresse ein Konto existiert, haben wir ihr eine E-Mail mit einem Anmeldelink gesendet.",
     "PasswordLoginLocked": "Die Passwort-Anmeldung ist aufgrund zu vieler fehlgeschlagener Versuche gesperrt. Bitte verwenden Sie eine OTP-Anmeldungsmethode, um Ihr Konto freizuschalten.",
     "AccountBlocked": "Ihr Konto wurde vom Administrator gesperrt.",
     "WorkspaceReadOnly": "Dieser Arbeitsbereich ist derzeit schreibgeschützt.",

@@ -457,7 +457,13 @@ export async function resetFailedLoginAttempts (db: AccountDB, accountUuid: Acco
 
 /** A confirmed sign in ends the streak of wrong code guesses on every email of the account. */
 export async function resetLoginOtpMisses (db: AccountDB, personUuid: PersonUuid): Promise<void> {
+  const missed = await db.socialId.find({ personUuid, loginOtpMisses: { $gt: 0 } })
+  if (missed.length === 0) return
   await db.socialId.update({ personUuid, loginOtpMisses: { $gt: 0 } }, { loginOtpMisses: 0, loginOtpMissedOn: 0 })
+  // Any sign in ends the lock: the link mailed about it must not outlive it.
+  for (const { _id } of missed) {
+    await db.otp.deleteMany({ socialId: _id, purpose: 'login-link' })
+  }
 }
 
 export function cleanEmail (email: string): string {
@@ -579,8 +585,8 @@ type Issued = { info: OtpInfo } | { ts: number }
 // The wait before the next code, or undefined when one may be issued. Throws while wrong guesses hold the wait.
 function getOtpWait (
   purpose: OtpPurpose,
-  socialId: SocialId,
-  otpData: OTP | undefined,
+  socialId: Pick<SocialId, 'loginOtpMisses' | 'loginOtpMissedOn'>,
+  otpData: Pick<OTP, 'createdOn' | 'expiresOn' | 'attempts'> | undefined,
   ts: number,
   retryDelayMs: number
 ): OtpInfo | undefined {
@@ -604,14 +610,30 @@ function getOtpWait (
   return { sent: true, retryOn }
 }
 
-// Next moment a "no account" letter may go to an address. There is no db row to throttle on, so
-// it is kept in memory; a restart forgets it, which at worst allows one extra letter per address.
-const NO_ACCOUNT_MAIL_MAX_ENTRIES = 10000
-const noAccountMails = new Map<string, number>()
+// Letters and misses of an address without an account: its waits and lock match a real one.
+// Kept in this pod only: a restart, another replica or eviction forgets them.
+interface NoAccountState {
+  otp?: Pick<OTP, 'createdOn' | 'expiresOn' | 'attempts'>
+  loginOtpMisses?: number
+  loginOtpMissedOn?: number
+}
+const NO_ACCOUNT_MAX_ENTRIES = 10000
+const noAccounts = new Map<string, NoAccountState>()
+
+// The state of the key, moved to the end of the eviction order.
+function touchNoAccount (key: string): NoAccountState {
+  const state = noAccounts.get(key) ?? {}
+  noAccounts.delete(key)
+  if (noAccounts.size >= NO_ACCOUNT_MAX_ENTRIES) {
+    noAccounts.delete(noAccounts.keys().next().value as string)
+  }
+  noAccounts.set(key, state)
+  return state
+}
 
 /**
- * Answers a request that names an address without an account the way a real one is answered, and
- * tells the address owner how to sign up. Within the retry delay it only answers.
+ * Answers for an address without an account as sendOtp does for a real one, waits and lock
+ * included, and mails the owner how to sign up.
  */
 export async function sendNoAccountEmail (
   ctx: MeasureContext,
@@ -619,19 +641,22 @@ export async function sendNoAccountEmail (
   email: string,
   kind: 'login' | 'recovery'
 ): Promise<OtpInfo> {
-  const ts = Date.now()
-  const key = `${kind}:${email}`
-  const known = noAccountMails.get(key)
-  if (known !== undefined && known > ts) {
-    return { sent: true, retryOn: known }
+  // The address goes to the mail "to": a list of addresses would mail every one of them.
+  if (!isEmail(email)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  const retryOn = ts + getOtpRetryDelayMs()
-  noAccountMails.delete(key)
-  if (noAccountMails.size >= NO_ACCOUNT_MAIL_MAX_ENTRIES) {
-    noAccountMails.delete(noAccountMails.keys().next().value as string)
+  const ts = Date.now()
+  const retryDelayMs = getOtpRetryDelayMs()
+  const state = touchNoAccount(`${kind}:${email}`)
+  const waiting = getOtpWait('login', state, state.otp, ts, retryDelayMs)
+  if (waiting !== undefined) {
+    return waiting
   }
-  noAccountMails.set(key, retryOn)
+
+  const previous = state.otp
+  const ttlMs = (getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
+  state.otp = { createdOn: ts, expiresOn: ts + ttlMs, attempts: 0 }
 
   const lang = branding?.defaultLanguage
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
@@ -649,10 +674,26 @@ export async function sendNoAccountEmail (
     )
   } catch (err) {
     // Nothing was mailed: let the next request try again.
-    noAccountMails.delete(key)
+    state.otp = previous
     throw err
   }
-  return { sent: true, retryOn }
+  return { sent: true, retryOn: ts + retryDelayMs }
+}
+
+/** Counts a guess at the code "sent" to an address without an account, as bumpOtpAttempts does. */
+export function guessNoAccountCode (email: string): void {
+  const state = noAccounts.get(`login:${email}`)
+  const ts = Date.now()
+  if (state?.otp === undefined || state.otp.expiresOn <= ts) return
+  state.otp.attempts += 1
+  // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
+  if (state.otp.attempts > OTP_MAX_ATTEMPTS) return
+  const misses = state.loginOtpMisses ?? 0
+  const missedOn = state.loginOtpMissedOn ?? 0
+  const startsOver =
+    missedOn < ts - OTP_MISS_DECAY_MS || (misses >= OTP_MAX_ATTEMPTS && missedOn < ts - OTP_MISS_WAIT_MS)
+  state.loginOtpMisses = startsOver ? 1 : misses + 1
+  state.loginOtpMissedOn = ts
 }
 
 const hashLinkToken = (token: string): string => createHash('sha256').update(token).digest('hex')
@@ -858,7 +899,10 @@ export async function isOtpValid (
   code: string,
   purpose: OtpPurpose
 ): Promise<boolean> {
-  const live = await db.bumpOtpAttempts(socialId, purpose, code, OTP_MAX_ATTEMPTS, OTP_MISS_DECAY_MS)
+  const live = await db.bumpOtpAttempts(socialId, purpose, code, OTP_MAX_ATTEMPTS, {
+    decayMs: OTP_MISS_DECAY_MS,
+    lockMs: OTP_MISS_WAIT_MS
+  })
   const newest: OTP | undefined = live.sort((a, b) =>
     a.createdOn !== b.createdOn ? b.createdOn - a.createdOn : a.code < b.code ? 1 : -1
   )[0]

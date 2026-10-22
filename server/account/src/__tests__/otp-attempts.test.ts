@@ -97,17 +97,20 @@ function createFakeDb (): { db: AccountDB, rows: OTP[], social: SocialId, other:
       purpose: OtpPurpose,
       guess: string,
       maxAttempts: number,
-      missDecayMs: number
+      miss: { decayMs: number, lockMs: number }
     ) => {
       const live = rows.filter((r) => r.socialId === socialId && r.purpose === purpose && r.expiresOn > Date.now())
       live.forEach((r) => {
         r.attempts += 1
       })
       // Same rule as postgres: a wrong guess at a login code that still takes guesses is a miss, and a
-      // streak whose last miss is older than missDecayMs starts over.
+      // streak whose last miss is older than decayMs, or whose lock is over, starts over.
       const open = live.filter((r) => r.attempts <= maxAttempts)
       if (purpose === 'login' && open.length > 0 && open.every((r) => r.code !== guess)) {
-        const streak = (social.loginOtpMissedOn ?? 0) >= Date.now() - missDecayMs
+        const misses = social.loginOtpMisses ?? 0
+        const missedOn = social.loginOtpMissedOn ?? 0
+        const streak =
+          missedOn >= Date.now() - miss.decayMs && !(misses >= maxAttempts && missedOn < Date.now() - miss.lockMs)
         social.loginOtpMisses = streak ? (social.loginOtpMisses ?? 0) + 1 : 1
         social.loginOtpMissedOn = Date.now()
       }
@@ -142,7 +145,7 @@ function createFakeDb (): { db: AccountDB, rows: OTP[], social: SocialId, other:
       return true
     },
     socialId: {
-      find: async () => [social, other],
+      find: async (query: Record<string, any>) => [social, other].filter((r) => matches(r, query)),
       findOne: async (query: Record<string, any>) => [social, other].find((r) => matches(r, query)) ?? null,
       insertOne: async () => 'new-social-id',
       update: async (query: Record<string, any>, ops: Partial<SocialId>) => {
@@ -674,6 +677,58 @@ describe('otp attempts', () => {
 
       expect(lettersTo(to)).toHaveLength(1)
     })
+
+    const guess = async (to: string, code = '000000'): Promise<void> => {
+      await expect(validateOtp(ctx, db, null, 'token', { email: to, code })).rejects.toThrow(invalidOtp)
+    }
+    const tooMany = { status: { code: platform.status.TooManyOtpAttempts } }
+
+    test('5 wrong codes lock loginOtp like a real account, and the lock ends after an hour', async () => {
+      const to = unknown()
+      await loginOtp(ctx, db, null, 'token', { email: to })
+      for (let i = 0; i < 5; i++) await guess(to)
+
+      now += 10 * 1000
+      await expect(loginOtp(ctx, db, null, 'token', { email: to })).rejects.toMatchObject(tooMany)
+
+      now += 60 * 60 * 1000
+      await expect(loginOtp(ctx, db, null, 'token', { email: to })).resolves.toMatchObject({ sent: true })
+    })
+
+    test('a guess without a loginOtp before it counts nothing', async () => {
+      const to = unknown()
+      for (let i = 0; i < 6; i++) await guess(to)
+
+      await expect(loginOtp(ctx, db, null, 'token', { email: to })).resolves.toMatchObject({ sent: true })
+      expect(lettersTo(to)).toHaveLength(1)
+    })
+
+    test('after the lock is over one wrong code does not lock again', async () => {
+      const to = unknown()
+      await loginOtp(ctx, db, null, 'token', { email: to })
+      for (let i = 0; i < 5; i++) await guess(to)
+      now += 60 * 60 * 1000 + 1000
+      await loginOtp(ctx, db, null, 'token', { email: to })
+
+      await guess(to)
+      now += 61 * 1000
+
+      await expect(loginOtp(ctx, db, null, 'token', { email: to })).resolves.toMatchObject({ sent: true })
+    })
+
+    test.each([
+      ['loginOtp', async (to: string) => await loginOtp(ctx, db, null, 'token', { email: to })],
+      [
+        'requestPasswordReset',
+        async (to: string) => {
+          await requestPasswordReset(ctx, db, null, 'token', { email: to })
+        }
+      ]
+    ])('%s refuses a list of addresses and mails nothing', async (_name, call) => {
+      await expect(call('a@x.com, b@y.com')).rejects.toMatchObject({ status: { code: platform.status.BadRequest } })
+
+      expect(mailSend).not.toHaveBeenCalled()
+    })
   })
 
   // The 5th miss closes the code sign in for an hour and mails the owner a one-time link.
@@ -713,6 +768,39 @@ describe('otp attempts', () => {
       await expect(byLink(token)).resolves.toMatchObject({ account: personUuid, socialId: sid._id })
       expect(sid.loginOtpMisses).toBe(0)
       expect(rows.some((r) => r.purpose === 'login-link')).toBe(false)
+      await expect(byLink(token)).rejects.toThrow(invalidOtp)
+    })
+
+    test('after the lock is over one wrong code does not lock again or mail a second letter', async () => {
+      await lock()
+      now += hour + 1000
+      await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toMatchObject({ sent: true })
+      mailSend.mockClear()
+
+      await miss(1)
+      now += 61 * 1000
+
+      await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toMatchObject({ sent: true })
+      expect(sid.loginOtpMisses).toBe(1)
+      expect(letters()).toHaveLength(0)
+    })
+
+    test('a password sign in kills the live link', async () => {
+      const token = await lock()
+      jest.spyOn(utils, 'verifyPassword').mockReturnValue(true)
+
+      await login(ctx, db, null, 'token', { email, password: 'password' })
+
+      await expect(byLink(token)).rejects.toThrow(invalidOtp)
+    })
+
+    test('a restored password kills the live link', async () => {
+      const token = await lock()
+      jest.spyOn(utils, 'verifyPassword').mockReturnValue(true)
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid, extra: { restoreEmail: email } })
+
+      await restorePassword(ctx, db, null, 'link', { password: 'a-new-password' })
+
       await expect(byLink(token)).rejects.toThrow(invalidOtp)
     })
 

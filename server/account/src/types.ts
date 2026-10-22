@@ -675,7 +675,7 @@ export interface AccountDB {
     purpose: OtpPurpose,
     guess: string,
     maxAttempts: number,
-    missDecayMs: number
+    miss: { decayMs: number, lockMs: number } // a streak starts over after decayMs or after its lock
   ) => Promise<OTP[]>
   generatePersonUuid: () => Promise<PersonUuid>
   ensurePerson: (

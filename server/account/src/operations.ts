@@ -167,6 +167,7 @@ import {
   notifyLoginLock,
   consumeLoginLink,
   sendNoAccountEmail,
+  guessNoAccountCode,
   sendOtp,
   setPassword,
   setTimezone,
@@ -541,6 +542,8 @@ export async function validateOtp (
     let emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
+      // Counted like a real miss, so the lock does not tell an unknown address from a known one.
+      guessNoAccountCode(normalizedEmail)
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 
@@ -670,8 +673,6 @@ async function finishOtpLogin (
 
   await resetFailedLoginAttempts(db, emailSocialId.personUuid as AccountUuid)
   await resetLoginOtpMisses(db, emailSocialId.personUuid)
-  // A sign in ends the lock, and a link mailed for it has done its job.
-  await db.otp.deleteMany({ socialId: emailSocialId._id, purpose: 'login-link' })
 
   const extraToken: Record<string, string> = isAdminEmail(email)
     ? { admin: 'true', authMethod: 'otp' }
