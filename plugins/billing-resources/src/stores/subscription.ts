@@ -66,6 +66,10 @@ export const isLimited = derived(subscriptionStore, ($store) => $store.isLimited
 export const onTrial = derived(subscriptionStore, ($store) => $store.onTrial)
 export const trialDaysLeft = derived(subscriptionStore, ($store) => $store.trialDaysLeft)
 
+// Password aging is not a subscription state: a subscription refresh must not clear it.
+const passwordAgainStore = writable(false)
+export const isPasswordAgain = { subscribe: passwordAgainStore.subscribe }
+
 /** Resolved numeric limits (0 = unlimited) for the active plan/package, reactive on subscription changes. */
 export const planLimits = derived(subscriptionStore, ($s) =>
   calculateLimits($s.currentPlan, $s.currentPackage, $s.currentSubscription, $s.currentPackageSubscription)
@@ -142,6 +146,10 @@ export function setSubscriptionState (
 
 export function setIsLimited (limited: boolean): void {
   subscriptionStore.update((store) => ({ ...store, isLimited: limited }))
+}
+
+export function setIsPasswordAgain (value: boolean): void {
+  passwordAgainStore.set(value)
 }
 
 export function resetSubscriptionStore (): void {

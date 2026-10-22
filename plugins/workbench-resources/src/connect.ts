@@ -39,7 +39,6 @@ import platform, {
 import presentation, {
   decodeTokenPayload,
   loadServerConfig,
-  MessageBox,
   purgeClient,
   refreshClient,
   releaseVersion,
@@ -54,7 +53,6 @@ import {
   locationStorageKeyId,
   navigate,
   setMetadataLocalStorage,
-  showPopup,
   themeStore
 } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
@@ -63,6 +61,7 @@ import plugin from './plugin'
 import { logOut, workspaceCreating } from './utils'
 import { WorkbenchEvents } from '@hcengineering/workbench'
 import { allowGuestSignUpStore } from '@hcengineering/view-resources'
+import { setIsPasswordAgain } from '@hcengineering/billing-resources'
 
 export const error = writable<string | undefined>(undefined)
 export const errorActions = writable<ErrorAction[]>([])
@@ -645,39 +644,19 @@ export async function connect (title: string): Promise<Client | undefined> {
     await broadcastEvent(plugin.event.NotifyConnection, me)
   })
   console.log(metricsToString((ctx as MeasureMetricsContext).metrics, 'connect', 50))
-  void notifyPasswordAging(wsUrl, token)
+  void notifyPasswordAging(token)
   return newClient
 }
 
-async function notifyPasswordAging (wsUrl: string, token: string): Promise<void> {
-  const key = `password_aging_notice_${wsUrl}`
-  try {
-    if (typeof sessionStorage === 'undefined' || sessionStorage.getItem(key) !== null) return
-    sessionStorage.setItem(key, '1')
-  } catch (err) {
-    return
-  }
-
+async function notifyPasswordAging (token: string): Promise<void> {
   let valid = true
   try {
     valid = await getAccountClient(getMetadata(login.metadata.AccountsUrl), token).checkPasswordAging()
   } catch (err) {
     return
   }
-  if (valid) return
 
-  showPopup(
-    MessageBox,
-    {
-      label: login.string.ChangePassword,
-      message: login.string.PasswordExpiredDesc,
-      okLabel: login.string.ChangePassword,
-      action: async () => {
-        navigate({ path: [loginId, 'changePassword'] })
-      }
-    },
-    'top'
-  )
+  setIsPasswordAgain(!valid)
 }
 
 async function getGlobalPerson (): Promise<GlobalPerson | undefined> {
