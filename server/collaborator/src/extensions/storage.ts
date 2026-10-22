@@ -243,7 +243,7 @@ export class StorageExtension implements Extension {
           }
         )
 
-        this.markups.set(documentName, currMarkup ?? {})
+        this.markups.set(documentName, currMarkup)
         this.clearUpdates(documentName, now)
 
         return

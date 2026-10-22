@@ -134,7 +134,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
       prev: () => Record<string, string>
       curr: () => Record<string, string>
     }
-  ): Promise<Record<string, string> | undefined> {
+  ): Promise<Record<string, string>> {
     const { clientFactory, wsIds } = context
     const { documentId } = decodeDocumentId(documentName)
 
@@ -202,7 +202,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
       prev: () => Record<string, string>
       curr: () => Record<string, string>
     }
-  ): Promise<Record<string, string> | undefined> {
+  ): Promise<Record<string, string>> {
     const { wsIds } = context
     const { documentId } = decodeDocumentId(documentName)
     const { objectAttr, objectClass, objectId } = documentId
@@ -210,7 +210,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
     const attribute = client.getHierarchy().findAttribute(objectClass, objectAttr)
     if (attribute === undefined) {
       ctx.warn('attribute not found', { documentName, objectClass, objectAttr })
-      return
+      return getMarkup.curr()
     }
 
     const markup = {
@@ -223,7 +223,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
 
     if (areEqualMarkups(currMarkup, prevMarkup)) {
       ctx.info('markup not changed, skip platform update', { documentName, size: currMarkup.length })
-      return { [objectAttr]: currMarkup }
+      return markup.curr
     }
 
     // sizes make content loss diagnosable after the fact
@@ -235,13 +235,13 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
 
     if (current === undefined) {
       ctx.warn('document not found', { documentName, objectClass, objectId })
-      return
+      return markup.curr
     }
 
     const hierarchy = client.getHierarchy()
     if (!hierarchy.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc)) {
       ctx.warn('unsupported attribute type', { documentName, objectClass, objectAttr })
-      return
+      return markup.curr
     }
 
     const storedBlob = (current as any)[objectAttr] as Ref<Blob> | null | undefined
@@ -264,7 +264,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
 
       if (storedMarkup !== undefined && areEqualMarkups(storedMarkup, currMarkup)) {
         ctx.info('markup matches stored content, skip platform update', { documentName, size: currMarkup.length })
-        return { [objectAttr]: currMarkup }
+        return markup.curr
       }
     }
 

@@ -162,23 +162,17 @@
     if (refContainer == null) {
       return
     }
-
     const scroll = refContainer.closest<HTMLElement>('.scroll')
-
     if (scroll == null) {
       return
     }
-
     stopExpandWatch()
-
     // decide ONCE: recomputing per-frame breaks after a jump to top (editor then looks in view)
     const editorBottom =
       refContainer.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop
-
     if (scroll.scrollTop < editorBottom) {
       return
     }
-
     expandPrevHeight = refContainer.offsetHeight
     expandTargetTop = scroll.scrollTop
     expandDeadline = performance.now() + 2000
@@ -190,22 +184,17 @@
         expandRaf = 0
         return
       }
-
       const h = refContainer.offsetHeight
       const grow = h - expandPrevHeight
       expandPrevHeight = h
-
       if (grow !== 0) {
         expandTargetTop += grow
       }
-
       if (Math.abs(scroll.scrollTop - expandTargetTop) > 1) {
         scroll.scrollTop = expandTargetTop
       }
-
       expandRaf = performance.now() < expandDeadline ? requestAnimationFrame(step) : 0
     }
-
     expandRaf = requestAnimationFrame(step)
   }
 
