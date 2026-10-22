@@ -2,6 +2,7 @@
   "status": {
     "LoadingPlugin": "Cargando complemento {plugin}...",
     "UnknownError": "Error desconocido: {message}",
+    "ConnectionClosed": "Conexión cerrada",
     "InvalidId": "Id no válido: {id}",
     "BadRequest": "Solicitud incorrecta",
     "Forbidden": "Prohibido",

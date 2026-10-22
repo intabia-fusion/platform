@@ -84,6 +84,12 @@ const reconnectJitterMs = 300
 // Throttle window for noisy diagnostics logs in hot paths.
 const diagLogThrottleMs = 5 * SECOND
 
+// A closed client is not a failure: the caller left the workspace (or logged out), so the
+// responses are no longer needed. Pipeline swallows this code instead of showing a status.
+function connectionClosedError (): PlatformError {
+  return new PlatformError(new Status(Severity.ERROR, platform.status.ConnectionClosed, {}))
+}
+
 interface MeasureData {
   time: number
   serverTime: number
@@ -351,11 +357,22 @@ class Connection implements ClientConnection {
       document.removeEventListener('visibilitychange', this.visibilityHandler)
       this.visibilityHandler = undefined
     }
-    for (const handler of this.onConnectHandlers) {
-      handler.reject(new Error('Connection closed'))
-    }
-    for (const req of this.requests.values()) {
-      req.reject(new Error('Connection closed'))
+    const handlers = this.onConnectHandlers.splice(0, this.onConnectHandlers.length)
+    const pending = [...this.requests.values()]
+    this.requests.clear()
+    if (handlers.length > 0 || pending.length > 0) {
+      const closedError = connectionClosedError()
+      for (const handler of handlers) {
+        handler.reject(closedError)
+      }
+      for (const req of pending) {
+        req.reject(closedError)
+      }
+      console.log('[conn] closed with pending requests', {
+        requests: pending.length,
+        waiters: handlers.length,
+        workspace: this.workspace
+      })
     }
     if (this.websocket !== null) {
       this.websocket.close(1000)
@@ -380,6 +397,10 @@ class Connection implements ClientConnection {
       {},
       (ctx) =>
         new Promise((resolve, reject) => {
+          if (this.closed) {
+            reject(connectionClosedError())
+            return
+          }
           this.onConnectHandlers.push({
             resolve,
             reject
@@ -887,7 +908,7 @@ class Connection implements ClientConnection {
       {},
       async (ctx) => {
         if (this.closed) {
-          throw new PlatformError(new Status(Severity.ERROR, platform.status.ConnectionClosed, {}))
+          throw connectionClosedError()
         }
 
         if (this.slowDownTimer > 0) {
