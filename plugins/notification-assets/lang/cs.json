@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "Push oznámení nejsou v tomto prohlížeči podporována",
     "PushSubscribeErrorDefault": "Nepodařilo se přihlásit k odběru oznámení",
     "Subscribe": "Přihlásit se",
-    "InboxNotificationsDescription": "Přijímejte osobní oznámení ve své doručené poště na platformě Huly.",
+    "InboxNotificationsDescription": "Přijímejte osobní oznámení ve své doručené poště.",
     "PushNotificationsDescription": "Přijímejte osobní oznámení na ploše.",
     "CommonNotificationCollectionAdded": "{senderName} přidal {collection}",
     "CommonNotificationCollectionRemoved": "{senderName} odebral {collection}",

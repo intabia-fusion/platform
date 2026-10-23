@@ -36,6 +36,7 @@ import { type Employee } from '@hcengineering/contact'
 import core, { systemAccountUuid, TxOperations, type AccountUuid, type Ref } from '@hcengineering/core'
 import { FrontFileUploader, HulyFormatImporter, type Logger } from '@hcengineering/importer'
 import { generateToken } from '@hcengineering/server-token'
+import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
 import tags, { type TagElement } from '@hcengineering/tags'
 import tracker, {
   MilestoneStatus,
@@ -292,6 +293,12 @@ async function createChannel (
   return channel
 }
 
+// Chat messages are editor markup, as the composer writes them: plain text that happens to start with "{"
+// would otherwise render as an empty message (markupToJSON).
+function textMarkup (text: string): string {
+  return jsonToMarkup({ type: MarkupNodeType.doc, content: [{ type: MarkupNodeType.paragraph, content: [{ type: MarkupNodeType.text, text }] }] })
+}
+
 async function postReply (
   client: TxOperations,
   channel: Channel,
@@ -299,7 +306,7 @@ async function postReply (
   message: string
 ): Promise<void> {
   await client.addCollection(chunter.class.ThreadMessage, channel._id, parent, chunter.class.ChatMessage, 'replies', {
-    message,
+    message: textMarkup(message),
     objectId: channel._id,
     objectClass: chunter.class.Channel
   })
@@ -312,7 +319,7 @@ async function createChat (accounts: PlannerAccount[], channels: DemoDataFile['c
     const channel = await createChannel(accounts[0].client, def.name, def.topic, def.description, memberUuids)
     let replyCount = 0
     for (const msg of def.messages) {
-      const id = await postMessage(accounts[msg.author - 1].client, channel, msg.text)
+      const id = await postMessage(accounts[msg.author - 1].client, channel, textMarkup(msg.text))
       for (const reply of msg.replies ?? []) {
         await postReply(accounts[reply.author - 1].client, channel, id, reply.text)
         replyCount++

@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "As notificações push não são suportadas neste browser",
     "PushSubscribeErrorDefault": "Falha ao subscrever notificações",
     "Subscribe": "Subscrever",
-    "InboxNotificationsDescription": "Receba notificações pessoais em sua caixa de entrada do Huly.",
+    "InboxNotificationsDescription": "Receba notificações pessoais em sua caixa de entrada.",
     "PushNotificationsDescription": "Receba notificações pessoais no desktop.",
     "Sound": "Som",
     "SoundNotificationsDescription": "Receba notificações sonoras para eventos.",

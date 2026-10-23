@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "Les notifications push ne sont pas prises en charge dans ce navigateur",
     "PushSubscribeErrorDefault": "Échec de l'abonnement aux notifications",
     "Subscribe": "S'abonner",
-    "InboxNotificationsDescription": "Recevez des notifications personnelles dans votre boîte de réception Huly.",
+    "InboxNotificationsDescription": "Recevez des notifications personnelles dans votre boîte de réception.",
     "PushNotificationsDescription": "Recevez des notifications personnelles sur le bureau.",
     "Sound": "Son",
     "SoundNotificationsDescription": "Recevez des notifications sonores pour les événements.",

@@ -39,7 +39,7 @@ AppPushNotification                          от сервиса                
 | `unreadCount` | Сколько записей реально попало в inbox: notified-сообщения + реакции + упоминания + commons. Двигает бейдж inbox и суммарный счётчик |
 | `unreadMessagesCount` | Все непрочитанные сообщения чата, включая те, что не породили уведомления (mentions-only или muted канал). Число в навигаторе чата |
 | `notifiedMessagesCount` | Непрочитанные сообщения, породившие уведомление. Цвет бейджа в навигаторе: `> 0` - красный, иначе серый |
-| Провайдер | Канал доставки: `InboxNotificationProvider`, `PushNotificationProvider` (зависит от Inbox), `SoundNotificationProvider` (зависит от Push) в `notification`; `EmailNotificationProvider` в `gmail` |
+| Провайдер | Канал доставки: `InboxNotificationProvider`, `PushNotificationProvider` (зависит от Inbox), `SoundNotificationProvider` (зависит от Push) в `notification`; `EmailNotificationProvider` в `gmail` (в настройках виден, только если `mail` нет в `DISABLED_FEATURES`: `isAvailableFn` = `gmail.function.IsEmailNotificationsAvailable`) |
 | Тип уведомления | `NotificationType`: что случилось (сообщение в DM, реакция, приглашение, смена статуса задачи). `MessageNotificationType` - для `ActivityMessage`, `TxNotificationType` - для любых Tx |
 | Режим документа | `DocNotificationSetting.mode`: `all` (по умолчанию), `mentions` (только упоминания), `mute` |
 | notified | Флаг unread-записи сообщения: было ли по нему уведомление (карточка в inbox, push). В `mentions`/`mute` режимах сообщения копятся без `notified` |
@@ -367,7 +367,7 @@ SQL (services/db-migrator/migrations), по файлу на флавор БД, �
 | `NotificationClientImpl` | - | - | internal | - | |
 | Inbox UI | communication/inbox | communication/inbox | ok | 0.8.60 | |
 | Actions | communication/inbox | communication/inbox | ok | 0.8.60 | |
-| Настройки | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Настройки | communication/notifications | communication/notifications | stale | 0.8.60 | не описан канал Email в "Основное" и в группах (баг: `gmail` в `DISABLED_FEATURES` не прячет `EmailNotificationProvider`, ждёт решения пользователя) |
 | Открытие документа = прочитано | communication/inbox | communication/inbox | partial | 0.8.60 | не упомянуты `readDoc` при выходе из документа/задачи и `readNotificationsWithoutMessage` при выборе канала в inbox |
 | Звук | communication/notifications | communication/notifications | ok | 0.8.60 | |
 | Фокус окна | - | - | internal | - | |

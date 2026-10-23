@@ -108,7 +108,7 @@
 | ToDo к чужим сущностям | task-tracking/creating-action-items, knowledge-management/documents-action-items | task-tracking/creating-action-items, knowledge-management/documents-action-items | partial | 0.8.60 | описано только назначение активности из документа; из описания задачи (Issue)/лида/кандидата (`time.mixin.ItemPresenter`) не показано |
 | Приложение "Планировщик" | task-tracking/creating-action-items | task-tracking/creating-action-items | partial | 0.8.60 | не описаны три панели приложения (навигатор/план/календарь) и переключение режимов вида |
 | Drag/drop ToDo | task-tracking/scheduling-action-items | task-tracking/scheduling-action-items | ok | 0.8.60 | |
-| Переназначение/закрытие ToDo при работе с Issue (FUSIO-38) | task-tracking/scheduling-action-items | task-tracking/scheduling-action-items | ok | 0.8.60 | |
+| Переназначение/закрытие ToDo при работе с Issue (FUSIO-38) | task-tracking/scheduling-action-items | task-tracking/scheduling-action-items | partial | 0.8.60 | не описаны переназначение исполнителя (ToDo старого исполнителя остаётся открытым, будущие слоты удаляются, уведомление) и предложение закрыть действия при закрытии задачи |
 | Миграция слотов | - | - | internal | - | |
 | Группировка занятости по людям | team-resources/team-planner | team-resources/team-planner | ok | 0.8.60 | |
 | Режимы вида | team-resources/team-planner | team-resources/team-planner | ok | 0.8.60 | |

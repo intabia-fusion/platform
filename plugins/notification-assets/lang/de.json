@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "Push-Benachrichtigungen werden in diesem Browser nicht unterstützt",
     "PushSubscribeErrorDefault": "Anmeldung für Benachrichtigungen fehlgeschlagen",
     "Subscribe": "Abonnieren",
-    "InboxNotificationsDescription": "Erhalten Sie persönliche Benachrichtigungen in Ihrem Huly-Posteingang.",
+    "InboxNotificationsDescription": "Erhalten Sie persönliche Benachrichtigungen in Ihrem Posteingang.",
     "PushNotificationsDescription": "Erhalten Sie persönliche Benachrichtigungen auf dem Desktop.",
     "CommonNotificationCollectionAdded": "{senderName} hat {collection} hinzugefügt",
     "CommonNotificationCollectionRemoved": "{senderName} hat {collection} entfernt",

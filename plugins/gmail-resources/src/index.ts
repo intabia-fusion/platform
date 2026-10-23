@@ -15,7 +15,7 @@
 //
 
 import { getMetadata, type Resources } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import presentation, { isDisabled } from '@hcengineering/presentation'
 import GmailWriteMessage from './components/activity/GmailWriteMessage.svelte'
 import GmailSharedMessage from './components/activity/GmailSharedMessage.svelte'
 import Configure from './components/Configure.svelte'
@@ -44,7 +44,9 @@ export default async (): Promise<Resources> => ({
   },
   function: {
     HasEmail: checkHasEmail,
-    MessageTitleProvider
+    MessageTitleProvider,
+    // The email channel is offered only while the mail feature is not in DISABLED_FEATURES.
+    IsEmailNotificationsAvailable: () => !isDisabled('mail')
   },
   handler: {
     DisconnectHandler: async (integration: Integration): Promise<void> => {

@@ -158,7 +158,7 @@
 | Дефолтные каналы general/random | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | Миграции истории | - | - | internal | - | |
 | Deep-link на тред/сообщение | - | - | plan | - | |
-| Чат-типы уведомлений | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Чат-типы уведомлений | communication/notifications | communication/notifications | stale | 0.8.60 | скриншот группы "Чат" без колонки Email (ждёт решения пользователя по багу gmail-провайдера) |
 | Mute чата | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | `ChatViewport` | - | - | internal | - | |
 | Джойн в канал = прочитано | - | - | plan | - | |

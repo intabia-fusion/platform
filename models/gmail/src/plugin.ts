@@ -53,6 +53,7 @@ export default mergeIds(gmailId, gmail, {
   },
   function: {
     HasEmail: '' as Resource<(doc?: Doc | Doc[] | undefined) => Promise<boolean>>,
-    MessageTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
+    MessageTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
+    IsEmailNotificationsAvailable: '' as Resource<() => boolean>
   }
 })
