@@ -60,7 +60,7 @@ import {
   type ServerFindOptions,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { type PlatformError, ForbiddenKind } from '@hcengineering/platform'
 import contact, { type Person, type SocialIdentityRef } from '@hcengineering/contact'
 import { isOwner, isSystem } from './utils'
 
@@ -480,10 +480,15 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         const members = attrs.members ?? []
         // Allow if creator is in owners list, or if no owners and creator is a member (e.g. DM)
         if (owners.length > 0 && !owners.includes(account.uuid)) {
-          throw new Error('Only owners can create private spaces')
+          throw this.forbiddenTx(ctx, ForbiddenKind.SpaceOwnerOnly, 'Only owners can create private spaces', tx)
         }
         if (owners.length === 0 && !members.includes(account.uuid)) {
-          throw new Error('Cannot create private space without being a member or owner')
+          throw this.forbiddenTx(
+            ctx,
+            ForbiddenKind.SpaceOwnerOnly,
+            'Cannot create private space without being a member or owner',
+            tx
+          )
         }
       }
       return
@@ -508,14 +513,24 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           ops.$push?.owners !== undefined ||
           ops.$pull?.owners !== undefined
         if (hasSensitiveUpdate && account.role !== AccountRole.Admin) {
-          throw new Error('Only admins can change private/owners on spaces without owners')
+          throw this.forbiddenTx(
+            ctx,
+            ForbiddenKind.SystemOnly,
+            'Only admins can change private/owners on spaces without owners',
+            tx
+          )
         }
         // Allow regular updates (e.g. $push/$pull members, name, description, etc.) for space members
         return
       }
 
       if (tx._class === core.class.TxRemoveDoc && account.role !== AccountRole.Admin) {
-        throw new Error('Only admins can delete private spaces without owners')
+        throw this.forbiddenTx(
+          ctx,
+          ForbiddenKind.SystemOnly,
+          'Only admins can delete private spaces without owners',
+          tx
+        )
       }
       return
     }
@@ -528,7 +543,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       const ops = updateTx.operations
 
       if (ops.private !== undefined && !isOwner) {
-        throw new Error('Only owners can change space privacy')
+        throw this.forbiddenTx(ctx, ForbiddenKind.SpaceOwnerOnly, 'Only owners can change space privacy', tx)
       }
 
       // Only owners can change owners
@@ -536,7 +551,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         ops.owners !== undefined || ops.$push?.owners !== undefined || ops.$pull?.owners !== undefined
 
       if (hasOwnersUpdate && !isOwner) {
-        throw new Error('Only owners can change space owners')
+        throw this.forbiddenTx(ctx, ForbiddenKind.SpaceOwnerOnly, 'Only owners can change space owners', tx)
       }
 
       // Prevent leaving a space without any owner: an empty owners list makes the space
@@ -563,7 +578,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           }
         }
         if (nextOwners.size === 0) {
-          throw new Error('Space must keep at least one owner')
+          throw this.forbiddenTx(ctx, ForbiddenKind.LastSpaceOwner, 'Space must keep at least one owner', tx)
         }
       }
 
@@ -595,7 +610,12 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
           const onlyPullSelf = pulledSelfOnly && ops.members === undefined && ops.$push?.members === undefined
 
           if (!onlyPushSelfToAutoJoin && !onlyPullSelf) {
-            throw new Error('Only owners can change members of private spaces')
+            throw this.forbiddenTx(
+              ctx,
+              ForbiddenKind.SpaceOwnerOnly,
+              'Only owners can change members of private spaces',
+              tx
+            )
           }
         }
       }
@@ -604,7 +624,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     // Only owners can delete private spaces
     if (tx._class === core.class.TxRemoveDoc) {
       if (space.private && !isOwner) {
-        throw new Error('Only owners can delete private spaces')
+        throw this.forbiddenTx(ctx, ForbiddenKind.SpaceOwnerOnly, 'Only owners can delete private spaces', tx)
       }
     }
   }
@@ -621,7 +641,15 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (guestRoles.has(account.role)) return
     if (this.isApiKeyGranted(ctx, this.spacesMap.get(cudTx.objectSpace))) return
     if (!this.canWriteSpace(cudTx.objectSpace, account.uuid)) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      if (!this.spacesMap.has(cudTx.objectSpace)) {
+        throw this.forbiddenTx(ctx, ForbiddenKind.UnknownSpace, 'The space does not exist', cudTx)
+      }
+      throw this.forbiddenTx(
+        ctx,
+        ForbiddenKind.NotSpaceMember,
+        'Only space members can write to a private space',
+        cudTx
+      )
     }
   }
 
@@ -657,20 +685,26 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const h = this.context.hierarchy
     if (!h.isDerived(tx.objectClass, publicLinkClass) || derived || ctx.contextData.isTriggerCtx === true) return
     if (isSystem(ctx.contextData.account, ctx)) return
-    const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    const forbidden = (message: string): PlatformError => this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, message, tx)
     if (tx._class === core.class.TxUpdateDoc) {
       const ops = (tx as TxUpdateDoc<Doc>).operations as Record<string, any>
-      if (['attachedTo', 'attachedToClass', 'space'].some((key) => touchesField(ops, key))) throw forbidden
+      if (['attachedTo', 'attachedToClass', 'space'].some((key) => touchesField(ops, key))) {
+        throw forbidden('Only the server can re-point or move a public link')
+      }
       return
     }
     if (tx._class !== core.class.TxCreateDoc) return
     const { attachedTo, attachedToClass } = (tx as TxCreateDoc<Doc>).attributes as any
-    if (attachedTo == null || attachedToClass == null || !h.hasClass(attachedToClass)) throw forbidden
+    if (attachedTo == null || attachedToClass == null || !h.hasClass(attachedToClass)) {
+      throw forbidden('A public link must name an existing document')
+    }
     const doc = (
       await this.next?.findAll(ctx, attachedToClass as Ref<Class<Doc>>, { _id: attachedTo }, { limit: 1 })
     )?.[0]
-    if (doc === undefined) throw forbidden
-    if (tx.objectSpace !== this.getPublicLinkSpace(doc)) throw forbidden
+    if (doc === undefined) throw forbidden('A public link can only be created for a readable document')
+    if (tx.objectSpace !== this.getPublicLinkSpace(doc)) {
+      throw forbidden('A public link must be created in the space of its document')
+    }
   }
 
   // Same rule as getPublicLinkSpace in the guest plugin, which this package cannot import.

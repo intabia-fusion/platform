@@ -154,3 +154,35 @@ export function unknownError (err: unknown, extra?: Record<string, any>): Status
   if (typeof err === 'string') return unknownStatus(err, extra)
   return ERROR
 }
+
+/**
+ * Why the server refused a write. Sent as `kind` in `platform.status.Forbidden` params,
+ * so the client can explain the refusal instead of guessing.
+ * @public
+ */
+export enum ForbiddenKind {
+  NotSpaceMember = 'not-space-member',
+  UnknownSpace = 'unknown-space',
+  SpaceOwnerOnly = 'space-owner-only',
+  SystemOnly = 'system-only',
+  LastSpaceOwner = 'last-space-owner',
+  SpaceRole = 'space-role',
+  WorkspaceRole = 'workspace-role',
+  WorkspaceOwnerOnly = 'workspace-owner-only',
+  SeatLimit = 'seat-limit',
+  ApiKey = 'api-key',
+  ForeignPrivateWrite = 'foreign-private-write',
+  DirectMessage = 'direct-message',
+  ReadState = 'read-state'
+}
+
+/**
+ * Forbidden error carrying its kind. `message` also goes into params: only the status reaches the client.
+ * @public
+ */
+export function forbiddenError (kind: ForbiddenKind, message?: string, params: Record<string, any> = {}): PlatformError {
+  const statusParams = message === undefined ? { ...params, kind } : { ...params, kind, message }
+  const err = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, statusParams))
+  if (message !== undefined) err.message = message
+  return err
+}

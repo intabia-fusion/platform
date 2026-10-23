@@ -174,6 +174,10 @@
     "MeetingRoomNum": "Toplantı Odası {number}",
     "VoiceRoomNum": "Sesli Oda {number}",
     "JoinRequestTitle": "Katılma isteği",
-    "JoinRequestBody": "{name} toplantıya katılmak istiyor"
+    "JoinRequestBody": "{name} toplantıya katılmak istiyor",
+    "CloseRoomNotMember": "Bu toplantının üyesi değilsiniz. Kapatıldığında içeriğine erişiminizi kaybedersiniz. Sizi üyelere ekleyelim mi?",
+    "JoinAndCloseRoom": "Katıl ve kapat",
+    "PrivateMeetingJoinHeader": "Bu toplantı özel",
+    "PrivateMeetingJoinText": "İçeriği yalnızca üyeler görüp düzenleyebilir. Erişim için toplantıya katılın."
   }
 }

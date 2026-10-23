@@ -41,6 +41,7 @@ import core, {
 import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
 import { SpaceSecurityMiddleware } from '../spaceSecurity'
 import contact from '@hcengineering/contact'
+import { ForbiddenKind } from '@hcengineering/platform'
 
 // Test space class refs
 const testSpaceClass = core.class.Space
@@ -1616,6 +1617,16 @@ describe('SpaceSecurityMiddleware', () => {
       })
 
       await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change space privacy')
+      await expect(mw.tx(ctx, [updateTx])).rejects.toMatchObject({
+        status: {
+          params: {
+            kind: ForbiddenKind.SpaceOwnerOnly,
+            message: 'Only owners can change space privacy',
+            account: 'user2',
+            space: 'space1'
+          }
+        }
+      })
     })
 
     it('should throw when non-owner tries to change owners', async () => {
@@ -1806,6 +1817,9 @@ describe('SpaceSecurityMiddleware', () => {
         $pull: { owners: 'user1' as AccountUuid }
       })
       await expect(mw.tx(ctx, [pullTx])).rejects.toThrow('Space must keep at least one owner')
+      await expect(mw.tx(ctx, [pullTx])).rejects.toMatchObject({
+        status: { params: { kind: ForbiddenKind.LastSpaceOwner } }
+      })
 
       const replaceTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
         owners: []
@@ -2108,6 +2122,9 @@ describe('SpaceSecurityMiddleware', () => {
       await expect(mw.tx(ctx, [updateTx])).rejects.toThrow(
         'Only admins can change private/owners on spaces without owners'
       )
+      await expect(mw.tx(ctx, [updateTx])).rejects.toMatchObject({
+        status: { params: { kind: ForbiddenKind.SystemOnly } }
+      })
     })
 
     it('should allow admin to modify private space without owners', async () => {
@@ -2173,6 +2190,9 @@ describe('SpaceSecurityMiddleware', () => {
       const removeTx = txFactory.createTxRemoveDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>)
 
       await expect(mw.tx(ctx, [removeTx])).rejects.toThrow('Only admins can delete private spaces without owners')
+      await expect(mw.tx(ctx, [removeTx])).rejects.toMatchObject({
+        status: { params: { kind: ForbiddenKind.SystemOnly } }
+      })
     })
   })
 
@@ -2246,7 +2266,9 @@ describe('SpaceSecurityMiddleware', () => {
 
       const createTx = docTx('private1')
 
-      await expect(mw.tx(ctx, [createTx])).rejects.toThrow()
+      await expect(mw.tx(ctx, [createTx])).rejects.toMatchObject({
+        status: { params: { kind: ForbiddenKind.NotSpaceMember, account: 'outsider', space: 'private1' } }
+      })
       expect(nextMiddleware.tx).not.toHaveBeenCalled()
     })
 

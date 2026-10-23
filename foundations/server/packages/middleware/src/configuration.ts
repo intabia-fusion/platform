@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,7 +24,7 @@ import {
   TxProcessor,
   type SessionData
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
@@ -63,7 +64,12 @@ export class ConfigurationMiddleware extends BaseMiddleware implements Middlewar
           // nothing here: cross-workspace changes go through the audited account RPCs.
           const account = ctx.contextData.account
           if (account.role !== AccountRole.Owner) {
-            throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+            throw this.forbiddenTx(
+              ctx,
+              ForbiddenKind.WorkspaceOwnerOnly,
+              'Only workspace owners can change configuration',
+              txCUD
+            )
           }
         }
       }

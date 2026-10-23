@@ -27,7 +27,7 @@ import { ApiKeyPermissionsMiddleware } from '../apiKeyPermissions'
 
 // Space membership/public-space access is checked by SpaceSecurityMiddleware for every session;
 // this middleware only narrows ops/spaces, so a bare context is enough here.
-const anyContext = {} as unknown as PipelineContext
+const anyContext = { hierarchy: { isDerived: () => false } } as unknown as PipelineContext
 
 const SPACE_A = 'spaceA' as Ref<Space>
 const SPACE_B = 'spaceB' as Ref<Space>

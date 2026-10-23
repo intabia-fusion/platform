@@ -20,7 +20,13 @@ import core, {
   TxProcessor,
   type TxResult
 } from '@hcengineering/core'
-import platform, { getResource, PlatformError, translate } from '@hcengineering/platform'
+import platform, {
+  ForbiddenKind,
+  getResource,
+  type IntlString,
+  PlatformError,
+  translate
+} from '@hcengineering/platform'
 import { BasePresentationMiddleware, type PresentationMiddleware } from '@hcengineering/presentation'
 import view, { type IAggregationManager } from '@hcengineering/view'
 import notification from '@hcengineering/notification'
@@ -326,6 +332,27 @@ export class AnalyticsMiddleware extends BasePresentationMiddleware implements P
 
 const READONLY_WORKSPACE_NOTIFY_INTERVAL = 5 * 60 * 1000
 
+function forbiddenText (kind: ForbiddenKind | undefined): [IntlString, IntlString] {
+  switch (kind) {
+    case ForbiddenKind.WorkspaceRole:
+      return [view.string.PermissionWarningTitle, view.string.PermissionWarningMessage]
+    case ForbiddenKind.NotSpaceMember:
+      return [view.string.AccessDeniedTitle, view.string.NotSpaceMemberMessage]
+    case ForbiddenKind.SpaceOwnerOnly:
+      return [view.string.AccessDeniedTitle, view.string.SpaceOwnerOnlyMessage]
+    case ForbiddenKind.LastSpaceOwner:
+      return [view.string.AccessDeniedTitle, view.string.LastSpaceOwnerMessage]
+    case ForbiddenKind.SpaceRole:
+      return [view.string.AccessDeniedTitle, view.string.SpaceRoleMessage]
+    case ForbiddenKind.WorkspaceOwnerOnly:
+      return [view.string.AccessDeniedTitle, view.string.WorkspaceOwnerOnlyMessage]
+    case ForbiddenKind.SeatLimit:
+      return [view.string.AccessDeniedTitle, view.string.SeatLimitMessage]
+    default:
+      return [view.string.AccessDeniedTitle, view.string.AccessDeniedMessage]
+  }
+}
+
 /**
  * @public
  */
@@ -392,14 +419,29 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
         return {}
       }
       if (err instanceof PlatformError && err.status.code === platform.status.Forbidden) {
+        const kind: ForbiddenKind | undefined = err.status.params?.kind
+        console.warn(err.message)
+        // Refusals come from many flows, some of them background ones; track each to find them.
+        Analytics.handleEvent('PermissionDenied', {
+          kind: kind ?? 'unknown',
+          message: err.status.params?.message,
+          txId: tx._id,
+          txClass: tx._class,
+          objectClass: (tx as TxCUD<Doc>).objectClass,
+          objectId: (tx as TxCUD<Doc>).objectId,
+          objectSpace: (tx as TxCUD<Doc>).objectSpace,
+          role: getCurrentAccount()?.role
+        })
+        const [title, message] = forbiddenText(kind)
         addNotification(
-          await translate(view.string.PermissionWarningTitle, {}, getCurrentLanguage()),
-          await translate(view.string.PermissionWarningMessage, {}, getCurrentLanguage()),
+          await translate(title, {}, getCurrentLanguage()),
+          await translate(message, {}, getCurrentLanguage()),
           ForbiddenNotification,
           {
             onClose: () => {}
           },
-          NotificationSeverity.Info
+          NotificationSeverity.Info,
+          `forbidden-${kind ?? 'unknown'}`
         )
         return {}
       } else {

@@ -65,6 +65,7 @@ import { $myPreferences, currentMeetingMinutes } from './stores'
 import { getLiveKitClient } from './liveKitClient'
 import { getLoveClient } from './loveClient'
 import { readRecordAvailable } from './recordAvailable'
+import { setMeetingPrivate } from './meetingPrivacy'
 
 export const liveKitClient = getLiveKitClient()
 export const lk: LKRoom = liveKitClient.liveKitRoom
@@ -402,11 +403,7 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 
 export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {
   if (mm === undefined) return
-
-  const client = getClient()
-  await client.update(mm, {
-    private: !mm.private
-  })
+  await setMeetingPrivate(mm, !mm.private)
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {

@@ -21,6 +21,7 @@
 | [architecture.md](architecture.md) | Слои монорепо, устройство плагина, путь запроса, поды и сервисы |
 | [features/README.md](features/README.md) | Карта продуктовых областей: где код, как работает, куда смотреть |
 | [connection_reconnect.md](connection_reconnect.md) | WebSocket клиента: подключение и переподключение |
+| [access_model.md](access_model.md) | Модель доступа: роли воркспейса, членство в space, владелец воркспейса, причины отказа |
 | [space_security_broadcasts.md](space_security_broadcasts.md) | `SpaceSecurityMiddleware`: кому уходят broadcast-транзакции |
 | [tx_security_fixes.md](tx_security_fixes.md) | Исправления безопасности приёма транзакций: пути полей и признак tx от триггера |
 | [pulse.md](pulse.md) | Transient-документы вместо hulypulse (присутствие, typing) |

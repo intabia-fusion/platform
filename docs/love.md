@@ -95,23 +95,7 @@
 
 ## 3. Безопасность
 
-`MeetingMinutes` - это `Space`, поэтому работает общий `spaceSecurity.ts`.
-
-| Действие | Условие | Результат |
-|---|---|---|
-| Создать приватный space с `owners: [я]` | - | OK |
-| Создать приватный space с `owners: [другой]` | - | `Only owners can create private spaces` |
-| Создать приватный space с `owners: []` | - | отказ |
-| Создать публичный space | - | OK (намеренно) |
-| Сменить `private` | я не в `owners` | `Only owners can change space privacy` |
-| Сменить `owners` (set/$push/$pull) | я не в `owners` | `Only owners can change space owners` |
-| Сменить `members` приватного space | я не в `owners` | `Only owners can change members of private spaces` |
-| `$pull: { members: я }` (self-leave) | я в `members`, не owner | OK |
-| `$pull: { members: { $in: [я, X] } }` | я не в `owners` | `Only owners can change members of private spaces` |
-| `$push: { members: я }` в `autoJoin` space | я не в `owners` | OK |
-| Любые изменения space с `owners.size === 0` | - | OK (legacy) |
-
-Системный аккаунт и `AccountRole.Owner` обходят проверки. Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
+`MeetingMinutes` - это `Space`, поэтому работает общий `spaceSecurity.ts`. Кто может закрыть встречу, менять организаторов и участников, и что видит владелец воркспейса без членства - [access_model.md](access_model.md), разделы 2-3. Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
 
 `ensurePerson` атомарен (`ON CONFLICT DO NOTHING` + откат orphan-person); Mongo как backend AccountDB не поддерживается. `OnEmployeeCreate` сериализует создание `PersonSpace` через `control.withScope`, поэтому дублей при параллельной регистрации нет.
 

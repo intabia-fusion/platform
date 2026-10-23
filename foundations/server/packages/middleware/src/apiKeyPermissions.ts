@@ -24,20 +24,13 @@ import core, {
   type TxApplyIf,
   type TxCUD
 } from '@hcengineering/core'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-
-// PlatformError builds `.message` from the status code; overwrite it so the reason reaches logs too.
-function forbidden (reason: string): PlatformError {
-  const err = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, { reason }))
-  err.message = reason
-  return err
-}
 
 /** Writes carried by an API key token: allowed at all, through which route, into which spaces.
  * Membership and reads stay with SpaceSecurityMiddleware. */
@@ -56,19 +49,20 @@ export class ApiKeyPermissionsMiddleware extends BaseMiddleware implements Middl
       return await this.provideTx(ctx, txes)
     }
     for (const tx of txes) {
-      this.checkTx(tx, apiKey, ctx.contextData.opsApi === true)
+      this.checkTx(ctx, tx, apiKey, ctx.contextData.opsApi === true)
     }
     return await this.provideTx(ctx, txes)
   }
 
   private checkTx (
+    ctx: MeasureContext<SessionData>,
     tx: Tx,
     apiKey: { canWrite: boolean, opsOnly: boolean, spaces: Ref<Space>[] },
     opsApi: boolean
   ): void {
     if (tx._class === core.class.TxApplyIf) {
       for (const t of (tx as TxApplyIf).txes) {
-        this.checkTx(t, apiKey, opsApi)
+        this.checkTx(ctx, t, apiKey, opsApi)
       }
       return
     }
@@ -76,11 +70,16 @@ export class ApiKeyPermissionsMiddleware extends BaseMiddleware implements Middl
       return
     }
     if (!apiKey.canWrite) {
-      throw forbidden('The API key is read-only')
+      throw this.forbiddenTx(ctx, ForbiddenKind.ApiKey, 'The API key is read-only', tx)
     }
     // Raw CUD carries no operation name, so a key granted operations writes only via /api/v1/ops.
     if (apiKey.opsOnly && !opsApi) {
-      throw forbidden('A key granted named operations may write only through /api/v1/ops')
+      throw this.forbiddenTx(
+        ctx,
+        ForbiddenKind.ApiKey,
+        'A key granted named operations may write only through /api/v1/ops',
+        tx
+      )
     }
     const cudTx = tx as TxCUD<Doc>
     // A space doc lives in core.space.Space, so updating a granted space itself (e.g. the project's
@@ -90,7 +89,7 @@ export class ApiKeyPermissionsMiddleware extends BaseMiddleware implements Middl
         ? (cudTx.objectId as Ref<Space>)
         : cudTx.objectSpace
     if (apiKey.spaces.length > 0 && !apiKey.spaces.includes(space)) {
-      throw forbidden(`The API key is not granted the space ${space}`)
+      throw this.forbiddenTx(ctx, ForbiddenKind.ApiKey, `The API key is not granted the space ${space}`, tx)
     }
   }
 }

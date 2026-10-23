@@ -60,6 +60,7 @@ describe('NotificationMiddleware', () => {
     } as any
 
     mockPipelineContext = {
+      hierarchy: { isDerived: () => false },
       derived: {
         tx: jest.fn()
       }

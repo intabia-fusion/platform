@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 
 <script lang="ts">
   import type { Ref, Space } from '@hcengineering/core'
-  import core, { type Doc, reduceCalls } from '@hcengineering/core'
+  import core, { type Doc, getCurrentAccount, reduceCalls } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { onMount } from 'svelte'
   import { getClient } from '@hcengineering/presentation'
@@ -31,7 +32,16 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
+  // Presence means "sees the content". A non-member of a private space sees none of it and may not write there;
+  // the stale doc of a just-closed space expires by TTL.
+  function isOutsider (object: Doc): boolean {
+    if (!hierarchy.isDerived(object._class, core.class.Space)) return false
+    const space = object as Space
+    return space.private && !space.members.includes(getCurrentAccount().uuid)
+  }
+
   const doUpdatePresence = reduceCalls(async (): Promise<void> => {
+    if (isOutsider(object)) return
     const presence = {
       personId,
       objectId: presenceId ?? object._id,
@@ -42,6 +52,7 @@
   })
 
   const doDeletePresence = reduceCalls(async (object: Doc, presenceId?: string): Promise<void> => {
+    if (isOutsider(object)) return
     const presence = {
       personId,
       objectId: presenceId ?? object._id,

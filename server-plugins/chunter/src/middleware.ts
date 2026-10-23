@@ -26,7 +26,7 @@ import core, {
 } from '@hcengineering/core'
 import chunter, { Chat, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import contact, { PersonSpace } from '@hcengineering/contact'
-import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { ForbiddenKind } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
@@ -116,7 +116,7 @@ export class ChunterMiddleware extends BaseMiddleware {
         const chat = TxProcessor.createDoc2Doc(createTx)
 
         if (chat.attachedTo == null) {
-          this.throwForbidden()
+          this.throwForbidden(ctx, _tx, 'A chat must be attached to a document')
           continue
         }
 
@@ -129,7 +129,7 @@ export class ChunterMiddleware extends BaseMiddleware {
       if (_tx._class === core.class.TxUpdateDoc && hierarchy.isDerived(tx.objectClass, chunter.class.Chat)) {
         const updateTx = _tx as TxUpdateDoc<Chat>
         if (updateTx.attachedTo == null || updateTx.attachedToClass == null) {
-          this.throwForbidden()
+          this.throwForbidden(ctx, _tx, 'A chat must be attached to a document')
           continue
         }
 
@@ -199,13 +199,17 @@ export class ChunterMiddleware extends BaseMiddleware {
     if (tx._class === core.class.TxCreateDoc) {
       const doc = TxProcessor.createDoc2Doc(tx as TxCreateDoc<ActivityInfoMessage>)
       if (doc.message !== chunter.string.ContentReport) return
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Content report messages are created by the system only')
     }
     if (tx._class === core.class.TxUpdateDoc) {
       const update = tx as TxUpdateDoc<ActivityInfoMessage>
-      if (update.operations.message === chunter.string.ContentReport) this.throwForbidden()
+      if (update.operations.message === chunter.string.ContentReport) {
+        this.throwForbidden(ctx, tx, 'Content report messages are created by the system only')
+      }
       const current = (await this.findAll(ctx, activity.class.ActivityInfoMessage, { _id: update.objectId }))[0]
-      if (current?.message === chunter.string.ContentReport) this.throwForbidden()
+      if (current?.message === chunter.string.ContentReport) {
+        this.throwForbidden(ctx, tx, 'Content report messages are created by the system only')
+      }
     }
   }
 
@@ -213,9 +217,13 @@ export class ChunterMiddleware extends BaseMiddleware {
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid) return
     const configs = await this.findAll(ctx, core.class.Configuration, { _id: chunter.ids.ContentReportsConfiguration })
-    if (!configs.some((it) => it.enabled)) this.throwForbidden()
+    if (!configs.some((it) => it.enabled)) {
+      this.throwForbidden(ctx, tx, 'Content reports are disabled in this workspace')
+    }
     const space = (await this.findAll(ctx, contact.class.PersonSpace, { _id: tx.objectSpace as Ref<PersonSpace> }))[0]
-    if (space?.account !== account.uuid) this.throwForbidden()
+    if (space?.account !== account.uuid) {
+      this.throwForbidden(ctx, tx, 'Content reports can only be filed from your own personal space')
+    }
   }
 
   private async onDirectCreate (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<DirectMessage>): Promise<void> {
@@ -237,7 +245,7 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       const direct = await this.findAll(ctx, chunter.class.DirectMessage, { referenceId })
       if (direct.length > 0) {
-        this.throwForbidden()
+        this.throwForbidden(ctx, tx, 'A direct message with these members already exists')
       }
       tx.attributes.referenceId = referenceId
     }
@@ -245,22 +253,22 @@ export class ChunterMiddleware extends BaseMiddleware {
 
   private async onDirectUpdate (ctx: MeasureContext<SessionData>, tx: TxUpdateDoc<DirectMessage>): Promise<void> {
     if (tx.operations.referenceId != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message referenceId cannot be changed')
     }
     if (tx.operations?.$unset?.referenceId != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message referenceId cannot be changed')
     }
     if (tx.operations.private != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message privacy cannot be changed')
     }
     if (tx.operations?.$unset?.private != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message privacy cannot be changed')
     }
     if (tx.operations.type != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message type cannot be changed')
     }
     if (tx.operations?.$unset?.type != null) {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Direct message type cannot be changed')
     }
 
     const hasMembersUpdates =
@@ -273,12 +281,12 @@ export class ChunterMiddleware extends BaseMiddleware {
 
     const direct = (await this.findAll(ctx, chunter.class.DirectMessage, { _id: tx.objectId }))[0]
     if (direct?.referenceId != null || direct.type === 'person') {
-      this.throwForbidden()
+      this.throwForbidden(ctx, tx, 'Members of a one-to-one direct message cannot be changed')
     }
   }
 
-  private throwForbidden (): void {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  private throwForbidden (ctx: MeasureContext<SessionData>, tx: Tx, message: string): void {
+    throw this.forbiddenTx(ctx, ForbiddenKind.DirectMessage, message, tx)
   }
 }
 
