@@ -42,6 +42,8 @@
         return 'Audio'
       case RoomType.Reception:
         return 'Reception'
+      case RoomType.Scheduled:
+        return 'Scheduled'
       default:
         return 'Room'
     }

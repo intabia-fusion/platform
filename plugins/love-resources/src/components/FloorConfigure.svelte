@@ -16,13 +16,13 @@
   import type { Contact } from '@hcengineering/contact'
   import type { DocumentUpdate, Ref } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
-  import { GRID_WIDTH, getFreeSpace } from '@hcengineering/love'
+  import { GRID_WIDTH, getFreeSpace, isServiceFloor } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import { DropdownLabels, Header, IconAdd, Scroller, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import lovePlg from '../plugin'
-  import { ensureOfficeDetailsLoaded, floors, lockedRoom, selectedFloor } from '../stores'
+  import { ensureOfficeDetailsLoaded, floors, lockedRoom, officeFloors, selectedFloor } from '../stores'
 
   import type { FloorSize, RGBAColor, ResizeInitParams, RoomSide } from '../types'
   import { shadowError, shadowNormal } from '../types'
@@ -291,10 +291,10 @@
     }
   }
 
-  let items = $floors.map((p) => {
+  let items = $officeFloors.map((p) => {
     return { id: p._id, label: p.name }
   })
-  $: items = $floors.map((p) => {
+  $: items = $officeFloors.map((p) => {
     return { id: p._id, label: p.name }
   })
 </script>
@@ -311,7 +311,10 @@
       on:selected={changeFloor}
     />
     <svelte:fragment slot="actions">
-      <IconButton icon={IconAdd} size="small" tooltip={{ label: lovePlg.string.AddRoom }} on:click={addRoom} />
+      <!-- The service floor holds exactly one room, created by fixed id along with the floor. -->
+      {#if !isServiceFloor(floor)}
+        <IconButton icon={IconAdd} size="small" tooltip={{ label: lovePlg.string.AddRoom }} on:click={addRoom} />
+      {/if}
       <div class="hulyHeader-divider short" />
       <Button
         label={lovePlg.string.FinalizeEditing}
