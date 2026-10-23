@@ -17,7 +17,8 @@
 import {
   getClient as getAccountClient,
   type LoginInfoWithWorkspaces,
-  type LoginInfoWorkspace
+  type LoginInfoWorkspace,
+  type PasswordAgingStatus
 } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
 import core, {
@@ -604,7 +605,7 @@ export class TSessionManager implements SessionManager {
   }
 
   @withContext('🧭 check-password-aging')
-  async checkPasswordAging (ctx: MeasureContext, token: string): Promise<boolean> {
+  async checkPasswordAging (ctx: MeasureContext, token: string): Promise<PasswordAgingStatus> {
     const accountClient = getAccountClient(this.accountsUrl, token)
     return await accountClient.checkPasswordAging()
   }
@@ -880,11 +881,16 @@ export class TSessionManager implements SessionManager {
         }
 
         if (wsInfo.passwordAgingRule != null && wsInfo.passwordAgingRule > 0) {
-          const isPasswordAgingOk = await this.checkPasswordAging(ctx, rawToken)
-          if (!isPasswordAgingOk) {
+          const passwordAging = await this.checkPasswordAging(ctx, rawToken)
+          if (passwordAging === 'warn') {
             ctx.warn('Password is older than the workspace aging rule, reminding on the client', {
               workspace: token.workspace
             })
+          } else if (passwordAging === 'expired') {
+            return {
+              error: new Status(Severity.ERROR, platform.status.PasswordExpired, {}),
+              terminate: true
+            }
           }
         }
 

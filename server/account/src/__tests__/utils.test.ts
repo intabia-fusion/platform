@@ -1364,7 +1364,8 @@ describe('account utils', () => {
           workspace: mockWorkspace.uuid,
           workspaceUrl: mockWorkspace.url,
           workspaceDataId: mockWorkspace.dataId,
-          role: AccountRole.User
+          role: AccountRole.User,
+          passwordAging: 'ok'
         })
       })
 

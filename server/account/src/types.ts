@@ -37,6 +37,7 @@ import {
   type IntegrationKind
 } from '@hcengineering/core'
 import type { EndpointInfo } from './utils'
+import { PasswordAgingStatus } from '@hcengineering/account-client'
 
 /* ========= D A T A B A S E  E N T I T I E S ========= */
 export enum Location {
@@ -784,6 +785,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   role: AccountRole
   allowGuestSignUp?: boolean
   disabledFeaturesOverride?: string[]
+  passwordAging?: PasswordAgingStatus
 }
 
 export interface OtpInfo {
