@@ -52,8 +52,7 @@ export async function notifyOwnerDisabled (
 
     let language: string | undefined
     try {
-      const [info] = await accountClient.getWorkspacesInfo([workspace])
-      language = info?.language
+      language = 'ru'
     } catch (err) {
       ctx.warn('webhook: failed to resolve workspace language, using the default', {
         endpointId: endpoint._id,

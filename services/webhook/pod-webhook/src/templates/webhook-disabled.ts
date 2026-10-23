@@ -20,7 +20,7 @@ export type MailLang = 'en' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pt-br' 
 
 const LANGS: MailLang[] = ['en', 'ru', 'de', 'fr', 'es', 'it', 'pt', 'pt-br', 'cs', 'tr', 'ja', 'zh']
 
-const DEFAULT_LANG: MailLang = 'en'
+const DEFAULT_LANG: MailLang = 'ru'
 
 /** `pt-BR` stays `pt-br`; `pt-PT` and any other regional tag fall back to its two-letter language. */
 export function resolveLang (language: string | null | undefined): MailLang {
