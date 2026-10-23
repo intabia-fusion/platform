@@ -94,7 +94,7 @@
         style:position={isNarrow && !wide ? 'static' : 'fixed'}
         style:left={isNarrow && !wide ? undefined : '1.75rem'}
         style:top={isNarrow && !wide ? undefined : '3rem'}
-        style:z-index={10001}
+        style:z-index={1001}
         class="px-4 logo"
       >
         <svelte:component this={activeTheme.logoComponent} />
@@ -104,7 +104,7 @@
       </div>
 
       {#if getMetadata(platform.metadata.DevModel)}
-        <div style:position="fixed" style:left="0px" style:top="0px" style:z-index={10000} class="flex-row-center">
+        <div style:position="fixed" style:left="0px" style:top="0px" style:z-index={1001} class="flex-row-center">
           <select class="select small" value={$loginTheme.name} on:change={onDevThemeChange}>
             <option value="intabia">Intabia</option>
             <option value="huly">Huly</option>
