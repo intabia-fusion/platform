@@ -28,5 +28,5 @@ export interface CollabStorageAdapter {
       prev: () => Record<string, string>
       curr: () => Record<string, string>
     }
-  ) => Promise<Record<string, string> | undefined>
+  ) => Promise<Record<string, string>>
 }
