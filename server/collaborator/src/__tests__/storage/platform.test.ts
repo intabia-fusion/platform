@@ -108,18 +108,6 @@ describe('PlatformStorageAdapter.saveDocumentToPlatform', () => {
     expect(client.addCollection).not.toHaveBeenCalled()
   })
 
-  it('returns the whole markup map when the stored content already matches', async () => {
-    const { client } = createClient()
-    ;(loadCollabJson as jest.Mock).mockResolvedValue('<p>new</p>')
-    const curr = { description: '<p>new</p>', content: '<p>other field</p>' }
-
-    const result = await save(client, { prev: () => ({ description: '<p>old</p>' }), curr: () => curr })
-
-    expect(result).toEqual(curr)
-    expect(saveCollabJson).not.toHaveBeenCalled()
-    expect(client.diffUpdate).not.toHaveBeenCalled()
-  })
-
   it('writes the changed document and returns the whole markup map', async () => {
     const { client, current } = createClient()
     ;(loadCollabJson as jest.Mock).mockResolvedValue(undefined)

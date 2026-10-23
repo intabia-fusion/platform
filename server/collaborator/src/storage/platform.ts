@@ -18,7 +18,7 @@ import activity, { DocAttributeUpdates, DocUpdateMessage } from '@hcengineering/
 import { Analytics } from '@hcengineering/analytics'
 import { loadCollabJson, loadCollabYdoc, saveCollabJson, saveCollabYdoc } from '@hcengineering/collaboration'
 import { decodeDocumentId } from '@hcengineering/collaborator-client'
-import core, { AttachedData, type Blob, MeasureContext, Ref, Space, TxOperations } from '@hcengineering/core'
+import core, { AttachedData, MeasureContext, Ref, Space, TxOperations } from '@hcengineering/core'
 import { StorageAdapter } from '@hcengineering/server-core'
 import { areEqualMarkups } from '@hcengineering/text'
 import { markupToYDoc } from '@hcengineering/text-ydoc'
@@ -242,30 +242,6 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
     if (!hierarchy.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc)) {
       ctx.warn('unsupported attribute type', { documentName, objectClass, objectAttr })
       return markup.curr
-    }
-
-    const storedBlob = (current as any)[objectAttr] as Ref<Blob> | null | undefined
-    if (storedBlob != null && storedBlob !== '') {
-      const storedMarkup = await ctx.with(
-        'loadCollabJson',
-        {},
-        (ctx) => {
-          return withRetry(
-            ctx,
-            this.retryCount,
-            () => {
-              return loadCollabJson(ctx, this.storage, wsIds, storedBlob)
-            },
-            this.retryInterval
-          )
-        },
-        { workspace: context.wsIds.uuid, documentName }
-      )
-
-      if (storedMarkup !== undefined && areEqualMarkups(storedMarkup, currMarkup)) {
-        ctx.info('markup matches stored content, skip platform update', { documentName, size: currMarkup.length })
-        return markup.curr
-      }
     }
 
     const blobId = await ctx.with(
