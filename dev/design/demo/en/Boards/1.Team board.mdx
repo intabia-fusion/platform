@@ -1,0 +1,39 @@
+---
+class: tracker:class:Board
+title: Team board
+key: main
+hint: Kanban
+visibility: all
+projects: [APP, MKT]
+author: Anna Smith
+editors: [Maria Cole, Ivan Peterson]
+# Conditions: field (priority, status, assignee, component, inStatus, relation), op (eq, in, not, gt), value list; "me" is the viewer
+filter:
+  - { field: priority, op: in, value: [Urgent, High, Medium, Low] }
+  - { field: status, op: not, value: [Archived] }
+columns:
+  - { title: Backlog, category: backlog, statuses: [Backlog] }
+  - { title: To Do, category: todo, statuses: [Todo, Design, Specification] }
+  - { title: On Hold, category: todo, statuses: [On Hold] }
+  - { title: In Progress, category: active, limit: 8, statuses: [In Progress, Development, Prototyping, Integration, Verification, Approval] }
+  - { title: Peer Review, category: active, statuses: [Peer Review] }
+  - { title: Ready for QA, category: active, limit: 12, statuses: [Ready for QA] }
+  - { title: Acceptance, category: active, statuses: [Acceptance] }
+  - { title: Merge queue, category: active, statuses: [Merge queue] }
+  - { title: Release candidate, category: active, statuses: [Release candidate] }
+  - { title: Done, category: won, statuses: [Done, Released, Canceled] }
+swimlanes:
+  - { title: Out of turn, hint: Priority = Urgent, filter: [{ field: priority, op: eq, value: [Urgent] }] }
+  - { title: In review for over 3 days, filter: [{ field: status, op: eq, value: [Peer Review] }, { field: inStatus, op: gt, value: ["3 d"] }] }
+  - { title: Everything else, rest: true }
+quickFilters:
+  - { title: Only mine, filter: [{ field: assignee, op: eq, value: [me] }] }
+  - { title: Development, filter: [{ field: assignee, op: in, value: [Ivan Peterson, Maria Cole] }] }
+  - { title: Testing, filter: [{ field: assignee, op: eq, value: [Oliver Wade] }] }
+  - { title: iOS, filter: [{ field: component, op: eq, value: [iOS] }] }
+  - { title: Urgent, filter: [{ field: priority, op: eq, value: [Urgent] }] }
+  - { title: Blockers, filter: [{ field: relation, op: eq, value: ["blocks"] }] }
+colorRules:
+  - { color: Orange, filter: [{ field: status, op: eq, value: [Ready for QA] }, { field: inStatus, op: gt, value: ["5 d"] }] }
+  - { color: Firework, filter: [{ field: status, op: eq, value: [Peer Review] }, { field: inStatus, op: gt, value: ["3 d"] }] }
+---

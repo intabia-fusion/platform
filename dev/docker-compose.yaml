@@ -25,6 +25,12 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
+  # Static Storybook build; 6006 stays free for `storybook dev`
+  storybook:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/storybook:${DOCKER_TAG:-latest}"
+    ports:
+      - 6007:80
+    restart: unless-stopped
   media:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/media:${DOCKER_TAG:-latest}"
     environment:

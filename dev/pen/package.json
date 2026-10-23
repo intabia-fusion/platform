@@ -1,0 +1,12 @@
+{
+  "name": "@hcengineering/pen-design",
+  "private": true,
+  "description": "pen.dev CLI for .pen design files; kept outside the pnpm workspace",
+  "type": "module",
+  "scripts": {
+    "pen": "pen"
+  },
+  "devDependencies": {
+    "@pen.dev/cli": "0.3.13"
+  }
+}

@@ -20,6 +20,8 @@ const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.ts'],
   addons: ['@storybook/addon-essentials', '@storybook/addon-a11y'],
   staticDirs: [{ from: '../../../packages/theme/fonts/complete/woff2', to: '/fonts' }],
+  // An inlined svg sprite becomes a data: URL, which <use href> refuses to load.
+  viteFinal: (viteConfig) => ({ ...viteConfig, build: { ...viteConfig.build, assetsInlineLimit: 0 } }),
   core: { disableTelemetry: true, disableWhatsNewNotifications: true }
 }
 
