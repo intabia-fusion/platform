@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,144 +14,122 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  import core, { type WithLookup } from '@hcengineering/core'
+  import type { WithLookup } from '@hcengineering/core'
   import type { Resource } from '@hcengineering/drive'
-  import { getClient } from '@hcengineering/presentation'
-  import { Button, IconMoreH } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import {
-    ObjectPresenter,
-    TimestampPresenter,
-    PersonIdPresenter,
-    openDoc,
-    showMenu
-  } from '@hcengineering/view-resources'
+  import { getClient, getFileUrl } from '@hcengineering/presentation'
+  import { AudioCover, FileCard, FileCover } from '@hcengineering/ui/kit'
+  import { TimestampPresenter, openDoc, showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
-  import FileSizePresenter from './FileSizePresenter.svelte'
-  import ResourcePresenter from './ResourcePresenter.svelte'
-  import Thumbnail from './Thumbnail.svelte'
+  import { filePreview } from '../preview'
+  import { isFolder } from '../utils'
+  import FolderTile from './FolderTile.svelte'
+  import ResourceAuthor from './ResourceAuthor.svelte'
+  import VideoCover from './VideoCover.svelte'
 
   export let object: WithLookup<Resource>
   export let selected: boolean = false
 
-  const client = getClient()
-  const hierarchy = client.getHierarchy()
+  const hierarchy = getClient().getHierarchy()
   const dispatch = createEventDispatcher()
 
   $: version = object.$lookup?.file
+  $: folder = isFolder(object) ? object : undefined
+  $: preview = filePreview(object.title, version)
+  $: modified = version?.lastModified ?? object.createdOn ?? object.modifiedOn
+  $: url = version != null ? getFileUrl(version.file, object.title) : ''
 
-  let hovered = false
+  let menu = false
+
+  function open (): void {
+    void openDoc(hierarchy, object)
+  }
+
+  function showActions (e: MouseEvent): void {
+    menu = true
+    showMenu(e, { object }, () => {
+      menu = false
+    })
+  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div
-  class="card-container"
-  class:selected
-  class:hovered
-  draggable="false"
-  on:mouseover={() => dispatch('obj-focus', object)}
-  on:mouseenter={() => dispatch('obj-focus', object)}
-  on:focus={() => {}}
-  on:contextmenu={(evt) => {
-    showMenu(evt, { object })
-  }}
->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div
-    class="card"
-    on:click={() => {
-      void openDoc(hierarchy, object)
-    }}
-  >
-    <div class="card-content">
-      <Thumbnail {object} />
-    </div>
-
-    <div class="header flex-col p-2 pt-1">
-      <div class="flex-row-center flex-gap-2 h-8">
-        <div class="title overflow-label flex-grow">
-          <ResourcePresenter value={object} shouldShowAvatar={false} accent />
-        </div>
-        <div class="tools">
-          <Button
-            icon={IconMoreH}
-            kind="ghost"
-            size="medium"
-            showTooltip={{ label: view.string.MoreActions, direction: 'bottom' }}
-            on:click={(evt) => {
-              hovered = true
-              showMenu(evt, { object }, () => {
-                hovered = false
-              })
-            }}
+<div class="grid-item" on:mouseenter={() => dispatch('obj-focus', object)}>
+  {#if folder !== undefined}
+    <FolderTile
+      value={folder}
+      active={selected || menu}
+      on:open={open}
+      on:contextmenu={(e) => {
+        showActions(e.detail)
+      }}
+    />
+  {:else}
+    <FileCard
+      --file-card-width="100%"
+      name={object.title}
+      size={version?.size ?? 0}
+      badge={preview.badge}
+      {url}
+      contentType={version?.type ?? ''}
+      nameLines={2}
+      highlighted={selected || menu}
+      on:open={open}
+      on:contextmenu={(e) => {
+        showActions(e.detail)
+      }}
+    >
+      <!-- A slot given is always used, so the usual cover is drawn here too. -->
+      <svelte:fragment slot="cover">
+        {#if preview.audio && version != null}
+          <AudioCover id={version.file} src={url} badge={preview.badge} />
+        {:else if preview.video}
+          <VideoCover
+            badge={preview.badge}
+            picture={preview.picture}
+            blurhash={preview.blurhash}
+            playlist={preview.playlist}
+            duration={preview.duration}
+            alt={object.title}
+            cacheKey={version?.file}
           />
-        </div>
-      </div>
-
-      <div class="flex-between flex-gap-2 h-4">
-        <div class="flex-row-center flex-gap-2 font-regular-12">
-          <PersonIdPresenter value={object.createdBy} withPadding={false} noUnderline avatarSize="tiny" />
-          <span>•</span>
-          <span class="flex-no-shrink">
-            <TimestampPresenter value={version?.lastModified ?? object.createdOn ?? object.modifiedOn} />
-          </span>
-        </div>
-        <div class="flex-no-shrink font-regular-12">
-          <FileSizePresenter value={version?.size} />
-        </div>
-      </div>
-    </div>
-  </div>
+        {:else}
+          <FileCover
+            badge={preview.badge}
+            picture={preview.picture}
+            blurhash={preview.blurhash}
+            page={preview.page}
+            alt={object.title}
+            cacheKey={version?.file}
+          />
+        {/if}
+      </svelte:fragment>
+      <!-- The dot parts it from the size, which the card leaves out when unknown. -->
+      <span slot="meta">{#if (version?.size ?? 0) > 0}· {/if}<TimestampPresenter value={modified} /></span>
+      <span class="author">
+        <ResourceAuthor value={object.createdBy} />
+      </span>
+    </FileCard>
+  {/if}
 </div>
 
 <style lang="scss">
-  .card-container {
-    position: relative;
-
-    border-radius: 0.5rem;
-    border: 1px solid var(--theme-divider-color);
-    background-color: var(--theme-kanban-card-bg-color);
-
-    &.selected {
-      outline: 2px solid var(--global-focus-BorderColor);
-      outline-offset: 2px;
-      background-color: var(--highlight-hover);
-    }
-
-    &:hover,
-    &.hovered {
-      .tools {
-        display: block;
-      }
-    }
-  }
-
-  .card {
-    border-radius: 0.5rem;
-    position: relative;
+  // The cards of a row share its height, so the authors line up at the bottom.
+  .grid-item {
+    display: flex;
     height: 100%;
+
+    > :global(*) {
+      flex-grow: 1;
+    }
+  }
+
+  .author {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-  }
-
-  .tools {
-    display: none;
-  }
-
-  .card-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 10rem;
-  }
-
-  .header {
-    border-top: 1px solid var(--theme-divider-color);
-    padding: 0.25rem 0.5rem 0.5rem;
+    margin-top: auto;
+    padding: 0.375rem 0 0.125rem;
+    min-width: 0;
+    font-size: 0.75rem;
+    color: var(--theme-dark-color);
   }
 </style>

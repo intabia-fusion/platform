@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Blob, Ref, WithLookup } from '@hcengineering/core'
   import drive, { type File, type FileVersion } from '@hcengineering/drive'
-  import { FilePreview, createQuery } from '@hcengineering/presentation'
+  import { FilePreview, createQuery, isTextFile } from '@hcengineering/presentation'
 
   import { createEventDispatcher, onMount } from 'svelte'
   import EditFileVersions from './EditFileVersions.svelte'
@@ -36,6 +36,9 @@
     contentType = version?.type
   })
 
+  // The panel has its own edges and its own scroll: the text goes in it whole, without a frame.
+  $: text = contentType != null && isTextFile(contentType)
+
   onMount(() => {
     dispatch('open', { ignoreKeys: ['parent', 'path', 'version', 'versions'] })
   })
@@ -47,6 +50,7 @@
     {contentType}
     name={version.title}
     metadata={version.metadata}
+    props={text ? { frame: false, scroll: false } : {}}
     fit={contentType !== 'application/pdf'}
   />
 

@@ -120,6 +120,20 @@ describe('migration reindex requests', () => {
     expect(stored()).toHaveLength(0)
   })
 
+  it('a request from scratch stays one when another migration asks for the same domain plainly', async () => {
+    await client.reindex(task, [classA], true)
+    await client.reindex(task, [classB])
+    await client.reindex(chunter, [classB])
+
+    const msgs = await send()
+
+    expect(msgs).toEqual([
+      workspaceEvents.reindex(task, [classA, classB], true),
+      workspaceEvents.reindex(chunter, [classB])
+    ])
+    expect(msgs[1]).not.toHaveProperty('clean')
+  })
+
   it('a full request covers the partial ones', async () => {
     await client.reindex(task, [classA])
     await client.fullReindex()

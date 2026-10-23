@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -46,7 +47,10 @@
     objects = res
   })
 
-  $: isColumn = hierarchy.isDerived(message.objectClass, attachment.class.Attachment) && !preview
+  // New attachments show as tiles under the header; removed ones are gone, so their names fit one line.
+  $: isAttachment = hierarchy.isDerived(message.objectClass, attachment.class.Attachment)
+  $: isColumn = isAttachment && !preview && message.action !== 'remove'
+  $: listed = message.action === 'remove' && isAttachment
   $: _icon = viewlet?.icon ?? objectIcon ?? activity.icon.Activity
   $: clazz = hierarchy.findClass(message.objectClass)
 </script>
@@ -63,8 +67,6 @@
       </span>
       {#if message.action === 'create'}
         <Label label={activity.string.New} />
-      {:else if message.action === 'remove' && message.updateCollection}
-        <Label label={activity.string.Removed} />
       {/if}
       <span class="lower">
         {#if collectionName && (message.history?.length || !isOwn)}
@@ -74,8 +76,9 @@
         {/if}
       </span>
     </span>
-    <span class="content flex-gap-1 no-word-wrap flex-wrap">
-      {#each valueMessages as valueMessage, index}
+    <!-- The gap alone spaces the tiles: a spacer element wrapped to the start of a row and shifted it. -->
+    <span class="content tiles no-word-wrap flex-wrap">
+      {#each valueMessages as valueMessage}
         <DocUpdateMessageObjectValue
           message={valueMessage}
           space={message.space}
@@ -84,9 +87,6 @@
           {preview}
           doc={objects.find((it) => it._id === valueMessage.objectId)}
         />
-        {#if index < valueMessages.length - 1}
-          <span class="ml-1" />
-        {/if}
       {/each}
     </span>
   </span>
@@ -123,7 +123,7 @@
           doc={objects.find((it) => it._id === valueMessage.objectId)}
         />
         {#if index < valueMessages.length - 1}
-          <span class="ml-1" />
+          {#if listed}<span class="comma">,</span>{:else}<span class="ml-1" />{/if}
         {/if}
       {/each}
     </span>
@@ -162,5 +162,13 @@
     &.preview {
       flex-wrap: nowrap;
     }
+  }
+
+  .tiles {
+    gap: 0.5rem;
+  }
+
+  .comma {
+    margin-right: 0.375rem;
   }
 </style>

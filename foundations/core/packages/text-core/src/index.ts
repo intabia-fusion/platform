@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,5 +18,6 @@ export * from './markup/dsl'
 export * from './markup/model'
 export * from './markup/reference'
 export * from './markup/highlight'
+export * from './markup/links'
 export * from './markup/traverse'
 export * from './markup/utils'

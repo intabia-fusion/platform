@@ -17,7 +17,12 @@ import { loginId } from '@hcengineering/login'
 import { loveId } from '@hcengineering/love'
 import { timeId } from '@hcengineering/time'
 import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
-import presentation, { MessageBox, setDownloadProgress, getClient } from '@hcengineering/presentation'
+import presentation, {
+  MessageBox,
+  setDownloadProgress,
+  setDownloadFilesHandler,
+  getClient
+} from '@hcengineering/presentation'
 import setting, { settingId } from '@hcengineering/setting'
 import {
   closePanel,
@@ -234,6 +239,10 @@ window.addEventListener('DOMContentLoaded', () => {
       .catch(() => {
         navigateToUrl(getBasicNotificationPath(workspace, app))
       })
+  })
+
+  setDownloadFilesHandler(async (files) => {
+    await ipcMain.downloadToFolder(files)
   })
 
   ipcMain.handleUpdateDownloadProgress((progress) => {

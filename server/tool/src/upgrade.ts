@@ -127,11 +127,12 @@ export class MigrateClientImpl implements MigrationClient {
     await this.create(DOMAIN_MIGRATION, reindexRequest())
   }
 
-  async reindex (domain: Domain, classes: Ref<Class<Doc>>[]): Promise<void> {
+  async reindex (domain: Domain, classes: Ref<Class<Doc>>[], clean: boolean = false): Promise<void> {
     const request = reindexRequest(domain, classes)
     // Two migrations may ask for the same domain: keep the classes of both.
     const [stored] = await this.lowLevel.rawFindAll<ReindexRequest>(DOMAIN_MIGRATION, { _id: request._id })
     request.classes = Array.from(new Set([...(stored?.classes ?? []), ...classes]))
+    if (clean || stored?.clean === true) request.clean = true
     await this.create(DOMAIN_MIGRATION, request)
   }
 }

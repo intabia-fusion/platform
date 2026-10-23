@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "エラー",
     "StatusWarning": "警告",
-    "StatusInfo": "情報"
+    "StatusInfo": "情報",
+    "Download": "ダウンロード",
+    "PreviewUnavailable": "このコンテンツタイプのプレビューは利用できません",
+    "PreviewFailed": "プレビューを開けませんでした",
+    "Play": "再生",
+    "Pause": "一時停止",
+    "PlaybackPosition": "再生位置",
+    "PlaybackSpeed": "再生速度",
+    "LinkPreviewUnavailable": "リンクのプレビューを表示できません",
+    "UploadProgress": "{sent} / {size}",
+    "UploadFailed": "アップロードに失敗しました",
+    "Retry": "再試行",
+    "VoiceStarting": "マイクを準備しています…",
+    "VoiceDiscard": "録音をキャンセル",
+    "VoiceAttach": "録音を添付"
   }
 }

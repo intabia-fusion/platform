@@ -29,6 +29,6 @@
   .thread__replies-count {
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--theme-link-color);
+    color: var(--button-primary-BackgroundColor);
   }
 </style>

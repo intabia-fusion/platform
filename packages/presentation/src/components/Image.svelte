@@ -40,6 +40,8 @@
   export let showLoading: boolean = false
   export let persistent: boolean = true
   export let tiny: boolean = false
+  /** How far off screen a persistent image stays loaded, as an IntersectionObserver root margin. */
+  export let margin: string = '20%'
 
   const dispatch = createEventDispatcher()
 
@@ -76,9 +78,13 @@
 
   function lazyObserverAction (node: Element, persistent: boolean): any {
     let activeObserver = persistent
-      ? persistentLazyObserver(node, (val) => {
-          visible = val
-        })
+      ? persistentLazyObserver(
+          node,
+          (val) => {
+            visible = val
+          },
+          margin
+        )
       : lazyObserver(node, (val, unsubscribe) => {
           if (val) {
             visible = true
@@ -95,9 +101,13 @@
           activeObserver?.destroy?.()
           persistent = newPersistent
           activeObserver = persistent
-            ? persistentLazyObserver(node, (val) => {
-                visible = val
-              })
+            ? persistentLazyObserver(
+                node,
+                (val) => {
+                  visible = val
+                },
+                margin
+              )
             : lazyObserver(node, (val, unsubscribe) => {
                 if (val) {
                   visible = true

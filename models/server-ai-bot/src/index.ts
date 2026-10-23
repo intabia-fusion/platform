@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,6 +20,7 @@ import serverCore from '@hcengineering/server-core'
 import serverAiBot from '@hcengineering/server-ai-bot'
 import chunter from '@hcengineering/chunter'
 import aiBot from '@hcengineering/ai-bot'
+import serverAttachment from '@hcengineering/server-attachment'
 
 export { serverAiBotId } from '@hcengineering/server-ai-bot'
 
@@ -39,5 +41,12 @@ export function createModel (builder: Builder): void {
       objectClass: aiBot.class.AudioTranscribe
     },
     isAsync: true
+  })
+
+  builder.mixin(aiBot.class.AudioTranscribe, core.class.Class, serverCore.mixin.SearchPresenter, {
+    title: [],
+    contentField: 'text',
+    highlightableField: 'text',
+    facets: serverAttachment.function.AttachmentSearchFacets
   })
 }

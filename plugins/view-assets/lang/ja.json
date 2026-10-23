@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "{total} KB のうち先頭 {shown} KB を表示",
+    "MarkdownPreview": "プレビュー",
+    "MarkdownSource": "ソース",
+    "MarkdownTooLarge": "書式なし：{limit} KB 超",
+    "TextShownLast": "{total} KB のうち末尾 {shown} KB を表示",
     "Contains": "含む",
     "NotContains": "含まない",
     "MoveClass": "{class} を移動",

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,6 +23,7 @@ import { AnyComponent } from '@hcengineering/ui'
 import { Widget } from '@hcengineering/workbench'
 
 export * from './analytics'
+export * from './category'
 
 /**
  * @public
@@ -99,7 +101,6 @@ export default plugin(attachmentId, {
     Photos: '' as AnyComponent,
     AttachmentsPresenter: '' as AnyComponent,
     DrawingPresenter: '' as AnyComponent,
-    FileBrowser: '' as AnyComponent,
     PDFViewer: '' as AnyComponent
   },
   icon: {
@@ -126,25 +127,26 @@ export default plugin(attachmentId, {
     NoFiles: '' as IntlString,
     NoParticipants: '' as IntlString,
     ShowMoreAttachments: '' as IntlString,
-    FileBrowserDateFilterAny: '' as IntlString,
-    FileBrowserDateFilterToday: '' as IntlString,
-    FileBrowserDateFilterYesterday: '' as IntlString,
-    FileBrowserDateFilter7Days: '' as IntlString,
-    FileBrowserDateFilter30Days: '' as IntlString,
-    FileBrowserDateFilter3Months: '' as IntlString,
-    FileBrowserDateFilter12Months: '' as IntlString,
-    FileBrowserTypeFilterAny: '' as IntlString,
-    FileBrowserTypeFilterImages: '' as IntlString,
-    FileBrowserTypeFilterAudio: '' as IntlString,
-    FileBrowserTypeFilterVideos: '' as IntlString,
-    FileBrowserTypeFilterPDFs: '' as IntlString,
+    FormatImage: '' as IntlString,
+    FormatVideo: '' as IntlString,
+    FormatGif: '' as IntlString,
+    FormatVoice: '' as IntlString,
+    VoiceMessage: '' as IntlString,
+    FormatMusic: '' as IntlString,
+    FormatPdf: '' as IntlString,
+    FormatDocument: '' as IntlString,
+    FormatSpreadsheet: '' as IntlString,
+    FormatPresentation: '' as IntlString,
+    FormatArchive: '' as IntlString,
+    FormatText: '' as IntlString,
+    FormatApplication: '' as IntlString,
+    FormatOther: '' as IntlString,
+    FormatLinkPreview: '' as IntlString,
     DeleteFile: '' as IntlString,
     Attachments: '' as IntlString,
-    FileBrowser: '' as IntlString,
     OpenInWindow: '' as IntlString,
     Embeddings: '' as IntlString,
-    Transcribing: '' as IntlString,
-    TranscriptionFailed: '' as IntlString
+    Transcribing: '' as IntlString
   },
   function: {
     AttachmentsApplier: '' as Resource<any>

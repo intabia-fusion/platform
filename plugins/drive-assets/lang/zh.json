@@ -40,6 +40,12 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyFolder": "此文件夹为空",
+    "DropFilesHere": "将文件拖放到此处",
+    "DropFilesHint": "或点击选择文件",
+    "FoldersCount": "{count, plural, other {# 个文件夹}}",
+    "FilesCount": "{count, plural, other {# 个文件}}",
+    "FolderEmpty": "空"
   }
 }

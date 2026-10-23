@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,12 +17,15 @@
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
-  import { AttachmentPresenter, FileDownload } from '@hcengineering/attachment-resources'
+  import { AttachmentLabel } from '@hcengineering/attachment-resources'
   import type { ChunterSpace } from '@hcengineering/chunter'
   import type { Doc } from '@hcengineering/core'
   import { SortingOrder, getCurrentAccount, type WithLookup } from '@hcengineering/core'
   import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
   import { Icon, IconMoreV, Label, Menu, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
+  import { IconFileDownload } from '@hcengineering/ui/kit'
+
+  import { mainTabOf } from '../search/attachments'
 
   export let channel: ChunterSpace | undefined
   const client = getClient()
@@ -81,11 +85,11 @@
       {#each visibleAttachments as attachment, i}
         <div class="flex-between attachmentRow" class:fixed={i === selectedRowNumber}>
           <div class="item flex">
-            <AttachmentPresenter value={attachment} />
+            <AttachmentLabel value={attachment} />
           </div>
           <div class="eAttachmentRowActions" class:fixed={i === selectedRowNumber}>
             <a href={getFileUrl(attachment.file, attachment.name)} download={attachment.name}>
-              <Icon icon={FileDownload} size="small" />
+              <Icon icon={IconFileDownload} size="small" />
             </a>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -102,8 +106,10 @@
           class="showMoreAttachmentsButton"
           on:click={() => {
             const loc = getCurrentResolvedLocation()
-            loc.path[3] = 'fileBrowser'
-            loc.query = channel ? { spaceId: channel._id } : {}
+            loc.path[3] = 'browser'
+            loc.path.length = 4
+            const tab = mainTabOf(client.getHierarchy(), visibleAttachments ?? [])
+            loc.query = channel !== undefined ? { tab, in: `${channel._class}~${channel._id}` } : { tab }
             navigate(loc)
           }}
         >

@@ -6,7 +6,8 @@
 
 - `fulltextSummary` - только текст атрибута `SearchPresenter.contentField`. Весь остальной текст идёт в `fulltextExtra`, у класса без `contentField` туда идёт весь текст. Раскладку делает `indexDocuments` (`server/indexer/src/indexer/indexer.ts`), полную переиндексацию запускает миграция `reindex-after-fulltext-extra` (`models/core/src/migration.ts`).
 - В непереиндексированном воркспейсе весь текст лежит в `fulltextSummary`, и `$searchIn: ['content']` находит там же кастомные атрибуты.
-- `fulltextExtra` не подсвечивается: в интерфейсе сниппеты показывает только поиск по чату (`plugins/chunter-resources/src/search/hydrate.ts`), только для ChatMessage и только из `highlightableContent`.
+- `fulltextExtra` подсвечивается (`highlights.extra`), только когда `searchIn` его включает и у всех классов запроса `SearchPresenter.highlightExtra` (сейчас только `ChatMessage`). Подсветка задаётся на весь запрос, поэтому класс проверяется по `query.classes`, как `scoring` (`searchFulltext`). У файла в `extra` текст всего документа до 500 КБ: подсветка на каждый найденный файл перечитывала бы его зря. Браузер ссылок берёт оттуда слова для адреса и заголовка превью.
+- Стандартный токенизатор оставляет хост с точками одним словом: `platform-stage.intabia.ru` даёт `platform` и `stage.intabia.ru`, поэтому `intabia` такую ссылку не находит.
 
 ## Новое поле в маппинге Elastic
 

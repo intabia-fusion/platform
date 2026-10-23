@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import type { TriggerFunc } from '@hcengineering/server-core'
+import type { SearchFacetsProvider, TriggerFunc } from '@hcengineering/server-core'
 
 /**
  * @public
@@ -29,5 +30,8 @@ export const serverAttachmentId = 'server-attachment' as Plugin
 export default plugin(serverAttachmentId, {
   trigger: {
     OnAttachmentDelete: '' as Resource<TriggerFunc>
+  },
+  function: {
+    AttachmentSearchFacets: '' as Resource<SearchFacetsProvider>
   }
 })

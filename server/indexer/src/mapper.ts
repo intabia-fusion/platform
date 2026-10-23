@@ -1,3 +1,18 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 import core, {
   getObjectValue,
   type Class,
@@ -124,6 +139,11 @@ export async function updateDocWithPresenter (
   }
 }
 
+// Every class must allow it: a mixed query would otherwise highlight the documents inside files too.
+export function getHighlightExtra (hierarchy: Hierarchy, classes: Ref<Class<Doc>>[]): boolean {
+  return classes.length > 0 && classes.every((c) => findSearchPresenter(hierarchy, c)?.highlightExtra === true)
+}
+
 export function getScoringConfig (hierarchy: Hierarchy, classes: Ref<Class<Doc>>[]): SearchScoring[] {
   let results: SearchScoring[] = []
   for (const _class of classes) {
@@ -146,12 +166,14 @@ function toHighlights (raw: Record<string, string[]> | undefined): SearchResultD
 
   const content = raw.highlightableContent ?? raw['highlightableContent.ru'] ?? raw.fulltextSummary
   const title = raw.searchTitle
+  const extra = raw.fulltextExtra
 
-  if (content === undefined && title === undefined) return undefined
+  if (content === undefined && title === undefined && extra === undefined) return undefined
 
   return {
     ...(content !== undefined ? { content } : {}),
-    ...(title !== undefined ? { title } : {})
+    ...(title !== undefined ? { title } : {}),
+    ...(extra !== undefined ? { extra } : {})
   }
 }
 
@@ -180,8 +202,12 @@ export function mapSearchResultDoc (hierarchy: Hierarchy, raw: IndexedDoc): Sear
   }
 
   if (raw.objectId != null && raw.objectClass != null) {
-    ;(doc.doc as any).objectId = raw.objectId
-    ;(doc.doc as any).objectClass = raw.objectClass
+    doc.doc.objectId = raw.objectId
+    doc.doc.objectClass = raw.objectClass
+  }
+  if (raw.rootObject != null && raw.rootObjectClass != null) {
+    doc.doc.rootObject = raw.rootObject
+    doc.doc.rootObjectClass = raw.rootObjectClass
   }
 
   function fUpper (name: string): string {

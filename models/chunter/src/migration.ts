@@ -49,7 +49,7 @@ import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
 import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
-import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
+import attachment, { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
 import notification, { type DocNotifyContext, DOMAIN_READ_STATE, type ReadState } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
@@ -698,6 +698,15 @@ export const chunterOperation: MigrateOperation = {
         state: 'chat-read-state-refs-v2',
         mode: 'upgrade',
         func: fillChatReadStates
+      },
+      {
+        state: 'attachment-search-reindex-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          // Files from scratch: the index still holds those removed without transactions.
+          await client.reindex(DOMAIN_ATTACHMENT, client.hierarchy.getDescendants(attachment.class.Attachment), true)
+          await client.reindex(DOMAIN_ACTIVITY, client.hierarchy.getDescendants(chunter.class.ChatMessage))
+        }
       }
     ])
   },

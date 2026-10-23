@@ -79,6 +79,7 @@
   let inputContent = currentMessage.message
 
   let recording = false
+  let recorder: VoiceRecordingHud | undefined
   const voiceActions: RefAction[] = [
     {
       label: chunter.string.RecordVoice,
@@ -90,7 +91,7 @@
     }
   ]
 
-  // Register the HUD-created AudioTranscribe as a draft attachment (not injected into the input).
+  // The recording joins the draft like a file; its doc is created on send.
   function onAudioAttachment (e: CustomEvent<Attachment>): void {
     inputRef?.addAttachmentDoc(e.detail)
   }
@@ -359,19 +360,6 @@
   <ReplyToMessagePresenter replyTo={forwardedMessage} on:delete={handleReplyMessageDelete} />
 {/if}
 
-{#if recording}
-  <VoiceRecordingHud
-    objectId={_id}
-    objectClass={_class}
-    space={getChannelSpace(object._class, object._id, object.space)}
-    on:audio={onAudioAttachment}
-    on:send={() => {
-      inputRef?.submit()
-    }}
-    on:close={() => (recording = false)}
-  />
-{/if}
-
 <AttachmentRefInput
   {focusIndex}
   bind:this={inputRef}
@@ -394,7 +382,25 @@
   on:blur
   bind:loading
   onKeyDown={handleKeyDown}
-/>
+  {recording}
+  beforeSend={recording ? async () => await recorder?.finish() : undefined}
+>
+  <svelte:fragment slot="recorder">
+    {#if recording}
+      <VoiceRecordingHud
+        bind:this={recorder}
+        objectId={_id}
+        objectClass={_class}
+        space={getChannelSpace(object._class, object._id, object.space)}
+        on:audio={onAudioAttachment}
+        on:close={() => {
+          recording = false
+          inputRef?.focus()
+        }}
+      />
+    {/if}
+  </svelte:fragment>
+</AttachmentRefInput>
 
 {#if withTypingInfo}
   <div class="typing-row">

@@ -15,14 +15,9 @@
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
-  import { MessageBox } from '@hcengineering/presentation'
-  import { showPopup } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
-  import { mySocialStringsStore } from '../stores'
 
-  import attachmentPlugin from '../plugin'
-  import AttachmentPresenter from './AttachmentPresenter.svelte'
+  import { mySocialStringsStore } from '../stores'
+  import AttachmentLabel from './file/AttachmentLabel.svelte'
 
   export let value: Attachment | undefined
 
@@ -32,30 +27,7 @@
     value?.createdBy !== undefined &&
     $mySocialStringsStore !== undefined &&
     (me.role === AccountRole.Owner || $mySocialStringsStore.has(value.createdBy))
-
-  function removeAttachmentWithConfirmation (attachment: Attachment): void {
-    showPopup(
-      MessageBox,
-      {
-        label: view.string.DeleteObject,
-        message: view.string.DeleteObjectConfirm,
-        params: { count: 1 },
-        action: async () => {
-          const impl = await getResource(attachmentPlugin.actionImpl.DeleteAttachment)
-          await impl(attachment)
-        }
-      },
-      'top'
-    )
-  }
 </script>
 
-<AttachmentPresenter
-  {value}
-  removable={isOwn}
-  on:remove={(ev) => {
-    if (ev.detail !== undefined && value !== undefined) {
-      removeAttachmentWithConfirmation(value)
-    }
-  }}
-/>
+<!-- Delete is in the menu of a right click, with a confirmation. -->
+<AttachmentLabel {value} removable={isOwn} />

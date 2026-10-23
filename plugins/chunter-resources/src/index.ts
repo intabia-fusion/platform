@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -102,6 +103,7 @@ import {
   CommentsApplier
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
+import { canDownloadAttachments, downloadAttachments } from './download'
 
 export { summarizingStore, startSummarizing, stopSummarizing } from './stores'
 
@@ -223,6 +225,7 @@ export default async (): Promise<Resources> => ({
     CanCopyMessageLink: canCopyMessageLink,
     CanReportMessage: canReportMessage,
     CanReportPerson: canReportPerson,
+    CanDownloadAttachments: canDownloadAttachments,
     GetChunterSpaceLinkFragment: chunterSpaceLinkFragmentProvider,
     GetChunterSpaceLinkId: getChunterSpaceLinkId,
     ParseChunterSpaceLinkId: parseChunterSpaceLinkId,
@@ -264,6 +267,7 @@ export default async (): Promise<Resources> => ({
     ReplyToMessage: replyToMessage,
     ForwardMessage: forwardMessage,
     ReportMessage: reportMessage,
-    ReportPerson: reportPerson
+    ReportPerson: reportPerson,
+    DownloadAttachments: downloadAttachments
   }
 })

@@ -17,11 +17,11 @@
 <script lang="ts">
   import type { Folder } from '@hcengineering/drive'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Icon, tooltip } from '@hcengineering/ui'
+  import { tooltip } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import type { ObjectPresenterType } from '@hcengineering/view'
 
-  import FolderIcon from './icons/Folder.svelte'
+  import FolderGlyph from './FolderGlyph.svelte'
 
   export let value: Folder
   export let inline: boolean = false
@@ -39,11 +39,14 @@
     <DocNavLink {disabled} object={value} {accent} {noUnderline}>
       <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.title) }}>
         {#if shouldShowAvatar}
-          <div class="icon">
-            <Icon icon={FolderIcon} size="small" fill="var(--global-accent-IconColor)" />
-          </div>
+          <FolderGlyph />
         {/if}
-        <span class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
+        <span
+          class="label nowrap"
+          class:after-glyph={shouldShowAvatar}
+          class:no-underline={noUnderline || disabled}
+          class:fs-bold={accent}
+        >
           {value.title}
         </span>
       </div>
@@ -54,3 +57,9 @@
     </span>
   {/if}
 {/if}
+
+<style lang="scss">
+  .after-glyph {
+    margin-left: 0.5rem;
+  }
+</style>

@@ -19,6 +19,8 @@ import attachment, { type Attachment } from '@hcengineering/attachment'
 import type { Tx, TxRemoveDoc } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 
+import { AttachmentSearchFacets } from './facets'
+
 /**
  * @public
  */
@@ -67,5 +69,8 @@ export async function OnAttachmentDelete (
 export default async () => ({
   trigger: {
     OnAttachmentDelete
+  },
+  function: {
+    AttachmentSearchFacets
   }
 })

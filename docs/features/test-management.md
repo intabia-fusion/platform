@@ -75,7 +75,7 @@
 - **События аналитики.** `TestRunCreated` и `TestPlanCreated`. - `plugins/test-management/src/analytics.ts` (enum `TestManagementEvents`), вызовы в `NewTestRunPanel.svelte` и `NewTestPlanPanel.svelte`.
 
 ### Прикрепления
-- **Вложения на кейсе и результате.** `TestCase`/`TestResult` несут коллекцию `attachment.class.Attachment` (`AttachmentPresenter`/`AttachmentStyledBox`), редактируются прямо в `EditTestCase`/`EditTestResult`/`CreateTestCase`. - `models/test-management/src/types.ts`, `plugins/test-management-resources/src/components/test-case/CreateTestCase.svelte`.
+- **Вложения на кейсе и результате.** `TestCase`/`TestResult` несут коллекцию `attachment.class.Attachment`. При создании кейса файлы добавляет `AttachmentStyledBox`, плитки показывает `AttachmentTiles` (`CreateTestCase`); при правке кейса и результата - `AttachmentStyleBoxCollabEditor` (`EditTestCase`, `TestResultAside` в панели `EditTestResult`). - `models/test-management/src/types.ts`, `plugins/test-management-resources/src/components/test-case/{CreateTestCase,EditTestCase}.svelte`, `test-result/TestResultAside.svelte`.
 - **Due date прогона.** `NewTestRunAside` даёт выставить `dueDate` до сохранения панели (`bind:dueDate={object.dueDate}`). - `plugins/test-management-resources/src/components/test-run/NewTestRunPanel.svelte`.
 - **Дефолтный assignee плана.** `NewTestPlanAside` даёт выставить `defaultAssignee`, который проставляется в `assignee` каждой создаваемой `TestPlanItem`. - `plugins/test-management-resources/src/components/test-plan/NewTestPlanPanel.svelte`.
 

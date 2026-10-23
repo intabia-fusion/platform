@@ -14,7 +14,7 @@
 //
 
 import core, { type Blob, type Ref, DOMAIN_BLOB, generateId, toIdMap } from '@hcengineering/core'
-import type { File, FileVersion, Resource } from '@hcengineering/drive'
+import type { File, FileVersion, Folder, Resource } from '@hcengineering/drive'
 import {
   type MigrateOperation,
   type MigrationClient,
@@ -120,6 +120,23 @@ async function renameFields (client: MigrationClient): Promise<void> {
   }
 }
 
+// What every folder holds, counted once; the server trigger keeps it from then on.
+async function countFolderContents (client: MigrationClient): Promise<void> {
+  const folders = await client.groupBy<Ref<Folder>, Resource>(DOMAIN_DRIVE, 'parent', { _class: drive.class.Folder })
+  const files = await client.groupBy<Ref<Folder>, Resource>(DOMAIN_DRIVE, 'parent', { _class: drive.class.File })
+  const all = await client.find<Folder>(DOMAIN_DRIVE, { _class: drive.class.Folder }, { projection: { _id: 1 } })
+  const chunk = 500
+  for (let i = 0; i < all.length; i += chunk) {
+    await client.bulk<Folder>(
+      DOMAIN_DRIVE,
+      all.slice(i, i + chunk).map((folder) => ({
+        filter: { _id: folder._id },
+        update: { folders: folders.get(folder._id) ?? 0, files: files.get(folder._id) ?? 0 }
+      }))
+    )
+  }
+}
+
 export const driveOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, driveId, [
@@ -130,6 +147,10 @@ export const driveOperation: MigrateOperation = {
       {
         state: 'renameFields',
         func: renameFields
+      },
+      {
+        state: 'count-folder-contents',
+        func: countFolderContents
       }
     ])
   },

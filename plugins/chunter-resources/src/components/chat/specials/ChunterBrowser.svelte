@@ -12,98 +12,132 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import attachment from '@hcengineering/attachment'
-  import { FileBrowser } from '@hcengineering/attachment-resources'
-  import { getCurrentLocation, navigate, popupstore, Scroller, Switcher } from '@hcengineering/ui'
+  import type { AttachmentFormat } from '@hcengineering/attachment'
   import type { SearchSortOrder } from '@hcengineering/core'
+  import { getCurrentLocation, navigate, popupstore, Switcher } from '@hcengineering/ui'
 
-  import { SearchType } from '../../../utils'
-  import { peekSearchSnapshot, takePendingSearch } from '../../../search/store'
-  import { filtersFromQuery, filtersToQuery, sortFromQuery } from '../../../search/url'
-  import type { ChatSearchFilters } from '../../../search/types'
   import { openSearchResult } from '../../../navigation'
-  import chunter from '../../../plugin'
+  import { BrowserTab, isAttachmentTab, type AttachmentTab } from '../../../search/attachments'
+  import { peekSearchSnapshot, takePendingSearch } from '../../../search/store'
+  import type { ChatSearchFilters } from '../../../search/types'
+  import {
+    defaultSort,
+    filtersFromQuery,
+    formatsFromQuery,
+    namesSearch,
+    replaceSearch,
+    searchToQuery,
+    sortFromQuery,
+    tabFromQuery
+  } from '../../../search/url'
   import Header from '../../Header.svelte'
-  import SearchPanel from '../search/SearchPanel.svelte'
+  import FilesPanel from '../search/browser/FilesPanel.svelte'
+  import LinksPanel from '../search/browser/LinksPanel.svelte'
+  import { tabConfig } from '../search/browser/tabs'
   import SearchInputBox from '../search/SearchInputBox.svelte'
+  import SearchPanel from '../search/SearchPanel.svelte'
 
-  const localStorageKey = 'chunter-browser-st__v2'
+  const TAB_STORAGE_KEY = 'chunter-browser-tab'
+  // Narrower than this, the tabs show only their icons.
+  const COMPACT_TABS_WIDTH = 760
 
-  let searchType: SearchType = initSearchType()
-  $: localStorage.setItem(localStorageKey, searchType.toString())
+  const tabItems = Object.values(BrowserTab).map((id) => ({
+    id,
+    icon: tabConfig[id].icon,
+    labelIntl: tabConfig[id].label,
+    tooltip: tabConfig[id].label
+  }))
 
+  // Where the browser starts: a search handed over from elsewhere, then a link naming one, then the last one kept.
   const pending = takePendingSearch()
-  const startLoc = getCurrentLocation()
-  const last = startLoc.query?.q == null ? peekSearchSnapshot() : undefined
+  const url = getCurrentLocation().query
+  const last = namesSearch(url) ? undefined : peekSearchSnapshot()
 
-  let query: string = pending?.search ?? last?.search ?? startLoc.query?.q ?? ''
+  let tab: BrowserTab = startTab()
+  // The kept search is a message search: a file tab opens with its own box empty.
+  let query: string = pending?.search ?? (tab === BrowserTab.Messages ? last?.search : undefined) ?? url?.q ?? ''
   let filters: ChatSearchFilters = pending?.filters ?? last?.filters ?? {}
-  let sort: SearchSortOrder = pending?.sort ?? last?.sort ?? sortFromQuery(startLoc.query) ?? 'relevance'
+  // The messages and the file tabs keep a sort each; the URL holds the one of the tab it was written for.
+  const urlSort = sortFromQuery(url)
+  let sort: SearchSortOrder =
+    pending?.sort ?? last?.sort ?? (tab === BrowserTab.Messages ? urlSort : undefined) ?? defaultSort(BrowserTab.Messages)
+  let fileSort: SearchSortOrder = (tab !== BrowserTab.Messages ? urlSort : undefined) ?? defaultSort(BrowserTab.Files)
+  const formats: Record<AttachmentTab, AttachmentFormat[]> = {
+    [BrowserTab.Media]: [],
+    [BrowserTab.Files]: [],
+    [BrowserTab.Audio]: []
+  }
+  if (isAttachmentTab(tab)) formats[tab] = formatsFromQuery(url)
+  // Off by default: searching the text inside files pulls in every document.
+  let searchContent = url?.content === '1'
 
-  let ready = pending !== undefined || last !== undefined
+  // Filters from a link name people and objects, which load first.
+  let ready = pending != null || last != null
   if (!ready) {
-    void filtersFromQuery(startLoc.query).then((restored) => {
+    void filtersFromQuery(url).then((restored) => {
       filters = restored
       ready = true
     })
   }
 
-  let lastWritten: string = ''
+  let written = ''
+  let headerWidth = 0
+
+  $: saveTab(tab)
+  $: compactTabs = headerWidth > 0 && headerWidth < COMPACT_TABS_WIDTH
 
   // Navigating closes every popup, so a URL write would shut a multiselect filter after each click.
   // The write waits until the popups close; the filters themselves apply right away.
   $: popupOpen = $popupstore.some((p) => p.dock !== true)
-  $: if (ready && !popupOpen) rememberSearch(query, filters, sort)
+  $: if (ready && !popupOpen) {
+    writeUrl(
+      searchToQuery({
+        tab,
+        query,
+        filters,
+        sort: tab === BrowserTab.Messages ? sort : fileSort,
+        formats: isAttachmentTab(tab) ? formats[tab] : [],
+        content: tab === BrowserTab.Files && searchContent
+      })
+    )
+  }
 
-  function rememberSearch (query: string, filters: ChatSearchFilters, sort: SearchSortOrder): void {
-    const params: Record<string, string> = { ...filtersToQuery(filters, sort) }
-    if (query !== '') params.q = query
-
-    const serialized = JSON.stringify(params)
-    if (serialized === lastWritten) return
-    lastWritten = serialized
-
+  function writeUrl (search: Record<string, string>): void {
+    const serialized = JSON.stringify(search)
+    if (serialized === written) return
+    written = serialized
     const loc = getCurrentLocation()
-    const { q, type, from, in: inParam, after, before, files, transcripts, sort: s, ...rest } = loc.query ?? {}
-    loc.query = { ...rest, ...params }
+    loc.query = replaceSearch(loc.query, search)
     navigate(loc, true)
   }
 
-  const COMPACT_TABS_WIDTH = 640
-  let headerWidth: number = 0
-  $: compactTabs = headerWidth > 0 && headerWidth < COMPACT_TABS_WIDTH
+  // A handed-over search and a link with a query are message searches, whatever tab was last.
+  function startTab (): BrowserTab {
+    if (pending != null) return BrowserTab.Messages
+    return tabFromQuery(url) ?? (url?.q != null ? BrowserTab.Messages : savedTab())
+  }
 
-  const tabs = [
-    {
-      id: SearchType.Messages,
-      icon: chunter.icon.Messages,
-      labelIntl: chunter.string.Messages,
-      tooltip: chunter.string.Messages
-    },
-    {
-      id: SearchType.Files,
-      icon: attachment.icon.FileBrowser,
-      labelIntl: attachment.string.Files,
-      tooltip: attachment.string.Files
-    }
-  ]
+  function savedTab (): BrowserTab {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE_KEY)
+      if (Object.values(BrowserTab).includes(saved as BrowserTab)) return saved as BrowserTab
+    } catch {}
+    return BrowserTab.Messages
+  }
 
-  function initSearchType (): SearchType {
-    const saved = localStorage.getItem(localStorageKey)
-    const parsed = Number(saved)
-
-    if (Object.values(SearchType).includes(parsed)) {
-      return parsed
-    }
-
-    return SearchType.Messages
+  function saveTab (tab: BrowserTab): void {
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, tab)
+    } catch {}
   }
 </script>
 
 <Header adaptive="disabled" withSearch={false} hideTitle bind:realWidth={headerWidth}>
   <svelte:fragment slot="search">
     <div class="header-search page-search">
-      <SearchInputBox bind:value={query} label={chunter.string.SearchPlaceholder} autoFocus kind="default" />
+      {#key tab}
+        <SearchInputBox bind:value={query} label={tabConfig[tab].placeholder} autoFocus kind="default" />
+      {/key}
     </div>
   </svelte:fragment>
   <svelte:fragment slot="actions">
@@ -111,28 +145,41 @@
       name="browser_group"
       kind="subtle"
       onlyIcons={compactTabs}
-      selected={searchType}
-      items={tabs}
+      selected={tab}
+      items={tabItems}
       on:select={(result) => {
-        if (result?.detail.id !== undefined) searchType = result.detail.id
+        if (result?.detail.id != null) tab = result.detail.id
       }}
     />
   </svelte:fragment>
 </Header>
 
-{#if searchType === SearchType.Messages && ready}
-  <SearchPanel
-    bind:value={query}
-    bind:filters
-    bind:sort
-    on:select={(e) => {
-      void openSearchResult(e.detail.raw.doc)
-    }}
-  />
-{:else}
-  <Scroller>
-    <FileBrowser requestedSpaceClasses={[chunter.class.Channel, chunter.class.DirectMessage]} withHeader={false} />
-  </Scroller>
+{#if ready}
+  {#if tab === BrowserTab.Messages}
+    <SearchPanel
+      bind:value={query}
+      bind:filters
+      bind:sort
+      on:select={(e) => {
+        void openSearchResult(e.detail.raw.doc)
+      }}
+    />
+  {:else}
+    {#key tab}
+      {#if isAttachmentTab(tab)}
+        <FilesPanel
+          {tab}
+          bind:value={query}
+          bind:filters
+          bind:formats={formats[tab]}
+          bind:searchContent
+          bind:sort={fileSort}
+        />
+      {:else}
+        <LinksPanel bind:value={query} bind:filters bind:sort={fileSort} />
+      {/if}
+    {/key}
+  {/if}
 {/if}
 
 <style lang="scss">

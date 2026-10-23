@@ -55,3 +55,7 @@ The sanity video test's poster is the discriminator between the HLS branch and t
 - [../stream_integration.md](../stream_integration.md)
 - [../stream_service_hardening.md](../stream_service_hardening.md)
 - [preview_bench](preview_bench.md) - preview pod benchmark, no overlap with this note (image thumbnails vs video/media pod).
+
+## Длительность видео
+
+Длительность видео лежит в `metadata.durationSec` (`FileVersion`, `Attachment`; у голосовых - в поле `durationSec` самого документа). Её пишут двое: браузер при загрузке (`element.duration` в `blobVideoMetadata`) и транскодер (`probe.Format.DurationSeconds` -> `TranscodeResult.duration` -> `handleTranscodeResult`), второй поверх первого. Браузер не знает длительность у форматов, которые не читает (mkv, avi), и у webm от `MediaRecorder`: в заголовке её нет, `duration` = `Infinity`. `ffprobe` у такого webm её тоже может не знать - тогда поле не приходит. Видео, загруженные до этого, поля не имеют: для них сетка Drive читает длительность из плейлистов (`plugins/drive-resources/src/video.ts`): главный плейлист перечисляет по одному `{blobID}_{profile}.m3u8` на качество, в плейлисте качества на каждый сегмент приходится `#EXTINF:<секунды>`, а `#EXT-X-ENDLIST` появляется, когда транскодирование закончено. Без него сумма была бы занижена, поэтому длительность не показывается. На стенде 8087 у большинства видео `hls` есть в документе, а блобов плейлиста и постера нет (данные скопированы без медиа), и плашка там показывает только «▶».

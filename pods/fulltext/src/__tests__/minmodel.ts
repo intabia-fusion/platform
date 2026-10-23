@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,9 +36,9 @@ import core, {
   type TxCreateDoc,
   TxFactory
 } from '@hcengineering/core'
-import type { IntlString, Plugin } from '@hcengineering/platform'
+import type { IntlString, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import serverCore from '@hcengineering/server-core'
+import serverCore, { type SearchFacetsProvider } from '@hcengineering/server-core'
 
 import buildModel from '@hcengineering/model-all'
 
@@ -125,6 +126,8 @@ export const test = plugin('test' as Plugin, {
 
 const DOMAIN_TEST: Domain = 'test' as Domain
 
+const testFacets = 'test-facets:function:Facets' as Resource<SearchFacetsProvider>
+
 /**
  * @public
  * Generate minimal model for testing purposes.
@@ -194,7 +197,7 @@ export function genMinModel (): Tx[] {
         core.class.Class,
         core.space.Model,
         serverCore.mixin.SearchPresenter,
-        { title: [['title']], contentField: 'description' }
+        { title: [['title']], contentField: 'description', facets: testFacets }
       )
     ]
   )

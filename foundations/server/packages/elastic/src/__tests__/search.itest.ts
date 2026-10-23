@@ -129,7 +129,8 @@ describe('Elastic search string', () => {
     docs.push(
       issue('t1', { searchTitle: 'quokka migration', searchShortTitle: 'QK-1' }),
       issue('t2', { searchTitle: 'unrelated work', searchShortTitle: 'QK-2', fulltextSummary: 'a quokka in the text' }),
-      issue('t3', { searchTitle: 'other work', searchShortTitle: 'QK-3', fulltextExtra: 'quokka as a custom value' })
+      issue('t3', { searchTitle: 'other work', searchShortTitle: 'QK-3', fulltextExtra: 'quokka as a custom value' }),
+      issue('t4', { searchTitle: 'arctic log', fulltextSummary: 'a walrus sighting', fulltextExtra: 'walrus migrations' })
     )
     // updateMany goes through the bulk API, which refreshes the index for us.
     await adapter.updateMany(ctx, ws, docs)
@@ -482,6 +483,41 @@ describe('Elastic search string', () => {
     expect(ids(result)).toContain('m1')
   })
 
+  it('highlights the word form the stemmer matched in fulltextExtra', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'migrating' },
+      { searchIn: ['extra'], highlightExtra: true, highlight: { preTag: '<b>', postTag: '</b>' } }
+    )
+    const hit = result.docs.find((d) => d.id === 't4')
+    expect((hit?._highlights?.fulltextExtra ?? []).join(' ')).toContain('<b>migrations</b>')
+  })
+
+  it('leaves fulltextExtra unhighlighted for a class that does not allow it', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'migrating' },
+      { searchIn: ['extra'], highlight: { preTag: '<b>', postTag: '</b>' } }
+    )
+    const hit = result.docs.find((d) => d.id === 't4')
+    expect(hit).toBeDefined()
+    expect(hit?._highlights?.fulltextExtra).toBeUndefined()
+  })
+
+  it('leaves fulltextExtra unhighlighted when it is not searched', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'walrus' },
+      { searchIn: ['content'], highlightExtra: true, highlight: { preTag: '<b>', postTag: '</b>' } }
+    )
+    const hit = result.docs.find((d) => d.id === 't4')
+    expect(hit).toBeDefined()
+    expect(hit?._highlights?.fulltextExtra).toBeUndefined()
+  })
+
   it("matches through fulltextExtra when searchIn names 'extra' only", async () => {
     const extra = await adapter.searchString(ctx, ws, { query: 'kilimanjaro' }, { searchIn: ['extra'] })
     expect(ids(extra)).toEqual(['i2'])
@@ -662,5 +698,129 @@ describe('Elastic search string', () => {
 
     const result = await adapter.searchString(ctx, ws, { query: 'penguins', classes: [MESSAGE_CLASS] }, {})
     expect(ids(result)).not.toContain('m7')
+  })
+})
+
+describe('Elastic feeds and facets', () => {
+  let adapter: FullTextAdapter
+  const ctx = new MeasureMetricsContext('-', {})
+  const ws = 'ws-facets' as WorkspaceUuid
+  const ATTACHMENT_CLASS = 'attachment:class:Attachment' as Ref<Class<Doc>>
+  const DIRECT_CLASS = 'chunter:class:DirectMessage' as Ref<Class<Doc>>
+
+  function file (
+    id: string,
+    name: string,
+    facets: string[],
+    opts: { createdOn?: number, root?: Ref<Class<Doc>> } = {}
+  ): IndexedDoc {
+    return {
+      id: id as Ref<Doc>,
+      _class: [ATTACHMENT_CLASS],
+      space: GENERAL,
+      modifiedBy: ALICE,
+      modifiedOn: opts.createdOn ?? T0,
+      searchTitle: name,
+      highlightableContent: name,
+      fulltextSummary: name,
+      attachedTo: `msg-${id}` as Ref<Doc>,
+      attachedToClass: MESSAGE_CLASS,
+      rootObject: 'chat' as Ref<Doc>,
+      rootObjectClass: opts.root ?? CHANNEL_CLASS,
+      facets,
+      'core:class:Doc%createdBy': ALICE,
+      'core:class:Doc%createdOn': opts.createdOn ?? T0
+    }
+  }
+
+  beforeAll(async () => {
+    adapter = await createElasticAdapter(await elasticUrl())
+    await adapter.initMapping(ctx)
+    await adapter.updateMany(ctx, ws, [
+      file('f1', 'report.pdf', ['attachment-kind:file', 'attachment-format:pdf'], { createdOn: T0 }),
+      file('f2', 'budget.xlsx', ['attachment-kind:file', 'attachment-format:spreadsheet'], { createdOn: T0 + DAY }),
+      file('f3', 'photo.png', ['attachment-kind:media', 'attachment-format:image'], { createdOn: T0 + 2 * DAY }),
+      file('f4', 'contract.pdf', ['attachment-kind:file', 'attachment-format:pdf'], {
+        createdOn: T0 + 3 * DAY,
+        root: DIRECT_CLASS
+      })
+    ])
+  }, 240000)
+
+  afterAll(async () => {
+    await adapter.clean(ctx, ws)
+    await adapter.close()
+  })
+
+  function ids (result: { docs: IndexedDoc[] }): string[] {
+    return result.docs.map((d) => d.id)
+  }
+
+  it('lists everything the filters let through without a query, in date order', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: '', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS], filters: { facets: [['attachment-kind:file']] } },
+      { sort: 'date-desc' }
+    )
+    expect(ids(result)).toEqual(['f4', 'f2', 'f1'])
+    expect(result.total).toBe(3)
+  })
+
+  it('requires every facet group and any value within one', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      {
+        query: '',
+        allowEmptyQuery: true,
+        classes: [ATTACHMENT_CLASS],
+        filters: { facets: [['attachment-kind:file'], ['attachment-format:pdf', 'attachment-format:image']] }
+      },
+      { sort: 'date-asc' }
+    )
+    expect(ids(result)).toEqual(['f1', 'f4'])
+  })
+
+  it('narrows by the class of the place a document belongs to', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: '', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS], filters: { rootObjectClass: [DIRECT_CLASS] } },
+      { sort: 'date-desc' }
+    )
+    expect(ids(result)).toEqual(['f4'])
+  })
+
+  it('matches the text as usual when an empty query is allowed', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'report', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS], filters: { facets: [['attachment-format:pdf']] } },
+      {}
+    )
+    expect(ids(result)).toEqual(['f1'])
+  })
+
+  it('still matches text together with facets', async () => {
+    const result = await adapter.searchString(
+      ctx,
+      ws,
+      { query: 'report', classes: [ATTACHMENT_CLASS], filters: { facets: [['attachment-format:pdf']] } },
+      {}
+    )
+    expect(ids(result)).toEqual(['f1'])
+  })
+
+  it('finds nothing for an empty query unless it is allowed', async () => {
+    const result = await adapter.searchString(ctx, ws, { query: '', classes: [ATTACHMENT_CLASS] }, {})
+    expect(ids(result)).toEqual([])
+  })
+
+  it('pages a feed with the cursor', async () => {
+    const query = { query: '', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS] }
+    const first = await adapter.searchString(ctx, ws, query, { sort: 'date-desc', limit: 2 })
+    const second = await adapter.searchString(ctx, ws, query, { sort: 'date-desc', limit: 2, cursor: first.cursor })
+    expect([...ids(first), ...ids(second)]).toEqual(['f4', 'f3', 'f2', 'f1'])
   })
 })

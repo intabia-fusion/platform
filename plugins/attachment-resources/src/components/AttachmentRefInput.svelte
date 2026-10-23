@@ -14,19 +14,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Attachment, AttachmentMetadata } from '@hcengineering/attachment'
+  import { LINK_PREVIEW_TYPE, type Attachment } from '@hcengineering/attachment'
   import type {
+    AttachedData,
     Blob as PlatformBlob,
     BlobMetadata,
     Class,
     Doc,
     IdMap,
     Markup,
-    PersonId,
     Ref,
     Space
   } from '@hcengineering/core'
-  import { RateLimiter, generateId, toIdMap } from '@hcengineering/core'
+  import { RateLimiter, toIdMap } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
   import type { LinkPreviewAttachmentMetadata } from '@hcengineering/presentation'
@@ -40,22 +40,24 @@
     getClient,
     isLinkPreviewEnabled,
     uploadFile,
-    generateFileId,
-    MessageBox
+    generateFileId
   } from '@hcengineering/presentation'
-  import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
+  import { EmptyMarkup, extractLinks, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
   import { AttachIcon, ReferenceInput } from '@hcengineering/text-editor-resources'
-  import { Loading, type AnySvelteComponent, showPopup } from '@hcengineering/ui'
+  import type { AnySvelteComponent } from '@hcengineering/ui'
   import {
     type FileUploadCallbackParams,
     type UploadHandlerDefinition,
     getUploadHandlers
   } from '@hcengineering/uploader'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
+
   import attachment from '../plugin'
-  import AttachmentPresenter from './AttachmentPresenter.svelte'
-  import view from '@hcengineering/view'
+  import { compareAsInMessage } from '../utils'
+  import AttachmentTile from './file/AttachmentTile.svelte'
+  import { dropFiles, pickedFiles } from './file/drop'
+  import { UploadQueue, draftAttachment, uploadTiles } from './file/uploads'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -84,6 +86,8 @@
   export let skipAttachmentsPreload = false
   export let disableAttachments = false
   export let onKeyDown: ((event: KeyboardEvent) => boolean) | undefined = undefined
+  export let recording = false
+  export let beforeSend: (() => Promise<void>) | undefined = undefined
 
   let refInput: ReferenceInput
 
@@ -94,18 +98,45 @@
   const client = getClient()
   const query = createQuery()
 
-  $: draftKey = `${objectId}_attachments`
+  // Not the old `_attachments` key: those drafts hold docs created before the send.
+  $: draftKey = `${objectId}_files`
   $: draftController = new DraftController<Record<Ref<Attachment>, Attachment>>(draftKey)
 
   let draftAttachments: Record<Ref<Attachment>, Attachment> | undefined = undefined
   let originalAttachments: Set<Ref<Attachment>> = new Set<Ref<Attachment>>()
+  // Docs are created on send: until then a draft holds only stored files.
   const newAttachments: Set<Ref<Attachment>> = new Set<Ref<Attachment>>()
-  const removedAttachments: Set<Attachment> = new Set<Attachment>()
+  // Removed from an edited message: deleted on send, kept on cancel.
+  const removedAttachments = new Map<Ref<Attachment>, Attachment>()
   const maxLinkPreviewCount = 3
-  const urlSet = new Set<string>()
+  let urlSet = new Set<string>()
+  let loadingPreviews = 0
 
-  let progress = false
-  let loadingLinks = false
+  let uploads = new UploadQueue(
+    () => {
+      uploads = uploads
+    },
+    (docs) => {
+      for (const doc of docs) {
+        attachments.set(doc._id, doc)
+        newAttachments.add(doc._id)
+      }
+      attachments = attachments
+      saveDraft()
+      notify()
+    }
+  )
+  let dragging = false
+
+  // Before every reader of `attachments`: an earlier one misses the draft restored in the call.
+  let loadedFor: Ref<Doc> | undefined
+  $: void (objectId && updateAttachments(objectId))
+
+  $: previews = Array.from(attachments.values()).filter((it) => it.type === LINK_PREVIEW_TYPE).length + loadingPreviews
+  $: tiles = uploadTiles(attachments.values(), uploads, (doc) => newAttachments.has(doc._id))
+
+  // Sends so far: a link preview arriving after its send goes to that message, not the next.
+  let sends = 0
 
   let refContainer: HTMLElement
 
@@ -122,12 +153,7 @@
         _id: { $in: Array.from(attachments.keys()) }
       },
       (res) => {
-        existingAttachments = res.map((p) => {
-          if (p.type === 'application/link-preview') {
-            urlSet.add(getUrlKey(p.name))
-          }
-          return p._id
-        })
+        existingAttachments = res.map((p) => p._id)
       }
     )
   } else {
@@ -145,29 +171,43 @@
     return url.protocol.startsWith('http')
   }
 
+  // The form `extractLinks` gives, so a link in the text and the same one in the editor match.
   function getUrlKey (s: string): string {
-    return s
+    try {
+      return new URL(s).toString()
+    } catch {
+      return s
+    }
   }
 
-  $: void (objectId && updateAttachments(objectId))
+  // Links already in the text never get a preview: it exists or its author removed it.
+  function knownLinks (markup: Markup): Set<string> {
+    if (isEmptyMarkup(markup)) return new Set()
+    return new Set(extractLinks(markupToJSON(markup)).map((it) => getUrlKey(it.url)))
+  }
 
   async function updateAttachments (objectId: Ref<Doc>): Promise<void> {
+    const moved = loadedFor !== objectId
+    // Another message: files still going up belong to the one they were added to.
+    if (moved) {
+      uploads.clear()
+      uploads.releaseAll()
+      urlSet = knownLinks(content)
+    }
+    loadedFor = objectId
     draftAttachments = $draftsStore[draftKey]
     if (draftAttachments && shouldSaveDraft) {
       attachments = new Map()
       newAttachments.clear()
       originalAttachments.clear()
-      Object.entries(draftAttachments).map((file) => {
-        return attachments.set(file[0] as Ref<Attachment>, file[1])
-      })
-      // Draft attachments already persisted (write-through) -> restore as originals, not news.
-      Object.entries(draftAttachments).map((file) => {
-        return originalAttachments.add(file[0] as Ref<Attachment>)
-      })
+      for (const [_id, doc] of Object.entries(draftAttachments)) {
+        attachments.set(_id as Ref<Attachment>, doc)
+        newAttachments.add(_id as Ref<Attachment>)
+      }
       removedAttachments.clear()
-      urlSet.clear()
       query.unsubscribe()
     } else if (!skipAttachmentsPreload) {
+      if (moved) forgetPrevious()
       query.query(
         attachment.class.Attachment,
         {
@@ -175,17 +215,33 @@
         },
         (res) => {
           originalAttachments = new Set(res.map((p) => p._id))
-          attachments = toIdMap(res)
+          // Added files are not docs yet, removed ones stay hidden until saved; order matches the message.
+          const next = toIdMap(res.filter((p) => !removedAttachments.has(p._id)).sort(compareAsInMessage))
+          for (const _id of newAttachments) {
+            const doc = attachments.get(_id)
+            if (doc != null) next.set(_id, doc)
+          }
+          attachments = next
         }
       )
     } else {
-      attachments = new Map()
-      newAttachments.clear()
-      originalAttachments.clear()
-      removedAttachments.clear()
-      urlSet.clear()
+      forgetPrevious()
       query.unsubscribe()
     }
+  }
+
+  // Unsent files of the previous object belong to its draft; without drafts nothing will send them.
+  function forgetPrevious (): void {
+    if (!shouldSaveDraft) {
+      for (const _id of newAttachments) {
+        const doc = attachments.get(_id)
+        if (doc != null) void deleteFile(doc.file)
+      }
+    }
+    attachments = new Map()
+    newAttachments.clear()
+    originalAttachments.clear()
+    removedAttachments.clear()
   }
 
   function saveDraft (): void {
@@ -195,179 +251,115 @@
     }
   }
 
-  async function createAttachment (file: File, meta?: AttachmentMetadata): Promise<void> {
-    try {
-      const { uuid, metadata } = await uploadFile(file)
-      await _createAttachment(uuid, file.name, file, meta ?? metadata)
-    } catch (err: any) {
-      void setPlatformStatus(unknownError(err))
-    }
-  }
-
-  async function _createAttachment (
-    file: Ref<PlatformBlob>,
-    name: string,
-    blob: File | Blob,
-    metadata?: BlobMetadata
-  ): Promise<void> {
-    try {
-      const _id: Ref<Attachment> = generateId()
-
-      attachments.set(_id, {
-        _id,
-        _class: attachment.class.Attachment,
-        collection: 'attachments',
-        modifiedOn: 0,
-        modifiedBy: '' as PersonId,
-        space,
-        attachedTo: objectId,
-        attachedToClass: _class,
-        name,
-        file,
-        type: blob.type,
-        size: blob.size,
-        lastModified: blob instanceof File ? blob.lastModified : Date.now(),
-        metadata
-      })
-      newAttachments.add(_id)
-      attachments = attachments
-      saved = false
-      // Write-through: persist now (attachedTo=objectId=future message id), not on send.
-      // Avoids orphan blobs and lets async consumers (voice-note transcription) find the doc.
-      const created = attachments.get(_id)
-      if (created !== undefined) {
-        await saveAttachment(created)
-        originalAttachments.add(_id)
-      }
-      saveDraft()
-      dispatch('update', { message: content, attachments: attachments.size })
-    } catch (err: any) {
-      void setPlatformStatus(unknownError(err))
-    }
-  }
-
-  // Register an already-persisted attachment (attachedTo=objectId) into the draft set for preview
-  // and send. Used by async-produced attachments (voice-notes) whose doc must exist up front.
-  export function addAttachmentDoc (doc: Attachment): void {
-    attachments.set(doc._id, doc)
-    originalAttachments.add(doc._id)
-    attachments = attachments
-    saved = false
-    saveDraft()
+  function notify (): void {
     dispatch('update', { message: content, attachments: attachments.size })
   }
+
+  function addStored (file: Ref<PlatformBlob>, name: string, blob: File | Blob, metadata?: BlobMetadata): void {
+    addAttachmentDoc(draftAttachment({ space, objectId, _class }, name, blob, file, metadata))
+  }
+
+  // Files given while a send runs: the message has taken its list already, they start the next one.
+  let sending = false
+  let afterSend: File[] = []
+
+  function addFiles (files: Iterable<File>): void {
+    if (disableAttachments) return
+    if (sending) {
+      afterSend.push(...files)
+      return
+    }
+    for (const file of files) uploads.add(draftAttachment({ space, objectId, _class }, file.name, file), file)
+    saved = false
+  }
+
+  const systemKeys = new Set([
+    '_id',
+    '_class',
+    'space',
+    'attachedTo',
+    'attachedToClass',
+    'collection',
+    'modifiedOn',
+    'modifiedBy',
+    'createdOn',
+    'createdBy'
+  ])
 
   async function saveAttachment (doc: Attachment): Promise<void> {
-    if (!existingAttachments.includes(doc._id)) {
-      await client.addCollection(attachment.class.Attachment, space, objectId, _class, 'attachments', doc, doc._id)
-      newAttachments.delete(doc._id)
-    }
-  }
-
-  async function fileSelected (): Promise<void> {
-    if (disableAttachments) return
-    progress = true
-    await tick()
-    const list = inputFile.files
-    if (list === null || list.length === 0) return
-    const limiter = new RateLimiter(10)
-    for (let index = 0; index < list.length; index++) {
-      const file = list.item(index)
-      if (file !== null) {
-        await limiter.add(() => createAttachment(file))
-      }
-    }
-    await limiter.waitProcessing()
-    inputFile.value = ''
-    progress = false
-  }
-
-  async function fileDrop (e: DragEvent): Promise<void> {
-    if (disableAttachments) return
-    const list = e.dataTransfer?.files
-    const limiter = new RateLimiter(10)
-
-    if (list === undefined || list.length === 0) return
-    progress = true
-    for (let index = 0; index < list.length; index++) {
-      const file = list.item(index)
-      if (file !== null) {
-        await limiter.add(() => createAttachment(file))
-      }
-    }
-    await limiter.waitProcessing()
-    progress = false
-  }
-
-  async function removeAttachmentWithConfirmation (attachment: Attachment): Promise<void> {
-    showPopup(
-      MessageBox,
-      {
-        label: view.string.DeleteObject,
-        message: view.string.DeleteObjectConfirm,
-        params: { count: 1 },
-        action: async () => {
-          await removeAttachment(attachment)
-        }
-      },
-      'top'
+    if (existingAttachments.includes(doc._id)) return
+    const data = Object.fromEntries(Object.entries(doc).filter(([key]) => !systemKeys.has(key)))
+    // A voice note keeps its class: its transcription starts when the doc is created.
+    await client.addCollection(
+      doc._class,
+      space,
+      objectId,
+      _class,
+      'attachments',
+      data as AttachedData<Attachment>,
+      doc._id
     )
+    newAttachments.delete(doc._id)
   }
 
-  async function removeAttachment (attachment: Attachment): Promise<void> {
-    attachments.delete(attachment._id)
+  function fileSelected (): void {
+    addFiles(pickedFiles(inputFile))
+  }
+
+  function removeTile (doc: Attachment): void {
+    if (uploads.has(doc._id)) {
+      uploads.remove(doc._id)
+      return
+    }
+    uploads.release(doc._id)
+    attachments.delete(doc._id)
     attachments = attachments
-    // Must run before dropping ids from the sets, else it only loses the blob and re-attaches on send.
-    await deleteAttachment(attachment)
-    newAttachments.delete(attachment._id)
-    originalAttachments.delete(attachment._id)
+    if (originalAttachments.has(doc._id)) {
+      removedAttachments.set(doc._id, doc)
+    } else {
+      newAttachments.delete(doc._id)
+      void deleteFile(doc.file)
+    }
     saveDraft()
-    dispatch('update', { message: content, attachments: attachments.size })
+    notify()
   }
 
-  async function deleteAttachment (attachment: Attachment): Promise<void> {
-    if (attachment.type === 'application/link-preview') {
-      urlSet.delete(getUrlKey(attachment.name))
-    }
-    if (originalAttachments.has(attachment._id)) {
-      await client.removeCollection(
-        attachment._class,
-        attachment.space,
-        attachment._id,
-        attachment.attachedTo,
-        attachment.attachedToClass,
-        'attachments'
-      )
-    } else {
-      await deleteFile(attachment.file)
-    }
+  async function deleteAttachment (doc: Attachment): Promise<void> {
+    await client.removeCollection(doc._class, doc.space, doc._id, doc.attachedTo, doc.attachedToClass, 'attachments')
+    removedAttachments.delete(doc._id)
   }
 
   onDestroy(() => {
-    if (!saved && !shouldSaveDraft) {
-      newAttachments.forEach((p) => {
-        const attachment = attachments.get(p)
-        if (attachment !== undefined) {
-          void deleteAttachment(attachment)
-        }
-      })
+    for (const doc of uploads.flush()) {
+      attachments.set(doc._id, doc)
+      newAttachments.add(doc._id)
     }
+    if (shouldSaveDraft) {
+      saveDraft()
+    } else if (!saved) {
+      for (const _id of newAttachments) {
+        const doc = attachments.get(_id)
+        if (doc != null) void deleteFile(doc.file)
+      }
+    }
+    uploads.releaseAll()
   })
 
   export function removeDraft (removeFiles: boolean): void {
     draftController.remove()
     if (removeFiles) {
+      uploads.clear()
       newAttachments.forEach((p) => {
-        const attachment = attachments.get(p)
-        if (attachment !== undefined) {
-          void deleteFile(attachment.file)
+        const doc = attachments.get(p)
+        if (doc != null) {
+          void deleteFile(doc.file)
         }
       })
     }
   }
 
   export function isEmptyDraft (): boolean {
-    return attachments.size === 0 && isEmptyMarkup(content)
+    return attachments.size === 0 && uploads.size === 0 && isEmptyMarkup(content)
   }
 
   export async function createAttachments (): Promise<void> {
@@ -376,16 +368,26 @@
     }
     saved = true
     const limiter = new RateLimiter(10)
+    // The limiter only logs a failure: without this the message would go out without the file.
+    let failure: unknown
+    const fail = (err: unknown): void => {
+      failure ??= err
+    }
     newAttachments.forEach((p) => {
-      const attachment = attachments.get(p)
-      if (attachment !== undefined) {
-        void limiter.add(() => saveAttachment(attachment))
+      const doc = attachments.get(p)
+      if (doc != null) {
+        void limiter.add(() => saveAttachment(doc), undefined, fail)
       }
     })
     removedAttachments.forEach((p) => {
-      void limiter.add(() => deleteAttachment(p))
+      void limiter.add(() => deleteAttachment(p), undefined, fail)
     })
     await limiter.waitProcessing()
+    if (failure !== undefined) {
+      // Done ones have left the sets, so a retry repeats only what failed.
+      saved = false
+      throw failure
+    }
     newAttachments.clear()
     urlSet.clear()
     removedAttachments.clear()
@@ -395,6 +397,7 @@
   // Drop the draft attachment set after the message is dispatched (id known to the message), so the
   // next message starts empty without racing the objectId-change reactive. Docs stay in the DB.
   function clearAttachmentsAfterSend (): void {
+    uploads.releaseAll()
     attachments = new Map()
     newAttachments.clear()
     originalAttachments.clear()
@@ -404,11 +407,33 @@
   }
 
   async function onMessage (event: CustomEvent): Promise<void> {
+    sends++
     loading = true
-    await createAttachments()
-    loading = false
-    dispatch('message', { message: event.detail, attachments: attachments.size })
-    clearAttachmentsAfterSend()
+    sending = true
+    let ready = false
+    try {
+      await beforeSend?.()
+      await createAttachments()
+      ready = true
+    } catch (err: any) {
+      // Not sent: the draft stays as it was, and so do the previews coming for it.
+      sends--
+      await setPlatformStatus(unknownError(err))
+    } finally {
+      sending = false
+      loading = false
+    }
+    if (ready) {
+      dispatch('message', { message: event.detail, attachments: attachments.size })
+      clearAttachmentsAfterSend()
+    }
+    if (afterSend.length > 0) {
+      const files = afterSend
+      afterSend = []
+      // Once the input has moved to the next message.
+      if (ready) await tick()
+      addFiles(files)
+    }
   }
 
   function updateLinkPreview (): void {
@@ -422,6 +447,7 @@
       if (urlSet.has(key)) {
         continue
       }
+      if (previews + newUrls.length >= maxLinkPreviewCount) break
       urlSet.add(key)
       newUrls.push(hrefs[i].href)
     }
@@ -431,46 +457,68 @@
   }
 
   function onUpdate (event: CustomEvent): void {
-    if (isLinkPreviewEnabled() && !loading && urlSet.size < maxLinkPreviewCount) {
+    if (isLinkPreviewEnabled() && !loading && previews < maxLinkPreviewCount) {
       updateLinkPreview()
     }
     dispatch('update', { message: event.detail, attachments: attachments.size })
   }
 
   async function loadLinks (urls: string[]): Promise<void> {
-    loadingLinks = true
+    const target = { objectId, space, _class, send: sends }
+    loadingPreviews += urls.length
     for (const url of urls) {
       try {
         const meta = await fetchLinkPreviewDetails(url)
         if (canDisplayLinkPreview(meta)) {
           const uuid = generateFileId()
           const blob = new Blob([JSON.stringify(meta)])
-          const file = new File([blob], uuid, { type: 'application/link-preview' })
+          const file = new File([blob], uuid, { type: LINK_PREVIEW_TYPE })
           const metadata: LinkPreviewAttachmentMetadata = {
             title: meta.title,
             image: meta.image,
             description: meta.description,
             imageWidth: meta.imageWidth,
-            imageHeight: meta.imageHeight
+            imageHeight: meta.imageHeight,
+            // Kept here too: the card still shows the address when the file fails to load.
+            url: meta.url ?? url
           }
-          await createAttachment(file, metadata)
+          const { uuid: stored } = await uploadFile(file)
+          // The same draft only: the input may have moved to another chat meanwhile.
+          if (sends === target.send && objectId === target.objectId) {
+            addStored(stored, file.name, file, metadata)
+          } else if (sends === target.send) {
+            // Moved to another chat unsent: the message it was typed for will never exist.
+            void deleteFile(stored)
+          } else {
+            // Already sent: straight onto that message, past the draft of the next one.
+            try {
+              await client.addCollection(
+                attachment.class.Attachment,
+                target.space,
+                target.objectId,
+                target._class,
+                'attachments',
+                {
+                  name: file.name,
+                  file: stored,
+                  type: file.type,
+                  size: file.size,
+                  lastModified: file.lastModified,
+                  metadata
+                }
+              )
+            } catch (err: any) {
+              void deleteFile(stored)
+              throw err
+            }
+          }
         }
       } catch (err: any) {
         void setPlatformStatus(unknownError(err))
+      } finally {
+        loadingPreviews--
       }
     }
-    loadingLinks = false
-  }
-
-  async function loadFiles (evt: ClipboardEvent): Promise<void> {
-    progress = true
-    const files = (evt.clipboardData?.files ?? []) as File[]
-
-    for (const file of files) {
-      await createAttachment(file)
-    }
-
-    progress = false
   }
 
   function pasteAction (_: any, evt: ClipboardEvent): boolean {
@@ -483,30 +531,26 @@
         allowed = true
       }
     }
-    if (!allowed) {
+    if (!allowed || disableAttachments) {
       return false
     }
-    const hasFiles = Array.from(evt.clipboardData?.items ?? []).some((i) => i.kind === 'file')
-
-    if (hasFiles) {
-      void loadFiles(evt)
-      return true
-    }
-
-    return false
+    const files = Array.from(evt.clipboardData?.files ?? [])
+    if (files.length === 0) return false
+    addFiles(files)
+    return true
   }
 
   async function onFileUploaded ({ uuid, name, file, metadata }: FileUploadCallbackParams): Promise<void> {
     try {
       await updateAttachments(objectId)
-      await _createAttachment(uuid, name, file, metadata)
+      addStored(uuid, name, file, metadata)
     } catch (err: any) {
       void setPlatformStatus(unknownError(err))
     }
   }
 
-  async function uploadWith (uploader: UploadHandlerDefinition): Promise<void> {
-    const upload = await getResource(uploader.handler)
+  async function uploadWith (handler: UploadHandlerDefinition): Promise<void> {
+    const upload = await getResource(handler.handler)
     const target = { objectId: docId ?? objectId, objectClass: docClass ?? _class }
     // save draft before recording
     dispatch('update', { message: content, attachments: attachments.size })
@@ -528,6 +572,15 @@
     if (refInput == null) return
     refInput.focus()
   }
+
+  export function addAttachmentDoc (doc: Attachment): void {
+    attachments.set(doc._id, doc)
+    newAttachments.add(doc._id)
+    attachments = attachments
+    saved = false
+    saveDraft()
+    notify()
+  }
 </script>
 
 <div class="flex-col no-print" bind:this={refContainer}>
@@ -543,23 +596,26 @@
   />
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div
-    class="flex-col"
-    on:dragover|preventDefault={() => {}}
-    on:dragleave={() => {}}
-    on:drop|preventDefault|stopPropagation={fileDrop}
+    class="flex-col drop"
+    class:dragging
+    use:dropFiles={{ enabled: !disableAttachments, onFiles: addFiles, onDragging: (on) => (dragging = on) }}
   >
     <ReferenceInput
       {focusIndex}
       bind:this={refInput}
       bind:content
       {iconSend}
-      {labelSend}
+      labelSend={uploads.size > 0
+        ? uploads.failed
+          ? attachment.string.FilesNotUploaded
+          : attachment.string.FilesUploading
+        : labelSend}
       {showSend}
       {showActions}
-      {disableSubmit}
+      disableSubmit={disableSubmit || uploads.size > 0}
       {clearOnSubmit}
       autofocus={autofocus ? 'end' : false}
-      loading={loading || progress || loadingLinks}
+      {loading}
       {boundary}
       {docClass}
       {isContentChanged}
@@ -580,8 +636,8 @@
             ]),
         ...(disableAttachments ? [] : uploadActions)
       ]}
-      showHeader={attachments.size > 0 || progress}
-      haveAttachment={attachments.size > 0}
+      showHeader={tiles.length > 0 || recording}
+      haveAttachment={attachments.size > 0 || recording}
       on:focus
       on:blur
       on:message={onMessage}
@@ -595,24 +651,25 @@
       }}
     >
       <div slot="header">
-        {#if (attachments.size > 0 || progress) && !disableAttachments}
-          <div class="flex-row-center list scroll-divider-color">
-            {#if progress}
-              <div class="flex p-3">
-                <Loading />
-              </div>
-            {/if}
-            {#each Array.from(attachments.values()) as attachment}
-              <div class="item flex">
-                <AttachmentPresenter
-                  value={attachment}
-                  showPreview
-                  removable
-                  on:remove={(result) => {
-                    if (result !== undefined) void removeAttachmentWithConfirmation(attachment)
-                  }}
-                />
-              </div>
+        {#if recording}
+          <div class="recorder"><slot name="recorder" /></div>
+        {/if}
+        {#if tiles.length > 0 && !disableAttachments}
+          <div class="list">
+            {#each tiles as tile (tile.doc._id)}
+              <AttachmentTile
+                value={tile.doc}
+                upload={tile.upload}
+                draft={tile.draft}
+                local={uploads.picture(tile.doc._id)}
+                removable
+                on:remove={() => {
+                  removeTile(tile.doc)
+                }}
+                on:retry={() => {
+                  uploads.retry(tile.doc._id)
+                }}
+              />
             {/each}
           </div>
         {/if}
@@ -622,14 +679,26 @@
 </div>
 
 <style lang="scss">
+  .drop {
+    border-radius: var(--medium-BorderRadius);
+    transition: background-color 0.15s ease;
+
+    &.dragging {
+      background-color: var(--global-ui-hover-BackgroundColor);
+    }
+  }
+
+  .recorder {
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  // Room above and below for the tiles' shadow, which the scrolling strip would cut.
   .list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.5rem;
     overflow-x: auto;
     overflow-y: hidden;
-
-    .item + .item {
-      padding-left: 1rem;
-      border-left: 1px solid var(--theme-divider-color);
-    }
   }
 </style>

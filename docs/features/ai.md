@@ -48,7 +48,7 @@
 3. Бот не пишет объект сам: правка/задача идут тулами `propose_task`/`propose_subtasks` (`utils/tools.ts`) как `AIEditProposalMessage`/`AITaskProposalMessage`, рендерятся `EditProposalPresenter`/`TaskProposalPresenter` (`models/ai-bot/src/index.ts`) и применяются пользователем.
 
 **3. Голосовая заметка в чате.**
-1. Аудио-вложение создаёт `AudioTranscribe` -> `OnAudioTranscribe` (`server-plugins/ai-bot-resources/src/index.ts`) кладёт `ChatVoiceTranscriptionTask` (kind `chat-voice`) в `QueueTopic.TranscriptionQueue`.
+1. Отправка сообщения с голосовым создаёт `AudioTranscribe` -> `OnAudioTranscribe` (`server-plugins/ai-bot-resources/src/index.ts`) кладёт `ChatVoiceTranscriptionTask` (kind `chat-voice`) в `QueueTopic.TranscriptionQueue`.
 2. Роль `stt-worker` (`queue.ts` `startSttWorker`) резолвит ASR-модель (`resolveAsrModel`, `transcription/asrRegistry.ts`), транскрибирует и опционально правит текст через LLM (`AIControl.correctTranscript`, `controller.ts`).
 3. Результат пишется в `AudioTranscribe.text`/`state=done`, длительность биллится (`pushTranscriptDuration`, `billing.ts`).
 

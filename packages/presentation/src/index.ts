@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -39,7 +40,9 @@ export { default as ObjectSearchPopup } from './components/ObjectSearchPopup.sve
 export { default as NavLink } from './components/NavLink.svelte'
 export { default as IconDownload } from './components/icons/Download.svelte'
 export { default as FilePreview } from './components/FilePreview.svelte'
-export { default as FilePreviewPopup } from './components/FilePreviewPopup.svelte'
+export { default as FileViewer } from './components/viewer/FileViewer.svelte'
+export { default as FileHeader } from './components/viewer/FileHeader.svelte'
+export * from './viewer'
 export { default as IconForward } from './components/icons/Forward.svelte'
 export { default as Breadcrumbs } from './components/breadcrumbs/Breadcrumbs.svelte'
 export { default as BreadcrumbsElement } from './components/breadcrumbs/BreadcrumbsElement.svelte'
@@ -47,8 +50,6 @@ export { default as ComponentExtensions } from './components/extensions/Componen
 export { default as DocCreateExtComponent } from './components/extensions/DocCreateExtComponent.svelte'
 export { default as SearchResult } from './components/SearchResult.svelte'
 export { default as LiteMessageViewer } from './components/LiteMessageViewer.svelte'
-export { default as DownloadFileButton } from './components/DownloadFileButton.svelte'
-export { default as FileTypeIcon } from './components/FileTypeIcon.svelte'
 export { default as DrawingBoard } from './components/DrawingBoard.svelte'
 export { default as DrawingBoardToolbar } from './components/DrawingBoardToolbar.svelte'
 export { default as Image } from './components/Image.svelte'

@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Error",
     "StatusWarning": "Warning",
-    "StatusInfo": "Information"
+    "StatusInfo": "Information",
+    "Download": "Download",
+    "PreviewUnavailable": "Preview is not available for this content type",
+    "PreviewFailed": "Couldn't open the preview",
+    "Play": "Play",
+    "Pause": "Pause",
+    "PlaybackPosition": "Playback position",
+    "PlaybackSpeed": "Speed",
+    "LinkPreviewUnavailable": "Link preview unavailable",
+    "UploadProgress": "{sent} of {size}",
+    "UploadFailed": "Upload failed",
+    "Retry": "Retry",
+    "VoiceStarting": "Turning on the microphone…",
+    "VoiceDiscard": "Cancel recording",
+    "VoiceAttach": "Attach recording"
   }
 }

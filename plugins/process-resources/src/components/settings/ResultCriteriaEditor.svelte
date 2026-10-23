@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 <script lang="ts">
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { ContextId, Process, UserResult } from '@hcengineering/process'
-  import { parseContext, SelectedExecutionContext } from '@hcengineering/process'
+  import { parseContext } from '@hcengineering/process'
   import { Button, eventToHTMLElement, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import ContextCriteria from '../criterias/ContextCriteria.svelte'

@@ -38,7 +38,7 @@ import { ProgressInfo, UpdateInfo } from 'electron-updater'
 import WinBadge from 'electron-windows-badge'
 import * as path from 'path'
 
-import { Config, MenuBarAction, NotificationParams, JumpListSpares, CommandCloseTab } from '../ui/types'
+import { Config, MenuBarAction, NotificationParams, JumpListSpares, CommandCloseTab, DownloadEntry } from '../ui/types'
 import { getOptions } from './args'
 import { addMenus } from './standardMenu'
 import { dispatchMenuBarAction } from './customMenu'
@@ -55,6 +55,7 @@ import { getFileInPublicBundledFolder } from './path'
 import { OsIntegration } from './osIntegration'
 import { IpcMessage } from '../ui/ipcMessages'
 import { createSafeWindow } from './winBadgeProxy'
+import { applyBatchSavePath, downloadToFolder } from './batchDownload'
 
 let isQuiting = false
 
@@ -284,6 +285,7 @@ function runTheApp (): void {
 
   function handleWillDownload (window: BrowserWindow): void {
     window.webContents.session.on('will-download', (_event, item) => {
+      applyBatchSavePath(item)
       const key = generateId()
 
       const notifyDownloadUpdated = (): void => {
@@ -594,6 +596,10 @@ function runTheApp (): void {
       rebuildJumpList(spares)
     })
   }
+
+  ipcMain.handle(IpcMessage.DownloadToFolder, async (event, files: DownloadEntry[]) => {
+    await downloadToFolder(event.sender, files)
+  })
 
   ipcMain.handle(IpcMessage.GetScreenAccess, () => systemPreferences.getMediaAccessStatus('screen') === 'granted')
   ipcMain.handle(IpcMessage.GetScreenSources, () => {

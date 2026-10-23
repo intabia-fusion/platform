@@ -1,9 +1,12 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+-->
 <script lang="ts">
   import { getContext, onDestroy } from 'svelte'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { makeDocCollabId, type Doc } from '@hcengineering/core'
   import attachmentPlugin, { type Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { AttachmentLabel } from '@hcengineering/attachment-resources'
   import { CollaborationIds } from '@hcengineering/text-editor'
   import type { Provider } from '@hcengineering/text-editor-resources'
   import {
@@ -181,7 +184,7 @@
           {#each attachmentDiff as item (item.att._id)}
             <div class="attachment-row" class:added={item.status === 'added'} class:removed={item.status === 'removed'}>
               <span class="diff-mark">{item.status === 'added' ? '+' : item.status === 'removed' ? '-' : ''}</span>
-              <AttachmentPresenter value={item.att} />
+              <AttachmentLabel value={item.att} />
             </div>
           {/each}
         </div>

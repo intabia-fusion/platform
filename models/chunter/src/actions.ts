@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -74,6 +75,21 @@ function defineMessageActions (builder: Builder): void {
       override: [view.action.CopyLink]
     },
     chunter.action.CopyChatMessageLink
+  )
+
+  createAction(
+    builder,
+    {
+      action: chunter.actionImpl.DownloadAttachments,
+      label: chunter.string.DownloadAll,
+      icon: chunter.icon.Download,
+      input: 'focus',
+      category: chunter.category.Chunter,
+      target: chunter.class.ChatMessage,
+      visibilityTester: chunter.function.CanDownloadAttachments,
+      context: { mode: ['context', 'browser'], group: 'copy' }
+    },
+    chunter.action.DownloadAttachments
   )
 
   createAction(

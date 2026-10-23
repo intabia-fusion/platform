@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { HIGHLIGHT_POST, HIGHLIGHT_PRE, matchedTerms, splitHighlight } from '../highlight'
+import { HIGHLIGHT_POST, HIGHLIGHT_PRE, markTerms, matchedTerms, splitHighlight } from '../highlight'
 
 const mark = (text: string): string => `${HIGHLIGHT_PRE}${text}${HIGHLIGHT_POST}`
 
@@ -131,5 +131,33 @@ describe('matchedTerms', () => {
 
   it('collects every match in one fragment', () => {
     expect(matchedTerms([`${mark('release')} and ${mark('notes')}`])).toEqual(['release', 'notes'])
+  })
+})
+
+describe('markTerms', () => {
+  it('marks every occurrence, whatever the case', () => {
+    expect(markTerms('Workbench and workbench', ['workbench'])).toBe(`${mark('Workbench')} and ${mark('workbench')}`)
+  })
+
+  it('prefers the longer term where two overlap', () => {
+    expect(markTerms('a releases b', ['release', 'releases'])).toBe(`a ${mark('releases')} b`)
+  })
+
+  it('marks only a whole word', () => {
+    expect(markTerms('stagecoach stage', ['stage'])).toBe(`stagecoach ${mark('stage')}`)
+  })
+
+  it('does not mark inside a word', () => {
+    expect(markTerms('category go', ['go'])).toBe(`category ${mark('go')}`)
+    expect(markTerms('backstage stage-2', ['stage'])).toBe(`backstage ${mark('stage')}-2`)
+  })
+
+  it('takes the terms literally', () => {
+    expect(markTerms('a.b axb', ['a.b'])).toBe(`${mark('a.b')} axb`)
+  })
+
+  it('leaves the text as it is without terms', () => {
+    expect(markTerms('text', [])).toBe('text')
+    expect(markTerms('text', [''])).toBe('text')
   })
 })

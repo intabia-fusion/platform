@@ -3093,18 +3093,36 @@ importers:
 
   dev/storybook:
     devDependencies:
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/attachment
+      '@hcengineering/attachment-resources':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/attachment-resources
+      '@hcengineering/core':
+        specifier: workspace:^0.7.25
+        version: link:../../foundations/core/packages/core
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@hcengineering/presentation':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/presentation
       '@hcengineering/theme':
         specifier: workspace:^0.7.0
         version: link:../../packages/theme
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
+      '@hcengineering/view':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/view
+      '@hcengineering/view-resources':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/view-resources
       '@storybook/addon-a11y':
         specifier: 'catalog:'
         version: 8.6.19(storybook@8.6.19(bufferutil@4.1.0)(prettier@3.6.2)(supports-color@8.1.1)(utf-8-validate@6.0.6))
@@ -11494,6 +11512,9 @@ importers:
       '@hcengineering/server-ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/ai-bot
+      '@hcengineering/server-attachment':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/attachment
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -16462,6 +16483,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/attachment
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
@@ -21425,6 +21449,12 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../attachment
+      '@hcengineering/attachment-resources':
+        specifier: workspace:^0.7.0
+        version: link:../attachment-resources
       '@hcengineering/contact-resources':
         specifier: workspace:^0.7.0
         version: link:../contact-resources
@@ -33401,6 +33431,9 @@ importers:
 
   server-plugins/attachment-resources:
     dependencies:
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/ai-bot
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
@@ -33827,6 +33860,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../plugins/activity
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/attachment
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter

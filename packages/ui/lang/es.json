@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Error",
     "StatusWarning": "Advertencia",
-    "StatusInfo": "Información"
+    "StatusInfo": "Información",
+    "Download": "Descargar",
+    "PreviewUnavailable": "La vista previa no está disponible para este tipo de contenido",
+    "PreviewFailed": "No se pudo abrir la vista previa",
+    "Play": "Reproducir",
+    "Pause": "Pausar",
+    "PlaybackPosition": "Posición de reproducción",
+    "PlaybackSpeed": "Velocidad",
+    "LinkPreviewUnavailable": "Vista previa del enlace no disponible",
+    "UploadProgress": "{sent} de {size}",
+    "UploadFailed": "Error al subir",
+    "Retry": "Reintentar",
+    "VoiceStarting": "Activando el micrófono…",
+    "VoiceDiscard": "Cancelar grabación",
+    "VoiceAttach": "Adjuntar grabación"
   }
 }

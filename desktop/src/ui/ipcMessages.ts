@@ -25,6 +25,7 @@ export const IpcMessage = {
   GetScreenAccess: 'get-screen-access',
   SetFrontCookie: 'set-front-cookie',
   HandleDownloadItem: 'handle-download-item',
+  DownloadToFolder: 'download-to-folder',
   SetBadge: 'set-badge',
   SetTitle: 'set-title',
   DockBounce: 'dock-bounce',

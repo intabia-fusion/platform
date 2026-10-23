@@ -22,7 +22,7 @@ import {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import type { FullTextAdapter } from '@hcengineering/server-core'
-import { getScoringConfig, mapSearchResultDoc } from './mapper'
+import { getHighlightExtra, getScoringConfig, mapSearchResultDoc } from './mapper'
 
 export async function searchFulltext (
   ctx: MeasureContext,
@@ -39,7 +39,8 @@ export async function searchFulltext (
     query,
     {
       ...options,
-      scoring: getScoringConfig(hierarchy, query.classes ?? [])
+      scoring: getScoringConfig(hierarchy, query.classes ?? []),
+      highlightExtra: getHighlightExtra(hierarchy, query.classes ?? [])
     },
     viewerId
   )) ?? { docs: [] }

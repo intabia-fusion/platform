@@ -20,6 +20,7 @@
   import { Icon, languageStore } from '@hcengineering/ui'
 
   import { getChannelName, getObjectIcon } from '../../utils'
+  import ThreadMark from './ThreadMark.svelte'
 
   export let message: ActivityMessage
 
@@ -43,6 +44,7 @@
       <div class="icon"><Icon {icon} size="x-small" /></div>
     {/if}
     <span class="label overflow-label font-medium-12 text-left secondary-textColor">{name}</span>
+    {#if isReply}<ThreadMark />{/if}
   </span>
 {/if}
 

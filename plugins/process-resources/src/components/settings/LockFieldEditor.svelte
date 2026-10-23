@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,13 +15,11 @@
 -->
 <script lang="ts">
   import type { Card, MasterTag } from '@hcengineering/card'
-  import cardPlugin, { Tag } from '@hcengineering/card'
   import type { AnyAttribute, Class, Ref } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import type { Process, Step } from '@hcengineering/process'
   import { Button, eventToHTMLElement, IconClose, Label, SelectPopup, showPopup, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import TagSelector from './TagSelector.svelte'
   import presentation, { getClient } from '@hcengineering/presentation'
 
   export let process: Process

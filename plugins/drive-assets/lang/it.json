@@ -40,6 +40,12 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyFolder": "Questa cartella è vuota",
+    "DropFilesHere": "Trascina qui i file",
+    "DropFilesHint": "oppure fai clic per sceglierli",
+    "FoldersCount": "{count, plural, one {# cartella} other {# cartelle}}",
+    "FilesCount": "{count, plural, one {# file} other {# file}}",
+    "FolderEmpty": "Vuota"
   }
 }

@@ -1,13 +1,3 @@
-export type AttachmentImageSize = 'medium' | 'x-large' | 'auto'
+// Copyright © 2026 Intabia Fusion.
 
-export interface LinkPreviewData {
-  url: string
-  host: string
-  title?: string
-  description?: string
-  hostname?: string
-  image?: string
-  imageWidth?: number
-  imageHeight?: number
-  icon?: string
-}
+export type AttachmentImageSize = 'medium' | 'x-large' | 'auto'

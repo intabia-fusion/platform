@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { AttachmentTile } from '@hcengineering/attachment-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { Ref } from '@hcengineering/core'
 
@@ -98,8 +99,8 @@
 {#if attachments.length}
   <div class="flex-row-center background-bg-accent-color bottom-divider">
     <Scroller padding=".5rem" gap="gap-2" horizontal contentDirection="horizontal" noFade={false}>
-      {#each attachments as attachment}
-        <AttachmentPresenter value={attachment} showPreview />
+      {#each attachments as attachment (attachment._id)}
+        <AttachmentTile value={attachment} />
       {/each}
     </Scroller>
     {#if attachments.length}<div class="antiHSpacer x2" />{/if}

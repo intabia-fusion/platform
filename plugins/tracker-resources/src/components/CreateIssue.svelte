@@ -17,7 +17,7 @@
   import activity from '@hcengineering/activity'
   import { Analytics } from '@hcengineering/analytics'
   import type { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import { AttachmentStyledBox, AttachmentTiles, type UploadQueue } from '@hcengineering/attachment-resources'
   import type { Employee } from '@hcengineering/contact'
   import type { Class, Doc, DocData, Ref } from '@hcengineering/core'
   import core, {
@@ -814,6 +814,8 @@
 
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
 
+  let uploads: UploadQueue | undefined
+
   function isMemberOfProject (project: Project | undefined): boolean {
     if (project == null) return false
     const members = project.members
@@ -900,7 +902,7 @@
   okLabel={tracker.string.SaveIssue}
   on:close={() => dispatch('close')}
   onCancel={showConfirmationDialog}
-  hideAttachments={attachments.size === 0}
+  hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
   hideSubheader={parentIssue == null}
   headerNoPadding
   noFade={true}
@@ -1037,6 +1039,9 @@
           if (ev.detail.action === 'saved') {
             object.attachments = ev.detail.value
           }
+        }}
+        on:uploads={(ev) => {
+          uploads = ev.detail
         }}
         on:attachments={(ev) => {
           if (ev.detail.size > 0) attachments = ev.detail.values
@@ -1176,18 +1181,14 @@
     <DocCreateExtComponent manager={docCreateManager} kind="pool" space={currentProject} props={extraProps} />
   </svelte:fragment>
   <svelte:fragment slot="attachments">
-    {#if attachments.size > 0}
-      {#each Array.from(attachments.values()) as attachment}
-        <AttachmentPresenter
-          value={attachment}
-          showPreview
-          removable
-          on:remove={(result) => {
-            if (result.detail !== undefined) void descriptionBox?.removeAttachmentById(result.detail._id)
-          }}
-        />
-      {/each}
-    {/if}
+    <AttachmentTiles
+      attachments={Array.from(attachments.values())}
+      {uploads}
+      removable
+      on:remove={(result) => {
+        void descriptionBox?.removeAttachmentById(result.detail._id)
+      }}
+    />
   </svelte:fragment>
   <svelte:fragment slot="footer">
     <Button

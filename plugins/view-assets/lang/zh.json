@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "显示 {total} KB 中的前 {shown} KB",
+    "MarkdownPreview": "预览",
+    "MarkdownSource": "源码",
+    "MarkdownTooLarge": "无格式：超过 {limit} KB",
+    "TextShownLast": "显示 {total} KB 中的最后 {shown} KB",
     "Contains": "包含",
     "NotContains": "不包含",
     "MoveClass": "移动 {class}",

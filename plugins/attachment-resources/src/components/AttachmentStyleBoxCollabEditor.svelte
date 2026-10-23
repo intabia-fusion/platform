@@ -49,7 +49,6 @@
   export let refContainer: HTMLElement | undefined = undefined
 
   export let enableAttachments: boolean = true
-  export let useAttachmentPreview: boolean = false
   export let readonly: boolean = false
 
   const client = getClient()
@@ -346,7 +345,6 @@
         {attachments}
         {readonly}
         {progress}
-        {useAttachmentPreview}
         on:remove={async (evt) => {
           if (evt.detail !== undefined) {
             await removeAttachment(evt.detail)

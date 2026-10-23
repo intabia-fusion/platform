@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -140,6 +141,10 @@ const mappings: estypes.MappingTypeMapping = {
       index: true
     },
     rootObjectClass: {
+      type: 'keyword',
+      index: true
+    },
+    facets: {
       type: 'keyword',
       index: true
     },
@@ -361,15 +366,16 @@ class ElasticAdapter implements FullTextAdapter {
     ctx: MeasureContext,
     workspaceId: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] }
+    options: SearchOptions & { scoring?: SearchScoring[], highlightExtra?: boolean }
   ): Promise<SearchStringResult> {
     try {
       const { viewerId } = options
-      const fields = searchFields(searchTargets(options.searchIn) ?? ['title', 'identifier', 'content', 'extra'])
+      const targets = searchTargets(options.searchIn) ?? ['title', 'identifier', 'content', 'extra']
+      const fields = searchFields(targets)
       if (fields.length === 0) return { docs: [] }
       const prefixFields = fields.filter((f) => !f.split('^')[0].includes('.'))
 
-      const mainQuery = query.query.startsWith('*')
+      const textQuery = query.query.startsWith('*')
         ? {
             bool: {
               should: [
@@ -451,6 +457,8 @@ class ElasticAdapter implements FullTextAdapter {
               }
             }
 
+      const mainQuery = query.allowEmptyQuery === true && query.query.trim() === '' ? { match_all: {} } : textQuery
+
       const elasticQuery: any = {
         query: {
           function_score: {
@@ -528,6 +536,12 @@ class ElasticAdapter implements FullTextAdapter {
       if (filters?.hasAttachment === true) {
         filter.push({ term: { hasAttachment: true } })
       }
+      if (filters?.rootObjectClass !== undefined) {
+        filter.push({ terms: this.getTerms(filters.rootObjectClass, 'rootObjectClass') })
+      }
+      for (const group of filters?.facets ?? []) {
+        filter.push({ terms: this.getTerms(group, 'facets') })
+      }
       if (filters?.excludeCollections !== undefined && filters.excludeCollections.length > 0) {
         // Only classes opting into content indexing carry `collection` at all, and a document
         // sitting in no collection has no such field either. Both must keep matching, hence
@@ -600,7 +614,8 @@ class ElasticAdapter implements FullTextAdapter {
             'highlightableContent.ru': { type: 'fvh', boundary_scanner: 'word' },
             // 0 fragments means the whole field, which is what a short title wants.
             searchTitle: { type: 'unified', number_of_fragments: 0 },
-            fulltextSummary: { type: 'unified' }
+            fulltextSummary: { type: 'unified' },
+            ...(options.highlightExtra === true && targets.includes('extra') ? { fulltextExtra: {} } : {})
           }
         }
       }

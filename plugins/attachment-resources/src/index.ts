@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 
 import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
 import attachment, { type Attachment } from '@hcengineering/attachment'
-import core, { SortingOrder, type Markup, type ObjQueryType, type SortingQuery } from '@hcengineering/core'
+import core, { type Markup } from '@hcengineering/core'
 import { type IntlString, type Resources } from '@hcengineering/platform'
 import { PDFViewer, deleteFile, getClient, uploadFile } from '@hcengineering/presentation'
 
@@ -23,11 +24,8 @@ import AccordionEditor from './components/AccordionEditor.svelte'
 import AddAttachment from './components/AddAttachment.svelte'
 import AttachmentDocList from './components/AttachmentDocList.svelte'
 import AttachmentDroppable from './components/AttachmentDroppable.svelte'
-import AttachmentGalleryPresenter from './components/AttachmentGalleryPresenter.svelte'
 import AttachmentList from './components/AttachmentList.svelte'
 import AttachmentGroup from './components/AttachmentGroup.svelte'
-import AttachmentPresenter from './components/AttachmentPresenter.svelte'
-import VoiceAttachmentPresenter from './components/VoiceAttachmentPresenter.svelte'
 import AttachmentPreview from './components/AttachmentPreview.svelte'
 import AttachmentRefInput from './components/AttachmentRefInput.svelte'
 import AttachmentStyleBoxCollabEditor from './components/AttachmentStyleBoxCollabEditor.svelte'
@@ -37,23 +35,30 @@ import Attachments from './components/Attachments.svelte'
 import AttachmentsGrid from './components/AttachmentsGrid.svelte'
 import AttachmentsPresenter from './components/AttachmentsPresenter.svelte'
 import AttachmentsTooltip from './components/AttachmentsTooltip.svelte'
-import FileBrowser from './components/FileBrowser.svelte'
 import Photos from './components/Photos.svelte'
 import IconAttachment from './components/icons/Attachment.svelte'
-import FileDownload from './components/icons/FileDownload.svelte'
 import IconUploadDuo from './components/icons/UploadDuo.svelte'
 import PreviewWidget from './components/PreviewWidget.svelte'
 import PreviewPopupActions from './components/PreviewPopupActions.svelte'
 import DrawingPresenter from './components/DrawingPresenter.svelte'
-import LinkPreview from './components/LinkPreview.svelte'
-import LinkPreviewCard from './components/LinkPreviewCard.svelte'
 import AttachmentSimplePreview from './components/AttachmentSimplePreview.svelte'
 import DraftAttachmentsEditor from './components/DraftAttachmentsEditor.svelte'
+import AttachmentLabel from './components/file/AttachmentLabel.svelte'
+import AttachmentTile from './components/file/AttachmentTile.svelte'
+import AttachmentTiles from './components/AttachmentTiles.svelte'
+import LinkCard from './components/file/LinkCard.svelte'
+import AudioAttachment from './components/file/AudioAttachment.svelte'
+import FileCard from './components/file/FileCard.svelte'
+import AttachmentMiniPreview from './components/file/MiniPreview.svelte'
+import VoiceAttachment from './components/file/VoiceAttachment.svelte'
 import { attachmentsApplier } from './utils'
 
 export type * from './types'
+export type { UploadQueue } from './components/file/uploads'
 export * from './stores'
 export * from './utils'
+export * from './format'
+export { pageImage, pictureImage } from './components/file/blob'
 
 export {
   AccordionEditor,
@@ -61,10 +66,8 @@ export {
   AttachmentDocList,
   DraftAttachmentsEditor,
   AttachmentDroppable,
-  AttachmentGalleryPresenter,
   AttachmentList,
   AttachmentGroup,
-  AttachmentPresenter,
   AttachmentPreview,
   AttachmentRefInput,
   AttachmentStyleBoxCollabEditor,
@@ -74,158 +77,25 @@ export {
   AttachmentsGrid,
   AttachmentsPresenter,
   AttachmentsTooltip,
-  FileBrowser,
-  FileDownload,
+  AttachmentLabel,
+  AttachmentTile,
+  AttachmentTiles,
+  LinkCard,
+  AudioAttachment,
+  FileCard,
+  VoiceAttachment,
   IconAttachment,
   IconUploadDuo,
-  LinkPreview,
-  LinkPreviewCard,
-  AttachmentSimplePreview
+  AttachmentSimplePreview,
+  AttachmentMiniPreview
 }
-
-export enum FileBrowserSortMode {
-  NewestFile,
-  OldestFile,
-  AscendingAlphabetical,
-  DescendingAlphabetical,
-  SmallestSize,
-  BiggestSize
-}
-
-export const sortModeToOptionObject = (sortMode: FileBrowserSortMode): SortingQuery<Attachment> => {
-  switch (sortMode) {
-    case FileBrowserSortMode.NewestFile:
-      return { modifiedOn: SortingOrder.Descending }
-    case FileBrowserSortMode.OldestFile:
-      return { modifiedOn: SortingOrder.Ascending }
-    case FileBrowserSortMode.AscendingAlphabetical:
-      return { name: SortingOrder.Ascending }
-    case FileBrowserSortMode.DescendingAlphabetical:
-      return { name: SortingOrder.Descending }
-    case FileBrowserSortMode.SmallestSize:
-      return { size: SortingOrder.Ascending }
-    case FileBrowserSortMode.BiggestSize:
-      return { size: SortingOrder.Descending }
-  }
-}
-
-const msInDay = 24 * 60 * 60 * 1000
-const getBeginningOfDate = (customDate?: Date): number => {
-  customDate ??= new Date()
-  customDate.setUTCHours(0, 0, 0, 0)
-  return customDate.getTime()
-}
-
-interface Filter {
-  id: string
-  label: IntlString
-}
-
-interface DateFilter extends Filter {
-  getDate: () => ObjQueryType<number> | undefined
-}
-
-interface TypeFilter extends Filter {
-  getType: () => ObjQueryType<string> | undefined
-}
-
-export const dateFileBrowserFilters: DateFilter[] = [
-  {
-    id: 'dateAny',
-    label: attachment.string.FileBrowserDateFilterAny,
-    getDate: () => {
-      return undefined
-    }
-  },
-  {
-    id: 'dateToday',
-    label: attachment.string.FileBrowserDateFilterToday,
-    getDate: () => {
-      return { $gte: getBeginningOfDate() }
-    }
-  },
-  {
-    id: 'dateYesterday',
-    label: attachment.string.FileBrowserDateFilterYesterday,
-    getDate: () => {
-      return { $gte: getBeginningOfDate() - msInDay, $lt: getBeginningOfDate() }
-    }
-  },
-  {
-    id: 'date7Days',
-    label: attachment.string.FileBrowserDateFilter7Days,
-    getDate: () => {
-      return { $gte: getBeginningOfDate() - msInDay * 6 }
-    }
-  },
-  {
-    id: 'date30Days',
-    label: attachment.string.FileBrowserDateFilter30Days,
-    getDate: () => {
-      return { $gte: getBeginningOfDate() - msInDay * 29 }
-    }
-  },
-  {
-    id: 'date3Months',
-    label: attachment.string.FileBrowserDateFilter3Months,
-    getDate: () => {
-      const now = new Date()
-      now.setMonth(now.getMonth() - 3)
-      return { $gte: getBeginningOfDate(now) }
-    }
-  },
-  {
-    id: 'date12Months',
-    label: attachment.string.FileBrowserDateFilter12Months,
-    getDate: () => {
-      const now = new Date()
-      now.setMonth(now.getMonth() - 12)
-      return { $gte: getBeginningOfDate(now) }
-    }
-  }
-]
-
-export const fileTypeFileBrowserFilters: TypeFilter[] = [
-  {
-    id: 'typeAny',
-    label: attachment.string.FileBrowserTypeFilterAny,
-    getType: () => {
-      return undefined
-    }
-  },
-  {
-    id: 'typeImage',
-    label: attachment.string.FileBrowserTypeFilterImages,
-    getType: () => {
-      return { $like: '%image/%' }
-    }
-  },
-  {
-    id: 'typeAudio',
-    label: attachment.string.FileBrowserTypeFilterAudio,
-    getType: () => {
-      return { $like: '%audio/%' }
-    }
-  },
-  {
-    id: 'typeVideo',
-    label: attachment.string.FileBrowserTypeFilterVideos,
-    getType: () => {
-      return { $like: '%video/%' }
-    }
-  },
-  {
-    id: 'typePDF',
-    label: attachment.string.FileBrowserTypeFilterPDFs,
-    getType: () => {
-      return 'application/pdf'
-    }
-  }
-]
 
 export async function AddAttachmentToSaved (attach: Attachment): Promise<void> {
   const client = getClient()
 
+  // A menu that missed the saved state must not save the file twice.
+  const current = await client.findOne(attachment.class.SavedAttachments, { attachedTo: attach._id })
+  if (current !== undefined) return
   await client.createDoc(attachment.class.SavedAttachments, core.space.Workspace, {
     attachedTo: attach._id
   })
@@ -234,9 +104,10 @@ export async function AddAttachmentToSaved (attach: Attachment): Promise<void> {
 export async function DeleteAttachmentFromSaved (attach: Attachment): Promise<void> {
   const client = getClient()
 
-  const current = await client.findOne(attachment.class.SavedAttachments, { attachedTo: attach._id })
-  if (current !== undefined) {
-    await client.remove(current)
+  // Every copy: a file saved twice before must leave the list at once.
+  const saved = await client.findAll(attachment.class.SavedAttachments, { attachedTo: attach._id })
+  for (const it of saved) {
+    await client.remove(it)
   }
 }
 
@@ -267,13 +138,12 @@ export default async (): Promise<Resources> => ({
   },
   component: {
     AttachmentsPresenter,
-    AttachmentPresenter,
-    VoiceAttachmentPresenter,
-    AttachmentGalleryPresenter,
+    AttachmentPresenter: AttachmentLabel,
+    // The model keeps the old id: changing it would need a model upgrade of every workspace.
+    VoiceAttachmentPresenter: VoiceAttachment,
     Attachments,
     DraftAttachmentsEditor,
     DrawingPresenter,
-    FileBrowser,
     Photos,
     PDFViewer,
     PreviewWidget,

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,7 +32,7 @@
   } from '@hcengineering/ui'
   import { createEventDispatcher, afterUpdate } from 'svelte'
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
-  import view, { BuildModelKey } from '@hcengineering/view'
+  import view from '@hcengineering/view'
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'

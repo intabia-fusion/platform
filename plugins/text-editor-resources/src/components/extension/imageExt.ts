@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 //
 import { notEmpty } from '@hcengineering/core'
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { FilePreviewPopup, getBlobRef, getFileUrl } from '@hcengineering/presentation'
+import { getBlobRef, getFileUrl, showFileViewer } from '@hcengineering/presentation'
 import { ImageNode, type ImageOptions } from '@hcengineering/text'
 import textEditor from '@hcengineering/text-editor'
 import { getEventPositionElement, SelectPopup, showPopup } from '@hcengineering/ui'
@@ -129,18 +130,7 @@ export const ImageExtension = ImageNode.extend<ImageOptions>({
 
             const metadata = node.attrs.width !== undefined ? { originalWidth: node.attrs.width } : {}
 
-            showPopup(
-              FilePreviewPopup,
-              {
-                file: fileId,
-                name: fileName,
-                contentType: fileType,
-                metadata,
-                fullSize: true,
-                showIcon: false
-              },
-              'centered'
-            )
+            showFileViewer({ file: fileId, name: fileName, contentType: fileType, metadata })
           }
         }
       }),
@@ -300,20 +290,9 @@ export async function openImage (editor: Editor): Promise<void> {
   const fileName = attributes.alt ?? ''
   const fileType = attributes['data-file-type'] ?? 'image/*'
   await new Promise<void>((resolve) => {
-    showPopup(
-      FilePreviewPopup,
-      {
-        file: fileId,
-        name: fileName,
-        contentType: fileType,
-        fullSize: true,
-        showIcon: false
-      },
-      'centered',
-      () => {
-        resolve()
-      }
-    )
+    showFileViewer({ file: fileId, name: fileName, contentType: fileType }, () => {
+      resolve()
+    })
   })
 }
 

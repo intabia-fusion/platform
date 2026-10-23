@@ -1,4 +1,5 @@
 <!--
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2020 Anticrm Platform Contributors.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -101,6 +102,8 @@
 
 <style lang="scss">
   .hulyReactions-container {
+    --reaction-select: color-mix(in srgb, var(--button-primary-BackgroundColor) 6%, var(--theme-panel-color));
+    --reaction-select-border: color-mix(in srgb, var(--button-primary-BackgroundColor) 16%, var(--theme-panel-color));
     display: flex;
     flex-wrap: wrap;
     column-gap: 0.25rem;
@@ -140,16 +143,21 @@
         margin: 0 0.05em 0.08em 0.1em;
       }
       &.highlight {
-        background: var(--global-ui-highlight-BackgroundColor);
-        border-color: var(--global-accent-SkyText);
+        background: var(--reaction-select-border);
+        border-color: var(--button-primary-BackgroundColor);
+
+        .counter {
+          color: var(--button-primary-BackgroundColor);
+        }
       }
 
       &:hover:not(.readonly) {
-        background: var(--global-ui-highlight-BackgroundColor);
-        border-color: var(--button-menu-active-BorderColor);
+        background: var(--reaction-select);
+        border-color: var(--reaction-select-border);
 
         &.highlight {
-          border-color: var(--global-focus-BorderColor);
+          background: var(--reaction-select-border);
+          border-color: var(--button-primary-BackgroundColor);
         }
       }
 
@@ -157,12 +165,18 @@
         padding: 0;
         width: 1.75rem;
 
+        // The kit secondary button hover: a neutral gray, not the tinted highlight.
         &.opened,
         &:hover {
-          background: var(--global-ui-highlight-BackgroundColor);
+          background: var(--button-secondary-hover-BackgroundColor);
           border-color: var(--button-secondary-BorderColor);
         }
       }
     }
+  }
+
+  :global(.theme-dark) .hulyReactions-container {
+    --reaction-select: color-mix(in srgb, var(--button-primary-BackgroundColor) 14%, var(--theme-panel-color));
+    --reaction-select-border: color-mix(in srgb, var(--button-primary-BackgroundColor) 35%, var(--theme-panel-color));
   }
 </style>

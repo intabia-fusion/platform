@@ -30,7 +30,14 @@
   function renderBlurhash (canvas: HTMLCanvasElement, blurhash: string): void {
     const ctx = canvas.getContext('2d')
     if (ctx !== null) {
-      const pixels = decode(blurhash, width, height, punch)
+      let pixels: Uint8ClampedArray
+      try {
+        pixels = decode(blurhash, width, height, punch)
+      } catch {
+        // A broken string from metadata draws nothing rather than breaking the view around it.
+        ctx.clearRect(0, 0, width, height)
+        return
+      }
       const imageData = ctx.createImageData(width, height)
       imageData.data.set(pixels)
       ctx.putImageData(imageData, 0, 0)

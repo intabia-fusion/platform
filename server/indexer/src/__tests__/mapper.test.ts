@@ -145,6 +145,15 @@ describe('mapSearchResultDoc', () => {
     expect(doc.highlights).toEqual({ content: ['body'], title: ['<em>Alice</em> — General'] })
   })
 
+  it('keeps extra fragments apart from content ones', () => {
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({ _highlights: { fulltextExtra: ['<em>Staging</em> environment'] } })
+    )
+
+    expect(doc.highlights).toEqual({ extra: ['<em>Staging</em> environment'] })
+  })
+
   it('prefers the dedicated field over the shared summary', () => {
     const doc = mapSearchResultDoc(
       hierarchy,
@@ -208,5 +217,22 @@ describe('mapSearchResultDoc', () => {
     expect(doc.shortTitle).toBe('General')
     expect(doc.score).toBe(4.2)
     expect(doc.doc._class).toBe(MESSAGE_CLASS)
+  })
+
+  it('hands back the place a document belongs to', () => {
+    // An attachment hangs off its message; the browser files it under the chat the message is in.
+    const doc = mapSearchResultDoc(
+      hierarchy,
+      indexed({
+        attachedTo: 'msg1' as Ref<Doc>,
+        attachedToClass: MESSAGE_CLASS,
+        rootObject: 'chat1' as Ref<Doc>,
+        rootObjectClass: 'chunter:class:Channel' as Ref<Class<Doc>>
+      })
+    )
+
+    expect(doc.doc.rootObject).toBe('chat1')
+    expect(doc.doc.rootObjectClass).toBe('chunter:class:Channel')
+    expect(doc.doc.attachedTo).toBe('msg1')
   })
 })

@@ -169,11 +169,14 @@ export async function resolveParents (object: Resource): Promise<Doc[]> {
   return parents.reverse()
 }
 
+export function isFolder (resource: Resource): resource is Folder {
+  return getClient().getHierarchy().isDerived(resource._class, drive.class.Folder)
+}
+
 export async function findAllChildren (resource: Resource, maxDepth: number = 10): Promise<Array<Ref<Folder>>> {
   const client = getClient()
-  const hierarchy = client.getHierarchy()
 
-  if (!hierarchy.isDerived(resource._class, drive.class.Folder)) {
+  if (!isFolder(resource)) {
     return []
   }
 

@@ -20,6 +20,7 @@
 Как устроено:
 
 - `MigrateClientImpl` (`server/tool/src/upgrade.ts`) ничего не шлёт, а записывает запрос в `_migrations` воркспейса: `MigrationState` с `plugin: 'fulltext-reindex'`, `state` - домен или `full`, у частичного ещё `classes` (`server/tool/src/reindex.ts`).
+- `reindex(domain, classes, clean)`: `clean` перед индексацией удаляет эти классы из индекса (`removeByQuery` по `_class`, в `FullTextIndexPipeline.reindex`). Обычный reindex только дописывает: документ, удалённый сырым `deleteMany`, остался бы в индексе. В индексе `_class` - точный класс и миксины, без предков, поэтому классы передаются вместе с наследниками. Запросы одного домена сливаются, `clean` побеждает. Без классов `clean` ничего не удаляет.
 - `upgradeWorkspaceWith` (`server/workspace-service/src/ws-operations.ts`) после `upgrade-done` отправляет записи (`sendPendingReindex`) и удаляет их. Если есть `full`, частичные не шлются - полный их покрывает.
 - При создании воркспейса записи удаляются без отправки: после создания приходит `Created`, и фуллтекст всё равно делает полную переиндексацию.
 - `dev/tool upgrade-workspace` повышает версию прямо в колбэке `upgrade-done`, иначе запросы ушли бы до повышения версии.

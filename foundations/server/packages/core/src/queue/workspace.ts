@@ -30,6 +30,8 @@ export interface QueueWorkspaceReindexMessage extends QueueWorkspaceMessage {
 
   domain: Domain
   classes: Ref<Class<Doc>>[]
+  /** Drop the classes from the index first, so documents gone from the database go from it too. */
+  clean?: boolean
 }
 
 /** Which limit a LimitsChanged event is about. 'plan' = plan/limits snapshot changed
@@ -119,10 +121,11 @@ export const workspaceEvents = {
     effect,
     quantity
   }),
-  reindex: (domain: Domain, classes: Ref<Class<Doc>>[]): QueueWorkspaceReindexMessage => ({
+  reindex: (domain: Domain, classes: Ref<Class<Doc>>[], clean: boolean = false): QueueWorkspaceReindexMessage => ({
     type: QueueWorkspaceEvent.Reindex,
     domain,
-    classes
+    classes,
+    ...(clean ? { clean } : {})
   }),
   maintenance: (timeoutMinutes: number, message?: string): QueueWorkspaceMaintenanceMessage => ({
     type: QueueWorkspaceEvent.Maintenance,

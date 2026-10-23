@@ -31,6 +31,15 @@ export function createModel (builder: Builder): void {
     }
   })
 
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverDrive.trigger.OnResourceChange,
+    isAsync: true,
+    txMatch: {
+      _class: { $in: [core.class.TxCreateDoc, core.class.TxRemoveDoc, core.class.TxUpdateDoc] },
+      objectClass: { $in: [drive.class.File, drive.class.Folder] }
+    }
+  })
+
   builder.mixin<Class<Doc>, ObjectDDParticipant>(
     drive.class.Folder,
     core.class.Class,

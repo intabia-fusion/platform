@@ -15,7 +15,13 @@
 // limitations under the License.
 //
 
-import { type Attachment, type AttachmentValue } from '@hcengineering/attachment'
+import {
+  AttachmentKind,
+  getAttachmentCategory,
+  type Attachment,
+  type AttachmentCategory,
+  type AttachmentValue
+} from '@hcengineering/attachment'
 import {
   type BlobMetadata,
   type Blob,
@@ -37,6 +43,7 @@ import view, { type AttributeApplierResult } from '@hcengineering/view'
 import workbench, { type WidgetTab } from '@hcengineering/workbench'
 
 import attachment from './plugin'
+import type { ComponentProps } from 'svelte'
 import AttachmentPreviewPopup from './components/AttachmentPreviewPopup.svelte'
 import { type AttachmentImageSize } from './types'
 
@@ -115,14 +122,15 @@ export function getType (
 
 export async function openAttachmentInSidebar (value: Attachment | BlobType): Promise<void> {
   closeTooltip()
-  await openFilePreviewInSidebar(value.file, value.name, value.type, value.metadata)
+  await openFilePreviewInSidebar(value.file, value.name, value.type, value.metadata, value.size)
 }
 
 export async function openFilePreviewInSidebar (
   file: Ref<Blob>,
   name: string,
   contentType: string,
-  metadata?: BlobMetadata
+  metadata?: BlobMetadata,
+  size?: number
 ): Promise<void> {
   const client = getClient()
   const widget = client.getModel().findAllSync(workbench.class.Widget, { _id: attachment.ids.PreviewWidget })[0]
@@ -143,7 +151,7 @@ export async function openFilePreviewInSidebar (
     id: file,
     icon,
     name,
-    data: { file, name, contentType, metadata }
+    data: { file, name, contentType, metadata, size }
   }
   await createFn(widget, tab)
 }
@@ -164,18 +172,68 @@ export function getCustomPresenter (hierarchy: Hierarchy, _class: Ref<Class<Doc>
   return m.presenter
 }
 
+/** A recording carries its transcription state; the class check covers one that has none yet. */
+export function isVoiceAttachment (hierarchy: Hierarchy, value: Attachment | BlobType): boolean {
+  return (
+    isAttachment(value) &&
+    value.type.startsWith('audio/') &&
+    (typeof (value as { state?: unknown }).state === 'string' ||
+      getCustomPresenter(hierarchy, value._class) !== undefined)
+  )
+}
+
 export function showAttachmentPreviewPopup (
   value: WithLookup<Attachment> | BlobType,
-  fullSize: boolean = true
+  props: Partial<ComponentProps<AttachmentPreviewPopup>> = {},
+  onClose?: () => void
 ): PopupResult {
   closeTooltip()
-  return showPopup(AttachmentPreviewPopup, { value, fullSize }, getPreviewAlignment(value.type ?? ''))
+  return showPopup(
+    AttachmentPreviewPopup,
+    { ...props, value, fullSize: true, fullWindow: true },
+    getPreviewAlignment(value.type ?? ''),
+    onClose
+  )
+}
+
+/** Opens the viewer on one of the items; its arrows step through the rest in their order. */
+export function showAttachmentsViewer (items: Array<WithLookup<Attachment>>, value: Attachment): void {
+  const at = (i: number): Partial<ComponentProps<AttachmentPreviewPopup>> => ({
+    value: items[i],
+    navigation: {
+      prev: i > 0 ? () => { popup.update(at(i - 1)) } : undefined,
+      next: i < items.length - 1 ? () => { popup.update(at(i + 1)) } : undefined
+    }
+  })
+  const index = items.findIndex((it) => it._id === value._id)
+  const popup = showAttachmentPreviewPopup(value, index < 0 ? {} : at(index))
+}
+
+export async function openAttachment (value: WithLookup<Attachment> | BlobType): Promise<string | undefined> {
+  return showAttachmentPreviewPopup(value).id
 }
 
 interface ImageDimensions {
   width: number
   height: number
   fit: 'cover' | 'contain'
+}
+
+const KIND_ORDER = [AttachmentKind.Media, AttachmentKind.File, AttachmentKind.Audio, AttachmentKind.Link]
+
+/** A voice message is told by its class: its container alone may read as a video. */
+export function attachmentCategory (value: Attachment): AttachmentCategory {
+  const voice = isVoiceAttachment(getClient().getHierarchy(), value)
+  return getAttachmentCategory(value.type, value.name, voice)
+}
+
+function attachmentKindOrder (value: Attachment): number {
+  return KIND_ORDER.indexOf(attachmentCategory(value).kind)
+}
+
+export function compareAsInMessage (a: Attachment, b: Attachment): number {
+  const byKind = attachmentKindOrder(a) - attachmentKindOrder(b)
+  return byKind !== 0 ? byKind : (a.createdOn ?? a.modifiedOn) - (b.createdOn ?? b.modifiedOn)
 }
 
 export function calculateAttachmentDimensions (
@@ -232,18 +290,10 @@ export function getImageDimensions (
   const originalWidth = size.width
   const originalHeight = size.height
   const fontSize = getRootFontSize()
-  let maxWidthPx = maxRem.maxWidth * fontSize
-  let maxHeightPx = maxRem.maxHeight * fontSize
+  const maxWidthPx = maxRem.maxWidth * fontSize
+  const maxHeightPx = maxRem.maxHeight * fontSize
 
   const ratio = originalHeight / originalWidth
-
-  // Square-ish images (logos) get a tighter cap so they don't dominate the message
-  const SQUARE_CAP_REM = 6
-  if (ratio >= 0.85 && ratio <= 1.18) {
-    const squareCapPx = SQUARE_CAP_REM * fontSize
-    maxWidthPx = Math.min(maxWidthPx, squareCapPx)
-    maxHeightPx = Math.min(maxHeightPx, squareCapPx)
-  }
 
   let width = Math.min(originalWidth, maxWidthPx)
   let height = Math.max(1, Math.round(width * ratio))

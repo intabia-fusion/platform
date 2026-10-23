@@ -116,7 +116,8 @@ import {
   type ViewletDescriptor,
   type ViewletPreference,
   type ViewletViewAction,
-  type DescendantAttribute
+  type DescendantAttribute,
+  textContentTypes
 } from '@hcengineering/view'
 
 import view from './plugin'
@@ -829,7 +830,7 @@ export function createModel (builder: Builder): void {
     presentation.class.FilePreviewExtension,
     core.space.Model,
     {
-      contentType: ['application/json', 'text/*'],
+      contentType: textContentTypes,
       alignment: 'float',
       component: view.component.TextViewer,
       extension: presentation.extension.FilePreviewExtension

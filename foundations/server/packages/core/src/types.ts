@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -367,6 +368,7 @@ export interface IndexedDoc {
    */
   rootObject?: Ref<Doc>
   rootObjectClass?: Ref<Class<Doc>>
+  facets?: string[]
 
   baseId?: Ref<Doc>
   [key: string]: any
@@ -415,7 +417,7 @@ export interface FullTextAdapter {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     query: SearchQuery,
-    options: SearchOptions & { scoring?: SearchScoring[] },
+    options: SearchOptions & { scoring?: SearchScoring[], highlightExtra?: boolean },
     viewerId?: string
   ) => Promise<SearchStringResult>
 
@@ -498,6 +500,27 @@ export type SearchPresenterProvider = (
 
 export type FieldParamKind = 'space' | 'parent'
 
+/**
+ * @public
+ */
+export interface SearchFacets {
+  values: string[]
+  // Appended to the document's `fulltextExtra`: searchable text it does not hold as an attribute, such as its link urls.
+  extra?: string
+}
+
+/**
+ * @public
+ */
+export type SearchFacetsProvider = (
+  doc: Doc,
+  hierarchy: Hierarchy,
+  ctx: MeasureContext,
+  storage: WithFind,
+  /** The documents indexed together with this one, to load what they need in one query. */
+  batch: Doc[]
+) => SearchFacets | Promise<SearchFacets>
+
 export type FieldTemplateParam =
   | /* field */ [string]
   | [/* kind */ 'func', /* Presenter function */ Resource<SearchPresenterProvider>, /* mode */ string]
@@ -533,9 +556,12 @@ export interface SearchPresenter extends Class<Doc> {
   shortTitle?: FieldTemplateComponent | FieldTemplate
   scoring?: SearchScoring[]
   highlightableField?: string
+  /** Highlights `fulltextExtra` too, when it is searched: it is short for this class, a file keeps a whole document there. */
+  highlightExtra?: boolean
   /** Main text attribute: goes to `fulltextSummary`, the rest to `fulltextExtra` */
   contentField?: string
   indexCollection?: boolean
+  facets?: Resource<SearchFacetsProvider>
 }
 
 export interface ServiceAdapter {

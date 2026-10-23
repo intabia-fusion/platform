@@ -205,7 +205,7 @@
           store.loadMore()
         }}
         on:retry={() => {
-          store.submit()
+          store.retry()
         }}
       />
     </div>

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -55,6 +56,7 @@ export default mergeIds(chunterId, chunter, {
   action: {
     ReportMessage: '' as Ref<Action>,
     ReportPerson: '' as Ref<Action>,
+    DownloadAttachments: '' as Ref<Action>,
     MarkCommentUnread: '' as Ref<Action>,
     MarkUnread: '' as Ref<Action>,
     ArchiveChannel: '' as Ref<Action>,
@@ -66,6 +68,7 @@ export default mergeIds(chunterId, chunter, {
   actionImpl: {
     ReportMessage: '' as ViewAction,
     ReportPerson: '' as ViewAction,
+    DownloadAttachments: '' as ViewAction,
     ArchiveChannel: '' as ViewAction,
     UnarchiveChannel: '' as ViewAction,
     DeleteChatMessage: '' as ViewAction,
@@ -121,6 +124,7 @@ export default mergeIds(chunterId, chunter, {
   function: {
     CanReportMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     CanReportPerson: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
+    CanDownloadAttachments: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
     GetLink: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<string>>,
     GetFragment: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,
     CanDeleteMessage: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,

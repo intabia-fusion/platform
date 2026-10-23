@@ -222,6 +222,10 @@ func (p *Transcoder) Transcode(ctx context.Context, task *Task) (*TaskResult, er
 		Playlist:  manifest.MasterPlaylistFileName(task.ID),
 		Thumbnail: manifest.ThumbnailFileName(task.ID),
 	}
+	// A recording written as a stream may have no length in its header: then none is sent.
+	if probe.Format != nil {
+		result.Duration = probe.Format.DurationSeconds
+	}
 
 	if metaProvider, ok := remoteStorage.(storage.MetaProvider); ok {
 		logger.Debug(

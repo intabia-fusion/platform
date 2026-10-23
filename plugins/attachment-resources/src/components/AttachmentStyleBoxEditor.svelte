@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,6 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import AttachmentStyledBox from './AttachmentStyledBox.svelte'
   import { SaveVersion } from '../utils'
-  import { EditorKitOptions } from '@hcengineering/text-editor-resources'
 
   export let object: Doc
   export let key: KeyedAttribute
@@ -129,7 +129,6 @@
     {focusIndex}
     kitOptions={{ reference: true }}
     bind:this={descriptionBox}
-    useAttachmentPreview={false}
     isScrollable={false}
     objectId={object._id}
     _class={object._class}

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -182,7 +183,21 @@ export const uis = plugin(uiId, {
     LatencyValue: '' as IntlString,
     StatusError: '' as IntlString,
     StatusWarning: '' as IntlString,
-    StatusInfo: '' as IntlString
+    StatusInfo: '' as IntlString,
+    Download: '' as IntlString,
+    PreviewUnavailable: '' as IntlString,
+    PreviewFailed: '' as IntlString,
+    Play: '' as IntlString,
+    Pause: '' as IntlString,
+    PlaybackPosition: '' as IntlString,
+    PlaybackSpeed: '' as IntlString,
+    LinkPreviewUnavailable: '' as IntlString,
+    UploadProgress: '' as IntlString,
+    UploadFailed: '' as IntlString,
+    Retry: '' as IntlString,
+    VoiceStarting: '' as IntlString,
+    VoiceDiscard: '' as IntlString,
+    VoiceAttach: '' as IntlString
   },
   metadata: {
     DefaultApplication: '' as Metadata<AnyComponent>,

@@ -77,6 +77,7 @@ import {
   ObjectLabel
 } from './types'
 
+export * from './content'
 export * from './types'
 export * from './utils'
 

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,6 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import type { Project, ProjectTypeDescriptor } from '@hcengineering/task'
-  import { ProjectType } from '@hcengineering/task'
   import type { AnyComponent } from '@hcengineering/ui'
   import { Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
   import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'

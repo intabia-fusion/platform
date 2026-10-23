@@ -32,6 +32,7 @@ const fullReindexState = 'full'
 /** `state` is the domain to reindex, or 'full'. */
 export interface ReindexRequest extends MigrationState {
   classes?: Array<Ref<Class<Doc>>>
+  clean?: boolean
 }
 
 /** A fixed id per domain: a migration re-run after a crash overwrites its request instead of adding one. */
@@ -72,7 +73,7 @@ export async function sendPendingReindex (
   }
   const msgs = requests.some((it) => it.state === fullReindexState)
     ? [workspaceEvents.fullReindex()]
-    : requests.map((it) => workspaceEvents.reindex(it.state as Domain, it.classes ?? []))
+    : requests.map((it) => workspaceEvents.reindex(it.state as Domain, it.classes ?? [], it.clean === true))
   await queue.send(ctx, workspace, msgs)
   await lowLevel.clean(
     ctx,

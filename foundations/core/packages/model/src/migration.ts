@@ -122,7 +122,8 @@ export interface MigrationClient {
   wsIds: WorkspaceIds
 
   fullReindex: () => Promise<void>
-  reindex: (domain: Domain, classes: Ref<Class<Doc>>[]) => Promise<void>
+  /** `clean` first drops these classes from the index: a plain reindex keeps documents removed by raw deletion. */
+  reindex: (domain: Domain, classes: Ref<Class<Doc>>[], clean?: boolean) => Promise<void>
   readonly logger: ModelLogger
   readonly ctx: MeasureContext
 }

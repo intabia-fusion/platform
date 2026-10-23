@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 -->
 
@@ -10,11 +11,15 @@
   import presentation, { getFileUrl } from '@hcengineering/presentation'
   import { convertToHTML } from '@hcengineering/print'
   import { EmbeddedHTML, Spinner, themeStore } from '@hcengineering/ui'
+  import { FileNoPreview } from '@hcengineering/ui/kit'
 
   export let value: Ref<Blob>
   export let name: string
   export let contentType: string
   export let metadata: BlobMetadata | undefined
+
+  $: dot = name.lastIndexOf('.')
+  $: extension = dot > 0 ? name.slice(dot + 1, dot + 5).toUpperCase() : ''
 
   let isLoading = true
   let convertedFile: string | undefined
@@ -264,14 +269,18 @@
   `
 </script>
 
-{#if src}
-  {#if isLoading}
-    <div class="centered">
-      <Spinner size="medium" />
-    </div>
-  {:else}
-    <EmbeddedHTML {src} {name} {css} />
-  {/if}
+{#if isLoading}
+  <div class="centered">
+    <Spinner size="medium" />
+  </div>
+{:else if convertedFile != null && convertedFile !== ''}
+  <EmbeddedHTML {src} {name} {css} />
+{:else}
+  <FileNoPreview
+    {name}
+    badge={{ label: extension !== '' ? extension : 'DOC', color: 'Cerulean' }}
+    url={getFileUrl(value, name)}
+  />
 {/if}
 
 <style lang="scss">
@@ -280,8 +289,8 @@
   }
   .centered {
     flex-grow: 1;
-    width: 100;
-    height: 100;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;

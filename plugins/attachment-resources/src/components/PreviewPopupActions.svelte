@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,9 @@
 -->
 <script lang="ts">
   import type { BlobMetadata, Blob, Ref } from '@hcengineering/core'
-  import { Button, closePopup, closeTooltip, IconToDetails } from '@hcengineering/ui'
+  import { closePopup, closeTooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import workbench from '@hcengineering/workbench'
 
   import { openFilePreviewInSidebar } from '../utils'
@@ -23,18 +26,21 @@
   export let name: string
   export let contentType: string
   export let metadata: BlobMetadata | undefined
+  export let size: number | undefined = undefined
 </script>
 
 {#if file}
-  <Button
-    icon={IconToDetails}
-    kind="icon"
+  <IconButton
+    icon={view.icon.Sidebar}
+    kind="ghost"
+    size="small"
+    iconSize="medium"
+    tooltip={{ label: workbench.string.OpenInSidebar }}
     on:click={() => {
       if (file === undefined) return
       closeTooltip()
       closePopup()
-      void openFilePreviewInSidebar(file, name, contentType, metadata)
+      void openFilePreviewInSidebar(file, name, contentType, metadata, size)
     }}
-    showTooltip={{ label: workbench.string.OpenInSidebar }}
   />
 {/if}

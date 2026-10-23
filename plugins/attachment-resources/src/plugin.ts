@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,25 +24,11 @@ export default mergeIds(attachmentId, attachment, {
   string: {
     NoAttachments: '' as IntlString,
     Photos: '' as IntlString,
-    FileBrowserFileCounter: '' as IntlString,
-    FileBrowserListView: '' as IntlString,
-    FileBrowserGridView: '' as IntlString,
-    FileBrowserFilterFrom: '' as IntlString,
-    FileBrowserFilterIn: '' as IntlString,
-    FileBrowserFilterDate: '' as IntlString,
-    FileBrowserFilterFileType: '' as IntlString,
-    FileBrowserSort: '' as IntlString,
-    FileBrowserSortNewest: '' as IntlString,
-    FileBrowserSortOldest: '' as IntlString,
-    FileBrowserSortAZ: '' as IntlString,
-    FileBrowserSortZA: '' as IntlString,
-    FileBrowserSortSmallest: '' as IntlString,
-    FileBrowserSortBiggest: '' as IntlString,
     AddAttachmentToSaved: '' as IntlString,
     RemoveAttachmentFromSaved: '' as IntlString,
     Pinned: '' as IntlString,
-    Play: '' as IntlString,
-    Pause: '' as IntlString
+    FilesUploading: '' as IntlString,
+    FilesNotUploaded: '' as IntlString
   },
   actionImpl: {
     AddAttachmentToSaved: '' as ViewAction,

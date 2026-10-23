@@ -1,4 +1,5 @@
 <!--
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -35,10 +36,10 @@
     position: relative;
     width: 100%;
     height: 1px;
-    border-top: 1px dashed var(--global-higlight-Color);
+    border-top: 1px dashed var(--button-brand-BackgroundColor);
   }
 
   .label {
-    color: var(--global-higlight-Color);
+    color: var(--button-brand-BackgroundColor);
   }
 </style>

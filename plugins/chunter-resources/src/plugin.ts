@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -99,6 +100,29 @@ export default mergeIds(chunterId, chunter, {
     SearchFilterSelected: '' as IntlString,
     SearchFilterObject: '' as IntlString,
     SearchFilterObjectMore: '' as IntlString,
+    BrowserMedia: '' as IntlString,
+    BrowserFiles: '' as IntlString,
+    BrowserLinks: '' as IntlString,
+    BrowserAudio: '' as IntlString,
+    SearchMediaPlaceholder: '' as IntlString,
+    SearchFilesPlaceholder: '' as IntlString,
+    SearchLinksPlaceholder: '' as IntlString,
+    SearchAudioPlaceholder: '' as IntlString,
+    MediaCount: '' as IntlString,
+    FilesCount: '' as IntlString,
+    LinksCount: '' as IntlString,
+    AudioCount: '' as IntlString,
+    NoMediaTitle: '' as IntlString,
+    NoFilesTitle: '' as IntlString,
+    NoLinksTitle: '' as IntlString,
+    NoAudioTitle: '' as IntlString,
+    BrowserEmptyHint: '' as IntlString,
+    GoToMessage: '' as IntlString,
+    OpenLink: '' as IntlString,
+    FoundInFileContent: '' as IntlString,
+    SearchFilterFileType: '' as IntlString,
+    SearchFilterAllFileTypes: '' as IntlString,
+    SearchInFileText: '' as IntlString,
     SearchFilterDate: '' as IntlString,
     SearchFilterHasAttachment: '' as IntlString,
     SearchFilterOptions: '' as IntlString,
@@ -107,6 +131,7 @@ export default mergeIds(chunterId, chunter, {
     SearchNoResultsTitle: '' as IntlString,
     SearchNoResultsHint: '' as IntlString,
     SearchFailed: '' as IntlString,
+    SearchFailedHint: '' as IntlString,
     SearchUnavailable: '' as IntlString,
     SearchRetry: '' as IntlString,
     SearchResultsCount: '' as IntlString,

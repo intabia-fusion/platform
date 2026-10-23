@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "Mostrando os primeiros {shown} KB de {total} KB",
+    "MarkdownPreview": "Visualização",
+    "MarkdownSource": "Código",
+    "MarkdownTooLarge": "Sem formatação: acima de {limit} KB",
+    "TextShownLast": "Mostrando os últimos {shown} KB de {total} KB",
     "Contains": "Contém",
     "NotContains": "Não contém",
     "MoveClass": "Mover {class}",

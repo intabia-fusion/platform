@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Erreur",
     "StatusWarning": "Avertissement",
-    "StatusInfo": "Information"
+    "StatusInfo": "Information",
+    "Download": "Télécharger",
+    "PreviewUnavailable": "L'aperçu n'est pas disponible pour ce type de contenu",
+    "PreviewFailed": "Impossible d’ouvrir l’aperçu",
+    "Play": "Lire",
+    "Pause": "Pause",
+    "PlaybackPosition": "Position de lecture",
+    "PlaybackSpeed": "Vitesse",
+    "LinkPreviewUnavailable": "Aperçu du lien indisponible",
+    "UploadProgress": "{sent} sur {size}",
+    "UploadFailed": "Échec de l’envoi",
+    "Retry": "Réessayer",
+    "VoiceStarting": "Activation du micro…",
+    "VoiceDiscard": "Annuler l’enregistrement",
+    "VoiceAttach": "Joindre l’enregistrement"
   }
 }

@@ -16,46 +16,34 @@
   import { Label, Toggle, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import chunter from '../../../plugin'
-  import type { ChatSearchFilters } from '../../../search/types'
+  import type { SearchOption } from '../../../search/types'
 
-  export let filters: ChatSearchFilters = {}
+  export let options: SearchOption[]
 
   const dispatch = createEventDispatcher()
 
-  let hasAttachment = filters.hasAttachment === true
-  let includeTranscription = filters.includeTranscription === true
+  let state: Record<string, boolean> = Object.fromEntries(options.map((o) => [o.key, o.on]))
 
-  function toggle (patch: Partial<ChatSearchFilters>): void {
-    dispatch('update', patch)
+  function toggle (key: string): void {
+    state = { ...state, [key]: !state[key] }
+    dispatch('update', { [key]: state[key] ? true : undefined })
   }
 </script>
 
 <div class="hulyPopup-container options" use:resizeObserver={() => dispatch('changeContent')}>
-  <button
-    class="option"
-    on:click={() => {
-      hasAttachment = !hasAttachment
-      toggle({ hasAttachment: hasAttachment ? true : undefined })
-    }}
-  >
-    <span class="label"><Label label={chunter.string.SearchFilterHasAttachment} /></span>
-    {#key hasAttachment}
-      <Toggle on={hasAttachment} />
-    {/key}
-  </button>
-  <button
-    class="option"
-    on:click={() => {
-      includeTranscription = !includeTranscription
-      toggle({ includeTranscription: includeTranscription ? true : undefined })
-    }}
-  >
-    <span class="label"><Label label={chunter.string.SearchFilterIncludeTranscription} /></span>
-    {#key includeTranscription}
-      <Toggle on={includeTranscription} />
-    {/key}
-  </button>
+  {#each options as option (option.key)}
+    <button
+      class="option"
+      on:click={() => {
+        toggle(option.key)
+      }}
+    >
+      <span class="label"><Label label={option.label} /></span>
+      {#key state[option.key]}
+        <Toggle on={state[option.key]} />
+      {/key}
+    </button>
+  {/each}
 </div>
 
 <style lang="scss">

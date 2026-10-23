@@ -9,6 +9,10 @@ import { Meta } from '@storybook/blocks'
 - **UI Kit** - актуальные компоненты из `@hcengineering/ui/kit` (`packages/ui/src/ui-kit`). Новый базовый компонент
   приходит вместе с историей здесь: `src/ui-kit/<Component>.stories.ts`.
 - У каждого компонента: **Playground** - все пропсы в панели Controls, **Variants** - размеры и состояния рядом.
+- Файлы, записи, ссылки и иконки кита - одной страницей на папку (`File`, `Audio`, `Link`, `Icons`): компоненты
+  показаны вместе, в состояниях, без Controls.
+- **Attachments** - вложения целиком (`Overview`, `Viewer`, `Sidebar`): настоящие компоненты платформы на клиенте
+  с пустой моделью (`src/attachments/mock.ts`).
 
 Тема, акцент и язык переключаются в тулбаре; компоненты рисуются через тот же `Theme`, что и в приложении.
 Правила кита - `docs/ui-components/ui-kit.md`.
