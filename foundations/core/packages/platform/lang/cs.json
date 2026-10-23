@@ -2,6 +2,7 @@
   "status": {
     "LoadingPlugin": "Načítání pluginu {plugin}...",
     "UnknownError": "Neznámá chyba: {message}",
+    "ConnectionClosed": "Připojení bylo uzavřeno",
     "InvalidId": "Neplatné ID: {id}",
     "BadRequest": "Špatný požadavek",
     "Forbidden": "Zakázáno",

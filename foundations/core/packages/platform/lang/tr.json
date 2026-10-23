@@ -2,6 +2,7 @@
   "status": {
     "LoadingPlugin": "{plugin} eklentisi yükleniyor...",
     "UnknownError": "Bilinmeyen hata: {message}",
+    "ConnectionClosed": "Bağlantı kapatıldı",
     "InvalidId": "Geçersiz Id: {id}",
     "BadRequest": "Hatalı istek",
     "Forbidden": "Yasak",

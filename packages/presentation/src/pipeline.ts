@@ -161,7 +161,14 @@ export class PresentationPipelineImpl implements PresentationPipeline {
   }
 
   async searchFulltext (query: SearchQuery, options: SearchOptions): Promise<SearchResult> {
-    return await this.client.searchFulltext(query, options)
+    try {
+      return await this.client.searchFulltext(query, options)
+    } catch (err) {
+      if (err instanceof PlatformError && err.status.code === platform.status.ConnectionClosed) {
+        return { docs: [] }
+      }
+      throw err
+    }
   }
 
   async findOne<T extends Doc>(

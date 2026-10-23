@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@ import core, {
   TxCreateDoc,
   type Doc
 } from '@hcengineering/core'
-import { addEventListener, removeEventListener } from '@hcengineering/platform'
+import platform, { addEventListener, removeEventListener, PlatformError } from '@hcengineering/platform'
 import { connect } from '../connection'
 
 // Mock CloseEvent for Node.js environment (used in MockWebSocket)
@@ -289,6 +290,17 @@ class SlowFindWebSocket extends MockWebSocket {
   }
 }
 
+class SilentFindWebSocket extends SlowFindWebSocket {
+  send (data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    const message = typeof data === 'string' ? data : new TextDecoder().decode(data as ArrayBuffer)
+    const method = message !== pingConst ? JSON.parse(message).method : undefined
+    if (method === 'findAll') {
+      return
+    }
+    super.send(data)
+  }
+}
+
 describe('connect function', () => {
   let connections: Array<{ close: () => Promise<void> }> = []
   let mockWebSockets: MockWebSocket[] = []
@@ -410,6 +422,43 @@ describe('connect function', () => {
     client.handleMsg(1, { id: -1, terminate: true })
 
     expect(client.closed).toBe(true)
+  })
+
+  it('rejects pending requests with ConnectionClosed on close', async () => {
+    const mockWs = new SilentFindWebSocket('ws://localhost:3333')
+    mockWebSockets.push(mockWs)
+    const client = connect('ws://localhost:3333', jest.fn(), 'test-workspace' as WorkspaceUuid, 'u' as PersonUuid, {
+      socketFactory: () => mockWs
+    })
+    connections.push(client)
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    const pending = client.findAll(core.class.Space, {})
+    const rejection = pending.catch((err) => err)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    await client.close()
+
+    const err = await rejection
+    expect(err).toBeInstanceOf(PlatformError)
+    expect((err as PlatformError).status.code).toBe(platform.status.ConnectionClosed)
+    expect((client as any).requests.size).toBe(0)
+  })
+
+  it('rejects a request waiting for an open socket with ConnectionClosed on close', async () => {
+    const mockWs = new SilentFindWebSocket('ws://localhost:3333')
+    mockWebSockets.push(mockWs)
+    const client = connect('ws://localhost:3333', jest.fn(), 'test-workspace' as WorkspaceUuid, 'u' as PersonUuid, {
+      socketFactory: () => mockWs
+    })
+    connections.push(client)
+
+    const pending = client.findAll(core.class.Space, {})
+    const rejection = pending.catch((err) => err)
+    await client.close()
+
+    const err = await rejection
+    expect(err).toBeInstanceOf(PlatformError)
+    expect((err as PlatformError).status.code).toBe(platform.status.ConnectionClosed)
   })
 
   it('resolves a slow findAll with a null lookupMap', async () => {

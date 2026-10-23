@@ -77,6 +77,10 @@
 2. Ping-проверка `pingResponse > hangTimeout` -> `close(1000)`.
 3. `dialTimer` не сработал за 30s -> `onDialTimeout` + force.
 
+## Закрытие клиента
+
+`close()` (уход из воркспейса, logout, таймаут connect-фазы) - намеренное завершение, а не сбой. Все ещё не отвеченные `requests` и `onConnectHandlers` отклоняются `PlatformError(ConnectionClosed)`, мапа `requests` очищается. `PresentationPipelineImpl` трактует этот код как «результат больше не нужен» и не показывает статус; обычный `Error` здесь попадал в статус-бар как «Неизвестная ошибка: Connection closed» при переключении воркспейса. Потеря сокета (`onclose`) запросы не отклоняет - они переотправляются после `hello`.
+
 ## onConnect -> обработка события (`plugins/workbench-resources/src/connect.ts`)
 
 | Event | Действие |
