@@ -26,14 +26,27 @@ import { type PostgresAccountDB } from '../collections/postgres/postgres'
 import { login, restorePassword, validateOtp } from '../operations'
 import { accountPlugin } from '../plugin'
 import { type SocialId } from '../types'
-import { createAccount, isOtpValid, loginOrSignUpWithProvider, OTP_MAX_ATTEMPTS, sendOtp, setPassword } from '../utils'
+import {
+  consumeLoginLink,
+  createAccount,
+  isOtpValid,
+  loginOrSignUpWithProvider,
+  notifyLoginLock,
+  OTP_MAX_ATTEMPTS,
+  sendOtp,
+  setPassword
+} from '../utils'
 import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
 
 jest.setTimeout(90000)
 
 jest.mock('@hcengineering/platform', () => {
   const actual = jest.requireActual('@hcengineering/platform')
-  return { ...actual, ...actual.default, translate: jest.fn(async (id: string) => id) }
+  return {
+    ...actual,
+    ...actual.default,
+    translate: jest.fn(async (id: string, params?: unknown) => `${id} ${JSON.stringify(params ?? {})}`)
+  }
 })
 
 jest.mock('@hcengineering/server-token', () => ({
@@ -65,7 +78,7 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     })
   }
   const bump = async (purpose: 'login' | 'operation', guess: string, decayMs = day): Promise<void> => {
-    await accountDb.bumpOtpAttempts(social._id, purpose, guess, OTP_MAX_ATTEMPTS, decayMs)
+    await accountDb.bumpOtpAttempts(social._id, purpose, guess, OTP_MAX_ATTEMPTS, { decayMs, lockMs: 60 * 60 * 1000 })
   }
   const reread = async (row: SocialId = social): Promise<SocialId> =>
     (await accountDb.socialId.findOne({ _id: row._id })) as SocialId
@@ -75,6 +88,10 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
       r.loginOtpMisses,
       r.loginOtpMissedOn === 0 ? 0 : 'stamped'
     ])
+  // Moves the last wrong guess back, as if the 1 hour wait had passed.
+  const letWaitPass = async (): Promise<void> => {
+    await accountDb.socialId.update({ personUuid }, { loginOtpMissedOn: Date.now() - 60 * 60 * 1000 - 1000 })
+  }
   // Both emails of the account carry misses, as after a bout of wrong guesses.
   const plantMisses = async (): Promise<void> => {
     await accountDb.socialId.update({ personUuid }, { loginOtpMisses: 7, loginOtpMissedOn: Date.now() })
@@ -200,6 +217,19 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
       expect((await reread()).loginOtpMisses).toBe(1)
     })
 
+    it('after the lock is over one wrong guess starts the streak at 1, not past the cap', async () => {
+      await insertCode('login', '111111')
+      for (let i = 0; i < OTP_MAX_ATTEMPTS; i++) await bump('login', '999999')
+      expect((await reread()).loginOtpMisses).toBe(OTP_MAX_ATTEMPTS)
+      await accountDb.otp.deleteMany({ socialId: social._id })
+      await insertCode('login', '222222')
+      await letWaitPass()
+
+      await bump('login', '999999')
+
+      expect((await reread()).loginOtpMisses).toBe(1)
+    })
+
     it('parallel wrong guesses are counted up to the cap of the code', async () => {
       await insertCode('login', '111111')
 
@@ -230,6 +260,28 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     })
   })
 
+  it('the lock letter stores only the hash of a one-time link, and the link signs in once', async () => {
+    setMetadata(accountPlugin.metadata.FrontURL, 'https://front.example.com')
+    await insertCode('login', '111111')
+    for (let i = 0; i < OTP_MAX_ATTEMPTS - 1; i++) await bump('login', '999999')
+    const before = await reread()
+    await bump('login', '999999')
+
+    await notifyLoginLock(ctx, accountDb, null, before)
+    await notifyLoginLock(ctx, accountDb, null, before)
+
+    expect(mailSend).toHaveBeenCalledTimes(1)
+    const token = /loginLink#token=([0-9a-f]{64})/.exec(mailSend.mock.calls[0][2][0].data.text)?.[1] as string
+    const [row] = await accountDb.otp.find({ socialId: social._id, purpose: 'login-link' })
+    expect(row.code).not.toBe(token)
+    expect(row.expiresOn - row.createdOn).toBe(60 * 60 * 1000)
+    expect(await isOtpValid(accountDb, social._id, row.code, 'login')).toBe(false)
+
+    expect((await consumeLoginLink(accountDb, token))?._id).toBe(social._id)
+    expect(await consumeLoginLink(accountDb, token)).toBeUndefined()
+    expect(await consumeLoginLink(accountDb, 'ab'.repeat(32))).toBeUndefined()
+  })
+
   it('sendOtp refuses with the time left while wrong guesses hold the wait, then lets the next code through', async () => {
     await sendOtp(ctx, accountDb, null, social)
     const code = (await accountDb.otp.findOne({ socialId: social._id, purpose: 'login' }))?.code as string
@@ -240,18 +292,21 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     expect(missed.loginOtpMisses).toBe(5)
     expect(typeof missed.loginOtpMissedOn).toBe('number')
 
-    // Five wrong guesses: 1 s x 2.
     const refused = await sendOtp(ctx, accountDb, null, missed).then(
       () => undefined,
       (err) => err
     )
     expect(refused).toBeInstanceOf(PlatformError)
     expect(refused.status.code).toBe(platform.status.TooManyOtpAttempts)
-    expect(refused.status.params).toEqual({ retryOn: (missed.loginOtpMissedOn as number) + 2000, minutes: 1 })
+    expect(refused.status.params).toEqual({
+      retryOn: (missed.loginOtpMissedOn as number) + 60 * 60 * 1000,
+      minutes: 60
+    })
     expect((await accountDb.otp.find({ socialId: social._id, purpose: 'login' })).map((o) => o.code)).toEqual([code])
 
-    await new Promise((resolve) => setTimeout(resolve, 2100))
-    await sendOtp(ctx, accountDb, null, missed)
+    await letWaitPass()
+    await new Promise((resolve) => setTimeout(resolve, 1100))
+    await sendOtp(ctx, accountDb, null, await reread())
     const rows = await accountDb.otp.find({ socialId: social._id, purpose: 'login' })
     expect(rows).toHaveLength(1)
     expect(rows[0].code).not.toBe(code)
@@ -279,8 +334,8 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
       for (let i = 0; i < OTP_MAX_ATTEMPTS; i++) {
         await isOtpValid(accountDb, social._id, code === '000000' ? '000001' : '000000', 'login')
       }
-      // Five wrong guesses: 1 s x 2.
-      await new Promise((resolve) => setTimeout(resolve, 2100))
+      await letWaitPass()
+      await new Promise((resolve) => setTimeout(resolve, 1100))
       mailSend.mockClear()
 
       await issueTogether(8)
@@ -312,7 +367,10 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
       for (let round = 0; round < 15; round++) {
         await Promise.all([
           ...Array.from({ length: 6 }, async () => {
-            await accountDb.bumpOtpAttempts(social._id, 'login', '999999', OTP_MAX_ATTEMPTS, day)
+            await accountDb.bumpOtpAttempts(social._id, 'login', '999999', OTP_MAX_ATTEMPTS, {
+              decayMs: day,
+              lockMs: 60 * 60 * 1000
+            })
           }),
           ...Array.from({ length: 6 }, async () => {
             await sendOtp(ctx, accountDb, null, social).catch((err) => {

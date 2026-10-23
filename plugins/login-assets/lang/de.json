@@ -128,6 +128,8 @@
     "DeleteAccountBlockedAdmin": "Ein Administratorkonto kann hier nicht gelöscht werden.",
     "DeleteAccountBlocked": "Sie sind alleiniger Eigentümer von: {workspaces}. Löschen Sie diese Arbeitsbereiche zuerst oder übergeben Sie sie.",
     "CodeSent": "Ein Bestätigungscode wurde an Ihre E-Mail gesendet.",
-    "EnterCode": "Code eingeben"
+    "EnterCode": "Code eingeben",
+    "LoginLinkCaption": "Bei Ihrem Konto anmelden",
+    "LoginLinkInvalid": "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet"
   }
 }

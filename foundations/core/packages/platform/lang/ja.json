@@ -23,7 +23,7 @@
     "WorkspaceAlreadyExists": "ワークスペースはすでに存在します",
     "PhoneAlreadyExists": "電話は既に存在する",
     "InvalidOtp": "無効なコード",
-    "TooManyOtpAttempts": "失敗した試行が多すぎます。{minutes}分後にもう一度お試しください。",
+    "TooManyOtpAttempts": "失敗した試行が多すぎます。{minutes}分後にもう一度お試しください。このアドレスにアカウントが存在する場合、ログイン用リンクをメールで送信しました。",
     "PasswordLoginLocked": "ログイン試行の失敗が多すぎるため、パスワードログインはロックされています。OTPログイン方法を使用してアカウントのロックを解除してください。",
     "AccountBlocked": "アカウントが管理者によってブロックされました。",
     "WorkspaceReadOnly": "このワークスペースは現在読み取り専用です。",

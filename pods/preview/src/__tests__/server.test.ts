@@ -47,7 +47,7 @@ const config = {
   ServiceID: 'preview',
   Cache: { enabled: false, cachePath: undefined, cacheSize: undefined, gcInterval: undefined },
   MaxBlobSize: 1024 * 1024,
-  Video: { concurrency: 2, timeout: 60 * 1000 },
+  Video: { concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 },
   LibreOfficeTimeout: 120 * 1000,
   PdfTimeout: 60 * 1000
 }
@@ -78,7 +78,7 @@ describe('preview routes', () => {
   beforeEach(async () => {
     stat.mockImplementation(async () => ({ contentType: 'application/octet-stream', size: 4, etag: 'etag' }))
     get.mockImplementation(async () => Readable.from([Buffer.from('blob')]))
-    ;(buildStorageFromConfig as jest.Mock).mockReturnValue({ stat, get })
+    ;(buildStorageFromConfig as jest.Mock).mockReturnValue({ stat, get, partial: get })
 
     const created = await createServer(ctx, config)
     close = created.close
@@ -171,7 +171,8 @@ describe('preview routes', () => {
         expect(response.status).toBe(500)
       }
 
-      expect(spawnMock).toHaveBeenCalledTimes(1)
+      // one request tries every frame position, the refusal turns the next ones away
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(handleError).not.toHaveBeenCalled()
     })
   })

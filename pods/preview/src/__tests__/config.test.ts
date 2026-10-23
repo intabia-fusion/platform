@@ -30,6 +30,7 @@ describe('video config', () => {
     delete process.env.SECRET
     delete process.env.FFMPEG_TIMEOUT
     delete process.env.VIDEO_CONCURRENCY
+    delete process.env.VIDEO_HEAD_TAIL_SIZE
     delete process.env.LIBREOFFICE_TIMEOUT
     delete process.env.PDF_TIMEOUT
   })
@@ -37,7 +38,7 @@ describe('video config', () => {
   it('limits ffmpeg and pdftocairo to 60 seconds, LibreOffice to 120 and videos to 2 at once by default', async () => {
     const config = await load()
 
-    expect(config.Video).toEqual({ concurrency: 2, timeout: 60 * 1000 })
+    expect(config.Video).toEqual({ concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 })
     expect(config.LibreOfficeTimeout).toBe(120 * 1000)
     expect(config.PdfTimeout).toBe(60 * 1000)
   })
@@ -50,7 +51,7 @@ describe('video config', () => {
       PDF_TIMEOUT: '9'
     })
 
-    expect(config.Video).toEqual({ concurrency: 3, timeout: 5000 })
+    expect(config.Video).toEqual({ concurrency: 3, timeout: 5000, headTailSize: 5 * 1024 * 1024 })
     expect(config.LibreOfficeTimeout).toBe(7000)
     expect(config.PdfTimeout).toBe(9000)
   })
@@ -71,7 +72,8 @@ describe('video config', () => {
     ['FFMPEG_TIMEOUT', ['0', '-1', 'soon', '', ...tooLong]],
     ['LIBREOFFICE_TIMEOUT', ['0', '-1', 'soon', '', ...tooLong]],
     ['PDF_TIMEOUT', ['0', '-1', 'soon', '', ...tooLong]],
-    ['VIDEO_CONCURRENCY', ['0', '-1', 'many', '']]
+    ['VIDEO_CONCURRENCY', ['0', '-1', 'many', '']],
+    ['VIDEO_HEAD_TAIL_SIZE', ['0', '-1', 'big', '']]
   ])('refuses a bad %s', async (name, values) => {
     for (const value of values) {
       await expect(load({ [name]: value })).rejects.toThrow(`${name} must be a positive number`)

@@ -164,6 +164,10 @@ import {
   sanitizeEmail,
   selectWorkspace,
   sendEmail,
+  notifyLoginLock,
+  consumeLoginLink,
+  sendNoAccountEmail,
+  guessNoAccountCode,
   sendOtp,
   setPassword,
   setTimezone,
@@ -334,7 +338,8 @@ export async function login (
 
 /**
  * Given an email sends an OTP code and returns the OTP information.
- * A person without an account is an unfinished sign up.
+ * A person without an account is an unfinished sign up. An unknown email gets the same answer
+ * and a letter with the sign up link.
  */
 export async function loginOtp (
   ctx: MeasureContext,
@@ -354,8 +359,9 @@ export async function loginOtp (
   ensureNotAiBot(normalizedEmail)
   const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
+  // The answer must not tell an unknown address from a known one; the owner gets a sign up letter.
   if (emailSocialId == null) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+    return await sendNoAccountEmail(ctx, branding, normalizedEmail, 'login')
   }
 
   return await sendOtp(ctx, db, branding, emailSocialId)
@@ -536,12 +542,15 @@ export async function validateOtp (
     let emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
+      // Counted like a real miss, so the lock does not tell an unknown address from a known one.
+      guessNoAccountCode(normalizedEmail)
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 
     const isValid = await isOtpValid(db, emailSocialId._id, code, 'login')
 
     if (!isValid) {
+      await notifyLoginLock(ctx, db, branding, emailSocialId)
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 
@@ -642,32 +651,76 @@ export async function validateOtp (
       }
     }
 
-    const person = await db.person.findOne({ uuid: emailSocialId.personUuid })
-    if (person == null) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
-    }
-
-    await resetFailedLoginAttempts(db, emailSocialId.personUuid as AccountUuid)
-    await resetLoginOtpMisses(db, emailSocialId.personUuid)
-
-    const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
-      ? { admin: 'true', authMethod: 'otp' }
-      : isBillingAdminEmail(normalizedEmail)
-        ? { billingAdmin: 'true', authMethod: 'otp' }
-        : { authMethod: 'otp' }
-
-    return {
-      account: emailSocialId.personUuid as AccountUuid,
-      name: getPersonName(person),
-      socialId: emailSocialId._id,
-      token: generateToken(emailSocialId.personUuid, undefined, extraToken),
-      deleteOn: targetAccount?.deleteOn
-    }
+    return await finishOtpLogin(db, emailSocialId, normalizedEmail, targetAccount)
   } catch (err: any) {
     Analytics.handleError(err)
     ctx.error(action === 'verify' ? 'OTP verification error' : 'OTP login/sign up error', { email, err })
     throw err
   }
+}
+
+/** The login result after a proven email: a code or a one-time link. */
+async function finishOtpLogin (
+  db: AccountDB,
+  emailSocialId: SocialId,
+  email: string,
+  targetAccount: Account | null
+): Promise<LoginInfo> {
+  const person = await db.person.findOne({ uuid: emailSocialId.personUuid })
+  if (person == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
+  }
+
+  await resetFailedLoginAttempts(db, emailSocialId.personUuid as AccountUuid)
+  await resetLoginOtpMisses(db, emailSocialId.personUuid)
+
+  const extraToken: Record<string, string> = isAdminEmail(email)
+    ? { admin: 'true', authMethod: 'otp' }
+    : isBillingAdminEmail(email)
+      ? { billingAdmin: 'true', authMethod: 'otp' }
+      : { authMethod: 'otp' }
+
+  return {
+    account: emailSocialId.personUuid as AccountUuid,
+    name: getPersonName(person),
+    socialId: emailSocialId._id,
+    token: generateToken(emailSocialId.personUuid, undefined, extraToken),
+    deleteOn: targetAccount?.deleteOn
+  }
+}
+
+/**
+ * Signs in with the one-time link mailed when the code sign in got locked by wrong guesses.
+ * Every failure is the same InvalidOtp: nothing tells an unknown link from a used or expired one.
+ */
+export async function loginByLink (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { token: string }
+): Promise<LoginInfo> {
+  const invalid = new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+  if (params.token == null || params.token === '') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const emailSocialId = await consumeLoginLink(db, params.token)
+  if (emailSocialId?.type !== SocialIdType.EMAIL) throw invalid
+  ensureNotAiBot(emailSocialId.value)
+
+  const targetAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
+  if (targetAccount == null) throw invalid
+  ensureNotBlocked(targetAccount)
+
+  if (emailSocialId.verifiedOn == null) {
+    await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
+  }
+  await db.otp.deleteMany({ socialId: emailSocialId._id, purpose: 'login' })
+  await confirmHulyIds(ctx, db, targetAccount.uuid)
+  ctx.info('Link login success', { socialId: emailSocialId._id })
+
+  return await finishOtpLogin(db, emailSocialId, emailSocialId.value, targetAccount)
 }
 
 export async function createWorkspace (
@@ -1609,20 +1662,13 @@ export async function requestPasswordReset (
 
   const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
-  if (emailSocialId == null) {
-    ctx.error('Email social id not found', { email, normalizedEmail })
-    throw new PlatformError(
-      new Status(Severity.ERROR, platform.status.SocialIdNotFound, { value: email, type: SocialIdType.EMAIL })
-    )
-  }
+  const account = emailSocialId == null ? null : await getAccount(db, emailSocialId.personUuid as AccountUuid)
 
-  const account = await getAccount(db, emailSocialId.personUuid as AccountUuid)
-
-  if (account == null) {
-    ctx.info('Account not found', { email, normalizedEmail })
-    throw new PlatformError(
-      new Status(Severity.ERROR, platform.status.AccountNotFound, { account: emailSocialId.personUuid })
-    )
+  // Same answer for any address; an unknown one gets a sign up letter instead of the reset link.
+  if (emailSocialId == null || account == null) {
+    ctx.info('Account not found for password reset', { email, normalizedEmail })
+    await sendNoAccountEmail(ctx, branding, normalizedEmail, 'recovery')
+    return
   }
 
   const mailQueue = getMetadata(accountPlugin.metadata.MailQueue)
@@ -3938,6 +3984,7 @@ export type AccountMethods =
   | 'signUp'
   | 'signUpOtp'
   | 'validateOtp'
+  | 'loginByLink'
   | 'createWorkspace'
   | 'createInvite'
   | 'createInviteLink'
@@ -4025,6 +4072,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     ...(hasSignUp ? { signUp: wrap(signUp) } : {}),
     ...(hasSignUp ? { signUpOtp: wrap(signUpOtp) } : {}),
     validateOtp: wrap(validateOtp),
+    loginByLink: wrap(loginByLink),
     createWorkspace: wrap(createWorkspace),
     createInvite: wrap(createInvite),
     createInviteLink: wrap(createInviteLink),

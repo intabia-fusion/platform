@@ -529,6 +529,7 @@ describe('PostgresAccountDB', () => {
   describe('bumpOtpAttempts', () => {
     const cap = 5
     const day = 24 * 60 * 60 * 1000
+    const hour = 60 * 60 * 1000
     const otpRow = (attempts: number, code = '123456'): any => ({
       social_id: '42',
       purpose: 'login',
@@ -546,7 +547,7 @@ describe('PostgresAccountDB', () => {
     const bump = async (purpose: 'login' | 'operation', guess: string, rows: any[]): Promise<any> => {
       if (purpose === 'login') mockClient.unsafe.mockResolvedValueOnce([])
       mockClient.unsafe.mockResolvedValueOnce(rows)
-      return await accountDb.bumpOtpAttempts('42' as PersonId, purpose, guess, cap, day)
+      return await accountDb.bumpOtpAttempts('42' as PersonId, purpose, guess, cap, { decayMs: day, lockMs: hour })
     }
 
     it('locks the social id, then counts the guess on unexpired codes of the social id and purpose, and maps the rows', async () => {
@@ -603,12 +604,14 @@ describe('PostgresAccountDB', () => {
         await bump('login', '999999', [otpRow(2)])
 
         expect(sqlOf(miss)).toBe(
-          'UPDATE global_account.social_id SET login_otp_misses = CASE WHEN login_otp_missed_on < $3 THEN 1 ELSE login_otp_misses + 1 END, login_otp_missed_on = $2 WHERE _id = $1'
+          'UPDATE global_account.social_id SET login_otp_misses = CASE WHEN login_otp_missed_on < $3 OR (login_otp_misses >= $4 AND login_otp_missed_on < $5) THEN 1 ELSE login_otp_misses + 1 END, login_otp_missed_on = $2 WHERE _id = $1'
         )
-        const [, [socialId, missedOn, cutoff]] = mockClient.unsafe.mock.calls[miss]
+        const [, [socialId, missedOn, cutoff, maxAttempts, lockCutoff]] = mockClient.unsafe.mock.calls[miss]
         expect(socialId).toBe('42')
         expect(missedOn).toBe(mockClient.unsafe.mock.calls[codes][1][2])
         expect(cutoff).toBe(missedOn - day)
+        expect(maxAttempts).toBe(cap)
+        expect(lockCutoff).toBe(missedOn - hour)
       })
 
       // Only the codes that still take the guess decide; the single-code cases are in otp-real.itest.ts.

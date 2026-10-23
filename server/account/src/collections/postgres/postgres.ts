@@ -1758,7 +1758,7 @@ export class PostgresAccountDB implements AccountDB {
     purpose: OtpPurpose,
     guess: string,
     maxAttempts: number,
-    missDecayMs: number
+    miss: { decayMs: number, lockMs: number }
   ): Promise<OTP[]> {
     // Parallel guesses queue on the row lock and each reads its own counter.
     return await this.withRetry(async (rTx) => {
@@ -1777,12 +1777,16 @@ export class PostgresAccountDB implements AccountDB {
       // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
       const open = live.filter((otp) => otp.attempts <= maxAttempts)
       if (purpose === 'login' && open.length > 0 && open.every((otp) => otp.code !== guess)) {
+        // After the lock is over one typo must not lock again: the streak starts over.
         await rTx.unsafe(
           `UPDATE ${this.socialId.getTableName()}
-           SET login_otp_misses = CASE WHEN login_otp_missed_on < $3 THEN 1 ELSE login_otp_misses + 1 END,
+           SET login_otp_misses = CASE
+                 WHEN login_otp_missed_on < $3 OR (login_otp_misses >= $4 AND login_otp_missed_on < $5) THEN 1
+                 ELSE login_otp_misses + 1
+               END,
                login_otp_missed_on = $2
            WHERE _id = $1`,
-          [socialId, ts, ts - missDecayMs]
+          [socialId, ts, ts - miss.decayMs, maxAttempts, ts - miss.lockMs]
         )
       }
       return live

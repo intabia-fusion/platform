@@ -127,6 +127,8 @@
     "DeleteAccountConfirm": "アカウントは削除予定となり、{days}日後に完全に削除されます。それまでにログインすれば取り消せます。続行しますか?",
     "DeleteAccountBlockedAdmin": "管理者アカウントはここから削除できません。",
     "DeleteAccountBlocked": "次のワークスペースの唯一のオーナーです: {workspaces}。先に削除するか、他の人に引き継いでください。",
-    "CodeSent": "確認コードをメールに送信しました。"
+    "CodeSent": "確認コードをメールに送信しました。",
+    "LoginLinkCaption": "アカウントにログイン",
+    "LoginLinkInvalid": "このログインリンクは期限切れか、すでに使用されています"
   }
 }

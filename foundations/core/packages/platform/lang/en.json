@@ -23,7 +23,7 @@
     "AccountAlreadyConfirmed": "Account already confirmed",
     "WorkspaceAlreadyExists": "Workspace already exists",
     "InvalidOtp": "Invalid code",
-    "TooManyOtpAttempts": "Too many failed attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+    "TooManyOtpAttempts": "Too many failed attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}. If this address has an account, we have emailed it a link to sign in.",
     "PasswordLoginLocked": "Password login is locked due to too many failed attempts. Please use an OTP login method to unlock your account.",
     "AccountBlocked": "Your account has been blocked by the administrator.",
     "WorkspaceReadOnly": "This workspace is read-only right now.",

@@ -26,6 +26,7 @@ import { OctetStreamProvider } from '../providers/octet'
 import { createPreviewService, type PreviewService, type ThumbnailParams } from '../service'
 import { TemporaryDir } from '../tempdir'
 import { FfmpegError } from '../utils/ffmpeg'
+import { BlobReadTimeout } from '../utils/blob'
 import { hangingStream, noCache, type Run, settle, startRun, until } from './helpers'
 
 jest.mock('child_process', () => ({ ...jest.requireActual('child_process'), spawn: jest.fn() }))
@@ -62,15 +63,17 @@ let hasFrame: (args: string[]) => boolean
 // etags is what the storage answers per blob; overwriting a blob changes its etag
 function makeStorage (
   types: Record<string, string> = {},
-  fallbackType = 'video/mp4'
+  fallbackType = 'video/mp4',
+  size = 4
 ): { storage: StorageAdapter, get: jest.Mock, etags: Record<string, string> } {
   const etags: Record<string, string> = {}
   const get = jest.fn(async () => Readable.from([Buffer.from('blob')]))
+  // the provider reads through partial, the counts below are of its reads
   const stat = jest.fn(
     async (_ctx: unknown, _ws: unknown, name: string) =>
-      ({ contentType: types[name] ?? fallbackType, size: 4, etag: etags[name] ?? 'etag-1' }) as unknown as Blob
+      ({ contentType: types[name] ?? fallbackType, size, etag: etags[name] ?? 'etag-1' }) as unknown as Blob
   )
-  return { storage: { stat, get } as unknown as StorageAdapter, get, etags }
+  return { storage: { stat, get, partial: get } as unknown as StorageAdapter, get, etags }
 }
 
 describe('PreviewService with video', () => {
@@ -78,11 +81,15 @@ describe('PreviewService with video', () => {
 
   function makeService (
     storage: StorageAdapter,
-    options: { video?: number, shared?: number, timeout?: number, cache?: Cache } = {}
+    options: { video?: number, shared?: number, timeout?: number, cache?: Cache, piece?: number } = {}
   ): PreviewService {
     const config = {
       MaxBlobSize: LIMIT,
-      Video: { concurrency: options.video ?? 2, timeout: options.timeout ?? 60 * 1000 },
+      Video: {
+        concurrency: options.video ?? 2,
+        timeout: options.timeout ?? 60 * 1000,
+        headTailSize: options.piece ?? 5 * 1024 * 1024
+      },
       LibreOfficeTimeout: 120 * 1000,
       PdfTimeout: 60 * 1000
     }
@@ -207,6 +214,35 @@ describe('PreviewService with video', () => {
     })
   })
 
+  describe('a video over the size limit', () => {
+    it('is served from its head and tail, not refused', async () => {
+      const piece = 1000
+      const size = LIMIT * 3
+      const { storage, get } = makeStorage({}, 'video/mp4', size)
+      const service = makeService(storage, { piece })
+
+      await expect(service.thumbnail(ctx, WS, 'big', PARAMS)).resolves.toBeDefined()
+
+      expect(get.mock.calls.map(([, , , offset, length]) => [offset, length])).toEqual([
+        [0, piece],
+        [size - piece, piece]
+      ])
+    })
+  })
+
+  describe('a video that the storage does not deliver in time', () => {
+    it('is refused, and the next request does not read it again', async () => {
+      const { storage, get } = makeStorage()
+      get.mockImplementation(async () => hangingStream())
+      const service = makeService(storage, { timeout: 100 })
+
+      await expect(service.metadata(ctx, WS, 'slow')).rejects.toBeInstanceOf(BlobReadTimeout)
+      await expect(service.metadata(ctx, WS, 'slow')).rejects.toBeInstanceOf(BlobReadTimeout)
+
+      expect(get).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('a refused blob', () => {
     beforeEach(() => {
       autoCode = 183
@@ -226,7 +262,7 @@ describe('PreviewService with video', () => {
       await expect(service.metadata(ctx, WS, 'bad')).rejects.toThrow('moov atom')
 
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(1)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(readdirSync(tempDir.path)).toEqual([])
     })
 
@@ -280,13 +316,13 @@ describe('PreviewService with video', () => {
       expect(error).toBeInstanceOf(FfmpegError)
       expect(error.message).toContain('Output file is empty')
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
 
       await expect(service.thumbnail(ctx, WS, 'empty', { ...PARAMS, width: 128 })).rejects.toBeInstanceOf(FfmpegError)
       await expect(service.metadata(ctx, WS, 'empty')).rejects.toBeInstanceOf(FfmpegError)
 
       expect(get).toHaveBeenCalledTimes(1)
-      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(spawnMock).toHaveBeenCalledTimes(4)
       expect(readdirSync(tempDir.path)).toEqual([])
     })
   })
@@ -528,11 +564,15 @@ describe('PreviewService with video', () => {
       await settle()
       expect(runs).toHaveLength(1)
 
-      runs[0].finish(1, 'Invalid data found when processing input')
+      // every frame position of the failed video is tried before its slot is freed
+      for (let i = 0; i < 4; i++) {
+        await until(() => runs.length === i + 1)
+        runs[i].finish(1, 'Invalid data found when processing input')
+      }
       await expect(failed).rejects.toThrow('ffmpeg exited with code 1')
-      await until(() => runs.length === 2)
+      await until(() => runs.length === 5)
 
-      runs[1].finish(0)
+      runs[4].finish(0)
       await expect(next).resolves.toBeDefined()
     })
   })

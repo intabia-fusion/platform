@@ -22,27 +22,34 @@ import { rm } from 'fs/promises'
 import { getImageMetadata } from '../metadata'
 import { TemporaryDir } from '../tempdir'
 import { type PreviewFile, type PreviewMetadata, type PreviewProvider } from '../types'
-import { copyBlob } from '../utils/blob'
+import { readHeadTail } from '../utils/blob'
 import { extractThumbnail } from '../utils/ffmpeg'
 
 export class VideoProvider implements PreviewProvider {
   constructor (
     private readonly storage: StorageAdapter,
     private readonly tempDir: TemporaryDir,
-    private readonly timeout: number
+    private readonly timeout: number,
+    private readonly headTailSize: number
   ) {}
 
   supports (mimeType: string): boolean {
     return mimeType.startsWith('video/')
   }
 
-  async image (ctx: MeasureContext, workspace: WorkspaceUuid, name: string, contentType: string): Promise<PreviewFile> {
+  async image (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    name: string,
+    contentType: string,
+    size: number
+  ): Promise<PreviewFile> {
     const videoFile = this.tempDir.tmpFile()
     const pngFile = this.tempDir.tmpFile() + '.png'
 
     try {
       await ctx.with('blob-read', {}, (ctx) => {
-        return copyBlob(ctx, this.storage, workspace, name, videoFile, this.timeout)
+        return readHeadTail(ctx, this.storage, workspace, name, videoFile, size, this.headTailSize, this.timeout)
       })
 
       await extractThumbnail(videoFile, pngFile, this.timeout)
@@ -64,10 +71,11 @@ export class VideoProvider implements PreviewProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     name: string,
-    contentType: string
+    contentType: string,
+    size: number
   ): Promise<PreviewMetadata> {
     const { filePath: path } = await ctx.with('thumbnail', {}, (ctx) => {
-      return this.image(ctx, workspace, name, contentType)
+      return this.image(ctx, workspace, name, contentType, size)
     })
 
     try {

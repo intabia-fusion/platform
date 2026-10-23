@@ -27,7 +27,7 @@ const WS = 'ws-1' as WorkspaceUuid
 const LIMIT = 1024
 const CONFIG = {
   MaxBlobSize: LIMIT,
-  Video: { concurrency: 2, timeout: 60 * 1000 },
+  Video: { concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 },
   LibreOfficeTimeout: 120 * 1000,
   PdfTimeout: 60 * 1000
 }
@@ -53,7 +53,6 @@ describe('PreviewService', () => {
   })
 
   it.each([
-    'video/mp4',
     'image/png',
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

@@ -65,7 +65,7 @@ describe('PreviewService with a document', () => {
   ): PreviewService {
     const config = {
       MaxBlobSize: 1024 * 1024,
-      Video: { concurrency: 2, timeout: 60 * 1000 },
+      Video: { concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 },
       LibreOfficeTimeout: options.timeout ?? 120 * 1000,
       PdfTimeout: options.pdfTimeout ?? 60 * 1000
     }

@@ -44113,6 +44113,9 @@ importers:
       dotenv:
         specifier: 'catalog:'
         version: 16.6.1
+      kafkajs:
+        specifier: 'catalog:'
+        version: 2.2.4(patch_hash=40d4a2250005d169e4c76f12ce0ee2982ebf1de293ea00762e19134306867af2)
       livekit-server-sdk:
         specifier: 'catalog:'
         version: 2.18.0
