@@ -43,6 +43,7 @@ jest.mock('../components/ReadOnlyNotification.svelte', () => ({}))
 jest.mock('../components/ForbiddenNotification.svelte', () => ({}))
 
 const tx = {
+  _id: 'tx1',
   _class: core.class.TxUpdateDoc,
   objectClass: core.class.Space,
   objectId: 'space1',
@@ -84,6 +85,7 @@ describe('ReadOnlyAccessMiddleware forbidden handling', () => {
     )
     expect(handleEvent).toHaveBeenCalledWith('PermissionDenied', {
       kind,
+      txId: 'tx1',
       txClass: core.class.TxUpdateDoc,
       objectClass: core.class.Space,
       objectId: 'space1',

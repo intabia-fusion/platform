@@ -425,6 +425,7 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
         Analytics.handleEvent('PermissionDenied', {
           kind: kind ?? 'unknown',
           message: err.status.params?.message,
+          txId: tx._id,
           txClass: tx._class,
           objectClass: (tx as TxCUD<Doc>).objectClass,
           objectId: (tx as TxCUD<Doc>).objectId,
