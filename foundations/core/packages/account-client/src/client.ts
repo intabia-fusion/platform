@@ -86,7 +86,8 @@ import type {
   WorkspaceActivityPoint,
   WorkspaceMemberDetails,
   AccountActivityStats,
-  DeletionPolicy
+  DeletionPolicy,
+  PasswordAgingStatus
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -366,7 +367,8 @@ export interface AccountClient {
   addHulyAssistantSocialId: () => Promise<PersonId>
   refreshHulyAssistantToken: () => Promise<void>
   updatePasswordAgingRule: (days?: number) => Promise<void>
-  checkPasswordAging: () => Promise<boolean>
+  /** Whether the account's password is still within the workspace aging rule (`ok` / `warn` / `expired`). */
+  checkPasswordAging: () => Promise<PasswordAgingStatus>
 
   setMyProfile: (profile: Partial<Omit<UserProfile, 'personUuid'>>) => Promise<void>
   getUserProfile: (personUuid?: PersonUuid) => Promise<PersonWithProfile | null>
@@ -715,7 +717,7 @@ class AccountClientImpl implements AccountClient {
     await this.rpc(request)
   }
 
-  async checkPasswordAging (): Promise<boolean> {
+  async checkPasswordAging (): Promise<PasswordAgingStatus> {
     const request = {
       method: 'checkPasswordAging' as const,
       params: {}

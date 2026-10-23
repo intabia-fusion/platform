@@ -61,6 +61,7 @@ import plugin from './plugin'
 import { logOut, workspaceCreating } from './utils'
 import { WorkbenchEvents } from '@hcengineering/workbench'
 import { allowGuestSignUpStore } from '@hcengineering/view-resources'
+import { setIsPasswordAgain } from '@hcengineering/billing-resources'
 
 export const error = writable<string | undefined>(undefined)
 export const errorActions = writable<ErrorAction[]>([])
@@ -349,30 +350,10 @@ export async function connect (title: string): Promise<Client | undefined> {
               break
             }
             case platform.status.PasswordExpired: {
-              translateCB(login.string.PasswordExpiredDesc, {}, get(themeStore).language, (r) => {
-                error.set(r)
-                errorActions.set([
-                  {
-                    label: login.string.SelectWorkspace,
-                    action: () => {
-                      const selectWorkspace: Pages = 'selectWorkspace'
-                      navigate({
-                        path: [loginId, selectWorkspace],
-                        query: {}
-                      })
-                    }
-                  },
-                  {
-                    label: login.string.ChangePassword,
-                    action: () => {
-                      const changePassword: Pages = 'changePassword'
-                      navigate({
-                        path: [loginId, changePassword],
-                        query: {}
-                      })
-                    }
-                  }
-                ])
+              const changePassword: Pages = 'changePassword'
+              navigate({
+                path: [loginId, changePassword],
+                query: {}
               })
               break
             }
@@ -643,6 +624,7 @@ export async function connect (title: string): Promise<Client | undefined> {
     await broadcastEvent(plugin.event.NotifyConnection, me)
   })
   console.log(metricsToString((ctx as MeasureMetricsContext).metrics, 'connect', 50))
+  setIsPasswordAgain(workspaceLoginInfo.passwordAging !== undefined && workspaceLoginInfo.passwordAging !== 'ok')
   return newClient
 }
 
