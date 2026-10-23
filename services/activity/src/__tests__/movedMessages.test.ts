@@ -14,7 +14,15 @@
 //
 
 import activity from '@hcengineering/activity'
-import { TxFactory, toFindResult, type Class, type Doc, type Ref, type TxCUD, type TxUpdateDoc } from '@hcengineering/core'
+import {
+  TxFactory,
+  toFindResult,
+  type Class,
+  type Doc,
+  type Ref,
+  type TxCUD,
+  type TxUpdateDoc
+} from '@hcengineering/core'
 
 import { getMovedMessagesTxes } from '../activity'
 import { type Client } from '../types'
