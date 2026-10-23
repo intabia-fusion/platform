@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { type Doc, type Ref, type Space } from '@hcengineering/core'
+  import core, { getCurrentAccount, type Doc, type Ref, type Space } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import { ObjectPopup, getClient } from '@hcengineering/presentation'
   import settingsRes from '../plugin'
@@ -24,7 +24,10 @@
   const hierarchy = getClient().getHierarchy()
 
   function isPickable (doc: Doc): boolean {
-    return isApiKeyPickableSpace(hierarchy, doc) && !(doc as Space).private
+    return (
+      isApiKeyPickableSpace(hierarchy, doc) &&
+      (!(doc as Space).private || (doc as Space).members.includes(getCurrentAccount().uuid))
+    )
   }
 </script>
 

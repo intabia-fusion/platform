@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { apiKeyOperations, type ApiKeyOperation, type CreatedApiKey } from '@hcengineering/account-client'
-  import core, { type Ref, type Space } from '@hcengineering/core'
+  import core, { getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import ui, {
     Button,
@@ -61,7 +61,7 @@
   let pickableSpaces: Space[] = []
   const spacesQuery = createQuery()
   spacesQuery.query(core.class.Space, {}, (res) => {
-    pickableSpaces = res.filter((s) => isApiKeyPickableSpace(hierarchy, s) && !s.private)
+    pickableSpaces = res.filter((s) => isApiKeyPickableSpace(hierarchy, s) && (!s.private || s.members.includes(getCurrentAccount().uuid)))
   })
   $: spaceNames = new Map<Ref<Space>, string>(pickableSpaces.map((s) => [s._id, s.name]))
 
@@ -112,8 +112,6 @@
   }
 
   function pickSpaces (event: MouseEvent): void {
-    console.log(spaces, pickableSpaces)
-
     // Selection commits via the popup's 'update' event (live, like RoleEditor/ArrayEditor's ObjectBoxPopup usage).
     showPopup(
       ApiKeySpacesPopup,
