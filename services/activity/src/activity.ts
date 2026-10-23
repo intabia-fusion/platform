@@ -40,9 +40,28 @@ const UPDATE_COMBINE_THRESHOLD = 5 * 60 * 1000 //  Use 5 minutes to combine simi
 export async function ActivityMessagesHandler (tx: TxCUD<Doc>, client: Client, cache: Cache): Promise<TxCUD<Doc>[]> {
   if (tx.space === core.space.DerivedTx) return []
 
-  return await client.ctx.with('generateDocUpdateMessages', {}, (ctx) =>
+  const moved = await getMovedMessagesTxes(tx, client)
+  const generated = await client.ctx.with('generateDocUpdateMessages', {}, (ctx) =>
     generateDocUpdateMessages(ctx, client, cache, tx, [])
   )
+  return [...moved, ...generated]
+}
+
+// Activity is read by the object's current space, so its messages follow the object on move.
+// Done here, not in a transactor trigger: messages of earlier txes may still be queued at move time.
+export async function getMovedMessagesTxes (tx: TxCUD<Doc>, client: Client): Promise<TxCUD<Doc>[]> {
+  if (tx._class !== core.class.TxUpdateDoc) return []
+
+  const space = (tx as TxUpdateDoc<Doc>).operations.space
+  if (space == null || space === tx.objectSpace || !isActivityDoc(tx.objectClass, client.hierarchy)) return []
+
+  // Declared collections (comments, backlinks) are already moved by the transactor.
+  const messages = await client.findAll(
+    activity.class.ActivityMessage,
+    { attachedTo: tx.objectId, space: tx.objectSpace },
+    { projection: { _id: 1, _class: 1, space: 1 } }
+  )
+  return messages.map((it) => client.txFactory.createTxUpdateDoc(it._class, it.space, it._id, { space }))
 }
 
 async function generateDocUpdateMessages (

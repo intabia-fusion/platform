@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -71,9 +72,10 @@ export class TDocument extends TDoc implements Document, Todoable {
   @Prop(TypeRef(document.class.Document), document.string.ParentDocument)
   parent!: Ref<Document>
 
-  @Prop(TypeRef(core.class.Space), core.string.Space)
+  // Not hidden, so a move to another teamspace shows up in activity.
+  @Prop(TypeRef(document.class.Teamspace), document.string.Teamspace)
   @Index(IndexKind.Indexed)
-  @Hidden()
+  @ReadOnly()
   declare space: Ref<Teamspace>
 
   @Prop(TypeAccountUuid(), document.string.LockedBy)
@@ -281,6 +283,10 @@ function defineDocument (builder: Builder): void {
   })
 
   builder.mixin(document.class.Document, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: document.component.DocumentPresenter
+  })
+
+  builder.mixin(document.class.Document, core.class.Class, view.mixin.AttributePresenter, {
     presenter: document.component.DocumentPresenter
   })
 
