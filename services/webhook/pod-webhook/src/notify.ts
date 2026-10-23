@@ -18,6 +18,8 @@ import { getClient as getAccountClient } from '@hcengineering/account-client'
 import type { PlatformQueueProducer } from '@hcengineering/server-core'
 import type { WebhookEndpoint } from '@hcengineering/setting'
 
+import { buildWebhookDisabled, resolveLang } from './mail'
+
 // Shape services/mail's pod-mail consumer expects off QueueTopic.NotificationQueue - duplicated here
 // (as billing/crm/gmail-resources each do) rather than depending on a mail-service-only package.
 export interface EmailNotification {
@@ -28,10 +30,6 @@ export interface EmailNotification {
 /** Its name when it has one, the address otherwise - several endpoints on one host read alike. */
 function endpointLabel (endpoint: Pick<WebhookEndpoint, 'url' | 'name'>): string {
   return endpoint.name !== undefined && endpoint.name !== '' ? `${endpoint.name} (${endpoint.url})` : endpoint.url
-}
-
-function escapeHtml (str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 /** Best-effort - a failed notification must not affect the disable itself, which already happened. */
@@ -45,23 +43,30 @@ export async function notifyOwnerDisabled (
   reason: string
 ): Promise<void> {
   try {
-    const recipients = await getAccountClient(accountsUrl, token).getWorkspaceOwnerEmails(workspace)
+    const accountClient = getAccountClient(accountsUrl, token)
+    const recipients = await accountClient.getWorkspaceOwnerEmails(workspace)
     if (recipients.length === 0) {
       ctx.warn('webhook: no email found to notify about endpoint disablement', { endpointId: endpoint._id })
       return
     }
 
-    const subject = 'Outgoing webhook disabled'
-    const text =
-      `Your outgoing webhook ${endpointLabel(endpoint)} was disabled after repeated delivery failures.\n` +
-      `Last error: ${reason}\n\nRe-enable it from workspace settings once the issue is fixed.`
-    const html =
-      `<p>Your outgoing webhook <code>${escapeHtml(endpointLabel(endpoint))}</code> was disabled after repeated ` +
-      `delivery failures.</p><p>Last error: ${escapeHtml(reason)}</p>` +
-      '<p>Re-enable it from workspace settings once the issue is fixed.</p>'
+    let language: string | undefined
+    try {
+      language = 'ru'
+    } catch (err) {
+      ctx.warn('webhook: failed to resolve workspace language, using the default', {
+        endpointId: endpoint._id,
+        err
+      })
+    }
+
+    const mail = buildWebhookDisabled(resolveLang(language), {
+      endpoint: endpointLabel(endpoint),
+      reason
+    })
 
     for (const to of recipients) {
-      await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { to, subject, text, html } }], to)
+      await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { to, ...mail } }], to)
     }
   } catch (err) {
     ctx.error('webhook: failed to notify owner about endpoint disablement', { endpointId: endpoint._id, err })
