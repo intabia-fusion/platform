@@ -182,6 +182,12 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   primaryEmail?: string
   // Set while the admin keeps the account out: no login, no workspace access
   blockedOn?: number
+  // Максимальное кол-во пространств: null означает, что действует лимит платформы
+  maxWorkspaces?: number | null
+  // Созданные аккаунтом воркспейсы, занимающие слот лимита
+  createdWorkspaces?: number
+  // Действующий предел на созданные воркспейсы: maxWorkspaces или платформенный
+  workspaceLimit?: number
 }
 
 export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
