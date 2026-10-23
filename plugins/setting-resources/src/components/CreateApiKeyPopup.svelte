@@ -61,7 +61,9 @@
   let pickableSpaces: Space[] = []
   const spacesQuery = createQuery()
   spacesQuery.query(core.class.Space, {}, (res) => {
-    pickableSpaces = res.filter((s) => isApiKeyPickableSpace(hierarchy, s) && (!s.private || s.members.includes(getCurrentAccount().uuid)))
+    pickableSpaces = res.filter(
+      (s) => isApiKeyPickableSpace(hierarchy, s) && (!s.private || s.members.includes(getCurrentAccount().uuid))
+    )
   })
   $: spaceNames = new Map<Ref<Space>, string>(pickableSpaces.map((s) => [s._id, s.name]))
 
