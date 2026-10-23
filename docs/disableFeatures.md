@@ -27,6 +27,15 @@ Please set a DISABLED_FEATURES environment variable for front service container,
 - process - Will disable process module
 - card - Will disable cards
 - hide-ru-banned-channels - Will hide channels banned in Russia
+- hr - Will disable HR (departments, vacations)
+- mail - Will disable the mail plugin
+- gmail - Will disable Gmail
+- contact.persons - Will hide the "Persons" section of Contacts
+- contact.companies - Will hide the "Companies" section of Contacts
+- tracker.issueImport - Will hide "Import" in the New Issue menu
+- contact:ids:OrganizationNotificationGroup, setting:ids:SettingNotificationGroup - Will hide these notification groups in notification settings
+
+Any plugin id works the same way: the plugin is filtered out of the UI model (`returnUITxes` in `foundations/core/packages/client-resources/src/index.ts`).
 
 ## Связанные документы
 

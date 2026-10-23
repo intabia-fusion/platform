@@ -25,6 +25,8 @@ Before searching the code for a feature, open the feature map [`docs/features/RE
 
 The map is maintained with the code: a change that adds, moves or removes a user-visible feature, a key class or an entry point updates the matching `docs/features/<area>.md` in the same PR. Each file carries the commit it was last checked against; a path in it that no longer exists is a bug in the docs.
 
+Each area file also tracks the user documentation (`../platform-docs`) in its `## Пользовательская документация` table, format in [`docs/features/README.md`](docs/features/README.md). A change to what the user sees of a feature (steps, buttons, settings, screens) updates its row in the same PR: a documented row (`ok`/`partial`/`no-en`) becomes `stale` with a one-phrase reason in "Расхождение", a `plan` row stays `plan`, an `internal` row that became visible becomes `plan`, an `off` row (feature disabled or not documented by decision) stays `off`; a new user-visible feature gets a `plan` row. The `docs-sync` skill works off these rows.
+
 ## Session memory (`docs/memory/`)
 
 One file per topic, for what the code and git history do NOT already say: a root cause that took digging, a third-party quirk with its file:line, a constant whose value came from a measurement.

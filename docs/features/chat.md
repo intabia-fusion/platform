@@ -66,6 +66,8 @@
 - **Закладки при удалении сообщения.** `OnActivityMessageRemoved` (асинхронный, `TxRemoveDoc` любого `ActivityMessage`) удаляет `activity.class.SavedMessage` всех пользователей с этим `attachedTo` - и при удалении ответа в треде, и при каскаде из `OnDocRemoved`; накопленные сироты чистит миграция `remove-orphan-saved-messages-v1` (`removeOrphanPreferences`). Подробности - [../saved-orphans.md](../saved-orphans.md). - server-plugins/activity-resources/src/index.ts; models/server-activity/src/index.ts; models/activity/src/migration.ts.
 - **Reply на сообщение.** Action `ReplyToMessage`. - models/chunter/src/actions.ts.
 - **Forward сообщения.** Action `ForwardMessage` -> `ForwardMessageDialog`. - models/chunter/src/actions.ts; plugins/chunter-resources/src/index.ts.
+- **Удаление сообщения.** Action `DeleteChatMessage` (`Backspace`), видимость `CanDeleteMessage` -> `canDeleteMessage`: своё сообщение (`createdBy` в `me.socialIds`) либо `AccountRole.Maintainer`+ - любое; подтверждение `DeleteMessageConfirmationPopup`. - models/chunter/src/actions.ts; `canDeleteMessage`, plugins/chunter-resources/src/utils.ts; `deleteChatMessage`, plugins/chunter-resources/src/index.ts.
+- **Перевод сообщения.** Actions `TranslateMessage`/`ShowOriginalMessage` (кнопки на сообщении, `inline: true`), видимость `CanTranslateMessage` -> `canTranslateMessage` - только если настроен `aiBot.metadata.EndpointURL`; перевод - через AI-бота (`aiTranslate`) на язык интерфейса (`languageStore`), результат кэшируется в `translatedMessagesStore`; "Показать оригинал" прячет перевод (`shownTranslatedMessagesStore`), не удаляя кэш. - models/chunter/src/actions.ts; `translateMessage`/`showOriginalMessage`/`canTranslateMessage`, plugins/chunter-resources/src/utils.ts.
 - **Вложения.** `TChatMessage.attachments` (PropCollection `attachment.class.Attachment`). - models/chunter/src/types.ts.
 - **Поиск по сообщениям.** `createChatSearchStore` (пагинация курсором, `generation` против гонок, `appendUnique` против дублей при переиндексации, `@Index(FullText)` на `message`), автодогрузка "тонких" страниц (< PAGE_SIZE/2, не более `MAX_AUTO_PAGES=5`), которые сами не запускают скролл-догрузку. - plugins/chunter-resources/src/search/store.ts; models/chunter/src/types.ts.
 - **Архивация каналов.** Actions `ArchiveChannel`/`UnarchiveChannel`, фильтр `archived` в навигаторе. - models/chunter/src/actions.ts; plugins/chunter-resources/src/components/chat/navigator/ChatNavGroup.svelte.
@@ -85,6 +87,8 @@
 - **Чтение по вьюпорту + IntersectionObserver.** `readViewportMessages`/`readMessages`/`recheckNotifications`. - plugins/chunter-resources/src/scroll.ts; ReverseChannelScrollView.svelte.
 - **Галочки прочтения + popup "кто прочитал".** `MessageReadMarker`/`MessageReadPopup` в `ChatMessagePresenter` по `ReadState`. - plugins/chunter-resources/src/components/chat-message/ChatMessagePresenter.svelte.
 - **Sidebar-виджеты.** `ChannelSidebarView`, `ChatWidgetTab`, `WorkbenchTabExtension` - тот же вьюпорт с отдельным `reader` для `setDocReading`. - plugins/chunter-resources/src/components.
+- **Боковая панель деталей открытого объекта.** `ChannelView` рендерит для канала `ChannelAside`, для прочих объектов - `DocAside` (атрибуты класса и миксинов объекта: `ClassAttributeBar`/`AttributeBarEditor`); показ переключается значком настроек в `Header.svelte` (`aside-toggled`), значок "развернуть" открывает полный вид объекта (`openDoc`). - plugins/chunter-resources/src/components/ChannelView.svelte; plugins/chunter-resources/src/components/chat/{DocAside,ChannelAside}.svelte; plugins/chunter-resources/src/components/Header.svelte.
+- **Фильтр активности открытого объекта (сейчас выключен).** `ChannelMessagesFilter` оборачивает общий `ActivityFilterPopup`/`ActivityHeader` (plugins/activity-resources) кнопкой в заголовке чата; видимость управляется `Header.svelte`'s `withFilters`, но `ChannelHeader.svelte` всегда передаёт `withFilters={false}` - кнопка не показывается ни для каналов, ни для объектов. До #6736 (2024-10-08, `509952de4e`) включался именно для объектов (не `ChunterSpace`); с тех пор не восстановлен. - plugins/chunter-resources/src/components/ChannelMessagesFilter.svelte; plugins/chunter-resources/src/components/{Header,ChannelHeader}.svelte.
 
 ### Навигатор
 
@@ -105,6 +109,57 @@
 - **Кэш вьюпортов и отложенная activity-группа.** "Как работает" п.7-8.
 - **Защита поиска от гонки и дублей.** `generation`, `appendUnique`. - plugins/chunter-resources/src/search/store.ts.
 - **Кэш `hiddenChats` в middleware.** In-memory Map с ленивой подгрузкой из low-level storage. - server-plugins/chunter/src/middleware.ts.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Каналы как пространства | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| DM и групповые диалоги | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Server-дедупликация 1:1 DM через referenceId | - | - | internal | - | |
+| Защита неизменяемости DM | - | - | internal | - | |
+| Переход в DM с персоной | - | - | plan | - | |
+| URL канала и директа | - | - | plan | - | |
+| Ссылка на канал | - | - | plan | - | |
+| Каналы в `@` и поиске | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | страница упоминает `@` только как общее форматирование сообщений, не описывает канал как отдельную категорию поиска/упоминания/spotlight |
+| Миграция дублированных DM | - | - | internal | - | |
+| Треды | communication/sending-messages, communication/inbox | communication/sending-messages, communication/inbox | partial | 0.8.60 | не описана сортировка списка тредов (по последнему ответу/по дате создания родителя) |
+| Список Threads | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | не описана сортировка списка (по последнему ответу/по дате создания), подъём треда при новом ответе |
+| Пересчёт при удалении ответа | - | - | internal | - | |
+| Закладки при удалении сообщения | - | - | internal | - | |
+| Reply на сообщение | communication/inbox | communication/inbox | ok | 0.8.60 | |
+| Forward сообщения | communication/inbox | communication/inbox | ok | 0.8.60 | |
+| Удаление сообщения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Перевод сообщения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Вложения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Поиск по сообщениям | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Архивация каналов | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Личное состояние чата (pin/hidden) | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Дефолтные каналы general/random | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Миграции истории | - | - | internal | - | |
+| Deep-link на тред/сообщение | - | - | plan | - | |
+| Чат-типы уведомлений | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Mute чата | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| `ChatViewport` | - | - | internal | - | |
+| Джойн в канал = прочитано | - | - | plan | - | |
+| Разделитель "New" | - | - | plan | - | |
+| Первый рендер не ждёт ReadState | - | - | internal | - | |
+| Чтение по вьюпорту + IntersectionObserver | - | - | plan | - | |
+| Галочки прочтения + popup "кто прочитал" | - | - | plan | - | |
+| Sidebar-виджеты | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Боковая панель деталей открытого объекта | communication/chat-activity | communication/chat-activity | ok | 0.8.60 | |
+| Фильтр активности открытого объекта (сейчас выключен) | - | - | off | - | кнопка фильтра скрыта кодом (`ChannelHeader.svelte` `withFilters={false}` с #6736), раздел убран со страницы |
+| Секции и сортировка | communication/chat-activity, communication/sending-messages | communication/chat-activity, communication/sending-messages | partial | 0.8.60 | не описан порядок секций (по времени последнего сообщения) и отложенная подгрузка секции активности |
+| Бейджи | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | не описан отдельный счётчик непрочитанных Threads |
+| Скрытые и закреплённые чаты | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Опция воркспейса, по умолчанию выключена | - | - | off | - | не документируем |
+| Действие "Пожаловаться" | - | - | off | - | не документируем |
+| Доставка владельцам | - | - | internal | - | |
+| Server-side агрегация activity | - | - | internal | - | |
+| Локальные патчи вместо рефетча | - | - | internal | - | |
+| Кэш вьюпортов и отложенная activity-группа | - | - | internal | - | |
+| Защита поиска от гонки и дублей | - | - | internal | - | |
+| Кэш `hiddenChats` в middleware | - | - | internal | - | |
 
 ## Куда смотреть, если нужно...
 

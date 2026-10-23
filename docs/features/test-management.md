@@ -79,6 +79,27 @@
 - **Due date прогона.** `NewTestRunAside` даёт выставить `dueDate` до сохранения панели (`bind:dueDate={object.dueDate}`). - `plugins/test-management-resources/src/components/test-run/NewTestRunPanel.svelte`.
 - **Дефолтный assignee плана.** `NewTestPlanAside` даёт выставить `defaultAssignee`, который проставляется в `assignee` каждой создаваемой `TestPlanItem`. - `plugins/test-management-resources/src/components/test-plan/NewTestPlanPanel.svelte`.
 
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Иерархические сьюты | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Запуск из библиотеки | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Атрибуты кейса | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Массовый выбор для прогона | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Тестовые планы | - | - | off | - | не документируем |
+| Статистика прогона | - | - | off | - | не документируем |
+| Последовательное прохождение | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Проект тестирования | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Статус-иконка кейса | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Активность и комментарии | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Вьюлеты | - | - | off | - | не документируем |
+| Навигация по URL | - | - | internal | - | |
+| События аналитики | - | - | internal | - | |
+| Вложения на кейсе и результате | additional-modules/test-management | additional-modules/test-management | off | - | выключено на проде: testManagement |
+| Due date прогона | - | - | off | - | не документируем |
+| Дефолтный assignee плана | - | - | off | - | не документируем |
+
 ## Куда смотреть, если нужно...
 
 - Добавить/изменить поле кейса, прогона, плана -> `models/test-management/src/types.ts`.

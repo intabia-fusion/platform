@@ -1,0 +1,8 @@
+class: tracker:class:Project
+title: Marketing
+identifier: MKT
+emoji: 📣
+private: false
+autoJoin: true
+description: "Promoting Demo's mobile app and brand: campaigns, content, partnerships."
+defaultIssueStatus: Backlog

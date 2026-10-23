@@ -82,7 +82,7 @@ Training не связан с задачами трекера: импорт `@hc
 ## Фичи
 
 ### HR
-- **Оргструктура.** Дерево отделов с руководителем и списком участников на каждом уровне. - `TDepartment`, `models/hr/src/index.ts`.
+- **Оргструктура.** Дерево отделов с руководителем и списком участников на каждом уровне; создание отдела - действие `CreateDepartment`, быстрый перевод сотрудника в другой отдел прямо из списка - действие-`ValueSelector` `Department` на `Staff`. - `TDepartment`, `models/hr/src/index.ts`.
 - **Автозачисление в отдел.** Новый Employee автоматически получает Staff-mixin и попадает в корневой отдел. - `OnEmployee`, `server-plugins/hr-resources/src/index.ts`.
 - **Каскадное удаление отдела.** `ArchiveDepartment` разрешён только если `members.length == 0` и это не корневой Head-отдел; `OnDepartmentRemove` каскадно удаляет дочерние отделы (на один уровень) и снимает Staff-mixin с бывших членов. - `models/hr/src/index.ts`, `server-plugins/hr-resources/src/index.ts`.
 - **График отпусков.** `Schedule.svelte` показывает заявки сотрудников по месяцам/году через дочерний `ScheduleView.svelte`, учитывает `PublicHoliday`. - `plugins/hr-resources/src/components/schedule/`.
@@ -95,14 +95,42 @@ Training не связан с задачами трекера: импорт `@hc
 - **Собственная нумерация.** Identifier отклика (`APP-{n}`) пишется в персистентное поле миграцией (`models/recruit/src/migration.ts`, вместе с sequences); идентификатор вакансии (`VCN-{n}`) в БД не хранится, а вычисляется на лету presenter'ом (`getSequenceId`, `server-plugins/recruit-resources/src/index.ts`).
 - **Таксономия навыков.** Категории тегов кандидата подгружаются из `@anticrm/skillset` при инициализации воркспейса. - `models/recruit/src/migration.ts`.
 - **Письмо кандидату.** Экшен `WriteEmail` открывает Gmail-композер, виден только если у Applicant есть email-канал (`ApplicantHasEmail`). - `models/recruit/src/index.ts`.
+- **Навигатор: Компании, Соискатели, Навыки.** Разделы приложения Recruit `organizations` (список компаний-клиентов вакансий, viewlet `TableVacancyList` на `VacancyList`), `talents` (список кандидатов, viewlet `TableCandidate`) и `skills` (управление тегами навыков, `SkillsView`); создание кандидата - диалог `CreateCandidate`, назначение рекрутера на отклик - действие `AssignRecruiter` (`ValueSelector` по `assignee`). - `models/recruit/src/index.ts` (`navigatorModel.specials` ~140-250, `AssignRecruiter` ~1236-1255).
 - **Короткие ссылки.** `LinkIdProvider` (deep-link, человекочитаемый URL) для Vacancy/Applicant/Opinion/Review; `SearchPresenter` (full-text поиск) только для Vacancy/Applicant; основной текст Vacancy в индексе - `fullDescription` (`contentField`), у Applicant основного текста нет, весь текст в `fulltextExtra`. - `models/server-recruit/src/index.ts`.
 
 ### Training
+- **Приложение "Тренинги".** Отдельное workbench-приложение; разделы навигатора: Все тренинги, Мои тренинги, Входящие запросы, Отправленные запросы, Результаты (подчинённых), Мои результаты - положение и видимость зависят от роли (trainee/trainer); отдельная категория настроек воркспейса "Тренинги" (`AccountRole.Maintainer`). - `training.app.Training`, `models/training/src/index.ts` (`defineApplication`, `defineSettings`).
+- **Управление тренингом и запросом на прохождение.** Контекстные действия на тренинге: изменить владельца, опубликовать (Release), дублировать, создать новую версию (Draft), назначить запрос на прохождение, удалить; на запросе (TrainingRequest) - изменить владельца, отменить запрос. - `models/training/src/index.ts` (`defineTraining` ~257-346, `defineTrainingRequest` ~548-576).
 - **Версионируемый курс.** `revision`/`state`/`releasedOn` - курс можно редактировать в черновике и выпускать новую редакцию. - `models/training/src/types.ts`.
 - **Тест с проходным баллом.** Вопросы - отдельная сущность (`questions.class.Question`), попытка считает `assessmentsPassed`/`assessmentsTotal` и сравнивает со `passingScore`. - `models/training/src/types.ts`, пакет `models/questions`.
 - **Ролевая модель QARA/Manager/QualifiedUser.** 8 отдельных permission на "чужие" курсы/заявки (не свои же). - `models/training/src/roles.ts`.
 - **Ограниченный доступ для прохождения теста.** Создание `Answer` разрешено с `AccountRole.Guest` через `core.mixin.TxAccessLevel` - сотруднику не нужна повышенная роль, чтобы пройти тест. - `models/questions/src/index.ts`.
 - **Связь с Controlled Documents (QMS).** UI Training показывает привязанный контролируемый документ (`TrainingPanelOverview.svelte`), но это только презентационная связь - поля в схеме нет.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Оргструктура | team-resources/human-resources | team-resources/human-resources | off | - | выключено на проде: hr |
+| Автозачисление в отдел | - | - | internal | - | |
+| Каскадное удаление отдела | - | - | internal | - | |
+| График отпусков | team-resources/human-resources | team-resources/human-resources | off | - | выключено на проде: hr |
+| Типы заявок с весом | team-resources/human-resources | team-resources/human-resources | off | - | выключено на проде: hr |
+| Вакансия на движке проектов | additional-modules/recruiting | additional-modules/recruiting | off | - | выключено на проде: recruit |
+| Кандидат как mixin контакта | additional-modules/recruiting | additional-modules/recruiting | off | - | выключено на проде: recruit |
+| Запрет создания вакансий по permission | - | - | off | - | не документируем |
+| Собственная нумерация | additional-modules/recruiting | additional-modules/recruiting | off | - | выключено на проде: recruit |
+| Таксономия навыков | additional-modules/recruiting | additional-modules/recruiting | off | - | выключено на проде: recruit |
+| Письмо кандидату | - | - | off | - | не документируем |
+| Навигатор: Компании, Соискатели, Навыки | additional-modules/recruiting | additional-modules/recruiting | off | - | выключено на проде: recruit |
+| Короткие ссылки | - | - | internal | - | |
+| Приложение "Тренинги" | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Управление тренингом и запросом на прохождение | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Версионируемый курс | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Тест с проходным баллом | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
+| Ролевая модель QARA/Manager/QualifiedUser | - | advanced-settings/roles | off | - | выключено на проде: training |
+| Ограниченный доступ для прохождения теста | - | - | internal | - | |
+| Связь с Controlled Documents (QMS) | additional-modules/trainings | additional-modules/trainings | off | - | выключено на проде: training |
 
 ## Куда смотреть, если нужно...
 
@@ -114,11 +142,11 @@ Training не связан с задачами трекера: импорт `@hc
 - Изменить вопросы/варианты ответа в тестах - `models/questions/src/doc-types` (не в training, общий пакет).
 - Поменять права ролей Training (QARA/Manager/QualifiedUser) - `models/training/src/roles.ts`.
 - Добавить presenter/уведомление для TrainingRequest - `server-plugins/training-resources/src/functions`.
-- Полностью отключить модуль на self-hosted инсталляции - env `DISABLED_FEATURES` (см. ниже); для HR такого флага нет.
+- Полностью отключить модуль на self-hosted инсталляции - env `DISABLED_FEATURES` (см. ниже).
 
 ## Настройки и конфигурация
 
-`DISABLED_FEATURES` - env-переменная front-сервиса (`pods/front/src/__start.ts`), список через запятую. Поддерживает `recruit` и `training` (полностью прячут приложение из workbench) - `docs/disableFeatures.md`. Для HR аналогичного флага нет - модуль отключить нельзя.
+`DISABLED_FEATURES` - env-переменная front-сервиса (`pods/front/src/__start.ts`), список через запятую. Поддерживает `hr`, `recruit` и `training` (полностью прячут приложение из workbench: плагин с этим id убирается из UI-модели) - `docs/disableFeatures.md`.
 
 ## Тесты
 

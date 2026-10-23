@@ -348,6 +348,32 @@ SQL (services/db-migrator/migrations), по файлу на флавор БД, �
 
 `EXPECTED_SCHEMA_VERSION` = 16 (foundations/server/packages/postgres/src/version.ts); версия - счётчик наборов изменений, не файлов; SQL-миграция без повышения версии не применится. `applyMigration` (services/db-migrator/src/db.ts) выполняет файл одной транзакцией и не помечает упавшую миграцию применённой; `getTableSchema` логирует, если у таблицы нет объявленной в `schemas.ts` колонки. Все файлы идемпотентны, поэтому переименованный файл безопасно применяется повторно.
 
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Embedded-контексты | - | - | internal | - | |
+| Три счётчика | communication/inbox | communication/inbox | partial | 0.8.60 | не описаны три отдельных счётчика (unreadCount/unreadMessagesCount/notifiedMessagesCount) и их влияние на число/цвет бейджа - только упомянута красная точка |
+| Чанки непрочитанного | - | - | internal | - | |
+| Компакция встроенных сообщений | - | - | internal | - | |
+| Правка и удаление сообщения | - | - | internal | - | |
+| Идемпотентность | - | - | internal | - | |
+| Операторы ядра | - | - | internal | - | |
+| Валидация записи | - | - | internal | - | |
+| Серверные презентеры с `triggerFields` | - | - | internal | - | |
+| Кросс-воркспейс статус | - | - | plan | - | |
+| Транзактор не шлёт push/email | - | - | internal | - | |
+| Присутствие `away` | - | - | plan | - | |
+| `NotificationClientImpl` | - | - | internal | - | |
+| Inbox UI | communication/inbox | communication/inbox | ok | 0.8.60 | |
+| Actions | communication/inbox | communication/inbox | ok | 0.8.60 | |
+| Настройки | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Открытие документа = прочитано | communication/inbox | communication/inbox | partial | 0.8.60 | не упомянуты `readDoc` при выходе из документа/задачи и `readNotificationsWithoutMessage` при выборе канала в inbox |
+| Звук | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Фокус окна | - | - | internal | - | |
+| Кэш объектов для карточек активности | - | - | internal | - | |
+| Deep-link из inbox/push | communication/inbox | communication/inbox | partial | 0.8.60 | страница не описывает переход по клику на карточку/push (открытие ровно того документа/сообщения, deep-link) |
+
 ## Известные ограничения
 
 - **Удержанный push живёт в памяти.** `PendingPushHolder` не переживает жёсткое падение процесса (OOM, `kill -9`): push, ждавшие окна удержания, теряются (inbox при этом на месте). Штатная остановка (`SIGTERM`/`SIGINT`: сначала останавливаются consumer'ы, затем `Worker.close()` закрывает каждый воркспейс, и тот досылает удержанное через `flushAll()` ещё при живом продюсере, потом закрываются продюсеры; жёсткий предел 30 с) и idle-close воркспейса досылают всё через `close()`. Уход получателя досылает удержанное, только если его `UserStatus` был в кэше сервиса. Кэш заполняется при первом поиске получателей, поэтому промах редок, а при промахе push уйдёт по потолку `PUSH_HOLD_MS`. Письмо в памяти не живёт (time-machine), но time-machine доставляет at-least-once: падение между отправкой и удалением строки даёт редкое второе письмо (дедупликации в pod-mail нет), срок срабатывания = окно + до 20 с опроса, реплика time-machine одна. Команда `schedule`/`cancel`, не дошедшая до брокера после ретраев, теряется с логом `Failed to send held letters to the time machine` (потерянный `cancel` безвреден: перепроверка при срабатывании). - services/notifications/src/pendingPush.ts, heldLetter.ts, workspace.ts.

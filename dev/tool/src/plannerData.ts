@@ -39,7 +39,7 @@ import core, {
   type Ref,
   type Space,
   type SocialId,
-  type TxOperations
+  TxOperations
 } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import contact, { type Employee, ensureEmployee, type Person, type PersonSpace } from '@hcengineering/contact'
@@ -61,9 +61,10 @@ import tracker, {
 import time, { type ProjectToDo, type ToDo, ToDoPriority, type WorkSlot } from '@hcengineering/time'
 
 const ctx = new MeasureMetricsContext('generate-planner-data', {})
-const DAY = 24 * 60 * 60 * 1000
+export const DAY = 24 * 60 * 60 * 1000
 
-async function eventually<T> (check: () => Promise<T | undefined>, timeoutMs = 15000): Promise<T> {
+/** Polls `check` until it returns a value, for data a server trigger creates asynchronously. */
+export async function eventually<T> (check: () => Promise<T | undefined>, timeoutMs = 15000): Promise<T> {
   const started = Date.now()
   while (Date.now() - started < timeoutMs) {
     const res = await check()
@@ -77,7 +78,7 @@ function uniqueSuffix (): string {
   return generateId().slice(-6).toUpperCase()
 }
 
-interface PlannerAccount {
+export interface PlannerAccount {
   token: WorkspaceToken
   client: TxOperations
   person: Person
@@ -87,7 +88,7 @@ interface PlannerAccount {
 }
 
 /** Logs `email` in and ensures Employee/PersonSpace/default-Calendar exist (created async by server triggers). */
-async function setupAccount (
+export async function setupAccount (
   token: WorkspaceToken,
   config: ServerConfig,
   systemRest: RestClient
@@ -96,7 +97,9 @@ async function setupAccount (
   const person = await accClient.getPerson()
   const socialIds: SocialId[] = await accClient.getSocialIds(true)
   const primary = pickPrimarySocialId(socialIds)._id
-  const client = await createRestTxOperations(token.endpoint, token.workspaceId, token.token, true)
+  // Sign as the primary id (as the UI does), not socialIds[0], or authors show as "(email)".
+  const restTx = await createRestTxOperations(token.endpoint, token.workspaceId, token.token, true)
+  const client = new TxOperations(restTx.client, primary)
   await ensureEmployee(
     ctx,
     {
@@ -217,7 +220,7 @@ async function createIssueDoc (
   return issueId
 }
 
-async function createPersonalTodo (owner: PlannerAccount, title: string): Promise<Ref<ToDo>> {
+export async function createPersonalTodo (owner: PlannerAccount, title: string): Promise<Ref<ToDo>> {
   const latest = await owner.client.findOne(
     time.class.ToDo,
     { user: owner.person._id as Ref<Employee>, doneOn: null },
@@ -243,7 +246,7 @@ async function createPersonalTodo (owner: PlannerAccount, title: string): Promis
 }
 
 /** Mirrors getWorkSlotSpace (plugins/time-resources/src/utils.ts): project todo -> project space, personal todo -> owner's PersonSpace. */
-async function createWorkSlotDoc (
+export async function createWorkSlotDoc (
   owner: PlannerAccount,
   todo: { _id: Ref<ToDo>, _class: Ref<Class<ToDo>>, attachedSpace?: Ref<Space>, title: string, visibility: string },
   date: number,
@@ -268,7 +271,7 @@ async function createWorkSlotDoc (
   })
 }
 
-async function createEventDoc (
+export async function createEventDoc (
   owner: PlannerAccount,
   title: string,
   date: number,
@@ -298,7 +301,7 @@ async function createEventDoc (
   )
 }
 
-async function createRecurringEventDoc (
+export async function createRecurringEventDoc (
   owner: PlannerAccount,
   title: string,
   date: number,
@@ -335,7 +338,7 @@ async function createRecurringEventDoc (
 }
 
 /** 09:00 local on `now + offsetDays`. */
-function dayStart (now: number, offsetDays: number): number {
+export function dayStart (now: number, offsetDays: number): number {
   const d = new Date(now + offsetDays * DAY)
   d.setHours(9, 0, 0, 0)
   return d.getTime()

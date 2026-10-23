@@ -2,6 +2,7 @@ Please read AGENTS.md in the repository root first.
 
 To locate a feature, start from `docs/features/README.md` (feature map) and `docs/architecture.md`, then grep.
 A change to a feature's entry points or model updates its `docs/features/<area>.md` in the same change.
+A change to what the user sees of a feature updates its row in `## Пользовательская документация` of that file: documented -> `stale` with a reason, `internal` -> `plan`, new feature -> `plan` (rules in `docs/features/README.md`).
 
 ## Session Memory (docs/memory)
 

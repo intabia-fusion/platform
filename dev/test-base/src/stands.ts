@@ -293,6 +293,74 @@ const qms: StandConfig = {
   ]
 }
 
+// Stable Russian demo content for user-documentation screenshots: tracker, knowledge base,
+// chat and planner, seeded by generate-demo-data (dev/tool) after the workspace is created.
+const docs: StandConfig = {
+  project: 'docs',
+  dir: 'tests',
+  composeFiles: PURE_PG_COMPOSE,
+  env: {
+    STORAGE_CONFIG: 'datalake|http://localhost:8083/_datalake',
+    ACCOUNTS_URL: LOCAL_ACCOUNTS_URL,
+    PLATFORM_URL: 'http://localhost:8083',
+    REGION_CONFIG_JSON: LOCAL_REGION_CONFIG_JSON,
+    ACCOUNT_DB_URL: PG_BOUNCER_URL,
+    DB_URL: PG_BOUNCER_URL,
+    SERVER_SECRET: 'secret',
+    QUEUE_CONFIG: 'localhost:19093;-staging'
+  },
+  accountsUrl: LOCAL_ACCOUNTS_URL,
+  elasticPort: 9201,
+  waitPorts: [
+    ['localhost', 6433],
+    ['localhost', 19093],
+    ['localhost', 8083]
+  ],
+  cleanup: ['sanity/.auth'],
+  accounts: [
+    { name: 'demo1', first: 'Анна', last: 'Смирнова' },
+    { name: 'demo2', first: 'Иван', last: 'Петров' },
+    { name: 'demo3', first: 'Мария', last: 'Козлова' },
+    { name: 'demo4', first: 'Олег', last: 'Васильев' },
+    { name: 'demo-en1', first: 'Anna', last: 'Smith' },
+    { name: 'demo-en2', first: 'Ivan', last: 'Peterson' },
+    { name: 'demo-en3', first: 'Maria', last: 'Cole' },
+    { name: 'demo-en4', first: 'Oliver', last: 'Wade' }
+  ],
+  workspaces: [
+    {
+      name: 'demo-ws',
+      owner: 'demo1',
+      members: [{ account: 'demo1', role: 'OWNER' }, { account: 'demo2' }, { account: 'demo3' }, { account: 'demo4' }],
+      configure: true,
+      plan: 'business'
+    },
+    {
+      name: 'demo-ws-en',
+      owner: 'demo-en1',
+      members: [
+        { account: 'demo-en1', role: 'OWNER' },
+        { account: 'demo-en2' },
+        { account: 'demo-en3' },
+        { account: 'demo-en4' }
+      ],
+      configure: true,
+      plan: 'business'
+    }
+  ],
+  post: () => [
+    ['generate-demo-data', 'demo-ws'],
+    [
+      'generate-demo-data',
+      'demo-ws-en',
+      '--dir',
+      resolve(repoRoot, 'tests/demo-ws-en'),
+      '--accounts',
+      'demo-en1,demo-en2,demo-en3,demo-en4'
+    ]
+  ]
+}
+
 /**
  * Seeds several stand definitions into one docker stack, so a single stand can serve more than one
  * test package. Containers, env and regions come from `base`; the others contribute accounts,
@@ -391,5 +459,6 @@ export const stands: Record<string, StandConfig> = {
   api,
   'ws-cockroach': wsCockroach,
   qms,
-  full: mergeStands(sanity, qms)
+  full: mergeStands(sanity, qms),
+  docs: mergeStands(sanity, docs)
 }

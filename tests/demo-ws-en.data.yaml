@@ -1,0 +1,128 @@
+# English counterpart of tests/demo-ws.data.yaml - see that file for the schema.
+# Message/reply `author` is 1-based: 1=Anna Smith (lead), 2=Ivan Peterson (developer),
+# 3=Maria Cole (designer), 4=Oliver Wade (tester).
+
+components:
+  - key: ios
+    label: iOS
+  - key: android
+    label: Android
+
+milestones:
+  - key: release10
+    label: "Release 1.0"
+    offsetDays: 14
+  - key: release11
+    label: "Release 1.1"
+    offsetDays: 45
+
+issueComponents:
+  APP-1: ios
+  APP-3: ios
+  APP-16: ios
+  APP-17: ios
+  APP-10: ios
+  APP-2: android
+  APP-8: android
+  APP-13: android
+
+issueMilestones:
+  APP-1: release10
+  APP-3: release10
+  APP-6: release10
+  APP-7: release10
+  APP-9: release10
+  APP-18: release10
+  APP-19: release10
+  APP-4: release11
+  APP-10: release11
+  APP-11: release11
+  APP-14: release11
+
+tags:
+  - key: bug
+    title: "bug"
+    color: 0
+  - key: ux
+    title: "UX"
+    color: 1
+  - key: urgent
+    title: "urgent"
+    color: 2
+
+issueLabels:
+  APP-7: [bug]
+  APP-8: [bug]
+  APP-4: [ux]
+  APP-9: [ux]
+  APP-6: [urgent]
+  APP-3: [urgent]
+
+issueDueDates:
+  APP-6: -1
+  APP-14: 0
+  APP-3: 3
+  APP-8: 3
+
+workSlotIssues: [APP-3, APP-6, APP-9, APP-17, APP-18, MKT-1]
+
+channels:
+  - name: "development"
+    topic: "Mobile app development"
+    description: "Discussion of mobile app tasks"
+    messages:
+      - author: 1
+        text: "Good morning! Sync at 10:00, let's cover APP-6 and the 1.0 release date."
+      - author: 2
+        text: "Hooked up the payment provider's SDK, test payments go through, working through 3D-Secure now."
+      - author: 4
+        text: "Found a critical crash on Android 12 when opening a profile without an avatar, filed APP-7, priority Urgent."
+        replies:
+          - author: 2
+            text: "Fixed it, added a default avatar. Oliver, can you double-check?"
+          - author: 4
+            text: "Checked on a Pixel 6 and a Samsung A53, no more crash, closing APP-7."
+      - author: 3
+        text: "Product card mockup is approved, starting the build today."
+      - author: 1
+        text: "Great! Show it on phone and tablet at the next sync."
+      - author: 4
+        text: "Another bug: the cart isn't saved after a full restart, looks like a regression. Filed APP-8."
+  - name: "marketing"
+    topic: "Marketing and promotion"
+    description: "Promoting the Demo app"
+    messages:
+      - author: 1
+        text: "Launched a test ad campaign on social media with a small budget, watching the response for a week."
+      - author: 3
+        text: "Updated the landing page - new screenshots and reviews, see MKT-4."
+      - author: 1
+        text: "Great, ship it to production."
+      - author: 3
+        text: "Published!"
+      - author: 1
+        text: "I'll take the launch press release, draft will be ready by Friday."
+      - author: 4
+        text: "Payment provider integration is running a bit behind due to a bug on their side, might affect the announcement."
+      - author: 1
+        text: "Okay, we'll factor that into the date. Holding off on the blogger partnership for now."
+
+personalTodos:
+  - ["Prepare the planning meeting agenda", "Sign off on the ad campaign budget"]
+  - ["Update dependencies in the mobile project", "Code review for the team's tasks"]
+  - ["Prepare App Store mockups", "Build an icon library"]
+  - ["Run the regression test suite", "Update payment test cases"]
+
+events:
+  - title: "Release demo"
+    day: 2
+    hourOffset: 6
+    durationMinutes: 60
+  - title: "Planning"
+    day: nextMonday
+    hourOffset: 1
+    durationMinutes: 30
+    recurring:
+      freq: WEEKLY
+      interval: 1
+      count: 52

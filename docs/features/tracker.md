@@ -78,6 +78,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **Связи между issues.** `blockedBy`/`relations` (Blocks/Blocked by/Related to), кросс-проектная настройка целей через `RelatedIssueTarget` и действие `EditRelatedTargets`. - `models/tracker/src/types.ts`, `models/tracker/src/actions.ts`.
 - **AI-ассистент при создании.** Расширения `CreateIssueAssist`/`CreateIssueHeaderActions` в шапке диалога создания; `IssueDraft.assistConversation` хранит корень диалога. - `plugins/tracker/src/index.ts`.
 - **Шаблоны задач.** `IssueTemplate` с деревом `children: IssueTemplateChild[]`; создание задачи из шаблона перезаписывает поля значениями шаблона. - `models/tracker/src/types.ts`.
+- **Копирование ID, названия, ссылки и описания задачи.** Подменю "Копировать" действий над задачей: `CopyIssueId` (`textProvider: tracker.function.GetIssueId`), `CopyIssueTitle` (`GetIssueTitle`), `CopyIssueLink` (label `tracker.string.CopyIssueUrl`, оверрайдит `view.action.CopyLink`), `CopyIssueMarkdown` (копирует поле `description` в markdown через общий `view.actionImpl.CopyDocumentMarkdown`); для выборки нескольких задач отдельное действие `CopyAsMarkdownTable` (`view.actionImpl.CopyAsMarkdownTable`, `input: 'selection'`). - `models/tracker/src/actions.ts`.
 - **Шапка и меню открытой задачи.** Заголовок урезается только при нехватке места (`watchTitle` меряет ширину): сначала сворачивается цепочка родителей, потом скрывается проект, потом цепочка целиком. В шапке: ИИ, сводка реакций, ссылка, «В сайдбар» (контурная иконка `view.icon.Sidebar`, та же в меню и в шапках документа и `EditDoc`), «Ещё», панель свойств (подсказка «Свойства»). На узком экране (`mobileAdaptive`) остаются только номер задачи, «Ещё» и панель свойств: расширения шапки не рисуются, а их действия режима `header` идут первой группой меню (`withHeaderActions` у `showMenu`). Меню задачи одно для панели, списка и канбана: раскладка задана в модели mixin `view.mixin.ActionMenu` на `tracker.class.Issue` (`defineIssueMenu` в models/tracker/src/actions.ts), view `Menu` берёт её по классу объекта, если вызывающий код не передал свой `layout` (по группам: id действий и подменю): открытие (открыть, новая вкладка, боковая панель; в панели «Открыть» исключён), работа с задачей (Изменить ▸, время), структура (подзадача, Родительская задача ▸, Связи ▸ с «Новой связанной задачей»), поделиться (Копировать ▸, публичная ссылка, печать), «Настройки типа задачи» (ссылка со стрелкой ↗: `link` + `opensPage` у пункта ui `Menu`, cmd-клик открывает новую вкладку), редкие действия над задачей целиком (перенос в проект, дубль) в группе `remove` перед удалением; действия вне `layout` идут в своей группе после перечисленных. Ширина текста - кнопка, видимая всегда, в правом поле контента на уровне первой строки; при смене режима не двигается (`maxWidthToggle="gutter"` у `Panel`). Панель атрибутов всегда показывает все примеси класса, переключателя дополнительных свойств нет. Кнопки боковой панели отделены от действий разделителем (ui `Panel`). Разделители меню стоят между группами раскладки. - plugins/tracker-resources/src/components/issues/edit/EditIssue.svelte, `ControlPanel.svelte`; plugins/view-resources/src/components/Menu.svelte; plugins/tracker-resources/src/components/RelationsPopup.svelte; packages/panel/src/components/MaxWidthToggle.svelte; models/tracker/src/actions.ts.
 
 ### Time tracking
@@ -105,9 +106,11 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **36 функций-трансформов значений** (строковые/числовые/даты/конверсии/агрегаты) для `UpdateFieldValue`. - `models/workflow/src/functions.ts`.
 - **Конфликты переходов.** `findTransitionConflict`/`hasSelfTransition`/`getTransitionConflict`. - `plugins/workflow/src/utils.ts`.
 - **Каскадное удаление.** `OnWorkflowDelete`/`OnTaskTypeDelete`/`OnStatusDelete`/`OnScreenDelete`/`OnAttributeDelete`. - `server-plugins/workflow-resources/src/WorkflowTrigger.ts`. `OnAttributeDelete` снимает удалённый атрибут с экранов (`ScreenField`) и вычищает его из `props.fields` правил переходов, правило без полей удаляется (`stripAttributeFromRules` - `plugins/workflow/src/utils.ts`). Попап удаления атрибута заранее показывает затронутые экраны и workflow с переходами - `plugins/workflow-resources/src/components/AttributeUsages.svelte`, зарегистрирован как `setting.class.AttributeUsageProvider` в `models/workflow/src/index.ts`.
+- **Создание workflow и его экранов перехода.** `CreateWorkflow.svelte` создаёт workflow (`createWorkflow(client, type._id, taskTypeId, name)`) для выбранного типа задачи в типе проекта; `ProjectTypeWorkflowsSectionEditor.svelte` - раздел настроек типа проекта со списком его workflow и импортом конфигурации (`ImportWorkflowPopup`). `ProjectTypeScreensSectionEditor.svelte` - раздел со списком "экранов" (класс `Screen`/`TScreen` - `models/workflow/src/types.ts`), создаются через `CreateScreen.svelte`: экран - форма валидации перед переходом, привязанная к типу задачи (`targetClass`) внутри типа проекта. Это UI поверх уже описанных в этом файле правил `WorkflowRuleConfig`/`ScreenRequest`. - `plugins/workflow-resources/src/components/{CreateWorkflow.svelte,ProjectTypeWorkflowsSectionEditor.svelte,ProjectTypeScreensSectionEditor.svelte}`.
 - **Экспорт/импорт workflow-конфигурации.** Токены `$status:`/`$taskType:`/`$screen:`/`$attr:`, `NameResolver` (минимальный ref при коллизии имён), отчёт совместимости статусов/атрибутов/экранов. - `plugins/workflow/src/transfer/` (`export.ts`, `import.ts`, `compatibility.ts`, `resolver.ts`, `statusRules.ts`, `validation.ts`, `utils.ts`, `types.ts`, `index.ts`).
 
 ### Views (list/kanban)
+- **Навигатор "Мои задачи" / "Все задачи".** Два специала верхнего уровня трекера: "Мои задачи" (`tracker.string.MyIssues`, `tracker.component.MyIssues`) с вкладками `assigned`/`active`/`backlog`/`created`/`subscribed`, и "Все задачи" (`tracker.string.AllIssues`, `tracker.component.Issues`) с вкладками `all`/`active`/`backlog`. - `models/tracker/src/index.ts` (специалы `opt.myIssuesId`/`opt.allIssuesId`, их `componentProps.config`).
 - **Viewlet'ы трекера.** `IssueList` (список с priority/identifier/status/kind/title/labels/ Milestone/Component/dueDate/reportedTime/estimation/assignee), `IssueKanban`, `SubIssues`/`ParentIssues`, `MilestoneIssuesList`, `ComponentIssuesList`. - `models/tracker/src/viewlets.ts`.
 - **Группировка/сортировка.** `issuesOptions(kanban)`: groupBy status/kind/assignee/priority/space/ component/milestone/attachedTo/createdBy/modifiedBy/estimation/remainingTime/reportedTime; для kanban - `swimLaneBy` (8 значений) + `compactMode`. - `models/tracker/src/viewlets.ts`.
 - **Порядок групп по статусу.** `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> порядок типа проекта: `ProjectType.statusOrder`, если задан, затем слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`; ранги собирает `getProjectStatusRank`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
@@ -120,10 +123,60 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 - **Пустые группы/колонки статусов.** `showEmptyGroups` передаёт `space` вида в `GetAllValuesFunc`; `getAllStates` берёт статусы только типов задач этого типа проекта и пересчитывает группы при изменении этих типов задач (`watchTaskTypes`; пересчёт ждёт, пока `taskTypeStore`/`statusStore` получат то же изменение, иначе показывалось предыдущее состояние). - `plugins/view-resources/src/viewOptions.ts`, `plugins/task-resources/src/index.ts`.
 
 ### Проекты, компоненты, вехи
+- **Раздел "Метки" в навигаторе.** Специал `labelsId` (`tracker.component.LabelsView`) оборачивает `tags.component.TagsView` и показывает все `TagElement` класса `Issue` по всему workspace, с созданием новой метки (`createItemLabel: tracker.string.AddLabel`); клик по метке (`onTag`) переходит в "Все задачи" и ставит фильтр по этой метке (`setFilterTag`). - `models/tracker/src/index.ts` (специал `opt.labelsId`), `plugins/tracker-resources/src/components/LabelsView.svelte`.
+- **Управление проектом: создание, редактирование, архивирование, удаление.** Создание - диалог `tracker.component.CreateProject` (`createComponent` у спейса `projects`, кнопка `+`/пункт `addSpaceLabel: tracker.string.CreateProject`). Действие `EditProject` видно по `view.function.CanEditSpace`. Удаление - два действия на одном `actionImpl.DeleteProject` с разными `query`/`visibilityTester`: "Архивировать" (label `workbench.string.Archive`, видно при `archived: false`, `CanArchiveSpace`) под id `DeleteProject`, и повторное удаление уже архивированного проекта (label `workbench.string.Delete`, видно при `archived: true`, `CanDeleteSpace`) под отдельным id `DeleteProjectClean`. - `models/tracker/src/actions.ts`, `models/tracker/src/index.ts`.
 - **Дефолтный проект.** `tracker.project.DefaultProject` (`identifier: 'TSK'`, `autoJoin: true`) создаётся миграцией `create-defaults`, только если не удалён пользователем. - `models/tracker/src/migration.ts`.
 - **Запрет создания проектов.** Permission `ForbidCreateProject` - `forbid`-правило на `TxCreateDoc`/`Project` уровня workspace. - `models/tracker/src/permissions.ts`.
-- **Компоненты.** Агрегация/группировка по `lead` (`CreateComponentAggregationManager`, `GrouppingComponentManager`). - `models/tracker/src/index.ts`.
+- **Компоненты.** Агрегация/группировка по названию компонента без учёта регистра (`label.toLowerCase().trim()`; одноимённые компоненты разных проектов объединяются в одну группу), `lead` в агрегации не используется. - `plugins/tracker-resources/src/component.ts` (`CreateComponentAggregationManager`, `GrouppingComponentManager`), `models/tracker/src/index.ts`.
 - **Вехи.** `SetMilestone` (`S+P`), `DeleteMilestone` (`Meta+Backspace`, с переносом задач). - `models/tracker/src/actions.ts`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Дерево подзадач | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | не описано создание подзадачи из уже существующей (действие «Добавить подзадачу»), только указание родителя при создании |
+| Связи между issues | task-tracking/related-issues, people-contacts/connecting-tasks | task-tracking/related-issues, people-contacts/connecting-tasks | ok | 0.8.60 | |
+| AI-ассистент при создании | - | - | plan | - | |
+| Шаблоны задач | task-tracking/issue-templates | task-tracking/issue-templates | ok | 0.8.60 | |
+| Копирование ID, названия, ссылки и описания задачи | - | - | plan | - | |
+| Шапка и меню открытой задачи | - | - | plan | - | |
+| Оценка/факт/остаток | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | описана только «Оценка» (estimation), факт (reportedTime) и остаток (remainingTime) не упомянуты |
+| Разбивка "потрачено/запланировано" | task-tracking/time-reports | - | partial | 0.8.60 | механика splitReportedTime (разбивка часов слота-отчёта) на странице не описана |
+| Диалог отчёта | task-tracking/time-reports, task-tracking/task-management | - | partial | 0.8.60 | не описан выбор сотрудника и быстрые кнопки часов (например «До 8ч») в форме списания |
+| UI оценки | task-tracking/time-reports | - | partial | 0.8.60 | страница описывает только список отчётов (TimeSpendReportList, вид «Отчеты по времени») и только период «Неделя» (без «2 недели»/«Месяц»); EstimationEditor/EstimationPopup/SubIssuesEstimations (оценка в карточке задачи) не описаны |
+| Формат длительности | task-tracking/time-reports | - | partial | 0.8.60 | показан только пример «4ч», без недель/дней/минут и составных значений вида «2ч 30м» |
+| Иерархия типов задач | - | - | plan | - | |
+| Редактор иерархии типа | - | - | plan | - | |
+| Тип задачи по умолчанию | advanced-settings/task-types | advanced-settings/task-types | ok | 0.8.60 | |
+| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | ok | 0.8.60 | |
+| Смена типа задачи | - | - | plan | - | |
+| Экспорт/импорт TaskType | - | - | plan | - | |
+| Уникальность статусов в типе проекта | - | - | internal | - | |
+| Статус без типа задачи | - | - | internal | - | |
+| Удаление статуса из типа проекта | workflow/create-statuses | - | partial | 0.8.60 | описано только простое удаление (иконки удалить/копировать), не показан сценарий с проверкой использования и слиянием статусов |
+| Правила перехода | workflow/create-rules-transitions | - | no-en | 0.8.60 | |
+| Статусы подзадач/родителя | workflow/create-rules-transitions | - | partial | 0.8.60 | не упомянут выбор по категории статуса, только по конкретному статусу для каждого типа задачи |
+| 36 функций-трансформов значений | - | - | plan | - | |
+| Конфликты переходов | workflow/create-rules-transitions | - | no-en | 0.8.60 | |
+| Каскадное удаление | - | - | plan | - | |
+| Экспорт/импорт workflow-конфигурации | workflow/create-rules-transitions | - | partial | 0.8.60 | импорт упомянут (раздел "Воркфлоу" типа проекта, из файла или буфера обмена), сам процесс (выбор файла, проверка совместимости) не раскрыт |
+| Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | ok | 0.8.60 | |
+| Навигатор "Мои задачи" / "Все задачи" | task-tracking/issue-collaborators | task-tracking/issue-collaborators | partial | 0.8.60 | описана только вкладка «Отслеживаемые» в «Моих задачах»; остальные вкладки и отдельный раздел «Все задачи» с его вкладками не раскрыты |
+| Viewlet'ы трекера | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | описаны только список и канбан, остальные viewlet'ы (подзадачи, этапы, компоненты, отчёты по времени) не упомянуты |
+| Группировка/сортировка | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
+| Порядок групп по статусу | - | - | plan | - | |
+| Опции показа | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
+| Пустой список задач | - | - | plan | - | |
+| Поиск в списке задач | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | не указано, что поиск ищет только по заголовку/идентификатору/описанию, а не по меткам и комментариям |
+| Фильтр по статусу | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | не описано, что список статусов в фильтре (все статусы типа проекта) может отличаться от списка в попапе статуса конкретной задачи |
+| Сохранённые представления и их порядок | - | - | plan | - | |
+| Пустые группы/колонки статусов | - | - | plan | - | |
+| Раздел "Метки" в навигаторе | task-tracking/labels | task-tracking/labels | ok | 0.8.60 | |
+| Управление проектом: создание, редактирование, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | partial | 0.8.60 | не описаны архивирование и удаление проекта |
+| Дефолтный проект | - | - | plan | - | |
+| Запрет создания проектов | - | - | plan | - | |
+| Компоненты | task-tracking/components | task-tracking/components | partial | 0.8.60 | не описано объединение одноимённых компонентов разных проектов при группировке/фильтре (агрегация идёт по названию компонента без учёта регистра, а не по руководителю) |
+| Вехи | task-tracking/milestones | task-tracking/milestones | ok | 0.8.60 | |
 
 ## Куда смотреть, если нужно...
 

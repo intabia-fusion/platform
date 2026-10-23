@@ -143,6 +143,44 @@
 
 - **Только контракт в `plugins/image-cropper`**, реальный компонент `Cropper.svelte` - в `plugins/image-cropper-resources/src/components/Cropper.svelte`.
 
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Версии файлов | knowledge-management/drive | knowledge-management/drive | partial | 0.8.60 | не описан откат на старую версию (`restoreFileVersion`) и удаление отдельной версии |
+| Actions над версиями | - | - | plan | - | |
+| Перемещение с пересчётом путей | knowledge-management/drive | knowledge-management/drive | ok | 0.8.60 | |
+| Загрузка папками с авто-созданием структуры | knowledge-management/drive | knowledge-management/drive | partial | 0.8.60 | не описана загрузка папки целиком drag&drop с автосозданием недостающих подпапок - страница описывает только загрузку отдельных файлов и ручное создание папки |
+| Поиск | - | - | plan | - | |
+| Права и шаринг | knowledge-management/drive | knowledge-management/drive | partial | 0.8.60 | не описаны конкретные права по ролям (CreateFile/UpdateFile/RemoveFile и т.п.) и запрет создания дисков (`ForbidCreateDrive`) - только общие настройки владельцев/приватности/автоприсоединения |
+| Комментарии на файлах | knowledge-management/drive | knowledge-management/drive | ok | 0.8.60 | |
+| Метрики | - | - | internal | - | |
+| Гостевой доступ | - | - | internal | - | |
+| Расчёт размеров картинки в чате (FUSIO-486) | - | - | internal | - | |
+| Голосовые вложения (FUSIO-866) | - | - | plan | - | |
+| Инлайн-превью ссылок/картинок во вводе | - | - | plan | - | |
+| Превью в сайдбаре | - | - | plan | - | |
+| Diff-применение вложений | - | - | internal | - | |
+| Link preview в тексте | - | - | plan | - | |
+| Видео-превью через HLS | - | - | plan | - | |
+| Реестр обработчиков | - | - | internal | - | |
+| Параллельная загрузка с лимитом | - | - | internal | - | |
+| Retry/cancel по файлу | - | - | plan | - | |
+| Лимит хранилища | - | - | plan | - | |
+| Multipart-загрузка больших файлов | - | - | internal | - | |
+| Drag&drop папок | knowledge-management/drive | knowledge-management/drive | partial | 0.8.60 | страница описывает только drag&drop отдельных файлов в область загрузки, не упоминает загрузку папки целиком |
+| Провайдеры по content-type | - | - | internal | - | |
+| Формат по Accept-заголовку клиента | - | - | internal | - | |
+| Диск-кэш + single-flight | - | - | internal | - | |
+| Кастомный базовый образ | - | - | internal | - | |
+| Мост Tx -> Kafka | - | - | internal | - | |
+| OpenGraph-парсинг ссылок | - | - | internal | - | |
+| Каскадное удаление по `parent` | - | - | internal | - | |
+| Удаление воркспейса целиком (FUSIO-1339) | - | - | internal | - | |
+| Учёт использования по типу | - | - | internal | - | |
+| `createFileStorage` | - | - | internal | - | |
+| Только контракт в `plugins/image-cropper` | - | - | internal | - | |
+
 ## Куда смотреть, если нужно...
 
 - Добавить новый формат превью (например heic) -> `pods/preview/src/providers/*`, `pods/preview/src/utils/*` (уже есть `heic.ts`, `bmp.ts`).

@@ -26,6 +26,7 @@ import {
   type AccountUuid,
   generateId,
   type PersonId,
+  pickPrimarySocialId,
   type Ref,
   SocialIdType,
   type TxOperations
@@ -459,9 +460,12 @@ export class HulyFormatImporter {
       throw new Error(`Social ID not found for email: ${email}`)
     }
 
-    this.personIdByEmail.set(email, socialId._id)
+    // Sign as the person's primary id (as the UI does), not the e-mail one, or the author shows as "(email)".
+    const personIds = await this.client.findAll(contact.class.SocialIdentity, { attachedTo: socialId.attachedTo })
+    const primary = pickPrimarySocialId(personIds)._id
+    this.personIdByEmail.set(email, primary)
 
-    return socialId._id
+    return primary
   }
 
   private findAccountByName (name: string): AccountUuid {

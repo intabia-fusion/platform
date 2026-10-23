@@ -6,6 +6,7 @@
 #
 #   ./prepare-pg.sh              # sanity workspaces only
 #   ./prepare-pg.sh --full       # + the QMS workspaces, so qms-tests run on this same stand
+#   ./prepare-pg.sh --docs       # + demo workspaces with stable data and the prod look (docker-compose.docs.yaml) for doc screenshots
 #   ./prepare-pg.sh --profile    # CPU-profile every Node pod
 #   ./prepare-pg.sh --asr        # + real transcription: oaitt container and a clisr STT worker
 #   ./prepare-pg.sh --asr-local  # + real transcription through a transcriber on the host, :9007
@@ -15,9 +16,11 @@ set -e
 STAND=sanity
 PROFILE_ARG=false
 ASR_OVERLAYS=
+DOCS_OVERLAY=
 while [ $# -gt 0 ]; do
     case "$1" in
         --full) STAND=full; shift ;;
+        --docs) STAND=docs; DOCS_OVERLAY=docker-compose.docs.yaml; shift ;;
         --profile) PROFILE_ARG=true; shift ;;
         --asr) ASR_OVERLAYS=docker-compose.asr.yaml,docker-compose.oaitt.yaml; shift ;;
         --asr-local) ASR_OVERLAYS=docker-compose.asr.yaml; shift ;;
@@ -50,6 +53,10 @@ fi
 
 if [ -n "$ASR_OVERLAYS" ]; then
     export STAND_EXTRA_COMPOSE="${STAND_EXTRA_COMPOSE:+${STAND_EXTRA_COMPOSE},}${ASR_OVERLAYS}"
+fi
+
+if [ -n "$DOCS_OVERLAY" ]; then
+    export STAND_EXTRA_COMPOSE="${STAND_EXTRA_COMPOSE:+${STAND_EXTRA_COMPOSE},}${DOCS_OVERLAY}"
 fi
 
 ../dev/test-base/run.sh "$STAND"

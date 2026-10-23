@@ -112,10 +112,53 @@
 - **Отложенные переходы через TimeMachine.** Таймер шлётся в `QueueTopic.TimeMachine`, срабатывает как `ProcessMessage` в `QueueTopic.Process`. - `services/process/src/main.ts`.
 - **Права запуска/отмены.** `ForbidRunProcess`, `ForbidCancelProcess`. - `models/process/src/permission.ts`.
 
+### API-ключи
+- **Личные и интеграционные API-ключи.** Интеграционный ключ со списком разрешённых операций (`issue:create/update/comment/time_report`, `chat:post`, `doc:create/update`) и опциональным ограничением на пространства (квота 5 активных на воркспейс), либо личный ключ, действующий с правами выпустившего (полные права/только чтение, квота 5 на человека); срок жизни выдаваемого токена 1-90 суток (по умолчанию 30), отзыв без отзыва уже выданных токенов. - `ApiKeySecret`/`generateApiKey`/`hashApiKey`, `server/account/src/apiKeys.ts`; UI - `plugins/setting-resources/src/components/{ApiKeysSection,ApiKeyTable,ApiKeyRow,ApiKeyPopup,CreateApiKeyPopup,ApiKeyOperationsPopup,ApiKeySpacesPopup}.svelte`.
+
+### Вебхуки
+- **Входящие вебхуки: вызов операций ключом.** Внешняя система POST-ит JSON `{action, ...}` на `/api/v1/webhook/action` (ключ в заголовке `Authorization`) или `/api/v1/webhook/k/:key` (ключ в пути, для сервисов без своих заголовков); приём асинхронный (202 + `jobId`), статус - через `/api/v1/webhook/job/:id`, повтор того же `Idempotency-Key` не создаёт новое задание. Отдельный флаг `incoming` на ключе, независимый от набора операций. - `services/webhook/pod-webhook/src/server.ts`; исполнение операций - `pods/server/src/opsApi.ts`.
+- **Правила разбора чужого формата.** Для систем, которые шлют собственное тело (Prometheus Alertmanager, Grafana, GitLab, Sentry) - адрес `/api/v1/webhook/in` принимает тело как есть, правило переводит его в операцию: условия (`eq/neq/exists/regex/in`), цикл `forEach` по массиву с условием на элемент, шаблонные поля `{{path}}`/`{{$.path}}`, готовые шаблоны и предпросмотр. Правила привязаны к конкретному API-ключу. - `WebhookIncomingRule`/`evaluateWebhookRule`/`renderWebhookTemplate`, `plugins/setting/src/webhookRules.ts`, `models/setting/src/index.ts`; UI - `plugins/setting-resources/src/components/{WebhookRulesSection,WebhookRuleEditor,WebhookRuleFromTemplate,WebhookEventsPopup}.svelte`, `webhookRuleTemplates.ts`.
+- **Исходящие вебхуки.** Эндпоинт с URL и набором событий (`issue.created/status_changed/assigned/commented/time_reported/time_report_updated`, `message.posted`, `document.created`); доставка подписывается по схеме Standard Webhooks (HMAC-SHA256, до двух секретов одновременно для ротации без простоя), повтор с бэкоффом до 5 попыток, автоотключение адреса после 3 неудач подряд, журнал доставок и тестовая отправка; запрет на приватные/служебные адреса (SSRF) и редиректы. Доступно только владельцу воркспейса. - `WebhookEndpoint`/`WebhookDelivery`/`WebhookStat`, `models/setting/src/index.ts`; `services/webhook/pod-webhook/src/{delivery,retry,signature,ssrf,stats,notify}.ts`; UI - `plugins/setting-resources/src/components/{WebhookEndpointsSection,WebhookEndpointEditor,CreateWebhookEndpoint}.svelte`.
+
 ### API-клиент (`@intabia-fusion/api`)
 - **Единый npm-бандл поверх `@hcengineering/*`.** Собирается из `foundations/core/packages/{api-client,client,client-resources,account-client}` + `@intabiafusion/clisr` и доменных пакетов (tracker/chunter/contact/card/...). - `dev/api/config.yml`.
 - **`connect()`/`PlatformClient`.** REST + WebSocket LiveQuery, `NodeWebSocketFactory` для Node.js. - `foundations/core/packages/api-client/src/client.ts`.
 - Подробности использования, установка, примеры - см. `docs/api-client.md`.
+
+## Пользовательская документация
+
+| Фича | ru | en | Статус | Сверено | Расхождение |
+| --- | --- | --- | --- | --- | --- |
+| Telegram-бот, команды | integrations/telegram | integrations/telegram | off | - | выключено на проде: telegram |
+| Уведомления о новых сообщениях | integrations/telegram | integrations/telegram | off | - | выключено на проде: telegram |
+| IntegrationType с несколькими аккаунтами | integrations/telegram | integrations/telegram | off | - | выключено на проде: telegram |
+| OAuth-подключение, несколько ящиков | integrations/gmail | integrations/gmail | off | - | выключено в продукте |
+| Full/partial синхронизация | - | - | internal | - | |
+| Два адаптера сообщений | - | - | internal | - | |
+| "Написать письмо" из карточки контакта / Applicant | integrations/gmail | integrations/gmail | off | - | выключено в продукте |
+| Уведомления о входящих письмах | integrations/gmail | integrations/gmail | off | - | выключено в продукте |
+| Три режима pod-mail | - | - | internal | - | |
+| SMTP с пулом соединений | - | - | internal | - | |
+| SES как альтернатива SMTP | - | - | internal | - | |
+| Авто-создание Person/канала из письма | - | - | off | - | не документируем |
+| Huly Mail IntegrationType | - | - | off | - | не документируем |
+| GitHub App: установка и авторизация | integrations/github | integrations/github | off | - | выключено в продукте |
+| Приём вебхуков | - | - | internal | - | |
+| Двусторонняя синхронизация issues/PR | integrations/github | integrations/github | off | - | выключено в продукте |
+| GitHub issue/PR как `tracker.class.Issue` | - | - | internal | - | |
+| Одна интеграция на workspace | - | - | internal | - | |
+| Отдельная global-интеграция для привязки личного GitHub-аккаунта | integrations/github | integrations/github | off | - | выключено в продукте |
+| Методы шагов | - | - | off | - | не документируем |
+| Триггеры переходов | - | - | off | - | не документируем |
+| Запрос согласования как первый класс | - | - | off | - | не документируем |
+| Отложенные переходы через TimeMachine | - | - | internal | - | |
+| Права запуска/отмены | - | - | off | - | не документируем |
+| Личные и интеграционные API-ключи | integrations/api-keys | integrations/api-keys | stale | 0.8.60 | en-скрины (huly/webhooks/api-key*.png) показывают ru-интерфейс («Создать личный ключ» и т.п.), нужно переснять на demo-en1 |
+| Входящие вебхуки: вызов операций ключом | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины показывают ru-интерфейс, нужно переснять на demo-en1 |
+| Правила разбора чужого формата | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины (webhook-rule*.png, «Правила (0)» и т.п.) показывают ru-интерфейс, нужно переснять на demo-en1 |
+| Исходящие вебхуки | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины показывают ru-интерфейс, нужно переснять на demo-en1 |
+| Единый npm-бандл поверх `@hcengineering/*` | - | - | plan | - | |
+| `connect()`/`PlatformClient` | - | - | plan | - | |
 
 ## Куда смотреть, если нужно...
 
