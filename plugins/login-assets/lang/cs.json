@@ -129,6 +129,8 @@
     "DeleteAccountBlocked": "Jste jediný vlastník: {workspaces}. Nejprve tyto pracovní prostory smažte nebo je předejte někomu jinému.",
     "CodeSent": "Potvrzovací kód byl odeslán na váš e-mail.",
     "EnterCode": "Zadejte kód",
-    "WorkspaceArchivedDesc": "Pracovní prostor byl archivován kvůli nečinnosti."
+    "WorkspaceArchivedDesc": "Pracovní prostor byl archivován kvůli nečinnosti.",
+    "LoginLinkCaption": "Přihlášení k vašemu účtu",
+    "LoginLinkInvalid": "Tento přihlašovací odkaz vypršel nebo už byl použit"
   }
 }

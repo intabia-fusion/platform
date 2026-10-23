@@ -1,6 +1,7 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
 // Copyright © 2026 TraceX SAS.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -53,6 +54,7 @@ import {
   getAccountInfo,
   createAccessLink,
   getSubscriptions,
+  getSubscriptionById,
   leaveWorkspace,
   getWorkspaceMembers,
   checkJoin,
@@ -126,7 +128,8 @@ describe('account operations', () => {
       findOne: jest.fn()
     },
     socialId: {
-      findOne: jest.fn()
+      findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([])
     },
     generatePersonUuid: jest.fn().mockResolvedValue('generated-person-uuid')
   } as unknown as AccountDB
@@ -489,7 +492,7 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
-        find: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         insertOne: jest.fn(),
         update: jest.fn()
       },
@@ -1354,8 +1357,10 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
-        find: jest.fn()
+        find: jest.fn().mockResolvedValue([]),
+        update: jest.fn()
       },
+      otp: { deleteMany: jest.fn() },
       shortLink: {
         deleteMany: jest.fn()
       }
@@ -1396,6 +1401,7 @@ describe('account operations', () => {
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
+        ;(mockDb.socialId.find as jest.Mock).mockResolvedValueOnce([mockSocialId])
 
         const result = await login(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
@@ -1408,6 +1414,12 @@ describe('account operations', () => {
           name: 'John Doe',
           socialId: 'social-id'
         })
+        // The miss counters of every email of the account are cleared.
+        expect(mockDb.socialId.update).toHaveBeenCalledWith(
+          { personUuid: mockAccountId, loginOtpMisses: { $gt: 0 } },
+          { loginOtpMisses: 0, loginOtpMissedOn: 0 }
+        )
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: 'social-id', purpose: 'login-link' })
       })
 
       test('should not return token if no social ids are confirmed', async () => {
@@ -1475,6 +1487,7 @@ describe('account operations', () => {
             password: mockPassword
           })
         ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {})))
+        expect(mockDb.socialId.update).not.toHaveBeenCalled()
       })
 
       test('should fail login with non-existent email', async () => {
@@ -1524,14 +1537,17 @@ describe('account operations', () => {
         expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
       })
 
-      test('should fail for an unknown email', async () => {
+      test('should answer an unknown email like a known one and send the sign up letter', async () => {
+        const info = { sent: true, retryOn: Date.now() + 60000 }
         jest.spyOn(utils, 'cleanEmail').mockReturnValue(mockEmail)
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
         jest.spyOn(utils, 'sendOtp')
+        jest.spyOn(utils, 'sendNoAccountEmail').mockResolvedValue(info)
 
-        await expect(loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })).rejects.toThrow(
-          new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
-        )
+        const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+
+        expect(result).toEqual(info)
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'login')
         expect(utils.sendOtp).not.toHaveBeenCalled()
       })
 
@@ -2245,7 +2261,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
         expect(mockDb.socialId.update).toHaveBeenCalledWith(
           { _id: mockSocialId._id },
           { verifiedOn: expect.any(Number) }
@@ -2291,7 +2307,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
         expect(utils.setPassword).not.toHaveBeenCalled()
       })
 
@@ -2332,7 +2348,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
         expect(mockDb.socialId.update).toHaveBeenCalledWith(
           { _id: mockSocialId._id },
           { verifiedOn: expect.any(Number) }
@@ -2387,7 +2403,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
         expect(utils.doMergePersons).toHaveBeenCalledWith(mockDb, callerAccountId, targetPersonId)
         expect(mockDb.socialId.update).toHaveBeenCalledWith(
           { _id: mockSocialId._id },
@@ -2434,7 +2450,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
         expect(mockDb.socialId.update).toHaveBeenCalledWith(
           { _id: mockSocialId._id },
           { personUuid: callerAccountId, verifiedOn: expect.any(Number) }
@@ -2525,6 +2541,7 @@ describe('account operations', () => {
       },
       socialId: {
         findOne: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         update: jest.fn()
       }
     } as unknown as AccountDB
@@ -2633,26 +2650,8 @@ describe('account operations', () => {
         })
       })
 
-      test('should fail if email not found', async () => {
-        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
-
-        await expect(
-          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail
-          })
-        ).rejects.toThrow(
-          new PlatformError(
-            new Status(Severity.ERROR, platform.status.SocialIdNotFound, {
-              value: mockEmail,
-              type: SocialIdType.EMAIL
-            })
-          )
-        )
-
-        expect(global.fetch).not.toHaveBeenCalled()
-      })
-
-      test('should fail if account not found', async () => {
+      test('should send the sign up letter for an unknown email or a person without an account', async () => {
+        jest.spyOn(utils, 'sendNoAccountEmail').mockResolvedValue({ sent: true, retryOn: 1 })
         const mockSocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockAccountId,
@@ -2661,21 +2660,19 @@ describe('account operations', () => {
           key: `email:${mockEmail}`
         }
 
+        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+        await expect(
+          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+        ).resolves.toBeUndefined()
+
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
-
         await expect(
-          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail
-          })
-        ).rejects.toThrow(
-          new PlatformError(
-            new Status(Severity.ERROR, platform.status.AccountNotFound, {
-              account: mockAccountId
-            })
-          )
-        )
+          requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+        ).resolves.toBeUndefined()
 
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledTimes(2)
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'recovery')
         expect(global.fetch).not.toHaveBeenCalled()
       })
     })
@@ -3239,10 +3236,11 @@ describe('getSubscriptions', () => {
   })
 
   test('workspace-less service token with no explicit uuid queries all workspaces', async () => {
+    // pod-tbank-subscriptions calls it this way, with the payment service token.
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: accountUuid,
       workspace: undefined,
-      extra: { service: 'tbank' }
+      extra: { service: 'payment' }
     })
 
     mockDb.subscription.find.mockResolvedValue([])
@@ -3260,6 +3258,75 @@ describe('getSubscriptions', () => {
     })
 
     await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})).rejects.toThrow(PlatformError)
+  })
+
+  test('a public-link guest token cannot read subscriptions of another workspace', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: utils.GUEST_ACCOUNT,
+      workspace: workspaceUuid,
+      extra: { service: 'transactor', linkId: 'link-1', guest: 'true' }
+    })
+    mockDb.getWorkspaceRole.mockResolvedValue(null)
+    const params = { workspaceUuid: 'victim-ws' as WorkspaceUuid }
+
+    await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(PlatformError)
+    expect(mockDb.subscription.find).not.toHaveBeenCalled()
+  })
+
+  test('a service outside the caller list is treated as a user', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: readOnlyGuestAccountUuid,
+      workspace: workspaceUuid,
+      extra: { service: 'love', meetingId: 'meeting-1' }
+    })
+    mockDb.getWorkspaceRole.mockResolvedValue(null)
+    const params = { workspaceUuid: 'victim-ws' as WorkspaceUuid }
+
+    await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(PlatformError)
+    expect(mockDb.subscription.find).not.toHaveBeenCalled()
+  })
+})
+
+describe('getSubscriptionById', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    mockDb = {
+      subscription: {
+        findOne: jest.fn().mockResolvedValue({ id: 'sub-1', workspaceUuid: 'victim-ws' })
+      },
+      getWorkspaceRole: jest.fn().mockResolvedValue(null)
+    }
+  })
+
+  test('payment service reads a subscription of any workspace', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: systemAccountUuid,
+      workspace: undefined,
+      extra: { service: 'payment' }
+    })
+
+    const result = await getSubscriptionById(mockCtx, mockDb, null, 'test-token', { subscriptionId: 'sub-1' })
+    expect(result).toEqual({ id: 'sub-1', workspaceUuid: 'victim-ws' })
+  })
+
+  test('a GitHub guest token cannot read a subscription of another workspace', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'github-guest' as AccountUuid,
+      workspace: 'attacker-ws' as WorkspaceUuid,
+      extra: { service: 'github', linkId: 'github-guest', guest: 'true' }
+    })
+
+    const read = getSubscriptionById(mockCtx, mockDb, null, 'test-token', { subscriptionId: 'sub-1' })
+    await expect(read).rejects.toThrow(PlatformError)
   })
 })
 

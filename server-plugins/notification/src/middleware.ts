@@ -170,12 +170,13 @@ export class NotificationMiddleware extends BaseMiddleware {
       const attachedToClass = message.attachedToClass
       const state = await this.getStateByDoc(ctx, attachedTo)
       if (state == null) {
-        const ttx = factory.createTxCreateDoc(notification.class.ReadState, message.space, {
+        const createTx = factory.createTxCreateDoc(notification.class.ReadState, message.space, {
           attachedTo,
           attachedToClass,
           collection: 'readStates',
           latestMessageTimestamp: 0
         })
+        const ttx = factory.createTxCollectionCUD(attachedToClass, attachedTo, message.space, 'readStates', createTx)
         // The flag goes on the session data itself, as in TriggersMiddleware: a copy made with
         // Object.create gets its own lazily created `broadcast`, and the new state never reaches clients.
         const prevFlag = ctx.contextData.isTriggerCtx
@@ -193,9 +194,12 @@ export class NotificationMiddleware extends BaseMiddleware {
         }
       }
     } else if (tx._class === core.class.TxUpdateDoc && tx.objectClass === notification.class.ReadState) {
-      if (this.isSystemAccess(ctx)) return true
-
       const updateTx = tx as TxUpdateDoc<ReadState>
+      if (this.isSystemAccess(ctx)) {
+        await this.fillDocument(ctx, updateTx)
+        return true
+      }
+
       if (
         updateTx.operations[account.uuid]?.timestamp == null ||
         updateTx.operations[account.uuid]?.messageId == null
@@ -215,6 +219,7 @@ export class NotificationMiddleware extends BaseMiddleware {
         if (currentTimestamp > updateTimestamp) return false
 
         this.activeStates.set(state._id, TxProcessor.updateDoc2Doc(state, updateTx))
+        await this.fillDocument(ctx, updateTx, state)
       }
     } else if (tx._class === core.class.TxRemoveDoc && tx.objectClass === notification.class.ReadState) {
       if (!this.isSystemAccess(ctx)) {
@@ -224,6 +229,21 @@ export class NotificationMiddleware extends BaseMiddleware {
     }
 
     return true
+  }
+
+  // A tx of a read state names the document, as any tx of an attached document does: a subscriber
+  // that does not hold the state reads it off the tx.
+  private async fillDocument (
+    ctx: MeasureContext<SessionData>,
+    tx: TxUpdateDoc<ReadState>,
+    state?: ReadState
+  ): Promise<void> {
+    if (tx.attachedTo != null) return
+    const found = state ?? (await this.getState(ctx, tx.objectId))
+    if (found == null) return
+    tx.attachedTo = found.attachedTo
+    tx.attachedToClass = found.attachedToClass
+    tx.collection = 'readStates'
   }
 
   private async getState (ctx: MeasureContext<SessionData>, _id: Ref<ReadState>): Promise<ReadState | undefined> {

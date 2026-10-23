@@ -439,18 +439,22 @@ async function createReadStateTx (control: TriggerControl, collaborator: Collabo
     { sort: { createdOn: SortingOrder.Descending }, limit: 1, projection: { _id: 1, createdOn: 1, modifiedOn: 1 } }
   )
   const isSpace = control.hierarchy.isDerived(collaborator.attachedToClass, core.class.Space)
-  return control.txFactory.createTxCreateDoc(
-    notification.class.ReadState,
-    isSpace ? (collaborator.attachedTo as Ref<Space>) : collaborator.space,
-    {
-      attachedTo: collaborator.attachedTo,
-      attachedToClass: collaborator.attachedToClass,
-      collection: 'readStates',
-      ...(latest != null
-        ? { latestMessageId: latest._id, latestMessageTimestamp: latest.createdOn ?? latest.modifiedOn }
-        : { latestMessageTimestamp: 0 })
-    }
-  )
+  const space = isSpace ? (collaborator.attachedTo as Ref<Space>) : collaborator.space
+  const createTx = control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
+    attachedTo: collaborator.attachedTo,
+    attachedToClass: collaborator.attachedToClass,
+    collection: 'readStates',
+    ...(latest != null
+      ? { latestMessageId: latest._id, latestMessageTimestamp: latest.createdOn ?? latest.modifiedOn }
+      : { latestMessageTimestamp: 0 })
+  })
+  return control.txFactory.createTxCollectionCUD(
+    collaborator.attachedToClass,
+    collaborator.attachedTo,
+    space,
+    'readStates',
+    createTx
+  ) as TxCreateDoc<ReadState>
 }
 
 // Applied at once so the batch's chats can point at it; the loser of a race takes the winner's state.
@@ -572,19 +576,20 @@ export async function OnChannelJoin (txes: TxUpdateDoc<Channel>[], control: Trig
     }
     if (Object.keys(operations).length === 0) continue
 
+    const space = tx.objectId as Ref<Space>
     if (state === undefined) {
-      res.push(
-        control.txFactory.createTxCreateDoc(notification.class.ReadState, tx.objectId as Ref<Space>, {
-          attachedTo: tx.objectId,
-          attachedToClass: tx.objectClass,
-          collection: 'readStates',
-          latestMessageTimestamp: 0,
-          ...operations
-        })
-      )
+      const createTx = control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
+        attachedTo: tx.objectId,
+        attachedToClass: tx.objectClass,
+        collection: 'readStates',
+        latestMessageTimestamp: 0,
+        ...operations
+      })
+      res.push(control.txFactory.createTxCollectionCUD(tx.objectClass, tx.objectId, space, 'readStates', createTx))
       continue
     }
-    res.push(control.txFactory.createTxUpdateDoc(state._class, state.space, state._id, operations))
+    const updateTx = control.txFactory.createTxUpdateDoc(state._class, state.space, state._id, operations)
+    res.push(control.txFactory.createTxCollectionCUD(tx.objectClass, tx.objectId, state.space, 'readStates', updateTx))
   }
   return res
 }

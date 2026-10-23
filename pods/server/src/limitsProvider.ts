@@ -21,6 +21,7 @@ import {
 } from '@hcengineering/account-client'
 import core, {
   type AccountUuid,
+  aiBotAccountEmail,
   buildSocialIdString,
   type Class,
   type Doc,
@@ -35,7 +36,6 @@ import { generateToken } from '@hcengineering/server-token'
 import chunter from '@hcengineering/chunter'
 import pulse from '@hcengineering/pulse'
 import preference from '@hcengineering/preference'
-import { aiBotAccountEmail } from '@hcengineering/middleware'
 
 const ZERO_LIMITS: PlanLimits = {
   usersLimit: 0,

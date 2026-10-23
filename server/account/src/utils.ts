@@ -16,6 +16,7 @@
 import {
   AccountRole,
   type AccountUuid,
+  aiBotAccountEmail,
   type Branding,
   concatLink,
   generateId,
@@ -45,7 +46,7 @@ import {
   type QueueWorkspaceLimitsMessage
 } from '@hcengineering/server-core'
 import { getDBClient, getDBFlavor, setDBExtraOptions } from '@hcengineering/postgres'
-import { pbkdf2Sync, randomBytes } from 'crypto'
+import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
@@ -79,7 +80,9 @@ import {
   type LoginInfoRequestData,
   type Meta,
   type Operations,
+  type OTP,
   type OtpInfo,
+  type OtpPurpose,
   type RegionInfo,
   type SocialId,
   type Subscription,
@@ -453,6 +456,17 @@ export async function resetFailedLoginAttempts (db: AccountDB, accountUuid: Acco
   )
 }
 
+/** A confirmed sign in ends the streak of wrong code guesses on every email of the account. */
+export async function resetLoginOtpMisses (db: AccountDB, personUuid: PersonUuid): Promise<void> {
+  const missed = await db.socialId.find({ personUuid, loginOtpMisses: { $gt: 0 } })
+  if (missed.length === 0) return
+  await db.socialId.update({ personUuid, loginOtpMisses: { $gt: 0 } }, { loginOtpMisses: 0, loginOtpMissedOn: 0 })
+  // Any sign in ends the lock: the link mailed about it must not outlive it.
+  for (const { _id } of missed) {
+    await db.otp.deleteMany({ socialId: _id, purpose: 'login-link' })
+  }
+}
+
 export function cleanEmail (email: string): string {
   return email.toLowerCase().trim()
 }
@@ -562,6 +576,200 @@ export function getSignUpLinkTtlMs (): number {
 /** Which letter carries the code: sign in, admin panel action, or a person's own destructive action. */
 export type OtpKind = 'login' | 'admin' | 'operation'
 
+// Once a streak of wrong guesses at login codes reaches the cap, no new code is issued for this long.
+const OTP_MISS_WAIT_MS = 60 * 60 * 1000
+// A streak of wrong guesses at login codes starts over once the last of them is this old.
+const OTP_MISS_DECAY_MS = 24 * 60 * 60 * 1000
+
+type Issued = { info: OtpInfo } | { ts: number }
+
+// The wait before the next code, or undefined when one may be issued. Throws while wrong guesses hold the wait.
+function getOtpWait (
+  purpose: OtpPurpose,
+  socialId: Pick<SocialId, 'loginOtpMisses' | 'loginOtpMissedOn'>,
+  otpData: Pick<OTP, 'createdOn' | 'expiresOn' | 'attempts'> | undefined,
+  ts: number,
+  retryDelayMs: number
+): OtpInfo | undefined {
+  // Wrong guesses at login codes are counted on the social id: the code row expires and is replaced
+  // long before the wait is over. Every miss past the cap starts the wait anew.
+  const missRetry =
+    purpose === 'login' && (socialId.loginOtpMisses ?? 0) >= OTP_MAX_ATTEMPTS
+      ? (socialId.loginOtpMissedOn ?? 0) + OTP_MISS_WAIT_MS
+      : 0
+  const rowRetryOn = otpData !== undefined && otpData.expiresOn > ts ? otpData.createdOn + retryDelayMs : 0
+  const retryOn = Math.max(rowRetryOn, missRetry)
+  if (retryOn <= ts) {
+    return undefined
+  }
+  // With wrong guesses holding the wait and no code left to type, "sent" leads the form nowhere.
+  const typeable = otpData !== undefined && otpData.expiresOn > ts && otpData.attempts < OTP_MAX_ATTEMPTS
+  if (missRetry > ts && !typeable) {
+    const minutes = Math.ceil((retryOn - ts) / 60000)
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.TooManyOtpAttempts, { retryOn, minutes }))
+  }
+  return { sent: true, retryOn }
+}
+
+// Letters and misses of an address without an account: its waits and lock match a real one.
+// Kept in this pod only: a restart, another replica or eviction forgets them.
+interface NoAccountState {
+  otp?: Pick<OTP, 'createdOn' | 'expiresOn' | 'attempts'>
+  loginOtpMisses?: number
+  loginOtpMissedOn?: number
+}
+const NO_ACCOUNT_MAX_ENTRIES = 10000
+const noAccounts = new Map<string, NoAccountState>()
+
+// The state of the key, moved to the end of the eviction order.
+function touchNoAccount (key: string): NoAccountState {
+  const state = noAccounts.get(key) ?? {}
+  noAccounts.delete(key)
+  if (noAccounts.size >= NO_ACCOUNT_MAX_ENTRIES) {
+    noAccounts.delete(noAccounts.keys().next().value as string)
+  }
+  noAccounts.set(key, state)
+  return state
+}
+
+/**
+ * Answers for an address without an account as sendOtp does for a real one, waits and lock
+ * included, and mails the owner how to sign up.
+ */
+export async function sendNoAccountEmail (
+  ctx: MeasureContext,
+  branding: Branding | null,
+  email: string,
+  kind: 'login' | 'recovery'
+): Promise<OtpInfo> {
+  // The address goes to the mail "to": a list of addresses would mail every one of them.
+  if (!isEmail(email)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const ts = Date.now()
+  const retryDelayMs = getOtpRetryDelayMs()
+  const state = touchNoAccount(`${kind}:${email}`)
+  const waiting = getOtpWait('login', state, state.otp, ts, retryDelayMs)
+  if (waiting !== undefined) {
+    return waiting
+  }
+
+  const previous = state.otp
+  const ttlMs = (getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
+  state.otp = { createdOn: ts, expiresOn: ts + ttlMs, attempts: 0 }
+
+  const lang = branding?.defaultLanguage
+  const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
+  const params = { app, link: concatLink(getFrontUrl(branding), '/login/signup') }
+  const text = await translate(accountPlugin.string.NoAccountText, params, lang)
+  const html = await translate(accountPlugin.string.NoAccountHTML, params, lang)
+  const subject = await translate(accountPlugin.string.NoAccountSubject, params, lang)
+
+  try {
+    await getMetadata(accountPlugin.metadata.MailQueue)?.send(
+      ctx,
+      '' as WorkspaceUuid,
+      [{ type: 'email', data: { text, html, subject, to: email } }],
+      email
+    )
+  } catch (err) {
+    // Nothing was mailed: let the next request try again.
+    state.otp = previous
+    throw err
+  }
+  return { sent: true, retryOn: ts + retryDelayMs }
+}
+
+/** Counts a guess at the code "sent" to an address without an account, as bumpOtpAttempts does. */
+export function guessNoAccountCode (email: string): void {
+  const state = noAccounts.get(`login:${email}`)
+  const ts = Date.now()
+  if (state?.otp === undefined || state.otp.expiresOn <= ts) return
+  state.otp.attempts += 1
+  // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
+  if (state.otp.attempts > OTP_MAX_ATTEMPTS) return
+  const misses = state.loginOtpMisses ?? 0
+  const missedOn = state.loginOtpMissedOn ?? 0
+  const startsOver =
+    missedOn < ts - OTP_MISS_DECAY_MS || (misses >= OTP_MAX_ATTEMPTS && missedOn < ts - OTP_MISS_WAIT_MS)
+  state.loginOtpMisses = startsOver ? 1 : misses + 1
+  state.loginOtpMissedOn = ts
+}
+
+const hashLinkToken = (token: string): string => createHash('sha256').update(token).digest('hex')
+
+/**
+ * When the wrong guess just made started a lock of the code sign in, mails the owner a one-time
+ * link that signs in without a code. `before` is the social id as it was before the guess.
+ * Never throws: the guess is answered the same whether the letter went out.
+ */
+export async function notifyLoginLock (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  before: SocialId
+): Promise<void> {
+  try {
+    const after = await db.socialId.findOne({ _id: before._id })
+    if (after?.type !== SocialIdType.EMAIL) return
+    const countedMiss =
+      (after.loginOtpMisses ?? 0) !== (before.loginOtpMisses ?? 0) ||
+      (after.loginOtpMissedOn ?? 0) !== (before.loginOtpMissedOn ?? 0)
+    const wasLocked =
+      (before.loginOtpMisses ?? 0) >= OTP_MAX_ATTEMPTS &&
+      (before.loginOtpMissedOn ?? 0) + OTP_MISS_WAIT_MS > (after.loginOtpMissedOn ?? 0)
+    if (!countedMiss || wasLocked || (after.loginOtpMisses ?? 0) < OTP_MAX_ATTEMPTS) return
+    if ((await db.account.findOne({ uuid: after.personUuid as AccountUuid })) == null) return
+
+    const ts = Date.now()
+    const token = randomBytes(32).toString('hex')
+    // A live link means this lock was already mailed (parallel guesses start it together).
+    const issued = await db.withOtpIssue<boolean>(after._id, 'login-link', async (issue) => {
+      if (issue.newest !== undefined && issue.newest.expiresOn > ts) return false
+      await issue.replace({
+        socialId: after._id,
+        purpose: 'login-link',
+        code: hashLinkToken(token),
+        expiresOn: ts + OTP_MISS_WAIT_MS,
+        createdOn: ts
+      })
+      return true
+    })
+    if (!issued) return
+
+    const lang = branding?.defaultLanguage
+    const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
+    const params = { app, link: concatLink(getFrontUrl(branding), `/login/loginLink#token=${token}`) }
+    const text = await translate(accountPlugin.string.LoginLockText, params, lang)
+    const html = await translate(accountPlugin.string.LoginLockHTML, params, lang)
+    const subject = await translate(accountPlugin.string.LoginLockSubject, params, lang)
+    try {
+      await getMetadata(accountPlugin.metadata.MailQueue)?.send(
+        ctx,
+        '' as WorkspaceUuid,
+        [{ type: 'email', data: { text, html, subject, to: after.value } }],
+        after.value
+      )
+    } catch (err) {
+      // Nothing was mailed: drop the link so that the next lock can try again.
+      await db.otp.deleteMany({ socialId: after._id, purpose: 'login-link' })
+      throw err
+    }
+  } catch (err: any) {
+    ctx.error('Failed to send the login lock letter', { err })
+  }
+}
+
+/** Consumes a link token; undefined when it is unknown, used, expired or replaced. */
+export async function consumeLoginLink (db: AccountDB, token: string): Promise<SocialId | undefined> {
+  const code = hashLinkToken(token)
+  const row = await db.otp.findOne({ purpose: 'login-link', code })
+  if (row == null || row.expiresOn <= Date.now()) return undefined
+  if (!(await db.consumeOtp(row.socialId, 'login-link', code))) return undefined
+  return (await db.socialId.findOne({ _id: row.socialId })) ?? undefined
+}
+
 export async function sendOtp (
   ctx: MeasureContext,
   db: AccountDB,
@@ -570,30 +778,56 @@ export async function sendOtp (
   ttlSec?: number,
   kind: OtpKind = 'login'
 ): Promise<OtpInfo> {
-  const ts = Date.now()
-  const otpData = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
+  const purpose: OtpPurpose = kind === 'login' ? 'login' : 'operation'
   const retryDelayMs = getOtpRetryDelayMs()
-
-  if (otpData !== undefined && otpData.expiresOn > ts && otpData.createdOn + retryDelayMs > ts) {
-    return { sent: true, retryOn: otpData.createdOn + retryDelayMs }
-  }
-
-  if (socialId.type !== SocialIdType.EMAIL) {
-    throw new Error('Unsupported OTP social id type')
-  }
-
   const ttlMs = (ttlSec ?? getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
+
+  // A request inside the wait must not pay for the code lookup and the lock; the check under the lock stays.
+  const [newest] = await db.otp.find({ socialId: socialId._id, purpose }, { createdOn: 'descending' }, 1)
+  const waiting = getOtpWait(purpose, socialId, newest, Date.now(), retryDelayMs)
+  if (waiting !== undefined) {
+    return waiting
+  }
+
+  // Before the lock: it queries through the pool, whose connections the waiting transactions hold.
   const code = await generateUniqueOtp(db)
 
-  // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
-  // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
-  const link =
-    kind === 'login' && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
+  // The wait is checked and the code written under the lock of the social id: requests passing the
+  // check together would each write a fresh code with its own attempts.
+  const issued = await db.withOtpIssue<Issued>(socialId._id, purpose, async (issue) => {
+    const ts = Date.now()
+    const inLock = getOtpWait(purpose, issue.socialId, issue.newest, ts, retryDelayMs)
+    if (inLock !== undefined) {
+      return { info: inLock }
+    }
 
-  await sendOtpEmail(ctx, branding, code, socialId.value, kind, link)
-  await db.otp.insertOne({ socialId: socialId._id, code, expiresOn: ts + ttlMs, createdOn: ts })
+    if (socialId.type !== SocialIdType.EMAIL) {
+      throw new Error('Unsupported OTP social id type')
+    }
 
-  return { sent: true, retryOn: ts + retryDelayMs }
+    // isOtpValid checks only the newest code, in case several rows exist.
+    await issue.replace({ socialId: socialId._id, purpose, code, expiresOn: ts + ttlMs, createdOn: ts })
+
+    return { ts }
+  })
+  if ('info' in issued) {
+    return issued.info
+  }
+
+  try {
+    // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
+    // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
+    const link =
+      kind === 'login' && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
+
+    await sendOtpEmail(ctx, branding, code, socialId.value, kind, link)
+  } catch (err) {
+    // Nothing was mailed: take the code back so that the user can ask again now, not after the delay.
+    await db.otp.deleteMany({ socialId: socialId._id, purpose, code })
+    throw err
+  }
+
+  return { sent: true, retryOn: issued.ts + retryDelayMs }
 }
 
 export async function sendOtpEmail (
@@ -652,10 +886,29 @@ export async function sendOtpEmail (
   ctx.info('OTP email queued to mail service', { to })
 }
 
-export async function isOtpValid (db: AccountDB, socialId: PersonId, code: string): Promise<boolean> {
-  const otpData = await db.otp.findOne({ socialId, code })
+export const OTP_MAX_ATTEMPTS = 5
 
-  return (otpData?.expiresOn ?? 0) > Date.now()
+/**
+ * Counts one guess against the newest live code of the social id and purpose (equal createdOn:
+ * the greater code), so a guess has one code to hit. A code that has used up its attempts
+ * refuses everything but stays until it expires, so the retry delay of sendOtp keeps
+ * applying. A match is not consumed here: the caller deletes it.
+ */
+export async function isOtpValid (
+  db: AccountDB,
+  socialId: PersonId,
+  code: string,
+  purpose: OtpPurpose
+): Promise<boolean> {
+  const live = await db.bumpOtpAttempts(socialId, purpose, code, OTP_MAX_ATTEMPTS, {
+    decayMs: OTP_MISS_DECAY_MS,
+    lockMs: OTP_MISS_WAIT_MS
+  })
+  const newest: OTP | undefined = live.sort((a, b) =>
+    a.createdOn !== b.createdOn ? b.createdOn - a.createdOn : a.code < b.code ? 1 : -1
+  )[0]
+
+  return newest?.code === code && newest.attempts <= OTP_MAX_ATTEMPTS
 }
 
 // ===== Admin-operation OTP (destructive admin actions) =====
@@ -732,9 +985,10 @@ export async function sendOperationOtp (
     return { sent: true, retryOn: Date.now() }
   }
   const sid = await getCallerEmailSocialId(ctx, db, token)
-  const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  const newestQuery = { socialId: sid._id, purpose: 'operation' as const }
+  const before = (await db.otp.find(newestQuery, { createdOn: 'descending' }, 1))[0]?.createdOn
   const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, kind)
-  const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  const after = (await db.otp.find(newestQuery, { createdOn: 'descending' }, 1))[0]?.createdOn
   // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
   if (audit && after !== before) {
     await logAdminAction(ctx, db, token, 'otp_issued')
@@ -760,8 +1014,9 @@ export async function verifyOperationOtp (
   }
   const sid = await getCallerEmailSocialId(ctx, db, token)
   // Atomic consume: only the caller that deletes the row succeeds. Prevents one code
-  // confirming two concurrent ops; each wrong guess deletes nothing (no reuse).
-  const ok = await db.consumeOtp(sid._id, otpCode)
+  // confirming two concurrent ops. Wrong guesses are counted and capped by isOtpValid.
+  const ok =
+    (await isOtpValid(db, sid._id, otpCode, 'operation')) && (await db.consumeOtp(sid._id, 'operation', otpCode))
   if (!ok) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
   }
@@ -1710,12 +1965,26 @@ export async function getWorkspaceJoinInfo (
 
 // aiBot is a technical account (system modifiedBy) that lands in ws_members as role=User; it must not
 // occupy a paid seat. Members that count toward a paid seat: ws_members minus the aiBot account.
-const AI_BOT_EMAIL = process.env.AI_BOT_EMAIL ?? 'huly.ai.bot@hc.engineering'
-
 export async function getSeatMembers (db: AccountDB, workspace: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
   const members = await db.getWorkspaceMembers(workspace)
-  const aiBot = (await getEmailSocialId(db, AI_BOT_EMAIL))?.personUuid
+  const aiBot = (await getEmailSocialId(db, aiBotAccountEmail))?.personUuid
   return aiBot == null ? members : members.filter((m) => m.person !== aiBot)
+}
+
+// A session holding the ai-bot email passes the transactor identity check. Sign in, reset and
+// registering this email are refused, except for the system token where the bot itself needs it.
+export function ensureNotAiBot (email: string): void {
+  if (cleanEmail(email) === aiBotAccountEmail) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+}
+
+// Tokens and API keys of the ai-bot account itself stay with the service.
+export async function ensureNotAiBotAccount (db: AccountDB, account: AccountUuid): Promise<void> {
+  const botEmail = await getEmailSocialId(db, aiBotAccountEmail)
+  if (botEmail?.personUuid === account) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
 }
 
 // Roles that never occupy a paid seat (guests are read-only). Admins are operators, also seatless.
@@ -1842,6 +2111,7 @@ export async function loginOrSignUpWithProvider (
 ): Promise<LoginInfo | null> {
   try {
     const normalizedEmail = email != null ? cleanEmail(email) : ''
+    ensureNotAiBot(normalizedEmail)
     const normalizedSocialId: SocialKey = {
       type: socialId.type,
       value: normalizeValue(socialId.value)
@@ -1917,6 +2187,7 @@ export async function loginOrSignUpWithProvider (
     ensureNotBlocked(await db.account.findOne({ uuid: personUuid as AccountUuid }))
 
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
+    await resetLoginOtpMisses(db, personUuid)
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true' }
       : isBillingAdminEmail(normalizedEmail)
@@ -2061,8 +2332,19 @@ export async function getWorkspaces (
   }))
 }
 
-export function verifyAllowedServices (services: string[], extra: any, shouldThrow = true): boolean {
-  const ok = services.includes(extra?.service)
+// Guest tokens minted by a pod used to carry its name, and those links never expire.
+// Old love guest links have no guest flag, only the read-only guest account.
+export function isServiceToken (extra: any, account?: AccountUuid): boolean {
+  return extra?.service !== undefined && extra?.guest !== 'true' && account !== readOnlyGuestAccountUuid
+}
+
+export function verifyAllowedServices (
+  services: string[],
+  extra: any,
+  shouldThrow = true,
+  account?: AccountUuid
+): boolean {
+  const ok = isServiceToken(extra, account) && services.includes(extra?.service)
 
   if (!ok && shouldThrow) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))

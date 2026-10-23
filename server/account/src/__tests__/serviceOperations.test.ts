@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -178,6 +179,27 @@ describe('addSocialIdToPerson', () => {
       type: SocialIdType.GITHUB,
       value: 'test-value',
       confirmed: false
+    }
+
+    await expect(addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)).rejects.toThrow(
+      new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    )
+
+    expect(addSocialIdSpy).not.toHaveBeenCalled()
+  })
+
+  test('should refuse a GitHub image guest token attaching a confirmed email to someone else', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'guest-account',
+      workspace: 'test-workspace',
+      extra: { service: 'github', linkId: 'guest-account', guest: 'true' }
+    })
+
+    const params = {
+      person: 'victim-person' as PersonUuid,
+      type: SocialIdType.EMAIL,
+      value: 'attacker@example.com',
+      confirmed: true
     }
 
     await expect(addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)).rejects.toThrow(
@@ -1400,6 +1422,20 @@ describe('integration methods', () => {
     test('should throw error for unauthorized service', async () => {
       ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
         extra: { service: 'unauthorized-service' }
+      })
+
+      await expect(listIntegrationsSecrets(mockCtx, mockDb, mockBranding, mockToken, {})).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
+
+      expect(mockDb.integrationSecret.find).not.toHaveBeenCalled()
+    })
+
+    test('should refuse a GitHub image guest token that carries the github service', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: 'guest-account',
+        workspace: 'test-workspace',
+        extra: { service: 'github', linkId: 'guest-account', guest: 'true' }
       })
 
       await expect(listIntegrationsSecrets(mockCtx, mockDb, mockBranding, mockToken, {})).rejects.toThrow(

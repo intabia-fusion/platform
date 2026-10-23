@@ -491,7 +491,7 @@
       const last = localStorage.getItem(`${locationStorageKeyId}_${app}`)
       if (last !== null) {
         const newLocation: Location = JSON.parse(last)
-        if (newLocation.path[3] != null) {
+        if (newLocation.path[1] === loc.path[1] && newLocation.path[3] != null) {
           space = loc.path[3] = newLocation.path[3] as Ref<Space>
           special = loc.path[4] = newLocation.path[4]
           if (loc.path[4] == null) {

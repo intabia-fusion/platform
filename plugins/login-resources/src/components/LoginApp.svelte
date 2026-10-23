@@ -29,6 +29,7 @@
   import Auth from './Auth.svelte'
   import Confirmation from './Confirmation.svelte'
   import ConfirmationSend from './ConfirmationSend.svelte'
+  import LoginLink from './LoginLink.svelte'
   import Registered from './Registered.svelte'
   import CreateWorkspaceForm from './CreateWorkspaceForm.svelte'
   import Join from './Join.svelte'
@@ -83,6 +84,7 @@
       'autoJoin',
       'confirm',
       'confirmationSend',
+      'loginLink',
       'auth',
       'downloads'
     ]
@@ -151,6 +153,8 @@
       <Confirmation />
     {:else if page === 'confirmationSend'}
       <ConfirmationSend />
+    {:else if page === 'loginLink'}
+      <LoginLink {navigateUrl} />
     {:else if page === 'registered'}
       <Registered />
     {:else if page === 'auth'}

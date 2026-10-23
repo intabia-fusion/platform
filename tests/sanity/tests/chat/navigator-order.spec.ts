@@ -13,8 +13,13 @@
 // limitations under the License.
 //
 
+import { createRestTxOperations } from '@hcengineering/api-client'
+import { type Doc } from '@hcengineering/core'
+import tracker from '@hcengineering/tracker'
+
 import { expect, test, type SharedWorkspace } from '../fixtures'
 import { type ChatMember, connectOwner, joinWorkspace } from '../API/ChatApi'
+import { createIssue, getProjectContext } from '../API/TrackerApi'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { generateTestData, generateUser, loginByToken } from '../utils'
@@ -22,6 +27,7 @@ import { generateTestData, generateUser, loginByToken } from '../utils'
 const channelsSection = 'chunter:class:Channel'
 const directSection = 'chunter:class:DirectMessage'
 const starredSection = 'starred'
+const issuesSection = tracker.class.Issue as string
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -252,6 +258,34 @@ test.describe('Chat navigator order', () => {
     await expect.poll(async () => await orderOf([early, late, silent])).toEqual([early, late])
     await other.addMember(three, me.account)
     await expect.poll(async () => await orderOf([early, late, silent])).toEqual([silent, early, late])
+  })
+
+  test('a sixth issue rises into the five of its activity section when talked to', async () => {
+    const { me } = await members()
+    if (shared.ws.token === undefined) throw new Error('No workspace token')
+    const client = await createRestTxOperations(shared.ws.endpoint, shared.ws.workspace, shared.ws.token)
+    try {
+      const ctx = await getProjectContext(client)
+      const titles = ['one', 'two', 'three', 'four', 'five', 'six'].map((it) => name(it))
+      const issues: Array<Pick<Doc, '_id' | '_class' | 'space'>> = []
+      for (const title of titles) {
+        const _id = await createIssue(client, ctx, { title, status: 'Backlog' })
+        issues.push({ _id, _class: tracker.class.Issue, space: ctx.project._id })
+      }
+      const issuesOrder = async (): Promise<string[]> => await orderOf(titles, issuesSection)
+
+      // The section shows five: the ones talked to, by their last comment; the silent sixth is beyond.
+      for (let i = 0; i < 5; i++) {
+        await me.sendComment(issues[i], `comment ${i + 1}`)
+      }
+      await expect.poll(issuesOrder).toEqual([titles[4], titles[3], titles[2], titles[1], titles[0]])
+
+      // A comment on the sixth lifts it over the five, live: the oldest of them leaves the section.
+      await me.sendComment(issues[5], 'the sixth talks')
+      await expect.poll(issuesOrder).toEqual([titles[5], titles[4], titles[3], titles[2], titles[1]])
+    } finally {
+      await client.close()
+    }
   })
 
   test('the live order is the order after a reload', async ({ page }) => {

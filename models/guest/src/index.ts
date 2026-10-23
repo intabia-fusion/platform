@@ -14,6 +14,7 @@ export class TPublicLink extends TDoc implements PublicLink {
   restrictions!: Restrictions
   revokable!: boolean
   attachedTo!: Ref<Doc>
+  attachedToClass?: Ref<Class<Doc>>
 }
 
 export function createModel (builder: Builder): void {

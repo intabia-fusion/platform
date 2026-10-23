@@ -157,7 +157,6 @@ interface Config {
   AvatarPath: string
   AvatarName: string
   AvatarContentType: string
-  Password: string
 
   // Pod role selected by MODE. STT ingest + meeting lifecycle run in every role by default
   // (stateless, cheap) so love can post audio to any pod.
@@ -255,7 +254,6 @@ interface YamlConfig {
   bot: {
     firstName: string
     lastName: string
-    password?: string
     avatar?: {
       path?: string
       name?: string
@@ -567,7 +565,6 @@ const config: Config = (() => {
     // Bot identity configuration
     FirstName: yamlConfig?.bot?.firstName ?? process.env.FIRST_NAME,
     LastName: yamlConfig?.bot?.lastName ?? process.env.LAST_NAME,
-    Password: yamlConfig?.bot?.password ?? process.env.PASSWORD ?? 'password',
     AvatarPath: yamlConfig?.bot?.avatar?.path ?? process.env.AVATAR_PATH ?? './assets/avatar.png',
     AvatarName: yamlConfig?.bot?.avatar?.name ?? process.env.AVATAR_NAME ?? 'ai_bot_avatar_v1',
     AvatarContentType: avatarContentType(yamlConfig?.bot?.avatar?.contentType ?? process.env.AVATAR_CONTENT_TYPE),

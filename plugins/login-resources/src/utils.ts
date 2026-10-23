@@ -841,7 +841,8 @@ async function handleStatusError (message: string, err: Status): Promise<void> {
   if (
     err.code === platform.status.InvalidPassword ||
     err.code === platform.status.AccountNotFound ||
-    err.code === platform.status.InvalidOtp
+    err.code === platform.status.InvalidOtp ||
+    err.code === platform.status.TooManyOtpAttempts
   ) {
     // No need to send to analytics
     return
@@ -1008,6 +1009,25 @@ export async function doValidateOtp (
       Analytics.handleError(err)
       return [unknownError(err), null]
     }
+  }
+}
+
+export async function doLoginByLink (token: string): Promise<[Status, LoginInfo | null]> {
+  try {
+    const loginInfo = await getAccountClient(null).loginByLink(token)
+
+    Analytics.handleEvent(LoginEvents.LoginOtp, { ok: true, link: true })
+
+    return [OK, loginInfo]
+  } catch (err: any) {
+    Analytics.handleEvent(LoginEvents.LoginOtp, { ok: false, link: true })
+    if (err instanceof PlatformError) {
+      await handleStatusError('Login with link error', err.status)
+
+      return [err.status, null]
+    }
+    Analytics.handleError(err)
+    return [unknownError(err), null]
   }
 }
 

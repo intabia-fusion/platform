@@ -14,7 +14,7 @@
 //
 
 import type { LoginInfoWithWorkspaces } from '@hcengineering/account-client'
-import core, { WorkspaceEvent, type Account, type WorkspaceIds } from '@hcengineering/core'
+import core, { WorkspaceEvent, systemAccountUuid, type Account, type WorkspaceIds } from '@hcengineering/core'
 import type { ClientSessionCtx, OneSecondCounters } from '@hcengineering/server-core'
 import type { Token } from '@hcengineering/server-token'
 
@@ -144,5 +144,60 @@ describe('ClientSession.broadcast', () => {
     expect(result).toHaveLength(1)
     expect(result[0].event).toBe(WorkspaceEvent.BulkUpdate)
     expect(result[0].params._class).toEqual([core.class.Space])
+  })
+})
+
+describe('ClientSession raw domain reads', () => {
+  const make = (
+    account: string,
+    extra?: Record<string, string>,
+    allowUpload = false
+  ): { session: ClientSession, ctx: ClientSessionCtx, ops: any } => {
+    const session = new ClientSession(
+      { account, workspace: 'ws-1', extra } as unknown as Token,
+      {} as unknown as WorkspaceIds,
+      {} as unknown as Account,
+      {} as unknown as LoginInfoWithWorkspaces,
+      allowUpload,
+      {} as unknown as OneSecondCounters
+    )
+    const ops = { loadChunk: jest.fn(), loadDocs: jest.fn(), getDomainHash: jest.fn(), closeChunk: jest.fn() }
+    jest.spyOn(session, 'getOps').mockReturnValue(ops as any)
+    const ctx = {
+      ctx: { error: jest.fn() },
+      pipeline: {},
+      requestId: 1,
+      sendResponse: jest.fn(),
+      sendError: jest.fn()
+    } as unknown as ClientSessionCtx
+    return { session, ctx, ops }
+  }
+
+  async function readAll (session: ClientSession, ctx: ClientSessionCtx): Promise<void> {
+    await session.loadChunk(ctx, 'tx' as any)
+    await session.loadDocs(ctx, 'tx' as any, [])
+    await session.getDomainHash(ctx, 'tx' as any)
+    await session.closeChunk(ctx, 1)
+  }
+
+  it.each([
+    ['a user', 'acc-1', undefined],
+    ['a DocGuest', 'b6996120-416f-49cd-841e-e4a5d2e49c9b', { linkId: 'link1', guest: 'true' }]
+  ])('refuses %s session', async (_name, account, extra) => {
+    const { session, ctx, ops } = make(account, extra)
+    await readAll(session, ctx)
+    for (const op of Object.values(ops)) expect(op).not.toHaveBeenCalled()
+    expect(ctx.sendError).toHaveBeenCalledTimes(4)
+  })
+
+  it.each([
+    ['a backup', 'acc-1', { mode: 'backup' }, true],
+    ['the system', systemAccountUuid, undefined, false],
+    ['an admin', 'acc-1', { admin: 'true' }, false]
+  ])('serves %s session', async (_name, account, extra, allowUpload) => {
+    const { session, ctx, ops } = make(account, extra, allowUpload)
+    await readAll(session, ctx)
+    for (const op of Object.values(ops)) expect(op).toHaveBeenCalledTimes(1)
+    expect(ctx.sendError).not.toHaveBeenCalled()
   })
 })

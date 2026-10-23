@@ -15,27 +15,33 @@
 //
 import core, {
   AccountRole,
+  type ArrOf,
   type AccountUuid,
   type AttachedDoc,
   type Class,
   type Collaborator,
   type Doc,
   type DocumentQuery,
+  DOMAIN_MODEL,
   type FindResult,
   generateId,
   getClassCollaborators,
   type LookupData,
   type MeasureContext,
+  type PersonId,
   type Position,
   type PullArray,
   type Ref,
+  type RefTo,
   type SearchOptions,
   type SearchQuery,
   type SearchResult,
   type SessionData,
   shouldShowArchived,
   type Space,
+  type SortingQuery,
   systemAccountUuid,
+  toFindResult,
   type Tx,
   type TxApplyIf,
   type TxCreateDoc,
@@ -55,7 +61,7 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
-import contact from '@hcengineering/contact'
+import contact, { type Person, type SocialIdentityRef } from '@hcengineering/contact'
 import { isOwner, isSystem } from './utils'
 
 interface SpaceInfo {
@@ -74,6 +80,25 @@ interface SpaceInfo {
  */
 
 const guestRoles = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest])
+
+// guest.class.PublicLink: the guest plugin is not a dependency of this package.
+const publicLinkClass = 'guest:class:PublicLink' as Ref<Class<Doc>>
+
+interface PublicLinkDoc extends Doc {
+  attachedTo?: Ref<Doc>
+  attachedToClass?: Ref<Class<Doc>>
+}
+
+// The SQL adapter drops other characters (escape) before reading a key: judge it the same way.
+const isLookupKey = (key: string): boolean => key.replace(/[^a-zA-ZА-Яа-яЁё0-9_.:$ -]/g, '').includes('$lookup')
+
+// A DocumentUpdate names a field directly or inside an operator such as $unset.
+function touchesField (ops: Record<string, any>, key: string): boolean {
+  if (key in ops) return true
+  return Object.keys(ops).some(
+    (op) => op.startsWith('$') && typeof ops[op] === 'object' && ops[op] !== null && key in ops[op]
+  )
+}
 
 export class SpaceSecurityMiddleware extends BaseMiddleware implements Middleware {
   private readonly spacesMap = new Map<Ref<Space>, SpaceInfo>()
@@ -620,9 +645,37 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         await this.handleTx(ctx, cudTx as TxCUD<Space>)
       } else {
         this.checkWriteAccess(ctx, cudTx, derived)
+        await this.checkPublicLinkTx(ctx, cudTx, derived)
         await this.handeCollaborator(ctx, cudTx as TxCUD<Collaborator>)
       }
     }
+  }
+
+  // A link's token reads the document it names: only its reader creates one, in its own space.
+  // After that only the server may re-point or move the link.
+  private async checkPublicLinkTx (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>, derived: boolean): Promise<void> {
+    const h = this.context.hierarchy
+    if (!h.isDerived(tx.objectClass, publicLinkClass) || derived || ctx.contextData.isTriggerCtx === true) return
+    if (isSystem(ctx.contextData.account, ctx)) return
+    const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    if (tx._class === core.class.TxUpdateDoc) {
+      const ops = (tx as TxUpdateDoc<Doc>).operations as Record<string, any>
+      if (['attachedTo', 'attachedToClass', 'space'].some((key) => touchesField(ops, key))) throw forbidden
+      return
+    }
+    if (tx._class !== core.class.TxCreateDoc) return
+    const { attachedTo, attachedToClass } = (tx as TxCreateDoc<Doc>).attributes as any
+    if (attachedTo == null || attachedToClass == null || !h.hasClass(attachedToClass)) throw forbidden
+    const doc = (
+      await this.next?.findAll(ctx, attachedToClass as Ref<Class<Doc>>, { _id: attachedTo }, { limit: 1 })
+    )?.[0]
+    if (doc === undefined) throw forbidden
+    if (tx.objectSpace !== this.getPublicLinkSpace(doc)) throw forbidden
+  }
+
+  // Same rule as getPublicLinkSpace in the guest plugin, which this package cannot import.
+  private getPublicLinkSpace (doc: Doc): Ref<Space> {
+    return this.context.hierarchy.isDerived(doc._class, core.class.Space) ? (doc._id as Ref<Space>) : doc.space
   }
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
@@ -822,22 +875,139 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     options?: ServerFindOptions<T>
   ): Promise<FindResult<T>> {
     await this.init(ctx)
+    let findOptions = options
+    if (ctx.contextData.account.role === AccountRole.DocGuest) {
+      // Only an adapter that filters by the link may answer a guest. The model has no adapter.
+      const domain = this.context.hierarchy.findDomain(_class)
+      if (domain !== undefined && domain !== DOMAIN_MODEL) {
+        const adapter = this.context.adapterManager?.getAdapter(domain, false)
+        if (adapter?.docGuestSecurity !== true) return toFindResult([])
+      }
+      // A $lookup key in the query acts on joined rows, which addSecurity does not filter:
+      // the answer would tell what those rows hold. An empty one does not depend on them.
+      if (Object.keys(query ?? {}).some(isLookupKey)) return toFindResult([])
+      // The model answers from modelDb without the link scope; only a lookup could reach rows beyond it.
+      if (domain !== DOMAIN_MODEL || options?.lookup !== undefined) await this.resolveGuestLink(ctx)
+      // Associations are joined without addSecurity and would read past the shared document.
+      if (options?.associations !== undefined) findOptions = { ...options, associations: undefined }
+      // The same keys in the sort would order by those rows.
+      if (options?.sort !== undefined) {
+        const sort = Object.fromEntries(Object.entries(options.sort).filter(([key]) => !isLookupKey(key)))
+        findOptions = { ...findOptions, sort: sort as SortingQuery<T> }
+      }
+    }
 
     // Security filtering is handled at the database (PostgreSQL) level via addSecurity().
     // This middleware only needs to filter lookup results client-side.
-    const findResult = await this.provideFindAll(ctx, _class, query, options)
-    const account = ctx.contextData.account
-    if (account.role !== AccountRole.DocGuest) {
-      if (options?.lookup !== undefined) {
-        const showArchived: boolean = shouldShowArchived(query, options)
-        for (const object of findResult) {
-          if (object.$lookup !== undefined) {
-            this.filterLookup(ctx, object.$lookup, showArchived)
-          }
+    const findResult = await this.provideFindAll(ctx, _class, query, findOptions)
+    if (findOptions?.lookup !== undefined) {
+      const showArchived: boolean = shouldShowArchived(query, findOptions)
+      for (const object of findResult) {
+        if (object.$lookup !== undefined) {
+          this.filterLookup(ctx, object.$lookup, showArchived)
         }
       }
     }
     return findResult
+  }
+
+  // A DocGuest reads what its link names; a gone or revoked link leaves nothing to read.
+  private async resolveGuestLink (ctx: MeasureContext<SessionData>): Promise<void> {
+    const link = ctx.contextData.guestLink
+    if (link === undefined) return
+    link.attachedTo = undefined
+    link.ids = undefined
+    // Like init: no session data, so nothing is filtered. The guest gets the scope built here.
+    const scope = await (ctx as MeasureContext).with('guest-link', {}, async (ctx) => {
+      ctx.contextData = undefined
+      return await this.getGuestScope(ctx, link._id)
+    })
+    if (scope === undefined) ctx.contextData.guestLink = undefined
+    else Object.assign(link, scope)
+  }
+
+  private async getGuestScope (
+    ctx: MeasureContext,
+    linkId: Ref<Doc>
+  ): Promise<{ attachedTo: Ref<Doc>, ids: Record<string, Ref<Doc>[]> } | undefined> {
+    const h = this.context.hierarchy
+    const found = (await this.next?.findAll(ctx, publicLinkClass, { _id: linkId }, { limit: 1 }))?.[0] as
+      | PublicLinkDoc
+      | undefined
+    // A link made before attachedToClass was recorded sits in core.space.Workspace, where
+    // every member reads its url.
+    if (found?.attachedTo == null || found.attachedToClass == null || !h.hasClass(found.attachedToClass)) return
+    const docDomain = h.findDomain(found.attachedToClass)
+    if (docDomain === undefined) return
+    const doc = (await this.next?.findAll(ctx, found.attachedToClass, { _id: found.attachedTo }, { limit: 1 }))?.[0]
+    // A link stays behind when its document moves to another space; a gone document leaves
+    // it empty. Either way it is revoked.
+    if (doc === undefined || found.space !== this.getPublicLinkSpace(doc)) return
+
+    // An id is a key within its domain only (GitHub keeps DocSyncInfo under its task's id).
+    const ids: Record<string, Ref<Doc>[]> = { [docDomain]: [found.attachedTo] }
+    const add = (_class: Ref<Class<Doc>>, id: Ref<Doc>): void => {
+      const domain = h.findDomain(_class)
+      if (domain !== undefined) (ids[domain] ??= []).push(id)
+    }
+    if (!h.isDerived(doc._class, core.class.Space)) add(core.class.Space, doc.space)
+    const socialIds = [doc.createdBy, doc.modifiedBy].filter((it): it is PersonId => it != null)
+    const persons = this.getPersonRefs(doc)
+    // Identities map the author to a person. Field values stay only if they are persons:
+    // a Ref is not checked on write.
+    const [identities, people] = await Promise.all([
+      this.next?.findAll(
+        ctx,
+        contact.class.SocialIdentity,
+        { _id: { $in: socialIds as SocialIdentityRef[] } },
+        { projection: { attachedTo: 1 } }
+      ),
+      persons.length === 0
+        ? undefined
+        : this.next?.findAll(ctx, contact.class.Person, { _id: { $in: persons } }, { projection: { _id: 1 } })
+    ])
+    for (const it of people ?? []) add(contact.class.Person, it._id)
+    for (const it of identities ?? []) add(contact.class.Person, it.attachedTo)
+    return { attachedTo: found.attachedTo, ids }
+  }
+
+  // Values of the document's Ref<Person> fields, single or arrays: assignee and the like.
+  private getPersonRefs (doc: Doc): Ref<Person>[] {
+    const h = this.context.hierarchy
+    const refs: Ref<Person>[] = []
+    for (const [key, attr] of h.getAllAttributes(doc._class)) {
+      const type = attr.type._class === core.class.ArrOf ? (attr.type as ArrOf<Doc>).of : attr.type
+      if (type._class !== core.class.RefTo || !h.isDerived((type as RefTo<Doc>).to, contact.class.Person)) continue
+      const value = (doc as any)[key]
+      for (const ref of Array.isArray(value) ? value : [value]) {
+        if (typeof ref === 'string') refs.push(ref as Ref<Person>)
+      }
+    }
+    return refs
+  }
+
+  // Nested lookups are joined without addSecurity as well, so every level gets the same filter.
+  private filterGuestLookup (link: SessionData['guestLink'], lookup: Record<string, any>): void {
+    for (const key in lookup) {
+      const val = lookup[key]
+      if (val === undefined) continue
+      const kept: any[] = (Array.isArray(val) ? val : [val]).filter((it) => this.isGuestLinkDoc(link, it))
+      lookup[key] = Array.isArray(val) ? kept : kept[0]
+      for (const doc of kept) {
+        if (doc.$lookup !== undefined) this.filterGuestLookup(link, doc.$lookup)
+      }
+    }
+  }
+
+  private isGuestLinkDoc (link: SessionData['guestLink'], doc: Doc & { attachedTo?: Ref<Doc> }): boolean {
+    if (doc.space === core.space.Model) return true
+    if (link === undefined) return false
+    const h = this.context.hierarchy
+    // Each link to the document carries its own token in url.
+    if (h.isDerived(doc._class, publicLinkClass)) return doc._id === link._id
+    const domain = h.findDomain(doc._class)
+    if (domain !== undefined && link.ids?.[domain]?.includes(doc._id) === true) return true
+    return link.attachedTo !== undefined && doc.attachedTo === link.attachedTo
   }
 
   override async searchFulltext (
@@ -848,6 +1018,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     await this.init(ctx)
     const newQuery = { ...query }
     const account = ctx.contextData.account
+    if (account.role === AccountRole.DocGuest) {
+      return { docs: [] }
+    }
     if (!isSystem(account, ctx)) {
       const allowed = this.getAllAllowedSpaces(ctx, false, true)
       if (query.spaces !== undefined) {
@@ -864,6 +1037,10 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (Object.keys(lookup).length === 0) return
     const account = ctx.contextData.account
     if (isSystem(account, ctx)) return
+    if (account.role === AccountRole.DocGuest) {
+      this.filterGuestLookup(ctx.contextData.guestLink, lookup)
+      return
+    }
     const owner = isOwner(account, ctx)
     const h = this.context.hierarchy
     const allowedSpaces = new Set(this.getAllAllowedSpaces(ctx, showArchived))

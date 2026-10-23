@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,10 @@
 //
 
 import core, {
+  type Account,
+  aiBotAccountEmail,
   type MeasureContext,
+  SocialIdType,
   type Tx,
   systemAccountUuid,
   type SessionData,
@@ -28,7 +32,12 @@ import {
   type PipelineContext
 } from '@hcengineering/server-core'
 
-export const aiBotAccountEmail = 'huly.ai.bot@hc.engineering'
+// The value alone matches a social id of any type; the bot is told by a confirmed email.
+export function isAiBotAccount (account: Pick<Account, 'fullSocialIds'>): boolean {
+  return account.fullSocialIds.some(
+    (it) => it.type === SocialIdType.EMAIL && it.value === aiBotAccountEmail && it.verifiedOn != null
+  )
+}
 
 /**
  * @public
@@ -49,7 +58,7 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
   tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const account = ctx.contextData.account
 
-    if (account.uuid === systemAccountUuid || account.fullSocialIds.some((it) => it.value === aiBotAccountEmail)) {
+    if (account.uuid === systemAccountUuid || isAiBotAccount(account)) {
       // TODO: We need to enhance allowed list in case of user service, on behalf of user activities.
 
       // We pass for system accounts and services.

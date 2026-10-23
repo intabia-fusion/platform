@@ -125,4 +125,55 @@ describe('SlidingWindowRateLimitter', () => {
     const r2 = limiter.checkRateLimit('user1')
     expect(r2.remaining).toBe(9)
   })
+
+  describe('tracked keys', () => {
+    const tracked = (limiter: SlidingWindowRateLimitter): number => (limiter as any).rateLimits.size
+    const fill = (limiter: SlidingWindowRateLimitter, count: number): void => {
+      for (let i = 0; i < count; i++) limiter.checkRateLimit(`key-${i}`)
+    }
+
+    it('drops keys with an empty window once too many are tracked, and keeps the live one', () => {
+      const limiter = new SlidingWindowRateLimitter(5, 1000, () => clock)
+      limiter.checkRateLimit('hot')
+      fill(limiter, 10000)
+      expect(tracked(limiter)).toBe(10001)
+
+      clock += 600
+      limiter.checkRateLimit('hot')
+      clock += 600
+      limiter.checkRateLimit('new')
+
+      // Only 'hot' still has a request inside the window, and it keeps counting from it.
+      expect(tracked(limiter)).toBe(2)
+      expect(limiter.checkRateLimit('hot').current).toBe(2)
+    })
+
+    it('keeps every key while its window is still open', () => {
+      const limiter = new SlidingWindowRateLimitter(5, 1000, () => clock)
+      fill(limiter, 10001)
+
+      clock += 500
+      limiter.checkRateLimit('new')
+
+      expect(tracked(limiter)).toBe(10002)
+    })
+
+    it('sweeps at most once per window', () => {
+      const limiter = new SlidingWindowRateLimitter(5, 1000, () => clock)
+      fill(limiter, 10001)
+      clock += 1500
+      limiter.checkRateLimit('first')
+      expect(tracked(limiter)).toBe(1)
+
+      fill(limiter, 10001)
+      clock += 1100
+      limiter.checkRateLimit('second')
+      expect(tracked(limiter)).toBe(1)
+
+      fill(limiter, 10001)
+      clock += 500
+      limiter.checkRateLimit('third')
+      expect(tracked(limiter)).toBe(10003)
+    })
+  })
 })

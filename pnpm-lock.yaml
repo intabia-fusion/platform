@@ -32539,9 +32539,6 @@ importers:
       morgan:
         specifier: 'catalog:'
         version: 1.12.0(supports-color@8.1.1)
-      node-poppler:
-        specifier: ^8.0.4
-        version: 8.0.4
       sharp:
         specifier: 'catalog:'
         version: 0.34.5
@@ -44119,6 +44116,9 @@ importers:
       dotenv:
         specifier: 'catalog:'
         version: 16.6.1
+      kafkajs:
+        specifier: 'catalog:'
+        version: 2.2.4(patch_hash=40d4a2250005d169e4c76f12ce0ee2982ebf1de293ea00762e19134306867af2)
       livekit-server-sdk:
         specifier: 'catalog:'
         version: 2.18.0
@@ -53844,10 +53844,6 @@ packages:
   node-localstorage@2.2.1:
     resolution: {integrity: sha512-vv8fJuOUCCvSPjDjBLlMqYMHob4aGjkmrkaE42/mZr0VT+ZAU10jRF8oTnX9+pgU9/vYJ8P7YT3Vd6ajkmzSCw==}
     engines: {node: '>=0.12'}
-
-  node-poppler@8.0.4:
-    resolution: {integrity: sha512-8bp200rELOX72mHv0cfnuDs7LWmd3jr3Y9pxgaysjeSxnUiZxhTA0Pg+SaXkTplIK+r4CfIVAfrla4omNq6UtA==}
-    engines: {node: '>=20'}
 
   node-releases@2.0.54:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
@@ -68060,11 +68056,6 @@ snapshots:
   node-localstorage@2.2.1:
     dependencies:
       write-file-atomic: 1.3.4
-
-  node-poppler@8.0.4:
-    dependencies:
-      camelcase: 6.3.0
-      semver: 7.7.3
 
   node-releases@2.0.54: {}
 

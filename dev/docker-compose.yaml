@@ -553,7 +553,6 @@ services:
       # Bot Identity Configuration
       - FIRST_NAME=Julia
       - LAST_NAME=AI
-      - PASSWORD=password
       - AVATAR_PATH=./avatar.png
       - AVATAR_CONTENT_TYPE=image/png
 

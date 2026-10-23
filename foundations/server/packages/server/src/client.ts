@@ -16,6 +16,7 @@
 
 import type { LoginInfoWithWorkspaces } from '@hcengineering/account-client'
 import {
+  AccountRole,
   generateId,
   TxProcessor,
   type Account,
@@ -46,7 +47,8 @@ import {
   type TxCUD,
   type TxResult,
   type WorkspaceDataId,
-  type WorkspaceIds
+  type WorkspaceIds,
+  systemAccountUuid
 } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import {
@@ -215,6 +217,11 @@ export class ClientSession implements Session {
       undefined,
       this.token.extra?.readonly === 'true'
     )
+    if (this.account.role === AccountRole.DocGuest) {
+      // A fresh object per request: a revoked link stops working on the next request.
+      const linkId = this.token.extra?.linkId
+      contextData.guestLink = typeof linkId === 'string' && linkId !== '' ? { _id: linkId as Ref<Doc> } : undefined
+    }
     ctx.ctx.contextData = contextData
   }
 
@@ -401,7 +408,16 @@ export class ClientSession implements Session {
     return this.ops
   }
 
+  // Raw domain reads skip space security: only backup, system and admin sessions get them.
+  private canReadRawDomains (): boolean {
+    return this.allowUpload || this.isAdmin || this.token.account === systemAccountUuid
+  }
+
   async loadChunk (ctx: ClientSessionCtx, domain: Domain, idx?: number): Promise<void> {
+    if (!this.canReadRawDomains()) {
+      await ctx.sendError(ctx.requestId, 'Forbidden', new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      return
+    }
     this.lastRequest = Date.now()
     try {
       const result = await this.getOps(ctx.pipeline).loadChunk(ctx.ctx, domain, idx)
@@ -413,6 +429,10 @@ export class ClientSession implements Session {
   }
 
   async getDomainHash (ctx: ClientSessionCtx, domain: Domain): Promise<void> {
+    if (!this.canReadRawDomains()) {
+      await ctx.sendError(ctx.requestId, 'Forbidden', new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      return
+    }
     this.lastRequest = Date.now()
     try {
       const result = await this.getOps(ctx.pipeline).getDomainHash(ctx.ctx, domain)
@@ -424,6 +444,10 @@ export class ClientSession implements Session {
   }
 
   async closeChunk (ctx: ClientSessionCtx, idx: number): Promise<void> {
+    if (!this.canReadRawDomains()) {
+      await ctx.sendError(ctx.requestId, 'Forbidden', new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      return
+    }
     try {
       this.lastRequest = Date.now()
       await this.getOps(ctx.pipeline).closeChunk(ctx.ctx, idx)
@@ -435,6 +459,10 @@ export class ClientSession implements Session {
   }
 
   async loadDocs (ctx: ClientSessionCtx, domain: Domain, docs: Ref<Doc>[]): Promise<void> {
+    if (!this.canReadRawDomains()) {
+      await ctx.sendError(ctx.requestId, 'Forbidden', new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      return
+    }
     this.lastRequest = Date.now()
     try {
       const result = await this.getOps(ctx.pipeline).loadDocs(ctx.ctx, domain, docs)

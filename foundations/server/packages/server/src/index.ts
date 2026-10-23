@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-export * from './blobs'
 export * from './client'
 export * from './sessionManager'
 export * from './starter'

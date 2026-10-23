@@ -134,14 +134,13 @@ async function OnDocCreated (txes: TxCreateDoc<Doc>[], control: TriggerControl):
     if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
     const isSpace = control.hierarchy.isDerived(tx.objectClass, core.class.Space)
     const space = isSpace ? (tx.objectId as Ref<Space>) : tx.objectSpace
-    result.push(
-      control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
-        attachedTo: tx.objectId,
-        attachedToClass: tx.objectClass,
-        collection: 'readStates',
-        latestMessageTimestamp: 0
-      })
-    )
+    const createTx = control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
+      attachedTo: tx.objectId,
+      attachedToClass: tx.objectClass,
+      collection: 'readStates',
+      latestMessageTimestamp: 0
+    })
+    result.push(control.txFactory.createTxCollectionCUD(tx.objectClass, tx.objectId, space, 'readStates', createTx))
   }
 
   return result

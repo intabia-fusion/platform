@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,7 +30,7 @@ import { pipeline } from 'stream/promises'
 
 import { createCache } from './cache'
 import { type Config } from './config'
-import { type RequestWithAuth, errorHandler, keepAlive } from './middleware'
+import { type RequestWithAuth, errorHandler, keepAlive, withBlob } from './middleware'
 import { createPreviewService, ThumbnailParams } from './service'
 import { TemporaryDir } from './tempdir'
 
@@ -147,7 +148,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   const tempDir = new TemporaryDir(ctx, 'preview-')
 
   const cache = createCache(ctx, config.Cache)
-  const service = createPreviewService(storageAdapter, cache, tempDir)
+  const service = createPreviewService(storageAdapter, cache, tempDir, config)
 
   const app = express()
   app.disable('x-powered-by')
@@ -175,6 +176,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.get(
     '/metadata/:workspace/:name',
+    withBlob,
     wrapRequest(ctx, 'getMetadata', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name
@@ -186,6 +188,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.get(
     '/image/:transform/:workspace/:name',
+    withBlob,
     wrapRequest(ctx, 'getThumbnail', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name

@@ -50,6 +50,7 @@ export default mergeIds(trackerId, tracker, {
   },
   string: {
     ClassicProject: '' as IntlString,
+    FindIssue: '' as IntlString,
     More: '' as IntlString,
     Delete: '' as IntlString,
     Open: '' as IntlString,

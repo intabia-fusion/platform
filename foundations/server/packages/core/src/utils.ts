@@ -187,6 +187,7 @@ export class SessionDataImpl implements SessionData {
   _broadcast: SessionData['broadcast'] | undefined
   asyncRequests: SessionData['asyncRequests']
   seatReadOnly: SessionData['seatReadOnly']
+  guestLink: SessionData['guestLink']
 
   constructor (
     readonly account: Account,

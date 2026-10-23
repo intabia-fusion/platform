@@ -391,7 +391,9 @@ export class TSessionManager implements SessionManager {
         for (const val of workspace.sessions.values()) {
           // Services may hold a person account (aibot), so the system account alone is not enough
           // to tell a real visit from a service connection.
-          if (val.session.getUser() !== systemAccountUuid && val.session.token?.extra?.service === undefined) {
+          const extra = val.session.token?.extra
+          // Public-link guests do not count as a visit, same as in account getWorkspaceInfo.
+          if (val.session.getUser() !== systemAccountUuid && extra?.service === undefined && extra?.guest !== 'true') {
             workspacesToUpdate.push(wsId)
             break
           }
@@ -1061,11 +1063,19 @@ export class TSessionManager implements SessionManager {
           }
           // Buffer drained enough - emit a single BulkUpdate event covering all dropped classes
           // before delivering the current broadcast so client query cache invalidates.
-          const pending = sock.takePendingRefresh?.() ?? null
           let outTx = tx
           let sendMemo: SendMemo | undefined = memo
+          if (session.session.getUser() === guestAccount) {
+            // A DocGuest reads only its link's document; document txes would bypass that.
+            outTx = tx.filter(
+              (it) => it._class === core.class.TxWorkspaceEvent || it._class === core.class.TxModelUpgrade
+            )
+            sendMemo = undefined
+            if (outTx.length === 0) continue
+          }
+          const pending = sock.takePendingRefresh?.() ?? null
           if (pending !== null && pending.length > 0) {
-            outTx = [buildRefreshTx(pending), ...tx]
+            outTx = [buildRefreshTx(pending), ...outTx]
             sendMemo = undefined // this socket gets a different payload
             ctx.measure('broadcast-flushed-refresh', pending.length)
           }

@@ -178,6 +178,7 @@ export default plugin(platformId, {
     WorkspaceLimitReached: '' as StatusCode<{ workspace: string }>,
     ApiKeyLimitReached: '' as StatusCode<{ limit: number }>,
     InvalidOtp: '' as StatusCode,
+    TooManyOtpAttempts: '' as StatusCode<{ retryOn: number, minutes: number }>,
     InviteNotFound: '' as StatusCode<{ email: string }>,
     MailboxError: '' as StatusCode<{ reason: string }>,
     SocialIdAlreadyExists: '' as StatusCode,

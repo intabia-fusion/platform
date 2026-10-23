@@ -219,6 +219,7 @@
     "AllFilters": "所有过滤器",
     "NoDescription": "无描述",
     "SearchIssue": "搜索任务…",
+    "FindIssue": "查找任务",
     "StatusHistory": "状态历史",
     "NewSubIssue": "添加子问题",
     "AddLabel": "添加标签",

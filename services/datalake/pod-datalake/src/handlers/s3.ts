@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,7 @@ import { type Request, type Response } from 'express'
 
 import { type Datalake } from '../datalake'
 import { type LimitsState } from '../limits'
-import { type RequestWithAuth } from '../middleware'
+import { type RequestWithAuth, isServiceToken } from '../middleware'
 import { type TemporaryDir } from '../tempdir'
 
 export async function handleS3CreateBlobParams (
@@ -50,8 +51,7 @@ export async function handleS3CreateBlob (
   }
 
   // Block user uploads when workspace disk or payment limit is exhausted (service tokens bypass).
-  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
-  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+  if (!isServiceToken((req as RequestWithAuth).token) && limitsState?.isExhausted(workspace) === true) {
     res.status(413).json({ message: 'Resource limit exceeded' })
     return
   }

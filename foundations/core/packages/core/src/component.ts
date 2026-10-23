@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -106,6 +107,9 @@ export const systemAccount: Account = {
 export const configUserAccountUuid = '0d94731c-0787-4bcd-aefe-304efc3706b1' as AccountUuid
 
 export const readOnlyGuestAccountUuid = '83bbed9a-0867-4851-be32-31d49d1d42ce' as AccountUuid
+
+// Email of the ai-bot account: the one place the platform recognises the bot by.
+export const aiBotAccountEmail = 'huly.ai.bot@hc.engineering'
 
 export default plugin(coreId, {
   class: {

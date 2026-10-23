@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,12 +17,10 @@
 import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import type { StorageAdapter } from '@hcengineering/server-core'
 
-import { createWriteStream } from 'fs'
-import { pipeline } from 'stream/promises'
-
 import { getImageMetadata } from '../metadata'
 import { TemporaryDir } from '../tempdir'
 import { type PreviewFile, type PreviewMetadata, type PreviewProvider } from '../types'
+import { copyBlob } from '../utils/blob'
 import { pdfToImage } from '../utils/pdf'
 import { docToPdf } from '../utils/libreoffice'
 
@@ -67,7 +66,9 @@ function getFileExtension (contentType: string): string {
 export class DocProvider implements PreviewProvider {
   constructor (
     private readonly storage: StorageAdapter,
-    private readonly tempDir: TemporaryDir
+    private readonly tempDir: TemporaryDir,
+    private readonly timeout: number,
+    private readonly pdfTimeout: number
   ) {}
 
   supports (contentType: string): boolean {
@@ -82,17 +83,16 @@ export class DocProvider implements PreviewProvider {
     let pngFile = tmpFile + '.png'
 
     try {
-      await ctx.with('blob-read', {}, async (ctx) => {
-        const stream = await this.storage.get(ctx, { uuid: workspace } as any, name)
-        await pipeline(stream, createWriteStream(docFile))
+      await ctx.with('blob-read', {}, (ctx) => {
+        return copyBlob(ctx, this.storage, workspace, name, docFile, this.timeout)
       })
 
       pdfFile = await ctx.with('doc-to-pdf', {}, (ctx) => {
-        return docToPdf(ctx, docFile)
+        return docToPdf(ctx, docFile, this.timeout)
       })
 
       pngFile = await ctx.with('pdf-to-png', {}, (ctx) => {
-        return pdfToImage(ctx, pdfFile)
+        return pdfToImage(ctx, pdfFile, this.pdfTimeout)
       })
     } catch (err: any) {
       // remove temporary files in case of error

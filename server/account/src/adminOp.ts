@@ -24,7 +24,7 @@ import {
 } from '@hcengineering/server-token'
 
 import { type AccountDB } from './types'
-import { getCallerEmailSocialId, logAdminAction, verifyOperationOtp } from './utils'
+import { logAdminAction, verifyOperationOtp } from './utils'
 
 const OTP_FAIL_WINDOW_SEC = 300
 const OTP_FAIL_LIMIT = 5
@@ -59,9 +59,9 @@ export function requireAdminSession (ctx: MeasureContext, token: string): Token 
 }
 
 /**
- * Consumes an admin OTP with a per-code attempt limit. Hitting the limit drops the outstanding
- * code, so a burst of guesses cannot be resumed - the admin has to request a new one, and issuing
- * one is itself throttled by OTP_RETRY_DELAY.
+ * Consumes an admin OTP with a per-code attempt limit. Hitting the limit refuses every further
+ * guess and keeps the code until it expires, so issuing a new one stays throttled by
+ * OTP_RETRY_DELAY and a burst of guesses cannot be resumed.
  */
 export async function verifyAdminOtpLimited (
   ctx: MeasureContext,
@@ -77,11 +77,6 @@ export async function verifyAdminOtpLimited (
   const failures = recent.filter((a) => a.action === 'otp_failed' && a.createdOn > issuedOn)
 
   if (failures.length >= OTP_FAIL_LIMIT) {
-    // Drop the outstanding code as well: guessing must not be resumable within the same window.
-    const sid = await getCallerEmailSocialId(ctx, db, token).catch(() => undefined)
-    if (sid !== undefined) {
-      await db.otp.deleteMany({ socialId: sid._id })
-    }
     throw forbidden()
   }
 

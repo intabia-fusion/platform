@@ -127,6 +127,8 @@
     "DeleteAccountConfirm": "Le compte sera marqué pour suppression et définitivement effacé dans {days} jours. Si vous vous connectez avant, vous pourrez annuler. Continuer ?",
     "DeleteAccountBlockedAdmin": "Un compte administrateur ne peut pas être supprimé ici.",
     "DeleteAccountBlocked": "Vous êtes le seul propriétaire de : {workspaces}. Supprimez d'abord ces espaces de travail ou transférez-les.",
-    "CodeSent": "Un code de confirmation a été envoyé à votre adresse e-mail."
+    "CodeSent": "Un code de confirmation a été envoyé à votre adresse e-mail.",
+    "LoginLinkCaption": "Connexion à votre compte",
+    "LoginLinkInvalid": "Ce lien de connexion a expiré ou a déjà été utilisé"
   }
 }

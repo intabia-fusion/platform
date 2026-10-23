@@ -127,6 +127,8 @@
     "CancelWorkspaceDeletion": "Отменить удаление",
     "AccountDeletionScheduled": "Аккаунт помечен на удаление",
     "AccountDeletionScheduledDesc": "Аккаунт будет удалён {date}. Отмените удаление, чтобы сохранить его. Пространства, которые вы отправили на удаление, останутся помеченными - каждое нужно восстановить отдельно.",
-    "CancelAccountDeletion": "Отменить удаление"
+    "CancelAccountDeletion": "Отменить удаление",
+    "LoginLinkCaption": "Вход в аккаунт",
+    "LoginLinkInvalid": "Ссылка для входа устарела или уже была использована"
   }
 }

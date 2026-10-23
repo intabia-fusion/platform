@@ -127,6 +127,8 @@
     "DeleteAccountConfirm": "L'account sarà contrassegnato per l'eliminazione e rimosso definitivamente tra {days} giorni. Accedendo prima potrai annullare. Continuare?",
     "DeleteAccountBlockedAdmin": "Un account amministratore non può essere eliminato da qui.",
     "DeleteAccountBlocked": "Sei l'unico proprietario di: {workspaces}. Elimina prima questi spazi di lavoro o trasferiscili.",
-    "CodeSent": "Un codice di conferma è stato inviato alla tua email."
+    "CodeSent": "Un codice di conferma è stato inviato alla tua email.",
+    "LoginLinkCaption": "Accedi al tuo account",
+    "LoginLinkInvalid": "Questo link di accesso è scaduto o è già stato usato"
   }
 }

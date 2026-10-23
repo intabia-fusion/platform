@@ -24,6 +24,7 @@
     "AccountAlreadyConfirmed": "Conta já confirmada",
     "WorkspaceAlreadyExists": "Espaço de trabalho já existe",
     "InvalidOtp": "Código inválido",
+    "TooManyOtpAttempts": "Muitas tentativas incorretas. Tente novamente em {minutes, plural, one {# minuto} other {# minutos}}. Se este endereço tiver uma conta, enviamos um e-mail com um link para entrar.",
     "PasswordLoginLocked": "O login com senha está bloqueado devido a muitas tentativas incorretas. Use um método de login OTP para desbloquear sua conta.",
     "AccountBlocked": "Sua conta foi bloqueada pelo administrador.",
     "WorkspaceReadOnly": "Este workspace está somente leitura no momento.",

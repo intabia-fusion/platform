@@ -57,3 +57,15 @@ export class NotFoundError extends HttpError {
     this.name = 'NotFoundError'
   }
 }
+
+// An external tool failed on a blob, so it fails the same way again. retryAfter (ms) is set
+// when it ran out of time or was killed: the load may be to blame, so retry after that long.
+export class ToolError extends Error {
+  constructor (
+    message: string,
+    readonly retryAfter?: number
+  ) {
+    super(message)
+    this.name = 'ToolError'
+  }
+}
