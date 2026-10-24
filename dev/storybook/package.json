@@ -7,6 +7,9 @@
   "scripts": {
     "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build -o storybook-static",
+    "bundle": "storybook build -o bundle",
+    "docker:build": "node ../../common/scripts/run_in_bash.js ../../common/scripts/docker_build.sh storybook",
+    "generate-screens": "node scripts/generate-screens.mjs",
     "format": "format src",
     "svelte-check": "do-svelte-check",
     "_phase:format": "format src",

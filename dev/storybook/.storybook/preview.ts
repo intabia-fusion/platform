@@ -20,6 +20,7 @@ import registerUiStrings from '@hcengineering/ui/src/lang'
 import type { Preview } from '@storybook/svelte'
 
 import './preview.scss'
+import '../src/design/setup'
 import StoryTheme from '../src/decorators/StoryTheme.svelte'
 import { hidePassthroughAttributes, organizeProps, prettifyTypeNames } from '../src/helpers/argTypes'
 import { systemTheme } from './theme'

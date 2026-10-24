@@ -1,0 +1,1 @@
+const VIEW = { page: 'Tracker my issues', frame: 'My issues list', myIssues: true, title: 'My issues', titleIcon: 'tracker/myissues', tabs: ['Assigned', 'Active', 'Backlog', 'Created', 'Subscribed'], tab: 'Assigned', assignee: 'Maria Cole' }

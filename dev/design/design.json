@@ -1,0 +1,135 @@
+{
+  "project": "Intabia",
+  "user": {
+    "name": "Designer",
+    "email": "designer@local.dev",
+    "password": "designer123"
+  },
+  "files": [
+    {
+      "name": "Intabia UI Kit",
+      "shared": true,
+      "build": [
+        [
+          "../penpot/library/ui-kit.js"
+        ]
+      ]
+    },
+    {
+      "name": "FUSIO-1613 Доски задач",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "build": [
+        [
+          "screens/fusio-1613/_page-as-is.js",
+          "screens/current/kanban.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02-board-view.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02a-board-selector.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02b-board-popups.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02d-board-explain.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02e-board-column-statuses.js"
+        ],
+        [
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/03-board-settings.js"
+        ]
+      ]
+    },
+    {
+      "name": "FUSIO-1621 Настройки проекта",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "build": [
+        [
+          "screens/fusio-1621/01-project-settings.js"
+        ]
+      ]
+    },
+    {
+      "name": "Intabia Screens",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "storybook": "Screens",
+      "build": [
+        [
+          "screens/current/workbench.js"
+        ],
+        [
+          "screens/current/kanban.js"
+        ],
+        [
+          "screens/current/tracker-issues.js",
+          "screens/current/tracker-issues-end.js"
+        ],
+        [
+          "screens/current/_page-my-issues.js",
+          "screens/current/tracker-issues.js",
+          "screens/current/tracker-issues-end.js"
+        ],
+        [
+          "screens/current/_page-new-issue.js",
+          "screens/current/tracker-issues.js",
+          "screens/current/tracker-new-issue.js"
+        ],
+        [
+          "screens/current/tracker-issue.js"
+        ],
+        [
+          "screens/current/settings-workspace.js"
+        ],
+        [
+          "screens/current/tracker-boards.js"
+        ],
+        [
+          "screens/current/tracker-board-settings.js"
+        ],
+        [
+          "screens/current/settings-project.js"
+        ],
+        [
+          "screens/current/chat-channel.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-signin.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-signup.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-recovery.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-workspaces.js"
+        ]
+      ]
+    }
+  ]
+}

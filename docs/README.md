@@ -13,6 +13,7 @@
 | [disableFeatures.md](disableFeatures.md) | Отключение модулей в self-hosted установке |
 | [lint-phase-optimization.md](lint-phase-optimization.md) | Lint-фаза сборки: память и параллелизм |
 | [macos_signing.md](macos_signing.md) | Подпись и нотаризация desktop-приложения для macOS |
+| [penpot.md](penpot.md) | Локальный Penpot для макетов интерфейса: установка, MCP для Claude Code, макеты как код в `dev/design` и `dev/penpot` |
 
 ## Архитектура и карта фич
 

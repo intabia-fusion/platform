@@ -1,0 +1,5 @@
+.env
+.env.*
+.state.json
+.state.*.json
+files/

@@ -96,6 +96,7 @@
 - [dependency-upgrade-tooling.md](dependency-upgrade-tooling.md) - Dependency upgrade tooling
 - [eslint8_upgrade_fix_patterns.md](eslint8_upgrade_fix_patterns.md) - @typescript-eslint 6->8 fix patterns
 - [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (`@intabia-fusion/yama`)
+- [penpot.md](penpot.md) - Penpot 2.18.3: измерение текста, flex sizing, варианты, токены, export/import RPC
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
 - [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules, the no-duplicates fixer bug и пробел проверки относительно Storybook
