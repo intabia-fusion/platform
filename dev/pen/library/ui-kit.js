@@ -16,8 +16,8 @@ const nav = [
   { item: 'Components', icon: 'tracker/components', indent: true }
 ]
 const card = {
-  id: 'APP-12', cat: 'active', title: 'Fix the board layout when a column has no limit', priority: 'high', parent: 'Mobile app redesign', unread: true,
-  assignee: avatar, sub: '1/2', due: '30 Oct', component: 'iOS', labels: [['bug', 'Sky'], ['ux', 'Orange']], est: '4h', att: 1, com: 3
+  id: 'APP-12', cat: 'active', title: 'Fix the board layout when a column has no limit', priority: 'high', parent: 'Mobile app redesign',
+  assignee: avatar, sub: '1/2', due: '30 Oct', component: 'iOS', labels: [['bug', 'Sky'], ['ux', 'Orange']], est: '4h'
 }
 
 // ---- Actions ----
@@ -73,9 +73,12 @@ def('TagsAndFilters/FilterChip', kit.FilterChip('Priority', 'in', 'Urgent, High'
 def('TagsAndFilters/Swatch', kit.Swatch(P('Orange')))
 
 // ---- Tracker ----
-def('Tracker/IssueCard', kit.IssueCard(card), { hide: ['0/0/2', '0/1/0'], slots: ['card-labels', 'labels'] })
+def('Tracker/IssueCard', kit.IssueCard(card), { hide: ['0/0/1'], slots: ['chips'] })
+def('Tracker/IssueCard/normal', kit.IssueCard({ ...card, density: 'normal' }), { hide: ['0/0/1'], slots: ['chips'] })
+def('Tracker/IssueCard/compact', kit.IssueCard({ ...card, density: 'compact' }), { slots: ['meta'] })
+def('Tracker/IssueCard/dense', kit.IssueCard({ ...card, density: 'dense' }))
 def('Tracker/ColumnHeader', kit.ColumnHeader('In Progress', 'active', 6, 294, { limit: 8, action: 'Release', actionIcon: 'milestone', tools: true }), { hide: ['0/3', '1', '2'] })
-def('Tracker/KanbanColumn', kit.KanbanColumn({ name: 'In Progress', cat: 'active', count: 2, statuses: [['Review', 'active'], ['Testing', 'active']], cards: [card, { ...card, id: 'APP-13', parent: undefined, unread: undefined, labels: undefined, est: undefined, att: undefined, com: undefined }] }, 320, 760), { hide: ['2'], slots: ['statuses', 'cards'] })
+def('Tracker/KanbanColumn', kit.KanbanColumn({ name: 'In Progress', cat: 'active', count: 2, statuses: [['Review', 'active'], ['Testing', 'active']], cards: [card, { ...card, id: 'APP-13', parent: undefined, labels: undefined, est: undefined }] }, 320, 760), { hide: ['2'], slots: ['statuses', 'cards'] })
 const issueRow = {
   id: 'APP-12', cat: 'active', title: 'Fix the board layout when a column has no limit', priority: 'high', assignee: avatar, sub: '1/2', com: 3, att: 1,
   labels: [['bug', 'Sky']], milestone: 'Release 1.0', component: 'iOS', due: '30 Oct', est: '4h', rep: 2, created: '2 days ago', modified: 'Oct 21'
@@ -142,6 +145,33 @@ def('Workbench/Workbench/with side panel', kit.Workbench('Workbench', 0, 0, { ta
   kit.at(shell, kit.box('Overlay', { w: 1920, h: 1080, fill: '#00000033' }), 0, 0)
   def('Workbench/Workbench/with overlay', shell, { slots: ['Main panel', 'overlay'] })
 }
+
+// ---- Login ----
+{
+  const sample = kit.LoginPage('Login page', 0, 0)
+  def('Login/LoginPage', sample.frame, { slots: ['Card slot'] })
+}
+def('Login/LoginCard', kit.LoginCard(), { slots: ['$root'] })
+def('Login/LoginForm', kit.LoginForm(kit.LoginCard(), {}), { slots: ['$root'] })
+def('Login/LoginTabs', kit.LoginTabs('Platform', ['Sign up', 'Log In'], 'Log In'))
+def('Login/LoginTitle', kit.LoginTitle('Title'))
+def('Login/LoginTitle/subtitle', kit.LoginTitle('Title', { subtitle: 'Subtitle' }))
+def('Login/LoginField', kit.LoginField('Label', { value: 'Value' }))
+def('Login/LoginStatus', kit.LoginStatus('Message'))
+def('Login/LoginStatus/error', kit.LoginStatus('Message', { kind: 'error' }))
+for (const kind of ['primary', 'default']) def(`Login/LoginButton/${kind}`, kit.LoginButton('Button', { kind }))
+def('Login/LoginButton/primary/disabled', kit.LoginButton('Button', { kind: 'primary', disabled: true }))
+def('Login/LoginButton/provider', kit.LoginButton('Button', { kind: 'provider', icon: 'google' }))
+for (const name of ['google', 'github', 'openid']) def('Login/LoginIcon/' + name, kit.LoginIcon(name))
+def('Login/LoginProviders', kit.LoginProviders([['google', 'Sign in with Google'], ['github', 'Sign in with GitHub']]), { slots: ['$root'] })
+def('Login/LoginCheckbox', kit.LoginCheckbox(true, 'Label'))
+def('Login/LoginCheckbox/empty', kit.LoginCheckbox(false, 'Label'))
+def('Login/LoginLinks', kit.LoginLinks([['Caption', 'Link']]), { slots: ['$root'] })
+def('Login/LoginAction', kit.LoginAction('Action'))
+def('Login/LoginOtpHeader', kit.LoginOtpHeader('Enter the code', 'We sent the code to', 'name@example.com'))
+def('Login/LoginCode', kit.LoginCode('123456'))
+def('Login/LoginWorkspace', kit.LoginWorkspace('Workspace', 'last visit 2 days ago'))
+def('Login/LoginBackTitle', kit.LoginBackTitle('Title'))
 
 // ---- Icon: one component per icon the screens and the definitions above name ----
 for (const name of [...host.icons].sort()) {

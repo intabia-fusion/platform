@@ -54,11 +54,17 @@
           "screens/fusio-1613/_data.js",
           "screens/fusio-1613/_board.js",
           "screens/fusio-1613/03-board-settings.js"
-        ],
+        ]
+      ]
+    },
+    {
+      "name": "FUSIO-1621 Настройки проекта",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "build": [
         [
-          "screens/fusio-1613/_data.js",
-          "screens/fusio-1613/_board.js",
-          "screens/fusio-1613/04-project-settings.js"
+          "screens/fusio-1621/01-project-settings.js"
         ]
       ]
     },
@@ -96,10 +102,32 @@
           "screens/current/settings-workspace.js"
         ],
         [
+          "screens/current/tracker-boards.js"
+        ],
+        [
+          "screens/current/tracker-board-settings.js"
+        ],
+        [
           "screens/current/settings-project.js"
         ],
         [
           "screens/current/chat-channel.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-signin.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-signup.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-recovery.js"
+        ],
+        [
+          "screens/current/_login.js",
+          "screens/current/login-workspaces.js"
         ]
       ]
     }

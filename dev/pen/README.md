@@ -16,7 +16,7 @@ Every theme-dependent color is a variable with `light`/`dark` values: theme toke
 
 ## Library
 
-`ui-kit.lib.pen` is one frame `Library` with a frame per category (`Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Tracker`, `Settings`, `Chat`, `Workbench`, `Icon`); each component sits in a cell under its name.
+`ui-kit.lib.pen` is one frame `Library` with a frame per category (`Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Tracker`, `Settings`, `Chat`, `Login`, `Workbench`, `Icon`); each component sits in a cell under its name.
 Names are those of the Storybook kit (`dev/storybook/src/design/kit/<Category>/<Name>.svelte`): `Workbench/Navigator`, `Tracker/IssueCard`, `Actions/Button/primary/medium`. A catch-all variant (`$root` slot) gets `penalty` in `def` so that it loses to any variant that fits. A variant adds a path part (`Forms/Toggle/off`, `Actions/Button/ghost/small/icon`).
 Screens are built from instances (`ref`) of these components; whatever a component cannot express stays drawn in place (the build prints `instances/drawn` per component).
 
@@ -70,6 +70,7 @@ What maps:
 | text, circle | `kit.text`, `kit.ellipse` |
 
 The inverse is derived from the library samples in `library/ui-kit.js` (`inverse.mjs`): the sample arguments of a variant are found again in its template (text, nested instance, optional part), so a component added there needs nothing else. Components whose slots carry data (navigator entries, cards, table rows, menu items, space header and settings parts) are read back in `lifts.mjs`; a new component of that kind needs a lift there.
+A draft component of the file named `Proposed/<Name>` (for example `Proposed/IssueCard`) is read as the library component (`PROPOSED` in `penfile.mjs`), so the library one must keep the draft's child order.
 Not mapped, reported as `// TODO(import): ...` in the script and in the console: free paths and other shapes, local components of the file, a component without a kit function, effects other than shadows, opacity, rotation, per-corner radii, fonts other than IBM Plex Sans, a Workbench inside a frame. A new component drawn in pen first is added to the Storybook kit and to `kit/95-library.js` / `library/ui-kit.js` by hand; until then its instances are reported.
 Known losses: the case of uppercase texts comes from the layer name of the instance (or is uppercase), kit options the library samples do not show (for example `accent` of a card besides its border color) are not recovered, the pen file keeps no computed size, so a top-level frame with fit content gets 400x300 and a TODO.
 

@@ -39,10 +39,15 @@ export function readPen (file) {
     const i = ref.indexOf(':')
     return i < 0 ? { lib: local, id: ref, own: true } : { lib: libs[ref.slice(0, i)], id: ref.slice(i + 1) }
   }
+  // A component drawn in the file before it joined the library: `Proposed/<Name>` is read as the library one,
+  // the library component must keep the child order of the draft
+  const PROPOSED = { 'Proposed/IssueCard': 'Tracker/IssueCard' }
   const viewOf = (node) => {
     const { lib, id, own } = split(node.ref)
     const comp = lib?.byId.get(id)
-    return comp === undefined || own ? null : viewOfInstance(node, lib, comp)
+    if (comp === undefined) return null
+    if (!own) return viewOfInstance(node, lib, comp)
+    return PROPOSED[comp.name] === undefined ? null : { ...viewOfInstance(node, lib, comp), name: PROPOSED[comp.name] }
   }
   const compName = (node) => split(node.ref).lib?.byId.get(split(node.ref).id)?.name
   return { doc, libs, viewOf, compName, local }

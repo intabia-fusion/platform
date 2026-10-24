@@ -101,7 +101,19 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     if (v === undefined) throw new Error(`Unknown dimension token: ${name}`)
     return v
   }
-  const P = (name: string): string => TOKENS.palette.light[name]
+  // Palette colors keep their name, so the dark theme can swap them through CSS variables (Canvas.svelte)
+  const palette =
+    (kind: string, table: string) =>
+      (name: string): string => {
+        const v = TOKENS[table].light[name]
+        if (v === undefined) throw new Error(`Unknown palette color: ${name}`)
+        const s: any = new String(v) // eslint-disable-line no-new-wrappers
+        s.token = `${kind}-${name}`
+        return s
+      }
+  const P = palette('pal', 'palette')
+  const PB = palette('palbg', 'paletteBackground')
+  const PT = palette('palt', 'paletteTitle')
 
   const kit: Record<string, any> = {
     mode: 'light',
@@ -162,6 +174,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     parent.children.push(s)
     return s
   }
+  kit.ellipse = (size: number, color?: any, name = 'Ellipse') =>
+    kit.box(name, { w: size, h: size, fill: color, radius: size / 2 })
   kit.icon = (name: string, color?: any, size = 16) =>
     node('Icon', 'icon/' + name, { name, color: col(color), size }, size, size)
 
@@ -181,6 +195,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       milestone: d.milestone,
       labels: d.labels,
       estimation: d.est !== undefined ? parseFloat(d.est) : undefined,
+      estimationLabel: d.estLabel,
       due: d.due,
       overdue: d.overdue,
       attachments: d.att,
@@ -216,8 +231,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.StatusIcon = (cat: string, _size?: number, palette?: string) =>
     node('StatusIcon', 'StatusIcon/' + cat, { status: clean({ category: cat, color: palette }) })
   kit.PriorityIcon = (level: string) => node('PriorityIcon', 'PriorityIcon/' + level, { priority: level })
-  kit.Avatar = (initials: string, color = 'Blueberry', size = 20) =>
-    node('Avatar', 'Avatar/' + size, { person: person(initials, color), size })
+  kit.Avatar = (initials: string, color = 'Blueberry', size = 20, round = false) =>
+    node('Avatar', 'Avatar/' + size, { person: person(initials, color), size, round: round || undefined })
   kit.AvatarEmpty = (size = 20) => node('Avatar', 'Avatar/empty', { size })
   kit.Chip = (content: any, o: Record<string, any> = {}) => kit.add(node('Chip', o.name ?? 'Chip', {}), content)
   kit.Label = (name: string, color = 'Sky') => node('Tag', 'Label', { label: [name, color] })
@@ -227,7 +242,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       status: { name, category: cat },
       count: o.count,
       draggable: o.drag,
-      block: o.w !== undefined ? true : undefined
+      block: o.w !== undefined ? true : undefined,
+      width: o.w
     })
   kit.Input = (o: Record<string, any> = {}) => {
     const w = o.w ?? 240
@@ -250,9 +266,9 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.Notice = (text: string, kind = 'warning', o: Record<string, any> = {}) =>
     node('Notice', 'Notice/' + kind, { text, kind, pill: o.pill, block: o.w !== undefined ? true : undefined })
   kit.QuickFilter = (label: string, on?: boolean) => node('QuickFilter', 'QuickFilter/' + label, { label, on })
-  kit.FilterChip = (attribute: string, operator: string, value: string) =>
-    node('FilterChip', 'FilterChip/' + attribute, { attribute, operator, value })
-  kit.Swatch = (color: any) => node('Swatch', 'Swatch', { color: col(color) })
+  kit.FilterChip = (attribute: string, operator: string, value: string, o: Record<string, any> = {}) =>
+    node('FilterChip', 'FilterChip/' + attribute, { attribute, operator, value, plain: o.plain })
+  kit.Swatch = (color: any, size?: number) => node('Swatch', 'Swatch', { color: col(color), size })
   kit.SectionTitle = (title: string, hint?: string) => node('SectionTitle', 'Section ' + title, { title, hint })
   kit.FormRow = (label: string, control: any, o: Record<string, any> = {}) =>
     kit.add(
@@ -263,7 +279,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     node('Table', o.name ?? 'Table', { columns: cols.map((c) => ({ title: c.title, width: c.w })), rows })
   kit.ColumnHeader = (name: string, cat: string, count: number, _w: number, o: Record<string, any> = {}) =>
     node('ColumnHeader', 'ColumnHeader ' + name, { column: toColumn(name, cat, count, o) })
-  kit.IssueCard = (d: Record<string, any>) => node('IssueCard', 'IssueCard ' + d.id, { issue: toIssue(d) })
+  kit.IssueCard = (d: Record<string, any>) =>
+    node('IssueCard', 'IssueCard ' + d.id, { issue: toIssue(d), density: d.density })
   kit.IssuePage = (d: Record<string, any>, w = 1515, h = 967) =>
     node(
       'IssuePage',
@@ -303,7 +320,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.IssueList = (groups: Array<Record<string, any>>, w = 1481) =>
     node('IssueList', 'Issue list', { groups: groups.map(toGroup), width: w })
   kit.KanbanColumn = (c: Record<string, any>) =>
-    node('KanbanColumn', 'Column ' + c.name, { column: toColumn(c.name, c.cat, c.count, c) })
+    node('KanbanColumn', 'Column ' + c.name, { column: toColumn(c.name, c.cat, c.count, c), density: c.density })
 
   const navProps = (o: Record<string, any>): Record<string, any> => ({
     title: o.title ?? 'Tracker',
@@ -315,7 +332,13 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
 
   // Standalone elements of the workbench, each a frame of its own on the canvas
   kit.TopBar = (w: number, o: Record<string, any> = {}) =>
-    node('TopBar', 'Top bar', { tab: { label: o.tab ?? 'Tracker', icon: o.tabIcon ?? 'tracker/tracker' } }, w, 36)
+    node(
+      'TopBar',
+      'Top bar',
+      { tab: o.tab === null ? undefined : { label: o.tab ?? 'Tracker', icon: o.tabIcon ?? 'tracker/tracker' } },
+      w,
+      36
+    )
   kit.AppRail = (h: number, o: Record<string, any> = {}) =>
     node(
       'AppRail',
@@ -453,6 +476,44 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     return content
   }
 
+  // Login page: the card sits in the middle of the frame, forms are added to it
+  kit.LoginPage = (name: string, x: number, y: number, o: Record<string, any> = {}) => {
+    const frame = node('LoginPage', name, { copyright: o.copyright }, o.w ?? 1920, o.h ?? 1080)
+    const card = node('LoginCard', 'Login card', {}, 460, 10)
+    frame.children.push(card)
+    frame.pos = { x, y }
+    current.frames.push(frame)
+    return { frame, card }
+  }
+  kit.LoginForm = (card: RNode, o: Record<string, any> = {}) => {
+    const form = node('LoginForm', 'Login form', { pad: o.pad }, 460, 10)
+    card.children.push(form)
+    return form
+  }
+  kit.LoginTabs = (heading: string | null, tabs: string[], selected: string, w = 396) =>
+    node('LoginTabs', 'Tabs', { heading: heading ?? undefined, tabs, selected, width: w })
+  kit.LoginTitle = (text: string, o: Record<string, any> = {}) =>
+    node('LoginTitle', 'Title', { text, subtitle: o.subtitle })
+  kit.LoginField = (label: string, o: Record<string, any> = {}) =>
+    node('LoginField', 'Field ' + label, { label, value: o.value, password: o.password, error: o.error, width: o.w })
+  kit.LoginStatus = (text?: string, o: Record<string, any> = {}) =>
+    node('LoginStatus', 'Status', { text, kind: o.kind })
+  kit.LoginButton = (label: string, o: Record<string, any> = {}) =>
+    node('LoginButton', 'Button ' + label, { label, kind: o.kind, disabled: o.disabled, icon: o.icon, width: o.w })
+  kit.LoginProviders = (items: any[], width = 396) => node('LoginProviders', 'Providers', { items, width })
+  kit.LoginCheckbox = (checked: boolean, label: string, o: Record<string, any> = {}) =>
+    node('LoginCheckbox', 'Check ' + label.slice(0, 24), { checked, label, invalid: o.invalid })
+  kit.LoginLinks = (rows: any[], o: Record<string, any> = {}) =>
+    node('LoginLinks', 'Links', { rows, accent: o.accent, width: o.w })
+  kit.LoginAction = (text: string) => node('LoginAction', 'Action', { text })
+  kit.LoginOtpHeader = (title: string, sent: string, email: string) =>
+    node('LoginOtpHeader', 'Header', { title, sent, email })
+  kit.LoginCode = (digits = '') => node('LoginCode', 'Code', { digits })
+  kit.LoginWorkspace = (name: string, note: string, o: Record<string, any> = {}) =>
+    node('LoginWorkspace', 'Workspace ' + name, { name, note, width: o.w })
+  kit.LoginBackTitle = (title: string, o: Record<string, any> = {}) =>
+    node('LoginBackTitle', 'Back title', { title, width: o.w })
+
   kit.page = async (name: string, o: Record<string, any> = {}) => {
     let page = pages.find((p) => p.name === name)
     if (page === undefined) {
@@ -468,8 +529,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
 
   async function run (input: RecordInput): Promise<unknown> {
     const code = input.scripts.map((s) => s.source).join('\n')
-    const fn = new AsyncFunction('kit', 'T', 'D', 'P', 'TOKENS', 'DEMO', 'penpot', code)
-    return await fn(kit, T, D, P, TOKENS, input.demo, penpot)
+    const fn = new AsyncFunction('kit', 'T', 'D', 'P', 'PB', 'PT', 'TOKENS', 'DEMO', 'penpot', code)
+    return await fn(kit, T, D, P, PB, PT, TOKENS, input.demo, penpot)
   }
   return { pages, run }
 }

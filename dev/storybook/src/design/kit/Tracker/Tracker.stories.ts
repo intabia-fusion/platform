@@ -55,10 +55,14 @@ export const IssueCardStates: Story = sections([
         props: card({ priority: 'urgent', estimation: undefined, sub: undefined, labels: undefined })
       },
       {
-        title: 'parent and counters',
+        title: 'parent and due date',
         props: card({ parent: 'Product card redesign', due: '30 Oct', attachments: 1, comments: 3 })
       },
-      { title: 'overdue, accent border', props: card({ due: '2 Oct', overdue: true, accent: '#D95757' }) }
+      { title: 'overdue, accent border', props: card({ due: '2 Oct', overdue: true, accent: '#D95757' }) },
+      { title: 'density: detailed', props: { ...card({}), density: 'detailed' } },
+      { title: 'density: normal', props: { ...card({}), density: 'normal' } },
+      { title: 'density: compact', props: { ...card({}), density: 'compact' } },
+      { title: 'density: dense', props: { ...card({}), density: 'dense' } }
     ],
     columns: [{ title: '', props: {} }]
   }

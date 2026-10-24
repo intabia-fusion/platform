@@ -15,13 +15,14 @@
 
 import type { Meta, StoryObj } from '@storybook/svelte'
 
+import CanvasView from '../Canvas.svelte'
 import Screen from '../Screen.svelte'
 
 const group = 'Screens'
-const page = 'Project settings'
+const page = 'Task boards'
 
 const meta = {
-  title: 'Screens/Project settings',
+  title: 'Screens/Task boards',
   component: Screen,
   tags: ['!autodocs'],
   parameters: { layout: 'fullscreen' }
@@ -30,4 +31,14 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Frame1: Story = { name: 'Edit project', args: { group, page, frame: 0 } }
+export const Canvas: StoryObj = {
+  parameters: { controls: { disable: true } },
+  render: () => ({ Component: CanvasView, props: { group, page } })
+}
+export const Frame1: Story = { name: 'Доска - вид', args: { group, page, frame: 0 } }
+export const Frame2: Story = { name: 'Доска - выбор доски', args: { group, page, frame: 1 } }
+export const Frame3: Story = { name: 'Доска - вход в настройки', args: { group, page, frame: 2 } }
+export const Frame4: Story = { name: 'Доска - статусы без колонки', args: { group, page, frame: 3 } }
+export const Frame5: Story = { name: 'Доска - статусы колонки', args: { group, page, frame: 4 } }
+export const Frame6: Story = { name: 'Стало - канбан', args: { group, page, frame: 5 } }
+export const Frame7: Story = { name: 'Стало - канбан с дорожками', args: { group, page, frame: 6 } }

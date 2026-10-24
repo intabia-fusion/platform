@@ -19,13 +19,15 @@
   export let attribute: string
   export let operator: string
   export let value: string
+  // A condition of a settings table has no remove cross
+  export let plain: boolean = false
 </script>
 
 <div class="kit-filter-chip">
   <span class="part">{attribute}</span>
   <span class="part dark">{operator}</span>
   <span class="part last">{value}</span>
-  <span class="remove"><Icon name="x" size={12} color="var(--theme-darker-color)" /></span>
+  {#if !plain}<span class="remove"><Icon name="x" size={12} color="var(--theme-darker-color)" /></span>{/if}
 </div>
 
 <style lang="scss">

@@ -16,7 +16,9 @@
   // Screen frames of recorded pages on one canvas at the x, y of the Penpot kit, with zoom and pan.
   // Frames render when they come near the viewport: 19 full-size workbenches at once are too heavy.
   import { onMount } from 'svelte'
+  import { themeStore } from '@hcengineering/ui'
   import Frame from '../kit/Frame.svelte'
+  import { paletteVars } from '../kit/palette'
   import PanZoom from '../PanZoom.svelte'
   import Render from './Render.svelte'
   import { records } from './records'
@@ -59,6 +61,7 @@
   let headings: Heading[] = []
   let failure: string | undefined
   let ready = false
+  $: vars = paletteVars($themeStore.dark)
 
   function layout (pages: RPage[]): void {
     const out: Item[] = []
@@ -157,7 +160,9 @@
       use:nearby={show(item.node.id)}
     >
       <Frame title={item.node.name} width={item.w} height={item.node.height}>
-        {#if shown.has(item.node.id)}<div class="fill"><Render node={{ ...item.node, pos: undefined }} /></div>{/if}
+        {#if shown.has(item.node.id)}<div class="fill" style={vars}>
+            <Render node={{ ...item.node, pos: undefined }} />
+          </div>{/if}
       </Frame>
     </div>
   {/each}

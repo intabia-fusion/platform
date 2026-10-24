@@ -16,16 +16,17 @@
   // Board of columns, the content of a kanban view
   import { Scroller } from '@hcengineering/ui'
   import KanbanColumn from './KanbanColumn.svelte'
-  import type { Column } from '../types'
+  import type { Column, Density } from '../types'
 
   export let columns: Column[] = []
+  export let density: Density = 'detailed'
 </script>
 
 <div class="kit-kanban">
   <Scroller horizontal contentDirection="horizontal" align="stretch" noStretch={false}>
     <div class="content">
       {#each columns as column (column.name)}
-        <KanbanColumn {column} />
+        <KanbanColumn {column} {density} />
       {/each}
     </div>
   </Scroller>

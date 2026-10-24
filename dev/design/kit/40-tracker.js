@@ -4,58 +4,67 @@
 // Status palette name per category (models/task/src/index.ts); a status may override it with its own color
 kit.statusPalette = (cat, color) => color || kit.CATEGORY[cat]
 
+// Card of a board in four densities (detailed, normal, compact, dense), 234px wide in a board column.
 // d: id cat color(palette) title assignee[initials, palette] priority sub due overdue component milestone
-//    labels[[name, palette]] est att com unread accent(color) parent
-kit.IssueCard = (d, w = 294) => {
-  const card = kit.box('IssueCard ' + d.id, { w, h: 104, dir: 'column', vs: 'auto', fill: T('theme-kanban-card-bg-color'), stroke: d.accent || T('theme-kanban-card-border'), radius: 4 })
-  const head = kit.box('card-header', { w, h: 20, dir: 'row', pad: [12, 16, 0, 16], align: 'center', justify: 'space-between', vs: 'auto' })
-  const left = kit.row('left', 6)
-  kit.add(left, kit.StatusIcon(d.cat, 14, d.color), kit.text(d.id, { size: 12, color: T('theme-content-color') }))
-  if (d.parent) kit.add(left, kit.text('› ' + d.parent, { size: 12, color: T('theme-darker-color') }))
-  const right = kit.row('right', 6)
-  if (d.unread) { const dot = penpot.createEllipse(); dot.resize(6, 6); kit.fill(dot, T('primary-button-default')); kit.add(right, dot) }
-  kit.add(right, d.assignee ? kit.Avatar(d.assignee[0], d.assignee[1], 20) : kit.AvatarEmpty(20))
-  kit.add(head, left, right)
-  const tw = kit.box('card-content', { w, h: 20, dir: 'row', pad: [8, 16, 8, 16], vs: 'auto' })
-  kit.add(tw, kit.text(d.title, { size: 13, lh: 1.3, w: w - 32, name: 'title' }))
-  const meta = kit.box('card-labels', { w, h: 32, dir: 'row', gap: 10, pad: [4, 12, 0, 16], wrap: true, vs: 'auto', align: 'start' })
-  const sub = (s, c) => kit.text(s, { size: 13, color: c || T('theme-dark-color') })
-  // Chips measured on the stand: 28px high, padding 8 + 1 border (icon only: 6 + 1), icons 16
-  kit.add(meta, kit.Chip([kit.PriorityIcon(d.priority || 'none')], { name: 'priority', pad: 9 }))
-  if (d.sub) kit.add(meta, kit.Chip([kit.icon('subissues', undefined, 16), sub(d.sub)], { name: 'sub-issues', pad: 9 }))
-  if (d.due) {
-    const c = d.overdue ? T('theme-state-negative-color') : undefined
-    kit.add(meta, kit.Chip([kit.icon('calendar', c, 16), sub(d.due, c)], { name: 'due date', pad: 9 }))
+//    labels[[name, palette]] est(text, "13h") accent(color) parent density estLabel
+kit.IssueCard = (d, w = 234) => {
+  const density = d.density || 'detailed'
+  const [py, px] = { detailed: [12, 14], normal: [10, 12], compact: [8, 10], dense: [6, 10] }[density]
+  const gap = { detailed: 8, normal: 8, compact: 6, dense: 4 }[density]
+  const inner = w - 2 * px - 2
+  const dark = T('theme-dark-color')
+  const card = kit.box('IssueCard ' + d.id, { w, h: 40, dir: 'column', gap, pad: [py, px, py, px], vs: 'auto', fill: T('theme-popup-color'), stroke: d.accent || T('theme-divider-color'), strokeW: d.accent ? 2 : 1, radius: 8 })
+  card.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 1, blur: 3, spread: 0, color: { color: '#000000', opacity: 0.06 } }]
+  const avatar = () => d.assignee ? kit.Avatar(d.assignee[0], d.assignee[1], 20, true) : kit.AvatarEmpty(20)
+  const txt = (s, size, color, o = {}) => kit.text(s, { size, color, ...o })
+  const pill = (name, content) => kit.add(kit.box(name, { w: 10, h: 20, dir: 'row', gap: 6, pad: [3, 8, 3, 8], align: 'center', hs: 'auto', vs: 'auto', radius: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }), content)
+  const dueColor = d.overdue ? T('theme-state-negative-color') : dark
+  if (density === 'dense') {
+    const row = kit.box('row', { w: inner, h: 20, dir: 'row', gap: 6, align: 'center', vs: 'auto' })
+    const room = inner - 16 - 20 - 18 - kit.textWidth(d.id, 12)
+    let title = d.title
+    while (title.length > 1 && kit.textWidth(title, 13) > room) title = title.slice(0, -1)
+    if (title !== d.title) title = title.trimEnd() + '…'
+    kit.add(row, kit.StatusIcon(d.cat, 16, d.color), txt(d.id, 12, T('theme-darker-color')), txt(title, 13, T('theme-caption-color'), { name: 'title' }), avatar())
+    return kit.add(card, row)
   }
-  kit.add(meta, kit.Chip(d.component ? [kit.icon('component', undefined, 16), sub(d.component)] : [kit.icon('component', T('theme-darker-color'), 16)], { name: 'component', pad: d.component ? 9 : 7 }))
-  kit.add(meta, kit.Chip(d.milestone ? [kit.icon('milestone', undefined, 16), sub(d.milestone)] : [kit.icon('milestone', T('theme-darker-color'), 16)], { name: 'milestone', pad: d.milestone ? 9 : 7 }))
-  kit.add(card, head, tw, meta)
-  if (d.labels) {
-    const lb = kit.box('labels', { w, h: 22, dir: 'row', gap: 4, pad: [4, 16, 0, 16], wrap: true, vs: 'auto' })
-    for (const [name, pal] of d.labels) kit.add(lb, kit.Label(name, pal))
-    kit.add(card, lb)
+  if (density === 'compact') {
+    const row = kit.box('title row', { w: inner, h: 20, dir: 'row', gap: 6, vs: 'auto', align: 'start' })
+    kit.add(row, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 13, T('theme-caption-color'), { weight: 500, w: inner - 16 - 20 - 12, name: 'title' }), avatar())
+    const meta = kit.box('meta', { w: inner, h: 20, dir: 'row', gap: 8, align: 'center', hs: 'auto', vs: 'auto' })
+    kit.add(meta, txt(d.id, 12, T('theme-darker-color')), kit.PriorityIcon(d.priority || 'none'))
+    if (d.sub) kit.add(meta, kit.icon('subissues', dark, 14))
+    if (d.due) kit.add(meta, kit.icon('calendar', dueColor, 14))
+    if (d.component) kit.add(meta, kit.icon('component', dark, 14))
+    if (d.milestone) kit.add(meta, kit.icon('milestone', dark, 14))
+    if (d.est) kit.add(meta, txt(d.est, 12, T('theme-darker-color')))
+    return kit.add(card, row, meta)
   }
-  // card-footer: shown with estimation or counters, otherwise a 16px spacer (h-4)
-  if (d.est || d.att || d.com) {
-    kit.add(card, kit.spacer(w, 16))
-    const foot = kit.box('card-footer', { w, h: 41, dir: 'row', pad: [12, 16, 12, 16], align: 'center', justify: 'space-between', fill: T('theme-kanban-card-footer') })
-    foot.borderRadiusBottomLeft = 4
-    foot.borderRadiusBottomRight = 4
-    const half = T('theme-dark-color')
-    kit.add(foot, kit.add(kit.row('estimation', 8), kit.ProgressCircle(d.rep || 0, parseFloat(d.est) || 0), kit.text(d.est || '0h', { size: 13, color: half, name: 'estimation' })))
-    const cnt = kit.row('counters', 10)
-    if (d.att) kit.add(cnt, kit.add(kit.row('attachments', 3), kit.icon('clip', undefined, 14), kit.text(String(d.att), { size: 13, color: half })))
-    if (d.com) kit.add(cnt, kit.add(kit.row('comments', 3), kit.icon('comment', undefined, 14), kit.text(String(d.com), { size: 13, color: half })))
-    kit.add(card, kit.add(foot, cnt))
-  } else kit.add(card, kit.spacer(w, 16))
+  const top = kit.box('top', { w: inner, h: 20, dir: 'row', align: 'center', justify: 'space-between', vs: 'auto' })
+  const left = kit.row('left', 4)
+  kit.add(left, txt(d.id, 12, dark, { name: 'id' }))
+  if (d.parent) kit.add(left, txt('› ' + d.parent, 12, T('theme-darker-color'), { name: 'parent' }))
+  kit.add(top, left, avatar())
+  const title = kit.box('title row', { w: inner, h: 20, dir: 'row', gap: 8, vs: 'auto', align: 'start' })
+  kit.add(title, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 14, T('theme-caption-color'), { weight: 500, w: inner - 24, name: 'title' }))
+  const chips = kit.box('chips', { w: inner, h: 20, dir: 'row', gap: 6, wrap: true, vs: 'auto', align: 'start' })
+  kit.add(chips, pill('priority', kit.PriorityIcon(d.priority || 'none')))
+  if (d.sub) kit.add(chips, pill('sub-issues', [kit.icon('subissues', dark, 14), txt(d.sub, 12, dark)]))
+  if (d.due) kit.add(chips, pill('due date', [kit.icon('calendar', dueColor, 14), txt(d.due, 12, dueColor)]))
+  if (d.component) kit.add(chips, pill('component', [kit.icon('component', dark, 14), txt(d.component, 12, dark)]))
+  if (d.milestone) kit.add(chips, pill('milestone', [kit.icon('milestone', dark, 14), txt(d.milestone, 12, dark)]))
+  if (density === 'detailed') for (const [name, pal] of (d.labels || [])) kit.add(chips, pill('label', [kit.ellipse(8, P(pal), 'dot'), txt(name, 12, dark)]))
+  else if (d.est) kit.add(chips, pill('est', txt(d.est, 12, dark)))
+  kit.add(card, top, title, chips)
+  if (density === 'detailed' && d.est) kit.add(card, txt((d.estLabel || 'Оценка') + ' ' + d.est, 12, T('theme-darker-color'), { name: 'footer' }))
   return card
 }
 
-// Column header: tinted with the status palette background, name in its title color.
-// o: tools(bool, hover state) limit over color(palette name) action(label of a button at the right)
+// Column header: tinted with the status palette background, name in its title color, text centered.
+// o: tools(bool, hover state) limit over(the limit is red) color(palette name) action(label of a button at the right)
 kit.ColumnHeader = (name, cat, count, w = 294, o = {}) => {
   const pal = kit.statusPalette(cat, o.color)
-  const h = kit.box('ColumnHeader ' + name, { w, h: 40, dir: 'row', pad: [6, o.tools ? 4 : 8, 0, 20], align: 'start', justify: 'space-between', fill: o.over ? T('theme-state-negative-background-color') : PB(pal), stroke: o.over ? T('theme-state-negative-color') : T('theme-divider-color'), radius: 4 })
+  const h = kit.box('ColumnHeader ' + name, { w, h: 40, dir: 'row', pad: [0, o.tools ? 4 : 8, 0, 20], align: 'center', justify: 'space-between', fill: PB(pal), stroke: T('theme-divider-color'), radius: 4 })
   const l = kit.row('title', 8)
   if (cat) kit.add(l, kit.StatusIcon(cat, 14, pal))
   kit.add(l, kit.text(name, { size: 14, weight: 500, color: PT(pal) }), kit.text(String(count), { size: 14, color: T('theme-dark-color') }))
@@ -66,18 +75,19 @@ kit.ColumnHeader = (name, cat, count, w = 294, o = {}) => {
   return h
 }
 
-// Column (panel-container, 20rem) with header, optional status chips and cards.
-// col: name cat color count cards[] statuses[[name,cat]] limit over tools
+// Column (panel-container, 20rem) with header, optional status chips and the cards on the grey column background.
+// col: name cat color count cards[] statuses[[name,cat]] limit over tools density
 kit.KanbanColumn = (col, w, h) => {
   const inner = w - 26
   const c = kit.box('Column ' + col.name, { w, h, dir: 'column', gap: 8, pad: [0, 13, 0, 13] })
-  // Measured: cards start 17px below the 40px header
+  // The spacer keeps the child order of the library column; cards start 17px under the header
   kit.add(c, kit.ColumnHeader(col.name, col.cat, col.count, inner, col), kit.spacer(inner, 1))
   if (col.statuses) {
     const st = kit.box('statuses', { w: inner, h: 20, dir: 'row', gap: 4, pad: [0, 2, 0, 2], wrap: true, vs: 'auto' })
     kit.add(c, kit.add(st, col.statuses.map(([n, cat]) => kit.StatusChip(n, cat))))
   }
-  for (const d of (col.cards || [])) kit.add(c, kit.IssueCard(d, inner))
+  const cards = (col.cards || []).map((d) => kit.IssueCard({ density: col.density, ...d }, inner - 16))
+  if (cards.length > 0) kit.add(c, kit.add(kit.box('cards', { w: inner, h: 10, dir: 'column', gap: 8, pad: [8, 8, 8, 8], vs: 'auto', fill: T('theme-kanban-card-bg-color'), radius: 8, clip: false }), cards))
   return c
 }
 

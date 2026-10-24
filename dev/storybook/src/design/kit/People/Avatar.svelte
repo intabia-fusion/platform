@@ -23,6 +23,7 @@
   // px, one of 20 | 24 | 32 | 40
   export let size: number = 20
   export let status: boolean = false
+  export let round: boolean = false
 
   let element: HTMLElement
 
@@ -37,7 +38,7 @@
     srcset={undefined}
     displayName={person?.initials ?? ''}
     size={sizes[size] ?? 'card'}
-    variant="roundedRect"
+    variant={round ? 'circle' : 'roundedRect'}
     color={colorDef}
     withStatus={status}
   />

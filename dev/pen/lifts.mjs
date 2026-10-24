@@ -53,6 +53,9 @@ const colorSig = (view, def) => {
 const sameSig = (a, b) => a.every((x, i) => x === b[i] || (i > 1 && (x === undefined || b[i] === undefined)))
 
 function navEntries (kids, env) {
+  // Entries dragged under the footer line in a hand-edited file still sit above it: the order follows y then
+  const fl = kids.findIndex((k) => k.name === 'footer line')
+  if (fl >= 0 && kids.slice(fl + 1).some((k) => k.y < kids[fl].y)) kids = [...kids].sort((a, b) => a.y - b.y)
   const out = []
   const base = []
   let footer
@@ -171,10 +174,18 @@ registerLifts({
 
   ColumnHeader (call, view, def, env) {
     const o = call.args[4] ?? (call.args[4] = {})
-    if (tokenOf(view.props.fill) === 'theme-state-negative-background-color') o.over = true
+    // Only the limit turns red when it is exceeded
+    const la = findAddr(def, (n) => n.type === 'text' && n.name.startsWith('/ '))
+    if (la !== undefined && tokenOf(view.ov.get(la)?.props.fill) === 'theme-state-negative-color') o.over = true
     const bg = tokenOf(view.props.fill)
     const pal = bg?.startsWith('palbg-') ? bg.slice(6) : Object.entries(env.TOKENS.paletteBackground.light).find(([, v]) => v === view.props.fill)?.[0]
     if (pal !== undefined && pal !== env.kit.CATEGORY[call.args[1]]) o.color = pal
+  },
+
+  FilterChip (call, view, def) {
+    // The cross is switched off by the instance: a condition of a settings table
+    const ra = findAddr(def, (n) => n.name === 'remove')
+    if (ra !== undefined && !shown(view, def, ra)) (call.args[3] ??= {}).plain = true
   },
 
   Chip (call, view, def, env) {
@@ -390,8 +401,28 @@ registerLifts({
 
   IssueCard (call, view, def, env) {
     const d = call.args[0]
-    for (const k of ['priority', 'sub', 'due', 'overdue', 'component', 'milestone', 'labels']) delete d[k]
-    for (const chip of slotKids(view, def, 'card-labels')) {
+    for (const k of ['priority', 'sub', 'due', 'overdue', 'component', 'milestone', 'labels', 'est', 'estLabel', 'parent', 'density']) delete d[k]
+    let density = view.name.split('/')[2]
+    // A detailed card without estimation and labels fits the normal one best, its own padding tells them apart
+    if (density === 'normal' && JSON.stringify(view.props.padding) === '[12,14]') density = undefined
+    if (density !== undefined) d.density = density
+    const textAt = (name) => {
+      const a = findAddr(def, (n) => n.type === 'text' && n.name === name)
+      return a !== undefined && shown(view, def, a) ? view.ov.get(a)?.props.content ?? def.nodes.get(a).content : undefined
+    }
+    // The dense card cuts the title to one line: the cut text is all an instance keeps
+    if (density === 'dense') d.title = textAt('title') ?? d.title
+    const parent = textAt('parent')
+    if (parent !== undefined) d.parent = parent.replace(/^› /, '')
+    const footer = textAt('footer')
+    if (footer !== undefined) {
+      const [label, ...rest] = footer.split(' ')
+      d.est = rest.join(' ')
+      if (label !== 'Оценка') d.estLabel = label
+    }
+    const labels = []
+    const compactKids = density === 'compact' ? slotKids(view, def, 'meta') : []
+    for (const chip of density === 'compact' ? compactKids : slotKids(view, def, 'chips')) {
       const text = (chip.children ?? []).find((c) => c.type === 'text')
       if (chip.name === 'priority') {
         const p = nodeCall((chip.children ?? [])[0] ?? {}, env)
@@ -402,13 +433,28 @@ registerLifts({
         if (tokenOf(text?.fill) === 'theme-state-negative-color') d.overdue = true
       } else if (chip.name === 'component' || chip.name === 'milestone') {
         if (text) d[chip.name] = text.content
+      } else if (chip.name === 'est') d.est = text?.content
+      else if (chip.name === 'label') {
+        const dot = (chip.children ?? []).find((c) => c.type === 'ellipse')
+        labels.push([text?.content, palName(dot?.fill, env) ?? 'Sky'])
+      } else if (chip.type === 'ref') {
+        const p = nodeCall(chip, env)
+        if (p?.fn === 'PriorityIcon') d.priority = p.args[0]
+        // The compact card shows an attribute as an icon, its value is not drawn
+        else if (/^icon\/(subissues|calendar|component|milestone)$/.test(chip.name)) d[{ subissues: 'sub', calendar: 'due' }[chip.name.slice(5)] ?? chip.name.slice(5)] = true
+      } else if (chip.type === 'text') {
+        if (chip === compactKids[0]) d.id = chip.content
+        else d.est = chip.content
       }
     }
-    const labels = slotKids(view, def, 'labels').map((k) => nodeCall(k, env)).filter((c) => c?.fn === 'Label').map((c) => c.args.slice(0, 2))
     if (labels.length > 0) d.labels = labels
     if (view.props.stroke !== undefined) d.accent = env.color(view.props.stroke)
     if (d.priority === undefined) d.priority = 'none'
-    if (d.assignee?.every((x) => x === undefined)) delete d.assignee
+    if (Array.isArray(d.assignee)) {
+      // The card avatar is always round: the size and round flags of the nested call are not data
+      d.assignee = [d.assignee[0], d.assignee[1]]
+      if (d.assignee.every((x) => x === undefined)) delete d.assignee
+    }
   },
 
   KanbanColumn (call, view, def, env) {
@@ -476,6 +522,81 @@ registerLifts({
     if (bar?.args[1]?.tabIcon !== undefined) o.tabIcon = bar.args[1].tabIcon
     if (nav?.args[1]?.title && nav.args[1].title !== 'Tracker') o.title = nav.args[1].title
     if (nav?.args[1]?.newLabel !== 'New issue' && nav?.args[1]?.newLabel !== undefined) o.newLabel = nav.args[1].newLabel
+  },
+
+  // Login parts. Options the samples do not show are read from the look of the instance
+  LoginPage (call, view, def) {
+    const row = findAddr(def, (n) => n.name === 'Copyright')
+    const texts = [0, 1].map((i) => view.ov.get(`${row}/${i}`)?.props.content ?? def.nodes.get(`${row}/${i}`)?.content)
+    const o = call.args[3] ?? (call.args[3] = {})
+    if (texts.join('|') !== '© 2026,|Intabia Fusion') o.copyright = texts
+  },
+
+  LoginTabs (call, view, def) {
+    // The selected tab has a filled underline
+    const filled = (i) => {
+      const a = `1/${i}/1`
+      const f = view.ov.get(a)?.props.fill ?? def.nodes.get(a)?.fill
+      return f !== undefined && f !== '#00000000'
+    }
+    const tabs = call.args[1]
+    const i = tabs.findIndex((t, k) => t !== undefined && filled(k))
+    call.args[2] = i >= 0 ? tabs[i] : undefined
+  },
+
+  LoginField (call, view, def) {
+    const o = call.args[1] ?? (call.args[1] = {})
+    const value = o.value
+    if (typeof value === 'string' && /^\u2022+$/.test(value)) o.password = true
+    if (view.props.stroke === '#EE7A7A99') o.error = true
+    if (typeof view.props.width === 'number' && view.props.width !== 396) o.w = view.props.width
+  },
+
+  LoginButton (call, view) {
+    const o = call.args[1] ?? (call.args[1] = {})
+    if (typeof view.props.width === 'number' && view.props.width !== 396) o.w = view.props.width
+  },
+
+  LoginProviders (call, view, def, env) {
+    const buttons = slotKids(view, def, '$root').flatMap((row) => row.children ?? [])
+    call.args[0] = buttons.map((b) => {
+      const c = nodeCall(b, env)
+      return [c?.args[1]?.icon, c?.args[0]]
+    })
+    if (typeof view.props.width === 'number' && view.props.width !== 396) call.args[1] = view.props.width
+  },
+
+  LoginCheckbox (call, view, def) {
+    const box = findAddr(def, (n) => n.name === 'box')
+    const stroke = propOf(view, box, 'stroke') ?? def.nodes.get(box)?.stroke
+    if (stroke === '#EE7A7A') (call.args[2] ?? (call.args[2] = {})).invalid = true
+  },
+
+  LoginLinks (call, view, def, env) {
+    // A link row the session cut into rows is read as one
+    const texts = (row) => (row.children ?? []).flatMap((c) => (c.type === 'frame' && c.name === 'row' ? c.children ?? [] : [c])).filter((c) => c.type === 'text')
+    const rows = slotKids(view, def, '$root').map((row) => texts(row).map((t) => t.content))
+    call.args[0] = rows.map((r) => (r.length > 1 ? r : [undefined, r[0]]))
+    const o = call.args[1] ?? (call.args[1] = {})
+    const first = slotKids(view, def, '$root')[0]
+    if (texts(first ?? {})[0]?.fill === '#000061CC') o.accent = true
+    if (typeof view.props.width === 'number' && view.props.width !== 396) o.w = view.props.width
+  },
+
+  LoginCode (call, view, def) {
+    // Cells 0-2 and 4-6 of the template, an empty digit is replaced by a spacer
+    call.args[0] = [0, 1, 2, 4, 5, 6].map((a) => {
+      const e = view.ov.get(`${a}/0`)
+      return e?.node !== undefined ? '' : e?.props.content ?? def.nodes.get(`${a}/0`)?.content ?? ''
+    }).join('')
+  },
+
+  LoginWorkspace (call, view) {
+    if (typeof view.props.width === 'number' && view.props.width !== 428) (call.args[2] ?? (call.args[2] = {})).w = view.props.width
+  },
+
+  LoginBackTitle (call, view) {
+    if (typeof view.props.width === 'number' && view.props.width !== 428) (call.args[1] ?? (call.args[1] = {})).w = view.props.width
   },
 
   SpaceHeader (call, view, def, env) {

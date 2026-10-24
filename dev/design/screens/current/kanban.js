@@ -40,7 +40,7 @@ const cols = DEMO.en.statuses.slice(0, 5).map((st) => {
       ...(i.component !== undefined ? { component: i.component } : {}),
       ...(i.milestone !== undefined ? { milestone: i.milestone } : {}),
       ...(i.labels !== undefined ? { labels: i.labels } : {}),
-      ...(i.estimation !== undefined ? { est: i.estimation + 'h' } : {})
+      ...(i.estimation !== undefined ? { est: i.estimation + 'h', estLabel: 'Estimation' } : {})
     }
   })
   return { name: st.name, cat: st.category, count: all.length, cards, ...(st.name === 'In Progress' ? { tools: true } : {}) }

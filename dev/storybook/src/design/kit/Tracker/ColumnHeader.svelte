@@ -24,14 +24,10 @@
   $: def = paletteDef(column.status.color ?? categoryColor[column.status.category], $themeStore.dark)
 </script>
 
-<div
-  class="kit-column-header"
-  class:over={column.over}
-  style:background={column.over === true ? undefined : def.background}
->
+<div class="kit-column-header" class:over={column.over} style:background={def.background}>
   <div class="title">
     <StatusIcon status={column.status} />
-    <span class="name" style:color={column.over === true ? undefined : def.title}>{column.name}</span>
+    <span class="name" style:color={def.title}>{column.name}</span>
     <span class="counter">{column.count}</span>
     {#if column.limit !== undefined}<span class="limit">/ {column.limit}</span>{/if}
   </div>
@@ -51,21 +47,17 @@
   .kit-column-header {
     position: relative;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
     width: 100%;
-    min-height: 2.5rem;
-    padding: 0.375rem 0.5rem 0 1.25rem;
+    height: 2.5rem;
+    padding: 0 0.5rem 0 1.25rem;
     border: 1px solid var(--theme-divider-color);
     border-radius: 0.25rem;
 
-    &.over {
-      background-color: var(--theme-state-negative-background-color);
-      border-color: var(--theme-state-negative-color);
-      .limit {
-        color: var(--theme-state-negative-color);
-      }
+    &.over .limit {
+      color: var(--theme-state-negative-color);
     }
   }
   .title {

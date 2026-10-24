@@ -24,6 +24,22 @@
   import Radio from '../kit/Forms/Radio.svelte'
   import Toggle from '../kit/Forms/Toggle.svelte'
   import Icon from '../kit/Icon.svelte'
+  import LoginAction from '../kit/Login/LoginAction.svelte'
+  import LoginBackTitle from '../kit/Login/LoginBackTitle.svelte'
+  import LoginButton from '../kit/Login/LoginButton.svelte'
+  import LoginCard from '../kit/Login/LoginCard.svelte'
+  import LoginCheckbox from '../kit/Login/LoginCheckbox.svelte'
+  import LoginCode from '../kit/Login/LoginCode.svelte'
+  import LoginField from '../kit/Login/LoginField.svelte'
+  import LoginForm from '../kit/Login/LoginForm.svelte'
+  import LoginLinks from '../kit/Login/LoginLinks.svelte'
+  import LoginOtpHeader from '../kit/Login/LoginOtpHeader.svelte'
+  import LoginPage from '../kit/Login/LoginPage.svelte'
+  import LoginProviders from '../kit/Login/LoginProviders.svelte'
+  import LoginStatus from '../kit/Login/LoginStatus.svelte'
+  import LoginTabs from '../kit/Login/LoginTabs.svelte'
+  import LoginTitle from '../kit/Login/LoginTitle.svelte'
+  import LoginWorkspace from '../kit/Login/LoginWorkspace.svelte'
   import Avatar from '../kit/People/Avatar.svelte'
   import DateSeparator from '../kit/Chat/DateSeparator.svelte'
   import Message from '../kit/Chat/Message.svelte'
@@ -63,11 +79,37 @@
   import type { RNode } from './recorder'
 
   export let node: RNode
+  // Flex direction of the parent box, for 'fill' sizes
+  export let parentDir: string | undefined = undefined
 
   const align: Record<string, string> = { start: 'flex-start', end: 'flex-end', center: 'center', stretch: 'stretch' }
   const justify: Record<string, string> = { ...align, 'space-between': 'space-between' }
 
-  function boxStyle (p: Record<string, any>): string {
+  function shadow (x: Record<string, any>): string {
+    const { color, opacity } = x.color
+    const alpha = Math.round(opacity * 255)
+      .toString(16)
+      .padStart(2, '0')
+    return `${x.style === 'inner-shadow' ? 'inset ' : ''}${x.offsetX}px ${x.offsetY}px ${x.blur}px ${x.spread}px ${color}${alpha}`
+  }
+
+  // 'fill' sizes follow the parent: along its axis a flex share, across it a stretch
+  function fillStyle (p: Record<string, any>, parent: string | undefined): string[] {
+    const s: string[] = []
+    if (p.hs === 'fill') {
+      s.push(parent === 'row' ? 'flex:1 1 0;min-width:0;width:auto' : 'align-self:stretch;width:auto')
+    }
+    if (p.vs === 'fill') {
+      s.push(parent === 'column' ? 'flex:1 1 0;min-height:0;height:auto' : 'align-self:stretch;height:auto')
+    }
+    return s
+  }
+
+  function boxStyle (
+    p: Record<string, any>,
+    shadows: Array<Record<string, any>> | undefined,
+    parent: string | undefined
+  ): string {
     const s = ['box-sizing:border-box', 'flex:none']
     if (p.dir !== undefined) {
       s.push('display:flex', `flex-direction:${p.dir}`, `align-items:${align[p.align ?? 'start']}`)
@@ -82,6 +124,8 @@
     if (p.stroke !== undefined) s.push(`border:${p.strokeW ?? 1}px ${p.strokeStyle ?? 'solid'} ${p.stroke}`)
     if (p.radius !== undefined) s.push(`border-radius:${p.radius}px`)
     if (p.clip !== false) s.push('overflow:hidden')
+    s.push(...fillStyle(p, parent))
+    if (shadows !== undefined) s.push(`box-shadow:${shadows.map(shadow).join(',')}`)
     return s.join(';')
   }
 
@@ -108,8 +152,8 @@
 {#if node.at !== undefined}
   <div class="at" style:left="{node.at.x}px" style:top="{node.at.y}px"><svelte:self node={placed} /></div>
 {:else if node.c === 'box'}
-  <div style={boxStyle(p)}>
-    {#each node.children as child (child.id)}<svelte:self node={child} />{/each}
+  <div style={boxStyle(p, node.shadows, parentDir)}>
+    {#each node.children as child (child.id)}<svelte:self node={child} parentDir={p.dir} />{/each}
   </div>
 {:else if node.c === 'text'}
   <span style={textStyle(p)}>{p.chars}</span>
@@ -130,6 +174,46 @@
     </Workbench>
     {#each node.children.filter((k) => k.slot === undefined) as child (child.id)}<svelte:self node={child} />{/each}
   </div>
+{:else if node.c === 'LoginPage'}
+  <div class="stage">
+    <LoginPage copyright={p.copyright} width={node.width} height={node.height}>
+      {#each node.children as child (child.id)}<svelte:self node={child} />{/each}
+    </LoginPage>
+  </div>
+{:else if node.c === 'LoginCard'}
+  <LoginCard
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</LoginCard
+  >
+{:else if node.c === 'LoginForm'}
+  <LoginForm pad={p.pad}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</LoginForm
+  >
+{:else if node.c === 'LoginTabs'}
+  <LoginTabs {...p} />
+{:else if node.c === 'LoginTitle'}
+  <LoginTitle {...p} />
+{:else if node.c === 'LoginField'}
+  <LoginField {...p} />
+{:else if node.c === 'LoginStatus'}
+  <LoginStatus {...p} />
+{:else if node.c === 'LoginButton'}
+  <LoginButton {...p} />
+{:else if node.c === 'LoginProviders'}
+  <LoginProviders {...p} />
+{:else if node.c === 'LoginCheckbox'}
+  <LoginCheckbox {...p} />
+{:else if node.c === 'LoginLinks'}
+  <LoginLinks {...p} />
+{:else if node.c === 'LoginAction'}
+  <LoginAction {...p} />
+{:else if node.c === 'LoginOtpHeader'}
+  <LoginOtpHeader {...p} />
+{:else if node.c === 'LoginCode'}
+  <LoginCode {...p} />
+{:else if node.c === 'LoginWorkspace'}
+  <LoginWorkspace {...p} />
+{:else if node.c === 'LoginBackTitle'}
+  <LoginBackTitle {...p} />
 {:else if node.c === 'TopBar'}
   <div class="sized" style:width="{node.width}px" style:height="{node.height}px"><TopBar tab={p.tab} /></div>
 {:else if node.c === 'AppRail'}

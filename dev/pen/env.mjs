@@ -86,7 +86,7 @@ export function buildIcons () {
 
 // ---- Scripts: Penpot kit files plus the pen core and atoms ----
 export const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-export const kitFiles = [join(here, 'kit/10-core.js'), ...['20-atoms', '30-workbench', '40-tracker', '45-chat', '50-settings'].map((f) => join(penpotKit, f + '.js')), join(here, 'kit/90-pen.js'), join(here, 'kit/95-library.js')]
+export const kitFiles = [join(here, 'kit/10-core.js'), ...['20-atoms', '30-workbench', '40-tracker', '45-chat', '50-settings', '55-login'].map((f) => join(penpotKit, f + '.js')), join(here, 'kit/90-pen.js'), join(here, 'kit/95-library.js')]
 export const kitSource = kitFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
 
 export const newHost = () => ({ seq: 0, tokens: new Set(), pages: new Map(), page: null, components: [], icons: new Set() })

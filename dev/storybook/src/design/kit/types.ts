@@ -17,6 +17,8 @@
 // never layout (x, y, width, height).
 
 export type StatusCategory = 'backlog' | 'todo' | 'active' | 'won' | 'lost'
+// Card density of a board: all fields, no labels and estimation line, attributes as icons, one line
+export type Density = 'detailed' | 'normal' | 'compact' | 'dense'
 export type Priority = 'none' | 'urgent' | 'high' | 'medium' | 'low'
 
 // Icon by name: a hand-drawn kit icon ('gear'), a sprite id ('tracker/issues') or a ui icon ('ui/Add')
@@ -53,6 +55,8 @@ export interface Issue {
   labels?: Label[]
   estimation?: number
   reported?: number
+  // Prefix of the estimation line of a detailed card, 'Оценка' when absent
+  estimationLabel?: string
   due?: string
   overdue?: boolean
   attachments?: number

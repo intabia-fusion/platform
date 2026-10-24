@@ -59,7 +59,8 @@ export async function importPen (file, { page } = {}) {
     const o = {}
     const row = n.layout === undefined || n.layout === 'horizontal'
     const flow = n.layout !== 'none'
-    const size = (v) => (v === undefined || v === 'fit_content' ? 'auto' : v === 'fill_container' ? 'fill' : 'fix')
+    // An empty fit-content frame is read back as fit_content(0)
+    const size = (v) => (v === undefined || String(v).startsWith('fit_content') ? 'auto' : v === 'fill_container' ? 'fill' : 'fix')
     if (typeof n.width === 'number') o.w = n.width
     if (typeof n.height === 'number') o.h = n.height
     if (flow) {
@@ -140,7 +141,8 @@ export async function importPen (file, { page } = {}) {
     const o = {}
     if (n.fontFamily && n.fontFamily !== 'IBM Plex Sans') env.pre.push(todo(`font ${n.fontFamily} is not in the kit`, n))
     if (n.fontSize && n.fontSize !== 14) o.size = n.fontSize
-    if (n.fontWeight && Number(n.fontWeight) !== 400) o.weight = Number(n.fontWeight)
+    // 'normal' is the default weight and has no number
+    if (n.fontWeight && n.fontWeight !== 'normal' && Number(n.fontWeight) !== 400) o.weight = Number(n.fontWeight)
     if (n.lineHeight && n.lineHeight !== 1.25) o.lh = n.lineHeight
     const c = color(n.fill, n)
     if (c !== undefined && tokenOf(n.fill) !== 'theme-caption-color') o.color = c
@@ -281,9 +283,36 @@ export async function importPen (file, { page } = {}) {
     if (overlay.length > 0) place('frame', overlay, lines)
   }
 
+  // Login page: the card sits in the slot of the page, its forms are kit.LoginForm(card) with their content added
+  function loginPage (n, y, lines) {
+    const view = pen.viewOf(n)
+    const call = invertView(view, env)
+    const args = [n.name, n.x ?? 0, y, tidy(call.args[3])]
+    lines.push(...collect(args), `const { card } = ${callOf('kit.LoginPage', args)}`)
+    const card = slotKids(view, call.def, 'Card slot').find((k) => k.type === 'ref')
+    const cardView = card === undefined ? null : pen.viewOf(card)
+    for (const k of cardView === null ? [] : slotKids(cardView, env.defs.get(cardView.name), '$root')) {
+      if (k.type === 'ref' && pen.compName(k) === 'Login/LoginForm') {
+        const fv = pen.viewOf(k)
+        const v = name('form')
+        const pad = pad4(fv.props.padding)
+        const o = pad !== undefined && pad.join() !== '32,32,32,32' ? { pad } : undefined
+        lines.push(`const ${v} = ${callOf('kit.LoginForm', [new Code('card'), o])}`)
+        for (const c of slotKids(fv, env.defs.get(fv.name), '$root')) {
+          const s = shape(c)
+          if (s !== null) lines.push(...s.pre, `kit.add(${v}, ${s.src})`)
+        }
+      } else {
+        const s = shape(k)
+        if (s !== null) lines.push(...s.pre, `kit.add(card, ${s.src})`)
+      }
+    }
+  }
+
   function topLevel (n, y, lines) {
     if (n.enabled === false) return
     if (n.type === 'ref' && pen.compName(n)?.startsWith('Workbench/Workbench')) return workbench(n, y, lines)
+    if (n.type === 'ref' && pen.compName(n) === 'Login/LoginPage') return loginPage(n, y, lines)
     const w = typeof n.width === 'number' ? n.width : undefined
     const h = typeof n.height === 'number' ? n.height : undefined
     const view = n.type === 'ref' ? pen.viewOf(n) : null

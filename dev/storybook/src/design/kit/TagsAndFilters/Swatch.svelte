@@ -18,11 +18,18 @@
 
   // PaletteColorIndexes name or a CSS color
   export let color: string
+  // px; the default of the kit when absent
+  export let size: number | undefined = undefined
 
   $: fill = paletteDef(color, $themeStore.dark).color
 </script>
 
-<span class="kit-swatch" style:background-color={fill} />
+<span
+  class="kit-swatch"
+  style:background-color={fill}
+  style:width={size !== undefined ? `${size}px` : undefined}
+  style:height={size !== undefined ? `${size}px` : undefined}
+/>
 
 <style>
   .kit-swatch {

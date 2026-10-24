@@ -273,7 +273,7 @@ function flagDiff (def, path, env) {
   setAt(alt, path, !cur)
   let s
   try { s = env.kit[def.call.fn](...alt) } catch { return null }
-  const shape = def.call.fn === 'Workbench' ? s.frame : def.call.fn === 'Modal' ? s.modal : s
+  const shape = def.call.fn === 'Workbench' || def.call.fn === 'LoginPage' ? s.frame : def.call.fn === 'Modal' ? s.modal : s
   const diff = (pj) => {
     const ops = new Map()
     if (!env.fit(def.tpl, pj, [], ops, true, { cost: 0 })) return null
@@ -337,7 +337,7 @@ export function slotKids (view, def, name) {
   // The placeholder that keeps pen from outlining an empty slot (kit/95-library.js) is not content
   const kids = (a === '' ? view.kids : view.ov.get(a)?.children)?.filter((k) => k.name !== 'slot-empty')
   const wrap = def.nodes.get(a)?.metadata?.type === 'wrap'
-  const rows = (kids ?? []).every((k) => k.type === 'frame' && k.name === 'row' && Array.isArray(k.children))
+  const rows = (kids ?? []).every((k) => k.type === 'frame' && /^row( \d+)?$/.test(k.name) && Array.isArray(k.children))
   return wrap && rows && (kids ?? []).length > 0 ? kids.flatMap((k) => k.children) : kids ?? []
 }
 export function findAddr (def, test) {
@@ -400,7 +400,7 @@ function evalBinding (b, call, view, def, env) {
 const SIZE = {
   TopBar: [[0, 'width']], AppRail: [[0, 'height']], Navigator: [[0, 'height']], Sidebar: [[0, 'height']], ColumnHeader: [[3, 'width']], IssueCard: [[1, 'width']],
   KanbanColumn: [[1, 'width'], [2, 'height']], Swatch: [[1, 'width']], DateSeparator: [[1, 'width']], NewMarker: [[0, 'width']], IssueRow: [[1, 'width']],
-  IssueGroup: [[1, 'width']], IssueList: [[1, 'width']], IssuePage: [[1, 'width'], [2, 'height']]
+  IssueGroup: [[1, 'width']], IssueList: [[1, 'width']], IssuePage: [[1, 'width'], [2, 'height']], LoginTabs: [[3, 'width']]
 }
 const LIFTS = {}
 export const registerLifts = (l) => Object.assign(LIFTS, l)
@@ -413,7 +413,7 @@ export function invertView (view, env) {
   const call = { fn: def.call.fn, args: cloneArgs(def.call.args), view, def }
   for (const b of bindingsOf(def, env)) evalBinding(b, call, view, def, env)
   LIFTS[call.fn]?.(call, view, def, env)
-  for (const [i, prop] of SIZE[call.fn] ?? []) if (view.props[prop] !== undefined) call.args[i] = view.props[prop]
+  for (const [i, prop] of SIZE[call.fn] ?? []) if (typeof view.props[prop] === 'number') call.args[i] = view.props[prop]
   return call
 }
 

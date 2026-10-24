@@ -84,6 +84,13 @@ kit.box = (name, o = {}) => {
 kit.row = (name, gap = 0, o = {}) => kit.box(name, { dir: 'row', gap, align: 'center', hs: 'auto', vs: 'auto', ...o })
 kit.col = (name, gap = 0, o = {}) => kit.box(name, { dir: 'column', gap, hs: 'auto', vs: 'auto', ...o })
 
+kit.ellipse = (size, color, name = 'Ellipse') => {
+  const e = penpot.createEllipse()
+  e.resize(size, size)
+  e.name = name
+  return kit.fill(e, color)
+}
+
 kit.text = (chars, o = {}) => {
   // createText returns null for an empty string
   if (chars === '') return kit.spacer(1, 1)

@@ -17,9 +17,10 @@
   import StatusChip from '../Status/StatusChip.svelte'
   import ColumnHeader from './ColumnHeader.svelte'
   import IssueCard from './IssueCard.svelte'
-  import type { Column } from '../types'
+  import type { Column, Density } from '../types'
 
   export let column: Column
+  export let density: Density = 'detailed'
 </script>
 
 <div class="kit-kanban-column" data-id="kanban-column">
@@ -31,12 +32,16 @@
       {/each}
     </div>
   {/if}
-  <Scroller padding=".25rem .5rem">
-    {#each column.issues ?? [] as issue (issue.id)}
-      <div class="p-1 flex-no-shrink border-radius-1 clear-mins" data-id="kanban-card">
-        <IssueCard {issue} />
+  <Scroller padding="0 13px">
+    {#if (column.issues ?? []).length > 0}
+      <div class="cards">
+        {#each column.issues ?? [] as issue (issue.id)}
+          <div class="flex-no-shrink clear-mins" data-id="kanban-card">
+            <IssueCard {issue} {density} />
+          </div>
+        {/each}
       </div>
-    {/each}
+    {/if}
   </Scroller>
 </div>
 
@@ -50,12 +55,22 @@
     border: 1px solid transparent;
   }
   .header {
-    margin: 0 0.75rem 0.5rem;
+    margin: 0 13px 17px;
   }
   .statuses {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    margin: 0 0.75rem 0.5rem;
+    margin: 0 13px 8px;
+  }
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    background-color: var(--theme-kanban-card-bg-color);
+    border-radius: 8px;
   }
 </style>

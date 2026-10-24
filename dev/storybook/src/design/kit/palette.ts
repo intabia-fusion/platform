@@ -33,3 +33,15 @@ export function paletteDef (name: string, dark: boolean): { color: string, title
   const def = getPlatformColorDef(paletteIndex(name), dark)
   return { color: def.color, title: def.title ?? def.color, background: def.background ?? def.color }
 }
+
+// CSS variables of every palette color for the current theme: `--pal-<Name>`, `--palbg-<Name>`, `--palt-<Name>`.
+// Recorded screens refer to them for P(), PB() and PT() colors, so the dark theme follows.
+export function paletteVars (dark: boolean): string {
+  return Object.keys(PaletteColorIndexes)
+    .filter((name) => Number.isNaN(Number(name)))
+    .map((name) => {
+      const def = paletteDef(name, dark)
+      return `--pal-${name}:${def.color};--palbg-${name}:${def.background};--palt-${name}:${def.title}`
+    })
+    .join(';')
+}

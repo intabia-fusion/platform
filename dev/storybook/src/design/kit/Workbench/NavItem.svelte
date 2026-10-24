@@ -15,6 +15,8 @@
 <script lang="ts">
   // Navigator entry: the product NavItem with a kit icon name
   import { NavItem as ProductNavItem } from '@hcengineering/ui'
+  import Icon from '../Icon.svelte'
+  import { kitIcons } from '../icons'
   import { productIcon } from '../productIcon'
   import type { IconName } from '../types'
 
@@ -26,12 +28,15 @@
   // Icon on a tinted tile, for channels and other objects
   export let object: boolean = false
 
-  $: asset = productIcon(icon)
+  // Hand-drawn kit icons have no sprite, they go through the kit Icon
+  $: drawn = icon !== undefined && kitIcons[icon] !== undefined
+  $: asset = drawn ? Icon : productIcon(icon)
 </script>
 
 <ProductNavItem
   type={object ? 'type-object' : 'type-link'}
   icon={asset}
+  iconProps={drawn ? { name: icon, size: 16 } : undefined}
   title={label}
   selected={selected === true}
   indent={indent === true}

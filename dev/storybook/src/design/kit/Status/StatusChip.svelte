@@ -23,9 +23,11 @@
   export let draggable: boolean = false
   // Fills the row and sits on a popup surface instead of the tinted chip
   export let block: boolean = false
+  // px; the content width when absent
+  export let width: number | undefined = undefined
 </script>
 
-<div class="kit-status-chip" class:block>
+<div class="kit-status-chip" class:block style:width={width !== undefined ? `${width}px` : undefined}>
   {#if draggable}<Icon name="drag" size={14} color="var(--theme-darker-color)" />{/if}
   <StatusIcon {status} size="x-small" />
   <span class="name">{status.name}</span>
@@ -53,14 +55,10 @@
       border: 1px solid var(--theme-button-border);
     }
     .count {
-      margin-left: auto;
       color: var(--theme-darker-color);
     }
   }
   .name + .count {
     margin-left: 0.25rem;
-  }
-  .block .name + .count {
-    margin-left: auto;
   }
 </style>

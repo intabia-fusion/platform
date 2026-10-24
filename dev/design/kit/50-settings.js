@@ -49,7 +49,8 @@ kit.FormRow = (label, control, o = {}) => {
 }
 
 // Filter condition chip as in FilterBar: attribute / operator / value / remove
-kit.FilterChip = (attr, op, value) => {
+// o.plain: a condition of a settings table, no remove cross
+kit.FilterChip = (attr, op, value, o = {}) => {
   const b = kit.box('FilterChip/' + attr, { w: 10, h: 28, dir: 'row', align: 'center', hs: 'auto', radius: 6, stroke: T('theme-button-border') })
   const part = (t, c, last) => {
     const p = kit.box('part', { w: 10, h: 28, dir: 'row', pad: [0, 8, 0, 8], align: 'center', hs: 'auto', fill: T('theme-button-default') })
@@ -57,6 +58,7 @@ kit.FilterChip = (attr, op, value) => {
     return kit.add(p, kit.text(t, { size: 13, color: c }))
   }
   kit.add(b, part(attr, T('theme-caption-color')), part(op, T('theme-dark-color')), part(value, T('theme-caption-color')))
+  if (o.plain) return b
   const x = kit.box('remove', { w: 26, h: 28, dir: 'row', align: 'center', justify: 'center' })
   return kit.add(b, kit.add(x, kit.icon('x', T('theme-darker-color'), 12)))
 }

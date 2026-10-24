@@ -15,13 +15,17 @@
 <script lang="ts">
   // Navigator group caption with an optional add button
   import Button from '../Actions/Button.svelte'
+  import Icon from '../Icon.svelte'
 
   export let label: string
   export let add: boolean | undefined = false
 </script>
 
 <div class="group">
-  <span class="caption">{label}</span>
+  <span class="head">
+    <span class="chevron"><Icon name="ui/Down" size={16} color="var(--global-tertiary-TextColor)" /></span>
+    <span class="caption">{label}</span>
+  </span>
   {#if add === true}<Button kind="tertiary" size="extra-small" icon="ui/Add" />{/if}
 </div>
 
@@ -35,10 +39,26 @@
     margin: 0.75rem 0 0.25rem;
     padding: 0 0.25rem 0 0.5rem;
   }
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
   .caption {
+    padding: 0 0.25rem;
     font-size: 0.75rem;
     font-weight: 500;
+    line-height: 1.25rem;
     text-transform: uppercase;
     color: var(--global-secondary-TextColor);
+    background-color: var(--global-ui-BackgroundColor);
+    border-radius: 0.25rem;
   }
 </style>

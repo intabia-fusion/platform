@@ -18,7 +18,7 @@ pnpm storybook
 | Раздел | Где | Что |
 |---|---|---|
 | UI Kit | `src/ui-kit` | Компоненты `packages/ui/src/ui-kit` |
-| Kit | `src/design/kit/<Категория>` | Визуальная библиотека: Workbench, Actions, Forms, Status, TagsAndFilters, People, Tracker, Settings, Chat. Пропсы - данные предметной области (`kit/types.ts`), без раскладки |
+| Kit | `src/design/kit/<Категория>` | Визуальная библиотека: Workbench, Actions, Forms, Status, TagsAndFilters, People, Tracker, Settings, Chat, Login. Пропсы - данные предметной области (`kit/types.ts`), без раскладки |
 | Screens / ... | `src/design/generated` | Принятое текущее состояние UI (`dev/design/screens/current`): Workbench (оболочка и её элементы), Tracker (канбан, список задач, мои задачи, страница задачи, диалог новой задачи). История `Canvas` на страницу, по истории на фрейм, общий `Screens / Canvas` |
 
 Библиотека `src/design/kit` - первичный источник: компоненты продукта доводятся до неё.

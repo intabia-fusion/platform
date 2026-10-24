@@ -63,6 +63,7 @@ kit.TopBar = (w, o = {}) => {
   const bar = penpotTopBar(w, o)
   const tab = bar.children.find((c) => c.name === 'tab')
   const plus = bar.children.find((c) => c.name === 'new tab')
+  if (tab === undefined) return bar
   const row = kit.box('tabs', { dir: 'row', gap: 8, align: 'center', hs: 'auto', vs: 'auto', clip: false })
   tab.hs = 'auto'
   kit.add(row, tab, plus)
@@ -81,22 +82,22 @@ kit.Input = (o = {}) => {
   return kit.add(c, b)
 }
 
-// Card parts span the card, so only its width changes between sizes; the wrap rows keep a number for the row cut
+// Card parts span the card, so only its width changes between sizes; the chips keep a number for the row cut
 const penpotIssueCard = kit.IssueCard
-kit.IssueCard = (d, w = 294) => {
+kit.IssueCard = (d, w = 234) => {
   const card = penpotIssueCard(d, w)
-  for (const c of card.children) if (c.name !== 'card-labels' && c.name !== 'labels') c.hs = 'fill'
-  card.children[1].children[0].node.width = 'fill_container'
+  for (const c of card.children) if (c.name !== 'chips') c.hs = 'fill'
+  const titles = (n) => (n.name === 'title' && n.node ? [n] : (n.children || []).flatMap(titles))
+  if (d.density !== 'dense') for (const t of titles(card)) t.node.width = 'fill_container'
   return card
 }
 
-// Cards sit in their own frame: the slot of the column
+// Cards sit in their own frame: the slot of the column, filled grey only when it holds cards
 const penpotKanbanColumn = kit.KanbanColumn
 kit.KanbanColumn = (col, w, h) => {
   const c = penpotKanbanColumn(col, w, h)
-  const cards = kit.box('cards', { w: w - 26, h: 10, dir: 'column', gap: 8, vs: 'auto', clip: false })
-  kit.add(cards, c.children.slice(col.statuses ? 3 : 2))
-  return kit.add(c, cards)
+  if (!(col.cards || []).length) kit.add(c, kit.box('cards', { w: w - 26, h: 10, dir: 'column', gap: 8, vs: 'auto', clip: false }))
+  return c
 }
 
 // Navigator entries are placed by x and y: they move into one frame at 0,0, the slot of the component
@@ -229,5 +230,49 @@ kit.NewIssuePopup = (o = {}) => {
   flow('header', at((c) => c.y < 60 && c.x < 400), 24, 24)
   flow('attributes', at((c) => c.y === 219), 24, 219)
   flow('attributes 2', at((c) => c.y === 263), 24, 263)
+  return card
+}
+
+// ---- Login art: pen path nodes instead of the Penpot SVG import ----
+const vector = (name, vb, w, h, paths) => kit.pen({
+  type: 'frame', name, layout: 'none', width: w, height: h,
+  children: paths.map(([d, c, rule], i) => ({ type: 'path', name: 'path ' + (i + 1), geometry: d, viewBox: [0, 0, vb[0], vb[1]], width: w, height: h, x: 0, y: 0, fill: c, ...(rule ? { fillRule: rule } : {}) }))
+})
+kit.LoginLogo = () => vector('Logo', [235, 50], 235, 50, LOGIN_LOGO)
+kit.LoginIcon = (name, size = 32) => vector('icon/' + name, [LOGIN_ICONS[name].vb, LOGIN_ICONS[name].vb], size, size, LOGIN_ICONS[name].paths)
+
+const grad = (rotation, a, b, o = {}) => ({ type: 'gradient', gradientType: 'linear', rotation, colors: [{ color: a, position: 0 }, { color: b, position: 1 }], ...o })
+// Ellipse as a path: the arc form takes the rotation, a rotated ellipse node has no such origin
+const arcPath = (cx, cy, rx, ry, deg) => {
+  const a = deg * Math.PI / 180
+  const [dx, dy] = [rx * Math.cos(a), rx * Math.sin(a)]
+  const f = (v) => v.toFixed(2)
+  return `M${f(cx - dx)} ${f(cy - dy)}A${rx} ${ry} ${deg} 1 0 ${f(cx + dx)} ${f(cy + dy)}A${rx} ${ry} ${deg} 1 0 ${f(cx - dx)} ${f(cy - dy)}Z`
+}
+kit.LoginBackground = (w = 1920, h = 1080) => {
+  const sy = h / 1036
+  const part = (name, d, fill, o = {}) => ({ type: 'path', name, geometry: d, viewBox: [0, 0, w, h], width: w, height: h, x: 0, y: 0, fill, ...o })
+  const ball = (name, cx, cy, r, a, b, opacity) => part(name, arcPath(cx, cy, r, r, 0), grad(135, a, b), opacity === undefined ? {} : { opacity })
+  const kids = [
+    { type: 'rectangle', name: 'sky', x: 0, y: 32, width: w, height: 1080, fill: { type: 'gradient', gradientType: 'linear', rotation: 180, colors: [{ color: '#0B0123', position: 0 }, { color: '#170134', position: 0.33 }, { color: '#250932', position: 0.66 }, { color: '#100118', position: 1 }] } },
+    ball('ball top', 357, -10, 125, '#2E0F52', '#1A0630'),
+    ball('ball small', 1364, 238, 72, '#4A2070', '#26104A', 0.5),
+    ball('ball big', 1625, 585, 213, '#431870', '#1C0636'),
+    part('oval', arcPath((-552.07 + 3055.18 / 2) * (w / 1920), (726.35 + 193) * sy + 32, 3055.18 * (w / 1920) / 2, 193 * sy, 0), '#F5F4F5'),
+    ball('ball left', 290, 807, 72, '#6B1F8A', '#2D0A52'),
+    part('pin shadow', arcPath(1500, 860, 105, 22, 0), '#3C1250', { opacity: 0.5 }),
+    part('pin body', 'M1500 628L1640 668L1585 830L1445 775Z', grad(135, '#F760D3', '#A50F7E')),
+    part('pin rim', arcPath(1572, 648, 72, 26, 20), '#D43CB0'),
+    part('pin base', arcPath(1503, 795, 86, 40, 25), '#C0289C'),
+    part('pin head', arcPath(1602, 568, 59, 59, 0), grad(135, '#F760D3', '#A50F7E'))
+  ]
+  return kit.pen({ type: 'frame', name: 'Login background', layout: 'none', width: w, height: h, clip: true, children: kids })
+}
+
+// The card fill is a soft gradient in the product, the Penpot kit keeps a flat color
+const penpotLoginCard = kit.LoginCard
+kit.LoginCard = () => {
+  const card = penpotLoginCard()
+  card.f = grad(135, '#F0F0F0', '#FFFFFF')
   return card
 }
