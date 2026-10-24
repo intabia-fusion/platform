@@ -17,7 +17,7 @@ import FramedSections from './FramedSections.svelte'
 import Icon from './Icon.svelte'
 
 const meta: Meta = {
-  title: 'Kit/Icon',
+  title: 'Kit (pen.dev)/Icon',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }
@@ -47,7 +47,7 @@ export const IconStates: Story = {
   render: (_args, { title, name }) => ({
     Component: FramedSections,
     props: {
-      title: `${title.replace('Kit/', '')} - ${name}`,
+      title: `${title.slice(title.lastIndexOf('/') + 1)} - ${name}`,
       sections: [
         {
           title: 'Icon - kit, sprite and ui names',

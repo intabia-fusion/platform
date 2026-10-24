@@ -24,7 +24,14 @@ const value = new Date(2026, 9, 24, 9, 30).getTime()
 const meta = {
   title: 'Dates/DatePicker',
   component: DatePicker,
-  args: { value, label: getEmbeddedLabel('Set due date'), shifts: false, range: false, compact: false },
+  args: {
+    value,
+    label: getEmbeddedLabel('Set due date'),
+    shifts: false,
+    range: false,
+    compact: false,
+    autofocus: false
+  },
   argTypes: {
     // An enum: docgen gives it no options.
     mode: { control: 'select', options: ['date', 'datetime', 'time', 'timeonly'] }
@@ -34,7 +41,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '**Когда:** содержимое попапа выбора даты: место открывает его через `showPopup(DatePicker, props, element, (result) => ...)` и получает результат в `close`. **Не этот компонент:** кнопка с датой, которая сама открывает попап, - `DateSelect`; сетка месяца в разметке места - `Calendar`; только ввод с клавиатуры - `DateInput`.\n\nПоверхность попапа как у `Menu`: рамка `--theme-popup-divider` и popover-тень. Полный вид - заголовок (`label`, по умолчанию «Select date») с крестиком, `detail`, поле `DateInput` (фокус при открытии), два месяца (на узком экране один), «Save» `brand`. Без времени клик по дню сразу закрывает с ним (полдень UTC дня, как хранятся даты); с `mode="datetime"` клик только ставит день (время остаётся), закрывает «Save» или Enter; `time` / `timeonly` - только поле `HH:MM` без месяцев (день `value`, без него - сегодня), сдвиги - минуты и часы. `shifts` - колонка быстрых сдвигов слева («через 15 минут», «через день»): строки-варианты на всю ширину колонки, вес 400; клик закрывает с «сейчас + сдвиг». `range` - два поля и диапазон по клику на месяцы, результат `{ value, end }` по порядку. `compact` - один месяц без шапки и кнопок, клик по дню закрывает с ним во времени `value`. Результат `close`: `{ value }` (`null` - дату очистили) или `null` - закрыли крестиком без изменений.'
+          '**Когда:** содержимое попапа выбора даты: место открывает его через `showPopup(DatePicker, props, element, (result) => ...)` и получает результат в `close`. **Не этот компонент:** кнопка с датой, которая сама открывает попап, - `DateSelect`; сетка месяца в разметке места - `Calendar`; только ввод с клавиатуры - `DateInput`.\n\nПоверхность попапа как у `Menu`: рамка `--theme-popup-divider` и popover-тень. Полный вид - заголовок (`label`, по умолчанию «Select date») с крестиком, `detail`, поле `DateInput` (фокус при открытии, `autofocus={false}` - без него), два месяца (на узком экране один), «Save» `brand`. Без времени клик по дню сразу закрывает с ним (полдень UTC дня, как хранятся даты); с `mode="datetime"` клик только ставит день (время остаётся), закрывает «Save» или Enter; `time` / `timeonly` - только поле `HH:MM` без месяцев (день `value`, без него - сегодня), сдвиги - минуты и часы. `shifts` - колонка быстрых сдвигов слева («через 15 минут», «через день»): строки-варианты на всю ширину колонки, вес 400; клик закрывает с «сейчас + сдвиг». `range` - два поля и диапазон по клику на месяцы, результат `{ value, end }` по порядку. `compact` - один месяц без шапки и кнопок, клик по дню закрывает с ним во времени `value`. Результат `close`: `{ value }` (`null` - дату очистили) или `null` - закрыли крестиком без изменений.'
       }
     }
   }

@@ -136,6 +136,8 @@ export interface DatePickerProps {
   shifts?: boolean
   /** The date is typed and shown as seen in this time zone; by default the user's one. */
   timeZone?: string
+  /** Focuses the input on open (default); not with `compact`. */
+  autofocus?: boolean
 }
 
 export interface DatePickerEvents {

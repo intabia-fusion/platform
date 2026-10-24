@@ -18,11 +18,12 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import IconsKit from './IconsKit.svelte'
 
 const meta = {
-  title: 'UI Kit/Icons',
+  title: 'Overview/Icons',
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Components: Story = { render: () => ({ Component: IconsKit }) }
+export const Components: Story = { name: 'Icons', render: () => ({ Component: IconsKit }) }

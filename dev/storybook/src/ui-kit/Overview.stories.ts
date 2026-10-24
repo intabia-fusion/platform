@@ -20,18 +20,13 @@ import KitOverview from './overview/KitOverview.svelte'
 const meta = {
   title: 'Overview/UI kit',
   component: KitOverview,
-  parameters: {
-    docs: {
-      description: {
-        component: 'Все компоненты кита на одной странице: сравнить размеры, отступы, цвета состояний.'
-      }
-    }
-  }
+  tags: ['!autodocs']
 } satisfies Meta<typeof KitOverview>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 export const All: Story = {
+  name: 'UI kit',
   parameters: { layout: 'padded', controls: { disable: true } }
 }

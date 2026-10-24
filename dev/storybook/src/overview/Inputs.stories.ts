@@ -71,7 +71,7 @@ const kit: StackGroup[] = [
 ]
 
 export const Components: Story = {
-  name: 'Kit',
+  name: 'Inputs and forms',
   render: () => ({
     Component: StoryStack,
     props: {

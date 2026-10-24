@@ -22,9 +22,9 @@ const group = 'Screens'
 const page = 'Login recovery'
 
 const meta = {
-  title: 'Screens/Login recovery',
+  title: 'Login recovery',
   component: Screen,
-  tags: ['!autodocs'],
+  tags: ['!autodocs', 'screen'],
   parameters: { layout: 'fullscreen' }
 } satisfies Meta<Screen>
 

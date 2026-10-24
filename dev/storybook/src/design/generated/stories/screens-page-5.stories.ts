@@ -21,9 +21,9 @@ const group = 'Screens'
 const page = 'Tracker new issue'
 
 const meta = {
-  title: 'Screens/Tracker new issue',
+  title: 'Tracker new issue',
   component: Screen,
-  tags: ['!autodocs'],
+  tags: ['!autodocs', 'screen'],
   parameters: { layout: 'fullscreen' }
 } satisfies Meta<Screen>
 
