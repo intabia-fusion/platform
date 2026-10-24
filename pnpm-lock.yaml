@@ -3100,7 +3100,7 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment-resources
       '@hcengineering/core':
-        specifier: workspace:^0.7.25
+        specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
