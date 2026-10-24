@@ -69,3 +69,29 @@ export function matchedTerms (fragments: string[]): string[] {
 
   return Array.from(terms)
 }
+
+/** Marks the words the index matched, whole, wherever the card shows them. */
+export function markTerms (text: string, terms: string[]): string {
+  // An empty word would match everywhere without moving on.
+  const words = terms.filter((t) => t !== '').map((t) => t.toLowerCase())
+  let result = ''
+  let i = 0
+  while (i < text.length) {
+    const word = words.find(
+      (w) =>
+        text.slice(i, i + w.length).toLowerCase() === w && !isWordChar(text[i - 1]) && !isWordChar(text[i + w.length])
+    )
+    if (word === undefined) {
+      result += text[i]
+      i++
+    } else {
+      result += HIGHLIGHT_PRE + text.slice(i, i + word.length) + HIGHLIGHT_POST
+      i += word.length
+    }
+  }
+  return result
+}
+
+function isWordChar (ch: string | undefined): boolean {
+  return ch !== undefined && /[\p{L}\p{N}]/u.test(ch)
+}

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,25 +14,40 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { Blob, BlobMetadata, Ref } from '@hcengineering/core'
+  import { getResource } from '@hcengineering/platform'
+  import presentation, {
+    downloadFile,
+    FileHeader,
+    FilePreview,
+    isTextFile,
+    showFileViewer
+  } from '@hcengineering/presentation'
+  import { closeTooltip, IconClose } from '@hcengineering/ui'
+  import { IconButton, IconOpenFile, IconSaveFile } from '@hcengineering/ui/kit'
   import type { Widget, WidgetTab } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
-  import { FilePreview, DownloadFileButton, FilePreviewPopup, FileTypeIcon } from '@hcengineering/presentation'
-  import { Breadcrumbs, Button, closeTooltip, Header, showPopup } from '@hcengineering/ui'
-  import { getResource } from '@hcengineering/platform'
-  import view from '@hcengineering/view'
 
   import attachment from '../plugin'
+  import AudioPreview from './file/AudioPreview.svelte'
 
   export let widget: Widget
   export let tab: WidgetTab | undefined
 
-  $: file = tab?.data?.file
-  $: fileName = tab?.data?.name ?? ''
-  $: contentType = tab?.data?.contentType
-  $: metadata = tab?.data?.metadata
+  $: file = tab?.data?.file as Ref<Blob> | undefined
+  $: name = (tab?.data?.name as string | undefined) ?? ''
+  $: contentType = (tab?.data?.contentType as string | undefined) ?? ''
+  $: metadata = tab?.data?.metadata as BlobMetadata | undefined
+  $: size = tab?.data?.size as number | undefined
+  $: sheet = isTextFile(contentType)
+  $: pdf = contentType === 'application/pdf'
+  $: viewer =
+    contentType.startsWith('audio/') && file != null
+      ? { component: AudioPreview, props: { value: { file, name, type: contentType, size: size ?? 0, metadata } } }
+      : undefined
 
   async function closeTab (): Promise<void> {
-    if (tab === undefined) return
+    if (tab == null) return
     const fn = await getResource(workbench.function.CloseWidgetTab)
     await fn(widget, tab.id)
   }
@@ -41,41 +57,103 @@
     await fn(attachment.ids.PreviewWidget)
   }
 
-  $: if (tab === undefined) {
+  $: if (tab == null) {
     void close()
-  } else if (tab.data === undefined) {
+  } else if (tab.data == null) {
     void closeTab()
   }
 </script>
 
-<Header
-  allowFullsize={false}
-  type="type-aside"
-  hideBefore={true}
-  hideActions={false}
-  hideDescription={true}
-  adaptive="disabled"
-  closeOnEscape={false}
-  on:close={closeTab}
->
-  <Breadcrumbs
-    items={[{ title: fileName, icon: FileTypeIcon, iconProps: { name: fileName }, iconMargin: '0 0.5rem 0 0' }]}
-    currentOnly
-  />
-  <svelte:fragment slot="actions">
-    <DownloadFileButton name={fileName} {file} />
-    <Button
-      icon={view.icon.Open}
-      kind="icon"
-      showTooltip={{ label: attachment.string.OpenInWindow }}
-      on:click={() => {
-        closeTooltip()
-        showPopup(FilePreviewPopup, { file, name: fileName, contentType, metadata, fullSize: true }, 'centered')
-      }}
+<div class="preview-widget">
+  <FileHeader {name} {contentType} {size}>
+    {#if file != null}
+      <IconButton
+        icon={IconSaveFile}
+        kind="ghost"
+        size="small"
+        iconSize="medium"
+        tooltip={{ label: presentation.string.Download }}
+        on:click={() => {
+          if (file != null) downloadFile(file, name)
+        }}
+      />
+      <IconButton
+        icon={IconOpenFile}
+        kind="ghost"
+        size="small"
+        iconSize="medium"
+        tooltip={{ label: attachment.string.OpenInWindow }}
+        on:click={() => {
+          closeTooltip()
+          if (file != null) showFileViewer({ file, name, contentType, metadata, size, viewer })
+        }}
+      />
+    {/if}
+    <span class="divider" />
+    <IconButton
+      icon={IconClose}
+      kind="ghost"
+      size="small"
+      iconSize="medium"
+      tooltip={{ label: presentation.string.Close }}
+      on:click={closeTab}
     />
-  </svelte:fragment>
-</Header>
+  </FileHeader>
 
-{#if file}
-  <FilePreview {file} {contentType} name={fileName} {metadata} />
-{/if}
+  {#if file != null}
+    <div class="stage" class:bleed={pdf || sheet}>
+      <div class="content" class:paper={sheet}>
+        <FilePreview {file} {contentType} {name} {metadata} {viewer} props={sheet ? { frame: false } : {}} fit />
+      </div>
+    </div>
+  {/if}
+</div>
+
+<style lang="scss">
+  .preview-widget {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .divider {
+    width: 1px;
+    height: 1.25rem;
+    margin: 0 0.25rem;
+    background-color: var(--theme-divider-color);
+  }
+
+  .stage {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+    padding: 0.75rem;
+    overflow: hidden;
+
+    // A document fills the width; the PDF toolbar then reads as the header's second row.
+    &.bleed {
+      padding: 0;
+    }
+  }
+
+  .content {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+
+    > :global(*) {
+      flex-grow: 1;
+    }
+
+    &.paper {
+      overflow: hidden;
+      color: var(--theme-content-color);
+      user-select: text;
+    }
+  }
+</style>

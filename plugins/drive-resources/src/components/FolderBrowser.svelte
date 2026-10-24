@@ -16,7 +16,8 @@
   import type { Doc, DocumentQuery, Ref, WithLookup } from '@hcengineering/core'
   import { permissionsStore } from '@hcengineering/contact-resources'
   import drive, { type Drive, type Folder } from '@hcengineering/drive'
-  import { Scroller, SearchInput, Panel, Button, IconMoreH } from '@hcengineering/ui'
+  import { createQuery } from '@hcengineering/presentation'
+  import { BlankView, Scroller, SearchInput, Panel, Button, IconMoreH } from '@hcengineering/ui'
   import type { Viewlet, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -30,9 +31,13 @@
     canCreateObject
   } from '@hcengineering/view-resources'
 
+  import drivePlugin from '../plugin'
+  import { uploadFilesToDrivePopup } from '../utils'
   import DrivePresenter from './DrivePresenter.svelte'
   import FolderHeader from './FolderHeader.svelte'
   import FileDropArea from './FileDropArea.svelte'
+  import IconUpload from './icons/FileUpload.svelte'
+  import IconFolder from './icons/Folder.svelte'
 
   export let space: Ref<Drive>
   export let parent: Ref<Folder>
@@ -60,6 +65,34 @@
   function updateSearchQuery (search: string): void {
     searchQuery = search === '' ? { ...query } : { ...query, $search: search }
   }
+
+  // An empty folder, not an empty search: a search or a filter that finds nothing keeps the list.
+  const firstQuery = createQuery()
+  // Unknown until asked: neither the list nor the blank flashes before the answer.
+  let empty: boolean | undefined
+  $: held =
+    type === 'folder' && object != null ? ((object as Folder).folders ?? 0) + ((object as Folder).files ?? 0) : 0
+  $: checkEmpty(query, held)
+
+  // A count over zero is enough; a zero or the root asks the base, so a wrong count never hides files.
+  function checkEmpty (query: DocumentQuery<Doc>, held: number): void {
+    if (held > 0) {
+      firstQuery.unsubscribe()
+      empty = false
+      return
+    }
+    empty = undefined
+    firstQuery.query(
+      _class,
+      query,
+      (res) => {
+        empty = res.length === 0
+      },
+      { limit: 1 }
+    )
+  }
+
+  $: blank = empty === true && search === '' && Object.keys(resultQuery).length === Object.keys(query).length
 
   const getDrive = (obj: Drive | Folder): Drive => obj as Drive
   const getFolder = (obj: Drive | Folder): Folder => obj as Folder
@@ -105,10 +138,26 @@
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div class="popupPanel-body" on:contextmenu>
         {#if viewlet}
-          <FileDropArea {space} {parent} canDrop={() => !readonly && canUpload}>
-            <Scroller horizontal={true}>
-              <ViewletContentView {_class} {viewlet} query={resultQuery} {space} {viewOptions} />
-            </Scroller>
+          <FileDropArea {space} {parent} canDrop={() => !readonly && canUpload} overlay={!blank} let:dragover>
+            {#if empty === undefined}
+              <!-- Asking whether the folder is empty. -->
+            {:else if blank && !readonly && canUpload}
+              <BlankView
+                icon={IconUpload}
+                header={drivePlugin.string.DropFilesHere}
+                label={drivePlugin.string.DropFilesHint}
+                active={dragover}
+                drop={() => {
+                  void uploadFilesToDrivePopup(space, parent)
+                }}
+              />
+            {:else if blank}
+              <BlankView icon={IconFolder} header={drivePlugin.string.EmptyFolder} />
+            {:else}
+              <Scroller horizontal={true}>
+                <ViewletContentView {_class} {viewlet} query={resultQuery} {space} {viewOptions} />
+              </Scroller>
+            {/if}
           </FileDropArea>
         {/if}
       </div>

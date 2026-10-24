@@ -5,7 +5,7 @@
     "rootDir": ".",
     "noEmit": true,
     "incremental": false,
-    "types": []
+    "types": ["vite/client"]
   },
   "include": ["src/**/*", ".storybook/**/*", "vite.config.mts"],
   "exclude": ["node_modules", "storybook-static"]

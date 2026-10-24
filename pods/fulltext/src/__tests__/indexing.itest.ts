@@ -1,4 +1,19 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 import core, {
   type Blob,
   generateId,
@@ -28,6 +43,7 @@ import {
 } from '@hcengineering/server-core'
 import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
+import { addLocation, type Plugin } from '@hcengineering/platform'
 import { createDoc, test, type TestDocument } from './minmodel'
 
 import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline, startServices } from './utils'
@@ -157,6 +173,17 @@ class TestQueue {
   }
 }
 
+addLocation('test-facets' as Plugin, async () => ({
+  default: async () => ({
+    function: {
+      Facets: (doc: TestDocument) => ({
+        values: [`title:${doc.title}`],
+        extra: doc.title.split('').reverse().join('')
+      })
+    }
+  })
+}))
+
 describe('full-text-indexing', () => {
   const toolCtx = new MeasureMetricsContext('tool', {})
 
@@ -235,6 +262,25 @@ describe('full-text-indexing', () => {
       expect(doc.fulltextExtra).toContain(id)
     }
     expect(doc.fulltextExtra).not.toContain(descriptionId)
+  })
+
+  it('stores the facets of the search presenter and indexes their text', async () => {
+    const txProducer = queue.queue.getProducer<Tx>(toolCtx, QueueTopic.Tx)
+    const personId = randomUUID().toString() as PersonUuid
+    const wsId: WorkspaceUuid = randomUUID().toString() as WorkspaceUuid
+    const token = generateToken(personId, wsId)
+    await queue.mgr.withIndexer(toolCtx, wsId, token, true, async () => {})
+
+    const titleId = generateId()
+    const descriptionId = generateId()
+
+    const doc = await queue.expectIndexingDoc(descriptionId, async () => {
+      await txProducer.send(toolCtx, wsId, [
+        createDoc(test.class.TestDocument, { title: titleId, description: descriptionId })
+      ])
+    })
+    expect(doc.facets).toEqual([`title:${titleId}`])
+    expect(doc.fulltextExtra).toContain(titleId.split('').reverse().join(''))
   })
 
   it('indexes all text of a class without contentField into fulltextExtra', async () => {

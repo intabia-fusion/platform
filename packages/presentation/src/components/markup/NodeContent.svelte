@@ -16,6 +16,7 @@
   import type { Class, Doc, Ref, Blob } from '@hcengineering/core'
   import type { AttrValue, MarkupNode } from '@hcengineering/text'
   import { MarkupNodeType } from '@hcengineering/text'
+  import { CheckBox } from '@hcengineering/ui'
 
   import CodeBlockNode from './CodeBlockNode.svelte'
   import ObjectNode from './ObjectNode.svelte'
@@ -190,10 +191,22 @@
         {/each}
       {/if}
     </li>
-  {:else if node.type === MarkupNodeType.taskList}
-    <!-- TODO not implemented -->
-  {:else if node.type === MarkupNodeType.taskItem}
-    <!-- TODO not implemented -->
+  {:else if node.type === MarkupNodeType.taskList || node.type === MarkupNodeType.todoList}
+    <ul class="todo-list" style:margin={preview ? '0' : null}>
+      {#each nodes as node}
+        <Node {parseEmojisFunction} {node} {preview} />
+      {/each}
+    </ul>
+  {:else if node.type === MarkupNodeType.taskItem || node.type === MarkupNodeType.todoItem}
+    <!-- `inert` instead of `readonly`, whose grey box hides the tick. -->
+    <li class="todo-item">
+      <span class="todo-check" inert><CheckBox checked={attrs.checked === true} /></span>
+      <span class="todo-content">
+        {#each nodes as node}
+          <Node {parseEmojisFunction} {node} {preview} />
+        {/each}
+      </span>
+    </li>
   {:else if node.type === MarkupNodeType.subLink}
     <sub>
       {#if nodes.length > 0}
@@ -257,6 +270,32 @@
 {/if}
 
 <style lang="scss">
+  .todo-list {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .todo-check {
+    display: flex;
+    flex-shrink: 0;
+    margin-top: 0.1875rem;
+  }
+
+  .todo-content {
+    flex-grow: 1;
+    min-width: 0;
+
+    > :global(p) {
+      margin: 0;
+    }
+  }
+
   .imgContainer {
     display: inline;
   }

@@ -27,7 +27,8 @@ export class ThreadsListPage extends CommonPage {
   readonly repliesCount = (parent: string): Locator => this.thread(parent).locator('.thread__replies-count')
   readonly lastReply = (parent: string): Locator => this.thread(parent).locator('.thread__last-reply')
   // The chat the message comes from, next to its author.
-  readonly chatLabel = (text: string): Locator => this.thread(text).locator('.header .reference')
+  readonly chatLabel = (text: string): Locator => this.thread(text).locator('.header .reference .label')
+  readonly threadMark = (text: string): Locator => this.thread(text).locator('.header .reference .thread')
   readonly savedNavItem = (): Locator => this.page.locator('.hulyNavItem-container').getByText('Saved', { exact: true })
 
   async open (): Promise<void> {

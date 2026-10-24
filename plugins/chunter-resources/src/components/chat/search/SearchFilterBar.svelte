@@ -44,7 +44,7 @@
   import chunter from '../../../plugin'
   import { expandClasses, getActivityDocClasses, splitPrimaryClasses } from '../../../search/classes'
   import { endOfDay, pickAuthors as resolveAuthors, startOfDay } from '../../../search/resolve'
-  import type { ChatSearchFilters, PickedObject } from '../../../search/types'
+  import type { ChatSearchFilters, PickedObject, SearchOption } from '../../../search/types'
   import FilterButtonContent from './FilterButtonContent.svelte'
   import SearchObjectPopup from './SearchObjectPopup.svelte'
   import SearchOptionsPopup from './SearchOptionsPopup.svelte'
@@ -52,6 +52,10 @@
   export let filters: ChatSearchFilters = {}
   export let compact: boolean = false
   export let space: Ref<Space> | undefined = undefined
+  // Off for files and links: a thread is not a place they can be filtered by.
+  export let messageFilters: boolean = true
+  // Reported as `{ key: true | undefined }`; the message defaults apply when unset.
+  export let options: SearchOption[] | undefined = undefined
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -75,7 +79,7 @@
     other: DropdownTextItem[]
   }
 
-  async function buildClassGroups (lang: string): Promise<ClassGroups> {
+  async function buildClassGroups (lang: string, withThreads: boolean): Promise<ClassGroups> {
     const { primary, rest } = splitPrimaryClasses(getActivityDocClasses())
 
     const suggested = await Promise.all(primary.map(async (c) => await toItem(c, lang)))
@@ -87,8 +91,10 @@
       label: await translate(chunter.string.SearchFilterThreads, {}, lang),
       icon: chunter.icon.Thread
     }
-    const afterDirect = suggested.findIndex((i) => i.id === chunterPlugin.class.DirectMessage)
-    suggested.splice(afterDirect === -1 ? suggested.length : afterDirect + 1, 0, threadsItem)
+    if (withThreads) {
+      const afterDirect = suggested.findIndex((i) => i.id === chunterPlugin.class.DirectMessage)
+      suggested.splice(afterDirect === -1 ? suggested.length : afterDirect + 1, 0, threadsItem)
+    }
 
     const all: DropdownTextItem = {
       id: ALL_CLASSES,
@@ -126,11 +132,12 @@
   }
 
   let classGroups: ClassGroups | undefined
-  $: void buildClassGroups($themeStore.language).then((groups) => {
+  $: void buildClassGroups($themeStore.language, messageFilters).then((groups) => {
     classGroups = groups
   })
 
-  $: pickedClasses = (filters.attachedToClasses ?? []) as Array<string>
+  // Without the threads item a kept "Thread replies" pick could not be cleared.
+  $: pickedClasses = (filters.attachedToClasses ?? []).filter((c) => messageFilters || c !== THREADS) as Array<string>
   $: selectedClasses = pickedClasses.length > 0 ? pickedClasses : [ALL_CLASSES]
   $: classItems = composeClassItems(classGroups, pickedClasses)
   $: selectedClassItems = classItems.filter((item) => selectedClasses.includes(`${item.id}`))
@@ -224,8 +231,6 @@
     )
   }
 
-  let optionsButton: HTMLElement | undefined
-
   $: objectPersons =
     objects.length > 1 && objects.every((o) => client.getHierarchy().isDerived(o._class, contact.class.Person))
       ? objects.map((o) => o._id as Ref<Person>)
@@ -239,18 +244,32 @@
         ? (objects[0].icon ?? chunter.icon.Hashtag)
         : chunter.icon.Hashtag
 
-  $: activeOptions = [filters.hasAttachment === true, filters.includeTranscription === true].filter(Boolean).length
+  $: shownOptions = options ?? (messageFilters ? messageOptions(filters) : [])
+  $: activeOptions = shownOptions.filter((o) => o.on).length
+
+  function messageOptions (filters: ChatSearchFilters): SearchOption[] {
+    return [
+      { key: 'hasAttachment', label: chunter.string.SearchFilterHasAttachment, on: filters.hasAttachment === true },
+      {
+        key: 'includeTranscription',
+        label: chunter.string.SearchFilterIncludeTranscription,
+        on: filters.includeTranscription === true
+      }
+    ]
+  }
+
+  let optionsButton: HTMLElement | undefined
 
   function openOptions (): void {
     showPopup(
       SearchOptionsPopup,
-      { filters },
+      { options: shownOptions },
       optionsButton,
       () => {},
       (patch: Partial<ChatSearchFilters> | undefined) => {
-        if (patch !== undefined) {
-          update(patch)
-        }
+        if (patch === undefined) return
+        if (options === undefined) update(patch)
+        else dispatch('options', patch)
       }
     )
   }
@@ -425,20 +444,24 @@
         {/if}
       </div>
 
-      <div bind:this={optionsButton}>
-        <Button
-          icon={IconAttachment}
-          label={chunter.string.SearchFilterOptions}
-          kind="secondary"
-          size="small"
-          iconSize="small"
-          on:click={openOptions}
-        >
-          {#if activeOptions > 0}
-            <span class="counter">{activeOptions}</span>
-          {/if}
-        </Button>
-      </div>
+      <slot name="extra" />
+
+      {#if shownOptions.length > 0}
+        <div bind:this={optionsButton}>
+          <Button
+            icon={IconAttachment}
+            label={chunter.string.SearchFilterOptions}
+            kind="secondary"
+            size="small"
+            iconSize="small"
+            on:click={openOptions}
+          >
+            {#if activeOptions > 0}
+              <span class="counter">{activeOptions}</span>
+            {/if}
+          </Button>
+        </div>
+      {/if}
 
       {#if $$slots.trailing}
         <div class="trailing"><slot name="trailing" /></div>
@@ -467,6 +490,7 @@
   .trailing {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     flex: 0 0 auto;
   }
 

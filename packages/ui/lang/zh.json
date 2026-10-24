@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} 毫秒",
     "StatusError": "错误",
     "StatusWarning": "警告",
-    "StatusInfo": "信息"
+    "StatusInfo": "信息",
+    "Download": "下载",
+    "PreviewUnavailable": "此內容類型無法預覽",
+    "PreviewFailed": "无法打开预览",
+    "Play": "播放",
+    "Pause": "暂停",
+    "PlaybackPosition": "播放位置",
+    "PlaybackSpeed": "播放速度",
+    "LinkPreviewUnavailable": "链接预览不可用",
+    "UploadProgress": "{sent} / {size}",
+    "UploadFailed": "上传失败",
+    "Retry": "重试",
+    "VoiceStarting": "正在打开麦克风…",
+    "VoiceDiscard": "取消录音",
+    "VoiceAttach": "附加录音"
   }
 }

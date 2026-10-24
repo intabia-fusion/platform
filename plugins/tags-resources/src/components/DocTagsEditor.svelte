@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,9 +19,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { TagReference } from '@hcengineering/tags'
   import tags from '@hcengineering/tags'
-  import { ButtonKind, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import { getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import tagsPlugin from '../plugin'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'
   import TagIcon from './icons/TagIcon.svelte'

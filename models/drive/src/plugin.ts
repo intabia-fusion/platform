@@ -43,11 +43,11 @@ export default mergeIds(driveId, drive, {
     FolderPanel: '' as AnyComponent,
     FolderPresenter: '' as AnyComponent,
     FilePresenter: '' as AnyComponent,
-    FileSizePresenter: '' as AnyComponent,
     FileVersionPresenter: '' as AnyComponent,
     FileVersionVersionPresenter: '' as AnyComponent,
     MoveResource: '' as AnyComponent,
-    ResourcePresenter: '' as AnyComponent
+    ResourcePresenter: '' as AnyComponent,
+    ResourceSizePresenter: '' as AnyComponent
   },
   function: {
     DriveLinkProvider: '' as Resource<(doc: Doc, props: Record<string, any>) => Promise<Location>>,

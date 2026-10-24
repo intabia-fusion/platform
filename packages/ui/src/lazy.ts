@@ -1,10 +1,13 @@
+// Copyright © 2026 Intabia Fusion.
+
 import { DelayedCaller } from './callers'
 
 const observers = new Map<string, IntersectionObserver>()
 const entryMap = new WeakMap<Element, { callback: (isIntersecting: boolean) => void }>()
 
-const delayedCaller = new DelayedCaller(5)
 function makeObserver (rootMargin: string): IntersectionObserver {
+  // One caller per observer: a shared one keeps only the last op, so another observer's batch was dropped.
+  const delayedCaller = new DelayedCaller(5)
   const entriesPending = new Map<Element, { isIntersecting: boolean }>()
   const notifyObservers = (observer: IntersectionObserver): void => {
     for (const [target, entry] of entriesPending.entries()) {
@@ -55,6 +58,7 @@ const persistentObservers = new Map<string, IntersectionObserver>()
 const persistentEntryMap = new WeakMap<Element, { callback: (isIntersecting: boolean) => void }>()
 
 function makePersistentObserver (rootMargin: string): IntersectionObserver {
+  const delayedCaller = new DelayedCaller(5)
   const entriesPending = new Map<Element, { isIntersecting: boolean }>()
   const notifyObservers = (): void => {
     for (const [target, entry] of entriesPending.entries()) {
@@ -143,7 +147,11 @@ export function lazyObserver (node: Element, onVisible: (value: boolean, unsubsc
 /**
  * @public
  */
-export function persistentLazyObserver (node: Element, onVisible: (value: boolean) => void): any {
+export function persistentLazyObserver (
+  node: Element,
+  onVisible: (value: boolean) => void,
+  rootMargin: string = '20%'
+): any {
   const lazyEnabled = isLazyEnabled()
   if (!lazyEnabled) {
     onVisible(true)
@@ -153,7 +161,7 @@ export function persistentLazyObserver (node: Element, onVisible: (value: boolea
   let destroy = (): void => {}
   const update = (): void => {
     destroy()
-    destroy = listenPersistent('20%', node, (isIntersecting) => {
+    destroy = listenPersistent(rootMargin, node, (isIntersecting) => {
       onVisible(isIntersecting)
     })
   }

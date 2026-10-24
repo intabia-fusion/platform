@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,6 @@
   import type { WithLookup } from '@hcengineering/core'
   import type { Class, Ref } from '@hcengineering/core'
   import type { TestResult } from '@hcengineering/test-management'
-  import { TestCase } from '@hcengineering/test-management'
   import { Panel } from '@hcengineering/panel'
 
   import TestResultAside from './TestResultAside.svelte'

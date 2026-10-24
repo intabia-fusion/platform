@@ -29,7 +29,10 @@ export class TalentDetailsPage extends CommonRecruitingPage {
   readonly buttonPopupMergeContacts = (): Locator =>
     this.formMergeContacts().locator('button:has-text("Merge contacts")')
 
-  readonly textAttachmentName = (): Locator => this.page.locator('div.name a')
+  // The talent lists its files in a table, by name.
+  readonly attachmentByName = (filePath: string): Locator =>
+    this.page.locator('a.attachment-label', { hasText: filePath })
+
   readonly titleAndSourceTalent = (title: string): Locator => this.page.locator('button > span', { hasText: title })
 
   async addSkill (skillTag: string, skillDescription: string): Promise<void> {

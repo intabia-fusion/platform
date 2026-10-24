@@ -46,6 +46,7 @@ type TranscodeResult struct {
 	Source        map[string]any `json:"source"`
 	Playlist      string         `json:"playlist"`
 	Thumbnail     string         `json:"thumbnail"`
+	Duration      float64        `json:"duration,omitempty"`
 }
 
 // ConsumerOptions represents options for the consumer

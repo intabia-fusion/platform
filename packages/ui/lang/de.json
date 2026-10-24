@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Fehler",
     "StatusWarning": "Warnung",
-    "StatusInfo": "Information"
+    "StatusInfo": "Information",
+    "Download": "Herunterladen",
+    "PreviewUnavailable": "Vorschau ist für diesen Inhaltstyp nicht verfügbar",
+    "PreviewFailed": "Vorschau konnte nicht geöffnet werden",
+    "Play": "Abspielen",
+    "Pause": "Pause",
+    "PlaybackPosition": "Wiedergabeposition",
+    "PlaybackSpeed": "Geschwindigkeit",
+    "LinkPreviewUnavailable": "Linkvorschau nicht verfügbar",
+    "UploadProgress": "{sent} von {size}",
+    "UploadFailed": "Hochladen fehlgeschlagen",
+    "Retry": "Erneut versuchen",
+    "VoiceStarting": "Mikrofon wird eingeschaltet…",
+    "VoiceDiscard": "Aufnahme abbrechen",
+    "VoiceAttach": "Aufnahme anhängen"
   }
 }

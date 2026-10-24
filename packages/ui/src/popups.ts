@@ -1,3 +1,18 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 import { getResource } from '@hcengineering/platform'
 import { type ComponentType } from 'svelte'
 import { derived, get } from 'svelte/store'
@@ -53,12 +68,9 @@ export const dockStore = derived(modalStore, (modals) => {
 
 export function updatePopup (id: string, props: Partial<CompAndProps>): void {
   modalStore.update((modals) => {
-    const popupIndex = (modals.filter((m) => m.type === 'popup') as CompAndProps[]).findIndex(
-      (p: CompAndProps) => p.id === id
-    )
-    if (popupIndex !== -1) {
-      ;(modals[popupIndex] as CompAndProps).update?.(props.props)
-    }
+    // Tooltips share the store, so an index among popups would point at the wrong entry.
+    const popup = (modals.filter((m) => m.type === 'popup') as CompAndProps[]).find((p) => p.id === id)
+    popup?.update?.(props.props)
     return modals
   })
 }

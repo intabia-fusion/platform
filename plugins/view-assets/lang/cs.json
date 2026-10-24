@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "Zobrazeno prvních {shown} kB z {total} kB",
+    "MarkdownPreview": "Náhled",
+    "MarkdownSource": "Zdroj",
+    "MarkdownTooLarge": "Bez formátování: přes {limit} KB",
+    "TextShownLast": "Zobrazeno posledních {shown} kB z {total} kB",
     "Contains": "Obsahuje",
     "NotContains": "Neobsahuje",
     "MoveClass": "Přesunout {class}",

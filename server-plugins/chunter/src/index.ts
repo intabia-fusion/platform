@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,12 @@
 
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import { ObjectDDParticipantFunc, SearchPresenterProvider, TriggerFunc } from '@hcengineering/server-core'
+import {
+  ObjectDDParticipantFunc,
+  SearchFacetsProvider,
+  SearchPresenterProvider,
+  TriggerFunc
+} from '@hcengineering/server-core'
 import { TypeMatchFuncResource } from '@hcengineering/server-notification'
 import { IconPresenterFn, IntlStringPresenterFn, StringPresenterFn } from '@hcengineering/server-activity'
 
@@ -43,6 +49,7 @@ export default plugin(serverChunterId, {
     ChannelIconPresenter: '' as Resource<IconPresenterFn>,
     DirectIconPresenter: '' as Resource<IconPresenterFn>,
     ChatMessageSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
+    ChatMessageSearchFacets: '' as Resource<SearchFacetsProvider>,
     JoinChannelTypeMatch: '' as TypeMatchFuncResource
   }
 })

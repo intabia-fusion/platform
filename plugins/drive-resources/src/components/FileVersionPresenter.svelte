@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,8 +18,7 @@
 <script lang="ts">
   import type { WithLookup } from '@hcengineering/core'
   import type { FileVersion } from '@hcengineering/drive'
-  import { FilePreviewPopup } from '@hcengineering/presentation'
-  import { showPopup } from '@hcengineering/ui'
+  import { showFileViewer } from '@hcengineering/presentation'
   import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
@@ -38,16 +38,13 @@
       return
     }
 
-    showPopup(
-      FilePreviewPopup,
-      {
-        file: value.file,
-        contentType: value.type,
-        name: value.title,
-        metadata: value.metadata
-      },
-      'centered'
-    )
+    showFileViewer({
+      file: value.file,
+      contentType: value.type,
+      name: value.title,
+      metadata: value.metadata,
+      size: value.size
+    })
   }
 </script>
 

@@ -17,14 +17,13 @@
   import aiBot from '@hcengineering/ai-bot'
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { generateId, getCurrentAccount } from '@hcengineering/core'
-  import { getClient, uploadFile } from '@hcengineering/presentation'
+  import { setPlatformStatus, unknownError } from '@hcengineering/platform'
+  import { uploadFile } from '@hcengineering/presentation'
   import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
-  import { IconClose, IconCheck, IconSend, Label, Spinner } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { VoiceRecorderBar } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import slugify from 'slugify'
 
-  import chunter from '../../plugin'
   import { VoiceRecorder } from '../../voiceRecorder'
 
   // Draft message this recording attaches to (objectId = future message id).
@@ -32,7 +31,6 @@
   export let objectClass: Ref<Class<Doc>>
   export let space: Ref<Space>
 
-  const client = getClient()
   const dispatch = createEventDispatcher()
 
   const recorder = new VoiceRecorder()
@@ -45,8 +43,11 @@
   let timer: any
   let raf: number | undefined
 
-  const NUM_BARS = 16
-  let bars: number[] = new Array(NUM_BARS).fill(0)
+  // A wide input shows about the last ten seconds.
+  const LEVELS = 128
+  const LEVEL_MS = 80
+  let levels: number[] = []
+  let sampled = 0
   let destroyed = false
 
   onMount(() => {
@@ -69,8 +70,11 @@
     timer = setInterval(() => {
       elapsed += 1
     }, 1000)
-    const tick = (): void => {
-      bars = [...bars.slice(1), recorder.getLevel()]
+    const tick = (now: number): void => {
+      if (now - sampled >= LEVEL_MS) {
+        sampled = now
+        levels = [...levels.slice(1 - LEVELS), recorder.getLevel()]
+      }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -83,15 +87,15 @@
     raf = undefined
   }
 
-  // Stop the mic, upload the blob and create the AudioTranscribe doc. Returns undefined on failure.
-  async function persist (): Promise<AudioTranscribe | undefined> {
+  // Uploads only: the input creates the doc on send.
+  async function persist (): Promise<AudioTranscribe> {
     stopTimers()
     let rec
     try {
       rec = await recorder.stop()
-    } catch {
+    } catch (err: any) {
       dispatch('close')
-      return undefined
+      throw err
     }
     phase = 'saving'
     const id = generateId<AudioTranscribe>()
@@ -99,7 +103,14 @@
     const author = slugify(await getCurrentEmployeeName(), { lower: false }) || 'voice'
     const name = `${author}-${Date.now()}.${ext}`
     const file = new File([rec.blob], name, { type: rec.type })
-    const { uuid, metadata } = await uploadFile(file)
+    let stored
+    try {
+      stored = await uploadFile(file)
+    } catch (err: any) {
+      dispatch('close')
+      throw err
+    }
+    const { uuid, metadata } = stored
     const data = {
       name,
       file: uuid,
@@ -110,15 +121,6 @@
       state: 'pending' as const,
       durationSec: Math.round(rec.durationSec)
     }
-    await client.addCollection<Doc, AudioTranscribe>(
-      aiBot.class.AudioTranscribe,
-      space,
-      objectId,
-      objectClass,
-      'attachments',
-      data,
-      id
-    )
     const doc = {
       _id: id,
       _class: aiBot.class.AudioTranscribe,
@@ -130,23 +132,19 @@
       modifiedBy: getCurrentAccount().primarySocialId,
       ...data
     } as unknown as AudioTranscribe
-    // Attach right away (shows as 'transcribing…' in the input) instead of blocking on the worker.
     dispatch('audio', doc)
     return doc
   }
 
-  async function onAttach (): Promise<void> {
-    const doc = await persist()
-    if (doc !== undefined) dispatch('close')
-  }
+  // A send during the upload must wait: a second stop finds the recorder released.
+  let attaching: Promise<void> | undefined
 
-  async function onSend (): Promise<void> {
-    const doc = await persist()
-    if (doc === undefined) return
-    // Submit right away; the transcript keeps filling in live on the already-sent attachment
-    // (presenter watches the doc), so there is no need to block the send on the worker.
-    dispatch('send')
-    dispatch('close')
+  export async function finish (): Promise<void> {
+    // A failure reaches the caller: a send must stop, not go out empty.
+    attaching ??= persist().then(() => {
+      dispatch('close')
+    })
+    await attaching
   }
 
   function onCancel (): void {
@@ -161,100 +159,16 @@
     // Release the mic on any teardown path so the browser tab drops the recording indicator.
     recorder.cancel()
   })
-
-  $: mmss = `${Math.floor(elapsed / 60)}`.padStart(2, '0') + ':' + `${elapsed % 60}`.padStart(2, '0')
 </script>
 
-<div class="hud">
-  {#if phase === 'starting'}
-    <Spinner size="small" />
-    <span class="timer"><Label label={chunter.string.PreparingMic} /></span>
-    <IconButton
-      icon={IconClose}
-      size="small"
-      kind="tertiary"
-      tooltip={{ label: chunter.string.VoiceCancel }}
-      on:click={onCancel}
-    />
-  {:else if phase === 'recording'}
-    <div class="dot" />
-    <span class="timer">{mmss}</span>
-    <div class="wave">
-      {#each bars as b}
-        <div class="bar" style="height: {Math.max(2, b * 22)}px" />
-      {/each}
-    </div>
-    <IconButton
-      icon={IconClose}
-      size="small"
-      kind="tertiary"
-      tooltip={{ label: chunter.string.VoiceCancel }}
-      on:click={onCancel}
-    />
-    <IconButton
-      icon={IconCheck}
-      size="small"
-      kind="secondary"
-      tooltip={{ label: chunter.string.VoiceAttach }}
-      on:click={onAttach}
-    />
-    <IconButton
-      icon={IconSend}
-      size="small"
-      kind="primary"
-      tooltip={{ label: chunter.string.VoiceSend }}
-      on:click={onSend}
-    />
-  {:else}
-    <!-- Upload only: the message is sent without waiting for the transcript. -->
-    <Spinner size="small" />
-  {/if}
-</div>
-
-<style lang="scss">
-  .hud {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
-    margin-bottom: 0.75rem;
-    padding: 0.375rem 0.625rem;
-    border-radius: 0.5rem;
-    background: var(--theme-refinput-color);
-    border: 1px solid var(--theme-refinput-border);
-  }
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--theme-error-color, #e05252);
-    animation: pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.3;
-    }
-  }
-  .timer {
-    font-variant-numeric: tabular-nums;
-    min-width: 3rem;
-  }
-  .wave {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    width: 5rem;
-    height: 24px;
-    overflow: hidden;
-  }
-  .bar {
-    width: 3px;
-    border-radius: 2px;
-    background: var(--theme-primary-default, #4870ff);
-    transition: height 0.08s linear;
-  }
-</style>
+<VoiceRecorderBar
+  state={phase}
+  {elapsed}
+  {levels}
+  on:discard={onCancel}
+  on:attach={() => {
+    finish().catch((err) => {
+      void setPlatformStatus(unknownError(err))
+    })
+  }}
+/>

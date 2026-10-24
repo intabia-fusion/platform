@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -77,10 +78,12 @@
 </div>
 
 <style lang="scss">
+  // Dark until the first frame arrives: an empty box did not read as a video.
   .container {
     min-width: 10rem;
     min-height: 10rem;
     border-radius: 0.75rem;
     overflow: hidden;
+    background-color: var(--global-media-BackdropColor);
   }
 </style>

@@ -43,6 +43,9 @@ export interface Folder extends Resource {
   path: Ref<Folder>[]
 
   file?: undefined
+
+  folders?: number
+  files?: number
 }
 
 /** @public */

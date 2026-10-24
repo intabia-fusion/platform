@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,6 +19,7 @@
   export let name: string
   export let fit: boolean = false
   export let css: string | undefined = undefined
+  export let view: 'FitH' | 'Fit' = 'FitH'
 
   let iframe: HTMLIFrameElement | undefined = undefined
 
@@ -42,7 +44,7 @@
   }
 </script>
 
-<iframe bind:this={iframe} class:fit src={src + '#view=FitH&navpanes=0'} title={name} on:load />
+<iframe bind:this={iframe} class:fit src={`${src}#view=${view}&navpanes=0`} title={name} on:load />
 
 <style lang="scss">
   iframe {

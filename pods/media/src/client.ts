@@ -110,14 +110,14 @@ export class WorkspaceClient {
     if (hierarchy.isDerived(objectClass, attachment.class.Attachment)) {
       const doc = await txOps.findOne(attachment.class.Attachment, { _id: objectId as Ref<Attachment> })
       if (doc !== undefined) {
-        await txOps.update(doc, { ...doc.metadata, ...metadata })
+        await txOps.update(doc, { metadata: { ...doc.metadata, ...metadata } })
       }
     }
 
     if (hierarchy.isDerived(objectClass, drive.class.FileVersion)) {
       const doc = await txOps.findOne(drive.class.FileVersion, { _id: objectId as Ref<FileVersion> })
       if (doc !== undefined) {
-        await txOps.update(doc, { ...doc.metadata, ...metadata })
+        await txOps.update(doc, { metadata: { ...doc.metadata, ...metadata } })
       }
     }
   }

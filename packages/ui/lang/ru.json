@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} мс",
     "StatusError": "Ошибка",
     "StatusWarning": "Предупреждение",
-    "StatusInfo": "Информация"
+    "StatusInfo": "Информация",
+    "Download": "Скачать",
+    "PreviewUnavailable": "Предварительный просмотр недоступен для этого типа контента",
+    "PreviewFailed": "Не удалось открыть предпросмотр",
+    "Play": "Воспроизвести",
+    "Pause": "Пауза",
+    "PlaybackPosition": "Позиция воспроизведения",
+    "PlaybackSpeed": "Скорость",
+    "LinkPreviewUnavailable": "Превью ссылки недоступно",
+    "UploadProgress": "{sent} из {size}",
+    "UploadFailed": "Не удалось загрузить",
+    "Retry": "Повторить",
+    "VoiceStarting": "Включаем микрофон…",
+    "VoiceDiscard": "Отменить запись",
+    "VoiceAttach": "Прикрепить запись"
   }
 }

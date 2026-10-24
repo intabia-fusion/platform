@@ -48,6 +48,7 @@ import {
   Prop,
   ReadOnly,
   TypeFileSize,
+  TypeNumber,
   TypeRecord,
   TypeRef,
   TypeString,
@@ -124,6 +125,16 @@ export class TFolder extends TResource implements Folder {
   declare path: Ref<Folder>[]
 
   declare file: undefined
+
+  @Prop(TypeNumber(), drive.string.Folders)
+  @ReadOnly()
+  @Hidden()
+  folders?: number
+
+  @Prop(TypeNumber(), drive.string.Files)
+  @ReadOnly()
+  @Hidden()
+  files?: number
 }
 
 @Model(drive.class.File, drive.class.Resource, DOMAIN_DRIVE)
@@ -359,7 +370,12 @@ function defineResource (builder: Builder): void {
           label: drive.string.Name,
           sortingKey: 'title'
         },
-        '$lookup.file.size',
+        {
+          key: '',
+          presenter: drive.component.ResourceSizePresenter,
+          label: drive.string.Size,
+          sortingKey: '$lookup.file.size'
+        },
         'comments',
         '$lookup.file.lastModified',
         'createdBy'
@@ -539,7 +555,7 @@ function defineFolder (builder: Builder): void {
       context: {
         mode: ['context', 'browser'],
         application: drive.app.Drive,
-        group: 'edit'
+        group: 'remove'
       },
       visibilityTester: drive.function.CanDeleteFolder
     },
@@ -560,7 +576,7 @@ function defineFolder (builder: Builder): void {
     visibilityTester: drive.function.CanUpdateFolder,
     context: {
       mode: ['browser', 'context'],
-      group: 'tools'
+      group: 'edit'
     }
   })
 }
@@ -617,7 +633,7 @@ function defineFileVersion (builder: Builder): void {
       context: {
         mode: ['context', 'browser'],
         application: drive.app.Drive,
-        group: 'edit'
+        group: 'remove'
       }
     },
     drive.action.DeleteFileVersion
@@ -698,7 +714,7 @@ function defineFile (builder: Builder): void {
       context: {
         mode: ['context', 'browser'],
         application: drive.app.Drive,
-        group: 'tools'
+        group: 'other'
       }
     },
     drive.action.DownloadFile
@@ -735,7 +751,7 @@ function defineFile (builder: Builder): void {
       context: {
         mode: ['context', 'browser'],
         application: drive.app.Drive,
-        group: 'edit'
+        group: 'remove'
       },
       visibilityTester: drive.function.CanDeleteFile
     },
@@ -756,7 +772,7 @@ function defineFile (builder: Builder): void {
     visibilityTester: drive.function.CanUpdateFile,
     context: {
       mode: ['browser', 'context'],
-      group: 'tools'
+      group: 'edit'
     }
   })
 }

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,5 +28,6 @@ loadMetadata(chunter.icon, {
   Copy: `${icons}#copy`,
   Messages: `${icons}#messages`,
   Bookmarks: `${icons}#bookmarks`,
-  Report: `${icons}#report`
+  Report: `${icons}#report`,
+  Download: `${icons}#download`
 })

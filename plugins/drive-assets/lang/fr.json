@@ -40,6 +40,12 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyFolder": "Ce dossier est vide",
+    "DropFilesHere": "Déposez des fichiers ici",
+    "DropFilesHint": "ou cliquez pour les choisir",
+    "FoldersCount": "{count, plural, one {# dossier} other {# dossiers}}",
+    "FilesCount": "{count, plural, one {# fichier} other {# fichiers}}",
+    "FolderEmpty": "Vide"
   }
 }

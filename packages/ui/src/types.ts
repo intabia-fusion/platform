@@ -18,7 +18,7 @@ import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { type ComponentType } from 'svelte'
 
 export interface BlankViewProps {
-  icon: Asset
+  icon: IconComponent
   header: IntlString
   label?: IntlString
 }

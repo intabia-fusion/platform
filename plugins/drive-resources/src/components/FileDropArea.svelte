@@ -13,13 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref, Space } from '@hcengineering/core'
+  import type { Ref } from '@hcengineering/core'
   import type { Drive, Folder } from '@hcengineering/drive'
   import { uploadFilesToDrive } from '../utils'
 
   export let space: Ref<Drive>
   export let parent: Ref<Folder>
   export let canDrop: ((e: DragEvent) => boolean) | undefined = undefined
+  export let overlay: boolean = true
 
   let dragover = false
   let counter = 0
@@ -38,7 +39,8 @@
   }
 
   async function handleDragOver (e: DragEvent): Promise<void> {
-    if (e.dataTransfer?.files === undefined) {
+    // Files from outside only: a card dragged within the page carries a link.
+    if (e.dataTransfer?.types.includes('Files') !== true) {
       return
     }
     if (canDrop !== undefined && !canDrop(e)) {
@@ -71,13 +73,13 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   class="dropzone flex-col w-full h-full"
-  class:dragover
+  class:dragover={dragover && overlay}
   on:dragenter={handleDragEnter}
   on:dragleave={handleDragLeave}
   on:dragover|preventDefault={handleDragOver}
   on:drop={handleDrop}
 >
-  <slot />
+  <slot {dragover} />
 </div>
 
 <style lang="scss">

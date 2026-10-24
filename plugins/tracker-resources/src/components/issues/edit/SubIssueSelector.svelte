@@ -19,7 +19,6 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import type { Issue } from '@hcengineering/tracker'
-  import { IssueStatus } from '@hcengineering/tracker'
   import {
     Icon,
     IconDetails,

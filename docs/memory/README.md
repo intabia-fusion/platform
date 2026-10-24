@@ -11,6 +11,7 @@
 
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
 - [content-reports.md](content-reports.md) - Чат: жалобы и опция воркспейса для них
+- [attachment_search_facets.md](attachment_search_facets.md) - Чат: поиск вложений, фасеты и привязка к чату
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
 - [push_voip_calls.md](push_voip_calls.md) - Push входящего звонка: VoIP
 
@@ -60,14 +61,16 @@
 
 ## Файлы и медиа - [drive-media.md](../features/drive-media.md)
 
+- [attachment-cards.md](attachment-cards.md) - Вложения: карточки кита, плеер, файлы на стенде
 - [preview_bench.md](preview_bench.md) - Preview bench: what it measures and what to distrust
-- [video-transcoding-storage.md](video-transcoding-storage.md) - Video transcoding: storage accounting and deletion
+- [video-transcoding-storage.md](video-transcoding-storage.md) - Video transcoding: storage accounting, deletion, длительность видео из плейлиста
 
 ## Каркас, бэкап, desktop - [platform-infra.md](../features/platform-infra.md)
 
 - [backup_index_revision_guard.md](backup_index_revision_guard.md) - Аренда бэкапа и ревизия индекса (FUSIO-1339)
 - [desktop-update-system.md](desktop-update-system.md) - Desktop auto-update system
 - [sidebar-widget-tabs.md](sidebar-widget-tabs.md) - Sidebar widget tabs
+- [desktop-batch-download.md](desktop-batch-download.md) - Desktop: «Скачать все» в одну папку без окон сохранения
 
 ## Архитектура, протокол, эксплуатация - [architecture.md](../architecture.md)
 
@@ -95,8 +98,8 @@
 - [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (`@intabia-fusion/yama`)
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
-- [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules and the no-duplicates fixer bug
-- [storybook.md](storybook.md) - Storybook 8.6 на Svelte 4: vite-плагины, CJS workspace-пакетов, имена типов в docgen
+- [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules, the no-duplicates fixer bug и пробел проверки относительно Storybook
+- [storybook.md](storybook.md) - Storybook 8.6 на Svelte 4: vite-плагины, CJS workspace-пакетов, имена типов в docgen, моки для историй вложений
 - [test-stand-nodejs.md](test-stand-nodejs.md) - Test stand setup in node (dev/test-base)
 - [typescript7-migration.md](typescript7-migration.md) - TypeScript 7 (tsgo) build
 - [upstream-sync.md](upstream-sync.md) - Синк с upstream (Platform-Collective/platform)

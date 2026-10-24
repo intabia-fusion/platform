@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,18 +16,16 @@
 <script lang="ts">
   import type { BlobMetadata } from '@hcengineering/core'
   import type { Blob, Ref } from '@hcengineering/core'
-  import {
-    Button,
+  import ui, {
     Component,
-    Label,
     resizeObserver,
     deviceOptionsStore as deviceInfo,
-    Loading
+    Loading,
+    type AnySvelteComponent
   } from '@hcengineering/ui'
+  import { FileNoPreview } from '@hcengineering/ui/kit'
 
-  import presentation from '../plugin'
-
-  import { getFileUrl } from '../file'
+  import { fileBadge, getFileUrl } from '../file'
   import { getPreviewType, previewTypes } from '../filetypes'
   import { getPreviewThumbnail } from '../preview'
   import { imageSizeToRatio } from '../image'
@@ -40,8 +39,8 @@
   export let fit: boolean = false
   export let embedded: boolean = false
   export let setLoading: ((loading: boolean) => void) | undefined = undefined
+  export let viewer: { component: AnySvelteComponent, props?: Record<string, any> } | undefined = undefined
 
-  let download: HTMLAnchorElement
   let parentWidth: number
   let minHeight: number | undefined
   $: parentHeight = ($deviceInfo.docHeight * 80) / 100
@@ -58,7 +57,16 @@
   $: thumbnail = metadata?.thumbnail
   $: thumbnailFile = typeof file === 'string' && !file.includes('://') ? file : undefined
   let hiResLoaded = false
-  $: if (thumbnailFile !== undefined) hiResLoaded = false
+  // The service may have no picture for this type: show no preview, not a spinner.
+  let thumbnailFailed = false
+  let lowResFailed = false
+  $: resetThumbnail(thumbnailFile)
+
+  function resetThumbnail (_: string | undefined): void {
+    hiResLoaded = false
+    thumbnailFailed = false
+    lowResFailed = false
+  }
 
   const updateHeight = (
     pWidth: number,
@@ -109,9 +117,9 @@
 >
   {#await srcRef then src}
     {#if src === ''}
-      <div class="flex-col items-center">
-        <Label label={presentation.string.FailedToPreview} />
-      </div>
+      <FileNoPreview {name} badge={fileBadge(name, contentType)} url="" label={ui.string.PreviewFailed} />
+    {:else if viewer !== undefined}
+      <svelte:component this={viewer.component} {...viewer.props} />
     {:else if previewType !== undefined}
       <Component
         is={previewType.component}
@@ -119,8 +127,8 @@
       />
     {:else if loading}
       <Loading />
-    {:else if thumbnail !== undefined && thumbnailFile !== undefined}
-      <div class="flex-col items-center flex-gap-3">
+    {:else if thumbnail !== undefined && thumbnailFile !== undefined && !thumbnailFailed}
+      <div class="flex-col items-center">
         <div
           class="thumbnail-wrap"
           style:aspect-ratio={`${thumbnail.width} / ${thumbnail.height}`}
@@ -128,7 +136,14 @@
         >
           <!-- Hi-res defines the box; low-res is a blurred placeholder shown until it loads -->
           {#if !hiResLoaded}
-            <img class="thumbnail low-res" src={getPreviewThumbnail(thumbnailFile, 64, 64, 1)} alt={name} />
+            {#if !lowResFailed}
+              <img
+                class="thumbnail low-res"
+                src={getPreviewThumbnail(thumbnailFile, 64, 64, 1)}
+                alt=""
+                on:error={() => (lowResFailed = true)}
+              />
+            {/if}
             <div class="thumbnail-loader"><Loading /></div>
           {/if}
           <img
@@ -138,33 +153,12 @@
             srcset={`${getPreviewThumbnail(thumbnailFile, thumbnail.width, thumbnail.height, 2)} 2x, ${getPreviewThumbnail(thumbnailFile, thumbnail.width, thumbnail.height, 3)} 3x`}
             alt={name}
             on:load={() => (hiResLoaded = true)}
+            on:error={() => (thumbnailFailed = true)}
           />
         </div>
-        <a class="no-line" href={src} download={name} bind:this={download}>
-          <Button
-            label={presentation.string.Download}
-            kind="ghost"
-            on:click={() => {
-              download.click()
-            }}
-            showTooltip={{ label: presentation.string.Download }}
-          />
-        </a>
       </div>
     {:else}
-      <div class="flex-col items-center flex-gap-3">
-        <Label label={presentation.string.ContentTypeNotSupported} />
-        <a class="no-line" href={src} download={name} bind:this={download}>
-          <Button
-            label={presentation.string.Download}
-            kind="primary"
-            on:click={() => {
-              download.click()
-            }}
-            showTooltip={{ label: presentation.string.Download }}
-          />
-        </a>
-      </div>
+      <FileNoPreview {name} badge={fileBadge(name, contentType)} url={src} />
     {/if}
   {/await}
 </div>

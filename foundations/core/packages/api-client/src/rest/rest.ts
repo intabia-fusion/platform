@@ -343,6 +343,7 @@ export class RestClientImpl implements RestClient {
     const result = await withRetry<SearchResult & { error?: Status }>(async () => {
       const params = new URLSearchParams()
       params.append('query', query.query)
+      if (query.allowEmptyQuery === true) params.append('allowEmptyQuery', 'true')
       if (query.classes != null && Object.keys(query.classes).length > 0) {
         params.append('classes', JSON.stringify(query.classes))
       }

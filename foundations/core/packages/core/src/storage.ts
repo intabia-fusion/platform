@@ -1,5 +1,6 @@
 //
 // Copyright © 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -277,6 +278,9 @@ export interface SearchFilters {
 
   excludeCollections?: string[]
   hasAttachment?: boolean
+  rootObjectClass?: Ref<Class<Doc>>[]
+  /** Every group must match, any value of a group does: `[['kind:file'], ['format:pdf', 'format:doc']]`. */
+  facets?: string[][]
 }
 
 /**
@@ -287,6 +291,8 @@ export interface SearchQuery {
   classes?: Ref<Class<Doc>>[]
   spaces?: Ref<Space>[]
   filters?: SearchFilters
+  /** An empty `query` finds every document the filters let through, not none: a feed before anything is typed. */
+  allowEmptyQuery?: boolean
 }
 
 /**
@@ -354,13 +360,20 @@ export interface SearchResultDoc {
   highlights?: {
     content?: string[]
     title?: string[]
+    // Text indexed beside the document, for a class with `SearchPresenter.highlightExtra`: the links of a message.
+    extra?: string[]
   }
   // Values of the attributes named by `SearchOptions.fields`, read from the stored document.
   fields?: Record<string, any>
   doc: Pick<Doc, '_id' | '_class' | 'createdOn'> &
     Partial<Pick<Doc, 'createdBy' | 'modifiedOn' | 'modifiedBy' | 'space'>> &
     Partial<Pick<AttachedDoc, 'attachedTo' | 'attachedToClass'>> &
-    Partial<Pick<VersionableDoc, 'baseId'>> & { objectId?: Ref<Doc>, objectClass?: Ref<Class<Doc>> }
+    Partial<Pick<VersionableDoc, 'baseId'>> & {
+      objectId?: Ref<Doc>
+      objectClass?: Ref<Class<Doc>>
+      rootObject?: Ref<Doc>
+      rootObjectClass?: Ref<Class<Doc>>
+    }
 }
 
 /**

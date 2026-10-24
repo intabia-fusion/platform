@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,11 +19,12 @@
   import type { WithLookup } from '@hcengineering/core'
   import type { File } from '@hcengineering/drive'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Icon, tooltip } from '@hcengineering/ui'
+  import { tooltip } from '@hcengineering/ui'
   import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
 
-  import { formatFileVersion, getFileTypeIcon } from '../utils'
+  import { formatFileVersion } from '../utils'
+  import FileIcon from './FileIcon.svelte'
 
   export let value: WithLookup<File>
   export let inline: boolean = false
@@ -33,8 +35,6 @@
   export let type: ObjectPresenterType = 'link'
 
   export let shouldShowVersion = false
-
-  $: icon = getFileTypeIcon(value.$lookup?.file?.type ?? '')
 </script>
 
 {#if value}
@@ -44,9 +44,7 @@
     <DocNavLink object={value} {disabled} {accent} {noUnderline}>
       <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.title) }}>
         {#if shouldShowAvatar}
-          <div class="icon">
-            <Icon {icon} size="small" />
-          </div>
+          <span class="preview"><FileIcon name={value.title} version={value.$lookup?.file} /></span>
         {/if}
         <div class="label nowrap flex flex-gap-2" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
           <span>{value.title}</span>
@@ -63,3 +61,16 @@
     </span>
   {/if}
 {/if}
+
+<style lang="scss">
+  // A block, not a flex box: the inline icon inside stays out of the link's hover underline.
+  .preview {
+    display: block;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+
+    > :global(*) {
+      vertical-align: top;
+    }
+  }
+</style>

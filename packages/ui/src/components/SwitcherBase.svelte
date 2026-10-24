@@ -113,7 +113,7 @@
         color: var(--theme-state-positive-color);
       }
     }
-    &:focus + .switcher-element {
+    &:focus-visible + .switcher-element {
       box-shadow: 0 0 0 var(--spacing-0_25) var(--global-focus-inset-BorderColor);
       outline: var(--spacing-0_25) solid var(--global-focus-BorderColor);
       outline-offset: var(--spacing-0_25);

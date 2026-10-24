@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,6 +15,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
+import { getResource } from '@hcengineering/platform'
 import attachmentPlugin, { type Attachment } from '@hcengineering/attachment'
 import contactPlugin, { formatName } from '@hcengineering/contact'
 import core, {
@@ -57,6 +59,8 @@ import type {
   FullTextAdapter,
   FulltextListener,
   IndexedDoc,
+  SearchFacetsProvider,
+  SearchPresenter,
   StorageAdapter
 } from '@hcengineering/server-core'
 import { RateLimiter, SessionDataImpl } from '@hcengineering/server-core'
@@ -251,10 +255,15 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     ctx: MeasureContext,
     domain: Domain,
     classes: Ref<Class<Doc>>[],
-    control?: ConsumerControl
+    control?: ConsumerControl,
+    clean: boolean = false
   ): Promise<void> {
     let processed = 0
     ctx.contextData ??= this.createContextData()
+    // Only named classes: a whole domain would need its class list, and the full reindex drops everything anyway.
+    if (clean && classes.length > 0) {
+      await this.fulltextAdapter.removeByQuery(ctx, this.workspace.uuid, { _class: { $in: classes } })
+    }
     await ctx.with(
       'reindex domain',
       { domain },
@@ -278,6 +287,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                 // Skip non indexable classes
                 continue
               }
+              if (classes.length > 0 && !classes.some((it) => this.hierarchy.isDerived(v, it))) continue
 
               await this.indexDocuments(ctx, v, values, pushQueue)
               await control?.heartbeat()
@@ -366,6 +376,65 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     return has
   }
 
+  private async loadFacetsProvider (
+    ctx: MeasureContext,
+    searchPresenter: SearchPresenter | undefined
+  ): Promise<SearchFacetsProvider | undefined> {
+    if (searchPresenter?.facets == null) return undefined
+    try {
+      return await getResource(searchPresenter.facets)
+    } catch (err: any) {
+      ctx.error('failed to load search facets provider', { facets: searchPresenter.facets, err })
+      return undefined
+    }
+  }
+
+  private isChatMessageClass (_class: Ref<Class<Doc>>): boolean {
+    return this.hierarchy.hasClass(_class) && this.hierarchy.isDerived(_class, chunter.class.ChatMessage)
+  }
+
+  // A thread reply's channel, not the message it answers.
+  private messageRoot (message: Doc): { _id: Ref<Doc>, _class: Ref<Class<Doc>> } | undefined {
+    if (this.hierarchy.isDerived(message._class, chunter.class.ThreadMessage)) {
+      const thread = message as ThreadMessage
+      return { _id: thread.objectId, _class: thread.objectClass }
+    }
+    if (this.hierarchy.isDerived(message._class, core.class.AttachedDoc)) {
+      const attached = message as AttachedDoc
+      return { _id: attached.attachedTo, _class: attached.attachedToClass }
+    }
+    return undefined
+  }
+
+  // Files are created just before their message: indexed first, they missed the chat they belong to.
+  private async indexMessageAttachments (
+    ctx: MeasureContext,
+    txes: TxCUD<Doc>[],
+    pushQueue: ElasticPushQueue
+  ): Promise<void> {
+    const messages = txes
+      .filter((tx) => tx._class === core.class.TxCreateDoc && this.isChatMessageClass(tx.objectClass))
+      .map((tx) => tx.objectId)
+    if (messages.length === 0) return
+    const inBatch = new Set(txes.map((tx) => tx.objectId))
+    try {
+      const attachments = await this.storage.findAll<Doc>(
+        ctx,
+        attachmentPlugin.class.Attachment,
+        { attachedTo: { $in: messages } },
+        { skipSpace: true }
+      )
+      const late = attachments.filter((it) => !inBatch.has(it._id))
+      for (const [_class, docs] of groupByArray(late, (it) => it._class)) {
+        if (!isClassIndexable(this.hierarchy, _class, this.contexts)) continue
+        await this.indexDocuments(ctx, _class, docs, pushQueue)
+      }
+    } catch (err: any) {
+      ctx.error('failed to index message attachments', { err })
+      Analytics.handleError(err)
+    }
+  }
+
   private async findParents (ctx: MeasureContext, docs: AttachedDoc[]): Promise<IdMap<Doc>> {
     const result: Doc[] = []
     const groups = groupByArray(docs, (doc) => doc.attachedToClass)
@@ -430,7 +499,18 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     const textField = (attr: AnyAttribute): TextField =>
       attr.name === contentField ? 'fulltextSummary' : 'fulltextExtra'
 
-    let parentDocs: IdMap<Doc> | undefined
+    // Shared by the concurrent documents below, so it is a promise: one lookup for the whole batch.
+    let parentDocs: Promise<IdMap<Doc>> | undefined
+    const getParentDocs = async (): Promise<IdMap<Doc> | undefined> => {
+      if (!this.hierarchy.isDerived(_class, core.class.AttachedDoc)) return undefined
+      // A failed lookup is not kept: the next document asks again.
+      parentDocs ??= this.findParents(ctx, docs as unknown as AttachedDoc[]).catch((err) => {
+        parentDocs = undefined
+        throw err
+      })
+      return await parentDocs
+    }
+    const facetsProvider = await this.loadFacetsProvider(ctx, searchPresenter)
 
     const rateLimit = new RateLimiter(10)
     // We need to add all to broadcast update
@@ -467,14 +547,26 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                 indexedDoc.hasAttachment = ((doc as any).attachments ?? 0) > 0
               }
 
-              if (this.hierarchy.isDerived(doc._class, chunter.class.ThreadMessage)) {
-                const thread = doc as ThreadMessage
-                indexedDoc.rootObject = thread.objectId
-                indexedDoc.rootObjectClass = thread.objectClass
-              } else if (this.hierarchy.isDerived(doc._class, core.class.AttachedDoc)) {
-                const attachedDoc = doc as AttachedDoc
-                indexedDoc.rootObject = attachedDoc.attachedTo
-                indexedDoc.rootObjectClass = attachedDoc.attachedToClass
+              // A file whose message is not there yet: indexed in full once the message is created.
+              let draft = false
+              const docRoot = this.messageRoot(doc)
+              if (docRoot !== undefined) {
+                indexedDoc.rootObject = docRoot._id
+                indexedDoc.rootObjectClass = docRoot._class
+
+                // A file sent in a chat belongs to the chat, not to the message carrying it.
+                if (
+                  !this.hierarchy.isDerived(doc._class, chunter.class.ThreadMessage) &&
+                  this.isChatMessageClass(docRoot._class)
+                ) {
+                  const message = (await getParentDocs())?.get(docRoot._id)
+                  draft = message == null
+                  const root = message != null ? this.messageRoot(message) : undefined
+                  if (root !== undefined) {
+                    indexedDoc.rootObject = root._id
+                    indexedDoc.rootObjectClass = root._class
+                  }
+                }
               }
 
               if (
@@ -487,6 +579,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
               for (const [, v] of Object.entries(content)) {
                 if (v.attr.type._class === core.class.TypeBlob) {
+                  if (draft) continue
                   const text = await ctx.with('process-blob', {}, (ctx) => this.processBlob(ctx, v, doc), {
                     attr: v.attr.name,
                     value: v.value
@@ -546,6 +639,19 @@ export class FullTextIndexPipeline implements FullTextPipeline {
                 }
               }
 
+              if (facetsProvider != null && !draft) {
+                try {
+                  const facets = await facetsProvider(doc, this.hierarchy, ctx, this.storage, docs)
+                  indexedDoc.facets = facets.values
+                  if (facets.extra !== undefined && facets.extra !== '') {
+                    appendText(indexedDoc, 'fulltextExtra', facets.extra)
+                  }
+                } catch (err: any) {
+                  // Without its facets the document still belongs in the index; a filter by them misses it.
+                  ctx.error('failed to compute search facets', { id: doc._id, _class: doc._class, err })
+                }
+              }
+
               // trim to large content
               if (indexedDoc.fulltextSummary.length > textLimit) {
                 indexedDoc.fulltextSummary = indexedDoc.fulltextSummary.slice(0, textLimit)
@@ -559,10 +665,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
 
               if (searchPresenter !== undefined) {
                 await ctx.with('update-search-presenter', { _class: doc._class }, async () => {
-                  parentDocs ??= this.hierarchy.isDerived(_class, core.class.AttachedDoc)
-                    ? await this.findParents(ctx, docs as unknown as AttachedDoc[])
-                    : undefined
-                  const parentDoc = parentDocs?.get((doc as AttachedDoc).attachedTo)
+                  const parentDoc = (await getParentDocs())?.get((doc as AttachedDoc).attachedTo)
                   if (spaceDocs === undefined) {
                     await updateSpaces()
                   }
@@ -703,6 +806,8 @@ export class FullTextIndexPipeline implements FullTextPipeline {
         Analytics.handleError(err)
       }
     }
+
+    await this.indexMessageAttachments(ctx, docEvents, pushQueue)
 
     try {
       if (toRemove.length !== 0) {

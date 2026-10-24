@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,6 +21,7 @@ import {
   type Class,
   type Doc,
   type Domain,
+  IndexKind,
   type Markup,
   type Ref,
   type Space
@@ -42,6 +44,7 @@ import {
 import attachment, { TAttachment } from '@hcengineering/model-attachment'
 import {
   type Builder,
+  Index,
   Model,
   Prop,
   TypeBoolean,
@@ -222,6 +225,7 @@ export class TAudioTranscribe extends TAttachment implements AudioTranscribe {
   state!: AudioTranscribeState
 
   @Prop(TypeString(), core.string.String)
+  @Index(IndexKind.FullText)
   text?: string
 
   @Prop(TypeNumber(), core.string.Number)

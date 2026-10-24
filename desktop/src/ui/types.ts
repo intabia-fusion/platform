@@ -172,6 +172,11 @@ export interface LaunchApplication {
   alias: string
 }
 
+export interface DownloadEntry {
+  url: string
+  name: string
+}
+
 export interface IPCMainExposed {
   setBadge: (badge: number | string, tooltip?: string) => void
   setTitle: (title: string) => void
@@ -188,6 +193,7 @@ export interface IPCMainExposed {
   getScreenSources: () => Promise<ScreenSource[]>
   handleAuth: (callback: (token: string) => void) => void
   handleDownloadItem: (callback: (item: DownloadItem) => void) => void
+  downloadToFolder: (files: DownloadEntry[]) => Promise<void>
 
   cancelBackup: () => void
   startBackup: (token: string, endpoint: string, workspace: string) => void

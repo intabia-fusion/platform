@@ -53,10 +53,11 @@ type Task struct {
 
 // TaskResult represents transcoding task result
 type TaskResult struct {
-	Playlist  string `json:"playlist"`
-	Thumbnail string `json:"thumbnail"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
+	Playlist  string  `json:"playlist"`
+	Thumbnail string  `json:"thumbnail"`
+	Width     int     `json:"width"`
+	Height    int     `json:"height"`
+	Duration  float64 `json:"duration,omitempty"`
 }
 
 // Scheduler manages transcoding tasks by passed config

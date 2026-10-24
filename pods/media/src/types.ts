@@ -42,4 +42,5 @@ export interface VideoTranscodeResult {
 
   thumbnail?: string
   playlist?: string
+  duration?: number
 }

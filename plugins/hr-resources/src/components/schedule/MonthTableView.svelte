@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022-2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,10 +18,9 @@
   import type { Doc, Ref } from '@hcengineering/core'
   import type { Request, RequestType, Staff } from '@hcengineering/hr'
   import type { Department } from '@hcengineering/hr'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, DropdownIntlItem, Label, Loading, showPopup, tableToCSV } from '@hcengineering/ui'
+  import { Label, Loading } from '@hcengineering/ui'
   import type { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
-  import { TableBrowser, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { TableBrowser } from '@hcengineering/view-resources'
   import hr from '../../plugin'
   import type { EmployeeReports } from '../../utils'
   import {

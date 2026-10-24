@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 -->
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import { AttachmentStyledBox, AttachmentTiles, type UploadQueue } from '@hcengineering/attachment-resources'
   import type { Channel, Organization } from '@hcengineering/contact'
   import { ContactEvents, findContacts } from '@hcengineering/contact'
   import type { AttachedData, Ref, TxOperations, WithLookup } from '@hcengineering/core'
@@ -95,6 +96,7 @@
 
   let descriptionBox: AttachmentStyledBox
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
+  let uploads: UploadQueue | undefined
 </script>
 
 <FocusHandler {manager} />
@@ -102,7 +104,7 @@
 <Card
   label={contact.string.CreateOrganization}
   okAction={createOrganization}
-  hideAttachments={attachments.size === 0}
+  hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
   canSave={object.name.length > 0}
   on:close={() => {
     dispatch('close')
@@ -135,6 +137,9 @@
     isScrollable={false}
     kitOptions={{ reference: true }}
     enableAttachments={false}
+    on:uploads={(ev) => {
+      uploads = ev.detail
+    }}
     on:attachments={(ev) => {
       if (ev.detail.size > 0) attachments = ev.detail.values
       else if (ev.detail.size === 0 && ev.detail.values != null) {
@@ -164,18 +169,14 @@
   </svelte:fragment>
 
   <svelte:fragment slot="attachments">
-    {#if attachments.size > 0}
-      {#each Array.from(attachments.values()) as attachment}
-        <AttachmentPresenter
-          value={attachment}
-          showPreview
-          removable
-          on:remove={(result) => {
-            if (result.detail !== undefined) void descriptionBox.removeAttachmentById(result.detail._id)
-          }}
-        />
-      {/each}
-    {/if}
+    <AttachmentTiles
+      attachments={Array.from(attachments.values())}
+      {uploads}
+      removable
+      on:remove={(result) => {
+        void descriptionBox.removeAttachmentById(result.detail._id)
+      }}
+    />
   </svelte:fragment>
 
   <svelte:fragment slot="footer">

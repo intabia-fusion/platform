@@ -23,15 +23,18 @@
 
   export let markup: Markup
   export let fragments: string[] = []
+  export let lines: number = 5
+  // Off in rows that open the message on click, so the cut stays.
+  export let expandable: boolean = true
 
-  /** Five lines of `line-height: 1.25rem`. */
-  const COLLAPSED_HEIGHT = 100
+  $: collapsedRem = lines * 1.25
 
   let expanded = false
   let overflows = false
 
   function measure (el: Element): void {
-    overflows = el.getBoundingClientRect().height > COLLAPSED_HEIGHT + 1
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+    overflows = el.getBoundingClientRect().height > collapsedRem * rem + 1
   }
 
   $: if (!isEmptyMarkup(markup)) expanded = false
@@ -57,13 +60,15 @@
     <div
       class="body"
       class:collapsed={overflows && !expanded}
-      style:max-height={expanded ? null : `${COLLAPSED_HEIGHT}px`}
+      class:clamped={!expandable}
+      style:--clamp-lines={lines}
+      style:max-height={expanded ? null : `${collapsedRem}rem`}
     >
       <div use:resizeObserver={measure}>
         <MessageViewer message={highlighted} preview />
       </div>
     </div>
-    {#if overflows}
+    {#if overflows && expandable}
       <div class="toggle">
         <Button
           label={expanded ? ui.string.ShowLess : ui.string.ShowMore}
@@ -108,10 +113,25 @@
       margin: 0 -0.25rem;
     }
 
-    .body.collapsed {
+    .body.collapsed:not(.clamped) {
       overflow: hidden;
       mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
       -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
+    }
+
+    // Ellipsis, not a fade-out: content follows below.
+    .body.clamped {
+      max-height: none !important;
+      line-height: 1.25rem;
+
+      :global(.text-markup-view) {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: var(--clamp-lines);
+        line-clamp: var(--clamp-lines);
+        overflow: hidden;
+        line-height: 1.25rem;
+      }
     }
 
     .toggle {

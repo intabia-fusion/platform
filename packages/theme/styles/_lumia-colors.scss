@@ -15,6 +15,11 @@
   --global-ui-hover-OverlayColor: #15307226;
   --global-ui-active-OverlayColor: #15307233;
 
+  /* Over a picture or a video: any colour may be under it, so one in every theme. */
+  --global-media-OverlayColor: #0000008C;
+  --global-on-media-TextColor: #FFFFFF;
+  --global-media-BackdropColor: #1D1F2B;
+
   --tag-on-accent-PorpoiseText: #FFFFFF;
   --tag-accent-SunshineBackground: #FFBD2E;
 

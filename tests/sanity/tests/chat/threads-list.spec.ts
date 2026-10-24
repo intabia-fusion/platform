@@ -263,6 +263,9 @@ test.describe('Threads list order tests', () => {
     await threads.savedNavItem().click()
     await expect(threads.chatLabel(a.text)).toHaveText(chat.channel.name)
     await expect(threads.chatLabel(replyText)).toHaveText(chat.channel.name)
+    // Only the reply is marked as sitting in a thread.
+    await expect(threads.threadMark(replyText)).toBeVisible()
+    await expect(threads.threadMark(a.text)).toHaveCount(0)
   })
 
   async function findOnlyReply (chat: Chat, parent: Ref<Doc>): Promise<Ref<Doc>> {

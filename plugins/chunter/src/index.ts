@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -127,9 +128,17 @@ export * from './utils'
 export * from './analytics'
 export * from './ops'
 
+/**
+ * Search facets an indexed chat message carries, see `SearchFilters.facets`.
+ */
+export const chatMessageFacet = {
+  link: 'message-link'
+}
+
 export default plugin(chunterId, {
   icon: {
     Chunter: '' as Asset,
+    Download: '' as Asset,
     Hashtag: '' as Asset,
     Thread: '' as Asset,
     Lock: '' as Asset,
@@ -209,11 +218,7 @@ export default plugin(chunterId, {
     NewDirectChat: '' as IntlString,
     TalkToYulia: '' as IntlString,
     Transcribing: '' as IntlString,
-    PreparingMic: '' as IntlString,
     RecordVoice: '' as IntlString,
-    VoiceCancel: '' as IntlString,
-    VoiceAttach: '' as IntlString,
-    VoiceSend: '' as IntlString,
     AddMembers: '' as IntlString,
     CloseConversation: '' as IntlString,
     Starred: '' as IntlString,
@@ -256,6 +261,7 @@ export default plugin(chunterId, {
     ContentReportOpen: '' as IntlString,
     ContentReportDeleteMessage: '' as IntlString,
     ReportMessage: '' as IntlString,
+    DownloadAll: '' as IntlString,
     ContentReportReason: '' as IntlString,
     ContentReportSent: '' as IntlString,
     ContentReportSentText: '' as IntlString,

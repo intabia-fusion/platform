@@ -666,6 +666,7 @@ export function registerRPC (
     void withSession(req, res, 'searchFulltext', async (ctx, session, rateLimit) => {
       const query: SearchQuery = {
         query: req.query.query as string,
+        allowEmptyQuery: req.query.allowEmptyQuery === 'true',
         classes: req.query.classes !== undefined ? JSON.parse(req.query.classes as string) : undefined,
         spaces: req.query.spaces !== undefined ? JSON.parse(req.query.spaces as string) : undefined,
         filters: req.query.filters !== undefined ? JSON.parse(req.query.filters as string) : undefined

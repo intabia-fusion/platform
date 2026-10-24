@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,7 +36,7 @@
     createQuery,
     deleteFile,
     DraftController,
-    FilePreviewPopup,
+    showFileViewer,
     getClient,
     InlineAttributeBar,
     MessageBox,
@@ -571,6 +572,16 @@
 
   const onsite = hierarchy.findAttribute(recruit.mixin.Candidate, 'onsite')
   const remote = hierarchy.findAttribute(recruit.mixin.Candidate, 'remote')
+
+  function openResume (): void {
+    if (object.resumeUuid === undefined) return
+    showFileViewer({
+      file: object.resumeUuid as Ref<Blob>,
+      contentType: object.resumeType ?? '',
+      name: object.resumeName ?? '',
+      size: object.resumeSize
+    })
+  }
 </script>
 
 <FocusHandler {manager} />
@@ -763,22 +774,7 @@
         {#if loading}
           <Button label={recruit.string.Uploading} icon={Spinner} disabled />
         {:else if object.resumeUuid}
-          <Button
-            disabled={loading}
-            focusIndex={103}
-            icon={FileIcon}
-            on:click={() => {
-              showPopup(
-                FilePreviewPopup,
-                {
-                  file: object.resumeUuid,
-                  contentType: object.resumeType,
-                  name: object.resumeName
-                },
-                object.resumeType?.startsWith('image/') ? 'centered' : 'float'
-              )
-            }}
-          >
+          <Button disabled={loading} focusIndex={103} icon={FileIcon} on:click={openResume}>
             <svelte:fragment slot="content">
               <span class="overflow-label disabled">{object.resumeName}</span>
             </svelte:fragment>

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,79 +15,54 @@
 -->
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
-  import { Loading, updatePopup, Scroller } from '@hcengineering/ui'
-  import { ListSelectionProvider } from '@hcengineering/view-resources'
-  import AttachmentPresenter from './AttachmentPresenter.svelte'
-  import AttachmentPreview from './AttachmentPreview.svelte'
+  import type { Ref } from '@hcengineering/core'
+  import { Scroller } from '@hcengineering/ui'
+  import { FileTile } from '@hcengineering/ui/kit'
+
+  import AttachmentTile from './file/AttachmentTile.svelte'
+  import { uploadTiles, type UploadQueue } from './file/uploads'
 
   export let attachments: Attachment[] = []
-  export let useAttachmentPreview = false
   export let progress = false
   export let readonly: boolean = false
+  export let uploads: UploadQueue | undefined = undefined
+  /** Not docs yet: removable whatever the space forbids. */
+  export let drafts: ReadonlySet<Ref<Attachment>> = new Set()
 
-  let element: HTMLElement
-  let attachmentPopupId: string = ''
-
-  const listProvider = new ListSelectionProvider((offset: 1 | -1 | 0) => {
-    const currentAttachmentIndex = listProvider.current()
-    if (currentAttachmentIndex === undefined) return
-    const selected = currentAttachmentIndex + offset
-    const sel = listProvider.docs()[selected] as Attachment
-    if (sel !== undefined && attachmentPopupId !== '') {
-      listProvider.updateFocus(sel)
-      updatePopup(attachmentPopupId, { props: { value: sel } })
-    }
-  })
-  $: listProvider.update(attachments.filter((p) => p.type.startsWith('image/')))
+  $: tiles = uploadTiles(attachments, uploads, (doc) => drafts.has(doc._id))
 </script>
 
 <div class="attachment-list-container">
   <Scroller noStretch shrink>
     <div class="attachment-list">
-      {#each attachments as attachment (attachment._id)}
-        {#if useAttachmentPreview}
-          <AttachmentPreview
-            value={attachment}
-            removable={!readonly}
-            {listProvider}
-            on:open={(res) => (attachmentPopupId = res.detail)}
-          />
-        {:else}
-          <AttachmentPresenter
-            value={attachment}
-            removable={!readonly}
-            showPreview
-            on:remove
-            on:open={(res) => (attachmentPopupId = res.detail)}
-          />
-        {/if}
+      {#each tiles as tile (tile.doc._id)}
+        <AttachmentTile
+          value={tile.doc}
+          scale="large"
+          upload={tile.upload}
+          draft={tile.draft}
+          local={uploads?.picture(tile.doc._id)}
+          removable={!readonly}
+          on:remove
+          on:retry={() => uploads?.retry(tile.doc._id)}
+        />
       {/each}
       {#if progress}
-        <div class="flex p-3" bind:this={element}>
-          <Loading
-            on:progress={() => {
-              element.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' })
-            }}
-          />
-        </div>
+        <FileTile scale="large" loading />
       {/if}
     </div>
   </Scroller>
 </div>
 
 <style lang="scss">
+  // No box of its own: each tile has its frame, a second one around them all was a plate.
   .attachment-list-container {
     display: flex;
     flex-direction: column;
     margin-top: 0.5rem;
-    padding: 0.5rem;
     min-width: 0;
     max-height: none;
     color: var(--theme-caption-color);
-    background-color: var(--theme-button-default);
-    border: 1px solid var(--theme-button-border);
-    border-radius: 0.25rem;
-    overflow: hidden;
   }
 
   .attachment-list {
@@ -94,6 +70,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0.5rem;
+    padding: 0.125rem;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;

@@ -13,20 +13,12 @@
 // limitations under the License.
 //
 
-import type {
-  Class,
-  Doc,
-  Markup,
-  PersonId,
-  Ref,
-  SearchResultDoc,
-  SearchSortOrder,
-  Space,
-  Timestamp
-} from '@hcengineering/core'
-import type { Asset } from '@hcengineering/platform'
+import type { Class, Doc, Markup, PersonId, Ref, SearchResultDoc, Space, Timestamp } from '@hcengineering/core'
+import type { Asset, IntlString } from '@hcengineering/platform'
 import type { Person } from '@hcengineering/contact'
 import { ChatMessage } from '@hcengineering/chunter'
+
+import type { PagedSearchState } from './paged'
 
 export interface PickedObject {
   _id: Ref<Doc>
@@ -55,6 +47,12 @@ export interface ChatSearchFilters {
   includeTranscription?: boolean
 }
 
+export interface SearchOption {
+  key: string
+  label: IntlString
+  on: boolean
+}
+
 export interface SearchResultRow {
   _id: Ref<ChatMessage>
   _class: Ref<Class<ChatMessage>>
@@ -62,6 +60,7 @@ export interface SearchResultRow {
   createdOn: Timestamp
   attachedToClass: Ref<Class<Doc>>
   attachedTo: Ref<Doc>
+  thread: boolean
   highlights: string[]
   markup: Markup
   person?: Person
@@ -69,18 +68,7 @@ export interface SearchResultRow {
   raw: SearchResultDoc
 }
 
-export interface ChatSearchState {
-  search: string
-  filters: ChatSearchFilters
-  sort: SearchSortOrder
-  results: SearchResultRow[]
-  total?: number
-  totalExact?: boolean
-  loading: boolean
-  loadingMore: boolean
-  done: boolean
-  failure?: SearchFailure
-}
+export type ChatSearchState = PagedSearchState<SearchResultRow, ChatSearchFilters>
 
 export type SearchFailure = { kind: 'unavailable' } | { kind: 'error', message: string }
 

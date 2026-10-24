@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
   import { Analytics } from '@hcengineering/analytics'
   import type { Attachment } from '@hcengineering/attachment'
   import attachmentP from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { AttachmentTile } from '@hcengineering/attachment-resources'
   import type { Channel, Contact } from '@hcengineering/contact'
   import contact, { getName as getContactName } from '@hcengineering/contact'
   import type { Markup, Ref } from '@hcengineering/core'
@@ -337,11 +338,10 @@
       </div>
       {#if attachments.length}
         <div class="flex-row-center list mt-2 scroll-divider-color">
-          {#each attachments as attachment}
+          {#each attachments as attachment (attachment._id)}
             <div class="item flex-row-center flex-no-shrink">
-              <AttachmentPresenter
+              <AttachmentTile
                 value={attachment}
-                showPreview
                 removable
                 on:remove={(result) => {
                   if (result !== undefined) void removeAttachment(attachment)

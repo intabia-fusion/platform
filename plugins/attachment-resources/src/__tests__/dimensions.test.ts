@@ -128,43 +128,32 @@ describe('Attachment Image Dimensions Suite (calculateAttachmentDimensions)', ()
     }
   })
 
-  // 2. Square-ish Logo Capping (Ratio 0.85 to 1.18)
-  describe('Square-ish Logo Capping (6rem = 96px cap for 0.85 <= ratio <= 1.18)', () => {
+  // 2. Square-ish images: a screenshot is not a logo, so no tighter cap than other pictures
+  describe('Square-ish images follow the standard bounds', () => {
     const testCases: AttachmentDimensionTestCase[] = [
       {
-        name: '160x160 1:1 square image (capped to 96px)',
+        name: '160x160 1:1 square image (own size)',
         metadata: { originalWidth: 160, originalHeight: 160 },
-        expectedWidth: 96,
-        expectedHeight: 96
+        expectedWidth: 160,
+        expectedHeight: 160
       },
       {
-        name: '100x85 ratio 0.85 exact lower boundary (capped to 96px)',
-        metadata: { originalWidth: 100, originalHeight: 85 },
-        expectedWidth: 96,
-        expectedHeight: 82
+        name: '740x860 screenshot at 2x DPR (half of its pixels, then the 400px height cap)',
+        metadata: { originalWidth: 740, originalHeight: 860 },
+        dpr: 2,
+        expectedWidth: 344,
+        expectedHeight: 400
       },
       {
-        name: '100x118 ratio 1.18 exact upper boundary (capped to 96px)',
-        metadata: { originalWidth: 100, originalHeight: 118 },
-        expectedWidth: 81,
-        expectedHeight: 96
-      },
-      {
-        name: '1000x840 ratio 0.84 (just outside square cap -> standard max bounds 400px)',
-        metadata: { originalWidth: 1000, originalHeight: 840 },
+        name: '1000x1000 large square (capped by maxRem 25rem = 400px)',
+        metadata: { originalWidth: 1000, originalHeight: 1000 },
         expectedWidth: 400,
-        expectedHeight: 336
-      },
-      {
-        name: '1000x1190 ratio 1.19 (just outside square cap -> standard max bounds 400px)',
-        metadata: { originalWidth: 1000, originalHeight: 1190 },
-        expectedWidth: 336,
         expectedHeight: 400
       }
     ]
 
     for (const tc of testCases) {
-      test(`evaluates square cap for ${tc.name}`, () => {
+      test(`sizes ${tc.name}`, () => {
         const dims = calculateAttachmentDimensions(tc.metadata, tc.size ?? 'x-large', tc.dpr ?? 1)
         expect(dims.width).toBe(tc.expectedWidth)
         expect(dims.height).toBe(tc.expectedHeight)

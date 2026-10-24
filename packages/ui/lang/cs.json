@@ -131,6 +131,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Chyba",
     "StatusWarning": "Upozornění",
-    "StatusInfo": "Informace"
+    "StatusInfo": "Informace",
+    "Download": "Stáhnout",
+    "PreviewUnavailable": "Náhled není dostupný pro tento typ obsahu",
+    "PreviewFailed": "Náhled se nepodařilo otevřít",
+    "Play": "Přehrát",
+    "Pause": "Pozastavit",
+    "PlaybackPosition": "Pozice přehrávání",
+    "PlaybackSpeed": "Rychlost",
+    "LinkPreviewUnavailable": "Náhled odkazu není k dispozici",
+    "UploadProgress": "{sent} z {size}",
+    "UploadFailed": "Nahrání se nezdařilo",
+    "Retry": "Zkusit znovu",
+    "VoiceStarting": "Zapínáme mikrofon…",
+    "VoiceDiscard": "Zrušit nahrávání",
+    "VoiceAttach": "Připojit nahrávku"
   }
 }

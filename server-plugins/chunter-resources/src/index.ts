@@ -70,6 +70,7 @@ import {
   DirectTitlePresenter,
   JoinChannelTypeMatch
 } from './utils'
+import { ChatMessageSearchFacets } from './facets'
 import { ChatMessageSearchTitleProvider, ChatSearchTitleProvider } from './search'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
@@ -638,6 +639,7 @@ export default async () => ({
     ChatSearchTitleProvider,
     ChannelIconPresenter,
     DirectIconPresenter,
-    ChatMessageSearchTitleProvider
+    ChatMessageSearchTitleProvider,
+    ChatMessageSearchFacets
   }
 })

@@ -32,7 +32,7 @@ export class CommonTrackerPage extends CalendarPage {
   linkInActivity = (): Locator => this.page.locator('div[id="activity:string:Activity"] a')
   inputCommentFile = (): Locator => this.page.locator('input#file')
   fileUploadName = (fileName: string): Locator =>
-    this.page.locator('div[slot="header"] div.item div.name', { hasText: fileName })
+    this.page.locator('div[slot="header"] div.tile span.name', { hasText: fileName })
 
   commentImg = (): Locator => this.page.locator('div.activityMessage div.content img')
   textCategoryHeader = (): Locator =>

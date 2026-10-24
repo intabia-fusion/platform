@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "{total} KB içinden ilk {shown} KB gösteriliyor",
+    "MarkdownPreview": "Önizleme",
+    "MarkdownSource": "Kaynak",
+    "MarkdownTooLarge": "Biçimlendirmesiz: {limit} KB üzeri",
+    "TextShownLast": "{total} KB içinden son {shown} KB gösteriliyor",
     "Contains": "içeriyor",
     "NotContains": "içermiyor",
     "MoveClass": "{class} taşı",

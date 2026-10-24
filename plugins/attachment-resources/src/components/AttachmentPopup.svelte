@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@
   import core from '@hcengineering/core'
 
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
-  import { AttachmentPresenter } from '..'
+  import AttachmentTile from './file/AttachmentTile.svelte'
   import attachment from '../plugin'
 
   export let object: Doc
@@ -125,9 +126,9 @@
     {/if}
   </div>
   <div class="content">
-    {#each docs as doc}
+    {#each docs as doc (doc._id)}
       <div class="item">
-        <AttachmentPresenter value={doc} showPreview removable={canRemove} on:remove={() => remove(doc)} />
+        <AttachmentTile value={doc} removable={canRemove} on:remove={() => remove(doc)} />
       </div>
     {/each}
   </div>

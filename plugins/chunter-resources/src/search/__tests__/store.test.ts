@@ -38,7 +38,8 @@ jest.mock('../resolve', () => ({
 }))
 
 /* eslint-disable import/first */
-import { MAX_AUTO_PAGES, PAGE_SIZE, createChatSearchStore, seedGlobalSearch, takePendingSearch } from '../store'
+import { MAX_AUTO_PAGES } from '../paged'
+import { PAGE_SIZE, createChatSearchStore, seedGlobalSearch, takePendingSearch } from '../store'
 
 const page = (ids: string[], cursor?: string): SearchResult =>
   ({ docs: ids.map((id) => ({ id })), cursor, total: ids.length }) as unknown as SearchResult
@@ -157,6 +158,20 @@ describe('createChatSearchStore', () => {
     expect(get(store).results.map((r) => r._id)).toEqual(['m1'])
   })
 
+  it('follows empty pages past the limit on thin ones', async () => {
+    // Empty pages leave nothing on screen, so stopping there would read as "nothing found".
+    for (let i = 0; i < 7; i++) searchFulltext.mockResolvedValueOnce(page([], `cur${i}`))
+    searchFulltext.mockResolvedValueOnce(page(['m1']))
+
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    for (let i = 0; i < 40; i++) await Promise.resolve()
+
+    expect(searchFulltext).toHaveBeenCalledTimes(8)
+    expect(get(store).results.map((r) => r._id)).toEqual(['m1'])
+  })
+
   it('walks on by itself when a page comes back too thin to scroll', async () => {
     // The server drops hits whose document is gone; a handful of rows never fills the list.
     searchFulltext.mockResolvedValueOnce(page(['m1'], 'cur1')).mockResolvedValueOnce(page(['m2']))
@@ -232,6 +247,42 @@ describe('createChatSearchStore', () => {
     expect(searchFulltext).toHaveBeenCalledTimes(1)
   })
 
+  it('counts the list exactly once no pages are left', async () => {
+    // Stale hits dropped by the server make its total a bound only while more pages may follow.
+    searchFulltext.mockResolvedValue({ ...page(['m1', 'm2']), total: 2, totalExact: false })
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+
+    expect(get(store).total).toBe(2)
+    expect(get(store).totalExact).toBe(true)
+  })
+
+  it('keeps the bound while more pages may follow', async () => {
+    searchFulltext.mockResolvedValue({ ...page(['m1', 'm2'], 'cur1'), total: 20, totalExact: false })
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+
+    expect(get(store).total).toBe(20)
+    expect(get(store).totalExact).toBe(false)
+  })
+
+  it('keeps the shown list when only the remembered order changes', async () => {
+    searchFulltext.mockResolvedValue(page(['m1', 'm2']))
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    const calls = searchFulltext.mock.calls.length
+
+    store.setSort('date-desc', true)
+    await settle()
+
+    expect(searchFulltext).toHaveBeenCalledTimes(calls)
+    expect(get(store).sort).toBe('date-desc')
+    expect(get(store).results).toHaveLength(2)
+  })
+
   it('starts from the top when the sort changes', async () => {
     // The cursor encodes the sort it was made with, so it cannot survive the switch.
     const full = Array.from({ length: PAGE_SIZE }, (_, i) => `m${i}`)
@@ -284,6 +335,64 @@ describe('createChatSearchStore', () => {
     await settle()
 
     expect(get(store).failure).toEqual({ kind: 'error', message: 'boom' })
+  })
+
+  it('drops the results of the previous search when a new one fails', async () => {
+    // Otherwise the old list with its count reads as the answer to the new filter.
+    searchFulltext.mockResolvedValueOnce(page(['m1', 'm2'], 'cur1')).mockRejectedValue(new Error('boom'))
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    store.setFilters({ hasAttachment: true })
+    await settle()
+
+    expect(get(store).results).toEqual([])
+    expect(get(store).total).toBeUndefined()
+    expect(get(store).failure).toEqual({ kind: 'error', message: 'boom' })
+  })
+
+  it('keeps the list when a next page fails, and the retry continues from it', async () => {
+    searchFulltext
+      .mockResolvedValueOnce(page(['m1', 'm2'], 'cur1'))
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(page(['m3']))
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    store.loadMore()
+    await settle()
+
+    expect(get(store).results.map((r) => r._id)).toEqual(['m1', 'm2'])
+    expect(get(store).failure).toEqual({ kind: 'error', message: 'boom' })
+    store.loadMore()
+    expect(searchFulltext).toHaveBeenCalledTimes(2)
+
+    store.retry()
+    await settle()
+    expect(searchFulltext.mock.calls[2][1].cursor).toBe('cur1')
+    expect(get(store).results.map((r) => r._id)).toEqual(['m1', 'm2', 'm3'])
+    expect(get(store).failure).toBeUndefined()
+  })
+
+  it('drops a next page of the old search once a new one is typed', async () => {
+    let resolveMore: (r: SearchResult) => void = () => {}
+    searchFulltext
+      .mockResolvedValueOnce(page(['m1', 'm2'], 'cur1'))
+      .mockImplementationOnce(async () => await new Promise<SearchResult>((resolve) => (resolveMore = resolve)))
+      .mockResolvedValueOnce(page(['n1']))
+    const store = createChatSearchStore()
+    store.setSearch('release')
+    await settle()
+    store.loadMore()
+    store.setSearch('other')
+    resolveMore(page(['m3'], 'cur2'))
+    for (let i = 0; i < 6; i++) await Promise.resolve()
+    store.loadMore()
+
+    expect(searchFulltext).toHaveBeenCalledTimes(2)
+    await settle()
+    expect(get(store).results.map((r) => r._id)).toEqual(['n1'])
+    expect(get(store).searched).toBe('other')
   })
 
   it('clears the failure when the next search starts', async () => {

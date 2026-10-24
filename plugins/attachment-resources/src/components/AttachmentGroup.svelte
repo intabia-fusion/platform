@@ -1,5 +1,6 @@
 <!-- //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,12 +15,13 @@
 // -->
 
 <script lang="ts">
-  import type { Attachment } from '@hcengineering/attachment'
-  import type { Ref } from '@hcengineering/core'
-  import type { WithLookup } from '@hcengineering/core'
+  import { AttachmentKind, type Attachment } from '@hcengineering/attachment'
+  import type { Ref, WithLookup } from '@hcengineering/core'
+
   import type { AttachmentImageSize } from '../types'
+  import { attachmentCategory, compareAsInMessage, showAttachmentsViewer } from '../utils'
   import AttachmentList from './AttachmentList.svelte'
-  import LinkPreviewList from './LinkPreviewList.svelte'
+  import LinkCard from './file/LinkCard.svelte'
 
   export let attachments: WithLookup<Attachment>[]
   export let savedAttachmentsIds: Ref<Attachment>[] = []
@@ -27,27 +29,71 @@
   export let videoPreload = false
   export let isOwn = false
 
-  let otherAttachments: WithLookup<Attachment>[]
-  let linkPreviewAttachments: WithLookup<Attachment>[]
+  let media: WithLookup<Attachment>[] = []
+  let files: WithLookup<Attachment>[] = []
+  let audio: WithLookup<Attachment>[] = []
+  let links: WithLookup<Attachment>[] = []
 
-  $: filter(attachments)
-  function filter (value: WithLookup<Attachment>[]): void {
-    linkPreviewAttachments = []
-    otherAttachments = []
-    for (const attachment of value) {
-      if (attachment === undefined) {
-        continue
-      }
-      if (attachment.type === 'application/link-preview') {
-        linkPreviewAttachments.push(attachment)
-      } else {
-        otherAttachments.push(attachment)
-      }
-    }
+  $: split(attachments)
+  function split (value: WithLookup<Attachment>[]): void {
+    const sorted = value.filter((it) => it != null).sort(compareAsInMessage)
+    const of = (kind: AttachmentKind): Array<WithLookup<Attachment>> =>
+      sorted.filter((it) => attachmentCategory(it).kind === kind)
+    media = of(AttachmentKind.Media)
+    files = of(AttachmentKind.File)
+    audio = of(AttachmentKind.Audio)
+    links = of(AttachmentKind.Link)
+  }
+
+  // In the order the groups are laid out, so the viewer steps from the pictures on to the files.
+  function openViewer (value: Attachment): void {
+    showAttachmentsViewer([...media, ...files, ...audio], value)
   }
 </script>
 
-<div class="gapV-2">
-  <AttachmentList attachments={otherAttachments} {savedAttachmentsIds} {imageSize} {videoPreload} removable={isOwn} />
-  <LinkPreviewList attachments={linkPreviewAttachments} {isOwn} />
+<div class="groups">
+  {#each [media, files] as group}
+    {#if group.length > 0}
+      <AttachmentList
+        attachments={group}
+        {savedAttachmentsIds}
+        {imageSize}
+        {videoPreload}
+        removable={isOwn}
+        {openViewer}
+      />
+    {/if}
+  {/each}
+  {#if audio.length > 0}
+    <AttachmentList
+      attachments={audio}
+      {savedAttachmentsIds}
+      {imageSize}
+      {videoPreload}
+      removable={isOwn}
+      stacked
+      {openViewer}
+    />
+  {/if}
+  {#if links.length > 0}
+    <div class="links">
+      {#each links as value (value._id)}
+        <LinkCard {value} removable={isOwn} />
+      {/each}
+    </div>
+  {/if}
 </div>
+
+<style lang="scss">
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+</style>

@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -12,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { FilePreviewPopup, getFileUrl } from '@hcengineering/presentation'
+import { getFileUrl, showFileViewer } from '@hcengineering/presentation'
 import { FileNode, type FileOptions as FileNodeOptions } from '@hcengineering/text'
-import { humanReadableFileSize, showPopup } from '@hcengineering/ui'
+import { humanReadableFileSize } from '@hcengineering/ui'
 import { nodeInputRule } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { type FileAttachFunction } from './types'
@@ -122,17 +123,7 @@ export const FileExtension = FileNode.extend<FileOptions>({
             const fileName = node.attrs['data-file-name'] ?? ''
             const fileType = node.attrs['data-file-type'] ?? ''
 
-            showPopup(
-              FilePreviewPopup,
-              {
-                file: fileId,
-                name: fileName,
-                contentType: fileType,
-                fullSize: false,
-                showIcon: false
-              },
-              'centered'
-            )
+            showFileViewer({ file: fileId, name: fileName, contentType: fileType })
           }
         }
       })

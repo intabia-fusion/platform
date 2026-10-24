@@ -40,6 +40,12 @@
     "UpdateFolderPermission": "Update Folder",
     "UpdateFolderPermissionDescription": "Grants users ability to update folders",
     "RemoveFolderPermission": "Remove Folder",
-    "RemoveFolderPermissionDescription": "Grants users ability to remove folders"
+    "RemoveFolderPermissionDescription": "Grants users ability to remove folders",
+    "EmptyFolder": "Tato složka je prázdná",
+    "DropFilesHere": "Přetáhněte soubory sem",
+    "DropFilesHint": "nebo klikněte a vyberte je",
+    "FoldersCount": "{count, plural, one {# složka} few {# složky} many {# složky} other {# složek}}",
+    "FilesCount": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}}",
+    "FolderEmpty": "Prázdná"
   }
 }

@@ -110,8 +110,22 @@ export function getPreviewAlignment (contentType: string): PopupAlignment {
   }
 }
 
-function getPreviewTypeRegExp (type: string): RegExp {
-  return new RegExp(`^${type.replaceAll('/', '\\/').replaceAll('*', '.*')}$`)
+/**
+ * Whether a content type fits a pattern where `*` is any run of characters: `text/*`, `application/*+json`.
+ */
+export function matchContentType (pattern: string, contentType: string): boolean {
+  const parts = pattern.split('*')
+  const first = parts[0]
+  const last = parts[parts.length - 1]
+  if (parts.length === 1) return pattern === contentType
+  if (!contentType.startsWith(first) || !contentType.endsWith(last)) return false
+  let at = first.length
+  for (const part of parts.slice(1, -1)) {
+    const found = contentType.indexOf(part, at)
+    if (found < 0) return false
+    at = found + part.length
+  }
+  return at <= contentType.length - last.length
 }
 
 async function isApplicableType (
@@ -123,9 +137,7 @@ async function isApplicableType (
 
   return (
     isAvailable &&
-    (Array.isArray(contentType) ? contentType : [contentType]).some((type) =>
-      getPreviewTypeRegExp(type).test(_contentType)
-    )
+    (Array.isArray(contentType) ? contentType : [contentType]).some((type) => matchContentType(type, _contentType))
   )
 }
 

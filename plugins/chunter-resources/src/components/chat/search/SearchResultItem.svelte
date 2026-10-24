@@ -17,28 +17,15 @@
   import core from '@hcengineering/core'
   import { Avatar, SystemAvatar } from '@hcengineering/contact-resources'
   import { MessageTimestamp } from '@hcengineering/activity-resources'
-  import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import { Icon, Label } from '@hcengineering/ui'
-  import type { Asset } from '@hcengineering/platform'
+  import { ComponentExtensions } from '@hcengineering/presentation'
+  import { Label } from '@hcengineering/ui'
 
   import type { SearchResultRow } from '../../../search/types'
+  import ChannelChip from './ChannelChip.svelte'
   import HighlightedText from './HighlightedText.svelte'
 
   export let row: SearchResultRow
   export let showChannel: boolean = true
-
-  const hierarchy = getClient().getHierarchy()
-
-  $: icon = iconFor(row.attachedToClass)
-
-  function iconFor (_class: SearchResultRow['attachedToClass']): Asset | undefined {
-    if (_class === undefined) return undefined
-    try {
-      return hierarchy.getClass(_class).icon
-    } catch {
-      return undefined
-    }
-  }
 </script>
 
 <div class="result">
@@ -62,18 +49,7 @@
         <span class="author"><Label label={core.string.System} /></span>
       {/if}
       {#if showChannel && row.channel !== ''}
-        <span class="reference flex-row-center flex-gap-1">
-          {#if row.attachedPerson !== undefined}
-            <div class="icon">
-              <Avatar person={row.attachedPerson} name={row.attachedPerson.name} size="inline" />
-            </div>
-          {:else if icon !== undefined}
-            <div class="icon"><Icon {icon} size="x-small" /></div>
-          {/if}
-          <span class="label overflow-label font-medium-12 text-left secondary-textColor">
-            {row.channel}
-          </span>
-        </span>
+        <ChannelChip label={row.channel} _class={row.attachedToClass} person={row.attachedPerson} thread={row.thread} />
       {/if}
       {#if row.createdOn !== undefined}
         <span class="time"><MessageTimestamp date={row.createdOn} format="full" /></span>
@@ -127,31 +103,6 @@
     color: var(--theme-darker-color);
     white-space: nowrap;
     flex-shrink: 0;
-  }
-
-  .reference {
-    flex-shrink: 1;
-    min-width: 0;
-    max-width: 20rem;
-    height: 1.25rem;
-    padding: 0 var(--spacing-0_75) 0 var(--spacing-0_5);
-    box-shadow: inset 0 0 0 1px var(--global-subtle-ui-BorderColor);
-    border-radius: var(--extra-small-BorderRadius);
-    background-color: var(--tag-nuance-SkyBackground);
-  }
-
-  .icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  .label {
-    flex-grow: 1;
-    flex-shrink: 1;
-    display: flex;
-    align-items: center;
   }
 
   .content {

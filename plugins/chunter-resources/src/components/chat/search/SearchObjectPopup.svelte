@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core, { getCurrentAccount, type Class, type Doc, type Ref, type Space } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
   import { translate } from '@hcengineering/platform'
@@ -133,6 +133,17 @@
   }
 
   const me = getCurrentEmployee()
+  const myAccount = getCurrentAccount().uuid
+
+  function isSpaceClass (_class: Ref<Class<Doc>>): boolean {
+    return hierarchy.hasClass(_class) && hierarchy.isDerived(_class, core.class.Space)
+  }
+
+  // An owner sees every space, yet filters by the ones they are in, as their chat list shows.
+  function isForeignSpace (_class: Ref<Class<Doc>>, doc: Doc | undefined): boolean {
+    if (!isSpaceClass(_class)) return false
+    return doc == null || !((doc as Space).members ?? []).includes(myAccount)
+  }
 
   // Everyone has an office, so listing them all would bury the rooms; only one's own is worth picking.
   // The reception is a waiting area, not a place people talk in.
@@ -149,7 +160,9 @@
         try {
           // Offices are dropped after loading, so rooms need a wider page to still fill the list.
           const isRoom = hierarchy.isDerived(_class, love.class.Room)
-          const docs = await client.findAll(_class, {}, { limit: isRoom ? PAGE_SIZE : SECTION_SIZE })
+          const docs = await client.findAll(_class, isSpaceClass(_class) ? { members: myAccount } : {}, {
+            limit: isRoom ? PAGE_SIZE : SECTION_SIZE
+          })
           const shown = docs.filter((d) => !isHiddenRoom(d)).slice(0, SECTION_SIZE)
           return await Promise.all(shown.map(async (d) => await toPicked(d._id, _class, d)))
         } catch (err: any) {
@@ -235,7 +248,9 @@
       const seen = new Set<Ref<Doc>>()
 
       for (const obj of picked) {
-        if (obj.title === '' || seen.has(obj._id) || isHiddenRoom(obj.doc)) continue
+        if (obj.title === '' || seen.has(obj._id) || isHiddenRoom(obj.doc) || isForeignSpace(obj._class, obj.doc)) {
+          continue
+        }
         seen.add(obj._id)
         const key = sectionClass(obj._class)
         const list = byClass.get(key) ?? []

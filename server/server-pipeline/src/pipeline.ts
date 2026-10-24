@@ -80,6 +80,7 @@ import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
 import { TaskMiddleware } from '@hcengineering/server-task'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
+import { DriveMiddleware } from '@hcengineering/server-drive-resources'
 
 import { createStorageDataAdapter } from './blobStorage'
 
@@ -189,6 +190,7 @@ export function createServerPipeline (
       IdentifierMiddleware.create, // After ApplyTx
       RatingMiddleware.create, // Rating editing restrictions
       WorkflowMiddleware.create, // Workflow editing restrictions
+      DriveMiddleware.create, // The folder a move leaves, for the folder counts
       TransientMiddleware.create,
       ChunterMiddleware.create,
       NotificationMiddleware.create,

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -136,9 +137,12 @@ export default plugin(presentationId, {
     Selected: '' as IntlString,
     NoResults: '' as IntlString,
     Next: '' as IntlString,
+    Previous: '' as IntlString,
+    ZoomIn: '' as IntlString,
+    ZoomOut: '' as IntlString,
+    ActualSize: '' as IntlString,
     FailedToPreview: '' as IntlString,
     ContentType: '' as IntlString,
-    ContentTypeNotSupported: '' as IntlString,
     StartDrawing: '' as IntlString,
     DrawingHistory: '' as IntlString,
     ColorAdd: '' as IntlString,

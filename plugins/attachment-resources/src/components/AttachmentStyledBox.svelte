@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,8 +15,8 @@
 -->
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
-  import type { BlobMetadata, Class, Doc, Markup, PersonId, Ref, Space, TxOperations } from '@hcengineering/core'
-  import { type Blob, generateId, toIdMap } from '@hcengineering/core'
+  import type { BlobMetadata, Class, Doc, Markup, Ref, Space, TxOperations } from '@hcengineering/core'
+  import { type Blob, toIdMap } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
   import type { FileOrBlob } from '@hcengineering/presentation'
@@ -32,11 +33,12 @@
   import type { EditorKitOptions } from '@hcengineering/text-editor-resources'
   import { AttachIcon, StyledTextBox } from '@hcengineering/text-editor-resources'
   import type { ButtonSize } from '@hcengineering/ui'
-  import { type FileUploadCallbackParams, uploadFiles } from '@hcengineering/uploader'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import attachment from '../plugin'
   import AttachmentsGrid from './AttachmentsGrid.svelte'
+  import { dropFiles, droppedFiles, pickedFiles } from './file/drop'
+  import { UploadQueue, draftAttachment } from './file/uploads'
 
   export let objectId: Ref<Doc> | undefined = undefined
   export let space: Ref<Space> | undefined = undefined
@@ -51,7 +53,6 @@
   export let focusable: boolean = false
   export let refContainer: HTMLElement | undefined = undefined
   export let shouldSaveDraft: boolean = false
-  export let useAttachmentPreview = false
   export let focusIndex: number | undefined = -1
   export let enableAttachments: boolean = true
   export let isScrollable = true
@@ -60,8 +61,6 @@
 
   export let useDirectAttachDelete = false
   export let boundary: HTMLElement | undefined = undefined
-
-  let progress = false
 
   let draftKey = objectId != null ? `${objectId as string}_attachments` : undefined
   $: draftKey = objectId ? `${objectId}_attachments` : undefined
@@ -154,54 +153,54 @@
     }
   }
 
-  async function onFileUploaded ({ uuid, name, file, metadata }: FileUploadCallbackParams): Promise<void> {
-    await createAttachment(uuid, name, file, metadata)
-  }
-
   async function createAttachment (
     uuid: Ref<Blob>,
     name: string,
     file: FileOrBlob,
     metadata: BlobMetadata | undefined
   ): Promise<void> {
-    if (space === undefined || objectId === undefined || _class === undefined) return
+    if (space == null || objectId == null || _class == null) return
     try {
-      const _id: Ref<Attachment> = generateId()
-
-      attachments.set(_id, {
-        _id,
-        _class: attachment.class.Attachment,
-        collection: 'attachments',
-        modifiedOn: 0,
-        modifiedBy: '' as PersonId,
-        space,
-        attachedTo: objectId,
-        attachedToClass: _class,
-        name,
-        file: uuid,
-        type: file.type,
-        size: file.size,
-        lastModified: file instanceof File ? file.lastModified : Date.now(),
-        metadata
-      })
-
-      newAttachments.add(_id)
-      attachments = attachments
-      saved = false
-      void saveDraft()
-      dispatch('attach', { action: 'saved', value: attachments.size })
-      dispatch('attached', _id)
-
-      if (useDirectAttachDelete) {
-        void saveNewAttachment(_id)
-      }
+      addStored([draftAttachment({ space, objectId, _class }, name, file, uuid, metadata)])
     } catch (err: any) {
       void setPlatformStatus(unknownError(err))
     }
   }
 
+  function addStored (docs: Attachment[]): void {
+    for (const doc of docs) {
+      attachments.set(doc._id, doc)
+      newAttachments.add(doc._id)
+    }
+    attachments = attachments
+    saved = false
+    void saveDraft()
+    dispatch('attach', { action: 'saved', value: attachments.size })
+    for (const doc of docs) {
+      dispatch('attached', doc._id)
+      if (useDirectAttachDelete) void saveNewAttachment(doc._id)
+    }
+  }
+
+  // A form that shows the files itself gets the queue with every change.
+  let uploads = new UploadQueue(() => {
+    uploads = uploads
+    dispatch('uploads', uploads)
+  }, addStored)
+
+  let dragging = false
+
+  // `enableAttachments` only hides the grid: a form drawing the files itself still takes them on drop.
+  $: canDrop = space != null && objectId != null && _class != null
+
+  function addFiles (files: Iterable<File>): void {
+    if (space == null || objectId == null || _class == null) return
+    for (const file of files) uploads.add(draftAttachment({ space, objectId, _class }, file.name, file), file)
+    saved = false
+  }
+
   async function saveAttachment (doc: Attachment, objectId: Ref<Doc> | undefined, op?: TxOperations): Promise<void> {
-    if (space === undefined || objectId === undefined || _class === undefined) return
+    if (space == null || objectId == null || _class == null) return
     newAttachments.delete(doc._id)
     await (op ?? client).addCollection(
       attachment.class.Attachment,
@@ -214,24 +213,20 @@
     )
   }
 
-  async function fileSelected (): Promise<void> {
-    progress = true
-    const list = inputFile.files
-    if (list === null || list.length === 0) return
-    await uploadFiles(list, { onFileUploaded })
-    inputFile.value = ''
-    progress = false
+  function fileSelected (): void {
+    addFiles(pickedFiles(inputFile))
   }
 
-  export async function fileDrop (e: DragEvent): Promise<void> {
-    progress = true
-    const list = e.dataTransfer?.files
-    if (list === undefined || list.length === 0) return
-    await uploadFiles(list, { onFileUploaded })
-    progress = false
+  export function fileDrop (e: DragEvent): void {
+    addFiles(droppedFiles(e))
   }
 
   async function removeAttachment (attachment: Attachment): Promise<void> {
+    if (uploads.has(attachment._id)) {
+      uploads.remove(attachment._id)
+      return
+    }
+    uploads.release(attachment._id)
     if (useDirectAttachDelete) {
       progressItems.push(attachment._id)
       progressItems = progressItems
@@ -265,6 +260,9 @@
   }
 
   onDestroy(() => {
+    const stored = uploads.flush()
+    if (stored.length > 0) addStored(stored)
+    uploads.releaseAll()
     if (!saved && !shouldSaveDraft) {
       newAttachments.forEach((p) => {
         const attachment = attachments.get(p)
@@ -280,6 +278,7 @@
       DraftController.remove(draftKey)
     }
     if (removeFiles) {
+      uploads.clear()
       newAttachments.forEach((p) => {
         const attachment = attachments.get(p)
         if (attachment !== undefined) {
@@ -297,6 +296,10 @@
   }
 
   export async function removeAttachmentById (_id: Ref<Attachment>): Promise<void> {
+    if (uploads.has(_id)) {
+      uploads.remove(_id)
+      return
+    }
     const attachment = attachments.get(_id)
     if (attachment !== undefined) {
       await removeAttachment(attachment)
@@ -307,6 +310,11 @@
     if (saved) {
       return
     }
+    saved = true
+    await uploads.settled()
+    const stored = uploads.flush()
+    if (stored.length > 0) addStored(stored)
+    // Adding the stored files marked the draft unsaved again.
     saved = true
     const promises: Promise<any>[] = []
     newAttachments.forEach((p) => {
@@ -341,7 +349,7 @@
     return false
   }
 
-  export async function pasteAction (evt: ClipboardEvent): Promise<void> {
+  export function pasteAction (evt: ClipboardEvent): void {
     if (!isAllowedPaste(evt)) {
       return
     }
@@ -357,9 +365,7 @@
       }
     }
 
-    if (files.length > 0) {
-      await uploadFiles(files, { onFileUploaded })
-    }
+    addFiles(files)
   }
 
   export function getAttachments (): Attachment[] {
@@ -400,14 +406,13 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-  class="flex-col clear-mins"
+  class="flex-col clear-mins drop"
   class:w-full={fullWidth}
-  on:paste={(ev) => pasteAction(ev)}
-  on:dragover|preventDefault={() => {}}
-  on:dragleave={() => {}}
-  on:drop|preventDefault|stopPropagation={(ev) => {
-    void fileDrop(ev)
+  class:dragging
+  on:paste={(ev) => {
+    pasteAction(ev)
   }}
+  use:dropFiles={{ enabled: canDrop, onFiles: addFiles, onDragging: (on) => (dragging = on) }}
 >
   <StyledTextBox
     {focusIndex}
@@ -432,11 +437,11 @@
   >
     <slot name="actions" slot="actions" />
   </StyledTextBox>
-  {#if attachments.size > 0 && enableAttachments}
+  {#if (attachments.size > 0 || uploads.size > 0) && enableAttachments}
     <AttachmentsGrid
       attachments={Array.from(attachments.values())}
-      {progress}
-      {useAttachmentPreview}
+      {uploads}
+      drafts={newAttachments}
       on:remove={async (evt) => {
         if (evt.detail !== undefined) {
           await removeAttachment(evt.detail)
@@ -445,3 +450,14 @@
     />
   {/if}
 </div>
+
+<style lang="scss">
+  .drop {
+    border-radius: var(--medium-BorderRadius);
+    transition: background-color 0.15s ease;
+
+    &.dragging {
+      background-color: var(--global-ui-hover-BackgroundColor);
+    }
+  }
+</style>

@@ -28,6 +28,12 @@
     "Restore": "Restaurar",
     "Root": "/",
     "ForbidCreateDrivePermission": "Proibir criação de unidade",
-    "ForbidCreateDrivePermissionDescription": "Proíbe os utilizadores de criar novas unidades"
+    "ForbidCreateDrivePermissionDescription": "Proíbe os utilizadores de criar novas unidades",
+    "EmptyFolder": "Esta pasta está vazia",
+    "DropFilesHere": "Arraste os arquivos para cá",
+    "DropFilesHint": "ou clique para escolhê-los",
+    "FoldersCount": "{count, plural, one {# pasta} other {# pastas}}",
+    "FilesCount": "{count, plural, one {# arquivo} other {# arquivos}}",
+    "FolderEmpty": "Vazia"
   }
 }

@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,6 +19,7 @@
   import { deviceOptionsStore as deviceInfo, resizeObserver, testing, checkAdaptiveMatching } from '..'
   import type { CompAndProps } from '../popups'
   import { fitPopupElement, pin } from '../popups'
+  import { desktopPlatform } from '../location'
   import type { AnySvelteComponent, DeviceOptions, PopupAlignment, PopupOptions, PopupPositionElement } from '../types'
 
   export let is: AnySvelteComponent
@@ -109,7 +111,9 @@
   ): void => {
     const device: DeviceOptions = $deviceInfo
     if (((fullSize || docSize) && (element === 'float' || element === 'centered')) || isFullMobile) {
-      options = fitPopupElement(modalHTML, device, 'full', contentPanel, clientWidth, clientHeight)
+      // A popup that asks for the whole window covers the browser's app bar; the desktop app keeps its title bar.
+      const below = desktopPlatform || initialProps?.fullWindow !== true ? contentPanel : undefined
+      options = fitPopupElement(modalHTML, device, 'full', below, clientWidth, clientHeight)
       options.props.maxHeight = '100vh'
       if (!modalHTML.classList.contains('fullsize')) modalHTML.classList.add('fullsize')
     } else {

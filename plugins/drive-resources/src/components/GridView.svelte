@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,6 +20,8 @@
   import type { BuildModelKey, ViewOptions } from '@hcengineering/view'
   import type { SelectDirection } from '@hcengineering/view-resources'
   import { ListSelectionProvider, buildConfigLookup, focusStore } from '@hcengineering/view-resources'
+
+  import { isFolder } from '../utils'
   import GridItem from './GridItem.svelte'
 
   export let _class: Ref<Class<Resource>>
@@ -31,17 +34,24 @@
   const hierarchy = client.getHierarchy()
   const q = createQuery()
 
+  let ordered: Array<WithLookup<Resource>> = []
+
+  // The pointer moves the selection too, for the keys to start from; shown, it would stay lit after the pointer left.
+  let byKeys = false
+
   const listProvider = new ListSelectionProvider((offset: 1 | -1 | 0, of?: Doc, dir?: SelectDirection) => {
     if (dir === 'vertical') {
-      let pos = objects.findIndex((p) => p._id === of?._id)
+      // The provider re-selects with no offset on every update: only a move is a key.
+      if (offset !== 0) byKeys = true
+      let pos = ordered.findIndex((p) => p._id === of?._id)
       pos += offset
       if (pos < 0) {
         pos = 0
       }
-      if (pos >= objects.length) {
-        pos = objects.length - 1
+      if (pos >= ordered.length) {
+        pos = ordered.length - 1
       }
-      listProvider.updateFocus(objects[pos])
+      listProvider.updateFocus(ordered[pos])
     }
   })
 
@@ -66,33 +76,56 @@
     }
   )
 
-  $: listProvider.update(objects)
+  $: folders = objects.filter(isFolder)
+  $: files = objects.filter((it) => !isFolder(it))
+  $: ordered = [...folders, ...files]
+
+  $: listProvider.update(ordered)
   $: selection = listProvider.current($focusStore)
 </script>
 
 <ActionContext context={{ mode: 'browser' }} />
 
-<div class="grid-container">
-  {#each objects as object, i}
-    {@const selected = selection === i}
-    <div class="grid-cell">
+{#if folders.length > 0}
+  <div class="grid-container folders">
+    {#each folders as object, i (object._id)}
       <GridItem
         {object}
-        {selected}
+        selected={byKeys && selection === i}
         on:obj-focus={(evt) => {
+          byKeys = false
           listProvider.updateFocus(evt.detail)
         }}
       />
-    </div>
-  {/each}
-</div>
+    {/each}
+  </div>
+{/if}
+{#if files.length > 0}
+  <div class="grid-container">
+    {#each files as object, i (object._id)}
+      <GridItem
+        {object}
+        selected={byKeys && selection === folders.length + i}
+        on:obj-focus={(evt) => {
+          byKeys = false
+          listProvider.updateFocus(evt.detail)
+        }}
+      />
+    {/each}
+  </div>
+{/if}
 
 <style lang="scss">
   .grid-container {
     display: grid;
     margin: 0.5rem 1rem;
     padding-bottom: 0.5rem;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: 0.875rem;
+
+    &.folders {
+      gap: 0.5rem 0.875rem;
+      margin-bottom: 0.75rem;
+    }
   }
 </style>

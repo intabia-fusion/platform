@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@
   import type { DocumentSpaceType } from '@hcengineering/controlled-documents'
   import { type Product, ProductVersionState } from '@hcengineering/products'
   import type { Attachment } from '@hcengineering/attachment'
-  import { AttachmentPresenter, AttachmentStyledBox } from '@hcengineering/attachment-resources'
+  import { AttachmentStyledBox, AttachmentTiles, type UploadQueue } from '@hcengineering/attachment-resources'
   import { AccountArrayEditor, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import type { AccountUuid, Data, Ref, Role, RolesAssignment, SpaceType, WithLookup } from '@hcengineering/core'
   import core, { SortingOrder, generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
@@ -55,6 +56,7 @@
 
   let object: Data<Product> = createDefaultObject()
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
+  let uploads: UploadQueue | undefined
   let rolesAssignment: RolesAssignment = {}
 
   let typeId: Ref<DocumentSpaceType> = products.spaceType.ProductType
@@ -230,7 +232,7 @@
   okAction={handleOkAction}
   {canSave}
   on:close={handleClose}
-  hideAttachments={attachments.size === 0}
+  hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
 >
   <svelte:fragment slot="header">
     <SpaceTypeSelector
@@ -284,6 +286,9 @@
         if (ev.detail.action === 'saved') {
           object.attachments = ev.detail.value
         }
+      }}
+      on:uploads={(ev) => {
+        uploads = ev.detail
       }}
       on:attachments={(ev) => {
         if (ev.detail.size > 0) attachments = ev.detail.values
@@ -347,20 +352,14 @@
   </svelte:fragment>
 
   <svelte:fragment slot="attachments">
-    {#if attachments.size > 0}
-      {#each Array.from(attachments.values()) as attachment}
-        <AttachmentPresenter
-          value={attachment}
-          showPreview
-          removable
-          on:remove={(result) => {
-            if (result.detail !== undefined) {
-              void descriptionBox.removeAttachmentById(result.detail._id)
-            }
-          }}
-        />
-      {/each}
-    {/if}
+    <AttachmentTiles
+      attachments={Array.from(attachments.values())}
+      {uploads}
+      removable
+      on:remove={(result) => {
+        void descriptionBox.removeAttachmentById(result.detail._id)
+      }}
+    />
   </svelte:fragment>
 
   <svelte:fragment slot="footer">

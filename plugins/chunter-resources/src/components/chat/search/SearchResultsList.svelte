@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, Label, Loading, Scroller } from '@hcengineering/ui'
+  import { BlankView, IconSearch, Loading, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../plugin'
   import type { ChatSearchState } from '../../../search/types'
+  import SearchFailureState from './SearchFailureState.svelte'
   import SearchResultItem from './SearchResultItem.svelte'
   import VirtualRow from './VirtualRow.svelte'
 
@@ -43,28 +44,16 @@
 
 {#if state.loading && state.results.length === 0}
   <Loading />
-{:else if state.failure !== undefined}
-  <div class="state">
-    <span class="title"><Label label={chunter.string.SearchFailed} /></span>
-    {#if state.failure.kind === 'unavailable'}
-      <span class="hint"><Label label={chunter.string.SearchUnavailable} /></span>
-    {:else}
-      <span class="hint">{state.failure.message}</span>
-    {/if}
-    <div class="mt-2">
-      <Button label={chunter.string.SearchRetry} kind="regular" on:click={() => dispatch('retry')} />
-    </div>
-  </div>
+{:else if state.failure != null && state.results.length === 0}
+  <SearchFailureState failure={state.failure} on:retry={() => dispatch('retry')} />
 {:else if state.results.length === 0 && state.search.trim() === ''}
-  <div class="state">
-    <span class="title"><Label label={chunter.string.SearchHintTitle} /></span>
-    <span class="hint"><Label label={chunter.string.SearchHintTyping} /></span>
-  </div>
+  <BlankView icon={IconSearch} header={chunter.string.SearchHintTitle} label={chunter.string.SearchHintTyping} />
 {:else if state.results.length === 0}
-  <div class="state">
-    <span class="title"><Label label={chunter.string.SearchNoResultsTitle} /></span>
-    <span class="hint"><Label label={chunter.string.SearchNoResultsHint} /></span>
-  </div>
+  <BlankView
+    icon={IconSearch}
+    header={chunter.string.SearchNoResultsTitle}
+    label={chunter.string.SearchNoResultsHint}
+  />
 {:else}
   <Scroller bind:divScroll onScroll={handleScroll} {maxHeight}>
     {#each state.results as row, index (row._id)}
@@ -87,33 +76,13 @@
     {/each}
     {#if state.loadingMore}
       <div class="more"><Loading shrink /></div>
+    {:else if state.failure != null}
+      <SearchFailureState failure={state.failure} inline on:retry={() => dispatch('retry')} />
     {/if}
   </Scroller>
 {/if}
 
 <style lang="scss">
-  .state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    height: 100%;
-    padding: 2rem;
-    text-align: center;
-  }
-
-  .title {
-    font-weight: 500;
-    color: var(--theme-caption-color);
-    margin-bottom: 0.25rem;
-  }
-
-  .hint {
-    font-size: 0.8125rem;
-    color: var(--theme-darker-color);
-  }
-
   .row {
     cursor: pointer;
     border-radius: 0.25rem;

@@ -27,6 +27,7 @@
   export let size: AttachmentImageSize = 'auto'
 
   const MIN_IMAGE_REM = 3
+  const touch = typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches
 
   $: dimensions = calculateAttachmentDimensions(value?.metadata, size, $devicePixelRatioStore)
 
@@ -80,9 +81,11 @@
       <BrokenImage size="large" />
     </div>
   {:else}
+    <!-- Freed off screen, but far enough that scrolling back finds it loaded; a phone scrolls in longer flings. -->
     <Image
       blob={value.file}
       loading="lazy"
+      margin={touch ? '200%' : '50%'}
       alt={value.name}
       fit={dimensions.fit}
       width={dimensions.width}

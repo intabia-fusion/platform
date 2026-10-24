@@ -67,7 +67,8 @@
   }
 
   async function getName (attach: Attachment): Promise<string | undefined> {
-    const person = await getPersonByPersonId(attach.modifiedBy)
+    // The sender, not the last to change it: a voice note is last changed by its transcription.
+    const person = await getPersonByPersonId(attach.createdBy ?? attach.modifiedBy)
 
     if (person != null) {
       return getContactName(client.getHierarchy(), person)

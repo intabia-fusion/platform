@@ -1,5 +1,10 @@
 {
   "string": {
+    "TextShownFirst": "Показаны первые {shown} КБ из {total} КБ",
+    "MarkdownPreview": "Просмотр",
+    "MarkdownSource": "Исходник",
+    "MarkdownTooLarge": "Без оформления: больше {limit} КБ",
+    "TextShownLast": "Показаны последние {shown} КБ из {total} КБ",
     "Contains": "содержит",
     "NotContains": "не содержит",
     "MoveClass": "Переместить {class}",

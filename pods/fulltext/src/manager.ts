@@ -345,7 +345,7 @@ export class WorkspaceManager {
       if (!this.restoring.has(ws)) {
         const result = await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
           try {
-            await indexer.reindex(this.ctx, mmd.domain, mmd.classes, control)
+            await indexer.reindex(this.ctx, mmd.domain, mmd.classes, control, mmd.clean === true)
           } catch (err: any) {
             this.ctx.error('failed to reindex domain', { workspace: ws })
             throw err

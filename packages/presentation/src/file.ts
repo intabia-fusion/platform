@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,13 +14,19 @@
 // limitations under the License.
 //
 
+import { formatBadge, getAttachmentCategory } from '@hcengineering/attachment'
 import { type Blob as PlatformBlob, type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
-import { type FileStorage, createFileStorage as createStorageClient } from '@hcengineering/storage-client'
+import {
+  type FileStorage,
+  type FileStorageUploadProgress,
+  createFileStorage as createStorageClient
+} from '@hcengineering/storage-client'
+import { textContentTypes } from '@hcengineering/view'
 import { v4 as uuid } from 'uuid'
 
 import plugin from './plugin'
-import { getFileMetadata } from './filetypes'
+import { getFileMetadata, matchContentType } from './filetypes'
 
 export function getCurrentWorkspaceUuid (): WorkspaceUuid {
   const workspaceUuid = getMetadata(plugin.metadata.WorkspaceUuid) ?? ''
@@ -48,6 +55,14 @@ export function getFileStorage (): FileStorage {
   }
 
   return storage
+}
+
+export function fileBadge (name: string, contentType: string): { label: string, color: string } {
+  return formatBadge(getAttachmentCategory(contentType, name).format, name)
+}
+
+export function isTextFile (contentType: string): boolean {
+  return textContentTypes.some((it) => matchContentType(it, contentType))
 }
 
 /** @public */
@@ -99,7 +114,9 @@ export function getContentType (name: string, type: string): string {
 
 export async function uploadFile (
   file: File,
-  uuid?: Ref<PlatformBlob>
+  uuid?: Ref<PlatformBlob>,
+  signal?: AbortSignal,
+  onProgress?: (progress: FileStorageUploadProgress) => void
 ): Promise<{ uuid: Ref<PlatformBlob>, metadata: Record<string, any> }> {
   uuid ??= generateFileId() as Ref<PlatformBlob>
 
@@ -112,11 +129,45 @@ export async function uploadFile (
   }
 
   const storage = getFileStorage()
-  await storage.uploadFile(token, workspace, uuid, file)
+  await storage.uploadFile(token, workspace, uuid, file, { signal, onProgress })
 
   const metadata = (await getFileMetadata(file, uuid)) ?? {}
 
   return { uuid, metadata }
+}
+
+export function downloadFile (file: string, name: string): void {
+  const link = document.createElement('a')
+  link.href = getFileUrl(file, name)
+  link.download = name
+  link.click()
+}
+
+export interface DownloadEntry {
+  url: string
+  name: string
+}
+
+// The browser drops downloads started in one go; a pause between them keeps every file.
+const DOWNLOAD_GAP_MS = 300
+
+let downloadFilesHandler: ((files: DownloadEntry[]) => Promise<void>) | undefined
+
+export function setDownloadFilesHandler (handler: ((files: DownloadEntry[]) => Promise<void>) | undefined): void {
+  downloadFilesHandler = handler
+}
+
+export async function downloadFiles (files: Array<{ file: string, name: string }>): Promise<void> {
+  if (downloadFilesHandler != null) {
+    await downloadFilesHandler(
+      files.map((it) => ({ url: new URL(getFileUrl(it.file, it.name), window.location.href).href, name: it.name }))
+    )
+    return
+  }
+  for (const [index, it] of files.entries()) {
+    if (index > 0) await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_GAP_MS))
+    downloadFile(it.file, it.name)
+  }
 }
 
 /** @public */
@@ -130,8 +181,9 @@ export async function deleteFile (file: string): Promise<void> {
 
 export async function getJsonOrEmpty<T = any> (file: string, name: string): Promise<T | undefined> {
   try {
-    const fileUrl = getFileUrl(file, name)
-    const resp = await fetch(fileUrl)
+    const resp = await fetch(getFileUrl(file, name))
+    // An error answer is JSON too: taken for the file it would hide the failure.
+    if (!resp.ok) return undefined
     return (await resp.json()) as T
   } catch {
     return undefined

@@ -183,8 +183,8 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--global-focus-BorderColor);
-      outline-offset: 2px;
+      outline: 0.125rem solid var(--global-focus-BorderColor);
+      outline-offset: 0.125rem;
     }
     &:not(:disabled) {
       &:hover {
@@ -255,9 +255,9 @@
       --_bg-hover: var(--button-tertiary-hover-BackgroundColor);
       --_bg-active: var(--button-tertiary-active-BackgroundColor);
       --_disabled-bg: transparent;
-      // Gray at rest like the legacy icon buttons, dark on hover so the target reads
-      --_icon: var(--global-secondary-TextColor);
-      --_label: var(--global-primary-TextColor);
+      // Darker than secondary gray, which read as disabled.
+      --_icon: color-mix(in srgb, var(--global-secondary-TextColor) 70%, var(--global-primary-TextColor));
+      --_label: var(--_icon);
       --_loading-label: var(--button-disabled-LabelColor);
 
       &:not(:disabled):is(:hover, :active, .button--pressed) {

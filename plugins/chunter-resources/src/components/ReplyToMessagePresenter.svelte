@@ -27,7 +27,7 @@
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import type { Person } from '@hcengineering/contact'
   import { formatName } from '@hcengineering/contact'
-  import { AttachmentSimplePreview } from '@hcengineering/attachment-resources'
+  import { AttachmentMiniPreview, isVoiceAttachment } from '@hcengineering/attachment-resources'
   import { isEmptyMarkup } from '@hcengineering/text'
   import type { IntlString } from '@hcengineering/platform'
   import { encodeChatURI } from '../navigation'
@@ -48,6 +48,9 @@
   $: hasAttachments = (replyTo.attachments ?? 0) > 0
   $: lookupAttachments = replyTo.$lookup?.attachments as Attachment[] | undefined
   $: personId = replyTo.createdBy ?? replyTo.modifiedBy
+  // A forward shows the files it carries when it has none of its own.
+  $: files = attachments.length > 0 ? attachments : hasContent ? [] : (replyTo.forwardContent?.attachments ?? [])
+  $: file = files[0]
 
   $: {
     if (lookupAttachments != null) {
@@ -140,13 +143,8 @@
   <div class="reply__indicator"></div>
 
   <div class="reply__content">
-    {#if hasAttachments || (!hasContent && (replyTo.forwardContent?.attachments?.length ?? 0) > 0)}
-      {@const attach = attachments[0] ?? replyTo.forwardContent?.attachments?.[0]}
-      <div class="reply__attachments">
-        {#if attach != null}
-          <AttachmentSimplePreview value={attach} />
-        {/if}
-      </div>
+    {#if file != null}
+      <AttachmentMiniPreview value={file} />
     {/if}
 
     <div class="reply__body">
@@ -157,13 +155,20 @@
       <div class="reply__text">
         {#if !isEmptyMarkup(replyTo.message)}
           <LiteMessageViewer message={replyTo.message} />
-        {:else if hasAttachments}
-          <span class="reply__attachment-label">
-            <Label label={attachment.string.Attachments} />
-          </span>
-        {:else if !isEmptyMarkup(replyTo.forwardContent?.message ?? '')}
+        {:else if !hasAttachments && !isEmptyMarkup(replyTo.forwardContent?.message ?? '')}
           <LiteMessageViewer message={replyTo.forwardContent?.message ?? ''} />
-        {:else if (replyTo.forwardContent?.attachments?.length ?? 0) > 0}
+        {:else if file != null}
+          <span class="reply__file">
+            <span class="reply__file-name">
+              {#if isVoiceAttachment(hierarchy, file)}
+                <Label label={attachment.string.VoiceMessage} />
+              {:else}
+                {file.name}
+              {/if}
+            </span>
+            {#if files.length > 1}<span class="reply__more">+{files.length - 1}</span>{/if}
+          </span>
+        {:else if hasAttachments}
           <span class="reply__attachment-label">
             <Label label={attachment.string.Attachments} />
           </span>
@@ -202,26 +207,12 @@
 
     &__content {
       display: flex;
+      align-items: center;
       flex: 1;
       min-width: 0;
       gap: 0.5rem;
       overflow: hidden;
       height: 100%;
-    }
-
-    &__attachments {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      width: 2.875rem;
-      height: 2.875rem;
-      flex-shrink: 0;
-
-      border-radius: var(--medium-BorderRadius);
-      background-color: var(--surface-secondary);
-      font-size: 0.85rem;
-      overflow: hidden;
     }
 
     &__body {
@@ -250,6 +241,24 @@
 
     &__attachment-label {
       color: var(--global-secondary-TextColor);
+    }
+
+    &__file {
+      display: flex;
+      align-items: baseline;
+      gap: 0.375rem;
+      min-width: 0;
+      color: var(--global-secondary-TextColor);
+    }
+
+    &__file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &__more {
+      flex-shrink: 0;
+      font-weight: 500;
     }
   }
 </style>

@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
-  import { AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { AttachmentTile } from '@hcengineering/attachment-resources'
   import type { SharedMessage } from '@hcengineering/gmail'
   import { createQuery } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
@@ -61,9 +62,9 @@
   {/if}
   {#if attachments.length}
     <div class="flex-row-center list mt-2">
-      {#each attachments as attachment}
+      {#each attachments as attachment (attachment._id)}
         <div class="item flex">
-          <AttachmentPresenter value={attachment} showPreview />
+          <AttachmentTile value={attachment} />
         </div>
       {/each}
     </div>

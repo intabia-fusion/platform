@@ -13,15 +13,81 @@
 // limitations under the License.
 //
 
+import { AttachmentFormat } from '@hcengineering/attachment'
 import { type Class, type Doc, type Ref, type SearchSortOrder } from '@hcengineering/core'
 import { type Person } from '@hcengineering/contact'
 import { getClient } from '@hcengineering/presentation'
 import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
 
+import { BrowserTab } from './attachments'
 import { pickAuthors } from './resolve'
 import type { ChatSearchFilters, PickedObject } from './types'
 
+type UrlQuery = Record<string, string | null> | undefined
+
 const SORTS: SearchSortOrder[] = ['relevance', 'date-desc', 'date-asc']
+const TABS = Object.values(BrowserTab)
+const FORMATS = new Set<string>(Object.values(AttachmentFormat))
+
+// Every key the browser writes: a link with any of them names a search.
+const SEARCH_KEYS = [
+  'q',
+  'type',
+  'from',
+  'in',
+  'after',
+  'before',
+  'files',
+  'transcripts',
+  'sort',
+  'tab',
+  'formats',
+  'content'
+]
+
+export interface BrowserSearch {
+  tab: BrowserTab
+  query: string
+  filters: ChatSearchFilters
+  sort: SearchSortOrder
+  formats: AttachmentFormat[]
+  content: boolean
+}
+
+/** Relevance needs a query; the file tabs open as a feed, newest first. */
+export function defaultSort (tab: BrowserTab): SearchSortOrder {
+  return tab === BrowserTab.Messages ? 'relevance' : 'date-desc'
+}
+
+export function namesSearch (query: UrlQuery): boolean {
+  return SEARCH_KEYS.some((key) => query?.[key] != null)
+}
+
+export function tabFromQuery (query: UrlQuery): BrowserTab | undefined {
+  const tab = query?.tab
+  return TABS.includes(tab as BrowserTab) ? (tab as BrowserTab) : undefined
+}
+
+export function formatsFromQuery (query: UrlQuery): AttachmentFormat[] {
+  return split(query?.formats).filter((it): it is AttachmentFormat => FORMATS.has(it))
+}
+
+/** The URL of a search: what equals the default is left out, so a plain browser keeps a plain address. */
+export function searchToQuery (search: BrowserSearch): Record<string, string> {
+  const query = filtersToQuery(search.filters)
+  if (search.query !== '') query.q = search.query
+  if (search.sort !== defaultSort(search.tab)) query.sort = search.sort
+  if (search.tab !== BrowserTab.Messages) query.tab = search.tab
+  if (search.formats.length > 0) query.formats = search.formats.join(',')
+  if (search.content) query.content = '1'
+  return query
+}
+
+/** The other parameters of the page stay; those of the previous search go. */
+export function replaceSearch (current: UrlQuery, search: Record<string, string>): Record<string, string | null> {
+  const rest = Object.entries(current ?? {}).filter(([key]) => !SEARCH_KEYS.includes(key))
+  return { ...Object.fromEntries(rest), ...search }
+}
 
 function join (values: string[]): string | undefined {
   return values.length > 0 ? values.join(',') : undefined
@@ -32,10 +98,10 @@ function split (value: string | null | undefined): string[] {
   return value.split(',').filter((v) => v !== '')
 }
 
-export function filtersToQuery (filters: ChatSearchFilters, sort: SearchSortOrder): Record<string, string> {
+function filtersToQuery (filters: ChatSearchFilters): Record<string, string> {
   const query: Record<string, string> = {}
 
-  const classes = join((filters.attachedToClasses ?? []).map((c) => c))
+  const classes = join(filters.attachedToClasses ?? [])
   if (classes !== undefined) query.type = classes
 
   const authors = join((filters.authors ?? []).map((a) => a.person))
@@ -48,7 +114,6 @@ export function filtersToQuery (filters: ChatSearchFilters, sort: SearchSortOrde
   if (filters.before !== undefined) query.before = `${filters.before}`
   if (filters.hasAttachment === true) query.files = '1'
   if (filters.includeTranscription === true) query.transcripts = '1'
-  if (sort !== 'relevance') query.sort = sort
 
   return query
 }
@@ -59,12 +124,12 @@ function toNumber (value: string | null | undefined): number | undefined {
   return isNaN(parsed) ? undefined : parsed
 }
 
-export function sortFromQuery (query: Record<string, string | null> | undefined): SearchSortOrder | undefined {
+export function sortFromQuery (query: UrlQuery): SearchSortOrder | undefined {
   const value = query?.sort
   return SORTS.includes(value as SearchSortOrder) ? (value as SearchSortOrder) : undefined
 }
 
-export async function filtersFromQuery (query: Record<string, string | null> | undefined): Promise<ChatSearchFilters> {
+export async function filtersFromQuery (query: UrlQuery): Promise<ChatSearchFilters> {
   if (query === undefined) return {}
 
   const filters: ChatSearchFilters = {}

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023-2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,7 +35,7 @@
     highlightUpdateCommand,
     selectNode
   } from '@hcengineering/text-editor-resources'
-  import { AttachmentsGrid, AttachmentPresenter } from '@hcengineering/attachment-resources'
+  import { AttachmentLabel, AttachmentsGrid } from '@hcengineering/attachment-resources'
   import {
     Button,
     Component,
@@ -410,7 +411,6 @@
             {attachments}
             readonly={!$isEditable}
             {progress}
-            useAttachmentPreview={false}
             on:remove={async (evt) => {
               if (evt.detail !== undefined) {
                 await removeAttachment(evt.detail)
@@ -423,7 +423,7 @@
             <div class="deleted-header"><Label label={plugin.string.RemovedAttachments} /></div>
             {#each deletedAttachments as att (att._id)}
               <div class="deleted-row">
-                <AttachmentPresenter value={att} />
+                <AttachmentLabel value={att} />
                 <div class="restore-btn">
                   <Button
                     icon={IconUndo}

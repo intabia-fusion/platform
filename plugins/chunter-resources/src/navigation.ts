@@ -13,6 +13,7 @@ import {
 } from '@hcengineering/ui'
 import { type Ref, type Doc, type Class, concatLink, type SearchResultDoc } from '@hcengineering/core'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
+import { messageInFocus } from '@hcengineering/activity-resources'
 import {
   type Channel,
   type ChatWidgetTab,
@@ -22,7 +23,7 @@ import {
 } from '@hcengineering/chunter'
 import { notificationId } from '@hcengineering/notification'
 import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
-import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
+import { classIcon, getObjectLinkFragment, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
 import view, { encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
 import {
@@ -97,25 +98,7 @@ export async function openMessageFromSpecial (message?: ActivityMessage): Promis
   if (message === undefined) {
     return
   }
-
-  const loc = getCurrentResolvedLocation()
-  const client = getClient()
-  const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-
-  if (isThreadMessage(message)) {
-    const id = await getObjectLinkId(providers, message.objectId, message.objectClass)
-
-    loc.path[3] = encodeChatURI(id, message.objectClass)
-    loc.path[4] = message.attachedTo
-  } else {
-    const id = await getObjectLinkId(providers, message.attachedTo, message.attachedToClass)
-
-    loc.path[3] = encodeChatURI(id, message.attachedToClass)
-  }
-
-  loc.query = { ...loc.query, message: message._id }
-
-  navigate(loc)
+  await openSearchResult(message)
 }
 
 export async function openSearchResult (doc: SearchResultDoc['doc']): Promise<void> {
@@ -124,27 +107,41 @@ export async function openSearchResult (doc: SearchResultDoc['doc']): Promise<vo
   const hierarchy = client.getHierarchy()
   const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  const objectId = doc.objectId
-  const objectClass = doc.objectClass
   const isThread = hierarchy.isDerived(doc._class, chunter.class.ThreadMessage)
+  // A reply is not in its chat: the chat goes to the message the thread hangs off.
+  const root = isThread ? (doc.attachedTo as Ref<ActivityMessage>) : undefined
+  const placeId = isThread ? doc.objectId : doc.attachedTo
+  const placeClass = isThread ? doc.objectClass : doc.attachedToClass
+  if (placeId == null || placeClass == null) return
 
-  if (isThread && objectId !== undefined && objectClass !== undefined) {
-    const id = await getObjectLinkId(providers, objectId, objectClass)
-    loc.path[3] = encodeChatURI(id, objectClass)
-    loc.path[4] = doc.attachedTo as string
-    loc.path.length = 5
-  } else if (doc.attachedTo !== undefined && doc.attachedToClass !== undefined) {
-    const id = await getObjectLinkId(providers, doc.attachedTo, doc.attachedToClass)
-    loc.path[3] = encodeChatURI(id, doc.attachedToClass)
-    loc.path[4] = ''
-    loc.path.length = 4
+  const isSpace = hierarchy.hasClass(placeClass) && hierarchy.isDerived(placeClass, chunter.class.ChunterSpace)
+  if (isSpace) {
+    const id = await getObjectLinkId(providers, placeId, placeClass)
+    loc.path[3] = encodeChatURI(id, placeClass)
+    if (root != null) {
+      loc.path[4] = root
+      loc.path.length = 5
+    } else {
+      loc.path[4] = ''
+      loc.path.length = 4
+    }
+    loc.query = { ...loc.query, message: root ?? doc._id }
+    navigate(loc)
   } else {
-    return
+    // An issue or a document opens in full, as from the chat navigator; its activity goes to the message.
+    const place = await client.findOne(placeClass, { _id: placeId as Ref<Doc> })
+    if (place == null) return
+    const panel = hierarchy.classHierarchyMixin(place._class, view.mixin.ObjectPanel)
+    const target = await getObjectLinkFragment(hierarchy, place, {}, panel?.component ?? view.component.EditDoc)
+    target.query = { ...target.query, message: root ?? doc._id }
+    navigate(target)
   }
 
-  loc.query = { ...loc.query, message: doc._id }
-
-  navigate(loc)
+  if (root != null) {
+    // From the location alone a thread opens only into a free sidebar; a result asked for always opens.
+    await openThreadInSidebar(root)
+    messageInFocus.set(doc._id as Ref<ActivityMessage>)
+  }
 }
 
 export function navigateToSpecial (specialId: string): void {

@@ -152,9 +152,10 @@ export class WorkspaceIndexer {
     ctx: MeasureContext,
     domain: Domain,
     classes: Ref<Class<Doc>>[],
-    control?: ConsumerControl
+    control?: ConsumerControl,
+    clean: boolean = false
   ): Promise<void> {
-    await this.fulltext.reindex(ctx, domain, classes, control)
+    await this.fulltext.reindex(ctx, domain, classes, control, clean)
   }
 
   async dropWorkspace (): Promise<void> {

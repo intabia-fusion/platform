@@ -49,12 +49,14 @@ export async function blobVideoMetadata (file: File, blob: Ref<Blob>): Promise<B
 
   return {
     originalHeight: size.height,
-    originalWidth: size.width
+    originalWidth: size.width,
+    // A recording written as a stream has no length in its header: the browser reports Infinity.
+    ...(Number.isFinite(size.duration) && size.duration > 0 ? { durationSec: size.duration } : {})
   }
 }
 
-async function getVideoSize (file: File): Promise<{ width: number, height: number } | undefined> {
-  const promise = new Promise<{ width: number, height: number }>((resolve, reject) => {
+async function getVideoSize (file: File): Promise<{ width: number, height: number, duration: number } | undefined> {
+  const promise = new Promise<{ width: number, height: number, duration: number }>((resolve, reject) => {
     const element = document.createElement('video')
 
     const src = URL.createObjectURL(file)
@@ -62,9 +64,10 @@ async function getVideoSize (file: File): Promise<{ width: number, height: numbe
     element.onloadedmetadata = () => {
       const height = element.videoHeight
       const width = element.videoWidth
+      const duration = element.duration
 
       URL.revokeObjectURL(src)
-      resolve({ height, width })
+      resolve({ height, width, duration })
     }
 
     element.onerror = reject

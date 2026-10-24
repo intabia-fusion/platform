@@ -92,7 +92,8 @@ export async function handleTranscodeResult (
     hls: {
       source: msg.playlist,
       thumbnail: msg.thumbnail
-    }
+    },
+    ...(msg.duration != null && msg.duration > 0 ? { durationSec: msg.duration } : {})
   }
 
   const client = await WorkspaceClient.create(workspaceUuid)

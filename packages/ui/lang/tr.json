@@ -132,6 +132,20 @@
     "LatencyValue": "{ms} ms",
     "StatusError": "Hata",
     "StatusWarning": "Uyarı",
-    "StatusInfo": "Bilgi"
+    "StatusInfo": "Bilgi",
+    "Download": "İndir",
+    "PreviewUnavailable": "Bu içerik türü için önizleme mevcut değil",
+    "PreviewFailed": "Önizleme açılamadı",
+    "Play": "Oynat",
+    "Pause": "Duraklat",
+    "PlaybackPosition": "Oynatma konumu",
+    "PlaybackSpeed": "Hız",
+    "LinkPreviewUnavailable": "Bağlantı önizlemesi kullanılamıyor",
+    "UploadProgress": "{sent} / {size}",
+    "UploadFailed": "Yükleme başarısız",
+    "Retry": "Tekrar dene",
+    "VoiceStarting": "Mikrofon açılıyor…",
+    "VoiceDiscard": "Kaydı iptal et",
+    "VoiceAttach": "Kaydı ekle"
   }
 }

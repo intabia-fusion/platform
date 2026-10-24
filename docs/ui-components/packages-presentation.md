@@ -34,8 +34,10 @@
 | `LiteMessageViewer` | Упрощённый рендер Markup без тяжёлых нод | `message: Markup \| MarkupNode`, `colorInherit = false` |
 | `HTMLViewer` | Рендер произвольного HTML-значения | `value: string`, `preview = false` |
 | `ObjectNode` | Инлайн-ссылка на документ в markup-дереве (mention) | `_id`, `_class`, `title`, `transparent` |
-| `FilePreview` | Универсальный превью файла по content-type | `file`, `name`, `contentType`, `fit` |
-| `FilePreviewPopup` | Полноэкранный попап-просмотрщик поверх FilePreview | `file`, `name`, `fullSize`, `showIcon` |
+| `FilePreview` | Универсальный превью файла по content-type; для типа без просмотрщика и при пустой ссылке - кит `FileNoPreview`, проп `viewer` подменяет просмотрщик своим компонентом | `file`, `name`, `contentType`, `fit`, `viewer` |
+| `FileViewer` | Просмотрщик во всё окно поверх FilePreview (открывается `showFileViewer`); `navigation` листает клавишами ←/→, а у картинок, видео и аудио - ещё и кнопками по бокам | `file`, `name`, `contentType`, `metadata`, `props`, `navigation` (`prev`, `next`), `extraActions`, `subtitle`, `size`, `viewer` |
+| `FileHeader` | Шапка файла в `FileViewer` и в сайдбаре вложения (`PreviewWidget`): значок формата, имя, «формат · размер», кнопки в слоте | `name`, `contentType`, `subtitle`, `size`, `plate` |
+| `showFileViewer` | Открыть `FileViewer` во всё окно | `showFileViewer(params: FileViewerProps, onClose?)`; `FileViewerProps` - пропы самого `FileViewer` (`ComponentProps`) без `fullSize`/`fullWindow`, `file` обязателен |
 | `PDFViewer` | Просмотр PDF инлайн или в полноэкранном режиме | `file: Ref<Blob>`, `name`, `fullSize` |
 | `Image` | Оптимизированное изображение с blurhash/lazy-loading | `blob: Ref<Blob>`, `width`, `height`, `fit` |
 | `getBlobURL` | Временный object URL для Blob | `getBlobURL(blob: Blob): Promise<string>` |
@@ -85,8 +87,7 @@
 
 | Компонент/функция | Назначение | Ключевые props / сигнатура |
 |---|---|---|
-| `DownloadFileButton` | Кнопка скачивания файла-blob по ссылке | `file: Ref<Blob>`, `name`, `tooltip` |
-| `FileTypeIcon` | Иконка типа файла по имени/расширению | `name: string` |
+| `downloadFile` | Скачать файл хранилища под его именем | `downloadFile(file: string, name: string): void` |
 | `IconDownload` / `IconForward` | Иконки платформы (скачать / переслать) | `size` |
 | `getFileUrl` | URL файла в blob-хранилище для `<img src>`/ссылок | `getFileUrl(file: string, filename?): string` |
 | `uploadFile` / `deleteFile` | Загрузка/удаление файла в blob-хранилище воркспейса | `uploadFile(file, uuid?, opts?): Promise<...>` |

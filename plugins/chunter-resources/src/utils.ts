@@ -265,11 +265,6 @@ export async function ChannelTitleProvider (client: Client, id: Ref<Channel>, do
   return channel.name
 }
 
-export enum SearchType {
-  Messages,
-  Files
-}
-
 export async function getTitle (doc: Doc): Promise<string> {
   const client = getClient()
   const hierarchy = client.getHierarchy()

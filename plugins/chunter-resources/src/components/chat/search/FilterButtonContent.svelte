@@ -21,6 +21,7 @@
 
   export let title: string
   export let icon: IconComponent | undefined = undefined
+  export let iconProps: Record<string, any> | undefined = undefined
   export let doc: Doc | undefined = undefined
   export let count: number = 1
 </script>
@@ -29,7 +30,7 @@
   {#if doc !== undefined}
     <SearchObjectIcon {doc} avatarSize="tiny" />
   {:else if icon !== undefined}
-    <Icon {icon} size="small" />
+    <Icon {icon} {iconProps} size="small" />
   {/if}
   <span class="title overflow-label">{title}</span>
   {#if count > 1}
