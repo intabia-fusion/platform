@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BasePreview } from '@hcengineering/activity-resources'
+  import { AppletsPreview, BasePreview } from '@hcengineering/activity-resources'
   import type { MentionNotification } from '@hcengineering/notification'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
@@ -21,6 +21,7 @@
   export let value: MentionNotification
 
   $: attachments = value.attachments ?? []
+  $: applets = value.applets ?? []
 </script>
 
 <BasePreview text={value.markup} timestamp={value.createdOn} account={value.createdBy} on:click>
@@ -29,6 +30,9 @@
       {attachments.length}
       <Icon icon={attachment.icon.Attachment} size="small" />
     </div>
+  {/if}
+  {#if applets.length > 0}
+    <AppletsPreview {applets} />
   {/if}
 </BasePreview>
 

@@ -471,6 +471,28 @@ const activitySchema: Schema = {
   }
 }
 
+// Polls included: a subclass shares the table.
+const appletSchema: Schema = {
+  ...baseSchema,
+  // Indexed together with workspaceId in customIndexes below.
+  attachedTo: {
+    type: 'text',
+    notNull: true,
+    index: false
+  }
+}
+
+// Answers of anonymous polls and quizzes, one per poll in the voter's personal space.
+const pollAnswerSchema: Schema = {
+  ...baseSchema,
+  // Indexed together with workspaceId and space in customIndexes below.
+  attachedTo: {
+    type: 'text',
+    notNull: true,
+    index: false
+  }
+}
+
 type CustomIndexType = 'unique' | 'custom'
 
 export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> = {
@@ -520,6 +542,24 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
         'CREATE INDEX IF NOT EXISTS activity_workspaceId_createdOn_threads__index ON activity ("workspaceId", "createdOn" DESC) WHERE replies > 0;'
       ]
     }
+  ],
+  // The `applets` lookup runs for every message of a chat page.
+  [translateDomain('applet')]: [
+    {
+      unique: [],
+      custom: [
+        'CREATE INDEX IF NOT EXISTS applet_workspaceId_attachedTo__index ON applet ("workspaceId", "attachedTo");'
+      ]
+    }
+  ],
+  // Not unique: a violation would fail the vote and the activity service would retry it forever.
+  [translateDomain('poll-answer')]: [
+    {
+      unique: [],
+      custom: [
+        'CREATE INDEX IF NOT EXISTS poll_answer_workspaceId_attachedTo_space__index ON poll_answer ("workspaceId", "attachedTo", space);'
+      ]
+    }
   ]
 }
 
@@ -550,7 +590,9 @@ export const domainSchemas: Record<string, Schema> = {
   kanban: defaultSchema,
   [translateDomain('attachment')]: attachmentSchema,
   [translateDomain('notification_read_state')]: docReadStateSchema,
-  [translateDomain('activity')]: activitySchema
+  [translateDomain('activity')]: activitySchema,
+  [translateDomain('applet')]: appletSchema,
+  [translateDomain('poll-answer')]: pollAnswerSchema
 }
 
 // Snapshot of the schemas declared above. `domainSchemas` is replaced per domain by what the

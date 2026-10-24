@@ -34,6 +34,7 @@ import core, {
   type TxRemoveDoc,
   type TxUpdateDoc,
   addOperation,
+  groupByArray,
   toFindResult,
   withContext,
   type TxCreateDoc,
@@ -149,16 +150,59 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
 
   async tx (ctx: MeasureContext<SessionData>, tx: Tx[]): Promise<TxMiddlewareResult> {
     await this.triggers.tx(tx)
+    const moved = await this.findMovedDocs(ctx, tx)
     const result = await this.provideTx(ctx, tx)
 
     const ftx = filterBroadcastOnly(tx, this.context.hierarchy)
     if (ftx.length > 0) {
-      await this.processDerived(ctx, ftx)
+      await this.processDerived(ctx, ftx, moved)
     }
     return result
   }
 
-  private async processDerived (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<void> {
+  // Read before the updates apply: a counter is taken from the parent a document had, not from the one its tx names.
+  private async findMovedDocs (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<Map<Ref<Tx>, AttachedDoc>> {
+    const isMove = (it: Tx): it is TxUpdateDoc<AttachedDoc> =>
+      it._class === core.class.TxUpdateDoc &&
+      (it as TxUpdateDoc<AttachedDoc>).attachedTo !== undefined &&
+      (it as TxUpdateDoc<AttachedDoc>).operations?.attachedTo !== undefined
+    const moves = txes.filter(isMove)
+    const current = new Map<Ref<Doc>, AttachedDoc>()
+    for (const [_class, items] of groupByArray(moves, (it) => it.objectClass).entries()) {
+      const domain = this.context.hierarchy.findDomain(_class)
+      if (domain === undefined || domain === DOMAIN_MODEL) continue
+      const docs = await this.findAll(ctx, _class, { _id: { $in: items.map((it) => it.objectId) } })
+      for (const doc of docs) current.set(doc._id, doc)
+    }
+
+    const result = new Map<Ref<Tx>, AttachedDoc>()
+    if (moves.length === 0) return result
+    for (const tx of txes) {
+      const objectId = (tx as TxCUD<Doc>).objectId
+      if (tx._class === core.class.TxCreateDoc && moves.some((it) => it.objectId === objectId)) {
+        current.set(objectId, TxProcessor.createDoc2Doc(tx as TxCreateDoc<AttachedDoc>))
+      }
+      if (!isMove(tx)) continue
+      const doc = current.get(objectId)
+      if (doc === undefined) continue
+      result.set(tx._id, doc)
+      // A later move of the same document in this batch starts where this one ends.
+      const { attachedTo, attachedToClass, collection } = tx.operations
+      current.set(objectId, {
+        ...doc,
+        attachedTo: attachedTo ?? doc.attachedTo,
+        attachedToClass: attachedToClass ?? doc.attachedToClass,
+        collection: collection ?? doc.collection
+      })
+    }
+    return result
+  }
+
+  private async processDerived (
+    ctx: MeasureContext<SessionData>,
+    txes: Tx[],
+    moved = new Map<Ref<Tx>, AttachedDoc>()
+  ): Promise<void> {
     const findAll: SessionFindAll = async (ctx, _class, query, options) => {
       const _ctx: MeasureContext = (options as ServerFindOptions<Doc>)?.ctx ?? ctx
       delete (options as ServerFindOptions<Doc>)?.ctx
@@ -178,7 +222,9 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     }
 
     const removed = await ctx.with('process-remove', {}, (ctx) => this.processRemove(ctx, txes, findAll))
-    const collections = await ctx.with('process-collection', {}, (ctx) => this.processCollection(ctx, txes, findAll))
+    const collections = await ctx.with('process-collection', {}, (ctx) =>
+      this.processCollection(ctx, txes, findAll, moved)
+    )
     const moves = await ctx.with('process-move', {}, (ctx) => this.processMove(ctx, txes, findAll))
 
     const triggerControl: Omit<TriggerControl, 'txFactory' | 'ctx' | 'txes'> = {
@@ -416,14 +462,10 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   private async updateCollection (
     ctx: MeasureContext,
     colTx: TxUpdateDoc<AttachedDoc>,
+    from: { _id: Ref<Doc>, _class: Ref<Class<Doc>>, collection: string },
     findAll: SessionFindAll
   ): Promise<Tx[]> {
-    if (colTx.attachedTo === undefined || colTx.attachedToClass === undefined || colTx.collection === undefined) {
-      return []
-    }
-
-    const _id = colTx.attachedTo
-    const _class = colTx.attachedToClass
+    const { _id, _class, collection } = from
     const { operations } = colTx
 
     if (
@@ -439,21 +481,24 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     const oldAttachedTo = (await findAll(ctx, _class, { _id }, { limit: 1 }))[0]
     let oldTx: Tx | null = null
     if (oldAttachedTo !== undefined) {
-      const attr = this.context.hierarchy.findAttribute(oldAttachedTo._class, colTx.collection)
+      const attr = this.context.hierarchy.findAttribute(oldAttachedTo._class, collection)
 
-      if (attr !== undefined) {
+      if (attr?.type._class === core.class.Collection) {
         oldTx = this.getCollectionUpdateTx(_id, _class, colTx.modifiedBy, colTx.modifiedOn, oldAttachedTo, {
-          $inc: { [colTx.collection]: -1 }
+          $inc: { [collection]: -1 }
         })
       }
     }
 
     const newAttachedToClass = operations.attachedToClass ?? _class
-    const newAttachedToCollection = operations.collection ?? colTx.collection
+    const newAttachedToCollection = operations.collection ?? collection
     const newAttachedTo = (await findAll(ctx, newAttachedToClass, { _id: operations.attachedTo }, { limit: 1 }))[0]
     let newTx: Tx | null = null
-    const newAttr = this.context.hierarchy.findAttribute(newAttachedToClass, newAttachedToCollection)
-    if (newAttachedTo !== undefined && newAttr !== undefined) {
+    const newAttr =
+      newAttachedTo !== undefined
+        ? this.context.hierarchy.findAttribute(newAttachedTo._class, newAttachedToCollection)
+        : undefined
+    if (newAttachedTo !== undefined && newAttr?.type._class === core.class.Collection) {
       newTx = this.getCollectionUpdateTx(
         newAttachedTo._id,
         newAttachedTo._class,
@@ -470,14 +515,24 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   private async processCollection (
     ctx: MeasureContext<SessionData>,
     txes: Tx[],
-    findAll: SessionFindAll
+    findAll: SessionFindAll,
+    moved = new Map<Ref<Tx>, AttachedDoc>()
   ): Promise<Tx[]> {
     const result: Tx[] = []
     for (const tx of txes) {
       const colTx = tx as TxCUD<AttachedDoc>
       if (colTx.attachedTo !== undefined && colTx.attachedToClass !== undefined && colTx.collection !== undefined) {
-        const _id = colTx.attachedTo
-        const _class = colTx.attachedToClass
+        // A removal or a move counts the document as stored: its tx may name any parent, or no existing document.
+        const stored =
+          colTx._class === core.class.TxRemoveDoc
+            ? (ctx.contextData.removedMap.get(colTx.objectId) as AttachedDoc | undefined)
+            : colTx._class === core.class.TxUpdateDoc
+              ? moved.get(colTx._id)
+              : colTx
+        if (stored?.attachedTo == null || stored.attachedToClass == null || stored.collection == null) continue
+        const _id = stored.attachedTo
+        const _class = stored.attachedToClass
+        const collection = stored.collection
 
         // Skip model operations
         if (this.context.hierarchy.getDomain(_class) === DOMAIN_MODEL) {
@@ -490,7 +545,8 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
         const isUpdateTx = colTx._class === core.class.TxUpdateDoc
         const res: Tx[] = []
         if (isUpdateTx) {
-          res.push(...(await this.updateCollection(ctx, colTx as TxUpdateDoc<AttachedDoc>, findAll)))
+          const from = { _id, _class, collection }
+          res.push(...(await this.updateCollection(ctx, colTx as TxUpdateDoc<AttachedDoc>, from, findAll)))
         }
 
         if ((isCreateTx || isDeleteTx) && !ctx.contextData.removedMap.has(_id)) {
@@ -506,7 +562,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
             attachedTo = createTx != null ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
           }
 
-          if (attachedTo !== undefined) {
+          if (attachedTo !== undefined && this.isCounterField(attachedTo._class, collection)) {
             res.push(
               this.getCollectionUpdateTx(
                 _id,
@@ -515,7 +571,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
                 colTx.modifiedOn,
                 attachedTo, // { _class: colTx.objectClass, space: colTx.objectSpace },
                 {
-                  $inc: { [colTx.collection]: isCreateTx ? 1 : -1 }
+                  $inc: { [collection]: isCreateTx ? 1 : -1 }
                 }
               )
             )
@@ -526,6 +582,13 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       }
     }
     return result
+  }
+
+  // Checked on the stored parent's class: a client `$inc` of `message` or `endAt` would run as a trusted tx.
+  private isCounterField (_class: Ref<Class<Doc>>, name: string): boolean {
+    if (!/^[A-Za-z]\w*$/.test(name)) return false
+    const attr = this.context.hierarchy.findAttribute(_class, name)
+    return attr === undefined || attr.type._class === core.class.Collection
   }
 
   private getParentClass (_class: Ref<Class<Doc>>): Ref<Class<Doc>> {

@@ -5,11 +5,15 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import core, {
+  AccountRole,
   type Doc,
+  type DocumentUpdate,
+  hasAccountRole,
   Tx,
   type TxCreateDoc,
   type TxCUD,
   TxProcessor,
+  type TxMixin,
   type TxUpdateDoc,
   MeasureContext,
   TxFactory,
@@ -24,16 +28,36 @@ import core, {
   combineAttributes,
   systemAccountUuid
 } from '@hcengineering/core'
-import chunter, { Chat, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
+import chunter, { Chat, type ChatMessage, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import contact, { PersonSpace } from '@hcengineering/contact'
 import { ForbiddenKind } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
+import { followsParent } from '@hcengineering/server-activity'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
 type ChatData = Pick<Chat, '_id' | '_class' | 'space' | 'attachedTo' | 'attachedToClass'>
+
+// What a message says and where it sits: the author's only, while pins and flags of other features stay open.
+const authorMessageFields = new Set([
+  'message',
+  'attachments',
+  'editedOn',
+  'forwardedMessage',
+  'forwardContent',
+  'attachedTo',
+  'attachedToClass',
+  'collection',
+  'space',
+  'applets',
+  'objectId',
+  'objectClass',
+  '_class'
+])
+// The author check reads them.
+const lockedMessageFields = new Set(['createdBy', 'createdOn'])
 
 export class ChunterMiddleware extends BaseMiddleware {
   private readonly hiddenChats = new Map<Ref<Doc>, ChatData[]>()
@@ -90,6 +114,15 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityInfoMessage)) {
         await this.onInfoMessage(ctx, tx as TxCUD<ActivityInfoMessage>)
+      }
+      // Any class of the messages' domain: storage writes such a tx by `_id`, whatever class it names.
+      if (
+        _tx._class !== core.class.TxCreateDoc &&
+        hierarchy.findDomain(tx.objectClass) === hierarchy.findDomain(chunter.class.ChatMessage) &&
+        ctx.contextData.isTriggerCtx !== true &&
+        ctx.contextData.account.uuid !== systemAccountUuid
+      ) {
+        await this.onMessageChange(ctx, tx, txes)
       }
       if (
         _tx._class === core.class.TxCreateDoc &&
@@ -213,6 +246,41 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
   }
 
+  // The rules of the message UI, which a crafted client skips; a cascade from triggers is not checked.
+  private async onMessageChange (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>, batch: Tx[]): Promise<void> {
+    if (tx._class === core.class.TxMixin) {
+      // A mixin that is not a class writes the top-level field it names, `message` included.
+      if (!this.context.hierarchy.isMixin((tx as TxMixin<Doc, Doc>).mixin)) this.throwForbidden()
+      return
+    }
+    if (tx._class === core.class.TxUpdateDoc) {
+      const fields = getUpdatedFields((tx as TxUpdateDoc<Doc>).operations)
+      if (fields.some((it) => lockedMessageFields.has(it))) this.throwForbidden()
+      if (!fields.some((it) => authorMessageFields.has(it))) return
+    } else if (tx._class !== core.class.TxRemoveDoc) {
+      return
+    }
+
+    const message = await this.findStoredMessage(ctx, tx.objectId)
+    if (message === undefined || !this.context.hierarchy.isDerived(message._class, chunter.class.ChatMessage)) return
+    const account = ctx.contextData.account
+    if (account.socialIds.includes(message.createdBy ?? message.modifiedBy)) return
+    if (tx._class === core.class.TxRemoveDoc && hasAccountRole(account, AccountRole.Maintainer)) return
+    const update = tx as TxUpdateDoc<Doc>
+    if (tx._class === core.class.TxUpdateDoc && followsParent(this.context.hierarchy, update, message, batch)) return
+    this.throwForbidden()
+  }
+
+  // Without the session's space filter: a message the sender cannot read is still someone's to protect.
+  private async findStoredMessage (ctx: MeasureContext<SessionData>, _id: Ref<Doc>): Promise<ChatMessage | undefined> {
+    const storage = this.context.lowLevelStorage
+    if (storage === undefined) {
+      return (await this.findAll(ctx, chunter.class.ChatMessage, { _id: _id as Ref<ChatMessage> }, { limit: 1 }))[0]
+    }
+    const domain = this.context.hierarchy.getDomain(chunter.class.ChatMessage)
+    return (await storage.rawFindAll<ChatMessage>(domain, { _id: _id as Ref<ChatMessage> }, { limit: 1 }))[0]
+  }
+
   private async onReportAction (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<ContentReportAction>): Promise<void> {
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid) return
@@ -288,6 +356,23 @@ export class ChunterMiddleware extends BaseMiddleware {
   private throwForbidden (ctx: MeasureContext<SessionData>, tx: Tx, message: string): void {
     throw this.forbiddenTx(ctx, ForbiddenKind.DirectMessage, message, tx)
   }
+}
+
+// Top-level fields an update touches, also through its operators (`$unset`, `$rename` and the like).
+function getUpdatedFields (operations: DocumentUpdate<Doc>): string[] {
+  const result: string[] = []
+  for (const [key, value] of Object.entries(operations)) {
+    if (!key.startsWith('$')) {
+      result.push(key.split('.')[0])
+      continue
+    }
+    if (value == null || typeof value !== 'object') continue
+    for (const [field, target] of Object.entries(value)) {
+      result.push(field.split('.')[0])
+      if (key === '$rename' && typeof target === 'string') result.push(target.split('.')[0])
+    }
+  }
+  return result
 }
 
 function getMembersHash (uuids: AccountUuid[]): string | undefined {

@@ -23,7 +23,7 @@ import core, {
   TxUpdateDoc,
   PersonId
 } from '@hcengineering/core'
-import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, { DocNotifyContext, UnreadMessageId } from '@hcengineering/notification'
 import { Receiver, Sender } from '@hcengineering/server-notification'
 import { Employee, PersonSpace } from '@hcengineering/contact'
@@ -111,6 +111,7 @@ const mockGetLastNotify = jest.fn()
 const mockHasMentionNotificationByMessage = jest.fn()
 const mockHasUnreadMentionByMessage = jest.fn()
 const mockGetAttachments = jest.fn()
+const mockGetApplets = jest.fn()
 const mockGetCreateContextTx = jest.fn()
 const mockGetPushGroup = jest.fn()
 
@@ -131,6 +132,7 @@ jest.mock('../../utils/utils', () => {
     hasMentionNotificationByMessage: (...args: any[]) => mockHasMentionNotificationByMessage(...args),
     hasUnreadMentionByMessage: (...args: any[]) => mockHasUnreadMentionByMessage(...args),
     getAttachments: (...args: any[]) => mockGetAttachments(...args),
+    getApplets: (...args: any[]) => mockGetApplets(...args),
     getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
     getPushGroup: (...args: any[]) => mockGetPushGroup(...args),
     isSender: (receiver: Receiver, sender: Sender) => {
@@ -141,6 +143,7 @@ jest.mock('../../utils/utils', () => {
 })
 
 describe('message module', () => {
+  const pollApplet = { _id: activity.applet.Poll, label: activity.string.Poll, pluralLabel: activity.string.Polls }
   let mockClient: any
   let mockCache: any
   let txCache: TxCache
@@ -214,6 +217,7 @@ describe('message module', () => {
     mockHasMentionNotificationByMessage.mockReset()
     mockHasUnreadMentionByMessage.mockReset()
     mockGetAttachments.mockReset()
+    mockGetApplets.mockReset()
     mockGetCreateContextTx.mockReset()
     mockCache.getDocReadState.mockReset()
 
@@ -237,6 +241,7 @@ describe('message module', () => {
     mockHasMentionNotificationByMessage.mockReturnValue(false)
     mockHasUnreadMentionByMessage.mockReturnValue(false)
     mockGetAttachments.mockResolvedValue([])
+    mockGetApplets.mockResolvedValue([])
     mockGetCreateContextTx.mockImplementation((id, objId, objCls, objSpace, receiver, res, factory, display) => {
       const tx = factory.createTxCreateDoc('DocNotifyContext', receiver.space, {
         unreadMessages: []
@@ -288,7 +293,8 @@ describe('message module', () => {
         objectClass: 'MsgClass',
         operations: {
           message: null,
-          attachments: null
+          attachments: null,
+          applets: null
         }
       } as unknown as TxUpdateDoc<ActivityMessage>
 
@@ -495,6 +501,75 @@ describe('message module', () => {
             notifyProviders: expect.any(Object)
           })
         )
+      })
+
+      it('looks applets up for a message without text and attachments', async () => {
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockGetApplets).toHaveBeenCalledWith(expect.objectContaining({ _id: 'msg-1' }), mockClient, true)
+      })
+
+      it('names the applet in the push of a message without text', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+        mockGetApplets.mockResolvedValue([{ _id: 'poll-1', applet: activity.applet.Poll }])
+        mockClient.model = { findAllSync: () => [pollApplet] }
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        const data = mockPushNotification.mock.calls[0][4]
+        expect(data.intl.intlParamsNotLocalized.message).toBe(activity.string.SentApplet)
+        // No translations are loaded in tests: translate() returns the string id.
+        expect(data.intl.intlParams.applet).toBe(activity.string.Poll)
+        expect(data.notification.applets).toEqual([{ _id: 'poll-1', applet: activity.applet.Poll }])
+      })
+
+      it('names several polls with the plural label', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+        mockGetApplets.mockResolvedValue([
+          { _id: 'poll-1', applet: activity.applet.Poll },
+          { _id: 'poll-2', applet: activity.applet.Poll }
+        ])
+        mockClient.model = { findAllSync: () => [pollApplet] }
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        // No translations are loaded in tests: translate() returns the string id.
+        expect(mockPushNotification.mock.calls[0][4].intl.intlParams.applet).toBe(activity.string.Polls)
+      })
+
+      it('names the applet of a forwarded message without text', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+        ;(mockTx.attributes as any).forwardedMessage = 'msg-0'
+        ;(mockTx.attributes as any).forwardContent = {
+          message: '',
+          attachments: [],
+          applets: [{ _id: 'poll-0', applet: activity.applet.Poll }]
+        }
+        mockClient.model = { findAllSync: () => [pollApplet] }
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification.mock.calls[0][4].intl.intlParamsNotLocalized.message).toBe(
+          activity.string.SentApplet
+        )
+      })
+
+      it('waits for the applets counter when the message has text', async () => {
+        ;(mockTx.attributes as any).message =
+          '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}'
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockGetApplets).toHaveBeenCalledWith(expect.objectContaining({ _id: 'msg-1' }), mockClient, false)
       })
 
       it('stacks the push with the conversation getPushGroup names', async () => {
@@ -985,10 +1060,11 @@ describe('message module', () => {
       } as unknown as TxUpdateDoc<ActivityMessage>
     })
 
-    it('returns early if not DocUpdateMessage and neither message nor attachments are updated', async () => {
+    it('returns early if not DocUpdateMessage and neither message, attachments nor applets are updated', async () => {
       mockTx.operations = {
         message: null,
-        attachments: null
+        attachments: null,
+        applets: null
       } as any
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
@@ -1033,7 +1109,8 @@ describe('message module', () => {
             $query: { messageId: 'msg-1' },
             $update: {
               message: { text: 'NotifMsg' },
-              attachments: []
+              attachments: [],
+              applets: []
             }
           }
         }
@@ -1041,6 +1118,31 @@ describe('message module', () => {
       expect(result.updateContextTx[1].operations).toEqual({
         object: { text: 'NotifMsg' }
       })
+    })
+
+    it('fills in the applets once their counter is raised', async () => {
+      mockTx.operations = { $inc: { applets: 1 } } as any
+      const messageDoc = {
+        _id: 'msg-1',
+        _class: 'MsgClass',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        message: 'Text',
+        applets: 1
+      } as unknown as ActivityMessage
+      const context = { _id: 'ctx-1', _class: 'DocNotifyContext', space: 'space-1' } as unknown as DocNotifyContext
+
+      mockCache.getDoc.mockResolvedValueOnce(messageDoc).mockResolvedValueOnce({ _id: 'doc-1' })
+      mockCache.getContexts.mockResolvedValue([context])
+      mockHasMessageNotification.mockReturnValue(true)
+      mockGetApplets.mockResolvedValue([{ _id: 'poll-1', applet: activity.applet.Poll }])
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      expect(mockGetApplets).toHaveBeenCalledWith(messageDoc, mockClient)
+      expect((result.updateContextTx[0].operations as any).$update.latestNotifications.$update.applets).toEqual([
+        { _id: 'poll-1', applet: activity.applet.Poll }
+      ])
     })
 
     it('updates mention notifications if type is mention', async () => {
@@ -1072,7 +1174,8 @@ describe('message module', () => {
             $update: {
               // The cached message already carries the edit, the tx is not applied a second time.
               markup: 'New Mention Text',
-              attachments: []
+              attachments: [],
+              applets: []
             }
           }
         }
@@ -1109,7 +1212,7 @@ describe('message module', () => {
           $update: {
             latestNotifications: {
               $query: { messageId: 'msg-1' },
-              $update: { message: { text: 'NotifMsg' }, attachments: [] }
+              $update: { message: { text: 'NotifMsg' }, attachments: [], applets: [] }
             }
           }
         },
@@ -1117,7 +1220,7 @@ describe('message module', () => {
           $update: {
             latestNotifications: {
               $query: { type: 'mention', messageId: 'msg-1' },
-              $update: { markup: 'New Text', attachments: [] }
+              $update: { markup: 'New Text', attachments: [], applets: [] }
             }
           }
         },

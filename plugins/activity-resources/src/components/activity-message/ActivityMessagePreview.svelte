@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 -->
 
 <script lang="ts">
-  import type { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import type { ActivityMessageLite, ActivityMessagePreviewType, AppletSnapshot } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
   import { Component } from '@hcengineering/ui'
@@ -26,6 +27,8 @@
   export let doc: Doc | undefined = undefined
   export let value: ActivityMessageLite
   export let attachments: BlobType[] = []
+  // From a notification: the preview shows them without fetching.
+  export let applets: AppletSnapshot[] | undefined = undefined
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
   export let actions: Action[] = []
@@ -48,7 +51,8 @@
       actions,
       space,
       doc,
-      attachments
+      attachments,
+      applets
     }}
     on:click
   />

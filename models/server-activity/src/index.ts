@@ -100,6 +100,16 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnPollRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      // With descendants: a removal sent under the base class would otherwise leave the answers behind.
+      objectClass: activity.class.AppletInstance
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocClassChanged,
     txMatch: {
       _class: core.class.TxUpdateDoc
