@@ -24,7 +24,7 @@
   import IconPlayFill from '../_icons/IconPlayFill.svelte'
   import { idlePlayer, playbackOf, sharedPlayback } from '../audio/playback'
   import IconButton from '../button/IconButton.svelte'
-  import { describeLink, openLink } from '../link/link'
+  import { describeLink, openLink } from '../link/utils'
   import LinkPicture from '../link/LinkPicture.svelte'
   import SiteIcon from '../link/SiteIcon.svelte'
   import type { LinkDetailsData, LinkPreviewData } from '../link/types'

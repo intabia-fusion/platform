@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
-<script lang="ts" generics="Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']">
+<script
+  lang="ts"
+  generics="Id extends DropdownIntlItem['id'] = DropdownIntlItem['id'], Selected extends Id | Id[] = Id"
+>
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -23,11 +26,12 @@
   import Button from './Button.svelte'
   import type { MenuButtonEvents, MenuButtonProps } from './types'
 
-  type $$Props = MenuButtonProps<Id>
-  type $$Events = MenuButtonEvents<Id>
+  type $$Props = MenuButtonProps<Id, Selected>
+  type $$Events = MenuButtonEvents<Selected>
 
   export let items: Array<DropdownIntlItem<Id>>
-  export let selected: Id | undefined = undefined
+  export let selected: Selected | undefined = undefined
+  export let multiselect: boolean = false
   export let noSelection: boolean = false
   export let autoSelectSingle: boolean = false
   export let itemParams: Record<string, any> = {}
@@ -37,11 +41,19 @@
     element?.focus()
   }
 
-  const dispatch = createEventDispatcher<{ selected: Id }>()
+  const dispatch = createEventDispatcher<{ selected: Selected }>()
 
   let popup: PopupResult | undefined
 
-  $: popupProps = { items, selected: noSelection ? undefined : selected, params: itemParams }
+  // ModernPopup toggles items only on an array.
+  $: shownSelected = multiselect
+    ? Array.isArray(selected)
+      ? selected
+      : selected !== undefined
+        ? [selected]
+        : []
+    : selected
+  $: popupProps = { items, selected: noSelection ? undefined : shownSelected, multiselect, params: itemParams }
   $: syncPopup(popupProps)
 
   let shownProps: typeof popupProps | undefined
@@ -53,23 +65,32 @@
     popup.update(props)
   }
 
-  function select (id: Id): void {
-    selected = id
-    dispatch('selected', id)
+  // `multiselect` decides the shape; `Selected` only follows it for the caller's types.
+  function select (value: Id | Id[]): void {
+    selected = value as Selected
+    dispatch('selected', value as Selected)
   }
 
   function open (): void {
     if (popup !== undefined) return
-    if (autoSelectSingle && items.length === 1) {
+    if (autoSelectSingle && !multiselect && items.length === 1) {
       select(items[0].id)
       return
     }
     closeTooltip()
     shownProps = popupProps
-    popup = showPopup(ModernPopup, popupProps, element, (result: Id | undefined) => {
-      popup = undefined
-      if (result !== undefined) select(result)
-    })
+    popup = showPopup(
+      ModernPopup,
+      popupProps,
+      element,
+      (result: Id | undefined) => {
+        popup = undefined
+        if (!multiselect && result !== undefined) select(result)
+      },
+      (result: Id[] | undefined) => {
+        if (multiselect && Array.isArray(result)) select(result)
+      }
+    )
   }
 
   onDestroy(() => {

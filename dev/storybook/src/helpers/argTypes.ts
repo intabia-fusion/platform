@@ -69,17 +69,148 @@ const categories: Record<string, readonly string[]> = {
     'shape',
     'label',
     'labelParams',
+    'placeholder',
     'icon',
     'iconSize',
     'iconProps',
+    'chevron',
+    'mode',
+    'tone',
+    'showIcon',
     'inheritColor',
-    'inheritFont'
+    'inheritFont',
+    'iconOnly',
+    'iconBox',
+    'orientation',
+    'labelPosition',
+    'description',
+    'descriptionParams',
+    'color',
+    'counter',
+    'duration',
+    'removable',
+    'collapsed',
+    'fullWidth',
+    'placeholderParams',
+    'heading',
+    'clearable',
+    'rows',
+    'maxRows',
+    'length',
+    'separator',
+    'numeric',
+    'filled',
+    'src',
+    'srcset',
+    'keys',
+    'width',
+    'padding',
+    'scrollable',
+    'embedded',
+    'footer',
+    'dot',
+    'segments',
+    'title',
+    'titleParams',
+    'wrap',
+    'count',
+    'level',
+    'bold',
+    'divider',
+    'inset',
+    'adaptive',
+    'navigatorToggle',
+    'scrollExtra',
+    'pinActions',
+    'format',
+    'exact',
+    'compact',
+    'navigation',
+    'indicator'
   ],
-  state: ['disabled', 'loading', 'pressed', 'hasMenu'],
-  menu: ['items', 'selected', 'noSelection', 'autoSelectSingle', 'itemParams'],
+  state: [
+    'disabled',
+    'readonly',
+    'loading',
+    'pressed',
+    'selected',
+    'allowDeselect',
+    'hasMenu',
+    'empty',
+    'checked',
+    'indeterminate',
+    'error',
+    'open',
+    'current',
+    'sticky',
+    'closable',
+    'preview',
+    'activeFilters',
+    'min',
+    'max',
+    'step',
+    'fractionDigits',
+    'required',
+    'maxlength',
+    'lazy',
+    'limit',
+    'expandable',
+    'notify',
+    'canSubmit',
+    'canProceed',
+    'fullSize',
+    'allowFullSize',
+    'highlighted',
+    'selection',
+    'hoverSelects',
+    'closeOnEscape',
+    'multiselect',
+    'range',
+    'end',
+    'month'
+  ],
+  menu: [
+    'items',
+    'selected',
+    'noSelection',
+    'autoSelectSingle',
+    'itemParams',
+    'popupLabel',
+    'popupDetail',
+    'shifts',
+    'categories',
+    'steps',
+    'withSearch',
+    'search',
+    'searchPlaceholder',
+    'detail'
+  ],
+  actions: ['submitLabel', 'submitKind', 'submitTooltip', 'hideSubmit', 'cancelLabel', 'hideCancel', 'submitOnEnter'],
   'accessibility & focus': ['tooltip', 'autofocus', 'focusIndex'],
-  native: ['type', 'id', 'name', 'value', 'form', 'noPrint', 'stopPropagation', 'element'],
-  methods: ['focus']
+  native: [
+    'type',
+    'id',
+    'name',
+    'value',
+    'group',
+    'form',
+    'tabindex',
+    'decorative',
+    'noPrint',
+    'stopPropagation',
+    'element',
+    'delay',
+    'inputmode',
+    'autocomplete',
+    'href',
+    'external',
+    'draggable',
+    'rowMinHeight',
+    'getKey',
+    'breakpoint',
+    'minWidth'
+  ],
+  methods: ['focus', 'select', 'clear']
 }
 const categoryOf = new Map(
   Object.entries(categories).flatMap(([category, props]) => props.map((prop) => [prop, category]))
@@ -90,11 +221,14 @@ const order = ['story', ...Object.keys(categories), 'properties', 'events', 'slo
 const withoutControl = new Set([
   'label',
   'labelParams',
+  'placeholder',
   'icon',
   'iconProps',
   'items',
   'selected',
   'itemParams',
+  'popupLabel',
+  'popupDetail',
   'tooltip',
   'autofocus',
   'focusIndex',
@@ -106,7 +240,45 @@ const withoutControl = new Set([
   'noPrint',
   'stopPropagation',
   'element',
-  'focus'
+  'focus',
+  'description',
+  'descriptionParams',
+  'placeholderParams',
+  'categories',
+  'activeFilters',
+  'group',
+  'tabindex',
+  'delay',
+  'inputmode',
+  'autocomplete',
+  'select',
+  'clear',
+  'src',
+  'srcset',
+  'href',
+  'submitLabel',
+  'cancelLabel',
+  'submitTooltip',
+  'steps',
+  'segments',
+  'status',
+  'title',
+  'titleParams',
+  'getKey',
+  'rowMinHeight',
+  'breakpoint',
+  'draggable',
+  'search',
+  'searchPlaceholder',
+  'minWidth',
+  'onSelect',
+  'onToggle',
+  'onBack',
+  'onResult',
+  'end',
+  'month',
+  'detail',
+  'timeZone'
 ])
 
 type Control = Parameters<ArgTypesEnhancer>[0]['argTypes'][string]['control']
@@ -129,3 +301,25 @@ export const organizeProps: ArgTypesEnhancer = (context) => {
     organized.sort(([, a], [, b]) => order.indexOf(a.table.category) - order.indexOf(b.table.category))
   )
 }
+
+type ArgsEnhancer = NonNullable<Preview['argsEnhancers']>[number]
+
+// Props where "not set" is a third state of its own (`selected` of a plain button, derived `empty`).
+const triState = new Set(['selected', 'empty', 'allowDeselect'])
+
+function isBooleanControl (control: unknown): boolean {
+  return (
+    control === 'boolean' || (typeof control === 'object' && (control as { type?: string } | null)?.type === 'boolean')
+  )
+}
+
+// A boolean without a value shows a "Set boolean" button: start it at its default, `false` when none is documented.
+export const defaultBooleans: ArgsEnhancer = (context) =>
+  Object.fromEntries(
+    Object.entries(context.argTypes)
+      .filter(
+        ([name, argType]) =>
+          context.initialArgs[name] === undefined && !triState.has(name) && isBooleanControl(argType.control)
+      )
+      .map(([name, argType]) => [name, argType.table?.defaultValue?.summary === 'true'])
+  )

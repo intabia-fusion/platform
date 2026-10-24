@@ -39,11 +39,19 @@
   min-height: 0;
 
   button.type-link { width: 100%; }
+  & > .nav-item { flex-grow: 1; }
 }
 .hulyNavPanel-container .hulyNavItem-container,
 .hulyNavPanel-container .hulyTaskNavLink-container,
-.parentSelector .hulyNavItem-container {
+.parentSelector .hulyNavItem-container,
+.hulyNavPanel-container .nav-item,
+.parentSelector .nav-item {
   margin: 0 0.75rem;
+}
+// Nested kit rows sit inside the parent row, which already has the side margin.
+.hulyNavPanel-container .nav-item .nav-item,
+.parentSelector .nav-item .nav-item {
+  margin-inline: 0;
 }
 .hulyNavPanel-header {
   display: flex;
@@ -217,7 +225,10 @@
   }
 }
 .hulyNavItem-container + .hulyNavGroup-container,
-.hulyNavPanel-container a.noUnderline + .hulyNavGroup-container { margin-top: .75rem; }
+.nav-item + .hulyNavGroup-container,
+.hulyNavPanel-container a.noUnderline + .hulyNavGroup-container,
+.nav-item + .nav-group,
+.hulyNavPanel-container a.noUnderline + .nav-group { margin-top: .75rem; }
 
 .hulyNavItem-container .hulyNavItem-chevron:enabled {
   & > * {

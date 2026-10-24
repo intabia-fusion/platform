@@ -21,7 +21,7 @@
   import { themeStore } from '@hcengineering/theme'
 
   import IconGlobe from '../_icons/IconGlobe.svelte'
-  import { nonEmpty } from './link'
+  import { nonEmpty } from './utils'
 
   export let src: string | undefined = undefined
   export let host: string | undefined = undefined

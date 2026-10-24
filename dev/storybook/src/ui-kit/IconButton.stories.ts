@@ -21,14 +21,34 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import Sections from '../helpers/Sections.svelte'
 import { axis } from '../helpers/matrix'
 
-const kinds = ['primary', 'secondary', 'tertiary', 'negative'] as const
-const sizes = ['large', 'medium', 'small', 'extra-small', 'min'] as const
+const kinds = [
+  'primary',
+  'brand',
+  'secondary',
+  'tertiary',
+  'ghost',
+  'positive',
+  'negative',
+  'positive-ghost',
+  'negative-ghost',
+  'light',
+  'dark'
+] as const
+const sizes = ['extra-large', 'large', 'medium', 'small', 'extra-small', 'min'] as const
 const tooltip = { label: getEmbeddedLabel('Settings') }
 
 const meta = {
-  title: 'UI Kit/IconButton',
+  title: 'Buttons/IconButton',
   component: IconButton,
-  args: { icon: IconSettings, tooltip, kind: 'secondary', size: 'large' }
+  args: { icon: IconSettings, tooltip, kind: 'secondary', size: 'large' },
+  parameters: {
+    docs: {
+      description: {
+        component:
+          '**Когда:** действие, понятное по иконке: настройки, закрыть, ещё, степпер числа. **Не этот компонент:** иконка без действия рядом с полем - `IconBox`; иконка-значение, которое можно поменять, - `SelectButton` только с иконкой.\n\nДоступное имя обязательно по типам: `tooltip` с `label` или `aria-label`. Остальное - как у `Button`; `min` - самый маленький размер, только для иконок; `tabindex={-1}` - вне порядка Tab (степперы `NumberInput`).'
+      }
+    }
+  }
 } satisfies Meta<IconButton>
 
 export default meta
@@ -66,6 +86,7 @@ export const Variants: Story = {
           columns: [
             { title: 'default', props: {} },
             { title: 'pressed', props: { pressed: true } },
+            { title: 'selected', props: { selected: true } },
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } }
           ],

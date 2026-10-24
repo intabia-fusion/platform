@@ -91,7 +91,7 @@
     border-radius: var(--large-BorderRadius);
     background-color: color-mix(in srgb, var(--theme-caption-color) 5%, transparent);
     // A borderless check: a ring would outweigh the recording.
-    --button-secondary-BorderColor: transparent;
+    --kit-button-secondary-BorderColor: transparent;
   }
 
   .status {

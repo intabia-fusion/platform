@@ -13,6 +13,11 @@
 // limitations under the License.
 //
 
+import type { IntlString } from '@hcengineering/platform'
+import type { AriaAttributes } from 'svelte/elements'
+
+import type { IconComponent } from '../../types'
+
 export type LinkLayout = 'cover' | 'thumb' | 'text'
 
 export interface LinkPreviewData {
@@ -31,4 +36,31 @@ export interface LinkDetailsData {
   icon?: string
   image?: string
   hostname?: string
+}
+
+/** `end` - the ellipsis at the end by the width of the place; `middle` - in the middle, the ending stays (file names). */
+export type LinkTruncate = 'end' | 'middle'
+
+/**
+ * A text link in running text: with `href` an `<a>` that navigates, without it a `<button>` for an inline action
+ * (Create an application under an empty state). Font comes from the place.
+ */
+export interface LinkProps extends AriaAttributes {
+  /** Text without translation (a file or site name) - `getEmbeddedLabel(text)`. */
+  label: IntlString
+  labelParams?: Record<string, any>
+  href?: string
+  /** Opens `href` in a new tab, without access back to this page. */
+  external?: boolean
+  icon?: IconComponent
+  iconProps?: Record<string, any>
+  disabled?: boolean
+  /** Where a label too long for the place is cut, `end` by default. */
+  truncate?: LinkTruncate
+  id?: string
+  [dataAttribute: `data-${string}`]: string | number | boolean | undefined
+}
+
+export interface LinkEvents {
+  click: MouseEvent
 }

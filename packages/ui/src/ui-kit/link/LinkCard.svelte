@@ -20,7 +20,7 @@
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import Skeleton from '../skeleton/Skeleton.svelte'
-  import { linkLayout, linkTarget, nonEmpty, openLink } from './link'
+  import { linkLayout, linkTarget, nonEmpty, openLink } from './utils'
   import LinkPicture from './LinkPicture.svelte'
   import SiteIcon from './SiteIcon.svelte'
   import type { LinkDetailsData, LinkPreviewData } from './types'

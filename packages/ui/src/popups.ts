@@ -50,6 +50,29 @@ export interface CompAndProps {
 
   // Internal
   closing?: boolean
+  anchor?: HTMLElement
+  order?: number
+  keyboard?: boolean
+}
+
+// Popups shown and not closed yet, by the order of showPopup calls (a component still loading counts too).
+const openOrders = new Set<number>()
+let lastOrder = 0
+
+// Opening a popup blurs the control that opened it; closing gives the focus back unless something else took it.
+function restoreAnchorFocus (popup: Pick<CompAndProps, 'anchor' | 'order' | 'keyboard'>): void {
+  const { anchor, order, keyboard } = popup
+  if (order !== undefined) openOrders.delete(order)
+  // A control clicked with the mouse would light its focus ring after Esc, a keyboard key itself.
+  if (anchor === undefined || keyboard !== true) return
+  setTimeout(() => {
+    // A popup opened after this one (a confirmation from a menu item) keeps the focus away from the control under it.
+    if (order !== undefined && [...openOrders].some((o) => o > order)) return
+    const active = document.activeElement
+    if (active !== null && active !== document.body) return
+    if (!anchor.isConnected || (anchor as HTMLButtonElement).disabled) return
+    anchor.focus({ preventScroll: true })
+  })
 }
 
 export interface PopupResult {
@@ -68,8 +91,8 @@ export const dockStore = derived(modalStore, (modals) => {
 
 export function updatePopup (id: string, props: Partial<CompAndProps>): void {
   modalStore.update((modals) => {
-    // Tooltips share the store, so an index among popups would point at the wrong entry.
-    const popup = (modals.filter((m) => m.type === 'popup') as CompAndProps[]).find((p) => p.id === id)
+    // Tooltips share modalStore, so the popup is looked up among all modals, not by its index among popups.
+    const popup = modals.find((m) => m.type === 'popup' && m.id === id) as CompAndProps | undefined
     popup?.update?.(props.props)
     return modals
   })
@@ -111,19 +134,41 @@ export function showPopup (
   }
 ): PopupResult {
   const id = options?.id ?? `${popupId++}`
-  const closePopupOp = (): void => {
+  let replaced: CompAndProps | undefined
+  let added = false
+  let cancelled = false
+  const closePopupOp = (restoreFocus: boolean = true): void => {
     modalStore.update((popups) => {
       const pos = popups.findIndex((p) => (p as CompAndProps).id === id && p.type === 'popup')
       if (pos !== -1) {
+        const popup = popups[pos] as CompAndProps
+        if (restoreFocus) restoreAnchorFocus(popup)
+        else replaced = popup
         popups.splice(pos, 1)
+      } else if (restoreFocus && !added && !cancelled) {
+        // Closed while its component is still loading: it must not show up once loaded.
+        cancelled = true
+        restoreAnchorFocus(data)
       }
       return popups
     })
   }
-  closePopupOp()
-  const anchor = document.activeElement as HTMLElement
-  const editable = anchor?.isContentEditable || anchor?.tagName === 'INPUT' || anchor?.tagName === 'TEXTAREA'
-  if (anchor != null && !editable) anchor.blur()
+  // Reopening the same id replaces the popup: the focus stays with the new one, the control that opened it carries over.
+  closePopupOp(false)
+  if (replaced?.order !== undefined) openOrders.delete(replaced.order)
+  const active = document.activeElement
+  const anchor =
+    replaced?.anchor?.isConnected === true
+      ? replaced.anchor
+      : active instanceof HTMLElement && active !== document.body
+        ? active
+        : undefined
+  const order = ++lastOrder
+  openOrders.add(order)
+  const keyboard =
+    replaced?.anchor?.isConnected === true ? replaced.keyboard : anchor?.matches(':focus-visible') === true
+  const editable = anchor?.isContentEditable === true || anchor?.tagName === 'INPUT' || anchor?.tagName === 'TEXTAREA'
+  if (anchor !== undefined && !editable) anchor.blur()
 
   const _element = element instanceof HTMLElement ? getPopupPositionElement(element) : element
   const data: Omit<CompAndProps, 'is'> = {
@@ -136,9 +181,14 @@ export function showPopup (
     onUpdate: (result: any) => {
       void onUpdate?.(result)
     },
-    close: closePopupOp,
+    close: () => {
+      closePopupOp()
+    },
     options,
-    type: 'popup'
+    type: 'popup',
+    anchor,
+    order,
+    keyboard
   }
   if (checkDockPosition(options.refId)) {
     data.dock = true
@@ -146,18 +196,24 @@ export function showPopup (
   if (typeof component === 'string') {
     getResource(component)
       .then((resolved) => {
+        if (cancelled) return
+        added = true
         addPopup({ ...data, is: resolved })
       })
       .catch((err) => {
+        openOrders.delete(order)
         Analytics.handleError(err)
         console.error(err)
       })
   } else {
+    added = true
     addPopup({ ...data, is: component })
   }
   return {
     id,
-    close: closePopupOp,
+    close: () => {
+      closePopupOp()
+    },
     update: (props) => {
       updatePopup(id, { props })
     }
@@ -167,6 +223,9 @@ export function showPopup (
 export function closePopup (category?: string): void {
   modalStore.update((popups) => {
     if (category !== undefined) {
+      for (const popup of popups) {
+        if (popup.type === 'popup' && popup.options.category === category) restoreAnchorFocus(popup as CompAndProps)
+      }
       popups = popups.filter((p) => p.type !== 'popup' || p.options.category !== category)
     } else {
       for (let i = popups.length - 1; i >= 0; i--) {
@@ -182,6 +241,7 @@ export function closePopup (category?: string): void {
             popi.onClose?.(undefined)
           }
           popi.closing = false
+          restoreAnchorFocus(popi)
           popups.splice(i, 1)
           break
         }

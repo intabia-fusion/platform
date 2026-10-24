@@ -13,10 +13,17 @@
 // limitations under the License.
 //
 
+import { getResource } from '@hcengineering/platform'
 import { get } from 'svelte/store'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { modalStore } from '../modals'
-import { closePopup, dockStore, pin, popupstore, showPopup, unpin, type CompAndProps } from '../popups'
+import { closePopup, dockStore, pin, popupstore, showPopup, unpin, updatePopup, type CompAndProps } from '../popups'
+
+vi.mock('@hcengineering/platform', async (importOriginal) => {
+  const platform = await importOriginal<typeof import('@hcengineering/platform')>()
+  return { ...platform, getResource: vi.fn(platform.getResource) }
+})
 
 const Comp = {} as any
 
@@ -52,6 +59,104 @@ describe('popups', () => {
     const popups = get(popupstore)
     expect(popups).toHaveLength(1)
     expect(popups[0].props).toEqual({ a: 2 })
+  })
+
+  describe('focus of the control that opened it', () => {
+    function button (): HTMLButtonElement {
+      const element = document.createElement('button')
+      document.body.appendChild(element)
+      element.focus()
+      return element
+    }
+
+    it('is taken off while the popup is open and given back on close', async () => {
+      const anchor = button()
+      const popup = open()
+      expect(document.activeElement).not.toBe(anchor)
+      popup.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(anchor)
+      anchor.remove()
+    })
+
+    it('comes back after closePopup too', async () => {
+      const anchor = button()
+      open()
+      closePopup()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(anchor)
+      anchor.remove()
+    })
+
+    it('stays where the user moved it', async () => {
+      const anchor = button()
+      const popup = open()
+      const other = document.createElement('input')
+      document.body.appendChild(other)
+      other.focus()
+      popup.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(other)
+      anchor.remove()
+      other.remove()
+    })
+
+    it('stays off the control while a popup opened after it is still open', async () => {
+      const anchor = button()
+      const menu = open()
+      const confirm = open()
+      menu.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).not.toBe(anchor)
+      confirm.close()
+      anchor.remove()
+    })
+
+    it('comes back to the control under a nested popup when the nested one closes', async () => {
+      const anchor = button()
+      const parent = open()
+      const inner = document.createElement('button')
+      document.body.appendChild(inner)
+      inner.focus()
+      const child = open()
+      child.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(inner)
+      inner.remove()
+      parent.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(anchor)
+      anchor.remove()
+    })
+
+    it('carries the control over when a popup is reopened under the same id', async () => {
+      const anchor = button()
+      open({}, { category: 'popup', overlay: true, id: 'again' })
+      const inside = document.createElement('button')
+      document.body.appendChild(inside)
+      inside.focus()
+      const again = open({}, { category: 'popup', overlay: true, id: 'again' })
+      inside.remove()
+      again.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(anchor)
+      anchor.remove()
+    })
+
+    it('does not come back to a removed control or on a replaced popup', async () => {
+      const anchor = button()
+      open({}, { category: 'popup', overlay: true, id: 'same' })
+      open({}, { category: 'popup', overlay: true, id: 'same' })
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).not.toBe(anchor)
+      const second = button()
+      const popup = open()
+      second.remove()
+      popup.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(document.body)
+      anchor.remove()
+    })
   })
 
   it('closes by handle', () => {
@@ -95,6 +200,18 @@ describe('popups', () => {
     expect(get(popupstore).map((p) => p.id)).toEqual([other.id])
   })
 
+  // Owners (MenuButton, Dropdown…) reset their open state in onClose, so a category close must call it too.
+  it('gives the focus back after a category close', async () => {
+    const anchor = document.createElement('button')
+    document.body.appendChild(anchor)
+    anchor.focus()
+    open({}, { category: 'menu', overlay: true })
+    closePopup('menu')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(document.activeElement).toBe(anchor)
+    anchor.remove()
+  })
+
   // Tooltips share modalStore with popups; closing a category must not take them with it.
   it('keeps non-popup modals when closing a category', () => {
     modalStore.set([{ label: 'tip' } as any])
@@ -115,6 +232,66 @@ describe('popups', () => {
 
     result.update({ a: 2 })
     expect(update).toHaveBeenCalledWith({ a: 2 })
+  })
+
+  it('routes an update to its popup when a tooltip comes first in modalStore', () => {
+    modalStore.set([{ label: 'tip' } as any])
+    const first = open()
+    const second = open()
+    const updates: Record<string, any[]> = { [first.id]: [], [second.id]: [] }
+    modalStore.update((modals) => {
+      for (const m of modals) {
+        if (m.type === 'popup') m.update = (props) => updates[m.id].push(props)
+      }
+      return modals
+    })
+
+    updatePopup(first.id, { props: { a: 1 } })
+    expect(updates[first.id]).toEqual([{ a: 1 }])
+    expect(updates[second.id]).toEqual([])
+  })
+
+  describe('a popup by resource id', () => {
+    function deferred (): { promise: Promise<any>, resolve: (value: any) => void } {
+      let resolve: (value: any) => void = () => {}
+      const promise = new Promise<any>((_resolve) => {
+        resolve = _resolve
+      })
+      return { promise, resolve }
+    }
+
+    it('shows up once its component is loaded', async () => {
+      const load = deferred()
+      vi.mocked(getResource).mockReturnValueOnce(load.promise)
+      showPopup('ui:component:Test' as any, {})
+      expect(get(popupstore)).toHaveLength(0)
+      load.resolve(Comp)
+      await load.promise
+      await Promise.resolve()
+      expect(get(popupstore)).toHaveLength(1)
+    })
+
+    it('never shows up when closed before loading, and gives the focus back', async () => {
+      const load = deferred()
+      vi.mocked(getResource).mockReturnValueOnce(load.promise)
+      const anchor = document.createElement('button')
+      document.body.appendChild(anchor)
+      anchor.focus()
+      const popup = showPopup('ui:component:Test' as any, {})
+      popup.close()
+      load.resolve(Comp)
+      await load.promise
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(get(popupstore)).toHaveLength(0)
+      expect(document.activeElement).toBe(anchor)
+
+      // Its order is gone too, so a later popup gives the focus back to its own control.
+      const plain = open()
+      plain.close()
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(document.activeElement).toBe(anchor)
+      anchor.remove()
+    })
   })
 
   it('ignores an update for an id that is gone', () => {

@@ -77,4 +77,35 @@ describe('ui-kit IconButton', () => {
     component.focus()
     expect(document.activeElement).toBe(button)
   })
+
+  it('leaves the Tab order with tabindex -1 and still focuses by focus()', () => {
+    const { button, component } = mount({ icon: ICON, tooltip: TOOLTIP, tabindex: -1 })
+    expect(button.tabIndex).toBe(-1)
+    component.focus()
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('forwards keydown, focus and blur', () => {
+    const { button, component } = mount({ icon: ICON, tooltip: TOOLTIP })
+    const handlers = { keydown: vi.fn(), focus: vi.fn(), blur: vi.fn() }
+    component.$on('keydown', handlers.keydown)
+    component.$on('focus', handlers.focus)
+    component.$on('blur', handlers.blur)
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }))
+    button.focus()
+    button.blur()
+    expect(handlers.keydown).toHaveBeenCalledTimes(1)
+    expect(handlers.focus).toHaveBeenCalledTimes(1)
+    expect(handlers.blur).toHaveBeenCalledTimes(1)
+  })
+
+  it('swaps the icon for a spinner and stays named while loading', async () => {
+    const { button } = mount({ icon: ICON, tooltip: TOOLTIP, loading: true })
+    await tick()
+    expect(button.querySelector('.spinner')).not.toBeNull()
+    expect(button.querySelector('svg.svg-small')).toBeNull()
+    expect(button.classList.contains('button--icon-only')).toBe(true)
+    expect(button.getAttribute('aria-label')).toBe('Settings')
+  })
 })
