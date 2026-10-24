@@ -15,9 +15,12 @@
 
 import { addons } from '@storybook/manager-api'
 
+import { registerSections } from './sections'
 import { systemTheme } from './theme'
 
 addons.setConfig({
   theme: systemTheme(),
   sidebar: { showRoots: true }
 })
+
+registerSections()

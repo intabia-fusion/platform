@@ -26,6 +26,6 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Tokens: Story = {
-  name: 'Tokens',
+  name: 'Color map',
   render: () => ({ Component: ColorMap })
 }

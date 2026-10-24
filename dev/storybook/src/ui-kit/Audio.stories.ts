@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import AudioKit from './AudioKit.svelte'
 
 const meta = {
-  title: 'UI Kit/Audio',
+  title: 'Media/Audio',
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta
 

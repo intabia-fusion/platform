@@ -22,26 +22,44 @@
 
   let root: HTMLElement
 
+  // The preview scrolls its body, not the window
+  function scroller (): HTMLElement {
+    for (let el = root.parentElement; el != null; el = el.parentElement) {
+      if (['auto', 'scroll'].includes(getComputedStyle(el).overflowY)) return el
+    }
+    return document.scrollingElement as HTMLElement
+  }
+
+  // scrollIntoView would also scroll the manager page around the iframe, out of the reader's reach
+  function scrollToElement (el: HTMLElement | null): void {
+    if (el == null) return
+    const box = scroller()
+    box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top
+  }
+
   // Stacked stories scroll a selected row or a focused field into view as they load: the overview opens at the top
   // until the reader scrolls themselves.
   onMount(() => {
     const events = ['wheel', 'touchmove', 'keydown', 'pointerdown']
-    const timers = [300, 1000, 2500].map((delay) =>
-      setTimeout(() => {
-        if (document.activeElement instanceof HTMLElement && root.contains(document.activeElement)) {
-          document.activeElement.blur()
-        }
-        root.scrollIntoView({ block: 'start' })
-      }, delay)
-    )
+    const box = scroller()
+    // A slow first load mounts stories after any fixed delay, so every scroll is undone until the reader acts
+    const reset = (): void => {
+      if (document.activeElement instanceof HTMLElement && root.contains(document.activeElement)) {
+        document.activeElement.blur()
+      }
+      if (box.scrollTop !== 0) box.scrollTop = 0
+    }
     const stop = (): void => {
-      timers.forEach((timer) => {
-        clearTimeout(timer)
-      })
+      window.removeEventListener('scroll', reset, true)
+      window.removeEventListener('focusin', reset)
       events.forEach((name) => {
         window.removeEventListener(name, stop)
       })
     }
+    reset()
+    // Capture: a scroll of an element does not bubble
+    window.addEventListener('scroll', reset, { capture: true, passive: true })
+    window.addEventListener('focusin', reset)
     events.forEach((name) => {
       window.addEventListener(name, stop, { passive: true })
     })
@@ -59,7 +77,9 @@
           <a
             class="stack__toc-link"
             href={`#${item.href}`}
-            on:click|preventDefault={() => document.getElementById(item.href)?.scrollIntoView()}
+            on:click|preventDefault={() => {
+              scrollToElement(document.getElementById(item.href))
+            }}
           >
             {item.title}
           </a>

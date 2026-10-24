@@ -21,9 +21,9 @@ const group = 'Screens'
 const page = 'Chat'
 
 const meta = {
-  title: 'Screens/Chat',
+  title: 'Chat',
   component: Screen,
-  tags: ['!autodocs'],
+  tags: ['!autodocs', 'screen'],
   parameters: { layout: 'fullscreen' }
 } satisfies Meta<Screen>
 

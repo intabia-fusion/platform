@@ -49,7 +49,7 @@ const kit: StackGroup[] = [
 ]
 
 export const Components: Story = {
-  name: 'Kit',
+  name: 'Popups and menus',
   render: () => ({
     Component: StoryStack,
     props: {

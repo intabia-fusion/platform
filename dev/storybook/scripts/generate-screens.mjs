@@ -15,6 +15,7 @@
 
 // Writes stories into src/design/generated/stories for every screen file of dev/design/design.json that has a "storybook"
 // title: one story per frame, a canvas story for a page of several frames, and a canvas of all pages only for "canvas": true.
+// Pages are top-level, without the group in the title: the sidebar tab of the "screen" tag already groups them.
 // Story files must list their exports statically, so the page and frame list is recorded here, in Node.
 // Run: node scripts/generate-screens.mjs (Node 24 strips the TypeScript of the recorder itself)
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -64,9 +65,9 @@ const group = ${group}
 const page = ${q(page.name)}
 
 const meta = {
-  title: ${q(file.title + '/' + page.name)},
+  title: ${q(page.name)},
   component: Screen,
-  tags: ['!autodocs'],
+  tags: ['!autodocs', 'screen'],
   parameters: { layout: 'fullscreen' }
 } satisfies Meta<Screen>
 
@@ -91,7 +92,7 @@ import CanvasView from '../Canvas.svelte'
 const meta = {
   title: ${group},
   component: CanvasView,
-  tags: ['!autodocs'],
+  tags: ['!autodocs', 'screen'],
   parameters: { layout: 'fullscreen' }
 } satisfies Meta
 

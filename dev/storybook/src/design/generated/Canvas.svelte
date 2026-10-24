@@ -98,8 +98,8 @@
   async function open (item: Item): Promise<void> {
     if (dragged) return
     const index = await (await fetch('index.json')).json()
-    const entry = Object.values<{ id: string, title: string }>(index.entries).find(
-      (e) => e.title === `${group}/${item.page}` && e.id.endsWith(`--frame-${item.index + 1}`)
+    const entry = Object.values<{ id: string, title: string, tags?: string[] }>(index.entries).find(
+      (e) => e.tags?.includes('screen') === true && e.title === item.page && e.id.endsWith(`--frame-${item.index + 1}`)
     )
     if (entry !== undefined) (window as any).__STORYBOOK_ADDONS_CHANNEL__?.emit('selectStory', { storyId: entry.id })
   }
@@ -134,6 +134,8 @@
         layout(all.get(group) ?? [])
         measure()
         requestAnimationFrame(() => {
+          // The story may be left before the records load
+          if (panZoom == null) return
           void panZoom.fit()
           ready = true
         })

@@ -15,7 +15,6 @@
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { DatePicker, type DatePickerProps, type DatePickerResult } from '@hcengineering/ui/kit'
-  import { onMount } from 'svelte'
 
   // Storybook does not depend on core: the enum values as strings.
   const DATETIME = 'datetime' as unknown as NonNullable<DatePickerProps['mode']>
@@ -56,19 +55,9 @@
     const format = (ts: number | null | undefined): string => (ts == null ? 'null' : new Date(ts).toLocaleString())
     last = result.end !== undefined ? `${format(result.value)} — ${format(result.end)}` : format(result.value)
   }
-
-  let root: HTMLElement | undefined
-
-  // Every picker focuses its input on open; on a page of many the last one would scroll the story down.
-  onMount(() => {
-    setTimeout(() => {
-      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-      root?.scrollIntoView({ block: 'start' })
-    }, 100)
-  })
 </script>
 
-<div bind:this={root} class="date-picker-variants">
+<div class="date-picker-variants">
   <p class="date-picker-variants__result">close: {last}</p>
   {#each variants as variant}
     <section class="date-picker-variants__item">
@@ -76,6 +65,7 @@
       <div>
         <DatePicker
           {...variant.props}
+          autofocus={false}
           on:close={(e) => {
             show(e.detail)
           }}

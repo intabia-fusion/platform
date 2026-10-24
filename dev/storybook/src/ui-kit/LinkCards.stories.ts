@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import LinkKit from './LinkKit.svelte'
 
 const meta = {
-  title: 'UI Kit/Link',
+  title: 'Media/Link cards',
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta
 

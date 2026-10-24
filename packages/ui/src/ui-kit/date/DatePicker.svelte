@@ -44,6 +44,7 @@
   export let detail: IntlString | undefined = undefined
   export let shifts: boolean = false
   export let timeZone: string | undefined = undefined
+  export let autofocus: boolean = true
 
   const dispatch = createEventDispatcher<{ close: DatePickerResult | null }>()
 
@@ -169,7 +170,7 @@
   }
 
   onMount(() => {
-    if (!compact) input?.focus()
+    if (autofocus && !compact) input?.focus()
   })
 </script>
 

@@ -84,7 +84,7 @@ const preview: Preview = {
         order: [
           'Introduction',
           'Overview',
-          ['UI kit', '*'],
+          ['UI kit', 'Icons', '*'],
           'Buttons',
           'Inputs',
           'Dates',
@@ -92,7 +92,8 @@ const preview: Preview = {
           'Navigation',
           'Panels and dialogs',
           'Feedback',
-          'Display'
+          'Display',
+          'Media'
         ]
       }
     }

@@ -126,6 +126,8 @@
 </script>
 
 <div class="overview">
+  <p class="overview__intro">Все компоненты кита на одной странице: сравнить размеры, отступы, цвета состояний.</p>
+
   <section class="group" aria-labelledby="ov-buttons">
     <h2 class="group__title" id="ov-buttons">Кнопки</h2>
 
@@ -596,6 +598,14 @@
     gap: var(--spacing-5);
     padding-bottom: var(--spacing-4);
     color: var(--global-primary-TextColor);
+
+    &__intro {
+      margin: 0;
+      max-width: 60rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--global-secondary-TextColor);
+    }
   }
   .group {
     display: flex;
