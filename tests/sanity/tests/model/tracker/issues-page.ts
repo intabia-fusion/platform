@@ -51,7 +51,7 @@ export class IssuesPage extends CommonTrackerPage {
   inputPopupCreateNewIssueFile = (): Locator =>
     this.page.locator('form[id="tracker:string:NewIssue"] input[type="file"]#file')
 
-  textPopupCreateNewIssueFile = (): Locator => this.page.locator('div[class*="attachments"] > div[class*="attachment"]')
+  textPopupCreateNewIssueFile = (): Locator => this.page.locator('.antiCard-attachments div.tile')
   // Matches the plain button and the split create/create-and-open one alike.
   buttonCreateIssue = (): Locator =>
     this.page.locator('form[id="tracker:string:NewIssue"] button', { hasText: 'Create issue' })
@@ -67,7 +67,7 @@ export class IssuesPage extends CommonTrackerPage {
     this.page.locator('form[id="tracker:string:NewIssue"] div[class*="title"] > div > button')
 
   inputPopupAddAttachmentsFile = (): Locator => this.page.locator('div.popup-tooltip input#file')
-  textPopupAddAttachmentsFile = (): Locator => this.page.locator('div.popup-tooltip div.item div.name')
+  textPopupAddAttachmentsFile = (): Locator => this.page.locator('div.popup-tooltip div.item div.tile')
   buttonCollapsedCategories = (): Locator => this.page.locator('div.categoryHeader.collapsed')
   pupupTagsPopup = (): Locator => this.page.locator('.popup#TagsPopup')
   issueNotExist = (issueName: string): Locator => this.page.locator('tr', { hasText: issueName })
@@ -93,11 +93,11 @@ export class IssuesPage extends CommonTrackerPage {
   addAttachmentButton = (issueName: string): Locator =>
     this.commonAncestorForOperations(issueName).locator('a > button')
 
-  deleteAttachmentLink = (filePath: string): Locator =>
-    this.page
-      .locator(`div.popup-tooltip div.item div.name a[download="${filePath}"]`)
-      .locator('xpath=../..')
-      .locator('span.remove-link')
+  attachmentTile = (filePath: string): Locator =>
+    this.page.locator(`div.popup-tooltip div.item div.tile[title="${filePath}"]`)
+
+  // The remove button of a tile shows on hover only.
+  deleteAttachmentLink = (filePath: string): Locator => this.attachmentTile(filePath).locator('.remove button')
 
   commentButton = (issueName: string): Locator => this.commonAncestorForOperations(issueName).locator('button').first()
   commentCountLocator = (issueName: string): Locator =>
@@ -738,8 +738,10 @@ export class IssuesPage extends CommonTrackerPage {
       // Absent before any click means the list has not rendered yet, not that it is deleted.
       if (clicked && !(await item.isVisible())) return
       await expect(item).toBeVisible({ timeout: 5000 })
-      await this.deleteAttachmentLink(filePath).hover()
+      await this.attachmentTile(filePath).hover()
       await this.deleteAttachmentLink(filePath).click()
+      // A stored file asks before it goes.
+      await this.pressYesForPopup(this.page)
       clicked = true
       await expect(item).toBeVisible({ visible: false })
     })
@@ -748,7 +750,7 @@ export class IssuesPage extends CommonTrackerPage {
   async checkCannotDeleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
     await retry(async () => {
       await this.hoverAttachmentButton(issueName)
-      await this.deleteAttachmentLink(filePath).hover()
+      await this.attachmentTile(filePath).hover()
       await expect(this.deleteAttachmentLink(filePath)).not.toBeVisible()
     })
   }

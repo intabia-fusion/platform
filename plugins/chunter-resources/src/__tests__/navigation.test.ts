@@ -32,6 +32,7 @@ jest.mock('@hcengineering/view-resources', () => ({
   getObjectLinkId: async (_providers: unknown, _id: string) => `general-${_id}`,
   parseLinkId: async (_providers: unknown, id: string) => id.match(/([0-9a-f]{24})$/)?.[1] ?? id
 }))
+jest.mock('@hcengineering/activity-resources', () => ({ messageInFocus: { set: () => {} } }))
 jest.mock('@hcengineering/workbench-resources', () => ({}))
 jest.mock('@hcengineering/ui', () => ({}))
 jest.mock('../components/chat/utils', () => ({ chatSpecials: [{ id: 'threads' }] }))

@@ -31,7 +31,7 @@ export class CategoryCreatePopup extends CalendarPage {
     if (data.attachFileName != null) {
       await this.inputAttachFile.setInputFiles(path.join(__dirname, `../../files/${data.attachFileName}`))
       await expect(
-        this.page.locator('div[class*="attachments"] div.name', { hasText: data.attachFileName })
+        this.page.locator('.antiCard-attachments div.tile span.name', { hasText: data.attachFileName })
       ).toBeVisible()
     }
 

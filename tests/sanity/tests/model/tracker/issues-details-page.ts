@@ -292,7 +292,8 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   }
 
   async checkIssueContainsAttachment (fileName: string): Promise<void> {
-    await this.page.locator('div.attachment-list div.name', { hasText: fileName }).click()
+    // Seen, not clicked: a click opens the viewer over the page.
+    await expect(this.page.locator(`div.attachment-list div.tile[title="${fileName}"]`)).toBeVisible()
   }
 
   async checkCollaborators (names: Array<string>): Promise<void> {

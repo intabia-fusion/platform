@@ -6,7 +6,7 @@ import { retryIntervals } from '../../retry'
 export class IssueCommentPopup extends IssuesPage {
   inputCommentText = (): Locator => this.page.locator('div[class*="commentPopup"] div.tiptap')
   inputAttachFile = (): Locator => this.page.locator('div[class*="commentPopup"] input#file')
-  textAttachFileName = (): Locator => this.page.locator('div[class*="commentPopup"] div[class*="attachment"] div.name')
+  textAttachFileName = (): Locator => this.page.locator('div[class*="commentPopup"] div.tile span.name')
   buttonSendComment = (): Locator =>
     this.page.locator('div[class*="commentPopup"] div.buttons-panel > button[type="button"]')
 
@@ -37,8 +37,8 @@ export class IssueCommentPopup extends IssuesPage {
         if ((await this.textAttachFileName().count()) === 0) {
           await this.inputAttachFile().setInputFiles(path.join(__dirname, `../../files/${attachmentFileName}`))
         }
-        // AttachmentPresenter renders nothing until getBlobRef resolves; this waits out the upload
-        // and preview round-trip - more than the 15s default allows under parallel load.
+        // The tile shows up once the file is picked; this waits out the upload too - more than the
+        // 15s default allows under parallel load.
         await expect(async () => {
           if ((await popup.count()) === 0) throw new Error('comment popup closed during the upload')
           await expect(this.textAttachFileName()).toHaveText(attachmentFileName, { timeout: 2000 })

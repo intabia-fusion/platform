@@ -17,7 +17,9 @@ export class CommonRecruitingPage extends CalendarPage {
   // Delivered only: a message shows while its create is still in flight, and a reload then loses it.
   readonly textComment = (): Locator => this.page.locator('.activityMessage div[data-delivered] .text-markup-view p')
   readonly inputAddAttachment = (): Locator => this.page.locator('div.antiSection #file').first()
-  readonly textAttachmentName = (): Locator => this.page.locator('div.attachment-container > a')
+  readonly textAttachmentName = (): Locator => this.page.locator('div.tile a[download]')
+  // A file tile names its file in the download link.
+  readonly attachmentByName = (filePath: string): Locator => this.page.locator(`div.tile a[download="${filePath}"]`)
   readonly buttonCreateFirstReview = (): Locator => this.page.locator('span:has-text("Create review")')
   readonly buttonMoreActions = (): Locator =>
     this.page
@@ -140,7 +142,7 @@ export class CommonRecruitingPage extends CalendarPage {
 
   async addAttachments (filePath: string): Promise<void> {
     await this.inputAddAttachment().setInputFiles(path.join(__dirname, `../../files/${filePath}`))
-    await expect(this.textAttachmentName().filter({ hasText: filePath }).first()).toBeVisible()
+    await expect(this.attachmentByName(filePath).first()).toBeVisible()
   }
 
   async addFirstReview (reviewTitle: string, reviewDescription: string): Promise<void> {
