@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,7 +32,11 @@
 
   $: attrViewletConfig = viewlet?.config?.[attributeModel.key]
   $: attributeIcon = attrViewletConfig?.icon ?? attributeModel.icon ?? IconEdit
-  $: isUnset = values.length > 0 && !values.some((value) => value != null && value !== '')
+  // Tree roots store a NoParent ref instead of an empty value.
+  const noParentIds: unknown[] = ['tracker:ids:NoParent', 'document:ids:NoParent']
+
+  $: isUnset =
+    values.length > 0 && !values.some((value) => value != null && value !== '' && !noParentIds.includes(value))
 
   $: isTextType = getIsTextType(attributeModel)
   $: isTooLarge =
