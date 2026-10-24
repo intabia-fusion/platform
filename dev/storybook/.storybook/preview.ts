@@ -22,7 +22,7 @@ import type { Preview } from '@storybook/svelte'
 import './preview.scss'
 import '../src/design/setup'
 import StoryTheme from '../src/decorators/StoryTheme.svelte'
-import { hidePassthroughAttributes, organizeProps, prettifyTypeNames } from '../src/helpers/argTypes'
+import { defaultBooleans, hidePassthroughAttributes, organizeProps, prettifyTypeNames } from '../src/helpers/argTypes'
 import { systemTheme } from './theme'
 
 registerUiStrings()
@@ -76,7 +76,26 @@ const preview: Preview = {
     backgrounds: { disable: true },
     controls: { expanded: true, sort: 'requiredFirst' },
     layout: 'centered',
-    docs: { theme: systemTheme() }
+    docs: { theme: systemTheme() },
+    options: {
+      // Components by name inside fixed sections; the stories of a component keep their own order.
+      storySort: {
+        method: 'alphabetical',
+        order: [
+          'Introduction',
+          'Overview',
+          ['UI kit', '*'],
+          'Buttons',
+          'Inputs',
+          'Dates',
+          'Menus and lists',
+          'Navigation',
+          'Panels and dialogs',
+          'Feedback',
+          'Display'
+        ]
+      }
+    }
   },
   decorators: [
     (_, context) => ({
@@ -89,6 +108,7 @@ const preview: Preview = {
     })
   ],
   argTypesEnhancers: [prettifyTypeNames, hidePassthroughAttributes, organizeProps],
+  argsEnhancers: [defaultBooleans],
   tags: ['autodocs']
 }
 

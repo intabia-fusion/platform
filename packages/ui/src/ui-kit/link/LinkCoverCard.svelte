@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
-  import { nonEmpty, webUrl } from './link'
+  import { nonEmpty, webUrl } from './utils'
   import SiteIcon from './SiteIcon.svelte'
   import SiteTile from './SiteTile.svelte'
 

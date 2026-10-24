@@ -85,7 +85,7 @@ describe('ui-kit MenuButton', () => {
 
     expect(popups.showPopup).toHaveBeenCalledTimes(1)
     const [, props, anchor] = popups.showPopup.mock.calls[0]
-    expect(props).toEqual({ items: ITEMS, selected: 'board', params: { count: 2 } })
+    expect(props).toEqual({ items: ITEMS, selected: 'board', multiselect: false, params: { count: 2 } })
     expect(anchor).toBe(button)
     expect(button.getAttribute('aria-expanded')).toBe('true')
     expect(button.classList.contains('button--pressed')).toBe(true)
@@ -95,6 +95,12 @@ describe('ui-kit MenuButton', () => {
     const { button } = mount({ items: ITEMS, ...({ pressed: true } as unknown as Partial<ComponentProps<MenuButton>>) })
     expect(button.getAttribute('aria-expanded')).toBe('false')
     expect(button.classList.contains('button--pressed')).toBe(false)
+  })
+
+  it('does not open while disabled or loading', () => {
+    mount({ items: ITEMS, disabled: true }).button.click()
+    mount({ items: ITEMS, loading: true }).button.click()
+    expect(popups.showPopup).not.toHaveBeenCalled()
   })
 
   it('does not open a second list while one is open', () => {
@@ -152,7 +158,7 @@ describe('ui-kit MenuButton', () => {
     const next = [...ITEMS, { id: 'table', label: getEmbeddedLabel('Table') }]
     component.$set({ items: next })
     await tick()
-    expect(popups.update).toHaveBeenCalledWith({ items: next, selected: undefined, params: {} })
+    expect(popups.update).toHaveBeenCalledWith({ items: next, selected: undefined, multiselect: false, params: {} })
     expect(popups.showPopup).toHaveBeenCalledTimes(1)
   })
 
@@ -184,6 +190,28 @@ describe('ui-kit MenuButton', () => {
     const withContent = host.querySelector('button') as HTMLButtonElement
     expect(withContent.querySelector('.content')?.textContent).toBe('Custom')
     expect(withContent.classList.contains('button--icon-only')).toBe(false)
+  })
+
+  it('passes an array to the list and reports every change with multiselect', async () => {
+    const { button, component } = mount({
+      items: ITEMS,
+      icon: ICON,
+      tooltip: { label: ITEMS[0].label },
+      multiselect: true
+    })
+    const onSelected = vi.fn<(event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']>>) => void>()
+    component.$on('selected', onSelected)
+
+    button.click()
+    expect(popups.showPopup.mock.calls[0][1]).toMatchObject({ selected: [], multiselect: true })
+    const onUpdate = popups.showPopup.mock.calls[0][4] as (result: string[]) => void
+    onUpdate(['list', 'board'])
+    onUpdate([])
+    await tick()
+    expect(onSelected.mock.calls.map((call) => call[0].detail)).toEqual([['list', 'board'], []])
+
+    lastOnClose()(undefined)
+    expect(onSelected).toHaveBeenCalledTimes(2)
   })
 
   it('forwards click to the caller as well', () => {

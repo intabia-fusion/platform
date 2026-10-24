@@ -15,7 +15,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { describeLink, linkHref, linkLayout, linkTarget, nonEmpty, webUrl } from '../../ui-kit/link/link'
+import { describeLink, linkHref, linkLayout, linkTarget, nonEmpty, webUrl } from '../../ui-kit/link/utils'
 
 describe('linkHref', () => {
   it('keeps web, mail, phone and relative addresses', () => {

@@ -14,13 +14,23 @@
 -->
 <script lang="ts">
   import { Theme } from '@hcengineering/theme'
+  import { deviceOptionsStore } from '@hcengineering/ui'
 
   import ThemeSync from './ThemeSync.svelte'
 
   export let theme: string
   export let accent: string
   export let language: string
+
+  let docWidth = window.innerWidth
+  let docHeight = window.innerHeight
+
+  // The app's Root keeps the window size here; popups placed `top` (the date popup) are positioned by it.
+  $: $deviceOptionsStore.docWidth = docWidth
+  $: $deviceOptionsStore.docHeight = docHeight
 </script>
+
+<svelte:window bind:innerWidth={docWidth} bind:innerHeight={docHeight} />
 
 <Theme>
   <ThemeSync {theme} {accent} {language} />

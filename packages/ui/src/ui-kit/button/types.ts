@@ -25,12 +25,28 @@ import type { DropdownIntlItem, IconComponent, IconSize, LabelAndProps, TooltipW
  * - `tertiary` - transparent, accent-colored text and icon;
  * - `ghost` - transparent, neutral text and icon;
  * - `positive` - green fill for a confirming action;
- * - `negative` - red fill for a destructive action.
+ * - `negative` - red fill for a destructive action;
+ * - `positive-ghost`, `negative-ghost` - transparent, green or red icon and text: a state that is on or off
+ *   (microphone, camera, screen sharing), tinted on hover;
+ * - `chip` - an oval pill of a list row (a milestone, a component, a due date), as the labels next to it.
  */
-export type ButtonKind = 'primary' | 'brand' | 'secondary' | 'tertiary' | 'ghost' | 'positive' | 'negative'
+/** `light` and `dark` keep their color in both themes: buttons on brand surfaces (login, onboarding). */
+export type ButtonKind =
+  | 'primary'
+  | 'brand'
+  | 'secondary'
+  | 'tertiary'
+  | 'ghost'
+  | 'positive'
+  | 'negative'
+  | 'positive-ghost'
+  | 'negative-ghost'
+  | 'chip'
+  | 'light'
+  | 'dark'
 
-/** `min` is for icon-only buttons. */
-export type ButtonSize = 'large' | 'medium' | 'small' | 'extra-small' | 'min'
+/** `min` is for icon-only buttons; `extra-large` for the main actions of the login and onboarding screens. */
+export type ButtonSize = 'extra-large' | 'large' | 'medium' | 'small' | 'extra-small' | 'min'
 
 export type ButtonShape = 'rectangle' | 'round'
 
@@ -42,6 +58,8 @@ export interface ButtonAttributes extends AriaAttributes {
   name?: string
   value?: string
   form?: string
+  /** `-1` takes the button out of the Tab order when the keyboard reaches its action another way (number steppers). */
+  tabindex?: number
   [dataAttribute: `data-${string}`]: string | number | boolean | undefined
 }
 
@@ -94,10 +112,16 @@ export type IconButtonProps = Omit<ButtonProps, 'label' | 'labelParams' | 'icon'
 } & ({ tooltip: TooltipWithLabel, 'aria-label'?: string } | { tooltip?: LabelAndProps, 'aria-label': string })
 
 /** `Id` is the item id type, so `selected` and the `selected` event carry it as is. */
-export interface MenuButtonProps<Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']>
-  extends Omit<ButtonProps, 'hasMenu' | 'pressed' | 'selected'> {
+/** `Selected` is the id type, or an array of ids with `multiselect`. */
+export interface MenuButtonProps<
+  Id extends DropdownIntlItem['id'] = DropdownIntlItem['id'],
+  Selected extends Id | Id[] = Id
+> extends Omit<ButtonProps, 'hasMenu' | 'pressed' | 'selected'> {
   items: Array<DropdownIntlItem<Id>>
-  selected?: Id
+  /** One id, or an array of them with `multiselect`. */
+  selected?: Selected
+  /** The list stays open and toggles items; `selected` reports the whole array on every change. */
+  multiselect?: boolean
   /** Keeps the selected item unmarked in the list. */
   noSelection?: boolean
   /** A single item is selected right away, without opening the list. */
@@ -106,6 +130,8 @@ export interface MenuButtonProps<Id extends DropdownIntlItem['id'] = DropdownInt
   itemParams?: Record<string, any>
 }
 
-export interface MenuButtonEvents<Id extends DropdownIntlItem['id'] = DropdownIntlItem['id']> extends ButtonEvents {
-  selected: CustomEvent<Id>
+export interface MenuButtonEvents<
+  Selected extends DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> = DropdownIntlItem['id']
+> extends ButtonEvents {
+  selected: CustomEvent<Selected>
 }

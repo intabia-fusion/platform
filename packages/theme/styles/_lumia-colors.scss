@@ -81,8 +81,10 @@
   --border-talk-indication-secondary: #25262A;
 
   /** Buttons **/
-  --button-subtle-LabelColor: #fff;
-  --button-subtle-IconColor: #fff;
+  --kit-button-subtle-LabelColor: #fff;
+  --button-subtle-LabelColor: var(--kit-button-subtle-LabelColor);
+  --kit-button-subtle-IconColor: #fff;
+  --button-subtle-IconColor: var(--kit-button-subtle-IconColor);
   --button-disabled-BackgroundColor: #d1d5de0d;
   --button-disabled-LabelColor: var(--global-disabled-TextColor);
   --button-disabled-IconColor: var(--global-disabled-TextColor);
@@ -90,10 +92,22 @@
   --button-primary-loading-LabelColor: #6191fe;
   --button-primary-BorderColor: #d1d5de1a;
   --primary-button-border: #d1d5de1a;
-  --button-secondary-BackgroundColor: #d1d5de0d;
-  --button-secondary-BorderColor: #d1d5de1a;
-  --button-secondary-hover-BackgroundColor: #A5BDFF1A;
-  --button-secondary-active-BackgroundColor: #d1d5de26;
+  --kit-button-secondary-BackgroundColor: #d1d5de0d;
+  --button-secondary-BackgroundColor: var(--kit-button-secondary-BackgroundColor);
+  --kit-button-secondary-BorderColor: #d1d5de1a;
+  --button-secondary-BorderColor: var(--kit-button-secondary-BorderColor);
+  --kit-button-secondary-hover-BackgroundColor: #A5BDFF1A;
+  --button-secondary-hover-BackgroundColor: var(--kit-button-secondary-hover-BackgroundColor);
+  --kit-button-secondary-active-BackgroundColor: #d1d5de26;
+  --button-secondary-active-BackgroundColor: var(--kit-button-secondary-active-BackgroundColor);
+  // The kit reads --kit-button-*: an accent recolors the legacy buttons only.
+  --kit-button-primary-BackgroundColor: var(--button-primary-BackgroundColor);
+  --kit-button-primary-hover-BackgroundColor: var(--button-primary-hover-BackgroundColor);
+  --kit-button-primary-active-BackgroundColor: var(--button-primary-active-BackgroundColor);
+  --kit-button-primary-LabelColor: var(--button-primary-LabelColor);
+  --kit-button-primary-IconColor: var(--button-primary-IconColor);
+  --kit-button-tertiary-LabelColor: var(--button-tertiary-LabelColor);
+  --kit-button-tertiary-IconColor: var(--button-tertiary-IconColor);
   --button-tertiary-hover-BackgroundColor: #d1d5de1a;
   --button-tertiary-active-BackgroundColor: #d1d5de26;
   --button-menu-active-BorderColor: #d9dee6;
@@ -120,6 +134,26 @@
   --button-positive-loading-LabelColor: #8ce0b5;
   --button-positive-LabelColor: #FFFFFF;
   --button-positive-IconColor: #FFFFFF;
+
+  // Fixed light and dark buttons for brand surfaces (login, onboarding): the same in both themes.
+  --button-light-BackgroundColor: #FFFFFF;
+  --button-light-BorderColor: #1725471f;
+  --button-light-hover-BackgroundColor: #F3F4F6;
+  --button-light-active-BackgroundColor: #E5E7EB;
+  --button-light-disabled-BackgroundColor: #FFFFFF99;
+  --button-light-disabled-LabelColor: #11111166;
+  --button-light-loading-LabelColor: #6B7280;
+  --button-light-LabelColor: #111111;
+  --button-light-IconColor: #111111;
+  --button-dark-BackgroundColor: #07040F;
+  --button-dark-BorderColor: transparent;
+  --button-dark-hover-BackgroundColor: #1D1A26;
+  --button-dark-active-BackgroundColor: #2B2834;
+  --button-dark-disabled-BackgroundColor: #07040F66;
+  --button-dark-disabled-LabelColor: #FFFFFF99;
+  --button-dark-loading-LabelColor: #FFFFFFA6;
+  --button-dark-LabelColor: #FFFFFF;
+  --button-dark-IconColor: #FFFFFF;
   --button-primary-loading-IconColor: var(--button-accent-IconColor);
   --button-brand-BackgroundColor: var(--accent-color-base, var(--button-primary-BackgroundColor));
   --button-brand-hover-BackgroundColor: var(--accent-color-hover, var(--button-primary-hover-BackgroundColor));
@@ -212,8 +246,10 @@
   --border-talk-indication-secondary: #F1F1F1;
 
   /** Buttons **/
-  --button-subtle-LabelColor: #000;
-  --button-subtle-IconColor: #000;
+  --kit-button-subtle-LabelColor: #000;
+  --button-subtle-LabelColor: var(--kit-button-subtle-LabelColor);
+  --kit-button-subtle-IconColor: #000;
+  --button-subtle-IconColor: var(--kit-button-subtle-IconColor);
   --button-disabled-BackgroundColor: #1725470d;
   --button-disabled-LabelColor: var(--global-disabled-TextColor);
   --button-disabled-IconColor: var(--global-disabled-TextColor);
@@ -221,10 +257,22 @@
   --button-primary-loading-LabelColor: #95baff;
   --button-primary-BorderColor: #1725471a;
   --primary-button-border: #1725471a;
-  --button-secondary-BackgroundColor: #1725470d;
-  --button-secondary-BorderColor: #1725471a;
-  --button-secondary-hover-BackgroundColor: #1725471a;
-  --button-secondary-active-BackgroundColor: #17254726;
+  --kit-button-secondary-BackgroundColor: #1725470d;
+  --button-secondary-BackgroundColor: var(--kit-button-secondary-BackgroundColor);
+  --kit-button-secondary-BorderColor: #1725471a;
+  --button-secondary-BorderColor: var(--kit-button-secondary-BorderColor);
+  --kit-button-secondary-hover-BackgroundColor: #1725471a;
+  --button-secondary-hover-BackgroundColor: var(--kit-button-secondary-hover-BackgroundColor);
+  --kit-button-secondary-active-BackgroundColor: #17254726;
+  --button-secondary-active-BackgroundColor: var(--kit-button-secondary-active-BackgroundColor);
+  // The kit reads --kit-button-*: an accent recolors the legacy buttons only.
+  --kit-button-primary-BackgroundColor: var(--button-primary-BackgroundColor);
+  --kit-button-primary-hover-BackgroundColor: var(--button-primary-hover-BackgroundColor);
+  --kit-button-primary-active-BackgroundColor: var(--button-primary-active-BackgroundColor);
+  --kit-button-primary-LabelColor: var(--button-primary-LabelColor);
+  --kit-button-primary-IconColor: var(--button-primary-IconColor);
+  --kit-button-tertiary-LabelColor: var(--button-tertiary-LabelColor);
+  --kit-button-tertiary-IconColor: var(--button-tertiary-IconColor);
   --button-tertiary-hover-BackgroundColor: #1725471a;
   --button-tertiary-active-BackgroundColor: #17254726;
   --button-menu-active-BorderColor: #0f121a;
@@ -251,6 +299,26 @@
   --button-positive-loading-LabelColor: #8ce0b5;
   --button-positive-LabelColor: #FFFFFF;
   --button-positive-IconColor: #FFFFFF;
+
+  // Fixed light and dark buttons for brand surfaces (login, onboarding): the same in both themes.
+  --button-light-BackgroundColor: #FFFFFF;
+  --button-light-BorderColor: #1725471f;
+  --button-light-hover-BackgroundColor: #F3F4F6;
+  --button-light-active-BackgroundColor: #E5E7EB;
+  --button-light-disabled-BackgroundColor: #FFFFFF99;
+  --button-light-disabled-LabelColor: #11111166;
+  --button-light-loading-LabelColor: #6B7280;
+  --button-light-LabelColor: #111111;
+  --button-light-IconColor: #111111;
+  --button-dark-BackgroundColor: #07040F;
+  --button-dark-BorderColor: transparent;
+  --button-dark-hover-BackgroundColor: #1D1A26;
+  --button-dark-active-BackgroundColor: #2B2834;
+  --button-dark-disabled-BackgroundColor: #07040F66;
+  --button-dark-disabled-LabelColor: #FFFFFF99;
+  --button-dark-loading-LabelColor: #FFFFFFA6;
+  --button-dark-LabelColor: #FFFFFF;
+  --button-dark-IconColor: #FFFFFF;
   --button-primary-loading-IconColor: var(--button-accent-IconColor);
   --button-brand-BackgroundColor: var(--accent-color-base, var(--button-primary-BackgroundColor));
   --button-brand-hover-BackgroundColor: var(--accent-color-hover, var(--button-primary-hover-BackgroundColor));

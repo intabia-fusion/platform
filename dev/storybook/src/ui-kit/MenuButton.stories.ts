@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconCopy, IconDelete, IconEdit, IconOptions, IconSettings, IconShare } from '@hcengineering/ui'
+import { IconAdd, IconCopy, IconDelete, IconEdit, IconOptions, IconSettings, IconShare } from '@hcengineering/ui'
 import { MenuButton } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 import type { ComponentProps } from 'svelte'
@@ -22,8 +22,8 @@ import type { ComponentProps } from 'svelte'
 import Sections from '../helpers/Sections.svelte'
 import { axis } from '../helpers/matrix'
 
-const kinds = ['primary', 'secondary', 'tertiary', 'negative'] as const
-const sizes = ['large', 'medium', 'small', 'extra-small', 'min'] as const
+const kinds = ['primary', 'brand', 'secondary', 'tertiary', 'ghost', 'positive', 'negative', 'light', 'dark'] as const
+const sizes = ['extra-large', 'large', 'medium', 'small', 'extra-small', 'min'] as const
 const view = getEmbeddedLabel('View')
 const settings = { label: getEmbeddedLabel('Settings') }
 const views = [
@@ -38,31 +38,50 @@ const actions = [
   { id: 'delete', label: getEmbeddedLabel('Delete'), icon: IconDelete }
 ]
 
+// Single and multiple choice in one story: `selected` takes both shapes.
+type Props = Omit<ComponentProps<MenuButton>, 'selected'> & { selected?: string | number | Array<string | number> }
+
 // Ready-made setups switched by the `example` control.
 const examples = {
   'select view': { items: views, selected: 'list', label: view, icon: IconOptions },
   'actions with icons': { items: actions, noSelection: true, icon: IconSettings, tooltip: settings },
   'text only': { items: views, selected: 'list', label: view, kind: 'tertiary' },
-  'single item, auto select': { items: [views[0]], label: view, icon: IconOptions, autoSelectSingle: true }
-} satisfies Record<string, ComponentProps<MenuButton>>
+  'single item, auto select': { items: [views[0]], label: view, icon: IconOptions, autoSelectSingle: true },
+  'add, multiselect': {
+    items: views,
+    selected: ['list'],
+    multiselect: true,
+    icon: IconAdd,
+    tooltip: { label: getEmbeddedLabel('Add view') }
+  }
+} satisfies Record<string, Props>
 
-type Args = Partial<ComponentProps<MenuButton>> & { example: keyof typeof examples }
+type Args = Partial<Props> & { example: keyof typeof examples }
 
 // Every key any example sets: a key missing from the next example would otherwise keep its old value.
-const defaults: Partial<ComponentProps<MenuButton>> = {
+const defaults: Partial<Props> = {
   selected: undefined,
   label: undefined,
   icon: undefined,
   tooltip: undefined,
   kind: undefined,
   noSelection: false,
-  autoSelectSingle: false
+  autoSelectSingle: false,
+  multiselect: false
 }
 
 const meta: Meta<Args> = {
-  title: 'UI Kit/MenuButton',
+  title: 'Buttons/MenuButton',
   component: MenuButton,
   args: { example: 'select view' },
+  parameters: {
+    docs: {
+      description: {
+        component:
+          '**Когда:** кнопка открывает список пунктов и сообщает выбранный (`on:selected`): вид списка, действия «ещё», «+» с галочками (`multiselect`). **Не этот компонент:** значение поля или атрибута - `Dropdown` / `SelectButton`; главное действие с меню связанных - `SplitButton`.\n\nПопап `ModernPopup` у кнопки; `hasMenu` и `aria-expanded` ведёт сам, смена `items` при открытом попапе обновляет его на месте, удаление кнопки закрывает попап. `noSelection` - не отмечать выбранный, `autoSelectSingle` - единственный пункт без попапа.'
+      }
+    }
+  },
   argTypes: {
     example: { control: 'select', options: Object.keys(examples), description: 'Ready-made setup of the props below' }
   },

@@ -590,6 +590,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #3478f6);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #2a69e6);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-purple {
@@ -704,6 +711,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #8a4292);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #7a3282);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-pink {
@@ -813,6 +827,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #e45c9c);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #d44b8c);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-red {
@@ -921,6 +942,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #ce4745);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #be3735);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-orange {
@@ -1023,6 +1051,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #989898);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #888888);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 /* Tertiary theme overrides for orange */
@@ -1155,6 +1190,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-light-green {
@@ -1293,6 +1335,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #78b856);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #68a846);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
 }
 
 .accent-graphite {
@@ -1400,4 +1449,13 @@
   --theme-toggle-bg-hover: rgba(120, 120, 128, 0.64);
   --theme-toggle-on-bg-color: var(--accent-color-base, #f6c94e);
   --theme-toggle-on-bg-hover: var(--accent-color-hover, #e6b93e);
+
+  // The kit primary: the base accent color with the on-accent text.
+  --kit-button-primary-BackgroundColor: var(--accent-color-base);
+  --kit-button-primary-hover-BackgroundColor: var(--accent-color-hover);
+  --kit-button-primary-active-BackgroundColor: var(--accent-color-active);
+  --kit-button-primary-LabelColor: var(--global-on-accent-TextColor);
+  --kit-button-primary-IconColor: var(--global-on-accent-TextColor);
+  --kit-button-tertiary-LabelColor: var(--accent-color-active);
+  --kit-button-tertiary-IconColor: var(--accent-color-active);
 }

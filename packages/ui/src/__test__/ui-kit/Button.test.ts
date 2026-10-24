@@ -70,13 +70,26 @@ describe('ui-kit Button', () => {
       )
     })
 
-    it.each(['primary', 'brand', 'secondary', 'tertiary', 'ghost', 'positive', 'negative'] as const)(
-      'renders the %s kind',
-      (kind) => {
-        const { button } = mount({ kind })
-        expect(button.classList.contains(`button--${kind}`)).toBe(true)
-      }
-    )
+    it.each([
+      'primary',
+      'brand',
+      'secondary',
+      'tertiary',
+      'ghost',
+      'positive',
+      'negative',
+      'chip',
+      'light',
+      'dark'
+    ] as const)('renders the %s kind', (kind) => {
+      const { button } = mount({ kind })
+      expect(button.classList.contains(`button--${kind}`)).toBe(true)
+    })
+
+    it('has an extra-large size for the login and onboarding screens', () => {
+      const { button } = mount({ label: LABEL, size: 'extra-large' })
+      expect(button.classList.contains('button--extra-large')).toBe(true)
+    })
 
     it('passes kind, size, shape and type through', () => {
       const { button } = mount({ kind: 'negative', size: 'extra-small', shape: 'round', type: 'submit' })
@@ -195,10 +208,36 @@ describe('ui-kit Button', () => {
       themeStore.set(theme)
     })
 
+    it('keeps the current name when an answer for a previous tooltip comes later', async () => {
+      const answers: Array<(text: string) => void> = []
+      vi.mocked(translateCB).mockImplementation((_label, _params, _language, cb) => {
+        answers.push(cb)
+      })
+      const { button, component } = mount({ icon: ICON, tooltip: { label: getEmbeddedLabel('Old') } })
+      component.$set({ tooltip: { label: getEmbeddedLabel('New') } })
+      await tick()
+      vi.mocked(translateCB).mockReset()
+      expect(answers).toHaveLength(2)
+      answers[1]('New')
+      answers[0]('Old')
+      await tick()
+      expect(button.getAttribute('aria-label')).toBe('New')
+    })
+
     it('prefers an explicit aria-label', async () => {
       const { button } = mount({ icon: ICON, tooltip: { label: getEmbeddedLabel('Settings') }, 'aria-label': 'Open' })
       await tick()
       expect(button.getAttribute('aria-label')).toBe('Open')
+    })
+
+    it('keeps the tooltip name when aria-label is passed as undefined', async () => {
+      const { button } = mount({
+        icon: ICON,
+        tooltip: { label: getEmbeddedLabel('Settings') },
+        'aria-label': undefined
+      })
+      await tick()
+      expect(button.getAttribute('aria-label')).toBe('Settings')
     })
 
     it('leaves a labelled button to its label', async () => {
@@ -259,7 +298,11 @@ describe('ui-kit Button', () => {
       component.$on('click', onClick)
       expect(button.disabled).toBe(true)
       expect(button.getAttribute('aria-busy')).toBe('true')
-      expect(button.querySelector('.spinner')).not.toBeNull()
+      // The kit spinner, decorative and in the icon color: the button itself reports aria-busy.
+      const spinner = button.querySelector('.button__icon .spinner')
+      expect(spinner?.classList.contains('spinner--small')).toBe(true)
+      expect(spinner?.classList.contains('spinner--inherit')).toBe(true)
+      expect(spinner?.getAttribute('aria-hidden')).toBe('true')
       expect(button.querySelector('svg.svg-small')).toBeNull()
       button.click()
       expect(onClick).not.toHaveBeenCalled()
@@ -344,6 +387,11 @@ describe('ui-kit Button', () => {
       expect(button.getAttribute('aria-describedby')).toBe('hint')
     })
 
+    it('takes tabindex, so a button can leave the Tab order', () => {
+      const { button } = mount({ tabindex: -1 })
+      expect(button.tabIndex).toBe(-1)
+    })
+
     it('focuses itself on mount when autofocus is set', () => {
       const { button } = mount({ autofocus: true })
       expect(document.activeElement).toBe(button)
@@ -353,6 +401,43 @@ describe('ui-kit Button', () => {
       const { button, component } = mount()
       component.focus()
       expect(document.activeElement).toBe(button)
+    })
+  })
+
+  describe('focus while loading', () => {
+    it('gets the focus back when the action ends and the focus fell to the page', async () => {
+      const { button, component } = mount({ label: getEmbeddedLabel('Save') })
+      button.focus()
+      component.$set({ loading: true })
+      await tick()
+      // A browser blurs a button that turns disabled; jsdom does not.
+      button.blur()
+      component.$set({ loading: false })
+      await tick()
+      await tick()
+      expect(document.activeElement).toBe(button)
+    })
+
+    it('leaves the focus where the user moved it', async () => {
+      const { button, component } = mount({ label: getEmbeddedLabel('Save') })
+      const other = document.createElement('input')
+      target.appendChild(other)
+      button.focus()
+      component.$set({ loading: true })
+      await tick()
+      other.focus()
+      component.$set({ loading: false })
+      await tick()
+      await tick()
+      expect(document.activeElement).toBe(other)
+    })
+
+    it('does not take the focus when it was not focused before', async () => {
+      const { button, component } = mount({ label: getEmbeddedLabel('Save'), loading: true })
+      component.$set({ loading: false })
+      await tick()
+      await tick()
+      expect(document.activeElement).not.toBe(button)
     })
   })
 })

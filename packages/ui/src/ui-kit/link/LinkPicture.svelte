@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import Skeleton from '../skeleton/Skeleton.svelte'
-  import { revealImage } from './link'
+  import { revealImage } from './utils'
 
   export let src: string | undefined = undefined
   export let fit: 'cover' | 'contain' = 'cover'

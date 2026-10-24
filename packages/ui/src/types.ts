@@ -373,6 +373,7 @@ export interface DropdownIntlItem<Id extends string | number = string | number> 
   keys?: string[]
   separatorBefore?: boolean
   separatorLabel?: IntlString
+  children?: Array<DropdownIntlItem<Id>>
 }
 
 export interface NestedSelectItem extends DropdownIntlItem {
