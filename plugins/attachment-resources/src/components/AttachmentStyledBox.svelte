@@ -260,7 +260,7 @@
   }
 
   onDestroy(() => {
-    const stored = uploads.flush()
+    const { stored } = uploads.flush()
     if (stored.length > 0) addStored(stored)
     uploads.releaseAll()
     if (!saved && !shouldSaveDraft) {
@@ -312,8 +312,10 @@
     }
     saved = true
     await uploads.settled()
-    const stored = uploads.flush()
+    const { stored, lost } = uploads.flush()
     if (stored.length > 0) addStored(stored)
+    // The form closes after this: a file that failed during the wait has no tile left to show it.
+    if (lost.length > 0) void setPlatformStatus(unknownError(`Not attached: ${lost.join(', ')}`))
     // Adding the stored files marked the draft unsaved again.
     saved = true
     const promises: Promise<any>[] = []

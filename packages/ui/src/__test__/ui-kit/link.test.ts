@@ -15,7 +15,27 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { describeLink, linkLayout, linkTarget, nonEmpty, webUrl } from '../../ui-kit/link/link'
+import { describeLink, linkHref, linkLayout, linkTarget, nonEmpty, webUrl } from '../../ui-kit/link/link'
+
+describe('linkHref', () => {
+  it('keeps web, mail, phone and relative addresses', () => {
+    expect(linkHref('https://example.com/a')).toBe('https://example.com/a')
+    expect(linkHref('mailto:a@example.com')).toBe('mailto:a@example.com')
+    expect(linkHref('tel:+100')).toBe('tel:+100')
+    expect(linkHref('/workbench/ws/tracker')).toBe('/workbench/ws/tracker')
+    expect(linkHref('#top')).toBe('#top')
+  })
+
+  // An uploaded .md renders raw `<a href>` through htmlToMarkup with the href as is.
+  it('drops schemes that run code, as the browser reads them', () => {
+    expect(linkHref('javascript:alert(1)')).toBeUndefined()
+    expect(linkHref(' JavaScript:alert(1)')).toBeUndefined()
+    expect(linkHref('java\tscript:alert(1)')).toBeUndefined()
+    expect(linkHref('data:text/html,<script>alert(1)</script>')).toBeUndefined()
+    expect(linkHref('vbscript:msgbox(1)')).toBeUndefined()
+    expect(linkHref(undefined)).toBeUndefined()
+  })
+})
 
 describe('webUrl', () => {
   it('keeps a web address in any case', () => {

@@ -52,7 +52,7 @@ export type { Playback } from './audio/types'
 export { default as LinkCard } from './link/LinkCard.svelte'
 export { default as LinkCoverCard } from './link/LinkCoverCard.svelte'
 export { default as SiteIcon } from './link/SiteIcon.svelte'
-export { linkTarget, openLink } from './link/link'
+export { linkHref, linkTarget, openLink } from './link/link'
 
 export { default as IconFileDownload } from './_icons/IconFileDownload.svelte'
 export { default as IconOpenFile } from './_icons/IconOpenFile.svelte'

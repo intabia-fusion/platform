@@ -17,6 +17,7 @@
   import type { MarkupMark } from '@hcengineering/text'
   import { MarkupMarkType } from '@hcengineering/text'
   import uiPlugin, { navigate, parseLocation } from '@hcengineering/ui'
+  import { linkHref } from '@hcengineering/ui/kit'
 
   import presentation from '../../plugin'
   import { Analytics } from '@hcengineering/analytics'
@@ -59,7 +60,7 @@
     <em><slot /></em>
   {:else if mark.type === MarkupMarkType.link}
     <a
-      href={attrs.href}
+      href={linkHref(attrs.href)}
       target={attrs.target ?? '_blank'}
       on:click|stopPropagation={handleLink}
       on:contextmenu|stopPropagation

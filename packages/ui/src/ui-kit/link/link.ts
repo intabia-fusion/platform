@@ -50,6 +50,18 @@ export function webUrl (url?: string): string | undefined {
   return url != null && webScheme(url) != null ? url : undefined
 }
 
+const LINK_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:']
+
+/** A markup link's address unless its scheme runs code (`javascript:`, `data:`). */
+export function linkHref (href?: string): string | undefined {
+  if (href == null) return undefined
+  try {
+    return LINK_PROTOCOLS.includes(new URL(href, 'http://relative.invalid').protocol) ? href : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function withoutScheme (url: string): string {
   return url.slice(webScheme(url)?.length ?? 0)
 }
