@@ -330,7 +330,7 @@
   }
 
   onDestroy(() => {
-    for (const doc of uploads.flush()) {
+    for (const doc of uploads.flush().stored) {
       attachments.set(doc._id, doc)
       newAttachments.add(doc._id)
     }

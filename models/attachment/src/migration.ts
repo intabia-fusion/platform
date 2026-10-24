@@ -15,7 +15,7 @@
 //
 
 import { type Attachment, type Drawing, type SavedAttachments } from '@hcengineering/attachment'
-import { type Doc, type Domain, type Ref } from '@hcengineering/core'
+import { DOMAIN_MODEL, DOMAIN_TRANSIENT, DOMAIN_TX, type Doc, type Domain, type Ref } from '@hcengineering/core'
 import {
   tryMigrate,
   type MigrateOperation,
@@ -82,15 +82,19 @@ export async function removeOrphanAttachments (client: MigrationClient): Promise
 
 async function findOrphans (client: MigrationClient, files: Attachment[]): Promise<Attachment[]> {
   const byDomain = new Map<Domain, Set<Ref<Doc>>>()
+  const alive = new Set<Ref<Doc>>()
   for (const file of files) {
-    // A class gone from the model leaves no domain to look in: its files go too.
     const domain = client.hierarchy.findDomain(file.attachedToClass)
-    if (domain === undefined) continue
+    // An unknown class (a plugin off in this build) or a model document can't be looked up: deleting
+    // the blob on that is irreversible, so such files stay.
+    if (domain === undefined || [DOMAIN_TX, DOMAIN_MODEL, DOMAIN_TRANSIENT].includes(domain)) {
+      alive.add(file.attachedTo)
+      continue
+    }
     const ids = byDomain.get(domain) ?? new Set()
     ids.add(file.attachedTo)
     byDomain.set(domain, ids)
   }
-  const alive = new Set<Ref<Doc>>()
   for (const [domain, ids] of byDomain) {
     // By id only: a card that changed its type keeps its files under the old class.
     const found = await client.find<Doc>(domain, { _id: { $in: Array.from(ids) } }, { projection: { _id: 1 } })

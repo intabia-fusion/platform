@@ -166,16 +166,18 @@ export class UploadQueue {
     }
   }
 
-  flush (): Attachment[] {
-    const docs: Attachment[] = []
+  /** Takes the stored files out and drops the rest, naming them: failed or still going up. */
+  flush (): { stored: Attachment[], lost: string[] } {
+    const stored: Attachment[] = []
     for (const [_id, item] of this.items) {
       if (item.stored) {
-        docs.push(item.doc)
+        stored.push(item.doc)
         this.items.delete(_id)
       }
     }
+    const lost = Array.from(this.items.values(), (it) => it.doc.name)
     this.clear()
-    return docs
+    return { stored, lost }
   }
 
   clear (): void {
