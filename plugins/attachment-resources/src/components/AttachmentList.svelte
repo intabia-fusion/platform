@@ -32,7 +32,11 @@
 
   // A link opens the site, not the viewer.
   $: viewable = attachments.filter((it) => getAttachmentCategory(it.type, it.name).kind !== AttachmentKind.Link)
-  $: open = openViewer ?? ((value: Attachment) => { showAttachmentsViewer(viewable, value) })
+  $: open =
+    openViewer ??
+    ((value: Attachment) => {
+      showAttachmentsViewer(viewable, value)
+    })
 </script>
 
 {#if attachments.length}

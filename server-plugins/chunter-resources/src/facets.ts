@@ -64,7 +64,7 @@ export async function ChatMessageSearchFacets (
   batch: Doc[] = [doc]
 ): Promise<SearchFacets> {
   const message = doc as ChatMessage
-  if (message.message == null || message.message === '' || isEmptyMarkup(message.message))  return { values: [] }
+  if (message.message == null || message.message === '' || isEmptyMarkup(message.message)) return { values: [] }
 
   const links = extractLinks(markupToJSON(message.message), MAX_LINKS)
   if (links.length === 0) return { values: [] }

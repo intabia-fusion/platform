@@ -105,7 +105,10 @@
         {/if}
       </svelte:fragment>
       <!-- The dot parts it from the size, which the card leaves out when unknown. -->
-      <span slot="meta">{#if (version?.size ?? 0) > 0}· {/if}<TimestampPresenter value={modified} /></span>
+      <span slot="meta"
+        >{#if (version?.size ?? 0) > 0}·
+        {/if}<TimestampPresenter value={modified} /></span
+      >
       <span class="author">
         <ResourceAuthor value={object.createdBy} />
       </span>

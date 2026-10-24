@@ -32,7 +32,9 @@
       <span class="overflow-label">{formatName(row.person.name)}</span>
     {/if}
     {#if date != null}
-      <span class="date">{#if row.person != null}·{/if}<DayLabel value={date} /></span>
+      <span class="date"
+        >{#if row.person != null}·{/if}<DayLabel value={date} /></span
+      >
     {/if}
   </span>
 {/if}

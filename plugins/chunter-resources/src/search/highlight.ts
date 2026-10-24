@@ -78,7 +78,8 @@ export function markTerms (text: string, terms: string[]): string {
   let i = 0
   while (i < text.length) {
     const word = words.find(
-      (w) => text.slice(i, i + w.length).toLowerCase() === w && !isWordChar(text[i - 1]) && !isWordChar(text[i + w.length])
+      (w) =>
+        text.slice(i, i + w.length).toLowerCase() === w && !isWordChar(text[i - 1]) && !isWordChar(text[i + w.length])
     )
     if (word === undefined) {
       result += text[i]

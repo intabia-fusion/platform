@@ -201,8 +201,18 @@ export function showAttachmentsViewer (items: Array<WithLookup<Attachment>>, val
   const at = (i: number): Partial<ComponentProps<AttachmentPreviewPopup>> => ({
     value: items[i],
     navigation: {
-      prev: i > 0 ? () => { popup.update(at(i - 1)) } : undefined,
-      next: i < items.length - 1 ? () => { popup.update(at(i + 1)) } : undefined
+      prev:
+        i > 0
+          ? () => {
+              popup.update(at(i - 1))
+            }
+          : undefined,
+      next:
+        i < items.length - 1
+          ? () => {
+              popup.update(at(i + 1))
+            }
+          : undefined
     }
   })
   const index = items.findIndex((it) => it._id === value._id)

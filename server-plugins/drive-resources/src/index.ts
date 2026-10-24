@@ -27,7 +27,7 @@ import core, {
   FindOptions,
   FindResult
 } from '@hcengineering/core'
-import drive, { File, type FileVersion, type Folder, type Resource } from '@hcengineering/drive'
+import drive, { type FileVersion, type Folder, type Resource } from '@hcengineering/drive'
 import type { TriggerControl } from '@hcengineering/server-core'
 
 /** @public */

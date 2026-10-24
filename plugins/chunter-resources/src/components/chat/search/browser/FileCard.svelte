@@ -65,7 +65,10 @@
 >
   <MarkedText slot="name" text={row.nameHighlight ?? file.name} />
   <!-- The dot parts it from the size, which the card leaves out when unknown. -->
-  <span slot="meta">{#if file.size > 0}· {/if}<DayLabel value={row.createdOn} /></span>
+  <span slot="meta"
+    >{#if file.size > 0}·
+    {/if}<DayLabel value={row.createdOn} /></span
+  >
   {#if inContent}
     <span class="hint"><Label label={chunterResources.string.FoundInFileContent} /></span>
   {/if}

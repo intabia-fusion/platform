@@ -77,11 +77,7 @@
   <div class="content buttonContainer flex-center" on:contextmenu={menu}>
     <AttachmentVideoPreview {value} preload={videoPreload} />
     <!-- On a touch screen a tap opens the viewer, as for a picture, instead of the small inline player. -->
-    <button
-      type="button"
-      class="tap-open"
-      on:click|stopPropagation={open}
-    >
+    <button type="button" class="tap-open" on:click|stopPropagation={open}>
       <span class="hidden-label"><Label label={view.string.Open} /></span>
     </button>
     {#if withActions}

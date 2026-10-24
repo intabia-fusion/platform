@@ -104,7 +104,9 @@ describe('extractLinks', () => {
   })
 
   it('takes the host of an address written without slashes or with backslashes', () => {
-    expect(extractLinks(doc(text('x', 'http:example.com')))).toEqual([{ url: 'http://example.com/', host: 'example.com' }])
+    expect(extractLinks(doc(text('x', 'http:example.com')))).toEqual([
+      { url: 'http://example.com/', host: 'example.com' }
+    ])
     expect(hosts(doc(text('x', 'http:\\\\Example.com\\a')))).toEqual(['example.com'])
     expect(hosts(doc(text('x', 'http:///example.com')))).toEqual(['example.com'])
   })
@@ -272,9 +274,9 @@ describe('hasOnlyLinks', () => {
     const inline = { type: 'text', text: 'https://api.io/v1', marks: [{ type: 'code' }] } as any
     const block = { type: 'codeBlock', content: [{ type: 'text', text: 'https://log.io/x' }] } as any
     expect(hasOnlyLinks(doc(inline, text(' https://example.com')))).toBe(false)
-    expect(hasOnlyLinks({ type: 'doc', content: [block, { type: 'paragraph', content: [text('https://a.io')] }] } as any)).toBe(
-      false
-    )
+    expect(
+      hasOnlyLinks({ type: 'doc', content: [block, { type: 'paragraph', content: [text('https://a.io')] }] } as any)
+    ).toBe(false)
   })
 
   it('is false for a link with words of its own', () => {

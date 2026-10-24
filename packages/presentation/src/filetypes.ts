@@ -137,9 +137,7 @@ async function isApplicableType (
 
   return (
     isAvailable &&
-    (Array.isArray(contentType) ? contentType : [contentType]).some((type) =>
-      matchContentType(type, _contentType)
-    )
+    (Array.isArray(contentType) ? contentType : [contentType]).some((type) => matchContentType(type, _contentType))
   )
 }
 

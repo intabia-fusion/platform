@@ -130,7 +130,11 @@ describe('Elastic search string', () => {
       issue('t1', { searchTitle: 'quokka migration', searchShortTitle: 'QK-1' }),
       issue('t2', { searchTitle: 'unrelated work', searchShortTitle: 'QK-2', fulltextSummary: 'a quokka in the text' }),
       issue('t3', { searchTitle: 'other work', searchShortTitle: 'QK-3', fulltextExtra: 'quokka as a custom value' }),
-      issue('t4', { searchTitle: 'arctic log', fulltextSummary: 'a walrus sighting', fulltextExtra: 'walrus migrations' })
+      issue('t4', {
+        searchTitle: 'arctic log',
+        fulltextSummary: 'a walrus sighting',
+        fulltextExtra: 'walrus migrations'
+      })
     )
     // updateMany goes through the bulk API, which refreshes the index for us.
     await adapter.updateMany(ctx, ws, docs)
@@ -760,7 +764,12 @@ describe('Elastic feeds and facets', () => {
     const result = await adapter.searchString(
       ctx,
       ws,
-      { query: '', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS], filters: { facets: [['attachment-kind:file']] } },
+      {
+        query: '',
+        allowEmptyQuery: true,
+        classes: [ATTACHMENT_CLASS],
+        filters: { facets: [['attachment-kind:file']] }
+      },
       { sort: 'date-desc' }
     )
     expect(ids(result)).toEqual(['f4', 'f2', 'f1'])
@@ -796,7 +805,12 @@ describe('Elastic feeds and facets', () => {
     const result = await adapter.searchString(
       ctx,
       ws,
-      { query: 'report', allowEmptyQuery: true, classes: [ATTACHMENT_CLASS], filters: { facets: [['attachment-format:pdf']] } },
+      {
+        query: 'report',
+        allowEmptyQuery: true,
+        classes: [ATTACHMENT_CLASS],
+        filters: { facets: [['attachment-format:pdf']] }
+      },
       {}
     )
     expect(ids(result)).toEqual(['f1'])

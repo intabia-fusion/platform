@@ -191,18 +191,13 @@
               params={{ sent, size: shownSize }}
             />{:else}{badge.label}{/if}
         </span>
-        <span
-          class="bar"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-        >
+        <span class="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
           <span class="fill" style:width="{percent}%" />
         </span>
       {:else}
         <span class="meta">
-          {#if audio && durationText != null}{durationText}{:else}{badge.label}{/if}{#if shownSize != null}<span class="dot">·</span
+          {#if audio && durationText != null}{durationText}{:else}{badge.label}{/if}{#if shownSize != null}<span
+              class="dot">·</span
             >{shownSize}{/if}{#if url !== ''}<span class="download"
               ><span class="dot">·</span><a
                 href={url}

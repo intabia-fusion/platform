@@ -80,17 +80,17 @@
         </span>
       </div>
     {:else if blob != null && !failed}
-    <Image
-      {blob}
-      alt={row.attachment.name}
-      width={Math.round(REQUEST_HEIGHT * ratio)}
-      height={REQUEST_HEIGHT}
-      fit="cover"
-      responsive
-      loading="lazy"
-      {blurhash}
-      on:error={() => (failedBlob = blob)}
-    />
+      <Image
+        {blob}
+        alt={row.attachment.name}
+        width={Math.round(REQUEST_HEIGHT * ratio)}
+        height={REQUEST_HEIGHT}
+        fit="cover"
+        responsive
+        loading="lazy"
+        {blurhash}
+        on:error={() => (failedBlob = blob)}
+      />
     {:else if blurhash != null}
       <Blurhash {blurhash} />
     {:else}

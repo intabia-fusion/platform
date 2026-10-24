@@ -286,10 +286,6 @@ Kept, with the reason (a condition would be a guess):
 - A `test.skip()` that depends on stand state changes the passed count without failing anything: run 20260917-123206 came out 415 instead of 417 because two `meetings.start` tests hit `test.skip(name === null, 'No regular room available')` - every room was busy at that moment.
 - A retry attempt can die with `End of central directory record signature not found` - the trace zip of the previous attempt was still being written. Playwright's own artefact race, not the test.
 - Wall time drifts up across a series (346 → 402s over 10 runs) because workspace data accumulates, not because of any one fix.
-- A full run with the default 2 retries on a stand under load ran 93 tests out to all 3 attempts; rerun by file with `--retries=0 --workers=3` they passed but 3. To find what a branch breaks, run with `--retries=0` and rerun the failed files on a calm stand.
-- Playwright compiles the spec files when the run starts: edits made while it runs are not picked up, the next run gets them.
-- Passing a list of files through `rushx uitest $F` hands them over as one argument (`No tests found`) - call `npx playwright test ... $F` with the env of the `uitest` script; in zsh split the list with `${=F}`.
-- `documents-print-preview` "latin" is the first print of the file and fails when the print service is cold (a print of over 60s); alone or warmed up it passes in 15s.
 
 ## Dead time found in run 20261005-104540
 

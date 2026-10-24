@@ -37,7 +37,13 @@
   $: glyph = variant === 'large' ? 'large' : variant === 'medium' || variant === 'sheet' ? 'medium' : 'small'
 </script>
 
-<div class="badge {variant}" class:colored={hue != null} style:--badge-background={background} style:--badge-color={textColor} aria-hidden="true">
+<div
+  class="badge {variant}"
+  class:colored={hue != null}
+  style:--badge-background={background}
+  style:--badge-color={textColor}
+  aria-hidden="true"
+>
   {#if variant !== 'tint'}
     {#if text !== ''}
       <span class="text" class:long={text.length > 4}>{text}</span>

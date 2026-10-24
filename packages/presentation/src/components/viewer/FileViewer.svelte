@@ -234,8 +234,16 @@
     if (key === 'ArrowLeft') return navigation?.prev
     if (key === 'ArrowRight') return navigation?.next
     if (!picture) return undefined
-    if (key === '+' || key === '=') return () => { zoom(STEP) }
-    if (key === '-') return () => { zoom(1 / STEP) }
+    if (key === '+' || key === '=') {
+      return () => {
+        zoom(STEP)
+      }
+    }
+    if (key === '-') {
+      return () => {
+        zoom(1 / STEP)
+      }
+    }
     if (key === '0') return resetZoom
     return undefined
   }

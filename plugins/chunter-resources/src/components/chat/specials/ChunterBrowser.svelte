@@ -60,7 +60,10 @@
   // The messages and the file tabs keep a sort each; the URL holds the one of the tab it was written for.
   const urlSort = sortFromQuery(url)
   let sort: SearchSortOrder =
-    pending?.sort ?? last?.sort ?? (tab === BrowserTab.Messages ? urlSort : undefined) ?? defaultSort(BrowserTab.Messages)
+    pending?.sort ??
+    last?.sort ??
+    (tab === BrowserTab.Messages ? urlSort : undefined) ??
+    defaultSort(BrowserTab.Messages)
   let fileSort: SearchSortOrder = (tab !== BrowserTab.Messages ? urlSort : undefined) ?? defaultSort(BrowserTab.Files)
   const formats: Record<AttachmentTab, AttachmentFormat[]> = {
     [BrowserTab.Media]: [],

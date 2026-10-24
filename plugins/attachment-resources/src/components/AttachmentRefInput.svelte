@@ -369,9 +369,9 @@
     saved = true
     const limiter = new RateLimiter(10)
     // The limiter only logs a failure: without this the message would go out without the file.
-    let failure: unknown
+    let failure: Error | undefined
     const fail = (err: unknown): void => {
-      failure ??= err
+      failure ??= err instanceof Error ? err : new Error(String(err))
     }
     newAttachments.forEach((p) => {
       const doc = attachments.get(p)
