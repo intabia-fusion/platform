@@ -28,6 +28,8 @@ services:
   # Static Storybook build; 6006 stays free for `storybook dev`
   storybook:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/storybook:${DOCKER_TAG:-latest}"
+    # The image exists only after `pnpm -w storybook`; plain `docker:up` skips it
+    profiles: ["storybook"]
     ports:
       - 6007:80
     restart: unless-stopped
