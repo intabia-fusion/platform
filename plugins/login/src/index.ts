@@ -18,9 +18,18 @@ import { AccountRole, Person, type WorkspaceUuid, WorkspaceInfoWithStatus } from
 import type { Asset, IntlString, Metadata, Plugin, Resource, Status } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui'
-import type { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
+import type { LoginInfo, PasswordValidations, WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 export type { LoginInfo, WorkspaceLoginInfo, OtpInfo, RegionInfo } from '@hcengineering/account-client'
+export type { PasswordStrictness, PasswordValidations } from '@hcengineering/account-client'
+
+/**
+ * @public
+ */
+export interface PasswordValidationError {
+  label: IntlString<{ count: number }>
+  params: { count: number }
+}
 
 /**
  * @public
@@ -47,47 +56,6 @@ export const pages = [
 ] as const
 
 export type Pages = (typeof pages)[number]
-
-export interface PasswordValidations {
-  MinLength: number
-  MinSpecialChars: number
-  MinDigits: number
-  MinUpperChars: number
-  MinLowerChars: number
-}
-
-export type PasswordStrictness = 'very_strict' | 'strict' | 'normal' | 'none'
-
-export const passwordRequirements: Record<PasswordStrictness, PasswordValidations> = {
-  very_strict: {
-    MinDigits: 4,
-    MinLength: 32,
-    MinLowerChars: 4,
-    MinSpecialChars: 4,
-    MinUpperChars: 4
-  },
-  strict: {
-    MinDigits: 2,
-    MinLength: 16,
-    MinLowerChars: 2,
-    MinSpecialChars: 2,
-    MinUpperChars: 2
-  },
-  normal: {
-    MinDigits: 1,
-    MinLength: 8,
-    MinLowerChars: 1,
-    MinSpecialChars: 1,
-    MinUpperChars: 1
-  },
-  none: {
-    MinDigits: 0,
-    MinLength: 0,
-    MinLowerChars: 0,
-    MinSpecialChars: 0,
-    MinUpperChars: 0
-  }
-}
 
 export default plugin(loginId, {
   metadata: {
@@ -175,6 +143,7 @@ export default plugin(loginId, {
     >,
     LeaveWorkspace: '' as Resource<(account: string, otpCode?: string) => Promise<LoginInfo | null>>,
     ChangePassword: '' as Resource<(oldPassword: string, password: string) => Promise<void>>,
+    ValidatePassword: '' as Resource<(password: string) => Promise<PasswordValidationError | undefined>>,
     SelectWorkspace: '' as Resource<
       (
         workspace: string,

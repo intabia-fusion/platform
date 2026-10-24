@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 import { Analytics } from '@hcengineering/analytics'
+import type { PasswordPolicy } from '@hcengineering/account-client'
 import {
   type AccountInfo,
   AccountRole,
@@ -73,6 +74,7 @@ import {
   maskApiKey
 } from './apiKeys'
 import { accountPlugin, type CrmNotification } from './plugin'
+import { assertPasswordPolicy, resolvePasswordPolicy } from './password'
 import { getFreePlanLimits } from './freeLimits'
 import {
   cancelWorkspaceSubscriptions,
@@ -392,14 +394,17 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  if (getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true && !isSystemToken(token)) {
+  const systemToken = isSystemToken(token)
+
+  if (!systemToken && getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true) {
     ctx.error('Password sign up is not allowed', { email })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   // The bot registers itself with the system token; open password sign up must not let
   // anyone else take its email first.
-  if (!isSystemToken(token)) {
+  if (!systemToken) {
+    assertPasswordPolicy(password)
     ensureNotAiBot(email)
   }
 
@@ -581,6 +586,9 @@ export async function validateOtp (
 
       if (targetAccount == null) {
         // This is a signup
+        if (password != null) {
+          assertPasswordPolicy(password)
+        }
         await createAccount(db, emailSocialId.personUuid, true)
         if (password != null) {
           await setPassword(ctx, db, branding, emailSocialId.personUuid as AccountUuid, password)
@@ -1529,13 +1537,19 @@ export async function signUpJoin (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  if (getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true && !isSystemToken(token)) {
+  const systemToken = isSystemToken(token)
+
+  if (!systemToken && getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true) {
     ctx.error('Password sign up is not allowed', { email })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  if (!systemToken) {
+    assertPasswordPolicy(password)
+  }
+
   const workspaceJoinInfo = await getWorkspaceJoinInfo(ctx, db, email, inviteId, workspaceUrl)
-  if (!isSystemToken(token)) {
+  if (!systemToken) {
     ensureNotAiBot(email)
   }
   ctx.info('Signing up and joining a workspace using invite', {
@@ -1607,6 +1621,16 @@ export async function confirm (
   return result
 }
 
+export async function getPasswordPolicy (
+  _ctx: MeasureContext,
+  _db: AccountDB,
+  _branding: Branding | null,
+  _token: string,
+  _params: Record<string, any>
+): Promise<PasswordPolicy> {
+  return resolvePasswordPolicy()
+}
+
 export async function changePassword (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1636,6 +1660,8 @@ export async function changePassword (
   if (!verifyPassword(oldPassword, account.hash, account.salt)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
+
+  assertPasswordPolicy(newPassword)
 
   await setPassword(ctx, db, branding, accountUuid, newPassword)
 
@@ -1715,6 +1741,8 @@ export async function restorePassword (
   if (password == null || password === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+
+  assertPasswordPolicy(password)
 
   const { account, extra } = decodeTokenVerbose(ctx, token)
   ctx.info('Restoring password', { account, extra })
@@ -4010,6 +4038,7 @@ export type AccountMethods =
   | 'requestOperationOtp'
   | 'getRegionInfo'
   | 'getLicenseInfo'
+  | 'getPasswordPolicy'
   | 'getUserWorkspaces'
   | 'getWorkspaceInfo'
   | 'getWorkspacesInfo'
@@ -4134,6 +4163,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     /* READ OPERATIONS */
     getRegionInfo: wrap(getRegionInfo),
     getLicenseInfo: wrap(getLicenseInfo),
+    getPasswordPolicy: wrap(getPasswordPolicy),
     getUserWorkspaces: wrap(getUserWorkspaces),
     getWorkspaceInfo: wrap(getWorkspaceInfo),
     getWorkspacesInfo: wrap(getWorkspacesInfo),

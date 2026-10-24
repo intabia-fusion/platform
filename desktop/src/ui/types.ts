@@ -15,7 +15,6 @@
 //
 
 import { DownloadItem } from '@hcengineering/desktop-downloads'
-import type { PasswordStrictness } from '@hcengineering/login'
 import { ScreenSource } from '@hcengineering/love'
 import { Plugin } from '@hcengineering/platform'
 import { IpcRendererEvent } from 'electron'
@@ -67,7 +66,6 @@ export interface Config {
   USE_OTP?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
-  PASSWORD_STRICTNESS?: PasswordStrictness
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS?: string
   HULYLAKE_URL?: string
   DISABLED_FEATURES?: string

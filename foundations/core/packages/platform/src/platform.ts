@@ -168,6 +168,7 @@ export default plugin(platformId, {
     IntegrationSecretNotFound: '' as StatusCode,
     PersonNotFound: '' as StatusCode<{ person: string }>,
     InvalidPassword: '' as StatusCode<{ account: string }>,
+    PasswordPolicyViolation: '' as StatusCode<{ rule: string, count: number }>,
     PasswordLoginLocked: '' as StatusCode,
     AccountBlocked: '' as StatusCode,
     WorkspaceReadOnly: '' as StatusCode,

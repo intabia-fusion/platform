@@ -26,6 +26,7 @@
     "WorkspaceAlreadyExists": "El espacio de trabajo ya existe",
     "InvalidOtp": "Código inválido",
     "TooManyOtpAttempts": "Demasiados intentos fallidos. Inténtelo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}. Si esta dirección tiene una cuenta, le hemos enviado un correo con un enlace para iniciar sesión.",
+    "PasswordPolicyViolation": "La contraseña no cumple con la política de contraseñas",
     "PasswordLoginLocked": "El inicio de sesión con contraseña está bloqueado debido a demasiados intentos fallidos. Use el método de inicio de sesión OTP para desbloquear su cuenta.",
     "AccountBlocked": "Tu cuenta ha sido bloqueada por el administrador.",
     "WorkspaceReadOnly": "Este espacio de trabajo es de solo lectura en este momento.",

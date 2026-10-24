@@ -59,9 +59,11 @@ import {
   getWorkspaceMembers,
   checkJoin,
   mergeSpecifiedPersons,
-  canMergeSpecifiedPersons
+  canMergeSpecifiedPersons,
+  getPasswordPolicy
 } from '../operations'
 import { accountPlugin } from '../plugin'
+import { assertPasswordPolicy, passwordRequirements } from '../password'
 
 // Mock platform
 jest.mock('@hcengineering/platform', () => {
@@ -1912,6 +1914,47 @@ describe('account operations', () => {
         expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
       })
 
+      test('should skip the password policy for a system token', async () => {
+        mockSignUpDeps(undefined)
+        const botPassword = '5f4dcc3b5aa765d61d8327deb882cf995f4dcc3b5aa765d61d8327deb882cf99'
+        ;(getMetadata as jest.Mock).mockImplementation((key) =>
+          key === accountPlugin.metadata.PasswordStrictness ? 'normal' : undefined
+        )
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: systemAccountUuid, extra: { service: 'aibot' } })
+
+        const result = await signUp(mockCtx, mockDb, mockBranding, mockToken, {
+          ...signUpParams,
+          password: botPassword
+        })
+
+        expect(result.account).toBe(mockAccountId)
+        expect(utils.signUpByEmail).toHaveBeenCalled()
+      })
+
+      test('should apply the password policy to a user password', async () => {
+        mockSignUpDeps(true)
+        ;(getMetadata as jest.Mock).mockImplementation((key) =>
+          key === accountPlugin.metadata.PasswordStrictness
+            ? 'normal'
+            : key === accountPlugin.metadata.AllowSkipOtpPasswordSignUp
+              ? true
+              : undefined
+        )
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: mockAccountId })
+
+        await expect(
+          signUp(mockCtx, mockDb, mockBranding, mockToken, { ...signUpParams, password: '12345678' })
+        ).rejects.toThrow(
+          new PlatformError(
+            new Status(Severity.ERROR, platform.status.PasswordPolicyViolation, {
+              rule: 'MinSpecialChars',
+              count: 1
+            })
+          )
+        )
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
+      })
+
       test('should create account when password sign up is allowed', async () => {
         const mockSocialId = {
           _id: 'social-id' as PersonId,
@@ -2756,6 +2799,105 @@ describe('account operations', () => {
             })
           )
         )
+      })
+    })
+
+    describe('password policy', () => {
+      const useStrictness = (value: string | undefined): void => {
+        ;(getMetadata as jest.Mock).mockImplementation((key: any) =>
+          key === accountPlugin.metadata.PasswordStrictness ? value : undefined
+        )
+      }
+
+      afterEach(() => {
+        ;(getMetadata as jest.Mock).mockReset()
+        jest.restoreAllMocks()
+      })
+
+      test('getPasswordPolicy serves the preset the account is configured with', async () => {
+        useStrictness('normal')
+
+        const policy = await getPasswordPolicy(mockCtx, mockDb, mockBranding, mockToken, {})
+
+        expect(policy).toEqual({ strictness: 'normal', validations: passwordRequirements.normal })
+      })
+
+      test('getPasswordPolicy falls back to none without a valid PASSWORD_STRICTNESS', async () => {
+        useStrictness('strikt')
+
+        const policy = await getPasswordPolicy(mockCtx, mockDb, mockBranding, mockToken, {})
+
+        expect(policy.strictness).toBe('none')
+      })
+
+      test('restorePassword rejects a password the policy does not allow', async () => {
+        useStrictness('normal')
+        jest.spyOn(utils, 'setPassword').mockResolvedValue()
+
+        await expect(
+          restorePassword(mockCtx, mockDb, mockBranding, mockToken, { password: '12345678' })
+        ).rejects.toThrow(
+          new PlatformError(
+            new Status(Severity.ERROR, platform.status.PasswordPolicyViolation, {
+              rule: 'MinSpecialChars',
+              count: 1
+            })
+          )
+        )
+        expect(utils.setPassword).not.toHaveBeenCalled()
+      })
+
+      test('changePassword rejects a weak new password after the old one is verified', async () => {
+        useStrictness('normal')
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: mockAccountId })
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({
+          uuid: mockAccountId,
+          hash: 'old-hash',
+          salt: 'old-salt'
+        })
+        jest.spyOn(utils, 'verifyPassword').mockReturnValue(true)
+        jest.spyOn(utils, 'setPassword').mockResolvedValue()
+
+        await expect(
+          changePassword(mockCtx, mockDb, mockBranding, mockToken, {
+            oldPassword: mockOldPassword,
+            newPassword: '12345678'
+          })
+        ).rejects.toThrow(
+          new PlatformError(
+            new Status(Severity.ERROR, platform.status.PasswordPolicyViolation, {
+              rule: 'MinSpecialChars',
+              count: 1
+            })
+          )
+        )
+        expect(utils.setPassword).not.toHaveBeenCalled()
+      })
+
+      test('none accepts anything, including passwords that were allowed before the policy existed', () => {
+        useStrictness(undefined)
+
+        expect(() => {
+          assertPasswordPolicy('1')
+        }).not.toThrow()
+      })
+
+      test('a Cyrillic password satisfies the case rules but still needs a special character', () => {
+        useStrictness('normal')
+
+        expect(() => {
+          assertPasswordPolicy('Пароль123')
+        }).toThrow(
+          new PlatformError(
+            new Status(Severity.ERROR, platform.status.PasswordPolicyViolation, {
+              rule: 'MinSpecialChars',
+              count: 1
+            })
+          )
+        )
+        expect(() => {
+          assertPasswordPolicy('Пароль123!')
+        }).not.toThrow()
       })
     })
   })
