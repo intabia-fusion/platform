@@ -38,8 +38,7 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
@@ -367,12 +366,12 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
 }
@@ -421,8 +420,7 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
@@ -750,18 +748,18 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   kit.at(main, kit.Menu(
     [
       { header: 'Мобильное приложение · APP' },
-      { label: 'Релиз 1.0', icon: 'board', hint: 'Веха' },
+      { label: 'Релиз 1.0', icon: 'board' },
       { label: 'Тестирование', icon: 'kit/PushPin', hint: 'в навигаторе' },
       '-',
       { header: 'Несколько проектов' },
@@ -774,7 +772,7 @@ await kit.page('Task boards')
       { label: 'Настройки доски', icon: 'gear' }
     ],
     { w: 320, name: 'Board selector popup' }
-  ), 140, 46)
+  ), 208, 46)
 }
 {
   const { main } = kit.Workbench('Доска - вход в настройки', 0, 1200, {
@@ -812,8 +810,7 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
@@ -1141,12 +1138,12 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   kit.at(main, kit.add(
@@ -1193,8 +1190,7 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
@@ -1522,12 +1518,12 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   const unmappedStatusesPopoverShadow = kit.add(
@@ -1567,7 +1563,7 @@ await kit.page('Task boards')
       color: { color: '#000000', opacity: 0.149 }
     }
   ]
-  kit.at(main, unmappedStatusesPopoverShadow, 1038, 50)
+  kit.at(main, unmappedStatusesPopoverShadow, 1000, 50)
 }
 {
   const { main } = kit.Workbench('Доска - статусы колонки', 0, 2400, {
@@ -1605,8 +1601,7 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
@@ -1934,68 +1929,70 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   const columnStatusesPopoverShadow = kit.add(
     kit.box('Column statuses popover', {
-      w: 260,
+      w: 262,
       dir: 'column',
-      gap: 10,
-      pad: [16, 16, 16, 16],
+      gap: 8,
+      pad: [8, 8, 8, 8],
       vs: 'auto',
       fill: T('theme-popup-color'),
       stroke: T('theme-popup-divider'),
-      radius: 8
+      radius: 12
     }),
     kit.text('Статусы колонки', { size: 12, weight: 500, color: T('theme-darker-color') }),
     kit.StatusChip(
       'In Progress',
       'active',
-      { count: 6, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 6, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     ),
     kit.StatusChip(
       'Development',
       'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 1, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     ),
     kit.StatusChip(
       'Prototyping',
       'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 1, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     ),
     kit.StatusChip(
       'Integration',
       'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 1, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     ),
     kit.StatusChip(
       'Verification',
       'active',
-      { count: 0, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 0, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     ),
     kit.StatusChip(
       'Approval',
       'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+      { count: 1, w: 244, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
     )
   )
   columnStatusesPopoverShadow.shadows = [
     {
       style: 'drop-shadow',
       offsetX: 0,
-      offsetY: 8,
-      blur: 24,
+      offsetY: 0,
+      blur: 8,
       spread: 0,
-      color: { color: '#000000', opacity: 0.149 }
+      color: { color: '#000000', opacity: 0.2 }
     }
   ]
-  kit.at(main, columnStatusesPopoverShadow, 508, 169)
+  // The product tooltip points at the column: a rotated square behind the popup, centered on the column (x 508, w 234)
+  kit.at(main, kit.box('Tooltip arrow', { w: 14, h: 14, fill: T('theme-popup-color'), stroke: T('theme-popup-divider'), rot: 45, clip: false }), 618, 163)
+  kit.at(main, columnStatusesPopoverShadow, 494, 169)
 }
 {
   const { main } = kit.Workbench('Стало - канбан', 2020, 2400, {
@@ -2020,182 +2017,27 @@ await kit.page('Task boards')
     ]
   })
   kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
-  kit.at(main, kit.add(
-    kit.box('Kanban', { w: 2264, h: 930, dir: 'row', pad: [24, 0, 0, 24] }),
-    kit.KanbanColumn(
-      {
-        name: 'Todo',
-        cat: 'todo',
-        count: 2,
-        cards: [
-          {
-            id: 'MKT-2',
-            cat: 'todo',
-            title: 'Подготовить пресс-релиз о запуске приложения',
-            assignee: ['СА', 'Sky'],
-            est: '4h',
-            priority: 'medium'
-          },
-          {
-            id: 'MKT-5',
-            cat: 'todo',
-            title: 'Email-рассылка по базе подписчиков',
-            assignee: ['СА', 'Sky'],
-            est: '3h',
-            priority: 'high'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'On Hold',
-        cat: 'todo',
-        count: 1,
-        cards: [
-          {
-            id: 'APP-22',
-            cat: 'todo',
-            title: 'Поддержка Apple Pay',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '8h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'In Progress',
-        cat: 'active',
-        count: 3,
-        tools: true,
-        cards: [
-          {
-            id: 'APP-6',
-            cat: 'active',
-            title: 'Интеграция с платёжным провайдером',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '21h',
-            priority: 'urgent',
-            milestone: 'Релиз 1.0',
-            labels: [['срочно', 'Pink']]
-          },
-          {
-            id: 'MKT-1',
-            cat: 'active',
-            title: 'Запуск рекламной кампании в соцсетях',
-            assignee: ['СА', 'Sky'],
-            est: '16h',
-            priority: 'high'
-          },
-          {
-            id: 'APP-3',
-            cat: 'active',
-            title: 'Push-уведомления о статусе заказа',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '13h',
-            priority: 'high',
-            sub: '1/2',
-            component: 'iOS',
-            milestone: 'Релиз 1.0',
-            labels: [['срочно', 'Pink']]
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Peer Review',
-        cat: 'active',
-        count: 2,
-        cards: [
-          {
-            id: 'APP-27',
-            cat: 'active',
-            title: 'Проверка количества товара в корзине',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '3h',
-            priority: 'high'
-          },
-          {
-            id: 'APP-28',
-            cat: 'active',
-            title: 'Рефакторинг API-клиента',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '5h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Ready for QA',
-        cat: 'active',
-        count: 1,
-        cards: [
-          {
-            id: 'APP-29',
-            cat: 'active',
-            title: 'Ссылки на товар из внешних источников',
-            assignee: ['КМ', 'Grass'],
-            est: '3h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Done',
-        cat: 'won',
-        count: 2,
-        cards: [
-          {
-            id: 'APP-7',
-            cat: 'won',
-            title: 'Баг: краш при открытии профиля на Android 12',
-            assignee: ['ВО', 'Crocodile'],
-            est: '3h',
-            priority: 'urgent',
-            milestone: 'Релиз 1.0',
-            labels: [['баг', 'Firework']]
-          },
-          {
-            id: 'MKT-4',
-            cat: 'won',
-            title: 'Обновить лендинг на сайте',
-            assignee: ['КМ', 'Grass'],
-            est: '6h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Canceled',
-        cat: 'lost',
-        count: 1,
-        cards: [{ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }]
-      },
-      320,
-      898
-    )
-  ), 2, 114)
+  // Columns follow the demo statuses: by category, the demo order inside it; the first five fit the window
+  const d = DEMO.ru
+  const columns = ['backlog', 'todo', 'active', 'won', 'lost'].flatMap((cat) => d.statuses.filter((st) => st.category === cat)).slice(0, 5)
+  const issues = d.projects.flatMap((project) => project.issues)
+  const person = (name) => d.people.find((it) => it.name === name)
+  const cardOf = (i, cat) => ({
+    id: i.id,
+    cat,
+    title: i.title,
+    priority: i.priority,
+    ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
+    ...(i.component !== undefined ? { component: i.component } : {}),
+    ...(i.milestone !== undefined ? { milestone: i.milestone } : {}),
+    ...(i.estimation !== undefined ? { est: i.estimation + 'h' } : {})
+  })
+  const board = kit.box('Kanban', { w: 2264, h: 930, dir: 'row', pad: [24, 0, 0, 24] })
+  for (const st of columns) {
+    const all = issues.filter((i) => i.status === st.name)
+    kit.add(board, kit.KanbanColumn({ name: st.name, cat: st.category, count: all.length, cards: all.slice(0, 4).map((i) => cardOf(i, st.category)) }, 320, 898))
+  }
+  kit.at(main, board, 2, 114)
 }
 {
   const { main } = kit.Workbench('Стало - канбан с дорожками', 0, 3600, {
@@ -2220,489 +2062,38 @@ await kit.page('Task boards')
     ]
   })
   kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
-  kit.at(main, kit.add(
-    kit.box('Kanban', { w: 2264, h: 930, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
-    kit.add(
-      kit.row('Column headers', 0, { align: 'start', clip: false }),
-      kit.KanbanColumn({ name: 'Todo', cat: 'todo', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'On Hold', cat: 'todo', count: 1, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'In Progress', cat: 'active', count: 3, tools: true, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Peer Review', cat: 'active', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Ready for QA', cat: 'active', count: 1, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Done', cat: 'won', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Canceled', cat: 'lost', count: 1, cards: [] }, 320, 44)
-    ),
-    kit.add(
-      kit.box('Swimlane Urgent', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Urgent', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(2)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-6',
-          cat: 'active',
-          title: 'Интеграция с платёжным провайдером',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '21h',
-          priority: 'urgent',
-          milestone: 'Релиз 1.0',
-          labels: [['срочно', 'Pink']]
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-7',
-          cat: 'won',
-          title: 'Баг: краш при открытии профиля на Android 12',
-          assignee: ['ВО', 'Crocodile'],
-          est: '3h',
-          priority: 'urgent',
-          milestone: 'Релиз 1.0',
-          labels: [['баг', 'Firework']]
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane High', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('High', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(4)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-5',
-          cat: 'todo',
-          title: 'Email-рассылка по базе подписчиков',
-          assignee: ['СА', 'Sky'],
-          est: '3h',
-          priority: 'high'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-1',
-          cat: 'active',
-          title: 'Запуск рекламной кампании в соцсетях',
-          assignee: ['СА', 'Sky'],
-          est: '16h',
-          priority: 'high'
-        }),
-        kit.IssueCard({
-          id: 'APP-3',
-          cat: 'active',
-          title: 'Push-уведомления о статусе заказа',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '13h',
-          priority: 'high',
-          sub: '1/2',
-          component: 'iOS',
-          milestone: 'Релиз 1.0',
-          labels: [['срочно', 'Pink']]
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-27',
-          cat: 'active',
-          title: 'Проверка количества товара в корзине',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '3h',
-          priority: 'high'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane Medium', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Medium', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(5)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-2',
-          cat: 'todo',
-          title: 'Подготовить пресс-релиз о запуске приложения',
-          assignee: ['СА', 'Sky'],
-          est: '4h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-22',
-          cat: 'todo',
-          title: 'Поддержка Apple Pay',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '8h',
-          priority: 'medium'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-28',
-          cat: 'active',
-          title: 'Рефакторинг API-клиента',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '5h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-29',
-          cat: 'active',
-          title: 'Ссылки на товар из внешних источников',
-          assignee: ['КМ', 'Grass'],
-          est: '3h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-4',
-          cat: 'won',
-          title: 'Обновить лендинг на сайте',
-          assignee: ['КМ', 'Grass'],
-          est: '6h',
-          priority: 'medium'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane Low', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Low', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(1)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
-      )
-    )
-  ), 2, 114)
+  // Columns follow the demo statuses: by category, the demo order inside it; the first five fit the window
+  const d = DEMO.ru
+  const columns = ['backlog', 'todo', 'active', 'won', 'lost'].flatMap((cat) => d.statuses.filter((st) => st.category === cat)).slice(0, 5)
+  const issues = d.projects.flatMap((project) => project.issues)
+  const person = (name) => d.people.find((it) => it.name === name)
+  const cardOf = (i, cat) => ({
+    id: i.id,
+    cat,
+    title: i.title,
+    priority: i.priority,
+    ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
+    ...(i.component !== undefined ? { component: i.component } : {}),
+    ...(i.milestone !== undefined ? { milestone: i.milestone } : {}),
+    ...(i.estimation !== undefined ? { est: i.estimation + 'h' } : {})
+  })
+  const board = kit.box('Kanban', { w: 2264, h: 930, dir: 'column', gap: 8, pad: [24, 24, 0, 24] })
+  kit.add(board, kit.add(
+    kit.row('Column headers', 0, { align: 'start', clip: false }),
+    columns.map((st) => kit.KanbanColumn({ name: st.name, cat: st.category, count: issues.filter((i) => i.status === st.name).length, cards: [] }, 320, 44))
+  ))
+  // The lane header is tinted by the priority, as in the product
+  for (const [level, title, pal] of [['urgent', 'Urgent', 'Orange'], ['high', 'High', 'Sunshine'], ['medium', 'Medium', 'Ocean']]) {
+    const inLane = issues.filter((i) => i.priority === level)
+    const head = kit.box('Swimlane ' + title, { w: 2214, h: 32, dir: 'row', gap: 8, pad: [0, 8, 0, 8], align: 'center', fill: PB(pal), radius: 4 })
+    kit.add(head, kit.icon('chevronD', PT(pal)), kit.PriorityIcon(level), kit.text(title, { weight: 600, color: PT(pal) }), kit.Count(inLane.length))
+    const row = kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false })
+    for (const st of columns) {
+      const cards = inLane.filter((i) => i.status === st.name).slice(0, 2).map((i) => kit.IssueCard(cardOf(i, st.category), 278))
+      kit.add(row, kit.add(kit.box('cell', { w: 294, h: 56, dir: 'column', gap: 8, pad: [8, 8, 8, 8], vs: cards.length > 0 ? 'auto' : 'fix', fill: T('theme-kanban-card-bg-color'), radius: 8, clip: false }), cards))
+    }
+    kit.add(board, head, row)
+  }
+  kit.at(main, board, 2, 114)
 }
 await kit.settle()

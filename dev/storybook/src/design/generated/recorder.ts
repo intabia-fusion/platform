@@ -141,7 +141,9 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
         wrap: o.wrap,
         hs: o.hs,
         vs: o.vs,
-        clip: o.clip
+        clip: o.clip,
+        opacity: o.opacity,
+        rot: o.rot
       },
       o.w ?? 10,
       o.h ?? 10
@@ -463,8 +465,16 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.Notice = (text: string, kind = 'warning', o: Record<string, any> = {}) =>
     node('Notice', 'Notice/' + kind, { text, kind, pill: o.pill, block: o.w !== undefined ? true : undefined })
   kit.QuickFilter = (label: string, on?: boolean) => node('QuickFilter', 'QuickFilter/' + label, { label, on })
-  kit.FilterChip = (attribute: string, operator: string, value: string, o: Record<string, any> = {}) =>
-    node('FilterChip', 'FilterChip/' + attribute, { attribute, operator, value, plain: o.plain })
+  kit.FilterChip = (attribute: string, operator: string, value: any, o: Record<string, any> = {}) => {
+    const chip = node('FilterChip', 'FilterChip/' + attribute, {
+      attribute,
+      operator,
+      value: typeof value === 'string' ? value : undefined,
+      plain: o.plain,
+      condition: o.condition
+    })
+    return typeof value === 'string' ? chip : kit.add(chip, value)
+  }
   kit.Swatch = (color: any, size?: number) => node('Swatch', 'Swatch', { color: col(color), size })
   kit.SectionTitle = (title: string, hint?: string) => node('SectionTitle', 'Section ' + title, { title, hint })
   kit.FormRow = (label: string, control: any, o: Record<string, any> = {}) =>
@@ -477,7 +487,15 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.ColumnHeader = (name: string, cat: string, count: number, _w: number, o: Record<string, any> = {}) =>
     node('ColumnHeader', 'ColumnHeader ' + name, { column: toColumn(name, cat, count, o) })
   kit.IssueCard = (d: Record<string, any>) =>
-    node('IssueCard', 'IssueCard ' + d.id, { issue: toIssue(d), density: d.density })
+    node('IssueCard', 'IssueCard ' + d.id, {
+      issue: toIssue(d),
+      density: d.density,
+      hover: d.hover,
+      dragged: d.dragged,
+      lifted: d.lifted,
+      focus: d.focus,
+      productIcons: d.productIcons
+    })
   kit.IssuePage = (d: Record<string, any>, w = 1515, h = 967) =>
     node(
       'IssuePage',
@@ -601,6 +619,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     })
     if (o.titleNode !== undefined) n.children.push(inSlot(o.titleNode, 'title'))
     for (const a of flat([o.actions ?? []])) n.children.push(inSlot(a, 'actions'))
+    for (const a of flat([o.end ?? []])) n.children.push(inSlot(a, 'end'))
     for (const f of flat([o.filters ?? []])) n.children.push(inSlot(f, 'filters'))
     main.children.push(n)
     return 113

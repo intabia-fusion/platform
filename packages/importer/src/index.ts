@@ -14,6 +14,7 @@
 //
 
 export * from './huly/huly'
+export { WorkspaceImporter } from './importer/importer'
 export * from './clickup/clickup'
 export * from './notion/notion'
 export * from './docx/docx'

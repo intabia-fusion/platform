@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -82,6 +83,8 @@ import TitlePresenter from './components/issues/TitlePresenter.svelte'
 import ParentIssuePresenter from './components/issues/ParentIssuePresenter.svelte'
 import ParentIssueSelector from './components/issues/ParentIssueSelector.svelte'
 import LabelsView from './components/LabelsView.svelte'
+import BoardPage from './components/boards/BoardPage.svelte'
+import BoardsNav from './components/boards/BoardsNav.svelte'
 import EditMilestone from './components/milestones/EditMilestone.svelte'
 import MilestoneDatePresenter from './components/milestones/MilestoneDatePresenter.svelte'
 import MyIssues from './components/myissues/MyIssues.svelte'
@@ -517,6 +520,8 @@ export default async (): Promise<Resources> => ({
     IssueExtra,
     IssueStatusPresenter,
     LabelsView,
+    BoardPage,
+    BoardsNav,
     ParentIssuePresenter,
     ParentIssueSelector,
     TimeSpendReportList,

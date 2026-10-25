@@ -43,6 +43,7 @@
     "docker-server": "./common/scripts/docker-server.sh && pnpm docker:up:server",
     "docker-love": "./common/scripts/docker-love.sh && pnpm docker:up:love",
     "docker:up": "docker compose -f ./dev/docker-compose.yaml up -d --force-recreate",
+    "storybook:dev": "pnpm --filter @hcengineering/storybook run generate-screens && pnpm --filter @hcengineering/storybook run storybook",
     "storybook": "pnpm --filter @hcengineering/storybook run generate-screens && pnpm --filter @hcengineering/storybook run bundle && pnpm --filter @hcengineering/storybook run docker:build && docker compose -f ./dev/docker-compose.yaml up -d --force-recreate storybook",
     "docker:up:tbank": "docker compose -f ./dev/docker-compose.yaml -f ./dev/docker-compose.tbank-mock.yaml up -d --force-recreate",
     "docker:up:backup": "docker compose -f ./dev/docker-compose.yaml -f ./dev/docker-compose.backup.yaml up -d --force-recreate",

@@ -6,19 +6,30 @@ kit.statusPalette = (cat, color) => color || kit.CATEGORY[cat]
 
 // Card of a board in four densities (detailed, normal, compact, dense), 234px wide in a board column.
 // d: id cat color(palette) title assignee[initials, palette] priority sub due overdue component milestone
-//    labels[[name, palette]] est(text, "13h") accent(color) parent density estLabel
+//    labels[[name, palette]] est(text, "13h") accent(color) parent density estLabel att com(counters of a detailed card)
+//    productIcons(the icons of the product card: layers, signpost, orange due date)
+//    hover dragged(the drop place) lifted(in hand) focus('inset' as today: a rule border hides it | 'ring' outside the card)
+// The 'ring' needs an outline, which Penpot and pen do not have: only the Storybook card draws it.
 kit.IssueCard = (d, w = 234) => {
   const density = d.density || 'detailed'
   const [py, px] = { detailed: [12, 14], normal: [10, 12], compact: [8, 10], dense: [6, 10] }[density]
   const gap = { detailed: 8, normal: 8, compact: 6, dense: 4 }[density]
   const inner = w - 2 * px - 2
   const dark = T('theme-dark-color')
-  const card = kit.box('IssueCard ' + d.id, { w, h: 40, dir: 'column', gap, pad: [py, px, py, px], vs: 'auto', fill: T('theme-popup-color'), stroke: d.accent || T('theme-divider-color'), strokeW: d.accent ? 2 : 1, radius: 8 })
-  card.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 1, blur: 3, spread: 0, color: { color: '#000000', opacity: 0.06 } }]
+  const inset = d.focus === 'inset' && !d.accent
+  // A focused card keeps its background: the ring already marks it
+  const fill = d.dragged ? T('accent-bg-color') : d.hover && !d.focus ? T('highlight-hover') : T('theme-popup-color')
+  const card = kit.box('IssueCard ' + d.id, { w, h: 40, dir: 'column', gap, pad: [py, px, py, px], vs: 'auto', fill, stroke: d.accent || (inset ? T('primary-edit-border-color') : T('theme-divider-color')), strokeW: d.accent || inset ? 2 : 1, radius: 8 })
+  const lift = d.lifted ? [{ style: 'drop-shadow', offsetX: 0, offsetY: 8, blur: 24, spread: 0, color: { color: '#000000', opacity: 0.15 } }] : []
+  card.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 1, blur: 3, spread: 0, color: { color: '#000000', opacity: 0.06 } }, ...lift]
   const avatar = () => d.assignee ? kit.Avatar(d.assignee[0], d.assignee[1], 20, true) : kit.AvatarEmpty(20)
   const txt = (s, size, color, o = {}) => kit.text(s, { size, color, ...o })
   const pill = (name, content) => kit.add(kit.box(name, { w: 10, h: 20, dir: 'row', gap: 6, pad: [3, 8, 3, 8], align: 'center', hs: 'auto', vs: 'auto', radius: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }), content)
   const dueColor = d.overdue ? T('theme-state-negative-color') : dark
+  const ic = d.productIcons
+    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'tracker/component', milestone: 'tracker/milestone' }
+    : { sub: 'subissues', due: 'calendar', component: 'component', milestone: 'milestone' }
+  const dueIcon = d.productIcons && !d.overdue ? T('theme-warning-color') : dueColor
   if (density === 'dense') {
     const row = kit.box('row', { w: inner, h: 20, dir: 'row', gap: 6, align: 'center', vs: 'auto' })
     const room = inner - 16 - 20 - 18 - kit.textWidth(d.id, 12)
@@ -33,10 +44,10 @@ kit.IssueCard = (d, w = 234) => {
     kit.add(row, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 13, T('theme-caption-color'), { weight: 500, w: inner - 16 - 20 - 12, name: 'title' }), avatar())
     const meta = kit.box('meta', { w: inner, h: 20, dir: 'row', gap: 8, align: 'center', hs: 'auto', vs: 'auto' })
     kit.add(meta, txt(d.id, 12, T('theme-darker-color')), kit.PriorityIcon(d.priority || 'none'))
-    if (d.sub) kit.add(meta, kit.icon('subissues', dark, 14))
-    if (d.due) kit.add(meta, kit.icon('calendar', dueColor, 14))
-    if (d.component) kit.add(meta, kit.icon('component', dark, 14))
-    if (d.milestone) kit.add(meta, kit.icon('milestone', dark, 14))
+    if (d.sub) kit.add(meta, kit.icon(ic.sub, dark, 14))
+    if (d.due) kit.add(meta, kit.icon(ic.due, dueIcon, 14))
+    if (d.component) kit.add(meta, kit.icon(ic.component, dark, 14))
+    if (d.milestone) kit.add(meta, kit.icon(ic.milestone, dark, 14))
     if (d.est) kit.add(meta, txt(d.est, 12, T('theme-darker-color')))
     return kit.add(card, row, meta)
   }
@@ -49,14 +60,20 @@ kit.IssueCard = (d, w = 234) => {
   kit.add(title, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 14, T('theme-caption-color'), { weight: 500, w: inner - 24, name: 'title' }))
   const chips = kit.box('chips', { w: inner, h: 20, dir: 'row', gap: 6, wrap: true, vs: 'auto', align: 'start' })
   kit.add(chips, pill('priority', kit.PriorityIcon(d.priority || 'none')))
-  if (d.sub) kit.add(chips, pill('sub-issues', [kit.icon('subissues', dark, 14), txt(d.sub, 12, dark)]))
-  if (d.due) kit.add(chips, pill('due date', [kit.icon('calendar', dueColor, 14), txt(d.due, 12, dueColor)]))
-  if (d.component) kit.add(chips, pill('component', [kit.icon('component', dark, 14), txt(d.component, 12, dark)]))
-  if (d.milestone) kit.add(chips, pill('milestone', [kit.icon('milestone', dark, 14), txt(d.milestone, 12, dark)]))
+  if (d.sub) kit.add(chips, pill('sub-issues', [kit.icon(ic.sub, dark, 14), txt(d.sub, 12, dark)]))
+  if (d.due) kit.add(chips, pill('due date', [kit.icon(ic.due, dueIcon, 14), txt(d.due, 12, dueColor)]))
+  if (d.component) kit.add(chips, pill('component', [kit.icon(ic.component, dark, 14), txt(d.component, 12, dark)]))
+  if (d.milestone) kit.add(chips, pill('milestone', [kit.icon(ic.milestone, dark, 14), txt(d.milestone, 12, dark)]))
   if (density === 'detailed') for (const [name, pal] of (d.labels || [])) kit.add(chips, pill('label', [kit.ellipse(8, P(pal), 'dot'), txt(name, 12, dark)]))
   else if (d.est) kit.add(chips, pill('est', txt(d.est, 12, dark)))
   kit.add(card, top, title, chips)
-  if (density === 'detailed' && d.est) kit.add(card, txt((d.estLabel || 'Оценка') + ' ' + d.est, 12, T('theme-darker-color'), { name: 'footer' }))
+  if (density === 'detailed' && (d.att || d.com)) {
+    const foot = kit.box('footer', { w: inner, h: 15, dir: 'row', align: 'center', justify: 'space-between', vs: 'auto' })
+    const count = (icon, n) => kit.add(kit.row('counter', 4), kit.icon(icon, T('theme-darker-color'), 14), txt(String(n), 12, T('theme-darker-color')))
+    kit.add(foot, d.est ? txt((d.estLabel || 'Оценка') + ' ' + d.est, 12, T('theme-darker-color'), { name: 'footer' }) : kit.spacer(1, 1))
+    kit.add(foot, kit.add(kit.row('counters', 10), d.att ? count('clip', d.att) : [], d.com ? count('comment', d.com) : []))
+    kit.add(card, foot)
+  } else if (density === 'detailed' && d.est) kit.add(card, txt((d.estLabel || 'Оценка') + ' ' + d.est, 12, T('theme-darker-color'), { name: 'footer' }))
   return card
 }
 

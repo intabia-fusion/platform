@@ -59,6 +59,7 @@ import {
   setupAccount,
   type PlannerAccount
 } from './plannerData'
+import { designDirFor, importDesignDemo } from './demoDesign'
 
 class DemoLogger implements Logger {
   log (msg: string, data?: any): void {
@@ -80,6 +81,8 @@ export interface GenerateDemoDataOptions {
   accountEmails: string[]
   password: string
   dir: string
+  /** dev/design/demo/<lang> with the statuses, extra issues and boards of the mockups; 'none' skips it, default by `dir` */
+  designDir?: string
 }
 
 /** The layout/text for a demo set, kept out of the importer's own folder as `<dir>.data.yaml` so the
@@ -121,7 +124,7 @@ function loadDemoData (resolvedDir: string): DemoDataFile {
 
 /** Names match the demo set's accounts exactly: account 1 = lead, 2 = developer, 3 = designer, 4 = tester. */
 export async function generateDemoData (opts: GenerateDemoDataOptions): Promise<void> {
-  const { workspace, platformUrl, accountEmails, password, dir } = opts
+  const { workspace, platformUrl, accountEmails, password, dir, designDir } = opts
   if (accountEmails.length !== 4) {
     throw new Error('need exactly 4 accounts: lead, developer, designer, tester')
   }
@@ -162,6 +165,9 @@ export async function generateDemoData (opts: GenerateDemoDataOptions): Promise<
   console.log('[demo-data] import done')
 
   await enrichTracker(owner.client, now, data)
+  if (designDir !== 'none') {
+    await importDesignDemo(designDir ?? designDirFor(dir), accounts, new DemoLogger(), uploader)
+  }
   await createChat(accounts, data.channels)
   await createPlannerData(systemRest, accounts, data, now)
 

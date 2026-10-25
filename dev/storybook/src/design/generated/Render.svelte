@@ -146,6 +146,8 @@
     if (p.stroke !== undefined) s.push(`border:${p.strokeW ?? 1}px ${p.strokeStyle ?? 'solid'} ${p.stroke}`)
     if (p.radius !== undefined) s.push(`border-radius:${p.radius}px`)
     if (p.clip !== false) s.push('overflow:hidden')
+    if (p.opacity !== undefined) s.push(`opacity:${p.opacity}`)
+    if (p.rot !== undefined) s.push(`transform:rotate(${p.rot}deg)`)
     s.push(...fillStyle(p, parent))
     if (shadows !== undefined) s.push(`box-shadow:${shadows.map(shadow).join(',')}`)
     return s.join(';')
@@ -257,6 +259,9 @@
     >
     <svelte:fragment slot="actions"
       >{#each kids('actions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+    >
+    <svelte:fragment slot="end"
+      >{#each kids('end') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
     >
     <svelte:fragment slot="filters"
       >{#each kids('filters') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
@@ -425,7 +430,9 @@
 {:else if node.c === 'StatusIcon'}
   <StatusIcon {...p} />
 {:else if node.c === 'FilterChip'}
-  <FilterChip {...p} />
+  <FilterChip {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</FilterChip
+  >
 {:else if node.c === 'QuickFilter'}
   <QuickFilter {...p} />
 {:else if node.c === 'Swatch'}

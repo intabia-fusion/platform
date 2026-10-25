@@ -19,6 +19,7 @@
 export type StatusCategory = 'backlog' | 'todo' | 'active' | 'won' | 'lost'
 // Card density of a board: all fields, no labels and estimation line, attributes as icons, one line
 export type Density = 'detailed' | 'normal' | 'compact' | 'dense'
+export type CardFocus = 'inset' | 'ring'
 export type Priority = 'none' | 'urgent' | 'high' | 'medium' | 'low'
 
 // Icon by name: a hand-drawn kit icon ('gear'), a sprite id ('tracker/parent-issue'), a ui kit sprite icon ('kit/Plus') or a ui icon ('ui/Mixin')

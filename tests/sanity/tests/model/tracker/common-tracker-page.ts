@@ -69,8 +69,11 @@ export class CommonTrackerPage extends CalendarPage {
   shouldShowAllToggle = (): Locator =>
     this.page.locator('.antiCard.menu .antiCard-menu__item:has-text("Show empty groups")')
 
+  // Issues of a project show the project boards in place of the "Issues" title
   header = (): Locator =>
-    this.page.locator('button.hulyBreadcrumb-container > span.hulyBreadcrumb-label', { hasText: 'Issues' })
+    this.page
+      .locator('button.hulyBreadcrumb-container > span.hulyBreadcrumb-label', { hasText: 'Issues' })
+      .or(this.page.locator('[data-id="projectBoardsBar"]'))
 
   view = (): Locator => this.page.locator('.hulyHeader-buttonsGroup > button[data-id="btn-viewOptions"]')
   showMore = (): Locator => this.page.locator('.hulyHeader-buttonsGroup > button[data-id="btn-viewSetting"]')

@@ -46,6 +46,8 @@ import {
   TMilestone,
   TProject,
   TProjectTargetPreference,
+  TBoard,
+  TBoardPreference,
   TRelatedIssueTarget,
   TTimeSpendReport,
   TTypeEstimation,
@@ -332,6 +334,7 @@ function defineApplication (
       hidden: false,
       locationResolver: tracker.resolver.Location,
       navigatorModel: {
+        sections: [tracker.component.BoardsNav],
         specials: [
           {
             id: opt.myIssuesId,
@@ -366,6 +369,13 @@ function defineApplication (
                 ['backlog', tracker.string.Backlog, {}]
               ]
             }
+          },
+          {
+            id: 'boards',
+            hidden: true,
+            label: tracker.string.TaskBoards,
+            icon: tracker.icon.Issues,
+            component: tracker.component.BoardPage
           },
           {
             id: 'all-projects',
@@ -466,7 +476,9 @@ export function createModel (builder: Builder): void {
     TRelatedIssueTarget,
     TTypeEstimation,
     TTypeRemainingTime,
-    TProjectTargetPreference
+    TProjectTargetPreference,
+    TBoard,
+    TBoardPreference
   )
 
   builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})

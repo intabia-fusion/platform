@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,6 +32,7 @@
   export let loaded: IdMap<DocWithRank>
   export let limit: number
   export let onShowMore: () => void
+  export let modern: boolean = false
 
   export let cardDragOver: (evt: CardDragEvent, object: Item) => void
   export let cardDrop: (evt: CardDragEvent, object: Item) => void
@@ -78,7 +80,8 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       bind:this={stateRefs[i]}
-      class="p-1 flex-no-shrink border-radius-1 clear-mins"
+      class="flex-no-shrink border-radius-1 clear-mins"
+      class:p-1={!modern}
       on:dragover|preventDefault={(evt) => {
         cardDragOver(evt, object)
       }}
@@ -88,6 +91,7 @@
     >
       <div
         class="card-container"
+        class:modern
         data-id="kanban-card"
         data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
@@ -117,7 +121,7 @@
   {/if}
 {/each}
 {#if hasMoreToShow}
-  <div class="p-1 flex-no-shrink clear-mins" data-id="kanban-show-more">
+  <div class="flex-no-shrink clear-mins" class:p-1={!modern} data-id="kanban-show-more">
     <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
       <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
       <Button
@@ -137,6 +141,20 @@
     border: 1px solid var(--theme-kanban-card-border);
     border-radius: 0.25rem;
 
+    &.modern {
+      background-color: var(--theme-popup-color);
+      border: 1px solid var(--theme-divider-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    // Mouse and keyboard focus look the same: a ring outside the card, the background stays
+    &.modern.selection {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      outline: 2px solid var(--kanban-focus-ring-color, #6b3ad3);
+      outline-offset: 2px;
+    }
+
     &.checked {
       background-color: var(--highlight-select);
       box-shadow: 0 0 1px 1px var(--highlight-select-border);
@@ -150,10 +168,6 @@
       /* Use accent-aware edit border and inset box-shadow so the animated border uses
          the same accent token that the theme provides (avoids abrupt color jumps). */
       box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color, var(--primary-button-default));
-
-      &:hover {
-        background-color: var(--highlight-hover);
-      }
     }
     &.checked.selection:hover {
       background-color: var(--highlight-select-hover);

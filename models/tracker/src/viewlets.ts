@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -98,10 +99,17 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
             label: tracker.string.SwimLaneBy
           },
           {
-            key: 'compactMode',
-            type: 'toggle' as const,
-            defaultValue: false,
-            label: tracker.string.CompactMode
+            key: 'density',
+            type: 'dropdown' as const,
+            defaultValue: 'default',
+            values: [
+              { id: 'default', label: tracker.string.DensityDefault },
+              { id: 'detailed', label: tracker.string.DensityDetailed },
+              { id: 'normal', label: tracker.string.DensityNormal },
+              { id: 'compact', label: tracker.string.DensityCompact },
+              { id: 'dense', label: tracker.string.DensityDense }
+            ],
+            label: tracker.string.CardDensity
           }
         ]
       : [])

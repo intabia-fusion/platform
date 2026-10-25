@@ -17,11 +17,13 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import type { Issue, Project } from '@hcengineering/tracker'
+  import type { Board, Issue, Project } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
   import ui, { BlankView, type DropdownIntlItem, showPopup, themeStore } from '@hcengineering/ui'
   import { columnControlStore } from '@hcengineering/kanban'
+  import { setContext } from 'svelte'
+  import { writable } from 'svelte/store'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -43,8 +45,10 @@
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
   import { openProjectSettings } from '../../projectSettings'
+  import { boardContextKey } from '../../boards'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
+  import ProjectBoardsBar from '../boards/ProjectBoardsBar.svelte'
 
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Issue> = {}
@@ -52,6 +56,14 @@
   export let label: string = ''
   export let icon: Asset | undefined = undefined
   export let modeSelectorProps: IModeSelector | undefined = undefined
+  // A board turns the kanban into the board's columns, lanes and colors
+  export let board: Board | undefined = undefined
+  // A board in place of the project issues: picking a viewlet closes it
+  export let onViewletPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
+
+  const boardStore = writable<Board | undefined>(board)
+  $: boardStore.set(board)
+  setContext(boardContextKey, boardStore)
 
   export let viewlet: WithLookup<Viewlet> | undefined = undefined
   const viewlets: WithLookup<Viewlet>[] | undefined = undefined
@@ -74,6 +86,7 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+
   $: currentProject = space ? ($activeProjects.get(space as Ref<Project>) as ProjectWorkflow | undefined) : undefined
   $: workflowsMap =
     currentProject && hierarchy.hasMixin(currentProject, workflow.mixin.ProjectWorkflow)
@@ -87,6 +100,8 @@
   $: noTaskTypes = currentProject !== undefined && $taskTypeStore.size > 0 && !hasTaskTypes
 
   $: projectRef = space as Ref<Project> | undefined
+  // Issues of a project show its boards in place of the title
+  $: projectBoards = board === undefined && projectRef !== undefined
   let canEditProject = false
   // Depends on the project itself: on a reload the space is known before the project is loaded
   async function checkCanEditProject (project: ProjectWorkflow | undefined): Promise<void> {
@@ -214,8 +229,10 @@
   {icon}
   bind:viewlet
   bind:search
-  showLabelSelector={$$slots.label_selector}
+  showLabelSelector={$$slots.label_selector || projectBoards}
   viewletQuery={{ attachTo: tracker.class.Issue, variant: { $exists: false } }}
+  defaultViewletDescriptor={board !== undefined ? tracker.viewlet.Kanban : undefined}
+  {onViewletPick}
   {viewlets}
   {label}
   {space}
@@ -227,14 +244,23 @@
   </svelte:fragment>
 
   <svelte:fragment slot="label_selector">
-    <slot name="label_selector" />
+    {#if projectBoards && projectRef !== undefined}
+      <ProjectBoardsBar project={projectRef} />
+    {:else}
+      <slot name="label_selector" />
+    {/if}
   </svelte:fragment>
 
   <svelte:fragment slot="type_selector">
     <slot name="type_selector" {viewlet} />
   </svelte:fragment>
 
+  <svelte:fragment slot="afterSearch">
+    <slot name="afterSearch" />
+  </svelte:fragment>
+
   <svelte:fragment slot="actions">
+    <slot name="board_actions" />
     {#if menuItems.length > 0}
       <MenuButton
         icon={ui.icon.DotsHorizontal}

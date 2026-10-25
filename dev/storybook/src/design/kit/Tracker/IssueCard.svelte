@@ -19,19 +19,41 @@
   import PriorityIcon from '../Status/PriorityIcon.svelte'
   import StatusIcon from '../Status/StatusIcon.svelte'
   import { paletteIndex } from '../palette'
-  import type { Density, Issue } from '../types'
+  import type { CardFocus, Density, Issue } from '../types'
 
   export let issue: Issue
   export let density: Density = 'detailed'
+  export let hover = false
+  // The drop place while dragging and the card in hand
+  export let dragged = false
+  export let lifted = false
+  // 'inset': the product ring today, a rule border hides it; 'ring': 2px outside the card, as ui-kit :focus-visible
+  export let focus: CardFocus | undefined = undefined
+  // The icons of the product card: layers, signpost, orange due date
+  export let productIcons = false
 
   $: labelColors = (issue.labels ?? []).map(
     ([, color]) => getPlatformColorDef(paletteIndex(color), $themeStore.dark).color
   )
+  $: icons = productIcons
+    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'tracker/component', milestone: 'tracker/milestone' }
+    : { sub: 'subissues', due: 'calendar', component: 'component', milestone: 'milestone' }
+  $: dueColor =
+    issue.overdue === true
+      ? 'var(--theme-state-negative-color)'
+      : productIcons
+        ? 'var(--theme-warning-color)'
+        : 'var(--theme-dark-color)'
   $: est = issue.estimation !== undefined ? `${issue.estimation}h` : undefined
 </script>
 
 <div
   class="kit-issue-card {density}"
+  class:hover={hover && focus === undefined}
+  class:dragged
+  class:lifted
+  class:focus-inset={focus === 'inset' && issue.accent === undefined}
+  class:focus-ring={focus === 'ring'}
   data-id="kanban-card-body"
   style:border-color={issue.accent}
   style:border-width={issue.accent !== undefined ? '2px' : undefined}
@@ -52,16 +74,10 @@
     <div class="meta">
       <span class="id">{issue.id}</span>
       <PriorityIcon priority={issue.priority} />
-      {#if issue.sub !== undefined}<Icon name="subissues" size={14} color="var(--theme-dark-color)" />{/if}
-      {#if issue.due !== undefined}
-        <Icon
-          name="calendar"
-          size={14}
-          color={issue.overdue === true ? 'var(--theme-state-negative-color)' : 'var(--theme-dark-color)'}
-        />
-      {/if}
-      {#if issue.component !== undefined}<Icon name="component" size={14} color="var(--theme-dark-color)" />{/if}
-      {#if issue.milestone !== undefined}<Icon name="milestone" size={14} color="var(--theme-dark-color)" />{/if}
+      {#if issue.sub !== undefined}<Icon name={icons.sub} size={14} color="var(--theme-dark-color)" />{/if}
+      {#if issue.due !== undefined}<Icon name={icons.due} size={14} color={dueColor} />{/if}
+      {#if issue.component !== undefined}<Icon name={icons.component} size={14} color="var(--theme-dark-color)" />{/if}
+      {#if issue.milestone !== undefined}<Icon name={icons.milestone} size={14} color="var(--theme-dark-color)" />{/if}
       {#if est !== undefined}<span class="id">{est}</span>{/if}
     </div>
   {:else}
@@ -80,23 +96,23 @@
       <span class="chip icon-only"><PriorityIcon priority={issue.priority} /></span>
       {#if issue.sub !== undefined}
         <span class="chip"
-          ><Icon name="subissues" size={14} color="var(--theme-dark-color)" />{issue.sub[0]}/{issue.sub[1]}</span
+          ><Icon name={icons.sub} size={14} color="var(--theme-dark-color)" />{issue.sub[0]}/{issue.sub[1]}</span
         >
       {/if}
       {#if issue.due !== undefined}
         <span class="chip" class:overdue={issue.overdue}>
-          <Icon
-            name="calendar"
-            size={14}
-            color={issue.overdue === true ? 'var(--theme-state-negative-color)' : 'var(--theme-dark-color)'}
-          />{issue.due}
+          <Icon name={icons.due} size={14} color={dueColor} />{issue.due}
         </span>
       {/if}
       {#if issue.component !== undefined}
-        <span class="chip"><Icon name="component" size={14} color="var(--theme-dark-color)" />{issue.component}</span>
+        <span class="chip"
+          ><Icon name={icons.component} size={14} color="var(--theme-dark-color)" />{issue.component}</span
+        >
       {/if}
       {#if issue.milestone !== undefined}
-        <span class="chip"><Icon name="milestone" size={14} color="var(--theme-dark-color)" />{issue.milestone}</span>
+        <span class="chip"
+          ><Icon name={icons.milestone} size={14} color="var(--theme-dark-color)" />{issue.milestone}</span
+        >
       {/if}
       {#if density === 'detailed'}
         {#each issue.labels ?? [] as [title], i}
@@ -106,7 +122,23 @@
         <span class="chip">{est}</span>
       {/if}
     </div>
-    {#if density === 'detailed' && est !== undefined}
+    {#if density === 'detailed' && (issue.attachments !== undefined || issue.comments !== undefined)}
+      <div class="foot">
+        <span class="footer">{est !== undefined ? `${issue.estimationLabel ?? 'Оценка'} ${est}` : ''}</span>
+        <span class="counters">
+          {#if issue.attachments !== undefined}
+            <span class="counter"
+              ><Icon name="clip" size={14} color="var(--theme-darker-color)" />{issue.attachments}</span
+            >
+          {/if}
+          {#if issue.comments !== undefined}
+            <span class="counter"
+              ><Icon name="comment" size={14} color="var(--theme-darker-color)" />{issue.comments}</span
+            >
+          {/if}
+        </span>
+      </div>
+    {:else if density === 'detailed' && est !== undefined}
       <span class="footer">{issue.estimationLabel ?? 'Оценка'} {est}</span>
     {/if}
   {/if}
@@ -137,6 +169,24 @@
     &.dense {
       gap: 4px;
       padding: 6px 10px;
+    }
+    &.hover {
+      background-color: var(--highlight-hover);
+    }
+    &.dragged {
+      background-color: var(--accent-bg-color);
+    }
+    &.lifted {
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    &.focus-inset {
+      border: 2px solid var(--primary-edit-border-color);
+    }
+    &.focus-ring {
+      outline: 2px solid var(--accent-color-primary);
+      outline-offset: 2px;
     }
   }
   .top {
@@ -236,6 +286,22 @@
     }
   }
   .footer {
+    font-size: 12px;
+    color: var(--theme-darker-color);
+  }
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .counters {
+    display: flex;
+    gap: 10px;
+  }
+  .counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 12px;
     color: var(--theme-darker-color);
   }

@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -48,8 +49,10 @@ import {
 } from '@hcengineering/task'
 import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@hcengineering/ui'
 import { Action, ActionCategory, IconProps } from '@hcengineering/view'
+import type { Board, BoardPreference } from './boards'
 
 export * from './analytics'
+export * from './boards'
 export * from './duration'
 export * from './ops'
 
@@ -534,6 +537,8 @@ const pluginState = plugin(trackerId, {
     TypeRemainingTime: '' as Ref<Class<Type<number>>>,
     RelatedIssueTarget: '' as Ref<Class<RelatedIssueTarget>>,
     ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>,
+    Board: '' as Ref<Class<Board>>,
+    BoardPreference: '' as Ref<Class<BoardPreference>>,
     IssueTaskType: '' as Ref<Class<Issue>>
   },
   mixin: {

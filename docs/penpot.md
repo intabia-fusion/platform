@@ -88,7 +88,7 @@ MCP-сервер Penpot держит одно подключение плаги�
 | `dev/design/generate.mjs` | Команды `tokens` и `demo`: генерация `kit/00-tokens.generated.js` и `kit/05-demo.generated.js` |
 | `dev/design/kit/00-tokens.generated.js` | Цвета light/dark, палитра (цвет, title, background), размеры. Генерируется, руками не правится |
 | `dev/design/kit/05-demo.generated.js` | Демо-данные `DEMO.ru` и `DEMO.en`: проекты, статусы с категориями, задачи, люди, метки, компоненты, вехи. Генерируется из `tests/demo-ws*` и `dev/design/demo/`, руками не правится. Как и токены, уходит в плагин через `storage` |
-| `dev/design/demo/<язык>/` | То, чего нет в демо-стенде: статусы (`Статусы/`), задачи проекта (`<проект>/`), конфигурация досок (`Доски/`). Формат как у `tests/demo-ws`: файл `.mdx` на объект, YAML-шапка, текст в теле |
+| `dev/design/demo/<язык>/` | То, чего нет в демо-стенде: статусы (`Статусы/`), задачи проекта (`<проект>/`), конфигурация досок (`Доски/`). Формат как у `tests/demo-ws`: файл `.mdx` на объект, YAML-шапка, текст в теле. Их же `generate-demo-data` загружает в демо-стенд (`tests/prepare-pg.sh --docs`), так что продукт показывает те же данные, что макеты |
 | `dev/design/kit/10-core.js` | Примитивы: `kit.box`, `kit.text`, `kit.add`, `kit.icon`, `kit.page`, `kit.settle`; `T()` - цвет темы, `D()` - размер |
 | `dev/design/kit/20-atoms.js` | `Button`, `IconButton`, `StatusIcon`, `PriorityIcon`, `Avatar`, `Chip`, `Label`, `StatusChip`, `Tabs`, `Input`, `Checkbox`, `Toggle`, `Menu`, `Notice` |
 | `dev/design/kit/30-workbench.js` | Оболочка приложения `Workbench`, `NavItem`, `SpaceHeader`, `QuickFilter` |

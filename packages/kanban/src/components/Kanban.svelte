@@ -88,6 +88,8 @@
     | ((swimLane: SwimLane) => { background?: string, color?: string } | undefined)
     | undefined = undefined
   export let compact: boolean = false
+  // Grey column background and elevated cards
+  export let modern: boolean = false
   // The group a category belongs to (e.g. the category of a status), for merging columns by it.
   export let getCategoryGroup: ((state: CategoryType) => string | undefined) | undefined = undefined
 
@@ -1129,6 +1131,7 @@
   class="kanban-container"
   class:swimlane-mode={swimLaneMode}
   class:compact
+  class:modern
   on:dragover={handleDragMove}
   on:dragend={onDragEnd}
   on:drop={onDragEnd}
@@ -1205,7 +1208,7 @@
                 class="swimlane-header"
                 data-id="kanban-swimlane-header"
                 data-swimlane-collapsed={isCollapsed ? 'true' : 'false'}
-                style:--swimlane-header-bg={laneStyle?.background ?? defaultBackground($themeStore.dark)}
+                style:--swimlane-header-bg={laneStyle?.background ?? 'var(--theme-list-row-color)'}
                 style:color={laneStyle?.color ?? 'var(--theme-caption-color)'}
                 style:--swimlane-title-color={laneStyle?.color}
                 on:click={() => {
@@ -1261,6 +1264,7 @@
                         class:drop-allowed={isDragging &&
                           (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
                         class:drop-disabled={blocked}
+                        class:filled={modern}
                         data-id="kanban-swimlane-cell"
                         data-swimlane-id={swimLane._id}
                         data-state={stateKey(state)}
@@ -1298,6 +1302,7 @@
                           onDragStart={(obj, st) => {
                             void onDragStart(obj, cardState(obj, st), swimLane)
                           }}
+                          {modern}
                           {showMenu}
                         >
                           <svelte:fragment slot="card" let:object let:dragged>
@@ -1445,40 +1450,47 @@
                   />
                 {/key}
               {/if}
-              <Scroller padding=".25rem .5rem" on:dragover on:drop>
-                <slot name="beforeCard" {state} />
-                <KanbanRow
-                  bind:this={stateRows[si]}
-                  on:obj-focus
-                  {stateObjects}
-                  {isDragging}
-                  {dragCard}
-                  {objects}
-                  {selection}
-                  {checkedSet}
-                  {state}
-                  loaded={loadedDocs}
-                  limit={cellLimit(cellLimits, cellKey('', state), COLUMN_LIMIT)}
-                  onShowMore={() => {
-                    showMore(cellKey('', state), COLUMN_LIMIT, COLUMN_LIMIT_STEP)
-                  }}
-                  cardDragOver={(evt, obj) => {
-                    cardDragOver(evt, obj, state)
-                  }}
-                  cardDrop={(evt, obj) => {
-                    void cardDrop(evt, obj, state)
-                  }}
-                  onDragStart={(obj, st) => {
-                    void onDragStart(obj, cardState(obj, st))
-                  }}
-                  {showMenu}
-                >
-                  <svelte:fragment slot="card" let:object let:dragged>
-                    <slot name="card" {object} {dragged} />
-                  </svelte:fragment>
-                </KanbanRow>
+              <Scroller
+                padding={modern ? '0.25rem max(var(--kanban-col-inset), 0.25rem)' : '.25rem .5rem'}
+                on:dragover
+                on:drop
+              >
+                <div class="column-cards" class:filled={modern && stateObjects.length > 0}>
+                  <slot name="beforeCard" {state} />
+                  <KanbanRow
+                    bind:this={stateRows[si]}
+                    on:obj-focus
+                    {stateObjects}
+                    {isDragging}
+                    {dragCard}
+                    {objects}
+                    {selection}
+                    {checkedSet}
+                    {state}
+                    loaded={loadedDocs}
+                    limit={cellLimit(cellLimits, cellKey('', state), COLUMN_LIMIT)}
+                    onShowMore={() => {
+                      showMore(cellKey('', state), COLUMN_LIMIT, COLUMN_LIMIT_STEP)
+                    }}
+                    cardDragOver={(evt, obj) => {
+                      cardDragOver(evt, obj, state)
+                    }}
+                    cardDrop={(evt, obj) => {
+                      void cardDrop(evt, obj, state)
+                    }}
+                    onDragStart={(obj, st) => {
+                      void onDragStart(obj, cardState(obj, st))
+                    }}
+                    {modern}
+                    {showMenu}
+                  >
+                    <svelte:fragment slot="card" let:object let:dragged>
+                      <slot name="card" {object} {dragged} />
+                    </svelte:fragment>
+                  </KanbanRow>
 
-                <slot name="afterCard" {state} />
+                  <slot name="afterCard" {state} />
+                </div>
               </Scroller>
             </div>
           {/if}
@@ -1574,6 +1586,69 @@
     &.compact {
       --kanban-col-width: 14rem;
       --kanban-col-gap: 0.375rem;
+    }
+    // A column is a fixed track: header and cards sit `--kanban-col-inset` inside it, neighbours `--kanban-col-gap` apart.
+    // The `--kanban-column-*` and `--kanban-padding-*` properties of the caller override the defaults.
+    &.modern {
+      --kanban-col-width: var(--kanban-column-width, 20rem);
+      --kanban-col-gap: var(--kanban-column-gap, 0rem);
+      --kanban-col-inset: var(--kanban-column-inset, 0.875rem);
+      --kanban-pad-top: var(--kanban-padding-top, 1.5rem);
+      --kanban-pad-x: var(--kanban-padding-x, 1.5rem);
+
+      .kanban-content {
+        column-gap: var(--kanban-col-gap);
+        padding: var(--kanban-pad-top) var(--kanban-pad-x) 0.5rem;
+      }
+      .panel-container {
+        border: none;
+      }
+      .column-cards.filled {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .kanban-swimlane-root {
+        padding: 0 var(--kanban-pad-x) 0.5rem;
+      }
+      .swimlane-header-row {
+        padding: var(--kanban-pad-top) 0 0.5rem;
+        border-bottom: none;
+      }
+      .swimlane-col-header {
+        box-sizing: border-box;
+        padding: 0 var(--kanban-col-inset);
+      }
+      .swimlane-block {
+        margin-bottom: 0.5rem;
+        background-color: transparent;
+      }
+      .swimlane-header {
+        height: 2rem;
+        padding: 0 0.5rem;
+        border-bottom: none;
+        border-radius: 0.25rem;
+        box-shadow: none;
+      }
+      // Cells keep the height of their cards, as in the design kit; an empty one is 3.5rem
+      .swimlane-grid {
+        align-items: start;
+        padding: 0.5rem 0 0;
+      }
+      // Every cell keeps the grey background, also an empty one
+      .swimlane-cell {
+        gap: 0.5rem;
+        width: auto;
+        min-height: 3.5rem;
+        margin: 0 var(--kanban-col-inset);
+        border: none;
+
+        &.drop-target {
+          border: none;
+          outline: 1px dashed var(--theme-divider-color);
+          outline-offset: -1px;
+        }
+      }
     }
   }
   // Row 1 holds the column headers: they share the height of the tallest one, as in the swimlane header row.
@@ -1678,6 +1753,13 @@
     gap: var(--kanban-col-gap);
     padding: 0.5rem 0;
   }
+  // Cards of a column sit on a grey background, only while the column has cards
+  .column-cards.filled,
+  .swimlane-cell.filled {
+    padding: 0.5rem;
+    background-color: var(--theme-kanban-card-bg-color);
+    border-radius: 0.5rem;
+  }
   .swimlane-cell {
     display: flex;
     flex-direction: column;
@@ -1769,10 +1851,10 @@
   }
   .swimlane-count {
     color: var(--theme-dark-color);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     padding: 0 0.375rem;
     background: var(--theme-button-hovered);
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     line-height: 1.25rem;
   }
 </style>

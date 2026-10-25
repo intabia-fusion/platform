@@ -47,6 +47,7 @@
     deviceOptionsStore as deviceInfo,
     Dock,
     getCurrentLocation,
+    getCurrentResolvedLocation,
     getLocation,
     isSameSegments,
     Label,
@@ -354,10 +355,17 @@
         loc.path[3] = currentSpace ?? currentSpecial ?? resolved.defaultLocation.path[3]
         if (loc.path[3] !== undefined && isSameApp) {
           // setting space special/aside only if it belongs to the same app
+          // The panel opens over the page: its sub-path (a board id) is not in the short link
+          const prev = getCurrentResolvedLocation()
           if (currentSpace != null) {
             loc.path[4] = currentSpecial ?? resolved.defaultLocation.path[4]
+            if (prev.path[3] === loc.path[3] && prev.path[4] === loc.path[4]) loc.path.push(...prev.path.slice(5))
           } else if (currentSpecial != null) {
             loc.path[4] = resolved.defaultLocation.path[4]
+            if (prev.path[3] === loc.path[3] && prev.path[4] !== undefined) {
+              loc.path.length = 4
+              loc.path.push(...prev.path.slice(4))
+            }
           }
         } else {
           loc.path.length = 4

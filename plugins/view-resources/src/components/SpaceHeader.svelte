@@ -4,7 +4,7 @@
   import { ModeSelector, SearchInput, Header, Breadcrumb } from '@hcengineering/ui'
   import type { Asset } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import type { Viewlet } from '@hcengineering/view'
+  import type { Viewlet, ViewletDescriptor } from '@hcengineering/view'
   import view, { type ViewletViewAction } from '@hcengineering/view'
   import { getViewletSpecialActions } from '../viewletUtils'
   import ViewletSelector from './ViewletSelector.svelte'
@@ -22,6 +22,10 @@
   export let modeSelectorProps: IModeSelector | undefined = undefined
   export let adaptive: HeaderAdaptive = 'doubleRow'
   export let resultQuery: DocumentQuery<Doc> = {}
+  // The viewlet shown until the user picks another one
+  export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
+  // A click on a viewlet goes here instead of switching (see ViewletSelector)
+  export let onViewletPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
 
   let scroller: HTMLElement
 
@@ -37,7 +41,14 @@
   hideExtra={!$$slots.extra && modeSelectorProps === undefined}
 >
   <svelte:fragment slot="beforeTitle">
-    <ViewletSelector bind:viewlet bind:viewlets ignoreFragment viewletQuery={viewletQuery ?? { attachTo: _class }} />
+    <ViewletSelector
+      bind:viewlet
+      bind:viewlets
+      ignoreFragment
+      viewletQuery={viewletQuery ?? { attachTo: _class }}
+      {defaultViewletDescriptor}
+      onPick={onViewletPick}
+    />
     <slot name="header-tools" />
   </svelte:fragment>
 
@@ -53,6 +64,8 @@
   {/if}
 
   <svelte:fragment slot="search">
+    <!-- A double-row header lays the search group out row-reverse: this slot shows last -->
+    <slot name="afterSearch" />
     <SearchInput bind:value={search} collapsed />
     <FilterButton {_class} {space} />
   </svelte:fragment>
