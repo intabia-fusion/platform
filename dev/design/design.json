@@ -65,6 +65,9 @@
       "build": [
         [
           "screens/fusio-1621/01-project-settings.js"
+        ],
+        [
+          "screens/fusio-1621/02-create-project.js"
         ]
       ]
     },
@@ -128,6 +131,10 @@
         [
           "screens/current/_login.js",
           "screens/current/login-workspaces.js"
+        ],
+        [
+          "screens/current/_page-create-project.js",
+          "screens/fusio-1621/02-create-project.js"
         ]
       ]
     }
