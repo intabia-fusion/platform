@@ -82,7 +82,9 @@ describe('ui-kit SettingRow', () => {
     const root = mount({ props: { label: getEmbeddedLabel('Name'), kind: 'column', fullWidth: true } })
     expect(root.classList.contains('setting-row--full-width')).toBe(true)
     expect(
-      mount({ props: { label: getEmbeddedLabel('Name'), kind: 'column' } }).classList.contains('setting-row--full-width')
+      mount({ props: { label: getEmbeddedLabel('Name'), kind: 'column' } }).classList.contains(
+        'setting-row--full-width'
+      )
     ).toBe(false)
   })
 

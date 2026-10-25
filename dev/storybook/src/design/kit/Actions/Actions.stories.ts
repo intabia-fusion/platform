@@ -216,7 +216,16 @@ export const TabsStates: Story = sections([
     rows: axis('size', ['medium', 'small']),
     columns: [
       { title: 'labels', props: { items: ['Issues', 'Board', 'Milestones'], selected: 'Board' } },
-      { title: 'icons', props: { items: [['Issues', 'tracker/issues'], ['Board', 'task/kanban']], selected: 'Issues' } }
+      {
+        title: 'icons',
+        props: {
+          items: [
+            ['Issues', 'tracker/issues'],
+            ['Board', 'task/kanban']
+          ],
+          selected: 'Issues'
+        }
+      }
     ]
   }
 ])
@@ -231,7 +240,14 @@ export const SegmentedControlStates: Story = sections([
       { title: 'badge', props: { items: ['Monthly', ['Yearly', undefined, '-20%']], selected: 'Yearly' } },
       {
         title: 'icon only',
-        props: { items: [['List', 'tracker/list'], ['Board', 'task/kanban']], selected: 'List', iconOnly: true }
+        props: {
+          items: [
+            ['List', 'tracker/list'],
+            ['Board', 'task/kanban']
+          ],
+          selected: 'List',
+          iconOnly: true
+        }
       }
     ]
   }
@@ -243,8 +259,26 @@ export const ButtonGroupStates: Story = sections([
     component: ButtonGroup,
     rows: axis('kind', ['secondary', 'ghost']),
     columns: [
-      { title: 'labels', props: { items: [['List', 'tracker/list'], ['Board', 'task/kanban']], selected: 'List' } },
-      { title: 'icon only', props: { items: [['', 'tracker/list'], ['', 'task/kanban']], selected: 'task/kanban' } },
+      {
+        title: 'labels',
+        props: {
+          items: [
+            ['List', 'tracker/list'],
+            ['Board', 'task/kanban']
+          ],
+          selected: 'List'
+        }
+      },
+      {
+        title: 'icon only',
+        props: {
+          items: [
+            ['', 'tracker/list'],
+            ['', 'task/kanban']
+          ],
+          selected: 'task/kanban'
+        }
+      },
       { title: 'small', props: { items: ['Day', 'Week'], selected: 'Day', size: 'small' } }
     ]
   }

@@ -68,9 +68,14 @@
 
   let templatesCount = 0
   const templatesQuery = createQuery()
-  $: templatesQuery.query(tracker.class.IssueTemplate, { space: project._id }, (res) => {
-    templatesCount = res.total
-  }, { limit: 1, total: true })
+  $: templatesQuery.query(
+    tracker.class.IssueTemplate,
+    { space: project._id },
+    (res) => {
+      templatesCount = res.total
+    },
+    { limit: 1, total: true }
+  )
 
   async function setAssignee (value: Ref<Employee> | undefined): Promise<void> {
     if (value === undefined) {

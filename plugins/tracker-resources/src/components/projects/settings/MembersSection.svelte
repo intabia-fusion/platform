@@ -42,11 +42,16 @@
   let roles: Role[] = []
   const rolesQuery = createQuery()
   $: if (typeType !== undefined) {
-    rolesQuery.query(core.class.Role, { attachedTo: typeType._id }, (res) => {
-      roles = res
-    }, {
-      sort: { name: SortingOrder.Ascending }
-    })
+    rolesQuery.query(
+      core.class.Role,
+      { attachedTo: typeType._id },
+      (res) => {
+        roles = res
+      },
+      {
+        sort: { name: SortingOrder.Ascending }
+      }
+    )
   } else {
     rolesQuery.unsubscribe()
   }

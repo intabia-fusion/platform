@@ -34,15 +34,7 @@
     showPopup,
     type DropdownTextItem
   } from '@hcengineering/ui'
-  import {
-    Callout,
-    SelectButton,
-    SettingRow,
-    TextArea,
-    TextInput,
-    Toggle,
-    WizardDialog
-  } from '@hcengineering/ui/kit'
+  import { Callout, SelectButton, SettingRow, TextArea, TextInput, Toggle, WizardDialog } from '@hcengineering/ui/kit'
   import { IconPicker, statusStore } from '@hcengineering/view-resources'
   import type { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
   import workflow from '@hcengineering/workflow'
@@ -75,7 +67,8 @@
 
   let name: string = namePlaceholder
   let description: string = descriptionPlaceholder
-  let identifier: string = 'TSK'
+  // Comes from the name, so an empty wizard does not start with a taken default
+  let identifier: string = toIdentifier(name)
   let isPrivate: boolean = false
   let icon: Asset = tracker.icon.Home
   let color = getColorNumberByText(name)
@@ -121,11 +114,16 @@
 
   let roles: Role[] = []
   $: if (typeType !== undefined) {
-    rolesQuery.query(core.class.Role, { attachedTo: typeType._id }, (res) => {
-      roles = res
-    }, {
-      sort: { name: SortingOrder.Ascending }
-    })
+    rolesQuery.query(
+      core.class.Role,
+      { attachedTo: typeType._id },
+      (res) => {
+        roles = res
+      },
+      {
+        sort: { name: SortingOrder.Ascending }
+      }
+    )
   } else {
     rolesQuery.unsubscribe()
     roles = []
@@ -133,11 +131,16 @@
 
   let workflows: Workflow[] = []
   $: if (typeId !== undefined) {
-    workflowsQuery.query(workflow.class.Workflow, { projectType: typeId }, (res) => {
-      workflows = res
-    }, {
-      sort: { name: SortingOrder.Ascending }
-    })
+    workflowsQuery.query(
+      workflow.class.Workflow,
+      { projectType: typeId },
+      (res) => {
+        workflows = res
+      },
+      {
+        sort: { name: SortingOrder.Ascending }
+      }
+    )
   } else {
     workflowsQuery.unsubscribe()
     workflows = []
@@ -162,8 +165,7 @@
   $: identifier = identifier.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
   $: identifierExists = !isSaving && projectsIdentifiers.has(identifier.toUpperCase())
 
-  $: generalValid =
-    typeId !== undefined && name.trim().length > 0 && identifier.trim().length > 0 && !identifierExists
+  $: generalValid = typeId !== undefined && name.trim().length > 0 && identifier.trim().length > 0 && !identifierExists
   $: accessValid = isAccessValid(isPrivate, mergeOwners(members, owners), owners)
   $: canSave = generalValid && accessValid
   $: canProceed = step === 'general' ? generalValid : step === 'members' ? accessValid : true
@@ -190,8 +192,12 @@
     )
   }
 
+  function toIdentifier (name: string): string {
+    return name.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
+  }
+
   function changeName (): void {
-    identifier = name.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
+    identifier = toIdentifier(name)
     color = isColorSelected ? color : getColorNumberByText(name)
   }
 
@@ -411,7 +417,6 @@
               aria-labelledby={labelId}
             />
           </SettingRow>
-
 
           <div class="divider" />
 

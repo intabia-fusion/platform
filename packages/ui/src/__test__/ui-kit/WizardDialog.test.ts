@@ -139,7 +139,14 @@ describe('ui-kit WizardDialog', () => {
     expect(submit.disabled).toBe(true)
 
     component.$set({
-      props: { label: getEmbeddedLabel('Import'), steps: STEPS, submitLabel: getEmbeddedLabel('Run'), earlySubmit: true, canSubmit: true, selected: 'review' }
+      props: {
+        label: getEmbeddedLabel('Import'),
+        steps: STEPS,
+        submitLabel: getEmbeddedLabel('Run'),
+        earlySubmit: true,
+        canSubmit: true,
+        selected: 'review'
+      }
     })
     await tick()
     buttons(root, 'actions')[0].click()

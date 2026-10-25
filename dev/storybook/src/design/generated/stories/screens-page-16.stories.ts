@@ -36,9 +36,15 @@ export const Canvas: StoryObj = {
   render: () => ({ Component: CanvasView, props: { group, page } })
 }
 export const Frame1: Story = { name: 'Создание проекта - Шаг 1. Основное', args: { group, page, frame: 0 } }
-export const Frame2: Story = { name: 'Создание проекта - Шаг 1. Ошибка идентификатора', args: { group, page, frame: 1 } }
+export const Frame2: Story = {
+  name: 'Создание проекта - Шаг 1. Ошибка идентификатора',
+  args: { group, page, frame: 1 }
+}
 export const Frame3: Story = { name: 'Создание проекта - Шаг 2. Участники и доступ', args: { group, page, frame: 2 } }
 export const Frame4: Story = { name: 'Создание проекта - Шаг 3. Задачи', args: { group, page, frame: 3 } }
 export const Frame5: Story = { name: 'Создание проекта - Шаг 4. Workflow', args: { group, page, frame: 4 } }
-export const Frame6: Story = { name: 'Создание проекта - Шаг 4. Workflow - у типа нет workflow', args: { group, page, frame: 5 } }
+export const Frame6: Story = {
+  name: 'Создание проекта - Шаг 4. Workflow - у типа нет workflow',
+  args: { group, page, frame: 5 }
+}
 export const Frame7: Story = { name: 'Создание проекта - Шаг 5. Сводка', args: { group, page, frame: 6 } }

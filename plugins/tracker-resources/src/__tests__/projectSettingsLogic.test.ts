@@ -14,14 +14,7 @@
 //
 
 import type { AccountUuid, Ref, Role } from '@hcengineering/core'
-import {
-  applyRoles,
-  isAccessValid,
-  mergeOwners,
-  OWNER_ROLE,
-  removeFromRoles,
-  rowRoles
-} from '../projectSettingsLogic'
+import { applyRoles, isAccessValid, mergeOwners, OWNER_ROLE, removeFromRoles, rowRoles } from '../projectSettingsLogic'
 
 const acc = (id: string): AccountUuid => id as AccountUuid
 

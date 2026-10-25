@@ -31,7 +31,8 @@
   $: iconProps = emoji
     ? { icon: color, size: 'small' }
     : {
-        fill: getPaletteColorDef(color, $themeStore.dark)?.icon ?? getPlatformColorForTextDef(name, $themeStore.dark).icon
+        fill:
+          getPaletteColorDef(color, $themeStore.dark)?.icon ?? getPlatformColorForTextDef(name, $themeStore.dark).icon
       }
 </script>
 

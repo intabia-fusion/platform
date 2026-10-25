@@ -30,7 +30,10 @@
   export let height: number | undefined = undefined
 </script>
 
-<div style:width={width !== undefined ? `${width}px` : 'fit-content'} style:height={height !== undefined ? `${height}px` : undefined}>
+<div
+  style:width={width !== undefined ? `${width}px` : 'fit-content'}
+  style:height={height !== undefined ? `${height}px` : undefined}
+>
   <EmptyState
     {size}
     {kind}

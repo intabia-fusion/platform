@@ -77,66 +77,66 @@
 </script>
 
 <div class="hulyComponent" data-id="project-settings">
-    <Header adaptive="disabled">
-      <Button
-        data-id="btnBackToProject"
-        kind="ghost"
+  <Header adaptive="disabled">
+    <Button
+      data-id="btnBackToProject"
+      kind="ghost"
+      size="small"
+      icon={IconBack}
+      label={tracker.string.BackToProject}
+      on:click={close}
+    />
+    <div class="hulyHeader-divider" />
+    <span class="title"><Label label={tracker.string.ProjectSettings} /></span>
+    <svelte:fragment slot="actions">
+      <IconButton
+        data-id="btnCloseProjectSettings"
+        kind="tertiary"
         size="small"
-        icon={IconBack}
-        label={tracker.string.BackToProject}
+        icon={IconClose}
+        tooltip={{ label: tracker.string.BackToProject }}
         on:click={close}
       />
-      <div class="hulyHeader-divider" />
-      <span class="title"><Label label={tracker.string.ProjectSettings} /></span>
-      <svelte:fragment slot="actions">
-        <IconButton
-          data-id="btnCloseProjectSettings"
-          kind="tertiary"
-          size="small"
-          icon={IconClose}
-          tooltip={{ label: tracker.string.BackToProject }}
-          on:click={close}
-        />
-      </svelte:fragment>
-    </Header>
-    {#if project !== undefined}
-      <div class="hulyComponent-content__container columns">
-        <div class="hulyComponent-content__column nav">
-          {#each sections as item (item.id)}
-            <div class="navItem" data-id="project-settings-nav-{item.id}">
-              <NavItem
-                label={item.label}
-                icon={item.icon}
-                selected={section === item.id}
-                on:click={() => {
-                  openProjectSection(item.id)
-                }}
-              />
-            </div>
-          {/each}
-        </div>
-        <div class="hulyComponent-content__column content">
-          <Scroller padding="1.5rem 2rem">
-            {#key section}
-              {#if section === 'general'}
-                <GeneralSection {project} />
-              {:else if section === 'members'}
-                <MembersSection {project} />
-              {:else if section === 'issues'}
-                <IssuesSection {project} />
-              {:else if section === 'statuses'}
-                <StatusesSection {project} />
-              {:else if section === 'workflow'}
-                <WorkflowSection {project} />
-              {:else}
-                <ArchiveSection {project} />
-              {/if}
-            {/key}
-          </Scroller>
-        </div>
+    </svelte:fragment>
+  </Header>
+  {#if project !== undefined}
+    <div class="hulyComponent-content__container columns">
+      <div class="hulyComponent-content__column nav">
+        {#each sections as item (item.id)}
+          <div class="navItem" data-id="project-settings-nav-{item.id}">
+            <NavItem
+              label={item.label}
+              icon={item.icon}
+              selected={section === item.id}
+              on:click={() => {
+                openProjectSection(item.id)
+              }}
+            />
+          </div>
+        {/each}
       </div>
-    {/if}
-  </div>
+      <div class="hulyComponent-content__column content">
+        <Scroller padding="1.5rem 2rem">
+          {#key section}
+            {#if section === 'general'}
+              <GeneralSection {project} />
+            {:else if section === 'members'}
+              <MembersSection {project} />
+            {:else if section === 'issues'}
+              <IssuesSection {project} />
+            {:else if section === 'statuses'}
+              <StatusesSection {project} />
+            {:else if section === 'workflow'}
+              <WorkflowSection {project} />
+            {:else}
+              <ArchiveSection {project} />
+            {/if}
+          {/key}
+        </Scroller>
+      </div>
+    </div>
+  {/if}
+</div>
 
 <style lang="scss">
   .title {

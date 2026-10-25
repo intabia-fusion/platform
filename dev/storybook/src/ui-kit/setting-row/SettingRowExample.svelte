@@ -171,7 +171,12 @@
         <SelectButton label={getEmbeddedLabel('Todo')} field fullWidth chevron />
       </div>
     </SettingRow>
-    <SettingRow kind="column" label={getEmbeddedLabel('Private')} hint={getEmbeddedLabel('Only members see it')} let:labelId>
+    <SettingRow
+      kind="column"
+      label={getEmbeddedLabel('Private')}
+      hint={getEmbeddedLabel('Only members see it')}
+      let:labelId
+    >
       <Toggle aria-labelledby={labelId} bind:checked={root} />
     </SettingRow>
   </div>

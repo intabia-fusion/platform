@@ -150,7 +150,19 @@ export const EmptyStateStates: Story = sections([
     title: 'EmptyState - large',
     component: EmptyState,
     rows: axis('kind', ['brand', 'plate']),
-    columns: [{ title: '', props: { label: 'No issues', description: 'Create the first issue', icon: 'ui/Add', size: 'large', width: 420, height: 240 } }]
+    columns: [
+      {
+        title: '',
+        props: {
+          label: 'No issues',
+          description: 'Create the first issue',
+          icon: 'ui/Add',
+          size: 'large',
+          width: 420,
+          height: 240
+        }
+      }
+    ]
   },
   {
     title: 'EmptyState - small',

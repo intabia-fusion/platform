@@ -33,8 +33,9 @@
 
   $: type = $typeStore.get(project.type)
   $: descriptor =
-    type !== undefined ? client.getModel().findAllSync(task.class.ProjectTypeDescriptor, { _id: type.descriptor })[0] : undefined
-
+    type !== undefined
+      ? client.getModel().findAllSync(task.class.ProjectTypeDescriptor, { _id: type.descriptor })[0]
+      : undefined
 </script>
 
 <ProjectSettingsSection

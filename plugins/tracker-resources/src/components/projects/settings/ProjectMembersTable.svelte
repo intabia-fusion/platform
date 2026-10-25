@@ -14,7 +14,12 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { employeeByIdStore, employeeRefByAccountUuidStore, EmployeePresenter, UsersPopup } from '@hcengineering/contact-resources'
+  import {
+    employeeByIdStore,
+    employeeRefByAccountUuidStore,
+    EmployeePresenter,
+    UsersPopup
+  } from '@hcengineering/contact-resources'
   import type { AccountUuid, Doc, Role, RolesAssignment } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
@@ -122,7 +127,12 @@
     rolesAccount = account
     rolesPopup = showPopup(
       ModernPopupLabels,
-      { placeholder: ui.string.SearchDots, items: roleItems, multiselect: true, selected: rowRoles(account, owners, assignment) },
+      {
+        placeholder: ui.string.SearchDots,
+        items: roleItems,
+        multiselect: true,
+        selected: rowRoles(account, owners, assignment)
+      },
       e.currentTarget as HTMLElement,
       () => {
         rolesAccount = undefined

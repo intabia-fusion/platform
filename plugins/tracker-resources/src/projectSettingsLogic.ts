@@ -58,7 +58,11 @@ export function applyRoles (
   const nextAssignment: RolesAssignment = {}
   for (const [role, accounts] of Object.entries(assignment)) {
     const rest = (accounts ?? []).filter((it) => it !== account)
-    nextAssignment[role as Ref<Role>] = selected.includes(role) ? [...rest, account] : accounts != null ? rest : accounts
+    nextAssignment[role as Ref<Role>] = selected.includes(role)
+      ? [...rest, account]
+      : accounts != null
+        ? rest
+        : accounts
   }
   return { owners: selected.includes(OWNER_ROLE) ? [...others, account] : others, assignment: nextAssignment }
 }

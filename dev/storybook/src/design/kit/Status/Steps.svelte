@@ -23,4 +23,8 @@
   $: steps = items.map((label, i) => ({ id: `${i}`, label: getEmbeddedLabel(label) }))
 </script>
 
-<Steps items={steps} selected={selected !== undefined && selected >= 0 ? `${selected}` : undefined} aria-label="Steps" />
+<Steps
+  items={steps}
+  selected={selected !== undefined && selected >= 0 ? `${selected}` : undefined}
+  aria-label="Steps"
+/>
