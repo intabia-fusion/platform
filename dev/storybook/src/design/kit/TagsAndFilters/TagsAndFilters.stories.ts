@@ -17,6 +17,7 @@ import { axis } from '../../../helpers/matrix'
 
 import ChipDemo from '../demo/ChipDemo.svelte'
 import FilterChip from './FilterChip.svelte'
+import KitChip from './KitChip.svelte'
 import QuickFilter from './QuickFilter.svelte'
 import Swatch from './Swatch.svelte'
 import Tag from './Tag.svelte'
@@ -83,5 +84,27 @@ export const SwatchStates: Story = sections([
     component: Swatch,
     rows: [{ title: 'color', props: {} }],
     columns: axis('color', ['Orange', 'Firework', 'Grass', '#6B3AD3'])
+  }
+])
+
+export const KitChipStates: Story = sections([
+  {
+    title: 'Chip (product)',
+    component: KitChip,
+    rows: axis('kind', ['tint', 'solid', 'outline', 'neutral']),
+    columns: [
+      { title: 'default', props: {} },
+      { title: 'color', props: { color: 'var(--pal-Orange)' } },
+      { title: 'icon', props: { icon: 'ui/Add' } },
+      { title: 'removable', props: { removable: true } },
+      { title: 'extra-small', props: { size: 'extra-small' } }
+    ],
+    props: { label: 'Release 1.0' }
+  },
+  {
+    title: 'Chip (product) - tones',
+    component: KitChip,
+    rows: axis('tone', ['positive', 'negative', 'regular', 'ghost']),
+    columns: [{ title: '', props: { label: 'Active' } }]
   }
 ])

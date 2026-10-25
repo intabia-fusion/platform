@@ -17,7 +17,7 @@ Every theme-dependent color is a variable with `light`/`dark` values: theme toke
 
 ## Library
 
-`ui-kit.lib.pen` is one frame `Library` with a frame per category (`Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Tracker`, `Settings`, `Chat`, `Login`, `Workbench`, `Icon`); each component sits in a cell under its name.
+`ui-kit.lib.pen` has a top-level frame per category (`Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Tracker`, `Settings`, `Chat`, `Login`, `Workbench`, `Icon`), side by side; inside it a section per group (`Actions/Button`), each component in a cell under its name. A section header carries a badge: `ui/kit: <Component>` when the group already has a product component in `@hcengineering/ui/kit` (map `host.uikit` in `library/ui-kit.js`), `только макет` otherwise. Moving a component between frames keeps its id: ids follow the names.
 Names are those of the Storybook kit (`dev/storybook/src/design/kit/<Category>/<Name>.svelte`): `Workbench/Navigator`, `Tracker/IssueCard`, `Actions/Button/primary/medium`. A catch-all variant (`$root` slot) gets `penalty` in `def` so that it loses to any variant that fits. A variant adds a path part (`Forms/Toggle/off`, `Actions/Button/ghost/small/icon`).
 Screens are built from instances (`ref`) of these components; whatever a component cannot express stays drawn in place (the build prints `instances/drawn` per component).
 
@@ -29,6 +29,9 @@ Screens are built from instances (`ref`) of these components; whatever a compone
 | `kit.NavGroupHeader`, `kit.NavSpaceHeader` | `Workbench/NavGroup`, `Workbench/NavSpace` |
 | `kit.ClassicButton` | `Actions/ClassicButton/<kind>/<size>` (`.../icon`; `.../content` takes its children, used only when no other variant fits: `penalty`) |
 | other `kit.<Name>` | `<Category>/<Name>` (`kit.Modal` returns `{ modal, body }`: the component is `modal`, `body` is its slot) |
+| `kit.TextInput`, `kit.TextArea`, `kit.SelectButton`, `kit.SettingRow`, `kit.Section`, `kit.Callout`, `kit.Steps`, `kit.EmptyState`, `kit.Dialog`, `kit.Tabs`, `kit.SegmentedControl`, `kit.ButtonGroup`, `kit.Breadcrumbs` | components of `@hcengineering/ui/kit` (`dev/design/kit/25-ui-kit.js`): `Forms/TextInput/<kind>/<size>`, `Forms/SelectButton/<kind>/<size>` (`.../full` with `w`), `Settings/SettingRow` (slots `control`, `details`), `Actions/Dialog` (slot `body`) ... |
+| `kit.KitStatusIcon`, `kit.KitChip`, `kit.KitNavItem`, `kit.KitNavGroup`, `kit.KitWizardDialog` | the same, `Kit` in front because the plain name belongs to an older kit component: `Status/KitStatusIcon/<tone>[/outline]`, `TagsAndFilters/KitChip/<kind>/<size>` |
+| `kit.Dropdown`, `kit.SearchInput` | instances of `Forms/SelectButton` and `Forms/TextInput` (the same look), read back as those |
 
 How an instance is made (`kit/95-library.js`): a tagged kit function still draws its shape in place with the real arguments. When the screen is serialized, the shape is compared with every library variant of that function (same child order, optional parts matched by key); the variant with the fewest differences wins and the differences become overrides:
 - changed text, color, size, position: property overrides of the node (`descendants`, keyed by the child index path, which `session.js` turns into ids);

@@ -20,6 +20,9 @@ import WorkbenchDemo from '../demo/WorkbenchDemo.svelte'
 import { person } from '../sample'
 import type { NavEntry } from '../types'
 import AppRail from './AppRail.svelte'
+import Breadcrumbs from './Breadcrumbs.svelte'
+import KitNavGroup from './KitNavGroup.svelte'
+import KitNavItem from './KitNavItem.svelte'
 import NavGroup from './NavGroup.svelte'
 import NavItem from './NavItem.svelte'
 import NavSpace from './NavSpace.svelte'
@@ -217,5 +220,59 @@ export const PanelHeaderStates: Story = sections([
       { title: 'chat channel', props: sized(PanelHeader, 640, 60, { title: 'general', icon: 'kit/Hash' }) }
     ],
     columns: one
+  }
+])
+
+export const KitNavItemStates: Story = sections([
+  {
+    title: 'NavItem (product)',
+    component: KitNavItem,
+    rows: [
+      { title: 'link', props: {} },
+      { title: 'selected', props: { selected: true } },
+      { title: 'count', props: { count: 4 } },
+      { title: 'level 1', props: { level: 1 } },
+      { title: 'expandable', props: { expandable: true, open: true } },
+      { title: 'description', props: { description: '12' } }
+    ],
+    columns: [{ title: '', props: { label: 'Issues', icon: 'tracker/issues', width: 240 } }]
+  },
+  {
+    title: 'NavItem (product) - kinds',
+    component: KitNavItem,
+    rows: [
+      { title: 'object', props: { kind: 'object', icon: 'chunter/hashtag' } },
+      { title: 'identifier', props: { identifier: 'APP-6' } },
+      { title: 'anchor', props: { kind: 'anchor' } }
+    ],
+    columns: [{ title: '', props: { label: 'Release notes', width: 240 } }]
+  }
+])
+
+export const KitNavGroupStates: Story = sections([
+  {
+    title: 'NavGroup (product)',
+    component: KitNavGroup,
+    rows: [
+      { title: 'section', props: {} },
+      { title: 'no divider', props: { divider: false } },
+      { title: 'expandable', props: { expandable: true } },
+      { title: 'collapsed', props: { expandable: true, open: false } },
+      { title: 'nested', props: { kind: 'nested', icon: 'setting/settings' } },
+      { title: 'selected', props: { selected: true } }
+    ],
+    columns: [{ title: '', props: { label: 'Projects', width: 240 } }]
+  }
+])
+
+export const BreadcrumbsStates: Story = sections([
+  {
+    title: 'Breadcrumbs',
+    component: Breadcrumbs,
+    rows: [
+      { title: 'labels', props: { items: ['Projects', 'Mobile app', 'APP-6'] } },
+      { title: 'icons', props: { items: [['Projects', 'tracker/tracker'], ['Mobile app', 'tracker/issues'], 'APP-6'] } }
+    ],
+    columns: [{ title: '', props: {} }]
   }
 ])

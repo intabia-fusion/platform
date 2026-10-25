@@ -20,7 +20,7 @@
   import { productIcon } from '../productIcon'
   import type { IconName } from '../types'
 
-  export let kind: 'regular' | 'primary' | 'dangerous' | 'ghost' | 'icon' = 'regular'
+  export let kind: 'regular' | 'primary' | 'positive' | 'dangerous' | 'ghost' | 'icon' = 'regular'
   export let size: 'small' | 'medium' | 'large' = 'medium'
   export let icon: IconName | undefined = undefined
   export let label: string | undefined = undefined
@@ -29,8 +29,11 @@
   export let disabled: boolean = false
   // Dropdown chevron after the label (ignored when the slot has content)
   export let menu: boolean = false
+  // Icon after the label, in place of the dropdown chevron
+  export let iconRight: IconName | undefined = undefined
 
   $: asset = productIcon(icon)
+  $: assetRight = iconRight !== undefined ? productIcon(iconRight) : menu ? ui.icon.CaretDownFill : undefined
 </script>
 
 {#if $$slots.default}
@@ -44,9 +47,9 @@
     {disabled}
     icon={asset}
     iconProps={{ size: iconSize === 20 ? 'medium' : 'small' }}
-    iconRight={menu ? ui.icon.CaretDownFill : undefined}
+    iconRight={assetRight}
     iconRightProps={{ size: 'small' }}
-    gap={menu ? 'large' : 'medium'}
+    gap={menu || iconRight !== undefined ? 'large' : 'medium'}
     label={label !== undefined && label !== '' ? getEmbeddedLabel(label) : undefined}
   />
 {/if}

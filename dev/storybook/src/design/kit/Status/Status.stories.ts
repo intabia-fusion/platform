@@ -16,11 +16,15 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import { axis } from '../../../helpers/matrix'
 
 import { categories, priorities, status } from '../sample'
+import CalloutDemo from '../demo/CalloutDemo.svelte'
 import Count from './Count.svelte'
+import EmptyState from './EmptyState.svelte'
+import KitStatusIcon from './KitStatusIcon.svelte'
 import Notice from './Notice.svelte'
 import PriorityIcon from './PriorityIcon.svelte'
 import StatusChip from './StatusChip.svelte'
 import StatusIcon from './StatusIcon.svelte'
+import Steps from './Steps.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
@@ -98,4 +102,63 @@ export const NoticeStates: Story = sections([
 
 export const CountStates: Story = sections([
   { title: 'Count', component: Count, rows: [{ title: 'value', props: {} }], columns: axis('value', [1, 12, 148]) }
+])
+
+export const CalloutStates: Story = sections([
+  {
+    title: 'Callout',
+    component: CalloutDemo,
+    rows: axis('tone', ['info', 'positive', 'warning', 'error']),
+    columns: [
+      { title: 'text', props: { width: 420 } },
+      { title: 'title', props: { title: 'Archive', width: 420 } },
+      { title: 'actions', props: { actions: true, width: 420 } }
+    ]
+  }
+])
+
+export const KitStatusIconStates: Story = sections([
+  {
+    title: 'StatusIcon (product)',
+    component: KitStatusIcon,
+    rows: axis('tone', ['positive', 'negative', 'error', 'warning', 'info', 'neutral']),
+    columns: [
+      { title: 'solid', props: {} },
+      { title: 'outline', props: { kind: 'outline' } },
+      { title: 'medium', props: { size: 'medium' } },
+      { title: 'dot', props: { dot: true } }
+    ]
+  }
+])
+
+export const StepsStates: Story = sections([
+  {
+    title: 'Steps',
+    component: Steps,
+    rows: [
+      { title: 'none current', props: { selected: -1 } },
+      { title: 'first', props: { selected: 0 } },
+      { title: 'second', props: { selected: 1 } },
+      { title: 'last', props: { selected: 2 } }
+    ],
+    columns: [{ title: '', props: { items: ['Select file', 'Map statuses', 'Review'] } }]
+  }
+])
+
+export const EmptyStateStates: Story = sections([
+  {
+    title: 'EmptyState - large',
+    component: EmptyState,
+    rows: axis('kind', ['brand', 'plate']),
+    columns: [{ title: '', props: { label: 'No issues', description: 'Create the first issue', icon: 'ui/Add', size: 'large', width: 420, height: 240 } }]
+  },
+  {
+    title: 'EmptyState - small',
+    component: EmptyState,
+    rows: [
+      { title: 'plate', props: {} },
+      { title: 'action', props: { action: 'Add application' } }
+    ],
+    columns: [{ title: '', props: { label: 'No applications yet', size: 'small', width: 420 } }]
+  }
 ])

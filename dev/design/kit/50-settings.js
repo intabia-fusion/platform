@@ -85,13 +85,26 @@ kit.Table = (cols, rows, o = {}) => {
   return t
 }
 
-kit.Radio = (on, label, hint) => {
-  const r = kit.box('Radio ' + label, { w: 10, h: 20, dir: 'row', gap: 8, align: 'start', hs: 'auto', vs: 'auto' })
-  const dot = kit.box('dot', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center', radius: 8, stroke: on ? T('primary-button-default') : T('theme-button-border'), strokeW: on ? 5 : 1 })
-  const c = kit.col('text', 2)
-  kit.add(c, kit.text(label, { size: 14 }))
-  if (hint) kit.add(c, kit.text(hint, { size: 12, color: T('theme-darker-color') }))
-  return kit.add(r, dot, c)
+// ui/kit Radio; the hint under the label is drawn by the kit, the product radio has none.
+// o: size(medium|small) kind(as Checkbox) disabled error
+kit.Radio = (on, label, hint, o = {}) => {
+  const small = o.size === 'small'
+  const box = small ? D('spacing-1_75') : D('spacing-2')
+  const line = small ? D('spacing-2') : D('spacing-2_5')
+  const font = small ? 12 : 14
+  let [color, mark] = selectorKind(o.kind)
+  let border = color || mark
+  if (o.disabled) [color, mark, border] = [null, T('global-disabled-TextColor'), T('global-disabled-TextColor')]
+  if (o.error) border = T('global-error-TextColor')
+  const empty = o.disabled || o.kind === 'neutral' ? null : T('selector-BackgroundColor')
+  const r = kit.box('Radio ' + label, { w: 10, h: 20, dir: 'row', gap: small ? D('spacing-0_75') : D('spacing-1'), align: 'start', hs: 'auto', vs: 'auto' })
+  const control = kit.box('control', { w: box, h: line, dir: 'row', align: 'center' })
+  const dot = kit.box('dot', { w: box, h: box, dir: 'row', align: 'center', justify: 'center', radius: box / 2, fill: on ? color : empty, stroke: on && !o.error ? color || border : border })
+  if (on) kit.add(dot, kit.ellipse(small ? 5 : D('spacing-0_75'), mark, 'mark'))
+  const c = kit.col('text', 0)
+  kit.add(c, kit.text(label, { size: font, lh: line / font, color: o.disabled ? T('global-disabled-TextColor') : T('global-primary-TextColor') }))
+  if (hint) kit.add(c, kit.text(hint, { size: 12, lh: 16 / 12, color: T('global-secondary-TextColor') }))
+  return kit.add(r, kit.add(control, dot), c)
 }
 
 kit.Swatch = (color, size = 20) => kit.box('Swatch', { w: size, h: size, radius: 4, fill: color, stroke: T('theme-button-border') })
@@ -115,8 +128,8 @@ kit.PanelHeader = (main, o = {}) => {
   return 57
 }
 
-// Button of settings and form pages (antiButton): kind regular | primary | dangerous | ghost | icon, size small 28 | medium 32 | large 36.
-// o: kind size icon iconSize label disabled menu content (nodes instead of icon and label)
+// Button of settings and form pages (antiButton): kind regular | primary | positive | dangerous | ghost | icon, size small 28 | medium 32 | large 36.
+// o: kind size icon iconSize label disabled menu iconRight (an icon after the label, takes the place of the menu chevron) content (nodes instead of icon and label)
 kit.ClassicButton = (o = {}) => {
   const kind = o.kind || 'regular'
   const size = o.size || 'medium'
@@ -124,18 +137,19 @@ kit.ClassicButton = (o = {}) => {
   const K = {
     regular: { bg: T('theme-button-default'), border: T('theme-button-border'), label: T('theme-content-color'), icon: T('theme-dark-color') },
     primary: o.disabled ? { bg: T('primary-button-disabled'), border: null, label: T('primary-button-disabled-color'), icon: T('primary-button-disabled-color') } : { bg: T('primary-button-default'), border: T('primary-button-border'), label: '#FFFFFF', icon: '#FFFFFF' },
+    positive: o.disabled ? { bg: T('positive-button-disabled'), border: null, label: T('positive-button-disabled-color'), icon: T('positive-button-disabled-color') } : { bg: T('positive-button-default'), border: null, label: '#FFFFFF', icon: '#FFFFFF' },
     dangerous: { bg: T('dangerous-bg-color'), border: T('dangerous-bg-color'), label: '#FFFFFF', icon: '#FFFFFF' },
     ghost: { bg: null, border: null, label: T('theme-content-color'), icon: T('theme-content-color') },
     icon: { bg: null, border: null, label: T('theme-content-color'), icon: T('theme-dark-color') }
   }[kind]
   // antiButton:disabled: border off, label and icon at theme-darker-color; regular also gets the disabled fill
-  if (o.disabled && kind !== 'primary') Object.assign(K, { border: null, label: T('theme-darker-color'), icon: T('theme-darker-color') }, kind === 'regular' ? { bg: T('theme-button-disabled') } : {})
+  if (o.disabled && kind !== 'primary' && kind !== 'positive') Object.assign(K, { border: null, label: T('theme-darker-color'), icon: T('theme-darker-color') }, kind === 'regular' ? { bg: T('theme-button-disabled') } : {})
   const iconOnly = !o.label && !o.content
-  const b = kit.box(o.name || `ClassicButton/${kind}/${size}`, { w: H, h: H, dir: 'row', gap: o.menu ? 8 : 6, pad: [0, iconOnly ? 0 : 12, 0, iconOnly ? 0 : 12], align: 'center', justify: 'center', hs: iconOnly ? 'fix' : 'auto', radius: 6, fill: K.bg, stroke: K.border })
+  const b = kit.box(o.name || `ClassicButton/${kind}/${size}`, { w: H, h: H, dir: 'row', gap: o.menu || o.iconRight ? 8 : 6, pad: [0, iconOnly ? 0 : 12, 0, iconOnly ? 0 : 12], align: 'center', justify: 'center', hs: iconOnly ? 'fix' : 'auto', radius: 6, fill: K.bg, stroke: K.border })
   if (o.content) kit.add(b, o.content)
   if (o.icon) kit.add(b, kit.icon(o.icon, K.icon, o.iconSize || 16))
   if (o.label) kit.add(b, kit.text(o.label, { size: 13, lh: 1.3125, color: K.label }))
-  if (o.menu) kit.add(b, kit.icon('kit/CaretDownFill', K.icon, 16))
+  if (o.menu || o.iconRight) kit.add(b, kit.icon(o.iconRight || 'kit/CaretDownFill', K.icon, 16))
   return b
 }
 

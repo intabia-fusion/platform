@@ -110,6 +110,10 @@ export interface MenuEntry {
   label?: string
   header?: string
   icon?: IconName
+  // Second line under the label
+  description?: string
+  // PaletteColorIndexes name: a swatch in place of the icon
+  color?: string
   hint?: string
   accent?: boolean
   selected?: boolean

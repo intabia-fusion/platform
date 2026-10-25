@@ -97,18 +97,31 @@ const wrapFlow = (rootId) => {
 
 // '§T:' prefixes a theme axis of the library (the import renames it to <alias>:mode)
 const tree = (json) => resolve(JSON.parse(json.split('$§').join('$' + (ALIAS ? ALIAS + ':' : '')).split('§T:').join(ALIAS ? ALIAS + ':' : '')))
-// Library: a frame per category, a labelled cell per component (the components go into their cells)
+// Library: a top-level frame per category, a section per group marked with its ui/kit component
+// or as only drawn, a labelled cell per component (the components go into their cells)
 if (LIB) {
-  ROOT = Insert(document, { type: 'frame', name: 'Library', x: 0, y: 0, layout: 'vertical', gap: 96, padding: 48, fill: '#FFFFFF' })
+  ROOTS = []
   CELL = {}
+  const font = { type: 'text', fontFamily: 'IBM Plex Sans' }
   for (const cat of LIB) {
-    const f = Insert(ROOT, { type: 'frame', name: cat.name, layout: 'vertical', gap: 32 })
-    Insert(f, { type: 'text', name: 'title', content: cat.name, fontFamily: 'IBM Plex Sans', fontSize: 40, fontWeight: '700', fill: '#1A1A1A' })
-    const list = Insert(f, { type: 'frame', name: 'components', layout: 'horizontal', gap: 48, width: 2400, alignItems: 'start', metadata: { type: 'wrap' } })
-    for (const name of cat.names) {
-      const cell = Insert(list, { type: 'frame', name: 'cell', layout: 'vertical', gap: 8 })
-      Insert(cell, { type: 'text', name: 'label', content: name, fontFamily: 'IBM Plex Sans', fontSize: 11, fill: '#777777' })
-      CELL[name] = cell
+    const f = Insert(document, { type: 'frame', name: cat.name, x: 0, y: 0, layout: 'vertical', gap: 64, padding: 48, fill: '#FFFFFF' })
+    ROOTS.push(f)
+    Insert(f, { ...font, name: 'title', content: cat.name, fontSize: 40, fontWeight: '700', fill: '#1A1A1A' })
+    for (const g of cat.groups) {
+      const sec = Insert(f, { type: 'frame', name: g.name, layout: 'vertical', gap: 24 })
+      const head = Insert(sec, { type: 'frame', name: 'header', layout: 'horizontal', gap: 12, alignItems: 'center' })
+      Insert(head, { ...font, name: 'group', content: g.name, fontSize: 22, fontWeight: '600', fill: '#1A1A1A' })
+      if (g.uikit !== undefined) {
+        const done = g.uikit !== ''
+        const badge = Insert(head, { type: 'frame', name: 'ui/kit', padding: [3, 8], cornerRadius: 4, fill: done ? '#DDF3E4' : '#EEEEEE' })
+        Insert(badge, { ...font, name: 'text', content: done ? 'ui/kit: ' + g.uikit : 'только макет', fontSize: 12, fontWeight: '500', fill: done ? '#1E7B3C' : '#777777' })
+      }
+      const list = Insert(sec, { type: 'frame', name: 'components', layout: 'horizontal', gap: 48, width: 2400, alignItems: 'start', metadata: { type: 'wrap' } })
+      for (const name of g.names) {
+        const cell = Insert(list, { type: 'frame', name: 'cell', layout: 'vertical', gap: 8 })
+        Insert(cell, { ...font, name: 'label', content: name, fontSize: 11, fill: '#777777' })
+        CELL[name] = cell
+      }
     }
   }
 }
@@ -120,9 +133,17 @@ TREES.forEach((json, i) => {
   if (t.reusable) K[t.name] = id
   ids.push(id)
 })
-if (INTO.length > 0) ids = [ROOT]
+if (INTO.length > 0) ids = ROOTS
 cuts = 0
 for (const id of ids) cuts += wrapFlow(id)
+// Category frames side by side, once their rows are wrapped
+if (INTO.length > 0) {
+  let x = 0
+  for (const id of ROOTS) {
+    Update(id, { x })
+    x += widthOf(id) + 200
+  }
+}
 Print('INSERT', Date.now() - T0, 'wrapped', cuts)
 if (PNG) {
   Export(INTO.length > 0 ? ids : ids.slice(1), 'png', OUT, { scale: 1 })

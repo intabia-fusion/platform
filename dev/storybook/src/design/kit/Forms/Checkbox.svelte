@@ -13,41 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import Icon from '../Icon.svelte'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Checkbox } from '@hcengineering/ui/kit'
+  import type { CheckboxKind, CheckboxSize } from '@hcengineering/ui/kit'
 
   export let checked: boolean = false
   export let label: string | undefined = undefined
+  export let indeterminate: boolean = false
+  export let size: CheckboxSize | undefined = undefined
+  export let kind: CheckboxKind | undefined = undefined
+  export let shape: 'rectangle' | 'round' | undefined = undefined
+  export let disabled: boolean = false
+  export let error: boolean = false
 </script>
 
-<div class="kit-checkbox">
-  <div class="box" class:checked>
-    {#if checked}<Icon name="tick" size={12} color="#fff" />{/if}
-  </div>
-  {#if label !== undefined}<span class="label">{label}</span>{/if}
-</div>
-
-<style lang="scss">
-  .kit-checkbox {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 1rem;
-    height: 1rem;
-    border: 1px solid var(--theme-button-border);
-    border-radius: 0.25rem;
-
-    &.checked {
-      background-color: var(--primary-button-default);
-      border-color: transparent;
-    }
-  }
-  .label {
-    color: var(--theme-caption-color);
-  }
-</style>
+{#if label !== undefined}
+  <Checkbox {checked} {indeterminate} {size} {kind} {shape} {disabled} {error} label={getEmbeddedLabel(label)} />
+{:else}
+  <Checkbox {checked} {indeterminate} {size} {kind} {shape} {disabled} {error} aria-label="Checkbox" />
+{/if}

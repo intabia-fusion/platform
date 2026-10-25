@@ -61,6 +61,51 @@ function toHex (v) {
   return ('#' + h(m[1]) + h(m[2]) + h(m[3]) + (a < 1 ? h(a * 255) : '')).toUpperCase()
 }
 
+const NAMED = { transparent: '#00000000', white: '#FFFFFF', black: '#000000' }
+
+// Top-level comma split: arguments of a function may hold var(..., fallback)
+function args (s) {
+  const out = []
+  let depth = 0
+  let cur = ''
+  for (const ch of s) {
+    if (ch === ',' && depth === 0) {
+      out.push(cur.trim())
+      cur = ''
+      continue
+    }
+    if (ch === '(') depth++
+    if (ch === ')') depth--
+    cur += ch
+  }
+  return [...out, cur.trim()]
+}
+
+// Hex of a color: a value, a var() chain or `color-mix(in srgb, A p%, B)` (kit tints)
+export function colorOf (vars, value) {
+  const v = resolveVar(vars, value)
+  if (v === undefined) return undefined
+  if (NAMED[v] !== undefined) return NAMED[v]
+  const m = v.match(/^color-mix\(\s*in srgb\s*,(.*)\)$/s)
+  if (m === null) return toHex(v)
+  const [a, b] = args(m[1])
+  const part = (s) => {
+    const pm = s.match(/^(.*?)\s+([\d.]+)%$/s)
+    return pm === null ? { c: colorOf(vars, s), p: undefined } : { c: colorOf(vars, pm[1]), p: Number(pm[2]) / 100 }
+  }
+  const x = part(a)
+  const y = part(b)
+  if (x.c === undefined || y.c === undefined) return undefined
+  const px = x.p ?? (y.p !== undefined ? 1 - y.p : 0.5)
+  const rgba = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).concat(h.length === 9 ? parseInt(h.slice(7), 16) / 255 : 1)
+  const [c1, c2] = [rgba(x.c), rgba(y.c)]
+  // Premultiplied interpolation, as CSS mixes colors with alpha
+  const alpha = c1[3] * px + c2[3] * (1 - px)
+  if (alpha === 0) return '#00000000'
+  const ch = (i) => Math.round((c1[i] * c1[3] * px + c2[i] * c2[3] * (1 - px)) / alpha)
+  return toHex(`rgba(${ch(0)}, ${ch(1)}, ${ch(2)}, ${alpha})`)
+}
+
 function toPx (v) {
   const m = v.trim().match(/^(-?[\d.]+)(rem|px)$/)
   if (m === null) return undefined
@@ -92,7 +137,7 @@ export function buildTokens () {
     for (const name of Object.keys(vars).sort()) {
       const v = resolveVar(vars, vars[name])
       if (v === undefined) continue
-      const hex = toHex(v)
+      const hex = colorOf(vars, v)
       if (hex !== undefined) colors[name] = hex
       else if (mode === 'light') {
         const px = toPx(v)
